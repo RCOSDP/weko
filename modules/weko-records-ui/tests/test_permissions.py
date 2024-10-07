@@ -12,7 +12,7 @@ from flask_security import login_user
 from flask_security.utils import login_user
 from invenio_accounts.models import Role, User
 from invenio_accounts.testutils import create_test_user, login_user_via_session
-from mock import patch
+from unittest.mock import patch
 from weko_records_ui.models import FileOnetimeDownload
 from weko_groups.models import Group, Membership
 
@@ -73,20 +73,20 @@ def test_check_file_download_permission(app, records, users,db_file_permission):
     fjson = {'url': {'url': 'https://weko3.example.org/record/11/files/001.jpg'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-27'}], 'format': 'image/jpeg', 'filename': 'helloworld.pdf', 'filesize': [{'value': '2.7 MB'}], 'accessrole': 'open_access', 'version_id': 'd73bd9cb-aa9e-4cd0-bf07-c5976d40bdde', 'displaytype': 'preview', 'is_thumbnail': False, 'future_date_message': '', 'download_preview_message': '', 'size': 2700000.0, 'mimetype': 'image/jpeg', 'file_order': 0}
     with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
         assert check_file_download_permission(record, fjson, True) == True
-    
+
     with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
         assert check_file_download_permission(record, fjson, True) == True
 
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
         assert check_file_download_permission(record, fjson, True) == True
-    
+
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
         with patch("weko_records_ui.permissions.to_utc", return_value=datetime.now()):
             assert check_file_download_permission(record, fjson, False) == True
-            
+
             fjson['date'][0]['dateValue'] = ""
             assert check_file_download_permission(record, fjson, False) == True
-            
+
             fjson['date'][0]['dateValue'] = "2022-09-27"
             fjson['accessrole'] = 'open_date'
             assert check_file_download_permission(record, fjson, True) == True
@@ -94,7 +94,7 @@ def test_check_file_download_permission(app, records, users,db_file_permission):
 
             with patch("weko_records_ui.permissions.to_utc", return_value="test"):
                 assert check_file_download_permission(record, fjson, False) == True
-            
+
             fjson['accessrole'] = 'open_login'
             assert check_file_download_permission(record, fjson, True) == True
 
@@ -105,14 +105,14 @@ def test_check_file_download_permission(app, records, users,db_file_permission):
                 assert check_file_download_permission(record, fjson, False) == True
                 fjson['groupsprice'] = [MagicMock()]
                 assert check_file_download_permission(record, fjson, False) == True
-    
+
             fjson['accessrole'] = 'open_no'
             assert check_file_download_permission(record, fjson, True) == False
             assert check_file_download_permission(record, fjson, False) == False
 
             fjson['accessrole'] = 'open_restricted'
             assert check_file_download_permission(record, fjson, True) == False
-            
+
 
 # def check_open_restricted_permission(record, fjson):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_open_restricted_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -125,10 +125,10 @@ def test_check_open_restricted_permission(app, records, users,db_file_permission
 
     with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
         assert check_open_restricted_permission(record, fjson) == False
-        
+
         with patch("weko_records_ui.permissions.__get_file_permission", return_value=data1):
             assert check_open_restricted_permission(record, fjson) == False
-            
+
 
 # def is_open_restricted(file_data):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_get_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -174,7 +174,7 @@ def test_check_permission_period(app,users):
     data1.user_id = users[0]["id"]
     data1.user_mail = users[0]["email"]
     data1.record_id = "c"
-    
+
     with patch('weko_records_ui.models.FileOnetimeDownload.find_downloadable_only', return_value=[{}]):
         assert check_permission_period(data1) == True
     with patch('weko_records_ui.models.FileOnetimeDownload.find_downloadable_only', return_value=None):
@@ -204,7 +204,7 @@ def test_get_permission(app, records, users,db_file_permission):
             data1.status = 0
             with patch("weko_workflow.api.WorkActivity.get_activity_steps", return_value=data2):
                 assert get_permission(record, fjson) == None
-            
+
             with patch("weko_workflow.api.WorkActivity.get_activity_steps", return_value=""):
                 assert get_permission(record, fjson) != None
 
@@ -248,7 +248,7 @@ def test_check_user_group_permission(app, records, users,db_file_permission):
         assert check_user_group_permission(1) == False
 
         assert check_user_group_permission("invalid") == False
-        
+
         assert check_user_group_permission("") == False
 
         a = Group.create(name="admin")
@@ -257,8 +257,8 @@ def test_check_user_group_permission(app, records, users,db_file_permission):
             print(current_user.get_id())
             m = Membership.create(user=current_user, group=g)
             assert check_user_group_permission(g.id) == True
-        
-    
+
+
     with app.test_request_context():
         with patch("flask_login.current_user.get_id", return_value=""):
             assert check_user_group_permission(1) == False
@@ -326,8 +326,8 @@ def test_check_publish_status(app):
             "%Y-%m-%d"
         )
         assert check_publish_status(record) == True
-        
-        
+
+
         record["publish_status"] = "1"
         record["pubdate"]["attribute_value"] = now.strftime("%Y-%m-%d")
         assert record.get("publish_status") == "1"
@@ -736,9 +736,9 @@ def test_is_owners_or_superusers(app,records,users):
         # contributer
         with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
             assert not is_owners_or_superusers(testrec)
-            
+
             testrec['owner'] = userId
-            assert is_owners_or_superusers(testrec) 
+            assert is_owners_or_superusers(testrec)
 
             testrec['owner'] = -1
             testrec['weko_shared_id'] = userId
@@ -758,4 +758,4 @@ def test_is_owners_or_superusers(app,records,users):
         # comadmin
         with  patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
             assert is_owners_or_superusers(testrec)
-    
+

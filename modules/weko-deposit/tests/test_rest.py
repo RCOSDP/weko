@@ -414,9 +414,6 @@ def test_depid_item_put(client, users,es_records):
     with patch("weko_deposit.rest.PersistentIdentifier.get", side_effect=PersistentIdentifier.get):
         res = client.put(url, data=json.dumps(input),
                         content_type='application/json')
-        print(111111111111111111111111111111111111111111111)
-        print(res.data.decode('utf-8'))
-        print(111111111111111111111111111111111111111111111)
         assert res.status_code == 200
         assert json.loads(res.data) == {"status":"success"}
 

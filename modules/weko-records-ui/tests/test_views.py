@@ -7,7 +7,7 @@ from flask_security.utils import login_user
 from invenio_accounts.testutils import login_user_via_session
 from invenio_files_rest.models import ObjectVersion
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-from mock import patch
+from unittest.mock import patch
 from lxml import etree
 from weko_deposit.api import WekoRecord
 from werkzeug.exceptions import NotFound, InternalServerError ,Forbidden
@@ -85,7 +85,7 @@ def test_pid_value_version():
     assert pid_value_version(1) == None
     assert pid_value_version("1") == None
     assert pid_value_version("1.1") == "1"
-    
+
     pid_value_version(MagicMock())
 
 
@@ -440,7 +440,7 @@ def test_get_workflow_detail(app,workflows):
 
     with pytest.raises(NotFound):
         ret = get_workflow_detail(0)
-    
+
 
 # def default_view_method(pid, record, filename=None, template=None, **kwargs):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -488,9 +488,9 @@ def test_default_view_method(app, records, itemtypes, indexstyle ,users):
                                 assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
                         with patch('weko_records_ui.views.get_record_permalink', return_value=False):
                             assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-                        
+
                             record.update(
-                                {'system_identifier_doi' :  
+                                {'system_identifier_doi' :
                                     {"attribute_value_mlt" :[{'subitem_systemidt_identifier':"permalink_uri"}]}})
                             assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
 
@@ -516,18 +516,18 @@ def test_default_view_method(app, records, itemtypes, indexstyle ,users):
                         with patch('weko_records_ui.views.PIDVersioning',return_value=pid_ver):
                             with patch('weko_records_ui.views.WekoRecord.get_record',return_value={'_deposit':{'status':'draft'}}):
                                 assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-                        
+
                         with patch('weko_records_ui.views.WekoRecord.get_record',side_effect=Exception):
                             assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
                         with patch('weko_records_ui.views.ItemLink.get_item_link_info',return_value={"relation":"res"}):
                             assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-                        
+
                         index = MagicMock()
                         index.index_name = ""
                         index.index_name_english ="index"
                         with patch('weko_records_ui.views.Indexes.get_index',return_value=index):
                             assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-                   
+
 
 
 # def doi_ish_view_method(parent_pid_value=0, version=0):
@@ -746,7 +746,7 @@ def test_soft_delete_acl_guest(client, records):
         (2, 200), # sysadmin
         (3, 200), # comadmin
         (4, 500), # generaluser
-        (5, 500), # originalroleuser 
+        (5, 500), # originalroleuser
         (6, 200), # originalroleuser2
         (7, 500), # user
     ],
@@ -788,7 +788,7 @@ def test_restore_acl_guest(client, records):
         (2, 200), # sysadmin
         (3, 200), # comadmin
         (4, 500), # generaluser
-        (5, 500), # originalroleuser 
+        (5, 500), # originalroleuser
         (6, 200), # originalroleuser2
         (7, 500), # user
     ],
@@ -923,7 +923,7 @@ def test_preview_able(app):
         ret = preview_able(file_json)
         assert isinstance(ret,bool)
         assert ret == True
-    
+
 
     size = 20000000000000
     file_json = {'url': {'url': 'https://weko3.example.org/record/11/files/001.jpg'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-27'}], 'format': mimetype, 'filename': '001.jpg', 'filesize': [{'value': '2.7 MB'}], 'accessrole': 'open_access', 'version_id': 'd73bd9cb-aa9e-4cd0-bf07-c5976d40bdde', 'displaytype': 'preview', 'is_thumbnail': False, 'future_date_message': '', 'download_preview_message': '', 'size': size, 'mimetype': mimetype, 'file_order': 0}
@@ -946,13 +946,13 @@ def test_get_uri(app,client,db_sessionlifetime,records):
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method_fix35133 -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_default_view_method_fix35133(app, records, itemtypes, indexstyle,mocker):
+def test_default_view_method_fix35133(app, records, itemtypes, indexstyle):
     indexer, results = records
     record = results[0]["record"]
     recid = results[0]["recid"]
     etree_str = '<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"><responseDate>2022-10-07T06:11:40Z</responseDate><request identifier="oai:repository.dl.itc.u-tokyo.ac.jp:02005680" verb="getrecord" metadataPrefix="jpcoar_1.0">https://repository.dl.itc.u-tokyo.ac.jp/oai</request><getrecord><record><header><identifier>oai:repository.dl.itc.u-tokyo.ac.jp:02005680</identifier><datestamp>2022-09-27T06:40:27Z</datestamp></header><metadata><jpcoar:jpcoar xmlns:datacite="https://schema.datacite.org/meta/kernel-4/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcndl="http://ndl.go.jp/dcndl/terms/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:jpcoar="https://github.com/JPCOAR/schema/blob/master/1.0/" xmlns:oaire="http://namespace.openaire.eu/schema/oaire/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rioxxterms="http://www.rioxx.net/schema/v2.0/rioxxterms/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="https://github.com/JPCOAR/schema/blob/master/1.0/" xsi:schemaLocation="https://github.com/JPCOAR/schema/blob/master/1.0/jpcoar_scm.xsd"><dc:title xml:lang="ja">『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表</dc:title><jpcoar:creator><jpcoar:nameIdentifier nameIdentifierURI="https://orcid.org/123" nameIdentifierScheme="ORCID">123</jpcoar:nameIdentifier><jpcoar:creatorName xml:lang="en">creator name</jpcoar:creatorName><jpcoar:familyName xml:lang="en">creator family name</jpcoar:familyName><jpcoar:givenName xml:lang="en">creator given name</jpcoar:givenName><jpcoar:creatorAlternative xml:lang="en">creator alternative name</jpcoar:creatorAlternative><jpcoar:affiliation><jpcoar:nameIdentifier nameIdentifierURI="test uri" nameIdentifierScheme="ISNI">affi name id</jpcoar:nameIdentifier><jpcoar:affiliationName xml:lang="en">affi name</jpcoar:affiliationName></jpcoar:affiliation></jpcoar:creator><dc:rights>CC BY</dc:rights><datacite:description xml:lang="ja" descriptionType="Other">『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。</datacite:description><dc:publisher xml:lang="ja">東京大学史料編纂所附属画像史料解析センター</dc:publisher><dc:publisher xml:lang="en">Center for the Study of Visual Sources, Historiographical Institute, The University of Tokyo</dc:publisher><datacite:date dateType="Issued">2022-09-30</datacite:date><dc:language>jpn</dc:language><dc:type rdf:resource="http://purl.org/coar/resource_type/c_ddb1">dataset</dc:type><jpcoar:identifier identifierType="HDL">http://hdl.handle.net/2261/0002005680</jpcoar:identifier><jpcoar:identifier identifierType="URI">https://repository.dl.itc.u-tokyo.ac.jp/records/2005680</jpcoar:identifier><jpcoar:relation relationType="references"><jpcoar:relatedIdentifier identifierType="URI">https://clioimg.hi.u-tokyo.ac.jp/viewer/list/idata/850/8500/20/%28a%29/?m=limit</jpcoar:relatedIdentifier></jpcoar:relation><datacite:geoLocation><datacite:geoLocationPoint><datacite:pointLongitude>point longitude test</datacite:pointLongitude><datacite:pointLatitude>point latitude test</datacite:pointLatitude></datacite:geoLocationPoint><datacite:geoLocationBox><datacite:westBoundLongitude>1</datacite:westBoundLongitude><datacite:eastBoundLongitude>2</datacite:eastBoundLongitude><datacite:southBoundLatitude>3</datacite:southBoundLatitude><datacite:northBoundLatitude>4</datacite:northBoundLatitude></datacite:geoLocationBox><datacite:geoLocationPlace>geo location place test</datacite:geoLocationPlace></datacite:geoLocation><jpcoar:file><jpcoar:URI objectType="dataset">https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx</jpcoar:URI><jpcoar:mimeType>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</jpcoar:mimeType><jpcoar:extent>121.7KB</jpcoar:extent><datacite:date dateType="Available">2022-09-27</datacite:date></jpcoar:file></jpcoar:jpcoar></metadata></record></getrecord></OAI-PMH>'
     et = etree.fromstring(etree_str)
-    mock_render_template = mocker.patch("weko_records_ui.views.render_template")
+    mock_render_template = patch("weko_records_ui.views.render_template")
     with app.test_request_context():
         with patch('weko_records_ui.views.check_original_pdf_download_permission', return_value=True):
             with patch("weko_records_ui.views.getrecord",return_value=et):
@@ -967,7 +967,7 @@ def test_default_view_method_fix35133(app, records, itemtypes, indexstyle,mocker
                         {'name': 'citation_dissertation_institution','data':""},
                         {'name': 'citation_abstract_html_url','data': 'http://TEST_SERVER/records/1'},
                     ]
-                assert kwargs["google_dataset_meta"] == '{"@context": "https://schema.org/", "@type": "Dataset", "citation": ["http://hdl.handle.net/2261/0002005680", "https://repository.dl.itc.u-tokyo.ac.jp/records/2005680"], "creator": [{"@type": "Person", "alternateName": "creator alternative name", "familyName": "creator family name", "givenName": "creator given name", "identifier": "123", "name": "creator name"}], "description": "『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。", "distribution": [{"@type": "DataDownload", "contentUrl": "https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx", "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt", "encodingFormat": "text/plain"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml", "encodingFormat": "application/x-yaml"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild", "encodingFormat": "text/x-shellscript"}], "includedInDataCatalog": {"@type": "DataCatalog", "name": "https://localhost"}, "license": ["CC BY"], "name": "『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表", "spatialCoverage": [{"@type": "Place", "geo": {"@type": "GeoCoordinates", "latitude": "point latitude test", "longitude": "point longitude test"}}, {"@type": "Place", "geo": {"@type": "GeoShape", "box": "1 3 2 4"}}, "geo location place test"]}' 
+                assert kwargs["google_dataset_meta"] == '{"@context": "https://schema.org/", "@type": "Dataset", "citation": ["http://hdl.handle.net/2261/0002005680", "https://repository.dl.itc.u-tokyo.ac.jp/records/2005680"], "creator": [{"@type": "Person", "alternateName": "creator alternative name", "familyName": "creator family name", "givenName": "creator given name", "identifier": "123", "name": "creator name"}], "description": "『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。", "distribution": [{"@type": "DataDownload", "contentUrl": "https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx", "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt", "encodingFormat": "text/plain"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml", "encodingFormat": "application/x-yaml"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild", "encodingFormat": "text/x-shellscript"}], "includedInDataCatalog": {"@type": "DataCatalog", "name": "https://localhost"}, "license": ["CC BY"], "name": "『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表", "spatialCoverage": [{"@type": "Place", "geo": {"@type": "GeoCoordinates", "latitude": "point latitude test", "longitude": "point longitude test"}}, {"@type": "Place", "geo": {"@type": "GeoShape", "box": "1 3 2 4"}}, "geo location place test"]}'
 # def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord, filename:str, **kwargs) -> str:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_create_secret_url_and_send_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_create_secret_url_and_send_mail(app,client,db,users,records):
@@ -986,7 +986,7 @@ def test_create_secret_url_and_send_mail(app,client,db,users,records):
             # with app.test_request_context():
             res = client.get(secret_file_url)
             assert res.status_code == 405
-            
+
             res = client.post(secret_file_url ,data=json.dumps({}), content_type='application/json')
             assert res.status_code == 200
         with patch('weko_records_ui.views.process_send_mail',return_value = False):
@@ -1033,7 +1033,7 @@ def test__get_show_secret_url_button(users,records,id ,is_show):
         for record in results:
             if 'filename' in record:
                 res.append( _get_show_secret_url_button(record["record"] , record["filename"]) )
-        
+
     assert not res[0]
     assert res[1] == is_show
     assert res[2] == is_show
@@ -1049,7 +1049,7 @@ def test__get_show_secret_url_button(users,records,id ,is_show):
 def test__get_show_secret_url_button2(users,records ,id,is_show):
     indexer, results = records
     # 80
-    # pattern of not db_restricted_access_secret 
+    # pattern of not db_restricted_access_secret
     i = 0
     role = ["open_access" , "open_no" ,"open_date"]
     for record in results:
@@ -1065,7 +1065,7 @@ def test__get_show_secret_url_button2(users,records ,id,is_show):
         for record in results:
             if 'filename' in record:
                 res.append( _get_show_secret_url_button(record["record"] , record["filename"]) )
-    
+
     assert res[0] == False
     assert res[1] == False
     assert res[2] == False
@@ -1096,7 +1096,7 @@ def test__get_show_secret_url_button3(users,records,id,is_show):
         for record in results:
             if 'filename' in record:
                 res.append( _get_show_secret_url_button(record["record"] , record["filename"]) )
-    
+
     assert res[0] == False
     assert res[1] == is_show
     assert res[2] == False

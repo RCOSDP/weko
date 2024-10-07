@@ -1,5 +1,5 @@
 import json
-from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 from flask import Blueprint, Response
 import pytest
 
@@ -325,7 +325,7 @@ def test_WekoFilesGet_error(app, records):
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoFileListGetAll -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_WekoFileListGetAll(app, mocker, records):
+def test_WekoFileListGetAll(app, records):
     app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_CITES_REST_ENDPOINTS']))
     with app.test_client() as client:
         with patch('weko_records_ui.fd.file_list_ui', return_value=Response(status=200)):
@@ -333,7 +333,7 @@ def test_WekoFileListGetAll(app, mocker, records):
             res = client.get('/v1/records/1/files/all')
             assert res.status_code == 200
 
-    test_mock = mocker.patch('weko_records_ui.fd.file_list_ui', return_value=Response(status=200))
+    test_mock = patch('weko_records_ui.fd.file_list_ui', return_value=Response(status=200))
     # 2 Exist thumbnail
     url = '/v1/records/7/files/all'
     res = client.get(url)
@@ -396,7 +396,7 @@ def test_WekoFileListGetAll_error(app, records):
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoFileListGetSelected -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_WekoFileListGetSelected(app, mocker, records):
+def test_WekoFileListGetSelected(app, records):
     app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_CITES_REST_ENDPOINTS']))
     with app.test_client() as client:
         with patch('weko_records_ui.fd.file_list_ui', return_value=Response(status=200)):

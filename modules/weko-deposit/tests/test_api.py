@@ -366,7 +366,6 @@ class TestWekoIndexer:
         indexer, records = es_records
         metadata = records[0]['record_data']
         ret = indexer.get_count_by_index_id("1")
-        print("ret:{}".format(ret))
         assert ret == 4
         ret = indexer.get_count_by_index_id("2")
         assert ret == 5

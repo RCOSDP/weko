@@ -1,5 +1,5 @@
 import pytest
-from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 from weko_records_ui.preview import preview, decode_name, zip_preview, children_to_list
 
@@ -19,20 +19,20 @@ def test_preview(app,records):
 
     with app.test_request_context('/record/{}/file_preview/{}?allow_aggs=True'.format(recid.pid_value,filename)):
         assert "<title>Preview</title>" in preview(record.pid,record,template)
-    
+
     with app.test_request_context('/record/{}/file_preview/{}?allow_aggs=False'.format(recid.pid_value,filename)):
         assert "<title>Preview</title>" in preview(record.pid,record,template)
-    
+
     with app.test_request_context('/record/{}/file_preview/{}'.format(recid.pid_value,filename)):
         assert "<title>Preview</title>" in preview(record.pid,record,template)
-    
+
     with app.test_request_context('/record/{}/file_preview/'.format(recid.pid_value)):
         with pytest.raises(AttributeError):
             assert preview(record.pid,record,template)==""
 
     with app.test_request_context():
         assert "<title>Preview</title>" in preview(record.pid,record,template)
-    
+
     indexer, results = records
     record = results[1]['record']
     filename = results[1]['filename']
@@ -42,15 +42,15 @@ def test_preview(app,records):
     with app.test_request_context('/record/{}/file_preview/{}?allow_aggs=True'.format(recid.pid_value,filename)):
         with patch("flask.templating._render", return_value=""):
             assert preview(record.pid,record,template)==""
-    
+
     with app.test_request_context('/record/{}/file_preview/{}?allow_aggs=False'.format(recid.pid_value,filename)):
         with patch("flask.templating._render", return_value=""):
             assert preview(record.pid,record,template)==""
-    
+
     with app.test_request_context('/record/{}/file_preview/{}'.format(recid.pid_value,filename)):
         with patch("flask.templating._render", return_value=""):
             assert preview(record.pid,record,template)==""
-    
+
     with app.test_request_context('/record/{}/file_preview/'.format(recid.pid_value)):
         with pytest.raises(AttributeError):
             assert preview(record.pid,record,template)==""
@@ -58,7 +58,7 @@ def test_preview(app,records):
     with app.test_request_context():
         with patch("flask.templating._render", return_value=""):
             assert preview(record.pid,record,template)==""
-    
+
     indexer, results = records
     record = results[2]['record']
     filename = results[2]['filename']
@@ -68,15 +68,15 @@ def test_preview(app,records):
     with app.test_request_context('/record/{}/file_preview/{}?allow_aggs=True'.format(recid.pid_value,filename)):
         with patch("flask.templating._render", return_value=""):
             assert preview(record.pid,record,template)==""
-    
+
     with app.test_request_context('/record/{}/file_preview/{}?allow_aggs=False'.format(recid.pid_value,filename)):
         with patch("flask.templating._render", return_value=""):
             assert preview(record.pid,record,template)==""
-    
+
     with app.test_request_context('/record/{}/file_preview/{}'.format(recid.pid_value,filename)):
         with patch("flask.templating._render", return_value=""):
             assert preview(record.pid,record,template)==""
-    
+
     with app.test_request_context('/record/{}/file_preview/'.format(recid.pid_value)):
         with pytest.raises(AttributeError):
             assert preview(record.pid,record,template)==""
@@ -84,7 +84,7 @@ def test_preview(app,records):
     with app.test_request_context():
         with patch("flask.templating._render", return_value=""):
             assert preview(record.pid,record,template)==""
-    
+
 
 # def children_to_list(node):
 def test_children_to_list(app):
@@ -126,7 +126,7 @@ def test_decode_name(app):
     obj1.detect = detect
     with patch("weko_records_ui.preview.chardet", return_value=obj1):
         assert decode_name(obj1) != obj1
-    
+
     with patch("weko_records_ui.preview.chardet.detect", return_value={"encoding": False}):
         assert decode_name(obj1) == obj1
 

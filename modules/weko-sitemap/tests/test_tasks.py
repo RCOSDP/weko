@@ -9,9 +9,9 @@ from weko_sitemap.tasks import link_success_handler,link_error_handler,update_si
 
 # def link_success_handler(retval):
 # .tox/c1/bin/pytest --cov=weko_sitemap tests/test_tasks.py::test_link_success_handler -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-sitemap/.tox/c1/tmp
-def test_link_success_handler(app,mocker):
+def test_link_success_handler(app):
     with app.test_request_context():
-        mock_send = mocker.patch("weko_sitemap.tasks.sitemap_finished.send")
+        mock_send = patch("weko_sitemap.tasks.sitemap_finished.send")
         data = [
             {"task_id":"test_task_id","total":1},
             "user_data"
@@ -22,12 +22,12 @@ def test_link_success_handler(app,mocker):
             exec_data={"task_id":"test_task_id","total_records":1},
             user_data="user_data"
         )
-    
+
 # def link_error_handler(request, exc, traceback):
 # .tox/c1/bin/pytest --cov=weko_sitemap tests/test_tasks.py::test_link_error_handler -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-sitemap/.tox/c1/tmp
-def test_link_error_handler(app,mocker):
-    mocker.patch("datetime.datetime",**{"now.return_value":datetime(2022,10,2,1,2,3)})
-    #datetime_mock = mocker.patch("weko_sitemap.tasks.datetime")
+def test_link_error_handler(app):
+    patch("datetime.datetime",**{"now.return_value":datetime(2022,10,2,1,2,3)})
+    #datetime_mock = patch("weko_sitemap.tasks.datetime")
     #datetime_mock.now.side_effect=[datetime(2022,10,2,1,2,3)]
     headers = {
         "id":"test_id",
@@ -41,7 +41,7 @@ def test_link_error_handler(app,mocker):
         delivery_info=None
         properties=None
     req = Request(Message,headers=headers,task="test_task",decoded=True)
-    mock_send=mocker.patch("weko_sitemap.tasks.sitemap_finished.send")
+    mock_send=patch("weko_sitemap.tasks.sitemap_finished.send")
     link_error_handler(req,"","")
     now=datetime.now()
     exe = str(now -datetime(2022,10,1,12,1,22))
@@ -58,18 +58,18 @@ def test_link_error_handler(app,mocker):
 
 # def update_sitemap(start_time=datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S'),
 # .tox/c1/bin/pytest --cov=weko_sitemap tests/test_tasks.py::test_update_sitemap -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-sitemap/.tox/c1/tmp
-def test_update_sitemap(app,db,mocker):
+def test_update_sitemap(app,db):
     def mock_gen_urls():
         for i in range(10):
             yield "http://test{}.com".format(i)
-    mocker.patch("weko_sitemap.ext.WekoSitemap._generate_all_item_urls",side_effect=mock_gen_urls)
+    patch("weko_sitemap.ext.WekoSitemap._generate_all_item_urls",side_effect=mock_gen_urls)
 
     current_app.config.update(
         SITEMAP_MAX_URL_COUNT=11
     )
     start = datetime(2022,10,1,1,2,3).strftime('%Y-%m-%dT%H:%M:%S')
     with app.test_request_context():
-        mock_send = mocker.patch("weko_sitemap.tasks.sitemap_page_needed.send")
+        mock_send = patch("weko_sitemap.tasks.sitemap_page_needed.send")
         result,user_data = update_sitemap(start_time=start)
         mock_send.assert_called_with(
             current_app._get_current_object(),
@@ -80,27 +80,27 @@ def test_update_sitemap(app,db,mocker):
         assert result["task_name"] == "sitemap"
         assert user_data == {"user_id":"System"}
 
-        
+
         current_app.config.update(
             SITEMAP_MAX_URL_COUNT=4
         )
-        mock_send = mocker.patch("weko_sitemap.tasks.sitemap_page_needed.send")
+        mock_send = patch("weko_sitemap.tasks.sitemap_page_needed.send")
         result,user_data = update_sitemap(start_time=start)
         mock_send.assert_has_calls([
-            mocker.call(current_app._get_current_object(),page=1,urlset=["http://test0.com","http://test1.com","http://test2.com","http://test3.com"]),
-            mocker.call(current_app._get_current_object(),page=2,urlset=["http://test4.com","http://test5.com","http://test6.com","http://test7.com"]),
-            mocker.call(current_app._get_current_object(),page=3,urlset=["http://test8.com","http://test9.com"]),
+            call(current_app._get_current_object(),page=1,urlset=["http://test0.com","http://test1.com","http://test2.com","http://test3.com"]),
+            call(current_app._get_current_object(),page=2,urlset=["http://test4.com","http://test5.com","http://test6.com","http://test7.com"]),
+            call(current_app._get_current_object(),page=3,urlset=["http://test8.com","http://test9.com"]),
         ])
         assert result["total"] == 4
         assert result["start_time"] == "2022-10-01T01:02:03"
         assert user_data == {"user_id":"System"}
-        
+
         # raise StopIteration
         def none_url():
             for i in range(0,0):
                 yield "test{}".format(i)
         with patch("weko_sitemap.ext.WekoSitemap._generate_all_item_urls",side_effect=none_url):
-            mock_send = mocker.patch("weko_sitemap.tasks.sitemap_page_needed.send")
+            mock_send = patch("weko_sitemap.tasks.sitemap_page_needed.send")
             result,user_data = update_sitemap(start_time=start)
             mock_send.assert_called_with(
                 current_app._get_current_object(),

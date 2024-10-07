@@ -1616,11 +1616,6 @@ class WekoDeposit(Deposit):
                         pid=pid)
             raise WekoDepositError(msg="PID status is not registered.")
 
-        print(11111111111111)
-        print(record)
-        print(11111111111111)
-        print(parent_pid)
-        print(11111111111111)
         if not record or versioning.is_child is None or versioning.draft_child:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='record is None or versioning does not exists '

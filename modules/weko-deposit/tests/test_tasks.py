@@ -89,10 +89,10 @@ class MockRecordIndexer:
         pass
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_update_authorInfo -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-def test_update_authorInfo(app, db, location, records, mocker):
-# def test_update_authorInfo(app, db, records,mocker, authors):
+def test_update_authorInfo(app, db, location, records):
+# def test_update_authorInfo(app, db, records, authors):
     app.config.update(WEKO_SEARCH_MAX_RESULT=1)
-    mocker.patch("weko_deposit.tasks.WekoDeposit.update_author_link")
+    patch("weko_deposit.tasks.WekoDeposit.update_author_link")
     mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
     with patch("weko_deposit.tasks.RecordsSearch", mock_recordssearch):
         with patch("weko_deposit.tasks.RecordIndexer", MockRecordIndexer):
@@ -259,9 +259,9 @@ def test_update_authorInfo(app, db, location, records, mocker):
 
 # def _update_author_data(item_id, record_ids):
 # isinstance(data, dict) and 'nameIdentifiers' in data is False
-def test_update_authorInfo_no_nameIdentifiers(app, db, location, records2, mocker):
+def test_update_authorInfo_no_nameIdentifiers(app, db, location, records2):
     app.config.update(WEKO_SEARCH_MAX_RESULT=1)
-    mocker.patch("weko_deposit.tasks.WekoDeposit.update_author_link")
+    patch("weko_deposit.tasks.WekoDeposit.update_author_link")
     mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
     with patch("weko_deposit.tasks.update_db_es_data") as mock_update_db_es_data:
         with patch("weko_deposit.tasks.RecordsSearch", mock_recordssearch):
@@ -269,19 +269,19 @@ def test_update_authorInfo_no_nameIdentifiers(app, db, location, records2, mocke
                 update_items_by_authorInfo(1, {})
 
 # Test for _update_author_data when for loop continues
-def test_no_creatorNames_contributorNames_names(app, db, location, records3, mocker):
+def test_no_creatorNames_contributorNames_names(app, db, location, records3):
     app.config.update(WEKO_SEARCH_MAX_RESULT=1)
-    mocker.patch("weko_deposit.tasks.WekoDeposit.update_author_link")
+    patch("weko_deposit.tasks.WekoDeposit.update_author_link")
     mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
     with patch("weko_deposit.tasks.RecordsSearch", mock_recordssearch):
         with patch("weko_deposit.tasks.RecordIndexer", MockRecordIndexer):
             update_items_by_authorInfo(1, {})
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_update_authorInfo -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-def test_update_authorInfo_case1(app, db, location, records, mocker):
-# def test_update_authorInfo(app, db, records,mocker, authors):
+def test_update_authorInfo_case1(app, db, location, records):
+# def test_update_authorInfo(app, db, records, authors):
     app.config.update(WEKO_SEARCH_MAX_RESULT=1)
-    mocker.patch("weko_deposit.tasks.WekoDeposit.update_author_link")
+    patch("weko_deposit.tasks.WekoDeposit.update_author_link")
     mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
     with patch("weko_deposit.tasks.RecordsSearch", mock_recordssearch):
         with patch("weko_deposit.tasks.RecordIndexer", MockRecordIndexer):
@@ -426,9 +426,9 @@ def test_update_authorInfo_case1(app, db, location, records, mocker):
 
 
 # update_gather_flg = True
-def test_update_authorInfo_with_update_gather_flg(app, db, location, records, mocker):
+def test_update_authorInfo_with_update_gather_flg(app, db, location, records):
     app.config.update(WEKO_SEARCH_MAX_RESULT=1)
-    mocker.patch("weko_deposit.tasks.WekoDeposit.update_author_link")
+    patch("weko_deposit.tasks.WekoDeposit.update_author_link")
     _target = {
         'authorNameInfo': [
             {'nameShowFlg': False},
@@ -463,17 +463,16 @@ def test_update_authorInfo_with_update_gather_flg(app, db, location, records, mo
 # def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_list=[], update_gather_flg=False):
 #   def _update_author_data(item_id, record_ids):
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_update_author_data -vv -s --cov-branch --cov-report=html --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp --full-trace
-def test_update_author_data(app, db, mocker, es_records):
+def test_update_author_data(app, db, es_records):
     pid_value = es_records[1][0]["deposit"].pid.pid_value
     mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
     with patch("weko_deposit.tasks.RecordsSearch", mock_recordssearch):
         with patch("weko_deposit.tasks.RecordIndexer", MockRecordIndexer):
-            mocker.patch("weko_deposit.tasks.WekoDeposit.update_author_link")
+            patch("weko_deposit.tasks.WekoDeposit.update_author_link")
             ex = PIDDoesNotExistError(pid_type='recid', pid_value=pid_value)
             with patch("weko_deposit.tasks.PersistentIdentifier.get", side_effect=ex) as mock_pid:
                 with patch("weko_deposit.tasks.weko_logger")as mock_logger:
                     update_items_by_authorInfo(["1","xxx"], {})
-                    # print(mock_logger.call_args_list)
                     mock_logger.assert_any_call(key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
                     mock_logger.assert_any_call(key='WEKO_COMMON_WHILE_START')
                     mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
@@ -486,7 +485,6 @@ def test_update_author_data(app, db, mocker, es_records):
             with patch("weko_deposit.tasks.PersistentIdentifier.get", side_effect=ex) as mock_pid:
                 with patch("weko_deposit.tasks.weko_logger")as mock_logger:
                     update_items_by_authorInfo(["1","xxx"], {})
-                    # print(mock_logger.call_args_list)
                     mock_logger.assert_any_call(key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
                     mock_logger.assert_any_call(key='WEKO_COMMON_WHILE_START')
                     mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
@@ -500,7 +498,6 @@ def test_update_author_data(app, db, mocker, es_records):
             with patch("weko_deposit.tasks.PersistentIdentifier.get", side_effect=ex) as mock_pid:
                 with patch("weko_deposit.tasks.weko_logger")as mock_logger:
                     update_items_by_authorInfo(["1","xxx"], {})
-                    # print(mock_logger.call_args_list)
                     mock_logger.assert_any_call(key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
                     mock_logger.assert_any_call(key='WEKO_COMMON_WHILE_START')
                     mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
@@ -511,7 +508,7 @@ def test_update_author_data(app, db, mocker, es_records):
                     mock_logger.assert_called_with(key='WEKO_COMMON_WHILE_END')
 
 # def get_origin_data(origin_pkid_list):
-def test_get_origin_data(app, db, mocker):
+def test_get_origin_data(app, db):
     origin_pkid_list = [1, 2]
     db.session.add(Authors(
             id=1,
@@ -534,7 +531,7 @@ def test_get_origin_data(app, db, mocker):
 
 # def update_db_es_data(origin_pkid_list, origin_id_list):
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_get_origin_data -vv -s --cov-branch --cov-report=html --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp --full-trace
-def test_update_db_es_data(app, db, mocker,esindex, es_records,authors):
+def test_update_db_es_data(app, db,esindex, es_records,authors):
     authors_db = Authors.query.all()
     origin_id_list=[]
     for author in authors_db:
@@ -571,7 +568,7 @@ def test_update_db_es_data(app, db, mocker,esindex, es_records,authors):
             mock_logger.assert_any_call(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
 
 # def make_stats_file(raw_stats):
-def test_make_stats_file(app, db, mocker):
+def test_make_stats_file(app, db):
     TARGET_LABEL = 'target'
     # file_format is tsv
     # success_items and fail_items is empty

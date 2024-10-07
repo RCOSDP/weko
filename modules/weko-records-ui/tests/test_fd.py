@@ -8,7 +8,7 @@ from weko_records_ui.errors import AvailableFilesNotFoundRESTError
 from weko_records_ui.fd import _is_terms_of_use_only, file_download_secret, prepare_response,file_download_onetime,_download_file,add_signals_info,weko_view_method,file_ui,file_preview_ui,file_download_ui,file_list_ui
 from weko_records_ui.config import WEKO_RECORDS_UI_DETAIL_TEMPLATE
 from unittest.mock import MagicMock
-from invenio_theme.config import THEME_ERROR_TEMPLATE 
+from invenio_theme.config import THEME_ERROR_TEMPLATE
 import pytest
 import io
 import copy
@@ -17,12 +17,12 @@ from flask import url_for,current_app,make_response
 from flask_security.utils import login_user
 from flask_babel import get_locale
 from invenio_accounts.testutils import login_user_via_session
-from mock import patch
+from unittest.mock import patch
 from invenio_records_files.utils import record_file_factory
 from werkzeug.exceptions import NotFound ,Forbidden
 
 from weko_records_ui.models import FileSecretDownload
-from sqlalchemy.exc import SQLAlchemyError 
+from sqlalchemy.exc import SQLAlchemyError
 # def weko_view_method(pid, record, template=None, **kwargs):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_weko_view_method -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_weko_view_method(app,records,itemtypes,users):
@@ -94,7 +94,7 @@ def test_file_ui(app,records,itemtypes,users):
         with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
             with pytest.raises(NotFound):
                 res = file_ui(recid,record,_record_file_factory= lambda x,y,z: None )
-    
+
     data1 = MagicMock()
     def cannot():
         return False
@@ -128,13 +128,13 @@ def test_file_ui(app,records,itemtypes,users):
 # for records_restricted
 # # def file_ui(
 # # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_file_ui2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_file_ui2(app,records_restricted,itemtypes,users ,client ,mocker):
+def test_file_ui2(app,records_restricted,itemtypes,users ,client ):
     indexer, results = records_restricted
     recid_none_login =  results[len(results) -2]["recid"]
     recid_login =  results[len(results) -1]["recid"]
     # 21
     # with app.test_request_context():
-    mock= mocker.patch('weko_records_ui.fd._download_file' ,return_value=make_response())
+    mock= patch('weko_records_ui.fd._download_file' ,return_value=make_response())
     res = client.get(url_for('invenio_records_ui.recid_files'
                         , pid_value = recid_none_login.pid_value
                         , filename = "helloworld_open_restricted.pdf"
@@ -146,7 +146,7 @@ def test_file_ui2(app,records_restricted,itemtypes,users ,client ,mocker):
     def cannot():
         return False
     data1.can = cannot
-    mock = mocker.patch('weko_records_ui.fd._redirect_method' ,return_value=make_response())
+    mock = patch('weko_records_ui.fd._redirect_method' ,return_value=make_response())
     with patch('weko_records_ui.fd.file_permission_factory', return_value=data1):
         res = client.get(url_for('invenio_records_ui.recid_files'
                             , pid_value = recid_none_login.pid_value
@@ -162,7 +162,7 @@ def test_file_ui2(app,records_restricted,itemtypes,users ,client ,mocker):
                 recid_login =  results[len(results) -1]["recid"]
                 record_login = results[len(results) -1]["record"]
 
-                from werkzeug.exceptions import Forbidden 
+                from werkzeug.exceptions import Forbidden
                 try:
                     res = file_ui(recid_login,record_login ,is_preview=False  , filename = "helloworld_open_restricted.pdf")
                     assert False
@@ -171,7 +171,7 @@ def test_file_ui2(app,records_restricted,itemtypes,users ,client ,mocker):
 
 # def file_ui(
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_file_ui3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_file_ui3(app,records_restricted,itemtypes,db_file_permission,users ,client ,mocker):
+def test_file_ui3(app,records_restricted,itemtypes,db_file_permission,users ,client ):
     indexer, results = records_restricted
     recid_none_login =  results[len(results) -2]["recid"]
     recid_login =  results[len(results) -1]["recid"]
@@ -186,20 +186,20 @@ def test_file_ui3(app,records_restricted,itemtypes,db_file_permission,users ,cli
             #23
             # contributer logined
             with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
-                mock = mocker.patch('weko_records_ui.fd._redirect_method' ,return_value=make_response())
+                mock = patch('weko_records_ui.fd._redirect_method' ,return_value=make_response())
                 fileobj:WekoFileObject = record_file_factory( recid_login, record_login, filename = "helloworld_open_restricted.pdf" )
                 fileobj.data['accessrole']='open_restricted'
                 fileobj.data['filename'] = "helloworld_open_restricted.pdf"
                 with pytest.raises(Forbidden):
                     res = file_ui(recid_login,record_login ,is_preview=False , filename = "helloworld_open_restricted.pdf")
-            
+
             #24
             with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
                 with patch("weko_records_ui.fd.is_owners_or_superusers", return_value=False):
                     fileobj:WekoFileObject = record_file_factory( recid_login, record_login, filename = "helloworld_open_restricted.pdf" )
                     fileobj.data['accessrole']='open_restricted'
                     fileobj.data['filename'] = "helloworld_open_restricted.pdf"
-                    
+
                     try:
                         res = file_ui(recid_login,record_login ,is_preview=False  , filename = "helloworld_open_restricted.pdf")
                         assert False
@@ -250,7 +250,7 @@ def test_add_signals_info(app,records,itemtypes,users):
         with patch("weko_records_ui.fd.Group.query_by_user", return_value=data1):
             with patch("flask_login.utils._get_user", return_value=data1):
                 add_signals_info(record,obj)
-            
+
             data1.roles = [data1, data2]
 
             with patch("flask_login.utils._get_user", return_value=data1):
@@ -278,14 +278,14 @@ def test_file_download_onetime(app, records, itemtypes, users, db_fileonetimedow
 
                         with patch("weko_records_ui.fd.validate_onetime_download_token", return_value=(False, [1])):
                             assert file_download_onetime(recid,record,record_file_factory)==""
-                        
+
                         _rv = (True, "")
                         with patch("weko_records_ui.fd.validate_onetime_download_token", return_value=_rv):
                             assert file_download_onetime(recid,record,record_file_factory)==""
 
                             with patch("weko_records_ui.fd.record_file_factory", return_value=False):
                                 assert file_download_onetime(recid,record,None)==""
-                            
+
                             file_object = MagicMock()
                             file_object.obj = {"foo" : "hoge"}
                             file_object.get = lambda x : 'open_restricted'
@@ -306,7 +306,7 @@ def test_file_download_onetime(app, records, itemtypes, users, db_fileonetimedow
 def test__is_terms_of_use_only(app, records_restricted, users, db_file_permission):
 
     provide:dict = { # is_terms_of_use_only
-        "provide" : 
+        "provide" :
             [
                 {
                     "role" : "none_loggin",
@@ -318,9 +318,9 @@ def test__is_terms_of_use_only(app, records_restricted, users, db_file_permissio
                 }
             ]
         }
-    
+
     provide_not:dict = { #is not_terms_of_use_only
-        "provide" : 
+        "provide" :
             [
                 {
                     "role" : "none_loggin",
@@ -353,7 +353,7 @@ def test__is_terms_of_use_only(app, records_restricted, users, db_file_permissio
         # 27
         # "none_loggin"
         assert not _is_terms_of_use_only(provide_not ,{'terms_of_use_only': True})
-        
+
         #Contributer
         with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
             assert not _is_terms_of_use_only(provide_not,{'terms_of_use_only': True})
@@ -408,7 +408,7 @@ def test_file_download_secret(app,db, itemtypes, users, records):
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_file_list_ui -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_file_list_ui(app,records,itemtypes,users,mocker,db_file_permission):
+def test_file_list_ui(app,records,itemtypes,users,db_file_permission):
     indexer, results = records
 
     # 9 can download
@@ -422,7 +422,7 @@ def test_file_list_ui(app,records,itemtypes,users,mocker,db_file_permission):
     record = results[3]["record"]
     with app.test_request_context():
         with patch("flask_login.utils._get_user", return_value=users[4]["obj"]):
-            test_mock = mocker.patch('weko_records_ui.utils.create_tsv', return_value=io.StringIO())
+            test_mock = patch('weko_records_ui.utils.create_tsv', return_value=io.StringIO())
             accessrole_list = ["open_access", "open_no"]
             for (file, accessrole) in zip(record.files, accessrole_list):
                 file["accessrole"] = accessrole

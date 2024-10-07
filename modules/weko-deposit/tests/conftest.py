@@ -875,8 +875,6 @@ def es_records_2(app, db, db_index, location, db_itemtype2,db_oaischema):
             results.append({"depid":depid, "recid":recid, "parent": parent, "doi":doi, "hdl": hdl,"record":record, "record_data":record_data,"item":item , "item_data":item_data,"deposit": deposit, "rec_uuid":rec_uuid, "version_id":obj.version_id})
 
     time.sleep(3)
-    # es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
-    # print(es.cat.indices())
     return indexer, results
 
 @pytest.fixture()
