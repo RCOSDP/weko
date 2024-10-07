@@ -205,6 +205,7 @@ maxminddb-geolite2==2018.703
 mistune==3.0.2
 mock==5.1.0
 more-itertools==8.10.0
+moto==5.0.16
 msgpack==1.0.8
 multidict==6.0.5
 nbclient==0.10.0

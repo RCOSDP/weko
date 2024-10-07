@@ -3,7 +3,7 @@ from smtplib import SMTPServerDisconnected
 
 from flask import url_for
 
-from mock import patch
+from unittest.mock import patch
 
 from invenio_mail.admin import MailSettingView,_app
 
@@ -11,16 +11,16 @@ from invenio_mail.admin import MailSettingView,_app
 
 class TestMailSettingView:
 # .tox/c1/bin/pytest --cov=invenio_mail tests/test_admin.py::TestMailSettingView::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
-    def test_index(self,client,db,users,mail_configs,mocker):
+    def test_index(self,client,db,users,mail_configs):
         url = url_for("mail.index")
-        
+
         # get
         res = client.get(url)
         assert res.status_code == 200
         assert "server=localhost" in str(res.data)
         assert "port=25" in str(res.data)
         assert "use_tls=False" in str(res.data)
-        
+
         # post
         ## mail_server, mail_port, mail_default_sender not in post_data
         data = {
@@ -83,23 +83,23 @@ class TestMailSettingView:
             assert res.status_code == 400
 
 # .tox/c1/bin/pytest --cov=invenio_mail tests/test_admin.py::TestMailSettingView::test_send_test_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
-    def test_send_test_mail(self,client, mail_configs,mocker):
+    def test_send_test_mail(self,client, mail_configs):
         url = url_for("mail.send_test_mail")
         post_data = {
             'recipient': 'test@mail.nii.ac.jp',
             'subject': 'test mail',
             'body': 'test body'}
         # success mail sending
-        mock_send = mocker.patch('flask_mail._Mail.send')
+        mock_send = patch('flask_mail._Mail.send')
         res = client.post(url,data=post_data)
         assert res.status_code == 200
         mock_send.assert_called()
         assert 'recipient=test@mail.nii.ac.jp' in str(res.data)
         assert 'body=test body' in str(res.data)
         assert "Test mail sent." in str(res.data)
-        
+
         # failed mail sending
-        mock_send = mocker.patch('flask_mail._Mail.send', side_effect=SMTPServerDisconnected())
+        mock_send = patch('flask_mail._Mail.send', side_effect=SMTPServerDisconnected())
         res = client.post(url,data=post_data)
         assert res.status_code == 200
         mock_send.assert_called()
@@ -108,20 +108,20 @@ class TestMailSettingView:
         assert "Failed to send mail." in str(res.data)
 
 # .tox/c1/bin/pytest --cov=invenio_mail tests/test_admin.py::TestMailSettingView::test_send_statistic_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
-    def test_send_statistic_mail(self,client,mail_configs,mocker):
+    def test_send_statistic_mail(self,client,mail_configs):
         rf = {
             'recipient': 'test@mail.nii.ac.jp',
             'subject': 'test mail',
             'body': 'test body'
         }
         # success mail sending
-        mock_send = mocker.patch('flask_mail._Mail.send')
+        mock_send = patch('flask_mail._Mail.send')
         result = MailSettingView.send_statistic_mail(rf)
         assert result == True
         mock_send.assert_called()
-        
+
         # failed mail sending
-        mock_send = mocker.patch('flask_mail._Mail.send', side_effect=SMTPServerDisconnected())
+        mock_send = patch('flask_mail._Mail.send', side_effect=SMTPServerDisconnected())
         rf = {
             'recipient': 'test@mail.nii.ac.jp',
             'subject': 'test mail',

@@ -12,7 +12,10 @@
 import json
 
 import pytest
+from unittest.mock import patch
 from flask import url_for
+from invenio_search import RecordsSearch
+from invenio_search.engine import dsl
 
 
 @pytest.mark.parametrize(
@@ -35,18 +38,18 @@ from flask import url_for
     ],
     indirect=["app"],
 )
-def test_valid_suggest(app, db, search, item_type, indexed_records, mock_search_execute, mocker):
+def test_valid_suggest(app, db, search, item_type, indexed_records, mock_search_execute):
     """Test VALID record creation request (POST .../records/)."""
     with app.test_client() as client:
-        suggest_mocker = mocker.patch("elasticsearch_dsl.Search.suggest", return_value=RecordsSearch())
+        suggest_mocker = patch("dsl.Search.suggest", return_value=RecordsSearch())
         # Valid simple completion suggester
-        mocker.patch("elasticsearch_dsl.Search.execute", return_value=mock_search_execute({"suggest":{"text":"test_value", "text_filtered_source": {"_source": "1"}, "suggest_title": "test_title", "text_byyear": "test_byyear", "year": 1990}}))
+        patch("dsl.Search.execute", return_value=mock_search_execute({"suggest":{"text":"test_value", "text_filtered_source": {"_source": "1"}, "suggest_title": "test_title", "text_byyear": "test_byyear", "year": 1990}}))
         res = client.get(
             url_for("invenio_records_rest.recid_suggest"), query_string={"text": "Back"}
         )
         assert res.status_code == 200
-        suggest_mocker.assert_has_calls(
-            [mocker.call("text","Back",completion=dict(field="suggest_title"))]
+        suggest_assert_has_calls(
+            [call("text","Back",completion=dict(field="suggest_title"))]
         )
         data = json.loads(res.get_data(as_text=True))
         assert data == {"text": "test_value"}

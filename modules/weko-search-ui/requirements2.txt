@@ -247,6 +247,7 @@ pyparsing==3.1.4
 pyPEG2==2.15.2
 pyproject-api==1.7.1
 pytest==7.4.4
+pytest_mock==3.6.1
 python-dateutil==2.9.0.post0
 python-editor==1.0.3
 python-geoip==1.2

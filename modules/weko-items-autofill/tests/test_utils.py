@@ -1,4 +1,4 @@
-from mock import patch
+from unittest.mock import patch
 import pytest
 from lxml import etree
 from invenio_cache import current_cache
@@ -87,7 +87,7 @@ def test_cached_api_json(app):
 # def get_item_id(item_type_id):
 #     def _get_jpcoar_mapping(rtn_results, jpcoar_data):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_item_id -vv -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_get_item_id(app, itemtypes, mocker):
+def test_get_item_id(app, itemtypes):
     data = json_data("data/itemtypes/mapping.json")
 
     test = {
@@ -246,52 +246,52 @@ def test_get_title_pubdate_path(app, itemtypes):
 
 # def get_crossref_record_data(pid, doi, item_type_id):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_crossref_record_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_get_crossref_record_data(db, itemtypes, mocker):   
-    mocker.patch("weko_items_autofill.utils.convert_crossref_xml_data_to_dictionary")
-    mocker.patch("weko_items_autofill.utils.get_crossref_data_by_key")
-    mocker.patch("weko_items_autofill.utils.sort_by_item_type_order")
-    mocker.patch("weko_items_autofill.utils.get_autofill_key_tree")
-    mocker.patch("weko_items_autofill.utils.get_crossref_autofill_item")
+def test_get_crossref_record_data(db, itemtypes):
+    patch("weko_items_autofill.utils.convert_crossref_xml_data_to_dictionary")
+    patch("weko_items_autofill.utils.get_crossref_data_by_key")
+    patch("weko_items_autofill.utils.sort_by_item_type_order")
+    patch("weko_items_autofill.utils.get_autofill_key_tree")
+    patch("weko_items_autofill.utils.get_crossref_autofill_item")
     data = [
         {'test_item1': {'test1_subitem1': 'test_article_title', 'test1_subitem2': 'en'}},
         {'test_item6': {'creatorNames': {'creatorName': 'A.Test1', 'creatorNameLang': 'en'}}},
         {'test_item7': {'contributorNames': {'contributorName': 'B.Test2', 'lang': 'en'}}},
         {'test_item8': {'test8_subitem1': {'test8_subitem2': '10.1103/PhysRev.47.777', 'test8_subitem3': 'DOI'}}},
         {'test_item16': {'test16_subitem1': '47'}}]
-    mocker.patch("weko_items_autofill.utils.build_record_model",return_value=data)
+    patch("weko_items_autofill.utils.build_record_model",return_value=data)
     # get_data is error
     with patch("weko_items_autofill.utils.CrossRefOpenURL.get_data",return_value={"error":"test_error"}):
         result = get_crossref_record_data("test_pid","test_doi",itemtypes[0][0].id)
         assert result == []
     current_cache.delete("crossref_datatest_pidtest_doi1")
-    
+
     with patch("weko_items_autofill.utils.CrossRefOpenURL.get_data",return_value={"error":None,"response":""}):
         # not exist itemtype
         result = get_crossref_record_data("test_pid","test_doi",300)
         assert result == []
-        
+
         result = get_crossref_record_data("test_pid","test_doi",itemtypes[0][0].id)
         assert result == []
-        
+
         # not exist itemtype.form
         itemtypes[1][0].form = None
         db.session.merge(itemtypes[1][0])
         result = get_crossref_record_data("test_pid","test_doi",itemtypes[1][0].id)
         assert result == []
-    
+
     current_cache.delete("crossref_datatest_pidtest_doi1")
     current_cache.delete("crossref_datatest_pidtest_doi300")
-    current_cache.delete("crossref_datatest_pidtest_doi2")   
+    current_cache.delete("crossref_datatest_pidtest_doi2")
 
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_crossref_record_data2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_get_crossref_record_data2(db, itemtypes, mocker):
-    mocker.patch("weko_items_autofill.utils.sort_by_item_type_order")
-    mocker.patch("weko_items_autofill.utils.get_autofill_key_tree")
-    mocker.patch("weko_items_autofill.utils.get_crossref_autofill_item")
-    mocker.patch(
+def test_get_crossref_record_data2(db, itemtypes):
+    patch("weko_items_autofill.utils.sort_by_item_type_order")
+    patch("weko_items_autofill.utils.get_autofill_key_tree")
+    patch("weko_items_autofill.utils.get_crossref_autofill_item")
+    patch(
         "weko_items_autofill.utils.CrossRefOpenURL.get_data",
         return_value={'response': '<?xml version="1.0" encoding="UTF-8"?>\n<crossref_result xmlns="http://www.crossref.org/qrschema/2.0" version="2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.crossref.org/qrschema/2.0 https://www.crossref.org/schema/crossref_query_output2.0.xsd"><query_result><head><doi_batch_id>none</doi_batch_id></head><body><query status="resolved" fl_count="0"><doi type="journal_article">10.17352/ojps.000010</doi><issn type="electronic">26407906</issn><journal_title>Open Journal of Plant Science</journal_title><contributors><contributor sequence="first" contributor_role="author"><given_name>Peertechz</given_name><surname>Publications</surname></contributor></contributors><year media_type="online">2018</year><publication_type>full_text</publication_type><article_title>Open Journal of Plant Science</article_title></query></body></query_result></crossref_result>', 'error': ''})
-        
+
     data = [
         {
             "test_item1": {
@@ -319,27 +319,27 @@ def test_get_crossref_record_data2(db, itemtypes, mocker):
         },
         {"test_item16": {"test16_subitem1": "47"}},
     ]
-    mocker.patch("weko_items_autofill.utils.build_record_model", return_value=data)
-    mocker.patch("weko_items_autofill.utils.convert_crossref_xml_data_to_dictionary",return_value={'error': '','response': {'article_title': 'article title','contributor': [{'family': 'Test1', 'given': 'A.'}],'doi': 'xxx/yyy','journal_title': 'journal title'}})
+    patch("weko_items_autofill.utils.build_record_model", return_value=data)
+    patch("weko_items_autofill.utils.convert_crossref_xml_data_to_dictionary",return_value={'error': '','response': {'article_title': 'article title','contributor': [{'family': 'Test1', 'given': 'A.'}],'doi': 'xxx/yyy','journal_title': 'journal title'}})
     result = get_crossref_record_data("test_pid1", "test_doi1", itemtypes[0][0].id)
     assert result == [{'test_item1': {'test1_subitem1': 'test_article_title','test1_subitem2': 'en'}},{'test_item6': {'creatorNames': {'creatorName': 'A.Test1','creatorNameLang': 'en'}}},{'test_item7': {'contributorNames': {'contributorName': 'B.Test2','lang': 'en'}}},{'test_item8': {'test8_subitem1': {'test8_subitem2': '10.1103/PhysRev.47.777','test8_subitem3': 'DOI'}}},{'test_item16': {'test16_subitem1': '47'}}]
 
-    mocker.patch("weko_items_autofill.utils.convert_crossref_xml_data_to_dictionary",return_value={'error': 'Opening and ending tag mismatch: body line 2 and query_result, line 2, column 331 (<string>, line 2)','response': {}})
+    patch("weko_items_autofill.utils.convert_crossref_xml_data_to_dictionary",return_value={'error': 'Opening and ending tag mismatch: body line 2 and query_result, line 2, column 331 (<string>, line 2)','response': {}})
     result = get_crossref_record_data("test_pid2", "test_doi2", itemtypes[0][0].id)
     assert result == []
-    
-    mocker.patch("weko_items_autofill.utils.convert_crossref_xml_data_to_dictionary",return_value={'error': '','response': {'article_title': 'article title','contributor': [{'family': 'Test1', 'given': 'A.'}],'doi': 'xxx/yyy','journal_title': 'journal title'}})
+
+    patch("weko_items_autofill.utils.convert_crossref_xml_data_to_dictionary",return_value={'error': '','response': {'article_title': 'article title','contributor': [{'family': 'Test1', 'given': 'A.'}],'doi': 'xxx/yyy','journal_title': 'journal title'}})
     result = get_crossref_record_data("test_pid3", "test_doi3", 300)
     assert result == []
 
     itemtypes[1][0].form = None
     db.session.merge(itemtypes[1][0])
     db.session.commit()
-    mocker.patch("weko_items_autofill.utils.convert_crossref_xml_data_to_dictionary",return_value={'error': '','response': {'article_title': 'article title','contributor': [{'family': 'Test1', 'given': 'A.'}],'doi': 'xxx/yyy','journal_title': 'journal title'}})
+    patch("weko_items_autofill.utils.convert_crossref_xml_data_to_dictionary",return_value={'error': '','response': {'article_title': 'article title','contributor': [{'family': 'Test1', 'given': 'A.'}],'doi': 'xxx/yyy','journal_title': 'journal title'}})
     result = get_crossref_record_data("test_pid4", "test_doi4", itemtypes[1][0].id)
     assert result == []
 
-        
+
     current_cache.delete("crossref_datatest_pid1test_doi11")
     current_cache.delete("crossref_datatest_pid2test_doi21")
     current_cache.delete("crossref_datatest_pid3test_doi31")
@@ -348,12 +348,12 @@ def test_get_crossref_record_data2(db, itemtypes, mocker):
 
 # def get_cinii_record_data(naid, item_type_id):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_record_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_get_cinii_record_data(db, itemtypes, mocker):
+def test_get_cinii_record_data(db, itemtypes):
     current_cache.delete("cinii_datatest_naid1")
     current_cache.delete("cinii_datatest_naid100")
-    mocker.patch("weko_items_autofill.utils.get_cinii_data_by_key")
-    mocker.patch("weko_items_autofill.utils.get_autofill_key_tree")
-    mocker.patch("weko_items_autofill.utils.get_cinii_autofill_item")
+    patch("weko_items_autofill.utils.get_cinii_data_by_key")
+    patch("weko_items_autofill.utils.get_autofill_key_tree")
+    patch("weko_items_autofill.utils.get_cinii_autofill_item")
     data = [
         {
             "test_item1": {
@@ -381,7 +381,7 @@ def test_get_cinii_record_data(db, itemtypes, mocker):
         },
         {"test_item16": {"test16_subitem1": "10"}},
     ]
-    mocker.patch("weko_items_autofill.utils.build_record_model", return_value=data)
+    patch("weko_items_autofill.utils.build_record_model", return_value=data)
 
     # get_data is error
     with patch(
@@ -544,8 +544,8 @@ def test_get_cinii_subject_data():
 
 # def get_cinii_page_data(data):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_page_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_get_cinii_page_data(app, mocker):
-    mocker.patch(
+def test_get_cinii_page_data(app):
+    patch(
         "weko_items_autofill.utils.pack_single_value_as_dict",
         side_effect=lambda x: {"@value": x},
     )
@@ -558,12 +558,12 @@ def test_get_cinii_page_data(app, mocker):
 
 # def get_cinii_numpage(data):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_numpage -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_get_cinii_numpage(app, mocker):
-    mocker.patch(
+def test_get_cinii_numpage(app):
+    patch(
         "weko_items_autofill.utils.pack_single_value_as_dict",
         side_effect=lambda x: {"@value": int(x)} if x != None else {"@value":None},
     )
-    mocker.patch(
+    patch(
         "weko_items_autofill.utils.get_cinii_page_data",
         side_effect=lambda x: {"@value": int(x)} if x != None else {"@value":None},
     )
@@ -576,7 +576,7 @@ def test_get_cinii_numpage(app, mocker):
     }
     result = get_cinii_numpage(data)
     assert result == {"@value": 6}
-    
+
     # not exist numPage, exist startingPage, endingPage
     data = {"prism:startingPage": "10", "prism:endingPage": "15"}
     result = get_cinii_numpage(data)
@@ -586,13 +586,13 @@ def test_get_cinii_numpage(app, mocker):
     data = {}
     result = get_cinii_numpage(data)
     assert result == {"@value": None}
-    
+
     # raise exception
     data = {"prism:startingPage": "a", "prism:endingPage": "b"}
     result = get_cinii_numpage(data)
     assert result == {"@value": None}
-    
-    
+
+
 
 # def get_cinii_date_data(data):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_date_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
@@ -732,7 +732,7 @@ def test__build_name_data():
 # def get_crossref_creator_data(data):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_crossref_creator_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_get_crossref_creator_data(mocker):
-    mocker.patch(
+    patch(
         "weko_items_autofill.utils._build_name_data",
         return_value=[{"@value": "Test1 A.", "@language": "en"}],
     )
@@ -744,7 +744,7 @@ def test_get_crossref_creator_data(mocker):
 # def get_crossref_contributor_data(data):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_crossref_contributor_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_get_crossref_contributor_data(mocker):
-    mocker.patch(
+    patch(
         "weko_items_autofill.utils._build_name_data",
         return_value=[{"@value": "Test1 A.", "@language": "en"}],
     )
@@ -799,7 +799,7 @@ def test_get_crossref_publisher_data():
 # def get_crossref_relation_data(isbn, doi):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_crossref_relation_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_get_crossref_relation_data(mocker):
-    mocker.patch(
+    patch(
         "weko_items_autofill.utils.pack_single_value_as_dict",
         side_effect=lambda x: {"@value": x},
     )
@@ -836,44 +836,44 @@ def test_get_crossref_source_data():
 
 # def get_crossref_data_by_key(api, keyword):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_crossref_data_by_key -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_get_crossref_data_by_key(app, mocker):
+def test_get_crossref_data_by_key(app):
     api = {"error": "exist_error"}
     result = get_crossref_data_by_key(api, "")
     assert result == None
 
-    mocker.patch(
+    patch(
         "weko_items_autofill.utils.get_crossref_title_data",
         side_effect=lambda x: [{"@value": x, "@language": "en"}],
     )
-    mocker.patch(
+    patch(
         "weko_items_autofill.utils.get_crossref_creator_data",
         side_effect=lambda x: [{"@value": x[0]["given"], "@language": "en"}],
     )
-    mocker.patch(
+    patch(
         "weko_items_autofill.utils.get_crossref_contributor_data",
         side_effect=lambda x: [{"@value": x[0]["given"], "@language": "en"}],
     )
-    mocker.patch(
+    patch(
         "weko_items_autofill.utils.get_crossref_source_title_data",
         side_effect=lambda x: {"@value": x, "@language": "en"},
     )
-    mocker.patch(
+    patch(
         "weko_items_autofill.utils.pack_single_value_as_dict",
         side_effect=lambda x: {"@value": x},
     )
-    mocker.patch(
+    patch(
         "weko_items_autofill.utils.get_start_and_end_page",
         side_effect=lambda x: {"@value": int(x)},
     )
-    mocker.patch(
+    patch(
         "weko_items_autofill.utils.get_crossref_issue_date",
         side_effect=lambda x: {"@value": x, "@type": "Issued"},
     )
-    mocker.patch(
+    patch(
         "weko_items_autofill.utils.get_crossref_relation_data",
         side_effect=lambda x, y: [{"@value": y, "@type": "DOI"}],
     )
-    mocker.patch(
+    patch(
         "weko_items_autofill.utils.get_crossref_source_data",
         side_effect=lambda x: [{"@value": x, "@type": "ISSN"}],
     )
@@ -915,11 +915,11 @@ def test_get_crossref_data_by_key(app, mocker):
 
 # def get_cinii_autofill_item(item_id):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_autofill_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_get_cinii_autofill_item(app, mocker):
+def test_get_cinii_autofill_item(app):
     get_item = {
         "title": [{"title": {"@value": "test1_subitem1", "model_id": "test_item1"}}],
     }
-    mocker.patch("weko_items_autofill.utils.get_item_id", return_value=get_item)
+    patch("weko_items_autofill.utils.get_item_id", return_value=get_item)
     result = get_cinii_autofill_item(1)
     assert result == {
         "title": [{"title": {"@value": "test1_subitem1", "model_id": "test_item1"}}]
@@ -928,11 +928,11 @@ def test_get_cinii_autofill_item(app, mocker):
 
 # def get_crossref_autofill_item(item_id):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_crossref_autofill_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_get_crossref_autofill_item(app, mocker):
+def test_get_crossref_autofill_item(app):
     get_item = {
         "title": [{"title": {"@value": "test1_subitem1", "model_id": "test_item1"}}],
     }
-    mocker.patch("weko_items_autofill.utils.get_item_id", return_value=get_item)
+    patch("weko_items_autofill.utils.get_item_id", return_value=get_item)
     result = get_crossref_autofill_item(1)
     assert result == {
         "title": [{"title": {"@value": "test1_subitem1", "model_id": "test_item1"}}]
@@ -1042,7 +1042,7 @@ def test_get_autofill_key_tree(mocker):
             "@type": "test_item8.test8_subitem1.test8_subitem3",
         },
     }
-    mocker.patch("weko_items_autofill.utils.get_key_value", side_effect=rtns)
+    patch("weko_items_autofill.utils.get_key_value", side_effect=rtns)
     result = get_autofill_key_tree({}, item)
     assert result == test
 
@@ -1144,7 +1144,7 @@ def test_get_key_value():
             test.update(attributes_keys)
             assert result == test
 
-    
+
     # exist @attributes.xml:lang
     assert_test(
         item_name="test_item2",
@@ -1176,7 +1176,7 @@ def test_get_key_value():
         value_key="test11_subitem1",
         attributes_keys={"@language":"subject_lang","@scheme":"subject_subjectScheme","@URI":"subject_subjectURI"}
     )
-    
+
     # exist @attributes.dateType
     assert_test(
         item_name="test_item12",
@@ -1576,7 +1576,7 @@ def test_fill_data():
     autofill_data = ""
     result = fill_data(form_model, autofill_data)
     assert result == None
-    
+
     # not multiple_data, form.get(key) is not list
     autofill_data = [{"@value": "A.Test1", "@language": "en"}]
     form_model = {
@@ -1590,7 +1590,7 @@ def test_fill_data():
     result = fill_data(form_model, autofill_data)
     #assert form_model == test
     assert result == test
-    
+
     # not multiple_data, form.get(key) is list
     autofill_data = [{"@value": "A.Test1"}]
     form_model = {
@@ -1631,7 +1631,7 @@ def test_fill_data():
     result = fill_data(form_model,autofill_data)
     assert result == test
 
-    # 
+    #
     autofill_data = {"@value": "47"}
     form_model = [
         {"@value": {"test_item16": {"test16_subitem1": "@value"}}},
@@ -1721,7 +1721,7 @@ def test_convert_crossref_xml_data_to_dictionary(mocker):
     def mock_cont_data(elem, roles, rtn_data):
         rtn_data.update({"contributor": [{"given": "A.", "family": "Test1"}]})
 
-    mocker.patch(
+    patch(
         "weko_items_autofill.utils._get_contributor_and_author_names",
         side_effect=mock_cont_data,
     )
@@ -1737,7 +1737,7 @@ def test_convert_crossref_xml_data_to_dictionary(mocker):
     }
     result = convert_crossref_xml_data_to_dictionary(data)
     assert result == test
-    
+
     result = convert_crossref_xml_data_to_dictionary(data,'utf-8')
     assert result == test
 
@@ -1747,16 +1747,16 @@ def test_convert_crossref_xml_data_to_dictionary(mocker):
 
     data = '<?xml version="1.0" encoding="UTF-8"?>\n<crossref_result xmlns="http://www.crossref.org/qrschema/2.0" version="2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.crossref.org/qrschema/2.0 https://www.crossref.org/schema/crossref_query_output2.0.xsd"><query_result><head><doi_batch_id>none</doi_batch_id></head><body></body></query_result></crossref_result>'
     result = convert_crossref_xml_data_to_dictionary(data)
-    assert result == {'error': '', 'response': {}} 
-    
+    assert result == {'error': '', 'response': {}}
+
     data = '<crossref_result xmlns="http://www.crossref.org/qrschema/2.0" version="2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.crossref.org/qrschema/2.0 https://www.crossref.org/schema/crossref_query_output2.0.xsd"><query_result><head><doi_batch_id>none</doi_batch_id></head><body></body></query_result></crossref_result>'
     result = convert_crossref_xml_data_to_dictionary(data)
-    assert result == {'error': '', 'response': {}} 
-    
+    assert result == {'error': '', 'response': {}}
+
     error_data = '<?xml version="1.0" encoding="UTF-8"?>\n<crossref_result xmlns="http://www.crossref.org/qrschema/2.0" version="2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.crossref.org/qrschema/2.0 https://www.crossref.org/schema/crossref_query_output2.0.xsd"><query_result><head><doi_batch_id>none</doi_batch_id></head><body></query_result></crossref_result>'
     result = convert_crossref_xml_data_to_dictionary(error_data)
-    assert result == {'error': 'Opening and ending tag mismatch: body line 2 and query_result, line 2, column 331 (<string>, line 2)','response': {}} 
-    
+    assert result == {'error': 'Opening and ending tag mismatch: body line 2 and query_result, line 2, column 331 (<string>, line 2)','response': {}}
+
 
 
 # def _get_contributor_and_author_names(elem, contributor_roles, rtn_data):

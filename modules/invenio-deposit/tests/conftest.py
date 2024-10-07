@@ -18,7 +18,6 @@ import tempfile
 from time import sleep
 
 import pytest
-from elasticsearch.exceptions import RequestError
 from flask import Flask
 from flask.cli import ScriptInfo
 from flask_babel import Babel
@@ -53,6 +52,7 @@ from invenio_records_ui.views import create_blueprint_from_app as records_ui_bp
 from invenio_rest import InvenioREST
 from invenio_search import InvenioSearch, current_search, current_search_client
 from invenio_search.errors import IndexAlreadyExistsError
+from invenio_search.engine import search
 from invenio_search_ui import InvenioSearchUI
 from six import BytesIO, get_method_self
 from sqlalchemy import inspect
@@ -93,7 +93,11 @@ def base_app(request):
             SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
                                               'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
             SEARCH_ELASTIC_HOSTS=os.environ.get(
-                'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
+                        'SEARCH_ELASTIC_HOSTS', 'opensearch'),
+            SEARCH_HOSTS=os.environ.get(
+                'SEARCH_HOST', 'opensearch'
+            ),
+            SEARCH_CLIENT_CONFIG={"http_auth":(os.environ['INVENIO_OPENSEARCH_USER'],os.environ['INVENIO_OPENSEARCH_PASS']),"use_ssl":True, "verify_certs":False},
             SQLALCHEMY_TRACK_MODIFICATIONS=True,
             SQLALCHEMY_ECHO=False,
             TESTING=True,
@@ -296,7 +300,7 @@ def es(app):
     """Elasticsearch fixture."""
     try:
         list(current_search.create())
-    except (RequestError, IndexAlreadyExistsError):
+    except (search.RequestError, IndexAlreadyExistsError):
         list(current_search.delete(ignore=[404]))
         list(current_search.create(ignore=[400]))
     current_search_client.indices.refresh()
