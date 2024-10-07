@@ -444,6 +444,11 @@ msgstr "更新"
 msgid "Close"
 msgstr "閉じる"
 
+#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:39
+#: weko_workflow/templates/weko_workflow/modal_itemtype_mapping.html:33
+msgid "The activity cannot be started because the specified item type is not mapped."
+msgstr "指定しているアイテムタイプがマッピングされていないため、アクティビティが開始できません"
+
 #~ msgid "Back"
 #~ msgstr "戻る"
 

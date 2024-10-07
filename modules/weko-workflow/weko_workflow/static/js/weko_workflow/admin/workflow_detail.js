@@ -1,5 +1,6 @@
 $(document).ready(function () {
   checkWorkflowName();
+  checkItemtype($("#txt_itemtype").val());
 });
 
 const select_show = $('#select_show');
@@ -14,6 +15,34 @@ $("#txt_workflow_name").keyup(function () {
     }
   }
 });
+
+$("#txt_itemtype").on("change", function(){
+  var selectedValue = $(this).val();
+  checkItemtype(selectedValue);
+});
+
+function checkItemtype(itemtype_id) {
+  let check_mapping_url = "/workflow/check_require_itemtype_mapping/"+itemtype_id;
+  $.ajax({
+    url: check_mapping_url,
+    method: "GET",
+    contentType: "application/json",
+    success: function(data, status){
+      if (data.length > 0) {
+        let message = $("#mapping_warning").val() + '<br/><br/>';
+        message += data.join(", ")
+        $("#inputMessage").html(message)
+        $("#itemtype_mapping_warning").show()
+      }else{
+        $("#inputMessage").html('')
+        $("#itemtype_mapping_warning").hide()
+      }
+    },
+    error: function(xhr, status, error){
+      console.log(error)
+    }
+  })
+}
 
 function checkWorkflowName() {
   if ($("#txt_workflow_name").val().trim() == "") {
