@@ -340,7 +340,7 @@ class ItemTypeMetaDataView(BaseView):
     def export(self,item_type_id):
         item_types = ItemTypes.get_by_id(id_=item_type_id)
 
-        # Error if the item-type is non-existent, deleted, or for harvesting
+        # Error if the item type is non-existent, deleted, or for harvesting
         if item_types is None or item_types.harvesting_type is True :
             current_app.logger.error('item_type_id={} is cannot export.'.format(item_type_id))
             return self.render(
@@ -401,7 +401,7 @@ class ItemTypeMetaDataView(BaseView):
 
         # Error if the data is incomplete
         if not item_type_name:
-            return jsonify(msg=_('No item-type name Error'))
+            return jsonify(msg=_('No item type name Error'))
         if not input_file:
             return jsonify(msg=_('No file Error'))
         if not input_file.mimetype:
@@ -448,7 +448,7 @@ class ItemTypeMetaDataView(BaseView):
             ):
                 raise ValueError('Zip file contents invalid.')
 
-            # Data of properties related to the item-type
+            # Data of properties related to the item type
             render = import_data['ItemType'].get('render')
             if not render:
                 raise ValueError(
@@ -547,13 +547,13 @@ class ItemTypeMetaDataView(BaseView):
             db.session.commit()
         except Exception as ex:
             db.session.rollback()
-            default_msg = _('Failed to import the item-type.')
+            default_msg = _('Failed to import the item type.')
             response = jsonify(msg='{} {}'.format(default_msg, str(ex)))
             response.status_code = 400
             return response
 
         current_app.logger.debug('itemtype import: {}'.format(item_type_id))
-        flash(_('The item-type imported successfully.'))
+        flash(_('The item type imported successfully.'))
         redirect_url = url_for('.index', item_type_id=item_type_id)
 
         if duplicated_prop_ids:
@@ -563,7 +563,7 @@ class ItemTypeMetaDataView(BaseView):
             }
             response = jsonify(
                 msg=_(
-                    'The item-type imported successfully, but these property '
+                    'The item type imported successfully, but these property '
                     'IDs were duplicated and were not imported:'
                 ),
                 duplicated_props=duplicated_props,
@@ -571,7 +571,7 @@ class ItemTypeMetaDataView(BaseView):
             )
         else:
             response = jsonify(
-                msg=_('The item-type imported successfully.'),
+                msg=_('The item type imported successfully.'),
                 redirect_url=redirect_url
             )
         return response

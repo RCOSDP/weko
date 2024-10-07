@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-itemtypes-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2024-10-02 10:36+0900\n"
+"POT-Creation-Date: 2024-10-07 17:22+0900\n"
 "PO-Revision-Date: 2018-01-18 18:48+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -74,7 +74,7 @@ msgid "Date (Type-less）"
 msgstr ""
 
 #: weko_itemtypes_ui/admin.py:404
-msgid "No item-type name Error"
+msgid "No item type name Error"
 msgstr ""
 
 #: weko_itemtypes_ui/admin.py:406
@@ -90,16 +90,16 @@ msgid "Unregistered properties detected."
 msgstr ""
 
 #: weko_itemtypes_ui/admin.py:550
-msgid "Failed to import the item-type."
+msgid "Failed to import the item type."
 msgstr ""
 
 #: weko_itemtypes_ui/admin.py:556 weko_itemtypes_ui/admin.py:574
-msgid "The item-type imported successfully."
+msgid "The item type imported successfully."
 msgstr ""
 
 #: weko_itemtypes_ui/admin.py:565
 msgid ""
-"The item-type imported successfully, but these property IDs were "
+"The item type imported successfully, but these property IDs were "
 "duplicated and were not imported:"
 msgstr ""
 

@@ -405,7 +405,7 @@ class TestItemTypeMetaDataView:
             'sort': 1,
         }]
 
-        # Render the error screen if item-type is not found
+        # Render the error screen if item type is not found
         url = url_for('itemtypesregister.export',item_type_id=100)
         mock_render = mocker.patch(
             'weko_itemtypes_ui.admin.ItemTypeMetaDataView.render',
@@ -437,7 +437,7 @@ class TestItemTypeMetaDataView:
             item_type_property_json = json.load(f)
             assert item_type_property_json == expected_item_type_property
 
-        # Render the error screen if item-type is for harvesting
+        # Render the error screen if item type is for harvesting
         item_type = simple_item_type['item_type']
         item_type.harvesting_type = True
         db.session.commit()
@@ -471,7 +471,7 @@ class TestItemTypeMetaDataView:
             'file': (file, '')
         }
         res = client.post(url,data=data,content_type='multipart/form-data')
-        assert json.loads(res.data)['msg'] == 'No item-type name Error'
+        assert json.loads(res.data)['msg'] == 'No item type name Error'
 
         # Error if 'input_file' is missing
         data = {
@@ -510,7 +510,7 @@ class TestItemTypeMetaDataView:
         }
         res = client.post(url, data=data, content_type='multipart/form-data')
         assert json.loads(res.data)['msg'] == (
-            'Failed to import the item-type. Zip file contents invalid.'
+            'Failed to import the item type. Zip file contents invalid.'
         )
 
         # Error if ItemType.json does not have a 'render' key
@@ -522,7 +522,7 @@ class TestItemTypeMetaDataView:
         res = client.post(url, data=data, content_type='multipart/form-data')
         assert res.status_code == 400
         assert json.loads(res.data)['msg'] == (
-            'Failed to import the item-type. '
+            'Failed to import the item type. '
             '"render" is missing or invalid in ItemType.json.'
         )
         
@@ -535,7 +535,7 @@ class TestItemTypeMetaDataView:
         res = client.post(url, data=data, content_type='multipart/form-data')
         assert res.status_code == 400
         assert json.loads(res.data)['msg'] == (
-            'Failed to import the item-type. '
+            'Failed to import the item type. '
             '"table_row" is missing or invalid in "render".'
         )
 
@@ -548,7 +548,7 @@ class TestItemTypeMetaDataView:
         res = client.post(url, data=data, content_type='multipart/form-data')
         assert res.status_code == 400
         assert json.loads(res.data)['msg'] == (
-            'Failed to import the item-type. '
+            'Failed to import the item type. '
             '"meta_list" is missing or invalid in "render".'
         )
 
@@ -562,11 +562,11 @@ class TestItemTypeMetaDataView:
         }
         res = client.post(url, data=data, content_type='multipart/form-data')
         assert json.loads(res.data)['msg'] == (
-            'Failed to import the item-type. Schema is in wrong format.'
+            'Failed to import the item type. Schema is in wrong format.'
         )
 
         # Import fails if forced-import is False and
-        # item-type has unknown properties
+        # item type has unknown properties
         with patch.dict(
             current_app.config,
             {'WEKO_ITEMTYPES_UI_FORCED_IMPORT_ENABLED': False}
@@ -585,11 +585,11 @@ class TestItemTypeMetaDataView:
             }
             res = client.post(url, data=data, content_type='multipart/form-data')
             assert json.loads(res.data)['msg'] == (
-                'Failed to import the item-type. Unregistered properties detected.'
+                'Failed to import the item type. Unregistered properties detected.'
             )
 
         # Import suceeds if forced-import is False but
-        # item-type does not have unknown properties
+        # item type does not have unknown properties
         with patch.dict(
             current_app.config,
             {'WEKO_ITEMTYPES_UI_FORCED_IMPORT_ENABLED': False}
@@ -605,11 +605,11 @@ class TestItemTypeMetaDataView:
             with caplog.at_level('DEBUG'):
                 res = client.post(url, data=data, content_type='multipart/form-data')
             assert json.loads(res.data)['msg'] == (
-                'The item-type imported successfully.'
+                'The item type imported successfully.'
             )
 
         # Import suceeds if forced-import is True, even when
-        # item-type has unknown properties
+        # item type has unknown properties
         with patch.dict(
             current_app.config,
             {'WEKO_ITEMTYPES_UI_FORCED_IMPORT_ENABLED': True}
@@ -621,11 +621,11 @@ class TestItemTypeMetaDataView:
             }
             res = client.post(url, data=data, content_type='multipart/form-data')
             assert json.loads(res.data)['msg'] == (
-                'The item-type imported successfully.'
+                'The item type imported successfully.'
             )
 
         # Import suceeds if forced-import is True and
-        # item-type does not have unknown properties
+        # item type does not have unknown properties
         with patch.dict(
             current_app.config,
             {'WEKO_ITEMTYPES_UI_FORCED_IMPORT_ENABLED': True}
@@ -637,7 +637,7 @@ class TestItemTypeMetaDataView:
             }
             res = client.post(url, data=data, content_type='multipart/form-data')
             assert json.loads(res.data)['msg'] == (
-                'The item-type imported successfully.'
+                'The item type imported successfully.'
             )
 
         # Error if the database commit fails
@@ -652,7 +652,7 @@ class TestItemTypeMetaDataView:
             }
             res = client.post(url, data=data, content_type='multipart/form-data')
             assert res.status_code == 400
-            assert 'Failed to import the item-type' in json.loads(res.data)['msg']
+            assert 'Failed to import the item type' in json.loads(res.data)['msg']
         
         # Import suceeds but duplicated IDs reported
         with patch.dict(
@@ -690,7 +690,7 @@ class TestItemTypeMetaDataView:
             mock_get_record.return_value = MockProp()
             res = client.post(url, data=data, content_type='multipart/form-data')
             assert json.loads(res.data)['msg'] == (
-                'The item-type imported successfully, but these property '
+                'The item type imported successfully, but these property '
                 'IDs were duplicated and were not imported:'
             )
             assert json.loads(res.data)['duplicated_props'] == expected_json
