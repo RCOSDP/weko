@@ -8,7 +8,7 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus, RecordIdent
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidrelations.models import PIDRelation
 from weko_deposit.api import WekoDeposit, WekoRecord
-from weko_records.api import ItemsMetadata 
+from weko_records.api import ItemsMetadata, WekoRecord
 
 
 def json_data(filename):

@@ -731,7 +731,7 @@ def test__build_name_data():
 
 # def get_crossref_creator_data(data):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_crossref_creator_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_get_crossref_creator_data(mocker):
+def test_get_crossref_creator_data():
     patch(
         "weko_items_autofill.utils._build_name_data",
         return_value=[{"@value": "Test1 A.", "@language": "en"}],
@@ -743,7 +743,7 @@ def test_get_crossref_creator_data(mocker):
 
 # def get_crossref_contributor_data(data):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_crossref_contributor_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_get_crossref_contributor_data(mocker):
+def test_get_crossref_contributor_data():
     patch(
         "weko_items_autofill.utils._build_name_data",
         return_value=[{"@value": "Test1 A.", "@language": "en"}],
@@ -798,7 +798,7 @@ def test_get_crossref_publisher_data():
 
 # def get_crossref_relation_data(isbn, doi):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_crossref_relation_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_get_crossref_relation_data(mocker):
+def test_get_crossref_relation_data():
     patch(
         "weko_items_autofill.utils.pack_single_value_as_dict",
         side_effect=lambda x: {"@value": x},
@@ -941,7 +941,7 @@ def test_get_crossref_autofill_item(app):
 
 # def get_autofill_key_tree(schema_form, item, result=None):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_autofill_key_tree -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_get_autofill_key_tree(mocker):
+def test_get_autofill_key_tree():
     # item is not dict
     result = get_autofill_key_tree({}, "item")
     assert result == None
@@ -1698,7 +1698,7 @@ def test_get_workflow_journal(app, db, actions):
 
 # def convert_crossref_xml_data_to_dictionary(api_data):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_convert_crossref_xml_data_to_dictionary -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_convert_crossref_xml_data_to_dictionary(mocker):
+def test_convert_crossref_xml_data_to_dictionary():
     data = (
         "<body>"
         '<doi type="journal_article">10.1103/PhysRev.47.777</doi>'

@@ -171,7 +171,7 @@ def users(app, db):
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
         student = User.query.filter_by(email='student@test.org').first()
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -285,7 +285,7 @@ def itemtypes(db):
     form = json_data("data/itemtypes/forms.json")
     render = json_data("data/itemtypes/render.json")
     mapping = json_data("data/itemtypes/mapping.json")
-    
+
     item_type_name = ItemTypeName(
         id=1, name="テストアイテムタイプ1", has_site_license=True, is_active=True
     )
@@ -305,7 +305,7 @@ def itemtypes(db):
         db.session.add(item_type_name)
         db.session.add(item_type)
         db.session.add(item_type_mapping)
-    
+
     item_type_name2 = ItemTypeName(
         id=2, name="all_none_itemtype", has_site_license=True, is_active=True
     )
@@ -320,7 +320,7 @@ def itemtypes(db):
         version_id=1,
         is_deleted=False,
     )
-    item_type_mapping2 = ItemTypeMapping(id=2, item_type_id=item_type2.id, mapping={})   
+    item_type_mapping2 = ItemTypeMapping(id=2, item_type_id=item_type2.id, mapping={})
     with db.session.begin_nested():
         db.session.add(item_type_name2)
         db.session.add(item_type2)
@@ -340,7 +340,7 @@ def itemtypes(db):
     with db.session.begin_nested():
         db.session.add(item_type15)
         db.session.add(item_type_mapping3)
-        
+
     db.session.commit()
 
     return [(item_type,item_type_name,item_type_mapping),(item_type2,item_type_name2),(item_type15,itemtype_name15)]
@@ -349,14 +349,14 @@ def itemtypes(db):
 def actions(db):
     action_datas = json_data("data/actions.json")
     action = list()
-    
+
     with db.session.begin_nested():
         for data in action_datas:
             action.append(Action(**data))
         db.session.add_all(action)
     status_datas = json_data("data/action_status.json")
     status = list()
-    
+
     with db.session.begin_nested():
         for data in status_datas:
             status.append(ActionStatus(**data))
@@ -374,10 +374,10 @@ def location(app, db, instance_path):
     return loc
 
 @pytest.fixture()
-def records(db):
+def records(db, location):
     record_data = json_data("data/test_records.json")
     item_data = json_data("data/test_items.json")
-    
+
     record_num = len(record_data)
     result = []
     for d in range(record_num):
