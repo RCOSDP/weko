@@ -379,7 +379,7 @@
             "search_other"
           ]
         },
-        "versionType": {
+        "versiontype": {
           "type": "string",
           "copy_to": [
             "search_other"
