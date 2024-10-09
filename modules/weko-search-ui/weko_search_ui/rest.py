@@ -368,6 +368,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     nlst.append(current_idx)
         agp.clear()
         # process index tree image info
+        custom_sort_data = None
         if len(nlst):
             index_id = nlst[0].get("key").split("/")[-1]
             index_info = Indexes.get_index(index_id=index_id)
@@ -376,11 +377,15 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 nlst[0]["img"] = index_info.image_name
             nlst[0]["display_format"] = index_info.display_format
             nlst[0]["rss_status"] = index_info.rss_status
+            if index_id == q:
+                custom_sort_data = index_info
         # Update rss_status for index child
         for idx in range(0, len(nlst)):
             index_id = nlst[idx].get("key").split("/")[-1]
             index_info = Indexes.get_index(index_id=index_id)
             nlst[idx]["rss_status"] = index_info.rss_status
+            if index_id == q:
+                custom_sort_data = index_info
         agp.append(nlst)
         for hit in rd["hits"]["hits"]:
             try:
@@ -390,9 +395,9 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 hit["_source"]["_comment"] = _comment
                 # Register custom_sort
                 cn = hit["_source"]["control_number"]
-                if index_info.item_custom_sort.get(cn):
+                if custom_sort_data and custom_sort_data.item_custom_sort.get(cn):
                     hit["_source"]["custom_sort"] = {
-                        str(index_info.id): str(index_info.item_custom_sort.get(cn))
+                        str(custom_sort_data.id): str(custom_sort_data.item_custom_sort.get(cn))
                     }
             except Exception:
                 pass
