@@ -100,7 +100,7 @@ def test_field(MyRecord, MyModel):
     assert isinstance(MyRecord.myobj, RelatedModelFieldContext)
 
 
-def test_setting_related_obj(testapp, db, MyRecord, MyModel):
+def test_setting_related_obj(app, db, MyRecord, MyModel):
     """Set the related object"""
     # via attr access
     record = MyRecord({})
@@ -118,7 +118,7 @@ def test_setting_related_obj(testapp, db, MyRecord, MyModel):
     assert record["myobj"] == {"akey": "c"}
 
 
-def test_change_key(testapp, db, MyModel):
+def test_change_key(app, db, MyModel):
     """Change key where the record is stored."""
 
     class Record1(Record, SystemFieldsMixin):
@@ -127,7 +127,7 @@ def test_change_key(testapp, db, MyModel):
     assert Record1({}, myobj=MyModel("a"))["custom"] == {"akey": "a"}
 
 
-def test_custom_dump_load(testapp, db, MyModel):
+def test_custom_dump_load(app, db, MyModel):
     """Change custom dump/load function."""
 
     # A custom dumper function
@@ -153,7 +153,7 @@ def test_custom_dump_load(testapp, db, MyModel):
     assert record.myobj == MyModel("a")
 
 
-def test_serialize_on_commit(testapp, db, MyRecord, MyModel):
+def test_serialize_on_commit(app, db, MyRecord, MyModel):
     """Test serialize on commit."""
     obj = MyModel("a")
     record = MyRecord.create({}, myobj=obj)
@@ -168,7 +168,7 @@ def test_serialize_on_commit(testapp, db, MyRecord, MyModel):
     assert record["myobj"] == {"akey": "b"}
 
 
-def test_required(testapp, db, MyModel, MyRecord):
+def test_required(app, db, MyModel, MyRecord):
     """Test required property."""
 
     class Record1(Record, SystemFieldsMixin):

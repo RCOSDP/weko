@@ -108,7 +108,7 @@ def test_weko_deposit_fetcher(app):
 
 # def get_latest_version_id(recid):
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_pidstore.py::test_get_latest_version_id -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-def test_get_latest_version_id(app,db,records):
+def test_get_latest_version_id(app,db, location, records):
     pids = list()
     pids.append(PersistentIdentifier.create('recid', "1.0",object_type='rec', object_uuid=uuid.uuid4(),status="R"))
     pids.append(PersistentIdentifier.create('recid', "1.1",object_type='rec', object_uuid=uuid.uuid4(),status="R"))

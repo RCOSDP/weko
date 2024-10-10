@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from flask import url_for
-from tests.testutils import BadBytesIO, login_user
+from .testutils import BadBytesIO, login_user
 
 from invenio_files_rest.models import Bucket, MultipartObject, Part
 from invenio_files_rest.tasks import merge_multipartobject

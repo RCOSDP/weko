@@ -18,7 +18,7 @@ user_results = [
 
 # def get_rss_data():
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_views.py::test_get_rss_data -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
-def test_get_rss_data(app, i18n_app, indices, es, mock_user_ctx, client_request_args):
+def test_get_rss_data(app, i18n_app, indices, mock_user_ctx, client_request_args):
     _data = {
         'hits': {
             'hits': [

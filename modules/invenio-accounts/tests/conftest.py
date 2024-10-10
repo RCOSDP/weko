@@ -104,7 +104,8 @@ def _app_factory(config=None):
         LOGIN_DISABLED=False,
         MAIL_SUPPRESS_SEND=True,
         SECRET_KEY="CHANGE_ME",
-        SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
+        # SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
+        SECURITY_PASSWORD_SINGLE_HASH=False,
         SECURITY_CONFIRM_EMAIL_WITHIN="2 seconds",
         SECURITY_RESET_PASSWORD_WITHIN="2 seconds",
         SECURITY_CHANGEABLE=True,
@@ -163,6 +164,10 @@ def _app_factory(config=None):
 
     return app
 
+@pytest.fixture
+def app_context(app):
+    with app.app_context():
+        yield
 
 def _database_setup(app, request):
     """Set up the database."""
@@ -193,7 +198,7 @@ def base_app(request):
     _database_setup(app, request)
     yield app
 
-
+# TODO
 @pytest.fixture()
 def app(request):
     """Flask application fixture with Invenio Accounts."""
@@ -331,46 +336,47 @@ def admin_view(app):
 @pytest.fixture()
 def users(app):
     """Create users."""
-    user1 = create_test_user(email="INFO@inveniosoftware.org", password="tester")
-    user2 = create_test_user(email="info2@invenioSOFTWARE.org", password="tester2")
-    user3 = create_test_user(email="admin1@inveniosoftware.org",password="tester3")
-    
-    ds = app.extensions["invenio-accounts"].datastore
-    role_count = Role.query.filter_by(name="System Administrator").count()
-    if role_count != 1:
-        sysadmin_role = ds.create_role(name="System Administrator")
-    else:
-        sysadmin_role = Role.query.filter_by(name="System Administrator").first()
-    
-    # Assign access authorization
-    with db.session.begin_nested():
-        action_users = [
-            ActionUsers(action="superuser-access", user=user3),
-        ]
-        db.session.add_all(action_users)
-        action_roles = [
-            ActionRoles(action="superuser-access", role=sysadmin_role)
-        ]
-        db.session.add_all(action_roles)
-        ds.add_role_to_user(user3, sysadmin_role)
+    with app.app_context():
+        user1 = create_test_user(email="INFO@inveniosoftware.org", password="tester")
+        user2 = create_test_user(email="info2@invenioSOFTWARE.org", password="tester2")
+        user3 = create_test_user(email="admin1@inveniosoftware.org",password="tester3")
+        
+        ds = app.extensions["invenio-accounts"].datastore
+        role_count = Role.query.filter_by(name="System Administrator").count()
+        if role_count != 1:
+            sysadmin_role = ds.create_role(name="System Administrator")
+        else:
+            sysadmin_role = Role.query.filter_by(name="System Administrator").first()
+        
+        # Assign access authorization
+        with db.session.begin_nested():
+            action_users = [
+                ActionUsers(action="superuser-access", user=user3),
+            ]
+            db.session.add_all(action_users)
+            action_roles = [
+                ActionRoles(action="superuser-access", role=sysadmin_role)
+            ]
+            db.session.add_all(action_roles)
+            ds.add_role_to_user(user3, sysadmin_role)
 
-    return [
-        {
-            "email": user1.email,
-            "id": user1.id,
-            "password": user1.password_plaintext,
-            "obj": user1,
-        },
-        {
-            "email": user2.email,
-            "id": user2.id,
-            "password": user2.password_plaintext,
-            "obj": user2,
-        },
-        {
-            "email": user3.email,
-            "id": user3.id,
-            "password": user3.password_plaintext,
-            "obj": user3
-        }
-    ]
+        return [
+            {
+                "email": user1.email,
+                "id": user1.id,
+                "password": user1.password_plaintext,
+                "obj": user1,
+            },
+            {
+                "email": user2.email,
+                "id": user2.id,
+                "password": user2.password_plaintext,
+                "obj": user2,
+            },
+            {
+                "email": user3.email,
+                "id": user3.id,
+                "password": user3.password_plaintext,
+                "obj": user3
+            }
+        ]

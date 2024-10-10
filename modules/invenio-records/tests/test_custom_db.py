@@ -21,22 +21,19 @@ from invenio_records import Record
 from invenio_records.models import RecordMetadataBase
 
 
-@pytest.fixture(scope="module")
-def CustomMetadata(database):
-    """."""
-    db = database
-
+@pytest.fixture(scope="function")
+def CustomMetadata(db):
+    """Class for custom metadata."""
     class CustomMetadata(db.Model, RecordMetadataBase):
-        __tablename__ = "custom_metadata"
+        """Custom Record Metadata Model."""
 
+        __tablename__ = 'custom_metadata'
     CustomMetadata.__table__.create(db.engine)
     return CustomMetadata
 
 
-def test_class_model(testapp, database, CustomMetadata):
+def test_class_model(app, db, CustomMetadata):
     """Test custom class model."""
-    db = database
-
     class CustomRecord(Record):
         model_cls = CustomMetadata
 

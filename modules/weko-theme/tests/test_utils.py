@@ -3,7 +3,7 @@ import pytest
 from flask import current_app, make_response, request
 from flask_login import current_user
 from mock import patch, MagicMock
-from elasticsearch_dsl import response, Search
+from invenio_search.engine import dsl
 
 from weko_theme.utils import (
     get_weko_contents,
@@ -50,7 +50,7 @@ def test_has_widget_design(i18n_app, users, client_request_args, communities):
 # .tox/c1/bin/pytest --cov=weko_theme tests/test_utils.py::test_get_init_display_setting -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-theme/.tox/c1/tmp
 def test_get_init_display_setting(i18n_app, users, client_request_args, communities):
     def dummy_response(data):
-        dummy=response.Response(Search(), json.loads(data))
+        dummy=dsl.response.Response(dsl.Search(), json.loads(data))
         return dummy
 
     search_setting = MagicMock()
@@ -63,7 +63,7 @@ def test_get_init_display_setting(i18n_app, users, client_request_args, communit
     i18n_app.config['WEKO_SEARCH_TYPE_DICT'] = {'INDEX': "WEKO_SEARCH_TYPE_DICT-INDEX"}
     i18n_app.config['COMMUNITIES_SORTING_OPTIONS'] = {'INDEX': "COMMUNITIES_SORTING_OPTIONS-INDEX"}
     test = MainScreenInitDisplaySetting()
-    
+
     with patch('weko_theme.utils.SearchManagement.get', return_value=search_setting):
         with patch('invenio_search.RecordsSearch.execute', return_value=dummy_response('{"hits": {"hits": [{"_source": {"path": ["44"]}},{"_source": {"path": ["11"]}}]}}')):
             with patch('weko_theme.utils.get_journal_info', return_value="get_journal_info"):
@@ -88,8 +88,8 @@ def test_get_init_display_setting(i18n_app, users, client_request_args, communit
             with patch('weko_items_ui.utils.get_ranking', return_value="get_ranking"):
                 search_setting.init_disp_setting["init_disp_screen_setting"] = "1"
                 assert isinstance(test.get_init_display_setting(), dict)
-        
+
         search_setting.init_disp_setting["init_disp_screen_setting"] = "2"
         assert isinstance(test.get_init_display_setting(), dict)
-    
+
     assert isinstance(test.get_init_display_setting(), dict)

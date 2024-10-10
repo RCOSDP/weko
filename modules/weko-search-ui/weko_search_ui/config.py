@@ -24,7 +24,6 @@ import pickle
 
 from invenio_records_rest.config import RECORDS_REST_ENDPOINTS
 from invenio_search import RecordsSearch
-from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 
 WEKO_SEARCH_UI_SEARCH_INDEX_API = "/api/index/"
 
@@ -129,6 +128,7 @@ RECORDS_REST_ENDPOINTS["recid"]["record_serializers"] = {
 
 # RECORDS_REST_ENDPOINTS['recid']['read_permission_factory_imp'] = allow_all
 
+from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 INDEXER_DEFAULT_INDEX = "{}-weko-item-v1.0.0".format(index_prefix)  # Use direct index
 INDEXER_FILE_DOC_TYPE = "content"
 

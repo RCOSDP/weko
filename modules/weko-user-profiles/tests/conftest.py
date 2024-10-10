@@ -41,6 +41,7 @@ from invenio_accounts.testutils import create_test_user
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_communities.models import Community
+from invenio_i18n import InvenioI18N
 
 from weko_index_tree.models import Index
 
@@ -86,8 +87,9 @@ def base_app(instance_path):
     InvenioDB(app_)
     InvenioAccess(app_)
     InvenioAccounts(app_)
+    InvenioI18N(app_)
     WekoUserProfiles(app_)
-    
+
     #app_.register_blueprint(accounts_blueprint)
 
     yield app_
@@ -169,7 +171,7 @@ def users(app, db):
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
         student = User.query.filter_by(email='student@test.org').first()
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')

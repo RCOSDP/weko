@@ -69,7 +69,7 @@ def es_hit():
     }
 
 
-def test_esdumper_without_model(testapp, db, example_data):
+def test_esdumper_without_model(app, db, example_data):
     """Test the Search dumper."""
     # Dump without a model.
     dump = Record(example_data).dumps(dumper=SearchDumper())
@@ -81,7 +81,7 @@ def test_esdumper_without_model(testapp, db, example_data):
     assert record == example_data  # data is equivalent to initial data
 
 
-def test_esdumper_with_model(testapp, db, example_data):
+def test_esdumper_with_model(app, db, example_data):
     """Test the Search dumper."""
     # Create a record
     record = Record.create(example_data)
@@ -104,7 +104,7 @@ def test_esdumper_with_model(testapp, db, example_data):
     assert new_record.model.json == record.model.json
 
 
-def test_esdumper_with_extensions(testapp, db, example_data):
+def test_esdumper_with_extensions(app, db, example_data):
     """Test extensions implementation."""
 
     # Create a simple extension that adds a computed field.
@@ -130,11 +130,9 @@ def test_esdumper_with_extensions(testapp, db, example_data):
     assert "count" not in new_record
 
 
-def test_esdumper_sa_datatypes(testapp, database):
+def test_esdumper_sa_datatypes(app, db):
     """Test to determine the data type of an SQLAlchemy field."""
-    db = database
-
-    class Model(db.Model, RecordMetadataBase):
+    class Model(db.Model, RecordMetadb):
         string = db.Column(db.String(255))
         text = db.Column(db.Text)
         biginteger = db.Column(db.BigInteger)
@@ -154,7 +152,7 @@ def test_esdumper_sa_datatypes(testapp, database):
     assert SearchDumper._sa_type(Model, "invalid") is None
 
 
-def test_relations_dumper(testapp, db, example_data):
+def test_relations_dumper(app, db, example_data):
     """Test relations dumper extension."""
 
     class RecordWithRelations(Record):
@@ -232,7 +230,7 @@ def test_relations_dumper(testapp, db, example_data):
     # assert 'count' not in new_record
 
 
-def test_indexedtime_dumper(testapp, db, example_data):
+def test_indexedtime_dumper(app, db, example_data):
     """Test relations dumper extension."""
 
     class RecordWithIndexedTime(Record):

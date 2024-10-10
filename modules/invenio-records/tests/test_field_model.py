@@ -22,11 +22,9 @@ from invenio_records.models import RecordMetadataBase
 from invenio_records.systemfields import ModelField, SystemFieldsMixin
 
 
-@pytest.fixture(scope="module")
-def Record1Metadata(database):
+@pytest.fixture(scope="function")
+def Record1Metadata(db):
     """."""
-    db = database
-
     class Record1Metadata(db.Model, RecordMetadataBase):
         __tablename__ = "record1_metadata"
 
@@ -36,10 +34,8 @@ def Record1Metadata(database):
     return Record1Metadata
 
 
-def test_model_field(testapp, database, Record1Metadata):
+def test_model_field(app, db, Record1Metadata):
     """Test model field with clearing none/empty values."""
-    db = database
-
     class Record1(Record, SystemFieldsMixin):
         model_cls = Record1Metadata
         dumper = SearchDumper()

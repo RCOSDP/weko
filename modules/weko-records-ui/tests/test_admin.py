@@ -6,7 +6,7 @@ import io
 from flask import Flask, json, jsonify, session, url_for
 from flask_security.utils import login_user
 from invenio_accounts.testutils import login_user_via_session
-from mock import patch
+from unittest.mock import patch
 from invenio_pidstore.errors import PIDDoesNotExistError
 from weko_records_ui.models import PDFCoverPageSettings
 
@@ -24,7 +24,7 @@ class TestItemSettingView():
             with patch("flask.templating._render", return_value=""):
                 res = client.get(url)
                 assert res.status == '200 OK'
-        
+
         with patch("flask_login.utils._get_user", return_value=users[1]['obj']):
             with patch("flask.templating._render", return_value=""):
                 res = client.post(url)
@@ -38,7 +38,7 @@ class TestItemSettingView():
                 data = {"submit": "a"}
                 res = client.post(url,data=data)
                 assert res.status == '200 OK'
-        
+
                 data = {"submit": "set_search_author_form","displayRadios":"1", "openDateDisplayRadios":"1"}
                 res = client.post(url,data=data)
                 assert res.status == '200 OK'
@@ -65,7 +65,7 @@ class TestItemSettingView():
                 assert res.status == '200 OK'
 
 
-                
+
 
 # class PdfCoverPageSettingView(BaseView):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_admin.py::TestPdfCoverPageSettingView -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -112,7 +112,7 @@ class TestInstitutionNameSettingView:
             with patch("flask.templating._render", return_value=""):
                 res = client.get(url)
                 assert res.status == '200 OK'
-        
+
         data = {"institution_name": "test"}
         with patch("flask_login.utils._get_user", return_value=users[1]['obj']):
             with patch("flask.templating._render", return_value=""):
@@ -134,12 +134,12 @@ class TestItemManagementBulkUpdate:
                 with patch("flask.templating._render", return_value=""):
                     res = client.get(url)
                     assert res.status == '403 FORBIDDEN'
-            
+
             with patch("flask_login.utils._get_user", return_value=users[1]['obj']):
                 with patch("flask.templating._render", return_value=""):
                     res = client.get(url)
                     assert res.status == '200 OK'
-        
+
 #     def get_items_metadata(self):
 #         def get_file_data(meta):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_admin.py::TestItemManagementBulkUpdate::test_get_items_metadata_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -152,7 +152,7 @@ class TestItemManagementBulkUpdate:
             with patch("flask.templating._render", return_value=""):
                 res = client.get(url)
                 assert res.status == '403 FORBIDDEN'
-        
+
         with patch("flask_login.utils._get_user", return_value=users[1]['obj']):
             res = client.get(url)
             assert res.status == '200 OK'
@@ -176,7 +176,7 @@ class TestItemManagementBulkUpdate:
             assert data['1']
             assert data['2']
             assert data['3']
-    
+
         url = url_for("items/bulk/update.get_items_metadata", pids="",_external=True)
         with patch("flask_login.utils._get_user", return_value=users[1]['obj']):
             with pytest.raises(PIDDoesNotExistError):
@@ -189,7 +189,7 @@ class TestItemManagementBulkUpdate:
         with patch("flask_login.utils._get_user", return_value=users[1]['obj']):
             with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=record):
                 res = client.get(url)
-        
+
         # meta is None
         url = url_for("items/bulk/update.get_items_metadata", pids="1",_external=True)
         with patch("flask_login.utils._get_user", return_value=users[1]['obj']):

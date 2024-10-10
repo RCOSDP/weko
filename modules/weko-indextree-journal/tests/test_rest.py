@@ -63,8 +63,8 @@ def test_create_blueprint(instance_path):
     app = Flask("testapp",
         instance_path=instance_path)
     app.config.update(
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'
         ),
         TESTING=True,
         SERVER_NAME="TEST_SERVER",

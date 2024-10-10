@@ -50,7 +50,7 @@ from weko_user_profiles import WekoUserProfiles
 
 from weko_accounts import WekoAccounts, WekoAccountsREST
 from weko_accounts.views import blueprint
-
+os.environ['TIKA_LOG_PATH'] = '/code/modules/weko-admin/tika.log'
 @pytest.yield_fixture()
 def instance_path():
     """Temporary instance path."""
@@ -91,7 +91,7 @@ def base_app(instance_path):
     WekoRecordsUI(app_)
     WekoAdmin(app_)
     WekoUserProfiles(app_)
-    app_.register_blueprint(blueprint)
+    app_.register_blueprint(blueprint, name='weko_accounts_unique')
     WekoAccountsREST(app_)
     return app_
 

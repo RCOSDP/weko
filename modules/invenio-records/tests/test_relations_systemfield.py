@@ -23,7 +23,7 @@ from invenio_records.systemfields.relations import (
 from invenio_records.systemfields.relations.errors import InvalidCheckValue
 
 
-def test_relations_field_pk_relation(testapp, db, languages):
+def test_relations_field_pk_relation(app, db, languages):
     """RelationsField tests for PKRelation."""
 
     Language, languages = languages
@@ -125,7 +125,7 @@ def test_relations_field_pk_relation(testapp, db, languages):
     record.commit()
 
 
-def test_relations_field_pk_list_relation(testapp, db, languages):
+def test_relations_field_pk_list_relation(app, db, languages):
     """RelationsField tests for PKListRelation."""
 
     Language, languages = languages
@@ -243,7 +243,7 @@ def test_relations_field_pk_list_relation(testapp, db, languages):
     record.commit()
 
 
-def test_relations_field_pk_list_relation_of_objects(testapp, db, languages):
+def test_relations_field_pk_list_relation_of_objects(app, db, languages):
     """RelationsField tests for PKListRelation with a list of objects."""
 
     Language, languages = languages
@@ -481,7 +481,7 @@ def test_relations_field_pk_list_relation_of_objects(testapp, db, languages):
     record.commit()
 
 
-def test_nested_relations_field(testapp, db, languages):
+def test_nested_relations_field(app, db, languages):
     """Tests deeply nested relations."""
 
     Language, languages = languages
@@ -526,7 +526,7 @@ def test_nested_relations_field(testapp, db, languages):
 
 
 def test_relations_field_pk_nested_list_of_objects_w_related_field(
-    testapp, db, languages
+    app, db, languages
 ):
     """RelationsField tests for PKListRelation with a list of objects."""
 
@@ -808,7 +808,7 @@ def test_relations_field_pk_nested_list_of_objects_w_related_field(
 
 
 def test_relations_field_pk_nested_list_of_objects_wo_related_field(
-    testapp, db, languages
+    app, db, languages
 ):
     """RelationsField tests for PKListRelation with a list of objects."""
 
@@ -1011,7 +1011,7 @@ def test_relations_field_pk_nested_list_of_objects_wo_related_field(
     record.commit()
 
 
-def test_relations_field_pk_relation_with_value_check(testapp, db, languages):
+def test_relations_field_pk_relation_with_value_check(app, db, languages):
     """RelationsField tests for PKRelation with value_check param."""
 
     Language, languages = languages
@@ -1103,7 +1103,7 @@ def test_relations_field_pk_relation_with_value_check(testapp, db, languages):
     assert res == oe_lang
 
 
-def test_relations_field_pk_list_relation_with_value_check(testapp, db, languages):
+def test_relations_field_pk_list_relation_with_value_check(app, db, languages):
     """RelationsField tests for PKListRelation with value_check param."""
 
     Language, languages = languages
@@ -1198,7 +1198,7 @@ def test_relations_field_pk_list_relation_with_value_check(testapp, db, language
 
 
 def test_relations_field_pk_nested_list_of_obj_w_related_field_w_value_check(
-    testapp, db, languages
+    app, db, languages
 ):
     """RelationsField tests for PKListRelation with a list of objects and
     with the value_check param."""

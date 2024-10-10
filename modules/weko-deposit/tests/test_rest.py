@@ -29,8 +29,7 @@ import uuid
 import pytest
 from unittest.mock import patch
 import redis
-
-from elasticsearch import ElasticsearchException
+from invenio_search.engine import search
 from sqlalchemy.exc import SQLAlchemyError
 from flask import url_for, current_app
 from invenio_files_rest.app import Flask
@@ -412,7 +411,7 @@ def test_depid_item_put(client, users,es_records):
     # success case with edit_mode
     # cur_pid = PersistentIdentifier.get('recid', kwargs['pid_value'])
     # pid = PersistentIdentifier.get('recid', kwargs['pid_value'].split(".")[0])
-    with patch("weko_deposit.rest.PersistentIdentifier.get", side_effect=PersistentIdentifier.get) as mock_pid:
+    with patch("weko_deposit.rest.PersistentIdentifier.get", side_effect=PersistentIdentifier.get):
         res = client.put(url, data=json.dumps(input),
                         content_type='application/json')
         assert res.status_code == 200
@@ -475,7 +474,7 @@ def test_depid_item_put(client, users,es_records):
             mock_logger.reset_mock()
 
     # ElasticsearchException
-    with patch("weko_deposit.rest.PersistentIdentifier.get",side_effect=ElasticsearchException("test_es_error")):
+    with patch("weko_deposit.rest.PersistentIdentifier.get",side_effect=search.OpenSearchException("test_es_error")):
         with patch("weko_deposit.rest.weko_logger") as mock_logger:
             res = client.put(url, data=json.dumps(input),
                         content_type='application/json')

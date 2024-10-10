@@ -27,7 +27,7 @@ class DepositProvider(BaseProvider):
     provide any additional features besides creation of deposit ids.
     """
 
-    default_status = PIDStatus.REGISTERED
+    default_status = PIDStatus.RESERVED
     """Deposit IDs are by default registered immediately."""
 
     @classmethod

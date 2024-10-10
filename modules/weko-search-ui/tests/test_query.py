@@ -3,9 +3,8 @@ import json
 import copy
 from flask import request, url_for
 from re import L
-from elasticsearch_dsl.query import Match, Range, Terms, Bool
+from opensearch_dsl.query import Match, Range, Terms, Bool
 from mock import patch, MagicMock
-from werkzeug import ImmutableMultiDict
 from werkzeug.datastructures import MultiDict, CombinedMultiDict
 from invenio_accounts.testutils import login_user_via_session
 

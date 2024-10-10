@@ -205,8 +205,7 @@ WEKO_AUTHORS_IMPORT_CACHE_KEY = 'author_import_cache'
 WEKO_AUTHORS_NUM_OF_PAGE = 25
 """Default number of author search results that display in one page."""
 
-from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
-WEKO_AUTHORS_ES_INDEX_NAME = "{}-authors".format(index_prefix)
+WEKO_AUTHORS_ES_INDEX_NAME = "{}-authors".format(os.environ.get("SEARCH_INDEX_PREFIX", ""))
 """Search engine index alias for author."""
 
 WEKO_AUTHORS_IMPORT_KEY = {

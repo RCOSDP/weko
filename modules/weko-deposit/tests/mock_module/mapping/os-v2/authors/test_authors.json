@@ -1,0 +1,180 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 1,
+    "max_result_window": 1000000,
+    "analysis": {
+      "tokenizer": {
+        "ja_tokenizer": {
+          "type": "kuromoji_tokenizer",
+          "mode": "search"
+        },
+        "ngram_tokenizer": {
+          "type": "nGram",
+          "min_gram": 2,
+          "max_gram": 3,
+          "token_chars": [
+            "letter",
+            "digit"
+          ]
+        }
+      },
+      "analyzer": {
+        "ja_analyzer": {
+          "tokenizer": "ja_tokenizer",
+          "filter": [
+            "kuromoji_baseform",
+            "kuromoji_part_of_speech",
+            "cjk_width",
+            "stop",
+            "kuromoji_stemmer",
+            "lowercase"
+          ]
+        },
+        "ngram_analyzer": {
+          "type": "custom",
+          "char_filter": [
+            "html_strip"
+          ],
+          "tokenizer": "ngram_tokenizer",
+          "filter": [
+            "cjk_width",
+            "lowercase"
+          ]
+        },
+        "wk_analyzer": {
+          "type": "custom",
+          "char_filter": [
+            "html_strip"
+          ],
+          "tokenizer": "whitespace",
+          "filter": [
+            "lowercase",
+            "stop",
+            "cjk_width"
+          ]
+        },
+        "paths": {
+          "tokenizer": "path_hierarchy"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "affiliationInfo": {
+        "type": "object",
+        "properties": {
+          "affiliationNameInfo": {
+            "type": "object",
+            "properties": {
+              "affiliationName": {
+                "type": "text",
+                "index": false
+              },
+              "affiliationNameLang": {
+                "type": "text"
+              },
+              "affiliationNameShowFlg": {
+                "type": "boolean"
+              }
+            }
+          },
+          "identifierInfo": {
+            "type": "object",
+            "properties": {
+              "affiliationId": {
+                "type": "text"
+              },
+              "affiliationIdType": {
+                "type": "text",
+                "index": false
+              },
+              "identifierShowFlg": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "authorIdInfo": {
+        "type": "object",
+        "properties": {
+          "authorId": {
+            "type": "text"
+          },
+          "authorIdShowFlg": {
+            "type": "boolean"
+          },
+          "idType": {
+            "type": "text",
+            "index": false
+          }
+        }
+      },
+      "authorNameInfo": {
+        "type": "object",
+        "properties": {
+          "familyName": {
+            "type": "text"
+          },
+          "firstName": {
+            "type": "text"
+          },
+          "fullName": {
+            "type": "text",
+            "fields": {
+              "raw": {
+                "type": "keyword",
+                "index": true
+              }
+            }
+          },
+          "language": {
+            "type": "text",
+            "index": false
+          },
+          "nameFormat": {
+            "type": "text",
+            "index": false
+          },
+          "nameShowFlg": {
+            "type": "boolean"
+          }
+        }
+      },
+      "emailInfo": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "text",
+            "fields": {
+              "raw": {
+                "type": "keyword",
+                "index": true
+              }
+            }
+          }
+        }
+      },
+      "gather_flg": {
+        "type": "integer"
+      },
+      "id": {
+        "type": "keyword",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "is_deleted": {
+        "type": "boolean"
+      },
+      "pk_id": {
+        "type": "keyword"
+      }
+    }
+  }
+}

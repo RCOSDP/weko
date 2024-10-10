@@ -10,7 +10,7 @@
 
 import pytest
 from flask import url_for
-from testutils import login_user
+from .testutils import login_user
 
 from invenio_files_rest.models import ObjectVersion
 

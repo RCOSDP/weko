@@ -149,7 +149,12 @@ def app(request, search_class):
         ACCOUNTS_JWT_ENABLE=False,
         INDEXER_DEFAULT_DOC_TYPE="item-v1.0.0",
         INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format("test"),
-        SEARCH_ELASTIC_HOSTS=os.environ.get("SEARCH_ELASTIC_HOSTS", "elasticsearch"),
+        SEARCH_ELASTIC_HOSTS=os.environ.get(
+                    'SEARCH_ELASTIC_HOSTS', 'opensearch'),
+        SEARCH_HOSTS=os.environ.get(
+            'SEARCH_HOST', 'opensearch'
+        ),
+        SEARCH_CLIENT_CONFIG={"http_auth":(os.environ['INVENIO_OPENSEARCH_USER'],os.environ['INVENIO_OPENSEARCH_PASS']),"use_ssl":True, "verify_certs":False},
         RECORDS_REST_ENDPOINTS=copy.deepcopy(config.RECORDS_REST_ENDPOINTS),
         RECORDS_REST_DEFAULT_CREATE_PERMISSION_FACTORY=None,
         RECORDS_REST_DEFAULT_DELETE_PERMISSION_FACTORY=None,
@@ -277,7 +282,7 @@ def search(app):
 def search_index(app):
     with open("tests/data/item-v1.0.0.json","r") as f:
         mapping = json.load(f)
-        
+
     current_search_client.indices.delete(index="test-*")
     try:
         current_search_client.indices.create(
@@ -440,7 +445,7 @@ def indexed_100records(app, db, search_index, item_type,indexes):
         result.append((pid,record))
     db.session.commit()
     current_search.flush_and_refresh(index="test-weko")
-    
+
     return result
 
 
@@ -511,13 +516,13 @@ def item_type(db):
     item_type_name=ItemTypeName(id=15,name="test_item_type15")
     with open("tests/item_type/15_form.json", "r") as f:
         form = json.load(f)
-        
+
     with open("tests/item_type/15_schema.json", "r") as f:
         schema = json.load(f)
-    
+
     with open("tests/item_type/15_render.json", "r") as f:
         render = json.load(f)
-    
+
     item_type = ItemType(
         id=15,
         name_id=15,
@@ -529,17 +534,17 @@ def item_type(db):
         version_id=1,
         is_deleted=False,
     )
-    
+
     with open("tests/item_type/15_mapping.json", "r") as f:
         mapping = json.load(f)
-    
+
     item_type_mapping = ItemTypeMapping(id=15, item_type_id=15, mapping=mapping)
-    
+
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
         db.session.add(item_type_mapping)
-    
+
     return item_type, item_type_mapping
 
 @pytest.fixture()
@@ -570,7 +575,7 @@ def facet_search(db):
     )
     db.session.add(control_number)
     db.session.commit()
-    
+
 @pytest.yield_fixture()
 def aggs_and_facet(redis_connect, facet_search):
     test_redis_key = "test_facet_search_query_has_permission"

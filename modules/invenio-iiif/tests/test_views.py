@@ -11,7 +11,7 @@
 from __future__ import absolute_import, print_function
 
 import pytest
-from mock import patch
+from unittest.mock import patch
 from werkzeug.exceptions import HTTPException
 from flask import url_for,make_response
 from flask_iiif.utils import iiif_image_url
@@ -79,7 +79,7 @@ def test_get_restricted_image_info(client, image_object, image_uuid):
 
 #def create_blueprint_from_app(app):
 # .tox/c1/bin/pytest --cov=invenio_iiif tests/test_views.py::test_create_blueprint_from_app -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio_iiif/.tox/c1/tmp
-def test_create_blueprint_from_app(app, mocker):
+def test_create_blueprint_from_app(app):
     app.config.update(
         IIIF_MANIFEST_ENDPOINTS = {
             "recid": {
@@ -91,16 +91,16 @@ def test_create_blueprint_from_app(app, mocker):
             }
         }
     )
-    mock_create = mocker.patch("invenio_iiif.views.create_blueprint")
-    create_blueprint_from_app(app)
-    test = {
-        "recid": {
-            "pid_type": "recid",
-            "route": "iiif/v2/records/<pid_value>/manifest.json",
-        },
-        "pid":{"pid_type":"recid"}
-    }
-    mock_create.assert_called_with(test)
+    with patch("invenio_iiif.views.create_blueprint") as mock_create:
+        create_blueprint_from_app(app)
+        test = {
+            "recid": {
+                "pid_type": "recid",
+                "route": "iiif/v2/records/<pid_value>/manifest.json",
+            },
+            "pid":{"pid_type":"recid"}
+        }
+        mock_create.assert_called_with(test)
 
 
 #def create_blueprint(endpoints):
@@ -113,8 +113,8 @@ def test_create_blueprint():
         },
     }
     result = create_blueprint(end_points)
-    
-    
+
+
 #def create_url_rule(
 # .tox/c1/bin/pytest --cov=invenio_iiif tests/test_views.py::test_create_url_rule -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio_iiif/.tox/c1/tmp
 def test_create_url_rule():
@@ -122,15 +122,15 @@ def test_create_url_rule():
     endpoint = "recid"
     route="/test1/test2"
     pid_type="recid"
-    
+
     result = create_url_rule(endpoint,route=route,pid_type=pid_type)
     assert result["endpoint"] == "recid"
     assert result["rule"] == "/test1/test2"
     assert result["methods"] == ["GET"]
-    
+
 #def manifest_view(
 # .tox/c1/bin/pytest --cov=invenio_iiif tests/test_views.py::test_manifest_view -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio_iiif/.tox/c1/tmp
-def test_manifest_view(app,records,mocker):
+def test_manifest_view(app,records):
     from invenio_pidstore.resolver import Resolver
     from invenio_iiif.manifest import IIIFManifest
     from invenio_records.api import Record
@@ -138,27 +138,26 @@ def test_manifest_view(app,records,mocker):
     resolver=Resolver(pid_type="recid",object_type="rec",getter=Record.get_record)
     permission_factory=None
     manifest_class=IIIFManifest
-    mocker.patch("invenio_iiif.views.url_for",side_effect=lambda x,pid_value:x+pid_value)
-    with app.test_request_context("/test"):
-        with patch("invenio_iiif.views.Resolver.resolve",side_effect=PIDDoesNotExistError(records[0][0].pid_type,records[0][0].pid_value)):
-            with pytest.raises(HTTPException) as httperror:
-                result = manifest_view(pid_value,resolver,permission_factory,manifest_class)
-            assert httperror.value.code == 404
-        with patch("invenio_iiif.views.Resolver.resolve",side_effect=PIDMissingObjectError("error_pid")):
-            with pytest.raises(HTTPException) as httperror:
-                result = manifest_view(pid_value,resolver,permission_factory,manifest_class)
-            assert httperror.value.code == 500
-        
-        with patch("invenio_iiif.views.Resolver.resolve",side_effect=PIDRedirectedError("error_pid",records[0][0])):
-            mock_redirect = mocker.patch("invenio_iiif.views.redirect",return_value=make_response())
-            result = manifest_view(pid_value,resolver,permission_factory,manifest_class)
-            mock_redirect.assert_called_with(".recid1")
-            with patch("invenio_iiif.views.redirect",side_effect=BuildError("endpoint","value","method")):
+    with patch("invenio_iiif.views.url_for",side_effect=lambda x,pid_value:x+pid_value):
+        with app.test_request_context("/test"):
+            with patch("invenio_iiif.views.Resolver.resolve",side_effect=PIDDoesNotExistError(records[0][0].pid_type,records[0][0].pid_value)):
+                with pytest.raises(HTTPException) as httperror:
+                    result = manifest_view(pid_value,resolver,permission_factory,manifest_class)
+                assert httperror.value.code == 404
+            with patch("invenio_iiif.views.Resolver.resolve",side_effect=PIDMissingObjectError("error_pid")):
                 with pytest.raises(HTTPException) as httperror:
                     result = manifest_view(pid_value,resolver,permission_factory,manifest_class)
                 assert httperror.value.code == 500
 
-        result = manifest_view(pid_value,resolver,permission_factory,manifest_class)
-        assert result.status_code == 204
-        
-    
+            with patch("invenio_iiif.views.Resolver.resolve",side_effect=PIDRedirectedError("error_pid",records[0][0])):
+                mock_redirect = mocker.patch("invenio_iiif.views.redirect",return_value=make_response())
+                result = manifest_view(pid_value,resolver,permission_factory,manifest_class)
+                mock_redirect.assert_called_with(".recid1")
+                with patch("invenio_iiif.views.redirect",side_effect=BuildError("endpoint","value","method")):
+                    with pytest.raises(HTTPException) as httperror:
+                        result = manifest_view(pid_value,resolver,permission_factory,manifest_class)
+                    assert httperror.value.code == 500
+
+            result = manifest_view(pid_value,resolver,permission_factory,manifest_class)
+            assert result.status_code == 204
+

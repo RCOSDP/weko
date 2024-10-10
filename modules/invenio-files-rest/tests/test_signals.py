@@ -11,7 +11,7 @@
 from io import BytesIO
 
 from flask import url_for
-from testutils import login_user
+from .testutils import login_user
 
 from invenio_files_rest.signals import file_deleted, file_uploaded
 

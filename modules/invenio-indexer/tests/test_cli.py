@@ -70,8 +70,20 @@ def test_reindex(app):
 
         # Initialize queue
         res = runner.invoke(cli.queue, ["init", "purge"])
-        assert 0 == res.exit_code
+        
+        print(f"Command exit code: {res.exit_code}")
+        print(f"Command output: {res.output}")
+        print(f"Command exception: {res.exception}")
+        
+        if res.exception:
+            print(f"Exception traceback: {res.exc_info}")
+        
+        assert res.exit_code == 0, f"Command failed with exit code {res.exit_code}"
+        assert "Indexing queue has been initialized." in res.output
+        assert "Indexing queue has been purged." in res.output
 
+
+        
         res = runner.invoke(cli.reindex, ["--yes-i-know", "-t", "recid"])
         assert 0 == res.exit_code
         res = runner.invoke(cli.run, [])

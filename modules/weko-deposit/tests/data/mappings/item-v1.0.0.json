@@ -2,6 +2,7 @@
   "settings": {
     "number_of_shards": 1,
     "number_of_replicas": 1,
+    "index.max_ngram_diff":2,
     "index.mapping.total_fields.limit": 50000,
     "analysis": {
       "tokenizer": {
@@ -59,7 +60,6 @@
           ],
           "tokenizer": "standard",
           "filter": [
-            "standard",
             "lowercase",
             "stop",
             "cjk_width"
@@ -72,7 +72,6 @@
     }
   },
   "mappings": {
-    "item-v1.0.0": {
       "properties": {
         "path": {
           "type": "keyword",
@@ -1218,4 +1217,4 @@
       ]
     }
   }
-}
+

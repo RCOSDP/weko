@@ -21,15 +21,17 @@
 """Weko Deposit API."""
 import copy
 import uuid
+
 from collections import OrderedDict
+
 from datetime import datetime, timezone,date
 from typing import NoReturn, Union
 from tika import parser
-
 from redis import RedisError
 from dictdiffer import dot_lookup
 from dictdiffer.merge import Merger, UnresolvedConflictsException
 from invenio_search.engine import search
+
 from flask import abort, current_app, json, request, session
 from flask_security import current_user
 from invenio_db import db
@@ -41,7 +43,7 @@ from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.draft import PIDNodeDraft
 from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidrelations.models import PIDRelation
-from invenio_pidrelations.serializers.utils import serialize_relations
+from invenio_pidrelations.serializers.utils import dump_relation
 from invenio_pidstore.errors import PIDDoesNotExistError, PIDInvalidAction
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
@@ -50,6 +52,7 @@ from invenio_records_files.models import RecordsBuckets
 from invenio_records_rest.errors import PIDResolveRESTError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
+
 
 from weko_admin.models import AdminSettings
 from weko_index_tree.api import Indexes
@@ -91,6 +94,22 @@ PRESERVE_FIELDS = (
 # WEKO_DEPOSIT_SYS_CREATOR_KEY = (
 #     current_app.config.get('WEKO_DEPOSIT_SYS_CREATOR_KEY')
 # )
+
+from invenio_pidrelations.api import PIDRelation
+from invenio_pidrelations.utils import resolve_relation_type_config
+def serialize_relations(pid):
+    """Serialize the relations for given PID."""
+    data = {}
+    relations = PIDRelation.get_child_relations(pid).all()
+    for relation in relations:
+        rel_cfg = resolve_relation_type_config(relation.relation_type)
+        dump_relation(rel_cfg.api(relation.parent),
+                      rel_cfg, pid, data)
+    parent_relations = PIDRelation.get_parent_relations(pid).all()
+    rel_cfgs = set([resolve_relation_type_config(p.relation_type) for p in parent_relations])
+    for rel_cfg in rel_cfgs:
+        dump_relation(rel_cfg.api(pid), rel_cfg, pid, data)
+    return data
 
 class WekoFileObject(FileObject):
     """Extend FileObject for detail page.
@@ -262,7 +281,6 @@ class WekoIndexer(RecordIndexer):
             parent_id (int):
                 Parent item ID used for routing the delete operation.
 
-
         Raises:
             WekoDepositIndexerError:
                 If an error occurs while deleting a file index.
@@ -275,7 +293,7 @@ class WekoIndexer(RecordIndexer):
                 self.client.delete(id=str(lst),
                                     index=self.es_index,
                                     routing=parent_id)
-            except ElasticsearchException as ex:
+            except search.OpenSearchException as ex:
                 weko_logger(key='WEKO_DEPOSIT_FAILED_DELETE_FILE_INDEX',
                             record_id=str(lst), ex=ex)
                 # raise WekoDepositIndexerError(ex=ex,
@@ -303,7 +321,7 @@ class WekoIndexer(RecordIndexer):
                 The response from Elasticsearch after attempting the update.
 
         Raises:
-            ElasticsearchException:
+            search.OpenSearchException:
                 If an error occurs during the update process (excluding errors
                 with status codes 400 and 404, which are ignored).
         """
@@ -379,7 +397,7 @@ class WekoIndexer(RecordIndexer):
                 }
             }
 
-        if update_revision:
+        if update_revision:# TODO version があるとエラー
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='update_revision is True')
             result = self.client.update(
@@ -410,7 +428,6 @@ class WekoIndexer(RecordIndexer):
 
         Args:
             record(:obj:WekoDeposit): Record instance. Not used.
-
         """
         self.get_es_index()
 
@@ -516,11 +533,6 @@ class WekoIndexer(RecordIndexer):
                 weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=None)
                 return None
 
-            # else:
-            #     weko_logger(key='WEKO_COMMON_IF_ENTER',
-            #                 branch='result is False')
-            #     weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=None)
-            #     return None
         ind = self.record_to_index({})
 
         search_result = self.client.search(index=ind,
@@ -550,7 +562,6 @@ class WekoIndexer(RecordIndexer):
 
     def get_metadata_by_item_id(self, item_id):
         """Get metadata of item by id from Elasticsearch.
-
         This method retrieves the metadata of an item from Elasticsearch by
         its ID.
 
@@ -706,7 +717,6 @@ class WekoDeposit(Deposit):
 
         This method returns the item metadata.
 
-
         Args:
             None
 
@@ -736,8 +746,6 @@ class WekoDeposit(Deposit):
 
     def is_published(self):
         """Check if deposit is published.
-
-
         This method checks if the deposit is published.
 
         Args:
@@ -754,7 +762,6 @@ class WekoDeposit(Deposit):
     @preserve(fields=('_deposit', '$schema'))
     def merge_with_published(self):
         """Merge changes with latest published version.
-
 
         This method merges changes with the latest published version and then
         unify the paches. (not use)
@@ -900,8 +907,8 @@ class WekoDeposit(Deposit):
                                 branch='dest is set')
                     dest -= value
                 else:
-                    if isinstance(dest, list) and isinstance(key, int) and len(
-                            dest) > key:
+                    if (isinstance(dest, list) and isinstance(key, int)
+                        and len(dest) > key):
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
                                     branch='dest is list and key is int and '
                                             'length of dest is larger than key')
@@ -976,8 +983,12 @@ class WekoDeposit(Deposit):
 
         """
         _filename_prop = 'filename'
-        files_versions = ObjectVersion.get_by_bucket(bucket=bucket_id,
-                                                    with_deleted=True).all()
+        files_versions = (
+            ObjectVersion.get_by_bucket(
+                bucket=bucket_id,
+                with_deleted=True
+            ).all()
+        )
         files_versions = {x.key: x.version_id for x in files_versions}
         file_meta = []
 
@@ -1162,24 +1173,26 @@ class WekoDeposit(Deposit):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='recid is None')
             deposit = super(WekoDeposit, cls).create(data, id_=id_)
-
         record_id = 0
+
         if data.get('_deposit'):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='_deposit is in data')
             record_id = str(data['_deposit']['id'])
+
         parent_pid = PersistentIdentifier.create(
             'parent',
             'parent:{0}'.format(record_id),
             object_type='rec',
             object_uuid=deposit.id,
-            status=PIDStatus.REGISTERED
+            status=PIDStatus.RESERVED
         )
 
         RecordsBuckets.create(record=deposit.model, bucket=bucket)
 
         recid = PersistentIdentifier.get('recid', record_id)
         depid = PersistentIdentifier.get('depid', record_id)
+
         PIDNodeVersioning(pid=parent_pid).insert_draft_child(child_pid=recid)
         PIDNodeDraft(pid=recid).insert_child(depid)
         # Update this object_uuid for item_id of activity.
@@ -1354,14 +1367,16 @@ class WekoDeposit(Deposit):
             # Get deposit bucket
             deposit_bucket = Bucket.query.get(self['_buckets']['deposit'])
             if deposit_bucket and deposit_bucket.location:
-                weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='location is in deposit_bucket')
+                weko_logger(
+                    key='WEKO_COMMON_IF_ENTER',
+                    branch='location is in deposit_bucket')
                 # Get workflow storage location
                 workflow_storage_location = None
 
                 if session and 'activity_info' in session:
-                    weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='activity_info is in session')
+                    weko_logger(
+                        key='WEKO_COMMON_IF_ENTER',
+                        branch='activity_info is in session')
                     activity_info = session['activity_info']
 
                     # Need to import here to avoid circular import
@@ -1379,6 +1394,7 @@ class WekoDeposit(Deposit):
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch='workflow_storage_location is None')
                     workflow_storage_location = Location.get_default()
+
                 if(deposit_bucket.location.id != workflow_storage_location.id):
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch='deposit_bucket.location.id is not '
@@ -1397,15 +1413,18 @@ class WekoDeposit(Deposit):
                 if record and record.json and '_oai' in record.json:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch='_oai is in record.json')
+
                     self.jrc['_oai'] = record.json.get('_oai')
                 if ('path' in self.jrc and '_oai' in self.jrc
                         and ('sets' not in self.jrc['_oai']
                         or not self.jrc['_oai']['sets'])):
-                    weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='path is in jrc and _oai is in jrc and '
-                                        'sets is not in jrc[_oai] or sets is '
-                                        'empty')
+
+                    weko_logger(
+                        key='WEKO_COMMON_IF_ENTER',
+                        branch='path is in jrc and _oai is in jrc and '
+                                'sets is not in jrc[_oai] or sets is empty')
                     setspec_list = self.jrc['path'] or []
+
                     if setspec_list:
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
                                     branch='setspec_list is not None')
@@ -1418,11 +1437,14 @@ class WekoDeposit(Deposit):
 
                 try:
                     # Upload file content to search engine
-                    self.indexer.upload_metadata(self.jrc,
-                                                self.pid.object_uuid,
-                                                self.revision_id)
+                    self.indexer.upload_metadata(
+                        self.jrc,
+                        self.pid.object_uuid,
+                        self.revision_id
+                    )
                     feedback_mail_list = (
                         FeedbackMailList.get_mail_list_by_item_id(self.id))
+
                     if feedback_mail_list:
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
                                     branch='feedback_mail_list is not None')
@@ -1439,16 +1461,20 @@ class WekoDeposit(Deposit):
                         'WEKO_DEPOSIT_ES_PARSING_ERROR_PROCESS_ENABLE')
                     parse_err = current_app.config.get(
                         'WEKO_DEPOSIT_ES_PARSING_ERROR_KEYWORD')
+
                     if (err_passing_config
                             and parse_err in ex.info["error"]["reason"]):
-                        weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                    branch='err_passing_config is True and '
-                                            'parse_err is in ex.info')
+                        weko_logger(
+                            key='WEKO_COMMON_IF_ENTER',
+                            branch='err_passing_config is True and '
+                                    'parse_err is in ex.info')
                         self.delete_content_files()
-                        self.indexer.upload_metadata(self.jrc,
-                                                    self.pid.object_uuid,
-                                                    self.revision_id,
-                                                    True)
+                        self.indexer.upload_metadata(
+                            self.jrc,
+                            self.pid.object_uuid,
+                            self.revision_id,
+                            True
+                        )
                         record_id = self['_deposit']['id']
                         weko_logger(key='WEKO_DEPOSIT_FAILED_PARSE_FILE_ITEM',
                                     record_id=record_id)
@@ -1483,8 +1509,8 @@ class WekoDeposit(Deposit):
             if record.json.get('_buckets'):
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
                             branch='_buckets is in record.json')
-                self._update_version_id(record.json,
-                                        record.json['_buckets']['deposit'])
+                self._update_version_id(
+                    record.json, record.json['_buckets']['deposit'])
             flag_modified(record, 'json')
             db.session.merge(record)
 
@@ -1590,7 +1616,7 @@ class WekoDeposit(Deposit):
                         pid=pid)
             raise WekoDepositError(msg="PID status is not registered.")
 
-        if not record or not versioning.exists or versioning.draft_child:
+        if not record or versioning.is_child is None or versioning.draft_child:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='record is None or versioning does not exists '
                                 'or draft_child exists')
@@ -1709,13 +1735,14 @@ class WekoDeposit(Deposit):
                         filename = lst.get('filename')
 
                         if file.obj.key == filename:
-                            weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                        branch='file.obj.key is equal to '
-                                                'filename')
+                            weko_logger(
+                                key='WEKO_COMMON_IF_ENTER',
+                                branch='file.obj.key is equal to filename')
 
                             lst.update({'mimetype': file.obj.mimetype})
                             lst.update(
-                                {'version_id': str(file.obj.version_id)})
+                                {'version_id': str(file.obj.version_id)}
+                            )
 
                             # update file url
                             url_metadata = lst.get('url', {})
@@ -1736,14 +1763,17 @@ class WekoDeposit(Deposit):
                                 content = lst.copy()
                                 attachment = {}
                                 if file.obj.mimetype in mimetypes:
-                                    weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                                branch='file.obj.mimetype is in'
-                                                        ' mimetypes')
+                                    weko_logger(
+                                        key='WEKO_COMMON_IF_ENTER',
+                                        branch='file.obj.mimetype is in mimetypes')
+
                                     try:
-                                        reader = parser.from_file(
-                                            file.obj.file.uri)
-                                        attachment["content"] = "".join(
-                                            reader["content"].splitlines())
+                                        reader = (
+                                            parser.from_file(file.obj.file.uri)
+                                        )
+                                        attachment["content"] = (
+                                            "".join(reader["content"].splitlines())
+                                        )
                                     except FileNotFoundError as ex:
                                         weko_logger(
                                             key='WEKO_DEPOSIT_FAILED_FIND_FILE',
@@ -1766,13 +1796,14 @@ class WekoDeposit(Deposit):
                                     key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
                                 # raise WekoDepositError(ex=ex) from ex
                             break
+
             weko_logger(key='WEKO_COMMON_FOR_END')
             self.jrc.update({'content': contents})
 
     def get_file_data(self):
         """Get file data.
-
         This method gets the file data from the item metadata.
+
         Args:
             None
 
@@ -1841,6 +1872,7 @@ class WekoDeposit(Deposit):
                         branch='ItemMetadata is not None')
             obj = ItemsMetadata.get_record(self.id)
             obj.update(self.data)
+
             if self.data.get('deleted_items'):
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
                             branch='deleted_items is not None')
@@ -1854,6 +1886,7 @@ class WekoDeposit(Deposit):
                         obj.pop(key)
                 weko_logger(key='WEKO_COMMON_FOR_END')
             obj.commit()
+
         else:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='ItemMetadata is None')
@@ -1879,7 +1912,6 @@ class WekoDeposit(Deposit):
             lst = ObjectVersion.get_by_bucket(
                 self.files.bucket, True).filter_by(is_head=False).all()
             klst = []
-
             weko_logger(key='WEKO_COMMON_FOR_START')
             for i, obj in enumerate(lst):
                 weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
@@ -2068,6 +2100,7 @@ class WekoDeposit(Deposit):
                             branch="'title_parent_key' in path"
                                     f"and {path['title_parent_key']} in _data")
                 temp_record = _data[path["title_parent_key"]]
+
                 if "title_value_lst_key" in path:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch='title_value_lst_key in path')
@@ -2143,10 +2176,6 @@ class WekoDeposit(Deposit):
                         else:
                             deleted_items.append(k)
                     weko_logger(key='WEKO_COMMON_FOR_END')
-                    # if activity.approval1 == None:
-                    #     deleted_items.append("approval1")
-                    # if activity.approval2 == None:
-                    #     deleted_items.append("approval2")
                     rtn_data["deleted_items"] = deleted_items
                     rtn_data["$schema"] = schema
                     rtn_data["title"] = title if title else activity.title
@@ -2363,9 +2392,10 @@ class WekoDeposit(Deposit):
         """
         description_key = "description"
         if isinstance(self.jrc, dict) and self.jrc.get(description_key):
-            weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch=f"{self.jrc} is dict"
-                            f"and {self.jrc.get(description_key)} is not empty")
+            weko_logger(
+                key='WEKO_COMMON_IF_ENTER',
+                branch=f"{self.jrc} is dict"
+                        f"and {self.jrc.get(description_key)} is not empty")
             _description = self.jrc.get(description_key)
             _new_description = []
             if isinstance(_description, list):
@@ -2468,6 +2498,7 @@ class WekoDeposit(Deposit):
                 jpcoar_north_east_point)
             es_south_west_point = _convert_geo_location(
                 jpcoar_south_west_point)
+
             if es_north_east_point:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
                             branch='es_north_east_point is not empty')
@@ -2639,7 +2670,7 @@ class WekoDeposit(Deposit):
             # attempt to delete index on es
             try:
                 self.indexer.delete(self)
-            except ElasticsearchException as ex:
+            except search.OpenSearchException as ex:
                 weko_logger(key='WEKO_COMMON_ERROR_ELASTICSEARCH', ex=ex)
             except Exception as ex:
                 weko_logger(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
@@ -3221,14 +3252,12 @@ class WekoRecord(Record):
             weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                         count=i, element=lst)
             key = lst[0]
-
             val = self.get(key)
             option = meta_options.get(key, {}).get('option')
             if not val or not option:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
                             branch=f"{val} or {option} is empty")
                 continue
-
             hidden = option.get("hidden")
             if hidden:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -3390,6 +3419,7 @@ class WekoRecord(Record):
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
                             branch=f"{option.get('hidden')} is not empty")
                 continue
+
             mlt = val.get('attribute_value_mlt')
             if mlt is not None:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -4080,7 +4110,6 @@ class _FormatSysCreator:
                 None.
 
             """
-
             weko_logger(key='WEKO_COMMON_FOR_START')
             for i, creator in enumerate(affiliation_data):
                 weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
@@ -4126,6 +4155,7 @@ class _FormatSysCreator:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch=f"key in 'WEKO_DEPOSIT_SYS_CREATOR_KEY'")
                     format_affiliation(value)
+
                 else:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch=f"key not in 'WEKO_DEPOSIT_SYS_CREATOR_KEY'")
@@ -4140,11 +4170,11 @@ class _FormatSysCreator:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch='language is not empty')
                     creator_list.append({language: creator_list_temp})
-                # else:
-                #     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                #                 branch='language is empty')
-                #     creator_list.append(
-                #         {self.no_language_key: creator_list_temp})
+                else:
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch='language is empty')
+                    creator_list.append(
+                        {self.no_language_key: creator_list_temp})
         else:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='creators is not dict')
@@ -4174,7 +4204,6 @@ class _FormatSysCreator:
 
         """
         count = 0
-
         weko_logger(key='WEKO_COMMON_FOR_START')
         for i, (k, v) in enumerate(creator_data.items()):
             weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
@@ -4233,7 +4262,6 @@ class _FormatSysCreator:
 
         # Get creators are displayed on creator pop up.
         self._get_creator_to_display_on_popup(creator_list_tmp)
-
         weko_logger(key='WEKO_COMMON_FOR_START')
         for i, creator_data in enumerate(creator_list_tmp):
             weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
@@ -4405,6 +4433,7 @@ class _FormatSysCreator:
             'affiliation_name_identifier']
         identifier_uri_key = WEKO_DEPOSIT_SYS_CREATOR_KEY[
             'affiliation_name_identifier_URI']
+
         identifier_schema = creator_data.get(identifier_schema_key, [])
         affiliation_name = creator_data.get(affiliation_name_key, [])
         identifier = creator_data.get(identifier_key, [])
@@ -4553,10 +4582,10 @@ class _FormatSysCreator:
                 weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                             count=i, element=lang)
                 _get_creator(lang)
-                # if creator_names:
-                #     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                #                 branch='creator_names is not empty')
-                #     break
+                if creator_names:
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch='creator_names is not empty')
+                    break
             weko_logger(key='WEKO_COMMON_FOR_END')
 
 
@@ -4608,7 +4637,7 @@ class _FormatSysBibliographicInformation:
                             count=i, element=key)
                 if key in _meta_data:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch=f"k in {_meta_data}")
+                                branch=f"{key} in _meta_data")
                     weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=True)
                     return True
             weko_logger(key='WEKO_COMMON_FOR_END')
@@ -4696,10 +4725,11 @@ class _FormatSysBibliographicInformation:
         if is_get_list:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='is_get_list is not empty')
-            # if not language:
-            #     weko_logger(key='WEKO_COMMON_IF_ENTER',
-            #                 branch='language is empty')
-            #     language = current_lang
+            current_lang = current_i18n.language
+            if not language:
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='language is empty')
+                language = current_lang
             bibliographic_info, length = self._get_bibliographic_show_list(
                 bibliographic, language)
         else:
@@ -5008,7 +5038,6 @@ class _FormatSysBibliographicInformation:
                         branch='page_end is not None')
             temp = page_end if page == '' else '-' + page_end
             page += temp if page_end else ''
-
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=page)
         return page
 

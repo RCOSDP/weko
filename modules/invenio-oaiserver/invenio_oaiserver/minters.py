@@ -26,13 +26,13 @@ def oaiid_minter(record_uuid, data):
         fetcher_name = current_app.config.get(
             "OAISERVER_CONTROL_NUMBER_FETCHER", "recid"
         )
+        cn_pid = current_pidstore.fetchers[fetcher_name](record_uuid, data)
         # adds zeros (0) at the beginning of the the OAI ID control number
         v = cn_pid.pid_value.split('.')
         v[0] = v[0].zfill(
             current_app.config.get('OAISERVER_CONTROL_NUMBER_LEN', 0)
         )
         recid_zfill = '.'.join(v)
-        cn_pid = current_pidstore.fetchers[fetcher_name](record_uuid, data)
         pid_value = current_app.config.get("OAISERVER_ID_PREFIX", "") + str(
             recid_zfill
         )

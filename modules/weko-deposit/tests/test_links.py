@@ -11,7 +11,7 @@ from weko_deposit.links import links_factory,base_factory
 
 # def links_factory(pid, **kwargs):
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_links.py::test_links_factory -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-def test_links_factory(app, db,mocker):
+def test_links_factory(app, db):
     with patch("weko_deposit.links.weko_logger") as mock_logger:
         pids = list()
         pids.append(PersistentIdentifier.create('recid', "1.0",object_type='rec', object_uuid=uuid.uuid4(),status="R"))
@@ -28,8 +28,8 @@ def test_links_factory(app, db,mocker):
             "iframe_tree":"/items/iframe/index/1.1",
             "iframe_tree_upgrade":"/items/iframe/index/1.3"
         }
-        mocker.patch("weko_deposit.links.deposit_links_factory",return_value=base)
-        mocker.patch("weko_deposit.links.base_factory",return_value=new_url)
+        patch("weko_deposit.links.deposit_links_factory",return_value=base)
+        patch("weko_deposit.links.base_factory",return_value=new_url)
         test = {
             "self":"/records/1.1",
             "index":"/api/deposits/redirect/1.1",

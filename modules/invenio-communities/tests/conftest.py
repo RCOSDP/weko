@@ -54,8 +54,7 @@ from weko_records.api import ItemsMetadata
 from invenio_communities import InvenioCommunities
 from invenio_communities.models import Community
 from invenio_communities.views.api import blueprint as api_blueprint
-from invenio_communities.views.ui import blueprint as ui_blueprint
-
+from invenio_communities.views.ui import create_ui_blueprint
 
 @pytest.yield_fixture()
 def instance_path():
@@ -114,6 +113,7 @@ def base_app(instance_path, request):
     InvenioCommunities(app_)
     InvenioMail(app_)
 
+    ui_blueprint = create_ui_blueprint(app)
     app_.register_blueprint(ui_blueprint)
     app_.register_blueprint(api_blueprint, url_prefix='/api/communities')
 

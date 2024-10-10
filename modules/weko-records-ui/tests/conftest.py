@@ -35,7 +35,9 @@ from unittest.mock import patch
 from datetime import timedelta
 
 import pytest
-from elasticsearch import Elasticsearch
+# from elasticsearch import Elasticsearch
+from opensearchpy import OpenSearch
+from invenio_search.engine import search,dsl
 from flask import Flask
 from flask_babel import Babel
 from flask_login import LoginManager, UserMixin
@@ -160,6 +162,7 @@ def instance_path():
     shutil.rmtree(path)
 
 
+@patch.dict('os.environ', {'INVENIO_OPENSEARCH_USER': 'invenio', 'INVENIO_OPENSEARCH_PASSWORD': 'openpass123!'})
 @pytest.fixture()
 def base_app(instance_path):
     """Flask application fixture."""
@@ -224,7 +227,11 @@ def base_app(instance_path):
         WEKO_INDEX_TREE_REST_ENDPOINTS=WEKO_INDEX_TREE_REST_ENDPOINTS,
         I18N_LANGUAGE=[("ja", "Japanese"), ("en", "English")],
         SERVER_NAME="TEST_SERVER",
-        SEARCH_ELASTIC_HOSTS="elasticsearch",
+        SEARCH_HOSTS=os.environ.get(
+            'SEARCH_HOST', 'opensearch'),
+        SEARCH_ELASTIC_HOSTS=os.environ.get(
+                    'SEARCH_ELASTIC_HOSTS', 'opensearch'),
+        SEARCH_CLIENT_CONFIG={"http_auth":(os.environ['INVENIO_OPENSEARCH_USER'],os.environ['INVENIO_OPENSEARCH_PASS']),"use_ssl":True, "verify_certs":False},
         SEARCH_INDEX_PREFIX="test-",
         WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME=WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,
         WEKO_SCHEMA_DDI_SCHEMA_NAME=WEKO_SCHEMA_DDI_SCHEMA_NAME,
@@ -327,22 +334,46 @@ def app(base_app):
         yield base_app
 
 @pytest.fixture()
-def esindex(app):
-    current_search_client.indices.delete(index='test-*')
+def esindex(app,base_app):
+    # current_search_client.indices.delete(index='test-*')
+    # with open("tests/data/mappings/item-v1.0.0.json","r") as f:
+    #     mapping = json.load(f)
+    # try:
+    #     current_search_client.indices.create(app.config["INDEXER_DEFAULT_INDEX"],body=mapping)
+    #     current_search_client.indices.put_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
+    # except:
+    #     current_search_client.indices.create("test-weko-items",body=mapping)
+    #     current_search_client.indices.put_alias(index="test-weko-items", name="test-weko")
+    # # print(current_search_client.indices.get_alias())
+
+    # try:
+    #     yield current_search_client
+    # finally:
+    #     current_search_client.indices.delete(index='test-*')
+    search_hosts = base_app.config["SEARCH_ELASTIC_HOSTS"]
+    search_client_config = base_app.config["SEARCH_CLIENT_CONFIG"]
+    search = OpenSearch(
+        hosts=[{'host': search_hosts, 'port': 9200}],
+        http_auth=search_client_config['http_auth'],
+        use_ssl=search_client_config['use_ssl'],
+        verify_certs=search_client_config['verify_certs'],
+    )
+
+    search.indices.delete(index='test-*')
     with open("tests/data/mappings/item-v1.0.0.json","r") as f:
         mapping = json.load(f)
     try:
-        current_search_client.indices.create(app.config["INDEXER_DEFAULT_INDEX"],body=mapping)
-        current_search_client.indices.put_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
+        search.indices.create(app.config["INDEXER_DEFAULT_INDEX"],body=mapping)
+        search.indices.put_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
     except:
-        current_search_client.indices.create("test-weko-items",body=mapping)
-        current_search_client.indices.put_alias(index="test-weko-items", name="test-weko")
+        search.indices.create("test-weko-items",body=mapping)
+        search.indices.put_alias(index="test-weko-items", name="test-weko")
     # print(current_search_client.indices.get_alias())
 
     try:
-        yield current_search_client
+        yield search
     finally:
-        current_search_client.indices.delete(index='test-*')
+        search.indices.delete(index='test-*')
 
 
 @pytest.yield_fixture()
@@ -4419,7 +4450,7 @@ def db_admin_settings(db):
 
 
 @pytest.fixture()
-def records_rest(app, db):
+def records_rest(app, db, location):
     rec_uuid = uuid.uuid4()
 
     depid = PersistentIdentifier.create(

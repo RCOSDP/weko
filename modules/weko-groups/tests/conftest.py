@@ -139,8 +139,10 @@ def instance_path():
 def base_app(instance_path):
     app_ = Flask("testapp", instance_path=instance_path)
     app_.config.update(
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         TESTING=True,
         SERVER_NAME="TEST_SERVER",
         SEARCH_INDEX_PREFIX='test-',
@@ -167,6 +169,7 @@ def base_app(instance_path):
     WekoGroups(app_)
     InvenioAccess(app_)
     InvenioAdmin(app_)
+    InvenioI18N(app_)
     # Babel(app_)
     # InvenioDB(app_)
     # InvenioAccounts(app_)

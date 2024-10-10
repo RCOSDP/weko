@@ -31,7 +31,6 @@ from datetime import datetime
 
 from invenio_formatter.filters.datetime import from_isodate
 from invenio_i18n.ext import current_i18n
-from invenio_oaiserver.response import get_identifier
 from marshmallow import Schema, fields, missing, ValidationError
 
 import weko_records.config as config
@@ -203,6 +202,7 @@ class RecordSchemaCSLJSON(Schema):
 
     def get_doi(self, obj):
         """Get doi."""
+        from invenio_oaiserver.response import get_identifier
         # Get DOI info and add to metadata.
         identifier = 'system_identifier'
         record = obj['record']

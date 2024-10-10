@@ -25,7 +25,7 @@ from invenio_records.systemfields.relations import (
 )
 
 
-def test_multirelations_field(testapp, db, languages):
+def test_multirelations_field(app, db, languages):
     """MultiRelationsField tests."""
 
     Language, languages = languages

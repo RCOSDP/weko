@@ -46,7 +46,7 @@ from weko_indextree_journal import WekoIndextreeJournal, WekoIndextreeJournalRES
 from weko_indextree_journal.models import Journal
 from weko_indextree_journal.views import blueprint
 from weko_indextree_journal.rest import create_blueprint
-from weko_indextree_journal.bundles import *
+# from weko_indextree_journal.bundles import *
 
 sys.path.append(os.path.dirname(__file__))
 
@@ -104,7 +104,7 @@ def base_app(request,instance_path):
         WEKO_INDEX_TREE_UPATED=True,
         I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English")],
         SERVER_NAME="TEST_SERVER",
-        SEARCH_ELASTIC_HOSTS="elasticsearch",
+        SEARCH_ELASTIC_HOSTS="opensearch",
         SEARCH_INDEX_PREFIX="test-",
         WEKO_PERMISSION_ROLE_USER=[
             "System Administrator",

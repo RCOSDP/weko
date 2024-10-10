@@ -192,24 +192,29 @@ def process_actions(actions, indexer_ids=[], all_queues=False):
 @queue.command("init")
 def init_queue():
     """Initialize indexing queue."""
-
     def action(queue):
-        queue.declare()
-        click.secho("Indexing queue has been initialized.", fg="green")
+        try:
+            click.echo(f"Attempting to initialize queue: {queue}")
+            queue.declare()
+            click.secho("Indexing queue has been initialized.", fg="green")
+        except Exception as e:
+            click.secho(f"Error initializing queue: {e}", fg="red")
+            click.echo(f"Queue details: {queue}")
+            click.echo(f"Exception details: {type(e).__name__}: {str(e)}")
+            raise  # 重新抛出异常，以便在测试中捕获
         return queue
-
     return action
-
 
 @queue.command("purge")
 def purge_queue():
     """Purge indexing queue."""
-
     def action(queue):
-        queue.purge()
-        click.secho("Indexing queue has been purged.", fg="green")
+        try:
+            queue.purge()
+            click.secho("Indexing queue has been purged.", fg="green")
+        except Exception as e:
+            click.secho(f"Error purging queue: {e}", fg="red")
         return queue
-
     return action
 
 

@@ -42,9 +42,9 @@ def test_init():
     assert "invenio-records" in app.extensions
 
 
-def test_db(testapp, db):
+def test_db(app, db):
     """Test database backend."""
-    with testapp.app_context():
+    with app.app_context():
         assert "records_metadata" in db.metadata.tables
         assert "records_metadata_version" in db.metadata.tables
         assert "transaction" in db.metadata.tables
@@ -62,7 +62,7 @@ def test_db(testapp, db):
     from invenio_records.models import RecordMetadata as RM
 
     # Create a record
-    with testapp.app_context():
+    with app.app_context():
         assert RM.query.count() == 0
 
         record_uuid = Record.create(data).id
@@ -72,7 +72,7 @@ def test_db(testapp, db):
         db.session.commit()
 
     # Retrieve created record
-    with testapp.app_context():
+    with app.app_context():
         record = Record.get_record(record_uuid)
         assert record.dumps() == data
         with pytest.raises(NoResultFound):
@@ -83,7 +83,7 @@ def test_db(testapp, db):
         record.commit()
         db.session.commit()
 
-    with testapp.app_context():
+    with app.app_context():
         record2 = Record.get_record(record_uuid)
         assert record2.model.version_id == 2
         assert record2["field"]
@@ -91,13 +91,13 @@ def test_db(testapp, db):
         db.session.commit()
 
     # Cannot commit record without model (i.e. Record.create_record)
-    with testapp.app_context():
+    with app.app_context():
         record3 = Record({"title": "Not possible"})
         with pytest.raises(MissingModelError):
             record3.commit()
 
     # Check invalid schema values
-    # with testapp.app_context():
+    # with app.app_context():
     #     v_schema = {
     #         "$id": "https://example.com/geographical-location.schema.json",
     #         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -124,12 +124,12 @@ def test_db(testapp, db):
     #         record_with_schema.commit()
 
     # # Allow types overriding on schema validation
-    # with testapp.app_context():
+    # with app.app_context():
     #     data = {"title": "Test", "hello": tuple(["foo", "bar"]), "$schema": schema}
-    #     testapp.config["RECORDS_VALIDATION_TYPES"] = {}
+    #     app.config["RECORDS_VALIDATION_TYPES"] = {}
     #     with pytest.raises(ValidationError):
     #         Record.create(data).commit()
 
-    #     testapp.config["RECORDS_VALIDATION_TYPES"] = {"array": (list, tuple)}
+    #     app.config["RECORDS_VALIDATION_TYPES"] = {"array": (list, tuple)}
     #     record_uuid = Record.create(data).commit()
     #     db.session.commit()

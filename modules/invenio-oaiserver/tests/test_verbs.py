@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 from marshmallow import ValidationError, Schema, fields
 from lxml import etree
 
-from helpers import create_record, run_after_insert_oai_set
+from .helpers import create_record, run_after_insert_oai_set
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore.minters import recid_minter
@@ -550,35 +550,35 @@ def test_list_sets_with_resumption_token_and_other_args(app):
 def test_validate_metadata_prefix(app, mocker):
     oai_metadata_formats = {
         "oai_dc": {
-            "serializer": ("invenio_oaiserver.utils:dumps_etree", {"xslt_filename": "/code/modules/invenio-oaiserver/invenio_oaiserver/static/xsl/MARC21slim2OAIDC.xsl"}), 
-            "schema": "http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd", 
+            "serializer": ("invenio_oaiserver.utils:dumps_etree", {"xslt_filename": "/code/modules/invenio-oaiserver/invenio_oaiserver/static/xsl/MARC21slim2OAIDC.xsl"}),
+            "schema": "http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd",
             "namespace": "http://www.w3.org/2001/XMLSchema"
-        }, 
+        },
         "marc21": {
             "serializer": ("invenio_oaiserver.utils:dumps_etree", {"prefix": "marc"}),
-            "schema": "http://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd", 
+            "schema": "http://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd",
             "namespace": "http://www.loc.gov/MARC21/slim"
-        }, 
+        },
         "ddi": {
-            "namespace": "ddi:codebook:2_5", 
-            "schema": "https://ddialliance.org/Specification/DDI-Codebook/2.5/XMLSchema/codebook.xsd", 
+            "namespace": "ddi:codebook:2_5",
+            "schema": "https://ddialliance.org/Specification/DDI-Codebook/2.5/XMLSchema/codebook.xsd",
             "serializer": ("invenio_oaiserver.utils:dumps_etree", {"schema_type": "ddi"})
-        }, 
+        },
         "jpcoar_v1": {
-            "namespace": "https://github.com/JPCOAR/schema/blob/master/1.0/", 
-            "schema": "https://github.com/JPCOAR/schema/blob/master/1.0/jpcoar_scm.xsd", 
+            "namespace": "https://github.com/JPCOAR/schema/blob/master/1.0/",
+            "schema": "https://github.com/JPCOAR/schema/blob/master/1.0/jpcoar_scm.xsd",
             "serializer": ("invenio_oaiserver.utils:dumps_etree", {"schema_type": "jpcoar_v1"})
-        }, 
+        },
         "jpcoar": {
-            "namespace": "https://github.com/JPCOAR/schema/blob/master/2.0/", 
-            "schema": "https://github.com/JPCOAR/schema/blob/master/2.0/jpcoar_scm.xsd", 
+            "namespace": "https://github.com/JPCOAR/schema/blob/master/2.0/",
+            "schema": "https://github.com/JPCOAR/schema/blob/master/2.0/jpcoar_scm.xsd",
             "serializer": ("invenio_oaiserver.utils:dumps_etree", {"schema_type": "jpcoar"})
         }
     }
     mocker.patch("invenio_oaiserver.verbs.get_oai_metadata_formats",return_value=oai_metadata_formats)
-    
+
     validate_metadata_prefix("jpcoar")
-    
+
     with pytest.raises(ValidationError) as e:
         validate_metadata_prefix("not_oai")
     error = e.value
@@ -590,7 +590,7 @@ def test_validate_duplicate_argument(app):
     url = "/test?test_field1=test_value1"
     with app.test_request_context(url):
         validate_duplicate_argument("test_field1")
-    
+
     url = "/test?test_field1=test_value1&test_field1=test_value2"
     with app.test_request_context(url):
         with pytest.raises(ValidationError) as e:
@@ -598,13 +598,13 @@ def test_validate_duplicate_argument(app):
     error = e.value
     assert error.messages == ['Illegal duplicate of argument "test_field1".']
     assert error.field_names == ["test_field1"]
-    
+
 # .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_verbs.py::test_DateTime_from_iso_permissive -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
 def test_DateTime_from_iso_permissive():
     class TestScheme(Schema):
         date = DateTime(format="permissive")
     result = TestScheme().load({"date":"2023-02-10T12:01:10"})
-    
+
     assert result.data["date"].strftime("%Y-%m-%dT%H:%M:%S") == "2023-02-10T12:01:10"
     assert result.errors == {}
     def mock_import(name,globals=None, locals=None,fromlist=(),level=0):
@@ -631,13 +631,13 @@ def test_OAIScheme_validate(app):
         error = e.value
         assert error.messages == ["This is not a valid OAI-PMH verb:OAISchema"]
         assert error.field_names == ["verb"]
-        
+
         data = {"from_":"2023-01-01","until":"2022-01-01"}
         with pytest.raises(ValidationError) as e:
             TestSchema().validate(data)
         error = e.value
         assert error.messages == ['Date "from" must be before "until".']
-        
+
         # Set 'until' time to 23:59:59 when 'until' time is 00:00:00
         # You have passed too many arguments.
         data = {"until":datetime(2023,1,1)}
@@ -645,7 +645,7 @@ def test_OAIScheme_validate(app):
             TestSchema().validate(data)
         error = e.value
         assert error.messages == ["You have passed too many arguments."]
-    
+
     url = "/test?verb=test_verb&name=test_name"
     with app.test_request_context(url):
         data = {"until":"2023-01-01"}

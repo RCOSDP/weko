@@ -9,6 +9,7 @@
 """Test of image opener."""
 
 from __future__ import absolute_import, print_function
+from unittest.mock import patch
 
 from flask import make_response, current_app
 from invenio_iiif.previewer import can_preview, preview, previewable_extensions
@@ -41,32 +42,31 @@ def test_can_preview():
 
 #def preview(file):
 # .tox/c1/bin/pytest --cov=invenio_iiif tests/test_previewer.py::test_preview -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio_iiif/.tox/c1/tmp
-def test_preview(client,image_object,mocker):
+def test_preview(client,image_object):
     """Test preview."""
     url = "/api/iiif/v2/test.png/full/750,/0/default.jpg"
-    mocker.patch("invenio_iiif.previewer.ui_iiif_image_url",return_value=url)
-    mock_render = mocker.patch("invenio_iiif.previewer.render_template",return_value=make_response())
-    file = MockPreviewFile(image_object,"jpg")
-    result = preview(file)
-    assert result.status_code == 200
-    mock_render.assert_called_with(
-        "invenio_iiif/preview.html",
-        file=file,
-        file_url=url
-    )
-    
-    current_app.config.update(
-        IIIF_PREVIEWER_PARAMS={
-            'size': '750,',
-            'image_format': 'jpg'
-        }
-    )
-    mock_render = mocker.patch("invenio_iiif.previewer.render_template",return_value=make_response())
-    file = MockPreviewFile(image_object,"jpg")
-    result = preview(file)
-    assert result.status_code == 200
-    mock_render.assert_called_with(
-        "invenio_iiif/preview.html",
-        file=file,
-        file_url=url
-    )
+    with patch("invenio_iiif.previewer.ui_iiif_image_url",return_value=url):
+        with patch("invenio_iiif.previewer.render_template",return_value=make_response()) as mock_render:
+            file = MockPreviewFile(image_object,"jpg")
+            result = preview(file)
+            assert result.status_code == 200
+            mock_render.assert_called_with(
+                "invenio_iiif/preview.html",
+                file=file,
+                file_url=url
+            )
+        current_app.config.update(
+            IIIF_PREVIEWER_PARAMS={
+                'size': '750,',
+                'image_format': 'jpg'
+            }
+        )
+        with patch("invenio_iiif.previewer.render_template",return_value=make_response()) as mock_render:
+            file = MockPreviewFile(image_object,"jpg")
+            result = preview(file)
+            assert result.status_code == 200
+            mock_render.assert_called_with(
+                "invenio_iiif/preview.html",
+                file=file,
+                file_url=url
+            )

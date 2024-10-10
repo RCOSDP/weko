@@ -1,7 +1,7 @@
 
 import re
 import pytest
-from mock import patch
+from unittest.mock import patch
 import responses
 from datetime import datetime
 from weko_index_tree.models import Index
@@ -32,7 +32,7 @@ def test_list_records(app,db,sample_list_xml_no_sets,mocker):
     )
     source.save()
     db.session.commit()
-    
+
     mocker.patch("invenio_oaiharvester.api.get_info_by_oai_name",return_value=("http://export.arxiv.org/oai2","oai_dc","2023-01-10",""))
     url = "http://export.arxiv.org/oai2"
     responses.add(
@@ -41,11 +41,11 @@ def test_list_records(app,db,sample_list_xml_no_sets,mocker):
         body=sample_list_xml_no_sets,
         content_type='text/xml'
     )
-    
+
     request, records = list_records(metadata_prefix="oai_dc",name="arXiv",setspecs="")
-    
+
     assert len(records) == 150
-    
+
 # def get_records(identifiers, metadata_prefix=None, url=None, name=None,
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_api.py::test_get_records -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
 @responses.activate
@@ -68,7 +68,7 @@ def test_get_records(app,db,sample_record_xml,mocker):
     assert len(records) == 1
     data = records[0].metadata
     assert data["title"] == ["The Distribution of Star Formation and Metals in the Low Surface\\n  Brightness Galaxy UGC 628"]
-    
+
 
     # not url
     request, records = get_records(identifiers,metadata_prefix="oai_dc",name="test_name",encoding="utf-8")
@@ -78,7 +78,7 @@ def test_get_records(app,db,sample_record_xml,mocker):
     assert len(records) == 1
     data = records[0].metadata
     assert data["title"] == ["The Distribution of Star Formation and Metals in the Low Surface\\n  Brightness Galaxy UGC 628"]
-    
+
     ## metadata_prefix is None
     request, records = get_records(identifiers,metadata_prefix=None,name="test_name",encoding="utf-8")
     assert request.encoding == "utf-8"
@@ -91,9 +91,9 @@ def test_get_records(app,db,sample_record_xml,mocker):
     # not name and url
     with pytest.raises(NameOrUrlMissing):
         request, records = get_records(identifiers,metadata_prefix="oai_dc",url=None,name=None,encoding="utf-8")
-    
-    
-    
+
+
+
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_api.py::test_get_info_by_oai_name -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
 # def get_info_by_oai_name(name):
 def test_get_info_by_oai_name(app,db):
@@ -114,7 +114,7 @@ def test_get_info_by_oai_name(app,db):
         assert prefix == "test_prefix"
         assert lastrun == "2023-01-10"
         assert specs == "test_spec"
-    
+
 # def send_run_status_mail(harvesting, harvest_log):
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_api.py::test_send_run_status_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
 def test_send_run_status_mail(app,db,users,mocker):
@@ -140,9 +140,9 @@ def test_send_run_status_mail(app,db,users,mocker):
     db.session.add_all([difference_harvest,bulk_harvest])
     lang_setting = AdminLangSettings(lang_code="en",lang_name="English",)
     db.session.add(lang_setting)
-    
+
     db.session.commit()
-    
+
     success_logs = HarvestLogs(
         id=1,harvest_setting_id=1,status="Successful"
     )
@@ -160,7 +160,7 @@ def test_send_run_status_mail(app,db,users,mocker):
     )
     db.session.add_all([success_logs,suspended_logs,cancel_logs,failed_logs,running_logs])
     db.session.commit()
-    
+
     # status is Successful
     mock_send = mocker.patch("invenio_oaiharvester.api.send_mail")
     mock_render = mocker.patch("invenio_oaiharvester.api.render_template",return_value="test_data")
@@ -170,7 +170,7 @@ def test_send_run_status_mail(app,db,users,mocker):
     args,kwargs = mock_render.call_args
     assert kwargs["result_text"] == "Successful"
     assert kwargs["update_style"] == "Difference"
-    
+
     # status is Suspended
     mock_send = mocker.patch("invenio_oaiharvester.api.send_mail")
     mock_render = mocker.patch("invenio_oaiharvester.api.render_template",return_value="test_data")
@@ -180,7 +180,7 @@ def test_send_run_status_mail(app,db,users,mocker):
     args,kwargs = mock_render.call_args
     assert kwargs["result_text"] == "Suspended"
     assert kwargs["update_style"] == "Difference"
-    
+
     # status is Cancel
     mock_send = mocker.patch("invenio_oaiharvester.api.send_mail")
     mock_render = mocker.patch("invenio_oaiharvester.api.render_template",return_value="test_data")
@@ -190,7 +190,7 @@ def test_send_run_status_mail(app,db,users,mocker):
     args,kwargs = mock_render.call_args
     assert kwargs["result_text"] == "Cancel"
     assert kwargs["update_style"] == "Difference"
-    
+
     # status is Failed
     mock_send = mocker.patch("invenio_oaiharvester.api.send_mail")
     mock_render = mocker.patch("invenio_oaiharvester.api.render_template",return_value="test_data")
@@ -200,7 +200,7 @@ def test_send_run_status_mail(app,db,users,mocker):
     args,kwargs = mock_render.call_args
     assert kwargs["result_text"] == "Failed"
     assert kwargs["update_style"] == "Difference"
-    
+
     # status is Running
     mock_send = mocker.patch("invenio_oaiharvester.api.send_mail")
     mock_render = mocker.patch("invenio_oaiharvester.api.render_template",return_value="test_data")
@@ -210,7 +210,7 @@ def test_send_run_status_mail(app,db,users,mocker):
     args,kwargs = mock_render.call_args
     assert kwargs["result_text"] == "Running"
     assert kwargs["update_style"] == "Difference"
-    
+
     # harvest is bulk
     mock_send = mocker.patch("invenio_oaiharvester.api.send_mail")
     mock_render = mocker.patch("invenio_oaiharvester.api.render_template",return_value="test_data")
@@ -220,7 +220,7 @@ def test_send_run_status_mail(app,db,users,mocker):
     args,kwargs = mock_render.call_args
     assert kwargs["result_text"] == "Running"
     assert kwargs["update_style"] == "Bulk"
-    
+
     with patch("invenio_oaiharvester.api.send_mail",side_effect=Exception("test_error")):
         send_run_status_mail(bulk_harvest,running_logs)
 

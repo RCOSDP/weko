@@ -24,7 +24,9 @@ from invenio_access import InvenioAccess
 from invenio_access.models import ActionRoles, ActionUsers, Role
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.testutils import create_test_user
-from invenio_accounts.views import blueprint as accounts_blueprint
+# from invenio_accounts.views import blueprint as accounts_blueprint
+from invenio_accounts.views.rest import create_rest_blueprint
+from invenio_accounts.views.settings import create_settings_blueprint
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_db.utils import drop_alembic_version_table
@@ -81,7 +83,7 @@ def base_app():
         TESTING=True,
         # Celery 3
         CELERY_ALWAYS_EAGER=True,
-        CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
+        CELERY_EAGER_PROPAGATES=True,
         # Celery 4
         CELERY_TASK_ALWAYS_EAGER=True,
         CELERY_TASK_EAGER_PROPAGATES=True,
@@ -117,7 +119,9 @@ def app(base_app):
     InvenioI18N(base_app)
     InvenioAccounts(base_app)
     InvenioAccess(base_app)
-    base_app.register_blueprint(accounts_blueprint)
+    # base_app.register_blueprint(accounts_blueprint)
+    base_app.register_blueprint(create_rest_blueprint(base_app))
+    base_app.register_blueprint(create_settings_blueprint(base_app))
     InvenioFilesREST(base_app)
     base_app.register_blueprint(blueprint)
 
@@ -172,7 +176,7 @@ def dummy_s3_location(db):
     db.session.add(loc)
     db.session.commit()
     yield loc
-    
+
     shutil.rmtree(tmppath)
 
 
@@ -423,6 +427,14 @@ def get_json():
 
     return inner
 
+
+@pytest.fixture()
+def get_sha256():
+    """Get sha256 of data."""
+    def inner(data, prefix=True):
+        m = hashlib.sha256()
+        m.update(data)
+        return "sha256:{0}".format(m.hexdigest()) if prefix else m.hexdigest()
     return inner
 
 

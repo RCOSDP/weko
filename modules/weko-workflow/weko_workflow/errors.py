@@ -26,7 +26,6 @@
 from flask_babel import gettext as _
 from invenio_rest.errors import RESTException
 
-
 class ActivityBaseRESTError(RESTException):
     """Invalid argument."""
 

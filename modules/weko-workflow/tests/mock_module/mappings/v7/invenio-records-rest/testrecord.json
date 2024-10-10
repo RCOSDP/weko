@@ -1,0 +1,41 @@
+{
+  "mappings": {
+    "testrecord": {
+      "properties": {
+        "control_number": {
+          "type": "keyword"
+        },
+        "stars": {
+          "type": "long"
+        },
+        "title": {
+          "type": "text"
+        },
+        "year": {
+          "type": "long",
+          "copy_to": "yearctx"
+        },
+        "yearctx": {
+          "type": "keyword"
+        },
+        "suggest_title": {
+          "type": "completion",
+          "analyzer": "simple",
+          "search_analyzer": "simple"
+        },
+        "suggest_byyear": {
+          "type": "completion",
+          "analyzer": "simple",
+          "search_analyzer": "simple",
+          "contexts": [
+            {
+              "name": "year",
+              "type": "category",
+              "path": "yearctx"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

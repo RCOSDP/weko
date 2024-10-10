@@ -10,7 +10,7 @@
 import copy
 import pytest
 import json
-from mock import patch
+from unittest.mock import patch
 from datetime import datetime
 from flask import url_for, make_response
 from flask_admin import Admin, menu
@@ -25,7 +25,7 @@ from invenio_oaiharvester.models import HarvestSettings,HarvestLogs
 
 def test_admin(app, db):
     """Test Flask-Admin interace."""
-    
+
     admin = Admin(app, name='Test')
 
     assert 'model' in harvest_admin_view
@@ -147,17 +147,17 @@ def test_run_stats(app,db):
     class MockM:
         def __init__(self,id):
             self.id=id
-    
+
     test_func = run_stats()
     result = test_func(None,None,MockM(1),None)
     assert result == "Harvesting is not running"
-    
+
     result = test_func(None,None,MockM(2),None)
     assert result == "Harvesting is paused with resumption token: test_token"
-    
+
     result = test_func(None,None,MockM(3),None)
     assert result == "Harvesting is running at task id:test_task</br>1 items processed"
-    
+
 
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_admin.py::test_control_btns -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
 def test_control_btns(app,db):
@@ -168,7 +168,7 @@ def test_control_btns(app,db):
     model = copy_adminview.pop('model')
     view = copy_adminview.pop('modelview')
     admin.add_view(view(model, db.session, **copy_adminview))
-    
+
     index = Index()
     db.session.add(index)
     db.session.commit()
@@ -199,21 +199,21 @@ def test_control_btns(app,db):
     )
     db.session.add_all([not_task,resumption,task])
     db.session.commit()
-    
+
     class MockM:
         def __init__(self,id):
             self.id=id
-    
+
     test_func = control_btns()
     # task_id is None, resumption_token is None
     result = test_func(None,None,MockM(1),None)
     assert result == '<a id="hvt-btn" class="btn btn-primary" href="http://test_server/admin/harvestsettings/run/?id=1">Run</a>'
-    
+
     # task_id is None, resumption_token is not None
     result = test_func(None,None,MockM(2),None)
     assert result == '<a id="resume-btn" class="btn btn-primary" href="http://test_server/admin/harvestsettings/run/?id=2">Resume</a>'\
                      '<a id="clear-btn" class="btn btn-danger" href="http://test_server/admin/harvestsettings/clear/?id=2">Clear</a>'
-    
+
     # task_id is not None, resumption_token is not None
     result = test_func(None,None,MockM(3),None)
     assert result == '<a id="pause-btn" class="btn btn-warning" href="http://test_server/admin/harvestsettings/pause/?id=3">Pause</a>'
@@ -234,21 +234,21 @@ def setup_admin(app,db,users):
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_admin.py::TestHarvestSettingView -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
 class TestHarvestSettingView:
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_admin.py::TestHarvestSettingView::test_run -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
-    def test_run(self,app,db,setup_admin,users,mocker):
+    def test_run(self,app,db,setup_admin,users):
         url = url_for("harvestsettings.run",id=1)
         class MockTask:
             @classmethod
             def s(self):
                 pass
-        mocker.patch("invenio_oaiharvester.admin.link_success_handler",side_effect=MockTask)
-        mocker.patch("invenio_oaiharvester.admin.link_error_handler",side_effect=MockTask)
+        patch("invenio_oaiharvester.admin.link_success_handler",side_effect=MockTask)
+        patch("invenio_oaiharvester.admin.link_error_handler",side_effect=MockTask)
         headers = {
             "User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
             "Referer":"http://test.org"
         }
         with app.test_client() as client:
-            mock_run = mocker.patch("invenio_oaiharvester.admin.run_harvesting.apply_async")
-            mock_redirect = mocker.patch("invenio_oaiharvester.admin.redirect",return_value=make_response())
+            mock_run = patch("invenio_oaiharvester.admin.run_harvesting.apply_async")
+            mock_redirect = patch("invenio_oaiharvester.admin.redirect",return_value=make_response())
             res = client.get(url,headers=headers)
             assert res.status_code == 200
             args, kwargs = mock_run.call_args
@@ -258,7 +258,7 @@ class TestHarvestSettingView:
             mock_redirect.assert_called_with("/admin/harvestsettings/details/?id=1")
 
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_admin.py::TestHarvestSettingView::test_pause -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
-    def test_pause(self,app,db,setup_admin,mocker):
+    def test_pause(self,app,db,setup_admin):
         url = url_for("harvestsettings.pause",id=1)
         index = Index()
         db.session.add(index)
@@ -275,15 +275,15 @@ class TestHarvestSettingView:
         db.session.commit()
 
         with app.test_client() as client:
-            mock_revoke = mocker.patch("invenio_oaiharvester.admin.celery.current_app.control.revoke")
-            mock_redirect = mocker.patch("invenio_oaiharvester.admin.redirect",return_value=make_response())
+            mock_revoke = patch("invenio_oaiharvester.admin.celery.current_app.control.revoke")
+            mock_redirect = patch("invenio_oaiharvester.admin.redirect",return_value=make_response())
             res = client.get(url)
             assert res.status_code == 200
             mock_revoke.assert_called_with("test_task",terminate=True)
             mock_redirect.assert_called_with("/admin/harvestsettings/details/?id=1")
-    
+
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_admin.py::TestHarvestSettingView::test_clear -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
-    def test_clear(self,app,db,setup_admin,mocker):
+    def test_clear(self,app,db,setup_admin):
         url = url_for("harvestsettings.clear",id=1)
         index = Index()
         db.session.add(index)
@@ -302,11 +302,11 @@ class TestHarvestSettingView:
         )
         db.session.add(logs)
         db.session.commit()
-        
-        mocker.patch("invenio_oaiharvester.admin.send_run_status_mail")
-        
+
+        patch("invenio_oaiharvester.admin.send_run_status_mail")
+
         with app.test_client() as client:
-            mock_redirect = mocker.patch("invenio_oaiharvester.admin.redirect",return_value=make_response())
+            mock_redirect = patch("invenio_oaiharvester.admin.redirect",return_value=make_response())
             res = client.get(url)
             assert res.status_code == 200
             mock_redirect.assert_called_with("/admin/harvestsettings/details/?id=1")
@@ -314,7 +314,7 @@ class TestHarvestSettingView:
             assert harvesting.task_id == None
             logs = HarvestLogs.query.filter_by(id=1).first()
             assert logs.status == "Cancel"
-    
+
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_admin.py::TestHarvestSettingView::test_get_logs -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
     def test_get_logs(self,app,db,setup_admin):
         url = url_for("harvestsettings.get_logs",id=1)
@@ -329,7 +329,7 @@ class TestHarvestSettingView:
         )
         db.session.add_all([logs1,logs2])
         db.session.commit()
-        
+
         with app.test_client() as client:
             test = [
                 {"counter":{},"end_time":None,"errmsg":None,"harvest_setting_id":1,"id":2,"requrl":None,"setting":{},"start_time":"2021-01-10T20:22:33+09:00","status":"Running"},
@@ -355,7 +355,7 @@ class TestHarvestSettingView:
             assert result == {"test_setting":"values"}
 
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_admin.py::TestHarvestSettingView::test_set_schedule -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
-    def test_set_schedule(self,app,db,setup_admin,mocker):
+    def test_set_schedule(self,app,db,setup_admin):
         url = url_for("harvestsettings.set_schedule",id=1)
         index = Index()
         db.session.add(index)
@@ -372,12 +372,12 @@ class TestHarvestSettingView:
         db.session.commit()
 
         with app.test_client() as client:
-            
+
             data = {
                 "dis_enable_schedule":"True",
                 "frequency":"daily"
             }
-            mock_redirect = mocker.patch("invenio_oaiharvester.admin.redirect",return_value=make_response())
+            mock_redirect = patch("invenio_oaiharvester.admin.redirect",return_value=make_response())
             res = client.post(url, data=data)
             assert res.status_code == 200
             mock_redirect.assert_called_with("/admin/harvestsettings/edit/?id=1")
@@ -390,7 +390,7 @@ class TestHarvestSettingView:
                 "frequency":"weekly",
                 "weekly_details":1
             }
-            mock_redirect = mocker.patch("invenio_oaiharvester.admin.redirect",return_value=make_response())
+            mock_redirect = patch("invenio_oaiharvester.admin.redirect",return_value=make_response())
             res = client.post(url, data=data)
             assert res.status_code == 200
             mock_redirect.assert_called_with("/admin/harvestsettings/edit/?id=1")
@@ -398,13 +398,13 @@ class TestHarvestSettingView:
             assert setting.schedule_enable == False
             assert setting.schedule_frequency == "weekly"
             assert setting.schedule_details == 1
-            
+
             data = {
                 "dis_enable_schedule":"True",
                 "frequency":"monthly",
                 "monthly_details":2
             }
-            mock_redirect = mocker.patch("invenio_oaiharvester.admin.redirect",return_value=make_response())
+            mock_redirect = patch("invenio_oaiharvester.admin.redirect",return_value=make_response())
             res = client.post(url, data=data)
             assert res.status_code == 200
             mock_redirect.assert_called_with("/admin/harvestsettings/edit/?id=1")

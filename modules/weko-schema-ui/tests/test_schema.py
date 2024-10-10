@@ -14,7 +14,8 @@ from flask import current_app
 from weko_schema_ui.models import OAIServerSchema
 import json
 import copy
-from collections import Iterable, OrderedDict
+from collections import OrderedDict
+from collections.abc import Iterable
 from werkzeug.exceptions import BadRequest
 from redis.exceptions import RedisError
 from unittest.mock import patch,Mock

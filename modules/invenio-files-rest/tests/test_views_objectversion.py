@@ -15,7 +15,7 @@ from unittest.mock import patch
 import pytest
 from flask import url_for
 from fs.opener import open_fs as opendir
-from tests.testutils import BadBytesIO, login_user
+from .testutils import BadBytesIO, login_user
 
 from invenio_files_rest.models import FileInstance, ObjectVersion
 from invenio_files_rest.tasks import remove_file_data

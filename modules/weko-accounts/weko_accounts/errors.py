@@ -60,3 +60,56 @@ class DisabledUserError(RESTException):
 
     code = 403
     description = 'Account is disabled.'
+
+
+"""Custom errors for weko assounts."""
+
+class WekoAccountsError(Exception):
+    """Super class for all weko accounts errors.
+
+    Attributes:
+        exception (Exception, Optional): Original exception object.
+        msg (str): Error message.
+    """
+    def __init__(self, ex=None, msg=None, *args):
+        """Constructor.
+
+        Initialize the weko assounts error.
+
+        Args:
+            ex (Exception, Optional): Original exception object
+            msg (str, Optional): Error message
+        """
+        if ex is not None:
+            self.exception = ex
+        if msg is None:
+            msg = "Some error has occurred in weko_accounts."
+        self.msg = msg
+        super().__init__(msg, *args)
+
+
+class WekoAccountsShibSettingError(WekoAccountsError):
+    """Setting of Shibboleth users error in weko accounts
+
+    Attributes:
+        exception (Exception, Optional): Original exception object.
+        msg (str): Error message
+    """
+    def __init__(self, ex=None, msg=None, *args):
+        if msg is None:
+            msg = "Some shibboleth setting error has occurred in weko_accounts."
+        super().__init__(ex, msg, *args)
+
+
+class WekoAccountsShibUserError(WekoAccountsError):
+    """Shibboleth user error in weko accounts.
+
+    Attributes:
+        exception (Exception, Optional): Original exception object.
+        msg (str): Error message
+    """
+    def __init__(self, ex=None, msg=None, *args):
+        if msg is None:
+            msg = "Some shibboleth user error has occurred in weko_accounts."
+        super().__init__(ex, msg, *args)
+

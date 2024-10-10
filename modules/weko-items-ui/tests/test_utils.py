@@ -10,7 +10,8 @@ import copy
 import tempfile
 from uuid import UUID
 from dictdiffer import diff, patch, swap, revert
-from elasticsearch import exceptions as es_exceptions
+# from elasticsearch import exceptions as es_exceptions
+from invenio_search.engine import search
 import uuid
 
 import pytest
@@ -21,10 +22,9 @@ from weko_redis.redis import RedisConnection
 from invenio_accounts.testutils import login_user_via_session
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from jsonschema import SchemaError, ValidationError
-from mock import patch
+from unittest.mock import patch
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
-from weko_workflow.api import WorkActivity
 from weko_user_profiles.models import UserProfile
 from weko_admin.models import SessionLifetime,RankingSettings
 from weko_workflow.models import (
@@ -8714,7 +8714,7 @@ def test_translate_schema_form(db_itemtype):
     assert list(_diff)==[]
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_WekoQueryRankingHelper_get -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_WekoQueryRankingHelper_get(app, users, db_records,esindex,mocker):
+def test_WekoQueryRankingHelper_get(app, users, db_records,esindex):
     data = {
         "aggregations": {
             "my_buckets": {
@@ -8760,7 +8760,7 @@ def test_WekoQueryRankingHelper_get(app, users, db_records,esindex,mocker):
         assert result == []
     
     # raise NotFoundError
-    with patch("invenio_stats.queries.ESWekoRankingQuery.run",side_effect=es_exceptions.NotFoundError(404,"test_error")):
+    with patch("invenio_stats.queries.ESWekoRankingQuery.run",side_effect=search.OpenSearchException.NotFoundError(404,"test_error")):
         result = WekoQueryRankingHelper.get(
             start_date="2023-08-19",
             end_date="2023-09-01",
@@ -8774,17 +8774,17 @@ def test_WekoQueryRankingHelper_get(app, users, db_records,esindex,mocker):
         
 # def get_ranking(settings):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_ranking -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_ranking(app, users, db_records, db_ranking, esindex,mocker):
+def test_get_ranking(app, users, db_records, db_ranking, esindex):
     index_json = [
         {"children":[],"cid":1,"pid":0,"name":"Index(public_state = True,harvest_public_state = True)","id":"1"},
         {"children":[],"cid":2,"pid":0,"name":"Index(public_state = True,harvest_public_state = False)","id":"2"},
         {"children":[],"cid":3,"pid":0,"name":"Index(public_state = False,harvest_public_state = True)","id":"3"},
         {"children":[],"cid":4,"pid":0,"name":"Index(public_state = False,harvest_public_state = False)","id":"4"}
     ]
-    mocker.patch("weko_items_ui.utils.Indexes.get_browsing_tree_ignore_more",return_value=index_json)
-    mocker.patch("weko_items_ui.utils.get_options_and_order_list", return_value=(None, None))
-    mocker.patch("weko_items_ui.utils.get_hide_list_by_schema_form", return_value=[])
-    mocker.patch("weko_deposit.api.WekoRecord.switching_language", return_value="test")
+    patch("weko_items_ui.utils.Indexes.get_browsing_tree_ignore_more",return_value=index_json)
+    patch("weko_items_ui.utils.get_options_and_order_list", return_value=(None, None))
+    patch("weko_items_ui.utils.get_hide_list_by_schema_form", return_value=[])
+    patch("weko_deposit.api.WekoRecord.switching_language", return_value="test")
     data = [{'key': '3', 'count': 5}, {'key': '1', 'count': 4}, {'key': '4', 'count': 2}]
     with patch("weko_items_ui.utils.WekoQueryRankingHelper.get", return_value=data):
         settings = db_ranking['settings']
@@ -9608,6 +9608,8 @@ def test_save_title(app, db_itemtype, db_workflow, db_records, users):
         "endpoints": {"initialization": "/api/deposits/redirect/1.0"},
     }
     save_title("A-00000000-00000", request_data)
+    # Need to import here to avoid circular import
+    from weko_workflow.api import WorkActivity
     activity = WorkActivity()
     db_activity = activity.get_activity_detail("A-00000000-00000")
     assert (

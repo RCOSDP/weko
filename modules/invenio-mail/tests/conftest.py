@@ -20,7 +20,7 @@ from flask_celeryext import FlaskCeleryExt
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from six import StringIO
-from flask_babelex import Babel
+from flask_babel import Babel
 
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
@@ -33,6 +33,7 @@ from invenio_access.models import ActionUsers,ActionRoles
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import User, Role
 from invenio_accounts.testutils import create_test_user
+from invenio_i18n import InvenioI18N
 
 from invenio_mail import InvenioMail, config
 from invenio_mail.admin import mail_adminview
@@ -45,7 +46,7 @@ def instance_path():
     path = tempfile.mkdtemp()
     yield path
     shutil.rmtree(path)
-    
+
 @pytest.fixture()
 def base_app(instance_path):
     app_ = Flask('testapp', instance_path=instance_path)
@@ -55,6 +56,7 @@ def base_app(instance_path):
         SERVER_NAME='app',
         SQLALCHEMY_DATABASE_URI=os.environ.get(
              'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        SECURITY_PASSWORD_SINGLE_HASH=False
         #SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
         #                                  'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
     )
@@ -62,14 +64,15 @@ def base_app(instance_path):
     InvenioDB(app_)
     InvenioAccounts(app_)
     InvenioAccess(app_)
+    InvenioI18N(app_)
     InvenioMail(app_)
-    
+
     app_.jinja_loader.searchpath.append('tests/templates')
     admin = Admin(app_)
     view_class = mail_adminview['view_class']
     admin.add_view(view_class(**mail_adminview['kwargs']))
-    
-    
+
+
     return app_
 
 @pytest.yield_fixture()
@@ -82,7 +85,7 @@ def app(base_app):
 def client(app):
     with app.test_client() as client:
         yield client
-        
+
 @pytest.yield_fixture()
 def db(app):
     """Database fixture."""
@@ -119,7 +122,7 @@ def users(app, db):
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
         student = User.query.filter_by(email='student@test.org').first()
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -234,7 +237,7 @@ def mail_configs(db):
         id=1,
         mail_server="localhost",
         mail_port=25,
-        
+
     )
     db.session.add(config)
     db.session.commit()
@@ -279,7 +282,7 @@ def email_task_app(request):
         CELERY_ALWAYS_EAGER=True,
         CELERY_RESULT_BACKEND="cache",
         CELERY_CACHE_BACKEND="memory",
-        CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
+        CELERY_EAGER_PROPAGATES=True,
         MAIL_SUPPRESS_SEND=True,
         MAIL_MAX_ATTACHMENT_SIZE=30,
     )

@@ -43,7 +43,7 @@ def test_init():
     assert "invenio-mail" in app.extensions
 
 # .tox/c1/bin/pytest --cov=invenio_mail tests/test_invenio_mail.py::test_init -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
-def test_init(mocker):
+def test_init():
     """Test extension initialization."""
     app = Flask('testapp')
     ext = InvenioMail(app)
@@ -54,7 +54,7 @@ def test_init(mocker):
     assert 'invenio-mail' not in app.extensions
     ext.init_app(app)
     assert 'invenio-mail' in app.extensions
-    
+
     # exist mail in app.extentions
     app = Flask('testapp')
     Mail(app)

@@ -26,7 +26,8 @@ import pytest
 import uuid
 from flask import url_for
 from mock import patch, MagicMock
-from elasticsearch.exceptions import NotFoundError
+# from elasticsearch.exceptions import NotFoundError
+from invenio_search.engine import search
 from invenio_indexer.api import RecordIndexer
 
 from invenio_accounts.testutils import login_user_via_session
@@ -95,7 +96,7 @@ def test_create_acl_guest(client):
     (5,False), # originalroleuser
     (6,True), # originalroleuser2
     (7,False), # user
-    (8,False), # student  
+    (8,False), # student
 ])
 def test_create_acl_users(client, users, index, is_permission):
     url = url_for("weko_authors.create")
@@ -142,7 +143,7 @@ def test_create(client, users, esindex):
     res = client.post(url, content_type="plain/text")
     assert res.status_code==200
     assert get_json(res) == {"msg":"Header Error"}
-    
+
     # success create
 
     es_id = uuid.uuid4()
@@ -157,9 +158,10 @@ def test_create(client, users, esindex):
             author = Authors.query.filter_by(id=pk_id).one()
             assert author
             assert type(author.json) == dict
-            res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
+            # res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
+            res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],id=str(es_id))
             assert res["_source"]["pk_id"] == str(pk_id)
-    
+
     # raise Exception
     es_id = uuid.uuid4()
     pk_id=11
@@ -169,18 +171,19 @@ def test_create(client, users, esindex):
                 res = client.post(url,
                   data=json.dumps(input),
                   content_type='application/json')
-                
+
                 assert res.status_code==500
                 assert get_json(res) == {"msg":"Failed"}
                 assert Authors.query.filter_by(id=pk_id).one_or_none() == None
-                with pytest.raises(NotFoundError):
-                    res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
-            
-            
-    
-    
-    
-    
+                with pytest.raises(search.NotFound):
+                    # res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
+                    res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],id=str(es_id))
+
+
+
+
+
+
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_update_author_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_update_author_acl_guest(client):
     """
@@ -202,7 +205,7 @@ def test_update_author_acl_guest(client):
     (5,False), # originalroleuser
     (6,True), # originalroleuser2
     (7,False), # user
-    (8,False), # student  
+    (8,False), # student
 ])
 def test_update_author_acl_users(client, users, index, is_permission):
     url = url_for("weko_authors.update_author")
@@ -246,9 +249,10 @@ def test_update_author(client, db, users, esindex, create_author):
         author = Authors.query.filter_by(id=id).one()
         assert author
         assert author.json["authorNameInfo"][0]["firstName"] == "タロウ"
-        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+        # res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],id=es_id)
         assert res["_source"]["authorNameInfo"][0]["firstName"] == "タロウ"
-    
+
     # failed update
     id = 2
     es_id = create_author(json.loads(json.dumps(test_data)), id)
@@ -269,10 +273,11 @@ def test_update_author(client, db, users, esindex, create_author):
         author = Authors.query.filter_by(id=id).one()
         assert author
         assert author.json["authorNameInfo"][0]["firstName"] == "ハナコ"
-        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+        # res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],id=es_id)
         assert res["_source"]["authorNameInfo"][0]["firstName"] == "ハナコ"
-        
-    
+
+
     # content_type is not json
     res = client.post(url, content_type="plain/text")
     assert res.status_code == 200
@@ -299,20 +304,20 @@ def test_delete_author_acl_guest(client):
     (5,False), # originalroleuser
     (6,True), # originalroleuser2
     (7,False), # user
-    (8,False), # student  
+    (8,False), # student
 ])
 def test_delete_author_acl_users(client, users, index, is_permission):
     url = url_for("weko_authors.delete_author")
     login_user_via_session(client=client, email=users[index]['email'])
     res = client.post(url, content_type="plain/text")
     assert_role(res, is_permission)
-    
+
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_delete_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 @pytest.mark.parametrize('base_app',[dict(
     is_es=True
 )],indirect=['base_app'])
-def test_delete_author(client, db,users, esindex, create_author, mocker):
+def test_delete_author(client, db,users, esindex, create_author):
     """
     Test of delete author data.
     :param client: The flask client.
@@ -323,33 +328,35 @@ def test_delete_author(client, db,users, esindex, create_author, mocker):
         "emailInfo": [{"email": "example@com"}],
         "is_deleted":"false"
     }
-    
-    
+
+
     login_user_via_session(client=client, email=users[0]['email'])
     url = url_for("weko_authors.delete_author")
-    mocker.patch("weko_authors.views.get_count_item_link", return_value=0)
-    
+    patch("weko_authors.views.get_count_item_link", return_value=0)
+
     id = 1
     es_id = create_author(json.loads(json.dumps(test_data)), id)
-    
+
     input = {"pk_id": str(id),"Id":es_id}
     res = client.post(url,json=input)
     assert res.status_code == 200
     result = Authors.query.filter_by(id=id).one()
     assert result.is_deleted == True
-    res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+    # res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+    res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],id=es_id)
     assert res["_source"]["is_deleted"] == "true"
-    
+
     id = 2
     es_id = create_author(json.loads(json.dumps(test_data)), id)
-    
+
     with patch("weko_authors.db.session.commit",side_effect=Exception("test_error")):
         input = {"pk_id": str(id),"Id":es_id}
         res = client.post(url,json=input)
         assert res.status_code == 200
         result = Authors.query.filter_by(id=id).one()
         assert result.is_deleted == False
-        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+        # res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],id=es_id)
         assert res["_source"]["is_deleted"] == "false"
 
     # author is linked to items
@@ -363,10 +370,10 @@ def test_delete_author(client, db,users, esindex, create_author, mocker):
     res = client.post(url, content_type="plain/text")
     assert res.status_code == 200
     assert get_json(res) == {"msg": "Header Error"}
-    
 
-        
-    
+
+
+
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_get_acl_guest(client):
     """
@@ -388,7 +395,7 @@ def test_get_acl_guest(client):
     (5,False), # originalroleuser
     (6,True), # originalroleuser2
     (7,False), # user
-    (8,False), # student  
+    (8,False), # student
 ])
 def test_get_acl_users(client, users, index, is_permission):
     url = url_for("weko_authors.get")
@@ -406,11 +413,12 @@ def test_get(client, users):
     class MockClient():
         def __init__(self,data):
             self.data = data
-        def search(self,index=None,doc_type=None, body=None):
+        # def search(self,index=None,doc_type=None, body=None):
+        def search(self,index=None, body=None):
             return self.data[index]
     url = url_for("weko_authors.get")
     login_user_via_session(client=client, email=users[0]['email'])
-    
+
     # not exist searchKey, sortKey, sortOrder
     input = {"searchKey": "", "pageNumber": 1, "numOfPage": 25,
              "sortKey": "", "sortOrder": ""}
@@ -434,7 +442,7 @@ def test_get(client, users):
         res = client.post(url, json=input)
         assert res.status_code == 200
         assert get_json(res) == test
-    
+
     input = {"searchKey": "test_key", "pageNumber": 1, "numOfPage": 25,
              "sortKey": "test_sort", "sortOrder": "test_order"}
     data = {
@@ -477,7 +485,7 @@ def test_getById_acl_guest(client):
     (5,False), # originalroleuser
     (6,True), # originalroleuser2
     (7,False), # user
-    (8,False), # student  
+    (8,False), # student
 ])
 def test_getById_acl_users(client,users, index, is_permission):
     url = url_for("weko_authors.getById")
@@ -487,7 +495,7 @@ def test_getById_acl_users(client,users, index, is_permission):
         assert_role(res, is_permission)
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_getById -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_getById(client, users, mocker):
+def test_getById(client, users):
     """
     Test of get author data by id.
     :param client: The flask client.
@@ -495,21 +503,22 @@ def test_getById(client, users, mocker):
     class MockClient:
         def __init__(self,data):
             self.data = data
-        def search(self,index=None,doc_type=None,body=None):
+        # def search(self,index=None,doc_type=None,body=None):
+        def search(self,index=None,body=None):
             return self.data
     login_user_via_session(client=client, email=users[0]['email'])
     url = url_for("weko_authors.getById")
 
     record_indexer = RecordIndexer()
     record_indexer.client=MockClient({"test":"test_search_result"})
-    mocker.patch("weko_authors.views.RecordIndexer",return_value=record_indexer)
-    
+    patch("weko_authors.views.RecordIndexer",return_value=record_indexer)
+
     # search_key is none
     input = {}
     res = client.post(url, json=input)
     assert res.status_code == 200
     assert res.get_data().decode("utf-8") == '{"test": "test_search_result"}'
-    
+
     # search_key is not noen
     input = {"Id":"test_id"}
     res = client.post(url, json=input)
@@ -537,7 +546,7 @@ def test_mapping_acl_guest(client):
     (5,False), # originalroleuser
     (6,True), # originalroleuser2
     (7,False), # user
-    (8,False), # student  
+    (8,False), # student
 ])
 def test_mapping_acl_users(client, users, index, is_permission):
     url = url_for("weko_authors.mapping")
@@ -558,7 +567,8 @@ def test_mapping(client, users, authors_prefix_settings, authors_affiliation_set
     class MockClient:
         def __init__(self, value):
             self.data = value
-        def get(self,index=None,doc_type=None,id=None):
+        # def get(self,index=None,doc_type=None,id=None):
+        def get(self,index=None,id=None):
             return self.data
     input = {"id": "1"}
     data = {
@@ -679,7 +689,7 @@ def test_mapping(client, users, authors_prefix_settings, authors_affiliation_set
         res = client.post(url,json=input)
         assert res.status_code == 200
         assert json.loads(res.get_data().decode("utf-8"))==test
-        
+
     data = {"_source": {"authorNameInfo": {},
                                 "authorIdInfo": {},
                                 "emailInfo": {},
@@ -731,7 +741,7 @@ def test_gatherById_acl_guest(client):
     (5,False), # originalroleuser
     (6,True), # originalroleuser2
     (7,False), # user
-    (8,False), # student  
+    (8,False), # student
 ])
 def test_gatherById_acl_users(client, users, index, is_permission):
     """
@@ -751,22 +761,23 @@ def test_gatherById_acl_users(client, users, index, is_permission):
 def test_gatherById(client, users, authors):
     url = url_for("weko_authors.gatherById")
     login_user_via_session(client=client, email=users[0]['email'])
-    
+
     class MockClient:
         def __init__(self, value):
             self.data = value
         def search(self,index=None, body=None):
             id = body["query"]["match"]["_id"]
             return self.data[index][id]
-        def update(self,index=None,doc_type=None,id=None,body=None):
+        # def update(self,index=None,doc_type=None,id=None,body=None):
+        def update(self,index=None,id=None,body=None):
             pass
-    
+
     input = {
         "idFrom":["1","2"],
         "idFromPkId":["1","2"],
         "idTo":"3"
     }
-    
+
     # raise Exception
     with patch("weko_authors.views.db.session.commit", side_effect=Exception("test_error")):
         res = client.post(url, json=input)
@@ -774,7 +785,7 @@ def test_gatherById(client, users, authors):
         assert json.loads(res.data) == {"code": 204, "msg": "Failed"}
         assert Authors.query.filter_by(id="1").one().gather_flg == 0
         assert Authors.query.filter_by(id="2").one().gather_flg == 0
-    
+
     input = {
         "idFrom":["1","2"],
         "idFromPkId":["1","2"],
@@ -812,7 +823,7 @@ def test_get_prefix_list_acl_guest(client):
     (5,False), # originalroleuser
     (6,True), # originalroleuser2
     (7,False), # user
-    (8,False), # student  
+    (8,False), # student
 ])
 def test_get_prefix_list_acl_users(client, users, authors_prefix_settings, index, is_permission):
     url = url_for("weko_authors.get_prefix_list")
@@ -820,21 +831,21 @@ def test_get_prefix_list_acl_users(client, users, authors_prefix_settings, index
 
     res = client.get(url)
     assert_role(res, is_permission)
-    
+
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_prefix_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_get_prefix_list(client, db, users):
     url = url_for("weko_authors.get_prefix_list")
     login_user_via_session(client=client, email=users[0]['email'])
-    
+
     # not exist settings
     res = client.get(url)
     assert res.status_code == 200
     assert get_json(res) == []
-    
+
     orcid = AuthorsPrefixSettings(name="ORCID",scheme="ORCID",url="https://orcid.org/##")
     db.session.add(orcid)
     db.session.commit()
-    
+
     res = client.get(url)
     assert res.status_code == 200
     result = get_json(res)[0]
@@ -842,7 +853,7 @@ def test_get_prefix_list(client, db, users):
     assert result["scheme"] == "ORCID"
     assert result["url"] == "https://orcid.org/##"
     assert result["id"] == 1
-    
+
 
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_affiliation_list_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -862,7 +873,7 @@ def test_get_affiliation_list_acl_guest(client):
     (5,False), # originalroleuser
     (6,True), # originalroleuser2
     (7,False), # user
-    (8,False), # student  
+    (8,False), # student
 ])
 def test_get_affiliation_list_acl_users(client, users, authors_prefix_settings, index, is_permission):
     url = url_for("weko_authors.get_affiliation_list")
@@ -870,21 +881,21 @@ def test_get_affiliation_list_acl_users(client, users, authors_prefix_settings, 
 
     res = client.get(url)
     assert_role(res, is_permission)
-    
+
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_affiliation_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_get_affiliation_list(client, db, users):
     url = url_for("weko_authors.get_affiliation_list")
     login_user_via_session(client=client, email=users[0]['email'])
-    
+
     # not exist settings
     res = client.get(url)
     assert res.status_code == 200
     assert get_json(res) == []
-    
+
     orcid = AuthorsAffiliationSettings(name="ISNI",scheme="ISNI",url="http://www.isni.org/isni/##")
     db.session.add(orcid)
     db.session.commit()
-    
+
     res = client.get(url)
     assert res.status_code == 200
     result = get_json(res)[0]
@@ -892,7 +903,7 @@ def test_get_affiliation_list(client, db, users):
     assert result["scheme"] == "ISNI"
     assert result["url"] == "http://www.isni.org/isni/##"
     assert result["id"] == 1
-    
+
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_list_schema_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_get_list_schema_acl_guest(client):
     url = url_for("weko_authors.get_list_schema")
@@ -910,7 +921,7 @@ def test_get_list_schema_acl_guest(client):
     (5,False), # originalroleuser
     (6,True), # originalroleuser2
     (7,False), # user
-    (8,False), # student  
+    (8,False), # student
 ])
 def test_get_list_schema_acl_users(client, users, index, is_permission):
     url = url_for("weko_authors.get_list_schema")
@@ -928,8 +939,8 @@ def test_get_list_schema(client, users):
     }
     res = client.get(url)
     assert get_json(res) == test
-    
-    
+
+
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_list_affiliation_schema_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_get_list_affiliation_schema_acl_guest(client):
     url = url_for("weko_authors.get_list_affiliation_schema")
@@ -947,7 +958,7 @@ def test_get_list_affiliation_schema_acl_guest(client):
     (5,False), # originalroleuser
     (6,True), # originalroleuser2
     (7,False), # user
-    (8,False), # student  
+    (8,False), # student
 ])
 def test_get_list_affiliation_schema_acl_users(client, users, index, is_permission):
     url = url_for("weko_authors.get_list_affiliation_schema")
@@ -988,7 +999,7 @@ def test_update_prefix_acl_guest(client):
     (5,False), # originalroleuser
     (6,True), # originalroleuser2
     (7,False), # user
-    (8,False), # student  
+    (8,False), # student
 ])
 def test_update_prefix_acl_users(client, users, authors_prefix_settings, index, is_permission):
     """
@@ -1006,7 +1017,7 @@ def test_update_prefix_acl_users(client, users, authors_prefix_settings, index, 
 def test_update_prefix(client, users, authors_prefix_settings):
     url = url_for("weko_authors.update_prefix")
     login_user_via_session(client=client, email=users[0]['email'])
-    
+
     # try to update the scheme of setting with ORCID in scheme to a non-existing scheme
     id = 2
     input = {"id":id,"scheme":"None","name":"none_name","url":"https://test_none/##"}
@@ -1016,13 +1027,13 @@ def test_update_prefix(client, users, authors_prefix_settings):
     assert result.name == "none_name"
     assert result.url == "https://test_none/##"
     assert get_json(res) == {"code":200,"msg":'Success'}
-    
+
     # try to update the scheme of setting with KAKEN2 in scheme to a existing scheme
     id = 4
     input = {"id":id,"scheme":"CiNii","name":"CiNii","url":"https://new_url/##"}
     res = client.post(url,json=input)
     assert get_json(res) == {"code":400,"msg":'Specified scheme is already exist.'}
-    
+
     # raise Exception
     res = client.post(url,data="not_correct_data")
     assert get_json(res) == {"code":204,"msg":'Failed'}
@@ -1051,7 +1062,7 @@ def test_delete_prefix_acl_guest(client, authors_prefix_settings):
     (5,False), # originalroleuser
     (6,True), # originalroleuser2
     (7,False), # user
-    (8,False), # student  
+    (8,False), # student
 ])
 def test_delete_prefix_acl_users(client, users, authors_prefix_settings, index, is_permission):
     """
@@ -1095,7 +1106,7 @@ def test_create_prefix_acl_guest(client):
     (5,False), # originalroleuser
     (6,True), # originalroleuser2
     (7,False), # user
-    (8,False), # student  
+    (8,False), # student
 ])
 def test_create_prefix_acl_users(client, users, index, is_permission):
     """
@@ -1114,17 +1125,17 @@ def test_create_prefix_acl_users(client, users, index, is_permission):
 def test_create_prefix(client, users):
     login_user_via_session(client=client, email=users[0]['email'])
     url = url_for("weko_authors.create_prefix")
-    
+
     input = {'name': 'test0', 'scheme': 'test0', 'url': 'https://test0/##'}
     # not exist scheme setting
     res = client.put(url,json=input)
     assert get_json(res) == {"code":200,"msg":"Success"}
     assert AuthorsPrefixSettings.query.filter_by(name="test0").one()
-    
+
     # exist scheme setting
     res = client.put(url,json=input)
     assert get_json(res) == {"code":400,"msg":'Specified scheme is already exist.'}
-    
+
     # raise exception
     with patch("weko_authors.views.get_author_prefix_obj", side_effect=Exception("test_error")):
         res = client.put(url,json=input)
@@ -1147,7 +1158,7 @@ def test_update_affiliation_acl_guest(client):
     (5,False), # originalroleuser
     (6,True), # originalroleuser2
     (7,False), # user
-    (8,False), # student  
+    (8,False), # student
 ])
 def test_update_affiliation_acl_users(client, users, authors_affiliation_settings, index, is_permission):
     login_user_via_session(client=client, email=users[index]['email'])
@@ -1160,7 +1171,7 @@ def test_update_affiliation_acl_users(client, users, authors_affiliation_setting
 def test_update_affiliation(client, users, authors_affiliation_settings):
     login_user_via_session(client=client, email=users[0]['email'])
     url = url_for("weko_authors.update_affiliation")
-    
+
     # try to update the scheme of setting with ISNI in scheme to a non-existing scheme
     input = {'id':1,'name': 'none_name', 'scheme': 'None', 'url': 'https://new_none/##'}
     res = client.post(url,json=input)
@@ -1169,12 +1180,12 @@ def test_update_affiliation(client, users, authors_affiliation_settings):
     assert result.scheme == "None"
     assert result.url == "https://new_none/##"
     assert get_json(res) == {"code":200,"msg":"Success"}
-    
+
     # try to update the scheme of setting with GRID in scheme to a existing scheme
     input = {'id':2,'name': 'Ringgold', 'scheme': 'Ringgold', 'url': 'https://new_none/##'}
     res = client.post(url,json=input)
     assert get_json(res) == {"code":400, "msg": "Specified scheme is already exist."}
-    
+
     # raise Exception
     with patch("weko_authors.views.get_author_affiliation_obj", side_effect=Exception("test_error")):
         res = client.post(url,json=input)
@@ -1202,7 +1213,7 @@ def test_delete_affiliation_acl_guest(client, authors_affiliation_settings):
     (5,False), # originalroleuser
     (6,True), # originalroleuser2
     (7,False), # user
-    (8,False), # student  
+    (8,False), # student
 ])
 def test_delete_affiliation_acl_users(client, users, authors_affiliation_settings, index, is_permission):
     """
@@ -1246,7 +1257,7 @@ def test_create_affiliation_acl_guest(client):
     (5,False), # originalroleuser
     (6,True), # originalroleuser2
     (7,False), # user
-    (8,False), # student  
+    (8,False), # student
 ])
 def test_create_affiliation_acl_users(client, users, index, is_permission):
     """
@@ -1265,17 +1276,17 @@ def test_create_affiliation_acl_users(client, users, index, is_permission):
 def test_create_affiliation(client, users):
     login_user_via_session(client=client, email=users[0]['email'])
     url = url_for("weko_authors.create_affiliation")
-    
+
     input = {'name': 'test0', 'scheme': 'test0', 'url': 'https://test0/##'}
     # not exist scheme setting
     res = client.put(url,json=input)
     assert get_json(res) == {"code":200,"msg":"Success"}
     assert AuthorsAffiliationSettings.query.filter_by(name="test0").one()
-    
+
     # exist scheme setting
     res = client.put(url,json=input)
     assert get_json(res) == {"code":400,"msg":'Specified scheme is already exist.'}
-    
+
     # raise exception
     with patch("weko_authors.views.get_author_affiliation_obj", side_effect=Exception("test_error")):
         res = client.put(url,json=input)

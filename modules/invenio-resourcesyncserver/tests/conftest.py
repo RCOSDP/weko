@@ -35,8 +35,6 @@ from flask_login import current_user, login_user, LoginManager
 from werkzeug.local import LocalProxy
 from tests.helpers import create_record, json_data
 from six import BytesIO
-from elasticsearch import Elasticsearch
-from elasticsearch.exceptions import RequestError
 from simplekv.memory.redisstore import RedisStore
 # from moto import mock_s3
 
@@ -73,6 +71,7 @@ from invenio_oaiserver.models import OAISet
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_records import InvenioRecords
 from invenio_search import InvenioSearch
+from inveion_search.engiine import search
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 from invenio_oaiharvester.models import HarvestSettings
 from invenio_stats import InvenioStats
@@ -84,6 +83,7 @@ from invenio_records.models import RecordMetadata
 from invenio_deposit.api import Deposit
 from invenio_communities.models import Community
 from invenio_search import current_search_client, current_search
+from inveion_search.engine import search
 from invenio_queues.proxies import current_queues
 from invenio_files_rest.permissions import bucket_listmultiparts_all, \
     bucket_read_all, bucket_read_versions_all, bucket_update_all, \
@@ -223,7 +223,11 @@ def base_app(instance_path, request):
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SEARCH_ELASTIC_HOSTS=os.environ.get(
-            'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
+                    'SEARCH_ELASTIC_HOSTS', 'opensearch'),
+        SEARCH_HOSTS=os.environ.get(
+            'SEARCH_HOST', 'opensearch'
+        ),
+        SEARCH_CLIENT_CONFIG={"http_auth":(os.environ['INVENIO_OPENSEARCH_USER'],os.environ['INVENIO_OPENSEARCH_PASS']),"use_ssl":True, "verify_certs":False},
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         JSONSCHEMAS_HOST='inveniosoftware.org',
         ACCOUNTS_USERINFO_HEADERS=True,
@@ -246,7 +250,6 @@ def base_app(instance_path, request):
         SEARCH_UI_SEARCH_INDEX="test-weko",
         # SEARCH_ELASTIC_HOSTS=os.environ.get("INVENIO_ELASTICSEARCH_HOST"),
         SEARCH_INDEX_PREFIX="{}-".format('test'),
-        SEARCH_CLIENT_CONFIG=dict(timeout=120, max_retries=10),
         OAISERVER_ID_PREFIX="oai:inveniosoftware.org:recid/",
         OAISERVER_RECORD_INDEX="_all",
         OAISERVER_REGISTER_SET_SIGNALS=True,
@@ -628,7 +631,7 @@ def base_app(instance_path, request):
     WekoAdmin(app_)
     # WekoTheme(app_)
     # InvenioCommunities(app_)
-    
+
     # search = InvenioSearch(app_, client=MockEs())
     # search.register_mappings(search_class.Meta.index, 'mock_module.mappings')
     InvenioRecordsREST(app_)
@@ -638,7 +641,7 @@ def base_app(instance_path, request):
 
     current_assets = LocalProxy(lambda: app_.extensions["invenio-assets"])
     current_assets.collect.collect()
-    
+
     return app_
 
 
@@ -680,7 +683,7 @@ def es(app):
     """Elasticsearch fixture."""
     try:
         list(current_search.create())
-    except RequestError:
+    except search..exceptions.RequestError:
         list(current_search.delete(ignore=[404]))
         list(current_search.create(ignore=[400]))
     current_search_client.indices.refresh()
@@ -728,7 +731,7 @@ def indices(app, db):
 
         db.session.add(testIndexThree)
         db.session.add(testIndexThreeChild)
-        
+
     return {
         'index_dict': dict(testIndexThree),
         'index_non_dict': testIndexThree,
@@ -761,7 +764,7 @@ def users(app, db):
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
         noroleuser = create_test_user(email='noroleuser@test.org')
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -789,7 +792,7 @@ def users(app, db):
     ds.add_role_to_user(user, repoadmin_role)
     ds.add_role_to_user(user, contributor_role)
     ds.add_role_to_user(user, comadmin_role)
-    
+
     # Assign access authorization
     with db.session.begin_nested():
         action_users = [
@@ -1011,9 +1014,9 @@ def es_records(app, db, db_index, location, db_itemtype, db_oaischema):
     with app.test_request_context():
         for i in range(1, 10):
             record_data =  {"_oai": {"id": "oai:weko3.example.org:000000{:02d}".format(i), "sets": ["{}".format((i % 2) + 1)]}, "path": ["{}".format((i % 2) + 1)], "recid": "{}".format(i), "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-08-20"}, "_buckets": {"deposit": "3e99cfca-098b-42ed-b8a0-20ddd09b3e02"}, "_deposit": {"id": "{}".format(i), "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0}, "owner": "1", "owners": [1], "status": "draft", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}}, "item_title": "title", "author_link": [], "item_type_id": "1", "publish_date": "2022-08-20", "publish_status": "1", "weko_shared_id": -1, "item_1617186331708": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"},{"subitem_1551255647225": "title", "subitem_1551255648112": "en"}]}, "item_1617258105262": {"attribute_name": "Resource Type", "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}]}, "relation_version_is_last": True, 'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [{'url': {'url': 'https://weko3.example.org/record/{}/files/hello.txt'.format(i)}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-07'}], 'format': 'plain/text', 'filename': 'hello.txt', 'filesize': [{'value': '146 KB'}], 'accessrole': 'open_access', 'version_id': '', 'mimetype': 'application/pdf',"file": "",}]}}
- 
+
             item_data = {"id": "{}".format(i), "cnri": "cnricnricnri", "cnri_suffix_not_existed": "cnri_suffix_not_existed", "is_change_identifier": "is_change_identifier" ,"pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0}, "lang": "ja", "publish_status": "public", "owner": "1", "title": "title", "owners": [1], "item_type_id": 1, "status": "keep", "$schema": "/items/jsonschema/1", "item_title": "item_title", "metadata": record_data, "pubdate": "2022-08-20", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}, "shared_user_id": -1, "item_1617186331708": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"},{"subitem_1551255647225": "title", "subitem_1551255648112": "en"}], "item_1617258105262": {"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}}
-   
+
             rec_uuid = uuid.uuid4()
 
             recid = PersistentIdentifier.create('recid', str(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
@@ -1028,7 +1031,7 @@ def es_records(app, db, db_index, location, db_itemtype, db_oaischema):
             if(i%2==1):
                 doi = PersistentIdentifier.create('doi', "https://doi.org/10.xyz/{}".format((str(i)).zfill(10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
                 hdl = PersistentIdentifier.create('hdl', "https://hdl.handle.net/0000/{}".format((str(i)).zfill(10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            
+
             record = WekoRecord.create(record_data, id_=rec_uuid)
             # from six import BytesIO
             from invenio_files_rest.models import Bucket
@@ -1044,15 +1047,15 @@ def es_records(app, db, db_index, location, db_itemtype, db_oaischema):
             deposit.commit()
             # record['item_1617605131499']['attribute_value_mlt'][0]['version_id'] = str(obj.version_id)
             record['item_1617605131499']['attribute_value_mlt'][0]['version_id'] = '1'
-            
+
             record_data['content']= [{"date":[{"dateValue":"2021-07-12","dateType":"Available"}],"accessrole":"open_access","displaytype" : "simple","filename" : "hello.txt","attachment" : {},"format" : "text/plain","mimetype" : "text/plain","filesize" : [{"value" : "1 KB"}],"version_id" : "{}".format('1'),"url" : {"url":"http://localhost/record/{}/files/hello.txt".format(i)},"file":(base64.b64encode(stream.getvalue())).decode('utf-8')}]
             indexer.upload_metadata(record_data, rec_uuid, 1, False)
             item = ItemsMetadata.create(item_data, id_=rec_uuid)
-            
+
             results.append({"depid":depid, "recid":recid, "parent": parent, "doi":doi, "hdl": hdl,"record":record, "record_data":record_data,"item":item , "item_data":item_data,"deposit": deposit})
 
     sleep(3)
-    es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
+    es = search.client.Opensearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
     # print(es.cat.indices())
     return {
         "indexer": indexer,

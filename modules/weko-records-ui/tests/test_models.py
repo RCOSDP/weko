@@ -12,7 +12,7 @@ from flask_security import login_user
 from flask_security.utils import login_user
 from invenio_accounts.models import Role, User
 from invenio_accounts.testutils import create_test_user, login_user_via_session
-from mock import patch
+from unittest.mock import patch
 
 from weko_records_ui.models import (
     InstitutionName
@@ -20,7 +20,7 @@ from weko_records_ui.models import (
     ,FilePermission
     ,FileOnetimeDownload
 )
-    
+
 
 institution_name = InstitutionName(
     name="test"
@@ -140,7 +140,7 @@ def test_find_by_activity(db_file_permission):
 @pytest.mark.skip(reason="'from sqlalchemy.dialects.postgresql import INTERVAL' can't tests on SQLite.")
 def test_find_downloadable_only(app,db):
     # 35
-    user_mail ='aaa@example.org' 
+    user_mail ='aaa@example.org'
     record_id=1
     file_name="text.txt"
     created=datetime.now() - timedelta(2)
