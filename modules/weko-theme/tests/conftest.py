@@ -566,17 +566,18 @@ def client_request_args(app):
     except AssertionError:
         pass
     with app.test_client() as client:
-        r = client.get('/', query_string={
-            'index_id': '33',
-            'page': 1,
-            'count': 20,
-            'term': 14,
-            'lang': 'en',
-            'parent_id': 33,
-            'index_info': {},
-            'community': 'comm1'
-            })
-        yield r
+        with patch("flask.templating._render", return_value=""):
+            r = client.get('/', query_string={
+                'index_id': '33',
+                'page': 1,
+                'count': 20,
+                'term': 14,
+                'lang': 'en',
+                'parent_id': 33,
+                'index_info': {},
+                'community': 'comm1'
+                })
+            yield r
 
 
 @pytest.fixture()
