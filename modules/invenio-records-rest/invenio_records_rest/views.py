@@ -455,6 +455,28 @@ def need_record_permission(factory_name):
         return need_record_permission_decorator
     return need_record_permission_builder
 
+def redirect_to_search(page, size):
+    """ Redirects to search page with the same query string
+    Args:
+        page (int): page number
+        size (int): size of the page
+    Returns:
+        response: redirect response
+    """
+    url = request.host_url + "search?search_type=0&q="
+    if page:
+        url += "&page=" + str(page)
+    if size:
+        url += "&size=" + str(size)
+    get_args = request.args.to_dict()
+    for key, param in get_args.items():
+        if key == "page_no" or key == "list_view_num" \
+            or key == "log_term" or key == "lang":
+            continue
+        url += "&" + key + "=" + param
+    response = make_response(redirect(url))
+    response.status_code = 302
+    return response
 
 class RecordsListOptionsResource(MethodView):
     """Resource for displaying options about records list/item views."""
@@ -549,13 +571,6 @@ class RecordsListResource(ContentNegotiatedMethodView):
         :returns: Search result containing hits and aggregations as
                   returned by invenio-search.
         """
-        format = request.values.get('format')
-        index_id = request.values.get('index_id')
-        if not format and index_id:
-            url = request.host_url + "/search?page=1&search_type=2&q=" + index_id
-            response = make_response(redirect(url))
-            response.status_code = 302
-            return response
         # default_results_size = current_app.config.get(
         #     'RECORDS_REST_DEFAULT_RESULTS_SIZE', 10)
         # page_no is parameters for Opensearch
@@ -568,6 +583,9 @@ class RecordsListResource(ContentNegotiatedMethodView):
                                       'list_view_num', 10, type=int),
                                   type=int)
         size = RecordsListResource.adjust_list_view_num(size)
+        format = request.values.get('format')
+        if (not format or format == "html") and request.values.get('q') == None:
+            return redirect_to_search(page, size)
 
         # if page * size >= self.max_result_window:
         #     raise MaxResultWindowRESTError()
