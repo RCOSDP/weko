@@ -11,6 +11,7 @@ This extension is enabled by default and automatically installed via
 ``invenio_base.apps`` and ``invenio_base.api_apps`` entry points.
 """
 
+import sys
 import logging
 import inspect
 import traceback
@@ -132,13 +133,21 @@ class WekoLoggingConsole(WekoLoggingBase):
 
         msg = msgid + ' : ' + msgstr
 
-        # get pathname, lineno, funcName of caller
-        frame = inspect.stack()[2]
-        extra = {
-            'wpathname': frame.filename,
-            'wlineno': frame.lineno,
-            'wfuncName': frame.function,
-        }
+        frame, extra = None, {}
+        try:
+            frame = sys._getframe(2)
+            extra = {
+                'wpathname': frame.f_code.co_filename,
+                'wlineno': frame.f_lineno,
+                'wfuncName': frame.f_code.co_name,
+            }
+        except Exception as ex:
+            frame = inspect.stack()[2]
+            extra = {
+                'wpathname': frame.filename,
+                'wlineno': frame.lineno,
+                'wfuncName': frame.function,
+            }
 
         # output log by msglvl
         if loglevel == 'ERROR':

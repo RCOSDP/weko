@@ -31,7 +31,7 @@ def strip_ms(dt):
     return dt - timedelta(microseconds=dt.microsecond)
 
 
-def test_get_records(testapp, db):
+def test_get_records(app, db):
     """Test bulk record fetching."""
     # Create test records
     test_records = [
@@ -55,7 +55,7 @@ def test_get_records(testapp, db):
     assert len(Record.get_records(test_ids, with_deleted=True)) == 3
 
 
-def test_revision_id_created_updated_properties(testapp, db):
+def test_revision_id_created_updated_properties(app, db):
     """Test properties."""
     record = Record.create({"title": "test"})
     assert record.revision_id == 0
@@ -76,9 +76,8 @@ def test_revision_id_created_updated_properties(testapp, db):
     assert dt_u < utcnow + timedelta(seconds=10)
 
 
-def test_delete(testapp, database):
+def test_delete(app, db):
     """Test delete a record."""
-    db = database
     # Create a record, revise it and delete it.
     record = Record.create({"title": "test 1"})
     db.session.commit()
@@ -117,9 +116,8 @@ def test_delete(testapp, database):
     # pytest.raises(NoResultFound, Record.get_record, record.id, with_deleted=True)
 
 
-def test_revisions(testapp, database):
+def test_revisions(app, db):
     """Test revisions."""
-    db = database
     # Create a record and make modifications to it.
     record = Record.create({"title": "test 1"})
     rec_uuid = record.id
@@ -181,13 +179,12 @@ def test_revisions(testapp, database):
     assert 5 not in record.revisions
 
 
-def test_retrieve_proper_revision(testapp, database):
+def test_retrieve_proper_revision(app, db):
     """Check accessing revision with gaps
 
     Test checks if it's possible to access proper revision
     when revision numbers have 'gaps'
     """
-    db = database
     record = Record.create({"title": "test 1"})
     db.session.commit()
     record["title"] = "test 2"
@@ -222,9 +219,8 @@ def test_retrieve_proper_revision(testapp, database):
     assert rev_2 == record.revisions[-3]
 
 
-def test_record_update_mutable(testapp, database):
+def test_record_update_mutable(app, db):
     """Test updating mutables in a record."""
-    db = database
     recid = uuid.UUID("262d2748-ba41-456f-a844-4d043a419a6f")
 
     # Create a new record with two mutables, a list and a dict
@@ -302,7 +298,7 @@ def test_record_update_mutable(testapp, database):
     }
 
 
-def test_missing_model(testapp, db):
+def test_missing_model(app, db):
     """Test revisions."""
     record = Record({})
     assert record.id is None
@@ -321,13 +317,13 @@ def test_missing_model(testapp, db):
     pytest.raises(MissingModelError, record.revert, -1)
 
 
-def test_record_replace_refs(testapp, db):
+def test_record_replace_refs(app, db):
     """Test the replacement of JSON references using JSONResolver."""
     record = Record.create(
         {"one": {"$ref": "http://nest.ed/A"}, "three": {"$ref": "http://nest.ed/ABC"}}
     )
     with pytest.raises(ImportError):
-        testapp.extensions["invenio-records"].loader_cls = json_loader_factory(
+        app.extensions["invenio-records"].loader_cls = json_loader_factory(
             JSONResolver(plugins=["demo.json_resolver"])
         )
 
@@ -357,15 +353,15 @@ def test_record_replace_refs(testapp, db):
     # assert out_json == expected_json
 
 
-def test_replace_refs_deepcopy(testapp):
+def test_replace_refs_deepcopy(app):
     """Test problem with replace_refs and deepcopy."""
-    with testapp.app_context():
+    with app.app_context():
         assert copy.deepcopy(Record({"recid": 1}).replace_refs()) == {"recid": 1}
 
 
-def test_record_dump(testapp, db):
+def test_record_dump(app, db):
     """Test record dump method."""
-    with testapp.app_context():
+    with app.app_context():
         record = Record.create(
             {
                 "foo": {
@@ -378,7 +374,7 @@ def test_record_dump(testapp, db):
         assert record_dump["foo"]["bar"] != record["foo"]["bar"]
 
 
-def test_default_format_checker(testapp):
+def test_default_format_checker(app):
     """Test a default format checker."""
     checker = FormatChecker()
     checker.checks("foo")(lambda el: el.startswith("foo"))
@@ -394,9 +390,9 @@ def test_default_format_checker(testapp):
     assert pytest.raises(ValidationError, CustomRecord(data).validate)
 
 
-def test_validate_with_format(testapp, db):
+def test_validate_with_format(app, db):
     """Test that validation can accept custom format rules."""
-    with testapp.app_context():
+    with app.app_context():
         checker = FormatChecker()
         checker.checks("foo")(lambda el: el.startswith("foo"))
         data = {"bar": "foo", "$schema": {"properties": {"bar": {"format": "foo"}}}}
@@ -426,7 +422,7 @@ def test_validate_with_format(testapp, db):
         assert "'bar' is not a 'foo'" in str(excinfo.value)
 
 
-def test_validate_partial(testapp, db):
+def test_validate_partial(app, db):
     """Test partial validation."""
     schema = {
         "properties": {
@@ -436,7 +432,7 @@ def test_validate_partial(testapp, db):
         "required": ["b"],
     }
     data = {"a": "hello", "$schema": schema}
-    with testapp.app_context():
+    with app.app_context():
         # Test validation on create()
 
         # normal validation should fail because 'b' is required
@@ -466,8 +462,7 @@ def test_validate_partial(testapp, db):
             record.commit(validator=PartialDraft4Validator)
 
 
-def test_reversed_works_for_revisions(testapp, database):
-    db = database
+def test_reversed_works_for_revisions(app, db):
     record = Record.create({"title": "test 1"})
     db.session.commit()
 
@@ -486,14 +481,14 @@ def test_reversed_works_for_revisions(testapp, database):
     reversed_revisions[2].revision_id == 0
 
 
-def test_clear_none(testapp, db):
+def test_clear_none(app, db):
     """Test clear_none."""
     record = Record({"a": None})
     record.clear_none()
     assert record == {}
 
 
-def test_undelete_no_get(testapp, db):
+def test_undelete_no_get(app, db):
     """Test undelete a record."""
     record = Record.create({"title": "test"})
     db.session.commit()
@@ -505,7 +500,7 @@ def test_undelete_no_get(testapp, db):
     assert record == {"title": "test"}
 
 
-def test_undelete_with_get(testapp, db):
+def test_undelete_with_get(app, db):
     """Test undelete a record."""
     record = Record.create({"title": "test"})
     db.session.commit()

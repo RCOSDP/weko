@@ -13,9 +13,9 @@ from invenio_db.utils import drop_alembic_version_table
 
 
 @pytest.mark.skip(reason="Caused by mergepoint")
-def test_alembic(testapp, db):
+def test_alembic(app, db):
     """Test alembic recipes."""
-    ext = testapp.extensions["invenio-db"]
+    ext = app.extensions["invenio-db"]
 
     if db.engine.name == "sqlite":
         raise pytest.skip("Upgrades are not supported on SQLite.")

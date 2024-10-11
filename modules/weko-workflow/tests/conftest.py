@@ -35,17 +35,14 @@ import pytest
 from flask import Flask, session, url_for, Response
 from flask_babel import Babel, lazy_gettext as _
 from flask_menu import Menu
-from elasticsearch import Elasticsearch
+from opensearchpy import OpenSearch
 from invenio_theme import InvenioTheme
-from invenio_theme.views import blueprint as invenio_theme_blueprint
 from invenio_assets import InvenioAssets
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers,ActionRoles
 from invenio_accounts.testutils import create_test_user
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import User, Role
-from invenio_accounts.views.settings import blueprint \
-    as invenio_accounts_blueprint
 from invenio_i18n import InvenioI18N
 from invenio_cache import InvenioCache
 from invenio_admin import InvenioAdmin
@@ -144,7 +141,7 @@ def instance_path():
 class MockEs():
     def __init__(self,**keywargs):
         self.indices = self.MockIndices()
-        self.es = Elasticsearch()
+        self.es = OpenSearch()
         self.cluster = self.MockCluster()
     def index(self, id="",version="",version_type="",index="",doc_type="",body="",**arguments):
         pass
@@ -1370,15 +1367,15 @@ def workflow_open_restricted(app, db, item_type, action_data, users):
 
     workflow_role1 = WorkflowRole(
         workflow_id=workflow1.id
-        ,role_id=users[2]["obj"].id # sysadmin
+        ,role_id=users[2]["obj"].roles[0].id # sysadmin
     )
     workflow_role2 = WorkflowRole(
         workflow_id=workflow2.id
-        ,role_id=users[2]["obj"].id # sysadmin
+        ,role_id=users[2]["obj"].roles[0].id # sysadmin
     )
     workflow_role3 = WorkflowRole(
         workflow_id=workflow3.id
-        ,role_id=users[2]["obj"].id # sysadmin
+        ,role_id=users[2]["obj"].roles[0].id # sysadmin
     )
     with db.session.begin_nested():
         db.session.add(workflow_role1)

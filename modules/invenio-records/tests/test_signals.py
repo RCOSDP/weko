@@ -68,9 +68,8 @@ def signals():
     before_record_insert.disconnect(before_record_insert_listener)
 
 
-def test_signals(testapp, database, signals):
+def test_signals(app, db, signals):
     """Test signals being sent."""
-    db = database
     record = Record.create({"title": "Test"})
     db.session.commit()
     assert "before_record_insert" in signals
@@ -97,10 +96,8 @@ def test_signals(testapp, database, signals):
     assert len(signals.keys()) == 8
 
 
-def test_signals_disabled(testapp, database, signals):
+def test_signals_disabled(app, db, signals):
     """Test signals being sent."""
-    db = database
-
     class MyRecord(Record):
         # Disable signals
         send_signals = False
