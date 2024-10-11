@@ -20,7 +20,7 @@
 
 """Package initialization for weko-accounts."""
 
-from .ext import WekoAccounts, WekoAccountsREST
+from .ext import WekoAccounts
 from .version import __version__
 
-__all__ = ('__version__', 'WekoAccounts', 'WekoAccountsREST')
+__all__ = ('__version__', 'WekoAccounts')

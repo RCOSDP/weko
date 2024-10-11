@@ -90,9 +90,6 @@ setup(
         'invenio_base.apps': [
             'weko_accounts = weko_accounts:WekoAccounts',
         ],
-        'invenio_base.api_apps': [
-            'weko_accounts_rest = weko_accounts:WekoAccountsREST',
-        ],
         'invenio_admin.views': [
             'weko_accounts_shibboleth = weko_accounts.admin:shib_adminview',
         ],

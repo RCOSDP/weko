@@ -120,7 +120,6 @@ setup(
         ],
         'invenio_oauth2server.scopes': [
             'weko_index_tree_create = weko_index_tree.scopes:create_index_scope',
-            'weko_index_tree_read = weko_index_tree.scopes:read_index_scope',
         ],
     },
     extras_require=extras_require,

@@ -24,6 +24,8 @@ from flask_babelex import gettext as _
 from flask_login import user_logged_in, user_logged_out
 
 from . import config
+from .sessions import login_listener, logout_listener
+from .views import blueprint
 
 
 class WekoAccounts(object):
@@ -51,7 +53,6 @@ class WekoAccounts(object):
         if app.config['WEKO_ACCOUNTS_LOGGER_ENABLED']:
             self._enable_logger_activity(app=app)
 
-        from .views import blueprint
         app.register_blueprint(blueprint)
         app.extensions['weko-accounts'] = self
 
@@ -102,40 +103,5 @@ class WekoAccounts(object):
 
         :param app: The flask application.
         """
-        from .sessions import login_listener, logout_listener
         user_logged_in.connect(login_listener, app)
         user_logged_out.connect(logout_listener, app)
-
-
-class WekoAccountsREST(object):
-    """Weko accounts Rest Obj."""
-
-    def __init__(self, app=None):
-        """
-        Extension initialization.
-        :param app: An instance of :class:`flask.Flask`.
-        """
-        if app:
-            self.init_app(app)
-
-    def init_app(self, app):
-        """
-        Flask application initialization.
-        Initialize the REST endpoints.
-        Connect all signals if `DEPOSIT_REGISTER_SIGNALS` is True.
-        :param app: An instance of :class:`flask.Flask`.
-        """
-        from .rest import create_blueprint
-        self.init_config(app)
-        blueprint = create_blueprint(app, app.config['WEKO_ACCOUNTS_REST_ENDPOINTS'])
-        app.register_blueprint(blueprint)
-        app.extensions['weko_accounts_rest'] = self
-
-    def init_config(self, app):
-        """
-        Initialize configuration.
-        :param app: An instance of :class:`flask.Flask`.
-        """
-        for k in dir(config):
-            if k.startswith('WEKO_ACCOUNTS_'):
-                app.config.setdefault(k, getattr(config, k))

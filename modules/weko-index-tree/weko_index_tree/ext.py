@@ -21,6 +21,8 @@
 """Flask extension for weko-index-tree."""
 
 from . import config
+from .rest import create_blueprint
+from .views import blueprint
 
 
 class WekoIndexTree(object):
@@ -39,7 +41,6 @@ class WekoIndexTree(object):
 
         :param app: The Flask application.
         """
-        from .views import blueprint
         self.init_config(app)
         app.register_blueprint(blueprint)
         app.extensions['weko-index-tree'] = self
@@ -79,7 +80,6 @@ class WekoIndexTreeREST(object):
 
         :param app: An instance of :class:`flask.Flask`.
         """
-        from .rest import create_blueprint
         self.init_config(app)
         blueprint = create_blueprint(
             app, app.config['WEKO_INDEX_TREE_REST_ENDPOINTS'])

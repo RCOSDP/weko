@@ -41,8 +41,6 @@ class IndexScope(Scope):
         )
 
 
-create_index_scope = IndexScope('create', help_text=_('Allow create.'))
+create_index_scope = IndexScope('create',
+                           help_text=_('Allow create.'))
 """Allow create."""
-
-read_index_scope = IndexScope('read', help_text=_('Allow read.'))
-"""Allow read."""
