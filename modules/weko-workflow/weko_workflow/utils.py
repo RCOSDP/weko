@@ -712,9 +712,6 @@ def handle_check_required_data(mapping_data, mapping_key):
         _requirements = check_required_data(value, key, True)
         if _requirements:
             requirements.extend(_requirements)
-        else:
-            requirements = []
-            break
 
     return requirements, keys, values
 
@@ -752,10 +749,12 @@ def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
             if num_map == 0:
                 num_map = len(check_required_info[1])
             if pattern and check_required_info[2]:
+                _required_value_check = False                
                 for idx, values in enumerate(check_required_info[2]):
-                    if values and pattern not in values:
-                        error_list['pattern'].append(
-                            check_required_info[1][idx])
+                    if values and pattern in values:
+                        _required_value_check = True
+                if not _required_value_check:
+                    error_list['pattern'].append(mapping_key)
 
     if requirements:
         if num_map == 1 and not is_either:
@@ -2580,7 +2579,7 @@ def get_item_info(item_id):
         try:
             item = ItemsMetadata.get_record(id_=item_id)
         except Exception as ex:
-            current_app.logger.exception('Cannot get item data:' + str(ex))
+            current_app.logger.error('Cannot get item data: {}'.format(ex))
             temp = dict()
             return temp
 
