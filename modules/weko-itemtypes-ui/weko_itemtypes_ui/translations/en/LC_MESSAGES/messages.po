@@ -17,7 +17,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.1\n"
+"Generated-By: Babel 2.5.1\n"
 
 #: weko_itemtypes_ui/admin.py:118
 msgid "Cannot delete Item type for Harvesting."
@@ -410,65 +410,8 @@ msgstr ""
 msgid "Register Itemtype"
 msgstr ""
 
-#~ msgid "Tee"
-#~ msgstr ""
-
-#~ msgid "'itemtype name'"
-#~ msgstr ""
-
-#~ msgid "itemtype list"
-#~ msgstr ""
-
-#~ msgid "Sending"
-#~ msgstr ""
-
-#~ msgid "create itemtype"
-#~ msgstr ""
-
-#~ msgid "itemtype name"
-#~ msgstr ""
-
-#~ msgid "JSONSchema"
-#~ msgstr ""
-
-#~ msgid "SchemaForm"
-#~ msgstr ""
-
-#~ msgid "Cannot delete because there is belonging item."
-#~ msgstr ""
-
-#~ msgid "Do you want to register the content？"
-#~ msgstr ""
-
-#~ msgid "Fail"
-#~ msgstr ""
-
-#~ msgid "Success"
-#~ msgstr ""
-
-#~ msgid "Property"
-#~ msgstr ""
-
-#~ msgid "Preview"
-#~ msgstr ""
-
-#~ msgid "Back"
-#~ msgstr ""
-
-#~ msgid "Linking"
-#~ msgstr ""
-
 msgid "Element"
 msgstr ""
-
-#~ msgid "Add2"
-#~ msgstr ""
-
-#~ msgid "Input fixed Value"
-#~ msgstr ""
-
-#~ msgid "Input fixed value"
-#~ msgstr ""
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
 msgid "Layer"
@@ -525,3 +468,61 @@ msgstr ""
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
 msgid "Would you like to cancel your changes?"
 msgstr ""
+
+#~ msgid "Tee"
+#~ msgstr ""
+
+#~ msgid "'itemtype name'"
+#~ msgstr ""
+
+#~ msgid "itemtype list"
+#~ msgstr ""
+
+#~ msgid "Sending"
+#~ msgstr ""
+
+#~ msgid "create itemtype"
+#~ msgstr ""
+
+#~ msgid "itemtype name"
+#~ msgstr ""
+
+#~ msgid "JSONSchema"
+#~ msgstr ""
+
+#~ msgid "SchemaForm"
+#~ msgstr ""
+
+#~ msgid "Cannot delete because there is belonging item."
+#~ msgstr ""
+
+#~ msgid "Do you want to register the content？"
+#~ msgstr ""
+
+#~ msgid "Fail"
+#~ msgstr ""
+
+#~ msgid "Success"
+#~ msgstr ""
+
+#~ msgid "Property"
+#~ msgstr ""
+
+#~ msgid "Preview"
+#~ msgstr ""
+
+#~ msgid "Back"
+#~ msgstr ""
+
+#~ msgid "Linking"
+#~ msgstr ""
+
+#~ msgid "Add2"
+#~ msgstr ""
+
+#~ msgid "Input fixed Value"
+#~ msgstr ""
+
+#~ msgid "Input fixed value"
+#~ msgstr ""
+

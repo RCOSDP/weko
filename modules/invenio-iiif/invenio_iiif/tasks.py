@@ -19,5 +19,5 @@ def create_thumbnail(uuid, thumbnail_width):
     """Create the thumbnail for an image."""
     # size = '!' + thumbnail_width + ','
     size = thumbnail_width + ','  # flask_iiif doesn't support ! at the moment
-    region = 'full'
-    thumbnail = IIIFImageAPI().get('v2', uuid, region, size, "0", 'default', 'jpg')
+    region = "full"
+    thumbnail = IIIFImageAPI().get("v2", uuid, region, size, "0", "default", "jpg")
