@@ -376,7 +376,6 @@
 						<line hits="0" number="482"/>
 						<line hits="0" number="483"/>
 						<line hits="0" number="484"/>
-						<line hits="0" number="485"/>
 						<line hits="0" number="486"/>
 						<line hits="0" number="487"/>
 						<line hits="0" number="488"/>
@@ -394,7 +393,7 @@
 						<line hits="1" number="503"/>
 						<line hits="1" number="504"/>
 						<line hits="0" number="505"/>
-						<line hits="0" number="506"/>
+						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="507,509" number="506"/>
 						<line hits="0" number="507"/>
 						<line hits="0" number="508"/>
 						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="511" number="510"/>
@@ -1835,6 +1834,7 @@
 						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="365" number="366"/>
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="367"/>
 						<line hits="1" number="368"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="369"/>
 						<line hits="1" number="370"/>
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="371"/>
 						<line hits="1" number="372"/>

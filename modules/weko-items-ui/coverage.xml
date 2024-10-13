@@ -1286,6 +1286,7 @@
 						<line hits="1" number="1934"/>
 						<line hits="1" number="1941"/>
 						<line hits="1" number="1947"/>
+						<line hits="1" number="1949"/>
 						<line hits="1" number="1950"/>
 						<line hits="1" number="1957"/>
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="1964"/>
@@ -1468,7 +1469,7 @@
 						<line hits="0" number="2295"/>
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="2297"/>
 						<line hits="1" number="2298"/>
-						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="2299"/>
+						<line hits="1" number="2299"/>
 						<line hits="1" number="2300"/>
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="2301"/>
 						<line hits="1" number="2302"/>
@@ -1781,6 +1782,7 @@
 						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="2942" number="2941"/>
 						<line hits="0" number="2942"/>
 						<line hits="1" number="2943"/>
+						<line hits="1" number="2944"/>
 						<line hits="1" number="2945"/>
 						<line hits="1" number="2965"/>
 						<line hits="1" number="2966"/>

@@ -124,8 +124,9 @@ def test_file_ui(app,records,itemtypes,users,mocker):
                 pass
        
 
-# def file_ui(
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_file_ui2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+# for records_restricted
+# # def file_ui(
+# # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_file_ui2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_file_ui2(app,records_restricted,itemtypes,users ,client ,mocker):
     indexer, results = records_restricted
     recid_none_login =  results[len(results) -2]["recid"]
@@ -197,7 +198,7 @@ def test_file_ui3(app,records_restricted,itemtypes,db_file_permission,users ,cli
                     fileobj:WekoFileObject = record_file_factory( recid_login, record_login, filename = "helloworld_open_restricted.pdf" )
                     fileobj.data['accessrole']='open_restricted'
                     fileobj.data['filename'] = "helloworld_open_restricted.pdf"
-                    from werkzeug.exceptions import Forbidden 
+                    
                     try:
                         res = file_ui(recid_login,record_login ,is_preview=False  , filename = "helloworld_open_restricted.pdf")
                         assert False

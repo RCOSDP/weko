@@ -38,6 +38,13 @@ msgstr ""
 #: tests/conftest.py:425
 msgid "Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)"
 msgstr ""
+#: weko_search_ui/utils.py:1255
+msgid "Title is required item."
+msgstr "タイトルは必須項目です。"
+
+#: weko_search_ui/utils.py:2496
+msgid "One of the following required values ​​has not been registered.<br/>{}<br/>"
+msgstr "次のいずれかの必要値が登録していません。<br/>{}<br/>"
 
 #: tests/conftest.py:439
 msgid "Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)"

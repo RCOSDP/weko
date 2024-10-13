@@ -118,8 +118,12 @@ def base_app(request):
             INDEXER_DEFAULT_INDEX='records-default-v1.0.0',
             INDEXER_DEFAULT_DOC_TYPE='default-v1.0.0',
             INDEXER_MQ_QUEUE = Queue("indexer", 
-                                 exchange=Exchange("indexer", type="direct"), routing_key="indexer",auto_delete=False,queue_arguments={"x-queue-type":"quorum"}),
-        
+                exchange=Exchange("indexer", type="direct"), routing_key="indexer",auto_delete=False,queue_arguments={"x-queue-type":"quorum"}),
+            WEKO_PERMISSION_SUPER_ROLE_USER=[
+                "System Administrator",
+                "Repository Administrator",
+            ],
+            WEKO_RECORDS_UI_EMAIL_ITEM_KEYS = ['creatorMails', 'contributorMails', 'mails'],
         )
         Babel(app_)
         FlaskCeleryExt(app_)

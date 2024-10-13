@@ -389,7 +389,7 @@ class SchemaTree:
         return node
 
     @classmethod
-    def get_jpcoar_json(cls, records, schema_name="jpcoar_mapping"):
+    def get_jpcoar_json(cls, records, schema_name="jpcoar_mapping", replace_field=True):
         """
         Find elements values and return a jpcoar json.
 
@@ -405,12 +405,12 @@ class SchemaTree:
         obj._ignore_list_all = []
         vlst = list(map(obj.__converter,
                         filter(lambda x: isinstance(x, dict),
-                               obj.__get_value_list())))
+                               obj.__get_value_list(replace_field=replace_field))))
 
         from .utils import json_merge_all
         return json_merge_all(vlst)
 
-    def __get_value_list(self, remove_empty=False):
+    def __get_value_list(self, remove_empty=False, replace_field=True):
         """Find values to a list."""
         def analysis(field):
             exp = (',',)
@@ -979,7 +979,7 @@ class SchemaTree:
         def replace_nameIdentifierScheme_for_jpcoar_v1(atr_vm_item):
             if 'nameIdentifiers' in atr_vm_item:
                 for idx,val in enumerate(atr_vm_item['nameIdentifiers']):
-                    if val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V1_NAMEIDSCHEME_REPLACE']:
+                    if 'nameIdentifierScheme' in val and val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V1_NAMEIDSCHEME_REPLACE']:
                         new_type = current_app.config[
                         'WEKO_SCHEMA_JPCOAR_V1_NAMEIDSCHEME_REPLACE'][val['nameIdentifierScheme']]
                         val['nameIdentifierScheme'] = new_type
@@ -987,7 +987,7 @@ class SchemaTree:
         def replace_nameIdentifierScheme_for_jpcoar_v2(atr_vm_item):
             if 'nameIdentifiers' in atr_vm_item:
                 for idx,val in enumerate(atr_vm_item['nameIdentifiers']):
-                    if val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE']:
+                    if 'nameIdentifierScheme' in val and val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE']:
                         new_type = current_app.config[
                         'WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE'][val['nameIdentifierScheme']]
                         val['nameIdentifierScheme'] = new_type
@@ -1037,11 +1037,11 @@ class SchemaTree:
                             if self._ignore_list_all:
                                 remove_hide_data(atr_vm_item, key_item_parent)
                             if self._schema_name == current_app.config[
-                                    'WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME']:
+                                    'WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME'] and replace_field:
                                 replace_resource_type_for_jpcoar_v1(atr_vm_item)
                                 replace_nameIdentifierScheme_for_jpcoar_v1(atr_vm_item)
                             if self._schema_name == current_app.config[
-                                    'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME']:
+                                    'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME'] and replace_field:
                                 replace_resource_type_for_jpcoar_v2(atr_vm_item)
                                 replace_nameIdentifierScheme_for_jpcoar_v2(atr_vm_item)
                             vlst_child = get_mapping_value(mpdic, atr_vm_item,

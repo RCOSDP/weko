@@ -924,9 +924,10 @@ class ItemTypes(RecordBase):
             itemtype_id (_type_): _description_
         """
         # with db.session.begin_nested():
+        result = {"msg":"Update ItemType({})".format(itemtype_id),"code":0}
         item_type = ItemTypes.get_by_id(itemtype_id)
-        old_render = pickle.loads(pickle.dumps(item_type.render, -1))
         data = pickle.loads(pickle.dumps(item_type.render, -1))
+        
         pat1 = re.compile(r'cus_(\d+)')
         for idx, i in enumerate(data['table_row_map']['form']):
             if isinstance(i,dict) and 'key' in i:
@@ -961,15 +962,12 @@ class ItemTypes(RecordBase):
             json_schema, json_form = update_text_and_textarea(
                 itemtype_id, json_schema, json_form)
         
-        # item_type.schema = json_schema
-        # item_type.form = json_form
-        # item_type.render = data
-        
-        # flag_modified(item_type, 'schema')
-        # flag_modified(item_type, 'form')
-        # flag_modified(item_type, 'render')
-        
-        # db.session.merge(item_type)
+        # item_type_mapping = (
+        #             ItemTypeMapping.query.filter(ItemTypeMapping.item_type_id == itemtype_id)
+        #             .order_by(desc(ItemTypeMapping.created))
+        #             .first()
+        #         )
+        # data['table_row_map']['mapping'] = item_type_mapping.mapping if item_type_mapping else {}
 
         record = cls.update(id_=itemtype_id,
                                       name=item_type.item_type_name.name,
@@ -983,6 +981,8 @@ class ItemTypes(RecordBase):
                 mapping.model.mapping = table_row_map.get('mapping')
                 flag_modified(mapping.model, 'mapping')
                 db.session.add(mapping.model)
+                result['msg'] = "Fix ItemType({}) mapping".format(itemtype_id)
+                result['code'] = 0  
         
         ItemTypeEditHistory.create_or_update(
             item_type_id=record.model.id,
@@ -990,7 +990,7 @@ class ItemTypes(RecordBase):
             notes=data.get('edit_notes', {})
         )
             
-        # return record
+        return result
 
 
 

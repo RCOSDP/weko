@@ -81,7 +81,95 @@ msgid ""
 "(CC BY-NC-SA 4.0)"
 msgstr ""
 
-#: tests/conftest.py:557
+#: weko_search_ui/utils.py:713
+msgid "Please specify item ID by half-width number."
+msgstr ""
+
+#: weko_search_ui/utils.py:727
+msgid "Specified item type does not exist."
+msgstr ""
+
+#: weko_search_ui/utils.py:797
+msgid "Specified URI and system URI do not match."
+msgstr ""
+
+#: weko_search_ui/utils.py:805
+msgid "Item already DELETED in the system"
+msgstr ""
+
+#: weko_search_ui/utils.py:815
+msgid "Please specify either \"Keep\" or \"Upgrade\"."
+msgstr ""
+
+#: weko_search_ui/utils.py:823
+msgid "Item ID does not match the specified URI information."
+msgstr ""
+
+#: weko_search_ui/utils.py:1255
+msgid "Title is required item."
+msgstr ""
+
+#: weko_search_ui/utils.py:2496
+msgid "One of the following required values ​​has not been registered.<br/>{}<br/>"
+msgstr ""
+
+#: weko_search_ui/utils.py:1276
+msgid "{} is required item."
+msgstr ""
+
+#: weko_search_ui/utils.py:1278
+msgid "Please set \"public\" or \"private\" for {}."
+msgstr ""
+
+#: weko_search_ui/utils.py:1312
+msgid "Specified {} does not match with existing index."
+msgstr ""
+
+#: weko_search_ui/utils.py:1317
+msgid "The specified {} does not exist in system."
+msgstr ""
+
+#: weko_search_ui/utils.py:1352
+msgid "Both of IndexID and POS_INDEX are not being set."
+msgstr ""
+
+#: weko_search_ui/utils.py:2470
+msgid "ID is specified for the newly registered item. Ignore the ID and register."
+msgstr ""
+
+#: weko_search_ui/utils.py:1426
+msgid "Specified {} is invalid."
+msgstr ""
+
+#: weko_search_ui/utils.py:1468 weko_search_ui/utils.py:1500
+#: weko_search_ui/utils.py:1576 weko_search_ui/utils.py:1616
+#: weko_search_ui/utils.py:1620 weko_search_ui/utils.py:1656
+msgid "Please specify {}."
+msgstr ""
+
+#: weko_search_ui/utils.py:1471 weko_search_ui/utils.py:1623
+msgid "The specified {} exceeds the maximum length."
+msgstr ""
+
+#: weko_search_ui/utils.py:1485 weko_search_ui/utils.py:1638
+msgid "Specified Prefix of {} is incorrect."
+msgstr ""
+
+#: weko_search_ui/utils.py:1493 weko_search_ui/utils.py:1588
+#: weko_search_ui/utils.py:1645
+msgid "{} cannot be set."
+msgstr ""
+
+#: weko_search_ui/utils.py:1502 weko_search_ui/utils.py:1505
+#: weko_search_ui/utils.py:1563 weko_search_ui/utils.py:1658
+msgid "Specified {} is different from existing {}."
+msgstr ""
+
+#: weko_search_ui/utils.py:1533
+msgid "You cannot keep an item private because it has a DOI."
+msgstr ""
+
+#: weko_search_ui/utils.py:1538
 msgid ""
 "Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 "
 "International (CC BY-NC-ND 4.0)"

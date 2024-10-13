@@ -66,7 +66,7 @@ def get_author_link(author_link, value):
     ):
         author_link.append(value["nameIdentifiers"][0]["nameIdentifier"])
 
-def json_loader(data, pid, owner_id=None, with_deleted=False):
+def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True):
     """Convert the item data and mapping to jpcoar.
 
     :param data: json from item form post.
@@ -170,7 +170,7 @@ def json_loader(data, pid, owner_id=None, with_deleted=False):
         jpcoar[k] = item.copy()
 
     # convert to es jpcoar mapping data
-    jrc = SchemaTree.get_jpcoar_json(jpcoar)
+    jrc = SchemaTree.get_jpcoar_json(jpcoar,replace_field=replace_field)
     list_key = []
     for k, v in jrc.items():
         if not v:

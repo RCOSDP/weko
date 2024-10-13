@@ -326,8 +326,8 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     ddi_item_type_name = 'DDI'
     journalarticle_type = ['other', 'conference paper',
                            'data paper', 'departmental bulletin paper',
-                           'editorial', 'journal article', 'periodical',
-                           'review article', 'article','newspaper', 'software paper']
+                           'editorial', 'journal','journal article',
+                           'review article', 'article','newspaper', 'software paper', 'periodical']
     thesis_types = ['thesis', 'bachelor thesis', 'master thesis',
                     'doctoral thesis']
     report_types = ['technical report', 'research report', 'report',
@@ -340,14 +340,15 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                     'observational data', 'recorded data', 'simulation data',
                     'survey data', 'source code']
     datageneral_types = ['internal report', 'policy report', 'report part',
-                         'working paper', 'interactive resource',
-                         'musical notation', 'research proposal',
+                         'working paper', 'interactive resource','lecture',
+                         'musical notation', 'peer review','research proposal','research protocol',
                          'technical documentation', 'workflow',
-                         'other', 'sound', 'patent',
-                         'cartographic material', 'map', 'lecture', 'image',
-                         'still image', 'moving image', 'video',
-                         'conference object', 'conference proceedings',
-                         'conference poster','manuscript', 'data management plan', 'interview']
+                         'other', 'other periodical','sound', 'patent',
+                         'cartographic material', 'map', 'commentary','lecture', 'image',
+                         'utility model','transcription','trademark','still image', 'moving image', 'video',
+                         'conference output', 'conference object','conference proceedings',
+                         'conference poster','layout design','industrial design','design','design patent','PCT application','plant patent','plant variety protection','software patent',
+                         'conference presentation','manuscript', 'data management plan', 'interview','other']
     
     def _check_resource_type(identifier_type, resource_type, old_resource_type):
         """
@@ -460,7 +461,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 # 'identifier',
                 # 'identifierRegistration',
                 'pageStart',
-                #'fileURI',
+                # 'fileURI',
             ]
             # remove 20220207
             # either_properties = ['version']
@@ -480,7 +481,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 # 'identifier',
                 # 'identifierRegistration',
                 'pageStart',
-                #'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['date','degreeGrantor']
@@ -495,7 +496,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
-                #'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['date','publisher']
@@ -510,7 +511,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
-                #'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['date','publisher']
@@ -527,7 +528,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
-                #'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['givenName','date','publisher']
@@ -545,7 +546,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
-                #'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['date','publisher']
@@ -565,7 +566,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 # 'identifierRegistration',
                 'sourceIdentifier',
                 'sourceTitle',
-                #'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['date','publisher']
@@ -580,7 +581,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
-                #'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['date','publisher']
@@ -598,7 +599,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
-                #'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['givenName','date','publisher']
@@ -640,8 +641,9 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     if properties:
         return validation_item_property(metadata_item, properties, identifier_type=identifier_type)
     else:
-        return _('Cannot register selected DOI for current Item Type of this '
+        error_list['other'] = _('Cannot register selected DOI for current Item Type of this '
                  'item.')
+        return error_list
 
 
 def merge_doi_error_list(current, new):
@@ -749,7 +751,7 @@ def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
             if num_map == 0:
                 num_map = len(check_required_info[1])
             if pattern and check_required_info[2]:
-                _required_value_check = False                
+                _required_value_check = False
                 for idx, values in enumerate(check_required_info[2]):
                     if values and pattern in values:
                         _required_value_check = True
@@ -2574,6 +2576,12 @@ def get_item_info(item_id):
     """
     if not item_id:
         return dict()
+    try:
+        item = ItemsMetadata.get_record(id_=item_id)
+    except Exception as ex:
+        current_app.logger.error('Cannot get item data: {}'.format(ex))
+        temp = dict()
+        return temp
     item_info = dict()
     if ItemMetadata.query.filter_by(id=item_id).first():
         try:

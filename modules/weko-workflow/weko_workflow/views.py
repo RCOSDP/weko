@@ -1065,6 +1065,7 @@ def display_activity(activity_id="0"):
     if approval_record and files:
         files = set_files_display_type(approval_record, files)
 
+
     ctx.update(
         dict(
             files_thumbnail=files_thumbnail,

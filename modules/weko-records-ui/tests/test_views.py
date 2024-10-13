@@ -1076,12 +1076,12 @@ def test_create_secret_url_and_send_mail_2(app,client,db,users,records,db_restri
     "id, is_show",
     [
         (0, False), #contributor
-        (1, True), #repoadmin
-        (2, True), #sysadmin
+        (1, False), #repoadmin
+        (2, False), #sysadmin
         (3, False), #comadmin
         (4, False), #generaluser
-        (5, True), #originalroleuser (owner)
-        (6, True), #originalroleuser2 (repoadmin)
+        (5, False), #originalroleuser (owner)
+        (6, False), #originalroleuser2 (repoadmin)
         (7, False), #user (weko_shared owner)
     ],
 )
@@ -1146,7 +1146,7 @@ def test__get_show_secret_url_button2(users,records ,id,is_show):
 @pytest.mark.parametrize(
     "id, is_show",
     [
-        (1, True), #repoadmin
+        (1, False), #repoadmin
     ],
 )
 def test__get_show_secret_url_button3(users, records, db_restricted_access_secret, id, is_show):

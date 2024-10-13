@@ -1217,8 +1217,8 @@
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="68"/>
 						<line hits="1" number="75"/>
 						<line hits="1" number="77"/>
-						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="80,82" number="79"/>
-						<line hits="0" number="80"/>
+						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="82" number="79"/>
+						<line hits="1" number="80"/>
 						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="83,85" number="82"/>
 						<line hits="0" number="83"/>
 						<line hits="0" number="85"/>
@@ -2675,7 +2675,7 @@
 				</class>
 			</classes>
 		</package>
-		<package branch-rate="0.62" complexity="0" line-rate="0.8429" name="serializers">
+		<package branch-rate="0.6664" complexity="0" line-rate="0.8937" name="serializers">
 			<classes>
 				<class branch-rate="1" complexity="0" filename="serializers/__init__.py" line-rate="1" name="__init__.py">
 					<methods/>
@@ -2777,7 +2777,7 @@
 						<line hits="0" number="126"/>
 					</lines>
 				</class>
-				<class branch-rate="0.2857" complexity="0" filename="serializers/dc.py" line-rate="0.5882" name="dc.py">
+				<class branch-rate="0.3571" complexity="0" filename="serializers/dc.py" line-rate="0.6667" name="dc.py">
 					<methods/>
 					<lines>
 						<line hits="1" number="21"/>
@@ -2794,11 +2794,11 @@
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="48"/>
 						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="48" number="52"/>
 						<line hits="1" number="53"/>
-						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="55" number="54"/>
-						<line hits="0" number="55"/>
-						<line hits="0" number="56"/>
-						<line hits="0" number="58"/>
-						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="54,60" number="59"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="54"/>
+						<line hits="1" number="55"/>
+						<line hits="1" number="56"/>
+						<line hits="1" number="58"/>
+						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="60" number="59"/>
 						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="54,61" number="60"/>
 						<line hits="0" number="61"/>
 						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="54,65" number="64"/>
@@ -2858,7 +2858,7 @@
 						<line hits="1" number="56"/>
 					</lines>
 				</class>
-				<class branch-rate="0.7576" complexity="0" filename="serializers/entry.py" line-rate="0.9793" name="entry.py">
+				<class branch-rate="0.7792" complexity="0" filename="serializers/entry.py" line-rate="0.9897" name="entry.py">
 					<methods/>
 					<lines>
 						<line hits="1" number="21"/>
@@ -3007,7 +3007,7 @@
 						<line hits="1" number="224"/>
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="227"/>
 						<line hits="1" number="230"/>
-						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="234" number="231"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="231"/>
 						<line hits="1" number="232"/>
 						<line hits="1" number="233"/>
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="234"/>
@@ -3031,7 +3031,7 @@
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="259"/>
 						<line hits="1" number="260"/>
 						<line hits="1" number="261"/>
-						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="267" number="262"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="262"/>
 						<line hits="1" number="263"/>
 						<line hits="1" number="264"/>
 						<line hits="1" number="265"/>
@@ -3086,9 +3086,9 @@
 						<line hits="1" number="349"/>
 						<line hits="1" number="350"/>
 						<line hits="1" number="352"/>
-						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="361,362" number="360"/>
-						<line hits="0" number="361"/>
-						<line hits="0" number="362"/>
+						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="362" number="360"/>
+						<line hits="1" number="361"/>
+						<line hits="1" number="362"/>
 						<line hits="1" number="364"/>
 						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="377" number="374"/>
 						<line hits="1" number="375"/>
@@ -3130,7 +3130,7 @@
 						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="482" number="473"/>
 						<line hits="1" number="474"/>
 						<line hits="1" number="475"/>
-						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="479" number="476"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="476"/>
 						<line hits="1" number="477"/>
 						<line hits="1" number="478"/>
 						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="482" number="479"/>
@@ -3144,8 +3144,8 @@
 						<line hits="1" number="524"/>
 						<line hits="1" number="525"/>
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="532"/>
-						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="534" number="533"/>
-						<line hits="0" number="534"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="533"/>
+						<line hits="1" number="534"/>
 						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="532" number="535"/>
 						<line hits="1" number="536"/>
 						<line hits="1" number="537"/>
@@ -3250,7 +3250,7 @@
 						<line hits="1" number="806"/>
 					</lines>
 				</class>
-				<class branch-rate="0.7468" complexity="0" filename="serializers/feed.py" line-rate="0.9787" name="feed.py">
+				<class branch-rate="0.7658" complexity="0" filename="serializers/feed.py" line-rate="0.9823" name="feed.py">
 					<methods/>
 					<lines>
 						<line hits="1" number="21"/>
@@ -3336,15 +3336,15 @@
 						<line hits="1" number="149"/>
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="151"/>
 						<line hits="1" number="152"/>
-						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="155" number="153"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="153"/>
 						<line hits="1" number="154"/>
-						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="157" number="155"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="155"/>
 						<line hits="1" number="156"/>
-						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="159" number="157"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="157"/>
 						<line hits="1" number="158"/>
-						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="161" number="159"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="159"/>
 						<line hits="1" number="160"/>
-						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="151" number="161"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="161"/>
 						<line hits="1" number="162"/>
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="164"/>
 						<line hits="1" number="165"/>
@@ -3453,7 +3453,7 @@
 						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="343" number="340"/>
 						<line hits="1" number="341"/>
 						<line hits="1" number="342"/>
-						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="360" number="343"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="343"/>
 						<line hits="1" number="344"/>
 						<line hits="1" number="345"/>
 						<line hits="1" number="346"/>
@@ -3523,8 +3523,8 @@
 						<line hits="1" number="420"/>
 						<line hits="1" number="421"/>
 						<line hits="1" number="423"/>
-						<line hits="0" number="440"/>
-						<line hits="0" number="441"/>
+						<line hits="1" number="440"/>
+						<line hits="1" number="441"/>
 						<line hits="1" number="444"/>
 						<line hits="1" number="457"/>
 						<line hits="1" number="458"/>
@@ -3903,7 +3903,7 @@
 						<line hits="1" number="103"/>
 					</lines>
 				</class>
-				<class branch-rate="0.6667" complexity="0" filename="serializers/opensearch.py" line-rate="0.95" name="opensearch.py">
+				<class branch-rate="0.6667" complexity="0" filename="serializers/opensearch.py" line-rate="1" name="opensearch.py">
 					<methods/>
 					<lines>
 						<line hits="1" number="21"/>
@@ -3927,9 +3927,9 @@
 						<line hits="1" number="66"/>
 						<line hits="1" number="68"/>
 						<line hits="1" number="70"/>
-						<line hits="0" number="76"/>
-						<line hits="0" number="77"/>
-						<line hits="0" number="79"/>
+						<line hits="1" number="76"/>
+						<line hits="1" number="77"/>
+						<line hits="1" number="79"/>
 						<line hits="1" number="81"/>
 						<line hits="1" number="87"/>
 						<line hits="1" number="88"/>
@@ -3968,7 +3968,7 @@
 						<line hits="1" number="164"/>
 					</lines>
 				</class>
-				<class branch-rate="0.75" complexity="0" filename="serializers/opensearchresponse.py" line-rate="0.9375" name="opensearchresponse.py">
+				<class branch-rate="0.65" complexity="0" filename="serializers/opensearchresponse.py" line-rate="0.7812" name="opensearchresponse.py">
 					<methods/>
 					<lines>
 						<line hits="1" number="9"/>
@@ -3979,13 +3979,13 @@
 						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="33" number="30"/>
 						<line hits="1" number="32"/>
 						<line hits="1" number="33"/>
-						<line hits="1" number="36"/>
-						<line hits="1" number="37"/>
-						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="39" number="38"/>
+						<line hits="0" number="36"/>
+						<line hits="0" number="37"/>
+						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="39,41" number="38"/>
 						<line hits="0" number="39"/>
-						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="42" number="41"/>
+						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="42,44" number="41"/>
 						<line hits="0" number="42"/>
-						<line hits="1" number="44"/>
+						<line hits="0" number="44"/>
 						<line hits="1" number="45"/>
 						<line hits="1" number="48"/>
 						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="exit" number="55"/>
@@ -4075,7 +4075,7 @@
 						<line hits="1" number="112"/>
 					</lines>
 				</class>
-				<class branch-rate="0.2051" complexity="0" filename="serializers/prism.py" line-rate="0.4848" name="prism.py">
+				<class branch-rate="0.3333" complexity="0" filename="serializers/prism.py" line-rate="0.6818" name="prism.py">
 					<methods/>
 					<lines>
 						<line hits="1" number="20"/>
@@ -4100,16 +4100,16 @@
 						<line hits="1" number="57"/>
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="59"/>
 						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="59" number="72"/>
-						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="75" number="73"/>
-						<line hits="0" number="75"/>
-						<line hits="0" number="78"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="73"/>
+						<line hits="1" number="75"/>
+						<line hits="1" number="78"/>
 						<line hits="1" number="80"/>
 						<line hits="1" number="86"/>
 						<line hits="1" number="88"/>
 						<line hits="1" number="90"/>
-						<line hits="0" number="96"/>
-						<line hits="0" number="97"/>
-						<line hits="0" number="99"/>
+						<line hits="1" number="96"/>
+						<line hits="1" number="97"/>
+						<line hits="1" number="99"/>
 						<line hits="1" number="101"/>
 						<line hits="1" number="107"/>
 						<line hits="1" number="108"/>
@@ -4179,29 +4179,29 @@
 						<line hits="0" number="253"/>
 						<line hits="0" number="254"/>
 						<line hits="1" number="256"/>
-						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="267,272" number="266"/>
-						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="268,269" number="267"/>
-						<line hits="0" number="268"/>
-						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="270,271" number="269"/>
-						<line hits="0" number="270"/>
-						<line hits="0" number="271"/>
-						<line hits="0" number="272"/>
+						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="272" number="266"/>
+						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="269" number="267"/>
+						<line hits="1" number="268"/>
+						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="271" number="269"/>
+						<line hits="1" number="270"/>
+						<line hits="1" number="271"/>
+						<line hits="1" number="272"/>
 						<line hits="1" number="274"/>
-						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="285,290" number="284"/>
-						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="286,287" number="285"/>
-						<line hits="0" number="286"/>
-						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="288,289" number="287"/>
-						<line hits="0" number="288"/>
-						<line hits="0" number="289"/>
-						<line hits="0" number="290"/>
+						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="290" number="284"/>
+						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="287" number="285"/>
+						<line hits="1" number="286"/>
+						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="289" number="287"/>
+						<line hits="1" number="288"/>
+						<line hits="1" number="289"/>
+						<line hits="1" number="290"/>
 						<line hits="1" number="292"/>
-						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="303,308" number="302"/>
-						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="304,305" number="303"/>
-						<line hits="0" number="304"/>
-						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="306,307" number="305"/>
-						<line hits="0" number="306"/>
-						<line hits="0" number="307"/>
-						<line hits="0" number="308"/>
+						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="308" number="302"/>
+						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="305" number="303"/>
+						<line hits="1" number="304"/>
+						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="307" number="305"/>
+						<line hits="1" number="306"/>
+						<line hits="1" number="307"/>
+						<line hits="1" number="308"/>
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="311"/>
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="315"/>
 						<line hits="1" number="318"/>
@@ -4234,7 +4234,7 @@
 						<line hits="0" number="31"/>
 					</lines>
 				</class>
-				<class branch-rate="0.4503" complexity="0" filename="serializers/utils.py" line-rate="0.6072" name="utils.py">
+				<class branch-rate="0.5464" complexity="0" filename="serializers/utils.py" line-rate="0.7452" name="utils.py">
 					<methods/>
 					<lines>
 						<line hits="1" number="21"/>
@@ -4252,26 +4252,26 @@
 						<line hits="1" number="37"/>
 						<line hits="1" number="40"/>
 						<line hits="1" number="48"/>
-						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="51,58" number="50"/>
-						<line hits="0" number="51"/>
-						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="53,56" number="52"/>
-						<line hits="0" number="53"/>
-						<line hits="0" number="54"/>
-						<line hits="0" number="56"/>
-						<line hits="0" number="58"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="50"/>
+						<line hits="1" number="51"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="52"/>
+						<line hits="1" number="53"/>
+						<line hits="1" number="54"/>
+						<line hits="1" number="56"/>
+						<line hits="1" number="58"/>
 						<line hits="1" number="60"/>
 						<line hits="1" number="61"/>
 						<line hits="1" number="62"/>
-						<line branch="true" condition-coverage="0% (0/2)" hits="1" missing-branches="64,74" number="63"/>
-						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="63,65" number="64"/>
-						<line hits="0" number="65"/>
-						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="63,67" number="66"/>
-						<line hits="0" number="67"/>
-						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="63,69" number="68"/>
-						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="70,72" number="69"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="63"/>
+						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="63" number="64"/>
+						<line hits="1" number="65"/>
+						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="63" number="66"/>
+						<line hits="1" number="67"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="68"/>
+						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="70" number="69"/>
 						<line hits="0" number="70"/>
-						<line hits="0" number="72"/>
-						<line hits="0" number="74"/>
+						<line hits="1" number="72"/>
+						<line hits="1" number="74"/>
 						<line hits="1" number="77"/>
 						<line hits="1" number="85"/>
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="86"/>
