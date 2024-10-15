@@ -94,6 +94,9 @@ class SwordItemTypeMapping(db.Model, Timestamp):
 
         Returns:
             SwordItemTypeMapping: Created mapping object.
+
+        Raises:
+            SQLAlchemyError: An error occurred while creating the mapping.
         """
         obj = cls(
             id=cls._get_next_id(),
@@ -113,6 +116,30 @@ class SwordItemTypeMapping(db.Model, Timestamp):
             db.session.rollback()
             raise
 
+        return obj
+
+    @classmethod
+    def get_mapping_by_id(cls, id, ignore_deleted=False):
+        """Get mapping by mapping_id.
+
+        Args:
+            mapping_id (int): Mapping ID.
+            ignore_deleted (bool, optional): Ignore deleted mapping.
+
+        Returns:
+            SwordItemTypeMapping:
+            Mapping object. If not found or deleted, return `None`.
+        """
+
+        obj = (
+            cls.query
+            .filter_by(id=id)
+            .order_by(cls.version_id.desc())
+            .first()
+        )
+
+        if not ignore_deleted and obj and obj.is_deleted:
+            return None
         return obj
 
 
@@ -137,11 +164,11 @@ class SwordClient(db.Model, Timestamp):
             - `Workfolw` (2): Workflow registration.
     """
 
-    class RegistrationType(enum.IntEnum):
+    class RegistrationType:
         """Solution to register item."""
 
-        Direct = 1
-        Workfolw = 2
+        DIRECT = 1
+        WORKFOLW = 2
 
     __tablename__ = 'sword_clients'
 
@@ -152,7 +179,7 @@ class SwordClient(db.Model, Timestamp):
         unique=True)
     """Id of the clients. Foreign key from Client."""
 
-    registration_type = db.Column(db.SmallInteger, unique=False, nullable=False)
+    registration_type = db.Column(db.Integer, unique=False, nullable=False)
     """Type of registration to register an item."""
 
     mapping_id = db.Column(
@@ -169,9 +196,26 @@ class SwordClient(db.Model, Timestamp):
         nullable=True)
     """Workflow ID of the client. Foreign key from WorkFlow."""
 
-    is_deleted = db.Column(
-        db.Boolean(name='is_deleted'),
-        nullable=False,
-        default=False)
-    """Sofr-delete status of the client."""
+    # is_deleted = db.Column(
+    #     db.Boolean(name='is_deleted'),
+    #     nullable=False,
+    #     default=False)
+    # """Sofr-delete status of the client."""
+
+
+    @classmethod
+    def get_client_by_id(cls, client_id, ignore_deleted=False):
+        """Get client by client_id.
+
+        Args:
+            client_id (str): Client ID.
+            ignore_deleted (bool, optional): Ignore deleted client.
+
+        Returns:
+            SwordClient: Client object.
+        """
+        obj = cls.query.filter_by(client_id=client_id).one_or_none()
+        # if not ignore_deleted and obj and obj.is_deleted:
+        #     return None
+        return obj
 
