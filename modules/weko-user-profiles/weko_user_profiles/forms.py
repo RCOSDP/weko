@@ -67,6 +67,18 @@ def check_length_100_characters(form, field):
         raise ValidationError(_("Text field must be less than 100 characters."))
 
 
+def check_phone_number(form, field):
+    """Validate phone number.
+
+    @param form:
+    @param field:
+    """
+    if len(field.data) > 15:
+        raise ValidationError('Phone number must be less than 15 characters.')
+    field = field.data.split("-")
+    if not all([x.isdigit() for x in field]):
+        raise ValidationError(_('Phone Number format is incorrect.'))
+
 def check_other_position(form, field):
     """Check other position.
 
@@ -90,7 +102,7 @@ def validate_digits(form, field):
     @param form:
     @param field:
     """
-    
+
     error_message = _('Only digits are allowed.')
     if not re.fullmatch(r'[0-9]*', field.data):
         raise ValidationError(error_message)
@@ -152,7 +164,6 @@ class ProfileForm(FlaskForm):
         super().__init__(*args, **kwargs)
         # アプリケーションコンテキスト内でデータベースクエリを実行
         profile_conf = AdminSettings.get('profiles_items_settings', dict_to_object=False)
-        print("profile_conf",profile_conf)
 
         if profile_conf is None:
             raise ValueError("Could not retrieve profile configuration settings.")
@@ -169,10 +180,9 @@ class ProfileForm(FlaskForm):
 
         for key in fix_keys:
             if key in profile_conf:
-                ordered_profile_conf[key] = profile_conf.pop(key)
+                ordered_profile_conf[key] = profile_conf.get(key)
             else:
                 missing_keys.append(key)
-
         if missing_keys:
             raise KeyError("Could not find the following keys in profile configuration settings: {}".format(missing_keys))
 
@@ -180,40 +190,43 @@ class ProfileForm(FlaskForm):
         ordered_profile_conf.update(profile_conf)
 
         # それぞれのフィールドに取得したアイテムデータを設定
+        required_keys = ['current_type', 'label_name', 'visible', 'select']
         for key, value in ordered_profile_conf.items():
-            try:
-                 # 'current_type'と'label_name'のチェック
-                if not all(subkey_list in value for subkey_list in ['current_type', 'label_name','visible','select']):
-                    raise KeyError(f"Missing required key in field : {key}")
-                
-                self.field_visibility[key] = value['visible']
+            missing_fieldkeys = [k for k in required_keys if k not in value]
+            if missing_fieldkeys:
+                raise KeyError(f"Missing required key(s) {missing_fieldkeys} in field: {key}")
 
-                if value['current_type'] == 'select':
-                    field = SelectField(
-                        _(value['label_name']),
-                        filters=[strip_filter],
-                        choices=[(choice, choice) for choice in value['select'][0].split('|')]
-                    )
-                    if field:
-                        setattr(ProfileForm, key, field)
-                else:
-                    validators = [check_length_100_characters]
-                    if value['current_type'] == 'identifier':
-                        validators.append(validate_digits)
-                    elif value['current_type'] == 'text':
-                        validators.append(check_length_100_characters)
-                    field = StringField(
-                        _(value['label_name']),
-                        validators=validators,
-                        filters=[strip_filter]
-                    )
-                    if field:
-                        setattr(ProfileForm, key, field)
-            except KeyError as e:
-                print(f"KeyError: {e} in field {key}")
-            except Exception as e:
-                print(f"Unexpected error: {e} in field {key}")
+            self.field_visibility[key] = value['visible']
 
+            if value['current_type'] == 'select':
+                if not isinstance(value['select'], list):
+                    raise ValueError(f"Invalid 'select' value in field: {key}")
+                field = SelectField(
+                    _(value['label_name']),
+                    filters=[strip_filter],
+                    choices=[(choice, choice) for choice in value['select'][0].split('|')]
+                )
+                setattr(ProfileForm, key, field)
+                field = getattr(self, key)
+                field.bind(form=self, name=key)
+            elif value['current_type'] == 'identifier':
+                validators = [validate_digits]
+                field = StringField(
+                    _(value['label_name']),
+                    validators=validators,
+                    filters=[strip_filter]
+                )
+                setattr(ProfileForm, key, field)
+            elif value['current_type'] == 'text':
+                validators = [check_length_100_characters]
+                field = StringField(
+                    _(value['label_name']),
+                    validators=validators,
+                    filters=[strip_filter]
+                )
+                setattr(ProfileForm, key, field)
+            else:
+                raise ValueError(f"Invalid 'current_type' value in field: {key}")
 
     def validate_username(form, field):
         """Wrap username validator for WTForms."""

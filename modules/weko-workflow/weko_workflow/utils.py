@@ -4059,8 +4059,8 @@ def get_usage_data(item_type_id, activity_detail, user_profile=None):
             "subitem_affiliated_division/department":
                 "affiliated_division_department",
             "subitem_position": "position",
-            "subitem_position(others)": "position_other",
-            "subitem_phone_number": "phone_number",
+            "subitem_position(others)": "item1",
+            "subitem_phone_number": "item2",
             "subitem_item3": "item3",
             "subitem_item4": "item4",
             "subitem_item5": "item5",

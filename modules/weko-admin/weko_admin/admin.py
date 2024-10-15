@@ -1363,7 +1363,7 @@ class FacetSearchSettingView(ModelView):
         )
 
 #   アドバンスドのviewクラスを設定
-class AdvancedView(BaseView):
+class ProfileSettingView(BaseView):
     @expose('/', methods=['GET'])
     def index(self):
         profile_settings = AdminSettings.get('profiles_items_settings', dict_to_object=False)
@@ -1534,7 +1534,7 @@ reindex_elasticsearch_adminview = {
 
 # プロファイル設定のviewを設定
 profile_settings_adminview = {
-    'view_class': AdvancedView,
+    'view_class': ProfileSettingView,
     'kwargs': {
         'category': _('Advanced'),
         'name': _('Profile Settings'),

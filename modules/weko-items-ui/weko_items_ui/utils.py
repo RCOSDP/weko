@@ -3126,13 +3126,13 @@ def positionlist_current():
     current_list = current_list.get('position', {}).get('select', [])
     if not current_list:
         return []
-    
+
     #リストの最初の項目を抜き出す。
     current_select = current_list[0]
 
     #パイプで分割してリストに変換。例）A|B|C → ['A','B','C']
     current_select = current_select.split('|')
-    
+
     #既存リストWEKO_USERPROFILES_POSITION_LIST_GENERALをもとにタプルに変換。
     settings_tuples = [(index,_(index)) for index in current_select]
 
@@ -3155,7 +3155,7 @@ def recursive_form(schema_form):
                 == 'select'):
             dict_data = []
             positions = current_app.config.get(
-                'WEKO_USERPROFILES_POSITION_LIST')+ positionlist_current()#positionlist_current()でポジションのリストを取得
+                'WEKO_USERPROFILES_POSITION_LIST')+positionlist_current()
             for val in positions:
                 if val[0]:
                     current_position = {

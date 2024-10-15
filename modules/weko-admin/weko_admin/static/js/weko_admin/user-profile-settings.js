@@ -28,14 +28,14 @@ $(function() {
 
   // Reactコンポーネントのレンダリング
   ReactDOM.render(
-    <ProfilesList termList={JSON.parse(initValue)} />,
+    <ProfilesList ProfileItemList ={JSON.parse(initValue)} />,
     document.getElementById('root')
   );
 });
 
 // ProfilesListコンポーネントの定義
-function ProfilesList({ termList }) {
-  const [terms, setTerms] = useState(termList);
+function ProfilesList({ ProfileItemList  }) {
+  const [profileItems , setProfileItems ] = useState(ProfileItemList );
 
   // メッセージを表示する関数の定義
   function addAlert(message, type) {
@@ -55,7 +55,7 @@ function ProfilesList({ termList }) {
 
   // ラベル名の変更ハンドラー
   const handleLabelChange = (itemKey, newValue) => {
-    setTerms(prevTerms => ({
+    setProfileItems (prevTerms => ({
       ...prevTerms,
       [itemKey]: {
         ...prevTerms[itemKey],
@@ -66,7 +66,7 @@ function ProfilesList({ termList }) {
 
   // 表示設定の変更ハンドラー
   const handleCheckboxChange = (itemKey, newValue) => {
-    setTerms(prevTerms => ({
+    setProfileItems (prevTerms => ({
       ...prevTerms,
       [itemKey]: {
         ...prevTerms[itemKey],
@@ -77,7 +77,7 @@ function ProfilesList({ termList }) {
 
   // 入力方法の変更ハンドラー
   const handleTypeChange = (itemKey, newValue) => {
-    setTerms(prevTerms => ({
+    setProfileItems (prevTerms => ({
       ...prevTerms,
       [itemKey]: {
         ...prevTerms[itemKey],
@@ -88,7 +88,7 @@ function ProfilesList({ termList }) {
 
   // オプションの変更ハンドラー
   const handleSelectChange = (itemKey, newValue) => {
-    setTerms(prevTerms => ({
+    setProfileItems (prevTerms => ({
       ...prevTerms,
       [itemKey]: {
         ...prevTerms[itemKey],
@@ -98,7 +98,7 @@ function ProfilesList({ termList }) {
   };
 
   // プロファイル設定をグループ化する関数
-  const groupedTemplates = groupProfileSettings(terms);
+  const groupedTemplates = groupProfileSettings(profileItems );
 
   function groupProfileSettings(templates) {
     const grouped = {};
@@ -127,7 +127,7 @@ function ProfilesList({ termList }) {
 
     // エラーチェック
     for (let itemKey of order) {
-      const item = terms[itemKey];
+      const item = profileItems [itemKey];
       if (!item) continue; // 項目が存在しない場合はスキップ
 
       // label_nameが空の場合エラー
@@ -139,7 +139,7 @@ function ProfilesList({ termList }) {
       
 
     let data = {
-      profiles_templates: terms
+      profiles_templates: profileItems 
     };
 
     // AJAXリクエストを送信
@@ -157,7 +157,7 @@ function ProfilesList({ termList }) {
           addAlert(result.msg, 1);
         }
         if (result.data) {
-          setTerms(result.data);
+          setProfileItems (result.data);
         }
       },
       error: function (error) {
@@ -171,7 +171,7 @@ function ProfilesList({ termList }) {
     <div className="container">
       <div id="alertContainer"></div> {/* アラートメッセージを表示するためのコンテナ */}
       {order.map(itemKey => {
-        const item = terms[itemKey];
+        const item = profileItems [itemKey];
         if (!item) return null; // 項目が存在しない場合はスキップ
         return (
           <div key={itemKey} className="item-group">
@@ -196,7 +196,7 @@ function ProfilesList({ termList }) {
                   checked={item.visible}
                   onChange={(e) => handleCheckboxChange(itemKey, e.target.checked)} // チェックボックスの設定
                 />
-                表示
+                Display
               </label>
             </div>
             {item.current_type === "select" && (
@@ -212,7 +212,7 @@ function ProfilesList({ termList }) {
         );
       })}
       <button onClick={handleSave} className="btn btn-primary">
-        <span className="glyphicon glyphicon-save" aria-hidden="true"></span> 保存
+        <span className="glyphicon glyphicon-save" aria-hidden="true"></span> SAVE
       </button> {/* 保存ボタンにアイコンを追加 */}
     </div>
   );
