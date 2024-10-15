@@ -207,8 +207,6 @@ class ProfileForm(FlaskForm):
                     choices=[(choice, choice) for choice in value['select'][0].split('|')]
                 )
                 setattr(ProfileForm, key, field)
-                field = getattr(self, key)
-                field.bind(form=self, name=key)
             elif value['current_type'] == 'identifier':
                 validators = [validate_digits]
                 field = StringField(
