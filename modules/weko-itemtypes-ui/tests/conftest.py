@@ -890,80 +890,80 @@ def rocrate_mapping(db, item_type):
     with db.session.begin_nested():
         db.session.add(rocrate_mapping1)
 
+# This fixture needs a param to set the item type ID
+@pytest.fixture
+def create_item_type(db):
+    def _create_item_type(id=1):
+        item_type_name = ItemTypeName(
+            created = datetime(2024, 9, 6, 0, 0),
+            updated = datetime(2024, 9, 6, 0, 0),
+            id=id,
+            name='test item type ' + str(id),
+            has_site_license=True,
+            is_active=True
+        )
+        item_type = ItemType(
+            created = datetime(2024, 9, 6, 0, 0),
+            updated = datetime(2024, 9, 6, 0, 0),
+            id=id,
+            name_id=id,
+            harvesting_type=False,
+            schema = {},
+            form = {},
+            render = {},
+            tag = 1,
+            version_id = 1,
+            is_deleted = False
+        )
+        item_type_mapping = ItemTypeMapping(
+            created = datetime(2024, 9, 6, 0, 0),
+            updated = datetime(2024, 9, 6, 0, 0),
+            id=id,
+            item_type_id=id,
+            mapping={'test': 'test'},
+            version_id=1
+        )
+        item_type_property = ItemTypeProperty(
+            created = datetime(2024, 9, 6, 0, 0),
+            updated = datetime(2024, 9, 6, 0, 0),
+            id=id,
+            name='test property ' + str(id),
+            schema={'type': 'string'},
+            form={'title_i18n': {'en': 'test property'}},
+            forms=['test form'],
+            delflg=False,
+            sort=None
+        )
+        with db.session.begin_nested():
+            db.session.add(item_type_name)
+            db.session.add(item_type)
+            db.session.add(item_type_mapping)
+            db.session.add(item_type_property)
+        db.session.commit()
+        item_type_data = {
+            'item_type_name': item_type_name,
+            'item_type': item_type,
+            'item_type_mapping': item_type_mapping,
+            'item_type_property': item_type_property
+        }
+        return item_type_data
+    return _create_item_type
+
 
 @pytest.fixture()
-def simple_item_type(db):
-    item_type_name = ItemTypeName(
-        created = datetime(2024, 9, 6, 0, 0),
-        updated = datetime(2024, 9, 6, 0, 0),
-        id=1,
-        name='test item type',
-        has_site_license=True,
-        is_active=True
-    )
-    item_type = ItemType(
-        created = datetime(2024, 9, 6, 0, 0),
-        updated = datetime(2024, 9, 6, 0, 0),
-        id=1,
-        name_id=1,
-        harvesting_type=False,
-        schema = {},
-        form = {},
-        render = {},
-        tag = 1,
-        version_id = 1,
-        is_deleted = False
-    )
-    item_type_mapping = ItemTypeMapping(
-        created = datetime(2024, 9, 6, 0, 0),
-        updated = datetime(2024, 9, 6, 0, 0),
-        id=1,
-        item_type_id=1,
-        mapping={'test': 'test'},
-        version_id=1
-    )
-    item_type_property = ItemTypeProperty(
-        created = datetime(2024, 9, 6, 0, 0),
-        updated = datetime(2024, 9, 6, 0, 0),
-        id=1,
-        name='test property',
-        schema={'type': 'string'},
-        form={'title_i18n': {'en': 'test property'}},
-        forms=['test form'],
-        delflg=False,
-        sort=1
-    )
-    with db.session.begin_nested():
-        db.session.add(item_type_name)
-        db.session.add(item_type)
-        db.session.add(item_type_mapping)
-        db.session.add(item_type_property)
-    db.session.commit()
-    item_type_list = {
-        'item_type_name': item_type_name,
-        'item_type': item_type,
-        'item_type_mapping': item_type_mapping,
-        'item_type_property': item_type_property
-    }
-    return item_type_list
-
-
-@pytest.fixture()
-def create_zipfiles():
-    zipfiles = []
-    for i in range(1, 10):
+def create_itemtype_zip():
+    def _create_itemtype_zip(id=1):
         zip_buffer = io.BytesIO()
         item_type = {
-            'id': i,
-            'name_id': i,
+            'id': id,
+            'name_id': id,
             'harvesting_type': False,
             'schema': {'type': 'object', 'properties': {'key': {'type': 'string'}}},
             'form': {},
             'render': {
-                    'table_row': ['row1', 'row2'],
+                    'table_row': ['item_' + str(id)],
                     'meta_list': {
-                        'row1': {'input_type': 'cus_' + str(i)},
-                        'row2': {'input_type': 'cus_' + str(i + 1)}
+                        'item_' + str(id): {'input_type': 'cus_' + str(id)}
                     }
                 },
             'tag': 1,
@@ -971,166 +971,33 @@ def create_zipfiles():
             'is_deleted': False
         }
         item_type_name = {
-            'id': i,
-            'name': 'test item type ' + str(i),
+            'id': id,
+            'name': 'test item type ' + str(id),
             'has_site_license': True,
             'is_active': True
         }
         item_type_mapping = {
-            'id': i,
-            'item_type_id': i,
+            'id': id,
+            'item_type_id': id,
             'mapping': {'test': 'test'},
             'version_id': 1
         }
         item_type_property = [{
-            'id': i,
-            'name': 'test property ' + str(i),
+            'id': id,
+            'name': 'test property ' + str(id),
             'schema': {'type': 'string'},
             'form': {'title_i18n': {'en': 'test property'}},
             'forms': ['test form'],
             'delflg': False,
-            'sort': 1,
+            'sort': None,
             'created': '2024-09-06T00:00:00+00:00',
             'updated': '2024-09-06T00:00:00+00:00'
         }]
-        extra_data = {'extra': 'example'}
         with ZipFile(zip_buffer, 'w', ZIP_DEFLATED) as test_zip:
             test_zip.writestr('ItemType.json', json.dumps(item_type))
             test_zip.writestr('ItemTypeName.json', json.dumps(item_type_name))
             test_zip.writestr('ItemTypeMapping.json', json.dumps(item_type_mapping))
             test_zip.writestr('ItemTypeProperty.json', json.dumps(item_type_property))
-            test_zip.writestr('extra.json', json.dumps(extra_data))
         zip_buffer.seek(0)
-        zipfiles.append(zip_buffer)
-
-    return zipfiles
-
-
-@pytest.fixture()
-def insufficient_zipfile():
-    zip_buffer = io.BytesIO()
-    with ZipFile(zip_buffer, 'w', ZIP_DEFLATED) as test_zip:
-        item_type_data = {
-            'schema': {'type': 'object', 'properties': {'key': {'type': 'string'}}},
-            'form': {},
-            'render': {
-                'table_row': ['row1', 'row2'],
-                'meta_list': {
-                    'row1': {'input_type': 'cus_1'},
-                    'row2': {'input_type': 'cus_2'}
-                }
-            }
-        }
-        item_type_name_data = {'name': 'example'}
-        item_type_mapping_data = {'mapping': 'example_mapping'}
-
-        test_zip.writestr(
-            'ItemType.json', json.dumps(item_type_data)
-        )
-        test_zip.writestr(
-            'ItemTypeName.json', json.dumps(item_type_name_data)
-        )
-        test_zip.writestr(
-            'ItemTypeMapping.json', json.dumps(item_type_mapping_data)
-        )
-    zip_buffer.seek(0)
-    return zip_buffer
-
-
-@pytest.fixture()
-def no_render_zipfile():
-    zip_buffer = io.BytesIO()
-    with ZipFile(zip_buffer, 'w', ZIP_DEFLATED) as test_zip:
-        item_type_data = {
-            'schema': {'type': 'object', 'properties': {'key': {'type': 'string'}}},
-            'form': {},
-        }
-        item_type_name_data = {'name': 'example'}
-        item_type_mapping_data = {'mapping': 'example_mapping'}
-        item_type_property_data = [
-            {'id': 1, 'name': 'property1', 'schema': {}, 'form': {}, 'forms': []},
-            {'id': 2, 'name': 'property2', 'schema': {}, 'form': {}, 'forms': []}
-        ]
-        test_zip.writestr(
-            'ItemType.json', json.dumps(item_type_data)
-        )
-        test_zip.writestr(
-            'ItemTypeName.json', json.dumps(item_type_name_data)
-        )
-        test_zip.writestr(
-            'ItemTypeMapping.json', json.dumps(item_type_mapping_data)
-        )
-        test_zip.writestr(
-            'ItemTypeProperty.json', json.dumps(item_type_property_data)
-        )
-    zip_buffer.seek(0)
-    return zip_buffer
-
-
-@pytest.fixture()
-def no_table_row_zipfile():
-    zip_buffer = io.BytesIO()
-    with ZipFile(zip_buffer, 'w', ZIP_DEFLATED) as test_zip:
-        item_type_data = {
-            'schema': {'type': 'object', 'properties': {'key': {'type': 'string'}}},
-            'form': {},
-            'render': {
-                'meta_list': {
-                    'row1': {'input_type': 'cus_1'},
-                    'row2': {'input_type': 'cus_2'}
-                }
-            }
-        }
-        item_type_name_data = {'name': 'example'}
-        item_type_mapping_data = {'mapping': 'example_mapping'}
-        item_type_property_data = [
-            {'id': 1, 'name': 'property1', 'schema': {}, 'form': {}, 'forms': []},
-            {'id': 2, 'name': 'property2', 'schema': {}, 'form': {}, 'forms': []}
-        ]
-        test_zip.writestr(
-            'ItemType.json', json.dumps(item_type_data)
-        )
-        test_zip.writestr(
-            'ItemTypeName.json', json.dumps(item_type_name_data)
-        )
-        test_zip.writestr(
-            'ItemTypeMapping.json', json.dumps(item_type_mapping_data)
-        )
-        test_zip.writestr(
-            'ItemTypeProperty.json', json.dumps(item_type_property_data)
-        )
-    zip_buffer.seek(0)
-    return zip_buffer
-
-
-@pytest.fixture()
-def no_meta_list_zipfile():
-    zip_buffer = io.BytesIO()
-    with ZipFile(zip_buffer, 'w', ZIP_DEFLATED) as test_zip:
-        item_type_data = {
-            'schema': {'type': 'object', 'properties': {'key': {'type': 'string'}}},
-            'form': {},
-            'render': {
-                'table_row': ['row1', 'row2']
-            }
-        }
-        item_type_name_data = {'name': 'example'}
-        item_type_mapping_data = {'mapping': 'example_mapping'}
-        item_type_property_data = [
-            {'id': 1, 'name': 'property1', 'schema': {}, 'form': {}, 'forms': []},
-            {'id': 2, 'name': 'property2', 'schema': {}, 'form': {}, 'forms': []}
-        ]
-        test_zip.writestr(
-            'ItemType.json', json.dumps(item_type_data)
-        )
-        test_zip.writestr(
-            'ItemTypeName.json', json.dumps(item_type_name_data)
-        )
-        test_zip.writestr(
-            'ItemTypeMapping.json', json.dumps(item_type_mapping_data)
-        )
-        test_zip.writestr(
-            'ItemTypeProperty.json', json.dumps(item_type_property_data)
-        )
-    zip_buffer.seek(0)
-    return zip_buffer
+        return zip_buffer
+    return _create_itemtype_zip

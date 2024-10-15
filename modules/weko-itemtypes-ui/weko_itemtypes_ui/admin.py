@@ -437,7 +437,7 @@ class ItemTypeMetaDataView(BaseView):
                                 import_data['ItemTypeName'] = json_obj
                             elif file_name == 'ItemTypeMapping.json':
                                 import_data['ItemTypeMapping'] = json_obj
-                            elif file_name == 'ItemTypeProperty.json':
+                            else:
                                 import_data['ItemTypeProperty'] = json_obj
 
             if (
@@ -497,12 +497,11 @@ class ItemTypeMetaDataView(BaseView):
                     new_prop_ids.append(prop_id)
                 else:
                     importing_prop = importing_props.get(prop_id)
-                    if importing_prop:
-                        importing_updated = (
-                            importing_prop.get('updated').split('+')[0])
-                        record_updated = record.updated.isoformat()
-                        if importing_updated != record_updated:
-                            duplicated_prop_ids.append(prop_id)
+                    importing_updated = (
+                        importing_prop.get('updated').split('+')[0])
+                    record_updated = record.updated.isoformat()
+                    if importing_updated != record_updated:
+                        duplicated_prop_ids.append(prop_id)
 
             forced_import = current_app.config[
                 'WEKO_ITEMTYPES_UI_FORCED_IMPORT_ENABLED'
