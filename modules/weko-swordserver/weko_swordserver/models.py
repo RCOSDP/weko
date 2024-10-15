@@ -7,10 +7,12 @@
 
 import enum
 
-from invenio_db import db
+from flask import current_app
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils.types import JSONType
 
+from invenio_db import db
 from invenio_oauth2server.models import Client
 from weko_records.models import ItemType, Timestamp
 from weko_workflow.models import WorkFlow
@@ -23,13 +25,13 @@ class SwordItemTypeMapping(db.Model, Timestamp):
     Mapping of RO-Crate matadata to WEKO item type.
 
     Columns:
-        id (int): ID of the mapping.
-        name (str): Name of the mapping.
-        mapping (JSON): Mapping in JSON format.
-        item_type (str): Target itemtype of the mapping.\
+        `id` (int): ID of the mapping.
+        `name` (str): Name of the mapping.
+        `mapping` (JSON): Mapping in JSON format.
+        `itemtype_id` (str): Target itemtype of the mapping.\
             Foreign key referencing `ItemType.id`.
-        version_id (int): Version ID of the mapping.
-        is_deleted (bool): Delete status of the mapping.
+        `version_id` (int): Version ID of the mapping.
+        `is_deleted` (bool): Sofr-delete status of the mapping.
     """
 
     __tablename__ = 'sword_item_type_mappings'
@@ -54,10 +56,10 @@ class SwordItemTypeMapping(db.Model, Timestamp):
         default=lambda: {},
         nullable=False
     )
-    """Mapping in JSON format. Foreign key of ItemType."""
+    """Mapping in JSON format. Foreign key from ItemType."""
 
-    item_type = db.Column(
-        db.String(255),
+    itemtype_id = db.Column(
+        db.Integer(),
         db.ForeignKey(ItemType.id),
         nullable=False)
     """Target itemtype of the mapping."""
@@ -69,11 +71,49 @@ class SwordItemTypeMapping(db.Model, Timestamp):
         db.Boolean(name='is_deleted'),
         nullable=False,
         default=False)
-    """Delete status of the mapping."""
+    """Sofr-delete status of the mapping."""
 
-    # __mapper_args__ = {
-    #     'version_id_col': version_id
-    # }
+
+    @classmethod
+    def _get_next_id(cls):
+        """Get next mapping id.
+
+        Returns:
+            int: Next new mapping id.
+        """
+        return cls.query.count() + 1
+
+    @classmethod
+    def create(cls, name, mapping, itemtype_id):
+        """Create mapping.
+
+        Args:
+            name (str): Name of the mapping.
+            mapping (dict): Mapping in JSON format.
+            itemtype_id (str): Target itemtype of the mapping.
+
+        Returns:
+            SwordItemTypeMapping: Created mapping object.
+        """
+        obj = cls(
+            id=cls._get_next_id(),
+            name=name,
+            mapping=mapping,
+            itemtype_id=itemtype_id,
+            version_id=1,
+            is_deleted=False
+        )
+
+        try:
+            with db.session.begin_nested():
+                db.session.add(obj)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.error(ex)
+            db.session.rollback()
+            raise
+
+        return obj
 
 
 class SwordClient(db.Model, Timestamp):
@@ -110,7 +150,7 @@ class SwordClient(db.Model, Timestamp):
         db.ForeignKey(Client.client_id),
         primary_key=True,
         unique=True)
-    """Id of the clients. foreign key of Client."""
+    """Id of the clients. Foreign key from Client."""
 
     registration_type = db.Column(db.SmallInteger, unique=False, nullable=False)
     """Type of registration to register an item."""
@@ -120,18 +160,18 @@ class SwordClient(db.Model, Timestamp):
         db.ForeignKey(SwordItemTypeMapping.id),
         unique=False,
         nullable=False)
-    """Mapping ID of the client. foreign key of SwordItemTypeMapping."""
+    """Mapping ID of the client. Foreign key from SwordItemTypeMapping."""
 
     workflow_id = db.Column(
         db.Integer,
         db.ForeignKey(WorkFlow.id),
         unique=False,
         nullable=True)
-    """Workflow ID of the client. foreign key of WorkFlow."""
+    """Workflow ID of the client. Foreign key from WorkFlow."""
 
     is_deleted = db.Column(
         db.Boolean(name='is_deleted'),
         nullable=False,
         default=False)
-    """Delete status of the client."""
+    """Sofr-delete status of the client."""
 
