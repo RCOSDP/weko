@@ -1013,3 +1013,11 @@ msgstr "大文字,小文字,数字,記号を各1文字以上含めてくださ�
 
 msgid "available characters"
 msgstr "使用可能文字"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Advanced"
+msgstr "アドバンスド"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Advanced_Profile Settings"
+msgstr "プロフィール設定編集"

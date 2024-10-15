@@ -25,7 +25,7 @@ from flask_babelex import lazy_gettext as _
 USERPROFILES = True
 """Enable or disable module extensions."""
 
-USERPROFILES_EMAIL_ENABLED = True
+USERPROFILES_EMAIL_ENABLED = False
 """Include the user email in the profile form."""
 
 USERPROFILES_EXTEND_SECURITY_FORMS = False

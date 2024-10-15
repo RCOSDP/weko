@@ -42,8 +42,13 @@
 {%- endif %}
 {%- set form = profile_form %}
 <form method="POST" name="profile_form">
+  <!--hidden設定-->
   {%- for field in form %}
-  {%- if field.widget.input_type == 'hidden' %}
+  <!--取得したfield.nameがsprit-○○の形式で取られていたため[sprit-]を除外して取得し、Falseのものがhiddenになるように設定-->
+  {%- set field_visible = form.field_visibility.get(field.name.split('-')[-1], True) %}
+  {%- if not field_visible %}
+  <input type="hidden" name="{{ field.name }}" value="{{ field.data }}">
+  {%- elif field.widget.input_type == 'hidden' %}
   {{ field() }}
   {%- elif config.WEKO_USERPROFILES_READONLY_EMAILFIELD==True and (field.id == 'profile-email' or field.id=='profile-email_repeat') %}
   {{ render_field(field, autofocus=True, placeholder=field.label.text,readonly=True) }}

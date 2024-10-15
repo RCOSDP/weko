@@ -1362,7 +1362,17 @@ class FacetSearchSettingView(ModelView):
             id=id
         )
 
-
+#   アドバンスドのviewクラスを設定
+class ProfileSettingView(BaseView):
+    @expose('/', methods=['GET'])
+    def index(self):
+        profile_settings = AdminSettings.get('profiles_items_settings', dict_to_object=False)
+        current_app.logger.warning(profile_settings)
+        return self.render(
+            current_app.config["WEKO_ADMIN_PROFILE_SETTING_TEMPLATE"],
+            data = json.dumps(profile_settings)
+        )
+    
 style_adminview = {
     'view_class': StyleSettingView,
     'kwargs': {
@@ -1522,6 +1532,16 @@ reindex_elasticsearch_adminview = {
     }
 }
 
+# プロファイル設定のviewを設定
+profile_settings_adminview = {
+    'view_class': ProfileSettingView,
+    'kwargs': {
+        'category': _('Advanced'),
+        'name': _('Profile Settings'),
+        'endpoint': 'profile_settings'
+    }
+}
+
 
 __all__ = (
     'style_adminview',
@@ -1541,5 +1561,6 @@ __all__ = (
     'restricted_access_adminview',
     'identifier_adminview',
     'facet_search_adminview',
-    'reindex_elasticsearch_adminview'
+    'reindex_elasticsearch_adminview',
+    'profile_settings_adminview'
 )

@@ -975,3 +975,11 @@ msgstr "Please include at least one uppercase letter, lowercase letter, number, 
 
 msgid "available characters"
 msgstr "available characters"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Advanced"
+msgstr "Advanced"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Advanced_Profile Settings"
+msgstr "Profile Settings"
