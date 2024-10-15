@@ -1,12 +1,17 @@
 const {useState, useEffect} = React;
 const LABEL_NEW = document.getElementById("new").value;
 const SAVE_LABEL = document.getElementById('save_label').value;
+const SUBJECT_LABEL = document.getElementById('subject_label').value;
+const RECIPIENTS_LABEL = document.getElementById('recipients_label').value;
 const MESSAGE_MISSING_DATA = document.getElementById('message_miss_data').value;
 const EMPTY_TERM = {
   key: "",
   flag: false,
   content: {
     "subject": "",
+    "recipients": "",
+    "cc": "",
+    "bcc": "",
     "body": ""
   }
 };
@@ -137,7 +142,7 @@ function TermsList({termList, setTermList, currentTerm, setCurrentTerm}) {
 }
 
 function TermDetail({currentTerm, setCurrentTerm}) {
-  const {subject, body} = currentTerm.content;
+  const {subject, recipients, cc, bcc, body} = currentTerm.content;
 
   function handleOnInputChanged(event) {
     event.preventDefault();
@@ -153,20 +158,28 @@ function TermDetail({currentTerm, setCurrentTerm}) {
   return (
     <div style={{paddingRight: '15px'}}>
       <div className="form-group row margin-top">
-        <label htmlFor="staticEmail"
-               className="col-sm-2 col-form-label field-required"
-               style={{textAlign: 'right'}}>Subject</label>
+        <label htmlFor="subject" className="col-sm-2 col-form-label field-required" style={{textAlign: 'right'}}>{SUBJECT_LABEL}</label>
         <div className="col-sm-10">
-          <input type="text" className="form-control"
-                 disabled={currentTerm.existed !== true} name="subject"
-                 value={subject}
-                 onChange={e => handleOnInputChanged(e)}/>
+          <input type="text" className="form-control" disabled={currentTerm.existed !== true} name="subject" value={subject} onChange={e => handleOnInputChanged(e)}/>
         </div>
+
+        <label htmlFor="recipients" className="col-sm-2 col-form-label" style={{textAlign: 'right'}}>{RECIPIENTS_LABEL}</label>
+        <div className="col-sm-10">
+          <input type="text" className="form-control" disabled={currentTerm.existed !== true} name="recipients" value={recipients} onChange={e => handleOnInputChanged(e)}/>
+        </div>
+
+        <label htmlFor="cc" className="col-sm-2 col-form-label" style={{textAlign: 'right'}}>CC</label>
+        <div className="col-sm-10">
+          <input type="text" className="form-control" disabled={currentTerm.existed !== true} name="cc" value={cc} onChange={e => handleOnInputChanged(e)}/>
+        </div>
+
+        <label htmlFor="bcc" className="col-sm-2 col-form-label" style={{textAlign: 'right'}}>BCC</label>
+        <div className="col-sm-10">
+          <input type="text" className="form-control" disabled={currentTerm.existed !== true} name="bcc" value={bcc} onChange={e => handleOnInputChanged(e)}/>
+        </div>
+
         <div className="col-sm-12 margin-top">
-          <textarea className="form-control mail_template_height"
-                    disabled={currentTerm.existed !== true} name="body"
-                    value={body}
-                    onChange={e => handleOnInputChanged(e)}/>
+          <textarea className="form-control mail_template_height" disabled={currentTerm.existed !== true} name="body" value={body} onChange={e => handleOnInputChanged(e)}/>
         </div>
       </div>
     </div>
@@ -239,7 +252,7 @@ function MailTemplateLayout({mail_templates}) {
         if (result.status) {
           addAlert(result.msg, 2);
         } else {
-          addAlert(result.msg, 1);
+          showErrorMessage(result.msg);
         }
         if (result.data) {
           setTermList(result.data)

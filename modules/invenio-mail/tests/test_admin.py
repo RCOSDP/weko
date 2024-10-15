@@ -1,11 +1,14 @@
 
+import json
 from smtplib import SMTPServerDisconnected
 
 from flask import url_for
 
 from mock import patch
+from unittest.mock import MagicMock
 
-from invenio_mail.admin import MailSettingView,_app
+from invenio_mail.admin import MailSettingView,_app, MailTemplatesView
+
 
 # .tox/c1/bin/pytest --cov=invenio_mail tests/test_admin.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
 
@@ -110,9 +113,11 @@ class TestMailSettingView:
 # .tox/c1/bin/pytest --cov=invenio_mail tests/test_admin.py::TestMailSettingView::test_send_statistic_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
     def test_send_statistic_mail(self,client,mail_configs,mocker):
         rf = {
-            'recipient': 'test@mail.nii.ac.jp',
-            'subject': 'test mail',
-            'body': 'test body'
+            'recipients': 'recipient@example.com',
+            'subject': 'Test Subject',
+            'cc': 'cc@example.com',
+            'bcc': 'bcc@example.com',
+            'body': 'Test Body'
         }
         # success mail sending
         mock_send = mocker.patch('flask_mail._Mail.send')
@@ -123,10 +128,193 @@ class TestMailSettingView:
         # failed mail sending
         mock_send = mocker.patch('flask_mail._Mail.send', side_effect=SMTPServerDisconnected())
         rf = {
-            'recipient': 'test@mail.nii.ac.jp',
-            'subject': 'test mail',
-            'body': 'test body'
+            'recipients': 'recipient@example.com',
+            'subject': 'Test Subject',
+            'cc': 'cc@example.com',
+            'bcc': 'bcc@example.com',
+            'body': 'Test Body'
         }
         result = MailSettingView.send_statistic_mail(rf)
         assert result == False
         mock_send.assert_called()
+
+class TestMailTemplatesView:
+# .tox/c1/bin/pytest --cov=invenio_mail tests/test_admin.py::TestMailTemplatesView::test_save_mail_template -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
+    @patch('invenio_mail.admin.MailTemplatesView.get_invalid_emails')
+    @patch('invenio_mail.admin.MailTemplates.save_and_update')
+    @patch('invenio_mail.admin.MailTemplateUsers.save_and_update')
+    @patch('invenio_mail.admin.MailTemplates.get_templates')
+    def test_save_mail_template(
+        self,
+        mock_get_templates,
+        mock_save_and_update_users,
+        mock_save_and_update,
+        mock_get_invalid_emails,
+        client
+    ):
+        # when all emails are valid
+        mock_get_templates.return_value = []
+        mock_save_and_update_users.return_value = True
+        mock_save_and_update.return_value = True
+        mock_get_invalid_emails.return_value = []
+        valid_tpl = [{
+            'key': 'mail_templates',
+            'content': {
+                'subject': 'valid_subject',
+                'body': 'valid_body',
+                'recipients': 'valid_mail',
+                'cc': 'valid_mail',
+                'bcc': 'valid_mail'
+            }
+        }]
+        url = url_for("mailtemplates.save_mail_template")
+        post_data = {'mail_templates': valid_tpl}
+        response = client.post(
+            url,
+            data=json.dumps(post_data),
+            content_type='application/json'
+        )
+        assert response.status_code == 200
+        assert 'Mail template was successfully updated.' in str(response.data)
+
+        # when recipients email is invalid
+        mock_get_invalid_emails.return_value = ['invalid_mail']
+        invalid_re_tpl = [{
+            'key': 'mail_templates',
+            'content': {
+                'subject': 'valid_subject',
+                'body': 'valid_body',
+                'recipients': 'invalid_mail',
+                'cc': 'valid_mail',
+                'bcc': 'valid_mail'
+            }
+        }]
+        post_data = {'mail_templates': invalid_re_tpl}
+        response = client.post(
+            url,
+            data=json.dumps(post_data),
+            content_type='application/json'
+        )
+        assert response.status_code == 200
+        assert ('Invalid email addresses (invalid_mail) detected.'
+                in str(response.data))
+
+        # when cc email is invalid
+        invalid_cc_tpl = [{
+            'key': 'mail_templates',
+            'content': {
+                'subject': 'valid_subject',
+                'body': 'valid_body',
+                'recipients': 'valid_mail',
+                'cc': 'invalid_mail',
+                'bcc': 'valid_mail'
+            }
+        }]
+        post_data = {'mail_templates': invalid_cc_tpl}
+        response = client.post(
+            url,
+            data=json.dumps(post_data),
+            content_type='application/json'
+        )
+        assert response.status_code == 200
+        assert ('Invalid email addresses (invalid_mail) detected.'
+                in str(response.data))
+        
+        # when bcc email is invalid
+        invalid_bcc_tpl = [{
+            'key': 'mail_templates',
+            'content': {
+                'subject': 'valid_subject',
+                'body': 'valid_body',
+                'recipients': 'valid_mail',
+                'cc': 'valid_mail',
+                'bcc': 'invalid_mail'
+            }
+        }]
+        post_data = {'mail_templates': invalid_bcc_tpl}
+        response = client.post(
+            url,
+            data=json.dumps(post_data),
+            content_type='application/json'
+        )
+        assert response.status_code == 200
+        assert ('Invalid email addresses (invalid_mail) detected.'
+                in str(response.data))
+        
+        # when mail template update failed
+        mock_save_and_update.return_value = False
+        mock_get_invalid_emails.return_value = []
+        post_data = {'mail_templates': valid_tpl}
+        response = client.post(
+            url,
+            data=json.dumps(post_data),
+            content_type='application/json'
+        )
+        assert response.status_code == 200
+        assert 'Mail template update failed.' in str(response.data)
+
+
+# .tox/c1/bin/pytest --cov=invenio_mail tests/test_admin.py::TestMailTemplatesView::test_get_invalid_emails -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
+    @patch('invenio_mail.admin.User.query')
+    def test_get_invalid_emails(self, mock_query, client):
+        # test email addresses list
+        registered_emails = ['valid@example.com', 'valid2@example.com']
+        unregistered_emails = ['invalid@example.com', 'invalid2@example.com']
+        mixed_emails = ['valid@example.com', 'invalid@example.com']
+        empty_emails = []
+        # test objects
+        mail_templates_view = MailTemplatesView()
+        mock_user_instance = MagicMock()
+
+        # Test when both emails are valid
+        mock_query.filter_by.return_value.first.side_effect = [
+            mock_user_instance, mock_user_instance
+        ]
+        result = mail_templates_view.get_invalid_emails(registered_emails)
+        assert result == []
+        mock_query.filter_by.assert_any_call(
+            email=registered_emails[0],
+            active=True
+        )
+        mock_query.filter_by.assert_any_call(
+            email=registered_emails[1],
+            active=True
+        )
+        assert mock_query.filter_by.call_count == 2
+
+        # Test when both emails are invalid
+        mock_query.filter_by.return_value.first.side_effect = [None, None]
+        result = mail_templates_view.get_invalid_emails(
+            unregistered_emails
+        )
+        assert result == unregistered_emails
+        mock_query.filter_by.assert_any_call(
+            email=unregistered_emails[0],
+            active=True
+        )
+        mock_query.filter_by.assert_any_call(
+            email=unregistered_emails[1],
+            active=True
+        )
+        assert mock_query.filter_by.call_count == 4
+
+        # Test when one email is valid and the other is invalid
+        mock_query.filter_by.return_value.first.side_effect = [
+            mock_user_instance,
+            None
+        ]
+        result = mail_templates_view.get_invalid_emails(mixed_emails)
+        assert result == ['invalid@example.com']
+        mock_query.filter_by.assert_any_call(
+            email=mixed_emails[0],
+            active=True
+        )
+        mock_query.filter_by.assert_any_call(
+            email=mixed_emails[1],
+            active=True
+        )
+        assert mock_query.filter_by.call_count == 6
+
+        # Test when the email list is empty
+        result = mail_templates_view.get_invalid_emails(empty_emails)
+        assert result == []
