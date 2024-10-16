@@ -5,6 +5,8 @@
 # WEKO-SWORDServer is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
+from weko_swordserver.models import SwordClient
+
 """Module of weko-swordserver."""
 
 # TODO: This is an example file. Remove it if your package does not use any
@@ -35,7 +37,7 @@ WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_METADATA = []
 """ List of Metadata Formats which are acceptable to the server. """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_PACKAGING = ['*']
-""" List of Packaging Formats which are acceptable to the server. 
+""" List of Packaging Formats which are acceptable to the server.
 
     ['*'] or List of Packaging Formats URI
         - http://purl.org/net/sword/3.0/package/Binary
@@ -45,7 +47,7 @@ WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_PACKAGING = ['*']
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_COLLECTION_POLICY = {}
 """ URL and description of the server’s collection policy.
-example: 
+example:
     {
         "@id" : "http://www.myorg.ac.uk/collectionpolicy",
         "description" : "...."
@@ -53,7 +55,7 @@ example:
 """
 WEKO_SWORDSERVER_SERVICEDOCUMENT_TREATMENT = {}
 """ URL and description of the treatment content can expect during deposit.
-example: 
+example:
     {
         "@id" : "http://www.myorg.ac.uk/treatment",
         "description" : "..."
@@ -91,3 +93,5 @@ WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_ASSEMBLED_SIZE = 30000000000000
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_SEGMENTS = 1000
 """ Maximum number of segments that the server will accept for a single segmented upload, if segmented upload is supported. """
+
+WEKO_SWORDSERVER_REGISTRATION_TYPE = SwordClient.RegistrationType
