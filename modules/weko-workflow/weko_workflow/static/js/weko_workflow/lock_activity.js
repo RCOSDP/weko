@@ -6,7 +6,7 @@ $(document).ready(function () {
 
   var guestEmail = $('#current_guest_email').val();
 
-  var unlocks_activity = function (activity_id, locked_value, is_opened, is_force = false) {
+  var unlocks_activity = function (activity_id, locked_value, is_opened) {
     if (guestEmail){
       return ;
     }
@@ -15,8 +15,7 @@ $(document).ready(function () {
 
     var data = JSON.stringify({
       locked_value: locked_value,
-      is_opened: is_opened,
-      is_force: is_force
+      is_opened:is_opened
     })
     if (is_ie) {
       var xhr = new XMLHttpRequest();
@@ -50,15 +49,14 @@ $(document).ready(function () {
     sessionStorage.removeItem('locked_value');
   };
 
-  var user_unlock_activity = function (activity_id, is_opened, is_force = false) {
+  var user_unlock_activity = function (activity_id, is_opened) {
     if (guestEmail) {
       return;
     }
     var url = '/workflow/activity/user_unlock/' + activity_id;
-
+    
     var data = JSON.stringify({
-      is_opened: is_opened,
-      is_force: is_force
+      is_opened: is_opened
     })
     var is_ie = /*@cc_on!@*/false || !!document.documentMode;
     if (is_ie) {
@@ -114,7 +112,7 @@ $(document).ready(function () {
               $("#user_lock_modal").css('display','block');
               $('#btn_unlock').on('click', function () {
                 $("#action_unlock_activity").modal("hide");
-                user_unlock_activity(activity_id, is_opened, is_force=true);
+                user_unlock_activity(activity_id, is_opened);
                 location.reload();
               });
             });

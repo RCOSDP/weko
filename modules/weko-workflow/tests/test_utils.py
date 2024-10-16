@@ -3232,8 +3232,7 @@ def test_delete_user_lock_activity_cache(client,users):
     user = users[2]
     login_user(user["obj"])
     data = {
-        "is_opened": False,
-        "is_force": False,
+        "is_opened": False
     }
     activity_id = "A-22240219-00001"
     cache_key = "workflow_userlock_activity_{}".format(user["id"])
@@ -3241,23 +3240,12 @@ def test_delete_user_lock_activity_cache(client,users):
     # cur_locked_val is empty
     result = delete_user_lock_activity_cache(activity_id, data)
     assert result == "Not unlock"
-
+    
+    
     # cur_locked_val is not empty, is_opened is False
     current_cache.set(cache_key, activity_id)
     result = delete_user_lock_activity_cache(activity_id, data)
     assert result == "User Unlock Success"
     assert current_cache.get(cache_key) == None
-
-    # cur_locked_val is not empty, is_opened is True, is_force is False
-    current_cache.set(cache_key, activity_id)
-    data["is_opened"] = True
-    result = delete_user_lock_activity_cache(activity_id, data)
-    assert result == "Not unlock"
-
-    # cur_locked_val is not empty, is_opened is True, is_force is True
-    data["is_force"] = True
-    result = delete_user_lock_activity_cache(activity_id, data)
-    assert result == "User Unlock Success"
-    assert current_cache.get(cache_key) == None
-
+    
     current_cache.delete(cache_key)
