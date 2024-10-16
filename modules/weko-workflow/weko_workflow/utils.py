@@ -2016,12 +2016,10 @@ def check_an_item_is_locked(item_id=None):
                     return True
         return False
 
-    _timeout = current_app.config.get("CELERY_GET_STATUS_TIMEOUT", 3.0)
-    if not item_id or not inspect(timeout=_timeout).ping():
+    if not item_id or not inspect().ping():
         return False
 
-    return check(inspect(timeout=_timeout).active()) or \
-        check(inspect(timeout=_timeout).reserved())
+    return check(inspect().active()) or check(inspect().reserved())
 
 
 def get_account_info(user_id):

@@ -90,9 +90,8 @@ def is_reindex_running():
     if not check_celery_is_run():
         return False
 
-    _timeout = current_app.config.get("CELERY_GET_STATUS_TIMEOUT", 3.0)
-    reserved = inspect(timeout=_timeout).reserved()
-    active = inspect(timeout=_timeout).active()
+    reserved = inspect().reserved()
+    active = inspect().active()
     for worker in active:
         for task in active[worker]:
             current_app.logger.debug("active")

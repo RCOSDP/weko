@@ -152,14 +152,13 @@ def is_import_running():
     if not check_celery_is_run():
         return "celery_not_run"
 
-    _timeout = current_app.config.get("CELERY_GET_STATUS_TIMEOUT", 3.0)
-    active = inspect(timeout=_timeout).active()
+    active = inspect().active()
     for worker in active:
         for task in active[worker]:
             if task["name"] == "weko_search_ui.tasks.import_item":
                 return "is_import_running"
 
-    reserved = inspect(timeout=_timeout).reserved()
+    reserved = inspect().reserved()
     for worker in reserved:
         for task in reserved[worker]:
             if task["name"] == "weko_search_ui.tasks.import_item":
@@ -168,7 +167,7 @@ def is_import_running():
 
 def check_celery_is_run():
     """Check celery is running, or not."""
-    if not inspect(timeout=current_app.config.get("CELERY_GET_STATUS_TIMEOUT", 3.0)).ping():
+    if not inspect().ping():
         return False
     else:
         return True
