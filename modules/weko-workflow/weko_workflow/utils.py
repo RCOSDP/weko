@@ -471,7 +471,6 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
-                'pageStart',
                 # 'fileURI',
             ]
             # いずれか必須が動いていない
