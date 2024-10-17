@@ -5,7 +5,7 @@
 # WEKO-SWORDServer is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
-import enum
+import json
 
 from flask import current_app
 from sqlalchemy.dialects import postgresql
@@ -17,12 +17,12 @@ from invenio_oauth2server.models import Client
 from weko_records.models import ItemType, Timestamp
 from weko_workflow.models import WorkFlow
 
-"""swordserver models."""
+"""Models of weko-swordserver."""
 
 class SwordItemTypeMapping(db.Model, Timestamp):
     """SwordItemTypeMapping Model
 
-    Mapping of RO-Crate matadata to WEKO item type.
+    Mapping for RO-Crate matadata to WEKO item type.
 
     Columns:
         `id` (int): ID of the mapping.
@@ -81,7 +81,8 @@ class SwordItemTypeMapping(db.Model, Timestamp):
         Returns:
             int: Next new mapping id.
         """
-        return cls.query.count() + 1
+        return (cls.query.order_by(cls.id.desc()).first().id + 1
+                if cls.query.count() > 0 else 1)
 
     @classmethod
     def create(cls, name, mapping, itemtype_id):
@@ -98,6 +99,7 @@ class SwordItemTypeMapping(db.Model, Timestamp):
         Raises:
             SQLAlchemyError: An error occurred while creating the mapping.
         """
+        mapping = json.dumps(mapping or {})
         obj = cls(
             id=cls._get_next_id(),
             name=name,
@@ -138,7 +140,7 @@ class SwordItemTypeMapping(db.Model, Timestamp):
             .first()
         )
 
-        if not ignore_deleted and obj and obj.is_deleted:
+        if not ignore_deleted and obj is not None and obj.is_deleted:
             return None
         return obj
 
@@ -151,7 +153,7 @@ class SwordClient(db.Model, Timestamp):
     Columns:
         `client_id` (str): ID of the client.\
             Foreign key referencing `Client.client_id`.
-        `registration_type` (int): Type of registration to register an item.
+        `registration_type_index` (int): Type of registration to register an item.
         `mapping_id` (int): Mapping ID of the client.\
             Foreign key referencing `SwordItemTypeMapping.id`.
         `workflow_id` (int, optional): Workflow ID of the client.\
@@ -179,7 +181,7 @@ class SwordClient(db.Model, Timestamp):
         unique=True)
     """Id of the clients. Foreign key from Client."""
 
-    registration_type = db.Column(db.Integer, unique=False, nullable=False)
+    registration_type_index = db.Column(db.Integer, unique=False, nullable=False)
     """Type of registration to register an item."""
 
     mapping_id = db.Column(
@@ -196,15 +198,21 @@ class SwordClient(db.Model, Timestamp):
         nullable=True)
     """Workflow ID of the client. Foreign key from WorkFlow."""
 
-    # is_deleted = db.Column(
-    #     db.Boolean(name='is_deleted'),
-    #     nullable=False,
-    #     default=False)
-    # """Sofr-delete status of the client."""
+    @property
+    def registration_type(self):
+        """Registration type name of the client."""
+        registration_type = str("")
+
+        if self.registration_type_index == self.RegistrationType.DIRECT:
+            registration_type = str("Direct")
+        elif self.registration_type_index == self.RegistrationType.WORKFOLW:
+            registration_type = str("Workflow")
+
+        return registration_type
 
 
     @classmethod
-    def get_client_by_id(cls, client_id, ignore_deleted=False):
+    def get_client_by_id(cls, client_id):
         """Get client by client_id.
 
         Args:
@@ -215,7 +223,5 @@ class SwordClient(db.Model, Timestamp):
             SwordClient: Client object.
         """
         obj = cls.query.filter_by(client_id=client_id).one_or_none()
-        # if not ignore_deleted and obj and obj.is_deleted:
-        #     return None
         return obj
 
