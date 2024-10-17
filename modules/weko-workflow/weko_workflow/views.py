@@ -109,7 +109,8 @@ from .utils import IdentifierHandle, auto_fill_title, \
     save_activity_data, saving_doi_pidstore, \
     send_usage_application_mail_for_guest_user, set_files_display_type, \
     update_approval_date, update_cache_data, validate_guest_activity_expired, \
-    validate_guest_activity_token, make_activitylog_tsv
+    validate_guest_activity_token, make_activitylog_tsv, \
+    delete_lock_activity_cache, delete_user_lock_activity_cache
 
 workflow_blueprint = Blueprint(
     'weko_workflow',
@@ -716,6 +717,23 @@ def display_guest_activity(file_name=""):
     )
 
 
+@workflow_blueprint.route('/verify_deletion/<string:activity_id>', methods=['GET'])
+@login_required_customize
+def verify_deletion(activity_id="0"):
+    is_deleted = False
+    activity = WorkActivity().get_activity_by_id(activity_id)
+    if activity and activity.item_id:
+        item_id = str(activity.item_id)
+        
+        recid = PersistentIdentifier.query.filter_by(
+            pid_type='recid', object_type='rec', object_uuid=item_id
+        ).one_or_none()
+        if recid and recid.is_deleted():
+            is_deleted = True
+    res = {'code': 200, 'is_deleted':is_deleted}
+    
+    return jsonify(res), 200
+    
 @workflow_blueprint.route('/activity/detail/<string:activity_id>',
                  methods=['GET', 'POST'])
 @login_required_customize
@@ -2412,18 +2430,27 @@ def get_feedback_maillist(activity_id='0'):
     res = ResponseMessageSchema().load({'code':-1,'msg':_('Error')})
     return jsonify(res.data), 400
 
+@workflow_blueprint.route('/activity/unlocks/<string:activity_id>',methods=["POST"])
+@login_required
+def unlocks_activity(activity_id="0"):
+    data = json.loads(request.data.decode("utf-8"))
+    msg_lock = None
+    if data.get("locked_value") != 0:
+        msg_lock = delete_lock_activity_cache(activity_id, data)
+    msg_userlock = delete_user_lock_activity_cache(activity_id, data)
+    res = {"code":200, "msg_lock":msg_lock,"msg_userlock":msg_userlock}
+    return jsonify(res), 200
+
 @workflow_blueprint.route('/activity/user_lock', methods=["GET"])
 @login_required
 def is_user_locked():
     cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
     cur_locked_val = str(get_cache_data(cache_key)) or str()
-    current_app.logger.error("is_user_locked:{}".format(cur_locked_val))
          
         
     if cur_locked_val:
         work_activity = WorkActivity()
         act = work_activity.get_activity_by_id(cur_locked_val)
-        current_app.logger.error(act.activity_status)
         if act is None or act.activity_status in [ActivityStatusPolicy.ACTIVITY_CANCEL,ActivityStatusPolicy.ACTIVITY_FORCE_END,ActivityStatusPolicy.ACTIVITY_FINALLY]:
             is_open = False
         else:
@@ -2483,8 +2510,7 @@ def user_lock_activity(activity_id="0"):
         # elif cur_locked_val==activity_id:
         #     delete_cache_data(cache_key)
             
-    locked_by_email, locked_by_username = get_account_info(str(current_user.get_id()))
-    res = {"code":200,"msg": "" if err else _("Success"),"err": err or "", "locked_by_username":locked_by_username}
+    res = {"code":200,"msg": "" if err else _("Success"),"err": err or "", "activity_id": cur_locked_val}
     return jsonify(res), 200
 
 @workflow_blueprint.route('/activity/user_unlock/<string:activity_id>', methods=["POST"])
@@ -2523,13 +2549,8 @@ def user_unlock_activity(activity_id="0"):
                             ResponseMessageSchema
                         example: {"code":200,"msg":"Unlock success"}
     """
-    cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
-    cur_locked_val = str(get_cache_data(cache_key)) or str()
     data = json.loads(request.data.decode("utf-8"))
-    msg = _("Not unlock")
-    if cur_locked_val and not data["is_opened"] or (cur_locked_val == activity_id):
-        delete_cache_data(cache_key)
-        msg = "User Unlock Success"
+    msg = delete_user_lock_activity_cache(activity_id, data)
     res = {"code":200, "msg":msg}
     return jsonify(res), 200
 
@@ -2712,20 +2733,13 @@ def unlock_activity(activity_id="0"):
         current_app.logger.error("unlock_activity: argument error")
         res = ResponseMessageSchema().load({"code":-1, "msg":"arguments error"})
         return jsonify(res.data), 400
-    cache_key = 'workflow_locked_activity_{}'.format(activity_id)
     try:
         data = LockedValueSchema().load(json.loads(request.data.decode("utf-8")))
     except ValidationError as err:
         res = ResponseMessageSchema().load({'code':-1, 'msg':str(err)})
         return jsonify(res.data), 400
-    locked_value = str(data.data.get('locked_value'))
-    current_app.logger.debug("id:{}".format(str(data.data.get('id'))))
-    msg = None
-    # get lock activity from cache
-    cur_locked_val = str(get_cache_data(cache_key)) or str()
-    if cur_locked_val and cur_locked_val == locked_value:
-        delete_cache_data(cache_key)
-        msg = _('Unlock success')
+    print("unlock_data:{}".format(data))
+    msg = delete_lock_activity_cache(activity_id, data.data)    
     res = ResponseUnlockSchema().load({'code':200,'msg':msg or _('Not unlock')})
     return jsonify(res.data), 200
 

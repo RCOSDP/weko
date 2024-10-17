@@ -471,7 +471,6 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
-                'pageStart',
                 # 'fileURI',
             ]
             # いずれか必須が動いていない
@@ -2016,10 +2015,12 @@ def check_an_item_is_locked(item_id=None):
                     return True
         return False
 
-    if not item_id or not inspect().ping():
+    _timeout = current_app.config.get("CELERY_GET_STATUS_TIMEOUT", 3.0)
+    if not item_id or not inspect(timeout=_timeout).ping():
         return False
 
-    return check(inspect().active()) or check(inspect().reserved())
+    return check(inspect(timeout=_timeout).active()) or \
+        check(inspect(timeout=_timeout).reserved())
 
 
 def get_account_info(user_id):
@@ -4468,3 +4469,23 @@ def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permissio
 
     #url_and_expired_date of a applyed content.
     return url_and_expired_date
+
+def delete_lock_activity_cache(activity_id, data):
+    cache_key = 'workflow_locked_activity_{}'.format(activity_id)
+    locked_value = str(data.get('locked_value'))
+    msg = None
+    cur_locked_val = str(get_cache_data(cache_key)) or str()
+    if cur_locked_val and cur_locked_val == locked_value:
+        delete_cache_data(cache_key)
+        msg = _('Unlock success')
+    return msg
+
+def delete_user_lock_activity_cache(activity_id, data):
+    cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
+    cur_locked_val = str(get_cache_data(cache_key)) or str()
+    msg = _("Not unlock")
+
+    if cur_locked_val and not data["is_opened"] or (cur_locked_val == activity_id and data['is_force']):
+        delete_cache_data(cache_key)
+        msg = "User Unlock Success"
+    return msg
