@@ -102,7 +102,8 @@ def validate_digits(form, field):
     @param form:
     @param field:
     """
-
+    if field.data == "None":
+        return
     error_message = _('Only digits are allowed.')
     if not re.fullmatch(r'[0-9]*', field.data):
         raise ValidationError(error_message)
@@ -204,7 +205,7 @@ class ProfileForm(FlaskForm):
                 field = SelectField(
                     _(value['label_name']),
                     filters=[strip_filter],
-                    choices=[(choice, choice) for choice in value['select'][0].split('|')]
+                    choices=[('','')]+[('None','')]+[(choice, choice) for choice in value['select'][0].split('|')]
                 )
                 setattr(ProfileForm, key, field)
             elif value['current_type'] == 'identifier':
