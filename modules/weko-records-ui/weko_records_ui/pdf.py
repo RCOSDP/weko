@@ -641,17 +641,17 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
 
     # Download the newly generated combined PDF file
     try:
-        combined_filename = 'CV_' + datetime.now().strftime('%Y%m%d') + '_' + \
-                            fileobj['filename']
+        download_filename = 'CV_' + fileobj['filename']
     except (KeyError, IndexError):
-        combined_filename = 'CV_' + title + '.pdf'
+        download_filename = 'CV_' + title + '.pdf'
 
     dir_path = tempfile.gettempdir() + '/comb_pdfs/'
 
     if not os.path.isdir(dir_path):
         os.mkdir(dir_path)
 
-    combined_filepath = dir_path + '{}.pdf'.format(combined_filename)
+    combined_filepath = dir_path + 'CV_{}_{}.pdf'.format(
+        datetime.now().strftime('%Y%m%d'), fileobj.file_id)
 
     with open(combined_filepath, 'wb') as f:
         try:
@@ -709,7 +709,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     return send_file(
         combined_filepath,
         as_attachment=True,
-        attachment_filename=combined_filename,
+        attachment_filename=download_filename,
         mimetype='application/pdf',
         cache_timeout=-1
     )
