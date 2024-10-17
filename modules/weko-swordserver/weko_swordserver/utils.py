@@ -7,12 +7,50 @@
 
 """Module of weko-swordserver."""
 
+import json
+import os
+import sys
+import tempfile
+from datetime import datetime, timezone
+import traceback
+from zipfile import ZipFile
 from flask import current_app
 from invenio_oauth2server.provider import get_token
 
 from .errors import WekoSwordserverException, ErrorType
 from .models import SwordClient, SwordItemTypeMapping
 
+
+def unpack_zip(file):
+    data_path = (
+        tempfile.gettempdir()
+        + "/"
+        + current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
+        + datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+    )
+
+    try:
+        # Create temp dir for import data
+        os.mkdir(data_path)
+
+        # Extract zip file
+        with ZipFile(file) as z:
+            for info in z.infolist():
+                try:
+                    info.filename = info.orig_filename.encode("cp437").decode("cp932")
+                    # replace backslash to slash
+                    if os.sep != "/" and os.sep in info.filename:
+                        info.filename = info.filename.replace(os.sep, "/")
+                except Exception:
+                    traceback.print_exc(file=sys.stdout)
+                z.extract(info, path=data_path)
+
+    except Exception as e:
+        current_app.logger.error(f'An error occured while extraction the zip file')
+        traceback.print_exc()
+        return None
+
+    return data_path
 
 def get_mapping_by_token(access_token):
     """Get mapping by token.
@@ -44,9 +82,14 @@ def get_mapping_by_token(access_token):
 
 def check_bagit_import_items(file, header, file_format):
     check_result = {}
-    register_format = ""
+
+    if isinstance(file, str):
+        filename = file.split("/")[-1]
+    else:
+        filename = file.filename
 
     # TODO: extension zip in tmporary directory
+    data_path = unpack_zip(file)
 
     # TODO: check request header
 
@@ -58,7 +101,7 @@ def check_bagit_import_items(file, header, file_format):
             errorType=ErrorType.MappingNotFound
         )
 
-    mapping = sword_mapping.mapping
+    mapping = json.loads(sword_mapping.mapping)
     register_format = sword_mapping.registration_type
 
     # TODO: validate mapping

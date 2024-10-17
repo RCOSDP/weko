@@ -121,11 +121,11 @@ class SwordItemTypeMapping(db.Model, Timestamp):
         return obj
 
     @classmethod
-    def get_mapping_by_id(cls, id, ignore_deleted=False):
+    def get_mapping_by_id(cls, id, ignore_deleted=True):
         """Get mapping by mapping_id.
 
         Args:
-            mapping_id (int): Mapping ID.
+            id (int): Mapping ID.
             ignore_deleted (bool, optional): Ignore deleted mapping.
 
         Returns:
@@ -140,7 +140,7 @@ class SwordItemTypeMapping(db.Model, Timestamp):
             .first()
         )
 
-        if not ignore_deleted and obj is not None and obj.is_deleted:
+        if ignore_deleted and obj is not None and obj.is_deleted:
             return None
         return obj
 
@@ -217,7 +217,6 @@ class SwordClient(db.Model, Timestamp):
 
         Args:
             client_id (str): Client ID.
-            ignore_deleted (bool, optional): Ignore deleted client.
 
         Returns:
             SwordClient: Client object.
