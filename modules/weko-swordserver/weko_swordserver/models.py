@@ -28,7 +28,7 @@ class SwordItemTypeMapping(db.Model, Timestamp):
         `id` (int): ID of the mapping.
         `name` (str): Name of the mapping.
         `mapping` (JSON): Mapping in JSON format.
-        `itemtype_id` (str): Target itemtype of the mapping.\
+        `item_type_id` (str): Target itemtype of the mapping.\
             Foreign key referencing `ItemType.id`.
         `version_id` (int): Version ID of the mapping.
         `is_deleted` (bool): Sofr-delete status of the mapping.
@@ -58,7 +58,7 @@ class SwordItemTypeMapping(db.Model, Timestamp):
     )
     """Mapping in JSON format. Foreign key from ItemType."""
 
-    itemtype_id = db.Column(
+    item_type_id = db.Column(
         db.Integer(),
         db.ForeignKey(ItemType.id),
         nullable=False)
@@ -85,13 +85,13 @@ class SwordItemTypeMapping(db.Model, Timestamp):
                 if cls.query.count() > 0 else 1)
 
     @classmethod
-    def create(cls, name, mapping, itemtype_id):
+    def create(cls, name, mapping, item_type_id):
         """Create mapping.
 
         Args:
             name (str): Name of the mapping.
             mapping (dict): Mapping in JSON format.
-            itemtype_id (str): Target itemtype of the mapping.
+            item_type_id (str): Target itemtype of the mapping.
 
         Returns:
             SwordItemTypeMapping: Created mapping object.
@@ -104,7 +104,7 @@ class SwordItemTypeMapping(db.Model, Timestamp):
             id=cls._get_next_id(),
             name=name,
             mapping=mapping,
-            itemtype_id=itemtype_id,
+            item_type_id=item_type_id,
             version_id=1,
             is_deleted=False
         )

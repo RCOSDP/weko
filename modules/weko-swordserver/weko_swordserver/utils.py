@@ -7,21 +7,78 @@
 
 """Module of weko-swordserver."""
 
-import json
 import os
 import sys
 import tempfile
-from datetime import datetime, timezone
 import traceback
-from zipfile import ZipFile
-from flask import current_app
+from base64 import b64encode
+from datetime import datetime, timezone
+from hashlib import sha256
+from zipfile import BadZipFile, ZipFile
+
+from flask import current_app, request
 from invenio_oauth2server.provider import get_token
 
 from .errors import WekoSwordserverException, ErrorType
 from .models import SwordClient, SwordItemTypeMapping
 
 
+def check_import_file_format(file, packaging):
+    """Check inport file format.
+
+    Args:
+        file (str): Import file
+        packaging (str): Packaging in request header
+
+    Raises:
+        WekoSwordserverException: _description_
+
+    Returns:
+        str: Import file format
+    """
+    if packaging == 'SWORDBagIt':
+        file_format = 'SWORD'
+    elif packaging == 'SimpleZip':
+        file_list = get_file_list_of_zip(file)
+        if 'ro-crate-metadata.json' in file_list:
+            file_format = 'ROCRATE'
+        else:
+            file_format = 'OTHERS'
+    else:
+        raise WekoSwordserverException(
+            "No Package Included.", ErrorType.BadRequest
+            )
+
+    return file_format
+
+
+def get_file_list_of_zip(file):
+    """Get file list of zip.
+
+    Args:
+        file (_type_): Zip file.
+
+    Returns:
+        list: File list
+    """
+    with ZipFile(file, 'r') as zip_ref:
+        file_list =  zip_ref.namelist()
+
+    return file_list
+
+
 def unpack_zip(file):
+    """Unpack zip file.
+
+    Unpack zip file and return extracted files information.
+
+    Args:
+        file (FileStorage): Zip file.
+
+    Returns:
+        tuple (str, list[ZipInfo]): Extracted files path and file information
+
+    """
     data_path = (
         tempfile.gettempdir()
         + "/"
@@ -33,24 +90,96 @@ def unpack_zip(file):
         # Create temp dir for import data
         os.mkdir(data_path)
 
-        # Extract zip file
-        with ZipFile(file) as z:
-            for info in z.infolist():
+        # Extract zip file, Extracted files remain.
+        with ZipFile(file) as zip_ref:
+            file_list =  zip_ref.namelist()
+            for info in zip_ref.infolist():
                 try:
-                    info.filename = info.orig_filename.encode("cp437").decode("cp932")
+                    info.filename = (
+                        info.orig_filename.encode("cp437").decode("cp932"))
                     # replace backslash to slash
                     if os.sep != "/" and os.sep in info.filename:
                         info.filename = info.filename.replace(os.sep, "/")
-                except Exception:
+                except Exception as ex:
                     traceback.print_exc(file=sys.stdout)
-                z.extract(info, path=data_path)
+                zip_ref.extract(info, path=data_path)
 
-    except Exception as e:
-        current_app.logger.error(f'An error occured while extraction the zip file')
+    except BadZipFile as ex:
+        current_app.logger.error(
+            "An error occured while extraction the zip file")
         traceback.print_exc()
-        return None
+        # TODO: error type
+        raise WekoSwordserverException(
+            "An error occured while extraction the zip file",
+            ErrorType.BadRequest
+        )
 
-    return data_path
+    return data_path, file_list
+
+
+def is_valid_body_hash(digest, body):
+    """Validate body hash.
+
+    Validate body hash by comparing to digest in request headers.
+    When body hash is valid : return True.
+    Else : return False.
+
+    Args:
+        digest (): Digest in request headers.
+        body (): Request body.
+
+    Returns:
+        bool: Check result.
+    """
+    body_hash = sha256(body).digest()
+    body_hash_base64 = b64encode(body_hash).decode()
+
+    result = False
+
+    if (digest.startwith('SHA-256=')
+        and digest.split('SHA-256=') == body_hash_base64):
+        result = True
+
+    return result
+
+
+def check_rocrate_required_files(file_list):
+    """Check RO-Crate required files.
+
+    Args:
+        file_list (list): FIle list of zip.
+
+    Returns:
+        list: List of results.
+    """
+    # TODO: move to .config
+    list_required_files = [
+        'manifest-sha-256.txt',
+        'ro-crate-metadata.json'
+    ]
+
+    return [required_file in file_list
+            for required_file in list_required_files]
+
+
+def check_swordbagit_required_files(file_list):
+    """Check SWORDBagIt required files.
+
+    Args:
+        file_list (list): FIle list of zip.
+
+    Returns:
+        list: List of results.
+    """
+    # TODO: move to .config
+    list_required_files = [
+        'manifest-sha-256.txt',
+        'metadata/sword.json'
+    ]
+
+    return [required_file in file_list
+            for required_file in list_required_files]
+
 
 def get_mapping_by_token(access_token):
     """Get mapping by token.
@@ -77,37 +206,3 @@ def get_mapping_by_token(access_token):
     mapping = SwordItemTypeMapping.get_mapping_by_id(mapping_id)
 
     return mapping
-
-
-
-def check_bagit_import_items(file, header, file_format):
-    check_result = {}
-
-    if isinstance(file, str):
-        filename = file.split("/")[-1]
-    else:
-        filename = file.filename
-
-    # TODO: extension zip in tmporary directory
-    data_path = unpack_zip(file)
-
-    # TODO: check request header
-
-    sword_mapping = get_mapping_by_token(header["access_token"])
-    if sword_mapping is None:
-        current_app.logger.error(f"Mapping not found by your token.")
-        raise WekoSwordserverException(
-            "Mapping not found by your token.",
-            errorType=ErrorType.MappingNotFound
-        )
-
-    mapping = json.loads(sword_mapping.mapping)
-    register_format = sword_mapping.registration_type
-
-    # TODO: validate mapping
-
-    # TODO: make check_result
-
-    return check_result, register_format
-
-
