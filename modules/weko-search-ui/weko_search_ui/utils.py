@@ -31,7 +31,6 @@ import tempfile
 import traceback
 import uuid
 import zipfile
-import hashlib
 from collections import Callable, OrderedDict
 from datetime import datetime
 from functools import partial, reduce, wraps
@@ -442,265 +441,6 @@ def parse_to_json_form(data: list, item_path_not_existed=[], include_empty=False
     return result
 
 
-# 中村追加処理-1
-def check_file_exist(data_path, file_to_check, in_root=False):
-    """Check if the specific file is contained.
-
-    Args:
-        data_path (str): ZIP extracted path
-
-    Returns:
-        bool: File exist
-    """
-    if in_root:
-        if file_to_check in data_path:
-            return True
-    else:
-        for root, dirs, files in os.walk(data_path):
-            if file_to_check in files:
-                return True
-
-    return False
-
-# 中村追加処理-2
-def check_rocrate_bagit_required_files(file_list):
-    list_required_files = [
-        'bag-info.txt',
-        'bagit.txt',
-        'manifest-sha-256.txt',
-        'tagmanifest-sha-256.txt',
-        'ro-crate-metadata.json'
-    ]
-
-    return [required_file in file_list for required_file in list_required_files]
-
-
-def check_swordbagit_required_files(file_list):
-    list_required_files = [
-        'bag-info.txt',
-        'bagit.txt',
-        'manifest-sha-256.txt',
-        'tagmanifest-sha-256.txt',
-        'metadata/sword.json'
-    ]
-
-    return [required_file in file_list for required_file in list_required_files]
-
-
-def get_file_list_of_zip(file, is_gakuninrdm=False):
-    # if isinstance(file, str):
-    #     filename = os.path.basename(file)
-    # else:
-    #     filename = file.filename
-    if not is_gakuninrdm:
-        tmp_prefix = current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
-    else:
-        tmp_prefix = "deposit_activity_"
-    tmp_dirname = tmp_prefix + datetime.utcnow().strftime(r"%Y%m%d%H%M%S")
-    data_path = os.path.join(tempfile.gettempdir(), tmp_dirname)
-    result = {"data_path": data_path}
-
-    # Create temp dir for import data
-    os.mkdir(data_path)
-
-    with zipfile.ZipFile(file, 'r') as zip_ref:
-        zip_ref.extractall(data_path)
-        file_list =  zip_ref.namelist()
-
-    return file_list
-
-
-def get_unpacked_zip_path(file, is_gakuninrdm=False):
-    # fileはファイルパス、strだった場合filename = 'ファイル名.拡張子'
-    if isinstance(file, str):
-        filename = file.split("/")[-1]
-    # str型じゃない場合、file.filenameでファイル名が取得できるっぽい？結果は上と同じになる模様
-    else:
-        filename = file.filename
-    if not is_gakuninrdm:
-        tmp_prefix = current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
-    else:
-        tmp_prefix = "deposit_activity_"
-    data_path = (
-        tempfile.gettempdir()
-        + "/"
-        + tmp_prefix
-        + datetime.utcnow().strftime(r"%Y%m%d%H%M%S")
-    )
-    result = {"data_path": data_path}
-
-    try:
-        # Create temp dir for import data
-        os.mkdir(data_path)
-
-        # ここで.zipを展開(解凍)している
-        with zipfile.ZipFile(file) as z:
-            for info in z.infolist():
-                try:
-                    info.filename = info.orig_filename.encode("cp437").decode("cp932")
-                    if os.sep != "/" and os.sep in info.filename:
-                        info.filename = info.filename.replace(os.sep, "/")
-                except Exception:
-                    current_app.logger.warning("-" * 60)
-                    traceback.print_exc(file=sys.stdout)
-                    current_app.logger.warning("-" * 60)
-                z.extract(info, path=data_path)
-
-        return data_path
-    except Exception as e:
-        print(f'An error occured while extraction the zip file: {str(e)}')
-        return None
-
-
-def calculate_sha256(file_path):
-    """Calculate SHA-256 of a file.
-
-    Args:
-        file_path (str): target file path
-
-    Returns:
-        str: result
-    """
-    sha256_hash = hashlib.sha256()
-    with open(file_path, "rb") as f:
-        for byte_block in iter(lambda: f.read(4096), b""):
-            sha256_hash.update(byte_block)
-    return sha256_hash.hexdigest()
-
-
-def check_manifest_sha_256(manifest_path):
-    """Validate all SHA-256 of each file in manifest/tagmanifest-sha-256.txt file.
-
-    Args:
-        manifest_path (str): manifest/tagmanifest-sha-256.txt file path
-
-    Returns:
-        bool: result
-    """
-    with open(manifest_path, "r") as manifest_file:
-        for line in manifest_file:
-            hash_value, file_path = line.strip().split(maxsplit=1)
-            calculated_hash = calculate_sha256(file_path)
-            if hash_value == calculated_hash:
-                # print(f"{file_path}: OK")
-                return True
-            else:
-                # print(f"{file_path}: MISMATCH (expected {hash_value}, got {calculated_hash})")
-                return False
-
-
-def check_rocrate_bagit_import_items(file, item_type_id, is_gakuninrdm=False):
-    """Validation importing zip file.
-
-    :argument
-        file -- zip file path.
-        item_id -- import item type id.
-        is_gakuninrdm -- Is call by gakuninrdm api.
-    :return
-        return       -- PID object if exist.
-
-    """
-    if isinstance(file, str):
-        filename = os.path.basename(file)
-    else:
-        filename = file.filename
-    if not is_gakuninrdm:
-        tmp_prefix = current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
-    else:
-        tmp_prefix = "deposit_activity_"
-    tmp_dirname = tmp_prefix + datetime.utcnow().strftime(r"%Y%m%d%H%M%S")
-    data_path = os.path.join(tempfile.gettempdir(), tmp_dirname)
-    result = {"data_path": data_path}
-
-    # # check item type id
-    # item_type = ItemTypes.get_by_id(item_type_id)
-    # if not item_type or item_type.is_deleted:
-    #     result["error"] =  _("The item type of the item to be imported is missing or has already been deleted.")
-    #     return result
-
-    try:
-        # Create temp dir for import data
-        os.mkdir(data_path)
-
-        with zipfile.ZipFile(file) as z:
-            for info in z.infolist():
-                try:
-                    info.filename = info.orig_filename.encode("cp437").decode("cp932")
-                    if os.sep != "/" and os.sep in info.filename:
-                        info.filename = info.filename.replace(os.sep, "/")
-                except Exception:
-                    current_app.logger.warning("-" * 60)
-                    traceback.print_exc(file=sys.stdout)
-                    current_app.logger.warning("-" * 60)
-                z.extract(info, path=data_path)
-
-        # data_path += "/data"
-        list_record = []
-        # get settings from table
-        # list_xml = list(filter(lambda filename: filename.endswith('.xml'), os.listdir(data_path)))
-
-        if not chekc_rocrate_bagit_files(data_path):  #RO-Crate+BagItのファイルが全部揃ってるか
-            raise FileNotFoundError()
-        # ここの処理をチェック
-        # list_record.extend(generate_metadata_from_jpcoar(data_path, list_xml, item_type_id))  #マッピングが必要なので一旦パス
-        list_record.extend({'@author': 'sample_author'})  #なので仮でメタデータ挿入
-
-        # current_app.logger.debug("list_record1: {}".format(list_record))
-
-        # add: {"id": null, "status": "new"}
-        # list_record = handle_check_exist_record(list_record)  #list_recordの中身がシステム内に存在するかのチェックなので一旦パス
-        # current_app.logger.debug("list_record2: {}".format(list_record))
-
-        # add: {"item_title": "****"}
-        handle_item_title(list_record)
-        # current_app.logger.debug("list_record3: {}".format(list_record))
-
-        list_record = handle_check_date(list_record)
-        # current_app.logger.debug("list_record4: {}".format(list_record))
-
-        handle_check_id(list_record)
-
-        # add: {"filenames": [{"filename": "sample.pdf", "id": ".metadata.item_1617605131499[0].filename"}], "metadata": {"feedback_mail_list": [{"author_id": "", "email": "wekosoftware@nii.ac.jp"}], "path": [1031]} }
-        handle_check_file_metadata(list_record, data_path)
-        # current_app.logger.debug("list_record5: {}".format(list_record))
-
-        if not is_gakuninrdm:
-            handle_check_cnri(list_record)
-            handle_check_doi_indexes(list_record)
-            handle_check_doi_ra(list_record)
-            handle_check_doi(list_record)
-
-        result["list_record"] = list_record
-    except zipfile.BadZipFile as ex:
-        result["error"] =  _(
-            "The format of the specified file {} does not support import." \
-            " Please specify one of the following formats: zip, tar, gztar, bztar, xztar.").format(filename)
-        current_app.logger.error("-" * 60)
-        traceback.print_exc(file=sys.stdout)
-        current_app.logger.error("-" * 60)
-    except FileNotFoundError as ex:
-        result["error"] =  _(
-            "The xml file was not found in the specified file {}." \
-            " Check if the directory structure is correct.").format(filename)
-        current_app.logger.error("-" * 60)
-        traceback.print_exc(file=sys.stdout)
-        current_app.logger.error("-" * 60)
-    except UnicodeDecodeError as ex:
-        result["error"] =  ex.reason
-        current_app.logger.error("-" * 60)
-        traceback.print_exc(file=sys.stdout)
-        current_app.logger.error("-" * 60)
-    except Exception as ex:
-        error = _("Internal server error")
-        if (ex.args and len(ex.args) and isinstance(ex.args[0], dict) and ex.args[0].get("error_msg")):
-            error = ex.args[0].get("error_msg")
-        result["error"] = error
-        current_app.logger.error("-" * 60)
-        traceback.print_exc(file=sys.stdout)
-        current_app.logger.error("-" * 60)
-    return result
-
-
 def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
                        all_index_permission=True, can_edit_indexes=[]):
     """Validation importing zip file.
@@ -716,10 +456,8 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
         return       -- PID object if exist.
 
     """
-    # fileはファイルパス、strだった場合filename = 'ファイル名.拡張子'
     if isinstance(file, str):
         filename = file.split("/")[-1]
-    # str型じゃない場合、file.filenameでファイル名が取得できるっぽい？結果は上と同じになる模様
     else:
         filename = file.filename
     if not is_gakuninrdm:
@@ -738,7 +476,6 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
         # Create temp dir for import data
         os.mkdir(data_path)
 
-        # ここで.zipを展開(解凍)している
         with zipfile.ZipFile(file) as z:
             for info in z.infolist():
                 try:
@@ -751,7 +488,6 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
                     current_app.logger.warning("-" * 60)
                 z.extract(info, path=data_path)
 
-        # ここからCSV, TSVのチェックを行っている模様
         data_path += "/data"
         list_record = []
         list_csv = list(filter(lambda x: x.endswith(".csv"), os.listdir(data_path)))
