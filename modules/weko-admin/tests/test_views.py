@@ -566,18 +566,23 @@ def test_manual_send_site_license_mail(api, db, users, mocker,no_records_sitelic
     mocker.patch("weko_admin.views.QuerySitelicenseReportsHelper.get",return_value=report_helper_result)
     mocker.patch("weko_admin.views.send_site_license_mail")
     res = api.post(url)
-    assert res.data == b"finished"
+    assert res.data == b'{"status":"success"}\n'
 
     mocker.patch("weko_admin.views.QuerySitelicenseReportsHelper.get",return_value=no_records_sitelicense)
     mocker.patch("weko_admin.views.send_site_license_mail")
     res = api.post(url)
-    assert res.data == b"finished"
+    assert res.data == b'{"status":"success"}\n'
     
+    # Exception
+    with patch("weko_admin.views.send_site_license_mail",side_effect=Exception("test_error")):
+        res = api.post(url)
+        assert res.data == b'{"status":"error"}\n'
+
     # send_list is None
     SiteLicenseInfo.query.delete()
     db.session.commit()
-    with pytest.raises(TypeError):
-        res = api.post(url)
+    res = api.post(url)
+    assert res.data == b'{"status":"error"}\n'
 
 #def update_site_info():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_update_site_info_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp

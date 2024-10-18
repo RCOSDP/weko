@@ -92,7 +92,7 @@ def test_check_send_site_access_report(client, admin_settings, mocker):
     
     # site_license_mail_setting.auto_send_flag is True
     AdminSettings.update("site_license_mail_settings", {"auto_send_flag": True})
-    mock_send = mocker.patch("weko_admin.tasks.manual_send_site_license_mail")
+    mock_send = mocker.patch("weko_admin.tasks.handle_site_license_mail")
     check_send_site_access_report()
     mock_send.assert_called()
     
