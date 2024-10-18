@@ -470,6 +470,7 @@ function OnLinkClick(uri, pid_value, accessrole) {
 }
 function confirm_login(action){
     let future_date_message = $('#future_date_message').val();
+    let displaytype = $('#displaytype').val();
     let download_preview_message = $('#download_preview_message').val();
     let download_message = $("#download_message").val();
     let preview_message = $("#preview_message").val();
@@ -478,7 +479,7 @@ function confirm_login(action){
     }else{
         message = preview_message;
     }
-    if(download_preview_message){
+    if(displaytype == 'preview' && download_preview_message){
         date_message = download_preview_message;
     }else{
         date_message = future_date_message;

@@ -241,25 +241,35 @@ class Index(db.Model, Timestamp):
 
     @classmethod
     def get_all_by_is_issn(cls):
-        """Get all Indexes issn existing.
+        """Get index dict where issn and biblio flag exist.
         
         Returns:
-            all Indexes issn existing.
+            info (dict): Indexes info.
         """
-        query_result = cls.query.all()
-        result = []
-        if query_result:
-            for index in query_result:
-                if index.online_issn and index.biblio_flag:
-                    data = {
-                        'id': index.id,
-                        'updated': index.updated,
-                        'index_name': index.index_name,
-                        'index_name_english': index.index_name_english,
-                        'issn' : index.online_issn
-                    }
-                    result.append(data)
-        return result if result else []
+        from weko_index_tree.api import Indexes
+        query = '''WITH recursive recursive_ancestor(depth, cid, pid, issn, name, en_name, updated) AS (
+            SELECT 0 AS depth, idx.id AS cid, idx.parent AS pid, idx.online_issn AS issn, idx.index_name AS name, idx.index_name_english AS en_name, idx.updated AS updated 
+            FROM "index" AS idx WHERE idx.online_issn != '' AND idx.biblio_flag = True 
+            UNION ALL 
+            SELECT recursive_ancestor.depth + 1, idx.id, idx.parent, idx.online_issn, idx.index_name, idx.index_name_english, idx.updated 
+            FROM recursive_ancestor 
+            JOIN "index" AS idx ON recursive_ancestor.pid = idx.id WHERE idx.online_issn != '' AND idx.biblio_flag = True), 
+            ranked_ancestor AS (
+            SELECT depth, cid, pid, issn, name, en_name, updated, ROW_NUMBER() OVER (PARTITION BY issn ORDER BY depth DESC, updated DESC, cid ASC) AS rn 
+            FROM recursive_ancestor) SELECT cid, issn, name, en_name FROM ranked_ancestor WHERE rn = 1 ORDER BY issn ASC;'''
+        result = db.session.execute(query).fetchall()
+        info = {}
+        if result:
+            for index in result:
+                spec = Indexes.get_full_path(index[0])
+                set_spec = spec.replace('/', ':')
+                info[index[1]] = {
+                    'name': index[2],
+                    'name_en': index[3],
+                    'id': set_spec,
+                }
+        return info
+
 
 class IndexStyle(db.Model, Timestamp):
     """Index style."""

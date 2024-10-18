@@ -9,20 +9,24 @@ from weko_index_tree.models import Index, IndexStyle
 #     def have_children(cls, id):
 #     def get_all(cls):
 #     def get_index_by_id(cls, index):
-# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_models.py::test_none_index -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
-def test_none_get_all_by_is_issn(app,db):
-    res = Index.get_all_by_is_issn()
-    assert res == []
+class DbExec_no_data():
+    def __init__(self, sql) -> None:
+        pass
+
+    def fetchall(self):
+        return []
+class DbExec():
+    def __init__(self, sql) -> None:
+        pass
+
+    def fetchall(self):
+        return [(1616224532673, '1234-987A', '利用報告', 'Data Report'),(1715825846862, '1234-567X', 'New New Index', 'New New Index')]
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_models.py::test_get_all_by_is_issn -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_get_all_by_is_issn(app, db, index_issn):
-    from datetime import date, datetime
-    # get_all_by_is_issn
-    res = Index.get_all_by_is_issn()
-    assert res == [{'id': 1616224532673, 'updated':datetime(2022, 1, 1),'index_name': '利用報告', 'index_name_english': 'Data Report', 'issn': '1234-987A'},
-                    {'id': 1714029010533, 'updated':datetime(2022, 1, 1),'index_name': 'New Index', 'index_name_english': 'New Index', 'issn': '1234-567X'},
-                    {'id': 1715825846862, 'updated':datetime(2022, 1, 1),'index_name': 'New New Index', 'index_name_english': 'New New Index', 'issn': '1234-567X'},
-                    {'id': 1715825846999, 'updated':datetime(2020, 1, 1),'index_name': 'Updated Index', 'index_name_english': 'Updated Index', 'issn': '1234-567X'},
-                   ]
+    with patch('invenio_db.db.session.execute', side_effect=DbExec):
+        assert Index.get_all_by_is_issn() == {'1234-567X': {'id': '1714029010533:1715825846862','name': 'New New Index','name_en': 'New New Index'},'1234-987A': {'id': '1616224532673', 'name': '利用報告', 'name_en': 'Data Report'}}
+    with patch('invenio_db.db.session.execute', side_effect=DbExec_no_data):
+        assert Index.get_all_by_is_issn() == {}
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_models.py::test_Index -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_Index(app, db, test_indices):
     # get_all
