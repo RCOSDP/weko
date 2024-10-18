@@ -109,6 +109,9 @@ def get_profile_info():
         result['error'] = str(e)
     return jsonify(result)
 
+def is_profile_menu_visible():
+    return current_app.config.get('MENU_VISIBLE_PROFILE', True)
+
 
 @blueprint.route('/', methods=['GET', 'POST'])
 @login_required
@@ -116,6 +119,7 @@ def get_profile_info():
     blueprint, 'settings.profile',
     # NOTE: Menu item text (icon replaced by a user icon).
     _('%(icon)s Profile', icon='<i class="fa fa-user fa-fw"></i>'),
+    visible_when=is_profile_menu_visible,
     order=0)
 @register_breadcrumb(
     blueprint, 'breadcrumbs.settings.profile', _('Profile')

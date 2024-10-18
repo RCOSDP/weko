@@ -88,11 +88,15 @@ def token_getter(is_personal=True, is_internal=False):
 #
 # Views
 #
+def is_applications_menu_visible():
+    return current_app.config.get('MENU_VISIBLE_APPLICATIONS', True)
+
 @blueprint.route("/", methods=['GET', 'POST'])
 @login_required
 @register_menu(
     blueprint, 'settings.applications',
     _('%(icon)s Applications', icon='<i class="fa fa-shield fa-fw"></i>'),
+    visible_when=is_applications_menu_visible,
     order=5,
     active_when=lambda: request.endpoint.startswith(
         "invenio_oauth2server_settings.")
