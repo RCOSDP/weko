@@ -32,6 +32,7 @@ from flask_babelex import lazy_gettext as _
 from flask_mail import Attachment
 from invenio_accounts.models import Role, User
 from invenio_db import db
+from invenio_mail.models import MailConfig
 from invenio_mail.api import send_mail
 from invenio_i18n.ext import current_i18n
 from weko_redis.redis import RedisConnection
@@ -136,7 +137,8 @@ def send_site_license_mail(organization_name, mail_list, result, data):
     site_name_en = ""
     site_name_ja = ""
     current_site_name = ""
-    current_lang_setting = current_i18n.language
+    default_lang = get_system_default_language()
+    current_lang_setting = getattr(current_i18n, 'language', default_lang)
     site_info = SiteInfo.get()
     for site_name in site_info.site_name:
         if site_name['language'] == "en":
@@ -160,17 +162,14 @@ def send_site_license_mail(organization_name, mail_list, result, data):
 
         # Create attached file
         file_name = 'SiteLicenseUserReport_' + agg_date + '.zip'
-        zip_stream = package_site_access_stats_file(data, agg_date, result)
+        zip_stream = package_site_access_stats_file(data, agg_date, result, current_lang_setting)
         attachment = Attachment(file_name,
                                 'application/x-zip-compressed',
                                 zip_stream.getvalue())
 
-        role = Role.query.filter_by(name=WEKO_ADMIN_PERMISSION_ROLE_SYSTEM).first()
-        user = User.query.filter(User.roles.contains(role)).order_by(User.id.asc()).first()
-        administrator = user.email if user is not None else None
-
+        mail_config = MailConfig.get_config()
+        site_mail= mail_config.get('mail_default_sender', '')
         with current_app.test_request_context() as ctx:
-            default_lang = get_system_default_language()
             # setting locale
             setattr(ctx, 'babel_locale', default_lang)
             # send alert mail
@@ -184,7 +183,7 @@ def send_site_license_mail(organization_name, mail_list, result, data):
                         site_name_en = site_name_en,
                         site_name_ja = site_name_ja,
                         agg_date=agg_date,
-                        administrator=administrator)),
+                        administrator=site_mail)),
                 attachments=[attachment])
     except Exception as ex:
         current_app.logger.error(ex)

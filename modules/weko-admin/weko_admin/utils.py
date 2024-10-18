@@ -554,7 +554,7 @@ def write_report_file_rows(writer, records, file_type=None, other_info=None):
                                  record.get('file_download'),
                                  record.get('file_preview')])
 
-def write_sitelicense_report_file_rows(writer, records, file_type, result):
+def write_sitelicense_report_file_rows(writer, records, file_type, result, current_lang_setting):
     """Write tsv/csv rows for stats.
     
     Args:
@@ -593,11 +593,11 @@ def write_sitelicense_report_file_rows(writer, records, file_type, result):
             if key == 'all_journals':
                 continue
             else:
-                data = [result['index_info'][key]['name'], result['index_info'][key]['id'], interface_name, key]
-                if current_i18n.language == 'ja' and result['index_info'][key]['name']:
-                    data = [result['index_info'][key]['name'], result['index_info'][key]['id'], interface_name, key]
+                if current_lang_setting == 'ja' and result['index_info'][key].get('name'):
+                    name = result['index_info'][key]['name']
                 else:
-                    data = [result['index_info'][key]['name_en'], result['index_info'][key]['id'], interface_name, key]
+                    name = result['index_info'][key]['name_en']
+                data = [name, result['index_info'][key]['id'], interface_name, key]
             for date in result['datelist']:
                 value = record[date]
                 data.append(value)
@@ -607,7 +607,7 @@ def write_sitelicense_report_file_rows(writer, records, file_type, result):
                     data.append(file_download_count[date])
             writer.writerow(data)
 
-def package_site_access_stats_file(stats, agg_date, result):
+def package_site_access_stats_file(stats, agg_date, result, current_lang_setting):
     """Package the tsv files into one zip file.
     
     Args:
@@ -629,7 +629,7 @@ def package_site_access_stats_file(stats, agg_date, result):
             file_name = setting_file_name + '_' + agg_date + '.' + file_format
             output_files.append({
                 'file_name': file_name,
-                'stream': make_site_access_stats_file(stat, stats_type, agg_date, result)})
+                'stream': make_site_access_stats_file(stat, stats_type, agg_date, result, current_lang_setting)})
 
         # Package zip file
         report_zip = zipfile.ZipFile(zip_stream, 'w')
@@ -644,7 +644,7 @@ def package_site_access_stats_file(stats, agg_date, result):
     return zip_stream
 
 
-def make_site_access_stats_file(stats, stats_type, agg_date, result):
+def make_site_access_stats_file(stats, stats_type, agg_date, result, current_lang_setting):
     """Make tsv site access report file for 1 organization.
 
     Args:
@@ -684,7 +684,7 @@ def make_site_access_stats_file(stats, stats_type, agg_date, result):
 
     writer.writerows([cols])
     
-    write_sitelicense_report_file_rows(writer, stats, stats_type, result)
+    write_sitelicense_report_file_rows(writer, stats, stats_type, result, current_lang_setting)
 
     return file_output
 
