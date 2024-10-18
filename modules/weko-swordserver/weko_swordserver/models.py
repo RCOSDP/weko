@@ -34,6 +34,9 @@ class SwordItemTypeMapping(db.Model, Timestamp):
         `is_deleted` (bool): Sofr-delete status of the mapping.
     """
 
+    # Enables SQLAlchemy-Continuum versioning
+    __versioned__ = {}
+
     __tablename__ = 'sword_item_type_mappings'
 
     id = db.Column(db.Integer, primary_key=True, unique=True)
@@ -72,6 +75,10 @@ class SwordItemTypeMapping(db.Model, Timestamp):
         nullable=False,
         default=False)
     """Sofr-delete status of the mapping."""
+
+    __mapper_args__ = {
+        'version_id_col': version_id
+    }
 
 
     @classmethod

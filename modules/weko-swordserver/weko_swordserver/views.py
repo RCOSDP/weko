@@ -225,13 +225,15 @@ def post_service_document():
         digest = request.headers.get("Digest")
         body = request.data
 
-        if not is_valid_body_hash(digest, body):
+        if digest is None or not is_valid_body_hash(digest, body):
             raise WekoSwordserverException(
-                "Invalid Body Hash", ErrorType.BadRequest
+                "Request body and digest verification failed.",
+                ErrorType.BadRequest
                 )
-        check_result, register_format = check_bagit_import_items(
+        check_result = check_bagit_import_items(
             file, header_info, file_format
         )
+        register_format = check_result.get("register_format")
 
     else:
         check_result, register_format = check_others_import_items(file, False)

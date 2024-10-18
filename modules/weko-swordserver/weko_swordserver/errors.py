@@ -36,7 +36,9 @@ class ErrorType(Enum):
 
     # Addlitional ErrorType
     # TODO: define additional error type name
-    MappingNotFound                 = ("MappingNotFound",               400, "BadRequest")
+    MappingNotDefined               = ("MappingNotFound",               400, "BadRequest")
+    WorkflowNotFound                = ("WorkflowNotFound",              400, "BadRequest")
+    ItemTypeNotFound                = ("ItemTypeNotFound",              400, "BadRequest")
     NotFound                        = ("NotFound",                      404, "NotFound")
     ServerError                     = ("ServerError",                   500, "InternalServerError")
 
@@ -49,6 +51,7 @@ class ErrorType(Enum):
 class WekoSwordserverException(Exception):
     errorType = ErrorType.ServerError
     message = ""
+    # TODO: message for user
 
     def __init__(self, message, errorType=None, **kwargs):
         """Initialize WekoSwordserverException."""
