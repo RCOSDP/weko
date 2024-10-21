@@ -20,9 +20,9 @@ def test_check_oauth(app,client,users,tokens):
     with app.test_request_context(headers=headers):
         res = check_oauth()(lambda x,y:x+y)(x=1,y=2)
         assert res == 3
-        
+
     headers = {
-        "Authorization":"Bearer {}".format(tokens["token"].access_token),
+        "Authorization":"Bearer {}".format(tokens[0]["token"].access_token),
     }
     with app.test_request_context(headers=headers):
         login_user(users[0]["obj"])
@@ -31,7 +31,7 @@ def test_check_oauth(app,client,users,tokens):
         assert res == 3
 
     headers = {
-        "Authorization":"Bearer {}".format(tokens["token"].access_token),
+        "Authorization":"Bearer {}".format(tokens[0]["token"].access_token),
     }
     with app.test_request_context(headers=headers):
         with pytest.raises(WekoSwordserverException) as e:

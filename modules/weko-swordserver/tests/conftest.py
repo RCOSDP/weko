@@ -226,31 +226,34 @@ def db(app):
 
 @pytest.fixture
 def tokens(app,users,db):
-    # TODO: create another tokens
-    user_id = str(users[0]["id"])
-    test_client = Client(
-        client_id="dev",
-        client_secret="dev",
-        name="Test name",
-        description="test description",
-        is_confidential=False,
-        user_id=user_id,
-        _default_scopes="deposit:write"
-    )
-    test_token = Token(
-        client=test_client,
-        user_id=user_id,
-        token_type="bearer",
-        access_token=jwt_create_token(user_id=user_id),
-        expires=datetime.now() + timedelta(hours=10),
-        is_personal=False,
-        is_internal=True,
-        _scopes="deposit:write"
-    )
-    db.session.add(test_client)
-    db.session.add(test_token)
+    tokens = []
+    for user in users:
+        user_id = str(user["id"])
+        test_client = Client(
+            client_id=f"dev{user_id}",
+            client_secret=f"dev{user_id}",
+            name="Test name",
+            description="test description",
+            is_confidential=False,
+            user_id=user_id,
+            _default_scopes="deposit:write"
+        )
+        test_token = Token(
+            client=test_client,
+            user_id=user_id,
+            token_type="bearer",
+            access_token=jwt_create_token(user_id=user_id),
+            expires=datetime.now() + timedelta(hours=10),
+            is_personal=False,
+            is_internal=True,
+            _scopes="deposit:write"
+        )
+        db.session.add(test_client)
+        db.session.add(test_token)
+        tokens.append({"token":test_token, "client":test_client})
     db.session.commit()
-    return {"token":test_token,"client":test_client}
+
+    return tokens
 
 @pytest.fixture()
 def users(app, db):
