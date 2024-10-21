@@ -815,35 +815,13 @@ class QuerySitelicenseReportsHelper(object):
                 datelist (list): List Aggregation date by month.
             """
             from weko_index_tree.api import Indexes
-            index_list = Index.get_all_by_is_issn()
             date_dict = {}
-            min_set_spec = None
-            min_index = None
-            min_index_dict = {}
             index_issn_list =[]
             for date in datelist:
                 date_dict[date] = index_dict.get(date,0)
-            for i in index_list:
-                spec = Indexes.get_full_path(i['id'])
-                set_spec = spec.replace('/', ':')
-                len_spec = len(set_spec.split(':'))
-                if i['issn'] in min_index_dict.keys():
-                    for issn, value in min_index_dict.items():
-                        if i['issn'] == issn:
-                            if value['min_spec'] >= len_spec and value['index']['updated'] < i['updated']:
-                                min_index = i
-                                min_set_spec = set_spec
-                                min_index_dict[i['issn']]['index'] = i
-                                min_index_dict[i['issn']]['min_spec'] = len_spec
-                else:
-                    min_index = i
-                    min_set_spec = set_spec
-                    min_index_dict[i['issn']] = {}
-                    min_index_dict[i['issn']]['index'] = i
-                    min_index_dict[i['issn']]['min_spec'] = len_spec
-                index_issn_list.append(i['issn'])
-                index_info[min_index['issn']] = {'name':min_index['index_name'], 'name_en':i['index_name_english'], 'id':min_set_spec}
-                index_dict[min_index['issn']] = pickle.loads(pickle.dumps(date_dict, -1))
+            for index_issn in index_info.keys():
+                index_issn_list.append(index_issn)
+                index_dict[index_issn] = pickle.loads(pickle.dumps(date_dict, -1))
             issn_list.extend(list(set(index_issn_list)))
             for k in query_list:
                 if k == 'search':
@@ -894,7 +872,7 @@ class QuerySitelicenseReportsHelper(object):
         issn_list = []
         result_format= {}
         index_dict = {}
-        index_info = {}
+        index_info = Index.get_all_by_is_issn()
         result = {}
 
         query_list = ['file_download', 'file_preview', 'search', 'record_view']

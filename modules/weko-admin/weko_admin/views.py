@@ -482,32 +482,41 @@ def manual_send_site_license_mail(start_month, end_month):
     Returns:
         string: finish sending mail code.
     """
-    send_list = SiteLicenseInfo.query.filter_by(receive_mail_flag='T').all()
-    if send_list:
-        start_date = start_month + '-01'
-        _, lastday = calendar.monthrange(int(end_month[:4]),
-                                         int(end_month[5:]))
-        end_date = end_month + '-' + str(lastday).zfill(2)
+    return handle_site_license_mail(start_month, end_month)
 
-        res = QuerySitelicenseReportsHelper.get(
-                start_date=start_date,end_date=end_date, event='sitelicense_download')
-        for s in send_list:
-            mail_list = s.mail_address.split('\n')
-            send_flag = False
-            if res['result']:
-                for key, item in res['result'].items():
-                    if s.organization_name == key:
-                        send_site_license_mail(key, mail_list, res, item)
-                        send_flag = True
-                        break
-            if not send_flag:
-                send_site_license_mail(s.organization_name,
-                                       mail_list, res, res['no_data'])
+def handle_site_license_mail(start_month, end_month):
+    """Send site license mail by manual or auto.
 
-        return 'finished'
-    else:
-        current_app.logger.error('send list is not exist.')
+    Args:
+        start_month (int): Aggregation start month.
+        end_month (int); Aggregation end month.
 
+    Returns:
+        string: finish sending mail code.
+    """
+    try:
+        send_list = SiteLicenseInfo.query.filter_by(receive_mail_flag='T').all()
+        if send_list:
+            start_date = start_month + '-01'
+            _, lastday = calendar.monthrange(int(end_month[:4]),
+                                            int(end_month[5:]))
+            end_date = end_month + '-' + str(lastday).zfill(2)
+            res = QuerySitelicenseReportsHelper.get(
+                    start_date=start_date,end_date=end_date, event='sitelicense_download')
+            for s in send_list:
+                mail_list = s.mail_address.split('\n')
+                if res['result'] and s.organization_name in res['result']:
+                    item = res['result'][s.organization_name]
+                else:
+                    item = res['no_data']
+                send_site_license_mail(s.organization_name, mail_list, res, item)
+            return jsonify({'status': 'success'}),200
+        else:
+            current_app.logger.error('send list is not exist.')
+            return jsonify({'status': 'error'}),400
+    except Exception as e:
+        current_app.logger.error('Cannot send sitelicense feedback email.:{}'.format(str(e)))
+        return jsonify({'status': 'error'}),400
 
 @blueprint_api.route('/update_site_info', methods=['POST'])
 @login_required
@@ -563,13 +572,13 @@ def get_site_info():
     result['notify'] = site_info.notify
     result['google_tracking_id_user'] = site_info.google_tracking_id_user
     result['addthis_user_id'] = site_info.addthis_user_id
-    
+
     if site_info.ogp_image and site_info.ogp_image_name:
         ts = time.time()
         result['ogp_image'] = request.host_url + \
             'api/admin/ogp_image'
         result['ogp_image_name'] = site_info.ogp_image_name
-    
+
     return jsonify(result)
 
 

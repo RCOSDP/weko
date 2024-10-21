@@ -2189,7 +2189,7 @@ def index_issn(app,db):
         updated = datetime(2022, 1, 1),
         index_name = "New Index",
         index_name_english = "New Index",
-        online_issn = "1234-567X",
+        online_issn = "",
         position = 11,
         biblio_flag = True
     )
@@ -2222,20 +2222,9 @@ def index_issn(app,db):
         online_issn = 909090,
         biblio_flag = False
     )
-    index_metadata6 = Index(
-        id = 1715825846999,
-        parent = 0,
-        updated = datetime(2020, 1, 1),
-        index_name = "Updated Index",
-        index_name_english = "Updated Index",
-        online_issn = "1234-567X",
-        position = 15,
-        biblio_flag = True
-    )
 
     db.session.add(index_metadata1)
     db.session.add(index_metadata2)
     db.session.add(index_metadata3)
     db.session.add(index_metadata4)
     db.session.add(index_metadata5)
-    db.session.add(index_metadata6)

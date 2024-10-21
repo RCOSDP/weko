@@ -38,7 +38,7 @@ from weko_admin.api import TempDirInfo
 
 from .models import AdminSettings, StatisticsEmail
 from .utils import StatisticMail, get_user_report_data, package_reports ,elasticsearch_reindex
-from .views import manual_send_site_license_mail 
+from .views import handle_site_license_mail 
 from celery.task.control import inspect
 from weko_search_ui.tasks import check_celery_is_run
 from .config import WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS,\
@@ -214,7 +214,7 @@ def check_send_site_access_report():
         end_month = end_date.strftime('%Y-%m')
         start_month = start_date.strftime('%Y-%m')
         # send mail api
-        manual_send_site_license_mail(start_month=start_month,
+        handle_site_license_mail(start_month=start_month,
                                       end_month=end_month)
 
 
