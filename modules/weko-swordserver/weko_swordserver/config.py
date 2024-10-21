@@ -100,3 +100,15 @@ WEKO_SWORDSERVER_REGISTRATION_TYPE = SwordClient.RegistrationType
     - `Direct` (1): Direct registration.
     - `Workfolw` (2): Workflow registration.
 """
+
+
+WEKO_SWORDSERVER_REQUIRED_FILES_ROCRATE = [
+    'manifest-sha-256.txt',
+    'ro-crate-metadata.json'
+]
+
+
+WEKO_SWORDSERVER_REQUIRED_FILES_SWORD = [
+    'manifest-sha-256.txt',
+    'metadata/sword.json'
+]
