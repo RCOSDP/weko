@@ -95,3 +95,8 @@ WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_SEGMENTS = 1000
 """ Maximum number of segments that the server will accept for a single segmented upload, if segmented upload is supported. """
 
 WEKO_SWORDSERVER_REGISTRATION_TYPE = SwordClient.RegistrationType
+""" Enum class for registration type.
+
+    - `Direct` (1): Direct registration.
+    - `Workfolw` (2): Workflow registration.
+"""

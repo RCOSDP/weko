@@ -25,7 +25,7 @@ class SwordItemTypeMapping(db.Model, Timestamp):
     Mapping for RO-Crate matadata to WEKO item type.
 
     Columns:
-        `id` (int): ID of the mapping.
+        `id` (int): ID of the mapping. Primary key.
         `name` (str): Name of the mapping.
         `mapping` (JSON): Mapping in JSON format.
         `item_type_id` (str): Target itemtype of the mapping.\
@@ -67,7 +67,7 @@ class SwordItemTypeMapping(db.Model, Timestamp):
         nullable=False)
     """Target itemtype of the mapping."""
 
-    version_id = db.Column(db.Integer, primary_key=True)
+    version_id = db.Column(db.Integer, nullable=False)
     """Version id of the mapping."""
 
     is_deleted = db.Column(
@@ -158,7 +158,7 @@ class SwordClient(db.Model, Timestamp):
     client whitch is register items through the sword api.
 
     Columns:
-        `client_id` (str): ID of the client.\
+        `client_id` (str): ID of the client. Primary key.\
             Foreign key referencing `Client.client_id`.
         `registration_type_index` (int): Type of registration to register an item.
         `mapping_id` (int): Mapping ID of the client.\
