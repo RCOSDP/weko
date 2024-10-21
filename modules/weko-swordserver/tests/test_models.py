@@ -86,10 +86,7 @@ class TestSwordItemTypeMapping:
             item_type_id=item_type["item_type"].id
         )
         assert obj.id == 1
-        assert (SwordItemTypeMapping.query
-            .filter_by(id=obj.id)
-            .order_by(SwordItemTypeMapping.version_id.desc())
-            .first()) == obj
+        assert (SwordItemTypeMapping.query.filter_by(id=obj.id).first()) == obj
 
         # one more
         obj2 = SwordItemTypeMapping.create(
@@ -100,7 +97,6 @@ class TestSwordItemTypeMapping:
         assert obj2.id == 2
         assert (SwordItemTypeMapping.query
             .filter_by(id=obj2.id)
-            .order_by(SwordItemTypeMapping.version_id.desc())
             .first()) == obj2
 
         # occurs DB error
@@ -113,10 +109,19 @@ class TestSwordItemTypeMapping:
                 mapping={"test": "test"},
                 item_type_id=item_type["item_type"].id
                 )
-            assert (SwordItemTypeMapping.query
-                .filter_by(id=3)
-                .order_by(SwordItemTypeMapping.version_id.desc())
-                .first()) == None
+            assert (SwordItemTypeMapping.query.filter_by(id=3).first()) == None
+
+    def test_update(app, db, item_type, sword_mapping):
+        obj = SwordItemTypeMapping.update(
+            id=sword_mapping[0]["id"],
+            mapping={"test2": "test2"},
+        )
+
+        result = SwordItemTypeMapping.query.filter_by(id=obj.id).first()
+
+        assert result == obj
+        assert result.mapping == obj.mapping
+        assert result.version_id == 2
 
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_models.py::TestSwordItemTypeMapping::test_get_all_versions_by_id -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
     def test_get_all_versions_by_id(app, db, sword_mapping):

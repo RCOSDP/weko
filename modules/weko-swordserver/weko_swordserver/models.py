@@ -17,6 +17,8 @@ from invenio_oauth2server.models import Client
 from weko_records.models import ItemType, Timestamp
 from weko_workflow.models import WorkFlow
 
+from .errors import ErrorType, WekoSwordserverException
+
 """Models of weko-swordserver."""
 
 class SwordItemTypeMapping(db.Model, Timestamp):
@@ -92,6 +94,9 @@ class SwordItemTypeMapping(db.Model, Timestamp):
     def create(cls, name, mapping, item_type_id):
         """Create mapping.
 
+        Create new mapping for item type. ID is autoincremented.
+        mapping dict is dumped to JSON format.
+
         Args:
             name (str): Name of the mapping.
             mapping (dict): Mapping in JSON format.
@@ -125,12 +130,80 @@ class SwordItemTypeMapping(db.Model, Timestamp):
 
 
     @classmethod
-    def get_mapping_by_id(cls, id, ignore_deleted=True):
-        """Get mapping by mapping_id.
+    def update(cls, id, name=None, mapping=None, item_type_id=None):
+        """Update mapping.
+
+        Update mapping by ID. Specify the value to be updated.
+        The verion_id is incremented and the previousmapping moves to
+        the history table.
 
         Args:
             id (int): Mapping ID.
-            ignore_deleted (bool, optional): Ignore deleted mapping.
+            name (str, optional): Name of the mapping. Not required.
+            mapping (dict, optional): Mapping in JSON format. Not required.
+            item_type_id (str, optional):
+                Target itemtype of the mapping. Not required.
+
+        Returns:
+            SwordItemTypeMapping: Updated mapping object.
+
+        Raises:
+            WekoSwordserverException: When mapping not found.
+            SQLAlchemyError: An error occurred while updating the mapping.
+        """
+        obj = cls.get_mapping_by_id(id)
+        if obj is None:
+            raise WekoSwordserverException(
+                "Mapping not defined.", errorType=ErrorType.MappingNotDefined)
+
+        obj.name = name if name is not None else obj.name
+        obj.mapping = json.dumps(
+            mapping if mapping is not None else obj.mapping
+        )
+        obj.item_type_id = (
+            item_type_id if item_type_id is not None else obj.item_type_id
+        )
+
+        try:
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.error(ex)
+            db.session.rollback()
+            raise
+
+        return obj
+
+    @classmethod
+    def delete(cls, id):
+        """Delete mapping.
+
+        Soft-delete mapping by ID.
+
+        Args:
+            id (int): Mapping ID.
+
+        Returns:
+            SwordItemTypeMapping: Deleted mapping object.
+        """
+        obj = cls.get_mapping_by_id(id)
+        if obj is not None:
+            obj.is_deleted = True
+        db.session.commit()
+        return obj
+
+
+    @classmethod
+    def get_mapping_by_id(cls, id, ignore_deleted=True):
+        """Get mapping by mapping_id.
+
+        Get mapping latest version by mapping_id.
+        If ignore_deleted=True, return None if the mapping is deleted(default).
+        Specify ignore_deleted=False to get the mapping even if it is deleted.
+
+        Args:
+            id (int): Mapping ID.
+            ignore_deleted (bool, optional):
+                Ignore deleted mapping. Default is True.
 
         Returns:
             SwordItemTypeMapping:
@@ -140,7 +213,6 @@ class SwordItemTypeMapping(db.Model, Timestamp):
         obj = (
             cls.query
             .filter_by(id=id)
-            .order_by(cls.version_id.desc())
             .first()
         )
 
@@ -162,7 +234,6 @@ class SwordClient(db.Model, Timestamp):
             Foreign key referencing `SwordItemTypeMapping.id`.
         `workflow_id` (int, optional): Workflow ID of the client.\
             Foreign key referencing `WorkFlow.id`.
-        `is_deleted` (bool): Delete status of the client.
 
     Nested Classes:
         `RegistrationType` (enum.IntEnum): Enum class for registration type.
@@ -174,7 +245,7 @@ class SwordClient(db.Model, Timestamp):
         """Solution to register item."""
 
         DIRECT = 1
-        WORKFOLW = 2
+        WORKFLOW = 2
 
     __tablename__ = 'sword_clients'
 
@@ -210,10 +281,115 @@ class SwordClient(db.Model, Timestamp):
 
         if self.registration_type_index == self.RegistrationType.DIRECT:
             registration_type = str("Direct")
-        elif self.registration_type_index == self.RegistrationType.WORKFOLW:
+        elif self.registration_type_index == self.RegistrationType.WORKFLOW:
             registration_type = str("Workflow")
 
         return registration_type
+
+
+    @classmethod
+    def register(cls, client_id, registration_type_index,
+                        mapping_id, workflow_id=None):
+        """Register client.
+
+        Make ralaion between client, mapping, and workflow.
+
+        Args:
+            client_id (str): Client ID.
+            registration_type_index (int): Type of registration.
+            mapping_id (int): Mapping ID.
+            workflow_id (int, optional):
+                Workflow ID. Required when registration_type is workflow.
+
+        Returns:
+            SwordClient: Created client object.
+
+        Raises:
+            WekoSwordserverException: When workflow_id not specified
+                even if the registration type is workflow.
+            SQLAlchemyError: An error occurred while creating the client.
+        """
+        if registration_type_index is current_app.config.get(
+            'WEKO_SWORDSERVER_REGISTRATION_TYPE'
+        ).WORKFLOW and  workflow_id is None:
+            raise WekoSwordserverException(
+                "Workflow ID is required for workflow registration.",
+                errorType=ErrorType.BadRequest
+            )
+
+        obj = cls(
+            client_id=client_id,
+            registration_type_index=registration_type_index,
+            mapping_id=mapping_id,
+            workflow_id=workflow_id
+        )
+
+        try:
+            with db.session.begin_nested():
+                db.session.add(obj)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.error(ex)
+            db.session.rollback()
+            raise
+
+        return obj
+
+    @classmethod
+    def update(cls, client_id, registration_type=None,
+                mapping_id=None, workflow_id=None):
+        """Update client.
+
+        Update relation between client, mapping, and workflow.
+        Specify the value to be updated.
+
+        Args:
+            client_id (str, optional): Client ID.
+            registration_type (int, optional): Type of registration.
+            mapping_id (int, optional): Mapping ID.
+            workflow_id (int, optional): Workflow ID.
+
+        Returns:
+            SwordClient: Updated client object.
+
+        Raises:
+            WekoSwordserverException: When client not found.
+            SQLAlchemyError: An error occurred while updating the client.
+        """
+        obj = cls.get_client_by_id(client_id)
+        if obj is None:
+            raise WekoSwordserverException(
+                "Client not found.", errorType=ErrorType.BadRequest)
+
+        obj.registration_type_index = (
+            registration_type or obj.registration_type_index
+        )
+        obj.mapping_id = mapping_id or obj.mapping_id
+        obj.workflow_id = workflow_id or obj.workflow_id
+
+        try:
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.error(ex)
+            db.session.rollback()
+            raise
+
+        return obj
+
+    @classmethod
+    def remove(cls, client_id):
+        """Remove client.
+
+        Args:
+            client_id (str): Client ID.
+
+        Returns:
+            SwordClient: Removed client object.
+        """
+        obj = cls.get_client_by_id(client_id)
+        if obj is not None:
+            obj.delete()
+        return obj
 
 
     @classmethod
@@ -224,8 +400,7 @@ class SwordClient(db.Model, Timestamp):
             client_id (str): Client ID.
 
         Returns:
-            SwordClient: Client object.
+            SwordClient: Client object. If not found, return `None`.
         """
         obj = cls.query.filter_by(client_id=client_id).one_or_none()
         return obj
-
