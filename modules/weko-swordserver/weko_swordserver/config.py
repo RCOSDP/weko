@@ -95,3 +95,15 @@ WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_SEGMENTS = 1000
 """ Maximum number of segments that the server will accept for a single segmented upload, if segmented upload is supported. """
 
 WEKO_SWORDSERVER_REGISTRATION_TYPE = SwordClient.RegistrationType
+
+
+WEKO_SWORDSERVER_REQUIRED_FILES_ROCRATE = [
+    'manifest-sha-256.txt',
+    'ro-crate-metadata.json'
+]
+
+
+WEKO_SWORDSERVER_REQUIRED_FILES_SWORD = [
+    'manifest-sha-256.txt',
+    'metadata/sword.json'
+]

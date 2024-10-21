@@ -45,6 +45,7 @@ def check_import_file_format(file, packaging):
         else:
             file_format = 'OTHERS'
     else:
+        current_app.logger.info("No Packing Included")
         raise WekoSwordserverException(
             "No Package Included.", ErrorType.BadRequest
             )
@@ -152,11 +153,9 @@ def check_rocrate_required_files(file_list):
     Returns:
         list: List of results.
     """
-    # TODO: move to .config
-    list_required_files = [
-        'manifest-sha-256.txt',
-        'ro-crate-metadata.json'
-    ]
+    list_required_files = current_app.config.get(
+        'WEKO_SWORDSERVER_REQUIRED_FILES_ROCRATE'
+    )
 
     return [required_file in file_list
             for required_file in list_required_files]
@@ -171,11 +170,9 @@ def check_swordbagit_required_files(file_list):
     Returns:
         list: List of results.
     """
-    # TODO: move to .config
-    list_required_files = [
-        'manifest-sha-256.txt',
-        'metadata/sword.json'
-    ]
+    list_required_files = current_app.config.get(
+        'WEKO_SWORDSERVER_REQUIRED_FILES_SWORD'
+    )
 
     return [required_file in file_list
             for required_file in list_required_files]
