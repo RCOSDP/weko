@@ -23,9 +23,11 @@ class SwordItemTypeMapping(db.Model, Timestamp):
     """SwordItemTypeMapping Model
 
     Mapping for RO-Crate matadata to WEKO item type.
+    When updating the mapping, the verion_id is incremented and the previous
+    mapping moves to the history table.
 
     Columns:
-        `id` (int): ID of the mapping. Primary key.
+        `id` (int): ID of the mapping. Primary key, autoincrement.
         `name` (str): Name of the mapping.
         `mapping` (JSON): Mapping in JSON format.
         `item_type_id` (str): Target itemtype of the mapping.\
@@ -39,7 +41,12 @@ class SwordItemTypeMapping(db.Model, Timestamp):
 
     __tablename__ = 'sword_item_type_mappings'
 
-    id = db.Column(db.Integer, primary_key=True, unique=True)
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+        unique=True,
+        autoincrement=True
+    )
     """ID of the mapping."""
 
     name = db.Column(db.String(255), nullable=False)
@@ -82,16 +89,6 @@ class SwordItemTypeMapping(db.Model, Timestamp):
 
 
     @classmethod
-    def _get_next_id(cls):
-        """Get next mapping id.
-
-        Returns:
-            int: Next new mapping id.
-        """
-        return (cls.query.order_by(cls.id.desc()).first().id + 1
-                if cls.query.count() > 0 else 1)
-
-    @classmethod
     def create(cls, name, mapping, item_type_id):
         """Create mapping.
 
@@ -108,7 +105,6 @@ class SwordItemTypeMapping(db.Model, Timestamp):
         """
         mapping = json.dumps(mapping or {})
         obj = cls(
-            id=cls._get_next_id(),
             name=name,
             mapping=mapping,
             item_type_id=item_type_id,
@@ -126,6 +122,7 @@ class SwordItemTypeMapping(db.Model, Timestamp):
             raise
 
         return obj
+
 
     @classmethod
     def get_mapping_by_id(cls, id, ignore_deleted=True):
@@ -204,6 +201,7 @@ class SwordClient(db.Model, Timestamp):
         unique=False,
         nullable=True)
     """Workflow ID of the client. Foreign key from WorkFlow."""
+
 
     @property
     def registration_type(self):
