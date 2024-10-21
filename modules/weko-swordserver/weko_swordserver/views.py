@@ -215,21 +215,25 @@ def post_service_document():
             f"Not found {filename} in request body.", ErrorType.BadRequest
         )
 
+    # Validate Digest SHA-256 before check_import_file_format()
+    digest = request.headers.get("Digest")
+    body = request.files.get("file")
+    is_valid_bodyhash = is_valid_body_hash(digest, body)
+
     packaging = request.headers.get("Packaging").split("/")[-1]
     file_format = check_import_file_format(file, packaging)
+    file_format = 'ROCRATE'
 
     if file_format == "SWORD" or file_format == "ROCRATE":
-        access_token = request.headers.get("Authorization").split("Bearer ")
-        header_info = {"access_token": access_token}
-
-        digest = request.headers.get("Digest")
-        body = request.data
-
-        if digest is None or not is_valid_body_hash(digest, body):
+        if digest is None or not is_valid_bodyhash:
             raise WekoSwordserverException(
                 "Request body and digest verification failed.",
                 ErrorType.BadRequest
                 )
+
+        access_token = request.headers.get("Authorization").split("Bearer ")[1]
+        header_info = {"access_token": access_token}
+
         check_result = check_bagit_import_items(
             file, header_info, file_format
         )

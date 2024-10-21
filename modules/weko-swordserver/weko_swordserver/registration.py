@@ -79,7 +79,6 @@ def check_bagit_import_items(file, header_info, file_format):
         data_path, file_list = unpack_zip(file)
         check_result.update({"data_path": data_path})
 
-        # TODO: check request header
         # Check if all required files are contained
         if file_format == 'ROCRATE':
             all_file_contained = all(check_rocrate_required_files(file_list))
@@ -88,7 +87,7 @@ def check_bagit_import_items(file, header_info, file_format):
 
         if not all_file_contained:
             raise WekoSwordserverException(
-                'Metadata JSON File Or "manifest-sha-256.txt" Is Lacking',
+                'Metadata JSON File Or "manifest-sha256.txt" Is Lacking',
                 errorType=ErrorType.BadRequest)
 
         # Check if the bag is valid

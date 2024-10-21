@@ -103,12 +103,12 @@ WEKO_SWORDSERVER_REGISTRATION_TYPE = SwordClient.RegistrationType
 
 
 WEKO_SWORDSERVER_REQUIRED_FILES_ROCRATE = [
-    'manifest-sha-256.txt',
+    'manifest-sha256.txt',
     'ro-crate-metadata.json'
 ]
 
 
 WEKO_SWORDSERVER_REQUIRED_FILES_SWORD = [
-    'manifest-sha-256.txt',
+    'manifest-sha256.txt',
     'metadata/sword.json'
 ]
