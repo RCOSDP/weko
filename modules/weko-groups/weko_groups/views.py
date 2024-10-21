@@ -131,12 +131,15 @@ def _has_admin_access():
     return current_user.is_authenticated and current_admin \
         .permission_factory(current_admin.admin.index_view).can()
 
+def is_groups_menu_visible():
+    return current_app.config.get('MENU_VISIBLE_GROUPS', True)
 
 @blueprint.route('/index', methods=['GET'])
 @blueprint.route('/', methods=['GET'])
 @register_menu(
     blueprint, 'settings.groups',
     _('%(icon)s Groups', icon='<i class="fa fa-users fa-fw"></i>'),
+    visible_when=is_groups_menu_visible,
     order=13,
     active_when=lambda: request.endpoint.startswith("groups_settings.")
 )

@@ -42,7 +42,8 @@
 <div class="navbar-form navbar-right navbar-form2">
 {%- if config.USERPROFILES %}
   <div class="btn-group">
-    <a class="btn btn-default btn-primary bg-transparent" href="{{ url_for('weko_user_profiles.profile')}}">
+    <a class="btn btn-default btn-primary bg-transparent"
+       href="{%- if config.MENU_VISIBLE_PROFILE == False %} # {%- else %} {{ url_for('weko_user_profiles.profile')}} {%- endif %}">
       <input id="current_user_email" type="hidden" value="{{current_user.email}}"/>
       <i class="fa fa-user"></i> {{current_user.email}}
     </a>
