@@ -134,7 +134,7 @@ from weko_workflow.utils import (
     is_terms_of_use_only,
     grant_access_rights_to_all_open_restricted_files,
     delete_lock_activity_cache,
-    delete_user_lock_activity_cache,
+    delete_user_lock_activity_cache
 )
 from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
 from weko_workflow.models import Activity
@@ -342,7 +342,7 @@ def test_item_metadata_validation(db_records,item_type):
     with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
         side_effect=[("item_1617258105262.resourcetype", ['thesis']),(None,["report"])]):
         result = item_metadata_validation(None,"5",without_ver_id=without_ver.object_uuid,record=record,file_path="test_file_path")
-        assert result == 'Cannot register selected DOI for current Item Type of this item.'
+        assert result['other'] == 'Cannot register selected DOI for current Item Type of this item.'
 
 
 #* THIS IS FOR JPCOAR2.0 DOI VALIDATION TEST
@@ -397,6 +397,8 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
             if result_1_check_item_1 in result_1.get(result_1_key):
                 result_1_check_list_2.append(result_1_check_item_1)
     assert len(result_1_check_list_2) == 1
+    # issue 45809
+    assert not "jpcoar:pageStart" in result_1.get("either_key")
 
     #* 別表2-3 JaLC DOI
     recid2, depid2, record2, item2, parent2, doi2, deposit2 = db_records_for_doi_validation_test[2]
@@ -510,7 +512,7 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
         for result_6_key in result_6_keys:
             if result_6_check_item_1 in result_6.get(result_6_key):
                 result_6_check_list_2.append(result_6_check_item_1)
-    assert len(result_6_check_list_2) == 3
+    assert len(set(result_6_check_list_2)) == 3
 
     #* 別表3-2 Crossref DOI
     recid7, depid7, record7, item7, parent7, doi7, deposit7 = db_records_for_doi_validation_test[7]
@@ -3232,7 +3234,8 @@ def test_delete_user_lock_activity_cache(client,users):
     user = users[2]
     login_user(user["obj"])
     data = {
-        "is_opened": False
+        "is_opened": False,
+        "is_force": False,
     }
     activity_id = "A-22240219-00001"
     cache_key = "workflow_userlock_activity_{}".format(user["id"])
@@ -3240,12 +3243,22 @@ def test_delete_user_lock_activity_cache(client,users):
     # cur_locked_val is empty
     result = delete_user_lock_activity_cache(activity_id, data)
     assert result == "Not unlock"
-    
-    
     # cur_locked_val is not empty, is_opened is False
     current_cache.set(cache_key, activity_id)
     result = delete_user_lock_activity_cache(activity_id, data)
     assert result == "User Unlock Success"
     assert current_cache.get(cache_key) == None
-    
+
+    # cur_locked_val is not empty, is_opened is True, is_force is False
+    current_cache.set(cache_key, activity_id)
+    data["is_opened"] = True
+    result = delete_user_lock_activity_cache(activity_id, data)
+    assert result == "Not unlock"
+
+    # cur_locked_val is not empty, is_opened is True, is_force is True
+    data["is_force"] = True
+    result = delete_user_lock_activity_cache(activity_id, data)
+    assert result == "User Unlock Success"
+    assert current_cache.get(cache_key) == None
+
     current_cache.delete(cache_key)
