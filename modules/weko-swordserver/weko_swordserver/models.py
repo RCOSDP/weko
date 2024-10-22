@@ -113,8 +113,6 @@ class SwordItemTypeMapping(db.Model, Timestamp):
             name=name,
             mapping=mapping,
             item_type_id=item_type_id,
-            version_id=1,
-            is_deleted=False
         )
 
         try:
@@ -256,7 +254,11 @@ class SwordClient(db.Model, Timestamp):
         unique=True)
     """Id of the clients. Foreign key from Client."""
 
-    registration_type_index = db.Column(db.Integer, unique=False, nullable=False)
+    registration_type_index = db.Column(
+        db.Integer,
+        unique=False,
+        nullable=False
+    )
     """Type of registration to register an item."""
 
     mapping_id = db.Column(
@@ -336,7 +338,7 @@ class SwordClient(db.Model, Timestamp):
         return obj
 
     @classmethod
-    def update(cls, client_id, registration_type=None,
+    def update(cls, client_id, registration_type_index=None,
                 mapping_id=None, workflow_id=None):
         """Update client.
 
@@ -362,10 +364,16 @@ class SwordClient(db.Model, Timestamp):
                 "Client not found.", errorType=ErrorType.BadRequest)
 
         obj.registration_type_index = (
-            registration_type or obj.registration_type_index
+            registration_type_index
+            if registration_type_index is not None
+            else obj.registration_type_index
         )
-        obj.mapping_id = mapping_id or obj.mapping_id
-        obj.workflow_id = workflow_id or obj.workflow_id
+        obj.mapping_id = (
+            mapping_id if mapping_id is not None else obj.mapping_id
+        )
+        obj.workflow_id = (
+            workflow_id if workflow_id is not None else obj.workflow_id
+        )
 
         try:
             db.session.commit()
