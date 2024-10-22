@@ -5,7 +5,7 @@
 # WEKO-SWORDServer is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
-from weko_swordserver.models import SwordClient
+from weko_swordserver.models import SwordClientModel
 
 """Module of weko-swordserver."""
 
@@ -94,7 +94,7 @@ WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_ASSEMBLED_SIZE = 30000000000000
 WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_SEGMENTS = 1000
 """ Maximum number of segments that the server will accept for a single segmented upload, if segmented upload is supported. """
 
-WEKO_SWORDSERVER_REGISTRATION_TYPE = SwordClient.RegistrationType
+WEKO_SWORDSERVER_REGISTRATION_TYPE = SwordClientModel.RegistrationType
 """ Enum class for registration type.
 
     - `Direct` (1): Direct registration.

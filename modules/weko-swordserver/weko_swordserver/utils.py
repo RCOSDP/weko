@@ -19,8 +19,8 @@ from zipfile import ZipFile
 from flask import current_app, request
 from invenio_oauth2server.provider import get_token
 
+from .api import SwordClient, SwordItemTypeMapping
 from .errors import WekoSwordserverException, ErrorType
-from .models import SwordClient, SwordItemTypeMapping
 
 
 def check_import_file_format(file, packaging):
