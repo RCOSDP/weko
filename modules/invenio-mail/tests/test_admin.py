@@ -255,7 +255,7 @@ class TestMailTemplatesView:
 
 
 # .tox/c1/bin/pytest --cov=invenio_mail tests/test_admin.py::TestMailTemplatesView::test_get_invalid_emails -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
-    @patch('invenio_mail.admin.User.query')
+    @patch('invenio_accounts.models.User.query')
     def test_get_invalid_emails(self, mock_query, client):
         # test email addresses list
         registered_emails = ['valid@example.com', 'valid2@example.com']

@@ -29,7 +29,6 @@ from invenio_db import db
 from sqlalchemy import or_
 from flask_babelex import gettext as _
 
-from invenio_accounts.models import User
 from invenio_mail.config import INVENIO_MAIL_DEFAULT_TEMPLATE_CATEGORY_ID
 from sqlalchemy.dialects import mysql
 
@@ -285,6 +284,8 @@ class MailTemplateUsers(db.Model, Timestamp):
             return False
 
         def process_emails(emails_str, mail_type):
+            from invenio_accounts.models import User
+
             status = True
             new_emails = [
                 email.strip()

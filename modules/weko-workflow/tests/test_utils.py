@@ -1392,6 +1392,7 @@ def test_send_mail_approval_done(mock_send_mail, mock_replace_characters):
                         'mail_bcc': ['bcc@example.com']
                     })
 
+
 # def send_mail_registration_done(mail_info):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail_registration_done -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @patch('weko_workflow.utils.get_mail_data')
@@ -1453,6 +1454,7 @@ def test_send_mail_registration_done(
                     'mail_bcc': ['bcc@example.com']
                 })
 
+
 # def send_mail_request_approval(mail_info):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail_request_approval -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @patch('weko_workflow.utils.replace_characters')
@@ -1471,6 +1473,10 @@ def test_send_mail_request_approval(mock_send_mail, mock_replace_characters):
         'advisor_mail_address': 'advisor@example.com',
         'guarantor_mail_address': 'guarantor@example.com'
     }
+
+    # Sending email fails when 'mail_info' is empty
+    send_mail_request_approval({})
+    mock_send_mail.assert_not_called()
 
     # Test when the 'subject' key has no value
     empty_subject_data = test_mail_data.copy()
@@ -1530,6 +1536,16 @@ def test_send_mail_request_approval(mock_send_mail, mock_replace_characters):
                     'mail_cc': ['cc@example.com'],
                     'mail_bcc': ['bcc@example.com']
                 })
+
+    # Sending email fails when the 'next_step' is empty
+    mock_send_mail.reset_mock()
+    test_mail_info['next_step'] = ''
+    mock_replace_characters.side_effect = ['Replaced Subject', 'Replaced Body']
+    with patch('weko_workflow.utils.email_pattern_request_approval',
+               return_value=copy.deepcopy(test_mail_data)):
+        send_mail_request_approval(test_mail_info)
+    mock_send_mail.assert_not_called()
+
 
 # def send_mail(subject, recipient, body):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp

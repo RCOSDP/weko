@@ -2310,8 +2310,10 @@ def send_mail_request_approval(mail_info):
 
     :mail_info: object
     """
-    if mail_info:
-        approver_mail = subject = body = None
+    if not mail_info:
+        return
+    else:
+        approver_mail = mail_data = subject = body = None
         next_step = mail_info.get('next_step')
         if next_step == 'approval_advisor':
             approver_mail = mail_info.get('advisor_mail_address')
@@ -2320,6 +2322,10 @@ def send_mail_request_approval(mail_info):
         if approver_mail:
             mail_data = email_pattern_request_approval(
                 mail_info.get('item_type_name'), next_step)
+
+    if not mail_data:
+        return
+    else:
         subject = mail_data.get('mail_subject')
         body = mail_data.get('mail_body')
         recipients = mail_data.get('mail_recipients')
@@ -2425,7 +2431,7 @@ def get_mail_data(mail_id):
                 recipients.append(user.email)
             elif record.mail_type == MailType.CC:
                 cc.append(user.email)
-            elif record.mail_type == MailType.BCC:
+            else:
                 bcc.append(user.email)
         else:
             invalid_ids.append(record.user_id)

@@ -11,7 +11,6 @@ from flask_babelex import gettext as _
 from flask_mail import Message
 from werkzeug.local import LocalProxy
 
-from invenio_accounts.models import User
 from invenio_mail.models import MailConfig, MailTemplates, MailTemplateUsers
 
 from . import config
@@ -147,8 +146,13 @@ class MailTemplatesView(BaseView):
     def index(self):
         """Mail template top page."""
         mts = MailTemplates.get_templates()
+        flag = current_app.config['INVENIO_MAIL_ADDITIONAL_RECIPIENTS_ENABLED']
+        data = {
+            "mail_templates": mts,
+            "additional_display": flag
+        }
         return self.render(config.INVENIO_MAIL_TEMPLATES_TEMPLATE,
-                           data=json.dumps({"mail_templates": mts}))
+                           data=json.dumps(data))
 
     @expose('help', methods=['GET'])
     def help(self):
@@ -239,6 +243,8 @@ class MailTemplatesView(BaseView):
             list: list of invalid email addresses
 
         """
+        from invenio_accounts.models import User
+
         invalid_emails = []
         for m in emails:
             valid_mail = User.query.filter_by(email=m, active=True).first()

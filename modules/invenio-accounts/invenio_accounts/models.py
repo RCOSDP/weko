@@ -18,6 +18,8 @@ from invenio_db import db
 from sqlalchemy.orm import validates
 from sqlalchemy_utils import IPAddressType, Timestamp
 
+from invenio_mail.models import MailTemplateUsers
+
 userrole = db.Table(
     'accounts_userrole',
     db.Column('user_id', db.Integer(), db.ForeignKey(

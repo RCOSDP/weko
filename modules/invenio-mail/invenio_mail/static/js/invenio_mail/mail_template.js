@@ -141,7 +141,7 @@ function TermsList({termList, setTermList, currentTerm, setCurrentTerm}) {
   )
 }
 
-function TermDetail({currentTerm, setCurrentTerm}) {
+function TermDetail({currentTerm, setCurrentTerm, additionalDisplay}) {
   const {subject, recipients, cc, bcc, body} = currentTerm.content;
 
   function handleOnInputChanged(event) {
@@ -155,38 +155,53 @@ function TermDetail({currentTerm, setCurrentTerm}) {
     setCurrentTerm({...currentTerm, content: content})
   }
 
-  return (
-    <div style={{paddingRight: '15px'}}>
-      <div className="form-group row margin-top">
-        <label htmlFor="subject" className="col-sm-2 col-form-label field-required" style={{textAlign: 'right'}}>{SUBJECT_LABEL}</label>
-        <div className="col-sm-10">
-          <input type="text" className="form-control" disabled={currentTerm.existed !== true} name="subject" value={subject} onChange={e => handleOnInputChanged(e)}/>
-        </div>
-
-        <label htmlFor="recipients" className="col-sm-2 col-form-label" style={{textAlign: 'right'}}>{RECIPIENTS_LABEL}</label>
-        <div className="col-sm-10">
-          <input type="text" className="form-control" disabled={currentTerm.existed !== true} name="recipients" value={recipients} onChange={e => handleOnInputChanged(e)}/>
-        </div>
-
-        <label htmlFor="cc" className="col-sm-2 col-form-label" style={{textAlign: 'right'}}>CC</label>
-        <div className="col-sm-10">
-          <input type="text" className="form-control" disabled={currentTerm.existed !== true} name="cc" value={cc} onChange={e => handleOnInputChanged(e)}/>
-        </div>
-
-        <label htmlFor="bcc" className="col-sm-2 col-form-label" style={{textAlign: 'right'}}>BCC</label>
-        <div className="col-sm-10">
-          <input type="text" className="form-control" disabled={currentTerm.existed !== true} name="bcc" value={bcc} onChange={e => handleOnInputChanged(e)}/>
-        </div>
-
-        <div className="col-sm-12 margin-top">
-          <textarea className="form-control mail_template_height" disabled={currentTerm.existed !== true} name="body" value={body} onChange={e => handleOnInputChanged(e)}/>
+  // Change the display based on the argument
+  if (additionalDisplay == true) {
+    return (
+      <div style={{paddingRight: '15px'}}>
+        <div className="form-group row margin-top">
+          <label htmlFor="subject" className="col-sm-2 col-form-label field-required" style={{textAlign: 'right'}}>{SUBJECT_LABEL}</label>
+          <div className="col-sm-10">
+            <input type="text" className="form-control" disabled={currentTerm.existed !== true} name="subject" value={subject} onChange={e => handleOnInputChanged(e)}/>
+          </div>
+          <label htmlFor="recipients" className="col-sm-2 col-form-label" style={{textAlign: 'right'}}>{RECIPIENTS_LABEL}</label>
+          <div className="col-sm-10">
+            <input type="text" className="form-control" disabled={currentTerm.existed !== true} name="recipients" value={recipients} onChange={e => handleOnInputChanged(e)}/>
+          </div>
+          <label htmlFor="cc" className="col-sm-2 col-form-label" style={{textAlign: 'right'}}>CC</label>
+          <div className="col-sm-10">
+            <input type="text" className="form-control" disabled={currentTerm.existed !== true} name="cc" value={cc} onChange={e => handleOnInputChanged(e)}/>
+          </div>
+          <label htmlFor="bcc" className="col-sm-2 col-form-label" style={{textAlign: 'right'}}>BCC</label>
+          <div className="col-sm-10">
+            <input type="text" className="form-control" disabled={currentTerm.existed !== true} name="bcc" value={bcc} onChange={e => handleOnInputChanged(e)}/>
+          </div>
+          <div className="col-sm-12 margin-top">
+            <textarea className="form-control mail_template_height" disabled={currentTerm.existed !== true} name="body" value={body} onChange={e => handleOnInputChanged(e)}/>
+          </div>
         </div>
       </div>
-    </div>
-  )
+    )
+  } else {
+    return (
+      <div style={{paddingRight: '15px'}}>
+        <div className="form-group row margin-top">
+          <label htmlFor="subject" className="col-sm-2 col-form-label field-required" style={{textAlign: 'right'}}>{SUBJECT_LABEL}</label>
+          <div className="col-sm-10">
+            <input type="text" className="form-control" disabled={currentTerm.existed !== true} name="subject" value={subject} onChange={e => handleOnInputChanged(e)}/>
+          </div>
+          <div className="col-sm-12 margin-top">
+            <textarea className="form-control mail_template_height" disabled={currentTerm.existed !== true} name="body" value={body} onChange={e => handleOnInputChanged(e)}/>
+          </div>
+        </div>
+      </div>
+    )
+  }
 }
 
-function TermsConditions({termList, setTermList, currentTerm, setCurrentTerm}) {
+function TermsConditions(
+  {termList, setTermList, currentTerm, setCurrentTerm, additionalDisplay}
+) {
   return (
     <div className="row">
       <div className="col col-md-4">
@@ -196,13 +211,14 @@ function TermsConditions({termList, setTermList, currentTerm, setCurrentTerm}) {
       </div>
       <div className="col col-md-8">
         <TermDetail currentTerm={currentTerm}
-                    setCurrentTerm={setCurrentTerm}/>
+                    setCurrentTerm={setCurrentTerm}
+                    additionalDisplay={additionalDisplay}/>
       </div>
     </div>
   )
 }
 
-function MailTemplateLayout({mail_templates}) {
+function MailTemplateLayout({mail_templates, additional_display}) {
   const [termList, setTermList] = useState(mail_templates);
   const [currentTerm, setCurrentTerm] = useState(EMPTY_TERM);
 
@@ -267,9 +283,11 @@ function MailTemplateLayout({mail_templates}) {
 
   return (
     <div>
-      <TermsConditions termList={termList} setTermList={setTermList}
+      <TermsConditions termList={termList}
+                       setTermList={setTermList}
                        currentTerm={currentTerm}
-                       setCurrentTerm={setCurrentTerm}/>
+                       setCurrentTerm={setCurrentTerm}
+                       additionalDisplay={additional_display}/>
       <div className="form-group">
         <button id="save-btn" className="btn btn-default"
                 style={{width: "130px", height: "40px", fontSize: "15px"}} onClick={handleSave}>
