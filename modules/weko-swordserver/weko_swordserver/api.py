@@ -8,6 +8,7 @@
 """Module of weko-swordserver."""
 
 import json
+import traceback
 from flask import current_app
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_continuum import version_class
@@ -64,7 +65,7 @@ class SwordItemTypeMapping():
                 db.session.add(obj)
             db.session.commit()
         except SQLAlchemyError as ex:
-            current_app.logger.error(ex)
+            traceback.print_exc()
             db.session.rollback()
             raise
 
@@ -109,7 +110,7 @@ class SwordItemTypeMapping():
         try:
             db.session.commit()
         except SQLAlchemyError as ex:
-            current_app.logger.error(ex)
+            traceback.print_exc()
             db.session.rollback()
             raise
 
@@ -208,7 +209,7 @@ class SwordClient():
                 db.session.add(obj)
             db.session.commit()
         except SQLAlchemyError as ex:
-            current_app.logger.error(ex)
+            traceback.print_exc()
             db.session.rollback()
             raise
 
@@ -241,9 +242,10 @@ class SwordClient():
             raise WekoSwordserverException(
                 "Client not found.", errorType=ErrorType.BadRequest)
 
-        if registration_type_index is current_app.config.get(
-            'WEKO_SWORDSERVER_REGISTRATION_TYPE'
-        ).WORKFLOW and  workflow_id is None:
+        if ((registration_type_index or obj.registration_type_index) is
+            current_app.config.get('WEKO_SWORDSERVER_REGISTRATION_TYPE')
+            .WORKFLOW) and (workflow_id or obj.wworkflow_id) is None:
+
             raise WekoSwordserverException(
                 "Workflow ID is required for workflow registration.",
                 errorType=ErrorType.BadRequest
@@ -264,7 +266,7 @@ class SwordClient():
         try:
             db.session.commit()
         except SQLAlchemyError as ex:
-            current_app.logger.error(ex)
+            traceback.print_exc()
             db.session.rollback()
             raise
 

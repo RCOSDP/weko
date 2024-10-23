@@ -194,8 +194,8 @@ def post_service_document():
             Content-Disposition	attachment; filename=[filename]
     """
     content_disposition, content_disposition_options = parse_options_header(
-            request.headers.get("Content-Disposition") or ""
-        )
+        request.headers.get("Content-Disposition") or ""
+    )
 
     if (content_disposition != "attachment"
             or not content_disposition_options.get("filename")):
@@ -222,7 +222,6 @@ def post_service_document():
 
     packaging = request.headers.get("Packaging").split("/")[-1]
     file_format = check_import_file_format(file, packaging)
-    file_format = 'ROCRATE'
 
     if file_format == "SWORD" or file_format == "ROCRATE":
         if digest is None or not is_valid_bodyhash:
