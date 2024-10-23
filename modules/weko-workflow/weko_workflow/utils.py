@@ -315,7 +315,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     """
     
     ddi_item_type_name = 'DDI'
-    journalarticle_type = ['other', 'conference paper',
+    journalarticle_type = ['conference paper',
                            'data paper', 'departmental bulletin paper',
                            'editorial', 'journal','journal article',
                            'review article', 'article','newspaper', 'software paper', 'periodical']
