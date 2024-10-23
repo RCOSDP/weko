@@ -111,32 +111,40 @@ class TestMailSettingView:
         assert "Failed to send mail." in str(res.data)
 
 # .tox/c1/bin/pytest --cov=invenio_mail tests/test_admin.py::TestMailSettingView::test_send_statistic_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
-    def test_send_statistic_mail(self,client,mail_configs,mocker):
+    def test_send_statistic_mail(self,app,client,mail_configs,mocker,caplog):
         rf = {
-            'recipients': 'recipient@example.com',
             'subject': 'Test Subject',
-            'cc': 'cc@example.com',
-            'bcc': 'bcc@example.com',
-            'body': 'Test Body'
+            'body': 'Test Body',
+            'recipients': ['recipient1@example.org', 'recipient2@example.org'],
+            'cc': ['cc1@example.org', 'cc2@example.org'],
+            'bcc': ['bcc1@example.org', 'bcc2@example.org']
         }
-        # success mail sending
+        # Success tests
         mock_send = mocker.patch('flask_mail._Mail.send')
         result = MailSettingView.send_statistic_mail(rf)
-        assert result == True
-        mock_send.assert_called()
-        
-        # failed mail sending
-        mock_send = mocker.patch('flask_mail._Mail.send', side_effect=SMTPServerDisconnected())
-        rf = {
-            'recipients': 'recipient@example.com',
-            'subject': 'Test Subject',
-            'cc': 'cc@example.com',
-            'bcc': 'bcc@example.com',
-            'body': 'Test Body'
-        }
-        result = MailSettingView.send_statistic_mail(rf)
-        assert result == False
-        mock_send.assert_called()
+        assert result is True
+        mock_send.assert_called_once()
+        sent_msg = mock_send.call_args[0][0]
+        assert sent_msg.subject    == rf['subject']
+        assert sent_msg.body       == rf['body']
+        assert sent_msg.recipients == rf['recipients']
+        assert sent_msg.cc         == rf['cc']
+        assert sent_msg.bcc        == rf['bcc']
+        mock_send.reset_mock()
+
+        # Failure tests
+        with caplog.at_level('ERROR'):
+            result = MailSettingView.send_statistic_mail({})
+            mock_send.assert_not_called()
+            assert result is False
+            assert 'Cannot send email' in caplog.text
+        with caplog.at_level('ERROR'):
+            mock_send.side_effect = SMTPServerDisconnected()
+            result = MailSettingView.send_statistic_mail(rf)
+            mock_send.assert_called()
+            assert result is False
+            assert 'Cannot send email' in caplog.text
+
 
 class TestMailTemplatesView:
 # .tox/c1/bin/pytest --cov=invenio_mail tests/test_admin.py::TestMailTemplatesView::test_save_mail_template -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp

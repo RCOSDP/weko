@@ -2250,7 +2250,7 @@ def send_mail_reminder(mail_info):
 
     subject = mail_data.get('mail_subject')
     body = mail_data.get('mail_body')
-    recipients = mail_data.get('mail_recipients')
+    recipients = mail_data.get('mail_recipients', [])
 
     if not subject:
         raise ValueError('Cannot get email subject')
@@ -2276,7 +2276,7 @@ def send_mail_approval_done(mail_info):
 
     subject = mail_data.get('mail_subject')
     body = mail_data.get('mail_body')
-    recipients = mail_data.get('mail_recipients')
+    recipients = mail_data.get('mail_recipients', [])
 
     if subject and body:
         body = replace_characters(mail_info, body)
@@ -2295,7 +2295,7 @@ def send_mail_registration_done(mail_info, mail_id):
 
     subject = mail_data.get('mail_subject')
     body = mail_data.get('mail_body')
-    recipients = mail_data.get('mail_recipients')
+    recipients = mail_data.get('mail_recipients', [])
 
     if subject and body:
         body = replace_characters(mail_info, body)
@@ -2328,7 +2328,7 @@ def send_mail_request_approval(mail_info):
     else:
         subject = mail_data.get('mail_subject')
         body = mail_data.get('mail_body')
-        recipients = mail_data.get('mail_recipients')
+        recipients = mail_data.get('mail_recipients', [])
         if subject and body:
             subject = replace_characters(mail_info, subject)
             body = replace_characters(mail_info, body)
@@ -2346,7 +2346,6 @@ def send_mail(mail_data):
     :recipients: Email recipients
     :body: content of email
     """
-
     if mail_data:
         rf = {
             'subject': mail_data.get('mail_subject'),
@@ -2406,7 +2405,6 @@ def get_mail_data(mail_id):
     :mail_id: mail template id in db
     """
     mt = MailTemplates.get_by_id(mail_id)
-
     if mt:
         subject = mt.mail_subject
         body = mt.mail_body
@@ -2440,13 +2438,20 @@ def get_mail_data(mail_id):
         for id in invalid_ids:
             MailTemplateUsers.delete_by_user_id(id)
 
-    return {
+    default_data = {
         "mail_subject": subject,
-        "mail_body": body,
+        "mail_body": body
+    }
+    additional_data = {
         "mail_recipients": recipients,
         "mail_cc": cc,
         "mail_bcc": bcc
     }
+    flag = current_app.config['INVENIO_MAIL_ADDITIONAL_RECIPIENTS_ENABLED']
+    if not flag:
+        return default_data
+    else:
+        return {**default_data, **additional_data}
 
 
 def get_mail_data_tpl(file_name):
@@ -3311,7 +3316,7 @@ def send_mail_url_guest_user(mail_info):
 
     subject  = mail_data.get('mail_subject')
     body = mail_data.get('mail_body')
-    recipients = mail_data.get('mail_recipients')
+    recipients = mail_data.get('mail_recipients', [])
 
     if not subject or not body:
         return False
@@ -3891,7 +3896,7 @@ def process_send_mail(mail_info, mail_id):
 
     subject = mail_data.get('mail_subject')
     body = mail_data.get('mail_body')
-    recipients = mail_data.get('mail_recipients')
+    recipients = mail_data.get('mail_recipients', [])
 
     if subject and body:
         body = replace_characters(mail_info, body)
