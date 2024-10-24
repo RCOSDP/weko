@@ -41,6 +41,8 @@
   <div class="hide" id="upt_tree_json">{{ upt_tree_json }}</div>
   <div class="hide" id="mod_tree_detail">{{ mod_tree_detail }}</div>
   <div class="hide" id="admin_coverpage_setting">{{ admin_coverpage_setting }}</div>
+  <!-- モーダル表示フラグを隠しフィールドに追加 -->
+  <input id="show_modal" type="hidden" value="{{ render_widgets }}" />
   <app-root-tree-hensyu nodeId={{index_id}}></app-root-tree-hensyu>
 </div>
 {%- endblock body %}
