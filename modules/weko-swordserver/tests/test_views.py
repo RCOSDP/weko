@@ -20,7 +20,7 @@ from weko_swordserver.views import blueprint, _get_status_document,_create_error
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test_get_service_document -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
 def test_get_service_document(client,users,tokens):
     login_user_via_session(client=client,email=users[0]["email"])
-    token = tokens["token"].access_token
+    token = tokens[0]["token"].access_token
     url = url_for("weko_swordserver.get_service_document")
     headers = {
         "Authorization":"Bearer {}".format(token),
@@ -33,7 +33,7 @@ def test_get_service_document(client,users,tokens):
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test_post_service_document -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
 def test_post_service_document(app,client,db,users,esindex,location,index,make_zip,tokens,item_type,doi_identifier,mocker):
     login_user_via_session(client=client,email=users[0]["email"])
-    token=tokens["token"].access_token
+    token=tokens[0]["token"].access_token
     url = url_for("weko_swordserver.post_service_document")
     headers = {
         "Authorization":"Bearer {}".format(token),
@@ -71,7 +71,7 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
                 post_service_document()
                 assert e.errorType == ErrorType.ServerError
                 assert e.message == "Error in check_import_items: test_check_error"
-        
+
         # exist "error" in item
         checked = {"error":"","item":{"errors":["this is test item error1","this is test item error2"]}}
         with patch("weko_swordserver.views.check_import_items",return_value=checked):
@@ -79,7 +79,7 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
                 post_service_document()
                 assert e.errorType == ErrorType.ContentMalformed
                 assert e.message == "Error in check_import_items: this is test item error1, this is test item error2"
-        
+
         # else
         checked = {"error":"","item":{}}
         with patch("weko_swordserver.views.check_import_items",return_value=checked):
@@ -87,7 +87,7 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
                 post_service_document()
                 assert e.errorType == ErrorType.ContentMalformed
                 assert e.message == "Error in check_import_items: item_missing"
-        
+
         # item.status is not new
         checked = {"error":"","item":{"status":"update","item_title":"not_new_item"}}
         with patch("weko_swordserver.views.check_import_items",return_value=checked):
@@ -95,7 +95,7 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
                 post_service_document()
                 assert e.errorType == ErrorType.BadRequest
                 assert e.message == "This item is already registered: not_new_item"
-        
+
         # import failed
         checked = {"error":"","item":{"status":"new","item_title":"new_item"}}
         with patch("weko_swordserver.views.check_import_items",return_value=checked):
@@ -104,14 +104,14 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
                     post_service_document()
                     assert e.errorType == ErrorType.ServerError
                     assert e.message == "Error in import_items_to_system: test error in import"
-        
-        
+
+
 
 # def get_status_document(recid):
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test__get_status_document -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
 def test_get_status_document(client, users, tokens):
     login_user_via_session(client=client,email=users[0]["email"])
-    token = tokens["token"].access_token
+    token = tokens[0]["token"].access_token
     url = url_for("weko_swordserver.get_status_document",recid="test_recid")
     headers = {
         "Authorization":"Bearer {}".format(token),
@@ -128,7 +128,7 @@ def test__get_status_document(app,records):
     recid_doi = records[0][0].pid_value
     recid_not_doi = records[2][0].pid_value
     recid_sysdoi = records[3][0].pid_value
-    
+
     test_doi = {
         "@context": "https://swordapp.github.io/swordv3/swordv3.jsonld",
         "@type": "Status",
@@ -210,15 +210,15 @@ def test__get_status_document(app,records):
         # exist permalink
         result = _get_status_document(recid_doi)
         assert result == test_doi
-        
+
         # not exist permalink
         result = _get_status_document(recid_not_doi)
         assert result == test_not_doi
-        
+
         # exist system_identifier_doi
         result = _get_status_document(recid_sysdoi)
         assert result == test_sysdoi
-        
+
         # raise WekoSwordserverException
         with pytest.raises(WekoSwordserverException) as e:
             _get_status_document("not_exist_recid")
@@ -230,13 +230,13 @@ def test__get_status_document(app,records):
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test_delete_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
 def test_delete_item(client, tokens, users,es_records):
     login_user_via_session(client=client,email=users[0]["email"])
-    token = tokens["token"].access_token
+    token = tokens[0]["token"].access_token
     delete_item = es_records[0][0].pid_value
     url = url_for("weko_swordserver.delete_item",recid=delete_item)
     headers = {
         "Authorization":"Bearer {}".format(token),
     }
-    
+
     res = client.delete(url, headers=headers)
     assert res.status_code == 204
     target = PersistentIdentifier.query.filter_by(pid_type="recid",pid_value=delete_item).first()

@@ -14,13 +14,13 @@ import traceback
 from base64 import b64encode
 from datetime import datetime, timezone
 from hashlib import sha256
-from zipfile import BadZipFile, ZipFile
+from zipfile import ZipFile
 
 from flask import current_app, request
 from invenio_oauth2server.provider import get_token
 
+from .api import SwordClient, SwordItemTypeMapping
 from .errors import WekoSwordserverException, ErrorType
-from .models import SwordClient, SwordItemTypeMapping
 
 
 def check_import_file_format(file, packaging):
@@ -45,8 +45,10 @@ def check_import_file_format(file, packaging):
         else:
             file_format = 'OTHERS'
     else:
+        current_app.logger.info("No Packing Included")
         raise WekoSwordserverException(
-            "No Package Included.", ErrorType.BadRequest
+            f"Unsupported packaging format: {packaging}.",
+            ErrorType.BadRequest
             )
 
     return file_format
@@ -86,33 +88,22 @@ def unpack_zip(file):
         + datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     )
 
-    try:
-        # Create temp dir for import data
-        os.mkdir(data_path)
+    # Create temp dir for import data
+    os.mkdir(data_path)
 
-        # Extract zip file, Extracted files remain.
-        with ZipFile(file) as zip_ref:
-            file_list =  zip_ref.namelist()
-            for info in zip_ref.infolist():
-                try:
-                    info.filename = (
-                        info.orig_filename.encode("cp437").decode("cp932"))
-                    # replace backslash to slash
-                    if os.sep != "/" and os.sep in info.filename:
-                        info.filename = info.filename.replace(os.sep, "/")
-                except Exception as ex:
-                    traceback.print_exc(file=sys.stdout)
-                zip_ref.extract(info, path=data_path)
-
-    except BadZipFile as ex:
-        current_app.logger.error(
-            "An error occured while extraction the zip file")
-        traceback.print_exc()
-        # TODO: error type
-        raise WekoSwordserverException(
-            "An error occured while extraction the zip file",
-            ErrorType.BadRequest
-        )
+    # Extract zip file, Extracted files remain.
+    with ZipFile(file) as zip_ref:
+        file_list =  zip_ref.namelist()
+        for info in zip_ref.infolist():
+            try:
+                info.filename = (
+                    info.orig_filename.encode("cp437").decode("cp932"))
+                # replace backslash to slash
+                if os.sep != "/" and os.sep in info.filename:
+                    info.filename = info.filename.replace(os.sep, "/")
+            except Exception as ex:
+                traceback.print_exc(file=sys.stdout)
+            zip_ref.extract(info, path=data_path)
 
     return data_path, file_list
 
@@ -131,16 +122,32 @@ def is_valid_body_hash(digest, body):
     Returns:
         bool: Check result.
     """
-    body_hash = sha256(body).digest()
-    body_hash_base64 = b64encode(body_hash).decode()
+    body_hash = calculate_sha256(body)
 
     result = False
 
-    if (digest.startwith('SHA-256=')
-        and digest.split('SHA-256=') == body_hash_base64):
+    if ('SHA-256=' in digest
+        and digest.split('SHA-256=')[-1] == body_hash):
         result = True
 
     return result
+
+
+def calculate_sha256(file):
+    """Calculate SHA-256 of a file.
+
+    Args:
+        file (_type_): File to be calculated.
+
+    Returns:
+        _type_: Calculate result.
+    """
+    sha256_hash = sha256()
+    for byte_block in iter(lambda: file.read(4096), b""):
+        sha256_hash.update(byte_block)
+    file.seek(0)
+
+    return sha256_hash.hexdigest()
 
 
 def check_rocrate_required_files(file_list):
@@ -152,11 +159,9 @@ def check_rocrate_required_files(file_list):
     Returns:
         list: List of results.
     """
-    # TODO: move to .config
-    list_required_files = [
-        'manifest-sha-256.txt',
-        'ro-crate-metadata.json'
-    ]
+    list_required_files = current_app.config.get(
+        'WEKO_SWORDSERVER_REQUIRED_FILES_ROCRATE'
+    )
 
     return [required_file in file_list
             for required_file in list_required_files]
@@ -171,17 +176,15 @@ def check_swordbagit_required_files(file_list):
     Returns:
         list: List of results.
     """
-    # TODO: move to .config
-    list_required_files = [
-        'manifest-sha-256.txt',
-        'metadata/sword.json'
-    ]
+    list_required_files = current_app.config.get(
+        'WEKO_SWORDSERVER_REQUIRED_FILES_SWORD'
+    )
 
     return [required_file in file_list
             for required_file in list_required_files]
 
 
-def get_mapping_by_token(access_token):
+def get_record_by_token(access_token):
     """Get mapping by token.
 
     Get mapping for RO-Crate matadata by access token.
@@ -195,14 +198,12 @@ def get_mapping_by_token(access_token):
     token = get_token(access_token=access_token)
     if token is None:
         current_app.logger.error(f"Token not found.")
-        raise WekoSwordserverException(
-            "Token not found.", errorType=ErrorType.ServerError
-        )
+        raise Exception("Token not found.")
 
     client_id = token.client_id
     sword_client = SwordClient.get_client_by_id(client_id)
 
     mapping_id = sword_client.mapping_id if sword_client is not None else None
-    mapping = SwordItemTypeMapping.get_mapping_by_id(mapping_id)
+    sword_mapping = SwordItemTypeMapping.get_mapping_by_id(mapping_id)
 
-    return mapping
+    return sword_client, sword_mapping

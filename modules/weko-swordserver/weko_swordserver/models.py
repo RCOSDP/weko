@@ -5,11 +5,7 @@
 # WEKO-SWORDServer is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
-import json
-
-from flask import current_app
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils.types import JSONType
 
 from invenio_db import db
@@ -17,15 +13,21 @@ from invenio_oauth2server.models import Client
 from weko_records.models import ItemType, Timestamp
 from weko_workflow.models import WorkFlow
 
+from .errors import ErrorType, WekoSwordserverException
+
 """Models of weko-swordserver."""
 
-class SwordItemTypeMapping(db.Model, Timestamp):
+class SwordItemTypeMappingModel(db.Model, Timestamp):
     """SwordItemTypeMapping Model
 
     Mapping for RO-Crate matadata to WEKO item type.
+    When updating the mapping, the verion_id is incremented and the previous
+    mapping moves to the history table.
+
+    Operation methods are defined in api.py.
 
     Columns:
-        `id` (int): ID of the mapping.
+        `id` (int): ID of the mapping. Primary key, autoincrement.
         `name` (str): Name of the mapping.
         `mapping` (JSON): Mapping in JSON format.
         `item_type_id` (str): Target itemtype of the mapping.\
@@ -34,9 +36,17 @@ class SwordItemTypeMapping(db.Model, Timestamp):
         `is_deleted` (bool): Sofr-delete status of the mapping.
     """
 
+    # Enables SQLAlchemy-Continuum versioning
+    __versioned__ = {}
+
     __tablename__ = 'sword_item_type_mappings'
 
-    id = db.Column(db.Integer, primary_key=True, unique=True)
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+        unique=True,
+        autoincrement=True
+    )
     """ID of the mapping."""
 
     name = db.Column(db.String(255), nullable=False)
@@ -64,7 +74,7 @@ class SwordItemTypeMapping(db.Model, Timestamp):
         nullable=False)
     """Target itemtype of the mapping."""
 
-    version_id = db.Column(db.Integer, primary_key=True)
+    version_id = db.Column(db.Integer, nullable=False)
     """Version id of the mapping."""
 
     is_deleted = db.Column(
@@ -73,92 +83,24 @@ class SwordItemTypeMapping(db.Model, Timestamp):
         default=False)
     """Sofr-delete status of the mapping."""
 
-
-    @classmethod
-    def _get_next_id(cls):
-        """Get next mapping id.
-
-        Returns:
-            int: Next new mapping id.
-        """
-        return (cls.query.order_by(cls.id.desc()).first().id + 1
-                if cls.query.count() > 0 else 1)
-
-    @classmethod
-    def create(cls, name, mapping, item_type_id):
-        """Create mapping.
-
-        Args:
-            name (str): Name of the mapping.
-            mapping (dict): Mapping in JSON format.
-            item_type_id (str): Target itemtype of the mapping.
-
-        Returns:
-            SwordItemTypeMapping: Created mapping object.
-
-        Raises:
-            SQLAlchemyError: An error occurred while creating the mapping.
-        """
-        mapping = json.dumps(mapping or {})
-        obj = cls(
-            id=cls._get_next_id(),
-            name=name,
-            mapping=mapping,
-            item_type_id=item_type_id,
-            version_id=1,
-            is_deleted=False
-        )
-
-        try:
-            with db.session.begin_nested():
-                db.session.add(obj)
-            db.session.commit()
-        except SQLAlchemyError as ex:
-            current_app.logger.error(ex)
-            db.session.rollback()
-            raise
-
-        return obj
-
-    @classmethod
-    def get_mapping_by_id(cls, id, ignore_deleted=True):
-        """Get mapping by mapping_id.
-
-        Args:
-            id (int): Mapping ID.
-            ignore_deleted (bool, optional): Ignore deleted mapping.
-
-        Returns:
-            SwordItemTypeMapping:
-            Mapping object. If not found or deleted, return `None`.
-        """
-
-        obj = (
-            cls.query
-            .filter_by(id=id)
-            .order_by(cls.version_id.desc())
-            .first()
-        )
-
-        if ignore_deleted and obj is not None and obj.is_deleted:
-            return None
-        return obj
+    __mapper_args__ = {
+        'version_id_col': version_id
+    }
 
 
-class SwordClient(db.Model, Timestamp):
+class SwordClientModel(db.Model, Timestamp):
     """SwordClient Model
 
     client whitch is register items through the sword api.
 
     Columns:
-        `client_id` (str): ID of the client.\
+        `client_id` (str): ID of the client. Primary key.\
             Foreign key referencing `Client.client_id`.
         `registration_type_index` (int): Type of registration to register an item.
         `mapping_id` (int): Mapping ID of the client.\
             Foreign key referencing `SwordItemTypeMapping.id`.
         `workflow_id` (int, optional): Workflow ID of the client.\
             Foreign key referencing `WorkFlow.id`.
-        `is_deleted` (bool): Delete status of the client.
 
     Nested Classes:
         `RegistrationType` (enum.IntEnum): Enum class for registration type.
@@ -170,7 +112,7 @@ class SwordClient(db.Model, Timestamp):
         """Solution to register item."""
 
         DIRECT = 1
-        WORKFOLW = 2
+        WORKFLOW = 2
 
     __tablename__ = 'sword_clients'
 
@@ -181,12 +123,16 @@ class SwordClient(db.Model, Timestamp):
         unique=True)
     """Id of the clients. Foreign key from Client."""
 
-    registration_type_index = db.Column(db.Integer, unique=False, nullable=False)
+    registration_type_index = db.Column(
+        db.Integer,
+        unique=False,
+        nullable=False
+    )
     """Type of registration to register an item."""
 
     mapping_id = db.Column(
         db.Integer,
-        db.ForeignKey(SwordItemTypeMapping.id),
+        db.ForeignKey(SwordItemTypeMappingModel.id),
         unique=False,
         nullable=False)
     """Mapping ID of the client. Foreign key from SwordItemTypeMapping."""
@@ -198,29 +144,15 @@ class SwordClient(db.Model, Timestamp):
         nullable=True)
     """Workflow ID of the client. Foreign key from WorkFlow."""
 
+
     @property
     def registration_type(self):
         """Registration type name of the client."""
-        registration_type = str("")
+        registration_type = ""
 
         if self.registration_type_index == self.RegistrationType.DIRECT:
-            registration_type = str("Direct")
-        elif self.registration_type_index == self.RegistrationType.WORKFOLW:
-            registration_type = str("Workflow")
+            registration_type = "Direct"
+        elif self.registration_type_index == self.RegistrationType.WORKFLOW:
+            registration_type = "Workflow"
 
         return registration_type
-
-
-    @classmethod
-    def get_client_by_id(cls, client_id):
-        """Get client by client_id.
-
-        Args:
-            client_id (str): Client ID.
-
-        Returns:
-            SwordClient: Client object.
-        """
-        obj = cls.query.filter_by(client_id=client_id).one_or_none()
-        return obj
-

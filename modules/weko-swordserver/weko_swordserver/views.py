@@ -194,8 +194,8 @@ def post_service_document():
             Content-Disposition	attachment; filename=[filename]
     """
     content_disposition, content_disposition_options = parse_options_header(
-            request.headers.get("Content-Disposition") or ""
-        )
+        request.headers.get("Content-Disposition") or ""
+    )
 
     if (content_disposition != "attachment"
             or not content_disposition_options.get("filename")):
@@ -215,23 +215,28 @@ def post_service_document():
             f"Not found {filename} in request body.", ErrorType.BadRequest
         )
 
+    # Validate Digest SHA-256 before check_import_file_format()
+    digest = request.headers.get("Digest")
+    body = request.files.get("file")
+    is_valid_bodyhash = is_valid_body_hash(digest, body)
+
     packaging = request.headers.get("Packaging").split("/")[-1]
     file_format = check_import_file_format(file, packaging)
 
     if file_format == "SWORD" or file_format == "ROCRATE":
-        access_token = request.headers.get("Authorization").split("Bearer ")
+        if digest is None or not is_valid_bodyhash:
+            raise WekoSwordserverException(
+                "Request body and digest verification failed.",
+                ErrorType.BadRequest
+                )
+
+        access_token = request.headers.get("Authorization").split("Bearer ")[1]
         header_info = {"access_token": access_token}
 
-        digest = request.headers.get("Digest")
-        body = request.data
-
-        if not is_valid_body_hash(digest, body):
-            raise WekoSwordserverException(
-                "Invalid Body Hash", ErrorType.BadRequest
-                )
-        check_result, register_format = check_bagit_import_items(
+        check_result = check_bagit_import_items(
             file, header_info, file_format
         )
+        register_format = check_result.get("register_format")
 
     else:
         check_result, register_format = check_others_import_items(file, False)
