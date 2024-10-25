@@ -22,23 +22,21 @@
 
 import re
 
-from flask import current_app, Flask
+from flask import current_app
 from flask_babelex import lazy_gettext as _
 from flask_login import current_user
 from flask_security.forms import email_required, email_validator, \
     unique_user_email
 from flask_wtf import FlaskForm
 from sqlalchemy.orm.exc import NoResultFound
-from wtforms import FormField, SelectField, StringField, SubmitField
+from wtforms import FormField, HiddenField, SelectField, StringField, SubmitField
 from wtforms.validators import DataRequired, EqualTo, StopValidation, \
     ValidationError
 
 from .api import current_userprofile
-from .config import USERPROFILES_LANGUAGE_LIST, USERPROFILES_TIMEZONE_LIST, \
-    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
-    WEKO_USERPROFILES_OTHERS_INPUT_DETAIL, WEKO_USERPROFILES_POSITION_LIST
+from .config import USERPROFILES_LANGUAGE_LIST, USERPROFILES_TIMEZONE_LIST, WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, WEKO_USERPROFILES_POSITION_LIST
 from .models import UserProfile
-from .validators import USERNAME_RULES, validate_username
+from .validators import USERNAME_RULES
 from weko_admin.models import AdminSettings
 from collections import OrderedDict
 
@@ -86,14 +84,15 @@ def check_other_position(form, field):
     @param field:
     """
     #設定されたリストに存在するOthersではなく、文字列としての【その他】もしくは【Others】を判別するバリデーション
-    if not form.position.data in ["その他", "Others"]:
+    if form.position.data != current_app.config.get("WEKO_USERPROFILES_OTHERS_INPUT_DETAIL") \
+        and not form.position.data in ["その他", "Others"]:
         if len(strip_filter(field.data)) > 0:
             raise ValidationError(_("Position is being inputted "
                                     "(Only input when selecting 'Others')"))
     else:
         if len(strip_filter(field.data)) == 0:
             raise ValidationError(_('Position not provided.'))
-        
+
 
 #識別子を判別するためのバリデーション
 def validate_digits(form, field):
@@ -108,7 +107,80 @@ def validate_digits(form, field):
     if not re.fullmatch(r'[0-9]*', field.data):
         raise ValidationError(error_message)
 
-app = Flask(__name__)
+
+def custom_profile_form_factory(profile_cls):
+    if not issubclass(profile_cls, ProfileForm):
+        profile_cls = ProfileForm
+
+    # Get profile configuration settings
+    profile_conf = AdminSettings.get('profiles_items_settings', dict_to_object=False)
+
+    # Create the ProfileForm class dynamically
+    if profile_conf is None:
+        if current_app.config.get("WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS"):
+            profile_conf = current_app.config.get("WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS")
+        else:
+            raise ValueError("Could not retrieve profile configuration settings.")
+
+    # Iterate over the profile configuration settings
+    sorted_profile_conf = OrderedDict(sorted(profile_conf.items(), key=lambda x: x[1].get("order", 0)))
+    for key, value in sorted_profile_conf.items():
+        # Check if the field should be visible
+        if value['visible']:
+            field_format = value['format']
+            # Create the field based on the current_type
+            if field_format == 'select':
+                # Check if format is select
+                if not isinstance(value['options'], list):
+                    raise ValueError(f"Invalid 'options' value in field: {key}")
+                field = SelectField(
+                    _(value['label_name']),
+                    filters=[strip_filter],
+                    choices=[('','')] + [(choice, _(choice)) for choice in value['options']]
+                )
+            elif field_format == 'identifier':
+                # Check if the field is a identifier
+                validators = [validate_digits]
+                field = StringField(
+                    _(value['label_name']),
+                    validators=validators,
+                    filters=[strip_filter]
+                )
+            elif field_format == 'text':
+                # Check if the field is a text field
+                validators = [check_length_100_characters]
+                field = StringField(
+                    _(value['label_name']),
+                    validators=validators,
+                    filters=[strip_filter]
+                )
+            elif field_format == 'phonenumber':
+                # Check if the field is a phone number
+                validators = [check_phone_number]
+                field = StringField(
+                    _(value['label_name']),
+                    validators=validators,
+                    filters=[strip_filter]
+                )
+            elif field_format == 'position(other)':
+                # Check if the field is other position field
+                validators = [check_other_position]
+                field = StringField(
+                    _(value['label_name']),
+                    validators=validators,
+                    filters=[strip_filter]
+                )
+            else:
+                raise ValueError(f"Invalid 'format' value in field: {key}")
+        else:
+            field = HiddenField(_(value['label_name']))
+
+        # Add the field to the ProfileForm class dynamically
+        setattr(profile_cls, key, field)
+
+    # Return the dynamically created ProfileForm class
+    return profile_cls
+
 
 class ProfileForm(FlaskForm):
     """Form for editing user profile."""
@@ -161,71 +233,149 @@ class ProfileForm(FlaskForm):
         ]
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # アプリケーションコンテキスト内でデータベースクエリを実行
-        profile_conf = AdminSettings.get('profiles_items_settings', dict_to_object=False)
+    fullname = StringField(
+        # NOTE: Form label
+        _('Fullname'),
+        validators=[
+            DataRequired(message=_('Full name not provided.')),
+            check_length_100_characters
+        ],
+        filters=[strip_filter])
 
-        if profile_conf is None:
-            raise ValueError("Could not retrieve profile configuration settings.")
-        
-        # プロフィール設定の表示設定を取得
-        self.field_visibility = {}
+    # University / Institution
+    university = StringField(
+        _('University/Institution'),
+        validators=[
+            DataRequired(message=_('University/Institution not provided.')),
+            check_length_100_characters
+        ],
+        filters=[strip_filter]
+    )
 
-        # 順序を指定して OrderedDict に変換
-        ordered_profile_conf = OrderedDict()
+    # Affiliation department / Department
+    department = StringField(
+        _('Affiliated Division/Department'),
+        validators=[
+            DataRequired(
+                message=_('Affiliated Division/Department not provided.')),
+            check_length_100_characters
+        ],
+        filters=[strip_filter]
+    )
 
-        # 固定されたキーを最初に追加
-        fix_keys = ["fullname", "university", "department", "position"]
-        missing_keys = []
+    # Position
+    position = SelectField(
+        _('Position'),
+        filters=[strip_filter],
+        validators=[
+            DataRequired(message=_('Position not provided.')),
+        ],
+        choices=WEKO_USERPROFILES_POSITION_LIST
+    )
 
-        for key in fix_keys:
-            if key in profile_conf:
-                ordered_profile_conf[key] = profile_conf.get(key)
-            else:
-                missing_keys.append(key)
-        if missing_keys:
-            raise KeyError("Could not find the following keys in profile configuration settings: {}".format(missing_keys))
+    # Other Position
+    item1 = StringField(
+        _('Position (Others)'),
+        validators=[
+            check_other_position
+        ],
+        render_kw={"placeholder": _("Input when selecting Others")}
+    )
 
-        # 固定キー以外を追加
-        ordered_profile_conf.update(profile_conf)
+    # Phone number
+    item2 = StringField(
+        _('Phone number'),
+        validators=[
+            DataRequired(message=_('Phone number not provided.')),
+            check_phone_number
+        ]
+    )
 
-        # それぞれのフィールドに取得したアイテムデータを設定
-        required_keys = ['current_type', 'label_name', 'visible', 'select']
-        for key, value in ordered_profile_conf.items():
-            missing_fieldkeys = [k for k in required_keys if k not in value]
-            if missing_fieldkeys:
-                raise KeyError(f"Missing required key(s) {missing_fieldkeys} in field: {key}")
+    # Affiliation institute 1
+    # Affiliation institute name (n)
+    item3 = StringField(
+        _('Affiliated Institution Name'),
+        validators=[
+            check_length_100_characters
+        ],
+        filters=[strip_filter]
+    )
 
-            self.field_visibility[key] = value['visible']
+    # Affiliation institute position (n)
+    item4 = SelectField(
+        _('Affiliated Institution Position'),
+        filters=[strip_filter],
+        choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
+    )
 
-            if value['current_type'] == 'select':
-                if not isinstance(value['select'], list):
-                    raise ValueError(f"Invalid 'select' value in field: {key}")
-                field = SelectField(
-                    _(value['label_name']),
-                    filters=[strip_filter],
-                    choices=[('','')]+[('None','')]+[(choice, choice) for choice in value['select'][0].split('|')]
-                )
-                setattr(ProfileForm, key, field)
-            elif value['current_type'] == 'identifier':
-                validators = [validate_digits]
-                field = StringField(
-                    _(value['label_name']),
-                    validators=validators,
-                    filters=[strip_filter]
-                )
-                setattr(ProfileForm, key, field)
-            elif value['current_type'] == 'text':
-                validators = [check_length_100_characters]
-                field = StringField(
-                    _(value['label_name']),
-                    validators=validators,
-                    filters=[strip_filter]
-                )
-                setattr(ProfileForm, key, field)
-            else:
-                raise ValueError(f"Invalid 'current_type' value in field: {key}")
+    # Affiliation institute 2
+    # Affiliation institute name (n)
+    item5 = StringField(
+        _('Affiliated Institution Name'),
+        validators=[
+            check_length_100_characters
+        ],
+        filters=[strip_filter]
+    )
+
+    # Affiliation institute position (n)
+    item6 = SelectField(
+        _('Affiliated Institution Position'),
+        filters=[strip_filter],
+        choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
+    )
+
+    # Affiliation institute 3
+    # Affiliation institute name (n)
+    item7 = StringField(
+        _('Affiliated Institution Name'),
+        validators=[
+            check_length_100_characters
+        ],
+        filters=[strip_filter]
+    )
+
+    # Affiliation institute position (n)
+    item8 = SelectField(
+        _('Affiliated Institution Position'),
+        filters=[strip_filter],
+        choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
+    )
+
+    # Affiliation institute 4
+    # Affiliation institute name (n)
+    item9 = StringField(
+        _('Affiliated Institution Name'),
+        validators=[
+            check_length_100_characters
+        ],
+        filters=[strip_filter]
+    )
+
+    # Affiliation institute position (n)
+    item10 = SelectField(
+        _('Affiliated Institution Position'),
+        filters=[strip_filter],
+        choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
+    )
+
+    # Affiliation institute 5
+    # Affiliation institute name (n)
+    item11 = StringField(
+        _('Affiliated Institution Name'),
+        validators=[
+            check_length_100_characters
+        ],
+        filters=[strip_filter]
+    )
+
+    # Affiliation institute position (n)
+    item12 = SelectField(
+        _('Affiliated Institution Position'),
+        filters=[strip_filter],
+        choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
+    )
+
 
     def validate_username(form, field):
         """Wrap username validator for WTForms."""

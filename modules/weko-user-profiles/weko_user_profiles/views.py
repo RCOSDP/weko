@@ -29,11 +29,10 @@ from invenio_db import db
 
 from .api import current_userprofile
 from .forms import EmailProfileForm, ProfileForm, VerificationForm, \
-    confirm_register_form_factory, register_form_factory
+    confirm_register_form_factory, custom_profile_form_factory, register_form_factory
 from .models import UserProfile
 from .utils import get_user_profile_info, handle_profile_form, \
     handle_verification_form
-from weko_admin.models import AdminSettings
 
 blueprint = Blueprint(
     'weko_user_profiles',
@@ -146,7 +145,11 @@ def profile():
 def profile_form_factory():
     """Create a profile form."""
     if current_app.config['USERPROFILES_EMAIL_ENABLED']:
-        form = EmailProfileForm(
+        if current_app.config.get("WEKO_USERPROFILES_CUSTOMIZE_ENABLED", False):
+            form_cls = custom_profile_form_factory(EmailProfileForm)
+        else:
+            form_cls = EmailProfileForm
+        form = form_cls(
             formdata=None,
             username=current_userprofile.username,
             fullname=current_userprofile.fullname,
@@ -176,7 +179,11 @@ def profile_form_factory():
             prefix='profile', )
         return form
     else:
-        form = ProfileForm(
+        if current_app.config.get("WEKO_USERPROFILES_CUSTOMIZE_ENABLED", False):
+            form_cls = custom_profile_form_factory(ProfileForm)
+        else:
+            form_cls = ProfileForm
+        form = form_cls(
             formdata=None,
             obj=current_userprofile,
             prefix='profile', )

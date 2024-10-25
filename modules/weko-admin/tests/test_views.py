@@ -987,17 +987,17 @@ def test_dbsession_clean(app, db):
     dbsession_clean(Exception)
     assert ItemTypeName.query.filter_by(id=3).first() is None
 
-# .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_send_profile_settings_save -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_send_profile_settings_save -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_send_profile_settings_save(api, users):
     url = url_for("weko_admin.send_profile_settings_save")
     login_user_via_session(client=api, email=users[0]["email"])
-    
+
     # 正常系テスト
     valid_data = {
-        'profiles_templates': {
-            'fullname': {'label_name': 'Full Name', 'visible': True, 'current_type': 'text', 'select': []},
-            'university': {'label_name': 'University', 'visible': True, 'current_type': 'text', 'select': []}
+        "profiles_templates": {
+            "fullname": {"label_name": "Full Name", "visible": True, "format": "text", "options": []},
+            "university": {"label_name": "University", "visible": True, "format": "text", "options": []}
         }
     }
 

@@ -33,6 +33,7 @@ from flask_security import url_for_security
 from flask_menu import current_menu
 from flask_login import login_user
 from speaklater import _LazyString
+from wtforms import StringField, SelectField
 
 from invenio_accounts.models import User
 from invenio_accounts.testutils import login_user_via_session
@@ -40,7 +41,6 @@ from invenio_accounts.testutils import login_user_via_session
 import weko_user_profiles
 from weko_user_profiles import WekoUserProfiles
 from weko_user_profiles.forms import ProfileForm,EmailProfileForm
-from weko_user_profiles.config import WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.views import (
     blueprint_ui_init, 
     blueprint_api_init,
@@ -415,14 +415,44 @@ def test_profile(client,register_bp,users,mocker):
 
 # def profile_form_factory():
 # .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_views.py::test_profile_form_factory -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
-def test_profile_form_factory(req_context,users,user_profiles):
-    g.userprofile = user_profiles[0]
-    login_user(users[0]["obj"])
-    result = profile_form_factory()
-    assert type(result) == EmailProfileForm
-    assert result.username.data == "sysadmin user"
-    current_app.config.update(
-        USERPROFILES_EMAIL_ENABLED=False
-    )
-    result = profile_form_factory()
-    assert type(result) == ProfileForm
+def test_profile_form_factory(app,req_context,users,user_profiles):
+    app.config.update({
+        "USERPROFILES_EMAIL_ENABLED": True,
+        "WEKO_USERPROFILES_CUSTOMIZE_ENABLED": False
+    })
+    with app.test_client():
+        g.userprofile = user_profiles[0]
+        login_user(users[0]["obj"])
+        result = profile_form_factory()
+        assert type(result) == EmailProfileForm
+        assert result.department is None
+        assert result.username.data == "sysadmin user"
+        app.config.update({
+            "USERPROFILES_EMAIL_ENABLED": False
+        })
+        result = profile_form_factory()
+        assert type(result) == ProfileForm
+        assert type(result.department) == StringField
+
+    # Case: WEKO_USERPROFILES_CUSTOMIZE_ENABLED = True
+    app.config.update({
+        "USERPROFILES_EMAIL_ENABLED": True,
+        "WEKO_USERPROFILES_CUSTOMIZE_ENABLED": True,
+        "WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS": {
+            "fullname": {"format": "text", "label_name": "Full Name", "visible": True, "options": [''], "order": 1},
+            "university": {"format": "text", "label_name": "University", "visible": True, "options": [''], "order": 2},
+            "department": {"format": "select", "label_name": "Department", "visible": True, "options": ["test1", "test2"], "order": 3},
+            "position": {"format": "text", "label_name": "Position", "visible": True, "options": [''], "order": 4},
+        }
+    })
+    with app.test_client():
+        result = profile_form_factory()
+        assert type(result) == EmailProfileForm
+        assert result.department is None
+        assert result.username.data == "sysadmin user"
+        app.config.update(
+            USERPROFILES_EMAIL_ENABLED=False
+        )
+        result = profile_form_factory()
+        assert type(result) == ProfileForm
+        assert type(result.department) == SelectField

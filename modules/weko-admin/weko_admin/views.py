@@ -791,7 +791,6 @@ def dbsession_clean(exception):
 @login_required
 @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
                  WEKO_ADMIN_PERMISSION_ROLE_REPO])
-    
     # データベースに保存する処理
 def send_profile_settings_save():
     data = request.get_json()
@@ -799,7 +798,7 @@ def send_profile_settings_save():
         return jsonify({"status": "error", "msg": "Invalid data"}), 400
 
     profiles_templates = data['profiles_templates']
-    
+
     try:
         # settingsカラムを更新または新規作成
         AdminSettings.update(name='profiles_items_settings', settings=profiles_templates)

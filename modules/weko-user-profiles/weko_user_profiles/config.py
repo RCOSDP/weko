@@ -169,4 +169,34 @@ WEKO_USERPROFILES_FORM_COLUMN = ["username", "timezone", "language", "email",
                                  "email_repeat"]
 """User profile form column"""
 
-WEKO_USERPROFILES_READONLY_EMAILFIELD = False 
+WEKO_USERPROFILES_READONLY_EMAILFIELD = False
+
+WEKO_USERPROFILES_CUSTOMIZE_ENABLED = True
+"""Enable customize profile fields"""
+
+USERPROFILES_FORMAT_OPTION_LIST = ["text", "select", "identifier", "phonenumber", "position(other)"]
+"""Profile field format option list"""
+
+USERPROFILES_DEFAULT_FIELDS_SETTINGS = {
+    "fullname": {"order": 1, "visible": True, "label_name": "氏名", "format": "text"},
+    "university": {"order": 2, "visible": True, "label_name": "大学・機関名", "format": "text"},
+    "department": {"order": 3, "visible": True, "label_name": "所属部局・部署", "format": "text"},
+    "position": {"order": 4, "visible": True, "label_name": "役職", "format": "select", "options": [ele[0] for ele in WEKO_USERPROFILES_POSITION_LIST]},
+    "item1": {"order": 5, "visible": True, "label_name": "役職（その他）", "format": "text"},
+    "item2": {"order": 6, "visible": True, "label_name": "電話番号", "format": "identifier"},
+    "item3": {"order": 7, "visible": True, "label_name": "所属学会名", "format": "identifier"},
+    "item4": {"order": 8, "visible": True, "label_name": "所属学会役職", "format": "select", "options": [ele[0] for ele in WEKO_USERPROFILES_INSTITUTE_POSITION_LIST]},
+    "item5": {"order": 9, "visible": True, "label_name": "所属学会名", "format": "text"},
+    "item6": {"order": 10, "visible": True, "label_name": "所属学会役職", "format": "select", "options": [ele[0] for ele in WEKO_USERPROFILES_INSTITUTE_POSITION_LIST]},
+    "item7": {"order": 11, "visible": True, "label_name": "所属学会名", "format": "text"},
+    "item8": {"order": 12, "visible": True, "label_name": "所属学会役職", "format": "select", "options": [ele[0] for ele in WEKO_USERPROFILES_INSTITUTE_POSITION_LIST]},
+    "item9": {"order": 13, "visible": True, "label_name": "所属学会名", "format": "text"},
+    "item10": {"order": 14, "visible": True, "label_name": "所属学会役職", "format": "select", "options": [ele[0] for ele in WEKO_USERPROFILES_INSTITUTE_POSITION_LIST]},
+    "item11": {"order": 15, "visible": True, "label_name": "所属学会名", "format": "text"},
+    "item12": {"order": 16, "visible": True, "label_name": "所属学会役職", "format": "select", "options": [ele[0] for ele in WEKO_USERPROFILES_INSTITUTE_POSITION_LIST]},
+    "item13": {"order": 17, "visible": False, "label_name": "item13", "format": "text"},
+    "item14": {"order": 18,"visible": False, "label_name": "item14", "format": "text"},
+    "item15": {"order": 19,"visible": False, "label_name": "item15", "format": "text"},
+    "item16": {"order": 20,"visible": False, "label_name": "item16", "format": "text"}
+}
+"""Default profile fields settings"""

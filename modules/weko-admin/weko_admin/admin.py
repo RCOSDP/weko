@@ -1366,13 +1366,17 @@ class FacetSearchSettingView(ModelView):
 class ProfileSettingView(BaseView):
     @expose('/', methods=['GET'])
     def index(self):
-        profile_settings = AdminSettings.get('profiles_items_settings', dict_to_object=False)
-        current_app.logger.warning(profile_settings)
+        profile_fields_settings = AdminSettings.get("profiles_items_settings", dict_to_object=False)
+        if not profile_fields_settings:
+            profile_fields_settings = current_app.config.get("USERPROFILES_DEFAULT_FIELDS_SETTINGS", {})
+
         return self.render(
             current_app.config["WEKO_ADMIN_PROFILE_SETTING_TEMPLATE"],
-            data = json.dumps(profile_settings)
+            data = json.dumps(profile_fields_settings),
+            format_options = json.dumps(
+                current_app.config.get("USERPROFILES_FORMAT_OPTION_LIST", [])),
         )
-    
+
 style_adminview = {
     'view_class': StyleSettingView,
     'kwargs': {
