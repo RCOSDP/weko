@@ -147,7 +147,7 @@ def check_bagit_import_items(file, header_info, file_format):
         current_app.logger.error("Bag validation failed.")
         traceback.print_exc()
         check_result.update({
-            "error": "Bag validation failed. Please check your bag."
+            "error": str(ex)
         })
 
     except (UnicodeDecodeError, UnicodeEncodeError) as ex:
