@@ -289,18 +289,22 @@ def user_profiles(db,users):
         university="test university",
         department="test department",
         position = "test position",
-        otherPosition="test other position",
-        phoneNumber="123-4567",
-        instituteName="test institute",
-        institutePosition="test institute position",
-        instituteName2="test institute2",
-        institutePosition2="test institute position2",
-        instituteName3="",
-        institutePosition3="",
-        instituteName4="",
-        institutePosition4="",
-        instituteName5="",
-        institutePosition5=""
+        item1="test other position",
+        item2="123-4567",
+        item3="test institute",
+        item4="test institute position",
+        item5="test institute2",
+        item6="test institute position2",
+        item7="",
+        item8="",
+        item9="",
+        item10="",
+        item11="",
+        item12="",
+        item13="",
+        item14="",
+        item15="",
+        item16=""
     )
     db.session.add(all_data)
     repo_profile = UserProfile(
@@ -313,18 +317,22 @@ def user_profiles(db,users):
         university="test university",
         department="test department",
         position = "test position",
-        otherPosition="test other position",
-        phoneNumber="123-4567",
-        instituteName="test institute",
-        institutePosition="test institute position",
-        instituteName2="test institute2",
-        institutePosition2="test institute position2",
-        instituteName3="",
-        institutePosition3="",
-        instituteName4="",
-        institutePosition4="",
-        instituteName5="",
-        institutePosition5=""
+        item1="test other position",
+        item2="123-4567",
+        item3="test institute",
+        item4="test institute position",
+        item5="test institute2",
+        item6="test institute position2",
+        item7="",
+        item8="",
+        item9="",
+        item10="",
+        item11="",
+        item12="",
+        item13="",
+        item14="",
+        item15="",
+        item16=""
     )
     db.session.add(repo_profile)
     not_validate_language = UserProfile(
@@ -337,19 +345,98 @@ def user_profiles(db,users):
         university="test university",
         department="test department",
         position = "test position",
-        otherPosition="test other position",
-        phoneNumber="123-4567",
-        instituteName="test institute",
-        institutePosition="test institute position",
-        instituteName2="test institute2",
-        institutePosition2="test institute position2",
-        instituteName3="",
-        institutePosition3="",
-        instituteName4="",
-        institutePosition4="",
-        instituteName5="",
-        institutePosition5=""
+        item1="test other position",
+        item2="123-4567",
+        item3="test institute",
+        item4="test institute position",
+        item5="test institute2",
+        item6="test institute position2",
+        item7="",
+        item8="",
+        item9="",
+        item10="",
+        item11="",
+        item12="",
+        item13="",
+        item14="",
+        item15="",
+        item16=""
     )
-    db.session.add(not_validate_language)
+    db.session.add(repo_profile)
+    none_config = UserProfile(
+        user_id=users[3]["id"],
+        _username="sysadmin2",
+        _displayname="sysadmin user",
+        fullname="",
+        timezone=USERPROFILES_TIMEZONE_DEFAULT,
+        language="not exist language",
+        university="",
+        department="",
+        position = "",
+        item1=None,
+        item2=None,
+        item3=None,
+        item4=None,
+        item5=None,
+        item6=None,
+        item7=None,
+        item8=None,
+        item9=None,
+        item10=None,
+        item11=None,
+        item12=None,
+        item13=None,
+        item14=None,
+        item15=None,
+        item16=None
+    )
+    db.session.add(none_config)
     db.session.commit()
-    return [all_data,repo_profile,not_validate_language]
+    return [
+        all_data,
+        repo_profile,
+        not_validate_language,
+        none_config
+    ]
+
+@pytest.fixture()
+def setup_data(db):
+    # Create a user
+    user = User(
+        email="sysadmin@test.org",
+        active=True
+    )
+    db.session.add(user)
+    db.session.commit()
+
+    # Create a user profile
+    profile_get_info = UserProfile(
+        user_id=user.id,
+        _username="sysadmin",
+        _displayname="sysadmin user",
+        fullname="test taro",
+        timezone="Etc/GMT",
+        language="ja",
+        university="test university",
+        department="test department",
+        position="test position",
+        item1="test other position",
+        item2="123-4567",
+        item3="test institute",
+        item4="test institute position",
+        item5="test institute2",
+        item6="test institute position2",
+        item7="test institute3",
+        item8="test institute position3",
+        item9="test institute4",
+        item10="test institute position4",
+        item11="test institute5",
+        item12="test institute position5",
+        item13="item 13",
+        item14="item 14",
+        item15="item 15",
+        item16="item 16"
+    )
+    db.session.add(profile_get_info)
+    db.session.commit()
+    return[profile_get_info]

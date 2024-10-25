@@ -100,7 +100,7 @@ def handle_profile_form(form):
                     form_data = getattr(form, key).data
                     # Noneを文字列として保存しないようにする
                     if form_data in ['', 'None']:
-                        form_data = None
+                        form_data = ''
                     setattr(current_userprofile, key, form_data)
             # Mapping role
             current_config = current_app.config

@@ -10,32 +10,62 @@ $(function() {
     return;
   }
 
-  // 空の項目テンプレート
-  const EMPTY_TERM = {
-    key: "",
-    flag: false,
-    content: {
-      "item": '',   // 項目名
-      "visible": '',    // 表示設定
-      "label_name": '',  // ラベル名
-      "select": '',     // 入力方法
-      "option": ''      // オプション
-    }
-  };
-
   // 初期データの取得とコンソールへの出力
   const initValue = initDataElement.value;
 
   // Reactコンポーネントのレンダリング
   ReactDOM.render(
-    <ProfilesList ProfileItemList ={JSON.parse(initValue)} />,
+    <ProfilesList profileItemList ={JSON.parse(initValue)} />,
     document.getElementById('root')
   );
 });
 
+function ProfileItem({ profileFieldKey, profileFieldValue, onLabelChange, onCheckboxChange, onTypeChange, onSelectChange }) {
+  const {label_name, format, visible, options, ...rest} = profileFieldValue;
+  const format_options = JSON.parse(document.getElementById("format_options").value);
+
+  let optionsDisplay = "";
+  if (format === "select") {
+    optionsDisplay = (!profileFieldValue.options ? [] : profileFieldValue.options).join('|');
+  }
+
+  return (
+    <div key={profileFieldKey} className="item-group">
+      <h3>{profileFieldKey}</h3>
+      <div>
+        <input type="text" value={label_name}
+          onChange={(e) => onLabelChange(e.target.value)} />
+        <select value={format}
+          onChange={(e) => onTypeChange(e.target.value)}>
+            {format_options.map((typeOption, index) => (
+              <option key={index} value={typeOption}>{typeOption}</option>
+            ))}
+        </select>
+        <label>
+          <input
+            type="checkbox"
+            checked={visible}
+            onChange={(e) => onCheckboxChange(e.target.checked)}
+          />
+          Display
+        </label>
+      </div>
+      {format === "select" && (
+        <input
+          type="text"
+          className="select-textbox"
+          value={optionsDisplay}
+          onChange={(e) => onSelectChange(e.target.value)}
+          placeholder="separate option with the | character"
+        />
+      )}
+    </div>
+  );
+}
+
 // ProfilesListコンポーネントの定義
-function ProfilesList({ ProfileItemList  }) {
-  const [profileItems , setProfileItems ] = useState(ProfileItemList );
+function ProfilesList({ profileItemList }) {
+  const [profileSettings , setProfileSettings] = useState(profileItemList);
 
   // メッセージを表示する関数の定義
   function addAlert(message, type) {
@@ -48,98 +78,56 @@ function ProfilesList({ ProfileItemList  }) {
       className = "alert alert-info alert-dismissible alert-profile-settings";
     }
     $('#alertContainer').append(
-      '<div class="' + className + '">'
-      + closeButton + message + '</div>'
+      '<div class="' + className + '">' + closeButton + message + '</div>'
     );
   }
 
   // ラベル名の変更ハンドラー
-  const handleLabelChange = (itemKey, newValue) => {
-    setProfileItems (prevTerms => ({
-      ...prevTerms,
-      [itemKey]: {
-        ...prevTerms[itemKey],
-        label_name: newValue
-      }
-    }));
+  const handleLabelNameChange = (fieldKey, newValue) => {
+    const newProfiles = {...profileSettings};
+    newProfiles[fieldKey].label_name = newValue;
+    setProfileSettings(newProfiles);
   };
 
   // 表示設定の変更ハンドラー
-  const handleCheckboxChange = (itemKey, newValue) => {
-    setProfileItems (prevTerms => ({
-      ...prevTerms,
-      [itemKey]: {
-        ...prevTerms[itemKey],
-        visible: newValue
-      }
-    }));
+  const handleVisibleChange = (fieldKey, newValue) => {
+    const newProfiles = {...profileSettings};
+    newProfiles[fieldKey].visible = newValue;
+    setProfileSettings(newProfiles);
   };
 
   // 入力方法の変更ハンドラー
-  const handleTypeChange = (itemKey, newValue) => {
-    setProfileItems (prevTerms => ({
-      ...prevTerms,
-      [itemKey]: {
-        ...prevTerms[itemKey],
-        current_type: newValue
-      }
-    }));
+  const handleFormatChange = (fieldKey, newValue) => {
+    const newProfiles = {...profileSettings};
+    newProfiles[fieldKey].format = newValue;
+    setProfileSettings(newProfiles);
   };
 
   // オプションの変更ハンドラー
-  const handleSelectChange = (itemKey, newValue) => {
-    setProfileItems (prevTerms => ({
-      ...prevTerms,
-      [itemKey]: {
-        ...prevTerms[itemKey],
-        select: newValue.split(',').map(option => option.trim())
-      }
-    }));
+  const handleOptionsChange = (fieldKey, newValue) => {
+    const newProfiles = {...profileSettings};
+    newProfiles[fieldKey].options = newValue.split('|').map(option => option.trim());
+    setProfileSettings(newProfiles);
   };
 
-  // プロファイル設定をグループ化する関数
-  const groupedTemplates = groupProfileSettings(profileItems );
-
-  function groupProfileSettings(templates) {
-    const grouped = {};
-    Object.keys(templates).forEach(key => {
-      const itemValue = templates[key];
-      if (!grouped[key]) {
-        grouped[key] = {
-          type: itemValue["type"], // 入力方法の設定
-          select: itemValue["select"], // 選択肢の設定
-          visible: itemValue["visible"],  // 表示設定
-          label_name: itemValue["label_name"], // ラベル名の設定
-          current_type: itemValue["current_type"], // 入力方法の初期値を設定
-          items: []
-        };
-      }
-    });
-    return grouped;
-  }
-
   // 表示する項目の順序を指定する配列
-  const order = ["fullname", "university", "department", "position", ...Array.from({ length: 16 }, (_, i) => `item${i + 1}`)];
+  const sortedProfileSettings = Object.keys(profileSettings).map(key => ({ key: key, value: profileSettings[key] })).sort((a, b) => (a.value.order - b.value.order));
 
   // 保存ボタンのクリックハンドラー
   const handleSave = () => {
     const URL = "/api/admin/profile_settings/save";
 
     // エラーチェック
-    for (let itemKey of order) {
-      const item = profileItems [itemKey];
-      if (!item) continue; // 項目が存在しない場合はスキップ
-
-      // label_nameが空の場合エラー
-      if (!item.label_name || (item.current_type === "select" && (!item.select || !item.select.every(option => option)))) {
-        addAlert('Failed to update settings.', 1);
-        return;
-      }
+    if (Object.keys(profileSettings).some((key) => {
+      const item = profileSettings[key];
+      return !item.label_name || (item.format === "select" && (!item.options || !item.options.every(option => option)));
+    })) {
+      addAlert('Failed to update settings.', 1);
+      return;
     }
-      
 
     let data = {
-      profiles_templates: profileItems 
+      profiles_templates: profileSettings
     };
 
     // AJAXリクエストを送信
@@ -148,71 +136,38 @@ function ProfilesList({ ProfileItemList  }) {
       method: 'POST',
       contentType: 'application/json',
       dataType: 'json',
-      data: JSON.stringify(data),
-      success: function (result) {
-        console.log("AJAXリクエスト成功:", result);
-        if (result.status==="success") {
-          addAlert(result.msg, 2);
-        } else {
-          addAlert(result.msg, 1);
-        }
-        if (result.data) {
-          setProfileItems (result.data);
-        }
-      },
-      error: function (error) {
-        console.log("AJAXリクエストエラー:", error);
-        addAlert('Profile Settings Update Failed.', 1);
+      data: JSON.stringify(data)
+    }).done((result) => {
+      if (result.status==="success") {
+        addAlert(result.msg, 2);
+      } else {
+        addAlert(result.msg, 1);
       }
+      if (result.data) {
+        setProfileSettings (result.data);
+      }
+    }).fail((jqXHR, textStatus, errorThrown) => {
+        addAlert('Profile Settings Update Failed.', 1);
     });
   };
 
   return (
+    // プロファイル設定の表示
     <div className="container">
       <div id="alertContainer"></div> {/* アラートメッセージを表示するためのコンテナ */}
-      {order.map(itemKey => {
-        const item = profileItems [itemKey];
-        if (!item) return null; // 項目が存在しない場合はスキップ
-        return (
-          <div key={itemKey} className="item-group">
-            <h3>{itemKey}</h3>
-            <div>
-              <input
-                type="text"
-                value={item.label_name}
-                onChange={(e) => handleLabelChange(itemKey, e.target.value)}
-              />
-              <select
-                value={item.current_type}
-                onChange={(e) => handleTypeChange(itemKey, e.target.value)}
-              >
-                {item.type.map((typeOption, index) => (
-                  <option key={index} value={typeOption}>{typeOption}</option>
-                ))}
-              </select>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={item.visible}
-                  onChange={(e) => handleCheckboxChange(itemKey, e.target.checked)} // チェックボックスの設定
-                />
-                Display
-              </label>
-            </div>
-            {item.current_type === "select" && (
-              <input
-                type="text"
-                className="select-textbox"
-                value={item.select.join(', ')}
-                onChange={(e) => handleSelectChange(itemKey, e.target.value)}
-                placeholder="separate option with the | character" // placeholder属性を追加
-              />
-            )}
-          </div>
-        );
+      {sortedProfileSettings.map((profileFieldSetting) => {
+        if (!profileFieldSetting.key || !profileFieldSetting.value) return null;
+        return <ProfileItem
+          profileFieldKey={profileFieldSetting.key}
+          profileFieldValue={profileFieldSetting.value}
+          onLabelChange={(newValue) => handleLabelNameChange(profileFieldSetting.key, newValue)}
+          onCheckboxChange={(newValue) => handleVisibleChange(profileFieldSetting.key, newValue)}
+          onTypeChange={(newValue) => handleFormatChange(profileFieldSetting.key, newValue)}
+          onSelectChange={(newValue) => handleOptionsChange(profileFieldSetting.key, newValue)}
+        />
       })}
       <button onClick={handleSave} className="btn btn-primary">
-        <span className="glyphicon glyphicon-save" aria-hidden="true"></span> SAVE
+        <span className="glyphicon glyphicon-save" aria-hidden="true">SAVE</span>
       </button> {/* 保存ボタンにアイコンを追加 */}
     </div>
   );
