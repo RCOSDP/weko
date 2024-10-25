@@ -84,6 +84,8 @@ class User(db.Model, UserMixin):
                             backref=db.backref('users', lazy='dynamic'))
     """List of the user's roles."""
 
+    template = db.relationship('MailTemplateUsers', cascade='all, delete')
+
     @validates('last_login_ip', 'current_login_ip')
     def validate_ip(self, key, value):
         """Hack untrackable IP addresses."""

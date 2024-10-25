@@ -1,3 +1,4 @@
+import copy
 import pytest
 import uuid
 from os.path import dirname, join
@@ -13,13 +14,14 @@ from sqlalchemy.orm.exc import NoResultFound
 from mock import MagicMock
 from weko_deposit.pidstore import get_record_without_version
 from weko_deposit.api import WekoRecord, WekoDeposit
+from invenio_accounts.models import User
 from invenio_records_files.models import RecordsBuckets
 from invenio_files_rest.models import Bucket
 from invenio_cache import current_cache
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from flask_login.utils import login_user
 from tests.helpers import json_data
-from invenio_mail.models import MailConfig
+from invenio_mail.models import MailConfig, MailTemplateUsers
 from weko_admin.models import SiteInfo, Identifier
 from weko_records_ui.models import FilePermission,FileOnetimeDownload
 from weko_records_ui.utils import get_list_licence
@@ -73,6 +75,7 @@ from weko_workflow.utils import (
     is_usage_application_item_type,
     is_usage_application,
     send_mail_reminder,
+    send_mail_registration_done,
     send_mail_approval_done,
     send_mail_request_approval,
     send_mail,
@@ -1255,80 +1258,308 @@ def test_is_usage_application(db_register):
     assert result == True
 # def send_mail_reminder(mail_info):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail_reminder -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_send_mail_reminder(client,mocker):
-    # nomal
-    mocker.patch("weko_workflow.utils.replace_characters",return_value="mail body")
-    with patch("weko_workflow.utils.get_mail_data",return_value=(None,"body")):
-        with patch("weko_workflow.utils.send_mail",return_value=True):
-            send_mail_reminder({})
+@patch('weko_workflow.utils.get_mail_data')
+@patch('weko_workflow.utils.replace_characters')
+@patch('weko_workflow.utils.send_mail')
+def test_send_mail_reminder(
+    mock_send_mail, mock_replace_characters, mock_get_mail_data
+):
+    # Default test data
+    test_mail_data = {
+        'mail_subject': 'Test Subject',
+        'mail_body': 'Test Body',
+        'mail_recipients': ['test@example.com'],
+        'mail_cc': ['cc@example.com'],
+        'mail_bcc': ['bcc@example.com']
+    }
+    test_mail_info = {
+        'mail_address': 'mail@example.com'
+    }
+
+    # Test for ValueError when the 'subject' key has no value
+    empty_subject_data = copy.deepcopy(test_mail_data)
+    empty_subject_data['mail_subject'] = ''
+    mock_get_mail_data.return_value = empty_subject_data
+    with pytest.raises(ValueError) as e:
+        send_mail_reminder(test_mail_info)
+    assert str(e.value) == 'Cannot get email subject'
+
+    # Test for ValueError when the 'body' key has no value
+    empty_body_data = copy.deepcopy(test_mail_data)
+    empty_body_data['mail_body'] = ''
+    mock_get_mail_data.return_value = empty_body_data
+    with pytest.raises(ValueError) as e:
+        send_mail_reminder(test_mail_info)
+    assert str(e.value) == 'Cannot get email body'
+
+    # Test for ValueError when the 'subject' key is missing
+    missing_subject_data = copy.deepcopy(test_mail_data)
+    del missing_subject_data['mail_subject']
+    mock_get_mail_data.return_value = missing_subject_data
+    with pytest.raises(ValueError) as e:
+        send_mail_reminder(test_mail_info)
+    assert str(e.value) == 'Cannot get email subject'
     
-    # can not get body
-    with patch("weko_workflow.utils.get_mail_data",return_value=(None,None)):
-        with patch("weko_workflow.utils.send_mail",return_value=True):
-            with pytest.raises(ValueError) as e:
-                send_mail_reminder({})
-                assert str(e.value) == 'Cannot get email template'
-    
-    # can not send mail
-    with patch("weko_workflow.utils.get_mail_data",return_value=(None,"body")):
-        with patch("weko_workflow.utils.send_mail",return_value=False):
-            with pytest.raises(ValueError) as e:
-                send_mail_reminder({})
-                assert str(e.value) == 'Cannot send mail'
+    # Test for ValueError when the 'body' key is missing
+    missing_body_data = copy.deepcopy(test_mail_data)
+    del missing_body_data['mail_body']
+    mock_get_mail_data.return_value = missing_body_data
+    with pytest.raises(ValueError) as e:
+        send_mail_reminder(test_mail_info)
+    assert str(e.value) == 'Cannot get email body'
+
+    # Test for ValueError when mail sending fails
+    mock_get_mail_data.return_value = copy.deepcopy(test_mail_data)
+    mock_replace_characters.return_value = 'Replaced Body'
+    mock_send_mail.return_value = False
+    with pytest.raises(ValueError) as e:
+        send_mail_reminder(test_mail_info)
+    assert str(e.value) == 'Cannot send mail'
+
+    # Test for successful mail sending
+    mock_get_mail_data.return_value = copy.deepcopy(test_mail_data)
+    mock_replace_characters.return_value = 'Replaced Body'
+    mock_send_mail.return_value = True
+    # TODO this should be deleted
+    send_mail_reminder(test_mail_info)
+    mock_send_mail.assert_called_with({
+                    'mail_subject': 'Test Subject',
+                    'mail_body': 'Replaced Body',
+                    'mail_recipients': ['test@example.com', 'mail@example.com'],
+                    'mail_cc': ['cc@example.com'],
+                    'mail_bcc': ['bcc@example.com']
+                })
+
 # def send_mail_approval_done(mail_info):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail_approval_done -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_send_mail_approval_done(mocker):
-    mocker.patch("weko_workflow.utils.replace_characters",return_value="body")
-    mocker.patch("weko_workflow.utils.send_mail")
-    with patch("weko_workflow.utils.email_pattern_approval_done",return_value=("subject","body")):
-        send_mail_approval_done({})
-    with patch("weko_workflow.utils.email_pattern_approval_done",return_value=(None,None)):
-        send_mail_approval_done({})
+@patch('weko_workflow.utils.replace_characters')
+@patch('weko_workflow.utils.send_mail')
+def test_send_mail_approval_done(mock_send_mail, mock_replace_characters):
+    # Default test data
+    test_mail_data = {
+        'mail_subject': 'Test Subject',
+        'mail_body': 'Test Body',
+        'mail_recipients': ['test@example.com'],
+        'mail_cc': ['cc@example.com'],
+        'mail_bcc': ['bcc@example.com']
+    }
+    test_mail_info = {
+        'register_user_mail': 'register@example.com'
+    }
+
+    # Test when the 'subject' key has no value
+    empty_subject_data = test_mail_data.copy()
+    empty_subject_data['mail_subject'] = ''
+    with patch('weko_workflow.utils.email_pattern_approval_done',
+               return_value=empty_subject_data):
+        send_mail_approval_done(test_mail_info)
+    mock_send_mail.assert_not_called()
+
+    # Test when the 'body' key has no value
+    empty_body_data = test_mail_data.copy()
+    empty_body_data['mail_body'] = ''
+    with patch('weko_workflow.utils.email_pattern_approval_done',
+               return_value=empty_body_data):
+        send_mail_approval_done(test_mail_info)
+    mock_send_mail.assert_not_called()
+
+    # Test when the 'subject' key is missing
+    missing_subject_data = test_mail_data.copy()
+    del missing_subject_data['mail_subject']
+    with patch('weko_workflow.utils.email_pattern_approval_done',
+               return_value=missing_subject_data):
+        send_mail_approval_done(test_mail_info)
+    mock_send_mail.assert_not_called()
+
+    # Test when the 'body' key is missing
+    missing_body_data = test_mail_data.copy()
+    del missing_body_data['mail_body']
+    with patch('weko_workflow.utils.email_pattern_approval_done',
+               return_value=missing_body_data):
+        send_mail_approval_done(test_mail_info)
+    mock_send_mail.assert_not_called()
+
+    # Test when mail sending succeeds
+    mock_replace_characters.return_value = 'Replaced Body'
+    with patch('weko_workflow.utils.email_pattern_approval_done',
+               return_value=copy.deepcopy(test_mail_data)):
+        send_mail_approval_done(test_mail_info)
+        mock_send_mail.assert_called_with({
+                        'mail_subject': 'Test Subject',
+                        'mail_body': 'Replaced Body',
+                        'mail_recipients': ['test@example.com', 'register@example.com'],
+                        'mail_cc': ['cc@example.com'],
+                        'mail_bcc': ['bcc@example.com']
+                    })
+
 # def send_mail_registration_done(mail_info):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail_registration_done -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-#def test_send_mail_registration_done(app,users,mocker):
-#    mocker.patch("weko_workflow.utils.replace_characters",return_value="body")
-#    mocker.patch("weko_workflow.utils.send_mail")
-#    mail_info = {
-#        "item_type_name":"テストアイテムタイプ"
-#    }
-#    with app.test_request_context():
-#        login_user(users[2]["obj"])
-#        with patch("weko_workflow.utils.email_pattern_registration_done",return_value=("subject","body")):
-#            send_mail_registration_done(mail_info)
-#            
-#        with patch("weko_workflow.utils.email_pattern_registration_done",return_value=(None, None)):
-#            send_mail_registration_done(mail_info)
+@patch('weko_workflow.utils.get_mail_data')
+@patch('weko_workflow.utils.replace_characters')
+@patch('weko_workflow.utils.send_mail')
+def test_send_mail_registration_done(
+    mock_send_mail, mock_replace_characters, mock_get_mail_data
+):
+    # Default test data
+    test_mail_data = {
+        'mail_subject': 'Test Subject',
+        'mail_body': 'Test Body',
+        'mail_recipients': ['test@example.com'],
+        'mail_cc': ['cc@example.com'],
+        'mail_bcc': ['bcc@example.com']
+    }
+    test_mail_info = {
+        'register_user_mail': 'register@example.com'
+    }
+    test_mail_id = 1
+
+    # Test when the 'subject' key has no value
+    empty_subject_data = test_mail_data.copy()
+    empty_subject_data['mail_subject'] = ''
+    mock_get_mail_data.return_value = empty_subject_data
+    send_mail_registration_done(test_mail_info, test_mail_id)
+    mock_send_mail.assert_not_called()
+
+    # Test when the 'body' key has no value
+    empty_body_data = test_mail_data.copy()
+    empty_body_data['mail_body'] = ''
+    mock_get_mail_data.return_value = empty_body_data
+    send_mail_registration_done(test_mail_info, test_mail_id)
+    mock_send_mail.assert_not_called()
+
+    # Test when the 'subject' key is missing
+    missing_subject_data = test_mail_data.copy()
+    del missing_subject_data['mail_subject']
+    mock_get_mail_data.return_value = missing_subject_data
+    send_mail_registration_done(test_mail_info, test_mail_id)
+    mock_send_mail.assert_not_called()
+
+    # Test when the 'body' key is missing
+    missing_body_data = test_mail_data.copy()
+    del missing_body_data['mail_body']
+    mock_get_mail_data.return_value = missing_body_data
+    send_mail_registration_done(test_mail_info, test_mail_id)
+    mock_send_mail.assert_not_called()
+
+    # Test when mail sending succeeds
+    mock_get_mail_data.return_value = copy.deepcopy(test_mail_data)
+    mock_replace_characters.return_value = 'Replaced Body'
+    send_mail_registration_done(test_mail_info, test_mail_id)
+    mock_send_mail.assert_called_with({
+                    'mail_subject': 'Test Subject',
+                    'mail_body': 'Replaced Body',
+                    'mail_recipients': ['test@example.com', 'register@example.com'],
+                    'mail_cc': ['cc@example.com'],
+                    'mail_bcc': ['bcc@example.com']
+                })
+
 # def send_mail_request_approval(mail_info):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail_request_approval -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_send_mail_request_approval(mocker):
-    mocker.patch("weko_workflow.utils.replace_characters",return_value="value")
-    mocker.patch("weko_workflow.utils.send_mail")
+@patch('weko_workflow.utils.replace_characters')
+@patch('weko_workflow.utils.send_mail')
+def test_send_mail_request_approval(mock_send_mail, mock_replace_characters):
+    # Default test data
+    test_mail_data = {
+        'mail_subject': 'Test Subject',
+        'mail_body': 'Test Body',
+        'mail_recipients': ['test@example.com'],
+        'mail_cc': ['cc@example.com'],
+        'mail_bcc': ['bcc@example.com']
+    }
+    test_mail_info = {
+        'next_step': 'approval_advisor',
+        'advisor_mail_address': 'advisor@example.com',
+        'guarantor_mail_address': 'guarantor@example.com'
+    }
 
-    with patch("weko_workflow.utils.email_pattern_request_approval",return_value=("subject","value")):
-        mail_info = {
-            "next_step":"approval_advisor",
-            "advisor_mail":"advisor.mail@test.org"
-        }
-        send_mail_request_approval(mail_info)
-        mail_info = {
-            "next_step":"approval_guarantor",
-            "guarantor_mail":"guarantor.mail@test.org"
-        }
-        send_mail_request_approval(mail_info)
-        mail_info = {
-            "next_step":"other step"
-        }
-        send_mail_request_approval(mail_info)
-        
-        send_mail_request_approval({})
+    # Test when the 'subject' key has no value
+    empty_subject_data = test_mail_data.copy()
+    empty_subject_data['mail_subject'] = ''
+    with patch('weko_workflow.utils.email_pattern_request_approval',
+               return_value=empty_subject_data):
+        send_mail_request_approval(test_mail_info)
+    mock_send_mail.assert_not_called()
+
+    # Test when the 'body' key has no value
+    empty_body_data = test_mail_data.copy()
+    empty_body_data['mail_body'] = ''
+    with patch('weko_workflow.utils.email_pattern_request_approval',
+               return_value=empty_body_data):
+        send_mail_request_approval(test_mail_info)
+    mock_send_mail.assert_not_called()
+
+    # Test when the 'subject' key is missing
+    missing_subject_data = test_mail_data.copy()
+    del missing_subject_data['mail_subject']
+    with patch('weko_workflow.utils.email_pattern_request_approval',
+               return_value=missing_subject_data):
+        send_mail_request_approval(test_mail_info)
+    mock_send_mail.assert_not_called()
+
+    # Test when the 'body' key is missing
+    missing_body_data = test_mail_data.copy()
+    del missing_body_data['mail_body']
+    with patch('weko_workflow.utils.email_pattern_request_approval',
+               return_value=missing_body_data):
+        send_mail_request_approval(test_mail_info)
+    mock_send_mail.assert_not_called()
+
+    # Test for successful mail sending when the next step is 'approval_advisor'
+    mock_replace_characters.side_effect = ['Replaced Subject', 'Replaced Body']
+    with patch('weko_workflow.utils.email_pattern_request_approval',
+               return_value=copy.deepcopy(test_mail_data)):
+        send_mail_request_approval(test_mail_info)
+    mock_send_mail.assert_called_with({
+                    'mail_subject': 'Replaced Subject',
+                    'mail_body': 'Replaced Body',
+                    'mail_recipients': ['test@example.com', 'advisor@example.com'],
+                    'mail_cc': ['cc@example.com'],
+                    'mail_bcc': ['bcc@example.com']
+                })
+
+    # Test for successful mail sending when the next step is 'approval_guarantor'
+    test_mail_info['next_step'] = 'approval_guarantor'
+    mock_replace_characters.side_effect = ['Replaced Subject', 'Replaced Body']
+    with patch('weko_workflow.utils.email_pattern_request_approval',
+               return_value=copy.deepcopy(test_mail_data)):
+        send_mail_request_approval(test_mail_info)
+    mock_send_mail.assert_called_with({
+                    'mail_subject': 'Replaced Subject',
+                    'mail_body': 'Replaced Body',
+                    'mail_recipients': ['test@example.com', 'guarantor@example.com'],
+                    'mail_cc': ['cc@example.com'],
+                    'mail_bcc': ['bcc@example.com']
+                })
+
 # def send_mail(subject, recipient, body):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_send_mail(mocker):
-    mocker.patch("weko_workflow.utils.MailSettingView.send_statistic_mail")
-    send_mail("subject", "recipient", "body")
-    
-    send_mail(None, None, None)
+def test_send_mail():
+    # Default test data
+    test_mail_data = {
+        'mail_subject': 'Test Subject',
+        'mail_body': 'Test Body',
+        'mail_recipients': ['test@example.com'],
+        'mail_cc': ['cc@example.com'],
+        'mail_bcc': ['bcc@example.com']
+    }
+
+    # Test for successful mail sending
+    with patch('weko_workflow.utils.MailSettingView.send_statistic_mail', return_value=True) as mock_send_statistic_mail:
+        assert send_mail(test_mail_data) == True
+        mock_send_statistic_mail.assert_called_with({
+            'subject': 'Test Subject',
+            'recipients': ['test@example.com'],
+            'cc': ['cc@example.com'],
+            'bcc': ['bcc@example.com'],
+            'body': 'Test Body'
+        })
+
+    # Test for unsuccessful mail sending
+    with patch('weko_workflow.utils.MailSettingView.send_statistic_mail', return_value=True) as mock_send_statistic_mail:
+        empty_mail_data = {}
+        send_mail(empty_mail_data)
+        mock_send_statistic_mail.assert_not_called()
+
 # def email_pattern_registration_done(user_role, item_type_name):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_email_pattern_registration_done -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 #def test_email_pattern_registration_done(app,users,mocker):
@@ -1478,10 +1709,47 @@ def test_email_pattern_approval_done(client,mocker):
 
 # def get_mail_data(file_name):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_mail_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_get_mail_data(mocker):
-    mocker.patch("weko_workflow.utils.get_file_path")
-    mocker.patch("weko_workflow.utils.get_subject_and_content")
-    get_mail_data("test_file")
+def test_get_mail_data(db_mail_templates, db_mail_template_users):
+    mail_template, users, mail_template_users = db_mail_template_users
+
+    valid_template_id = 1
+    invalid_template_id = 0
+    
+    # when mail template is not found
+    result = get_mail_data(invalid_template_id)
+    assert result == {
+        "mail_subject": "",
+        "mail_body": "",
+        "mail_recipients": [],
+        "mail_cc": [],
+        "mail_bcc": []
+    }
+
+    # all emails is valid case
+    result = get_mail_data(valid_template_id)
+    assert result =={
+        'mail_subject': 'Test Subject',
+        'mail_body': 'Test Body',
+        'mail_recipients': ['user1@example.com', 'user2@example.com'],
+        'mail_cc': ['user1@example.com', 'user2@example.com'],
+        'mail_bcc': ['user1@example.com', 'user2@example.com'],
+    }
+
+    # all emails is invalid case
+    mtu = MailTemplateUsers()
+    mtu.query.count() == 6
+    users[0].active = False
+    users[1].active = False
+    result = get_mail_data(valid_template_id)
+    assert result =={
+        'mail_subject': 'Test Subject',
+        'mail_body': 'Test Body',
+        'mail_recipients': [],
+        'mail_cc': [],
+        'mail_bcc': [],
+    }
+    assert mtu.query.count() == 0
+
 # def get_subject_and_content(file_path):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_subject_and_content -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_subject_and_content():
@@ -2373,18 +2641,72 @@ def test_save_activity_data_2(db_register, mocker):
 
 # def send_mail_url_guest_user(mail_info: dict) -> bool:
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail_url_guest_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_send_mail_url_guest_user(mocker):
-    mocker.patch("weko_workflow.utils.replace_characters",return_value=None)
-    with patch("weko_workflow.utils.get_mail_data",return_value=(None,None)):
-        result = send_mail_url_guest_user({})
-        assert result == False
-    with patch("weko_workflow.utils.get_mail_data",return_value=("subject","body")):
-        with patch("weko_workflow.utils.send_mail",return_value=True):
-            result = send_mail_url_guest_user({})
-            assert result == True
-        with patch("weko_workflow.utils.send_mail",return_value=False):
-            result = send_mail_url_guest_user({})
-            assert result == False
+@patch('weko_workflow.utils.get_mail_data')
+@patch('weko_workflow.utils.replace_characters')
+@patch('weko_workflow.utils.send_mail')
+def test_send_mail_url_guest_user(
+    mock_send_mail, mock_replace_characters, mock_get_mail_data
+):
+    test_mail_data = {
+        'mail_subject': 'Test Subject',
+        'mail_body': 'Test Body',
+        'mail_recipients': ['test@example.com'],
+        'mail_cc': ['cc@example.com'],
+        'mail_bcc': ['bcc@example.com']
+    }
+    test_mail_info = {
+        'mail_address': 'mail@example.com'
+    }
+
+    # Test when the 'subject' key has no value
+    empty_subject_data = test_mail_data.copy()
+    empty_subject_data['mail_subject'] = ''
+    mock_get_mail_data.return_value = empty_subject_data
+    result = send_mail_url_guest_user(test_mail_info)
+    assert result == False
+
+    # Test when the 'body' key has no value
+    empty_body_data = test_mail_data.copy()
+    empty_body_data['mail_body'] = ''
+    mock_get_mail_data.return_value = empty_body_data
+    result = send_mail_url_guest_user(test_mail_info)
+    assert result == False
+
+    # Test when the 'subject' key is missing
+    missing_subject_data = test_mail_data.copy()
+    del missing_subject_data['mail_subject']
+    mock_get_mail_data.return_value = missing_subject_data
+    result = send_mail_url_guest_user(test_mail_info)
+    assert result == False
+
+    # Test when the 'body' key is missing
+    missing_body_data = test_mail_data.copy()
+    del missing_body_data['mail_body']
+    mock_get_mail_data.return_value = missing_body_data
+    result = send_mail_url_guest_user(test_mail_info)
+    assert result == False
+
+    # Test when mail sending fails
+    mock_get_mail_data.return_value = copy.deepcopy(test_mail_data)
+    mock_replace_characters.return_value = 'Replaced Body'
+    mock_send_mail.return_value = False
+    result = send_mail_url_guest_user(test_mail_info)
+    assert result == False
+
+    # Test when mail sending succeeds
+    mock_get_mail_data.return_value = copy.deepcopy(test_mail_data)
+    mock_replace_characters.return_value = 'Replaced Body'
+    mock_send_mail.return_value = True
+    result = send_mail_url_guest_user(test_mail_info)
+    assert result == True
+    mock_send_mail.assert_called_with({
+                    'mail_subject': 'Test Subject',
+                    'mail_body': 'Replaced Body',
+                    'mail_recipients': ['test@example.com', 'mail@example.com'],
+                    'mail_cc': ['cc@example.com'],
+                    'mail_bcc': ['bcc@example.com']
+                })
+
 # def generate_guest_activity_token_value(
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_generate_guest_activity_token_value -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_generate_guest_activity_token_value(client,mocker):
@@ -2971,21 +3293,69 @@ def test_get_approval_keys(item_type):
     assert result == ['parentkey.subitem_restricted_access_guarantor_mail_address']
 # def process_send_mail(mail_info, mail_pattern_name):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_process_send_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_process_send_mail(app,mocker):
-    mocker.patch("weko_workflow.utils.replace_characters",return_value=None)
-    mocker.patch("weko_workflow.utils.send_mail")
-    mail_info = {}
-    mail_pattern_name = ""
-    result = process_send_mail(mail_info,mail_pattern_name)
-    assert result == None
-    
-    mail_info = {"mail_recipient":"value"}
-    mail_pattern_name = ""
-    with patch("weko_workflow.utils.get_mail_data",return_value=(None,None)):
-        result = process_send_mail(mail_info,mail_pattern_name)
-        
-    with patch("weko_workflow.utils.get_mail_data",return_value=("body","subject")):
-        result = process_send_mail(mail_info,mail_pattern_name)
+@patch('weko_workflow.utils.get_mail_data')
+@patch('weko_workflow.utils.replace_characters')
+@patch('weko_workflow.utils.send_mail')
+def test_process_send_mail(
+    mock_send_mail, mock_replace_characters, mock_get_mail_data, client
+):
+    # Default test data
+    test_mail_data = {
+        'mail_subject': 'Test Subject',
+        'mail_body': 'Test Body',
+        'mail_recipients': ['test@example.com'],
+        'mail_cc': ['cc@example.com'],
+        'mail_bcc': ['bcc@example.com']
+    }
+    test_mail_info = {
+        'mail_recipient': 'mail@example.com',
+    }
+    test_mail_id = 1
+
+    # Test when mail_info has no value for 'mail_recipient' key
+    empty_mail_info = {}
+    process_send_mail(empty_mail_info, test_mail_id)
+    mock_send_mail.assert_not_called()
+
+    # Test when the 'subject' key has no value
+    empty_subject_data = test_mail_data.copy()
+    empty_subject_data['mail_subject'] = ''
+    mock_get_mail_data.return_value = empty_subject_data
+    process_send_mail(test_mail_info, test_mail_id)
+    mock_send_mail.assert_not_called()
+
+    # Test when the 'body' key has no value
+    empty_body_data = test_mail_data.copy()
+    empty_body_data['mail_body'] = ''
+    mock_get_mail_data.return_value = empty_body_data
+    process_send_mail(test_mail_info, test_mail_id)
+    mock_send_mail.assert_not_called()
+
+    # Test when the 'subject' key is missing
+    missing_subject_data = test_mail_data.copy()
+    del missing_subject_data['mail_subject']
+    mock_get_mail_data.return_value = missing_subject_data
+    process_send_mail(test_mail_info, test_mail_id)
+    mock_send_mail.assert_not_called()
+
+    # Test when the 'body' key is missing
+    missing_body_data = test_mail_data.copy()
+    del missing_body_data['mail_body']
+    mock_get_mail_data.return_value = missing_body_data
+    process_send_mail(test_mail_info, test_mail_id)
+    mock_send_mail.assert_not_called()
+
+    # Test when mail sending succeeds
+    mock_get_mail_data.return_value = copy.deepcopy(test_mail_data)
+    mock_replace_characters.return_value = 'Replaced Body'
+    process_send_mail(test_mail_info, test_mail_id)
+    mock_send_mail.assert_called_with({
+                    'mail_subject': 'Test Subject',
+                    'mail_body': 'Replaced Body',
+                    'mail_recipients': ['test@example.com', 'mail@example.com'],
+                    'mail_cc': ['cc@example.com'],
+                    'mail_bcc': ['bcc@example.com']
+                })
 
 # def cancel_expired_usage_reports():
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_cancel_expired_usage_reports -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp

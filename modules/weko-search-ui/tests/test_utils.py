@@ -2563,17 +2563,31 @@ def test_handle_check_duplication_item_id(i18n_app):
 
 
 # def export_all(root_url, user_id, data): *** not yet done
-def test_export_all(db_activity, i18n_app, users, item_type, db_records2):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_export_all -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+@patch('weko_search_ui.utils.reset_redis_cache')
+@patch('weko_search_ui.utils.get_redis_cache')
+@patch('weko_search_ui.utils.delete_exported')
+def test_export_all(
+    mock_delete_exported, mock_get_cache, mock_reset_cache, app
+    ):
+    app.config['WEKO_ADMIN_CACHE_PREFIX'] = 'admin_cache_{name}_{user_id}'
+    app.config['WEKO_SEARCH_UI_BULK_EXPORT_MSG'] = 'MSG_EXPORT_ALL'
+    app.config['WEKO_SEARCH_UI_BULK_EXPORT_RUN_MSG'] = 'RUN_MSG_EXPORT_ALL'
+    app.config['WEKO_ADMIN_OUTPUT_FORMAT'] = 'tsv'
+    app.config['WEKO_ITEMS_UI_EXPORT_TMP_PREFIX'] = 'weko_export_'
+    app.config['WEKO_SEARCH_UI_BULK_EXPORT_URI'] = 'URI_EXPORT_ALL'
     root_url = "/"
-    user_id = users[3]["obj"].id
-    data = {"item_type_id": "1", "item_id_range": "1"}
-    data2 = {"item_type_id": "-1", "item_id_range": "1-9"}
-    data3 = {"item_type_id": -1, "item_id_range": "1"}
+    user_id = 1
+    data = {}
+    timezone = 'UTC'
 
-    assert not export_all(root_url, user_id, data)
-    assert not export_all(root_url, user_id, data2)
-    assert not export_all(root_url, user_id, data3)
+    export_all(root_url, user_id, data, timezone)
 
+    mock_reset_cache.assert_any_call('admin_cache_MSG_EXPORT_ALL_1', "")
+    mock_reset_cache.assert_called_with('admin_cache_RUN_MSG_EXPORT_ALL_1', "")
+    mock_get_cache.assert_called_with('admin_cache_URI_EXPORT_ALL_1')
+    mock_delete_exported.assert_called()
+    mock_get_cache.reset_mock()
 
 # def delete_exported(uri, cache_key):
 def test_delete_exported(i18n_app, file_instance_mock):

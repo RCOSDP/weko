@@ -84,45 +84,53 @@ class UserProfile(db.Model):
     position = db.Column('position', db.String(100))
 
     """Position"""
-    otherPosition = db.Column('otherPosition', db.String(100))
+    item1 = db.Column('otherPosition', db.String(100))
 
     """Phone number"""
-    phoneNumber = db.Column('phoneNumber', db.String(15))
+    item2 = db.Column('phoneNumber', db.String(15))
 
     """Affiliation institute name 1"""
     """Affiliation institute name (n)"""
-    instituteName = db.Column('instituteName', db.String(100))
+    item3 = db.Column('instituteName', db.String(100))
 
     """Affiliation institute position (n)"""
-    institutePosition = db.Column('institutePosition', db.String(255))
+    item4 = db.Column('institutePosition', db.String(255))
 
     """Affiliation institute name 2"""
     """Affiliation institute name (n)"""
-    instituteName2 = db.Column('instituteName2', db.String(100))
+    item5 = db.Column('instituteName2', db.String(100))
 
     """Affiliation institute position (n)"""
-    institutePosition2 = db.Column('institutePosition2', db.String(255))
+    item6 = db.Column('institutePosition2', db.String(255))
 
     """Affiliation institute name 3"""
     """Affiliation institute name (n)"""
-    instituteName3 = db.Column('instituteName3', db.String(100))
+    item7 = db.Column('instituteName3', db.String(100))
 
     """Affiliation institute position (n)"""
-    institutePosition3 = db.Column('institutePosition3', db.String(255))
+    item8 = db.Column('institutePosition3', db.String(255))
 
     """Affiliation institute name 4"""
     """Affiliation institute name (n)"""
-    instituteName4 = db.Column('instituteName4', db.String(100))
+    item9 = db.Column('instituteName4', db.String(100))
 
     """Affiliation institute position (n)"""
-    institutePosition4 = db.Column('institutePosition4', db.String(255))
+    item10 = db.Column('institutePosition4', db.String(255))
 
     """Affiliation institute name 5"""
     """Affiliation institute name (n)"""
-    instituteName5 = db.Column('instituteName5', db.String(100))
+    item11 = db.Column('instituteName5', db.String(100))
 
     """Affiliation institute position (n)"""
-    institutePosition5 = db.Column('institutePosition5', db.String(255))
+    item12 = db.Column('institutePosition5', db.String(255))
+
+    item13 = db.Column('item13', db.String(100))
+
+    item14 = db.Column('item14', db.String(100))
+
+    item15 = db.Column('item15', db.String(100))
+
+    item16 = db.Column('item16', db.String(100))
 
     @hybrid_property
     def username(self):
@@ -184,21 +192,21 @@ class UserProfile(db.Model):
         :return:
         """
         institute_dict = {
-            1: {'subitem_affiliated_institution_name': self.instituteName,
+            1: {'subitem_affiliated_institution_name': self.item3,
                 'subitem_affiliated_institution_position':
-                    self.institutePosition},
-            2: {'subitem_affiliated_institution_name': self.instituteName2,
+                    self.item4},
+            2: {'subitem_affiliated_institution_name': self.item5,
                 'subitem_affiliated_institution_position':
-                    self.institutePosition2},
-            3: {'subitem_affiliated_institution_name': self.instituteName3,
+                    self.item6},
+            3: {'subitem_affiliated_institution_name': self.item7,
                 'subitem_affiliated_institution_position':
-                    self.institutePosition3},
-            4: {'subitem_affiliated_institution_name': self.instituteName4,
+                    self.item8},
+            4: {'subitem_affiliated_institution_name': self.item9,
                 'subitem_affiliated_institution_position':
-                    self.institutePosition4},
-            5: {'subitem_affiliated_institution_name': self.instituteName5,
+                    self.item10},
+            5: {'subitem_affiliated_institution_name': self.item11,
                 'subitem_affiliated_institution_position':
-                    self.institutePosition5}
+                    self.item12}
         }
         return institute_dict
 

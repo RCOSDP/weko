@@ -66,6 +66,20 @@ feedback_mail_js = Bundle(
     output="gen/weko_admin_feedback_mail.%(version)s.js",
 )
 
+#JSのバンドルを作成
+profile_set_js = Bundle(
+    'js/weko_admin/user-profile-settings.js',
+    filters='jsmin',
+    output="gen/profile_settings_adminview.%(version)s.js",
+)
+
+#CSSのバンドルを作成
+profile_set_css = Bundle(
+    'css/weko_admin/user-profiles-settings.css',
+    filters='jsmin',
+    output="gen/profile_settings_adminview.%(version)s.css",
+)
+
 log_analysis_js = Bundle(
     'js/weko_admin/log_analysis.js',
     output="gen/weko_admin_ui_log_analysis.%(version)s.js",
