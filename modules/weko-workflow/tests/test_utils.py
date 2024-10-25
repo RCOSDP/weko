@@ -1392,6 +1392,7 @@ def test_send_mail_approval_done(mock_send_mail, mock_replace_characters):
                         'mail_bcc': ['bcc@example.com']
                     })
 
+
 # def send_mail_registration_done(mail_info):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail_registration_done -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @patch('weko_workflow.utils.get_mail_data')
@@ -1453,6 +1454,7 @@ def test_send_mail_registration_done(
                     'mail_bcc': ['bcc@example.com']
                 })
 
+
 # def send_mail_request_approval(mail_info):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail_request_approval -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @patch('weko_workflow.utils.replace_characters')
@@ -1471,6 +1473,10 @@ def test_send_mail_request_approval(mock_send_mail, mock_replace_characters):
         'advisor_mail_address': 'advisor@example.com',
         'guarantor_mail_address': 'guarantor@example.com'
     }
+
+    # Sending email fails when 'mail_info' is empty
+    send_mail_request_approval({})
+    mock_send_mail.assert_not_called()
 
     # Test when the 'subject' key has no value
     empty_subject_data = test_mail_data.copy()
@@ -1530,6 +1536,16 @@ def test_send_mail_request_approval(mock_send_mail, mock_replace_characters):
                     'mail_cc': ['cc@example.com'],
                     'mail_bcc': ['bcc@example.com']
                 })
+
+    # Sending email fails when the 'next_step' is empty
+    mock_send_mail.reset_mock()
+    test_mail_info['next_step'] = ''
+    mock_replace_characters.side_effect = ['Replaced Subject', 'Replaced Body']
+    with patch('weko_workflow.utils.email_pattern_request_approval',
+               return_value=copy.deepcopy(test_mail_data)):
+        send_mail_request_approval(test_mail_info)
+    mock_send_mail.assert_not_called()
+
 
 # def send_mail(subject, recipient, body):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -1709,13 +1725,12 @@ def test_email_pattern_approval_done(client,mocker):
 
 # def get_mail_data(file_name):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_mail_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_get_mail_data(db_mail_templates, db_mail_template_users):
+def test_get_mail_data(app, db_mail_templates, db_mail_template_users):
     mail_template, users, mail_template_users = db_mail_template_users
-
     valid_template_id = 1
     invalid_template_id = 0
-    
-    # when mail template is not found
+
+    # Default data is returned if the template data is not found
     result = get_mail_data(invalid_template_id)
     assert result == {
         "mail_subject": "",
@@ -1725,30 +1740,49 @@ def test_get_mail_data(db_mail_templates, db_mail_template_users):
         "mail_bcc": []
     }
 
-    # all emails is valid case
-    result = get_mail_data(valid_template_id)
-    assert result =={
-        'mail_subject': 'Test Subject',
-        'mail_body': 'Test Body',
-        'mail_recipients': ['user1@example.com', 'user2@example.com'],
-        'mail_cc': ['user1@example.com', 'user2@example.com'],
-        'mail_bcc': ['user1@example.com', 'user2@example.com'],
-    }
+    # All data is returned if the flag is True
+    with patch.dict(
+        app.config,
+        {'INVENIO_MAIL_ADDITIONAL_RECIPIENTS_ENABLED': True}
+    ):
+        result = get_mail_data(valid_template_id)
+        assert result == {
+            'mail_subject': 'Test Subject',
+            'mail_body': 'Test Body',
+            'mail_recipients': ['user1@example.com', 'user2@example.com'],
+            'mail_cc': ['user1@example.com', 'user2@example.com'],
+            'mail_bcc': ['user1@example.com', 'user2@example.com'],
+        }
 
-    # all emails is invalid case
-    mtu = MailTemplateUsers()
-    mtu.query.count() == 6
-    users[0].active = False
-    users[1].active = False
-    result = get_mail_data(valid_template_id)
-    assert result =={
-        'mail_subject': 'Test Subject',
-        'mail_body': 'Test Body',
-        'mail_recipients': [],
-        'mail_cc': [],
-        'mail_bcc': [],
-    }
-    assert mtu.query.count() == 0
+    # Only subject and body is returned if the flag is False
+    with patch.dict(
+        app.config,
+        {'INVENIO_MAIL_ADDITIONAL_RECIPIENTS_ENABLED': False}
+    ):
+        result = get_mail_data(valid_template_id)
+        assert result == {
+            'mail_subject': 'Test Subject',
+            'mail_body': 'Test Body'
+        }
+
+    # Records are deleted if the related user is inactive or invalid
+    with patch.dict(
+        app.config,
+        {'INVENIO_MAIL_ADDITIONAL_RECIPIENTS_ENABLED': True}
+    ):
+        mtu = MailTemplateUsers()
+        assert mtu.query.count() == 6
+        users[0].active = False
+        users[1].active = False
+        result = get_mail_data(valid_template_id)
+        assert result =={
+            'mail_subject': 'Test Subject',
+            'mail_body': 'Test Body',
+            'mail_recipients': [],
+            'mail_cc': [],
+            'mail_bcc': [],
+        }
+        assert mtu.query.count() == 0
 
 # def get_subject_and_content(file_path):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_subject_and_content -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp

@@ -1,8 +1,30 @@
 
 
+from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 from invenio_accounts.models import User
-from invenio_mail.models import MailConfig, MailTemplates, MailTemplateUsers, MailType
+from invenio_mail.models import (
+    Timestamp, MailConfig, MailTemplates, MailTemplateUsers, MailType
+)
+
+# .tox/c1/bin/pytest --cov=invenio_mail tests/test_models.py::test_updated_timestamp_on_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
+@patch('invenio_mail.models.datetime')
+def test_updated_timestamp_on_update(
+    mock_datetime, db, mail_template_fixture, mail_template_users_fixture
+):
+    mock_time = datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    mock_datetime.now.return_value = mock_time
+    user3 = User(id=3, email='user3@example.org')
+    template = mail_template_fixture
+    record = MailTemplateUsers(template=template, user=user3, mail_type=MailType.CC)
+    db.session.add(record)
+    db.session.commit()
+    record = MailTemplateUsers.query.filter_by(user=user3).first()
+    record.mail_type = MailType.BCC
+    db.session.commit()
+    mock_datetime.now.assert_called()
+    assert record.updated == datetime(2024, 1, 1, 0, 0)
+
 
 class TestMailConfig:
 # .tox/c1/bin/pytest --cov=invenio_mail tests/test_models.py::TestMailConfig::test_get_config -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
@@ -93,7 +115,17 @@ class TestMailTemplates:
         ):
             result = mt.save_and_update(new_data)
             assert result == False
-            
+
+
+class TestMailType:
+# .tox/c1/bin/pytest --cov=invenio_mail tests/test_models.py::TestMailType::test_enum -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
+    def test_enum(self):
+        assert MailType.RECIPIENT > MailType.CC
+        assert MailType.CC > MailType.BCC
+        assert MailType.RECIPIENT > MailType.BCC
+        assert MailType.RECIPIENT.__lt__('recipient') == NotImplemented
+        assert MailType.CC.__lt__(123) == NotImplemented
+
 
 class TestMailTemplateUsers:
 # .tox/c1/bin/pytest --cov=invenio_mail tests/test_models.py::TestMailTemplateUsers::test_save_and_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
@@ -131,6 +163,9 @@ class TestMailTemplateUsers:
                 'bcc': 'user1@example.com, user2@example.com'
             }
         }
+        assert sut.save_and_update(data) == True
+        assert sut.query.count() == 6
+
         assert sut.save_and_update(data) == True
         assert sut.query.count() == 6
 
