@@ -97,3 +97,6 @@ WEKO_INDEX_TREE_INDEX_LOCK_KEY_PREFIX = "lock_index_"
 """Index lock key prefix."""
 
 WEKO_INDEX_TREE_API_LIMIT_RATE_DEFAULT = ['100 per minute']
+
+#インデックス公開ロック機能設定コンフィグ
+WEKO_INDEX_TREE_SHOW_MODAL = False
