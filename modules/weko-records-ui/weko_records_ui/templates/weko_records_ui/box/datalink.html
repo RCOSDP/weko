@@ -1,0 +1,84 @@
+{# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+<div class="well" style="text-align:center;margin-bottom:0px;">
+    <button id="item-link-register-data-btn" type="button" class="btn btn-primary" data-toggle="modal"
+        data-target="#item-link-register-data-modal" style="text-align:center;width:100%;margin-bottom:10px;">
+        {{ _('Data Registration') }}
+    </button>
+    <div class="modal fade" id="item-link-register-data-modal" tabindex="-1" role="dialog"
+        aria-labelledby="item-link-register-data-modal-label" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h1 class="modal-title" id="item-link-register-data-modal-label" style="text-align:left">
+                        <strong>{{ _('Data Registration') }}</strong>
+                    </h1>
+                    <h4 style="text-align:left">
+                        {{ _('Please select method of registration') }}
+                    </h4>
+                </div>
+
+                <div class="modal-body">
+                    <div class="flex justify-space-between">
+                        <span style="margin-right:1rem;">
+                            <a href="{{ url_for('weko_workflow.new_activity', new_item_link_button_clicked=1) }}">
+                                <button id="item-link-register-new-data-btn" type="button" class="btn btn-light"
+                                    style="text-align:center;width:35%;color:black;">
+                                    <h4>{{ _('Link new data') }}</h4>
+                                </button>
+                            </a>
+                        </span>
+                        <span>
+                            <a class="edit-button" href="#!" id="btn_edit"
+                                data-pid-value="{{ pid.pid_value }}" {%- if community
+                                -%}data-community="{{ community.id }}" {%- endif -%}>
+                                <button id="item-link-register-existing-data-btn" type="button" class="btn btn-light"
+                                style="text-align:center;width:35%;color:black;">
+                                <h4>{{ _('Link existing data') }}</h4>
+                            </button></a>
+                        </span>
+                    </div>
+
+                    <br>
+
+                    <input id="edit_message" type="hidden" value="{{_('The workflow is being edited.')}}" />
+                    <input id="delete_message" type="hidden"
+                        value="{{_('The item cannot be deleted because it has a DOI.')}}" />
+                    <input id="change_publish_message" type="hidden"
+                        value="{{_('You cannot keep an item private because it has a DOI.')}}" />
+                    <div class="row row-4">
+                        <p class="alert alert-danger alert-dismissible text-middle collapse" role="alert"
+                            style="min-width: 330px;">
+                            <button type="button" class="close" id="btn_close_alert" aria-label="Close"><span
+                                    aria-hidden="true">&times;</span></button>
+                            {{_('The workflow is being edited.')}}
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
