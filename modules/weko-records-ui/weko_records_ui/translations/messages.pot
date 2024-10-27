@@ -515,6 +515,23 @@ msgstr ""
 msgid "Online Analysis"
 msgstr ""
 
+#: weko_records_ui/templates/weko_records_ui/box/analysis.html:28
+#: weko_records_ui/templates/weko_records_ui/box/analysis.html:39
+msgid "Data Registration"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/analysis.html:42
+msgid "Please select method of registration"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/analysis.html:52
+msgid "Link new data"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/analysis.html:61
+msgid "Link existing data"
+msgstr ""
+
 #: weko_records_ui/templates/weko_records_ui/box/analysis.html:42
 msgid "Terms of Use"
 msgstr ""

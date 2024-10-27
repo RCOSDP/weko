@@ -681,8 +681,42 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     if file_order >= 0 and files and files[file_order].get('url') and files[file_order]['url'].get('url'):
         file_url = files[file_order]['url']['url']
 
+    if record.get("_oai", {}).get("id") \
+            and record.get("title") \
+            and isinstance(record.get("title"), list):
+        
+        from flask import session
+
+        if session.get("current_user_item_link") != record["_oai"]["id"]:
+            if session.get("item_link_record"):
+                del session["item_link_record"]
+            if session.get("current_user_item_link"):
+                del session["current_user_item_link"]
+
+        if session.get("item_link_record") \
+                and isinstance(session.get("item_link_record"), dict):
+            session["item_link_record"][record["_oai"]["id"]] = {
+                "item_links": "1",
+                "item_title": record["title"][0],
+                "value": "isSupplementTo",
+                "recid": record["recid"],
+            }
+            session["current_user_item_link"] = record["_oai"]["id"]
+
+        else:
+            session["item_link_record"] = {}
+            session["current_user_item_link"] = ""
+            session["item_link_record"][record["_oai"]["id"]] = {
+                "item_links": "1",
+                "item_title": record["title"][0],
+                "value": "isSupplementTo",
+                "recid": record["recid"],
+            }
+            session["current_user_item_link"] = record["_oai"]["id"]
+
     return render_template(
         template,
+        session=session,
         pid=pid,
         pid_versioning=pid_ver,
         active_versions=active_versions,

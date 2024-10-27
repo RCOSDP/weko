@@ -130,6 +130,7 @@
                     <p id="activity_id">{{activity.activity_id}}</p>
                     <input id="activity_id_for_lock" type="hidden" value="{{activity.activity_id}}" />
                     <input id="cur_step_for_lock" type="hidden" value="{{cur_step}}" />
+                    <input id="existing_item_link_button" type="hidden" value="{{existing_item_link_button}}" />
                   </div>
                 </div>
                 <div class="form-group">
@@ -259,6 +260,7 @@
               <div class="hide" id="hide-actionId">{{action_id}}</div>
               <div class="hide" id="hide-actionstep_item_login_url">{{step_item_login_url}}</div>
               <div class="hide" id="hide-actioncur_step">{{cur_step}}</div>
+              <input id="item_link_index_tree_clicked" type="hidden" value="{{item_link_index_tree_clicked}}" />
               {%- if 'item_login' == cur_step or 'item_login_application' == cur_step or 'file_upload' == cur_step %}
                 {% include step_item_login_url %}
               {%- elif 'item_link' == cur_step %}
@@ -379,6 +381,7 @@
 {%- endblock page_body_main %}
 
 {%- block page_body %}
+<!-- TODO This part will run upon clicking next in the Item Link registration screen -->
 <div id="AutoCancelMsg" class="hide">{{_('The activity is forcibly canceled because the workflow settings have changed and the next step was not found.')}}</div>
 <div ng-controller="AuthorModalCtrl" class="modal fade" tabindex="-1" role="dialog" id="cancelModal">
   <div class="modal-dialog modelWidth modal-lg" role="document">

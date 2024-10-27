@@ -415,6 +415,19 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
     { id: "Cites", content: "Cites" }
   ];
 
+  $rootScope.default_item_link_setup = function(data) {
+    let sub_data = {
+      item_id: 0,
+      item_title: "",
+      sele_id: ""
+    };
+
+    sub_data.sele_id = "isSupplementTo";
+    sub_data.item_id = data.recid;
+    sub_data.item_title = data.item_title;
+    $scope.link_item_list.push(sub_data);
+  };
+
 //   add button
   $rootScope.add_link = function(data, index) {
     let sub_data = {
@@ -427,6 +440,22 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
     sub_data.item_id = data.metadata.control_number;
     sub_data.item_title = data.metadata.title[0];
     $scope.link_item_list.push(sub_data);
+    
+  };
+
+ // add url link button
+  $rootScope.add_url_link = function() {
+    let sub_data = {
+      item_id: 0,
+      item_title: "",
+      sele_id: ""
+    };
+
+    sub_data.sele_id = "relateTo";
+    sub_data.item_id = $('#outside-url').val();
+    sub_data.item_title = $('#outside-url').val();
+    $scope.link_item_list.push(sub_data);
+    $('#outside-url').val("")
   };
 
 //   add ex_item_link
@@ -505,9 +534,23 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
 
 //   save button
   $scope.btn_save = function () {
+    let activity_id = $("#activity_id").text().trim();
+    let action_id = $("#hide-actionId").text().trim();
+    let existing_item_link_button = $("#existing_item_link_button").val();
+    let item_link_index_tree_clicked = $("#item_link_index_tree_clicked").val();
+
+    if (existing_item_link_button === "true") {
+      var post_url = '/workflow/activity/action/' + activity_id + '/' + action_id
+    }
+    else if (item_link_index_tree_clicked === "true") {
+      var post_url = '/workflow/activity/action/' + activity_id + '/' + action_id
+    }
+    else {
+      var post_url = $('.cur_step').data('next-uri');
+    }
+
     let saveButton = $("#item-link-save-btn");
     $scope.startLoading(saveButton);
-    var post_url = $('.cur_step').data('next-uri');
     if (!post_url) {
       let error_msg = $('#AutoCancelMsg').text();
       $('#cancelModalBody').text(error_msg);
@@ -517,7 +560,7 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
       commond: $("#input-comment").val(),
       action_version: $('.cur_step').data('action-version'),
       temporary_save: 1,
-      link_data: $scope.link_item_list
+      link_data: $scope.link_item_list,
     };
     $http({
       method: 'POST',
@@ -547,9 +590,23 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
   };
 //   run button
   $scope.btn_run=function(){
+    let activity_id = $("#activity_id").text().trim();
+    let action_id = $("#hide-actionId").text().trim();
+    let existing_item_link_button = $("#existing_item_link_button").val();
+    let item_link_index_tree_clicked = $("#item_link_index_tree_clicked").val();
+
+    if (existing_item_link_button === "true") {
+      var post_url = '/workflow/activity/action/' + activity_id + '/' + action_id
+    }
+    else if (item_link_index_tree_clicked === "true") {
+      var post_url = '/workflow/activity/action/' + activity_id + '/' + action_id
+    }
+    else {
+      var post_url = $('.cur_step').data('next-uri');
+    }
+
     let runButton = $("#item-link-run-btn");
     $scope.startLoading(runButton);
-    var post_url = $('.cur_step').data('next-uri');
     if (!post_url) {
       let error_msg = $('#AutoCancelMsg').text();
       $('#cancelModalBody').text(error_msg);
@@ -562,10 +619,11 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
       link_data: $scope.link_item_list
     };
     $scope.isDisabledRun = true;
+
     $http({
         method: 'POST',
         url: post_url,
-        data: post_data,
+        data: JSON.stringify(post_data),
         headers: {'Content-Type': 'application/json'},
     }).then(function successCallback(response) {
       if (0 === response.data.code) {
@@ -579,6 +637,7 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
           }
           parent.document.location.href = redirectUrl;
         } else {
+          // document.location.href = response.data.data.redirect;
           document.location.reload(true);
         }
       } else if (-2 === response.data.code) {

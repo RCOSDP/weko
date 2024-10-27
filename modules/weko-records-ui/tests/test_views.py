@@ -529,6 +529,26 @@ def test_default_view_method(app, records, itemtypes, indexstyle ,users):
                             assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
                    
 
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_default_view_method_2(client, app, records, itemtypes, indexstyle):
+    indexer, results = records
+    record = results[0]["record"]
+    recid = results[0]["recid"]
+    test_data = {}
+    with app.test_request_context():
+        with patch('weko_records_ui.views.check_original_pdf_download_permission', return_value=True):
+            with patch("weko_records_ui.views.get_search_detail_keyword", return_value={}):
+                with patch("weko_records_ui.views.get_index_link_list", return_value=[]):
+                    # need to fix
+                    with pytest.raises(Exception) as e:
+                        res = default_view_method(recid, record, 'helloworld.pdf')
+                        assert e.type==TemplatesNotFound
+                    test_data["item_link_record"] = {}
+                    with patch("weko_records_ui.views", return_value=test_data):
+                        with pytest.raises(Exception) as e:
+                            res = default_view_method(recid, record, 'helloworld.pdf')
+                            assert e.type==TemplatesNotFound
+
 
 # def doi_ish_view_method(parent_pid_value=0, version=0):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_doi_ish_view_method_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

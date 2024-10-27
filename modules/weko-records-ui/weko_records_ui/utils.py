@@ -115,11 +115,17 @@ def get_record_permalink(record):
     :param record: index_name_english
     :return: pid value of doi/cnri.
     """
-    doi = record.pid_doi
-    cnri = record.pid_cnri
 
-    if doi or cnri:
-        return doi.pid_value if doi else cnri.pid_value
+    #* This 'try and except' snippet is for item link outside url function
+    #* to not throw an error be able to display url in item detail screen
+    try:
+        doi = record.pid_doi
+        cnri = record.pid_cnri
+
+        if doi or cnri:
+            return doi.pid_value if doi else cnri.pid_value
+    except:
+        pass
 
     return None
 

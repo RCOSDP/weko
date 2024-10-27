@@ -372,9 +372,7 @@
               <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span> {{_('Back')}}</a>
             {% if record | check_permission %}
               {% if can_edit %}
-                <a class="btn btn-primary edit-button" href="#!" id="btn_edit" data-pid-value="{{ pid.pid_value }}"
-                  {%- if community -%}data-community="{{ community.id }}" {%- endif -%}>
-                  <span class="glyphicon glyphicon-edit" aria-hidden="true"></span> {{_('Edit')}}</a>
+                
                 <a class="btn btn-danger delete-button" id="btn_delete" ng-click="openConfirm(
                   'del_item',
                   '{{'/records/soft_delete/'+ pid.pid_value}}',
@@ -425,6 +423,11 @@
         <div id="invenio-csl" class="col-sm-3 col-md-3 col-lg-3 col-right">
           <!-- start demo block -->
           {%- include "weko_records_ui/box/stats.html" %}
+
+          {% if record | check_permission %}
+              {%- include "weko_records_ui/box/datalink.html" %}
+          {% endif %}
+
           {%- if files | selectattr('is_thumbnail', 'equalto', False)| list | length > 0 -%}
             {% if not record.hide_file %}
               {% if (accessRight == 'open access' or accessRight=='オープンアクセス') and config.WEKO_RECORDS_UI_DISPLAY_ONLINE_ANALYSIS_FLG %}
@@ -516,3 +519,6 @@
     });
   </script>
 {# {%- endblock javascript %} #}
+<a class="btn btn-primary edit-button" href="#!" id="btn_edit" data-pid-value="{{ pid.pid_value }}"
+                  {%- if community -%}data-community="{{ community.id }}" {%- endif -%}>
+                  <span class="glyphicon glyphicon-edit" aria-hidden="true"></span> {{_('Edit')}}</a>

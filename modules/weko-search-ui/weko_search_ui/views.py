@@ -24,7 +24,7 @@ import time
 from xml.etree import ElementTree
 
 from blinker import Namespace
-from flask import Blueprint, current_app, flash, jsonify, render_template, request
+from flask import Blueprint, current_app, flash, jsonify, render_template, request, session
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
@@ -185,6 +185,30 @@ def search():
             )
         )
         form = FlaskForm(request.form)
+
+        if session.get("existing_item_link_in_progress"):
+            cur_step = "item_link"
+        if not step_item_login_url:
+            step_item_login_url = "weko_items_ui/iframe/item_edit.html"
+        item_link_index_tree_clicked = "true"
+        item_id = activity_detail.item_id
+        post_json = request.get_json()
+        current_pid = ""
+        item_link_info = None
+        try:
+            current_pid = PersistentIdentifier.get_by_object(
+                pid_type='recid',
+                object_type='rec',
+                object_uuid=item_id
+            )
+            item_link = ItemLink(current_pid.pid_value)
+            if session.get("item_link_info"):
+                item_link_info = True
+                err = item_link.update(list(session.get("item_link_info")))
+
+        except Exception as e:
+            current_app.logger.error(e)
+
         return render_template(
             "weko_workflow/activity_detail.html",
             action_id=action_id,
@@ -201,6 +225,7 @@ def search():
             is_login=bool(current_user.get_id()),
             is_permission=check_permission(),
             item=item,
+            item_link_index_tree_clicked=item_link_index_tree_clicked,
             page=page,
             pid=pid,
             form=form,

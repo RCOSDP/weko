@@ -2266,13 +2266,25 @@ class ItemLink(object):
         ret = []
 
         for relation in dst_relations:
-            record = WekoRecord.get_record_by_pid(relation.dst_item_pid)
-            ret.append(dict(
-                item_links=relation.dst_item_pid,
-                item_title=record.get('item_title'),
-                value=relation.reference_type
-            ))
+            is_outside_url = False
+            try:
+                int(relation.dst_item_pid)
+            except:
+                is_outside_url = True
 
+            record = WekoRecord.get_record_by_pid(relation.dst_item_pid)
+            if not is_outside_url:
+                ret.append(dict(
+                    item_links=relation.dst_item_pid,
+                    item_title=record.get('item_title'),
+                    value=relation.reference_type
+                ))
+            else:
+                ret.append(dict(
+                    item_links=relation.dst_item_pid,
+                    item_title=relation.dst_item_pid,
+                    value=relation.dst_item_pid
+                ))
         return ret
 
     @staticmethod
@@ -2340,10 +2352,18 @@ class ItemLink(object):
                 sid = 'system_identifier_doi'
                 avm = 'attribute_value_mlt'
                 ssi = 'subitem_systemidt_identifier'
-                if wr.get(sid) and wr.get(sid).get(avm)[0]:
-                    url = wr[sid][avm][0][ssi]
-                else:
-                    url = request.host_url + 'records/' + pid_value
+
+                #* empty url variable and 'try and except' snippet is for item link outside url function
+                #* to not throw an error be able to display url in item detail screen
+                url = ''
+                try:
+                    if wr.get(sid) and wr.get(sid).get(avm)[0]:
+                        url = wr[sid][avm][0][ssi]
+                    else:
+                        url = request.host_url + 'records/' + pid_value
+                except:
+                    pass
+
             else:
                 url = permalink
 
@@ -2380,10 +2400,17 @@ class ItemLink(object):
         updated = []
         created = []
         for item in items:
-            item_id = item['item_id']
+            if item.get("item_id"):
+                item_id = item['item_id']
+            elif item.get("item_links"):
+                item_id = item['item_links']
             if item_id in dst_ids:
-                updated.extend(item for dst_item in dst_relations if
-                               dst_item.reference_type != item['sele_id'])
+                if item.get("sele_id"):
+                    updated.extend(item for dst_item in dst_relations if
+                                dst_item.reference_type != item['sele_id'])
+                elif item.get("value"):
+                    updated.extend(item for dst_item in dst_relations if
+                                dst_item.reference_type != item['value'])
                 dst_ids.remove(item_id)
             else:
                 created.append(item)
@@ -2416,8 +2443,8 @@ class ItemLink(object):
         """
         objects = [ItemReference(
             src_item_pid=self.org_item_id,
-            dst_item_pid=cr['item_id'],
-            reference_type=cr['sele_id']) for cr in dst_items]
+            dst_item_pid=cr.get('item_id') or cr.get("item_links"),
+            reference_type=cr.get('sele_id') or cr.get("value")) for cr in dst_items]
         db.session.bulk_save_objects(objects)
 
     def bulk_update(self, dst_items):
@@ -2427,8 +2454,8 @@ class ItemLink(object):
         """
         objects = [ItemReference(
             src_item_pid=self.org_item_id,
-            dst_item_pid=cr['item_id'],
-            reference_type=cr['sele_id']) for cr in dst_items]
+            dst_item_pid=cr.get('item_id') or cr.get("item_links"),
+            reference_type=cr.get('sele_id') or cr.get("value")) for cr in dst_items]
         for obj in objects:
             db.session.merge(obj)
 

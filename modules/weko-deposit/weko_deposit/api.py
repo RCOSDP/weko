@@ -2379,8 +2379,13 @@ class WekoRecord(Record):
     @classmethod
     def get_record_by_pid(cls, pid):
         """Get record by pid."""
-        pid = PersistentIdentifier.get('depid', pid)
-        return cls.get_record(id_=pid.object_uuid)
+        #* This 'try and except' snippet is for item link outside url function
+        #* to not throw 'PIDDoesNotExistError'
+        try:
+            pid = PersistentIdentifier.get('depid', pid)
+            return cls.get_record(id_=pid.object_uuid)
+        except Exception as err:
+            pass
 
     @classmethod
     def get_record_by_uuid(cls, uuid):

@@ -868,7 +868,6 @@ def prepare_edit_item():
             code=err_code,
             msg=_('Header Error')
         )
-
     post_activity = request.get_json()
     getargs = request.args
     pid_value = post_activity.get('pid_value')
@@ -989,14 +988,22 @@ def prepare_edit_item():
                 msg=_('An error has occurred.')
             )
 
+        existing_item_link_button_pressed = {}
+        session["existing_item_link_button_pressed"] = {}
+        if post_activity.get('existing_item_link_button_pressed'):
+            session["existing_item_link_button_pressed"][rtn.activity_id] = post_activity.get('existing_item_link_button_pressed')
+            existing_item_link_button_pressed[rtn.activity_id] = post_activity.get('existing_item_link_button_pressed')
+
         if community:
             comm = GetCommunity.get_community_by_id(community)
             url_redirect = url_for('weko_workflow.display_activity',
                                    activity_id=rtn.activity_id,
-                                   community=comm.id)
+                                   community=comm.id,
+                                   existing_item_link_button_pressed=existing_item_link_button_pressed)
         else:
             url_redirect = url_for('weko_workflow.display_activity',
-                                   activity_id=rtn.activity_id)
+                                   activity_id=rtn.activity_id,
+                                   existing_item_link_button_pressed=existing_item_link_button_pressed)
 
         return jsonify(
             code=0,

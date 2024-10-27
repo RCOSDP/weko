@@ -282,6 +282,7 @@ class Flow(object):
             if action_order:
                 query = query.filter_by(action_order=action_order)
             cur_action = query.first()
+
             if cur_action:
                 next_action_order = cur_action.action_order + 1
                 next_action = _FlowAction.query.filter_by(

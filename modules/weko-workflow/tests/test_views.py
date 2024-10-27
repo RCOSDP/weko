@@ -4574,3 +4574,21 @@ def test_ActivityActionResource_post(client, db_register , users):
     login(client=client, email=users[2]['email'])
     res = client.get(url)
     assert res.status_code == 400
+
+def test_new_activity(client, users, db_register):
+    with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
+        res = client.get(
+            url_for('weko_workflow.new_activity'),
+            query_string={'new_item_link_button_clicked': '1'},
+        )
+
+        assert res.status_code == 200
+
+def test_new_activity_2(db_register, client, users, app):
+    with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
+        res = client.get(
+            url_for('weko_workflow.new_activity'),
+            query_string={'new_item_link_button_clicked': '2'},
+        )
+
+        assert res.status_code == 200
