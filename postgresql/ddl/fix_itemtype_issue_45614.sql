@@ -155,5 +155,44 @@ BEGIN
         UPDATE item_metadata SET json=replace(json::text, key || '"', value || '"')::jsonb WHERE json::text like '%' || key || '"%';
     END LOOP;
 
+
+
+    CREATE TEMPORARY TABLE tmp_item_type_name  AS SELECT * FROM item_type_name where id in (15,16);
+    UPDATE tmp_item_type_name SET id = 30002 WHERE id = 15;
+    UPDATE tmp_item_type_name SET id = 30001 WHERE id = 16;
+    UPDATE item_type_name SET name = concat('backup_',name) WHERE id = 15;
+    UPDATE item_type_name SET name = concat('backup_',name) WHERE id = 16;
+    INSERT INTO item_type_name SELECT * FROM tmp_item_type_name where id in (30001,30002);
+    DROP TABLE tmp_item_type_name;
+
+    CREATE TEMPORARY TABLE tmp_item_type AS SELECT * FROM item_type where id in (15,16);
+    UPDATE tmp_item_type SET id = 30002,name_id=30002 WHERE id = 15;
+    UPDATE tmp_item_type SET id = 30001,name_id=30001 WHERE id = 16;
+    INSERT INTO item_type SELECT * FROM tmp_item_type where id in (30001,30002);
+    
+    DROP TABLE tmp_item_type;
+
+    UPDATE workflow_workflow SET itemtype_id = 30002 WHERE itemtype_id = 15;
+    UPDATE workflow_workflow SET itemtype_id = 30001 WHERE itemtype_id = 16;
+    UPDATE item_metadata SET item_type_id = 30002 WHERE item_type_id = 15;
+    UPDATE item_metadata SET item_type_id = 30001 WHERE item_type_id = 16;
+    UPDATE item_type_mapping SET item_type_id = 30002 WHERE item_type_id = 15;
+    UPDATE item_type_mapping SET item_type_id = 30001 WHERE item_type_id = 16;
+
+    DELETE FROM item_type WHERE id in (15,16) ;
+    DELETE FROM item_type_name WHERE id in (15,16) ;
+
+    UPDATE item_metadata SET json=replace(json::text,'/items/jsonschema/15"','/items/jsonschema/30002"')::jsonb WHERE json::text like '%/items/jsonschema/15"%';
+    UPDATE item_metadata SET json=replace(json::text,'/items/jsonschema/16"','/items/jsonschema/30001"')::jsonb WHERE json::text like '%/items/jsonschema/16"%';
+    UPDATE item_metadata SET json=replace(json::text,'"$schema": "15"','"$schema": "/items/jsonschema/30002"')::jsonb WHERE json::text like '%"$schema": "15"%';
+    UPDATE item_metadata SET json=replace(json::text,'"$schema": "16"','"$schema": "/items/jsonschema/30001"')::jsonb WHERE json::text like '%"$schema": "16"%';
+
+
+    UPDATE records_metadata SET json=replace(json::text,'"item_type_id": "15"','"item_type_id": "30002"')::jsonb WHERE json::text like '%"item_type_id": "15"%';
+    UPDATE records_metadata SET json=replace(json::text,'"item_type_id": "16"','"item_type_id": "30001"')::jsonb WHERE json::text like '%"item_type_id": "16"%';
+    
+
+
+
 END;
 $$ LANGUAGE plpgsql;
