@@ -3,8 +3,12 @@ CREATE OR REPLACE FUNCTION fix_itemtype_issue_45614()
 RETURNS void AS $$
 DECLARE
     full_itemtype_id integer := 15;
+    target_full_itemtype_id integer := 30002;
+    full_itemtype_name_id integer := (SELECT name_id FROM item_type WHERE id = full_itemtype_id);
     full_itemtype_name text := 'デフォルトアイテムタイプ（フル）';
     simple_itemtype_id integer := 16;
+    target_simple_itemtype_id integer := 30001;
+    simple_itemtype_name_id integer := (SELECT name_id FROM item_type WHERE id = simple_itemtype_id);
     simple_itemtype_name text := 'デフォルトアイテムタイプ（シンプル）';
     full_update_dict jsonb := '{
         "item_1617186331708": "item_30002_title0",
@@ -155,40 +159,40 @@ BEGIN
         UPDATE item_metadata SET json=replace(json::text, key || '"', value || '"')::jsonb WHERE json::text like '%' || key || '"%';
     END LOOP;
 
+    IF (SELECT id FROM item_type WHERE id = full_itemtype_id) = full_itemtype_id THEN
+        RAISE NOTICE 'fix item_type_id';
+        CREATE TEMPORARY TABLE tmp_item_type AS SELECT * FROM item_type where id in (full_itemtype_id,simple_itemtype_id);
+        CREATE TEMPORARY TABLE tmp_item_type_name  AS SELECT * FROM item_type_name where id in (full_itemtype_name_id,simple_itemtype_name_id);
+        UPDATE tmp_item_type_name SET id = target_full_itemtype_id WHERE id = full_itemtype_name_id;
+        UPDATE tmp_item_type_name SET id = target_simple_itemtype_id WHERE id = simple_itemtype_name_id;
+        UPDATE item_type_name SET name = concat('backup_',name) WHERE id = full_itemtype_name_id;
+        UPDATE item_type_name SET name = concat('backup_',name) WHERE id = simple_itemtype_name_id;
+        INSERT INTO item_type_name SELECT * FROM tmp_item_type_name where id in (target_simple_itemtype_id,target_full_itemtype_id);
 
+        UPDATE tmp_item_type SET id = target_full_itemtype_id,name_id=target_full_itemtype_id WHERE id = full_itemtype_id;
+        UPDATE tmp_item_type SET id = target_simple_itemtype_id,name_id=target_simple_itemtype_id WHERE id = simple_itemtype_id;
+        INSERT INTO item_type SELECT * FROM tmp_item_type where id in (target_simple_itemtype_id,target_full_itemtype_id);
+        DROP TABLE tmp_item_type_name;
+        DROP TABLE tmp_item_type;
 
-    CREATE TEMPORARY TABLE tmp_item_type_name  AS SELECT * FROM item_type_name where id in (15,16);
-    UPDATE tmp_item_type_name SET id = 30002 WHERE id = 15;
-    UPDATE tmp_item_type_name SET id = 30001 WHERE id = 16;
-    UPDATE item_type_name SET name = concat('backup_',name) WHERE id = 15;
-    UPDATE item_type_name SET name = concat('backup_',name) WHERE id = 16;
-    INSERT INTO item_type_name SELECT * FROM tmp_item_type_name where id in (30001,30002);
-    DROP TABLE tmp_item_type_name;
+        UPDATE workflow_workflow SET itemtype_id = target_full_itemtype_id WHERE itemtype_id = full_itemtype_id;
+        UPDATE workflow_workflow SET itemtype_id = target_simple_itemtype_id WHERE itemtype_id = simple_itemtype_id;
+        UPDATE item_metadata SET item_type_id = target_full_itemtype_id WHERE item_type_id = full_itemtype_id;
+        UPDATE item_metadata SET item_type_id = target_simple_itemtype_id WHERE item_type_id = simple_itemtype_id;
+        UPDATE item_type_mapping SET item_type_id = target_full_itemtype_id WHERE item_type_id = full_itemtype_id;
+        UPDATE item_type_mapping SET item_type_id = target_simple_itemtype_id WHERE item_type_id = simple_itemtype_id;
 
-    CREATE TEMPORARY TABLE tmp_item_type AS SELECT * FROM item_type where id in (15,16);
-    UPDATE tmp_item_type SET id = 30002,name_id=30002 WHERE id = 15;
-    UPDATE tmp_item_type SET id = 30001,name_id=30001 WHERE id = 16;
-    INSERT INTO item_type SELECT * FROM tmp_item_type where id in (30001,30002);
-    
-    DROP TABLE tmp_item_type;
+        DELETE FROM item_type WHERE id in (full_itemtype_id,simple_itemtype_id) ;
+        DELETE FROM item_type_name WHERE id in (full_itemtype_name_id,simple_itemtype_name_id);
+        
 
-    UPDATE workflow_workflow SET itemtype_id = 30002 WHERE itemtype_id = 15;
-    UPDATE workflow_workflow SET itemtype_id = 30001 WHERE itemtype_id = 16;
-    UPDATE item_metadata SET item_type_id = 30002 WHERE item_type_id = 15;
-    UPDATE item_metadata SET item_type_id = 30001 WHERE item_type_id = 16;
-    UPDATE item_type_mapping SET item_type_id = 30002 WHERE item_type_id = 15;
-    UPDATE item_type_mapping SET item_type_id = 30001 WHERE item_type_id = 16;
+        UPDATE item_metadata SET json=replace(json::text,concat('/items/jsonschema/',full_itemtype_id,'"'),concat('/items/jsonschema/',target_full_itemtype_id,'"'))::jsonb WHERE json::text like concat('%/items/jsonschema/',full_itemtype_id,'"%');
+        UPDATE item_metadata SET json=replace(json::text,concat('/items/jsonschema/',simple_itemtype_id,'"'),concat('/items/jsonschema/',target_simple_itemtype_id,'"'))::jsonb WHERE json::text like concat('%/items/jsonschema/',simple_itemtype_id,'"%');
+        UPDATE item_metadata SET json=replace(json::text,concat('"$schema": "',full_itemtype_id,'"'),concat('"$schema": "/items/jsonschema/',target_full_itemtype_id,'"'))::jsonb WHERE json::text like concat('%"$schema": "',full_itemtype_id',"%');
+        UPDATE item_metadata SET json=replace(json::text,concat('"$schema": "',simple_itemtype_id,'"'),concat('"$schema": "/items/jsonschema/',target_simple_itemtype_id,'"'))::jsonb WHERE json::text like concat('%"$schema": "',simple_itemtype_id',"%');
 
-    DELETE FROM item_type WHERE id in (15,16) ;
-    DELETE FROM item_type_name WHERE id in (15,16) ;
-
-    UPDATE item_metadata SET json=replace(json::text,'/items/jsonschema/15"','/items/jsonschema/30002"')::jsonb WHERE json::text like '%/items/jsonschema/15"%';
-    UPDATE item_metadata SET json=replace(json::text,'/items/jsonschema/16"','/items/jsonschema/30001"')::jsonb WHERE json::text like '%/items/jsonschema/16"%';
-    UPDATE item_metadata SET json=replace(json::text,'"$schema": "15"','"$schema": "/items/jsonschema/30002"')::jsonb WHERE json::text like '%"$schema": "15"%';
-    UPDATE item_metadata SET json=replace(json::text,'"$schema": "16"','"$schema": "/items/jsonschema/30001"')::jsonb WHERE json::text like '%"$schema": "16"%';
-
-    UPDATE records_metadata SET json=replace(json::text,'"item_type_id": "15"','"item_type_id": "30002"')::jsonb WHERE json::text like '%"item_type_id": "15"%';
-    UPDATE records_metadata SET json=replace(json::text,'"item_type_id": "16"','"item_type_id": "30001"')::jsonb WHERE json::text like '%"item_type_id": "16"%';
-    
+        UPDATE records_metadata SET json=replace(json::text,concat('"item_type_id": "',full_itemtype_id,'"'),concat('"item_type_id": "',target_full_itemtype_id,'"'))::jsonb WHERE json::text like concat('%"item_type_id": "',full_itemtype_id,'"%');
+        UPDATE records_metadata SET json=replace(json::text,concat('"item_type_id": "',simple_itemtype_id,'"'),concat('"item_type_id": "',target_simple_itemtype_id,'"'))::jsonb WHERE json::text like concat('%"item_type_id": "',simple_itemtype_id,'"%');
+    END IF;
 END;
 $$ LANGUAGE plpgsql;
