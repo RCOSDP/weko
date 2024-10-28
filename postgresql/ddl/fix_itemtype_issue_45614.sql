@@ -187,12 +187,8 @@ BEGIN
     UPDATE item_metadata SET json=replace(json::text,'"$schema": "15"','"$schema": "/items/jsonschema/30002"')::jsonb WHERE json::text like '%"$schema": "15"%';
     UPDATE item_metadata SET json=replace(json::text,'"$schema": "16"','"$schema": "/items/jsonschema/30001"')::jsonb WHERE json::text like '%"$schema": "16"%';
 
-
     UPDATE records_metadata SET json=replace(json::text,'"item_type_id": "15"','"item_type_id": "30002"')::jsonb WHERE json::text like '%"item_type_id": "15"%';
     UPDATE records_metadata SET json=replace(json::text,'"item_type_id": "16"','"item_type_id": "30001"')::jsonb WHERE json::text like '%"item_type_id": "16"%';
     
-
-
-
 END;
 $$ LANGUAGE plpgsql;
