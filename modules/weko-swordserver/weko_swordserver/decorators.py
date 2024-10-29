@@ -13,6 +13,7 @@ from flask import current_app, request
 from invenio_oauth2server.decorators import require_api_auth, require_oauth_scopes
 
 from .errors import ErrorType, WekoSwordserverException
+from .utils import is_valid_body_hash
 
 
 def check_oauth(*scopes):
@@ -103,3 +104,26 @@ def check_package_contents():
         return decorated
     return wrapper
 
+def check_digest():
+    """Decorator to check Digest header."""
+    def wrapper(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            # Check Digest
+            digest = request.headers.get("Digest", None)
+            file = kwargs.get('file', None)
+            is_valid_bodyhash = is_valid_body_hash(digest, file)
+
+            result = f(*args, **kwargs)
+
+            if result in ["SWORD", "ROCRATE"]:
+                if digest is None or not is_valid_bodyhash:
+                    raise WekoSwordserverException(
+                        "Request body and digest verification failed.",
+                        ErrorType.BadRequest
+                        )
+
+            return result
+
+        return decorated
+    return wrapper

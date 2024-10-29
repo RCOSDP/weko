@@ -57,12 +57,6 @@ blueprint = Blueprint(
 )
 blueprint.before_request(verify_oauth_token_and_set_current_user)
 
-@blueprint.route("/hello", methods=["GET"])
-@oauth2.require_oauth()
-def hello():
-    current_app.logger.info("Hello, World!")
-    return jsonify({"message": "Hello, World!"})
-
 
 @blueprint.route("/service-document", methods=["GET"])
 @oauth2.require_oauth()
@@ -197,13 +191,13 @@ def post_service_document():
         request.headers.get("Content-Disposition") or ""
     )
 
+    filename = content_disposition_options.get("filename")
     if (content_disposition != "attachment"
-            or not content_disposition_options.get("filename")):
+            or filename is None):
         raise WekoSwordserverException(
             "Cannot get filename by Content-Disposition.",
             ErrorType.BadRequest
         )
-    filename = content_disposition_options.get("filename")
 
     # Check import item
     file = None
@@ -215,27 +209,22 @@ def post_service_document():
             f"Not found {filename} in request body.", ErrorType.BadRequest
         )
 
-    # Validate Digest SHA-256 before check_import_file_format()
-    digest = request.headers.get("Digest")
-    body = request.files.get("file")
-    is_valid_bodyhash = is_valid_body_hash(digest, body)
-
     packaging = request.headers.get("Packaging").split("/")[-1]
-    file_format = check_import_file_format(file, packaging)
 
-    if file_format == "SWORD" or file_format == "ROCRATE":
-        if digest is None or not is_valid_bodyhash:
-            raise WekoSwordserverException(
-                "Request body and digest verification failed.",
-                ErrorType.BadRequest
-                )
+    # Validate Digest SHA-256 before check_import_file_format()
+    # digest = request.headers.get("Digest")
+    # is_valid_bodyhash = is_valid_body_hash(digest, file)
 
-        access_token = request.headers.get("Authorization").split("Bearer ")[1]
-        header_info = {"access_token": access_token}
+    file_format = check_import_file_format(file=file, packaging=packaging)
 
-        check_result = check_bagit_import_items(
-            file, header_info, file_format
-        )
+    if file_format in ["SWORD", "ROCRATE"]:
+        # if digest is None or not is_valid_bodyhash:
+        #     raise WekoSwordserverException(
+        #         "Request body and digest verification failed.",
+        #         ErrorType.BadRequest
+        #         )
+
+        check_result = check_bagit_import_items(file, file_format)
         register_format = check_result.get("register_format")
 
     else:
