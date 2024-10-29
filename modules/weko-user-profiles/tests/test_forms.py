@@ -313,6 +313,9 @@ def test_check_other_position(app, position, field_data, expected_exception, exp
 
 # def custom_profile_form_factory(profile_cls):
 # .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_forms.py::test_custom_profile_form_factory -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
+class DummyClass:
+    pass
+
 def test_custom_profile_form_factory(app):
 
     profile_conf = {
@@ -326,6 +329,20 @@ def test_custom_profile_form_factory(app):
         "item4": {"format": "select", "label_name": "optionsample", "visible": True, "options": ["test1", "test2", "test3"], "order": 8},
     }
 
+    profile_conf = {
+        'fullname': {'format': 'text', 'label_name': 'Full Name', 'visible': True, 'options': [''], "order": 1},
+        'university': {'format': 'text', 'label_name': 'University', 'visible': True, 'options': [''], "order": 2},
+        'department': {'format': 'text', 'label_name': 'Department', 'visible': True, 'options': [''], "order": 3},
+        'position': {'format': 'text', 'label_name': 'Position', 'visible': True, 'options': [''], "order": 4},
+    }
+
+    with app.test_client():
+        # AdminSettings.get をモックして、profile_conf を返すようにする
+        with patch('weko_admin.models.AdminSettings.get', return_value=profile_conf):
+            # DummyClass を渡して、ProfileForm のサブクラスでない場合をテスト
+            form_cls = custom_profile_form_factory(DummyClass)
+            assert form_cls is ProfileForm  # ProfileForm に置き換えられていることを確認
+
     with app.test_client():
         #正常系
         with patch('weko_admin.models.AdminSettings.get', return_value=profile_conf):
@@ -335,7 +352,8 @@ def test_custom_profile_form_factory(app):
         # Invalid Case: profile_conf and WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS is None
         with patch('weko_admin.models.AdminSettings.get', return_value=None):
             with pytest.raises(ValueError, match="Could not retrieve profile configuration settings."):
-                custom_profile_form_factory(ProfileForm)
+                with patch('flask.current_app.config.get', return_value=None):
+                    custom_profile_form_factory(ProfileForm)
 
     # 正常系: WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS is not none
     app.config.update({

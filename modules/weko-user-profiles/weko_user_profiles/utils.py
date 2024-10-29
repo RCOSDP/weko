@@ -46,7 +46,11 @@ def get_user_profile_info(user_id):
         'subitem_position': '',
         'subitem_phone_number': '',
         'subitem_position(others)': '',
-        'subitem_affiliated_institution': []
+        'subitem_affiliated_institution': [],
+        'subitem_affiliated_institution_list': [{
+            "subitem_affiliated_institution_name": "",
+            "subitem_affiliated_institution_position": "",
+        }],
     }
     subitem_affiliated_institution = []
     user_info = UserProfile.get_by_userid(int(user_id))
@@ -63,12 +67,21 @@ def get_user_profile_info(user_id):
         result['subitem_phone_number'] = user_info.item2 if profile_conf.get('item2', {}).get('visible', True) else ''
         institute_dict_data = user_info.get_institute_data()
         for i in range(1, 6):
-            if institute_dict_data.get(i) and institute_dict_data.get(i).get(
-                    'subitem_affiliated_institution_name') != '':
-                subitem_affiliated_institution.append(
-                    institute_dict_data.get(i))
-        result[
-            'subitem_affiliated_institution'] = subitem_affiliated_institution
+            name_key = f'subitem_affiliated_institution_name_{i}'
+            position_key = f'subitem_affiliated_institution_position_{i}'
+            config_name_key = f'item{i+2}'  # item3から始めるために+2
+
+            if i in institute_dict_data:
+                print(f'AAAAA:{config_name_key}')
+                result[name_key] = (
+                    institute_dict_data[i].get('subitem_affiliated_institution_name', '')
+                     if profile_conf.get(config_name_key, {}).get('visible', True) else ''
+                )
+                print(f'BBBBB:{config_name_key}')
+                result[position_key] = (
+                    institute_dict_data[i].get('subitem_affiliated_institution_position', '')
+                    if profile_conf.get(config_name_key, {}).get('visible', True) else ''
+                )
     from invenio_accounts.models import User
     user = User()
     data = user.query.filter_by(id=user_id).one_or_none()
@@ -98,9 +111,6 @@ def handle_profile_form(form):
             for key in form.__dict__:
                 if getattr(form, key) and hasattr(current_userprofile, key):
                     form_data = getattr(form, key).data
-                    # Noneを文字列として保存しないようにする
-                    if form_data in ['', 'None']:
-                        form_data = ''
                     setattr(current_userprofile, key, form_data)
             # Mapping role
             current_config = current_app.config

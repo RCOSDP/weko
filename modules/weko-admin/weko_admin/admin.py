@@ -1368,7 +1368,7 @@ class ProfileSettingView(BaseView):
     def index(self):
         profile_fields_settings = AdminSettings.get("profiles_items_settings", dict_to_object=False)
         if not profile_fields_settings:
-            profile_fields_settings = current_app.config.get("USERPROFILES_DEFAULT_FIELDS_SETTINGS", {})
+            profile_fields_settings = current_app.config.get("WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS", {})
 
         return self.render(
             current_app.config["WEKO_ADMIN_PROFILE_SETTING_TEMPLATE"],
