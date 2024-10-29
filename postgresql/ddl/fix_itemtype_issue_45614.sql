@@ -3,8 +3,12 @@ CREATE OR REPLACE FUNCTION fix_itemtype_issue_45614()
 RETURNS void AS $$
 DECLARE
     full_itemtype_id integer := 15;
+    target_full_itemtype_id integer := 30002;
+    full_itemtype_name_id integer := (SELECT name_id FROM item_type WHERE id = full_itemtype_id);
     full_itemtype_name text := 'デフォルトアイテムタイプ（フル）';
     simple_itemtype_id integer := 16;
+    target_simple_itemtype_id integer := 30001;
+    simple_itemtype_name_id integer := (SELECT name_id FROM item_type WHERE id = simple_itemtype_id);
     simple_itemtype_name text := 'デフォルトアイテムタイプ（シンプル）';
     full_update_dict jsonb := '{
         "item_1617186331708": "item_30002_title0",
@@ -83,6 +87,13 @@ DECLARE
     }';
     key text;
     value text;
+    -- スペルミス修正
+    spell_miss_update_dict jsonb := '{
+        "subitem_degreegrantor_identifie": "subitem_degreegrantor_identifier",
+        "holding_agent_name_idenfitier_uri": "holding_agent_name_identifier_uri",
+        "holding_agent_name_idenfitier_value": "holding_agent_name_identifier_value",
+        "holding_agent_name_idenfitier_scheme": "holding_agent_name_identifier_scheme"
+    }';
 BEGIN
     -- デフォルトアイテムタイプ（フル）
     IF (SELECT name FROM item_type_name WHERE id = (SELECT name_id FROM item_type WHERE id = full_itemtype_id))=full_itemtype_name THEN
@@ -120,6 +131,68 @@ BEGIN
         END LOOP;
     ELSE
         RAISE EXCEPTION 'item_type_id and name do not match. id: %, name: %', simple_itemtype_id, simple_itemtype_name;
+    END IF;
+
+    -- スペルミス修正
+    FOR key, value IN SELECT * FROM jsonb_each_text(spell_miss_update_dict)
+    LOOP
+        RAISE NOTICE 'fix spell miss: % > %', key, value;
+        UPDATE item_type SET schema=replace(schema::text, key || '"', value || '"')::jsonb WHERE schema::text like '%' || key || '"%';
+        UPDATE item_type SET form=replace(form::text, key || '"', value || '"')::jsonb WHERE form::text like '%' || key || '"%';
+        UPDATE item_type SET form=replace(form::text, key || '[', value || '[')::jsonb WHERE form::text like '%' || key || '[%';
+        UPDATE item_type SET form=replace(form::text, key || '.', value || '.')::jsonb WHERE form::text like '%' || key || '.%';
+        UPDATE item_type SET render=replace(render::text, key || '"', value || '"')::jsonb WHERE render::text like '%' || key || '"%';
+        UPDATE item_type SET render=replace(render::text, key || '[', value || '[')::jsonb WHERE render::text like '%' || key || '[%';
+        UPDATE item_type SET render=replace(render::text, key || '.', value || '.')::jsonb WHERE render::text like '%' || key || '.%';
+
+        UPDATE item_type_mapping SET mapping=replace(mapping::text, key || '"', value || '"')::jsonb WHERE mapping::text like '%' || key || '"%';
+
+        UPDATE item_type_property SET schema=replace(schema::text, key || '"', value || '"')::jsonb WHERE schema::text like '%' || key || '"%';
+        UPDATE item_type_property SET form=replace(form::text, key || '"', value || '"')::jsonb WHERE form::text like '%' || key || '"%';
+        UPDATE item_type_property SET form=replace(form::text, key || '[', value || '[')::jsonb WHERE form::text like '%' || key || '[%';
+        UPDATE item_type_property SET form=replace(form::text, key || '.', value || '.')::jsonb WHERE form::text like '%' || key || '.%';
+        UPDATE item_type_property SET forms=replace(forms::text, key || '"', value || '"')::jsonb WHERE forms::text like '%' || key || '"%';
+        UPDATE item_type_property SET forms=replace(forms::text, key || '[', value || '[')::jsonb WHERE forms::text like '%' || key || '[%';
+        UPDATE item_type_property SET forms=replace(forms::text, key || '.', value || '.')::jsonb WHERE forms::text like '%' || key || '.%';
+
+        UPDATE records_metadata SET json=replace(json::text, key || '"', value || '"')::jsonb WHERE json::text like '%' || key || '"%';
+        UPDATE item_metadata SET json=replace(json::text, key || '"', value || '"')::jsonb WHERE json::text like '%' || key || '"%';
+    END LOOP;
+
+    IF (SELECT id FROM item_type WHERE id = full_itemtype_id) = full_itemtype_id THEN
+        RAISE NOTICE 'fix item_type_id';
+        CREATE TEMPORARY TABLE tmp_item_type AS SELECT * FROM item_type where id in (full_itemtype_id,simple_itemtype_id);
+        CREATE TEMPORARY TABLE tmp_item_type_name  AS SELECT * FROM item_type_name where id in (full_itemtype_name_id,simple_itemtype_name_id);
+        UPDATE tmp_item_type_name SET id = target_full_itemtype_id WHERE id = full_itemtype_name_id;
+        UPDATE tmp_item_type_name SET id = target_simple_itemtype_id WHERE id = simple_itemtype_name_id;
+        UPDATE item_type_name SET name = concat('backup_',name) WHERE id = full_itemtype_name_id;
+        UPDATE item_type_name SET name = concat('backup_',name) WHERE id = simple_itemtype_name_id;
+        INSERT INTO item_type_name SELECT * FROM tmp_item_type_name where id in (target_simple_itemtype_id,target_full_itemtype_id);
+
+        UPDATE tmp_item_type SET id = target_full_itemtype_id,name_id=target_full_itemtype_id WHERE id = full_itemtype_id;
+        UPDATE tmp_item_type SET id = target_simple_itemtype_id,name_id=target_simple_itemtype_id WHERE id = simple_itemtype_id;
+        INSERT INTO item_type SELECT * FROM tmp_item_type where id in (target_simple_itemtype_id,target_full_itemtype_id);
+        DROP TABLE tmp_item_type_name;
+        DROP TABLE tmp_item_type;
+
+        UPDATE workflow_workflow SET itemtype_id = target_full_itemtype_id WHERE itemtype_id = full_itemtype_id;
+        UPDATE workflow_workflow SET itemtype_id = target_simple_itemtype_id WHERE itemtype_id = simple_itemtype_id;
+        UPDATE item_metadata SET item_type_id = target_full_itemtype_id WHERE item_type_id = full_itemtype_id;
+        UPDATE item_metadata SET item_type_id = target_simple_itemtype_id WHERE item_type_id = simple_itemtype_id;
+        UPDATE item_type_mapping SET item_type_id = target_full_itemtype_id WHERE item_type_id = full_itemtype_id;
+        UPDATE item_type_mapping SET item_type_id = target_simple_itemtype_id WHERE item_type_id = simple_itemtype_id;
+
+        DELETE FROM item_type WHERE id in (full_itemtype_id,simple_itemtype_id) ;
+        DELETE FROM item_type_name WHERE id in (full_itemtype_name_id,simple_itemtype_name_id);
+        
+
+        UPDATE item_metadata SET json=replace(json::text,concat('/items/jsonschema/',full_itemtype_id,'"'),concat('/items/jsonschema/',target_full_itemtype_id,'"'))::jsonb WHERE json::text like concat('%/items/jsonschema/',full_itemtype_id,'"%');
+        UPDATE item_metadata SET json=replace(json::text,concat('/items/jsonschema/',simple_itemtype_id,'"'),concat('/items/jsonschema/',target_simple_itemtype_id,'"'))::jsonb WHERE json::text like concat('%/items/jsonschema/',simple_itemtype_id,'"%');
+        UPDATE item_metadata SET json=replace(json::text,concat('"$schema": "',full_itemtype_id,'"'),concat('"$schema": "/items/jsonschema/',target_full_itemtype_id,'"'))::jsonb WHERE json::text like concat('%"$schema": "',full_itemtype_id',"%');
+        UPDATE item_metadata SET json=replace(json::text,concat('"$schema": "',simple_itemtype_id,'"'),concat('"$schema": "/items/jsonschema/',target_simple_itemtype_id,'"'))::jsonb WHERE json::text like concat('%"$schema": "',simple_itemtype_id',"%');
+
+        UPDATE records_metadata SET json=replace(json::text,concat('"item_type_id": "',full_itemtype_id,'"'),concat('"item_type_id": "',target_full_itemtype_id,'"'))::jsonb WHERE json::text like concat('%"item_type_id": "',full_itemtype_id,'"%');
+        UPDATE records_metadata SET json=replace(json::text,concat('"item_type_id": "',simple_itemtype_id,'"'),concat('"item_type_id": "',target_simple_itemtype_id,'"'))::jsonb WHERE json::text like concat('%"item_type_id": "',simple_itemtype_id,'"%');
     END IF;
 END;
 $$ LANGUAGE plpgsql;
