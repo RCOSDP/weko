@@ -154,11 +154,11 @@ def test_get_user_profile_info(setup_data):
             "subitem_phone_number": "",
             "subitem_position(others)": "",
             "subitem_affiliated_institution": [
-                {"subitem_affiliated_institution_name": "test institute", "subitem_affiliated_institution_position": "test institute position"},
-                {"subitem_affiliated_institution_name": "test institute2", "subitem_affiliated_institution_position": "test institute position2"},
-                {"subitem_affiliated_institution_name": "test institute3", "subitem_affiliated_institution_position": "test institute position3"},
-                {"subitem_affiliated_institution_name": "test institute4", "subitem_affiliated_institution_position": "test institute position4"},
-                {"subitem_affiliated_institution_name": "test institute5", "subitem_affiliated_institution_position": "test institute position5"}
+                {"subitem_affiliated_institution_name": "", "subitem_affiliated_institution_position": ""},
+                {"subitem_affiliated_institution_name": "", "subitem_affiliated_institution_position": ""},
+                {"subitem_affiliated_institution_name": "", "subitem_affiliated_institution_position": ""},
+                {"subitem_affiliated_institution_name": "", "subitem_affiliated_institution_position": ""},
+                {"subitem_affiliated_institution_name": "", "subitem_affiliated_institution_position": ""}
             ],
             'subitem_mail_address': 'sysadmin@test.org',
         }
@@ -184,7 +184,7 @@ def test_get_user_profile_info(setup_data):
     # institute_dict_dataが空の場合のテスト
     with patch('weko_admin.models.AdminSettings.get', return_value=profile_conf), \
     patch('weko_user_profiles.models.UserProfile.get_by_userid', return_value=setup_data['profile']), \
-    patch('weko_user_profiles.models.UserProfile.get_institute_data', return_value={}):
+    patch('weko_user_profiles.models.UserProfile.get_institute_data', return_value=[]):
         result = get_user_profile_info(user_id)
         expected = {
             'subitem_user_name': 'sysadmin',
