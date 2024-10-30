@@ -58,6 +58,7 @@ class ShibUser(object):
                 self.user.roles = list(
                     role for role in self.user.roles
                     if role not in self.shib_user.shib_roles)
+                self.user.roles.clear()
                 self.shib_user.shib_roles.clear()
                 for role in roles:
                     if role not in self.user.roles:
@@ -134,6 +135,7 @@ class ShibUser(object):
             with db.session.begin_nested():
                 if self.shib_attr['shib_mail']:
                     shib_user.shib_mail = self.shib_attr['shib_mail']
+                    shib_user.weko_user.email = self.shib_attr['shib_mail']
                 if self.shib_attr['shib_user_name']:
                     shib_user.shib_user_name = self.shib_attr['shib_user_name']
                 if self.shib_attr['shib_role_authority_name']:
