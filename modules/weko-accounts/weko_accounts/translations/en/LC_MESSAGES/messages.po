@@ -41,12 +41,28 @@ msgid "WEKO-Accounts"
 msgstr ""
 
 #: weko_accounts/views.py:296
+msgid "Missing SHIB_ATTR_SESSION_ID."
+msgstr ""
+
+#: weko_accounts/views.py:312
+msgid "Missing SHIB_ATTRs."
+msgstr ""
+
+#: weko_accounts/views.py:296
 msgid "shib_active_flag_error"
 msgstr "Your account is in a disabled state. If you have not yet activated your account, please click the URL in the confirmation email sent from the user registration system to activate your account. If this account is merged with another account, please use the merged account."
 
 #: weko_accounts/views.py:301
 msgid "shib_ip_range_flag_error"
 msgstr "Cannot login because corporate shared account is being used from a non-contracted IP address. Please use it from an IP range within the institution you have a contract with."
+
+#: weko_accounts/views.py:355
+msgid "Failed login cause failed update user data."
+msgstr ""
+
+#: weko_accounts/views.py:376
+msgid "Unexpected error occurred."
+msgstr ""
 
 #: weko_accounts/templates/weko_accounts/confirm_user.html:29
 msgid "confirm for account"

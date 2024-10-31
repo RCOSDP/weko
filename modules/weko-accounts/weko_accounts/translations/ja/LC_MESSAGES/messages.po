@@ -41,12 +41,28 @@ msgid "WEKO-Accounts"
 msgstr "WEKOアカウント"
 
 #: weko_accounts/views.py:296
+msgid "Missing SHIB_ATTR_SESSION_ID."
+msgstr "SHIB_ATTR_SESSION_ID が取得できませんでした。"
+
+#: weko_accounts/views.py:312
+msgid "Missing SHIB_ATTRs."
+msgstr "当サイトのログインに必要な属性が取得できませんでした。"
+
+#: weko_accounts/views.py:296
 msgid "shib_active_flag_error"
 msgstr "アカウントが無効化の状態です．まだ，アカウントをアクティベートされていない場合は，ユーザ登録システムから送信された確認メール内のURLをクリックし，アカウントを有効化してください．このアカウントを他のアカウントに統合された場合は，統合先のアカウントをご利用下さい．"
 
 #: weko_accounts/views.py:301
 msgid "shib_ip_range_flag_error"
 msgstr "法人用の共有アカウントが、契約外のIPアドレスから利用されているためにログインできません。契約されている機関内のIPレンジからご利用下さい。"
+
+#: weko_accounts/views.py:355
+msgid "Failed login cause failed update user data."
+msgstr "ユーザ情報の更新に失敗したため、ログインできませんでした。"
+
+#: weko_accounts/views.py:376
+msgid "Unexpected error occurred."
+msgstr "予期せぬエラーが発生しました。"
 
 #: weko_accounts/templates/weko_accounts/confirm_user.html:28
 msgid "confirm for account"

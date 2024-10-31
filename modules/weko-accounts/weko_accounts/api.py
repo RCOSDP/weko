@@ -16,6 +16,7 @@ from flask_login import current_user, user_logged_in, user_logged_out
 from flask_security.utils import hash_password, verify_password
 from invenio_accounts.models import Role, User
 from invenio_db import db
+from sqlalchemy.exc import SQLAlchemyError
 from weko_user_profiles.models import UserProfile
 from werkzeug.local import LocalProxy
 
@@ -102,7 +103,7 @@ class ShibUser(object):
                             db.session.add(new_role)
                     db.session.commit()
                 except Exception as ex:
-                    current_app.logger.debug(ex)
+                    current_app.logger.error(ex)
                     db.session.rollback()
 
     def get_relation_info(self):
@@ -147,10 +148,10 @@ class ShibUser(object):
                 if self.shib_attr['shib_ip_range_flag']:
                     shib_user.shib_ip_range_flag = self.shib_attr['shib_ip_range_flag']
             db.session.commit()
-        except Exception as ex:
-            current_app.logger.error(ex)
+        except SQLAlchemyError as ex:
+            current_app.logger.error("SQLAlchemyError: {}".format(ex))
             db.session.rollback()
-            return None
+            raise ex
 
         return shib_user
 
@@ -181,21 +182,23 @@ class ShibUser(object):
         shib_username_config = current_app.config[
             'WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN']
         try:
-            with db.session.begin_nested():
-                self.user.email = self.shib_attr['shib_mail']
-            db.session.commit()
-
             if not self.shib_attr['shib_eppn'] and shib_username_config:
                 self.shib_attr['shib_eppn'] = self.shib_attr['shib_user_name']
+
+            shib_user_count = ShibbolethUser.query.filter_by(weko_uid=self.user.id).count()
+            if shib_user_count > 0:
+                raise SQLAlchemyError("User already exists. (weko_uid={}, shib_eppn={})".format(self.user.id, self.shib_attr.get('shib_eppn')))
+            
+            self.user.email = self.shib_attr['shib_mail']
             self.shib_user = ShibbolethUser.create(
                 self.user,
                 **self.shib_attr
             )
+            return self.shib_user
         except Exception as ex:
             current_app.logger.error(ex)
             db.session.rollback()
-
-        return self.shib_user
+            return None
 
     def new_relation_info(self):
         """
@@ -204,26 +207,34 @@ class ShibUser(object):
         :return: ShibbolethUser instance
 
         """
-        kwargs = dict(
-            email=self.shib_attr.get('shib_mail'),
-            password=hash_password(''),
-            confirmed_at=datetime.utcnow(),
-            active=True
-        )
+        try:
+            kwargs = dict(
+                email=self.shib_attr.get('shib_mail'),
+                password=hash_password(''),
+                confirmed_at=datetime.utcnow(),
+                active=True
+            )
 
-        user = _datastore.find_user(email=self.shib_attr.get('shib_mail'))
-        if not user:
-            self.user = _datastore.create_user(**kwargs)
-        else:
-            self.user = user
+            user = _datastore.find_user(email=self.shib_attr.get('shib_mail'))
+            if not user:
+                self.user = _datastore.create_user(**kwargs)
+            else:
+                shib_user_count = ShibbolethUser.query.filter_by(weko_uid=user.id).count()
+                if shib_user_count > 0:
+                    raise SQLAlchemyError("User already exists. (weko_uid={}, shib_eppn={})".format(user.id, self.shib_attr.get('shib_eppn')))
+                self.user = user
 
-        shib_user = ShibbolethUser.create(
-            self.user,
-            **self.shib_attr)
-        self.shib_user = shib_user
-        self.new_shib_profile()
+            shib_user = ShibbolethUser.create(
+                self.user,
+                **self.shib_attr)
+            self.shib_user = shib_user
+            self.new_shib_profile()
 
-        return shib_user
+            return shib_user
+        except SQLAlchemyError as ex:
+            current_app.logger.error("SQLAlchemyError: {}".format(ex))
+            db.session.rollback()
+            raise ex
 
     def new_shib_profile(self):
         """
@@ -233,14 +244,19 @@ class ShibUser(object):
 
         """
         with db.session.begin_nested():
-            # create profile.
-            userprofile = UserProfile(user_id=self.user.id,
-                                      timezone=current_app.config[
-                                          'USERPROFILES_TIMEZONE_DEFAULT'],
-                                      language=current_app.config[
-                                          'USERPROFILES_LANGUAGE_DEFAULT'])
-            userprofile.username = self.shib_user.shib_user_name
-            db.session.add(userprofile)
+            userprofile = UserProfile.query.filter_by(user_id=self.user.id).one_or_none()
+            if not userprofile:
+                # create profile.
+                userprofile = UserProfile(user_id=self.user.id,
+                                        timezone=current_app.config[
+                                            'USERPROFILES_TIMEZONE_DEFAULT'],
+                                        language=current_app.config[
+                                            'USERPROFILES_LANGUAGE_DEFAULT'])
+                userprofile.username = self.shib_user.shib_user_name
+                db.session.add(userprofile)
+            else:
+                # update profile.
+                userprofile.username = self.shib_user.shib_user_name
         db.session.commit()
         return userprofile
 
