@@ -108,12 +108,15 @@ def set_lifetime(minutes):
         return abort(400)
 
 
+def is_session_menu_visible():
+    return current_app.config.get('MENU_VISIBLE_SESSION', True)
+
 @blueprint.route('/session', methods=['GET', 'POST'])
 @blueprint.route('/session/', methods=['GET', 'POST'])
 @register_menu(
     blueprint, 'settings.lifetime',
     _('%(icon)s Session', icon='<i class="fa fa-cogs fa-fw"></i>'),
-    visible_when=_has_admin_access,
+    visible_when=_has_admin_access and is_session_menu_visible,
     order=14
 )
 @register_breadcrumb(

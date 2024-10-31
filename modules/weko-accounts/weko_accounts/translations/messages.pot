@@ -40,11 +40,27 @@ msgid "WEKO-Accounts"
 msgstr ""
 
 #: weko_accounts/views.py:296
+msgid "Missing SHIB_ATTR_SESSION_ID."
+msgstr ""
+
+#: weko_accounts/views.py:312
+msgid "Missing SHIB_ATTRs."
+msgstr ""
+
+#: weko_accounts/views.py:296
 msgid "shib_active_flag_error"
 msgstr ""
 
 #: weko_accounts/views.py:301
 msgid "shib_ip_range_flag_error"
+msgstr ""
+
+#: weko_accounts/views.py:355
+msgid "Failed login cause failed update user data."
+msgstr ""
+
+#: weko_accounts/views.py:376
+msgid "Unexpected error occurred."
 msgstr ""
 
 #: weko_accounts/templates/weko_accounts/confirm_user.html:28

@@ -40,6 +40,7 @@ from simplekv.memory.redisstore import RedisStore
 from weko_redis.redis import RedisConnection
 from werkzeug.local import LocalProxy
 from invenio_db import db
+from sqlalchemy.exc import SQLAlchemyError
 
 from .api import ShibUser
 from .utils import generate_random_str, parse_attributes
@@ -133,17 +134,22 @@ def shib_auto_login():
 
         cache_val = orjson.loads(str(cache_val, encoding='utf-8'))
         shib_user = ShibUser(cache_val)
-        if not is_auto_bind:
-            shib_user.get_relation_info()
-        else:
-            shib_user.new_relation_info()
+        
+        try:
+            if not is_auto_bind:
+                shib_user.get_relation_info()
+            else:
+                shib_user.new_relation_info()
+        except SQLAlchemyError as e:
+            flash(_("Failed login cause failed update user data."), category='danger')
+            return _redirect_method()
 
         error = shib_user.check_in()
 
         if error:
             datastore.delete(cache_key)
             current_app.logger.error(error)
-            flash(error, category='error')
+            flash(error, category='denger')
             return _redirect_method()
 
         if shib_user.shib_user:
@@ -164,12 +170,12 @@ def confirm_user():
     """
     try:
         if request.form.get('csrf_random', '') != session['csrf_random']:
-            flash('csrf_random', category='error')
+            flash('csrf_random error', category='denger')
             return _redirect_method()
 
         shib_session_id = session['shib_session_id']
         if not shib_session_id:
-            flash('shib_session_id', category='error')
+            flash('shib_session_id error', category='denger')
             return _redirect_method()
 
         redis_connection = RedisConnection()
@@ -178,12 +184,12 @@ def confirm_user():
             'WEKO_ACCOUNTS_SHIB_CACHE_PREFIX'] + shib_session_id
 
         if not datastore.redis.exists(cache_key):
-            flash('cache_key', category='error')
+            flash('cache_key error', category='denger')
             return _redirect_method()
 
         cache_val = datastore.get(cache_key)
         if not cache_val:
-            flash('cache_val', category='error')
+            flash('cache_val error', category='denger')
             datastore.delete(cache_key)
             return _redirect_method()
 
@@ -192,19 +198,20 @@ def confirm_user():
         account = request.form.get('WEKO_ATTR_ACCOUNT', None)
         password = request.form.get('WEKO_ATTR_PWD', None)
         if not shib_user.check_weko_user(account, password):
-            flash('check_weko_user', category='error')
+            flash('check_weko_user error', category='denger')
             datastore.delete(cache_key)
             return _redirect_method()
 
         if not shib_user.bind_relation_info(account):
-            flash('FAILED bind_relation_info!', category='error')
+            flash('FAILED bind_relation_info!', category='denger')
+            datastore.delete(cache_key)
             return _redirect_method()
 
         error = shib_user.check_in()
 
         if error:
             datastore.delete(cache_key)
-            flash(error, category='error')
+            flash(error, category='denger')
             return _redirect_method()
 
         if shib_user.shib_user:
@@ -213,6 +220,8 @@ def confirm_user():
         return redirect(session['next'] if 'next' in session else '/')
     except BaseException:
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
+        if cache_key and datastore.redis.exists(cache_key):
+            datastore.delete(cache_key)
     return abort(400)
 
 
@@ -228,7 +237,7 @@ def shib_login():
 
         if not shib_session_id:
             current_app.logger.error(_("Missing SHIB_ATTR_SESSION_ID!"))
-            flash(_("Missing SHIB_ATTR_SESSION_ID!"), category='error')
+            flash(_("Missing SHIB_ATTR_SESSION_ID!"), category='denger')
             return _redirect_method()
 
         redis_connection = RedisConnection()
@@ -238,14 +247,14 @@ def shib_login():
 
         if not datastore.redis.exists(cache_key):
             current_app.logger.error(_("Missing SHIB_CACHE_PREFIX!"))
-            flash(_("Missing SHIB_CACHE_PREFIX!"), category='error')
+            flash(_("Missing SHIB_CACHE_PREFIX!"), category='denger')
             return _redirect_method()
 
         cache_val = datastore.get(cache_key)
 
         if not cache_val:
             current_app.logger.error(_("Missing SHIB_ATTR!"))
-            flash(_("Missing SHIB_ATTR!"), category='error')
+            flash(_("Missing SHIB_ATTR!"), category='denger')
             datastore.delete(cache_key)
             return _redirect_method()
 
@@ -282,27 +291,43 @@ def shib_sp_login():
     try:
         shib_session_id = request.form.get('SHIB_ATTR_SESSION_ID', None)
         if not shib_session_id and not _shib_enable:
-            flash(_("Missing SHIB_ATTR_SESSION_ID!"), category='error')
-            return redirect(url_for_security('login'))
+            current_app.logger.error("Missing SHIB_ATTR_SESSION_ID.")
+            error_redirect_params = {
+                'SHIB_ATTR_SESSION_ID': '',
+                'next': next,
+                'msg': _("Missing SHIB_ATTR_SESSION_ID!"),
+                '_method': 'GET'
+            }
+            return url_for("weko_accounts.shib_login_error", **error_redirect_params)
 
         shib_attr, error = parse_attributes()
+        error_msg = None
 
         # Check SHIB_ATTR_EPPN and SHIB_ATTR_USER_NAME:
         if error or not (
                 shib_attr.get('shib_eppn', None)
                 or _shib_username_config and shib_attr.get('shib_user_name')):
-            flash(_("Missing SHIB_ATTRs!"), category='error')
-            return _redirect_method()
+            error_msg = _("Missing SHIB_ATTRs.")
+            current_app.logger.error("Missing SHIB_ATTRs!")
         
         # Check SHIB_ATTR_ACTIVE_FLAG:
         if shib_attr.get('shib_active_flag', None) == "FALSE": # `shib_active_flag=''` is not error
-            flash(_("shib_active_flag_error"), category='error')
-            return _redirect_method()
+            error_msg = _("shib_active_flag_error")
+            current_app.logger.error("shib_active_flag_error({})".format(shib_attr.get('shib_eppn', None)))
         
         # Check SHIB_ATTR_SITE_USER_WITHIN_IP_RANGE_FLAG:
         if shib_attr.get('shib_ip_range_flag', None) == "FALSE": # `shib_ip_range_flag=''` is not error
-            flash(_("shib_ip_range_flag_error"), category='error')
-            return _redirect_method()
+            error_msg = _("shib_ip_range_flag_error")
+            current_app.logger.error("shib_ip_range_flag_error({})".format(shib_attr.get('shib_eppn', None)))
+        
+        if error_msg:
+            error_redirect_params = {
+                'SHIB_ATTR_SESSION_ID': shib_session_id,
+                'next': next,
+                'msg': error_msg,
+                '_method': 'GET'
+            }
+            return url_for("weko_accounts.shib_login_error", **error_redirect_params)
 
         redis_connection = RedisConnection()
         datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
@@ -315,8 +340,20 @@ def shib_sp_login():
             ttl_secs=ttl_sec)
 
         shib_user = ShibUser(shib_attr)
+
         # Check the relation of shibboleth user with weko account.
-        rst = shib_user.get_relation_info()
+        try:
+            rst = shib_user.get_relation_info()
+        except SQLAlchemyError as e:
+            # Failed to update user data.
+            current_app.logger.error("SQLAlchemyError: {}".format(e))
+            error_redirect_params = {
+                'SHIB_ATTR_SESSION_ID': shib_session_id,
+                'next': next,
+                'msg': _('Failed login cause failed update user data.'),
+                '_method': 'GET'
+            }
+            return url_for("weko_accounts.shib_login_error", **error_redirect_params)
 
         next_url = 'weko_accounts.shib_auto_login'
         if not rst:
@@ -331,7 +368,13 @@ def shib_sp_login():
         return url_for(next_url, **query_string)
     except BaseException:
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
-        return _redirect_method()
+        error_redirect_params = {
+            'SHIB_ATTR_SESSION_ID': shib_session_id,
+            'next': next,
+            'msg': _('Unexpected error occurred.'),
+            '_method': 'GET'
+        }
+        return url_for("weko_accounts.shib_login_error", **error_redirect_params)
 
 
 @blueprint.route('/shib/sp/login', methods=['GET'])
@@ -356,6 +399,26 @@ def shib_stub_login():
             current_app.config[
                 'WEKO_ACCOUNTS_SECURITY_LOGIN_SHIB_USER_TEMPLATE'],
             module_name=_('WEKO-Accounts'))
+
+
+@blueprint.route('/shib/error', methods=['GET'])
+def shib_login_error():
+    """Shibboleth SP login error.
+
+    :return:
+    """
+    msg = request.args.get('msg', '')
+    if msg:
+        flash(msg, category='danger')
+        """
+        Note:
+            category can be one of ['info', 'danger', 'warning', 'success'], otherwise it will be 'info'.
+            
+            The cause is invenio_theme@1.0.0b4
+                invenio_theme/templates/invenio_theme/macros/messages.html
+        """
+    next = request.args.get('next', '/')
+    return redirect(next)
 
 
 @blueprint.route('/shib/logout')

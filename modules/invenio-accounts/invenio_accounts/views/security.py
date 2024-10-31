@@ -25,11 +25,15 @@ from ..sessions import delete_session
 from .settings import blueprint
 
 
+def is_security_menu_visible():
+    return current_app.config.get('MENU_VISIBLE_SECURITY', True)
+
 @login_required
 @register_menu(
     blueprint, 'settings.security',
     # NOTE: Menu item text (icon replaced by a user icon).
     _('%(icon)s Security', icon='<i class="fa fa-shield fa-fw"></i>'),
+    visible_when=is_security_menu_visible,
     order=2)
 @register_breadcrumb(blueprint, 'breadcrumbs.settings.security', _('Security'))
 def security():
