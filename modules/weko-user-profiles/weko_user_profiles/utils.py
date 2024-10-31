@@ -60,7 +60,12 @@ def get_user_profile_info(user_id):
         result['subitem_position'] = user_info.position if profile_conf.get('position', {}).get('visible', True) else ''
         result['subitem_position(others)'] = user_info.item1 if profile_conf.get('item1', {}).get('visible', True) else ''
         result['subitem_phone_number'] = user_info.item2 if profile_conf.get('item2', {}).get('visible', True) else ''
-        result["subitem_affiliated_institution"] = user_info.get_institute_data()
+        subitem_affiliated_institution = []
+        institute_dict_data = user_info.get_institute_data()
+        for institution_info in institute_dict_data:
+            if institution_info and institution_info.get('subitem_affiliated_institution_name') != '':
+                subitem_affiliated_institution.append(institution_info)
+        result['subitem_affiliated_institution'] = subitem_affiliated_institution
     from invenio_accounts.models import User
     user = User()
     data = user.query.filter_by(id=user_id).one_or_none()
