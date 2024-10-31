@@ -120,10 +120,10 @@ for module_path in modules/*/; do
       echo "### skip tests for ${module_path%?} ###"
       continue
     fi
-    # if [[ ${module_path} =~ ^modules/(weko-inedex-tree).+$ ]];then
-    #   echo "### skip tests for ${module_path%?} ###"
-    #   continue
-    # fi 
+    if [[ ${module_path} =~ ^modules/(weko-index-tree).+$ ]];then
+      echo "### skip tests for ${module_path%?} ###"
+      continue
+    fi 
     # if [[ ${module_path} =~ ^modules/(weko-indextree-journal).+$ ]]; then
     #   echo "### skip tests for ${module_path%?} ###"
     #   continue
