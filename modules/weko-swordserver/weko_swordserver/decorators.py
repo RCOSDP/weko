@@ -13,7 +13,6 @@ from flask import current_app, request
 from invenio_oauth2server.decorators import require_api_auth, require_oauth_scopes
 
 from .errors import ErrorType, WekoSwordserverException
-from .utils import is_valid_body_hash
 
 
 def check_oauth(*scopes):
@@ -48,7 +47,7 @@ def check_on_behalf_of():
             # Check onBehalfOf
             allowOnBehalfOf = current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_ON_BEHALF_OF']
             onBehalfOf = request.headers.get("On-Behalf-Of", "")
-            if allowOnBehalfOf == False and onBehalfOf != "":
+            if not allowOnBehalfOf and onBehalfOf:
                 raise WekoSwordserverException("Not support On-Behalf-Of.", ErrorType.OnBehalfOfNotAllowed)
 
             return f(*args, **kwargs)
@@ -112,6 +111,8 @@ def check_digest():
             # Check Digest
             digest = request.headers.get("Digest", None)
             file = kwargs.get('file', None)
+
+            from .utils import is_valid_body_hash
             is_valid_bodyhash = is_valid_body_hash(digest, file)
 
             result = f(*args, **kwargs)
@@ -124,6 +125,5 @@ def check_digest():
                         )
 
             return result
-
         return decorated
     return wrapper

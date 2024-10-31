@@ -23,7 +23,7 @@ from .api import SwordClient, SwordItemTypeMapping
 from .errors import WekoSwordserverException, ErrorType
 from .decorators import check_digest
 
-@check_digest
+@check_digest()
 def check_import_file_format(file, packaging):
     """Check inport file format.
 
