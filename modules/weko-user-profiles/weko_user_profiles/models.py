@@ -25,6 +25,8 @@ from invenio_db import db
 from sqlalchemy import event
 from sqlalchemy.ext.hybrid import hybrid_property
 
+from weko_admin.models import AdminSettings
+
 from .validators import validate_username
 
 
@@ -124,13 +126,13 @@ class UserProfile(db.Model):
     """Affiliation institute position (n)"""
     item12 = db.Column('institutePosition5', db.String(255))
 
-    item13 = db.Column('item13', db.String(100))
+    item13 = db.Column('item13', db.String(255))
 
-    item14 = db.Column('item14', db.String(100))
+    item14 = db.Column('item14', db.String(255))
 
-    item15 = db.Column('item15', db.String(100))
+    item15 = db.Column('item15', db.String(255))
 
-    item16 = db.Column('item16', db.String(100))
+    item16 = db.Column('item16', db.String(255))
 
     @hybrid_property
     def username(self):
@@ -191,23 +193,21 @@ class UserProfile(db.Model):
 
         :return:
         """
-        institute_dict = {
-            1: {'subitem_affiliated_institution_name': self.item3,
-                'subitem_affiliated_institution_position':
-                    self.item4},
-            2: {'subitem_affiliated_institution_name': self.item5,
-                'subitem_affiliated_institution_position':
-                    self.item6},
-            3: {'subitem_affiliated_institution_name': self.item7,
-                'subitem_affiliated_institution_position':
-                    self.item8},
-            4: {'subitem_affiliated_institution_name': self.item9,
-                'subitem_affiliated_institution_position':
-                    self.item10},
-            5: {'subitem_affiliated_institution_name': self.item11,
-                'subitem_affiliated_institution_position':
-                    self.item12}
-        }
+        profile_setting = AdminSettings.get('profiles_items_settings', dict_to_object=False)
+        item_field_settings = [
+            profile_setting.get("item"+ str(i), {}).get("visible", False)  for i in range(3, 17)]
+        institute_dict = [
+            {"subitem_affiliated_institution_name": self.item3 if item_field_settings[0] else "",
+            'subitem_affiliated_institution_position': self.item4 if item_field_settings[1] else ""},
+            {'subitem_affiliated_institution_name': self.item5 if item_field_settings[2] else "",
+            'subitem_affiliated_institution_position': self.item6 if item_field_settings[3] else ""},
+            {'subitem_affiliated_institution_name': self.item7 if item_field_settings[4] else "",
+            'subitem_affiliated_institution_position':self.item8 if item_field_settings[5] else ""},
+            {'subitem_affiliated_institution_name': self.item9 if item_field_settings[6] else "",
+            'subitem_affiliated_institution_position': self.item10 if item_field_settings[7] else ""},
+            {'subitem_affiliated_institution_name': self.item11 if item_field_settings[8] else "",
+            'subitem_affiliated_institution_position': self.item12 if item_field_settings[9] else ""}
+        ]
         return institute_dict
 
 

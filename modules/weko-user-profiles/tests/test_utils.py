@@ -153,13 +153,7 @@ def test_get_user_profile_info(setup_data):
             "subitem_position": "",
             "subitem_phone_number": "",
             "subitem_position(others)": "",
-            "subitem_affiliated_institution": [
-                {"subitem_affiliated_institution_name": "test institute", "subitem_affiliated_institution_position": "test institute position"},
-                {"subitem_affiliated_institution_name": "test institute2", "subitem_affiliated_institution_position": "test institute position2"},
-                {"subitem_affiliated_institution_name": "test institute3", "subitem_affiliated_institution_position": "test institute position3"},
-                {"subitem_affiliated_institution_name": "test institute4", "subitem_affiliated_institution_position": "test institute position4"},
-                {"subitem_affiliated_institution_name": "test institute5", "subitem_affiliated_institution_position": "test institute position5"}
-            ],
+            "subitem_affiliated_institution": [],
             'subitem_mail_address': 'sysadmin@test.org',
         }
         assert result == expected
@@ -184,7 +178,7 @@ def test_get_user_profile_info(setup_data):
     # institute_dict_dataが空の場合のテスト
     with patch('weko_admin.models.AdminSettings.get', return_value=profile_conf), \
     patch('weko_user_profiles.models.UserProfile.get_by_userid', return_value=setup_data['profile']), \
-    patch('weko_user_profiles.models.UserProfile.get_institute_data', return_value={}):
+    patch('weko_user_profiles.models.UserProfile.get_institute_data', return_value=[]):
         result = get_user_profile_info(user_id)
         expected = {
             'subitem_user_name': 'sysadmin',
@@ -214,7 +208,7 @@ def test_handle_verification_form(app,mocker):
 
 
 # def handle_profile_form(form):
-# .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_utils.py::test_handle_profile_form -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_utils.py::test_handle_profile_form -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
 def test_handle_profile_form(app, users, user_profiles, mocker):
     # WEKO_USERPROFILES_ROLE_MAPPING_ENABLED is false
     data = {
@@ -338,71 +332,6 @@ def test_handle_profile_form(app, users, user_profiles, mocker):
             mock_flash = mocker.patch("weko_user_profiles.utils.flash")
             handle_profile_form(form)
             mock_flash.assert_not_called()
-        data = {
-            "profile-username": "test_sysadmin",
-            "profile-timezone": 'Etc/GMT',
-            "profile-language": "ja",
-            "profile-email": 'sysadmin@test.org',
-            "profile-email_repeat": 'sysadmin@test.org',
-            "profile-fullname": "None",
-            "profile-university": "None",
-            "profile-department": "None",
-            "profile-position": "None",
-            "profile-phoneNumber": "None",
-            "profile-item4": "None",
-            "profile-item6": "None",
-            "profile-item8": "None",
-            "profile-item10": "None",
-            "profile-item12": "None"
-        }
-    with app.test_request_context(method="POST", data=data):
-        with patch('weko_admin.models.AdminSettings.get', return_value=profile_conf):
-            login_user(users[0]["obj"])
-            userprofile = user_profiles[3]
-            form = ProfileForm(
-                formdata=None,
-                username=userprofile._username,
-                fullname=userprofile.fullname,
-                timezone=userprofile.timezone,
-                language=userprofile.language,
-                email="sysadmin@test.org",
-                email_repeat="sysadmin@test.org",
-                university=userprofile.university,
-                department=userprofile.department,
-                position=userprofile.position,
-                item1=userprofile.item1,
-                item2=userprofile.item2,
-                item3=userprofile.item3,
-                item4=userprofile.item4,
-                item5=userprofile.item5,
-                item6=userprofile.item6,
-                item7=userprofile.item7,
-                item8=userprofile.item8,
-                item9=userprofile.item9,
-                item10=userprofile.item10,
-                item11=userprofile.item11,
-                item12=userprofile.item12,
-                prefix='profile',
-            )
-            handle_profile_form(form)
-            assert userprofile.timezone == "Etc/GMT-9"
-            assert userprofile._username == "sysadmin2"
-            assert userprofile.item1 is None
-            assert userprofile.item2 is None
-            assert userprofile.item3 is None
-            assert userprofile.item4 is None
-            assert userprofile.item5 is None
-            assert userprofile.item6 is None
-            assert userprofile.item7 is None
-            assert userprofile.item8 is None
-            assert userprofile.item9 is None
-            assert userprofile.item10 is None
-            assert userprofile.item11 is None
-            assert userprofile.item12 is None
-            assert userprofile.fullname == ""
-            assert userprofile.position == ""
-            assert userprofile.department == ""
-            assert userprofile.university == ""
     # changed email
     current_app.config.update(
         WEKO_USERPROFILES_ROLE_MAPPING_ENABLED=True,
@@ -462,6 +391,23 @@ def test_handle_profile_form(app, users, user_profiles, mocker):
                 'Profile was updated. We have sent a verification email to new_repoadmin@test.org. Please check it.',
                 category="success"
             )
+    data = {
+        "profile-username": "test_repoadmin",
+        "profile-timezone": 'Etc/GMT',
+        "profile-language": "ja",
+        "profile-email": 'new_repoadmin@test.org',
+        "profile-email_repeat": 'new_repoadmin@test.org',
+        "profile-fullname": "test username",
+        "profile-university": "test university",
+        "profile-department": "test department",
+        "profile-position": "Professor",
+        "profile-phoneNumber": "12-345",
+        "profile-item4": "",
+        "profile-item6": "",
+        "profile-item8": "",
+        "profile-item10": "",
+        "profile-item12": ""
+    }
 
 
 # def get_role_by_position(position):

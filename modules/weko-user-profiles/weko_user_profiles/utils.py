@@ -46,9 +46,8 @@ def get_user_profile_info(user_id):
         'subitem_position': '',
         'subitem_phone_number': '',
         'subitem_position(others)': '',
-        'subitem_affiliated_institution': []
+        'subitem_affiliated_institution': [],
     }
-    subitem_affiliated_institution = []
     user_info = UserProfile.get_by_userid(int(user_id))
     #項目表示の設定を取得。visbleがFalseの場合は表示しない
     profile_conf = AdminSettings.get('profiles_items_settings', dict_to_object=False)
@@ -61,14 +60,12 @@ def get_user_profile_info(user_id):
         result['subitem_position'] = user_info.position if profile_conf.get('position', {}).get('visible', True) else ''
         result['subitem_position(others)'] = user_info.item1 if profile_conf.get('item1', {}).get('visible', True) else ''
         result['subitem_phone_number'] = user_info.item2 if profile_conf.get('item2', {}).get('visible', True) else ''
+        subitem_affiliated_institution = []
         institute_dict_data = user_info.get_institute_data()
-        for i in range(1, 6):
-            if institute_dict_data.get(i) and institute_dict_data.get(i).get(
-                    'subitem_affiliated_institution_name') != '':
-                subitem_affiliated_institution.append(
-                    institute_dict_data.get(i))
-        result[
-            'subitem_affiliated_institution'] = subitem_affiliated_institution
+        for institution_info in institute_dict_data:
+            if institution_info and institution_info.get('subitem_affiliated_institution_name') != '':
+                subitem_affiliated_institution.append(institution_info)
+        result['subitem_affiliated_institution'] = subitem_affiliated_institution
     from invenio_accounts.models import User
     user = User()
     data = user.query.filter_by(id=user_id).one_or_none()
@@ -98,9 +95,6 @@ def handle_profile_form(form):
             for key in form.__dict__:
                 if getattr(form, key) and hasattr(current_userprofile, key):
                     form_data = getattr(form, key).data
-                    # Noneを文字列として保存しないようにする
-                    if form_data in ['', 'None']:
-                        form_data = ''
                     setattr(current_userprofile, key, form_data)
             # Mapping role
             current_config = current_app.config

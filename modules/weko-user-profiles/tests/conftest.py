@@ -77,6 +77,7 @@ def base_app(instance_path):
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         TEST_USER_EMAIL='test_user@example.com',
         TEST_USER_PASSWORD='test_password',
+        WEKO_ADMIN_PROFILE_SETTING_TEMPLATE = 'weko_admin/admin/profiles_settings.html',
         TESTING=True,
         WTF_CSRF_ENABLED=False,
     )
@@ -362,41 +363,11 @@ def user_profiles(db,users):
         item15="",
         item16=""
     )
-    db.session.add(repo_profile)
-    none_config = UserProfile(
-        user_id=users[3]["id"],
-        _username="sysadmin2",
-        _displayname="sysadmin user",
-        fullname="",
-        timezone=USERPROFILES_TIMEZONE_DEFAULT,
-        language="not exist language",
-        university="",
-        department="",
-        position = "",
-        item1=None,
-        item2=None,
-        item3=None,
-        item4=None,
-        item5=None,
-        item6=None,
-        item7=None,
-        item8=None,
-        item9=None,
-        item10=None,
-        item11=None,
-        item12=None,
-        item13=None,
-        item14=None,
-        item15=None,
-        item16=None
-    )
-    db.session.add(none_config)
     db.session.commit()
     return [
         all_data,
         repo_profile,
         not_validate_language,
-        none_config
     ]
 
 @pytest.fixture()
