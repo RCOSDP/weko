@@ -126,13 +126,13 @@ class UserProfile(db.Model):
     """Affiliation institute position (n)"""
     item12 = db.Column('institutePosition5', db.String(255))
 
-    item13 = db.Column('item13', db.String(100))
+    item13 = db.Column('item13', db.String(255))
 
-    item14 = db.Column('item14', db.String(100))
+    item14 = db.Column('item14', db.String(255))
 
-    item15 = db.Column('item15', db.String(100))
+    item15 = db.Column('item15', db.String(255))
 
-    item16 = db.Column('item16', db.String(100))
+    item16 = db.Column('item16', db.String(255))
 
     @hybrid_property
     def username(self):
