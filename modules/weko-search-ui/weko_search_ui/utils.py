@@ -21,6 +21,7 @@
 """Weko Search-UI admin."""
 
 import csv
+import chardet
 import json
 import os
 import re
@@ -628,27 +629,10 @@ def getEncode(filepath):
     Returns:
         [type]: [description]
     """
-    encs = [
-        "iso-2022-jp",
-        "euc-jp",
-        "shift_jis",
-        "utf-8",
-        "utf-8-sig",
-        "utf-16be",
-        "utf-16le",
-        "utf-32be",
-        "utf-32le",
-        "",
-    ]
-    for enc in encs:
-        if enc != "":
-            with open(filepath, encoding=enc) as fr:
-                try:
-                    fr = fr.read()
-                except UnicodeDecodeError:
-                    continue
-            return enc
-    return enc
+    with open(filepath, mode='rb') as fr:
+        b = fr.read()
+    enc = chardet.detect(b)
+    return enc.get('encoding', 'utf-8-sig')
 
 
 def read_stats_file(file_path: str, file_name: str, file_format: str) -> dict:
