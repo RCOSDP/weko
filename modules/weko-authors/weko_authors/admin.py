@@ -107,8 +107,11 @@ class ExportView(BaseView):
         data = get_export_url()
         if data.get('file_uri'):
             file_instance = FileInstance.get_by_uri(data.get('file_uri'))
-            file_name = WEKO_AUTHORS_EXPORT_FILE_NAME + '.' + \
+            file_name = "{}_{}.{}".format(
+                WEKO_AUTHORS_EXPORT_FILE_NAME,
+                file_instance.updated.strftime("%Y%m%d%H%M"),
                 current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+            )
             return file_instance.send_file(
                 file_name,
                 mimetype='application/octet-stream',
@@ -138,6 +141,14 @@ class ExportView(BaseView):
         # set download_link
         status['download_link'] = url_for(
             'authors/export.download', _external=True)
+        status['filename'] = ''
+        file_instance = FileInstance.get_by_uri(status.get('file_uri', ''))
+        if file_instance:
+            status['filename'] = "{}_{}.{}".format(
+                WEKO_AUTHORS_EXPORT_FILE_NAME,
+                file_instance.updated.strftime("%Y%m%d%H%M"),
+                current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+            )
         if not status.get('file_uri'):
             status['download_link'] = ''
         if 'file_uri' in status:
