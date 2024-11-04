@@ -2495,6 +2495,55 @@ def test_send_mail_users(client, users, users_index, status_code):
         res = client.post(url, json=input)
         assert res.status_code == status_code
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_unlocks_activity_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_unlocks_activity_nologin(client, db_register2):
+    url = url_for('weko_workflow.unlocks_activity',activity_id="A-22000111-00001")
+    res = client.post(url)
+    assert res.status_code == 302
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_unlocks_activity_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize('users_index', [ i for i in range(7)])
+def test_unlocks_activity_acl(client, users, db_register2, users_index):
+    url = url_for('weko_workflow.unlocks_activity',activity_id="A-22000111-00001")
+    login(client=client, email=users[users_index]["email"])
+    data = json.dumps({"locked_value":"", "is_opened":False})
+    res = client.post(url,data=data)
+    assert res.status_code != 302
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_unlocks_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_unlocks_activity(client, users, db_register2):
+
+    activity_id="A-22000111-00001"
+    url = url_for("weko_workflow.unlocks_activity", activity_id=activity_id)
+    locked_value = "1-123456789"
+    user = users[2]
+    login(client=client, email=user["email"])
+
+    lock_key = "workflow_locked_activity_{}".format(activity_id)
+    user_lock_key = "workflow_userlock_activity_{}".format(user["id"])
+    current_cache.delete(lock_key)
+    current_cache.delete(user_lock_key)
+
+    data = json.dumps({"locked_value":locked_value, "is_opened":False})
+    
+    # not locked
+    res = client.post(url, data=data)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"code": 200, "msg_lock":None, "msg_userlock":"Not unlock"}
+    
+    # locked
+    current_cache.set(lock_key,locked_value)
+    current_cache.set(user_lock_key,activity_id)
+    res = client.post(url, data=data)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"code": 200, "msg_lock":"Unlock success", "msg_userlock":"User Unlock Success"}
+    assert current_cache.get(lock_key) == None
+    assert current_cache.get(user_lock_key) == None
+    
+    current_cache.delete(lock_key)
+    current_cache.delete(user_lock_key)
+    
+
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_unlocks_activity_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_unlocks_activity_nologin(client, db_register2):
