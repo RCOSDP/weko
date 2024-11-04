@@ -315,7 +315,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     """
     
     ddi_item_type_name = 'DDI'
-    journalarticle_type = ['other', 'conference paper',
+    journalarticle_type = ['conference paper',
                            'data paper', 'departmental bulletin paper',
                            'editorial', 'journal','journal article',
                            'review article', 'article','newspaper', 'software paper', 'periodical']
@@ -471,7 +471,6 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
-                'pageStart',
                 # 'fileURI',
             ]
             # いずれか必須が動いていない
@@ -4485,7 +4484,7 @@ def delete_user_lock_activity_cache(activity_id, data):
     cur_locked_val = str(get_cache_data(cache_key)) or str()
     msg = _("Not unlock")
 
-    if cur_locked_val and not data["is_opened"] or (cur_locked_val == activity_id):
+    if cur_locked_val and not data["is_opened"] or (cur_locked_val == activity_id and data['is_force']):
         delete_cache_data(cache_key)
         msg = "User Unlock Success"
     return msg
