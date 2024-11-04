@@ -300,8 +300,21 @@ def check_duplicate_mapping(
 
     lst_temporary = {}
     meta_list = item_type.render.get('meta_list')
-    for item_key, item_value in data_mapping.items():
-        lst_temporary[item_key] = get_all_mapping(item_value, mapping_type)
+    table_row = item_type.render.get('table_row')
+    properties = item_type.schema.get('properties')
+    table_row += [
+        'pubdate',
+        'system_file',
+        'system_identifier_doi',
+        'system_identifier_hdl',
+        'system_identifier_uri'
+    ]
+
+    for item_key, item_value in deepcopy(data_mapping).items():
+        if item_key in table_row:
+            lst_temporary[item_key] = get_all_mapping(item_value, mapping_type)
+        else:
+            data_mapping.pop(item_key)
     lst_mapping_detail = []
     for k, v in lst_temporary.items():
         lst_mapping_detail.append({k: v})
@@ -322,14 +335,13 @@ def check_duplicate_mapping(
             lst_overlap = list(
                 set(lst_values_src).intersection(lst_values_des))
             if lst_overlap:
-                properties = item_type.schema.get('properties')
                 if item_src_key in properties:
-                    item_src_name = item_type.schema.get('properties').get(
+                    item_src_name = properties.get(
                         item_src_key).get('title')
                 else:
                     continue
                 if item_des_key in properties:
-                    item_des_name = item_type.schema.get('properties').get(
+                    item_des_name = properties.get(
                         item_des_key).get('title')
                 else:
                     continue
