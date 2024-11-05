@@ -18,7 +18,7 @@ else:
     print("Usage: python update_template_and_policies.py [user] [password]")
     sys.exit(1)
 
-host = os.environ.get('INVENIO_ELASTICSEARCH_HOST','localhost')
+host = "opensearch"
 prefix = os.environ.get('SEARCH_INDEX_PREFIX')
 module_dir = "/code/modules/"
 base_url = f"https://{host}:9200/"
