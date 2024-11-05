@@ -1,0 +1,263 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+
+version: "3.2"
+
+services:
+  web:
+    restart: "always"
+    build:
+      context: .
+      #target: stage_1
+    sysctls:
+      net.core.somaxconn: 1024
+    #command: /bin/bash -c "rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=INFO -B -D -f /code/celeryd.log && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
+    #command: /bin/bash -c "jinja2 /code/scripts/instance.cfg > /home/invenio/.virtualenvs/invenio/var/instance/conf/invenio.cfg; rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=DEBUG -B -D -f /code/celeryd.log && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
+    command: bash /code/scripts/entrypoint.sh
+    environment:
+      - PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      - VIRTUALENVWRAPPER_PYTHON=/home/invenio/.virtualenvs/invenio/bin/python
+      - INVENIO_WEB_HOST=127.0.0.1
+      - INVENIO_WEB_INSTANCE=invenio
+      - INVENIO_WEB_VENV=invenio
+      - INVENIO_WEB_HOST_NAME=weko3.example.org
+      - INVENIO_WEB_PROTOCOL=https
+      - INVENIO_USER_EMAIL=wekosoftware@nii.ac.jp
+      - INVENIO_USER_PASS=uspass123
+      - INVENIO_POSTGRESQL_HOST=postgresql
+      - INVENIO_POSTGRESQL_DBNAME=invenio
+      - INVENIO_POSTGRESQL_DBUSER=invenio
+      - INVENIO_POSTGRESQL_DBPASS=dbpass123
+      - INVENIO_REDIS_HOST=redis
+      - INVENIO_ELASTICSEARCH_HOST=elasticsearch
+      - INVENIO_RABBITMQ_HOST=rabbitmq
+      - INVENIO_RABBITMQ_USER=guest
+      - INVENIO_RABBITMQ_PASS=guest
+      - INVENIO_RABBITMQ_VHOST=/
+      - INVENIO_WORKER_HOST=127.0.0.1
+      - INVENIO_FILES_LOCATION_NAME=local
+      - INVENIO_FILES_LOCATION_URI=/var/tmp
+      - INVENIO_ROLE_SYSTEM=System Administrator
+      - INVENIO_ROLE_REPOSITORY=Repository Administrator
+      - INVENIO_ROLE_CONTRIBUTOR=Contributor
+      - INVENIO_ROLE_COMMUNITY=Community Administrator
+      # production or development
+      # - FLASK_ENV=development
+      - FLASK_ENV=production
+      #- FLASK_DEBUG=True
+      - SEARCH_INDEX_PREFIX=tenant1
+      - INVENIO_DB_POOL_CLASS=QueuePool
+      - GOOGLE_TRACKING_ID_SYSTEM=UA-86504114-1
+      - GOOGLE_TRACKING_ID_USER=
+      - ADDTHIS_USER_ID=ra-5d8af23e9a3a2633
+      - TMPDIR=/tmp
+      - CACHE_REDIS_DB=0
+      - ACCOUNTS_SESSION_REDIS_DB_NO=1
+      - CELERY_RESULT_BACKEND_DB_NO=2
+      - WEKO_AGGREGATE_EVENT_HOUR=0
+      - WEKO_AGGREGATE_EVENT_MINUTE=0
+      - WEKO_HANDLE_ALLOW_REGISTER_CRNI=False
+      - WEKO_RECORDS_UI_SECRET_KEY="secret"
+      - SECRET_KEY="CHANGE ME"
+      - WTF_CSRF_SECRET_KEY="CHANGE ME"
+      - TZ=Asia/Tokyo
+    volumes:
+      - weko3_data:/var/tmp
+      - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
+      - data_data:/home/invenio/.virtualenvs/invenio/var/instance/data
+      - conf_data:/home/invenio/.virtualenvs/invenio/var/instance/conf
+      - type: bind
+        source: .
+        target: /code
+      - /code/modules/invenio-admin/invenio_admin.egg-info
+      - /code/modules/invenio-app/invenio_app.egg-info
+      - /code/modules/invenio-accounts/invenio_accounts.egg-info
+      - /code/modules/invenio-oauth2server/invenio_oauth2server.egg-info
+      - /code/modules/invenio-files-rest/invenio_files_rest.egg-info
+      - /code/modules/invenio-indexer/invenio_indexer.egg-info
+      - /code/modules/invenio-s3/invenio_s3.egg-info
+      - /code/modules/invenio-oaiharvester/invenio_oaiharvester.egg-info
+      - /code/modules/invenio-oaiserver/invenio_oaiserver.egg-info
+      - /code/modules/invenio-records/invenio_records.egg-info
+      - /code/modules/invenio-previewer/invenio_previewer.egg-info
+      - /code/modules/invenio-stats/invenio_stats.egg-info
+      - /code/modules/invenio-records-rest/invenio_records_rest.egg-info
+      - /code/modules/invenio-communities/invenio_communities.egg-info
+      - /code/modules/invenio-mail/invenio_mail.egg-info
+      - /code/modules/invenio-deposit/invenio_deposit.egg-info
+      - /code/modules/invenio-resourcesyncserver/invenio_resourcesyncserver.egg-info
+      - /code/modules/invenio-resourcesyncclient/invenio_resourcesyncclient.egg-info
+      - /code/modules/invenio-queues/invenio_queues.egg-info
+      - /code/modules/invenio-db/invenio_db.egg-info
+      - /code/modules/weko-theme/weko_theme.egg-info
+      - /code/modules/weko-itemtypes-ui/weko_itemtypes_ui.egg-info
+      - /code/modules/weko-items-ui/weko_items_ui.egg-info
+      - /code/modules/weko-accounts/weko_accounts.egg-info
+      - /code/modules/weko-admin/weko_admin.egg-info
+      - /code/modules/weko-logging/weko_logging.egg-info
+      - /code/modules/weko-gridlayout/weko_gridlayout.egg-info
+      - /code/modules/weko-groups/weko_groups.egg-info
+      - /code/modules/weko-search-ui/weko_search_ui.egg-info
+      - /code/modules/weko-records/weko_records.egg-info
+      - /code/modules/weko-records-ui/weko_records_ui.egg-info
+      - /code/modules/weko-schema-ui/weko_schema_ui.egg-info
+      - /code/modules/weko-index-tree/weko_index_tree.egg-info
+      - /code/modules/weko-user-profiles/weko_user_profiles.egg-info
+      - /code/modules/weko-deposit/weko_deposit.egg-info
+      - /code/modules/weko-authors/weko_authors.egg-info
+      - /code/modules/weko-handle/weko_handle.egg-info
+      - /code/modules/weko-workflow/weko_workflow.egg-info
+      - /code/modules/weko-indextree-journal/weko_indextree_journal.egg-info
+      - /code/modules/weko-bulkupdate/weko_bulkupdate.egg-info
+      - /code/modules/weko-items-autofill/weko_items_autofill.egg-info
+      - /code/modules/weko-sitemap/weko_sitemap.egg-info
+      - /code/modules/invenio-iiif/invenio_iiif.egg-info
+      - /code/modules/weko-swordserver/weko_swordserver.egg-info
+    user: invenio
+    links:
+      - postgresql
+      - redis
+      - elasticsearch
+      - rabbitmq
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+    ports:
+      - "5001:5000"
+    #privileged: true
+    # pscap apt-get install libcap-ng-utils
+    #cap_add:
+    #  - SYS_ADMIN
+    oom_kill_disable: true
+    deploy:
+      resources:
+        limits:
+          memory: 8000m
+
+  postgresql:
+    restart: "always"
+    image: postgres:12
+#    command: postgres -c log_destination=stderr -c log_statement=all -c log_connections=on -c log_disconnections=on
+    environment:
+      - POSTGRES_USER=invenio
+      - POSTGRES_DB=invenio
+      - POSTGRES_PASSWORD=dbpass123
+    volumes:
+      - pgsql-data:/var/lib/postgresql/data
+    ports:
+      - "25401:5432"
+
+  redis:
+    restart: "always"
+    image: redis
+    ports:
+      - "26301:6379"
+    deploy:
+      resources:
+        limits:
+          memory: 100m
+
+  elasticsearch:
+    restart: "always"
+    build:
+      context: .
+      dockerfile: ./elasticsearch/Dockerfile.es-v7
+      args:
+        - ELASTICSEARCH_S3_ACCESS_KEY=${ELASTICSEARCH_S3_ACCESS_KEY}
+        - ELASTICSEARCH_S3_SECRET_KEY=${ELASTICSEARCH_S3_SECRET_KEY}
+        - ELASTICSEARCH_S3_ENDPOINT=${ELASTICSEARCH_S3_ENDPOINT}
+        - ELASTICSEARCH_S3_BUCKET=${ELASTICSEARCH_S3_BUCKET}
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    environment:
+      - "discovery.type=single-node"
+      - "ES_JAVA_OPTS=-Xms2048m -Xmx2048m"
+    ports:
+      - "29201:9200"
+      - "29301:9300"
+
+  rabbitmq:
+    restart: "always"
+    image: rabbitmq
+    ports:
+      - "24301:4369"
+      - "45601:25672"
+    environment:
+      - "RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit consumer_timeout 10800000"
+
+  nginx:
+    restart: "always"
+    build: ./nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
+      - data_data:/home/invenio/.virtualenvs/invenio/var/instance/data
+#      - letsencrypt_etc:/etc/letsencrypt
+#      - letsencrypt_html:/var/www/html
+    links:
+      - web
+    deploy:
+      resources:
+        limits:
+          memory: 300m
+
+#  certbot:
+#    image: certbot/certbot:latest
+#    volumes:
+#      - letsencrypt_etc:/etc/letsencrypt
+#      - letsencrypt_html:/var/www/html
+#    command: ["--version"]
+
+  flower:
+    restart: "always"
+    image: mher/flower:0.9.5
+    command: --broker=amqp://guest:guest@rabbitmq:5672// --broker_api=http://guest:guest@rabbitmq:5671/api/
+    ports:
+      - "5501:5555"
+    links:
+      - rabbitmq
+
+#  kibana:
+#    build:
+#      context: .
+#      dockerfile: ./kibana/Dockerfile
+#    restart: "always"
+#    command: kibana
+#    ports:
+#      - "5601:5601"
+#    environment:
+#      - "ELASTICSEARCH_URL=http://elasticsearch:9200"
+#      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+#    links:
+#      - elasticsearch
+
+volumes:
+  weko3_data:
+  static_data:
+  data_data:
+  conf_data:
+  pgsql-data:
+  es-data:
+#  letsencrypt_etc:
+#  letsencrypt_html:
+
