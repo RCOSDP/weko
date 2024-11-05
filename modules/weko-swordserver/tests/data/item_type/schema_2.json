@@ -1,0 +1,881 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "required": [
+    "pubdate",
+    "item_1730255238992",
+    "item_1730255318606"
+  ],
+  "properties": {
+    "pubdate": {
+      "type": "string",
+      "title": "PubDate",
+      "format": "datetime"
+    },
+    "system_file": {
+      "type": "object",
+      "title": "File Information",
+      "format": "object",
+      "properties": {
+        "subitem_systemfile_size": {
+          "type": "string",
+          "title": "SYSTEMFILE Size",
+          "format": "text"
+        },
+        "subitem_systemfile_version": {
+          "type": "string",
+          "title": "SYSTEMFILE Version",
+          "format": "text"
+        },
+        "subitem_systemfile_datetime": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "format": "object",
+            "properties": {
+              "subitem_systemfile_datetime_date": {
+                "type": "string",
+                "title": "SYSTEMFILE DateTime Date",
+                "format": "datetime"
+              },
+              "subitem_systemfile_datetime_type": {
+                "enum": [
+                  "Accepted",
+                  "Available",
+                  "Collected",
+                  "Copyrighted",
+                  "Created",
+                  "Issued",
+                  "Submitted",
+                  "Updated",
+                  "Valid"
+                ],
+                "type": "string",
+                "title": "SYSTEMFILE DateTime Type",
+                "format": "select"
+              }
+            }
+          },
+          "title": "SYSTEMFILE DateTime",
+          "format": "array"
+        },
+        "subitem_systemfile_filename": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "format": "object",
+            "properties": {
+              "subitem_systemfile_filename_uri": {
+                "type": "string",
+                "title": "SYSTEMFILE Filename URI",
+                "format": "text"
+              },
+              "subitem_systemfile_filename_type": {
+                "enum": [
+                  "Abstract",
+                  "Fulltext",
+                  "Summary",
+                  "Thumbnail",
+                  "Other"
+                ],
+                "type": "string",
+                "title": "SYSTEMFILE Filename Type",
+                "format": "select"
+              },
+              "subitem_systemfile_filename_label": {
+                "type": "string",
+                "title": "SYSTEMFILE Filename Label",
+                "format": "text"
+              }
+            }
+          },
+          "title": "SYSTEMFILE Filename",
+          "format": "array"
+        },
+        "subitem_systemfile_mimetype": {
+          "type": "string",
+          "title": "SYSTEMFILE MimeType",
+          "format": "text"
+        }
+      },
+      "system_prop": true
+    },
+    "item_1730255238992": {
+      "type": "object",
+      "title": "タイトル",
+      "required": [
+        "subitem_title",
+        "subitem_title_language"
+      ],
+      "properties": {
+        "subitem_title": {
+          "type": "string",
+          "title": "タイトル",
+          "format": "text",
+          "title_i18n": {
+            "en": "Title",
+            "ja": "タイトル"
+          }
+        },
+        "subitem_title_language": {
+          "enum": [
+            null,
+            "ja",
+            "ja-Kana",
+            "ja-Latn",
+            "en",
+            "fr",
+            "it",
+            "de",
+            "es",
+            "zh-cn",
+            "zh-tw",
+            "ru",
+            "la",
+            "ms",
+            "eo",
+            "ar",
+            "el",
+            "ko"
+          ],
+          "type": [
+            "null",
+            "string"
+          ],
+          "title": "言語",
+          "format": "select",
+          "currentEnum": [
+            "ja",
+            "ja-Kana",
+            "ja-Latn",
+            "en",
+            "fr",
+            "it",
+            "de",
+            "es",
+            "zh-cn",
+            "zh-tw",
+            "ru",
+            "la",
+            "ms",
+            "eo",
+            "ar",
+            "el",
+            "ko"
+          ]
+        }
+      }
+    },
+    "item_1730255318606": {
+      "type": "object",
+      "title": "著者",
+      "required": [
+        "subitem_author_name"
+      ],
+      "properties": {
+        "subitem_author_name": {
+          "type": "string",
+          "title": "著者名",
+          "format": "text",
+          "title_i18n": {
+            "en": "Author name",
+            "ja": "著者名"
+          }
+        }
+      }
+    },
+    "item_1730255441907": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "givenNames": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "format": "object",
+              "properties": {
+                "givenName": {
+                  "type": "string",
+                  "title": "名",
+                  "format": "text",
+                  "title_i18n": {
+                    "en": "Given Name",
+                    "ja": "名"
+                  }
+                },
+                "givenNameLang": {
+                  "enum": [
+                    null,
+                    "ja",
+                    "ja-Kana",
+                    "ja-Latn",
+                    "en",
+                    "fr",
+                    "it",
+                    "de",
+                    "es",
+                    "zh-cn",
+                    "zh-tw",
+                    "ru",
+                    "la",
+                    "ms",
+                    "eo",
+                    "ar",
+                    "el",
+                    "ko"
+                  ],
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "title": "言語",
+                  "format": "select",
+                  "currentEnum": [
+                    "ja",
+                    "ja-Kana",
+                    "ja-Latn",
+                    "en",
+                    "fr",
+                    "it",
+                    "de",
+                    "es",
+                    "zh-cn",
+                    "zh-tw",
+                    "ru",
+                    "la",
+                    "ms",
+                    "eo",
+                    "ar",
+                    "el",
+                    "ko"
+                  ]
+                }
+              }
+            },
+            "title": "寄与者名",
+            "format": "array"
+          },
+          "familyNames": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "format": "object",
+              "properties": {
+                "familyName": {
+                  "type": "string",
+                  "title": "姓",
+                  "format": "text",
+                  "title_i18n": {
+                    "en": "Family Name",
+                    "ja": "姓"
+                  }
+                },
+                "familyNameLang": {
+                  "enum": [
+                    null,
+                    "ja",
+                    "ja-Kana",
+                    "ja-Latn",
+                    "en",
+                    "fr",
+                    "it",
+                    "de",
+                    "es",
+                    "zh-cn",
+                    "zh-tw",
+                    "ru",
+                    "la",
+                    "ms",
+                    "eo",
+                    "ar",
+                    "el",
+                    "ko"
+                  ],
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "title": "言語",
+                  "format": "select",
+                  "currentEnum": [
+                    "ja",
+                    "ja-Kana",
+                    "ja-Latn",
+                    "en",
+                    "fr",
+                    "it",
+                    "de",
+                    "es",
+                    "zh-cn",
+                    "zh-tw",
+                    "ru",
+                    "la",
+                    "ms",
+                    "eo",
+                    "ar",
+                    "el",
+                    "ko"
+                  ]
+                }
+              }
+            },
+            "title": "寄与者姓",
+            "format": "array"
+          },
+          "contributorType": {
+            "enum": [
+              null,
+              "ContactPerson",
+              "DataCollector",
+              "DataCurator",
+              "DataManager",
+              "Distributor",
+              "Editor",
+              "HostingInstitution",
+              "Producer",
+              "ProjectLeader",
+              "ProjectManager",
+              "ProjectMember",
+              "RelatedPerson",
+              "Researcher",
+              "ResearchGroup",
+              "Sponsor",
+              "Supervisor",
+              "WorkPackageLeader",
+              "Other"
+            ],
+            "type": [
+              "null",
+              "string"
+            ],
+            "title": "寄与者タイプ",
+            "format": "select",
+            "currentEnum": [
+              "ContactPerson",
+              "DataCollector",
+              "DataCurator",
+              "DataManager",
+              "Distributor",
+              "Editor",
+              "HostingInstitution",
+              "Producer",
+              "ProjectLeader",
+              "ProjectManager",
+              "ProjectMember",
+              "RelatedPerson",
+              "Researcher",
+              "ResearchGroup",
+              "Sponsor",
+              "Supervisor",
+              "WorkPackageLeader",
+              "Other"
+            ]
+          },
+          "nameIdentifiers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "format": "object",
+              "properties": {
+                "nameIdentifier": {
+                  "type": "string",
+                  "title": "寄与者識別子",
+                  "format": "text",
+                  "title_i18n": {
+                    "en": "Contributor Name Identifier",
+                    "ja": "寄与者識別子"
+                  }
+                },
+                "nameIdentifierURI": {
+                  "type": "string",
+                  "title": "寄与者識別子URI",
+                  "format": "text",
+                  "title_i18n": {
+                    "en": "Contributor Name Identifier URI",
+                    "ja": "寄与者識別子URI"
+                  }
+                },
+                "nameIdentifierScheme": {
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "title": "寄与者識別子Scheme",
+                  "format": "select",
+                  "currentEnum": []
+                }
+              }
+            },
+            "title": "寄与者識別子",
+            "format": "array"
+          },
+          "contributorMails": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "format": "object",
+              "properties": {
+                "contributorMail": {
+                  "type": "string",
+                  "title": "メールアドレス",
+                  "format": "text",
+                  "title_i18n": {
+                    "en": "Email Address",
+                    "ja": "メールアドレス"
+                  }
+                }
+              }
+            },
+            "title": "寄与者メールアドレス",
+            "format": "array"
+          },
+          "contributorNames": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "format": "object",
+              "properties": {
+                "lang": {
+                  "enum": [
+                    null,
+                    "ja",
+                    "ja-Kana",
+                    "ja-Latn",
+                    "en",
+                    "fr",
+                    "it",
+                    "de",
+                    "es",
+                    "zh-cn",
+                    "zh-tw",
+                    "ru",
+                    "la",
+                    "ms",
+                    "eo",
+                    "ar",
+                    "el",
+                    "ko"
+                  ],
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "title": "言語",
+                  "format": "select",
+                  "currentEnum": [
+                    "ja",
+                    "ja-Kana",
+                    "ja-Latn",
+                    "en",
+                    "fr",
+                    "it",
+                    "de",
+                    "es",
+                    "zh-cn",
+                    "zh-tw",
+                    "ru",
+                    "la",
+                    "ms",
+                    "eo",
+                    "ar",
+                    "el",
+                    "ko"
+                  ]
+                },
+                "nameType": {
+                  "enum": [
+                    null,
+                    "Personal",
+                    "Organizational"
+                  ],
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "title": "名前タイプ",
+                  "format": "select",
+                  "currentEnum": [
+                    "Personal",
+                    "Organizational"
+                  ]
+                },
+                "contributorName": {
+                  "type": "string",
+                  "title": "姓名",
+                  "format": "text",
+                  "title_i18n": {
+                    "en": "Name",
+                    "ja": "姓名"
+                  }
+                }
+              }
+            },
+            "title": "寄与者姓名",
+            "format": "array"
+          },
+          "contributorAffiliations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "format": "object",
+              "properties": {
+                "contributorAffiliationNames": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "format": "object",
+                    "properties": {
+                      "contributorAffiliationName": {
+                        "type": "string",
+                        "title": "所属機関名",
+                        "format": "text",
+                        "title_i18n": {
+                          "en": "Affiliation Name",
+                          "ja": "所属機関名"
+                        }
+                      },
+                      "contributorAffiliationNameLang": {
+                        "enum": [
+                          null,
+                          "ja",
+                          "ja-Kana",
+                          "ja-Latn",
+                          "en",
+                          "fr",
+                          "it",
+                          "de",
+                          "es",
+                          "zh-cn",
+                          "zh-tw",
+                          "ru",
+                          "la",
+                          "ms",
+                          "eo",
+                          "ar",
+                          "el",
+                          "ko"
+                        ],
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "title": "言語",
+                        "format": "select",
+                        "currentEnum": [
+                          "ja",
+                          "ja-Kana",
+                          "ja-Latn",
+                          "en",
+                          "fr",
+                          "it",
+                          "de",
+                          "es",
+                          "zh-cn",
+                          "zh-tw",
+                          "ru",
+                          "la",
+                          "ms",
+                          "eo",
+                          "ar",
+                          "el",
+                          "ko"
+                        ]
+                      }
+                    }
+                  },
+                  "title": "所属機関名",
+                  "format": "array"
+                },
+                "contributorAffiliationNameIdentifiers": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "format": "object",
+                    "properties": {
+                      "contributorAffiliationURI": {
+                        "type": "string",
+                        "title": "所属機関識別子URI",
+                        "format": "text",
+                        "title_i18n": {
+                          "en": "Affiliation Name Identifier URI",
+                          "ja": "所属機関識別子URI"
+                        }
+                      },
+                      "contributorAffiliationScheme": {
+                        "enum": [
+                          null,
+                          "kakenhi",
+                          "ISNI",
+                          "Ringgold",
+                          "GRID"
+                        ],
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "title": "所属機関識別子Scheme",
+                        "format": "select",
+                        "currentEnum": [
+                          "kakenhi",
+                          "ISNI",
+                          "Ringgold",
+                          "GRID"
+                        ]
+                      },
+                      "contributorAffiliationNameIdentifier": {
+                        "type": "string",
+                        "title": "所属機関識別子",
+                        "format": "text",
+                        "title_i18n": {
+                          "en": "Affiliation Name Identifier",
+                          "ja": "所属機関識別子"
+                        }
+                      }
+                    }
+                  },
+                  "title": "所属機関識別子",
+                  "format": "array"
+                }
+              }
+            },
+            "title": "寄与者所属",
+            "format": "array"
+          },
+          "contributorAlternatives": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "format": "object",
+              "properties": {
+                "contributorAlternative": {
+                  "type": "string",
+                  "title": "別名",
+                  "format": "text",
+                  "title_i18n": {
+                    "en": "Alternative Name",
+                    "ja": "別名"
+                  }
+                },
+                "contributorAlternativeLang": {
+                  "enum": [
+                    null,
+                    "ja",
+                    "ja-Kana",
+                    "ja-Latn",
+                    "en",
+                    "fr",
+                    "it",
+                    "de",
+                    "es",
+                    "zh-cn",
+                    "zh-tw",
+                    "ru",
+                    "la",
+                    "ms",
+                    "eo",
+                    "ar",
+                    "el",
+                    "ko"
+                  ],
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "title": "言語",
+                  "format": "select",
+                  "currentEnum": [
+                    "ja",
+                    "ja-Kana",
+                    "ja-Latn",
+                    "en",
+                    "fr",
+                    "it",
+                    "de",
+                    "es",
+                    "zh-cn",
+                    "zh-tw",
+                    "ru",
+                    "la",
+                    "ms",
+                    "eo",
+                    "ar",
+                    "el",
+                    "ko"
+                  ]
+                }
+              }
+            },
+            "title": "寄与者別名",
+            "format": "array"
+          }
+        }
+      },
+      "title": "寄与者",
+      "maxItems": 9999,
+      "minItems": 1
+    },
+    "item_1730256425948": {
+      "type": "object",
+      "title": "要約",
+      "properties": {
+        "subitem_summary": {
+          "type": "string",
+          "title": "要約",
+          "format": "textarea",
+          "title_i18n": {
+            "en": "Summary",
+            "ja": "要約"
+          }
+        }
+      }
+    },
+    "item_1730256524921": {
+      "type": "object",
+      "title": "サブタイトル",
+      "properties": {
+        "subitem_alternative_title": {
+          "type": "string",
+          "title": "その他のタイトル",
+          "format": "text",
+          "title_i18n": {
+            "en": "Alternative Title",
+            "ja": "その他のタイトル"
+          }
+        },
+        "subitem_alternative_title_language": {
+          "enum": [
+            null,
+            "ja",
+            "ja-Kana",
+            "ja-Latn",
+            "en",
+            "fr",
+            "it",
+            "de",
+            "es",
+            "zh-cn",
+            "zh-tw",
+            "ru",
+            "la",
+            "ms",
+            "eo",
+            "ar",
+            "el",
+            "ko"
+          ],
+          "type": [
+            "null",
+            "string"
+          ],
+          "title": "言語",
+          "format": "select",
+          "currentEnum": [
+            "ja",
+            "ja-Kana",
+            "ja-Latn",
+            "en",
+            "fr",
+            "it",
+            "de",
+            "es",
+            "zh-cn",
+            "zh-tw",
+            "ru",
+            "la",
+            "ms",
+            "eo",
+            "ar",
+            "el",
+            "ko"
+          ]
+        }
+      }
+    },
+    "system_identifier_doi": {
+      "type": "object",
+      "title": "Persistent Identifier(DOI)",
+      "format": "object",
+      "properties": {
+        "subitem_systemidt_identifier": {
+          "type": "string",
+          "title": "SYSTEMIDT Identifier",
+          "format": "text"
+        },
+        "subitem_systemidt_identifier_type": {
+          "enum": [
+            "DOI",
+            "HDL",
+            "URI"
+          ],
+          "type": "string",
+          "title": "SYSTEMIDT Identifier Type",
+          "format": "select",
+          "currentEnum": [
+            "DOI",
+            "HDL",
+            "URI"
+          ]
+        }
+      },
+      "system_prop": true
+    },
+    "system_identifier_hdl": {
+      "type": "object",
+      "title": "Persistent Identifier(HDL)",
+      "format": "object",
+      "properties": {
+        "subitem_systemidt_identifier": {
+          "type": "string",
+          "title": "SYSTEMIDT Identifier",
+          "format": "text"
+        },
+        "subitem_systemidt_identifier_type": {
+          "enum": [
+            "DOI",
+            "HDL",
+            "URI"
+          ],
+          "type": "string",
+          "title": "SYSTEMIDT Identifier Type",
+          "format": "select",
+          "currentEnum": [
+            "DOI",
+            "HDL",
+            "URI"
+          ]
+        }
+      },
+      "system_prop": true
+    },
+    "system_identifier_uri": {
+      "type": "object",
+      "title": "Persistent Identifier(URI)",
+      "format": "object",
+      "properties": {
+        "subitem_systemidt_identifier": {
+          "type": "string",
+          "title": "SYSTEMIDT Identifier",
+          "format": "text"
+        },
+        "subitem_systemidt_identifier_type": {
+          "enum": [
+            "DOI",
+            "HDL",
+            "URI"
+          ],
+          "type": "string",
+          "title": "SYSTEMIDT Identifier Type",
+          "format": "select",
+          "currentEnum": [
+            "DOI",
+            "HDL",
+            "URI"
+          ]
+        }
+      },
+      "system_prop": true
+    }
+  },
+  "description": ""
+}

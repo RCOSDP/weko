@@ -22,7 +22,7 @@ def sword_mapping(db, item_type):
         obj = SwordItemTypeMappingModel(
             name=f"test{i}",
             mapping={"test": "test"},
-            item_type_id=item_type["item_type"].id,
+            item_type_id=item_type[0]["item_type"].id,
             is_deleted=False
         )
         with db.session.begin_nested():
@@ -84,7 +84,7 @@ class TestSwordItemTypeMapping:
         obj = SwordItemTypeMapping.create(
             name="test1",
             mapping={"test": "test"},
-            item_type_id=item_type["item_type"].id
+            item_type_id=item_type[0]["item_type"].id
         )
         assert obj.id == 1
         assert (SwordItemTypeMappingModel.query.filter_by(id=obj.id).first()) == obj
@@ -93,7 +93,7 @@ class TestSwordItemTypeMapping:
         obj = SwordItemTypeMapping.create(
             name="test2",
             mapping={"test": "test"},
-            item_type_id=item_type["item_type"].id
+            item_type_id=item_type[0]["item_type"].id
         )
         assert obj.id == 2
         assert (SwordItemTypeMappingModel.query

@@ -394,35 +394,53 @@ def item_type(app, db):
     item_type_name = ItemTypeName(id=1,
         name="デフォルトアイテムタイプ（フル）", has_site_license=True, is_active=True
     )
-    item_type_schema = json_data("data/item_type/schema_1.json")
-
-    item_type_form = json_data("data/item_type/form_1.json")
-
-    item_type_render = json_data("data/item_type/render_1.json")
-
-    item_type_mapping = json_data("data/item_type/mapping_1.json")
 
     item_type = ItemType(
         id=1,
         name_id=1,
         harvesting_type=True,
-        schema=item_type_schema,
-        form=item_type_form,
-        render=item_type_render,
+        schema=json_data("data/item_type/schema_1.json"),
+        form=json_data("data/item_type/form_1.json"),
+        render=json_data("data/item_type/render_1.json"),
         tag=1,
         version_id=1,
         is_deleted=False,
     )
-    item_type_mapping = ItemTypeMapping(id=1,item_type_id=1, mapping=item_type_mapping)
+    item_type_mapping = ItemTypeMapping(
+        id=1,
+        item_type_id=1,
+        mapping=json_data("data/item_type/mapping_1.json")
+    )
+
+    item_type_name_2 = ItemTypeName(id=2,
+        name="シンプルアイテムタイプ", has_site_license=True, is_active=True
+    )
+
+    item_type_2 = ItemType(
+        id=2,
+        name_id=2,
+        harvesting_type=True,
+        schema=json_data("data/item_type/schema_2.json"),
+        form=json_data("data/item_type/form_2.json"),
+        render=json_data("data/item_type/render_2.json"),
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
 
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
         db.session.add(item_type_mapping)
+        db.session.add(item_type_name_2)
+        db.session.add(item_type_2)
 
     db.session.commit()
 
-    return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
+    return [
+        {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping},
+        {"item_type_name": item_type_name_2, "item_type": item_type_2, "item_type_mapping":None}
+    ]
 
 @pytest.fixture()
 def doi_identifier(app, db):

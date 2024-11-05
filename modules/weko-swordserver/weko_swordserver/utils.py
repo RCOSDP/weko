@@ -11,12 +11,12 @@ import os
 import sys
 import tempfile
 import traceback
-from base64 import b64encode
+from copy import deepcopy
 from datetime import datetime, timezone
 from hashlib import sha256
 from zipfile import ZipFile
 
-from flask import current_app, request
+from flask import current_app
 from invenio_oauth2server.provider import get_token
 
 from .api import SwordClient, SwordItemTypeMapping
@@ -79,7 +79,8 @@ def unpack_zip(file):
         file (FileStorage): Zip file.
 
     Returns:
-        tuple (str, list[ZipInfo]): Extracted files path and file information
+        tuple (str, list[str]):
+        data_path: Path of extracted files, file_list: List of extracted files.
 
     """
     data_path = (
@@ -208,3 +209,58 @@ def get_record_by_token(access_token):
     sword_mapping = SwordItemTypeMapping.get_mapping_by_id(mapping_id)
 
     return sword_client, sword_mapping
+
+def process_json(json_ld):
+    """Process json-ld.
+
+    Process RO-Crate metadata json-ld data.
+    Pick up necessary data from @graph and resolve links
+    in order to map to WEKO item type.
+
+    Args:
+        json_ld (dict): Json-ld data.
+
+    Returns:
+        dict: Processed json data.
+    """
+    json = deepcopy(json_ld)
+
+    # transform list that contains @id to dict in @graph
+    if "@graph" in json and isinstance(json["@graph"], list):
+        new_value = {}
+        for v in json["@graph"]:
+            if isinstance(v, dict) and "@id" in v:
+                new_value[v["@id"]] = v
+            else:
+                new_value = value
+                break
+        json["@graph"] = new_value
+    # Remove unnecessary keys
+    json = {**json["@graph"]}
+
+    def _resolve_link(parent, key, value):
+        if isinstance(value, dict):
+            if len(value) == 1 and "@id" in value and value["@id"] in json:
+                parent[key] = json[value["@id"]]
+            else:
+                for k, v in value.items():
+                    _resolve_link(value, k, v)
+        elif isinstance(value, list):
+            for i, v in enumerate(value):
+                _resolve_link(value, i, v)
+
+    for key, value in json.items():
+        _resolve_link(json, key, value)
+
+    # prepare json for mapper format
+    json = {
+        "record": {
+            "header": {
+                "identifier": json["./"]["name"],
+                "datestamp": json["./"]["datePublished"]
+            },
+            "metadata": json
+        }
+    }
+
+    return json

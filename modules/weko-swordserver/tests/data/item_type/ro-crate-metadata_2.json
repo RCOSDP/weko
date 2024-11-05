@@ -1,0 +1,133 @@
+{
+  "@context": "https://w3id.org/ro/crate/1.1/context",
+  "@graph": [
+    {
+      "@id": "./",
+      "@type": "Dataset",
+      "creator": {
+        "@id": "http://orcid.org/0000-0002-1825-0097"
+      },
+      "datePublished": "2023/01/18T23:39:34Z",
+      "description": "A simple example of a tree.",
+      "hasPart": [
+        {
+          "@id": "data/tree.md"
+        }
+      ],
+      "name": "The Tree"
+    },
+    {
+      "@id": "ro-crate-metadata.json",
+      "@type": "CreativeWork",
+      "about": {
+        "@id": "./"
+      },
+      "conformsTo": {
+        "@id": "https://w3id.org/ro/crate/1.1"
+      }
+    },
+    {
+      "@id": "#summary",
+      "@type": "Thing",
+      "summary": "the tree of simple itemtype"
+    },
+    {
+      "@id": "data/tree.md",
+      "@type": "File",
+      "author": {
+        "@id": "http://orcid.org/0000-0002-1825-0097"
+      },
+      "contentSize": "1641",
+      "contributor": {
+        "@id": "http://orcid.org/0000-0002-1825-0085"
+      },
+      "date": {
+        "@id": "#date"
+      },
+      "encodingFormat": "text/markdown",
+      "identifier": {
+        "@id": "https://example.org/data/tree.md",
+        "label": "tree.md",
+        "type": "File"
+      },
+      "name": "tree.md",
+      "version": "1.0"
+    },
+    {
+      "@id": "http://orcid.org/0000-0002-1825-0097",
+      "@type": "Person",
+      "identifier": {
+        "@id": "https://orcid.org/0000-0002-1234-5678",
+        "schema": "https://orcid.org",
+        "uri": "https://orcid.org/0000-0002-1234-5678"
+      },
+      "name": "Egon Willighagen"
+    },
+    {
+      "@id": "http://orcid.org/0000-0002-1825-0085",
+      "@type": "Person",
+      "affiliation": {
+        "@id": "#affiliation"
+      },
+      "alternateName": {
+        "@id": "#alternateName"
+      },
+      "contributorType": "Researcher",
+      "email": "contributor@example.org",
+      "familyName": {
+        "@id": "#familyName"
+      },
+      "fullname": "Stian Soiland-Reyes",
+      "givenName": {
+        "@id": "#givenName"
+      },
+      "identifier": {
+        "@id": "https://orcid.org/0000-0002-1234-5679",
+        "schema": "https://orcid.org",
+        "uri": "https://orcid.org/0000-0002-1234-5679"
+      },
+      "nametype": "Personal"
+    },
+    {
+      "@id": "#alternateName",
+      "@type": "Thing",
+      "language": "en",
+      "name": "Stian S.R."
+    },
+    {
+      "@id": "#givenName",
+      "@type": "Thing",
+      "language": "en",
+      "name": "Stian"
+    },
+    {
+      "@id": "#familyName",
+      "@type": "Thing",
+      "language": "en",
+      "name": "Soiland-Reyes"
+    },
+    {
+      "@id": "#affiliation",
+      "@type": "Thing",
+      "identifier": {
+        "@id": "https://example.org/affiliation",
+        "schema": "https://example.org/schema",
+        "uri": "https://example.org/affiliation"
+      },
+      "language": "en",
+      "name": "University of Manchester"
+    },
+    {
+      "@id": "#title",
+      "@type": "Thing",
+      "language": "ja",
+      "name": "アイテムタイプの木構造"
+    },
+    {
+      "@id": "#subtitle",
+      "@type": "Thing",
+      "language": "ja",
+      "name": "試しに作ってみた"
+    }
+  ]
+}
