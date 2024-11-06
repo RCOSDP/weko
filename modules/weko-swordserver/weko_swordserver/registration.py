@@ -13,14 +13,18 @@ import traceback
 from flask import current_app, request
 from zipfile import BadZipFile
 
+from weko_search_ui.utils import *
+
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkFlow
 from .errors import ErrorType, WekoSwordserverException
+from .mapper import WekoSwordMapper
 from .utils import (
     check_rocrate_required_files,
     check_swordbagit_required_files,
     get_record_by_token,
-    unpack_zip)
+    unpack_zip,
+    process_json)
 
 
 def check_import_items(file, is_change_identifier = False):
@@ -87,8 +91,10 @@ def check_bagit_import_items(file, file_format):
         # Check if all required files are contained
         if file_format == 'ROCRATE':
             all_file_contained = all(check_rocrate_required_files(file_list))
+            json_name = "ro-crate-metadata.json"
         elif file_format == 'SWORD':
             all_file_contained = all(check_swordbagit_required_files(file_list))
+            json_name = "metadata/sword.json"
 
         if not all_file_contained:
             raise WekoSwordserverException(
@@ -142,7 +148,26 @@ def check_bagit_import_items(file, file_format):
         # TODO: validate mapping
         mapping = json.loads(sword_mapping.mapping)
 
+        with open(f"{data_path}/{json_name}", "r") as f:
+            json_ld = json.load(f)
+        processed_json = process_json(json_ld)
+
         # TODO: make check_result
+        list_record = []
+
+        list_record.extend(generate_metadata_from_json(processed_json, mapping, item_type))
+
+        list_record = handle_check_exist_record(list_record)
+
+        handle_item_title(list_record)
+
+        list_record = handle_check_date(list_record)
+
+        handle_check_id(list_record)
+
+        handle_check_file_metadata(list_record, data_path)
+
+        check_result.update({"list_record": list_record})
 
     except WekoSwordserverException:
         raise
@@ -187,3 +212,42 @@ def check_bagit_import_items(file, file_format):
             check_result.update({"error": str(ex)})
 
     return check_result
+
+
+# TODO: add generate_metadata function, and add read_json function
+def generate_metadata_from_json(json, mapping, item_type, is_change_identifier=False):
+    """Generate metadata from JSON-LD.
+
+    Args:
+        json (dict): Json data including metadata.
+        mapping (dict): Mapping definition.
+        item_type_id (int): ItemType ID used for registration.
+        is_change_identifier (bool, optional):
+            Change Identifier Mode. Defaults to False.
+
+    Returns:
+        list: list_record.
+    """
+    list_record = []
+
+    # FIXME: Change constructor of WekoSwordMapper to get self.itemtype_name from item_type.item_type_name.
+    mapper = WekoSwordMapper(json, item_type.item_type_name, mapping)
+    mapper.map_itemtype("")
+    metadata = mapper.map()
+
+    list_record.append({
+        "$schema": item_type.schema,
+        "metadata": metadata,
+        "item_type_name": item_type.item_type_name,
+        "item_type_id": item_type.id,
+    })
+
+    handle_set_change_identifier_flag(list_record, is_change_identifier)
+    # FIXME: Change method below for GRDM link.
+    handle_fill_system_item(list_record)
+
+    list_record = handle_validate_item_import(
+        list_record, item_type.schema
+    )
+
+    return list_record
