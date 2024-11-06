@@ -24,7 +24,8 @@ from .utils import (
     check_swordbagit_required_files,
     get_record_by_token,
     unpack_zip,
-    process_json)
+    process_json
+)
 
 
 def check_import_items(file, is_change_identifier = False):
@@ -52,6 +53,7 @@ def check_bagit_import_items(file, file_format):
             check_result = {
                 "data_path": "/tmp/xxxxx",
                 "list_record": [
+                    # metadata
                 ]
                 "register_format": "Direct",
                 "item_type_id": 1,
@@ -62,14 +64,12 @@ def check_bagit_import_items(file, file_format):
             check_result = {
                 "data_path": "/tmp/xxxxx",
                 "list_record": [
+                    # metadata
                 ]
                 "register_format": "Workflow",
                 "workflow_id": 1,
                 "item_type_id": 2,
             }
-
-
-
     """
     check_result = {}
     if "On-Behalf-Of" in request.headers:
@@ -153,18 +153,13 @@ def check_bagit_import_items(file, file_format):
         processed_json = process_json(json_ld)
 
         # TODO: make check_result
-        list_record = []
-
-        list_record.extend(generate_metadata_from_json(processed_json, mapping, item_type))
-
+        list_record = generate_metadata_from_json(
+            processed_json, mapping, item_type
+        )
         list_record = handle_check_exist_record(list_record)
-
         handle_item_title(list_record)
-
         list_record = handle_check_date(list_record)
-
         handle_check_id(list_record)
-
         handle_check_file_metadata(list_record, data_path)
 
         check_result.update({"list_record": list_record})

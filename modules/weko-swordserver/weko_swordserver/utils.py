@@ -76,7 +76,7 @@ def unpack_zip(file):
     Unpack zip file and return extracted files information.
 
     Args:
-        file (FileStorage): Zip file.
+        file (FileStorage | str): Zip file object or file path.
 
     Returns:
         tuple (str, list[str]):
