@@ -143,7 +143,6 @@ def check_bagit_import_items(file, file_format):
                 errorType=ErrorType.ItemTypeNotFound
             )
         check_result.update({"item_type_id": item_type.id})
-        item_type_name = item_type.item_type_name
 
         # TODO: validate mapping
         mapping = json.loads(sword_mapping.mapping)
@@ -225,9 +224,7 @@ def generate_metadata_from_json(json, mapping, item_type, is_change_identifier=F
     """
     list_record = []
 
-    # FIXME: Change constructor of WekoSwordMapper to get self.itemtype_name from item_type.item_type_name.
-    mapper = WekoSwordMapper(json, item_type.item_type_name, mapping)
-    mapper.map_itemtype("")
+    mapper = WekoSwordMapper(json, item_type, mapping)
     metadata = mapper.map()
 
     list_record.append({
