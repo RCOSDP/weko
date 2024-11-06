@@ -110,14 +110,15 @@ def check_digest():
         def decorated(*args, **kwargs):
             # Check Digest
             digest = request.headers.get("Digest", None)
-            file = kwargs.get('file', None)
+            file = kwargs.get("file", None)
+            file_format = kwargs.get("file_format", None)
 
             from .utils import is_valid_body_hash
             is_valid_bodyhash = is_valid_body_hash(digest, file)
 
             result = f(*args, **kwargs)
 
-            if result in ["SWORD", "ROCRATE"]:
+            if (file_format or result) in ["SWORD", "ROCRATE"]:
                 if digest is None or not is_valid_bodyhash:
                     raise WekoSwordserverException(
                         "Request body and digest verification failed.",

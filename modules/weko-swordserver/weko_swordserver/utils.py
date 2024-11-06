@@ -124,32 +124,18 @@ def is_valid_body_hash(digest, body):
     Returns:
         bool: Check result.
     """
-    body_hash = calculate_sha256(body)
+    sha256_hash = sha256()
+    for byte_block in iter(lambda: body.read(4096), b""):
+        sha256_hash.update(byte_block)
+    body.seek(0)
+    body_hash = sha256_hash.hexdigest()
 
     result = False
-
     if ('SHA-256=' in digest
         and digest.split('SHA-256=')[-1] == body_hash):
         result = True
 
     return result
-
-
-def calculate_sha256(file):
-    """Calculate SHA-256 of a file.
-
-    Args:
-        file (_type_): File to be calculated.
-
-    Returns:
-        _type_: Calculate result.
-    """
-    sha256_hash = sha256()
-    for byte_block in iter(lambda: file.read(4096), b""):
-        sha256_hash.update(byte_block)
-    file.seek(0)
-
-    return sha256_hash.hexdigest()
 
 
 def check_rocrate_required_files(file_list):

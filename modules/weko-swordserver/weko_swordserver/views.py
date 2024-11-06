@@ -208,19 +208,10 @@ def post_service_document():
         )
 
     packaging = request.headers.get("Packaging").split("/")[-1]
-
-    # Validate Digest SHA-256 before check_import_file_format()
-    # digest = request.headers.get("Digest")
-    # is_valid_bodyhash = is_valid_body_hash(digest, file)
-
+    # check digest and file format
     file_format = check_import_file_format(file=file, packaging=packaging)
 
     if file_format in ["SWORD", "ROCRATE"]:
-        # if digest is None or not is_valid_bodyhash:
-        #     raise WekoSwordserverException(
-        #         "Request body and digest verification failed.",
-        #         ErrorType.BadRequest
-        #         )
 
         check_result = check_bagit_import_items(file, file_format)
         register_format = check_result.get("register_format")
