@@ -238,12 +238,17 @@ def process_json(json_ld):
     for key, value in json.items():
         _resolve_link(json, key, value)
 
+    # replace Dataset identifier
+    id = current_app.config["WEKO_SWORDSERVER_DATASET_IDENTIFIER"].get("")
+    enc = current_app.config["WEKO_SWORDSERVER_DATASET_IDENTIFIER"].get("enc")
+    json.update({enc: json.pop(id)})
+
     # prepare json for mapper format
     json = {
         "record": {
             "header": {
-                "identifier": json["./"]["name"],
-                "datestamp": json["./"]["datePublished"]
+                "identifier": json[enc]["name"],
+                "datestamp": json[enc]["datePublished"]
             },
             "metadata": json
         }

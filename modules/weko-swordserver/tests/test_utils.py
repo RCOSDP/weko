@@ -16,8 +16,9 @@ from .helpers import json_data
 
 # def process_json():
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_process_json -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-def test_process_json():
-    json_ld = json_data("data/item_type/ro-crate-metadata_2.json")
-    json = process_json(json_ld)
+def test_process_json(app):
+    with app.app_context():
+        json_ld = json_data("data/item_type/ro-crate-metadata_2.json")
+        json = process_json(json_ld)
 
-    assert json == json_data("data/item_type/processed_json_2.json")
+        assert json == json_data("data/item_type/processed_json_2.json")
