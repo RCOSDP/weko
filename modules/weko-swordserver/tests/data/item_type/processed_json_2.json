@@ -35,50 +35,55 @@
               "name": "Egon Willighagen"
             },
             "contentSize": "1641",
-            "contributor": {
-              "@id": "http://orcid.org/0000-0002-1825-0085",
-              "@type": "Person",
-              "affiliation": {
-                "@id": "#affiliation",
-                "@type": "Thing",
-                "identifier": {
-                  "@id": "https://example.org/affiliation",
-                  "schema": "https://example.org/schema",
-                  "uri": "https://example.org/affiliation"
+            "contributor": [
+              {
+                "@id": "http://orcid.org/0000-0002-1825-0085",
+                "@type": "Person",
+                "affiliation": {
+                  "@id": "#affiliation",
+                  "@type": "Organization",
+                  "identifier": {
+                    "@id": "https://example.org/affiliation",
+                    "schema": "https://example.org/schema",
+                    "uri": "https://example.org/affiliation"
+                  },
+                  "language": "en",
+                  "name": "University of Manchester"
                 },
-                "language": "en",
-                "name": "University of Manchester"
-              },
-              "alternateName": {
-                "@id": "#alternateName",
-                "@type": "Thing",
-                "language": "en",
-                "name": "Stian S.R."
-              },
-              "contributorType": "Researcher",
-              "email": "contributor@example.org",
-              "familyName": {
-                "@id": "#familyName",
-                "@type": "Thing",
-                "language": "en",
-                "name": "Soiland-Reyes"
-              },
-              "fullname": "Stian Soiland-Reyes",
-              "givenName": {
-                "@id": "#givenName",
-                "@type": "Thing",
-                "language": "en",
-                "name": "Stian"
-              },
-              "identifier": {
-                "@id": "https://orcid.org/0000-0002-1234-5679",
-                "schema": "https://orcid.org",
-                "uri": "https://orcid.org/0000-0002-1234-5679"
-              },
-              "nametype": "Personal"
-            },
-            "date": {
-              "@id": "#date"
+                "alternateName": {
+                  "@id": "#alternateName",
+                  "@type": "Thing",
+                  "language": "en",
+                  "name": "Stian S.R."
+                },
+                "contributorType": "Researcher",
+                "email": "contributor@example.org",
+                "familyName": {
+                  "@id": "#familyName",
+                  "@type": "Thing",
+                  "language": "en",
+                  "name": "Soiland-Reyes"
+                },
+                "fullname": "Stian Soiland-Reyes",
+                "givenName": {
+                  "@id": "#givenName",
+                  "@type": "Thing",
+                  "language": "en",
+                  "name": "Stian"
+                },
+                "identifier": {
+                  "@id": "https://orcid.org/0000-0002-1234-5679",
+                  "schema": "https://orcid.org",
+                  "uri": "https://orcid.org/0000-0002-1234-5679"
+                },
+                "nametype": "Personal"
+              }
+            ],
+            "datetime": {
+              "@id": "#datetime",
+              "@type": "DateTime",
+              "date": "2024/11/07T06:24:40Z",
+              "type": "Created"
             },
             "encodingFormat": "text/markdown",
             "identifier": {
@@ -125,50 +130,55 @@
                 "name": "Egon Willighagen"
               },
               "contentSize": "1641",
-              "contributor": {
-                "@id": "http://orcid.org/0000-0002-1825-0085",
-                "@type": "Person",
-                "affiliation": {
-                  "@id": "#affiliation",
-                  "@type": "Thing",
-                  "identifier": {
-                    "@id": "https://example.org/affiliation",
-                    "schema": "https://example.org/schema",
-                    "uri": "https://example.org/affiliation"
+              "contributor": [
+                {
+                  "@id": "http://orcid.org/0000-0002-1825-0085",
+                  "@type": "Person",
+                  "affiliation": {
+                    "@id": "#affiliation",
+                    "@type": "Organization",
+                    "identifier": {
+                      "@id": "https://example.org/affiliation",
+                      "schema": "https://example.org/schema",
+                      "uri": "https://example.org/affiliation"
+                    },
+                    "language": "en",
+                    "name": "University of Manchester"
                   },
-                  "language": "en",
-                  "name": "University of Manchester"
-                },
-                "alternateName": {
-                  "@id": "#alternateName",
-                  "@type": "Thing",
-                  "language": "en",
-                  "name": "Stian S.R."
-                },
-                "contributorType": "Researcher",
-                "email": "contributor@example.org",
-                "familyName": {
-                  "@id": "#familyName",
-                  "@type": "Thing",
-                  "language": "en",
-                  "name": "Soiland-Reyes"
-                },
-                "fullname": "Stian Soiland-Reyes",
-                "givenName": {
-                  "@id": "#givenName",
-                  "@type": "Thing",
-                  "language": "en",
-                  "name": "Stian"
-                },
-                "identifier": {
-                  "@id": "https://orcid.org/0000-0002-1234-5679",
-                  "schema": "https://orcid.org",
-                  "uri": "https://orcid.org/0000-0002-1234-5679"
-                },
-                "nametype": "Personal"
-              },
-              "date": {
-                "@id": "#date"
+                  "alternateName": {
+                    "@id": "#alternateName",
+                    "@type": "Thing",
+                    "language": "en",
+                    "name": "Stian S.R."
+                  },
+                  "contributorType": "Researcher",
+                  "email": "contributor@example.org",
+                  "familyName": {
+                    "@id": "#familyName",
+                    "@type": "Thing",
+                    "language": "en",
+                    "name": "Soiland-Reyes"
+                  },
+                  "fullname": "Stian Soiland-Reyes",
+                  "givenName": {
+                    "@id": "#givenName",
+                    "@type": "Thing",
+                    "language": "en",
+                    "name": "Stian"
+                  },
+                  "identifier": {
+                    "@id": "https://orcid.org/0000-0002-1234-5679",
+                    "schema": "https://orcid.org",
+                    "uri": "https://orcid.org/0000-0002-1234-5679"
+                  },
+                  "nametype": "Personal"
+                }
+              ],
+              "datetime": {
+                "@id": "#datetime",
+                "@type": "DateTime",
+                "date": "2024/11/07T06:24:40Z",
+                "type": "Created"
               },
               "encodingFormat": "text/markdown",
               "identifier": {
@@ -191,6 +201,12 @@
         "@type": "Thing",
         "summary": "the tree of simple itemtype"
       },
+      "#datetime": {
+        "@id": "#datetime",
+        "@type": "DateTime",
+        "date": "2024/11/07T06:24:40Z",
+        "type": "Created"
+      },
       "data/tree.md": {
         "@id": "data/tree.md",
         "@type": "File",
@@ -205,50 +221,55 @@
           "name": "Egon Willighagen"
         },
         "contentSize": "1641",
-        "contributor": {
-          "@id": "http://orcid.org/0000-0002-1825-0085",
-          "@type": "Person",
-          "affiliation": {
-            "@id": "#affiliation",
-            "@type": "Thing",
-            "identifier": {
-              "@id": "https://example.org/affiliation",
-              "schema": "https://example.org/schema",
-              "uri": "https://example.org/affiliation"
+        "contributor": [
+          {
+            "@id": "http://orcid.org/0000-0002-1825-0085",
+            "@type": "Person",
+            "affiliation": {
+              "@id": "#affiliation",
+              "@type": "Organization",
+              "identifier": {
+                "@id": "https://example.org/affiliation",
+                "schema": "https://example.org/schema",
+                "uri": "https://example.org/affiliation"
+              },
+              "language": "en",
+              "name": "University of Manchester"
             },
-            "language": "en",
-            "name": "University of Manchester"
-          },
-          "alternateName": {
-            "@id": "#alternateName",
-            "@type": "Thing",
-            "language": "en",
-            "name": "Stian S.R."
-          },
-          "contributorType": "Researcher",
-          "email": "contributor@example.org",
-          "familyName": {
-            "@id": "#familyName",
-            "@type": "Thing",
-            "language": "en",
-            "name": "Soiland-Reyes"
-          },
-          "fullname": "Stian Soiland-Reyes",
-          "givenName": {
-            "@id": "#givenName",
-            "@type": "Thing",
-            "language": "en",
-            "name": "Stian"
-          },
-          "identifier": {
-            "@id": "https://orcid.org/0000-0002-1234-5679",
-            "schema": "https://orcid.org",
-            "uri": "https://orcid.org/0000-0002-1234-5679"
-          },
-          "nametype": "Personal"
-        },
-        "date": {
-          "@id": "#date"
+            "alternateName": {
+              "@id": "#alternateName",
+              "@type": "Thing",
+              "language": "en",
+              "name": "Stian S.R."
+            },
+            "contributorType": "Researcher",
+            "email": "contributor@example.org",
+            "familyName": {
+              "@id": "#familyName",
+              "@type": "Thing",
+              "language": "en",
+              "name": "Soiland-Reyes"
+            },
+            "fullname": "Stian Soiland-Reyes",
+            "givenName": {
+              "@id": "#givenName",
+              "@type": "Thing",
+              "language": "en",
+              "name": "Stian"
+            },
+            "identifier": {
+              "@id": "https://orcid.org/0000-0002-1234-5679",
+              "schema": "https://orcid.org",
+              "uri": "https://orcid.org/0000-0002-1234-5679"
+            },
+            "nametype": "Personal"
+          }
+        ],
+        "datetime": {
+          "@id": "#datetime",
+          "@type": "DateTime",
+          "date": "2024/11/07T06:24:40Z",
+          "type": "Created"
         },
         "encodingFormat": "text/markdown",
         "identifier": {
@@ -274,7 +295,7 @@
         "@type": "Person",
         "affiliation": {
           "@id": "#affiliation",
-          "@type": "Thing",
+          "@type": "Organization",
           "identifier": {
             "@id": "https://example.org/affiliation",
             "schema": "https://example.org/schema",
@@ -331,7 +352,7 @@
       },
       "#affiliation": {
         "@id": "#affiliation",
-        "@type": "Thing",
+        "@type": "Organization",
         "identifier": {
           "@id": "https://example.org/affiliation",
           "schema": "https://example.org/schema",

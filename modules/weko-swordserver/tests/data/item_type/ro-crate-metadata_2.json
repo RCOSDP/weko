@@ -32,17 +32,25 @@
       "summary": "the tree of simple itemtype"
     },
     {
+      "@id": "#datetime",
+      "@type": "DateTime",
+      "date": "2024/11/07T06:24:40Z",
+      "type": "Created"
+    },
+    {
       "@id": "data/tree.md",
       "@type": "File",
       "author": {
         "@id": "http://orcid.org/0000-0002-1825-0097"
       },
       "contentSize": "1641",
-      "contributor": {
-        "@id": "http://orcid.org/0000-0002-1825-0085"
-      },
-      "date": {
-        "@id": "#date"
+      "contributor": [
+        {
+          "@id": "http://orcid.org/0000-0002-1825-0085"
+        }
+      ],
+      "datetime": {
+        "@id": "#datetime"
       },
       "encodingFormat": "text/markdown",
       "identifier": {
@@ -108,7 +116,7 @@
     },
     {
       "@id": "#affiliation",
-      "@type": "Thing",
+      "@type": "Organization",
       "identifier": {
         "@id": "https://example.org/affiliation",
         "schema": "https://example.org/schema",
