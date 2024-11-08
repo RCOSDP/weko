@@ -590,10 +590,10 @@ def users(app, db):
         comadmin = User.query.filter_by(email='comadmin@test.org').first()
         repoadmin = User.query.filter_by(email='repoadmin@test.org').first()
         sysadmin = User.query.filter_by(email='sysadmin@test.org').first()
-        generaluser = User.query.filter_by(email='generaluser@test.org')
-        originalroleuser = create_test_user(email='originalroleuser@test.org')
-        originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
-        noroleuser = create_test_user(email='noroleuser@test.org')
+        generaluser = User.query.filter_by(email='generaluser@test.org').first()
+        originalroleuser = User.query.filter_by(email='originalroleuser@test.org').first()
+        originalroleuser2 = User.query.filter_by(email='originalroleuser2@test.org').first()
+        noroleuser = User.query.filter_by(email='noroleuser@test.org').first()
         
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
@@ -1618,3 +1618,21 @@ def admin_lang_setting(db):
     AdminLangSettings.create("en","English", True, 0, True)
     AdminLangSettings.create("ja","日本語", True, 1, True)
     AdminLangSettings.create("zh","中文", False, 0, True)
+
+
+@pytest.fixture()
+def index_thumbnail(app,instance_path):
+    dir_path = os.path.join(instance_path,
+    app.config['WEKO_THEME_INSTANCE_DATA_DIR'],'indextree')
+    thumbnail_path = os.path.join(
+                        dir_path,
+                        "test_thumbnail.txt"
+                    )
+    if not os.path.isdir(dir_path):
+        os.makedirs(dir_path)
+    
+    with open(thumbnail_path, "w") as f:
+        f.write("test")
+    
+    return thumbnail_path
+    
