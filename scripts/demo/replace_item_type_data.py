@@ -5,7 +5,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from invenio_db import db
 from flask import current_app
-import logging
 
 import argparse
 
@@ -104,7 +103,6 @@ def replace_item_type_data(render_old, render_new, _form_prop_old, item_key):
 
 
 def main():
-    current_app.logger.setLevel(logging.INFO)
     current_app.logger.info('=============== replace_item_type_data ===============')
     try:
         _update_date = args.update_date if args else UPDATE_DATE
