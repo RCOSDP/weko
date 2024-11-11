@@ -960,14 +960,13 @@ class ItemTypes(RecordBase):
                             else:
                                 tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))
                                 data['table_row_map']['schema']['properties'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
-                                cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'],data['table_row_map']['schema']['properties'][_prop_id])
+                                # cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'],data['table_row_map']['schema']['properties'][_prop_id])
                                 _form = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.form, -1))).replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_form, -1))
                                 _tmp_data = data['table_row_map']['form'][idx]
                                 cls.update_attribute_options(tmp_data, _tmp_data)
                                 cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'][_prop_id],data['table_row_map']['schema']['properties'][_prop_id])
-                                
-                                                       
+                                                                               
         from weko_itemtypes_ui.utils import fix_json_schema,update_required_schema_not_exist_in_form, update_text_and_textarea
         
         table_row_map = data.get('table_row_map')
@@ -1017,17 +1016,16 @@ class ItemTypes(RecordBase):
     @classmethod
     def update_property_enum(cls, old_value, new_value):
             if isinstance(old_value, dict):
-                for key, value in old_value.items():
+               for key, value in old_value.items():
                     if isinstance(old_value[key], dict):
-                        if "enum" in old_value[key]:
-                            new_value[key]["enum"] = old_value[key]["enum"]
-                        elif "currentEnum" in old_value[key]:
-                            new_value[key]["currentEnum"] = old_value[key]["currentEnum"]  
-                        else:
-                            if key in new_value and key in old_value:
-                                cls.update_property_enum(old_value[key], new_value[key])
-
-    
+                        if key in new_value and key in old_value:
+                            if "enum" in old_value[key]:
+                                new_value[key]["enum"] = old_value[key]["enum"]
+                            elif "currentEnum" in old_value[key]:
+                                new_value[key]["currentEnum"] = old_value[key]["currentEnum"]  
+                            else:
+                                if key in new_value and key in old_value:
+                                    cls.update_property_enum(old_value[key], new_value[key])
 
     @classmethod
     def update_attribute_options(cls, old_value, new_value):        
