@@ -29,7 +29,7 @@ class TestWekoSwordMapper:
         assert mapper.json_map == json_map
 
 
-    # def test__process_json_map():
+    # def __create_item_map():
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_mapper.py::TestWekoSwordMapper::test__create_item_map -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
     def test__create_item_map(self, item_type):
         json = None
@@ -41,3 +41,15 @@ class TestWekoSwordMapper:
         item_map =  mapper._create_item_map()
         assert item_map == json_data("data/item_type/item_map_2.json")
 
+
+    # def map():
+    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_mapper.py::TestWekoSwordMapper::test_map -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+    def test_map(self, item_type):
+        json = json_data("data/item_type/processed_json_2.json")
+        itemtype = item_type[1]["item_type"]
+        json_map = json_data("data/item_type/sword_mapping_2.json")
+
+        mapper = WekoSwordMapper(json, itemtype, json_map)
+        result = mapper.map()
+
+        assert result == json_data("data/item_type/mapped_json_2.json")

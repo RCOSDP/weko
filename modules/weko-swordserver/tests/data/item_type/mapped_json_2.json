@@ -1,0 +1,73 @@
+{
+  "$schema": 2,
+  "pubdate": "2023-01-18",
+  "system_file": {
+    "subitem_systemfile_size": "1641",
+    "subitem_systemfile_version": "1.0",
+    "subitem_systemfile_datetime": {
+      "subitem_systemfile_datetime_date": "2024/11/11T01:37:36Z",
+      "subitem_systemfile_datetime_type": "Created"
+    },
+    "subitem_systemfile_filename": {
+      "subitem_systemfile_filename_uri": "https://example.org/data/tree.md",
+      "subitem_systemfile_filename_type": "File",
+      "subitem_systemfile_filename_label": "tree.md"
+    },
+    "subitem_systemfile_mimetype": "text/markdown"
+  },
+  "item_1730255238992": {
+    "subitem_title": "アイテムタイプの木構造",
+    "subitem_title_language": "ja"
+  },
+  "item_1730255318606": {
+    "subitem_author_name": "Egon Willighagen"
+  },
+  "item_1730255441907": [
+    {
+      "givenNames": {
+        "givenName": "Stian",
+        "givenNameLang": "en"
+      },
+      "familyNames": {
+        "familyName": "Soiland-Reyes",
+        "familyNameLang": "en"
+      },
+      "contributorType": "Person",
+      "nameIdentifiers": {
+        "nameIdentifier": "https://orcid.org/0000-0002-1234-5679",
+        "nameIdentifierURI": "https://orcid.org/0000-0002-1234-5679",
+        "nameIdentifierScheme": "https://orcid.org"
+      },
+      "contributorMails": {
+        "contributorMail": "contributor@example.org"
+      },
+      "contributorNames": {
+        "lang": "en",
+        "nameType": "Personal",
+        "contributorName": "Stian Soiland-Reyes"
+      },
+      "contributorAffiliations": {
+        "contributorAffiliationNames": {
+          "contributorAffiliationName": "University of Manchester",
+          "contributorAffiliationNameLang": "en"
+        },
+        "contributorAffiliationNameIdentifiers": {
+          "contributorAffiliationURI": "https://example.org/affiliation",
+          "contributorAffiliationScheme": "https://example.org/scheme",
+          "contributorAffiliationNameIdentifier": "https://example.org/affiliation"
+        }
+      },
+      "contributorAlternatives": {
+        "contributorAlternative": "Stian S.R.",
+        "contributorAlternativeLang": "en"
+      }
+    }
+  ],
+  "item_1730256425948": {
+    "subitem_summary": "the tree of simple itemtype"
+  },
+  "item_1730256524921": {
+    "subitem_alternative_title": "試しに作ってみた",
+    "subitem_alternative_title_language": "ja"
+  }
+}

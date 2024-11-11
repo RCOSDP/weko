@@ -4,6 +4,14 @@
     {
       "@id": "./",
       "@type": "Dataset",
+      "author": {
+        "@id": "http://orcid.org/0000-0002-1825-0097"
+      },
+      "contributor": [
+        {
+          "@id": "http://orcid.org/0000-0002-1825-0085"
+        }
+      ],
       "creator": {
         "@id": "http://orcid.org/0000-0002-1825-0097"
       },
@@ -34,21 +42,13 @@
     {
       "@id": "#datetime",
       "@type": "DateTime",
-      "date": "2024/11/07T06:24:40Z",
+      "date": "2024/11/11T01:37:36Z",
       "type": "Created"
     },
     {
       "@id": "data/tree.md",
       "@type": "File",
-      "author": {
-        "@id": "http://orcid.org/0000-0002-1825-0097"
-      },
       "contentSize": "1641",
-      "contributor": [
-        {
-          "@id": "http://orcid.org/0000-0002-1825-0085"
-        }
-      ],
       "datetime": {
         "@id": "#datetime"
       },
@@ -66,7 +66,7 @@
       "@type": "Person",
       "identifier": {
         "@id": "https://orcid.org/0000-0002-1234-5678",
-        "schema": "https://orcid.org",
+        "scheme": "https://orcid.org",
         "uri": "https://orcid.org/0000-0002-1234-5678"
       },
       "name": "Egon Willighagen"
@@ -91,9 +91,10 @@
       },
       "identifier": {
         "@id": "https://orcid.org/0000-0002-1234-5679",
-        "schema": "https://orcid.org",
+        "scheme": "https://orcid.org",
         "uri": "https://orcid.org/0000-0002-1234-5679"
       },
+      "language": "en",
       "nametype": "Personal"
     },
     {
@@ -119,7 +120,7 @@
       "@type": "Organization",
       "identifier": {
         "@id": "https://example.org/affiliation",
-        "schema": "https://example.org/schema",
+        "scheme": "https://example.org/scheme",
         "uri": "https://example.org/affiliation"
       },
       "language": "en",

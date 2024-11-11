@@ -8,219 +8,16 @@
       "d2Vrby1zd29yZHNlcnZlci0uLw==": {
         "@id": "./",
         "@type": "Dataset",
-        "creator": {
-          "@id": "http://orcid.org/0000-0002-1825-0097",
-          "@type": "Person",
-          "identifier": {
-            "@id": "https://orcid.org/0000-0002-1234-5678",
-            "schema": "https://orcid.org",
-            "uri": "https://orcid.org/0000-0002-1234-5678"
-          },
-          "name": "Egon Willighagen"
-        },
-        "datePublished": "2023/01/18T23:39:34Z",
-        "description": "A simple example of a tree.",
-        "hasPart": [
-          {
-            "@id": "data/tree.md",
-            "@type": "File",
-            "author": {
-              "@id": "http://orcid.org/0000-0002-1825-0097",
-              "@type": "Person",
-              "identifier": {
-                "@id": "https://orcid.org/0000-0002-1234-5678",
-                "schema": "https://orcid.org",
-                "uri": "https://orcid.org/0000-0002-1234-5678"
-              },
-              "name": "Egon Willighagen"
-            },
-            "contentSize": "1641",
-            "contributor": [
-              {
-                "@id": "http://orcid.org/0000-0002-1825-0085",
-                "@type": "Person",
-                "affiliation": {
-                  "@id": "#affiliation",
-                  "@type": "Organization",
-                  "identifier": {
-                    "@id": "https://example.org/affiliation",
-                    "schema": "https://example.org/schema",
-                    "uri": "https://example.org/affiliation"
-                  },
-                  "language": "en",
-                  "name": "University of Manchester"
-                },
-                "alternateName": {
-                  "@id": "#alternateName",
-                  "@type": "Thing",
-                  "language": "en",
-                  "name": "Stian S.R."
-                },
-                "contributorType": "Researcher",
-                "email": "contributor@example.org",
-                "familyName": {
-                  "@id": "#familyName",
-                  "@type": "Thing",
-                  "language": "en",
-                  "name": "Soiland-Reyes"
-                },
-                "fullname": "Stian Soiland-Reyes",
-                "givenName": {
-                  "@id": "#givenName",
-                  "@type": "Thing",
-                  "language": "en",
-                  "name": "Stian"
-                },
-                "identifier": {
-                  "@id": "https://orcid.org/0000-0002-1234-5679",
-                  "schema": "https://orcid.org",
-                  "uri": "https://orcid.org/0000-0002-1234-5679"
-                },
-                "nametype": "Personal"
-              }
-            ],
-            "datetime": {
-              "@id": "#datetime",
-              "@type": "DateTime",
-              "date": "2024/11/07T06:24:40Z",
-              "type": "Created"
-            },
-            "encodingFormat": "text/markdown",
-            "identifier": {
-              "@id": "https://example.org/data/tree.md",
-              "label": "tree.md",
-              "type": "File"
-            },
-            "name": "tree.md",
-            "version": "1.0"
-          }
-        ],
-        "name": "The Tree"
-      },
-      "ro-crate-metadata.json": {
-        "@id": "ro-crate-metadata.json",
-        "@type": "CreativeWork",
-        "about": {
-          "@id": "./",
-          "@type": "Dataset",
-          "creator": {
-            "@id": "http://orcid.org/0000-0002-1825-0097",
-            "@type": "Person",
-            "identifier": {
-              "@id": "https://orcid.org/0000-0002-1234-5678",
-              "schema": "https://orcid.org",
-              "uri": "https://orcid.org/0000-0002-1234-5678"
-            },
-            "name": "Egon Willighagen"
-          },
-          "datePublished": "2023/01/18T23:39:34Z",
-          "description": "A simple example of a tree.",
-          "hasPart": [
-            {
-              "@id": "data/tree.md",
-              "@type": "File",
-              "author": {
-                "@id": "http://orcid.org/0000-0002-1825-0097",
-                "@type": "Person",
-                "identifier": {
-                  "@id": "https://orcid.org/0000-0002-1234-5678",
-                  "schema": "https://orcid.org",
-                  "uri": "https://orcid.org/0000-0002-1234-5678"
-                },
-                "name": "Egon Willighagen"
-              },
-              "contentSize": "1641",
-              "contributor": [
-                {
-                  "@id": "http://orcid.org/0000-0002-1825-0085",
-                  "@type": "Person",
-                  "affiliation": {
-                    "@id": "#affiliation",
-                    "@type": "Organization",
-                    "identifier": {
-                      "@id": "https://example.org/affiliation",
-                      "schema": "https://example.org/schema",
-                      "uri": "https://example.org/affiliation"
-                    },
-                    "language": "en",
-                    "name": "University of Manchester"
-                  },
-                  "alternateName": {
-                    "@id": "#alternateName",
-                    "@type": "Thing",
-                    "language": "en",
-                    "name": "Stian S.R."
-                  },
-                  "contributorType": "Researcher",
-                  "email": "contributor@example.org",
-                  "familyName": {
-                    "@id": "#familyName",
-                    "@type": "Thing",
-                    "language": "en",
-                    "name": "Soiland-Reyes"
-                  },
-                  "fullname": "Stian Soiland-Reyes",
-                  "givenName": {
-                    "@id": "#givenName",
-                    "@type": "Thing",
-                    "language": "en",
-                    "name": "Stian"
-                  },
-                  "identifier": {
-                    "@id": "https://orcid.org/0000-0002-1234-5679",
-                    "schema": "https://orcid.org",
-                    "uri": "https://orcid.org/0000-0002-1234-5679"
-                  },
-                  "nametype": "Personal"
-                }
-              ],
-              "datetime": {
-                "@id": "#datetime",
-                "@type": "DateTime",
-                "date": "2024/11/07T06:24:40Z",
-                "type": "Created"
-              },
-              "encodingFormat": "text/markdown",
-              "identifier": {
-                "@id": "https://example.org/data/tree.md",
-                "label": "tree.md",
-                "type": "File"
-              },
-              "name": "tree.md",
-              "version": "1.0"
-            }
-          ],
-          "name": "The Tree"
-        },
-        "conformsTo": {
-          "@id": "https://w3id.org/ro/crate/1.1"
-        }
-      },
-      "#summary": {
-        "@id": "#summary",
-        "@type": "Thing",
-        "summary": "the tree of simple itemtype"
-      },
-      "#datetime": {
-        "@id": "#datetime",
-        "@type": "DateTime",
-        "date": "2024/11/07T06:24:40Z",
-        "type": "Created"
-      },
-      "data/tree.md": {
-        "@id": "data/tree.md",
-        "@type": "File",
         "author": {
           "@id": "http://orcid.org/0000-0002-1825-0097",
           "@type": "Person",
           "identifier": {
             "@id": "https://orcid.org/0000-0002-1234-5678",
-            "schema": "https://orcid.org",
+            "scheme": "https://orcid.org",
             "uri": "https://orcid.org/0000-0002-1234-5678"
           },
           "name": "Egon Willighagen"
         },
-        "contentSize": "1641",
         "contributor": [
           {
             "@id": "http://orcid.org/0000-0002-1825-0085",
@@ -230,7 +27,7 @@
               "@type": "Organization",
               "identifier": {
                 "@id": "https://example.org/affiliation",
-                "schema": "https://example.org/schema",
+                "scheme": "https://example.org/scheme",
                 "uri": "https://example.org/affiliation"
               },
               "language": "en",
@@ -259,16 +56,167 @@
             },
             "identifier": {
               "@id": "https://orcid.org/0000-0002-1234-5679",
-              "schema": "https://orcid.org",
+              "scheme": "https://orcid.org",
               "uri": "https://orcid.org/0000-0002-1234-5679"
             },
+            "language": "en",
             "nametype": "Personal"
           }
         ],
+        "creator": {
+          "@id": "http://orcid.org/0000-0002-1825-0097",
+          "@type": "Person",
+          "identifier": {
+            "@id": "https://orcid.org/0000-0002-1234-5678",
+            "scheme": "https://orcid.org",
+            "uri": "https://orcid.org/0000-0002-1234-5678"
+          },
+          "name": "Egon Willighagen"
+        },
+        "datePublished": "2023/01/18T23:39:34Z",
+        "description": "A simple example of a tree.",
+        "hasPart": [
+          {
+            "@id": "data/tree.md",
+            "@type": "File",
+            "contentSize": "1641",
+            "datetime": {
+              "@id": "#datetime",
+              "@type": "DateTime",
+              "date": "2024/11/11T01:37:36Z",
+              "type": "Created"
+            },
+            "encodingFormat": "text/markdown",
+            "identifier": {
+              "@id": "https://example.org/data/tree.md",
+              "label": "tree.md",
+              "type": "File"
+            },
+            "name": "tree.md",
+            "version": "1.0"
+          }
+        ],
+        "name": "The Tree"
+      },
+      "ro-crate-metadata.json": {
+        "@id": "ro-crate-metadata.json",
+        "@type": "CreativeWork",
+        "about": {
+          "@id": "./",
+          "@type": "Dataset",
+          "author": {
+            "@id": "http://orcid.org/0000-0002-1825-0097",
+            "@type": "Person",
+            "identifier": {
+              "@id": "https://orcid.org/0000-0002-1234-5678",
+              "scheme": "https://orcid.org",
+              "uri": "https://orcid.org/0000-0002-1234-5678"
+            },
+            "name": "Egon Willighagen"
+          },
+          "contributor": [
+            {
+              "@id": "http://orcid.org/0000-0002-1825-0085",
+              "@type": "Person",
+              "affiliation": {
+                "@id": "#affiliation",
+                "@type": "Organization",
+                "identifier": {
+                  "@id": "https://example.org/affiliation",
+                  "scheme": "https://example.org/scheme",
+                  "uri": "https://example.org/affiliation"
+                },
+                "language": "en",
+                "name": "University of Manchester"
+              },
+              "alternateName": {
+                "@id": "#alternateName",
+                "@type": "Thing",
+                "language": "en",
+                "name": "Stian S.R."
+              },
+              "contributorType": "Researcher",
+              "email": "contributor@example.org",
+              "familyName": {
+                "@id": "#familyName",
+                "@type": "Thing",
+                "language": "en",
+                "name": "Soiland-Reyes"
+              },
+              "fullname": "Stian Soiland-Reyes",
+              "givenName": {
+                "@id": "#givenName",
+                "@type": "Thing",
+                "language": "en",
+                "name": "Stian"
+              },
+              "identifier": {
+                "@id": "https://orcid.org/0000-0002-1234-5679",
+                "scheme": "https://orcid.org",
+                "uri": "https://orcid.org/0000-0002-1234-5679"
+              },
+              "language": "en",
+              "nametype": "Personal"
+            }
+          ],
+          "creator": {
+            "@id": "http://orcid.org/0000-0002-1825-0097",
+            "@type": "Person",
+            "identifier": {
+              "@id": "https://orcid.org/0000-0002-1234-5678",
+              "scheme": "https://orcid.org",
+              "uri": "https://orcid.org/0000-0002-1234-5678"
+            },
+            "name": "Egon Willighagen"
+          },
+          "datePublished": "2023/01/18T23:39:34Z",
+          "description": "A simple example of a tree.",
+          "hasPart": [
+            {
+              "@id": "data/tree.md",
+              "@type": "File",
+              "contentSize": "1641",
+              "datetime": {
+                "@id": "#datetime",
+                "@type": "DateTime",
+                "date": "2024/11/11T01:37:36Z",
+                "type": "Created"
+              },
+              "encodingFormat": "text/markdown",
+              "identifier": {
+                "@id": "https://example.org/data/tree.md",
+                "label": "tree.md",
+                "type": "File"
+              },
+              "name": "tree.md",
+              "version": "1.0"
+            }
+          ],
+          "name": "The Tree"
+        },
+        "conformsTo": {
+          "@id": "https://w3id.org/ro/crate/1.1"
+        }
+      },
+      "#summary": {
+        "@id": "#summary",
+        "@type": "Thing",
+        "summary": "the tree of simple itemtype"
+      },
+      "#datetime": {
+        "@id": "#datetime",
+        "@type": "DateTime",
+        "date": "2024/11/11T01:37:36Z",
+        "type": "Created"
+      },
+      "data/tree.md": {
+        "@id": "data/tree.md",
+        "@type": "File",
+        "contentSize": "1641",
         "datetime": {
           "@id": "#datetime",
           "@type": "DateTime",
-          "date": "2024/11/07T06:24:40Z",
+          "date": "2024/11/11T01:37:36Z",
           "type": "Created"
         },
         "encodingFormat": "text/markdown",
@@ -285,7 +233,7 @@
         "@type": "Person",
         "identifier": {
           "@id": "https://orcid.org/0000-0002-1234-5678",
-          "schema": "https://orcid.org",
+          "scheme": "https://orcid.org",
           "uri": "https://orcid.org/0000-0002-1234-5678"
         },
         "name": "Egon Willighagen"
@@ -298,7 +246,7 @@
           "@type": "Organization",
           "identifier": {
             "@id": "https://example.org/affiliation",
-            "schema": "https://example.org/schema",
+            "scheme": "https://example.org/scheme",
             "uri": "https://example.org/affiliation"
           },
           "language": "en",
@@ -327,9 +275,10 @@
         },
         "identifier": {
           "@id": "https://orcid.org/0000-0002-1234-5679",
-          "schema": "https://orcid.org",
+          "scheme": "https://orcid.org",
           "uri": "https://orcid.org/0000-0002-1234-5679"
         },
+        "language": "en",
         "nametype": "Personal"
       },
       "#alternateName": {
@@ -355,7 +304,7 @@
         "@type": "Organization",
         "identifier": {
           "@id": "https://example.org/affiliation",
-          "schema": "https://example.org/schema",
+          "scheme": "https://example.org/scheme",
           "uri": "https://example.org/affiliation"
         },
         "language": "en",
