@@ -1,20 +1,22 @@
 {
   "$schema": 2,
   "pubdate": "2023-01-18",
-  "system_file": {
-    "subitem_systemfile_size": "1641",
-    "subitem_systemfile_version": "1.0",
-    "subitem_systemfile_datetime": {
-      "subitem_systemfile_datetime_date": "2024/11/11T01:37:36Z",
-      "subitem_systemfile_datetime_type": "Created"
-    },
-    "subitem_systemfile_filename": {
-      "subitem_systemfile_filename_uri": "https://example.org/data/tree.md",
-      "subitem_systemfile_filename_type": "File",
-      "subitem_systemfile_filename_label": "tree.md"
-    },
-    "subitem_systemfile_mimetype": "text/markdown"
-  },
+  "system_file": [
+    {
+      "subitem_systemfile_size": "1641",
+      "subitem_systemfile_version": "1.0",
+      "subitem_systemfile_datetime": {
+        "subitem_systemfile_datetime_date": "2024/11/11T01:37:36Z",
+        "subitem_systemfile_datetime_type": "Created"
+      },
+      "subitem_systemfile_filename": {
+        "subitem_systemfile_filename_uri": "https://example.org/data/tree.md",
+        "subitem_systemfile_filename_type": "File",
+        "subitem_systemfile_filename_label": "tree.md"
+      },
+      "subitem_systemfile_mimetype": "text/markdown"
+    }
+  ],
   "item_1730255238992": {
     "subitem_title": "アイテムタイプの木構造",
     "subitem_title_language": "ja"
