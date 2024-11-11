@@ -12,9 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 ### Security
 
-## [v1.0.7a] - 2024-10-29
-## [v1.0.8a] - 2024-10-29
-## [v1.0.9a] - 2024-10-29
+## [v1.0.7a] - planning
 ### Changed
 - Added a feature that allows users to forcibly unlock activity locks.
 ### Fixed
