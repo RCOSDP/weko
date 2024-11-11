@@ -2714,21 +2714,22 @@ class WorkActivityHistory(object):
 class UpdateItem(object):
     """The class about item."""
 
-    def publish(self, record):
+    def publish(self, record, status):
         r"""Record publish  status change view.
 
         Change record publish status with given status and renders record
         export template.
 
         :param record: record object.
+        :param status: publish status
         :return: The rendered template.
         """
         from weko_deposit.api import WekoIndexer
         publish_status = record.get('publish_status')
         if not publish_status:
-            record.update({'publish_status': PublishStatus.PUBLIC.value})
+            record.update({'publish_status': status})
         else:
-            record['publish_status'] = PublishStatus.PUBLIC.value
+            record['publish_status'] = status
 
         record.commit()
         db.session.commit()
