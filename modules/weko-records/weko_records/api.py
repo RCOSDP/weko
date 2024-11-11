@@ -950,21 +950,25 @@ class ItemTypes(RecordBase):
                                     data['table_row_map']['schema']['properties'][_prop_id].pop('properties')
                                 if 'format' in data['table_row_map']['schema']['properties'][_prop_id]:
                                     data['table_row_map']['schema']['properties'][_prop_id].pop('format')
-
-                                tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))
+                                
+                                tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))                               
                                 _forms = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.forms, -1))).replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_forms, -1))
                                 _tmp_data = data['table_row_map']['form'][idx]
                                 cls.update_attribute_options(tmp_data, _tmp_data)
+                                cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'][_prop_id],data['table_row_map']['schema']['properties'][_prop_id])
                             else:
                                 tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))
                                 data['table_row_map']['schema']['properties'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
+                                # cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'],data['table_row_map']['schema']['properties'][_prop_id])
                                 _form = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.form, -1))).replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_form, -1))
                                 _tmp_data = data['table_row_map']['form'][idx]
                                 cls.update_attribute_options(tmp_data, _tmp_data)
-                                                       
+                                cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'][_prop_id],data['table_row_map']['schema']['properties'][_prop_id])
+                                                                               
         from weko_itemtypes_ui.utils import fix_json_schema,update_required_schema_not_exist_in_form, update_text_and_textarea
+        
         table_row_map = data.get('table_row_map')
         json_schema = fix_json_schema(table_row_map.get('schema'))
         json_form = table_row_map.get('form')
@@ -975,6 +979,17 @@ class ItemTypes(RecordBase):
             json_schema, json_form = update_text_and_textarea(
                 itemtype_id, json_schema, json_form)
         
+        if 'schemaeditor' in data:
+            if 'schema' in data['schemaeditor']:
+                data['schemaeditor']['schema'] = json_schema
+        
+        # item_type_mapping = (
+        #             ItemTypeMapping.query.filter(ItemTypeMapping.item_type_id == itemtype_id)
+        #             .order_by(desc(ItemTypeMapping.created))
+        #             .first()
+        #         )
+        # data['table_row_map']['mapping'] = item_type_mapping.mapping if item_type_mapping else {}
+
         record = cls.update(id_=itemtype_id,
                                       name=item_type.item_type_name.name,
                                       schema=json_schema,
@@ -999,6 +1014,20 @@ class ItemTypes(RecordBase):
         return result
 
     @classmethod
+    def update_property_enum(cls, old_value, new_value):
+            if isinstance(old_value, dict):
+               for key, value in old_value.items():
+                    if isinstance(old_value[key], dict):
+                        if key in new_value and key in old_value:
+                            if "enum" in old_value[key]:
+                                new_value[key]["enum"] = old_value[key]["enum"]
+                            elif "currentEnum" in old_value[key]:
+                                new_value[key]["currentEnum"] = old_value[key]["currentEnum"]  
+                            else:
+                                if key in new_value and key in old_value:
+                                    cls.update_property_enum(old_value[key], new_value[key])
+
+    @classmethod
     def update_attribute_options(cls, old_value, new_value):        
         if "items" in old_value:
             for idx2,item2 in enumerate(old_value["items"]):
@@ -1019,7 +1048,7 @@ class ItemTypes(RecordBase):
                 if "isSpecifyNewline" in item2:
                     isSpecifyNewline = item2["isSpecifyNewline"]
                 if "required" in item2:
-                    isRequired = item2["required"]
+                   isRequired = item2["required"]
                 if "title_i18n" in item2:
                     title_i18n_temp = item2["title_i18n"]
                     title_i18n = title_i18n_temp
@@ -1042,6 +1071,9 @@ class ItemTypes(RecordBase):
 
                 if 'items' in item2:
                     cls.update_attribute_options(item2, new_value["items"][idx2])
+
+ 
+             
 
             
             
