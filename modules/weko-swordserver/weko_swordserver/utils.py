@@ -37,14 +37,14 @@ def check_import_file_format(file, packaging):
     Returns:
         str: Import file format
     """
-    if packaging == 'SWORDBagIt':
-        file_format = 'SWORD'
-    elif packaging == 'SimpleZip':
+    if "SWORDBagIt" in packaging:
+        file_format = "SWORD"
+    elif "SimpleZip" in packaging:
         file_list = get_file_list_of_zip(file)
-        if 'ro-crate-metadata.json' in file_list:
-            file_format = 'ROCRATE'
+        if "ro-crate-metadata.json" in file_list:
+            file_format = "ROCRATE"
         else:
-            file_format = 'OTHERS'
+            file_format = "OTHERS"
     else:
         current_app.logger.info("No Packing Included")
         raise WekoSwordserverException(
@@ -64,7 +64,7 @@ def get_file_list_of_zip(file):
     Returns:
         list: File list
     """
-    with ZipFile(file, 'r') as zip_ref:
+    with ZipFile(file, "r") as zip_ref:
         file_list =  zip_ref.namelist()
 
     return file_list
@@ -131,8 +131,8 @@ def is_valid_body_hash(digest, body):
     body_hash = sha256_hash.hexdigest()
 
     result = False
-    if ('SHA-256=' in digest
-        and digest.split('SHA-256=')[-1] == body_hash):
+    if (digest is not None and "SHA-256=" in digest
+        and digest.split("SHA-256=")[-1] == body_hash):
         result = True
 
     return result
@@ -148,7 +148,7 @@ def check_rocrate_required_files(file_list):
         list: List of results.
     """
     list_required_files = current_app.config.get(
-        'WEKO_SWORDSERVER_REQUIRED_FILES_ROCRATE'
+        "WEKO_SWORDSERVER_REQUIRED_FILES_ROCRATE"
     )
 
     return [required_file in file_list
@@ -165,7 +165,7 @@ def check_swordbagit_required_files(file_list):
         list: List of results.
     """
     list_required_files = current_app.config.get(
-        'WEKO_SWORDSERVER_REQUIRED_FILES_SWORD'
+        "WEKO_SWORDSERVER_REQUIRED_FILES_SWORD"
     )
 
     return [required_file in file_list
@@ -210,6 +210,7 @@ def process_json(json_ld):
         dict: Processed json data.
     """
     json = deepcopy(json_ld)
+    index = json.pop("@index", None)
 
     # transform list that contains @id to dict in @graph
     if "@graph" in json and isinstance(json["@graph"], list):
@@ -222,7 +223,7 @@ def process_json(json_ld):
                 break
         json["@graph"] = new_value
     # Remove unnecessary keys
-    json = {**json["@graph"]}
+    json = json.get("@graph")
 
     def _resolve_link(parent, key, value):
         if isinstance(value, dict):
@@ -248,7 +249,8 @@ def process_json(json_ld):
         "record": {
             "header": {
                 "identifier": json[enc]["name"],
-                "datestamp": json[enc]["datePublished"]
+                "datestamp": json[enc]["datePublished"],
+                "index": index,
             },
             "metadata": json
         }

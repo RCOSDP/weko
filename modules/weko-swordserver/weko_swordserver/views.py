@@ -34,7 +34,8 @@ from .errors import ErrorType, WekoSwordserverException
 from .utils import check_import_file_format
 from .registration import (
     check_bagit_import_items,
-    check_import_items as check_others_import_items)
+    check_import_items as check_others_import_items
+)
 
 
 class SwordState:

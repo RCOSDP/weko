@@ -47,13 +47,13 @@ def sword_client(db, tokens, sword_mapping, workflow):
     client = tokens[0]["client"]
     sword_client1 = SwordClientModel(
         client_id=client.client_id,
-        registration_type_index=SwordClientModel.RegistrationType.DIRECT,
+        registration_type_id=SwordClientModel.RegistrationType.DIRECT,
         mapping_id=sword_mapping[0]["sword_mapping"].id,
     )
     client = tokens[1]["client"]
     sword_client2 = SwordClientModel(
         client_id=client.client_id,
-        registration_type_index=SwordClientModel.RegistrationType.WORKFLOW,
+        registration_type_id=SwordClientModel.RegistrationType.WORKFLOW,
         mapping_id=sword_mapping[1]["sword_mapping"].id,
         workflow_id=workflow["workflow"].id,
     )
@@ -107,7 +107,7 @@ class TestSwordItemTypeMapping:
             mapping={"test": "test"},
             item_type_id=999
             )
-        assert (SwordItemTypeMappingModel.query.filter_by(id=3).first()) == None
+        assert SwordItemTypeMappingModel.query.filter_by(id=3).first() == None
 
     # def update(cls, id, name=None, mapping=None, item_type_id=None):
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordItemTypeMapping::test_update -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
@@ -168,14 +168,14 @@ class TestSwordClient:
         assert SwordClient.get_client_by_id("999") is None
         assert SwordClient.get_client_by_id(None) is None
 
-    # def register(cls, client_id, registration_type_index, mapping_id, workflow_id):
+    # def register(cls, client_id, registration_type_id, mapping_id, workflow_id):
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordClient::test_register -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
     def test_register(app, db, tokens, sword_mapping, workflow):
         # direct
         client = tokens[0]["client"]
         result = SwordClient.register(
             client_id=client.client_id,
-            registration_type_index=SwordClientModel.RegistrationType.DIRECT,
+            registration_type_id=SwordClientModel.RegistrationType.DIRECT,
             mapping_id=sword_mapping[0]["sword_mapping"].id,
         )
         assert result.client_id == client.client_id
@@ -187,7 +187,7 @@ class TestSwordClient:
         client = tokens[1]["client"]
         result = SwordClient.register(
             client_id=client.client_id,
-            registration_type_index=SwordClientModel.RegistrationType.WORKFLOW,
+            registration_type_id=SwordClientModel.RegistrationType.WORKFLOW,
             mapping_id=sword_mapping[1]["sword_mapping"].id,
             workflow_id=workflow["workflow"].id,
         )
@@ -200,18 +200,18 @@ class TestSwordClient:
         with pytest.raises(SQLAlchemyError):
             SwordClient.register(
                 client_id=client.client_id,
-                registration_type_index=SwordClientModel.RegistrationType.WORKFLOW,
+                registration_type_id=SwordClientModel.RegistrationType.WORKFLOW,
                 mapping_id=sword_mapping[1]["sword_mapping"].id,
                 workflow_id=999,
             )
 
-    # def update(cls, client_id, registration_type_index=None, mapping_id=None, workflow_id):
+    # def update(cls, client_id, registration_type=None, mapping_id=None, workflow_id):
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordClient::test_update -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
     def test_update(app, db, tokens, sword_mapping, sword_client, workflow):
         client = sword_client[0]["sword_client"]
         obj = SwordClient.update(
             client_id=client.client_id,
-            registration_type_index=SwordClientModel.RegistrationType.WORKFLOW,
+            registration_type_id=SwordClientModel.RegistrationType.WORKFLOW,
             mapping_id=sword_mapping[1]["sword_mapping"].id,
             workflow_id=workflow["workflow"].id,
         )
@@ -224,7 +224,7 @@ class TestSwordClient:
         client = sword_client[1]["sword_client"]
         obj = SwordClient.update(
             client_id=client.client_id,
-            registration_type_index=SwordClientModel.RegistrationType.DIRECT,
+            registration_type_id=SwordClientModel.RegistrationType.DIRECT,
             mapping_id=sword_mapping[0]["sword_mapping"].id,
         )
         assert obj == SwordClientModel.query.filter_by(client_id=client.client_id).first()

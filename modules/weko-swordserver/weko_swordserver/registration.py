@@ -13,7 +13,16 @@ import traceback
 from flask import current_app, request
 from zipfile import BadZipFile
 
-from weko_search_ui.utils import *
+from weko_search_ui.utils import (
+    handle_check_date,
+    handle_check_exist_record,
+    handle_check_file_metadata,
+    handle_check_id,
+    handle_fill_system_item,
+    handle_item_title,
+    handle_set_change_identifier_flag,
+    handle_validate_item_import
+)
 
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkFlow
@@ -29,7 +38,8 @@ from .utils import (
 
 
 def check_import_items(file, is_change_identifier = False):
-    pass
+    from weko_search_ui.utils import check_import_items
+    return check_import_items(file, is_change_identifier), None
 
 
 

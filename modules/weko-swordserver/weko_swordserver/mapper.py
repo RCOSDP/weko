@@ -27,19 +27,20 @@ class WekoSwordMapper(JsonMapper):
             return {}
 
         res = {
-            '$schema': self.itemtype.id,
-            'pubdate': str(self.datestamp())
+            "$schema": self.itemtype.id,
+            "pubdate": str(self.datestamp()),
+            "path": [self.json.get("record").get("header").get("index")],
         }
 
         item_map = self._create_item_map()
         metadata = self._create_metadata(item_map, self.json_map)
 
         # resourcetype.Type Setting
-        if 'resourcetype.Type' in item_map:
-            item_path = item_map['resourcetype.Type']
-            item_paths = item_path.split('.')
+        if "resourcetype.Type" in item_map:
+            item_path = item_map["resourcetype.Type"]
+            item_paths = item_path.split(".")
             metadata[item_paths[0]] = {}
-            metadata[item_paths[0]][item_paths[1]] = 'dataset'
+            metadata[item_paths[0]][item_paths[1]] = "dataset"
 
         res = {**res, **metadata}
         return res

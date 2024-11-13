@@ -168,7 +168,7 @@ class SwordItemTypeMapping():
 class SwordClient():
 
     @classmethod
-    def register(cls, client_id, registration_type_index,
+    def register(cls, client_id, registration_type_id,
                         mapping_id, workflow_id=None):
         """Register client.
 
@@ -176,7 +176,7 @@ class SwordClient():
 
         Args:
             client_id (str): Client ID.
-            registration_type_index (int): Type of registration.
+            registration_type_id (int): Type of registration.
             mapping_id (int): Mapping ID.
             workflow_id (int, optional):
                 Workflow ID. Required when registration_type is workflow.
@@ -189,7 +189,7 @@ class SwordClient():
                 even if the registration type is workflow.
             SQLAlchemyError: An error occurred while creating the client.
         """
-        if registration_type_index is current_app.config.get(
+        if registration_type_id is current_app.config.get(
             'WEKO_SWORDSERVER_REGISTRATION_TYPE'
         ).WORKFLOW and  workflow_id is None:
             raise WekoSwordserverException(
@@ -199,7 +199,7 @@ class SwordClient():
 
         obj = SwordClientModel(
             client_id=client_id,
-            registration_type_index=registration_type_index,
+            registration_type_id=registration_type_id,
             mapping_id=mapping_id,
             workflow_id=workflow_id
         )
@@ -217,7 +217,7 @@ class SwordClient():
 
 
     @classmethod
-    def update(cls, client_id, registration_type_index=None,
+    def update(cls, client_id, registration_type_id=None,
                 mapping_id=None, workflow_id=None):
         """Update client.
 
@@ -226,7 +226,7 @@ class SwordClient():
 
         Args:
             client_id (str, optional): Client ID.
-            registration_type (int, optional): Type of registration.
+            registration_type_id (int, optional): Type of registration.
             mapping_id (int, optional): Mapping ID.
             workflow_id (int, optional): Workflow ID.
 
@@ -242,7 +242,7 @@ class SwordClient():
             raise WekoSwordserverException(
                 "Client not found.", errorType=ErrorType.BadRequest)
 
-        if ((registration_type_index or obj.registration_type_index) is
+        if ((registration_type_id or obj.registration_type_id) is
             current_app.config.get('WEKO_SWORDSERVER_REGISTRATION_TYPE')
             .WORKFLOW) and (workflow_id or obj.wworkflow_id) is None:
 
@@ -251,10 +251,10 @@ class SwordClient():
                 errorType=ErrorType.BadRequest
             )
 
-        obj.registration_type_index = (
-            registration_type_index
-            if registration_type_index is not None
-            else obj.registration_type_index
+        obj.registration_type_id = (
+            registration_type_id
+            if registration_type_id is not None
+            else obj.registration_type_id
         )
         obj.mapping_id = (
             mapping_id if mapping_id is not None else obj.mapping_id
