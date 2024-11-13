@@ -172,7 +172,6 @@ DEFAULT_MAPPING = {
     "oai_dc_mapping": "",
     "spase_mapping": "",
 }
-
 LANGUAGE_VAL2_1 = [
     None,
     "ja",
@@ -819,7 +818,32 @@ COUNTRY_VAL = [
     "ZMB",
     "ZWE",
 ]
+AFFILIATION_SCHEME_LBL = [None, "kakenhi【非推奨】", "ISNI", "Ringgold【非推奨】", "GRID"]
 AFFILIATION_SCHEME_VAL = [None, "kakenhi", "ISNI", "Ringgold", "GRID"]
+CREATOR_IDENTIFIER_SCHEMA_LBL = [
+None,
+"e-Rad_Researcher",
+"NRID【非推奨】", 
+"ORCID",
+"ISNI", 
+"VIAF", 
+"AID", 
+"kakenhi【非推奨】", 
+"Ringgold",
+"GRID【非推奨】",
+"ROR"]
+CREATOR_IDENTIFIER_SCHEMA_VAL = [
+None,
+"e-Rad_Researcher",
+"NRID", 
+"ORCID",
+"ISNI", 
+"VIAF", 
+"AID", 
+"kakenhi", 
+"Ringgold",
+"GRID",
+"ROR"]
 DATE_TYPE_VAL = [
     None,
     "Accepted",
