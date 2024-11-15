@@ -902,33 +902,33 @@ msgstr "ElasticSearch Index"
 #~ msgid "CC BY-SA"
 #~ msgstr ""
 
-#~ msgid "CC BY-ND"
-#~ msgstr ""
+msgid "CC BY-ND"
+msgstr ""
 
-#~ msgid "CC BY-NC"
-#~ msgstr ""
+msgid "CC BY-NC"
+msgstr ""
 
-#~ msgid "CC BY-NC-SA"
-#~ msgstr ""
+msgid "CC BY-NC-SA"
+msgstr ""
 
-#~ msgid "ANY"
-#~ msgstr "任意"
+msgid "ANY"
+msgstr "任意"
 
-#~ msgid "Admin menu_ホーム"
-#~ msgstr "ホーム"
+msgid "Admin menu_ホーム"
+msgstr "ホーム"
 
-#~ msgid "Admin menu_Maintenance_ElasticSearch Index"
-#~ msgstr "ElasticSearchインデックス"
+msgid "Admin menu_Maintenance_ElasticSearch Index"
+msgstr "ElasticSearchインデックス"
 
-#~ msgid "Password(reconfirmation)"
-#~ msgstr "パスワード（確認用）"
+msgid "Password(reconfirmation)"
+msgstr "パスワード（確認用）"
 
-#~ msgid "password rule1"
-#~ msgstr "パスワードは8文字以上で設定してください。"
+msgid "password rule1"
+msgstr "パスワードは8文字以上で設定してください。"
 
-#~ msgid "password rule2"
-#~ msgstr "大文字,小文字,数字,記号を各1文字以上含めてください。"
+msgid "password rule2"
+msgstr "大文字,小文字,数字,記号を各1文字以上含めてください。"
 
-#~ msgid "available characters"
-#~ msgstr "使用可能文字"
+msgid "available characters"
+msgstr "使用可能文字"
 

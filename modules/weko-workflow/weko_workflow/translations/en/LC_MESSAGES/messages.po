@@ -773,13 +773,6 @@ msgstr ""
 #~ msgid "Stop/Continue"
 #~ msgstr ""
 
-#~ msgid ""
-#~ "After checking the Terms and Conditions,"
-#~ " please check the [I have read "
-#~ "and agreed to the Terms and "
-#~ "Conditions] at the end of scroll."
-#~ msgstr ""
-
 #~ msgid "Email Type"
 #~ msgstr ""
 
@@ -888,4 +881,11 @@ msgstr ""
 
 #~ msgid "Waiting for approval."
 #~ msgstr ""
+
+msgid ""
+"After checking the Terms and Conditions,"
+" please check the [I have read "
+"and agreed to the Terms and "
+"Conditions] at the end of scroll."
+msgstr ""
 
