@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-workflow 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2023-02-16 11:42+0900\n"
+"POT-Creation-Date: 2019-07-02 09:20+0000\n"
 "PO-Revision-Date: 2018-08-06 13:44+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,340 +19,272 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_workflow/admin.py:128
+#: weko_workflow/admin.py:100
 #, fuzzy
 msgid "Updated flow successfully."
 msgstr "フローを更新しました"
 
-#: weko_workflow/admin.py:165
-msgid "Cannot be deleted because flow is used."
-msgstr ""
-
-#: weko_workflow/admin.py:202
+#: weko_workflow/admin.py:138
 #, fuzzy
 msgid "Updated flow action successfully"
 msgstr "フローアクションを更新しました。"
 
-#: weko_workflow/admin.py:463 weko_workflow/admin.py:472
+#: weko_workflow/admin.py:148
+msgid "Approval by Administrator action does not exist, or not in the right order."
+msgstr "管理者の承認了アクションは存在しないか、正しい順序になっていません。"
+
+#: weko_workflow/admin.py:150
+msgid "Approval by Advisor action is not in the right order."
+msgstr "指導教員の承認アクションは正しい順序になっていません。"
+
+#: weko_workflow/admin.py:152
+msgid "Approval by Guarantor action is not in the right order."
+msgstr "保証人の承認アクションは正しい順序になっていません。"
+
+#: weko_workflow/admin.py:154
+msgid "Start or End action is not in the right order."
+msgstr "開始または終了アクションは存在しないか、正しい順序になっていません。"
+
+#: weko_workflow/admin.py:228 weko_workflow/admin.py:237
 msgid "WorkFlow"
 msgstr "ワークフロー"
 
-#: weko_workflow/admin.py:464
+#: weko_workflow/admin.py:229
 msgid "WorkFlow List"
 msgstr "ワークフロー一覧"
 
-#: weko_workflow/admin.py:473
+#: weko_workflow/admin.py:238
 msgid "Flow List"
 msgstr "フロー一覧"
 
-#: weko_workflow/api.py:2056 weko_workflow/utils.py:3062
+#: weko_workflow/api.py:1130 weko_workflow/views.py:219
 msgid "End"
 msgstr "終了"
 
-#: weko_workflow/errors.py:34
-msgid "Invalid ID supplied."
-msgstr ""
-
-#: weko_workflow/errors.py:41
-msgid "Invalid input."
-msgstr ""
-
-#: weko_workflow/errors.py:48
-msgid "指定されたIDによる登録アクティビティが存在しない。"
-msgstr ""
-
-#: weko_workflow/errors.py:55
-msgid "登録アクティビティが見つからない。"
-msgstr ""
-
-#: weko_workflow/errors.py:62
-msgid "登録アクティビティを削除エラー。"
-msgstr ""
-
-#: weko_workflow/models.py:73
+#: weko_workflow/models.py:69
 msgid "action_begin"
 msgstr "作業開始"
 
-#: weko_workflow/models.py:75
+#: weko_workflow/models.py:71
 msgid "action_done"
 msgstr "作業済"
 
-#: weko_workflow/models.py:77
+#: weko_workflow/models.py:73
 msgid "action_doing"
 msgstr "作業中"
 
-#: weko_workflow/models.py:79
+#: weko_workflow/models.py:75
 msgid "action_thrown_out"
 msgstr "却下"
 
-#: weko_workflow/models.py:81
+#: weko_workflow/models.py:77
 msgid "action_not_done"
 msgstr "中止"
 
-#: weko_workflow/models.py:83
+#: weko_workflow/models.py:79
 msgid "action_retry"
 msgstr "やり直し"
 
-#: weko_workflow/models.py:85
+#: weko_workflow/models.py:81
 msgid "action_skipped"
 msgstr "スキップ"
 
-#: weko_workflow/models.py:87
+#: weko_workflow/models.py:83
 msgid "action_error"
 msgstr "エラー"
 
-#: weko_workflow/models.py:89
+#: weko_workflow/models.py:85
 msgid "action_canceled"
 msgstr "中止"
 
-#: weko_workflow/models.py:140
+#: weko_workflow/models.py:136
 msgid "activity_active"
 msgstr "開始"
 
-#: weko_workflow/models.py:142
+#: weko_workflow/models.py:138
 msgid "activity_completed"
 msgstr "終了"
 
-#: weko_workflow/models.py:144
+#: weko_workflow/models.py:140
 msgid "activity_stopped"
 msgstr "強制終了"
 
-#: weko_workflow/models.py:146
+#: weko_workflow/models.py:142
 msgid "activity_canceled"
 msgstr "取り消し"
 
-#: weko_workflow/models.py:148
+#: weko_workflow/models.py:144
 msgid "activity_doing"
 msgstr "作業中"
 
-#: weko_workflow/models.py:150
+#: weko_workflow/models.py:146
 msgid "activity_error"
 msgstr "エラー"
 
-#: weko_workflow/models.py:190
+#: weko_workflow/models.py:186
 msgid "Available"
 msgstr "利用可"
 
-#: weko_workflow/models.py:192
+#: weko_workflow/models.py:188
 msgid "In use"
 msgstr "利用中"
 
-#: weko_workflow/models.py:194
+#: weko_workflow/models.py:190
 msgid "Making"
 msgstr "作成中"
 
-#: weko_workflow/models.py:232
+#: weko_workflow/models.py:228
 msgid "Created"
 msgstr "作成日"
 
-#: weko_workflow/models.py:234
+#: weko_workflow/models.py:230
 msgid "Updated"
 msgstr "更新日"
 
-#: weko_workflow/models.py:236
+#: weko_workflow/models.py:232
 msgid "Deleted"
 msgstr "削除日"
 
-#: weko_workflow/models.py:271
+#: weko_workflow/models.py:267
 msgid "Usable"
 msgstr "有効"
 
-#: weko_workflow/models.py:273
+#: weko_workflow/models.py:269
 #: weko_workflow/templates/weko_workflow/admin/pop_page.html:44
 msgid "Unusable"
 msgstr "無効"
 
-#: weko_workflow/models.py:308
+#: weko_workflow/models.py:304
 msgid "Begin Action"
 msgstr "開始しました"
 
-#: weko_workflow/models.py:310
+#: weko_workflow/models.py:306
 msgid "End Action"
 msgstr "終了しました"
 
-#: weko_workflow/models.py:343
+#: weko_workflow/models.py:339
 msgid "Record has be created."
 msgstr "登録しました"
 
-#: weko_workflow/models.py:344
+#: weko_workflow/models.py:340
 msgid "Record has be updated."
 msgstr "更新しました"
 
-#: weko_workflow/models.py:345
+#: weko_workflow/models.py:341
 msgid "Record has be deleted."
 msgstr "削除しました"
 
-#: weko_workflow/models.py:353
+#: weko_workflow/models.py:349
 msgid "Status Policy"
 msgstr "ステータスポリシー"
 
-#: weko_workflow/models.py:494
+#: weko_workflow/models.py:487
 msgid "Subscription Policy"
 msgstr "購読ポリシー"
 
-#: weko_workflow/scopes.py:35
-msgid "Allow create Workflow Activity."
-msgstr ""
-
-#: weko_workflow/utils.py:190
+#: weko_workflow/utils.py:118
 msgid "Identifier datas are empty!"
 msgstr "データ識別子が入力されていません"
 
-#: weko_workflow/utils.py:200
-msgid "DOI temporary registered!"
-msgstr ""
-
-#: weko_workflow/utils.py:212
-msgid "DOI successfully registered!"
-msgstr ""
-
-#: 433
-#, fuzzy
-msgid ""
-"\"When assigning a JaLC DOI through NDL, the resource type must be "
-"'doctor thesis'."
-msgstr "NDL JaLCに割り当てる場合、資源タイプは「doctoral thesis」である必要があります。"
-
-#: tests/test_views.py:1197 weko_workflow/utils.py:449
+#: weko_workflow/utils.py:298
 msgid "Cannot register selected DOI for current Item Type of this item."
 msgstr "選択されたDOIをこのアイテムのアイテムタイプに登録できません。"
 
-#: tests/test_utils.py:663 weko_workflow/utils.py:1703
-msgid "This DOI has been used already for another item. Please input another DOI."
-msgstr "このDOIは他のアイテムで既に使用されているため、他のDOIを入力してください"
+#: weko_workflow/utils.py: 433
+msgid "When assigning a JaLC DOI through NDL, the resource type must be 'doctor thesis'."
+msgstr "NDL JaLCに割り当てる場合、資源タイプは「doctoral thesis」である必要があります。"
 
-#: tests/test_utils.py:681 weko_workflow/utils.py:1707
-msgid "This DOI was withdrawn. Please input another DOI."
-msgstr "このDOIは取り下げられたため、他のDOIを入力してください"
-
-#: tests/test_utils.py:690 tests/test_views.py:1394 tests/test_views.py:1552
-#: weko_workflow/utils.py:1710 weko_workflow/views.py:1267
-#: weko_workflow/views.py:1272 weko_workflow/views.py:1401
-#: weko_workflow/views.py:1491 weko_workflow/views.py:1516
-#: weko_workflow/views.py:1659 weko_workflow/views.py:1856
-#: weko_workflow/views.py:2098 weko_workflow/views.py:2202
-msgid "success"
-msgstr "成功"
-
-#: tests/test_utils.py:1869 weko_workflow/utils.py:2959
-msgid "The specified link has expired."
-msgstr "指定したリンクはアクセス有効期限を超過しています。"
-
-#: weko_workflow/views.py:609
-msgid "Email is sent successfully."
-msgstr "メールの送付が完了しました。"
-
-#: weko_workflow/views.py:629
-msgid "Token is invalid"
-msgstr ""
-
-#: tests/test_views.py:1352 weko_workflow/views.py:1072
+#: weko_workflow/views.py:405 weko_workflow/views.py:407
+#: weko_workflow/views.py:410 weko_workflow/views.py:412
 msgid "Authorization required"
 msgstr "権限必須"
 
-#: tests/test_views.py:1502 weko_workflow/views.py:1573
-#: weko_workflow/views.py:1597 weko_workflow/views.py:1779
+#: weko_workflow/views.py:473 weko_workflow/views.py:482
+#: weko_workflow/views.py:486 weko_workflow/views.py:544
+#: weko_workflow/views.py:594 weko_workflow/views.py:658
+#: weko_workflow/views.py:773 weko_workflow/views.py:814
+#: weko_workflow/views.py:847
+msgid "success"
+msgstr "成功"
+
+#: weko_workflow/views.py:548 weko_workflow/views.py:618
 msgid "error"
 msgstr "エラー"
 
+#: weko_workflow/views.py:770
+msgid "Error! Cannot process quit activity!"
+msgstr "アクティビティを終了できません"
+
+#: weko_workflow/views.py:794
+msgid "Password not provided"
+msgstr "パスワードが入力されていません"
+
 #: weko_workflow/templates/weko_workflow/modal_withdraw_confirmation.html:50
-#: weko_workflow/views.py:2205
+#: weko_workflow/views.py:819
 msgid "Invalid password"
 msgstr "無効なパスワード"
 
-#: weko_workflow/views.py:2209
-#, fuzzy
-msgid "Error!"
-msgstr "エラー"
+#: weko_workflow/views.py:822
+msgid "Error! Relogin"
+msgstr "再度ログインしてください"
 
-#: weko_workflow/views.py:2234
-msgid "Header Error"
-msgstr ""
+#: weko_workflow/views.py:840
+msgid "This DOI has been used already for another item. Please input another DOI."
+msgstr "このDOIは他のアイテムで既に使用されているため、他のDOIを入力してください"
 
-#: weko_workflow/views.py:2244 weko_workflow/views.py:2311
-#: weko_workflow/views.py:2435
-#, fuzzy
-msgid "Success"
-msgstr "成功"
+#: weko_workflow/views.py:844
+msgid "This DOI was withdrawn. Please input another DOI."
+msgstr "このDOIは取り下げられたため、他のDOIを入力してください"
 
-#: weko_workflow/views.py:2247 weko_workflow/views.py:2318
-#, fuzzy
-msgid "Error"
-msgstr "エラー"
-
-#: weko_workflow/views.py:2412
-msgid "Locked"
-msgstr ""
-
-#: weko_workflow/views.py:2506
-#, fuzzy
-msgid "Unlock success"
-msgstr "成功"
-
-#: weko_workflow/views.py:2507
-msgid "Not unlock"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/helpers.html:60
-#: weko_workflow/templates/weko_workflow/helpers.html:66
+#: weko_workflow/templates/weko_workflow/helpers.html:57
+#: weko_workflow/templates/weko_workflow/helpers.html:63
 msgid "Input Field"
 msgstr "入力欄"
 
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:25
-msgid ""
-"When assigning a DOI to an item, it must be associated with an index "
-"whose index status is \"Public\" and Harvest Publishing is \"Public\"."
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:27
-msgid ""
-"Since the item has a DOI, it must be associated with an index whose index"
-" status is \"Public\" and whose Harvest Publishing is \"Public\"."
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:32
-msgid "Confirmation"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:36
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:24
 msgid "Identifier Grant"
 msgstr "識別子の付与"
 
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:78
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:66
 msgid "Its able to input only haft-width alphanumeric or half-width symbol."
 msgstr "半角英数字または半角記号のみ入力できます"
 
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:79
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:67
 msgid "Input value exceeds 255 characters."
 msgstr "入力値が255文字を超えています"
 
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:80
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:68
 msgid "DOI has not been entered."
 msgstr "DOIが入力されていません"
 
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:90
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:77
 msgid "Withdraw DOI"
 msgstr "DOIの取り下げ"
 
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:97
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:84
 msgid "DOI was withdrawn."
 msgstr "DOIが取り下げられました"
 
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:103
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:90
 msgid "Items for which a DOI has been withdrawn can not be granted a DOI."
 msgstr "DOIを取り下げたアイテムにはDOIを付与できません"
 
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:112
-#: weko_workflow/templates/weko_workflow/item_link.html:146
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:99
+#: weko_workflow/templates/weko_workflow/item_link.html:123
 msgid "Save"
 msgstr "保存"
 
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:115
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:102
 msgid "Next"
 msgstr "次へ"
 
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:119
-msgid "Quit_identifier_grand"
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:106
+#: weko_workflow/templates/weko_workflow/item_link.html:130
+# msgid "Quit"
+# msgstr "終了"
+
+#: weko_workflow/templates/weko_workflow/Activity_detail.html:306
+msgid "QuitQO"
 msgstr "強制終了"
 
 #: weko_workflow/templates/weko_workflow/index.html:29
@@ -360,69 +292,38 @@ msgstr "強制終了"
 msgid "Welcome to %(module_name)s"
 msgstr "%(module_name)sへようこそ！"
 
-#: weko_workflow/templates/weko_workflow/item_link.html:27
+#: weko_workflow/templates/weko_workflow/item_link.html:7
 msgid "Index Tree"
 msgstr "インデックスツリー"
 
-#: weko_workflow/templates/weko_workflow/item_link.html:44
+#: weko_workflow/templates/weko_workflow/item_link.html:24
 msgid "Designate Index"
 msgstr "インデックスを指定"
 
-#: weko_workflow/templates/weko_workflow/item_link.html:59
+#: weko_workflow/templates/weko_workflow/item_link.html:39
 msgid "Item Link"
 msgstr "アイテムリンク"
 
-#: weko_workflow/templates/weko_workflow/item_link.html:81
+#: weko_workflow/templates/weko_workflow/item_link.html:58
 msgid "Delete"
 msgstr "削除"
 
-#: weko_workflow/templates/weko_workflow/item_link.html:99
+#: weko_workflow/templates/weko_workflow/item_link.html:76
 msgid "Search failed."
 msgstr "検索に失敗しました"
 
-#: weko_workflow/templates/weko_workflow/item_link.html:105
+#: weko_workflow/templates/weko_workflow/item_link.html:82
 msgid "Loading..."
 msgstr "読み込み中..."
 
-#: weko_workflow/templates/weko_workflow/item_link.html:137
-#: weko_workflow/templates/weko_workflow/item_link.html:139
+#: weko_workflow/templates/weko_workflow/item_link.html:114
+#: weko_workflow/templates/weko_workflow/item_link.html:116
 msgid "Comment"
 msgstr "コメント"
 
-#: weko_workflow/templates/weko_workflow/item_link.html:150
-msgid "Next_item"
-msgstr "次へ"
-
-#: weko_workflow/templates/weko_workflow/item_link.html:155
-msgid "Quit_item"
-msgstr "強制終了"
-
-#: weko_workflow/templates/weko_workflow/lock_activity.html:25
-#: weko_workflow/templates/weko_workflow/permission_required.html:25
-msgid "Permission required"
-msgstr "権限が必要です"
-
-#: weko_workflow/templates/weko_workflow/lock_activity.html:26
-msgid "This activity is being locked ({})."
-msgstr "このアクティビティはロック中です（{}）。"
-
-#: weko_workflow/templates/weko_workflow/lock_activity.html:27
-msgid "Already have another activity open ({}). Close any open activities."
-msgstr "他のアクティビティ（{}）を既に開いています。開いているアクティビティを閉じてください。"
-
-#: weko_workflow/templates/weko_workflow/lock_activity.html:43
-msgid "Do you want to unlock this activity?"
-msgstr "このアクティビティのロックを解除してよろしいでしょうか。"
-
-#: weko_workflow/templates/weko_workflow/lock_activity.html:47
-msgid "OK"
-msgstr ""
-
-#: 37 weko_workflow/templates/weko_workflow/lock_activity.html:49
-#: weko_workflow/templates/weko_workflow/modal_quit_confirmation.html:39
-#: weko_workflow/templates/weko_workflow/modal_withdraw_confirmation.html:71
-msgid "Cancel"
-msgstr "キャンセル"
+#: weko_workflow/templates/weko_workflow/item_link.html:127
+msgid "Done"
+msgstr "完了"
 
 #: weko_workflow/templates/weko_workflow/modal_quit_confirmation.html:33
 msgid "Are you sure you want to quit the activity?"
@@ -433,13 +334,14 @@ msgstr "このアクティビティを終了してもよろしいですか？"
 msgid "Continue"
 msgstr "継続"
 
+#: weko_workflow/templates/weko_workflow/modal_quit_confirmation.html:39
+#: weko_workflow/templates/weko_workflow/modal_withdraw_confirmation.html:71
+msgid "Cancel"
+msgstr "キャンセル"
+
 #: weko_workflow/templates/weko_workflow/modal_withdraw_confirmation.html:44
 msgid "Are you sure you want to withdraw DOI?"
 msgstr "DOIを取り下げてもよろしいですか？"
-
-#: 33
-msgid "already open another activity ({})."
-msgstr "既に別のアクティビティ({})を開いています。"
 
 #: weko_workflow/templates/weko_workflow/oapolicy_search.html:3
 msgid "Journal"
@@ -457,39 +359,46 @@ msgstr ""
 msgid "Paid OA:"
 msgstr ""
 
+#: weko_workflow/templates/weko_workflow/permission_required.html:25
+msgid "Permission required"
+msgstr "権限が必要です"
+
 #: weko_workflow/templates/weko_workflow/permission_required.html:26
 msgid "You do not have sufficient permissions to view this page."
 msgstr "このページの閲覧権限がありません"
 
-#: weko_workflow/templates/weko_workflow/record_after_update.html:27
-#: weko_workflow/templates/weko_workflow/record_detail.html:27
+#: weko_workflow/templates/weko_workflow/record_detail.html:24
 msgid "Item"
 msgstr "アイテム"
 
-#: weko_workflow/templates/weko_workflow/record_after_update.html:28
-#: weko_workflow/templates/weko_workflow/record_detail.html:28
+#: weko_workflow/templates/weko_workflow/record_detail.html:25
 msgid "No title"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/record_after_update.html:43
-#: weko_workflow/templates/weko_workflow/record_detail.html:43
+#: weko_workflow/templates/weko_workflow/record_detail.html:37
 msgid "Name"
 msgstr "名前"
 
-#: weko_workflow/templates/weko_workflow/record_after_update.html:43
-#: weko_workflow/templates/weko_workflow/record_detail.html:43
+#: weko_workflow/templates/weko_workflow/record_detail.html:37
 msgid "File"
 msgstr "ファイル"
 
-#: weko_workflow/templates/weko_workflow/record_after_update.html:44
-#: weko_workflow/templates/weko_workflow/record_detail.html:44
+#: weko_workflow/templates/weko_workflow/record_detail.html:38
 msgid "License"
 msgstr "ライセンス"
 
-#: weko_workflow/templates/weko_workflow/record_after_update.html:92
-#: weko_workflow/templates/weko_workflow/record_detail.html:93
+#: weko_workflow/templates/weko_workflow/record_detail.html:67
 msgid "Plagiarism Check"
 msgstr "剽窃チェック"
+
+#: weko_workflow/templates/weko_workflow/record_detail.html:78
+#: weko_workflow/templates/weko_workflow/record_detail.html:100
+msgid "Preview"
+msgstr "プレビュー"
+
+#: weko_workflow/templates/weko_workflow/record_detail.html:135
+msgid "Item Type"
+msgstr "アイテムタイプ"
 
 #: weko_workflow/templates/weko_workflow/admin/pop_page.html:7
 msgid "Action List"
@@ -531,102 +440,11 @@ msgstr "適用"
 msgid "Update"
 msgstr "更新"
 
-#: weko_workflow/templates/weko_workflow/admin/pop_page.html:62
-#: weko_workflow/templates/weko_workflow/admin/pop_page.html:95
+#: weko_workflow/templates/weko_workflow/admin/pop_page.html:61
 msgid "Close"
 msgstr "閉じる"
 
-#: weko_workflow/templates/weko_workflow/admin/pop_page.html:75
-msgid "Specify Property"
-msgstr "プロパティを指定する"
-
-#: weko_workflow/templates/weko_workflow/admin/pop_page.html:91
-msgid "Setting"
-msgstr ""
-
-#: tests/conftest.py:232
-msgid "write your own license"
-msgstr ""
-
-#: tests/conftest.py:237
-msgid "Creative Commons CC0 1.0 Universal Public Domain Designation"
-msgstr ""
-
-#: tests/conftest.py:252
-msgid "Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
-msgstr ""
-
-#: tests/conftest.py:264
-msgid "Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)"
-msgstr ""
-
-#: tests/conftest.py:278
-msgid "Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)"
-msgstr ""
-
-#: tests/conftest.py:292
-msgid "Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)"
-msgstr ""
-
-#: tests/conftest.py:306
-msgid ""
-"Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported (CC "
-"BY-NC-SA 3.0)"
-msgstr ""
-
-#: tests/conftest.py:320
-msgid ""
-"Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported (CC BY-"
-"NC-ND 3.0)"
-msgstr ""
-
-#: tests/conftest.py:335
-msgid "Creative Commons Attribution 4.0 International (CC BY 4.0)"
-msgstr ""
-
-#: tests/conftest.py:347
-msgid "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
-msgstr ""
-
-#: tests/conftest.py:361
-msgid ""
-"Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND "
-"4.0)"
-msgstr ""
-
-#: tests/conftest.py:375
-msgid ""
-"Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC "
-"4.0)"
-msgstr ""
-
-#: tests/conftest.py:389
-msgid ""
-"Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International "
-"(CC BY-NC-SA 4.0)"
-msgstr ""
-
-#: tests/conftest.py:403
-msgid ""
-"Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 "
-"International (CC BY-NC-ND 4.0)"
-msgstr ""
-
-msgid "Approval Rejection Notification Email"
-msgstr "承認却下通知メール"
-
-msgid "Download"
-msgstr "ダウンロード"
-
-msgid "Deleted activities cannot be restored."
-msgstr "削除したアクティビティは元に戻せません。"
-
-msgid "Are you sure you want to delete filtered activities?"
-msgstr "フィルターされたアクティビティを削除してもよろしいですか？"
-
-msgid "Are you sure you want to delete the filtered activity?"
-msgstr "選択したアクティビティを削除してもよろしいですか？"
-
+#: weko_workflow/templates/weko_workflow/item_login_sucess.html:288
 #~ msgid "Back"
 #~ msgstr "戻る"
 
@@ -714,183 +532,8 @@ msgstr "選択したアクティビティを削除してもよろしいですか
 #~ msgid "Create WorkFlow"
 #~ msgstr "フロー作成"
 
-#~ msgid ""
-#~ "Approval by Administrator action does "
-#~ "not exist, or not in the right "
-#~ "order."
-#~ msgstr "管理者の承認了アクションは存在しないか、正しい順序になっていません。"
-
-#~ msgid "Approval by Advisor action is not in the right order."
-#~ msgstr "指導教員の承認アクションは正しい順序になっていません。"
-
-#~ msgid "Approval by Guarantor action is not in the right order."
-#~ msgstr "保証人の承認アクションは正しい順序になっていません。"
-
-#~ msgid "Start or End action is not in the right order."
-#~ msgstr "開始または終了アクションは存在しないか、正しい順序になっていません。"
-
-#~ msgid "Error! Cannot process quit activity!"
-#~ msgstr "アクティビティを終了できません"
-
-#~ msgid "Password not provided"
-#~ msgstr "パスワードが入力されていません"
-
-#~ msgid "Error! Relogin"
-#~ msgstr "再度ログインしてください"
-
-# msgid "Quit"
-# msgstr "終了"
-#~ msgid "QuitQO"
-#~ msgstr "強制終了"
-
-#~ msgid "Done"
-#~ msgstr "完了"
-
-#~ msgid "Preview"
-#~ msgstr "プレビュー"
-
-#~ msgid "Item Type"
-#~ msgstr "アイテムタイプ"
-
-#~ msgid ""
-#~ "Use of JGSS data is considered as"
-#~ " Continue. If you approve, this usage"
-#~ " report will end. It is not "
-#~ "able to restore an usage report "
-#~ "that has ended. Do you want to "
-#~ "continue?"
-#~ msgstr "JGSSデータの利用は「継続」とされています。承認するとこの利用報告は終了となりますがよろしいでしょうか。終了した利用報告を復活させることはできません。"
-
-#~ msgid "Stop/Continue"
-#~ msgstr "終了／継続"
-
-#~ msgid "Email Type"
-#~ msgstr "メール種別"
-
-#~ msgid "Send Mail"
-#~ msgstr "メール通知"
-
-#~ msgid "Remind to submit the Data Usage Report(Other than Student)"
-#~ msgstr "JGSSデータ利用報告の手続き＜学部生以外＞"
-
-#~ msgid "Remind to submit the Data Usage Report(Student)"
-#~ msgstr "JGSSデータ利用報告の手続き＜学部生＞"
-
-#~ msgid "email will be sent."
-#~ msgstr "を送付します。"
-
-#~ msgid "Please contact your system administrator."
-#~ msgstr "システム管理者に問い合わせてください。"
-
-#~ msgid "Add Filter"
-#~ msgstr "フィルターを追加"
-
-#~ msgid "Link"
-#~ msgstr "リンク"
-
-#~ msgid "Display Name"
-#~ msgstr "表示名"
-
-#~ msgid "Your session has timed out. Please login again."
-#~ msgstr "セッションが切れました。再度ログインしてください。"
-
-#~ msgid "Enable Full"
-#~ msgstr "有効にする"
-
-#~ msgid "Disable Full"
-#~ msgstr "無効にする"
-
-#~ msgid "Enable"
-#~ msgstr "有効"
-
-#~ msgid "Disable"
-#~ msgstr "無効"
-
-#~ msgid "Registration Destination Index Designation"
-#~ msgstr "登録先インデックスの指定"
-
-#~ msgid "Undesignated"
-#~ msgstr "指定なし"
-
-#~ msgid "Registration Destination Index"
-#~ msgstr "登録先インデックス"
-
-#~ msgid "Strage Location"
-#~ msgstr "ストレージロケーション"
-
-#~ msgid "Reject"
-#~ msgstr "却下"
-
-#~ msgid "Approval"
-#~ msgstr "承認"
-
-#~ msgid "Quit_Approval"
-#~ msgstr "強制終了"
-
-#~ msgid ""
-#~ "The activity is forcibly canceled "
-#~ "because the workflow settings have "
-#~ "changed and the next step was not"
-#~ " found."
-#~ msgstr "ワークフローの設定が変更し、次のアクションが見つかないため、このアクティビティは強制的に中止します。"
-
-#~ msgid "Specify property"
-#~ msgstr "プロパティを指定"
-
-#~ msgid "Item registrant"
-#~ msgstr "アイテム登録者"
-
-#~ msgid "Request mail"
-#~ msgstr "リクエスト送信先"
-
-#~ msgid "Guest User"
-#~ msgstr "非ログインユーザー"
-
-#~ msgid "Login User"
-#~ msgstr "ログインユーザー"
-
-#~ msgid "Notification Email Setting"
-#~ msgstr "通知メール設定"
-
-#~ msgid "Approval Request Notification Email"
-#~ msgstr "承認依頼通知メール"
-
-#~ msgid "Approval Notification Email"
-#~ msgstr "承認通知メール"
-
-#~ msgid "Deleted activity cannot be restored."
-#~ msgstr "削除したアクティビティは元に戻せません。"
-
-#~ msgid "Clear Confirm"
-#~ msgstr "削除の確認"
-
-#~ msgid "Send an email to the registrant"
-#~ msgstr "登録者にメールを送信する"
-
-#~ msgid "Send an email to item registrants when applying for use"
-#~ msgstr "利用申請時に、アイテム登録者に対しメールを送信する"
-
-#~ msgid "Application approved."
-#~ msgstr "申請が承認されました"
-
-#~ msgid "Back to Top page"
-#~ msgstr "トップページへ戻る"
-
-#~ msgid "Waiting for approval."
-#~ msgstr "承認待ちです"
-
-msgid ""
-"After checking the Terms and Conditions,"
-" please check the [I have read "
-"and agreed to the Terms and "
-"Conditions] at the end of scroll."
-msgstr "利用規約を確認の上、スクロール最下部にある「利用規約に同意する」にチェックを入れてください"
-
 msgid "Terms and Conditions"
 msgstr "利用規約"
-
-msgid "Restricted Access Flag"
-msgstr "利用申請フラグ"
 
 msgid "I have read and agreed to the Terms and Conditions"
 msgstr "利用規約に同意する"
@@ -901,3 +544,178 @@ msgstr "申請日"
 msgid "Approved Date"
 msgstr "承認日"
 
+msgid "Use of JGSS data is considered as Continue. If you approve, this usage report will end. It is not able to restore an usage report that has ended. Do you want to continue?"
+msgstr "JGSSデータの利用は「継続」とされています。承認するとこの利用報告は終了となりますがよろしいでしょうか。終了した利用報告を復活させることはできません。"
+
+msgid "Stop/Continue"
+msgstr "終了／継続"
+
+msgid "After checking the Terms and Conditions, please check the [I have read and agreed to the Terms and Conditions] at the end of scroll."
+msgstr "利用規約を確認の上、スクロール最下部にある「利用規約に同意する」にチェックを入れてください"
+
+msgid "Email Type"
+msgstr "メール種別"
+
+msgid "Send Mail"
+msgstr "メール通知"
+
+msgid "Email is sent successfully."
+msgstr "メールの送付が完了しました。"
+
+msgid "Remind to submit the Data Usage Report(Other than Student)"
+msgstr "JGSSデータ利用報告の手続き＜学部生以外＞"
+
+msgid "Remind to submit the Data Usage Report(Student)"
+msgstr "JGSSデータ利用報告の手続き＜学部生＞"
+
+msgid "email will be sent."
+msgstr "を送付します。"
+
+msgid "Please contact your system administrator."
+msgstr "システム管理者に問い合わせてください。"
+
+msgid "Add Filter"
+msgstr "フィルターを追加"
+
+msgid "Link"
+msgstr "リンク"
+
+msgid "Display Name"
+msgstr "表示名"
+
+msgid "This activity is being locked ({})."
+msgstr "このアクティビティはロック中です（{}）。"
+
+msgid "already open another activity ({})."
+msgstr "既に別のアクティビティ({})を開いています。"
+
+msgid "Already have another activity open ({}). Close any open activities."
+msgstr "他のアクティビティ（{}）を既に開いています。開いているアクティビティを閉じてください。"
+
+msgid "Do you want to unlock this activity?"
+msgstr "このアクティビティのロックを解除してよろしいでしょうか。"
+
+msgid "Your session has timed out. Please login again."
+msgstr "セッションが切れました。再度ログインしてください。"
+
+msgid "Restricted Access Flag"
+msgstr "利用申請フラグ"
+
+msgid "Enable Full"
+msgstr "有効にする"
+
+msgid "Disable Full"
+msgstr "無効にする"
+
+msgid "Enable"
+msgstr "有効"
+
+msgid "Disable"
+msgstr "無効"
+
+msgid "Registration Destination Index Designation"
+msgstr "登録先インデックスの指定"
+
+msgid "Undesignated"
+msgstr "指定なし"
+
+msgid "Registration Destination Index"
+msgstr "登録先インデックス"
+
+msgid "Strage Location"
+msgstr "ストレージロケーション"
+
+#: weko_workflow/templates/weko_workflow/activity_detail.html:260
+msgid "Reject"
+msgstr "却下"
+
+#: weko_workflow/templates/weko_workflow/activity_detail.html:263
+msgid "Approval"
+msgstr "承認"
+
+#: weko_workflow/templates/weko_workflow/activity_detail.html:266
+msgid "Quit_Approval"
+msgstr "強制終了"
+
+#: weko_workflow/templates/weko_workflow/item_login_sucess.html:295
+#: weko_workflow/templates/weko_workflow/activity_detail.html:381
+msgid "The activity is forcibly canceled because the workflow settings have changed and the next step was not found."
+msgstr "ワークフローの設定が変更し、次のアクションが見つかないため、このアクティビティは強制的に中止します。"
+
+#: weko_workflow/templates/weko_workflow/item_link.html:153
+msgid "Quit_item"
+msgstr "強制終了"
+
+#: weko_workflow/templates/weko_workflow/item_link.html:150
+msgid "Next_item"
+msgstr "次へ"
+
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:114
+msgid "Quit_identifier_grand"
+msgstr "強制終了"
+
+msgid "The specified link has expired."
+msgstr "指定したリンクはアクセス有効期限を超過しています。"
+
+msgid "Specify Property"
+msgstr "プロパティを指定する"
+
+msgid "Specify property"
+msgstr "プロパティを指定"
+
+msgid "Item registrant"
+msgstr "アイテム登録者"
+
+msgid "Request mail"
+msgstr "リクエスト送信先"
+
+msgid "Guest User"
+msgstr "非ログインユーザー"
+
+msgid "Login User"
+msgstr "ログインユーザー"
+
+msgid "Notification Email Setting"
+msgstr "通知メール設定"
+
+msgid "Approval Request Notification Email"
+msgstr "承認依頼通知メール"
+
+msgid "Approval Notification Email"
+msgstr "承認通知メール"
+
+msgid "Approval Rejection Notification Email"
+msgstr "承認却下通知メール"
+
+msgid "Download"
+msgstr "ダウンロード"
+
+msgid "Deleted activities cannot be restored."
+msgstr "削除したアクティビティは元に戻せません。"
+
+msgid "Are you sure you want to delete filtered activities?"
+msgstr "フィルターされたアクティビティを削除してもよろしいですか？"
+
+msgid "Deleted activity cannot be restored."
+msgstr "削除したアクティビティは元に戻せません。"
+
+msgid "Are you sure you want to delete the filtered activity?"
+msgstr "選択したアクティビティを削除してもよろしいですか？"
+
+msgid "Clear Confirm"
+msgstr "削除の確認"
+
+msgid "Send an email to the registrant"
+msgstr "登録者にメールを送信する"
+
+msgid "Send an email to item registrants when applying for use"
+msgstr "利用申請時に、アイテム登録者に対しメールを送信する"
+
+msgid "Application approved."
+msgstr "申請が承認されました"
+
+msgid "Back to Top page"
+msgstr "トップページへ戻る"
+
+msgid "Waiting for approval."
+msgstr "承認待ちです"

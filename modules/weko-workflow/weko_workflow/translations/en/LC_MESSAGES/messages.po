@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-workflow 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2023-02-16 11:42+0900\n"
+"POT-Creation-Date: 2019-04-25 19:05+0900\n"
 "PO-Revision-Date: 2018-08-06 13:44+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -19,420 +19,241 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_workflow/admin.py:128
+#: weko_workflow/admin.py:100
 msgid "Updated flow successfully."
 msgstr ""
 
-#: weko_workflow/admin.py:165
-msgid "Cannot be deleted because flow is used."
-msgstr ""
-
-#: weko_workflow/admin.py:202
+#: weko_workflow/admin.py:138
 msgid "Updated flow action successfully"
 msgstr ""
 
-#: weko_workflow/admin.py:463 weko_workflow/admin.py:472
+#: weko_workflow/admin.py:148
+msgid "Approval by Administrator action does not exist, or not in the right order."
+msgstr ""
+
+#: weko_workflow/admin.py:150
+msgid "Approval by Advisor action is not in the right order."
+msgstr ""
+
+#: weko_workflow/admin.py:152
+msgid "Approval by Guarantor action is not in the right order."
+msgstr ""
+
+#: weko_workflow/admin.py:154
+msgid "Start or End action is not in the right order."
+msgstr ""
+
+#: weko_workflow/admin.py:228 weko_workflow/admin.py:237
 msgid "WorkFlow"
 msgstr "Workflow"
 
-#: weko_workflow/admin.py:464
+#: weko_workflow/admin.py:229
 msgid "WorkFlow List"
 msgstr "Workflow List"
 
-#: weko_workflow/admin.py:473
+#: weko_workflow/admin.py:238
 msgid "Flow List"
 msgstr ""
 
-#: weko_workflow/api.py:2056 weko_workflow/utils.py:3062
+#: weko_workflow/api.py:998 weko_workflow/views.py:171
 msgid "End"
 msgstr ""
 
-#: weko_workflow/errors.py:34
-msgid "Invalid ID supplied."
-msgstr ""
-
-#: weko_workflow/errors.py:41
-msgid "Invalid input."
-msgstr ""
-
-#: weko_workflow/errors.py:48
-msgid "指定されたIDによる登録アクティビティが存在しない。"
-msgstr ""
-
-#: weko_workflow/errors.py:55
-msgid "登録アクティビティが見つからない。"
-msgstr ""
-
-#: weko_workflow/errors.py:62
-msgid "登録アクティビティを削除エラー。"
-msgstr ""
-
-#: weko_workflow/models.py:73
+#: weko_workflow/models.py:66
 msgid "action_begin"
 msgstr "Begin"
 
-#: weko_workflow/models.py:75
+#: weko_workflow/models.py:68
 msgid "action_done"
 msgstr "Done"
 
-#: weko_workflow/models.py:77
+#: weko_workflow/models.py:70
 msgid "action_doing"
 msgstr "Doing"
 
-#: weko_workflow/models.py:79
+#: weko_workflow/models.py:72
 msgid "action_thrown_out"
 msgstr "Thrown out"
 
-#: weko_workflow/models.py:81
+#: weko_workflow/models.py:74
 msgid "action_not_done"
 msgstr "Not done"
 
-#: weko_workflow/models.py:83
+#: weko_workflow/models.py:76
 msgid "action_retry"
 msgstr "Retry"
 
-#: weko_workflow/models.py:85
+#: weko_workflow/models.py:78
 msgid "action_skipped"
 msgstr "Skipped"
 
-#: weko_workflow/models.py:87
+#: weko_workflow/models.py:80
 msgid "action_error"
 msgstr "Error"
 
-#: weko_workflow/models.py:89
+#: weko_workflow/models.py:85
 msgid "action_canceled"
 msgstr "Canceled"
 
-#: weko_workflow/models.py:140
+#: weko_workflow/models.py:130
 msgid "activity_active"
 msgstr "Start"
 
-#: weko_workflow/models.py:142
+#: weko_workflow/models.py:132
 msgid "activity_completed"
 msgstr "Completed"
 
-#: weko_workflow/models.py:144
+#: weko_workflow/models.py:134
 msgid "activity_stopped"
 msgstr "Stopped"
 
-#: weko_workflow/models.py:146
+#: weko_workflow/models.py:136
 msgid "activity_canceled"
 msgstr "Canceled"
 
-#: weko_workflow/models.py:148
+#: weko_workflow/models.py:138
 msgid "activity_doing"
 msgstr "Doing"
 
-#: weko_workflow/models.py:150
+#: weko_workflow/models.py:140
 msgid "activity_error"
 msgstr "Error"
 
-#: weko_workflow/models.py:190
+#: weko_workflow/models.py:180
 msgid "Available"
 msgstr ""
 
-#: weko_workflow/models.py:192
+#: weko_workflow/models.py:182
 msgid "In use"
 msgstr ""
 
-#: weko_workflow/models.py:194
+#: weko_workflow/models.py:184
 msgid "Making"
 msgstr "Creating"
 
-#: weko_workflow/models.py:232
+#: weko_workflow/models.py:222
 msgid "Created"
 msgstr ""
 
-#: weko_workflow/models.py:234
+#: weko_workflow/models.py:224
 msgid "Updated"
 msgstr ""
 
-#: weko_workflow/models.py:236
+#: weko_workflow/models.py:226
 msgid "Deleted"
 msgstr ""
 
-#: weko_workflow/models.py:271
+#: weko_workflow/models.py:261
 msgid "Usable"
 msgstr ""
 
-#: weko_workflow/models.py:273
+#: weko_workflow/models.py:263
 #: weko_workflow/templates/weko_workflow/admin/pop_page.html:44
 msgid "Unusable"
 msgstr ""
 
-#: weko_workflow/models.py:308
+#: weko_workflow/models.py:298
 msgid "Begin Action"
 msgstr ""
 
-#: weko_workflow/models.py:310
+#: weko_workflow/models.py:300
 msgid "End Action"
 msgstr ""
 
-#: weko_workflow/models.py:343
+#: weko_workflow/models.py:333
 msgid "Record has be created."
 msgstr "Created record"
 
-#: weko_workflow/models.py:344
+#: weko_workflow/models.py:334
 msgid "Record has be updated."
 msgstr "Updated record"
 
-#: weko_workflow/models.py:345
+#: weko_workflow/models.py:335
 msgid "Record has be deleted."
 msgstr "Deleted record"
 
-#: weko_workflow/models.py:353
+#: weko_workflow/models.py:343
 msgid "Status Policy"
 msgstr ""
 
-#: weko_workflow/models.py:494
+#: weko_workflow/models.py:479
 msgid "Subscription Policy"
 msgstr ""
 
-#: weko_workflow/scopes.py:35
-msgid "Allow create Workflow Activity."
-msgstr ""
-
-#: weko_workflow/utils.py:190
-msgid "Identifier datas are empty!"
-msgstr ""
-
-#: weko_workflow/utils.py:200
-msgid "DOI temporary registered!"
-msgstr ""
-
-#: weko_workflow/utils.py:212
-msgid "DOI successfully registered!"
-msgstr ""
-
-#: 433
-msgid ""
-"\"When assigning a JaLC DOI through NDL, the resource type must be "
-"'doctor thesis'."
-msgstr ""
-
-#: tests/test_views.py:1197 weko_workflow/utils.py:449
+#: weko_workflow/utils.py:298
 msgid "Cannot register selected DOI for current Item Type of this item."
 msgstr ""
 
-#: tests/test_utils.py:663 weko_workflow/utils.py:1703
-msgid "This DOI has been used already for another item. Please input another DOI."
-msgstr ""
-
-#: tests/test_utils.py:681 weko_workflow/utils.py:1707
-msgid "This DOI was withdrawn. Please input another DOI."
-msgstr ""
-
-#: tests/test_utils.py:690 tests/test_views.py:1394 tests/test_views.py:1552
-#: weko_workflow/utils.py:1710 weko_workflow/views.py:1267
-#: weko_workflow/views.py:1272 weko_workflow/views.py:1401
-#: weko_workflow/views.py:1491 weko_workflow/views.py:1516
-#: weko_workflow/views.py:1659 weko_workflow/views.py:1856
-#: weko_workflow/views.py:2098 weko_workflow/views.py:2202
-msgid "success"
-msgstr ""
-
-#: tests/test_utils.py:1869 weko_workflow/utils.py:2959
-msgid "The specified link has expired."
-msgstr ""
-
-#: weko_workflow/views.py:609
-msgid "Email is sent successfully."
-msgstr ""
-
-#: weko_workflow/views.py:629
-msgid "Token is invalid"
-msgstr ""
-
-#: tests/test_views.py:1352 weko_workflow/views.py:1072
+#: weko_workflow/views.py:301 weko_workflow/views.py:303
+#: weko_workflow/views.py:306 weko_workflow/views.py:308
 msgid "Authorization required"
 msgstr ""
 
-#: tests/test_views.py:1502 weko_workflow/views.py:1573
-#: weko_workflow/views.py:1597 weko_workflow/views.py:1779
+#: weko_workflow/views.py:393 weko_workflow/views.py:400
+#: weko_workflow/views.py:404 weko_workflow/views.py:469
+#: weko_workflow/views.py:591
+msgid "success"
+msgstr ""
+
+#: weko_workflow/views.py:443 weko_workflow/views.py:562
 msgid "error"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/modal_withdraw_confirmation.html:50
-#: weko_workflow/views.py:2205
-msgid "Invalid password"
-msgstr ""
-
-#: weko_workflow/views.py:2209
-msgid "Error!"
-msgstr ""
-
-#: weko_workflow/views.py:2234
-msgid "Header Error"
-msgstr ""
-
-#: weko_workflow/views.py:2244 weko_workflow/views.py:2311
-#: weko_workflow/views.py:2435
-msgid "Success"
-msgstr ""
-
-#: weko_workflow/views.py:2247 weko_workflow/views.py:2318
-msgid "Error"
-msgstr ""
-
-#: weko_workflow/views.py:2412
-msgid "Locked"
-msgstr ""
-
-#: weko_workflow/views.py:2506
-msgid "Unlock success"
-msgstr ""
-
-#: weko_workflow/views.py:2507
-msgid "Not unlock"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/helpers.html:60
-#: weko_workflow/templates/weko_workflow/helpers.html:66
+#: weko_workflow/templates/weko_workflow/helpers.html:57
+#: weko_workflow/templates/weko_workflow/helpers.html:63
 msgid "Input Field"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:25
-msgid ""
-"When assigning a DOI to an item, it must be associated with an index "
-"whose index status is \"Public\" and Harvest Publishing is \"Public\"."
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:27
-msgid ""
-"Since the item has a DOI, it must be associated with an index whose index"
-" status is \"Public\" and whose Harvest Publishing is \"Public\"."
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:32
-msgid "Confirmation"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:36
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:24
 msgid "Identifier Grant"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:78
-msgid "Its able to input only haft-width alphanumeric or half-width symbol."
-msgstr "It's able to input only haft-width alphanumeric or half-width symbol."
-
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:79
-msgid "Input value exceeds 255 characters."
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:80
-msgid "DOI has not been entered."
-msgstr "DOI not provided"
-
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:90
-msgid "Withdraw DOI"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:97
-msgid "DOI was withdrawn."
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:103
-msgid "Items for which a DOI has been withdrawn can not be granted a DOI."
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:112
-#: weko_workflow/templates/weko_workflow/item_link.html:146
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:70
+#: weko_workflow/templates/weko_workflow/item_link.html:128
 msgid "Save"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:115
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:75
 msgid "Next"
 msgstr ""
-
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:119
-msgid "Quit_identifier_grand"
-msgstr "Quit"
 
 #: weko_workflow/templates/weko_workflow/index.html:29
 #, python-format
 msgid "Welcome to %(module_name)s"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/item_link.html:27
+#: weko_workflow/templates/weko_workflow/item_link.html:7
 msgid "Index Tree"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/item_link.html:44
+#: weko_workflow/templates/weko_workflow/item_link.html:30
 msgid "Designate Index"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/item_link.html:59
+#: weko_workflow/templates/weko_workflow/item_link.html:45
 msgid "Item Link"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/item_link.html:81
+#: weko_workflow/templates/weko_workflow/item_link.html:64
 msgid "Delete"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/item_link.html:99
+#: weko_workflow/templates/weko_workflow/item_link.html:82
 msgid "Search failed."
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/item_link.html:105
+#: weko_workflow/templates/weko_workflow/item_link.html:88
 msgid "Loading..."
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/item_link.html:137
-#: weko_workflow/templates/weko_workflow/item_link.html:139
+#: weko_workflow/templates/weko_workflow/item_link.html:120
+#: weko_workflow/templates/weko_workflow/item_link.html:122
 msgid "Comment"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/item_link.html:150
-msgid "Next_item"
-msgstr "Next"
-
-#: weko_workflow/templates/weko_workflow/item_link.html:155
-msgid "Quit_item"
-msgstr "Quit"
-
-#: weko_workflow/templates/weko_workflow/lock_activity.html:25
-#: weko_workflow/templates/weko_workflow/permission_required.html:25
-msgid "Permission required"
+#: weko_workflow/templates/weko_workflow/item_link.html:132
+msgid "Done"
 msgstr ""
-
-#: weko_workflow/templates/weko_workflow/lock_activity.html:26
-msgid "This activity is being locked ({})."
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/lock_activity.html:27
-msgid "Already have another activity open ({}). Close any open activities."
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/lock_activity.html:43
-msgid "Do you want to unlock this activity?"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/lock_activity.html:47
-msgid "OK"
-msgstr ""
-
-#: 37 weko_workflow/templates/weko_workflow/lock_activity.html:49
-#: weko_workflow/templates/weko_workflow/modal_quit_confirmation.html:39
-#: weko_workflow/templates/weko_workflow/modal_withdraw_confirmation.html:71
-msgid "Cancel"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/modal_quit_confirmation.html:33
-msgid "Are you sure you want to quit the activity?"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/modal_quit_confirmation.html:37
-#: weko_workflow/templates/weko_workflow/modal_withdraw_confirmation.html:68
-msgid "Continue"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/modal_withdraw_confirmation.html:44
-msgid "Are you sure you want to withdraw DOI?"
-msgstr ""
-
-#: 33
-msgid "already open another activity ({})."
-msgstr "既に別のアクティビティ({})を開いています。"
 
 #: weko_workflow/templates/weko_workflow/oapolicy_search.html:3
 msgid "Journal"
@@ -450,38 +271,45 @@ msgstr ""
 msgid "Paid OA:"
 msgstr ""
 
+#: weko_workflow/templates/weko_workflow/permission_required.html:25
+msgid "Permission required"
+msgstr ""
+
 #: weko_workflow/templates/weko_workflow/permission_required.html:26
 msgid "You do not have sufficient permissions to view this page."
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/record_after_update.html:27
-#: weko_workflow/templates/weko_workflow/record_detail.html:27
+#: weko_workflow/templates/weko_workflow/record_detail.html:4
 msgid "Item"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/record_after_update.html:28
-#: weko_workflow/templates/weko_workflow/record_detail.html:28
+#: weko_workflow/templates/weko_workflow/record_detail.html:10
 msgid "No title"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/record_after_update.html:43
-#: weko_workflow/templates/weko_workflow/record_detail.html:43
+#: weko_workflow/templates/weko_workflow/record_detail.html:23
 msgid "Name"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/record_after_update.html:43
-#: weko_workflow/templates/weko_workflow/record_detail.html:43
+#: weko_workflow/templates/weko_workflow/record_detail.html:23
 msgid "File"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/record_after_update.html:44
-#: weko_workflow/templates/weko_workflow/record_detail.html:44
+#: weko_workflow/templates/weko_workflow/record_detail.html:24
 msgid "License"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/record_after_update.html:92
-#: weko_workflow/templates/weko_workflow/record_detail.html:93
+#: weko_workflow/templates/weko_workflow/record_detail.html:53
 msgid "Plagiarism Check"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/record_detail.html:64
+#: weko_workflow/templates/weko_workflow/record_detail.html:86
+msgid "Preview"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/record_detail.html:121
+msgid "Item Type"
 msgstr ""
 
 #: weko_workflow/templates/weko_workflow/admin/pop_page.html:7
@@ -524,105 +352,50 @@ msgstr ""
 msgid "Update"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/pop_page.html:62
-#: weko_workflow/templates/weko_workflow/admin/pop_page.html:95
+#: weko_workflow/templates/weko_workflow/admin/pop_page.html:61
 msgid "Close"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/pop_page.html:75
-msgid "Specify Property"
-msgstr "Specify Property"
-
-#: weko_workflow/templates/weko_workflow/admin/pop_page.html:91
-msgid "Setting"
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:77
+msgid "DOI was withdrawn."
 msgstr ""
 
-#: tests/conftest.py:232
-msgid "write your own license"
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:83
+msgid "Items for which a DOI has been withdrawn can not be granted a DOI."
 msgstr ""
 
-#: tests/conftest.py:237
-msgid "Creative Commons CC0 1.0 Universal Public Domain Designation"
+#: weko_workflow/views.py:716
+msgid "Password not provided"
 msgstr ""
 
-#: tests/conftest.py:252
-msgid "Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
+#: weko_workflow/views.py:738
+msgid "Invalid password"
 msgstr ""
 
-#: tests/conftest.py:264
-msgid "Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)"
+#: weko-workflow/weko_workflow/views.py: 777
+msgid "This DOI has been used already for another item. Please input another DOI."
 msgstr ""
 
-#: tests/conftest.py:278
-msgid "Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)"
+#: weko-workflow/weko_workflow/views.py: 781
+msgid "This DOI was withdrawn. Please input another DOI."
 msgstr ""
 
-#: tests/conftest.py:292
-msgid "Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)"
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:65
+msgid "Its able to input only haft-width alphanumeric or half-width symbol."
+msgstr "It's able to input only haft-width alphanumeric or half-width symbol."
+
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:66
+msgid "Input value exceeds 255 characters."
 msgstr ""
 
-#: tests/conftest.py:306
-msgid ""
-"Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported (CC "
-"BY-NC-SA 3.0)"
-msgstr ""
-
-#: tests/conftest.py:320
-msgid ""
-"Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported (CC BY-"
-"NC-ND 3.0)"
-msgstr ""
-
-#: tests/conftest.py:335
-msgid "Creative Commons Attribution 4.0 International (CC BY 4.0)"
-msgstr ""
-
-#: tests/conftest.py:347
-msgid "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
-msgstr ""
-
-#: tests/conftest.py:361
-msgid ""
-"Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND "
-"4.0)"
-msgstr ""
-
-#: tests/conftest.py:375
-msgid ""
-"Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC "
-"4.0)"
-msgstr ""
-
-#: tests/conftest.py:389
-msgid ""
-"Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International "
-"(CC BY-NC-SA 4.0)"
-msgstr ""
-
-#: tests/conftest.py:403
-msgid ""
-"Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 "
-"International (CC BY-NC-ND 4.0)"
-msgstr ""
-
-msgid "Approval Rejection Notification Email"
-msgstr ""
-
-msgid "Download"
-msgstr ""
-
-msgid "Deleted activities cannot be restored."
-msgstr ""
-
-msgid "Are you sure you want to delete filtered activities?"
-msgstr ""
-
-msgid "Are you sure you want to delete the filtered activity?"
-msgstr ""
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:67
+msgid "DOI has not been entered."
+msgstr "DOI not provided"
 
 #~ msgid "item type"
 #~ msgstr ""
 
+#: weko_workflow/templates/weko_workflow/item_login_sucess.html:288
 #~ msgid "Back"
 #~ msgstr ""
 
@@ -716,176 +489,178 @@ msgstr ""
 #~ msgid "Update flow action successfully"
 #~ msgstr ""
 
-#~ msgid ""
-#~ "Approval by Administrator action does "
-#~ "not exist, or not in the right "
-#~ "order."
-#~ msgstr ""
-
-#~ msgid "Approval by Advisor action is not in the right order."
-#~ msgstr ""
-
-#~ msgid "Approval by Guarantor action is not in the right order."
-#~ msgstr ""
-
-#~ msgid "Start or End action is not in the right order."
-#~ msgstr ""
-
-#~ msgid "Done"
-#~ msgstr ""
-
-#~ msgid "Preview"
-#~ msgstr ""
-
-#~ msgid "Item Type"
-#~ msgstr ""
-
-#~ msgid "Password not provided"
-#~ msgstr ""
-
-#~ msgid "Terms and Conditions"
-#~ msgstr ""
-
-#~ msgid "I have read and agreed to the Terms and Conditions"
-#~ msgstr ""
-
-#~ msgid "Application Date"
-#~ msgstr ""
-
-#~ msgid "Approved Date"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Use of JGSS data is considered as"
-#~ " Continue. If you approve, this usage"
-#~ " report will end. It is not "
-#~ "able to restore an usage report "
-#~ "that has ended. Do you want to "
-#~ "continue?"
-#~ msgstr ""
-#~ "Use of JGSS data is considered as"
-#~ " &quot;Continue&quot;. If you approve, this"
-#~ " usage report will end. It is "
-#~ "not able to restore an usage "
-#~ "report that has ended. Do you want"
-#~ " to continue?"
-
-#~ msgid "Stop/Continue"
-#~ msgstr ""
-
-#~ msgid "Email Type"
-#~ msgstr ""
-
-#~ msgid "Send Mail"
-#~ msgstr ""
-
-#~ msgid "Please contact your system administrator."
-#~ msgstr ""
-
-#~ msgid "Remind to submit the Data Usage Report(Other than Student)"
-#~ msgstr ""
-
-#~ msgid "Remind to submit the Data Usage Report(Student)"
-#~ msgstr ""
-
-#~ msgid "email will be sent."
-#~ msgstr ""
-
-#~ msgid "Add Filter"
-#~ msgstr ""
-
-#~ msgid "Link"
-#~ msgstr ""
-
-#~ msgid "Display Name"
-#~ msgstr ""
-
-#~ msgid "Your session has timed out. Please login again."
-#~ msgstr ""
-
-#~ msgid "Restricted Access Flag"
-#~ msgstr "Usage Application Flag"
-
-#~ msgid "Enable Full"
-#~ msgstr "Enable"
-
-#~ msgid "Disable Full"
-#~ msgstr "Disable"
-
-#~ msgid "Enable"
-#~ msgstr ""
-
-#~ msgid "Disable"
-#~ msgstr ""
-
-#~ msgid "Registration Destination Index Designation"
-#~ msgstr ""
-
-#~ msgid "Undesignated"
-#~ msgstr ""
-
-#~ msgid "Registration Destination Index"
-#~ msgstr ""
-
-#~ msgid "Strage Location"
-#~ msgstr ""
-
-#~ msgid "Quit_Approval"
-#~ msgstr "Quit"
-
-#~ msgid ""
-#~ "The activity is forcibly canceled "
-#~ "because the workflow settings have "
-#~ "changed and the next step was not"
-#~ " found."
-#~ msgstr ""
-
-#~ msgid "Specify property"
-#~ msgstr "Specify Property"
-
-#~ msgid "Item registrant"
-#~ msgstr "Item registrant"
-
-#~ msgid "Request mail"
-#~ msgstr "Request mail"
-
-#~ msgid "Guest User"
-#~ msgstr ""
-
-#~ msgid "Login User"
-#~ msgstr ""
-
-#~ msgid "Notification Email Setting"
-#~ msgstr ""
-
-#~ msgid "Approval Request Notification Email"
-#~ msgstr ""
-
-#~ msgid "Approval Notification Email"
-#~ msgstr ""
-
-#~ msgid "Deleted activity cannot be restored."
-#~ msgstr ""
-
-#~ msgid "Clear Confirm"
-#~ msgstr ""
-
-#~ msgid "Send an email to item registrants when applying for use"
-#~ msgstr ""
-
-#~ msgid "Application approved."
-#~ msgstr ""
-
-#~ msgid "Back to Top page"
-#~ msgstr ""
-
-#~ msgid "Waiting for approval."
-#~ msgstr ""
-
-msgid ""
-"After checking the Terms and Conditions,"
-" please check the [I have read "
-"and agreed to the Terms and "
-"Conditions] at the end of scroll."
+msgid "Terms and Conditions"
 msgstr ""
 
+msgid "I have read and agreed to the Terms and Conditions"
+msgstr ""
+
+msgid "Application Date"
+msgstr ""
+
+msgid "Approved Date"
+msgstr ""
+
+msgid "Use of JGSS data is considered as Continue. If you approve, this usage report will end. It is not able to restore an usage report that has ended. Do you want to continue?"
+msgstr "Use of JGSS data is considered as &quot;Continue&quot;. If you approve, this usage report will end. It is not able to restore an usage report that has ended. Do you want to continue?"
+
+msgid "Stop/Continue"
+msgstr ""
+
+msgid "After checking the Terms and Conditions, please check the [I have read and agreed to the Terms and Conditions] at the end of scroll."
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_list.html:186
+msgid "Email Type"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_list.html:82
+msgid "Send Mail"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_list.html:333
+msgid "Please contact your system administrator."
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_list.html:309
+msgid "Email is sent successfully."
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_list.html:
+msgid "Remind to submit the Data Usage Report(Other than Student)"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_list.html
+msgid "Remind to submit the Data Usage Report(Student)"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_list.html:266
+msgid "email will be sent."
+msgstr ""
+
+msgid "Add Filter"
+msgstr ""
+
+msgid "Link"
+msgstr ""
+
+msgid "Display Name"
+msgstr ""
+
+msgid "Your session has timed out. Please login again."
+msgstr ""
+
+msgid "Restricted Access Flag"
+msgstr "Usage Application Flag"
+
+msgid "Enable Full"
+msgstr "Enable"
+
+msgid "Disable Full"
+msgstr "Disable"
+
+msgid "Enable"
+msgstr ""
+
+msgid "Disable"
+msgstr ""
+
+msgid "Registration Destination Index Designation"
+msgstr ""
+
+msgid "Undesignated"
+msgstr ""
+
+msgid "Registration Destination Index"
+msgstr ""
+
+msgid "Strage Location"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_detail.html:266
+msgid "Quit_Approval"
+msgstr "Quit"
+
+#: weko_workflow/templates/weko_workflow/activity_detail.html:381
+#: weko_workflow/templates/weko_workflow/item_login_sucess.html:295
+msgid "The activity is forcibly canceled because the workflow settings have changed and the next step was not found."
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/item_link.html:153
+msgid "Quit_item"
+msgstr "Quit"
+
+#: weko_workflow/templates/weko_workflow/item_link.html:150
+msgid "Next_item"
+msgstr "Next"
+
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:114
+msgid "Quit_identifier_grand"
+msgstr "Quit"
+
+msgid "The specified link has expired."
+msgstr ""
+
+msgid "Specify Property"
+msgstr "Specify Property"
+
+msgid "Specify property"
+msgstr "Specify Property"
+
+msgid "Item registrant"
+msgstr "Item registrant"
+
+msgid "Request mail"
+msgstr "Request mail"
+
+msgid "Guest User"
+msgstr ""
+
+msgid "Login User"
+msgstr ""
+
+msgid "Notification Email Setting"
+msgstr ""
+
+msgid "Approval Request Notification Email"
+msgstr ""
+
+msgid "Approval Notification Email"
+msgstr ""
+
+msgid "Approval Rejection Notification Email"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/modal_withdraw_confirmation.html:44
+msgid "Are you sure you want to withdraw DOI?"
+msgstr ""
+
+msgid "Download"
+msgstr ""
+
+msgid "Deleted activities cannot be restored."
+msgstr ""
+
+msgid "Are you sure you want to delete filtered activities?"
+msgstr ""
+
+msgid "Deleted activity cannot be restored."
+msgstr ""
+
+msgid "Are you sure you want to delete the filtered activity?"
+msgstr ""
+
+msgid "Clear Confirm"
+msgstr ""
+
+msgid "Send an email to item registrants when applying for use"
+msgstr ""
+
+msgid "Application approved."
+msgstr ""
+
+msgid "Back to Top page"
+msgstr ""
+
+msgid "Waiting for approval."
+msgstr ""
