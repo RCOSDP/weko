@@ -138,7 +138,9 @@ msgid "Title is required item."
 msgstr "タイトルは必須項目です。"
 
 #: weko_search_ui/utils.py:2496
-msgid "One of the following required values ​​has not been registered.<br/>{}<br/>"
+msgid ""
+"One of the following required values ​​has not been "
+"registered.<br/>{}<br/>"
 msgstr "次のいずれかの必要値が登録していません。<br/>{}<br/>"
 
 #: weko_search_ui/utils.py:1276
