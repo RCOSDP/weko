@@ -460,6 +460,8 @@ ${INVENIO_WEB_INSTANCE} authors_affiliation default_settings \
        "Ringgold" "Ringgold" ""
 ${INVENIO_WEB_INSTANCE} authors_affiliation default_settings \
        "kakenhi" "kakenhi" ""
+${INVENIO_WEB_INSTANCE} authors_affiliation default_settings \
+       "ROR" "ROR" "https://ror.org/##"
 # create-default-authors-affiliation-settings-end
 
 # create-widget-bucket-begin
