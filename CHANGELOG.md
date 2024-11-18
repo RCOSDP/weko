@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added a feature that allows users to forcibly unlock activity locks.
 ### Fixed
 - Fixed an issue where comments on the first index would overwrite comments on indexes at the same level.
+- Fixed an issue where the item details screen and the item type editing screen could not be displayed due to data errors in the item type mapping.
 - Fixed an issue where the lock function was not working when the workflow was opened in multiple tabs.
 - Corrected an issue with the validation check for dissertations where the StartPage field was included erroneously.
 - Fixed an URL encoding issue of Shibboleth redirection.

@@ -109,6 +109,8 @@ BEGIN
             UPDATE item_type SET render=replace(render::text, key, value)::jsonb WHERE id = full_itemtype_id AND render::text like '%' || key || '[%';
             UPDATE item_type SET render=replace(render::text, key, value)::jsonb WHERE id = full_itemtype_id AND render::text like '%' || key || '.%';
             UPDATE item_type_mapping SET mapping=replace(mapping::text, key, value)::jsonb WHERE id = 40001 AND mapping::text like '%' || key || '"%';
+            UPDATE records_metadata SET json=replace(json::text, key, value)::jsonb WHERE json::text like '%' || key || '%';
+            UPDATE item_metadata SET json=replace(json::text, key, value)::jsonb WHERE json::text like '%' || key || '%';
         END LOOP;
     ELSE
         RAISE EXCEPTION 'item_type_id and name do not match. id: %, name: %', full_itemtype_id, full_itemtype_name;
@@ -128,6 +130,8 @@ BEGIN
             UPDATE item_type SET render=replace(render::text, key, value)::jsonb WHERE id = simple_itemtype_id AND render::text like '%' || key || '[%';
             UPDATE item_type SET render=replace(render::text, key, value)::jsonb WHERE id = simple_itemtype_id AND render::text like '%' || key || '.%';
             UPDATE item_type_mapping SET mapping=replace(mapping::text, key, value)::jsonb WHERE id = simple_itemtype_id AND mapping::text like '%' || key || '"%';
+            UPDATE records_metadata SET json=replace(json::text, key, value)::jsonb WHERE json::text like '%' || key || '%';
+            UPDATE item_metadata SET json=replace(json::text, key, value)::jsonb WHERE json::text like '%' || key || '%';
         END LOOP;
     ELSE
         RAISE EXCEPTION 'item_type_id and name do not match. id: %, name: %', simple_itemtype_id, simple_itemtype_name;
