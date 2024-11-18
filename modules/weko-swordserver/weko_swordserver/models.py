@@ -129,7 +129,8 @@ class SwordClientModel(db.Model, Timestamp):
     client_id = db.Column(
         db.String(255),
         db.ForeignKey(Client.client_id),
-        unique=True
+        unique=True,
+        nullable=False
     )
     """Id of the clients. Foreign key from Client."""
 

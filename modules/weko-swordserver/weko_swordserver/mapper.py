@@ -122,7 +122,11 @@ class WekoSwordMapper(JsonMapper):
     def validate_mapping(self):
         """Validate mapping."""
         item_map = self._create_item_map()
-        # FIXME: stack error message and i18n
+        # FIXME: i18n
+        error_msg = []
         for k, v in self.json_map.items():
             if k not in item_map:
-                raise WekoSwordserverException(f"Invalid mapping: {k}")
+                error_msg.append(f"{k} is not defined.")
+
+        if error_msg:
+            raise WekoSwordserverException(error_msg)
