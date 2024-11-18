@@ -47,7 +47,7 @@ def check_on_behalf_of():
             # Check onBehalfOf
             allowOnBehalfOf = current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_ON_BEHALF_OF']
             onBehalfOf = request.headers.get("On-Behalf-Of", "")
-            if allowOnBehalfOf == False and onBehalfOf != "":
+            if not allowOnBehalfOf and onBehalfOf:
                 raise WekoSwordserverException("Not support On-Behalf-Of.", ErrorType.OnBehalfOfNotAllowed)
 
             return f(*args, **kwargs)
@@ -103,3 +103,28 @@ def check_package_contents():
         return decorated
     return wrapper
 
+def check_digest():
+    """Decorator to check Digest header."""
+    def wrapper(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            # Check Digest
+            digest = request.headers.get("Digest", None)
+            file = kwargs.get("file", None)
+            file_format = kwargs.get("file_format", None)
+
+            from .utils import is_valid_body_hash
+            is_valid_bodyhash = is_valid_body_hash(digest, file)
+
+            result = f(*args, **kwargs)
+
+            if (file_format or result) in ["SWORD", "ROCRATE"]:
+                if digest is None or not is_valid_bodyhash:
+                    raise WekoSwordserverException(
+                        "Request body and digest verification failed.",
+                        ErrorType.BadRequest
+                        )
+
+            return result
+        return decorated
+    return wrapper

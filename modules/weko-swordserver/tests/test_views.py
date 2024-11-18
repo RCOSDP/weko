@@ -1,7 +1,7 @@
 
 from flask import url_for,json,request,abort
 import pytest
-from mock import patch
+from unittest.mock import patch
 import datetime
 from sword3common.lib.seamless import SeamlessException
 from werkzeug.datastructures import FileStorage
@@ -10,6 +10,7 @@ from invenio_accounts.testutils import login_user_via_session
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_files_rest.models import Location
 
+from invenio_records.models import RecordMetadata
 from weko_swordserver.errors import *
 
 from weko_swordserver.views import blueprint, _get_status_document,_create_error_document,post_service_document
@@ -53,20 +54,21 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
     res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
     assert res.status_code == 200
 
-    #recid = PersistentIdentifier.get("recid","1").object_uuid
-    #record = RecordMetadata.query.filter_by(id=recid).one_or_none()
-    #assert record is not None
-    #record = record.json
-    #file_metadata = record["item_1617605131499"]["attribute_value_mlt"][0]
-    #assert file_metadata.get("url") is not None
-    #assert file_metadata.get("url").get("url") == "https://localhost/record/1/files/sample.html"
+    recid = PersistentIdentifier.get("recid","1").object_uuid
+    record = RecordMetadata.query.filter_by(id=recid).one_or_none()
+    assert record is not None
+    record = record.json
+    file_metadata = record["item_1617605131499"]["attribute_value_mlt"][0]
+    assert file_metadata.get("url") is not None
+    assert file_metadata.get("url").get("url") == "https://localhost/record/1/files/sample.html"
     assert json.loads(res.data) == {"recid":"1"}
+
     zip = make_zip()
     storage=FileStorage(filename="payload.zip",stream=zip)
     with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
         # exist "error" in check_result
         checked = {"error":"test_check_error","item":"test_item"}
-        with patch("weko_swordserver.views.check_import_items",return_value=checked):
+        with patch("weko_search_ui.utils.check_import_items",return_value=checked):
             with pytest.raises(WekoSwordserverException) as e:
                 post_service_document()
                 assert e.errorType == ErrorType.ServerError
@@ -74,7 +76,7 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
 
         # exist "error" in item
         checked = {"error":"","item":{"errors":["this is test item error1","this is test item error2"]}}
-        with patch("weko_swordserver.views.check_import_items",return_value=checked):
+        with patch("weko_search_ui.utils.check_import_items",return_value=checked):
             with pytest.raises(WekoSwordserverException) as e:
                 post_service_document()
                 assert e.errorType == ErrorType.ContentMalformed
@@ -82,7 +84,7 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
 
         # else
         checked = {"error":"","item":{}}
-        with patch("weko_swordserver.views.check_import_items",return_value=checked):
+        with patch("weko_search_ui.utils.check_import_items",return_value=checked):
             with pytest.raises(WekoSwordserverException) as e:
                 post_service_document()
                 assert e.errorType == ErrorType.ContentMalformed
@@ -90,7 +92,7 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
 
         # item.status is not new
         checked = {"error":"","item":{"status":"update","item_title":"not_new_item"}}
-        with patch("weko_swordserver.views.check_import_items",return_value=checked):
+        with patch("weko_search_ui.utils.check_import_items",return_value=checked):
             with pytest.raises(WekoSwordserverException) as e:
                 post_service_document()
                 assert e.errorType == ErrorType.BadRequest
@@ -98,7 +100,7 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
 
         # import failed
         checked = {"error":"","item":{"status":"new","item_title":"new_item"}}
-        with patch("weko_swordserver.views.check_import_items",return_value=checked):
+        with patch("weko_search_ui.utils.check_import_items",return_value=checked):
             with patch("weko_swordserver.views.import_items_to_system",return_value={"error_id":"test error in import"}):
                 with pytest.raises(WekoSwordserverException) as e:
                     post_service_document()

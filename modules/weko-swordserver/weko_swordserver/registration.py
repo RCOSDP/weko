@@ -10,25 +10,40 @@
 import bagit
 import json
 import traceback
-from flask import current_app
+from flask import current_app, request
 from zipfile import BadZipFile
+
+from weko_search_ui.utils import (
+    handle_check_date,
+    handle_check_exist_record,
+    handle_check_file_metadata,
+    handle_check_id,
+    handle_fill_system_item,
+    handle_item_title,
+    handle_set_change_identifier_flag,
+    handle_validate_item_import
+)
 
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkFlow
 from .errors import ErrorType, WekoSwordserverException
+from .mapper import WekoSwordMapper
 from .utils import (
     check_rocrate_required_files,
     check_swordbagit_required_files,
     get_record_by_token,
-    unpack_zip)
+    unpack_zip,
+    process_json
+)
 
 
 def check_import_items(file, is_change_identifier = False):
-    pass
+    from weko_search_ui.utils import check_import_items
+    return check_import_items(file, is_change_identifier), None
 
 
 
-def check_bagit_import_items(file, header_info, file_format):
+def check_bagit_import_items(file, file_format):
     """Check bagit import items.
 
     Check that the actual file contents match the recorded hashes stored
@@ -48,6 +63,7 @@ def check_bagit_import_items(file, header_info, file_format):
             check_result = {
                 "data_path": "/tmp/xxxxx",
                 "list_record": [
+                    # metadata
                 ]
                 "register_format": "Direct",
                 "item_type_id": 1,
@@ -58,16 +74,19 @@ def check_bagit_import_items(file, header_info, file_format):
             check_result = {
                 "data_path": "/tmp/xxxxx",
                 "list_record": [
+                    # metadata
                 ]
                 "register_format": "Workflow",
                 "workflow_id": 1,
                 "item_type_id": 2,
             }
-
-
-
     """
     check_result = {}
+    if "On-Behalf-Of" in request.headers:
+        # TODO: check if on-behalf-of is correct
+        check_result.update({
+            "On-Behalf-Of": request.headers.get("On-Behalf-Of")
+        })
 
     if isinstance(file, str):
         filename = file.split("/")[-1]
@@ -82,8 +101,10 @@ def check_bagit_import_items(file, header_info, file_format):
         # Check if all required files are contained
         if file_format == 'ROCRATE':
             all_file_contained = all(check_rocrate_required_files(file_list))
+            json_name = "ro-crate-metadata.json"
         elif file_format == 'SWORD':
             all_file_contained = all(check_swordbagit_required_files(file_list))
+            json_name = "metadata/sword.json"
 
         if not all_file_contained:
             raise WekoSwordserverException(
@@ -94,7 +115,8 @@ def check_bagit_import_items(file, header_info, file_format):
         bag = bagit.Bag(data_path)
         bag.validate()
 
-        sword_client, sword_mapping = get_record_by_token(header_info["access_token"])
+        access_token = request.headers.get("Authorization").split("Bearer ")[1]
+        sword_client, sword_mapping = get_record_by_token(access_token)
         if sword_mapping is None:
             current_app.logger.error(f"Mapping not defined for sword client.")
             raise WekoSwordserverException(
@@ -105,14 +127,22 @@ def check_bagit_import_items(file, header_info, file_format):
         # Check workflow and item type
         register_format = sword_mapping.registration_type
         if register_format == "Workflow":
-            # TODO: check workflow
+            # TODO: check if workflow exists
             workflow = WorkFlow.get_workflow_by_id(sword_client.workflow_id)
-            if workflow is None:
+            if workflow is None or workflow.is_deleted:
                 current_app.logger.error(f"Workflow not found for sword client.")
                 raise WekoSwordserverException(
                     "Workflow not found for registration your item.",
                     errorType=ErrorType.WorkflowNotFound
                 )
+            # Check if workflow and item type match
+            if workflow.itemtype_id != sword_mapping.item_type_id:
+                current_app.logger.error(f"Item type and workflow do not match.")
+                raise WekoSwordserverException(
+                    "Item type and workflow do not match.",
+                    errorType=ErrorType.ItemTypeNotMatched
+                )
+
         check_result.update({"register_format": register_format})
 
         item_type = ItemTypes.get_by_id(sword_mapping.item_type_id)
@@ -123,12 +153,25 @@ def check_bagit_import_items(file, header_info, file_format):
                 errorType=ErrorType.ItemTypeNotFound
             )
         check_result.update({"item_type_id": item_type.id})
-        item_type_name = item_type.item_type_name
 
         # TODO: validate mapping
         mapping = json.loads(sword_mapping.mapping)
 
+        with open(f"{data_path}/{json_name}", "r") as f:
+            json_ld = json.load(f)
+        processed_json = process_json(json_ld)
+
         # TODO: make check_result
+        list_record = generate_metadata_from_json(
+            processed_json, mapping, item_type
+        )
+        list_record = handle_check_exist_record(list_record)
+        handle_item_title(list_record)
+        list_record = handle_check_date(list_record)
+        handle_check_id(list_record)
+        handle_check_file_metadata(list_record, data_path)
+
+        check_result.update({"list_record": list_record})
 
     except WekoSwordserverException:
         raise
@@ -173,3 +216,40 @@ def check_bagit_import_items(file, header_info, file_format):
             check_result.update({"error": str(ex)})
 
     return check_result
+
+
+# TODO: add generate_metadata function, and add read_json function
+def generate_metadata_from_json(json, mapping, item_type, is_change_identifier=False):
+    """Generate metadata from JSON-LD.
+
+    Args:
+        json (dict): Json data including metadata.
+        mapping (dict): Mapping definition.
+        item_type_id (int): ItemType ID used for registration.
+        is_change_identifier (bool, optional):
+            Change Identifier Mode. Defaults to False.
+
+    Returns:
+        list: list_record.
+    """
+    list_record = []
+
+    mapper = WekoSwordMapper(json, item_type, mapping)
+    metadata = mapper.map()
+
+    list_record.append({
+        "$schema": item_type.schema,
+        "metadata": metadata,
+        "item_type_name": item_type.item_type_name,
+        "item_type_id": item_type.id,
+    })
+
+    handle_set_change_identifier_flag(list_record, is_change_identifier)
+    # FIXME: Change method below for GRDM link.
+    handle_fill_system_item(list_record)
+
+    list_record = handle_validate_item_import(
+        list_record, item_type.schema
+    )
+
+    return list_record

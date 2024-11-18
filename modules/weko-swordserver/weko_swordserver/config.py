@@ -5,12 +5,11 @@
 # WEKO-SWORDServer is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
+import base64
 from weko_swordserver.models import SwordClientModel
 
 """Module of weko-swordserver."""
 
-# TODO: This is an example file. Remove it if your package does not use any
-# extra configuration variables.
 
 WEKO_SWORDSERVER_DEFAULT_VALUE = 'foobar'
 """Default value for the application."""
@@ -112,3 +111,12 @@ WEKO_SWORDSERVER_REQUIRED_FILES_SWORD = [
     'manifest-sha256.txt',
     'metadata/sword.json'
 ]
+
+
+WEKO_SWORDSERVER_DATASET_PLEFIX = "weko-swordserver"
+
+WEKO_SWORDSERVER_DATASET_IDENTIFIER = {
+    "": "./",
+    "enc": base64.b64encode(
+        f"{WEKO_SWORDSERVER_DATASET_PLEFIX}-./".encode('utf-8')).decode('utf-8')
+}

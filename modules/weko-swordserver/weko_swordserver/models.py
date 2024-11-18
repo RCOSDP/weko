@@ -13,7 +13,6 @@ from invenio_oauth2server.models import Client
 from weko_records.models import ItemType, Timestamp
 from weko_workflow.models import WorkFlow
 
-from .errors import ErrorType, WekoSwordserverException
 
 """Models of weko-swordserver."""
 
@@ -96,7 +95,7 @@ class SwordClientModel(db.Model, Timestamp):
     Columns:
         `client_id` (str): ID of the client. Primary key.\
             Foreign key referencing `Client.client_id`.
-        `registration_type_index` (int): Type of registration to register an item.
+        `registration_type_id` (int): Type of registration to register an item.
         `mapping_id` (int): Mapping ID of the client.\
             Foreign key referencing `SwordItemTypeMapping.id`.
         `workflow_id` (int, optional): Workflow ID of the client.\
@@ -115,16 +114,28 @@ class SwordClientModel(db.Model, Timestamp):
         WORKFLOW = 2
 
     __tablename__ = 'sword_clients'
+    # __table_args__ = (
+    #     db.Index("idx_client_id", "client_id"),
+    # )
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+        unique=True,
+        autoincrement=True
+    )
+    """ID of the Sword Client Setting."""
 
     client_id = db.Column(
         db.String(255),
         db.ForeignKey(Client.client_id),
-        primary_key=True,
-        unique=True)
+        unique=True,
+        nullable=False
+    )
     """Id of the clients. Foreign key from Client."""
 
-    registration_type_index = db.Column(
-        db.Integer,
+    registration_type_id = db.Column(
+        db.SmallInteger,
         unique=False,
         nullable=False
     )
@@ -150,9 +161,9 @@ class SwordClientModel(db.Model, Timestamp):
         """Registration type name of the client."""
         registration_type = ""
 
-        if self.registration_type_index == self.RegistrationType.DIRECT:
+        if self.registration_type_id == self.RegistrationType.DIRECT:
             registration_type = "Direct"
-        elif self.registration_type_index == self.RegistrationType.WORKFLOW:
+        elif self.registration_type_id == self.RegistrationType.WORKFLOW:
             registration_type = "Workflow"
 
         return registration_type

@@ -11,18 +11,19 @@ import os
 import sys
 import tempfile
 import traceback
-from base64 import b64encode
+from copy import deepcopy
 from datetime import datetime, timezone
 from hashlib import sha256
 from zipfile import ZipFile
 
-from flask import current_app, request
+from flask import current_app
 from invenio_oauth2server.provider import get_token
 
 from .api import SwordClient, SwordItemTypeMapping
 from .errors import WekoSwordserverException, ErrorType
+from .decorators import check_digest
 
-
+@check_digest()
 def check_import_file_format(file, packaging):
     """Check inport file format.
 
@@ -36,14 +37,14 @@ def check_import_file_format(file, packaging):
     Returns:
         str: Import file format
     """
-    if packaging == 'SWORDBagIt':
-        file_format = 'SWORD'
-    elif packaging == 'SimpleZip':
+    if "SWORDBagIt" in packaging:
+        file_format = "SWORD"
+    elif "SimpleZip" in packaging:
         file_list = get_file_list_of_zip(file)
-        if 'ro-crate-metadata.json' in file_list:
-            file_format = 'ROCRATE'
+        if "ro-crate-metadata.json" in file_list:
+            file_format = "ROCRATE"
         else:
-            file_format = 'OTHERS'
+            file_format = "OTHERS"
     else:
         current_app.logger.info("No Packing Included")
         raise WekoSwordserverException(
@@ -63,7 +64,7 @@ def get_file_list_of_zip(file):
     Returns:
         list: File list
     """
-    with ZipFile(file, 'r') as zip_ref:
+    with ZipFile(file, "r") as zip_ref:
         file_list =  zip_ref.namelist()
 
     return file_list
@@ -75,10 +76,11 @@ def unpack_zip(file):
     Unpack zip file and return extracted files information.
 
     Args:
-        file (FileStorage): Zip file.
+        file (FileStorage | str): Zip file object or file path.
 
     Returns:
-        tuple (str, list[ZipInfo]): Extracted files path and file information
+        tuple (str, list[str]):
+        data_path: Path of extracted files, file_list: List of extracted files.
 
     """
     data_path = (
@@ -122,32 +124,18 @@ def is_valid_body_hash(digest, body):
     Returns:
         bool: Check result.
     """
-    body_hash = calculate_sha256(body)
+    sha256_hash = sha256()
+    for byte_block in iter(lambda: body.read(4096), b""):
+        sha256_hash.update(byte_block)
+    body.seek(0)
+    body_hash = sha256_hash.hexdigest()
 
     result = False
-
-    if ('SHA-256=' in digest
-        and digest.split('SHA-256=')[-1] == body_hash):
+    if (digest is not None and "SHA-256=" in digest
+        and digest.split("SHA-256=")[-1] == body_hash):
         result = True
 
     return result
-
-
-def calculate_sha256(file):
-    """Calculate SHA-256 of a file.
-
-    Args:
-        file (_type_): File to be calculated.
-
-    Returns:
-        _type_: Calculate result.
-    """
-    sha256_hash = sha256()
-    for byte_block in iter(lambda: file.read(4096), b""):
-        sha256_hash.update(byte_block)
-    file.seek(0)
-
-    return sha256_hash.hexdigest()
 
 
 def check_rocrate_required_files(file_list):
@@ -160,7 +148,7 @@ def check_rocrate_required_files(file_list):
         list: List of results.
     """
     list_required_files = current_app.config.get(
-        'WEKO_SWORDSERVER_REQUIRED_FILES_ROCRATE'
+        "WEKO_SWORDSERVER_REQUIRED_FILES_ROCRATE"
     )
 
     return [required_file in file_list
@@ -177,7 +165,7 @@ def check_swordbagit_required_files(file_list):
         list: List of results.
     """
     list_required_files = current_app.config.get(
-        'WEKO_SWORDSERVER_REQUIRED_FILES_SWORD'
+        "WEKO_SWORDSERVER_REQUIRED_FILES_SWORD"
     )
 
     return [required_file in file_list
@@ -207,3 +195,65 @@ def get_record_by_token(access_token):
     sword_mapping = SwordItemTypeMapping.get_mapping_by_id(mapping_id)
 
     return sword_client, sword_mapping
+
+def process_json(json_ld):
+    """Process json-ld.
+
+    Process RO-Crate metadata json-ld data.
+    Pick up necessary data from @graph and resolve links
+    in order to map to WEKO item type.
+
+    Args:
+        json_ld (dict): Json-ld data.
+
+    Returns:
+        dict: Processed json data.
+    """
+    json = deepcopy(json_ld)
+    index = json.pop("@index", None)
+
+    # transform list that contains @id to dict in @graph
+    if "@graph" in json and isinstance(json["@graph"], list):
+        new_value = {}
+        for v in json["@graph"]:
+            if isinstance(v, dict) and "@id" in v:
+                new_value[v["@id"]] = v
+            else:
+                new_value = value
+                break
+        json["@graph"] = new_value
+    # Remove unnecessary keys
+    json = json.get("@graph")
+
+    def _resolve_link(parent, key, value):
+        if isinstance(value, dict):
+            if len(value) == 1 and "@id" in value and value["@id"] in json:
+                parent[key] = json[value["@id"]]
+            else:
+                for k, v in value.items():
+                    _resolve_link(value, k, v)
+        elif isinstance(value, list):
+            for i, v in enumerate(value):
+                _resolve_link(value, i, v)
+
+    for key, value in json.items():
+        _resolve_link(json, key, value)
+
+    # replace Dataset identifier
+    id = current_app.config["WEKO_SWORDSERVER_DATASET_IDENTIFIER"].get("")
+    enc = current_app.config["WEKO_SWORDSERVER_DATASET_IDENTIFIER"].get("enc")
+    json.update({enc: json.pop(id)})
+
+    # prepare json for mapper format
+    json = {
+        "record": {
+            "header": {
+                "identifier": json[enc]["name"],
+                "datestamp": json[enc]["datePublished"],
+                "index": index,
+            },
+            "metadata": json
+        }
+    }
+
+    return json

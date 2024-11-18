@@ -1,0 +1,1397 @@
+[
+  {
+    "key": "pubdate",
+    "type": "template",
+    "title": "PubDate",
+    "format": "yyyy-MM-dd",
+    "required": true,
+    "title_i18n": {
+      "en": "PubDate",
+      "ja": "公開日"
+    },
+    "templateUrl": "/static/templates/weko_deposit/datepicker.html"
+  },
+  {
+    "key": "item_1730255238992",
+    "type": "fieldset",
+    "items": [
+      {
+        "key": "item_1730255238992.subitem_title",
+        "type": "text",
+        "title": "タイトル",
+        "required": true,
+        "title_i18n": {
+          "en": "Title",
+          "ja": "タイトル"
+        }
+      },
+      {
+        "key": "item_1730255238992.subitem_title_language",
+        "type": "select",
+        "title": "言語",
+        "required": false,
+        "titleMap": [
+          {
+            "name": "ja",
+            "value": "ja"
+          },
+          {
+            "name": "ja-Kana",
+            "value": "ja-Kana"
+          },
+          {
+            "name": "ja-Latn",
+            "value": "ja-Latn"
+          },
+          {
+            "name": "en",
+            "value": "en"
+          },
+          {
+            "name": "fr",
+            "value": "fr"
+          },
+          {
+            "name": "it",
+            "value": "it"
+          },
+          {
+            "name": "de",
+            "value": "de"
+          },
+          {
+            "name": "es",
+            "value": "es"
+          },
+          {
+            "name": "zh-cn",
+            "value": "zh-cn"
+          },
+          {
+            "name": "zh-tw",
+            "value": "zh-tw"
+          },
+          {
+            "name": "ru",
+            "value": "ru"
+          },
+          {
+            "name": "la",
+            "value": "la"
+          },
+          {
+            "name": "ms",
+            "value": "ms"
+          },
+          {
+            "name": "eo",
+            "value": "eo"
+          },
+          {
+            "name": "ar",
+            "value": "ar"
+          },
+          {
+            "name": "el",
+            "value": "el"
+          },
+          {
+            "name": "ko",
+            "value": "ko"
+          }
+        ],
+        "title_i18n": {
+          "en": "Language",
+          "ja": "言語"
+        }
+      }
+    ],
+    "title": "タイトル",
+    "title_i18n": {
+      "en": "Title",
+      "ja": "タイトル"
+    }
+  },
+  {
+    "key": "item_1730256524921",
+    "type": "fieldset",
+    "items": [
+      {
+        "key": "item_1730256524921.subitem_alternative_title",
+        "type": "text",
+        "title": "その他のタイトル",
+        "title_i18n": {
+          "en": "Alternative Title",
+          "ja": "その他のタイトル"
+        },
+        "title_i18n_temp": {
+          "en": "Alternative Title",
+          "ja": "その他のタイトル"
+        }
+      },
+      {
+        "key": "item_1730256524921.subitem_alternative_title_language",
+        "type": "select",
+        "title": "言語",
+        "titleMap": [
+          {
+            "name": "ja",
+            "value": "ja"
+          },
+          {
+            "name": "ja-Kana",
+            "value": "ja-Kana"
+          },
+          {
+            "name": "ja-Latn",
+            "value": "ja-Latn"
+          },
+          {
+            "name": "en",
+            "value": "en"
+          },
+          {
+            "name": "fr",
+            "value": "fr"
+          },
+          {
+            "name": "it",
+            "value": "it"
+          },
+          {
+            "name": "de",
+            "value": "de"
+          },
+          {
+            "name": "es",
+            "value": "es"
+          },
+          {
+            "name": "zh-cn",
+            "value": "zh-cn"
+          },
+          {
+            "name": "zh-tw",
+            "value": "zh-tw"
+          },
+          {
+            "name": "ru",
+            "value": "ru"
+          },
+          {
+            "name": "la",
+            "value": "la"
+          },
+          {
+            "name": "ms",
+            "value": "ms"
+          },
+          {
+            "name": "eo",
+            "value": "eo"
+          },
+          {
+            "name": "ar",
+            "value": "ar"
+          },
+          {
+            "name": "el",
+            "value": "el"
+          },
+          {
+            "name": "ko",
+            "value": "ko"
+          }
+        ],
+        "title_i18n": {
+          "en": "Language",
+          "ja": "言語"
+        },
+        "title_i18n_temp": {
+          "en": "Language",
+          "ja": "言語"
+        }
+      }
+    ],
+    "title": "サブタイトル",
+    "title_i18n": {
+      "en": "Subtitle",
+      "ja": "サブタイトル"
+    }
+  },
+  {
+    "key": "item_1730255318606",
+    "type": "fieldset",
+    "items": [
+      {
+        "key": "item_1730255318606.subitem_author_name",
+        "type": "text",
+        "title": "著者名",
+        "required": true,
+        "title_i18n": {
+          "en": "Author name",
+          "ja": "著者名"
+        },
+        "title_i18n_temp": {
+          "en": "Author name",
+          "ja": "著者名"
+        }
+      }
+    ],
+    "title": "著者",
+    "title_i18n": {
+      "en": "Author",
+      "ja": "著者"
+    }
+  },
+  {
+    "add": "New",
+    "key": "item_1730255441907",
+    "items": [
+      {
+        "key": "item_1730255441907[].contributorType",
+        "type": "select",
+        "title": "Contributor Type",
+        "titleMap": [
+          {
+            "name": "ContactPerson",
+            "value": "ContactPerson"
+          },
+          {
+            "name": "DataCollector",
+            "value": "DataCollector"
+          },
+          {
+            "name": "DataCurator",
+            "value": "DataCurator"
+          },
+          {
+            "name": "DataManager",
+            "value": "DataManager"
+          },
+          {
+            "name": "Distributor",
+            "value": "Distributor"
+          },
+          {
+            "name": "Editor",
+            "value": "Editor"
+          },
+          {
+            "name": "HostingInstitution",
+            "value": "HostingInstitution"
+          },
+          {
+            "name": "Producer",
+            "value": "Producer"
+          },
+          {
+            "name": "ProjectLeader",
+            "value": "ProjectLeader"
+          },
+          {
+            "name": "ProjectManager",
+            "value": "ProjectManager"
+          },
+          {
+            "name": "ProjectMember",
+            "value": "ProjectMember"
+          },
+          {
+            "name": "RelatedPerson",
+            "value": "RelatedPerson"
+          },
+          {
+            "name": "Researcher",
+            "value": "Researcher"
+          },
+          {
+            "name": "ResearchGroup",
+            "value": "ResearchGroup"
+          },
+          {
+            "name": "Sponsor",
+            "value": "Sponsor"
+          },
+          {
+            "name": "Supervisor",
+            "value": "Supervisor"
+          },
+          {
+            "name": "WorkPackageLeader",
+            "value": "WorkPackageLeader"
+          },
+          {
+            "name": "Other",
+            "value": "Other"
+          }
+        ],
+        "title_i18n": {
+          "en": "Contributor Type",
+          "ja": "寄与者タイプ"
+        },
+        "title_i18n_temp": {
+          "en": "Contributor Type",
+          "ja": "寄与者タイプ"
+        }
+      },
+      {
+        "add": "New",
+        "key": "item_1730255441907[].nameIdentifiers",
+        "items": [
+          {
+            "key": "item_1730255441907[].nameIdentifiers[].nameIdentifierScheme",
+            "type": "select",
+            "title": "寄与者識別子Scheme",
+            "titleMap": [],
+            "title_i18n": {
+              "en": "Contributor Name Identifier Scheme",
+              "ja": "寄与者識別子Scheme"
+            },
+            "title_i18n_temp": {
+              "en": "Contributor Name Identifier Scheme",
+              "ja": "寄与者識別子Scheme"
+            }
+          },
+          {
+            "key": "item_1730255441907[].nameIdentifiers[].nameIdentifierURI",
+            "type": "text",
+            "title": "寄与者識別子URI",
+            "title_i18n": {
+              "en": "Contributor Name Identifier URI",
+              "ja": "寄与者識別子URI"
+            },
+            "title_i18n_temp": {
+              "en": "Contributor Name Identifier URI",
+              "ja": "寄与者識別子URI"
+            }
+          },
+          {
+            "key": "item_1730255441907[].nameIdentifiers[].nameIdentifier",
+            "type": "text",
+            "title": "寄与者識別子",
+            "title_i18n": {
+              "en": "Contributor Name Identifier",
+              "ja": "寄与者識別子"
+            },
+            "title_i18n_temp": {
+              "en": "Contributor Name Identifier",
+              "ja": "寄与者識別子"
+            }
+          }
+        ],
+        "style": {
+          "add": "btn-success"
+        },
+        "title": "寄与者識別子",
+        "title_i18n": {
+          "en": "Contributor Name Identifier",
+          "ja": "寄与者識別子"
+        },
+        "title_i18n_temp": {
+          "en": "Contributor Name Identifier",
+          "ja": "寄与者識別子"
+        }
+      },
+      {
+        "add": "New",
+        "key": "item_1730255441907[].contributorNames",
+        "items": [
+          {
+            "key": "item_1730255441907[].contributorNames[].contributorName",
+            "type": "text",
+            "title": "姓名",
+            "title_i18n": {
+              "en": "Name",
+              "ja": "姓名"
+            },
+            "title_i18n_temp": {
+              "en": "Name",
+              "ja": "姓名"
+            }
+          },
+          {
+            "key": "item_1730255441907[].contributorNames[].lang",
+            "type": "select",
+            "title": "言語",
+            "titleMap": [
+              {
+                "name": "ja",
+                "value": "ja"
+              },
+              {
+                "name": "ja-Kana",
+                "value": "ja-Kana"
+              },
+              {
+                "name": "ja-Latn",
+                "value": "ja-Latn"
+              },
+              {
+                "name": "en",
+                "value": "en"
+              },
+              {
+                "name": "fr",
+                "value": "fr"
+              },
+              {
+                "name": "it",
+                "value": "it"
+              },
+              {
+                "name": "de",
+                "value": "de"
+              },
+              {
+                "name": "es",
+                "value": "es"
+              },
+              {
+                "name": "zh-cn",
+                "value": "zh-cn"
+              },
+              {
+                "name": "zh-tw",
+                "value": "zh-tw"
+              },
+              {
+                "name": "ru",
+                "value": "ru"
+              },
+              {
+                "name": "la",
+                "value": "la"
+              },
+              {
+                "name": "ms",
+                "value": "ms"
+              },
+              {
+                "name": "eo",
+                "value": "eo"
+              },
+              {
+                "name": "ar",
+                "value": "ar"
+              },
+              {
+                "name": "el",
+                "value": "el"
+              },
+              {
+                "name": "ko",
+                "value": "ko"
+              }
+            ],
+            "title_i18n": {
+              "en": "Language",
+              "ja": "言語"
+            },
+            "title_i18n_temp": {
+              "en": "Language",
+              "ja": "言語"
+            }
+          },
+          {
+            "key": "item_1730255441907[].contributorNames[].nameType",
+            "type": "select",
+            "title": "名前タイプ",
+            "titleMap": [
+              {
+                "name": "Personal",
+                "value": "Personal"
+              },
+              {
+                "name": "Organizational",
+                "value": "Organizational"
+              }
+            ],
+            "title_i18n": {
+              "en": "Name Type",
+              "ja": "名前タイプ"
+            },
+            "title_i18n_temp": {
+              "en": "Name Type",
+              "ja": "名前タイプ"
+            }
+          }
+        ],
+        "style": {
+          "add": "btn-success"
+        },
+        "title": "寄与者姓名",
+        "title_i18n": {
+          "en": "Contributor Name",
+          "ja": "寄与者姓名"
+        },
+        "title_i18n_temp": {
+          "en": "Contributor Name",
+          "ja": "寄与者姓名"
+        }
+      },
+      {
+        "add": "New",
+        "key": "item_1730255441907[].familyNames",
+        "items": [
+          {
+            "key": "item_1730255441907[].familyNames[].familyNameLang",
+            "type": "select",
+            "title": "言語",
+            "titleMap": [
+              {
+                "name": "ja",
+                "value": "ja"
+              },
+              {
+                "name": "ja-Kana",
+                "value": "ja-Kana"
+              },
+              {
+                "name": "ja-Latn",
+                "value": "ja-Latn"
+              },
+              {
+                "name": "en",
+                "value": "en"
+              },
+              {
+                "name": "fr",
+                "value": "fr"
+              },
+              {
+                "name": "it",
+                "value": "it"
+              },
+              {
+                "name": "de",
+                "value": "de"
+              },
+              {
+                "name": "es",
+                "value": "es"
+              },
+              {
+                "name": "zh-cn",
+                "value": "zh-cn"
+              },
+              {
+                "name": "zh-tw",
+                "value": "zh-tw"
+              },
+              {
+                "name": "ru",
+                "value": "ru"
+              },
+              {
+                "name": "la",
+                "value": "la"
+              },
+              {
+                "name": "ms",
+                "value": "ms"
+              },
+              {
+                "name": "eo",
+                "value": "eo"
+              },
+              {
+                "name": "ar",
+                "value": "ar"
+              },
+              {
+                "name": "el",
+                "value": "el"
+              },
+              {
+                "name": "ko",
+                "value": "ko"
+              }
+            ],
+            "title_i18n": {
+              "en": "Language",
+              "ja": "言語"
+            },
+            "title_i18n_temp": {
+              "en": "Language",
+              "ja": "言語"
+            }
+          },
+          {
+            "key": "item_1730255441907[].familyNames[].familyName",
+            "type": "text",
+            "title": "姓",
+            "title_i18n": {
+              "en": "Family Name",
+              "ja": "姓"
+            },
+            "title_i18n_temp": {
+              "en": "Family Name",
+              "ja": "姓"
+            }
+          }
+        ],
+        "style": {
+          "add": "btn-success"
+        },
+        "title": "寄与者姓",
+        "title_i18n": {
+          "en": "Contributor Family Name",
+          "ja": "寄与者姓"
+        },
+        "title_i18n_temp": {
+          "en": "Contributor Family Name",
+          "ja": "寄与者姓"
+        }
+      },
+      {
+        "add": "New",
+        "key": "item_1730255441907[].givenNames",
+        "items": [
+          {
+            "key": "item_1730255441907[].givenNames[].givenName",
+            "type": "text",
+            "title": "名",
+            "title_i18n": {
+              "en": "Given Name",
+              "ja": "名"
+            },
+            "title_i18n_temp": {
+              "en": "Given Name",
+              "ja": "名"
+            }
+          },
+          {
+            "key": "item_1730255441907[].givenNames[].givenNameLang",
+            "type": "select",
+            "title": "言語",
+            "titleMap": [
+              {
+                "name": "ja",
+                "value": "ja"
+              },
+              {
+                "name": "ja-Kana",
+                "value": "ja-Kana"
+              },
+              {
+                "name": "ja-Latn",
+                "value": "ja-Latn"
+              },
+              {
+                "name": "en",
+                "value": "en"
+              },
+              {
+                "name": "fr",
+                "value": "fr"
+              },
+              {
+                "name": "it",
+                "value": "it"
+              },
+              {
+                "name": "de",
+                "value": "de"
+              },
+              {
+                "name": "es",
+                "value": "es"
+              },
+              {
+                "name": "zh-cn",
+                "value": "zh-cn"
+              },
+              {
+                "name": "zh-tw",
+                "value": "zh-tw"
+              },
+              {
+                "name": "ru",
+                "value": "ru"
+              },
+              {
+                "name": "la",
+                "value": "la"
+              },
+              {
+                "name": "ms",
+                "value": "ms"
+              },
+              {
+                "name": "eo",
+                "value": "eo"
+              },
+              {
+                "name": "ar",
+                "value": "ar"
+              },
+              {
+                "name": "el",
+                "value": "el"
+              },
+              {
+                "name": "ko",
+                "value": "ko"
+              }
+            ],
+            "title_i18n": {
+              "en": "Language",
+              "ja": "言語"
+            },
+            "title_i18n_temp": {
+              "en": "Language",
+              "ja": "言語"
+            }
+          }
+        ],
+        "style": {
+          "add": "btn-success"
+        },
+        "title": "寄与者名",
+        "title_i18n": {
+          "en": "Contributor Given Name",
+          "ja": "寄与者名"
+        },
+        "title_i18n_temp": {
+          "en": "Contributor Given Name",
+          "ja": "寄与者名"
+        }
+      },
+      {
+        "add": "New",
+        "key": "item_1730255441907[].contributorAlternatives",
+        "items": [
+          {
+            "key": "item_1730255441907[].contributorAlternatives[].contributorAlternativeLang",
+            "type": "select",
+            "title": "言語",
+            "titleMap": [
+              {
+                "name": "ja",
+                "value": "ja"
+              },
+              {
+                "name": "ja-Kana",
+                "value": "ja-Kana"
+              },
+              {
+                "name": "ja-Latn",
+                "value": "ja-Latn"
+              },
+              {
+                "name": "en",
+                "value": "en"
+              },
+              {
+                "name": "fr",
+                "value": "fr"
+              },
+              {
+                "name": "it",
+                "value": "it"
+              },
+              {
+                "name": "de",
+                "value": "de"
+              },
+              {
+                "name": "es",
+                "value": "es"
+              },
+              {
+                "name": "zh-cn",
+                "value": "zh-cn"
+              },
+              {
+                "name": "zh-tw",
+                "value": "zh-tw"
+              },
+              {
+                "name": "ru",
+                "value": "ru"
+              },
+              {
+                "name": "la",
+                "value": "la"
+              },
+              {
+                "name": "ms",
+                "value": "ms"
+              },
+              {
+                "name": "eo",
+                "value": "eo"
+              },
+              {
+                "name": "ar",
+                "value": "ar"
+              },
+              {
+                "name": "el",
+                "value": "el"
+              },
+              {
+                "name": "ko",
+                "value": "ko"
+              }
+            ],
+            "title_i18n": {
+              "en": "Language",
+              "ja": "言語"
+            },
+            "title_i18n_temp": {
+              "en": "Language",
+              "ja": "言語"
+            }
+          },
+          {
+            "key": "item_1730255441907[].contributorAlternatives[].contributorAlternative",
+            "type": "text",
+            "title": "別名",
+            "title_i18n": {
+              "en": "Alternative Name",
+              "ja": "別名"
+            },
+            "title_i18n_temp": {
+              "en": "Alternative Name",
+              "ja": "別名"
+            }
+          }
+        ],
+        "style": {
+          "add": "btn-success"
+        },
+        "title": "寄与者別名",
+        "title_i18n": {
+          "en": "Contributor Alternative Name",
+          "ja": "寄与者別名"
+        },
+        "title_i18n_temp": {
+          "en": "Contributor Alternative Name",
+          "ja": "寄与者別名"
+        }
+      },
+      {
+        "add": "New",
+        "key": "item_1730255441907[].contributorAffiliations",
+        "items": [
+          {
+            "add": "New",
+            "key": "item_1730255441907[].contributorAffiliations[].contributorAffiliationNameIdentifiers",
+            "items": [
+              {
+                "key": "item_1730255441907[].contributorAffiliations[].contributorAffiliationNameIdentifiers[].contributorAffiliationNameIdentifier",
+                "type": "text",
+                "title": "所属機関識別子",
+                "title_i18n": {
+                  "en": "Affiliation Name Identifier",
+                  "ja": "所属機関識別子"
+                },
+                "title_i18n_temp": {
+                  "en": "Affiliation Name Identifier",
+                  "ja": "所属機関識別子"
+                }
+              },
+              {
+                "key": "item_1730255441907[].contributorAffiliations[].contributorAffiliationNameIdentifiers[].contributorAffiliationScheme",
+                "type": "select",
+                "title": "所属機関識別子Scheme",
+                "titleMap": [
+                  {
+                    "name": "kakenhi",
+                    "value": "kakenhi"
+                  },
+                  {
+                    "name": "ISNI",
+                    "value": "ISNI"
+                  },
+                  {
+                    "name": "Ringgold",
+                    "value": "Ringgold"
+                  },
+                  {
+                    "name": "GRID",
+                    "value": "GRID"
+                  }
+                ],
+                "title_i18n": {
+                  "en": "Affiliation Name Identifier Scheme",
+                  "ja": "所属機関識別子Scheme"
+                },
+                "title_i18n_temp": {
+                  "en": "Affiliation Name Identifier Scheme",
+                  "ja": "所属機関識別子Scheme"
+                }
+              },
+              {
+                "key": "item_1730255441907[].contributorAffiliations[].contributorAffiliationNameIdentifiers[].contributorAffiliationURI",
+                "type": "text",
+                "title": "所属機関識別子URI",
+                "title_i18n": {
+                  "en": "Affiliation Name Identifier URI",
+                  "ja": "所属機関識別子URI"
+                },
+                "title_i18n_temp": {
+                  "en": "Affiliation Name Identifier URI",
+                  "ja": "所属機関識別子URI"
+                }
+              }
+            ],
+            "style": {
+              "add": "btn-success"
+            },
+            "title": "所属機関識別子",
+            "title_i18n": {
+              "en": "Affiliation Name Identifiers",
+              "ja": "所属機関識別子"
+            },
+            "title_i18n_temp": {
+              "en": "Affiliation Name Identifiers",
+              "ja": "所属機関識別子"
+            }
+          },
+          {
+            "add": "New",
+            "key": "item_1730255441907[].contributorAffiliations[].contributorAffiliationNames",
+            "items": [
+              {
+                "key": "item_1730255441907[].contributorAffiliations[].contributorAffiliationNames[].contributorAffiliationName",
+                "type": "text",
+                "title": "所属機関名",
+                "title_i18n": {
+                  "en": "Affiliation Name",
+                  "ja": "所属機関名"
+                },
+                "title_i18n_temp": {
+                  "en": "Affiliation Name",
+                  "ja": "所属機関名"
+                }
+              },
+              {
+                "key": "item_1730255441907[].contributorAffiliations[].contributorAffiliationNames[].contributorAffiliationNameLang",
+                "type": "select",
+                "title": "言語",
+                "titleMap": [
+                  {
+                    "name": "ja",
+                    "value": "ja"
+                  },
+                  {
+                    "name": "ja-Kana",
+                    "value": "ja-Kana"
+                  },
+                  {
+                    "name": "ja-Latn",
+                    "value": "ja-Latn"
+                  },
+                  {
+                    "name": "en",
+                    "value": "en"
+                  },
+                  {
+                    "name": "fr",
+                    "value": "fr"
+                  },
+                  {
+                    "name": "it",
+                    "value": "it"
+                  },
+                  {
+                    "name": "de",
+                    "value": "de"
+                  },
+                  {
+                    "name": "es",
+                    "value": "es"
+                  },
+                  {
+                    "name": "zh-cn",
+                    "value": "zh-cn"
+                  },
+                  {
+                    "name": "zh-tw",
+                    "value": "zh-tw"
+                  },
+                  {
+                    "name": "ru",
+                    "value": "ru"
+                  },
+                  {
+                    "name": "la",
+                    "value": "la"
+                  },
+                  {
+                    "name": "ms",
+                    "value": "ms"
+                  },
+                  {
+                    "name": "eo",
+                    "value": "eo"
+                  },
+                  {
+                    "name": "ar",
+                    "value": "ar"
+                  },
+                  {
+                    "name": "el",
+                    "value": "el"
+                  },
+                  {
+                    "name": "ko",
+                    "value": "ko"
+                  }
+                ],
+                "title_i18n": {
+                  "en": "Language",
+                  "ja": "言語"
+                },
+                "title_i18n_temp": {
+                  "en": "Language",
+                  "ja": "言語"
+                }
+              }
+            ],
+            "style": {
+              "add": "btn-success"
+            },
+            "title": "所属機関名",
+            "title_i18n": {
+              "en": "Affiliation Names",
+              "ja": "所属機関名"
+            },
+            "title_i18n_temp": {
+              "en": "Affiliation Names",
+              "ja": "所属機関名"
+            }
+          }
+        ],
+        "style": {
+          "add": "btn-success"
+        },
+        "title": "寄与者所属",
+        "title_i18n": {
+          "en": "Affiliation",
+          "ja": "寄与者所属"
+        },
+        "title_i18n_temp": {
+          "en": "Affiliation",
+          "ja": "寄与者所属"
+        }
+      },
+      {
+        "add": "New",
+        "key": "item_1730255441907[].contributorMails",
+        "items": [
+          {
+            "key": "item_1730255441907[].contributorMails[].contributorMail",
+            "type": "text",
+            "title": "メールアドレス",
+            "title_i18n": {
+              "en": "Email Address",
+              "ja": "メールアドレス"
+            },
+            "title_i18n_temp": {
+              "en": "Email Address",
+              "ja": "メールアドレス"
+            }
+          }
+        ],
+        "style": {
+          "add": "btn-success"
+        },
+        "title": "寄与者メールアドレス",
+        "title_i18n": {
+          "en": "Contributor Email Address",
+          "ja": "寄与者メールアドレス"
+        },
+        "title_i18n_temp": {
+          "en": "Contributor Email Address",
+          "ja": "寄与者メールアドレス"
+        }
+      },
+      {
+        "key": "item_1730255441907[].authorInputButton",
+        "icon": "glyphicon glyphicon-search",
+        "type": "button",
+        "style": "btn-default pull-right m-top-5",
+        "title": "著者DBから入力",
+        "onClick": "searchAuthor('item_1730255441907[]', true, form)",
+        "title_i18n": {
+          "en": "Enter from DB",
+          "ja": "著者DBから入力"
+        }
+      }
+    ],
+    "style": {
+      "add": "btn-success"
+    },
+    "title": "寄与者",
+    "title_i18n": {
+      "en": "Contributor",
+      "ja": "寄与者"
+    }
+  },
+  {
+    "key": "item_1730256425948",
+    "type": "fieldset",
+    "items": [
+      {
+        "key": "item_1730256425948.subitem_summary",
+        "type": "textarea",
+        "title": "要約",
+        "title_i18n": {
+          "en": "Summary",
+          "ja": "要約"
+        },
+        "title_i18n_temp": {
+          "en": "Summary",
+          "ja": "要約"
+        }
+      }
+    ],
+    "title": "要約",
+    "title_i18n": {
+      "en": "Abstract",
+      "ja": "要約"
+    }
+  },
+  {
+    "key": "system_identifier_doi",
+    "type": "fieldset",
+    "items": [
+      {
+        "key": "parentkey.subitem_systemidt_identifier",
+        "type": "text",
+        "title": "SYSTEMIDT Identifier"
+      },
+      {
+        "key": "parentkey.subitem_systemidt_identifier_type",
+        "type": "select",
+        "title": "SYSTEMIDT Identifier Type",
+        "titleMap": [
+          {
+            "name": "DOI",
+            "value": "DOI"
+          },
+          {
+            "name": "HDL",
+            "value": "HDL"
+          },
+          {
+            "name": "URI",
+            "value": "URI"
+          }
+        ]
+      }
+    ],
+    "title": "Persistent Identifier(DOI)",
+    "title_i18n": {
+      "en": "Persistent Identifier(DOI)",
+      "ja": "永続識別子（DOI）"
+    }
+  },
+  {
+    "key": "system_identifier_hdl",
+    "type": "fieldset",
+    "items": [
+      {
+        "key": "parentkey.subitem_systemidt_identifier",
+        "type": "text",
+        "title": "SYSTEMIDT Identifier"
+      },
+      {
+        "key": "parentkey.subitem_systemidt_identifier_type",
+        "type": "select",
+        "title": "SYSTEMIDT Identifier Type",
+        "titleMap": [
+          {
+            "name": "DOI",
+            "value": "DOI"
+          },
+          {
+            "name": "HDL",
+            "value": "HDL"
+          },
+          {
+            "name": "URI",
+            "value": "URI"
+          }
+        ]
+      }
+    ],
+    "title": "Persistent Identifier(HDL)",
+    "title_i18n": {
+      "en": "Persistent Identifier(HDL)",
+      "ja": "永続識別子（HDL）"
+    }
+  },
+  {
+    "key": "system_identifier_uri",
+    "type": "fieldset",
+    "items": [
+      {
+        "key": "parentkey.subitem_systemidt_identifier",
+        "type": "text",
+        "title": "SYSTEMIDT Identifier"
+      },
+      {
+        "key": "parentkey.subitem_systemidt_identifier_type",
+        "type": "select",
+        "title": "SYSTEMIDT Identifier Type",
+        "titleMap": [
+          {
+            "name": "DOI",
+            "value": "DOI"
+          },
+          {
+            "name": "HDL",
+            "value": "HDL"
+          },
+          {
+            "name": "URI",
+            "value": "URI"
+          }
+        ]
+      }
+    ],
+    "title": "Persistent Identifier(URI)",
+    "title_i18n": {
+      "en": "Persistent Identifier(URI)",
+      "ja": "永続識別子（URI）"
+    }
+  },
+  {
+    "key": "system_file",
+    "type": "fieldset",
+    "items": [
+      {
+        "add": "New",
+        "key": "parentkey.subitem_systemfile_filename",
+        "items": [
+          {
+            "key": "parentkey.subitem_systemfile_filename[].subitem_systemfile_filename_label",
+            "type": "text",
+            "title": "SYSTEMFILE Filename Label"
+          },
+          {
+            "key": "parentkey.subitem_systemfile_filename[].subitem_systemfile_filename_type",
+            "type": "select",
+            "title": "SYSTEMFILE Filename Type",
+            "titleMap": [
+              {
+                "name": "Abstract",
+                "value": "Abstract"
+              },
+              {
+                "name": "Fulltext",
+                "value": "Fulltext"
+              },
+              {
+                "name": "Summary",
+                "value": "Summary"
+              },
+              {
+                "name": "Thumbnail",
+                "value": "Thumbnail"
+              },
+              {
+                "name": "Other",
+                "value": "Other"
+              }
+            ]
+          },
+          {
+            "key": "parentkey.subitem_systemfile_filename[].subitem_systemfile_filename_uri",
+            "type": "text",
+            "title": "SYSTEMFILE Filename URI"
+          }
+        ],
+        "style": {
+          "add": "btn-success"
+        },
+        "title": "SYSTEMFILE Filename"
+      },
+      {
+        "key": "parentkey.subitem_systemfile_mimetype",
+        "type": "text",
+        "title": "SYSTEMFILE MimeType"
+      },
+      {
+        "key": "parentkey.subitem_systemfile_size",
+        "type": "text",
+        "title": "SYSTEMFILE Size"
+      },
+      {
+        "add": "New",
+        "key": "parentkey.subitem_systemfile_datetime",
+        "items": [
+          {
+            "key": "parentkey.subitem_systemfile_datetime[].subitem_systemfile_datetime_date",
+            "type": "template",
+            "title": "SYSTEMFILE DateTime Date",
+            "format": "yyyy-MM-dd",
+            "templateUrl": "/static/templates/weko_deposit/datepicker.html"
+          },
+          {
+            "key": "parentkey.subitem_systemfile_datetime[].subitem_systemfile_datetime_type",
+            "type": "select",
+            "title": "SYSTEMFILE DateTime Type",
+            "titleMap": [
+              {
+                "name": "Accepted",
+                "value": "Accepted"
+              },
+              {
+                "name": "Available",
+                "value": "Available"
+              },
+              {
+                "name": "Collected",
+                "value": "Collected"
+              },
+              {
+                "name": "Copyrighted",
+                "value": "Copyrighted"
+              },
+              {
+                "name": "Created",
+                "value": "Created"
+              },
+              {
+                "name": "Issued",
+                "value": "Issued"
+              },
+              {
+                "name": "Submitted",
+                "value": "Submitted"
+              },
+              {
+                "name": "Updated",
+                "value": "Updated"
+              },
+              {
+                "name": "Valid",
+                "value": "Valid"
+              }
+            ]
+          }
+        ],
+        "style": {
+          "add": "btn-success"
+        },
+        "title": "SYSTEMFILE DateTime"
+      },
+      {
+        "key": "parentkey.subitem_systemfile_version",
+        "type": "text",
+        "title": "SYSTEMFILE Version"
+      }
+    ],
+    "title": "File Information",
+    "title_i18n": {
+      "en": "File Information",
+      "ja": "ファイル情報"
+    }
+  }
+]
