@@ -1743,7 +1743,7 @@ $(document).ready(function () {
           let itpTitleI18nJa = itpForm.title_i18n.ja;
           let itTitleI18nEn = itForm.title_i18n_temp.en;
           let itTitleI18nJa = itForm.title_i18n_temp.ja;
-          if(itTitleI18nEn != itpTitleI18nEn || itTitleI18nJa != itpTitleI18nJa) {
+          if ((itTitleI18nEn != itpTitleI18nEn || itTitleI18nJa != itpTitleI18nJa) && Array.isArray(changedProperties)) {
             itForm.title_i18n_temp = itpForm.title_i18n;
             changedProperties.push(itpTitleI18nEn);
           }
@@ -1774,7 +1774,7 @@ $(document).ready(function () {
           let itpTitleI18nJa = itpForm.title_i18n.ja;
           let itTitleI18nEn = itForm.title_i18n_temp.en;
           let itTitleI18nJa = itForm.title_i18n_temp.ja;
-          if(itTitleI18nEn != itpTitleI18nEn || itTitleI18nJa != itpTitleI18nJa) {
+          if ((itTitleI18nEn != itpTitleI18nEn || itTitleI18nJa != itpTitleI18nJa) && Array.isArray(changedProperties)) {
             itForm.title_i18n_temp = itpForm.title_i18n;
             changedProperties.push(itpTitleI18nEn);
           }
