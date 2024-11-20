@@ -950,7 +950,7 @@ RELATION_ID_TYPE_LBL = [
     "ISSN【非推奨】",
     "NAID【非推奨】",
     "NCID",
-    "PMID【現在不使用】",
+    "PMID",
     "PURL",
     "SCOPUS",
     "URI",
