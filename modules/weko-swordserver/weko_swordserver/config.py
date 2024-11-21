@@ -69,17 +69,23 @@ WEKO_SWORDSERVER_SERVICEDOCUMENT_STAGING_MAX_IDLE = 3600
 WEKO_SWORDSERVER_SERVICEDOCUMENT_BY_REFERENCE_DEPOSIT = False
 """ Does the server support By-Reference deposit? """
 
-WEKO_SWORDSERVER_SERVICEDOCUMENT_ON_BEHALF_OF = False
+WEKO_SWORDSERVER_SERVICEDOCUMENT_ON_BEHALF_OF = True
 """ Does the server support deposit on behalf of other users (mediation) """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_DIGEST = ["SHA-256", "SHA", "MD5"]
 """ The list of digest formats that the server will accept. """
+
+WEKO_SWORDSERVER_SERVICEDOCUMENT_DIGEST_VERIFICATION = True
+""" Does the server require the client to send a digest? """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_AUTHENTICATION = ["OAuth"]
 """ List of authentication schemes supported by the server. """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_SERVICES = []
 """ List of Services contained within the parent service """
+
+WEKO_SWORDSERVER_SERVICEDOCUMENT_CONTENT_LENGTH = False
+""" Does the server require a Content-Length header? """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE = 16777216000
 """ Maximum size in bytes as an integer for the total size of an assembled segmented upload """
@@ -105,18 +111,22 @@ WEKO_SWORDSERVER_REQUIRED_FILES_ROCRATE = [
     'manifest-sha256.txt',
     'ro-crate-metadata.json'
 ]
+"""List of required files for RO-Crate."""
 
 
 WEKO_SWORDSERVER_REQUIRED_FILES_SWORD = [
     'manifest-sha256.txt',
     'metadata/sword.json'
 ]
+"""List of required files for SWORDBagIt."""
 
 
-WEKO_SWORDSERVER_DATASET_PLEFIX = "weko-swordserver"
+WEKO_SWORDSERVER_DATASET_PLEFIX = "weko-"
+"""Prefix of the dataset identifier."""
 
 WEKO_SWORDSERVER_DATASET_IDENTIFIER = {
     "": "./",
     "enc": base64.b64encode(
-        f"{WEKO_SWORDSERVER_DATASET_PLEFIX}-./".encode('utf-8')).decode('utf-8')
+        f"{WEKO_SWORDSERVER_DATASET_PLEFIX}./".encode('utf-8')).decode('utf-8')
 }
+"""Dataset identifier replacement setting."""

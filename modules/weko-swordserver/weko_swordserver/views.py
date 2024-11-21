@@ -320,10 +320,11 @@ def _get_status_document(recid):
     # Get record uri
     record_uri = "{}records/{}".format(request.url_root, recid)
     permalink = get_record_permalink(record)
-    if not permalink and \
-        record.get("system_identifier_doi") and \
-        record.get("system_identifier_doi").get(
-            "attribute_value_mlt")[0]:
+    if (
+        not permalink
+        and record.get("system_identifier_doi")
+        and record.get("system_identifier_doi").get("attribute_value_mlt")[0]
+    ):
         permalink = record["system_identifier_doi"][
             "attribute_value_mlt"][0][
             "subitem_systemidt_identifier"]
