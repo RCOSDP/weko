@@ -184,7 +184,7 @@ def saving_doi_pidstore(item_id,
         ndljalcdoi_dc_tail = (ndljalcdoi_dc_link.split('//')[1]).split('/')
         identifier_val = ndljalcdoi_dc_link
         doi_register_val = '/'.join(ndljalcdoi_dc_tail[1:])
-        doi_register_typ = 'NDL JaLC'
+        doi_register_typ = 'JaLC'
     else:
         current_app.logger.error(_('Identifier datas are empty!'))
         return False

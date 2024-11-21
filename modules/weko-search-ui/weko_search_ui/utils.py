@@ -1998,7 +1998,7 @@ def handle_check_doi_ra(list_record):
             current_app.logger.debug("item_id:{0} doi_ra:{1}".format(item_id, doi_ra))
             current_app.logger.debug("doi_type:{0} _value:{1}".format(doi_type, _value))
 
-            if doi_type and doi_type[0] != doi_ra:
+            if doi_type and doi_type[0] != doi_ra and (doi_ra != 'NDL JaLC' or doi_type[0] != 'JaLC'):
                 error = _("Specified {} is different from " + "existing {}.").format(
                     "DOI_RA", "DOI_RA"
                 )
@@ -2364,7 +2364,7 @@ def register_item_doi(item):
                 data,
                 WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1
             )
-        elif doi_ra == "NDL JaLC" and doi:
+        elif doi_ra == "NDL JaLC" and doi and not pid_doi:
             data = {
                 "identifier_grant_jalc_doi_link": IDENTIFIER_GRANT_LIST[1][2]
                 + "/"
@@ -2998,6 +2998,8 @@ def handle_fill_system_item(list_record):
                 elif is_ndl:
                     item["doi_ra"] = item_doi_ra
 
+            item_doi_ra = "JaLC" if item_doi_ra == "NDL JaLC" else item_doi_ra
+            registerd_doi_ra = "JaLC" if registerd_doi_ra == "NDL JaLC" else registerd_doi_ra
             if identifierRegistration_key in item["metadata"]:
                 if existed_doi and checked_registerd_doi_ra and checked_item_doi_ra:
                     if 'subitem_identifier_reg_type' in item["metadata"][identifierRegistration_key]:
@@ -3090,7 +3092,9 @@ def get_thumbnail_key(item_type_id=0):
         item_type = item_type.render
         schema = item_type.get("schemaeditor", {}).get("schema", {})
         for key, item in schema.items():
-            if item.get("properties") and item["properties"].get("subitem_thumbnail"):
+            if isinstance(item, dict) and \
+                    item.get("properties") and \
+                    item["properties"].get("subitem_thumbnail"):
                 return key
 
 
