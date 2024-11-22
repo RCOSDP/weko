@@ -64,7 +64,7 @@ def get_service_document():
     """
     Request from the server a list of the Service-URLs that the client can deposit to.
     A Service-URL allows the server to support multiple different deposit conditions - each URL may have its own set of rules/workflows behind it;
-    for example, Service-URLs may be subject-specific, organisational-specific, or process-specific.
+    for example, Service-URLs may be subject-specific, organizational-specific, or process-specific.
     It is up to the client to determine which is the suitable URL for its deposit, based on the information provided by the server.
     The list of Service-URLs may vary depending on the authentication credentials supplied by the client.
 
@@ -160,7 +160,7 @@ def post_service_document():
     """
     Response Requirements
         * MUST include ETag header if implementing concurrency control
-        * MUST include one or more File-URLs for the deposited content in the Status document. The behaviour of these File-URLs may vary depending on the type of content deposited (e.g. ByReference and Segmented Uploads do not need to be immediately retrievable)
+        * MUST include one or more File-URLs for the deposited content in the Status document. The behavior of these File-URLs may vary depending on the type of content deposited (e.g. ByReference and Segmented Uploads do not need to be immediately retrievable)
         * MUST respond with a Location header, containing the Object-URL
         * MUST respond with a valid Status Document or a suitable error response
         * Status Document MUST be available on GET to the Object-URL in the Location header immediately (irrespective of whether this is a 201 or 202 response)
@@ -211,17 +211,18 @@ def post_service_document():
     packaging = request.headers.get("Packaging").split("/")[-1]
     # check digest and file format
     file_format = check_import_file_format(file=file, packaging=packaging)
+    if file_format == "JSON":
 
-    if file_format in ["SWORD", "ROCRATE"]:
-
-        check_result = check_bagit_import_items(file, file_format)
+        check_result = check_bagit_import_items(file, packaging)
         register_format = check_result.get("register_format")
 
     else:
-        check_result, register_format = check_others_import_items(file, False)
+        check_result, file_format = check_others_import_items(file, False)
 
-    item = (check_result.get("list_record")[0]
-            if check_result.get("list_record") else None)
+    item = (
+        check_result.get("list_record")[0]
+            if "list_record" in check_result else None
+    )
     if check_result.get("error") or not item or item.get("errors"):
         errorType = None
         check_result_msg = ""
@@ -255,6 +256,7 @@ def post_service_document():
             "user_id": owner,
             "action": "IMPORT"
     }
+    print(f"item: {item}")
     import_result = import_items_to_system(item, request_info=request_info)
     if not import_result.get("success"):
         raise WekoSwordserverException("Error in import_items_to_system: {0}".format(item.get("error_id")), ErrorType.ServerError)
@@ -341,14 +343,14 @@ def _get_status_document(recid):
         "@type": constants.DocumentType.Status[0],
         "@id" : url_for("weko_swordserver.get_status_document", recid=recid, _external=True),
         "actions" : {
-            "getMetadata" : False,      # Not implimented
-            "getFiles" : False,         # Not implimented
-            "appendMetadata" : False,   # Not implimented
-            "appendFiles" : False,      # Not implimented
-            "replaceMetadata" : False,  # Not implimented
-            "replaceFiles" : False,     # Not implimented
-            "deleteMetadata" : False,   # Not implimented
-            "deleteFiles" : False,      # Not implimented
+            "getMetadata" : False,      # Not implemented
+            "getFiles" : False,         # Not implemented
+            "appendMetadata" : False,   # Not implemented
+            "appendFiles" : False,      # Not implemented
+            "replaceMetadata" : False,  # Not implemented
+            "replaceFiles" : False,     # Not implemented
+            "deleteMetadata" : False,   # Not implemented
+            "deleteFiles" : False,      # Not implemented
             "deleteObject" : True,
         },
         "eTag" : str(record.revision_id),

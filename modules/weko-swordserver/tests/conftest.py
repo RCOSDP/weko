@@ -69,6 +69,7 @@ from weko_items_ui.ext import WekoItemsUI
 from weko_records.models import ItemTypeName, ItemType,ItemTypeMapping
 from weko_schema_ui.ext import WekoSchemaUI
 from weko_search_ui import WekoSearchUI
+from weko_swordserver.models import SwordClientModel, SwordItemTypeMappingModel
 from weko_theme.ext import WekoTheme
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import (
@@ -538,6 +539,19 @@ def make_zip():
     return factory
 
 @pytest.fixture()
+def make_crate():
+    def factory():
+        fp = BytesIO()
+        with ZipFile(fp, 'w', compression=ZIP_DEFLATED) as new_zip:
+            for dir, subdirs, files in os.walk("tests/data/zip_crate/"):
+                new_zip.write(dir,dir.split("/")[-1])
+                for file in files:
+                    new_zip.write(os.path.join(dir, file),os.path.join(dir.split("/")[-1],file))
+        fp.seek(0)
+        return fp
+    return factory
+
+@pytest.fixture()
 def install_node_module(app):
     current_path = os.getcwd()
     os.chdir(app.instance_path+'/static')
@@ -688,3 +702,54 @@ def workflow(app, db, item_type, action_data, users):
         "flow_action": flow_actions,
         "workflow": workflow
     }
+
+
+@pytest.fixture
+def sword_mapping(db, item_type):
+    sword_mapping = []
+    for i in range(1, 3):
+        obj = SwordItemTypeMappingModel(
+            name=f"test{i}",
+            mapping=json_data("data/item_type/sword_mapping_2.json"),
+            item_type_id=item_type[1]["item_type"].id,
+            is_deleted=False
+        )
+        with db.session.begin_nested():
+            db.session.add(obj)
+
+        sword_mapping.append({
+            "id": obj.id,
+            "sword_mapping": obj,
+            "name": obj.name,
+            "mapping": obj.mapping,
+            "item_type_id": obj.item_type_id,
+            "version_id": obj.version_id,
+            "is_deleted": obj.is_deleted
+        })
+
+    db.session.commit()
+
+    return sword_mapping
+
+@pytest.fixture
+def sword_client(db, tokens, sword_mapping, workflow):
+    client = tokens[0]["client"]
+    sword_client1 = SwordClientModel(
+        client_id=client.client_id,
+        registration_type_id=SwordClientModel.RegistrationType.DIRECT,
+        mapping_id=sword_mapping[0]["sword_mapping"].id,
+    )
+    client = tokens[1]["client"]
+    sword_client2 = SwordClientModel(
+        client_id=client.client_id,
+        registration_type_id=SwordClientModel.RegistrationType.WORKFLOW,
+        mapping_id=sword_mapping[1]["sword_mapping"].id,
+        workflow_id=workflow["workflow"].id,
+    )
+
+    with db.session.begin_nested():
+        db.session.add(sword_client1)
+        db.session.add(sword_client2)
+    db.session.commit()
+
+    return [{"sword_client": sword_client1}, {"sword_client": sword_client2}]

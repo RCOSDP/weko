@@ -39,11 +39,11 @@ from .utils import (
 
 def check_import_items(file, is_change_identifier = False):
     from weko_search_ui.utils import check_import_items
-    return check_import_items(file, is_change_identifier), None
+    return check_import_items(file, is_change_identifier), "TSV"
 
 
 
-def check_bagit_import_items(file, file_format):
+def check_bagit_import_items(file, packaging):
     """Check bagit import items.
 
     Check that the actual file contents match the recorded hashes stored
@@ -83,7 +83,7 @@ def check_bagit_import_items(file, file_format):
     """
     check_result = {}
     if "On-Behalf-Of" in request.headers:
-        # TODO: check if on-behalf-of is correct
+        # FIXME: How to handle on-behalf-of
         check_result.update({
             "On-Behalf-Of": request.headers.get("On-Behalf-Of")
         })
@@ -94,22 +94,16 @@ def check_bagit_import_items(file, file_format):
         filename = file.filename
 
     try:
-        # TODO: extension zip in tmporary directory
+        # TODO: extension zip in temporary directory
         data_path, file_list = unpack_zip(file)
         check_result.update({"data_path": data_path})
 
-        # Check if all required files are contained
-        if file_format == 'ROCRATE':
-            all_file_contained = all(check_rocrate_required_files(file_list))
-            json_name = "ro-crate-metadata.json"
-        elif file_format == 'SWORD':
-            all_file_contained = all(check_swordbagit_required_files(file_list))
-            json_name = "metadata/sword.json"
-
-        if not all_file_contained:
-            raise WekoSwordserverException(
-                'Metadata JSON File Or "manifest-sha256.txt" Is Lacking',
-                errorType=ErrorType.BadRequest)
+        # get json file name
+        json_name = (
+            current_app.config['WEKO_SWORDSERVER_METADATA_FILE_SWORD']
+                if packaging == "SWORDBagIt"
+                else current_app.config['WEKO_SWORDSERVER_METADATA_FILE_ROCRATE']
+        )
 
         # Check if the bag is valid
         bag = bagit.Bag(data_path)
@@ -125,7 +119,7 @@ def check_bagit_import_items(file, file_format):
             )
 
         # Check workflow and item type
-        register_format = sword_mapping.registration_type
+        register_format = sword_client.registration_type
         if register_format == "Workflow":
             # TODO: check if workflow exists
             workflow = WorkFlow.get_workflow_by_id(sword_client.workflow_id)
@@ -155,7 +149,7 @@ def check_bagit_import_items(file, file_format):
         check_result.update({"item_type_id": item_type.id})
 
         # TODO: validate mapping
-        mapping = json.loads(sword_mapping.mapping)
+        mapping = sword_mapping.mapping
 
         with open(f"{data_path}/{json_name}", "r") as f:
             json_ld = json.load(f)
@@ -178,7 +172,7 @@ def check_bagit_import_items(file, file_format):
 
     except BadZipFile as ex:
         current_app.logger.error(
-            "An error occured while extraction the file."
+            "An error occurred while extraction the file."
         )
         traceback.print_exc()
         check_result.update({
@@ -195,7 +189,7 @@ def check_bagit_import_items(file, file_format):
 
     except (UnicodeDecodeError, UnicodeEncodeError) as ex:
         current_app.logger.error(
-            "An error occured while reading the file."
+            "An error occurred while reading the file."
         )
         traceback.print_exc()
         check_result.update({
@@ -203,7 +197,7 @@ def check_bagit_import_items(file, file_format):
         })
 
     except Exception as ex:
-        current_app.logger.error("An error occured while checking the file.")
+        current_app.logger.error("An error occurred while checking the file.")
         traceback.print_exc()
         if (
             ex.args
@@ -240,13 +234,14 @@ def generate_metadata_from_json(json, mapping, item_type, is_change_identifier=F
     list_record.append({
         "$schema": item_type.schema,
         "metadata": metadata,
-        "item_type_name": item_type.item_type_name,
+        "item_type_name": item_type.item_type_name.name,
         "item_type_id": item_type.id,
     })
-
+    print(f"list_record.error: {list_record[0].get('errors', 'not error occured')}")
     handle_set_change_identifier_flag(list_record, is_change_identifier)
     # FIXME: Change method below for GRDM link.
     handle_fill_system_item(list_record)
+    print(f"list_record.error: {list_record[0].get('errors', 'not error occured')}")
 
     list_record = handle_validate_item_import(
         list_record, item_type.schema

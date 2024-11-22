@@ -17,6 +17,7 @@ from hashlib import sha256
 from zipfile import ZipFile
 
 from flask import current_app
+from invenio_oauth2server.models import Token
 from invenio_oauth2server.provider import get_token
 
 from .api import SwordClient, SwordItemTypeMapping
@@ -38,15 +39,21 @@ def check_import_file_format(file, packaging):
         str: Import file format
     """
     if "SWORDBagIt" in packaging:
-        file_format = "SWORD"
+        file_list = get_file_list_of_zip(file)
+        if "metadata/sword.json" in file_list:
+            file_format = "JSON"
+        else:
+            raise WekoSwordserverException(
+                "SWORD metadata file not found in the package.",
+                ErrorType.BadRequest
+                )
     elif "SimpleZip" in packaging:
         file_list = get_file_list_of_zip(file)
         if "ro-crate-metadata.json" in file_list:
-            file_format = "ROCRATE"
+            file_format = "JSON"
         else:
             file_format = "OTHERS"
     else:
-        current_app.logger.info("No Packing Included")
         raise WekoSwordserverException(
             f"Unsupported packaging format: {packaging}.",
             ErrorType.BadRequest
@@ -183,10 +190,10 @@ def get_record_by_token(access_token):
     Returns:
         SwordItemTypeMapping: Mapping for RO-Crate matadata.
     """
-    token = get_token(access_token=access_token)
+    token = Token.query.filter_by(access_token=access_token).first()
     if token is None:
-        current_app.logger.error(f"Token not found.")
-        raise Exception("Token not found.")
+        current_app.logger.error(f"Accesstoken not found.")
+        raise Exception("Accesstoken not found.")
 
     client_id = token.client_id
     sword_client = SwordClient.get_client_by_id(client_id)

@@ -11,22 +11,22 @@ from weko_swordserver.models import SwordClientModel
 """Module of weko-swordserver."""
 
 
-WEKO_SWORDSERVER_DEFAULT_VALUE = 'foobar'
+WEKO_SWORDSERVER_DEFAULT_VALUE = "foobar"
 """Default value for the application."""
 
-WEKO_SWORDSERVER_BASE_TEMPLATE = 'weko_swordserver/base.html'
+WEKO_SWORDSERVER_BASE_TEMPLATE = "weko_swordserver/base.html"
 """Default base template for the demo page."""
 
-WEKO_SWORDSERVER_SWORD_VERSION = 'http://purl.org/net/sword/3.0'
+WEKO_SWORDSERVER_SWORD_VERSION = "http://purl.org/net/sword/3.0"
 """ The version of the SWORD protocol this server supports """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_ABSTRACT = ""
 """ A description of the service """
 
-WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT = ['*/*']
+WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT = ["*/*"]
 """ List of Content Types which are acceptable to the server. """
 
-WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT = ['application/zip']
+WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT = ["application/zip"]
 """ List of Archive Formats that the server can unpack. If the server sends a package using a different format, the server MAY treat it as a Binary File """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_DEPOSITS = True
@@ -35,10 +35,10 @@ WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_DEPOSITS = True
 WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_METADATA = []
 """ List of Metadata Formats which are acceptable to the server. """
 
-WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_PACKAGING = ['*']
+WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_PACKAGING = ["*"]
 """ List of Packaging Formats which are acceptable to the server.
 
-    ['*'] or List of Packaging Formats URI
+    ["*"] or List of Packaging Formats URI
         - http://purl.org/net/sword/3.0/package/Binary
         - http://purl.org/net/sword/3.0/package/SimpleZip
         - http://purl.org/net/sword/3.0/package/SWORDBagIt
@@ -106,27 +106,18 @@ WEKO_SWORDSERVER_REGISTRATION_TYPE = SwordClientModel.RegistrationType
     - `Workfolw` (2): Workflow registration.
 """
 
+WEKO_SWORDSERVER_METADATA_FILE_ROCRATE = "ro-crate-metadata.json"
+""" Metadata file name for RO-Crate+Bagit. """
 
-WEKO_SWORDSERVER_REQUIRED_FILES_ROCRATE = [
-    'manifest-sha256.txt',
-    'ro-crate-metadata.json'
-]
-"""List of required files for RO-Crate."""
+WEKO_SWORDSERVER_METADATA_FILE_SWORD = "metadata/sword.json"
+""" Metadata file name for SWORDBagIt. """
 
-
-WEKO_SWORDSERVER_REQUIRED_FILES_SWORD = [
-    'manifest-sha256.txt',
-    'metadata/sword.json'
-]
-"""List of required files for SWORDBagIt."""
-
-
-WEKO_SWORDSERVER_DATASET_PLEFIX = "weko-"
-"""Prefix of the dataset identifier."""
+WEKO_SWORDSERVER_DATASET_PREFIX = "weko-"
+""" Prefix to be added to the dataset identifier. """
 
 WEKO_SWORDSERVER_DATASET_IDENTIFIER = {
     "": "./",
     "enc": base64.b64encode(
-        f"{WEKO_SWORDSERVER_DATASET_PLEFIX}./".encode('utf-8')).decode('utf-8')
+        f"{WEKO_SWORDSERVER_DATASET_PREFIX}./".encode("utf-8")).decode("utf-8")
 }
-"""Dataset identifier replacement setting."""
+""" Dataset identifier replacement setting. """
