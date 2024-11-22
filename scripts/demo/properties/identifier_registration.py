@@ -33,7 +33,7 @@ mapping = {
     "spase_mapping": "",
 }
 
-id_type = [None, "JaLC", "Crossref", "DataCite", "PMID【現在不使用】"]
+id_type = [None, "JaLC", "Crossref", "DataCite", "PMID"]
 
 
 def add(post_data, key, **kwargs):
