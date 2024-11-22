@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fixed an issue where the lock function was not working when the workflow was opened in multiple tabs.
 - Corrected an issue with the validation check for dissertations where the StartPage field was included erroneously.
 - Fixed an URL encoding issue of Shibboleth redirection.
+- Fixed issues with the item type correction tool and added a tool to revert states to a previous version.
 
 ## [v1.0.9] - 2024-10-03
 ### Fixed
