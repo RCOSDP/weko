@@ -88,7 +88,7 @@ def form(
                     "title_i18n": {"ja": "物理的形態", "en": "Physical Format"},
                 },
                 {
-                    "key": "{}.json_format_language".format(key),
+                    "key": "{}.jpcoar_format_language".format(key),
                     "type": "select",
                     "title": "Language",
                     "title_i18n": {"ja": "言語", "en": "Language"},

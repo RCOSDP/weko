@@ -19,7 +19,7 @@ mapping = {
     "junii2_mapping": "",
     "lido_mapping": "",
     "lom_mapping": "",
-    "oai_dc_mapping": {"identifier": {"@value": "subitem_start_page"}},
+    "oai_dc_mapping": "",
     "spase_mapping": "",
 }
 

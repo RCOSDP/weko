@@ -84,7 +84,8 @@ def form(
                 {
                     "key": "{}.volume_title".format(key),
                     "type": "text",
-                    "title": "Edition",
+                    "title": "Volume Title",
+                    "title_i18n": {"ja": "部編名", "en": "Volume Title"},
                 },
                 {
                     "key": "{}.volume_title_language".format(key),

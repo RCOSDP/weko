@@ -449,6 +449,22 @@ ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "KAKEN2" "KAKEN2" "https://nrid.nii.ac.jp/nrid/##"
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "ROR" "ROR" "https://ror.org/##"
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "e-Rad_Researcher" "e-Rad_Researcher" ""
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "NRID" "NRID【非推奨】" "https://nrid.nii.ac.jp/nrid/##"
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "ISNI" "ISNI" ""
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "VIAF" "VIAF" ""
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "AID" "AID" ""
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "kakenhi" "kakenhi【非推奨】" ""
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "Ringgold" "Ringgold" ""
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "GRID" "GRID【非推奨】" "" 
 # create-default-authors-prefix-settings-end
 
 # create-default-authors-affiliation-settings-begin
