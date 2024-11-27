@@ -54,7 +54,7 @@ mapping = {
     "lom_mapping": "",
     "oai_dc_mapping": {
         "relation": {
-            "@value": "subitem_relation_name.subitem_relation_name_text,subitem_relation_type_id.subitem_relation_type_id_text"
+            "@value": "subitem_relation_name.subitem_relation_name_text"
         }
     },
     "spase_mapping": "",

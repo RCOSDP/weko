@@ -51,12 +51,7 @@ mapping = {
     "junii2_mapping": "",
     "lido_mapping": "",
     "lom_mapping": "",
-    "oai_dc_mapping": {
-        "date": {"@value": "bibliographicIssueDates.bibliographicIssueDate"},
-        "identifier": {
-            "@value": "bibliographic_titles.bibliographic_title,bibliographicIssueNumber,bibliographicVolumeNumber,bibliographicPageStart,bibliographicPageEnd"
-        },
-    },
+    "oai_dc_mapping": "",
     "spase_mapping": "",
 }
 date_type = [None, "", "Issued"]

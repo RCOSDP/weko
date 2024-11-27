@@ -29,7 +29,7 @@ mapping = {
     "junii2_mapping": "",
     "lido_mapping": "",
     "lom_mapping": "",
-    "oai_dc_mapping": {"type": {"@value": "subitem_version_type"}},
+    "oai_dc_mapping":"",
     "spase_mapping": "",
 }
 version_type = [None, "AO", "SMUR", "AM", "P", "VoR", "CVoR", "EVoR", "NA"]

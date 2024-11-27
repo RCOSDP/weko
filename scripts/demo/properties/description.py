@@ -83,6 +83,7 @@ def schema(title="", multi_flag=multiple_flag):
                     "type": ["null", "string"],
                     "format": "select",
                     "enum": description_type,
+                    "currentEnum": description_type[1:],
                     "title": "内容記述タイプ",
                 },
             },

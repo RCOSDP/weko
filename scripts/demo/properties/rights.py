@@ -60,17 +60,17 @@ def schema(title="", multi_flag=multiple_flag):
             "type": "object",
             "properties": {
                 "subitem_rights": {"format": "text", "title": "権利情報", "type": "string"},
+                "subitem_rights_resource": {
+                    "format": "text",
+                    "title": "権利情報Resource",
+                    "type": "string",
+                },
                 "subitem_rights_language": {
                     "editAble": True,
                     "type": ["null", "string"],
                     "format": "select",
                     "enum": config.LANGUAGE_VAL2_1,
                     "title": "言語",
-                },
-                "subitem_rights_resource": {
-                    "format": "text",
-                    "title": "権利情報Resource",
-                    "type": "string",
                 },
             },
         }
@@ -89,13 +89,6 @@ def form(
         _d = {
             "items": [
                 {
-                    "key": "{}.subitem_rights_language".format(key),
-                    "title": "言語",
-                    "title_i18n": {"en": "Language", "ja": "言語"},
-                    "titleMap": get_select_value(config.LANGUAGE_VAL2_1),
-                    "type": "select",
-                },
-                {
                     "key": "{}.subitem_rights_resource".format(key),
                     "title": "権利情報Resource",
                     "title_i18n": {"en": "Rights Resource", "ja": "権利情報Resource"},
@@ -106,6 +99,13 @@ def form(
                     "title": "権利情報",
                     "title_i18n": {"en": "Rights", "ja": "権利情報"},
                     "type": "text",
+                },
+                {
+                    "key": "{}.subitem_rights_language".format(key),
+                    "title": "言語",
+                    "title_i18n": {"en": "Language", "ja": "言語"},
+                    "titleMap": get_select_value(config.LANGUAGE_VAL2_1),
+                    "type": "select",
                 },
             ],
             "key": key.replace("[]", ""),

@@ -22,7 +22,7 @@
 
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 
-WEKO_AUTHORS_LIST_SCHEME = ['e-Rad', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID',
+WEKO_AUTHORS_LIST_SCHEME = ['e-Rad_Researcher', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID',
                             'kakenhi', 'Ringgold', 'GRID', 'ROR', 'Other']
 """ List of Author Name Identifier Scheme """
 
@@ -30,7 +30,7 @@ WEKO_AUTHORS_INDEX_ITEM_OTHER = 10
 """ Item other index """
 
 WEKO_AUTHORS_LIST_SCHEME_AFFILIATION = [
-    'ISNI', 'GRID', 'Ringgold', 'kakenhi', 'Other']
+    'ISNI', 'GRID', 'Ringgold', 'kakenhi', 'ROR', 'Other']
 """ List of Affiliation Name Identifier Scheme """
 
 WEKO_AUTHORS_AFFILIATION_IDENTIFIER_ITEM_OTHER = 4

@@ -1,0 +1,1 @@
+UPDATE authors_prefix_settings SET name='e-Rad_Researcher' scheme='e-Rad_Researcher' where scheme='e-Rad';
