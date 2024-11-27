@@ -963,13 +963,16 @@ def citation(record, pid, style=None, ln=None):
 def soft_delete(recid):
     """Soft delete item."""
     try:
-        if not has_update_version_role(current_user):
+        _id = recid
+        if recid.startswith('del_ver_'):
+            _id = _id.replace('del_ver_', '')
+        record = WekoRecord.get_record_by_pid(_id)
+        if not check_created_id(record):
             abort(403)
         if recid.startswith('del_ver_'):
-            recid = recid.replace('del_ver_', '')
-            delete_version(recid)
+            delete_version(_id)
         else:
-            soft_delete_imp(recid)
+            soft_delete_imp(_id)
         db.session.commit()
         return make_response('PID: ' + str(recid) + ' DELETED', 200)
     except Exception as ex:
@@ -990,7 +993,8 @@ def soft_delete(recid):
 def restore(recid):
     """Restore item."""
     try:
-        if not has_update_version_role(current_user):
+        record = WekoRecord.get_record_by_pid(recid)
+        if not check_created_id(record):
             abort(403)
         restore_imp(recid)
         return make_response('PID: ' + str(recid) + ' RESTORED', 200)
