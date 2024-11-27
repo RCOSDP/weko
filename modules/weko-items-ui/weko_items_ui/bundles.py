@@ -65,8 +65,8 @@ js = Bundle(
 )
 
 dependencies_upload_js = NpmBundle(
-    'node_modules/angular-schema-form/node_modules/tv4/tv4.js',
-    'node_modules/angular-schema-form/node_modules/objectpath/lib/ObjectPath.js',
+    'node_modules/tv4/tv4.js',
+    'node_modules/objectpath/lib/ObjectPath.js',
     filters=RequireJSFilter(),
 )
 upload_js = NpmBundle(
