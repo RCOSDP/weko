@@ -3,6 +3,8 @@ from flask import url_for,json,request,abort
 import pytest
 from unittest.mock import patch
 import datetime
+
+import bagit
 from sword3common.lib.seamless import SeamlessException
 from werkzeug.datastructures import FileStorage
 
@@ -119,30 +121,35 @@ def test_post_service_document_json_ld(app,client,db,users,esindex,location,inde
         loc = db.session.query(Location).filter(
                     Location.id == 1).one()
         loc.size = 1547
+
     patch("weko_swordserver.views._get_status_document",side_effect=lambda x:{"recid":x})
     patch("weko_search_ui.utils.find_and_update_location_size",side_effect=update_location_size)
     patch("weko_search_ui.utils.send_item_created_event_to_es")
-    zip = make_crate()
-    mapped_json = json_data("data/item_type/mapped_json_2.json")
-    storage = FileStorage(filename="payload.zip",stream=zip)
-    headers = {
-        "Authorization":"Bearer {}".format(token),
-        "Content-Disposition":"attachment; filename=payload.zip",
-        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
-        "Digest":"SHA-256={}".format(calculate_hash(storage))
-    }
 
-    print("")
-    with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json) as map_mock:
-        try:
-            res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-            print(f"response: {res}")
-            print(f"response.data: {json.loads(res.data)}")
-        except Exception as e:
-            print(f"errorType: {e.errorType}")
-            print(f"message: {e.message}")
+    # success
+    with patch("weko_swordserver.registration.bagit.Bag.validate"):
+        zip = make_crate()
+        mapped_json = json_data("data/item_type/mapped_json_2.json")
+        storage = FileStorage(filename="payload.zip",stream=zip)
+        headers = {
+            "Authorization":"Bearer {}".format(token),
+            "Content-Disposition":"attachment; filename=payload.zip",
+            "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
+            "Digest":"SHA-256={}".format(calculate_hash(storage))
+        }
 
-        map_mock.assert_called_once()
+        print("")
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+            try:
+                res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
+                print(f"response: {res}")
+                print(f"response.data: {json.loads(res.data)}")
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                print(f"errorType: {e.errorType}")
+                print(f"message: {e.message}")
+            assert res.status_code == 200
 
 
 # def get_status_document(recid):

@@ -16,14 +16,18 @@
       "creator": {
         "@id": "http://orcid.org/0000-0002-1825-0097"
       },
-      "datePublished": "2023/01/18T23:39:34Z",
-      "description": "A simple example of a tree.",
+      "datePublished": "2024/11/15T01:59:48Z",
+      "description": "A simple example for swordserver.",
       "hasPart": [
         {
-          "@id": "data/tree.md"
+          "@id": "data/sample.rst"
         }
       ],
-      "name": "The Tree"
+      "name": "The Sample",
+      "Resource Type": {
+        "type": "other",
+        "uri": ""
+      }
     },
     {
       "@id": "ro-crate-metadata.json",
@@ -38,28 +42,28 @@
     {
       "@id": "#summary",
       "@type": "Thing",
-      "summary": "the tree of simple itemtype"
+      "summary": "the sample of simple itemtype"
     },
     {
       "@id": "#datetime",
       "@type": "DateTime",
-      "date": "2024/11/11T01:37:36Z",
+      "date": "2023-01-18",
       "type": "Created"
     },
     {
-      "@id": "data/tree.md",
+      "@id": "data/sample.rst",
       "@type": "File",
-      "contentSize": "1641",
+      "contentSize": "333",
       "datetime": {
         "@id": "#datetime"
       },
-      "encodingFormat": "text/markdown",
+      "encodingFormat": "text/x-rst",
       "identifier": {
-        "@id": "https://example.org/data/tree.md",
-        "label": "tree.md",
-        "type": "File"
+        "@id": "https://example.org/data/sample.rst",
+        "label": "sample.rst",
+        "type": "fulltext"
       },
-      "name": "tree.md",
+      "name": "sample.rst",
       "version": "1.0"
     },
     {
@@ -74,7 +78,7 @@
     },
     {
       "@id": "http://orcid.org/0000-0002-1825-0085",
-      "@type": "Person",
+      "@type": "DataCurator",
       "affiliation": {
         "@id": "#affiliation"
       },
@@ -131,7 +135,7 @@
       "@id": "#title",
       "@type": "Thing",
       "language": "ja",
-      "name": "アイテムタイプの木構造"
+      "name": "サンプルアイテム"
     },
     {
       "@id": "#subtitle",

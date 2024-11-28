@@ -14,6 +14,8 @@ from flask import current_app, request
 from zipfile import BadZipFile
 
 from weko_search_ui.utils import (
+    handle_check_and_prepare_index_tree,
+    handle_check_and_prepare_publish_status,
     handle_check_date,
     handle_check_exist_record,
     handle_check_file_metadata,
@@ -29,8 +31,6 @@ from weko_workflow.api import WorkFlow
 from .errors import ErrorType, WekoSwordserverException
 from .mapper import WekoSwordMapper
 from .utils import (
-    check_rocrate_required_files,
-    check_swordbagit_required_files,
     get_record_by_token,
     unpack_zip,
     process_json
@@ -43,7 +43,9 @@ def check_import_items(file, is_change_identifier = False):
 
 
 
-def check_bagit_import_items(file, packaging):
+def check_bagit_import_items(
+        file, packaging, all_index_permission=True, can_edit_indexes=[]
+    ):
     """Check bagit import items.
 
     Check that the actual file contents match the recorded hashes stored
@@ -166,6 +168,12 @@ def check_bagit_import_items(file, packaging):
         handle_item_title(list_record)
         list_record = handle_check_date(list_record)
         handle_check_id(list_record)
+        handle_check_and_prepare_index_tree(
+            list_record, all_index_permission, can_edit_indexes
+        )
+        handle_check_and_prepare_publish_status(list_record)
+        print(f"list_record.error: {list_record[0].get('errors', 'not error occured')}")
+
         handle_check_file_metadata(list_record, data_path)
 
         check_result.update({"list_record": list_record})
@@ -235,16 +243,15 @@ def generate_metadata_from_json(json, mapping, item_type, is_change_identifier=F
     metadata = mapper.map()
 
     list_record.append({
-        "$schema": item_type.schema,
+        "$schema": f"/items/jsonschema/{item_type.id}",
         "metadata": metadata,
         "item_type_name": item_type.item_type_name.name,
         "item_type_id": item_type.id,
+        # FIXME: publish_status should be set in the json file.
+        "publish_status": "public",
     })
-    print(f"list_record.error: {list_record[0].get('errors', 'not error occured')}")
     handle_set_change_identifier_flag(list_record, is_change_identifier)
-    # FIXME: Change method below for GRDM link.
     handle_fill_system_item(list_record)
-    print(f"list_record.error: {list_record[0].get('errors', 'not error occured')}")
 
     list_record = handle_validate_item_import(
         list_record, item_type.schema

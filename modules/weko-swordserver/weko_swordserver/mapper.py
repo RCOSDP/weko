@@ -27,7 +27,7 @@ class WekoSwordMapper(JsonMapper):
             return {}
 
         res = {
-            "$schema": self.itemtype.id,
+            # "$schema": self.itemtype.id,
             "pubdate": str(self.datestamp()),
             "path": [self.json.get("record").get("header").get("index")],
         }
@@ -59,8 +59,8 @@ class WekoSwordMapper(JsonMapper):
             if isinstance(json, dict):
                 return _get_json_value(json.get(keys[0]), keys[1:])
             elif isinstance(json, list):
-                if len(keys) == 1:
-                    return _get_json_value(json[0], keys)
+                # if len(keys) == 1:
+                #     return _get_json_value(json[0], keys)
                 return [_get_json_value(cv, keys) for cv in json]
             else:
                 return json

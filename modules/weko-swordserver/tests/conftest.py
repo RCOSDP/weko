@@ -414,7 +414,7 @@ def item_type(app, db):
     )
 
     item_type_name_2 = ItemTypeName(id=2,
-        name="シンプルアイテムタイプ", has_site_license=True, is_active=True
+        name="デフォルトアイテムタイプ（SWORD）", has_site_license=True, is_active=True
     )
 
     item_type_2 = ItemType(
@@ -424,9 +424,14 @@ def item_type(app, db):
         schema=json_data("data/item_type/schema_2.json"),
         form=json_data("data/item_type/form_2.json"),
         render=json_data("data/item_type/render_2.json"),
-        tag=1,
+        tag=2,
         version_id=1,
         is_deleted=False,
+    )
+    item_type_mapping_2 = ItemTypeMapping(
+        id=2,
+        item_type_id=2,
+        mapping=json_data("data/item_type/mapping_2.json")
     )
 
     with db.session.begin_nested():
@@ -435,6 +440,7 @@ def item_type(app, db):
         db.session.add(item_type_mapping)
         db.session.add(item_type_name_2)
         db.session.add(item_type_2)
+        db.session.add(item_type_mapping_2)
 
     db.session.commit()
 
@@ -468,7 +474,7 @@ def doi_identifier(app, db):
 
 @pytest.fixture()
 def index(app, db):
-    index_ = Index(
+    index_1 = Index(
         id=1234567891011,
         parent=0,
         position=11,
@@ -482,7 +488,22 @@ def index(app, db):
         image_name="",
         public_state=False,
     )
-    db.session.add(index_)
+    index_2 = Index(
+        id=1623632832836,
+        parent=0,
+        position=12,
+        index_name="test_index_ld",
+        index_name_english="test_index_ld",
+        index_link_name_english="New Index LD",
+        index_link_enabled=False,
+        more_check=False,
+        display_no=5,
+        harvest_public_state=True,
+        image_name="",
+        public_state=False,
+    )
+    db.session.add(index_1)
+    db.session.add(index_2)
     db.session.commit()
 
 @pytest.fixture()
