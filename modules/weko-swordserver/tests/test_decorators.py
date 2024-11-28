@@ -63,7 +63,7 @@ def test_check_on_behalf_of(app):
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_decorators.py::test_check_package_contents -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
 def test_check_package_contents(app,make_zip):
     # when not required content length
-    app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_CONTENT_LENGTH'] = False
+    app.config['WEKO_SWORDSERVER_CONTENT_LENGTH'] = False
     with app.test_request_context():
         with pytest.raises(WekoSwordserverException) as e:
             res = check_package_contents()(lambda x,y:x+y)(x=1,y=2)
@@ -78,4 +78,4 @@ def test_check_package_contents(app,make_zip):
             assert e.message == "No selected file."
 
     # TODO: when required content length
-    app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_CONTENT_LENGTH'] = True
+    app.config['WEKO_SWORDSERVER_CONTENT_LENGTH'] = True

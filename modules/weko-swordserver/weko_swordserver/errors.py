@@ -41,7 +41,6 @@ class ErrorType(Enum):
     ItemTypeNotFound                = ("ItemTypeNotFound",              400, "BadRequest")
     NotFound                        = ("NotFound",                      404, "NotFound")
     ServerError                     = ("ServerError",                   500, "InternalServerError")
-    ItemTypeNotMatched              = ("ItemTypeNotMatched",            500, "InternalServerError")
 
     def __init__(self, type, code, httpName):
         self.type = type

@@ -32,7 +32,10 @@ WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT = ["application/zip"]
 WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_DEPOSITS = True
 """ Does the Service accept deposits? """
 
-WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_METADATA = []
+WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_METADATA = [
+    "https://github.com/JPCOAR/schema/blob/master/2.0/jpcoar_scm.xsd",
+    "https://w3id.org/ro/crate/1.1/",
+]
 """ List of Metadata Formats which are acceptable to the server. """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_PACKAGING = ["*"]
@@ -75,26 +78,20 @@ WEKO_SWORDSERVER_SERVICEDOCUMENT_ON_BEHALF_OF = True
 WEKO_SWORDSERVER_SERVICEDOCUMENT_DIGEST = ["SHA-256", "SHA", "MD5"]
 """ The list of digest formats that the server will accept. """
 
-WEKO_SWORDSERVER_SERVICEDOCUMENT_DIGEST_VERIFICATION = True
-""" Does the server require the client to send a digest? """
-
 WEKO_SWORDSERVER_SERVICEDOCUMENT_AUTHENTICATION = ["OAuth"]
 """ List of authentication schemes supported by the server. """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_SERVICES = []
 """ List of Services contained within the parent service """
 
-WEKO_SWORDSERVER_SERVICEDOCUMENT_CONTENT_LENGTH = False
-""" Does the server require a Content-Length header? """
-
 WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE = 16777216000
-""" Maximum size in bytes as an integer for the total size of an assembled segmented upload """
+""" Maximum size in bytes as an integer for files being uploaded. """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_BY_REFERENCE_SIZE = 30000000000000000
 """ Maximum size in bytes as an integer for files uploaded by reference. """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_ASSEMBLED_SIZE = 30000000000000
-""" Maximum size in bytes as an integer for files being uploaded. """
+""" Maximum size in bytes as an integer for the total size of an assembled segmented upload """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_SEGMENTS = 1000
 """ Maximum number of segments that the server will accept for a single segmented upload, if segmented upload is supported. """
@@ -121,3 +118,9 @@ WEKO_SWORDSERVER_DATASET_IDENTIFIER = {
         f"{WEKO_SWORDSERVER_DATASET_PREFIX}./".encode("utf-8")).decode("utf-8")
 }
 """ Dataset identifier replacement setting. """
+
+WEKO_SWORDSERVER_DIGEST_VERIFICATION = True
+""" Does the server require the client to send a digest? """
+
+WEKO_SWORDSERVER_CONTENT_LENGTH = False
+""" Does the server require a Content-Length header? """

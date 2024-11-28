@@ -18,7 +18,6 @@ from zipfile import ZipFile
 
 from flask import current_app
 from invenio_oauth2server.models import Token
-from invenio_oauth2server.provider import get_token
 
 from .api import SwordClient, SwordItemTypeMapping
 from .errors import WekoSwordserverException, ErrorType
@@ -44,8 +43,8 @@ def check_import_file_format(file, packaging):
             file_format = "JSON"
         else:
             raise WekoSwordserverException(
-                "SWORD metadata file not found in the package.",
-                ErrorType.BadRequest
+                "SWORDBagIt requires metadate/sword.json.",
+                ErrorType.MetadataFormatNotAcceptable
                 )
     elif "SimpleZip" in packaging:
         file_list = get_file_list_of_zip(file)
@@ -55,8 +54,8 @@ def check_import_file_format(file, packaging):
             file_format = "OTHERS"
     else:
         raise WekoSwordserverException(
-            f"Unsupported packaging format: {packaging}.",
-            ErrorType.BadRequest
+            f"Not accept packaging format: {packaging}",
+            ErrorType.PackagingFormatNotAcceptable
             )
 
     return file_format
@@ -145,40 +144,6 @@ def is_valid_body_hash(digest, body):
     return result
 
 
-def check_rocrate_required_files(file_list):
-    """Check RO-Crate required files.
-
-    Args:
-        file_list (list): FIle list of zip.
-
-    Returns:
-        list: List of results.
-    """
-    list_required_files = current_app.config.get(
-        "WEKO_SWORDSERVER_REQUIRED_FILES_ROCRATE"
-    )
-
-    return [required_file in file_list
-            for required_file in list_required_files]
-
-
-def check_swordbagit_required_files(file_list):
-    """Check SWORDBagIt required files.
-
-    Args:
-        file_list (list): FIle list of zip.
-
-    Returns:
-        list: List of results.
-    """
-    list_required_files = current_app.config.get(
-        "WEKO_SWORDSERVER_REQUIRED_FILES_SWORD"
-    )
-
-    return [required_file in file_list
-            for required_file in list_required_files]
-
-
 def get_record_by_token(access_token):
     """Get mapping by token.
 
@@ -202,6 +167,7 @@ def get_record_by_token(access_token):
     sword_mapping = SwordItemTypeMapping.get_mapping_by_id(mapping_id)
 
     return sword_client, sword_mapping
+
 
 def process_json(json_ld):
     """Process json-ld.

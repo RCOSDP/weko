@@ -72,7 +72,7 @@ def check_package_contents():
             file.seek(0, os.SEEK_END)
             real_contentLength = file.tell()
             file.seek(0, 0)
-            if current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_CONTENT_LENGTH']:
+            if current_app.config['WEKO_SWORDSERVER_CONTENT_LENGTH']:
                 if contentLength is None:
                     raise WekoSwordserverException("Content-Length is required.", ErrorType.ContentMalformed)
                 if int(contentLength) != real_contentLength:
@@ -126,14 +126,14 @@ def check_digest():
 
             result = f(*args, **kwargs)
 
-            if current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_DIGEST_VERIFICATION']:
+            if current_app.config['WEKO_SWORDSERVER_DIGEST_VERIFICATION']:
                 if (
                     (file_format or result) in ["SWORD", "ROCRATE"]
                     and (digest is None or not is_valid_bodyhash)
                 ):
                     raise WekoSwordserverException(
                         "Request body and digest verification failed.",
-                        ErrorType.BadRequest
+                        ErrorType.DigestMismatch
                         )
 
             return result

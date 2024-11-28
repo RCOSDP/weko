@@ -131,10 +131,13 @@ def check_bagit_import_items(file, packaging):
                 )
             # Check if workflow and item type match
             if workflow.itemtype_id != sword_mapping.item_type_id:
-                current_app.logger.error(f"Item type and workflow do not match.")
+                current_app.logger.error(
+                    "Item type and workflow do not match. "
+                    f"ItemType ID must be {sword_mapping.item_type_id}, "
+                    f"but the workflow's ItemType ID was {workflow.itemtype_id}.")
                 raise WekoSwordserverException(
                     "Item type and workflow do not match.",
-                    errorType=ErrorType.ItemTypeNotMatched
+                    errorType=ErrorType.ServerError
                 )
 
         check_result.update({"register_format": register_format})
