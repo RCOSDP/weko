@@ -1,6 +1,5 @@
 {
-  "@context": "https://w3id.org/ro/crate/1.1/context",
-  "@index": 1623632832836,
+  "@context": "https://schema.org/",
   "@graph": [
     {
       "@id": "./",
@@ -17,7 +16,14 @@
         "@id": "http://orcid.org/0000-0002-1825-0097"
       },
       "datePublished": "2024/11/15T01:59:48Z",
+      "accessMode": "public",
       "description": "A simple example for swordserver.",
+      "isPartOf": {
+        "@id": "https://example.org/project/123",
+        "@type": "Project",
+        "name": "Project XYZ",
+        "sameAs": "https://192.168.56.101/tree/index/1623632832836"
+      },
       "hasPart": [
         {
           "@id": "data/sample.rst"
@@ -25,8 +31,7 @@
       ],
       "name": "The Sample",
       "Resource Type": {
-        "type": "other",
-        "uri": ""
+        "@id": "#resourcetype"
       }
     },
     {
@@ -38,6 +43,11 @@
       "conformsTo": {
         "@id": "https://w3id.org/ro/crate/1.1"
       }
+    },
+    {
+      "@id": "#resourcetype",
+      "type": "other",
+      "uri": ""
     },
     {
       "@id": "#summary",

@@ -2,8 +2,9 @@
   "record": {
     "header": {
       "identifier": "The Sample",
-      "datestamp": "2024/11/15T01:59:48Z",
-      "index": 1623632832836
+      "datestamp": "2024-11-15",
+      "indextree": 1623632832836,
+      "publish_status": "public"
     },
     "metadata": {
       "d2Vrby0uLw==": {
@@ -74,8 +75,12 @@
           },
           "name": "Egon Willighagen"
         },
-        "datePublished": "2024/11/15T01:59:48Z",
         "description": "A simple example for swordserver.",
+        "isPartOf": {
+          "@id": "https://example.org/project/123",
+          "@type": "Project",
+          "name": "Project XYZ"
+        },
         "hasPart": [
           {
             "@id": "data/sample.rst",
@@ -99,6 +104,7 @@
         ],
         "name": "The Sample",
         "Resource Type": {
+          "@id": "#resourcetype",
           "type": "other",
           "uri": ""
         }
@@ -174,8 +180,12 @@
             },
             "name": "Egon Willighagen"
           },
-          "datePublished": "2024/11/15T01:59:48Z",
           "description": "A simple example for swordserver.",
+          "isPartOf": {
+            "@id": "https://example.org/project/123",
+            "@type": "Project",
+            "name": "Project XYZ"
+          },
           "hasPart": [
             {
               "@id": "data/sample.rst",
@@ -199,6 +209,7 @@
           ],
           "name": "The Sample",
           "Resource Type": {
+            "@id": "#resourcetype",
             "type": "other",
             "uri": ""
           }
@@ -206,6 +217,11 @@
         "conformsTo": {
           "@id": "https://w3id.org/ro/crate/1.1"
         }
+      },
+      "#resourcetype": {
+        "@id": "#resourcetype",
+        "type": "other",
+        "uri": ""
       },
       "#summary": {
         "@id": "#summary",

@@ -1,5 +1,5 @@
 {
-  "@context": "https://w3id.org/ro/crate/1.1/context",
+  "@context": "https://schema.org/",
   "@graph": [
     {
       "@id": "./",
@@ -16,13 +16,23 @@
         "@id": "http://orcid.org/0000-0002-1825-0097"
       },
       "datePublished": "2024/11/15T01:59:48Z",
-      "description": "A simple example of a tree.",
+      "accessMode": "public",
+      "description": "A simple example for swordserver.",
+      "isPartOf": {
+        "@id": "https://example.org/project/123",
+        "@type": "Project",
+        "name": "Project XYZ",
+        "sameAs": "https://192.168.56.101/tree/index/1623632832836"
+      },
       "hasPart": [
         {
           "@id": "data/sample.rst"
         }
       ],
-      "name": "The Tree"
+      "name": "The Sample",
+      "Resource Type": {
+        "@id": "#resourcetype"
+      }
     },
     {
       "@id": "ro-crate-metadata.json",
@@ -35,14 +45,19 @@
       }
     },
     {
+      "@id": "#resourcetype",
+      "type": "other",
+      "uri": ""
+    },
+    {
       "@id": "#summary",
       "@type": "Thing",
-      "summary": "the tree of simple itemtype"
+      "summary": "the sample of simple itemtype"
     },
     {
       "@id": "#datetime",
       "@type": "DateTime",
-      "date": "2023/01/18T23:39:34Z",
+      "date": "2023-01-18",
       "type": "Created"
     },
     {
@@ -52,11 +67,11 @@
       "datetime": {
         "@id": "#datetime"
       },
-      "encodingFormat": "text/markdown",
+      "encodingFormat": "text/x-rst",
       "identifier": {
         "@id": "https://example.org/data/sample.rst",
         "label": "sample.rst",
-        "type": "File"
+        "type": "fulltext"
       },
       "name": "sample.rst",
       "version": "1.0"
@@ -73,7 +88,7 @@
     },
     {
       "@id": "http://orcid.org/0000-0002-1825-0085",
-      "@type": "Person",
+      "@type": "DataCurator",
       "affiliation": {
         "@id": "#affiliation"
       },
@@ -138,6 +153,5 @@
       "language": "ja",
       "name": "試しに作ってみた"
     }
-  ],
-  "@index": 1623632832836
+  ]
 }

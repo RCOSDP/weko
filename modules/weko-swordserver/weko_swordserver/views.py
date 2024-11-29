@@ -256,7 +256,7 @@ def post_service_document():
             "user_id": owner,
             "action": "IMPORT"
     }
-    print(f"item: {item}")
+
     import_result = import_items_to_system(item, request_info=request_info)
     if not import_result.get("success"):
         raise WekoSwordserverException("Error in import_items_to_system: {0}".format(item.get("error_id")), ErrorType.ServerError)

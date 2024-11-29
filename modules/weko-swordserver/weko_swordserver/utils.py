@@ -13,6 +13,7 @@ import tempfile
 import traceback
 from copy import deepcopy
 from datetime import datetime, timezone
+from dateutil import parser
 from hashlib import sha256
 from zipfile import ZipFile
 
@@ -183,7 +184,6 @@ def process_json(json_ld):
         dict: Processed json data.
     """
     json = deepcopy(json_ld)
-    index = json.pop("@index", None)
 
     # transform list that contains @id to dict in @graph
     if "@graph" in json and isinstance(json["@graph"], list):
@@ -213,17 +213,25 @@ def process_json(json_ld):
         _resolve_link(json, key, value)
 
     # replace Dataset identifier
-    id = current_app.config["WEKO_SWORDSERVER_DATASET_IDENTIFIER"].get("")
-    enc = current_app.config["WEKO_SWORDSERVER_DATASET_IDENTIFIER"].get("enc")
+    id = current_app.config["WEKO_SWORDSERVER_DATASET_ROOT"].get("")
+    enc = current_app.config["WEKO_SWORDSERVER_DATASET_ROOT"].get("enc")
     json.update({enc: json.pop(id)})
 
     # prepare json for mapper format
     json = {
         "record": {
             "header": {
-                "identifier": json[enc]["name"],
-                "datestamp": json[enc]["datePublished"],
-                "index": index,
+                "identifier": json.get(enc).get("name"),
+                "datestamp": (
+                    parser.parse(json.get(enc).pop("datePublished"))
+                    .strftime('%Y-%m-%d')
+                ),
+                "publish_status": json.get(enc).pop("accessMode"),
+                "indextree": (
+                    int(json.get(enc).get("isPartOf").pop("sameAs", "/").split("/")[-1])
+                        if "sameAs" in json.get(enc).get("isPartOf")
+                        else None
+                )
             },
             "metadata": json
         }

@@ -112,7 +112,7 @@ WEKO_SWORDSERVER_METADATA_FILE_SWORD = "metadata/sword.json"
 WEKO_SWORDSERVER_DATASET_PREFIX = "weko-"
 """ Prefix to be added to the dataset identifier. """
 
-WEKO_SWORDSERVER_DATASET_IDENTIFIER = {
+WEKO_SWORDSERVER_DATASET_ROOT = {
     "": "./",
     "enc": base64.b64encode(
         f"{WEKO_SWORDSERVER_DATASET_PREFIX}./".encode("utf-8")).decode("utf-8")

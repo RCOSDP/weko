@@ -96,7 +96,6 @@ def check_bagit_import_items(
         filename = file.filename
 
     try:
-        # TODO: extension zip in temporary directory
         data_path, file_list = unpack_zip(file)
         check_result.update({"data_path": data_path})
 
@@ -123,7 +122,6 @@ def check_bagit_import_items(
         # Check workflow and item type
         register_format = sword_client.registration_type
         if register_format == "Workflow":
-            # TODO: check if workflow exists
             workflow = WorkFlow.get_workflow_by_id(sword_client.workflow_id)
             if workflow is None or workflow.is_deleted:
                 current_app.logger.error(f"Workflow not found for sword client.")
@@ -158,9 +156,13 @@ def check_bagit_import_items(
 
         with open(f"{data_path}/{json_name}", "r") as f:
             json_ld = json.load(f)
-        processed_json = process_json(json_ld)
 
-        # TODO: make check_result
+        # TODO: delete unnecessary files and add zip file to dictionary
+
+        processed_json = process_json(json_ld)
+        # FIXME: if workflow registration, check if the indextree is valid
+        indextree = processed_json.get("record").get("header").get("indextree")
+
         list_record = generate_metadata_from_json(
             processed_json, mapping, item_type
         )
@@ -172,7 +174,6 @@ def check_bagit_import_items(
             list_record, all_index_permission, can_edit_indexes
         )
         handle_check_and_prepare_publish_status(list_record)
-        print(f"list_record.error: {list_record[0].get('errors', 'not error occured')}")
 
         handle_check_file_metadata(list_record, data_path)
 
@@ -223,7 +224,6 @@ def check_bagit_import_items(
     return check_result
 
 
-# TODO: add generate_metadata function, and add read_json function
 def generate_metadata_from_json(json, mapping, item_type, is_change_identifier=False):
     """Generate metadata from JSON-LD.
 
@@ -247,8 +247,7 @@ def generate_metadata_from_json(json, mapping, item_type, is_change_identifier=F
         "metadata": metadata,
         "item_type_name": item_type.item_type_name.name,
         "item_type_id": item_type.id,
-        # FIXME: publish_status should be set in the json file.
-        "publish_status": "public",
+        "publish_status": metadata.pop("publish_status"),
     })
     handle_set_change_identifier_flag(list_record, is_change_identifier)
     handle_fill_system_item(list_record)
