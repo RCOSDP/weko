@@ -13,11 +13,12 @@ import tempfile
 import traceback
 from copy import deepcopy
 from datetime import datetime, timezone
+from dateutil import parser
 from hashlib import sha256
 from zipfile import ZipFile
 
 from flask import current_app
-from invenio_oauth2server.provider import get_token
+from invenio_oauth2server.models import Token
 
 from .api import SwordClient, SwordItemTypeMapping
 from .errors import WekoSwordserverException, ErrorType
@@ -38,18 +39,24 @@ def check_import_file_format(file, packaging):
         str: Import file format
     """
     if "SWORDBagIt" in packaging:
-        file_format = "SWORD"
+        file_list = get_file_list_of_zip(file)
+        if "metadata/sword.json" in file_list:
+            file_format = "JSON"
+        else:
+            raise WekoSwordserverException(
+                "SWORDBagIt requires metadate/sword.json.",
+                ErrorType.MetadataFormatNotAcceptable
+                )
     elif "SimpleZip" in packaging:
         file_list = get_file_list_of_zip(file)
         if "ro-crate-metadata.json" in file_list:
-            file_format = "ROCRATE"
+            file_format = "JSON"
         else:
             file_format = "OTHERS"
     else:
-        current_app.logger.info("No Packing Included")
         raise WekoSwordserverException(
-            f"Unsupported packaging format: {packaging}.",
-            ErrorType.BadRequest
+            f"Not accept packaging format: {packaging}",
+            ErrorType.PackagingFormatNotAcceptable
             )
 
     return file_format
@@ -138,40 +145,6 @@ def is_valid_body_hash(digest, body):
     return result
 
 
-def check_rocrate_required_files(file_list):
-    """Check RO-Crate required files.
-
-    Args:
-        file_list (list): FIle list of zip.
-
-    Returns:
-        list: List of results.
-    """
-    list_required_files = current_app.config.get(
-        "WEKO_SWORDSERVER_REQUIRED_FILES_ROCRATE"
-    )
-
-    return [required_file in file_list
-            for required_file in list_required_files]
-
-
-def check_swordbagit_required_files(file_list):
-    """Check SWORDBagIt required files.
-
-    Args:
-        file_list (list): FIle list of zip.
-
-    Returns:
-        list: List of results.
-    """
-    list_required_files = current_app.config.get(
-        "WEKO_SWORDSERVER_REQUIRED_FILES_SWORD"
-    )
-
-    return [required_file in file_list
-            for required_file in list_required_files]
-
-
 def get_record_by_token(access_token):
     """Get mapping by token.
 
@@ -183,10 +156,10 @@ def get_record_by_token(access_token):
     Returns:
         SwordItemTypeMapping: Mapping for RO-Crate matadata.
     """
-    token = get_token(access_token=access_token)
+    token = Token.query.filter_by(access_token=access_token).first()
     if token is None:
-        current_app.logger.error(f"Token not found.")
-        raise Exception("Token not found.")
+        current_app.logger.error(f"Accesstoken not found.")
+        raise Exception("Accesstoken not found.")
 
     client_id = token.client_id
     sword_client = SwordClient.get_client_by_id(client_id)
@@ -195,6 +168,7 @@ def get_record_by_token(access_token):
     sword_mapping = SwordItemTypeMapping.get_mapping_by_id(mapping_id)
 
     return sword_client, sword_mapping
+
 
 def process_json(json_ld):
     """Process json-ld.
@@ -210,7 +184,6 @@ def process_json(json_ld):
         dict: Processed json data.
     """
     json = deepcopy(json_ld)
-    index = json.pop("@index", None)
 
     # transform list that contains @id to dict in @graph
     if "@graph" in json and isinstance(json["@graph"], list):
@@ -240,17 +213,25 @@ def process_json(json_ld):
         _resolve_link(json, key, value)
 
     # replace Dataset identifier
-    id = current_app.config["WEKO_SWORDSERVER_DATASET_IDENTIFIER"].get("")
-    enc = current_app.config["WEKO_SWORDSERVER_DATASET_IDENTIFIER"].get("enc")
+    id = current_app.config["WEKO_SWORDSERVER_DATASET_ROOT"].get("")
+    enc = current_app.config["WEKO_SWORDSERVER_DATASET_ROOT"].get("enc")
     json.update({enc: json.pop(id)})
 
     # prepare json for mapper format
     json = {
         "record": {
             "header": {
-                "identifier": json[enc]["name"],
-                "datestamp": json[enc]["datePublished"],
-                "index": index,
+                "identifier": json.get(enc).get("name"),
+                "datestamp": (
+                    parser.parse(json.get(enc).pop("datePublished"))
+                    .strftime('%Y-%m-%d')
+                ),
+                "publish_status": json.get(enc).pop("accessMode"),
+                "indextree": (
+                    int(json.get(enc).get("isPartOf").pop("sameAs", "/").split("/")[-1])
+                        if "sameAs" in json.get(enc).get("isPartOf")
+                        else None
+                )
             },
             "metadata": json
         }

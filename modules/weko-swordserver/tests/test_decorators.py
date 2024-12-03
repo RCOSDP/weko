@@ -43,6 +43,12 @@ def test_check_oauth(app,client,users,tokens):
 # def check_on_behalf_of():
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_decorators.py::test_check_on_behalf_of -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
 def test_check_on_behalf_of(app):
+    # TODO: when accept on behalf of
+    app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_ON_BEHALF_OF'] = True
+
+
+    # when not accept on behalf of
+    app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_ON_BEHALF_OF'] = False
     with app.test_request_context():
         res = check_on_behalf_of()(lambda x,y: x+y)(x=1,y=2)
         assert res == 3
@@ -56,6 +62,8 @@ def test_check_on_behalf_of(app):
 # def check_package_contents():
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_decorators.py::test_check_package_contents -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
 def test_check_package_contents(app,make_zip):
+    # when not required content length
+    app.config['WEKO_SWORDSERVER_CONTENT_LENGTH'] = False
     with app.test_request_context():
         with pytest.raises(WekoSwordserverException) as e:
             res = check_package_contents()(lambda x,y:x+y)(x=1,y=2)
@@ -68,3 +76,6 @@ def test_check_package_contents(app,make_zip):
             res = check_package_contents()(lambda x,y:x+y)(x=1,y=2)
             assert e.errorType == ErrorType.ContentMalformed
             assert e.message == "No selected file."
+
+    # TODO: when required content length
+    app.config['WEKO_SWORDSERVER_CONTENT_LENGTH'] = True

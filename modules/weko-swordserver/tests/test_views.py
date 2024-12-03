@@ -3,6 +3,8 @@ from flask import url_for,json,request,abort
 import pytest
 from unittest.mock import patch
 import datetime
+
+import bagit
 from sword3common.lib.seamless import SeamlessException
 from werkzeug.datastructures import FileStorage
 
@@ -12,8 +14,8 @@ from invenio_files_rest.models import Location
 
 from invenio_records.models import RecordMetadata
 from weko_swordserver.errors import *
-
 from weko_swordserver.views import blueprint, _get_status_document,_create_error_document,post_service_document
+from .helpers import json_data, calculate_hash
 
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
 
@@ -107,6 +109,54 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
                     assert e.errorType == ErrorType.ServerError
                     assert e.message == "Error in import_items_to_system: test error in import"
 
+# def post_service_document():
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test_post_service_document_json_ld -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
+def test_post_service_document_json_ld(app,client,db,users,esindex,location,index,make_crate,tokens,item_type,doi_identifier,sword_mapping,sword_client,mocker):
+    login_user_via_session(client=client,email=users[0]["email"])
+    token=tokens[0]["token"].access_token
+    client_id = tokens[0]["client"].client_id
+    url = url_for("weko_swordserver.post_service_document")
+    def update_location_size():
+        from decimal import Decimal
+        loc = db.session.query(Location).filter(
+                    Location.id == 1).one()
+        loc.size = 1547
+
+    mocker.patch("weko_swordserver.views._get_status_document",side_effect=lambda x:{"recid":x})
+    mocker.patch("weko_search_ui.utils.find_and_update_location_size",side_effect=update_location_size)
+    mocker.patch("weko_search_ui.utils.send_item_created_event_to_es")
+
+    # success
+    mocker.patch("weko_swordserver.registration.bagit.Bag.validate")
+    zip = make_crate()
+    mapped_json = json_data("data/item_type/mapped_json_2.json")
+    storage = FileStorage(filename="payload.zip",stream=zip)
+    headers = {
+        "Authorization":"Bearer {}".format(token),
+        "Content-Disposition":"attachment; filename=payload.zip",
+        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
+        "Digest":"SHA-256={}".format(calculate_hash(storage))
+    }
+
+    # Direct registration
+    with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+        try:
+            res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
+            # print(f"res.data: {json.loads(res.data)}")
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+
+        assert res.status_code == 200
+
+        recid = json.loads(res.data)["recid"]
+        recid = PersistentIdentifier.get("recid",recid).object_uuid
+        record = RecordMetadata.query.filter_by(id=recid).one_or_none()
+        assert record is not None
+        record = record.json
+        file_metadata = record["item_1617604990215"]["attribute_value_mlt"][0]
+        assert file_metadata.get("url") is not None
+        assert file_metadata.get("url").get("url") == "https://example.org/data/sample.rst"
 
 
 # def get_status_document(recid):

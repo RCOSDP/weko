@@ -69,6 +69,7 @@ from weko_items_ui.ext import WekoItemsUI
 from weko_records.models import ItemTypeName, ItemType,ItemTypeMapping
 from weko_schema_ui.ext import WekoSchemaUI
 from weko_search_ui import WekoSearchUI
+from weko_swordserver.models import SwordClientModel, SwordItemTypeMappingModel
 from weko_theme.ext import WekoTheme
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import (
@@ -413,7 +414,7 @@ def item_type(app, db):
     )
 
     item_type_name_2 = ItemTypeName(id=2,
-        name="シンプルアイテムタイプ", has_site_license=True, is_active=True
+        name="デフォルトアイテムタイプ（SWORD）", has_site_license=True, is_active=True
     )
 
     item_type_2 = ItemType(
@@ -423,9 +424,14 @@ def item_type(app, db):
         schema=json_data("data/item_type/schema_2.json"),
         form=json_data("data/item_type/form_2.json"),
         render=json_data("data/item_type/render_2.json"),
-        tag=1,
+        tag=2,
         version_id=1,
         is_deleted=False,
+    )
+    item_type_mapping_2 = ItemTypeMapping(
+        id=2,
+        item_type_id=2,
+        mapping=json_data("data/item_type/mapping_2.json")
     )
 
     with db.session.begin_nested():
@@ -434,6 +440,7 @@ def item_type(app, db):
         db.session.add(item_type_mapping)
         db.session.add(item_type_name_2)
         db.session.add(item_type_2)
+        db.session.add(item_type_mapping_2)
 
     db.session.commit()
 
@@ -467,7 +474,7 @@ def doi_identifier(app, db):
 
 @pytest.fixture()
 def index(app, db):
-    index_ = Index(
+    index_1 = Index(
         id=1234567891011,
         parent=0,
         position=11,
@@ -481,7 +488,22 @@ def index(app, db):
         image_name="",
         public_state=False,
     )
-    db.session.add(index_)
+    index_2 = Index(
+        id=1623632832836,
+        parent=0,
+        position=12,
+        index_name="test_index_ld",
+        index_name_english="test_index_ld",
+        index_link_name_english="New Index LD",
+        index_link_enabled=False,
+        more_check=False,
+        display_no=5,
+        harvest_public_state=True,
+        image_name="",
+        public_state=False,
+    )
+    db.session.add(index_1)
+    db.session.add(index_2)
     db.session.commit()
 
 @pytest.fixture()
@@ -530,6 +552,19 @@ def make_zip():
         fp = BytesIO()
         with ZipFile(fp, 'w', compression=ZIP_DEFLATED) as new_zip:
             for dir, subdirs, files in os.walk("tests/data/zip_data/data"):
+                new_zip.write(dir,dir.split("/")[-1])
+                for file in files:
+                    new_zip.write(os.path.join(dir, file),os.path.join(dir.split("/")[-1],file))
+        fp.seek(0)
+        return fp
+    return factory
+
+@pytest.fixture()
+def make_crate():
+    def factory():
+        fp = BytesIO()
+        with ZipFile(fp, 'w', compression=ZIP_DEFLATED) as new_zip:
+            for dir, subdirs, files in os.walk("tests/data/zip_crate/"):
                 new_zip.write(dir,dir.split("/")[-1])
                 for file in files:
                     new_zip.write(os.path.join(dir, file),os.path.join(dir.split("/")[-1],file))
@@ -688,3 +723,54 @@ def workflow(app, db, item_type, action_data, users):
         "flow_action": flow_actions,
         "workflow": workflow
     }
+
+
+@pytest.fixture
+def sword_mapping(db, item_type):
+    sword_mapping = []
+    for i in range(1, 3):
+        obj = SwordItemTypeMappingModel(
+            name=f"test{i}",
+            mapping=json_data("data/item_type/sword_mapping_2.json"),
+            item_type_id=item_type[1]["item_type"].id,
+            is_deleted=False
+        )
+        with db.session.begin_nested():
+            db.session.add(obj)
+
+        sword_mapping.append({
+            "id": obj.id,
+            "sword_mapping": obj,
+            "name": obj.name,
+            "mapping": obj.mapping,
+            "item_type_id": obj.item_type_id,
+            "version_id": obj.version_id,
+            "is_deleted": obj.is_deleted
+        })
+
+    db.session.commit()
+
+    return sword_mapping
+
+@pytest.fixture
+def sword_client(db, tokens, sword_mapping, workflow):
+    client = tokens[0]["client"]
+    sword_client1 = SwordClientModel(
+        client_id=client.client_id,
+        registration_type_id=SwordClientModel.RegistrationType.DIRECT,
+        mapping_id=sword_mapping[0]["sword_mapping"].id,
+    )
+    client = tokens[1]["client"]
+    sword_client2 = SwordClientModel(
+        client_id=client.client_id,
+        registration_type_id=SwordClientModel.RegistrationType.WORKFLOW,
+        mapping_id=sword_mapping[1]["sword_mapping"].id,
+        workflow_id=workflow["workflow"].id,
+    )
+
+    with db.session.begin_nested():
+        db.session.add(sword_client1)
+        db.session.add(sword_client2)
+    db.session.commit()
+
+    return [{"sword_client": sword_client1}, {"sword_client": sword_client2}]

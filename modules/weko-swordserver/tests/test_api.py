@@ -13,57 +13,9 @@ from sqlalchemy_continuum import version_class
 from weko_swordserver.api import SwordItemTypeMapping, SwordClient
 from weko_swordserver.models import SwordItemTypeMappingModel, SwordClientModel
 
+from .helpers import json_data
+
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-
-@pytest.fixture
-def sword_mapping(db, item_type):
-    sword_mapping = []
-    for i in range(1, 3):
-        obj = SwordItemTypeMappingModel(
-            name=f"test{i}",
-            mapping={"test": "test"},
-            item_type_id=item_type[0]["item_type"].id,
-            is_deleted=False
-        )
-        with db.session.begin_nested():
-            db.session.add(obj)
-
-        sword_mapping.append({
-            "id": obj.id,
-            "sword_mapping": obj,
-            "name": obj.name,
-            "mapping": obj.mapping,
-            "item_type_id": obj.item_type_id,
-            "version_id": obj.version_id,
-            "is_deleted": obj.is_deleted
-        })
-
-    db.session.commit()
-
-    return sword_mapping
-
-@pytest.fixture
-def sword_client(db, tokens, sword_mapping, workflow):
-    client = tokens[0]["client"]
-    sword_client1 = SwordClientModel(
-        client_id=client.client_id,
-        registration_type_id=SwordClientModel.RegistrationType.DIRECT,
-        mapping_id=sword_mapping[0]["sword_mapping"].id,
-    )
-    client = tokens[1]["client"]
-    sword_client2 = SwordClientModel(
-        client_id=client.client_id,
-        registration_type_id=SwordClientModel.RegistrationType.WORKFLOW,
-        mapping_id=sword_mapping[1]["sword_mapping"].id,
-        workflow_id=workflow["workflow"].id,
-    )
-
-    with db.session.begin_nested():
-        db.session.add(sword_client1)
-        db.session.add(sword_client2)
-    db.session.commit()
-
-    return [{"sword_client": sword_client1}, {"sword_client": sword_client2}]
 
 # class SwordItemTypeMapping:
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordItemTypeMapping -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace

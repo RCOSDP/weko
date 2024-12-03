@@ -11,34 +11,37 @@ from weko_swordserver.models import SwordClientModel
 """Module of weko-swordserver."""
 
 
-WEKO_SWORDSERVER_DEFAULT_VALUE = 'foobar'
+WEKO_SWORDSERVER_DEFAULT_VALUE = "foobar"
 """Default value for the application."""
 
-WEKO_SWORDSERVER_BASE_TEMPLATE = 'weko_swordserver/base.html'
+WEKO_SWORDSERVER_BASE_TEMPLATE = "weko_swordserver/base.html"
 """Default base template for the demo page."""
 
-WEKO_SWORDSERVER_SWORD_VERSION = 'http://purl.org/net/sword/3.0'
+WEKO_SWORDSERVER_SWORD_VERSION = "http://purl.org/net/sword/3.0"
 """ The version of the SWORD protocol this server supports """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_ABSTRACT = ""
 """ A description of the service """
 
-WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT = ['*/*']
+WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT = ["*/*"]
 """ List of Content Types which are acceptable to the server. """
 
-WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT = ['application/zip']
+WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT = ["application/zip"]
 """ List of Archive Formats that the server can unpack. If the server sends a package using a different format, the server MAY treat it as a Binary File """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_DEPOSITS = True
 """ Does the Service accept deposits? """
 
-WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_METADATA = []
+WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_METADATA = [
+    "https://github.com/JPCOAR/schema/blob/master/2.0/jpcoar_scm.xsd",
+    "https://w3id.org/ro/crate/1.1/",
+]
 """ List of Metadata Formats which are acceptable to the server. """
 
-WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_PACKAGING = ['*']
+WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_PACKAGING = ["*"]
 """ List of Packaging Formats which are acceptable to the server.
 
-    ['*'] or List of Packaging Formats URI
+    ["*"] or List of Packaging Formats URI
         - http://purl.org/net/sword/3.0/package/Binary
         - http://purl.org/net/sword/3.0/package/SimpleZip
         - http://purl.org/net/sword/3.0/package/SWORDBagIt
@@ -69,7 +72,7 @@ WEKO_SWORDSERVER_SERVICEDOCUMENT_STAGING_MAX_IDLE = 3600
 WEKO_SWORDSERVER_SERVICEDOCUMENT_BY_REFERENCE_DEPOSIT = False
 """ Does the server support By-Reference deposit? """
 
-WEKO_SWORDSERVER_SERVICEDOCUMENT_ON_BEHALF_OF = False
+WEKO_SWORDSERVER_SERVICEDOCUMENT_ON_BEHALF_OF = True
 """ Does the server support deposit on behalf of other users (mediation) """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_DIGEST = ["SHA-256", "SHA", "MD5"]
@@ -82,13 +85,13 @@ WEKO_SWORDSERVER_SERVICEDOCUMENT_SERVICES = []
 """ List of Services contained within the parent service """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE = 16777216000
-""" Maximum size in bytes as an integer for the total size of an assembled segmented upload """
+""" Maximum size in bytes as an integer for files being uploaded. """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_BY_REFERENCE_SIZE = 30000000000000000
 """ Maximum size in bytes as an integer for files uploaded by reference. """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_ASSEMBLED_SIZE = 30000000000000
-""" Maximum size in bytes as an integer for files being uploaded. """
+""" Maximum size in bytes as an integer for the total size of an assembled segmented upload """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_SEGMENTS = 1000
 """ Maximum number of segments that the server will accept for a single segmented upload, if segmented upload is supported. """
@@ -100,23 +103,24 @@ WEKO_SWORDSERVER_REGISTRATION_TYPE = SwordClientModel.RegistrationType
     - `Workfolw` (2): Workflow registration.
 """
 
+WEKO_SWORDSERVER_METADATA_FILE_ROCRATE = "ro-crate-metadata.json"
+""" Metadata file name for RO-Crate+Bagit. """
 
-WEKO_SWORDSERVER_REQUIRED_FILES_ROCRATE = [
-    'manifest-sha256.txt',
-    'ro-crate-metadata.json'
-]
+WEKO_SWORDSERVER_METADATA_FILE_SWORD = "metadata/sword.json"
+""" Metadata file name for SWORDBagIt. """
 
+WEKO_SWORDSERVER_DATASET_PREFIX = "weko-"
+""" Prefix to be added to the dataset identifier. """
 
-WEKO_SWORDSERVER_REQUIRED_FILES_SWORD = [
-    'manifest-sha256.txt',
-    'metadata/sword.json'
-]
-
-
-WEKO_SWORDSERVER_DATASET_PLEFIX = "weko-swordserver"
-
-WEKO_SWORDSERVER_DATASET_IDENTIFIER = {
+WEKO_SWORDSERVER_DATASET_ROOT = {
     "": "./",
     "enc": base64.b64encode(
-        f"{WEKO_SWORDSERVER_DATASET_PLEFIX}-./".encode('utf-8')).decode('utf-8')
+        f"{WEKO_SWORDSERVER_DATASET_PREFIX}./".encode("utf-8")).decode("utf-8")
 }
+""" Dataset identifier replacement setting. """
+
+WEKO_SWORDSERVER_DIGEST_VERIFICATION = True
+""" Does the server require the client to send a digest? """
+
+WEKO_SWORDSERVER_CONTENT_LENGTH = False
+""" Does the server require a Content-Length header? """

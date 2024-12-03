@@ -68,11 +68,19 @@ def check_package_contents():
             # Check Content-Length
             maxUploadSize = current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE']
             contentLength = request.headers.get("Content-Length", None)
-            if contentLength is None:
-                # Get length by file
-                file.seek(0, os.SEEK_END)
-                contentLength = file.tell()
-                file.seek(0, 0)
+            # Get length by real file
+            file.seek(0, os.SEEK_END)
+            real_contentLength = file.tell()
+            file.seek(0, 0)
+            if current_app.config['WEKO_SWORDSERVER_CONTENT_LENGTH']:
+                if contentLength is None:
+                    raise WekoSwordserverException("Content-Length is required.", ErrorType.ContentMalformed)
+                if int(contentLength) != real_contentLength:
+                    raise WekoSwordserverException(
+                        "Content-Length is not equal to real content length. (request:{}, real:{})".format(
+                            contentLength, real_contentLength), ErrorType.ContentMalformed)
+            elif contentLength is None:
+                contentLength = real_contentLength
             if int(contentLength or '0') > maxUploadSize:
                 raise WekoSwordserverException(
                     "Content size is too large. (request:{}, maxUploadSize:{})".format(
@@ -109,20 +117,23 @@ def check_digest():
         @wraps(f)
         def decorated(*args, **kwargs):
             # Check Digest
-            digest = request.headers.get("Digest", None)
-            file = kwargs.get("file", None)
-            file_format = kwargs.get("file_format", None)
+            digest = request.headers.get("Digest")
+            file = kwargs.get("file") or request.files.get("file")
+            file_format = kwargs.pop("file_format", None)
 
             from .utils import is_valid_body_hash
             is_valid_bodyhash = is_valid_body_hash(digest, file)
 
             result = f(*args, **kwargs)
 
-            if (file_format or result) in ["SWORD", "ROCRATE"]:
-                if digest is None or not is_valid_bodyhash:
+            if current_app.config['WEKO_SWORDSERVER_DIGEST_VERIFICATION']:
+                if (
+                    (file_format or result) in ["SWORD", "ROCRATE"]
+                    and (digest is None or not is_valid_bodyhash)
+                ):
                     raise WekoSwordserverException(
                         "Request body and digest verification failed.",
-                        ErrorType.BadRequest
+                        ErrorType.DigestMismatch
                         )
 
             return result
