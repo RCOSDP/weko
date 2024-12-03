@@ -367,11 +367,17 @@ class WekoRecordsResource(ContentNegotiatedMethodView):
             # Check pretty
             indent = 4 if request.args.get('pretty') == 'true' else None
 
+            # Check presence of requestmail address
+            from weko_records.api import RequestMailList
+            mail = RequestMailList.get_mail_list_by_item_id(pid.object_uuid)
+            metadata = self._convert_metadata(record, language)
+            metadata['hasRequestmailAddress'] = len(mail) > 0
+
             # Create Response
             res_json = {
                 'index': indexId,
                 'rocrate': rocrate,
-                'metadata': self._convert_metadata(record, language),
+                'metadata': metadata
             }
             res = Response(
                 response=json.dumps(res_json, indent=indent),

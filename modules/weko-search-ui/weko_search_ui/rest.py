@@ -632,27 +632,30 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
 
             if not is_id_sort:
                 sort_element = {}
-                sort_element['controlnumber'] = {'order': 'asc', 'unmapped_type': 'long'}
+                sort_element['control_number'] = {'order': 'asc', 'unmapped_type': 'long'}
                 sort_query.append(sort_element)
 
             search._sort = sort_query
 
             # Facet Setting
-            # from weko_admin.models import FacetSearchSetting
-            # from weko_admin.utils import get_facet_search_query
-            # params = {}
-            # facets = get_facet_search_query()
-            # search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
-            # if facets and search_index and 'post_filters' in facets[search_index]:
-            #     post_filters = facets[search_index]['post_filters']
-            #     for param in post_filters:
-            #         value = request.args.getlist(param)
-            #         if value:
-            #             params[param] = value
-            # weko_faceted_search_mapping = FacetSearchSetting.get_activated_facets_mapping()
-            # for param in params:
-            #     query_key = weko_faceted_search_mapping[param]
-            #     search = search.post_filter({'terms': {query_key: params[param]}})
+            from weko_admin.models import FacetSearchSetting
+            from weko_admin.utils import get_facet_search_query
+            params = {}
+            facets = get_facet_search_query(has_permission=False)
+            search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
+            if facets and search_index and 'post_filters' in facets[search_index]:
+                post_filters = facets[search_index]['post_filters']
+                for param in post_filters:
+                    value = request.args.getlist(param)
+                    if value:
+                        params[param] = value
+            weko_faceted_search_mapping = FacetSearchSetting.get_activated_facets_mapping()
+            for param in params:
+                query_key = weko_faceted_search_mapping[param]
+                search = search.filter({'terms': {query_key: params[param]}})
+            aggs = facets.get(search_index, {}).get('aggs', {})
+            for name, agg in aggs.items():
+                search.aggs[name] = agg
 
             # Execute search
             search_results = search.execute()
@@ -681,6 +684,13 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
                 if sort_key:
                     cursor = sort_key[0]
 
+            facet_list = {}
+            dic = search_results.get('aggregations', {})
+            for k, v in dic.items():
+                if isinstance(v, dict) and k in v and 'buckets' in v[k]:
+                    facet_list[k] = {}
+                    facet_list[k]['buckets'] = v[k]['buckets']
+
             # Create result
             result = {
                 'total_results': search_results['hits']['total'],
@@ -688,6 +698,7 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
                 'cursor': cursor,
                 'page': page,
                 'search_results': rocrate_list,
+                'aggregations' : facet_list
             }
             res = Response(
                 response=json.dumps(result, indent=indent),
@@ -816,7 +827,7 @@ class IndexSearchResultList(ContentNegotiatedMethodView):
 
             if not is_id_sort:
                 sort_element = {}
-                sort_element['controlnumber'] = {'order': 'asc', 'unmapped_type': 'long'}
+                sort_element['control_number'] = {'order': 'asc', 'unmapped_type': 'long'}
                 sort_query.append(sort_element)
 
             search._sort = sort_query
