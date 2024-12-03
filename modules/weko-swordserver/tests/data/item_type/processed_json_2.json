@@ -29,7 +29,7 @@
               "@type": "Organization",
               "identifier": {
                 "@id": "https://example.org/affiliation",
-                "scheme": "https://example.org/scheme",
+                "scheme": "GRID",
                 "uri": "https://example.org/affiliation"
               },
               "language": "en",
@@ -134,7 +134,7 @@
                 "@type": "Organization",
                 "identifier": {
                   "@id": "https://example.org/affiliation",
-                  "scheme": "https://example.org/scheme",
+                  "scheme": "GRID",
                   "uri": "https://example.org/affiliation"
                 },
                 "language": "en",
@@ -271,7 +271,7 @@
           "@type": "Organization",
           "identifier": {
             "@id": "https://example.org/affiliation",
-            "scheme": "https://example.org/scheme",
+            "scheme": "GRID",
             "uri": "https://example.org/affiliation"
           },
           "language": "en",
@@ -329,7 +329,7 @@
         "@type": "Organization",
         "identifier": {
           "@id": "https://example.org/affiliation",
-          "scheme": "https://example.org/scheme",
+          "scheme": "GRID",
           "uri": "https://example.org/affiliation"
         },
         "language": "en",
