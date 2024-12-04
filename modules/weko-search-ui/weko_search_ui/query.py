@@ -1415,5 +1415,6 @@ def feedback_email_search_factory(self, search):
 
 def split_text_by_or(text):
     split_text = text.replace("　", " ").replace(" | ", " OR ")
-    split_text_list = re.split(r' +OR +', split_text)
+    pattern = r'\s+OR\s'
+    split_text_list = re.split(pattern, split_text)
     return split_text_list

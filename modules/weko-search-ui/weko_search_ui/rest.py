@@ -638,21 +638,9 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
             search._sort = sort_query
 
             # Facet Setting
-            from weko_admin.models import FacetSearchSetting
             from weko_admin.utils import get_facet_search_query
-            params = {}
             facets = get_facet_search_query(has_permission=False)
             search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
-            if facets and search_index and 'post_filters' in facets[search_index]:
-                post_filters = facets[search_index]['post_filters']
-                for param in post_filters:
-                    value = request.args.getlist(param)
-                    if value:
-                        params[param] = value
-            weko_faceted_search_mapping = FacetSearchSetting.get_activated_facets_mapping()
-            for param in params:
-                query_key = weko_faceted_search_mapping[param]
-                search = search.filter({'terms': {query_key: params[param]}})
             aggs = facets.get(search_index, {}).get('aggs', {})
             for name, agg in aggs.items():
                 search.aggs[name] = agg
