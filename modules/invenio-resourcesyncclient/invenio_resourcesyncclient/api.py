@@ -81,12 +81,8 @@ class ResyncHandler(object):
             'base_url': self.base_url,
             'index_name': index_name,
             'created': self.created,
-            'from_date': self.from_date.strftime(
-                '%Y-%m-%dT%H:%M:%S%z'
-            ) if self.from_date else None,
-            'to_date': self.to_date.strftime(
-                '%Y-%m-%dT%H:%M:%S%z'
-            ) if self.to_date else None,
+            'from_date': self.from_date if self.from_date else None,
+            'to_date': self.to_date if self.to_date else None,
             'updated': self.updated,
             'resync_save_dir': self.resync_save_dir,
             'resync_mode': self.resync_mode,

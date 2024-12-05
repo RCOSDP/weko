@@ -21,6 +21,7 @@ import os
 import datetime
 import json
 import uuid
+from datetime import datetime as dt
 
 import pytest
 from flask import Flask
@@ -209,7 +210,7 @@ def location(app, db, instance_path):
 @pytest.fixture()
 def session_time(app, db):
     session_lifetime = SessionLifetime(lifetime=60,is_delete=False)
-    
+
     with db.session.begin_nested():
         db.session.add(session_lifetime)
 
@@ -553,7 +554,7 @@ def test_indices(app, db):
             biblio_flag=True if not online_issn else False,
             online_issn=online_issn
         )
-    
+
     with db.session.begin_nested():
         db.session.add(base_index(1, 0, 0))
         db.session.add(base_index(2, 0, 1))
@@ -679,6 +680,22 @@ def test_resync(app, db, test_indices):
                     ' "timestamp": 1664550000, "ln": [{"rel": "file",' +
                     ' "href": "tests/data/bioproject_data01.jsonld"}]}]'
     )
+    resync_handler8 = ResyncIndexes(
+        id=80,
+        status="Manual",
+        index_id=2,
+        repository_name="root",
+        from_date=dt.strptime('2024-11-27 00:00:00', '%Y-%m-%d %H:%M:%S'),
+        to_date=None,
+        resync_save_dir="",
+        resync_mode="Incremental",
+        saving_format="JPCOAR-XML",
+        base_url="base_test2",
+        is_running=None,
+        interval_by_day=1,
+        task_id='test_task',
+        result=None
+    )
 
     resync_log = ResyncLogs(
         id=10,
@@ -700,5 +717,6 @@ def test_resync(app, db, test_indices):
         db.session.add(resync_handler5)
         db.session.add(resync_handler6)
         db.session.add(resync_handler7)
+        db.session.add(resync_handler8)
         db.session.add(resync_log)
     db.session.commit()
