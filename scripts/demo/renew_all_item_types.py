@@ -24,7 +24,6 @@ def main():
         print(traceback.format_exc())
         db.session.rollback()
 
-        
 
 if __name__ == '__main__':
     try:

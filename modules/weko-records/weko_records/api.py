@@ -927,7 +927,7 @@ class ItemTypes(RecordBase):
         result = {"msg":"Update ItemType({})".format(itemtype_id),"code":0}
         item_type = ItemTypes.get_by_id(itemtype_id)
         data = pickle.loads(pickle.dumps(item_type.render, -1))
-        
+
         pat1 = re.compile(r'cus_(\d+)')
         for idx, i in enumerate(data['table_row_map']['form']):
             if isinstance(i,dict) and 'key' in i:
@@ -972,7 +972,7 @@ class ItemTypes(RecordBase):
                                 cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'][_prop_id],data['table_row_map']['schema']['properties'][_prop_id])
                                                                                
         from weko_itemtypes_ui.utils import fix_json_schema,update_required_schema_not_exist_in_form, update_text_and_textarea
-        
+
         table_row_map = data.get('table_row_map')
         json_schema = fix_json_schema(table_row_map.get('schema'))
         json_form = table_row_map.get('form')
@@ -982,11 +982,11 @@ class ItemTypes(RecordBase):
         if itemtype_id != 0:
             json_schema, json_form = update_text_and_textarea(
                 itemtype_id, json_schema, json_form)
-        
+
         if 'schemaeditor' in data:
             if 'schema' in data['schemaeditor']:
                 data['schemaeditor']['schema'] = json_schema
-        
+
         # item_type_mapping = (
         #             ItemTypeMapping.query.filter(ItemTypeMapping.item_type_id == itemtype_id)
         #             .order_by(desc(ItemTypeMapping.created))
@@ -1014,7 +1014,7 @@ class ItemTypes(RecordBase):
             user_id=1,
             notes=data.get('edit_notes', {})
         )
-            
+
         return result
 
     @classmethod
