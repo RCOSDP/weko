@@ -188,7 +188,11 @@ def subitem_recs(subitems, subitem_key_list, schema, oai_key_list, metadata):
 
     if subschema:
         if subschema.get('items', {}).get('properties', None):
+<<<<<<< HEAD
             if oai_key and metadata and oai_key in metadata:
+=======
+            if oai_key and oai_key in metadata:
+>>>>>>> 95750d6c5 (weko#47128 fix harvester get value issue)
                 if isinstance(metadata[oai_key], list):
                     _tmp = []
                     for m in metadata[oai_key]:
@@ -217,12 +221,17 @@ def subitem_recs(subitems, subitem_key_list, schema, oai_key_list, metadata):
             else:
                 current_app.logger.debug("oai_key: {}, metadata: {}".format(oai_key, metadata))
         elif subschema.get('properties', None):
+<<<<<<< HEAD
             if oai_key and metadata and oai_key in metadata:
                 if subitem_key in subitems:
                     _tmp = subitems[subitem_key]
                 else:
                     _tmp = {}
                     subitems[subitem_key] = _tmp
+=======
+            if oai_key and oai_key in metadata:
+                _tmp = {}
+>>>>>>> 95750d6c5 (weko#47128 fix harvester get value issue)
                 if isinstance(metadata[oai_key], list):
                     for m in metadata[oai_key]:
                         subitem_recs(
@@ -242,8 +251,16 @@ def subitem_recs(subitems, subitem_key_list, schema, oai_key_list, metadata):
                         oai_key_list[1:],
                         metadata[oai_key]
                     )
+<<<<<<< HEAD
                 if not _tmp:
                     subitems.pop(subitem_key)
+=======
+                if _tmp:
+                    if subitem_key in subitems:
+                        subitems[subitem_key].update(_tmp)
+                    else:
+                        subitems[subitem_key] = _tmp
+>>>>>>> 95750d6c5 (weko#47128 fix harvester get value issue)
             else:
                 current_app.logger.debug("oai_key: {}, metadata: {}".format(oai_key, metadata))
         else:
@@ -254,8 +271,13 @@ def subitem_recs(subitems, subitem_key_list, schema, oai_key_list, metadata):
                     current_app.logger.debug("oai_key: {}, metadata: {}".format(oai_key, metadata))
             elif isinstance(metadata, str) and oai_key == TEXT:
                 subitems[subitem_key] = metadata
+<<<<<<< HEAD
             elif isinstance(metadata, list) and len(metadata) > 0:
                 subitems[subitem_key] = metadata[0]
+=======
+            elif isinstance(metadata, list):
+                subitems[subitem_key] = metadata
+>>>>>>> 95750d6c5 (weko#47128 fix harvester get value issue)
             else:
                 current_app.logger.debug("metadata: {}".format(metadata))
 
@@ -830,8 +852,13 @@ def add_version(schema, mapping, res, metadata):
 def add_version_type(schema, mapping, res, metadata):
     """Add version type."""
     patterns = [
+<<<<<<< HEAD
         ('versiontype.@value', TEXT),
         ('versiontype.@attributes.rdf:resource', '@rdf:resource'),
+=======
+        ('versionType.@value', TEXT),
+        ('versionType.@attributes.rdf:resource', '@rdf:resource'),
+>>>>>>> 95750d6c5 (weko#47128 fix harvester get value issue)
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -997,6 +1024,7 @@ def add_conference(schema, mapping, res, metadata):
             'jpcoar:conferenceSponsor.@xml:lang'),
         ('conference.conferenceDate.@value',
             'jpcoar:conferenceDate.#text'),
+<<<<<<< HEAD
         ('conference.conferenceDate.@attributes.startYear',
             'jpcoar:conferenceDate.@startYear'),
         ('conference.conferenceDate.@attributes.startMonth',
@@ -1008,6 +1036,19 @@ def add_conference(schema, mapping, res, metadata):
         ('conference.conferenceDate.@attributes.endMonth',
             'jpcoar:conferenceDate.@endMonth'),
         ('conference.conferenceDate.@attributes.endDay',
+=======
+        ('conference.conferenceDate.@startYear',
+            'jpcoar:conferenceDate.@startYear'),
+        ('conference.conferenceDate.@startMonth',
+            'jpcoar:conferenceDate.@startMonth'),
+        ('conference.conferenceDate.@startDay',
+            'jpcoar:conferenceDate.@startDay'),
+        ('conference.conferenceDate.@endYear',
+            'jpcoar:conferenceDate.@endYear'),
+        ('conference.conferenceDate.@endMonth',
+            'jpcoar:conferenceDate.@endMonth'),
+        ('conference.conferenceDate.@endDay',
+>>>>>>> 95750d6c5 (weko#47128 fix harvester get value issue)
             'jpcoar:conferenceDate.@endDay'),
         ('conference.conferenceDate.@attributes.xml:lang',
             'jpcoar:conferenceDate.@xml:lang'),
@@ -1562,8 +1603,11 @@ class JPCOARMapper(BaseMapper):
                 partial(add_temporal, *args),
             'datacite:geoLocation':
                 partial(add_geo_location, *args),
+<<<<<<< HEAD
             'jpcoar:fundingReference':
                 partial(add_funding_reference, version, *args),
+=======
+>>>>>>> 95750d6c5 (weko#47128 fix harvester get value issue)
             'jpcoar:sourceIdentifier':
                 partial(add_source_identifier, *args),
             'jpcoar:sourceTitle':
