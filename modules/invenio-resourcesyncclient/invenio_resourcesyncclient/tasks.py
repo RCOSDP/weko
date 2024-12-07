@@ -238,7 +238,7 @@ def get_record_from_json_file(rc):
        If creation of record information fails, empty information is returned.
 
         Args:
-            rc: ResourceListの<url>に相当する情報。
+            rc: Information equivalent to <url> in ResourceList.
 
         Returns:
             record: record information created from a file in JSON-LD
@@ -317,6 +317,7 @@ def resync_sync(id):
         task_id=resync_sync.request.id,
         log_type='sync'
     )
+    resync_log_id = resync_log.id
 
     try:
         pause = False
@@ -328,17 +329,15 @@ def resync_sync(id):
         signal.signal(signal.SIGTERM, sigterm_handler)
         current_app.logger.info('[{0}] [{1}]'.format(
             0, 'Processing records'))
-        try:
-            process_sync(id, counter)
-
-        except Exception as e:
-            current_app.logger.info(e)
+        process_sync(id, counter)
+        resync_log = ResyncLogs.query.filter_by(id=resync_log_id).first()
         resync_log.status = current_app.config.get(
             "INVENIO_RESYNC_LOGS_STATUS",
             INVENIO_RESYNC_LOGS_STATUS
         ).get('successful')
 
     except Exception as ex:
+        resync_log = ResyncLogs.query.filter_by(id=resync_log_id).first()
         resync_log.status = current_app.config.get(
             "INVENIO_RESYNC_LOGS_STATUS",
             INVENIO_RESYNC_LOGS_STATUS
@@ -347,6 +346,7 @@ def resync_sync(id):
         resync_log.errmsg = str(ex)[:255]
     finally:
         try:
+            resync = ResyncIndexes.query.filter_by(id=id).first()
             res = finish(
                 resync,
                 resync_log,

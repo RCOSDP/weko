@@ -1,7 +1,16 @@
-const list_label = "List";
-const create_label = "Create";
-const edit_label = "Edit";
-const detail_label = "Detail";
+const LABELS = {};
+(function () {
+  // Get all labels.
+  let labels = document.getElementsByClassName('resync-client-label');
+  for (let i = 0; i < labels.length; i++) {
+    LABELS[labels[i].id] = labels[i].value;
+  }
+})();
+
+const list_label = LABELS['lblResyncClientList'];
+const create_label = LABELS['lblResyncClientCreate'];
+const edit_label = LABELS['lblResyncClientEdit'];
+const detail_label = LABELS['lblResyncClientDetail'];
 const urlCreate = window.location.origin + "/admin/resync/create";
 const urlUpdate = window.location.origin + "/admin/resync/update";
 const urlDelete = window.location.origin + "/admin/resync/delete";
@@ -323,6 +332,7 @@ class CreateResyncComponent extends React.Component {
     super(props);
     this.state = {
       ...default_state,
+      ...props.select_item,
       tree_list: []
     };
     this.handleChangeState = this.handleChangeState.bind(this);
@@ -352,9 +362,17 @@ class CreateResyncComponent extends React.Component {
     const { repository_id } = state;
     const url_path = window.location.origin + "/resync/" + repository_id;
     this.handleChangeState("url_path", url_path);
-  }
+}
 
   handleSubmit(add_another) {
+    if((this.state.from_date || this.state.resync_mode === 'Incremental') && !moment(this.state.from_date,'YYYY/MM/DD', true).isValid()) {
+      alert(LABELS['lblResyncClientFromDate FormatErrorMsg']);
+      return;
+    }
+    if(this.state.to_date && !moment(this.state.to_date,'YYYY/MM/DD', true).isValid()) {
+      alert(LABELS['lblResyncClientUntilDate FormatErrorMsg']);
+      return;
+    }
     const new_data = { ...this.state };
     delete new_data.tree_list;
     const {mode} = this.props
@@ -421,13 +439,11 @@ class CreateResyncComponent extends React.Component {
   componentDidMount() {
     this.getTreeList();
     const {mode} = this.props
-    if (mode ==='edit'){
-      this.setState({
-        ...this.props.select_item,
-        from_date: this.props.select_item.from_date ? moment(this.props.select_item.from_date).format("MM/DD/YYYY") : "",
-        to_date: this.props.select_item.to_date ? moment(this.props.select_item.to_date).format("MM/DD/YYYY"): ""
-      })
-    }
+    initDatepicker();
+    this.state.from_date = this.state.from_date ? moment(this.state.from_date).format("YYYY/MM/DD"):"";
+    this.state.to_date = this.state.to_date ? moment(this.state.to_date).format("YYYY/MM/DD"):"";
+    $("#from_date").val(this.state.from_date);
+    $("#to_date").val(this.state.to_date);
   }
 
   render() {
@@ -680,6 +696,8 @@ class DetailResourceComponent extends React.Component {
       ...props.select_item,
       logs: []
     }
+    this.state.from_date = this.state.from_date? moment(this.state.from_date).format("YYYY/MM/DD") : "";
+    this.state.to_date = this.state.to_date? moment(this.state.to_date).format("YYYY/MM/DD"): "";
   }
 
   handleSync() {
@@ -853,15 +871,15 @@ class DetailResourceComponent extends React.Component {
                 <thead>
                  <tr>
                     <th>#</th>
-                    <th>Start Time</th>
-                    <th>End Time</th>
-                    <th>Status</th>
-                    <th>Log Type</th>
-                    <th>Processed Items</th>
-                    <th>Created Items</th>
-                    <th>Updated Items</th>
-                    <th>Deleted Items</th>
-                    <th>Error Items</th>
+                    <th>{LABELS['lblResyncClientStart Time']}</th>
+                    <th>{LABELS['lblResyncClientEnd Time']}</th>
+                    <th>{LABELS['lblResyncClientStatus']}</th>
+                    <th>{LABELS['lblResyncClientLog Type']}</th>
+                    <th>{LABELS['lblResyncClientProcessed Items']}</th>
+                    <th>{LABELS['lblResyncClientCreated Items']}</th>
+                    <th>{LABELS['lblResyncClientUpdated Items']}</th>
+                    <th>{LABELS['lblResyncClientDeleted Items']}</th>
+                    <th>{LABELS['lblResyncClientError Items']}</th>
                     <th>Error Message, Url</th>
                  </tr>
                 </thead>
@@ -896,7 +914,6 @@ class DetailResourceComponent extends React.Component {
 
 $(function() {
   ReactDOM.render(<MainLayout />, document.getElementById("root"));
-  initDatepicker()
 });
 
 class ComponentDatePicker extends React.Component {
@@ -919,14 +936,10 @@ class ComponentDatePicker extends React.Component {
   componentDidMount(){
     const that = this
     const {props} = this
-    $("#"+props.id_component).change(
+    $("#"+this.props.id_component).change(
       function(event) {
           const value = event.target.value;
-          if (moment(value,'MM/DD/YYYY').isValid()) {
-            if (that.props.onChange){
-            that.props.onChange(that.props.name,value)
-          }
-          }
+          that.props.onChange(that.props.name,value)
         }
     )
   }
@@ -942,13 +955,10 @@ class ComponentDatePicker extends React.Component {
       <div style={this.styleContainer}>
         <div class={this.state.defaultClass}>
           <input
-            value={props.value}
             className="form-control"
             name={props.component_name}
             id={props.id_component}
-            style={this.styleDatePicker}
             type="text"
-            data-provide="datepicker"
             />
           <div
             id={props.error_id}
@@ -963,16 +973,14 @@ class ComponentDatePicker extends React.Component {
 
 function initDatepicker() {
   $("#from_date").datepicker({
-    format: "dd/mm/yyyy",
-    todayBtn: "linked",
+    format: "yyyy/mm/dd",
     autoclose: true,
     forceParse: false
   })
   .on("changeDate", function(e) {
   });
   $("#to_date").datepicker({
-    format: "dd/mm/yyyy",
-    todayBtn: "linked",
+    format: "yyyy/mm/dd",
     autoclose: true,
     forceParse: false
   })

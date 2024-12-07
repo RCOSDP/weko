@@ -57,3 +57,6 @@ INVENIO_RESYNC_MODE = True
 
 INVENIO_RESYNC_ENABLE_ITEM_VERSIONING = False
 """ If True, the version of the item will be updated upon import.  """
+
+INVENIO_RESOURCESYNCCLIENT_DEFAULT_TIME = '00:00:00'
+""" Start time of changelist in Resync sync process.  """
