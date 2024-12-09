@@ -96,7 +96,7 @@ def check_bagit_import_items(
         filename = file.filename
 
     try:
-        data_path, file_list = unpack_zip(file)
+        data_path, files_list = unpack_zip(file)
         check_result.update({"data_path": data_path})
 
         # get json file name
@@ -174,13 +174,15 @@ def check_bagit_import_items(
             list_record, all_index_permission, can_edit_indexes
         )
         handle_check_and_prepare_publish_status(list_record)
-
         handle_check_file_metadata(list_record, data_path)
 
+        handle_files_info(list_record, files_list)
         check_result.update({"list_record": list_record})
 
-    except WekoSwordserverException:
-        raise
+    except WekoSwordserverException as ex:
+        check_result.update({
+            "error": ex.message
+        })
 
     except BadZipFile as ex:
         current_app.logger.error(
@@ -256,4 +258,17 @@ def generate_metadata_from_json(json, mapping, item_type, is_change_identifier=F
         list_record, item_type.schema
     )
 
+    return list_record
+
+def handle_files_info(list_record, file_list):
+    # for Direct registration handling
+    target_files_list = []
+    for file in file_list:
+        if file.startswith("data/") and file != "data/":
+            target_files_list.append(file.split("data/")[1])
+    if target_files_list:
+        list_record[0].update({"file_path":target_files_list})
+
+    # for record in list_record:
+    #     files_info = record.get("metadata").get("files_info")
     return list_record

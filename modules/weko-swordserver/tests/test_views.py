@@ -140,23 +140,17 @@ def test_post_service_document_json_ld(app,client,db,users,esindex,location,inde
 
     # Direct registration
     with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
-        try:
-            res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-            # print(f"res.data: {json.loads(res.data)}")
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
+        res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
 
         assert res.status_code == 200
-
         recid = json.loads(res.data)["recid"]
-        recid = PersistentIdentifier.get("recid",recid).object_uuid
-        record = RecordMetadata.query.filter_by(id=recid).one_or_none()
+        recid = PersistentIdentifier.get("recid",recid)
+        record = RecordMetadata.query.filter_by(id=recid.object_uuid).one_or_none()
         assert record is not None
         record = record.json
         file_metadata = record["item_1617604990215"]["attribute_value_mlt"][0]
         assert file_metadata.get("url") is not None
-        assert file_metadata.get("url").get("url") == "https://example.org/data/sample.rst"
+        assert file_metadata.get("url").get("url") == f"https://localhost/record/{recid.id}/files/sample.rst"
 
 
 # def get_status_document(recid):
