@@ -131,10 +131,10 @@ def is_valid_body_hash(digest, body):
     Returns:
         bool: Check result.
     """
+    body.seek(0)
     sha256_hash = sha256()
     for byte_block in iter(lambda: body.read(4096), b""):
         sha256_hash.update(byte_block)
-    body.seek(0)
     body_hash = sha256_hash.hexdigest()
 
     result = False

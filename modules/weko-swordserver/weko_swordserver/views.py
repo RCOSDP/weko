@@ -218,6 +218,9 @@ def post_service_document():
 
     else:
         check_result, file_format = check_others_import_items(file, False)
+    data_path = check_result.get("data_path","")
+    expire = datetime.now() + timedelta(days=1)
+    TempDirInfo().set(data_path, {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")})
 
     item = (
         check_result.get("list_record")[0]
@@ -240,9 +243,6 @@ def post_service_document():
     if item.get("status") != "new":
         raise WekoSwordserverException("This item is already registered: {0]".format(item.get("item_title")), ErrorType.BadRequest)
 
-    data_path = check_result.get("data_path","")
-    expire = datetime.now() + timedelta(days=1)
-    TempDirInfo().set(data_path, {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")})
     item["root_path"] = data_path+"/data"
 
     # import item
