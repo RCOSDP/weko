@@ -164,7 +164,7 @@ class SearchSetting(object):
         return nested_sorting
 
 
-def get_search_detail_keyword(str):
+def get_search_detail_keyword(str_):
     """Get search detail keyword."""
     res = sm.get()
     options = None
@@ -204,10 +204,12 @@ def get_search_detail_keyword(str):
                 if key_lang == current_i18n.language:
                     k_v["contents"] = contents_value[key_lang]
         if k_v.get("check_val"):
-            for val in k_v.get("check_val"):
-                if val.get("contents"):
-                    val["contents"] = escape_str(_(val["contents"]))
-
+            if k_v.get("id") != "iid":
+                for val in k_v.get("check_val"):
+                    if val.get("contents"):
+                        val["contents"] = escape_str(_(val["contents"]))
+                    if val.get("id") and isinstance(val.get("id"), str):
+                        val["id"] = escape_str(_(val["id"]))
     key_options["condition_setting"] = options
 
     key_options_str = json.dumps(key_options)
