@@ -4,6 +4,34 @@
     1623632832836
   ],
   "publish_status": "public",
+  "files_info": [
+    {
+      "key": "item_1617604990215",
+      "items": [
+        {
+          "filesize": [
+            {
+              "value": "333"
+            }
+          ],
+          "version": "1.0",
+          "fileDate": [
+            {
+              "fileDateValue": "2023-01-18",
+              "fileDateType": "Created"
+            }
+          ],
+          "filename": "sample.rst",
+          "url": {
+            "url": "https://example.org/data/sample.rst",
+            "objectType": "fulltext",
+            "label": "sample.rst"
+          },
+          "format": "text/x-rst"
+        }
+      ]
+    }
+  ],
   "item_1617604990215": [
     {
       "filesize": [

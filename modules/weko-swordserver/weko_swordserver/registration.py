@@ -7,6 +7,8 @@
 
 """Module of weko-swordserver."""
 
+import os
+import shutil
 import bagit
 import json
 import traceback
@@ -97,16 +99,21 @@ def check_bagit_import_items(
         shared_id = user.id if user is not None else None
         if shared_id is None:
             # get weko user id from personal access token
-            token = Token.query.filter_by(access_token=on_behalf_of).one_or_none()
+            token = (
+                Token.query
+                .filter_by(access_token=on_behalf_of).one_or_none()
+            )
             shared_id = token.user_id if token is not None else None
         if shared_id is None:
             # get weko user id from shibboleth user eppn
-            shib_user = ShibbolethUser.query.filter_by(shib_eppn=on_behalf_of).one_or_none()
+            shib_user = (
+                ShibbolethUser.query
+                .filter_by(shib_eppn=on_behalf_of).one_or_none()
+            )
             shared_id = shib_user.weko_uid if shib_user is not None else None
 
-
     if isinstance(file, str):
-        filename = file.split("/")[-1]
+        filename = os.path.basename(file)
     else:
         filename = file.filename
 
@@ -172,8 +179,6 @@ def check_bagit_import_items(
         with open(f"{data_path}/{json_name}", "r") as f:
             json_ld = json.load(f)
 
-        # TODO: delete unnecessary files and add zip file to dictionary
-
         processed_json = process_json(json_ld)
         # FIXME: if workflow registration, check if the indextree is valid
         indextree = processed_json.get("record").get("header").get("indextree")
@@ -191,7 +196,14 @@ def check_bagit_import_items(
         handle_check_and_prepare_publish_status(list_record)
         handle_check_file_metadata(list_record, data_path)
 
-        handle_files_info(list_record, files_list)
+        # add zip file to temporary dictionary
+        if isinstance(file, str):
+            shutil.copy(file, os.path.join(data_path, "data", filename))
+        else:
+            file.seek(0, 0)
+            file.save(os.path.join(data_path, "data", filename))
+        files_list.append(f"data/{filename}")
+        handle_files_info(list_record, files_list, data_path, filename)
 
         if shared_id is not None:
             list_record[0].get("metadata").update({"weko_shared_id": shared_id})
@@ -280,15 +292,30 @@ def generate_metadata_from_json(json, mapping, item_type, is_change_identifier=F
 
     return list_record
 
-def handle_files_info(list_record, file_list):
+def handle_files_info(list_record, files_list, data_path, filename):
     # for Direct registration handling
     target_files_list = []
-    for file in file_list:
+    for file in files_list:
         if file.startswith("data/") and file != "data/":
             target_files_list.append(file.split("data/")[1])
     if target_files_list:
         list_record[0].update({"file_path":target_files_list})
 
-    # for record in list_record:
-    #     files_info = record.get("metadata").get("files_info")
+    metadata = list_record[0].get("metadata")
+    files_info = metadata.get("files_info")  # for Workflow registration
+    key = files_info[0].get("key")
+    file_metadata = metadata.get(key)  # for Direct registration
+
+    dataset_info = {
+        "filesize": [
+            {
+                "value": str(os.path.getsize(os.path.join(data_path, "data", filename))),
+            }
+        ],
+        "filename":  filename,
+        "format": "application/zip",
+    }
+    files_info[0].get("items").append(dataset_info)
+    file_metadata.append(dataset_info)
+
     return list_record

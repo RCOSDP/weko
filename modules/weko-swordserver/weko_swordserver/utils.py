@@ -8,7 +8,6 @@
 """Module of weko-swordserver."""
 
 import os
-import sys
 import tempfile
 import traceback
 from copy import deepcopy
@@ -93,7 +92,7 @@ def unpack_zip(file):
     data_path = (
         tempfile.gettempdir()
         + "/"
-        + current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
+        + current_app.config.get("WEKO_SEARCH_UI_IMPORT_TMP_PREFIX")
         + datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     )
 
@@ -102,7 +101,7 @@ def unpack_zip(file):
 
     # Extract zip file, Extracted files remain.
     with ZipFile(file) as zip_ref:
-        file_list =  zip_ref.namelist()
+        file_list = []
         for info in zip_ref.infolist():
             try:
                 info.filename = (
@@ -110,9 +109,10 @@ def unpack_zip(file):
                 # replace backslash to slash
                 if os.sep != "/" and os.sep in info.filename:
                     info.filename = info.filename.replace(os.sep, "/")
-            except Exception as ex:
-                traceback.print_exc(file=sys.stdout)
-            zip_ref.extract(info, path=data_path)
+                file_list.append(info.filename)
+            except Exception:
+                traceback.print_exc()
+        zip_ref.extractall(path=data_path)
 
     return data_path, file_list
 
