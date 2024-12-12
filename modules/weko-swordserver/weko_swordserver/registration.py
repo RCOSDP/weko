@@ -13,6 +13,9 @@ import traceback
 from flask import current_app, request
 from zipfile import BadZipFile
 
+from invenio_accounts.models import User
+from invenio_oauth2server.models import Token
+from weko_accounts.models import ShibbolethUser
 from weko_search_ui.utils import (
     handle_check_and_prepare_index_tree,
     handle_check_and_prepare_publish_status,
@@ -84,11 +87,23 @@ def check_bagit_import_items(
             }
     """
     check_result = {}
+
+    shared_id = None
+    # parse On-Behalf-Of
     if "On-Behalf-Of" in request.headers:
-        # FIXME: How to handle on-behalf-of
-        check_result.update({
-            "On-Behalf-Of": request.headers.get("On-Behalf-Of")
-        })
+        # get weko user id from email
+        on_behalf_of = request.headers.get("On-Behalf-Of")
+        user = User.query.filter_by(email=on_behalf_of).one_or_none()
+        shared_id = user.id if user is not None else None
+        if shared_id is None:
+            # get weko user id from personal access token
+            token = Token.query.filter_by(access_token=on_behalf_of).one_or_none()
+            shared_id = token.user_id if token is not None else None
+        if shared_id is None:
+            # get weko user id from shibboleth user eppn
+            shib_user = ShibbolethUser.query.filter_by(shib_eppn=on_behalf_of).one_or_none()
+            shared_id = shib_user.weko_uid if shib_user is not None else None
+
 
     if isinstance(file, str):
         filename = file.split("/")[-1]
@@ -177,6 +192,11 @@ def check_bagit_import_items(
         handle_check_file_metadata(list_record, data_path)
 
         handle_files_info(list_record, files_list)
+
+        if shared_id is not None:
+            list_record[0].get("metadata").update({"weko_shared_id": shared_id})
+
+        print(f"list_record[0]: {list_record[0]}")
         check_result.update({"list_record": list_record})
 
     except WekoSwordserverException as ex:
