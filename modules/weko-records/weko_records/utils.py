@@ -312,7 +312,15 @@ def copy_field_test(dc, map, jrc, iid=None):
                                         b = None
                                         if idx < len(_lte):
                                             b = _lte[idx]
-                                        ranges.append(convert_range_value(a, b))
+                                        try:
+                                            ranges.append(convert_range_value(a, b))
+                                        except:
+                                            _error_col = val.get("path", {}).get("gte") \
+                                                if val.get("path", {}).get("gte") else val.get("path", {}).get("lte")
+                                            raise ValueError(
+                                                "can not convert to range value. start:{} end:{}. column: {}".format(
+                                                    a, b, _error_col)
+                                            )
                                 if len(ranges) > 0:
                                     value_range = {id: ranges}
                                     jrc.update(value_range)
@@ -331,7 +339,15 @@ def copy_field_test(dc, map, jrc, iid=None):
                                         b = None
                                         if idx < len(_lte):
                                             b = _lte[idx]
-                                        dateRanges.append(convert_date_range_value(a, b))
+                                        try:
+                                            dateRanges.append(convert_date_range_value(a, b))
+                                        except:
+                                            _error_col = val.get("path", {}).get("gte") \
+                                                if val.get("path", {}).get("gte") else val.get("path", {}).get("lte")
+                                            raise ValueError(
+                                                "can not convert to range value. start:{} end:{}. column: {}".format(
+                                                    a, b, _error_col)
+                                            )
                                 if len(dateRanges) > 0:
                                     value_range = {id: dateRanges}
                                     jrc.update(value_range)
@@ -403,20 +419,13 @@ def convert_range_value(start, end=None):
             else:
                 ret = {_start: end, _end: start}
         else:
-            try:
-                a = float(start)
-                b = float(end)
+            a = float(start)
+            b = float(end)
 
-                if a < b:
-                    ret = {_start: start, _end: end}
-                else:
-                    ret = {_start: end, _end: start}
-            except ValueError:
-                current_app.logger.exception(
-                    "can not convert to range value. start:{0} end:{1}".format(
-                        start, end
-                    )
-                )
+            if a < b:
+                ret = {_start: start, _end: end}
+            else:
+                ret = {_start: end, _end: start}
     return ret
 
 
@@ -479,15 +488,18 @@ def makeDateRangeValue(start, end):
     a = None
     b = None
     if p2.match(start):
-        a = time.strptime(start, "%Y-%m-%d")
-        b = time.strptime(end, "%Y-%m-%d")
-
+        _s = start.split('-')
+        _e = end.split('-')
+        a = time.strptime('{:0>4}-{}-{}'.format(_s[0], _s[1], _s[2]), "%Y-%m-%d")
+        b = time.strptime('{:0>4}-{}-{}'.format(_e[0], _e[1], _e[2]), "%Y-%m-%d")
     elif p3.match(start):
-        a = time.strptime(start, "%Y-%m")
-        b = time.strptime(end, "%Y-%m")
+        _s = start.split('-')
+        _e = end.split('-')
+        a = time.strptime('{:0>4}-{}'.format(_s[0], _s[1]), "%Y-%m")
+        b = time.strptime('{:0>4}-{}'.format(_e[0], _e[1]), "%Y-%m")
     elif p4.match(start):
-        a = time.strptime(start, "%Y")
-        b = time.strptime(end, "%Y")
+        a = time.strptime('{:0>4}'.format(start), "%Y")
+        b = time.strptime('{:0>4}'.format(end), "%Y")
 
     if a is not None and b is not None:
         if a < b:
