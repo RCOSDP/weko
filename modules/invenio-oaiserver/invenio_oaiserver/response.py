@@ -812,6 +812,11 @@ def get_identifier(record):
             subitem_systemidt_identifier=record.pid_cnri.pid_value,
             subitem_systemidt_identifier_type=record.pid_cnri.pid_type.upper(),
         ))
+    if record.pid_ark:
+        result["attribute_value_mlt"].append(dict(
+            subitem_systemidt_identifier=record.pid_ark.pid_value,
+            subitem_systemidt_identifier_type=record.pid_ark.pid_type.upper(),
+        ))
     if current_app.config.get('WEKO_SCHEMA_RECORD_URL'):
         result["attribute_value_mlt"].append(dict(
             subitem_systemidt_identifier=current_app.config[

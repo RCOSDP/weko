@@ -100,6 +100,7 @@ from weko_workflow.utils import (
     item_metadata_validation,
     register_hdl_by_handle,
     register_hdl_by_item_id,
+    register_ark_by_item_id,
     saving_doi_pidstore,
 )
 
@@ -1541,6 +1542,10 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
             if not is_gakuninrdm:
                 if current_app.config.get("WEKO_HANDLE_ALLOW_REGISTER_CNRI"):
                     register_item_handle(item)
+                
+                if current_app.config.get("WEKO_HANDLE_ALLOW_REGISTER_ARK"):
+                    register_item_ark(item)
+                
                 register_item_doi(item)
 
                 status_number = WEKO_IMPORT_PUBLISH_STATUS.index(
@@ -2238,6 +2243,41 @@ def register_item_handle(item):
                 register_hdl_by_item_id(item_id, pid.object_uuid, get_url_root())
 
     current_app.logger.debug("end register_item_handle(item)")
+
+def register_item_ark(item):
+    """Register item ark.
+
+    :argument
+        item    -- {object} Record item.
+    :return
+        response -- {object} Process status.
+
+    """
+    current_app.logger.debug("start register_item_ark(item)")
+    item_id = str(item.get("id"))
+    record = WekoRecord.get_record_by_pid(item_id)
+    pid = record.pid_recid
+    pid_ark = record.pid_ark
+    ark = item.get("ark")
+    status = item.get("status")
+    uri = item.get("uri")
+    current_app.logger.debug(
+        "item_id:{0} pid:{1} pid_hdl:{2} ark:{3} status:{4}".format(
+            item_id, pid, pid_ark, ark, status
+        )
+    )
+
+    if item.get("is_change_identifier"):
+        # TODO: implement manual register ark
+        current_app.logger.debug("TODO:manual register ark")
+    else:
+        if item.get("status") == "new":
+            register_ark_by_item_id(item_id, pid.object_uuid, get_url_root())
+        else:
+            if pid_ark is None and ark is None:
+                register_ark_by_item_id(item_id, pid.object_uuid, get_url_root())
+
+    current_app.logger.debug("end register_item_ark(item)")
 
 
 def prepare_doi_setting():
