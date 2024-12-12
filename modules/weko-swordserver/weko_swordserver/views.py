@@ -213,7 +213,7 @@ def post_service_document():
     file_format = check_import_file_format(file=file, packaging=packaging)
     if file_format == "JSON":
 
-        check_result = check_bagit_import_items(file, packaging)
+        check_result = check_bagit_import_items(file)
         register_format = check_result.get("register_format")
 
     else:

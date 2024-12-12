@@ -16,7 +16,7 @@ from dateutil import parser
 from hashlib import sha256
 from zipfile import ZipFile
 
-from flask import current_app
+from flask import current_app, request
 from invenio_oauth2server.models import Token
 
 from .api import SwordClient, SwordItemTypeMapping
@@ -145,7 +145,7 @@ def is_valid_body_hash(digest, body):
     return result
 
 
-def get_record_by_token(access_token):
+def get_record_by_token():
     """Get mapping by token.
 
     Get mapping for RO-Crate matadata by access token.
@@ -156,12 +156,7 @@ def get_record_by_token(access_token):
     Returns:
         SwordItemTypeMapping: Mapping for RO-Crate matadata.
     """
-    token = Token.query.filter_by(access_token=access_token).first()
-    if token is None:
-        current_app.logger.error(f"Accesstoken not found.")
-        raise Exception("Accesstoken not found.")
-
-    client_id = token.client_id
+    client_id = request.oauth.client.client_id
     sword_client = SwordClient.get_client_by_id(client_id)
 
     mapping_id = sword_client.mapping_id if sword_client is not None else None

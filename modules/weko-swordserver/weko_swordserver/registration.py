@@ -49,7 +49,7 @@ def check_import_items(file, is_change_identifier = False):
 
 
 def check_bagit_import_items(
-        file, packaging, all_index_permission=True, can_edit_indexes=[]
+        file, all_index_permission=True, can_edit_indexes=[]
     ):
     """Check bagit import items.
 
@@ -58,9 +58,6 @@ def check_bagit_import_items(
 
     Args:
         file (FileStorage | str): File object or file path.
-        header_info (dict):
-            Request header information. It should contain "access_token".
-        file_format (str): File format. "ROCRATE" or "SWORD".
 
     Returns:
         dict: Result of mapping to item type
@@ -124,7 +121,7 @@ def check_bagit_import_items(
         # get json file name
         json_name = (
             current_app.config['WEKO_SWORDSERVER_METADATA_FILE_SWORD']
-                if packaging == "SWORDBagIt"
+                if request.headers.get("Packaging").split("/")[-1] == "SWORDBagIt"
                 else current_app.config['WEKO_SWORDSERVER_METADATA_FILE_ROCRATE']
         )
 
@@ -133,7 +130,7 @@ def check_bagit_import_items(
         bag.validate()
 
         access_token = request.headers.get("Authorization").split("Bearer ")[1]
-        sword_client, sword_mapping = get_record_by_token(access_token)
+        sword_client, sword_mapping = get_record_by_token()
         if sword_mapping is None:
             current_app.logger.error(f"Mapping not defined for sword client.")
             raise WekoSwordserverException(
@@ -208,7 +205,6 @@ def check_bagit_import_items(
         if shared_id is not None:
             list_record[0].get("metadata").update({"weko_shared_id": shared_id})
 
-        print(f"list_record[0]: {list_record[0]}")
         check_result.update({"list_record": list_record})
 
     except WekoSwordserverException as ex:
