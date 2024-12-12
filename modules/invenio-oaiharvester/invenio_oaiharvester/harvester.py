@@ -221,7 +221,11 @@ def subitem_recs(subitems, subitem_key_list, schema, oai_key_list, metadata):
                 current_app.logger.debug("oai_key: {}, metadata: {}".format(oai_key, metadata))
         elif subschema.get('properties', None):
             if oai_key and oai_key in metadata:
-                _tmp = {}
+                if subitem_key in subitems:
+                    _tmp = subitems[subitem_key]
+                else:
+                    _tmp = {}
+                    subitems[subitem_key] = _tmp
                 if isinstance(metadata[oai_key], list):
                     for m in metadata[oai_key]:
                         subitem_recs(
@@ -241,11 +245,8 @@ def subitem_recs(subitems, subitem_key_list, schema, oai_key_list, metadata):
                         oai_key_list[1:],
                         metadata[oai_key]
                     )
-                if _tmp:
-                    if subitem_key in subitems:
-                        subitems[subitem_key].update(_tmp)
-                    else:
-                        subitems[subitem_key] = _tmp
+                if not _tmp:
+                    subitems.pop(subitem_key)
             else:
                 current_app.logger.debug("oai_key: {}, metadata: {}".format(oai_key, metadata))
         else:
@@ -256,8 +257,8 @@ def subitem_recs(subitems, subitem_key_list, schema, oai_key_list, metadata):
                     current_app.logger.debug("oai_key: {}, metadata: {}".format(oai_key, metadata))
             elif isinstance(metadata, str) and oai_key == TEXT:
                 subitems[subitem_key] = metadata
-            elif isinstance(metadata, list):
-                subitems[subitem_key] = metadata
+            elif isinstance(metadata, list) and len(metadata) > 0:
+                subitems[subitem_key] = metadata[0]
             else:
                 current_app.logger.debug("metadata: {}".format(metadata))
 
@@ -492,8 +493,16 @@ def add_publisher_jpcoar(schema, mapping, res, metadata):
             'dcndl:location.#text'
         ),
         (
+            'publisher_jpcoar.location.@attributes.xml:lang',
+            'dcndl:location.@xml:lang'
+        ),
+        (
             'publisher_jpcoar.publicationPlace.@value',
             'dcndl:publicationPlace.#text'
+        ),
+        (
+            'publisher_jpcoar.publicationPlace.@attributes.xml:lang',
+            'dcndl:publicationPlace.@xml:lang'
         ),
     ]
 
@@ -610,7 +619,8 @@ def add_date(schema, mapping, res, metadata):
 
 def add_date_dcterms(schema, mapping, res, metadata):
     patterns = [
-        ('date_dcterms.@value', '#text'),
+        ('date_dcterms.@value', TEXT),
+        ('date_dcterms.@attributes.xml:lang', LANG),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -618,14 +628,8 @@ def add_date_dcterms(schema, mapping, res, metadata):
 
 def add_edition(schema, mapping, res, metadata):
     patterns = [
-        (
-            'edition.@value',
-            '#text'
-        ),
-        (
-            'edition.@attributes.xml:lang',
-            '@xml:lang'
-        ),
+        ('edition.@value', TEXT),
+        ('edition.@attributes.xml:lang', LANG),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -633,14 +637,8 @@ def add_edition(schema, mapping, res, metadata):
 
 def add_volumeTitle(schema, mapping, res, metadata):
     patterns = [
-        (
-            'volumeTitle.@value',
-            '#text'
-        ),
-        (
-            'volumeTitle.@attributes.xml:lang',
-            '@xml:lang'
-        ),
+        ('volumeTitle.@value', TEXT),
+        ('volumeTitle.@attributes.xml:lang', LANG),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -648,10 +646,7 @@ def add_volumeTitle(schema, mapping, res, metadata):
 
 def add_originalLanguage(schema, mapping, res, metadata):
     patterns = [
-        (
-            'originalLanguage.@value',
-            '#text'
-        ),
+        ('originalLanguage.@value', TEXT),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -659,14 +654,8 @@ def add_originalLanguage(schema, mapping, res, metadata):
 
 def add_extent(schema, mapping, res, metadata):
     patterns = [
-        (
-            'extent.@value',
-            '#text'
-        ),
-        (
-            'extent.@attributes.xml:lang',
-            '@xml:lang'
-        ),
+        ('extent.@value', TEXT),
+        ('extent.@attributes.xml:lang', LANG),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -674,14 +663,8 @@ def add_extent(schema, mapping, res, metadata):
 
 def add_format(schema, mapping, res, metadata):
     patterns = [
-        (
-            'format.@value',
-            '#text'
-        ),
-        (
-            'format.@attributes.xml:lang',
-            '@xml:lang'
-        ),
+        ('format.@value', TEXT),
+        ('format.@attributes.xml:lang', LANG),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -716,10 +699,7 @@ def add_holdingAgent(schema, mapping, res, metadata):
 
 def add_datasetSeries(schema, mapping, res, metadata):
     patterns = [
-        (
-            'datasetSeries.@value',
-            '#text',
-        ),
+        ('datasetSeries.@value', TEXT),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -853,8 +833,8 @@ def add_version(schema, mapping, res, metadata):
 def add_version_type(schema, mapping, res, metadata):
     """Add version type."""
     patterns = [
-        ('versionType.@value', TEXT),
-        ('versionType.@attributes.rdf:resource', '@rdf:resource'),
+        ('versiontype.@value', TEXT),
+        ('versiontype.@attributes.rdf:resource', '@rdf:resource'),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -1020,17 +1000,17 @@ def add_conference(schema, mapping, res, metadata):
             'jpcoar:conferenceSponsor.@xml:lang'),
         ('conference.conferenceDate.@value',
             'jpcoar:conferenceDate.#text'),
-        ('conference.conferenceDate.@startYear',
+        ('conference.conferenceDate.@attributes.startYear',
             'jpcoar:conferenceDate.@startYear'),
-        ('conference.conferenceDate.@startMonth',
+        ('conference.conferenceDate.@attributes.startMonth',
             'jpcoar:conferenceDate.@startMonth'),
-        ('conference.conferenceDate.@startDay',
+        ('conference.conferenceDate.@attributes.startDay',
             'jpcoar:conferenceDate.@startDay'),
-        ('conference.conferenceDate.@endYear',
+        ('conference.conferenceDate.@attributes.endYear',
             'jpcoar:conferenceDate.@endYear'),
-        ('conference.conferenceDate.@endMonth',
+        ('conference.conferenceDate.@attributes.endMonth',
             'jpcoar:conferenceDate.@endMonth'),
-        ('conference.conferenceDate.@endDay',
+        ('conference.conferenceDate.@attributes.endDay',
             'jpcoar:conferenceDate.@endDay'),
         ('conference.conferenceDate.@attributes.xml:lang',
             'jpcoar:conferenceDate.@xml:lang'),
@@ -1064,10 +1044,8 @@ def add_degree_name(schema, mapping, res, metadata):
     """Add academic degree and field of the degree specified in \
     the Degree Regulation."""
     patterns = [
-        ('degreeName.@value',
-            TEXT),
-        ('degreeName.@attributes.xml:lang',
-            LANG),
+        ('degreeName.@value', TEXT),
+        ('degreeName.@attributes.xml:lang', LANG),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -1700,26 +1678,40 @@ class JPCOARMapper(BaseMapper):
                 partial(add_apc, *args),
             'dc:rights':
                 partial(add_right, *args),
+            'jpcoar:rightsHolder':
+                partial(add_rights_holder, *args),
             'jpcoar:subject':
                 partial(add_subject, *args),
             'datacite:description':
                 partial(add_description, *args),
             'dc:publisher':
                 partial(add_publisher, *args),
+            'jpcoar:publisher':
+                partial(add_publisher_jpcoar, *args),
             'datacite:date':
                 partial(add_date, *args),
+            'dcterms:date':
+                partial(add_date_dcterms, *args),
             'dc:language':
                 partial(add_language, *args),
+            'dc:type':
+                partial(add_resource_type, *args),
             'datacite:version':
                 partial(add_version, *args),
             'oaire:version':
                 partial(add_version_type, *args),
+            'jpcoar:identifier':
+                partial(add_identifier, *args),
             'jpcoar:identifierRegistration':
                 partial(add_identifier_registration, *args),
+            'jpcoar:relation':
+                partial(add_relation, *args),
             'dcterms:temporal':
                 partial(add_temporal, *args),
             'datacite:geoLocation':
                 partial(add_geo_location, *args),
+            'jpcoar:fundingReference':
+                partial(add_funding_reference, *args),
             'jpcoar:sourceIdentifier':
                 partial(add_source_identifier, *args),
             'jpcoar:sourceTitle':
@@ -1736,30 +1728,14 @@ class JPCOARMapper(BaseMapper):
                 partial(add_page_end, *args),
             'dcndl:dissertationNumber':
                 partial(add_dissertation_number, *args),
-            'dcndl:dateGranted':
-                partial(add_date_granted, *args),
-            'dc:type':
-                partial(add_resource_type, *args),
-            'jpcoar:relation':
-                partial(add_relation, *args),
-            'jpcoar:degreeGrantor':
-                partial(add_degree_grantor, *args),
             'dcndl:degreeName':
                 partial(add_degree_name, *args),
+            'dcndl:dateGranted':
+                partial(add_date_granted, *args),
+            'jpcoar:degreeGrantor':
+                partial(add_degree_grantor, *args),
             'jpcoar:conference':
                 partial(add_conference, *args),
-            'jpcoar:fundingReference':
-                partial(add_funding_reference, *args),
-            'jpcoar:rightsHolder':
-                partial(add_rights_holder, *args),
-            'jpcoar:file':
-                partial(add_file, *args),
-            'jpcoar:identifier':
-                partial(add_identifier, *args),
-            'jpcoar:publisher':
-                partial(add_publisher_jpcoar, *args),
-            'dcterms:date':
-                partial(add_date_dcterms, *args),
             'dcndl:edition':
                 partial(add_edition, *args),
             'dcndl:volumeTitle':
@@ -1774,6 +1750,8 @@ class JPCOARMapper(BaseMapper):
                 partial(add_holdingAgent, *args),
             'jpcoar:datasetSeries':
                 partial(add_datasetSeries, *args),
+            'jpcoar:file':
+                partial(add_file, *args),
             'jpcoar:catalog':
                 partial(add_catalog, *args),
         }
