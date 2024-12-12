@@ -1439,6 +1439,8 @@ class WekoDeposit(Deposit):
             self._convert_jpcoar_data_to_es()
         except RuntimeError:
             raise
+        except ValueError as ex:
+            raise ex
         except BaseException:
             import traceback
             current_app.logger.error(traceback.format_exc())
