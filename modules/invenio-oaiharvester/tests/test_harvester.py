@@ -23,15 +23,23 @@ from invenio_oaiharvester.harvester import (
     add_access_right,
     add_apc,
     add_right,
+    add_rights_holder,
     add_subject,
     add_description,
     add_publisher,
+    add_publisher_jpcoar,
     add_date,
+    add_date_dcterms,
     add_language,
+    add_resource_type,
     add_version,
     add_version_type,
+    add_identifier,
     add_identifier_registration,
+    add_relation,
     add_temporal,
+    add_geo_location,
+    add_funding_reference,
     add_source_identifier,
     add_source_title,
     add_volume,
@@ -40,17 +48,19 @@ from invenio_oaiharvester.harvester import (
     add_page_start,
     add_page_end,
     add_dissertation_number,
-    add_date_granted,
-    add_resource_type,
-    add_relation,
-    add_geo_location,
-    add_degree_grantor,
     add_degree_name,
+    add_date_granted,
+    add_degree_grantor,
     add_conference,
-    add_funding_reference,
-    add_rights_holder,
+    add_edition,
+    add_volumeTitle,
+    add_originalLanguage,
+    add_extent,
+    add_format,
+    add_holdingAgent,
+    add_datasetSeries,
     add_file,
-    add_identifier,
+    add_catalog,
     add_creator_dc,
     add_contributor_dc,
     add_title_dc,
@@ -650,13 +660,6 @@ def test_add_creator_jpcoar(app):
     add_creator_jpcoar(schema, mapping, res, metadata)
     assert res == {'item_key': [{'creatorAffiliations': [{'affiliationNames': [{'affiliationName': 'Test affiliation name none'}, {'affiliationName': 'Test affiliation name en', 'affiliationNameLang': 'en'}]}]}]}
 
-    # res = {}
-    # metadata = [
-    #     OrderedDict([('@creatorType', 'Test type'), ('jpcoar:nameIdentifier', [OrderedDict([('@nameIdentifierURI', 'https://ror.org/weko1'), ('@nameIdentifierScheme', 'ROR'), ('#text', 'weko1')]), OrderedDict([('@nameIdentifierURI', 'https://ror.org/weko2'), ('@nameIdentifierScheme', 'ROR'), ('#text', 'weko2')])]), ('jpcoar:creatorName', [OrderedDict([('@xml:lang', 'en'), ('#text', 'En name')]), OrderedDict([('@xml:lang', 'ja'), ('#text', 'Ja name')])]), ('jpcoar:familyName', OrderedDict([('@xml:lang', 'en'), ('#text', 'Test family name 1')])), ('jpcoar:givenName', OrderedDict([('@xml:lang', 'en'), ('#text', 'Test given name 1')])), ('jpcoar:creatorAlternative', OrderedDict([('@xml:lang', 'en'), ('#text', 'Test alternative name')])), ('jpcoar:affiliation', [OrderedDict([('jpcoar:nameIdentifier', OrderedDict([('@nameIdentifierURI', 'https://affiliation.name.id/uri'), ('@nameIdentifierScheme', 'GRID'), ('#text', 'Test affiliation name identifier')])), ('jpcoar:affiliationName', [OrderedDict([('#text', 'Test affiliation name none')]), OrderedDict([('@xml:lang', 'en'), ('#text', 'Test affiliation name en')])])]), OrderedDict([('jpcoar:nameIdentifier', OrderedDict([('@nameIdentifierURI', 'https://affiliation.name.id/uri'), ('@nameIdentifierScheme', 'GRID'), ('#text', 'Test affiliation name identifier 2')])), ('jpcoar:affiliationName', [OrderedDict([('#text', 'Test affiliation name none')]), OrderedDict([('@xml:lang', 'en'), ('#text', 'Test affiliation name en')])])])])])
-    # ]
-    # add_creator_jpcoar(schema, mapping, res, metadata)
-    # assert res == {'item_key': [{'creatorType': 'Test type', 'givenNames': [{'givenName': 'Test given name 1', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': 'Test family name 1', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': 'En name', 'creatorNameLang': 'en'}, {'creatorName': 'Ja name', 'creatorNameLang': 'ja'}], 'creatorAlternatives': [{'creatorAlternative': 'Test alternative name', 'creatorAlternativeLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'weko1', 'nameIdentifierURI': 'https://ror.org/weko1', 'nameIdentifierScheme': 'ROR'}, {'nameIdentifier': 'weko2', 'nameIdentifierURI': 'https://ror.org/weko2', 'nameIdentifierScheme': 'ROR'}], 'creatorAffiliations': [{'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'Test affiliation name identifier', 'affiliationNameIdentifierURI': 'https://affiliation.name.id/uri', 'affiliationNameIdentifierScheme': 'GRID'}], 'affiliationNames': [{'affiliationName': 'Test affiliation name none'}, {'affiliationName': 'Test affiliation name en', 'affiliationNameLang': 'en'}]}, {'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'Test affiliation name identifier 2', 'affiliationNameIdentifierURI': 'https://affiliation.name.id/uri', 'affiliationNameIdentifierScheme': 'GRID'}], 'affiliationNames': [{'affiliationName': 'Test affiliation name none'}, {'affiliationName': 'Test affiliation name en', 'affiliationNameLang': 'en'}]}]}]}
-
 # def add_contributor_jpcoar(schema, mapping, res, metadata):
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::test_add_contributor_jpcoar -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
 def test_add_contributor_jpcoar(app):
@@ -831,6 +834,35 @@ def test_add_publisher(app):
     add_publisher(schema, mapping, res, metadata)
     assert res == {'item_key': [{'subitem_publisher': 'Elsevier', 'subitem_publisher_language': 'en'}, {'subitem_publisher': '日本物理学会', 'subitem_publisher_language': 'ja'}]}
 
+# def add_publisher_jpcoar(schema, mapping, res, metadata):
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::test_add_publisher_jpcoar -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+def test_add_publisher_jpcoar(app):
+    schema = {'item_key': {'items': {"type": "object","format": "object","title": "publisher_information","properties": {"publisher_names": {"type": "array","format": "array","title": "出版者名","items": {"type": "object","format": "object","properties": {"publisher_name": {"type": "string","format": "text","title": "出版者名","title_i18n": {"ja": "出版者名", "en": "Publisher Name"}},"publisher_name_language": {"type": "string","format": "select","enum": [None, 'ja', 'en'],"title": "言語","title_i18n": {"ja": "言語", "en": "Language"}}}}},"publisher_descriptions": {"type": "array","format": "array","title": "出版者注記","items": {"type": "object","format": "object","properties": {"publisher_description": {"type": "string","format": "text","title": "出版者注記","title_i18n": {"ja": "出版者注記","en": "Publisher Description"}},"publisher_description_language": {"type": ["null", "string"],"format": "select","enum": [None, 'ja', 'en'],"title": "言語","title_i18n": {"ja": "言語", "en": "Language"}}}}},"publisher_locations": {"type": "array","format": "array","title": "出版地","items": {"type": "object","format": "object","properties": {"publisher_location": {"type": "string","format": "text","title": "出版地","title_i18n": {"ja": "出版地", "en": "Publication Place"}},"publisher_location_language": {"type": ["null", "string"],"format": "select","enum": [None, 'ja', 'en'],"title": "言語","title_i18n": {"ja": "言語", "en": "Language"}}}}},"publication_places": {"type": "array","format": "array","title": "出版地（国名コード）","items": {"type": "object","format": "object","properties": {"publication_place": {"type": "string","format": "text","title": "出版地（国名コード）","title_i18n": {"ja": "出版地（国名コード）","en": "Publication Place (Country code)"}},"publication_place_language": {"type": ["null", "string"],"format": "select","enum": [None, 'ja', 'en'],"title": "言語","title_i18n": {"ja": "言語", "en": "Language"}}}}}}}}}
+    mapping = {
+        'publisher_jpcoar.publisherName.@value': ['item_key.publisher_names.publisher_name'],
+        'publisher_jpcoar.publisherName.@attributes.xml:lang': ['item_key.publisher_names.publisher_name_language'],
+        'publisher_jpcoar.publisherDescription.@value': ['item_key.publisher_descriptions.publisher_description'],
+        'publisher_jpcoar.publisherDescription.@attributes.xml:lang': ['item_key.publisher_descriptions.publisher_description_language'],
+        'publisher_jpcoar.location.@value': ['item_key.publisher_locations.publisher_location'],
+        'publisher_jpcoar.location.@attributes.xml:lang': ['item_key.publisher_locations.publisher_location_language'],
+        'publisher_jpcoar.publicationPlace.@value': ['item_key.publication_places.publication_place'],
+        'publisher_jpcoar.publicationPlace.@attributes.xml:lang': ['item_key.publication_places.publication_place_language']
+    }
+    xml = """
+            <record>
+                <jpcoar:publisher>
+                    <jpcoar:publisherName xml:lang="ja">霞ケ関出版</jpcoar:publisherName>
+                    <jpcoar:publisherDescription xml:lang="ja">印刷</jpcoar:publisherDescription>
+                    <dcndl:location xml:lang="ja">東京</dcndl:location>
+                    <dcndl:publicationPlace>JPN</dcndl:publicationPlace> 
+                </jpcoar:publisher>
+            </record>
+          """
+    res = {}
+    metadata = xmltoTestData('jpcoar:publisher', xml)
+    add_publisher_jpcoar(schema, mapping, res, metadata)
+    assert res == {'item_key': [{'publisher_names': [{'publisher_name': '霞ケ関出版', 'publisher_name_language': 'ja'}], 'publisher_descriptions': [{'publisher_description': '印刷', 'publisher_description_language': 'ja'}], 'publisher_locations': [{'publisher_location': '東京', 'publisher_location_language': 'ja'}], 'publication_places': [{'publication_place': 'JPN'}]}]}
+
 # def add_date(schema, mapping, res, metadata):
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::test_add_date -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
 def test_add_date(app):
@@ -849,6 +881,219 @@ def test_add_date(app):
     metadata = xmltoTestData('datacite:date', xml)
     add_date(schema, mapping, res, metadata)
     assert res == {'item_key': [{'subitem_date_issued_datetime': '2015-10-01', 'subitem_date_issued_type': 'Issued'}, {'subitem_date_issued_datetime': '2016-01-01', 'subitem_date_issued_type': 'Available'}]}
+
+# def add_date_dcterms(schema, mapping, res, metadata):
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::test_add_date_dcterms -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+def test_add_date_dcterms(app):
+    schema = {'item_key': {'items': {"system_prop": False,"type": "object","title": "dcterms_date","properties": {"subitem_dcterms_date": {"type": "string","format": "text","title": "日付（リテラル）","title_i18n": {"en": "Date Literal", "ja": "日付（リテラル）"},},"subitem_dcterms_date_language": {"editAble": True,"type": ["null", "string"],"format": "select","enum": [None, 'ja', 'en'],"title": "言語"}}}}}
+    mapping = {
+        'date_dcterms.@value': ['item_key.subitem_dcterms_date'],
+        'date_dcterms.@attributes.xml:lang': ['item_key.subitem_dcterms_date_language']
+    }
+    xml = """
+            <record>
+                <dcterms:date xml:lang="ja">宝暦年間</dcterms:date>
+                <dcterms:date>19--</dcterms:date>
+            </record>
+          """
+    res = {}
+    metadata = xmltoTestData('dcterms:date', xml)
+    add_date_dcterms(schema, mapping, res, metadata)
+    assert res == {'item_key': [{'subitem_dcterms_date': '宝暦年間', 'subitem_dcterms_date_language': 'ja'}, {'subitem_dcterms_date': '19--'}]}
+
+# def add_edition(schema, mapping, res, metadata):
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::test_add_edition -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+def test_add_edition(app):
+    schema = {'item_key': {'items': {"type": "object","format": "object","title": "edition","properties": {"edition": {"type": "string","format": "text","title": "版","title_i18n": {"ja": "版", "en": "Edition"},},"edition_language": {"type": "string","format": "select","enum": [None, 'ja', 'en'],"title": "言語","title_i18n": {"en": "Language", "ja": "言語"}}}}}}
+    mapping = {
+        'edition.@value': ['item_key.edition'],
+        'edition.@attributes.xml:lang': ['item_key.edition_language']
+    }
+    xml = """
+            <record>
+                <dcndl:edition xml:lang="ja">改訂新版</dcndl:edition>
+                <dcndl:edition xml:lang="ja">宮城野の一部を改刻した改題本</dcndl:edition>
+            </record>
+          """
+    res = {}
+    metadata = xmltoTestData('dcndl:edition', xml)
+    add_edition(schema, mapping, res, metadata)
+    assert res == {'item_key': [{'edition': '改訂新版', 'edition_language': 'ja'}, {'edition': '宮城野の一部を改刻した改題本', 'edition_language': 'ja'}]}
+
+# def add_volumeTitle(schema, mapping, res, metadata):
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::test_add_volumeTitle -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+def test_add_volumeTitle(app):
+    schema = {'item_key': {'items': {"type": "object","format": "object","title": "volume_title","properties": {"volume_title": {"type": "string","format": "text","title": "部編名","title_i18n": {"ja": "部編名", "en": "Volume Title"},},"volume_title_language": {"type": "string","format": "select","enum": [None, 'ja', 'en', 'ja-Kana'],"title": "Language","title_i18n": {"ja": "言語", "en": "Language"}}}}}}
+    mapping = {
+        'volumeTitle.@value': ['item_key.volume_title'],
+        'volumeTitle.@attributes.xml:lang': ['item_key.volume_title_language']
+    }
+    xml = """
+            <record>
+                <dcndl:volumeTitle xml:lang="ja">近畿.△2 三重・和歌山・大阪・兵庫</dcndl:volumeTitle>
+                <dcndl:volumeTitle xml:lang="ja-Kana">キンキ.△2 ミエ ワカヤマ オオサカ ヒョウゴ</dcndl:volumeTitle>
+            </record>
+          """
+    res = {}
+    metadata = xmltoTestData('dcndl:volumeTitle', xml)
+    add_volumeTitle(schema, mapping, res, metadata)
+    assert res == {'item_key': [{'volume_title': '近畿.△2 三重・和歌山・大阪・兵庫', 'volume_title_language': 'ja'}, {'volume_title': 'キンキ.△2 ミエ ワカヤマ オオサカ ヒョウゴ', 'volume_title_language': 'ja-Kana'}]}
+
+# def add_originalLanguage(schema, mapping, res, metadata):
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::test_add_originalLanguage -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+def test_add_originalLanguage(app):
+    schema = {'item_key': {'items': {"type": "object","format": "object","title": "original_language","properties": {"original_language": {"type": "string","format": "text","title": "Original Language","title_i18n": {"ja": "原文の言語", "en": "Volume Title"}}}}}}
+    mapping = {
+        'originalLanguage.@value': ['item_key.original_language']
+    }
+    xml = """
+            <record>
+                <dcndl:originalLanguage>eng</dcndl:originalLanguage>
+                <dcndl:originalLanguage>jpn</dcndl:originalLanguage>
+            </record>
+          """
+    res = {}
+    metadata = xmltoTestData('dcndl:originalLanguage', xml)
+    add_originalLanguage(schema, mapping, res, metadata)
+    assert res == {'item_key': [{'original_language': 'eng'}, {'original_language': 'jpn'}]}
+
+# def add_extent(schema, mapping, res, metadata):
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::test_add_extent -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+def test_add_extent(app):
+    schema = {'item_key': {'items': {"type": "object","format": "object","title": "dcterms_extent","properties": {"dcterms_extent": {"type": "string","format": "text","title": "Extent","title_i18n": {"ja": "大きさ", "en": "Extent"},},"dcterms_extent_language": {"type": "string","format": "select","enum": [None, 'ja', 'en'],"title": "Language","title_i18n": {"ja": "言語", "en": "Language"}}}}}}
+    mapping = {
+        'extent.@value': ['item_key.dcterms_extent'],
+        'extent.@attributes.xml:lang': ['item_key.dcterms_extent_language']
+    }
+    xml = """
+            <record>
+                <dcterms:extent xml:lang="ja">図版△;△19cm</dcterms:extent>
+                <dcterms:extent xml:lang="ja">22cm△+△CD-ROM1 枚（12cm）</dcterms:extent>
+            </record>
+          """
+    res = {}
+    metadata = xmltoTestData('dcterms:extent', xml)
+    add_extent(schema, mapping, res, metadata)
+    assert res == {'item_key': [{'dcterms_extent': '図版△;△19cm', 'dcterms_extent_language': 'ja'}, {'dcterms_extent': '22cm△+△CD-ROM1 枚（12cm）', 'dcterms_extent_language': 'ja'}]}
+
+# def add_format(schema, mapping, res, metadata):
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::test_add_format -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+def test_add_format(app):
+    schema = {'item_key': {'items': {"type": "object","format": "object","title": "jpcoar_format","properties": {"jpcoar_format": {"type": "string","format": "text","title": "物理的形態","title_i18n": {"ja": "物理的形態", "en": "Physical Format"},},"jpcoar_format_language": {"type": "string","format": "select","enum": [None, 'ja', 'en'],"title": "Language","title_i18n": {"ja": "言語", "en": "Language"}}}}}}
+    mapping = {
+        'format.@value': ['item_key.jpcoar_format'],
+        'format.@attributes.xml:lang': ['item_key.jpcoar_format_language']
+    }
+    xml = """
+            <record>
+                <jpcoar:format>折本</jpcoar:format>
+            </record>
+          """
+    res = {}
+    metadata = xmltoTestData('jpcoar:format', xml)
+    add_format(schema, mapping, res, metadata)
+    assert res == {'item_key': [{'jpcoar_format': '折本'}]}
+
+# def add_holdingAgent(schema, mapping, res, metadata):
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::test_add_holdingAgent -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+def test_add_holdingAgent(app):
+    schema = {'item_key': {"type": "object","format": "object","title": "holding_agent_name","properties": {"holding_agent_names": {"type": "array","format": "array","title": "所蔵機関名","items": {"type": "object","format": "object","properties": {"holding_agent_name": {"type": "string","format": "text","title": "所蔵機関名","title_i18n": {"ja": "所蔵機関名","en": "Holding Agent Name"}},"holding_agent_name_language": {"type": "string","format": "select","enum": [None, 'ja', 'en'],"title": "Language","title_i18n": {"ja": "言語", "en": "Language"}}}}},"holding_agent_name_identifier": {"type": "object","format": "object","title": "所蔵機関識別子","properties": {"holding_agent_name_identifier_value": {"type": "string","format": "text","title": "所蔵機関識別子","title_i18n": {"ja": "所蔵機関識別子","en": "Holding Agent Name Identifier"}},"holding_agent_name_identifier_scheme": {"type": "string","format": "select","enum": [None,"kakenhi","ISNI","Ringgold","GRID","ROR","FANO","ISIL","MARC","OCLC"],"title": "所蔵機関識別子スキーマ","title_i18n": {"ja": "所蔵機関識別子スキーマ","en": "Holding Agent Name Identifier Schema"}},"holding_agent_name_identifier_uri": {"type": "string","format": "text","title": "所蔵機関識別子URI","title_i18n": {"ja": "所蔵機関識別子URI","en": "Holding Agent Name Identifier URI"}}}}}}}
+    mapping = {
+        'holdingAgent.holdingAgentName.@value': ['item_key.holding_agent_names.holding_agent_name'],
+        'holdingAgent.holdingAgentName.@attributes.xml:lang': ['item_key.holding_agent_names.holding_agent_name_language'],
+        'holdingAgent.holdingAgentNameIdentifier.@value': ['item_key.holding_agent_name_identifier.holding_agent_name_identifier_value'],
+        'holdingAgent.holdingAgentNameIdentifier.@attributes.nameIdentifierScheme': ['item_key.holding_agent_name_identifier.holding_agent_name_identifier_scheme'],
+        'holdingAgent.holdingAgentNameIdentifier.@attributes.nameIdentifierURI': ['item_key.holding_agent_name_identifier.holding_agent_name_identifier_uri']
+    }
+    xml = """
+            <record>
+                <jpcoar:holdingAgent>
+                    <jpcoar:holdingAgentNameIdentifier nameIdentifierScheme="ROR">https://ror.org/057zh3y96</jpcoar:holdingAgentNameIdentifier>
+                    <jpcoar:holdingAgentName xml:lang="en">The University of Tokyo</jpcoar:holdingAgentName>
+                </jpcoar:holdingAgent>
+            </record>
+          """
+    res = {}
+    metadata = xmltoTestData('jpcoar:holdingAgent', xml)
+    add_holdingAgent(schema, mapping, res, metadata)
+    assert res == {'item_key': [{'holding_agent_names': [{'holding_agent_name': 'The University of Tokyo', 'holding_agent_name_language': 'en'}], 'holding_agent_name_identifier': {'holding_agent_name_identifier_value': 'https://ror.org/057zh3y96', 'holding_agent_name_identifier_scheme': 'ROR'}}]}
+
+# def add_datasetSeries(schema, mapping, res, metadata):
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::test_add_datasetSeries -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+def test_add_datasetSeries(app):
+    schema = {'item_key': {'items': {"type": "object","format": "object","properties": {"jpcoar_dataset_series": {"type": ["null", "string"],"format": "select","enum": [None, "True", "False"],"title": "Dataset Series"}}}}}
+    mapping = {
+        'datasetSeries.@value': ['item_key.jpcoar_dataset_series']
+    }
+    xml = """
+            <record>
+                <jpcoar:datasetSeries>True</jpcoar:datasetSeries>
+            </record>
+          """
+    res = {}
+    metadata = xmltoTestData('jpcoar:datasetSeries', xml)
+    add_datasetSeries(schema, mapping, res, metadata)
+    assert res == {'item_key': [{'jpcoar_dataset_series': 'True'}]}
+
+# def add_catalog(schema, mapping, res, metadata):
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::test_add_catalog -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+def test_add_catalog(app):
+    schema = {'item_key': {'items': {"type": "object","format": "object","title": "catalog","properties": {"catalog_contributors": {"type": "array","format": "array","items": {"type": "object","format": "object","properties": {"contributor_type": {"type": "string","format": "select","enum": ["HostingInstitution"],"currentEnum": ["HostingInstitution"],"title": "Hosting Institution Type","title_i18n": {"ja": "提供機関タイプ","en": "Hosting Institution Type"}},"contributor_names": {"type": "array","format": "array","items": {"type": "object","format": "object","properties": {"contributor_name": {"type": "string","format": "text","title": "Hosting Institution Name","title_i18n": {"ja": "提供機関名","en": "Hosting Institution Name"}},"contributor_name_language": {"type": ["null", "string"],"format": "select","enum": [None, 'ja', 'en'],"title": "Language","title_i18n": {"ja": "言語","en": "Language"}}}},"title": "Hosting Institution Name"}}},"title": "Hosting Institution"},"catalog_identifiers": {"type": "array","format": "array","items": {"type": "object","format": "object","properties": {"catalog_identifier": {"type": "string","format": "text","title": "Identifier","title_i18n": {"ja": "識別子", "en": "Identifier"}},"catalog_identifier_type": {"type": ["null", "string"],"format": "select","enum": ["DOI", "HDL", "URI"],"currentEnum": ["DOI", "HDL", "URI"],"title": "Identifier Type","title_i18n": {"ja": "識別子タイプ", "en": "Identifier Type"}}}},"title": "Identifier"},"catalog_titles": {"type": "array","format": "array","items": {"type": "object","format": "object","properties": {"catalog_title": {"type": "string","format": "text","title": "Title","title_i18n": {"ja": "タイトル", "en": "Title"}},"catalog_title_language": {"type": "string","format": "select","enum": [None, 'ja', 'en', 'ja-Kana'],"title": "Language","title_i18n": {"ja": "言語", "en": "Language"}}}},"title": "Title"},"catalog_descriptions": {"type": "array","format": "array","items": {"type": "object","format": "object","properties": {"catalog_description": {"type": "string","format": "text","title": "Description","title_i18n": {"ja": "内容記述", "en": "Description"}},"catalog_description_language": {"type": "string","format": "select","enum": [None, 'ja', 'en'],"title": "Language","title_i18n": {"ja": "言語", "en": "Language"}},"catalog_description_type": {"type": "string","format": "select","enum": ["Abstract","Methods","TableOfContents","TechnicalInfo","Other",],"currentEnum": ["Abstract","Methods","TableOfContents","TechnicalInfo","Other",],"title": "Description Type","title_i18n": {"ja": "内容記述タイプ", "en": "Description Type"}}}},"title": "Description"},"catalog_subjects": {"type": "array","format": "array","items": {"type": "object","format": "object","properties": {"catalog_subject": {"type": "string","format": "text","title": "Subject","title_i18n": {"ja": "主題", "en": "Subject"}},"catalog_subject_language": {"type": "string","format": "select","enum": [None, 'ja', 'en'],"title": "Language","title_i18n": {"ja": "言語", "en": "Language"}},"catalog_subject_uri": {"type": "string","format": "text","title": "Subject URI","title_i18n": {"ja": "主題URI", "en": "Subject URI"}},"catalog_subject_scheme": {"type": "string","format": "select","enum": ["BSH","DDC","e-Rad","LCC","LCSH","MeSH","NDC","NDLC","NDLSH","SciVal","UDC","Other",],"currentEnum": ["BSH","DDC","e-Rad","LCC","LCSH","MeSH","NDC","NDLC","NDLSH","SciVal","UDC","Other",],"title": "Subject Scheme","title_i18n": {"ja": "主題スキーマ", "en": "Subject Scheme"}}}},"title": "Subject"},"catalog_licenses": {"type": "array","format": "array","items": {"type": "object","format": "object","properties": {"catalog_license": {"type": "string","format": "text","title": "License","title_i18n": {"ja": "ライセンス", "en": "License"}},"catalog_license_language": {"type": "string","format": "select","enum": [None, 'ja', 'en'],"title": "Language","title_i18n": {"ja": "言語", "en": "Language"}},"catalog_license_type": {"type": "string","format": "select","enum": ["file", "metadata", "thumbnail"],"currentEnum": ["file", "metadata", "thumbnail"],"title": "License Type","title_i18n": {"ja": "ライセンスタイプ", "en": "License Type"}},"catalog_license_rdf_resource": {"type": "string","format": "text","title": "RDF Resource","title_i18n": {"ja": "RDFリソース", "en": "RDF Resource"}}}},"title": "License"},"catalog_rights": {"type": "array","format": "array","items": {"type": "object","format": "object","properties": {"catalog_rights_right": {"type": "string","format": "text","title": "Rights","title_i18n": {"ja": "権利情報", "en": "Rights"}},"catalog_right_language": {"type": "string","format": "select","enum": [None, 'ja', 'en'],"title": "Language","title_i18n": {"ja": "言語", "en": "Language"}},"catalog_right_rdf_resource": {"type": "string","format": "text","title": "RDF Resource","title_i18n": {"ja": "RDFリソース", "en": "RDF Resource"}}}},"title": "Rights"},"catalog_access_rights": {"type": "array","format": "array","items": {"type": "object","format": "object","properties": {"catalog_access_right": {"type": "string","format": "select","enum": ["embargoed access","metadata only access","restricted access","open access",],"currentEnum": ["embargoed access","metadata only access","restricted access","open access",],"title": "Access Rights","title_i18n": {"ja": "アクセス権", "en": "Access Rights"}},"catalog_access_right_rdf_resource": {"type": "string","format": "text","title": "RDF Resource","title_i18n": {"ja": "RDFリソース", "en": "RDF Resource"}}}},"title": "Access Rights"},"catalog_file": {"type": "object","format": "object","properties": {"catalog_file_uri": {"type": "object","format": "object","properties": {"catalog_file_uri_value": {"type": "string","format": "text","title": "Thumbnail URI","title_i18n": {"ja": "代表画像URI", "en": "Thumbnail URI"},},"catalog_file_object_type": {"type": "string","format": "select","enum": ["thumbnail"],"currentEnum": ["thumbnail"],"title": "Object Type","title_i18n": {"ja": "オブジェクトタイプ", "en": "Object Type"}}}}}}}}}}
+    mapping = {
+        'catalog.contributor.@attributes.contributorType': ['item_key.catalog_contributors.contributor_type'],
+        'catalog.contributor.contributorName.@value': ['item_key.catalog_contributors.contributor_names.contributor_name'],
+        'catalog.contributor.contributorName.@attributes.xml:lang': ['item_key.catalog_contributors.contributor_names.contributor_name_language'],
+        'catalog.identifier.@value': ['item_key.catalog_identifiers.catalog_identifier'],
+        'catalog.identifier.@attributes.identifierType': ['item_key.catalog_identifiers.catalog_identifier_type'],
+        'catalog.title.@value': ['item_key.catalog_titles.catalog_title'],
+        'catalog.title.@attributes.xml:lang': ['item_key.catalog_titles.catalog_title_language'],
+        'catalog.description.@value': ['item_key.catalog_descriptions.catalog_description'],
+        'catalog.description.@attributes.xml:lang': ['item_key.catalog_descriptions.catalog_description_language'],
+        'catalog.description.@attributes.descriptionType': ['item_key.catalog_descriptions.catalog_description_type'],
+        'catalog.subject.@value': ['item_key.catalog_subjects.catalog_subject'],
+        'catalog.subject.@attributes.xml:lang': ['item_key.catalog_subjects.catalog_subject_language'],
+        'catalog.subject.@attributes.subjectURI': ['item_key.catalog_subjects.catalog_subject_uri'],
+        'catalog.subject.@attributes.subjectScheme': ['item_key.catalog_subjects.catalog_subject_scheme'],
+        'catalog.license.@value': ['item_key.catalog_licenses.catalog_license'],
+        'catalog.license.@attributes.xml:lang': ['item_key.catalog_licenses.catalog_license_language'],
+        'catalog.license.@attributes.licenseType': ['item_key.catalog_licenses.catalog_license_type'],
+        'catalog.license.@attributes.rdf:resource': ['item_key.catalog_licenses.catalog_license_rdf_resource'],
+        'catalog.rights.@value': ['item_key.catalog_rights.catalog_rights_right'],
+        'catalog.rights.@attributes.xml:lang': ['item_key.catalog_rights.catalog_right_language'],
+        'catalog.rights.@attributes.rdf:resource': ['item_key.catalog_rights.catalog_right_rdf_resource'],
+        'catalog.accessRights.@value': ['item_key.catalog_access_rights.catalog_access_right'],
+        'catalog.accessRights.@attributes.rdf:resource': ['item_key.catalog_access_rights.catalog_access_right_rdf_resource'],
+        'catalog.file.URI.@value': ['item_key.catalog_file.catalog_file_uri.catalog_file_uri_value'],
+        'catalog.file.URI.@attributes.objectType': ['item_key.catalog_file.catalog_file_uri.catalog_file_object_type']
+    }
+    xml = """
+            <record>
+                <jpcoar:catalog>
+                    <jpcoar:contributor contributorType="HostingInstitution">
+                        <jpcoar:contributorName xml:lang="ja">東京大学</jpcoar:contributorName>
+                        <jpcoar:contributorName xml:lang="en">The University of Tokyo</jpcoar:contributorName>
+                    </jpcoar:contributor>
+                    <jpcoar:identifier identifierType="URI">https://da.dl.itc.u-tokyo.ac.jp/portal/</jpcoar:identifier>
+                    <dc:title xml:lang="ja">東京大学学術資産等アーカイブズポータル</dc:title>
+                    <dc:title xml:lang="ja-Kana">トウキョウダイガクガクジュツシサントウアーカイブズポータル</dc:title>
+                    <dc:title xml:lang="en">UTokyo Academic Archives Portal</dc:title>
+                    <datacite:description xml:lang="ja" descriptionType="Other">東京大学学術資産等アーカイブズポータルは、 「東京大学デジタルアーカイブズ構築事業」により構築されたポータルサイトです。当事業によりデジタル化された資料だけでなく、これまで学内の様々な部局が個別にデジタル化し公開してきたコレクションを、横断的に検索することができます。</datacite:description>
+                    <jpcoar:subject subjectScheme="Other">書籍等</jpcoar:subject>
+                    <jpcoar:subject xml:lang="ja">人文学</jpcoar:subject>
+                    <jpcoar:subject subjectURI="https://da.dl.itc.u-tokyo.ac.jp/">自然史・理工学</jpcoar:subject>
+                    <jpcoar:license xml:lang="ja" licenseType="metadata" rdf:resource="https://da.dl.itc.u-tokyo.ac.jp/portal/help/collection">連携コレクション一覧</jpcoar:license>
+                    <dc:rights xml:lang="ja">著作権の帰属はコレクションによって異なる</dc:rights>
+                    <dcterms:accessRights rdf:resource="http://purl.org/coar/access_right/c_abf2">open access</dcterms:accessRights>
+                    <jpcoar:file>
+                        <jpcoar:URI objectType="thumbnail">https://xxx.xxx.xxx.xxx/xxx/thumbnail.jpg</jpcoar:URI>
+                    </jpcoar:file>
+                </jpcoar:catalog>
+            </record>
+          """
+    res = {}
+    metadata = xmltoTestData('jpcoar:catalog', xml)
+    add_catalog(schema, mapping, res, metadata)
+    assert res == {'item_key': [{'catalog_contributors': [{'contributor_type': 'HostingInstitution', 'contributor_names': [{'contributor_name': '東京大学', 'contributor_name_language': 'ja'}, {'contributor_name': 'The University of Tokyo', 'contributor_name_language': 'en'}]}], 'catalog_identifiers': [{'catalog_identifier': 'https://da.dl.itc.u-tokyo.ac.jp/portal/', 'catalog_identifier_type': 'URI'}], 'catalog_titles': [{'catalog_title': '東京大学学術資産等アーカイブズポータル', 'catalog_title_language': 'ja'}, {'catalog_title': 'トウキョウダイガクガクジュツシサントウアーカイブズポータル', 'catalog_title_language': 'ja-Kana'}, {'catalog_title': 'UTokyo Academic Archives Portal', 'catalog_title_language': 'en'}], 'catalog_descriptions': [{'catalog_description': '東京大学学術資産等アーカイブズポータルは、 「東京大学デジタルアーカイブズ構築事業」により構築されたポータルサイトです。当事業によりデジタル化された資料だけでなく、これまで学内の様々な部局が個別にデジタル化し公開してきたコレクションを、横断的に検索することができます。', 'catalog_description_type': 'Other', 'catalog_description_language': 'ja'}], 'catalog_subjects': [{'catalog_subject': '書籍等', 'catalog_subject_scheme': 'Other'}, {'catalog_subject': '人文学', 'catalog_subject_language': 'ja'}, {'catalog_subject': '自然史・理工学', 'catalog_subject_uri': 'https://da.dl.itc.u-tokyo.ac.jp/'}], 'catalog_licenses': [{'catalog_license': '連携コレクション一覧', 'catalog_license_language': 'ja', 'catalog_license_type': 'metadata', 'catalog_license_rdf_resource': 'https://da.dl.itc.u-tokyo.ac.jp/portal/help/collection'}], 'catalog_rights': [{'catalog_rights_right': '著作権の帰属はコレクションによって異なる', 'catalog_right_language': 'ja'}], 'catalog_access_rights': [{'catalog_access_right': 'open access', 'catalog_access_right_rdf_resource': 'http://purl.org/coar/access_right/c_abf2'}], 'catalog_file': {'catalog_file_uri': {'catalog_file_uri_value': 'https://xxx.xxx.xxx.xxx/xxx/thumbnail.jpg', 'catalog_file_object_type': 'thumbnail'}}}]}
 
 # def add_language(schema, mapping, res, metadata):
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::test_add_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
@@ -890,8 +1135,8 @@ def test_add_version(app):
 def test_add_version_type(app):
     schema = {'item_key': {"system_prop": True,"type": "object","title": "出版タイプ","properties": {"subitem_version_type": {"type": ["null", "string"],"format": "select","enum": [None, "AO", "SMUR", "AM", "P", "VoR", "CVoR", "EVoR", "NA"],"title": "出版タイプ","title_i18n": {"en": "Version Type", "ja": "出版タイプ"}},"subitem_version_resource": {"format": "text","title": "出版タイプResource","title_i18n": {"en": "Version Type Resource","ja": "出版タイプResource"},"type": "string"}}}}
     mapping = {
-        'versionType.@value': ['item_key.subitem_version_type'],
-        'versionType.@attributes.rdf:resource': ['item_key.subitem_version_resource']
+        'versiontype.@value': ['item_key.subitem_version_type'],
+        'versiontype.@attributes.rdf:resource': ['item_key.subitem_version_resource']
     }
     xml = """
             <record>
@@ -1170,12 +1415,12 @@ def test_add_conference(app):
         'conference.conferenceName.@value': ['item_key.subitem_conference_names.subitem_conference_name'],
         'conference.conferenceName.@attributes.xml:lang': ['item_key.subitem_conference_names.subitem_conference_name_language'],
         'conference.conferenceDate.@value': ['item_key.subitem_conference_date.subitem_conference_period'],
-        'conference.conferenceDate.@startYear': ['item_key.subitem_conference_date.subitem_conference_start_year'],
-        'conference.conferenceDate.@startMonth': ['item_key.subitem_conference_date.subitem_conference_start_month'],
-        'conference.conferenceDate.@startDay': ['item_key.subitem_conference_date.subitem_conference_start_day'],
-        'conference.conferenceDate.@endYear': ['item_key.subitem_conference_date.subitem_conference_end_year'],
-        'conference.conferenceDate.@endMonth': ['item_key.subitem_conference_date.subitem_conference_end_month'],
-        'conference.conferenceDate.@endDay': ['item_key.subitem_conference_date.subitem_conference_end_day'],
+        'conference.conferenceDate.@attributes.startYear': ['item_key.subitem_conference_date.subitem_conference_start_year'],
+        'conference.conferenceDate.@attributes.startMonth': ['item_key.subitem_conference_date.subitem_conference_start_month'],
+        'conference.conferenceDate.@attributes.startDay': ['item_key.subitem_conference_date.subitem_conference_start_day'],
+        'conference.conferenceDate.@attributes.endYear': ['item_key.subitem_conference_date.subitem_conference_end_year'],
+        'conference.conferenceDate.@attributes.endMonth': ['item_key.subitem_conference_date.subitem_conference_end_month'],
+        'conference.conferenceDate.@attributes.endDay': ['item_key.subitem_conference_date.subitem_conference_end_day'],
         'conference.conferenceDate.@attributes.xml:lang': ['item_key.subitem_conference_date.subitem_conference_date_language'],
         'conference.conferenceVenue.@value': ['item_key.subitem_conference_venues.subitem_conference_venue'],
         'conference.conferenceVenue.@attributes.xml:lang': ['item_key.subitem_conference_venues.subitem_conference_venue_language']
