@@ -110,16 +110,21 @@ def check_items_settings(settings=None):
 
 def get_record_permalink(record):
     """
-    Get latest doi/cnri's value of record.
+    Get latest doi/cnri/ark's value of record.
 
     :param record: index_name_english
     :return: pid value of doi/cnri.
     """
     doi = record.pid_doi
     cnri = record.pid_cnri
+    ark = record.pid_ark
 
-    if doi or cnri:
-        return doi.pid_value if doi else cnri.pid_value
+    if doi:
+        return doi.pid_value
+    if cnri:
+        return cnri.pid_value
+    if ark:
+        return ark.pid_value
 
     return None
 

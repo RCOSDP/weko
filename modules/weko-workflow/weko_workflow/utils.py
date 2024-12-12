@@ -252,6 +252,59 @@ def register_hdl(activity_id):
     else:
         current_app.logger.info('Cannot connect Handle server!')
 
+def register_ark(activity_id):
+    """
+    Register HDL into Persistent Identifiers.
+
+    :param activity_id: Workflow Activity Identifier
+    :return cnri_pidstore: HDL pidstore object or None
+    """
+    activity = WorkActivity().get_activity_detail(activity_id)
+    current_pid = PersistentIdentifier.get_by_object(pid_type='recid',
+                                                 object_type='rec',
+                                                 object_uuid=activity.item_id)
+    pid_without_ver = get_record_without_version(current_pid)
+    item_uuid  = pid_without_ver.object_uuid
+    # item_uuid = activity.item_id
+    current_app.logger.debug(
+        "register_hdl: {0} {1}".format(activity_id, item_uuid))
+    record = WekoRecord.get_record(item_uuid)
+    
+    if record.pid_ark:
+        current_app.logger.info('This record was registered HDL!')
+        return
+    else:
+        deposit_id = record.pid_parent.pid_value.split('parent:')[1]
+
+    record_url = request.url.split('/workflow/')[0] \
+        + '/records/' + str(deposit_id)
+
+    import requests
+    import pprint
+    headers = {}
+    headers["Content-Type"]= 'application/json'
+    headers["accept"]='application/json'
+    login_url = current_app.config.get('WEKO_HANDLE_ARK_LOGIN_URL',None)
+    user = current_app.config.get('WEKO_HANDLE_ARK_LOGIN_USER',None)
+    passwd = current_app.config.get('WEKO_HANDLE_ARK_LOGIN_PASSWD',None)
+    mint_url = current_app.config.get('WEKO_HANDLE_ARK_MINT_URL',None)
+    naan = current_app.config.get('WEKO_HANDLE_ARK_NAAN',None)
+    shoulder = current_app.config.get('WEKO_HANDLE_ARK_SHOULDER',None)
+
+    if login_url and user and passwd and mint_url and naan and shoulder:
+        body = {"query": user,"password": passwd}
+        res = requests.post(login_url, headers=headers, json=body)
+        if res:
+            data = res.json()
+            if 'token' in data:
+                headers = {'Authorization': 'Bearer {}'.format(res.json()["token"])}
+                body2 = {"naan": naan,"shoulder": shoulder,"url": record_url}
+                res2 = requests.post(mint_url, headers=headers, json=body2)
+                identifier = IdentifierHandle(item_uuid)
+                if res2:
+                    data2 = res2.json()
+                    if 'data' in data2 and "ark" in data2["data"]:
+                        identifier.register_pidstore('ark', data2["data"]["ark"])
 
 def register_hdl_by_item_id(deposit_id, item_uuid, url_root):
     """

@@ -17,3 +17,27 @@ WEKO_HANDLE_CREDS_JSON_PATH = '/code/modules/resources/handle_creds.json'
 
 WEKO_HANDLE_ALLOW_REGISTER_CNRI = False
 """Allow registering CNRI."""
+
+WEKO_HANDLE_ALLOW_REGISTER_ARK = False
+"""Allow registering ARK."""
+
+WEKO_HANDLE_ARK_LOGIN_URL = None
+""" Login URL for ARK server."""
+
+WEKO_HANDLE_ARK_LOGIN_USER = None
+""" Login user for ARK server."""
+
+WEKO_HANDLE_ARK_LOGIN_PASSWD = None
+""" Login password for ARK server."""
+
+WEKO_HANDLE_ARK_MINT_URL = None
+"""" MINT URL for ARK server."""
+
+WEKO_HANDLE_ARK_NAAN = None
+""" NAAN of Ark """
+
+WEKO_HANDLE_ARK_SHOULDER = None
+""" Shoulder of Ark """
+
+
+

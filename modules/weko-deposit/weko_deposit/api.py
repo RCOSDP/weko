@@ -2365,6 +2365,11 @@ class WekoRecord(Record):
         return self._get_pid('hdl')
 
     @property
+    def pid_ark(self):
+        """Return pid_value of ark identifier."""
+        return self._get_pid('ark')
+
+    @property
     def pid_parent(self):
         """Return pid_value of doi identifier."""
         pid_ver = PIDVersioning(child=self.pid_recid)

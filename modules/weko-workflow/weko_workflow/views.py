@@ -110,7 +110,7 @@ from .utils import IdentifierHandle, auto_fill_title, \
     send_usage_application_mail_for_guest_user, set_files_display_type, \
     update_approval_date, update_cache_data, validate_guest_activity_expired, \
     validate_guest_activity_token, make_activitylog_tsv, \
-    delete_lock_activity_cache, delete_user_lock_activity_cache
+    delete_lock_activity_cache, delete_user_lock_activity_cache, register_ark
 
 workflow_blueprint = Blueprint(
     'weko_workflow',
@@ -1383,6 +1383,9 @@ def next_action(activity_id='0', action_id=0):
 
     if action_endpoint in ['item_login', 'item_login_application'] and (record.pid_cnri is None) and current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CNRI'):
         register_hdl(activity_id)
+
+    if action_endpoint in ['item_login', 'item_login_application'] and (record.pid_ark is None) and current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_ARK'):
+        register_ark(activity_id)
 
     flow = Flow()
     next_flow_action = flow.get_next_flow_action(
