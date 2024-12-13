@@ -95,7 +95,7 @@ def get_permission_filter(index_id: str = None):
             terms = Q("terms", path=term_list)
     else:
         terms = Q("terms", path=is_perm_indexes)
-    
+
     if is_admin:
         mst.append(status)
     else:
@@ -180,6 +180,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                     name_dict.update(dict(query=kv))
                     qry = Q("match", **{v: name_dict})
                 else:
+                    # OR search
                     should_list = []
                     for split_text in split_text_list:
                         name_dict = dict(operator="and")
@@ -205,6 +206,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                             fields=v,
                         )
                     else:
+                        # OR search
                         should_list = []
                         for split_text in split_text_list:
                             should_list.append(Q(
@@ -324,6 +326,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                                             val_attr_lst = alst[1].split("=")
                                             qt = None
 
+                                            # attribute conditon
                                             field_name = alst[0] + "." + val_attr_lst[0]
                                             if "=*" in alst[1]:
                                                 qt = [
@@ -345,6 +348,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                                                 qry = Q("bool", must=mut)
 
                                             else:
+                                                # OR search
                                                 should_list = []
                                                 for split_text in split_text_list:
                                                     name = alst[0] + ".value"
@@ -508,6 +512,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                     qry = Q("match", **{v: name_dict})
 
                 else:
+                    # OR search
                     should_list = []
                     for split_text in split_text_list:
                         name_dict = dict(operator="and")
@@ -703,6 +708,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                 fields=["content.attachment.content"],
             )
         else:
+            # OR search
             should_list = []
             for split_text in split_text_list:
                 should_list.append(Q(
@@ -1420,7 +1426,7 @@ def feedback_email_search_factory(self, search):
 def split_text_by_or(text):
     """split text by " OR " or " | "
     :param text: input text
-    
+
     """
     text = text.replace("　", " ")
     pattern = r'(?<= )(?:OR|\|)(?= )'
