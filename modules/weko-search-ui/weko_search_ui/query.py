@@ -175,7 +175,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
             if isinstance(v, str):
                 name_dict = dict(operator="and")
                 name_dict.update(dict(query=kv))
-                should_list = []
                 split_text_list = split_text_by_or(kv)
 
                 if len(split_text_list) == 1:
@@ -189,29 +188,34 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                     qry = Q("bool", should=should_list, minimum_should_match=1)
 
             elif isinstance(v, list):
-                should_list = []
-                split_text_list = split_text_by_or(kv)
-
-                if len(split_text_list) == 1:
-                    qry = Q(
-                        "multi_match",
-                        query=kv,
-                        type="most_fields",
-                        minimum_should_match="75%",
-                        operator="and",
-                        fields=v,
-                    )
+                if k == "title" and isinstance(additional_params, dict) and additional_params.get("exact_title_match"):
+                    should_list = []
+                    should_list.append(Q("term", **{"title":kv}))
+                    should_list.append(Q("term", **{"alternative":kv}))
+                    qry = Q("bool", should=should_list, minimum_should_match=1)
                 else:
-                    for t in split_text_list:
-                        should_list.append(Q(
+                    split_text_list = split_text_by_or(kv)
+                    if len(split_text_list) == 1:
+                        qry = Q(
                             "multi_match",
-                            query=t,
+                            query=kv,
                             type="most_fields",
                             minimum_should_match="75%",
                             operator="and",
                             fields=v,
-                    ))
-                    qry = Q("bool", should=should_list, minimum_should_match=1)
+                        )
+                    else:
+                        should_list = []
+                        for t in split_text_list:
+                            should_list.append(Q(
+                                "multi_match",
+                                query=t,
+                                type="most_fields",
+                                minimum_should_match="75%",
+                                operator="and",
+                                fields=v,
+                        ))
+                        qry = Q("bool", should=should_list, minimum_should_match=1)
 
             elif isinstance(v, dict):
 
@@ -692,7 +696,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
     def _get_file_content_query(qstr):
         """Query for searching indexed file contents."""
 
-        should_list = []
         split_text_list = split_text_by_or(qstr)
         if len(split_text_list) == 1:
             multi_cont_q = Q(
@@ -1267,8 +1270,11 @@ def opensearch_factory(self, search, query_parser=None):
         index_id = str(index_id)
         return item_path_search_factory(self, search, index_id=index_id)
     else:
+        additional_params = {
+            "exact_title_match": request.args.get("exact_title_match") == "true"
+        }
         return default_search_factory(
-            self, search, query_parser, search_type=search_type
+            self, search, query_parser, search_type=search_type, additional_params=additional_params
         )
 
 

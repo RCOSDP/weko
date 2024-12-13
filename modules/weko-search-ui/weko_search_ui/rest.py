@@ -604,7 +604,8 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
             item_type_ids = [x.item_type_id for x in mapping]
             item_types = ItemTypes.get_records(item_type_ids)
             additional_params = {
-                'itemtype': ','.join([x.model.item_type_name.name for x in item_types])
+                'itemtype': ','.join([x.model.item_type_name.name for x in item_types]),
+                'exact_title_match': request.args.get('exact_title_match') == 'true'
             }
 
             # Query Generate
