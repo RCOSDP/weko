@@ -2,22 +2,14 @@
 
 $base =  $_SERVER['REQUEST_SCHEME']."://".$_SERVER['SERVER_NAME'];
 
-// ERROR
-if(!$_SERVER['HTTP_WEKOSOCIETYAFFILIATION']){
-  echo "<script type='text/javascript'>
-  window.alert('Permission is invalid');
-  window.location.href='".$base."';</script>";
-  //header("HTTP/1.1 403 Forbidden");
-  //header("Location: ".$base);
-}else{
   $url = $base."/weko/shib/login?next=%2F";
   $curl = curl_init();
   $post_args=[];
-  $post_args['SHIB_ATTR_USER_NAME']=$_SERVER['HTTP_WEKOID'];
+  $post_args['SHIB_ATTR_USER_NAME']=$_SERVER['mail'];
   $post_args["SHIB_ATTR_EPPN"]=$_SERVER['Remote-User'];
   $post_args["SHIB_ATTR_MAIL"]=$_SERVER['mail'];
   $post_args["SHIB_ATTR_SESSION_ID"]=$_SERVER['Shib-Session-ID'];
-  $post_args["SHIB_ATTR_ROLE_AUTHORITY_NAME"]=$_SERVER['HTTP_WEKOSOCIETYAFFILIATION'];
+  $post_args["SHIB_ATTR_ROLE_AUTHORITY_NAME"]="管理者";
   $options = array(
     //Method
     CURLOPT_POST => true,//POST
@@ -43,8 +35,6 @@ if(!$_SERVER['HTTP_WEKOSOCIETYAFFILIATION']){
   if (CURLE_OK !== $errno) {
         throw new RuntimeException($error, $errno);
   }
-  header("HTTP/1.1 302 Found");
+
   header("Location: ".$base.$result);
-  //var_dump($app_cookies[0]['value']);
-}
 ?>
