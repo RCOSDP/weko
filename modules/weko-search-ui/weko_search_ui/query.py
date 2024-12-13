@@ -173,17 +173,17 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                 return
 
             if isinstance(v, str):
-                name_dict = dict(operator="and")
-                name_dict.update(dict(query=kv))
                 split_text_list = split_text_by_or(kv)
 
                 if len(split_text_list) == 1:
+                    name_dict = dict(operator="and")
+                    name_dict.update(dict(query=kv))
                     qry = Q("match", **{v: name_dict})
                 else:
                     should_list = []
-                    for t in split_text_list:
+                    for split_text in split_text_list:
                         name_dict = dict(operator="and")
-                        name_dict.update(dict(query=t))
+                        name_dict.update(dict(query=split_text))
                         should_list.append(Q("match", **{v: name_dict}))
                     qry = Q("bool", should=should_list, minimum_should_match=1)
 
@@ -206,10 +206,10 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                         )
                     else:
                         should_list = []
-                        for t in split_text_list:
+                        for split_text in split_text_list:
                             should_list.append(Q(
                                 "multi_match",
-                                query=t,
+                                query=split_text,
                                 type="most_fields",
                                 minimum_should_match="75%",
                                 operator="and",
@@ -324,15 +324,14 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                                             val_attr_lst = alst[1].split("=")
                                             qt = None
 
+                                            field_name = alst[0] + "." + val_attr_lst[0]
                                             if "=*" in alst[1]:
-                                                name = alst[0] + "." + val_attr_lst[0]
                                                 qt = [
-                                                    Q("exists", field=name)
+                                                    Q("exists", field=field_name)
                                                 ]
                                             else:
-                                                name = alst[0] + "." + val_attr_lst[0]
                                                 qt = [
-                                                    Q("term", **{name: val_attr_lst[1]})
+                                                    Q("term", **{field_name: val_attr_lst[1]})
                                                 ]
 
                                             split_text_list = split_text_by_or(kv)
@@ -347,10 +346,10 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
 
                                             else:
                                                 should_list = []
-                                                for t in split_text_list:
+                                                for split_text in split_text_list:
                                                     name = alst[0] + ".value"
                                                     name_dict = dict(operator="and")
-                                                    name_dict.update(dict(query=t))
+                                                    name_dict.update(dict(query=split_text))
                                                     should_list.append(Q("match", **{v: name_dict}))
                                                 mut = []
                                                 mut.extend(qt or [])
@@ -510,9 +509,9 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
 
                 else:
                     should_list = []
-                    for t in split_text_list:
+                    for split_text in split_text_list:
                         name_dict = dict(operator="and")
-                        name_dict.update(dict(query=t))
+                        name_dict.update(dict(query=split_text))
                         should_list.append(Q("match", **{v: name_dict}))
                     qry = Q("bool", should=should_list, minimum_should_match=1)
             return qry
@@ -695,7 +694,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
 
     def _get_file_content_query(qstr):
         """Query for searching indexed file contents."""
-
         split_text_list = split_text_by_or(qstr)
         if len(split_text_list) == 1:
             multi_cont_q = Q(
@@ -706,10 +704,10 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
             )
         else:
             should_list = []
-            for t in split_text_list:
+            for split_text in split_text_list:
                 should_list.append(Q(
                     "multi_match",
-                    query=t,
+                    query=split_text,
                     operator="and",
                     fields=["content.attachment.content"],
                 ))
@@ -1420,7 +1418,11 @@ def feedback_email_search_factory(self, search):
     return search
 
 def split_text_by_or(text):
-    split_text = text.replace("　", " ").replace(" | ", " OR ")
-    pattern = r'\s+OR\s'
-    split_text_list = re.split(pattern, split_text)
+    """split text by " OR " or " | "
+    :param text: input text
+    
+    """
+    text = text.replace("　", " ")
+    pattern = r'(?<= )(?:OR|\|)(?= )'
+    split_text_list = re.split(pattern, text)
     return split_text_list
