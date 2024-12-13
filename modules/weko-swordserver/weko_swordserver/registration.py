@@ -36,7 +36,7 @@ from weko_workflow.api import WorkFlow
 from .errors import ErrorType, WekoSwordserverException
 from .mapper import WekoSwordMapper
 from .utils import (
-    get_record_by_token,
+    get_record_by_client_id,
     unpack_zip,
     process_json
 )
@@ -48,9 +48,7 @@ def check_import_items(file, is_change_identifier = False):
 
 
 
-def check_bagit_import_items(
-        file, all_index_permission=True, can_edit_indexes=[]
-    ):
+def check_bagit_import_items(file, packaging):
     """Check bagit import items.
 
     Check that the actual file contents match the recorded hashes stored
@@ -58,6 +56,7 @@ def check_bagit_import_items(
 
     Args:
         file (FileStorage | str): File object or file path.
+        packaging (str): Packaging type. SWORDBagIt or SimpleZip.
 
     Returns:
         dict: Result of mapping to item type
@@ -121,7 +120,7 @@ def check_bagit_import_items(
         # get json file name
         json_name = (
             current_app.config['WEKO_SWORDSERVER_METADATA_FILE_SWORD']
-                if request.headers.get("Packaging").split("/")[-1] == "SWORDBagIt"
+                if packaging == "SWORDBagIt"
                 else current_app.config['WEKO_SWORDSERVER_METADATA_FILE_ROCRATE']
         )
 
@@ -129,8 +128,8 @@ def check_bagit_import_items(
         bag = bagit.Bag(data_path)
         bag.validate()
 
-        access_token = request.headers.get("Authorization").split("Bearer ")[1]
-        sword_client, sword_mapping = get_record_by_token()
+        client_id = request.oauth.client.client_id
+        sword_client, sword_mapping = get_record_by_client_id(client_id)
         if sword_mapping is None:
             current_app.logger.error(f"Mapping not defined for sword client.")
             raise WekoSwordserverException(
@@ -187,9 +186,7 @@ def check_bagit_import_items(
         handle_item_title(list_record)
         list_record = handle_check_date(list_record)
         handle_check_id(list_record)
-        handle_check_and_prepare_index_tree(
-            list_record, all_index_permission, can_edit_indexes
-        )
+        handle_check_and_prepare_index_tree(list_record, True, [])
         handle_check_and_prepare_publish_status(list_record)
         handle_check_file_metadata(list_record, data_path)
 

@@ -17,13 +17,11 @@ from hashlib import sha256
 from zipfile import ZipFile
 
 from flask import current_app, request
-from invenio_oauth2server.models import Token
 
 from .api import SwordClient, SwordItemTypeMapping
 from .errors import WekoSwordserverException, ErrorType
-from .decorators import check_digest
 
-@check_digest()
+
 def check_import_file_format(file, packaging):
     """Check inport file format.
 
@@ -145,18 +143,17 @@ def is_valid_body_hash(digest, body):
     return result
 
 
-def get_record_by_token():
-    """Get mapping by token.
-
-    Get mapping for RO-Crate matadata by access token.
+def get_record_by_client_id(client_id):
+    """
+    Get the SwordClient and SwordItemTypeMapping records associated with client ID.
 
     Args:
-        access_token (str): Access token.
+        client_id (str): The ID of the client to get the settings records for.
 
     Returns:
-        SwordItemTypeMapping: Mapping for RO-Crate matadata.
+        tuple (SwordClientModel, SwordItemTypeMappingModel): A tuple containing the SwordClient object and the SwordItemTypeMapping object.
+               If the client or mapping is not found, the corresponding value in the tuple will be None.
     """
-    client_id = request.oauth.client.client_id
     sword_client = SwordClient.get_client_by_id(client_id)
 
     mapping_id = sword_client.mapping_id if sword_client is not None else None
