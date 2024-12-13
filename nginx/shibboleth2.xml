@@ -4,14 +4,14 @@
 
     <OutOfProcess tranLogFormat="%u|%s|%IDP|%i|%ac|%t|%attr|%n|%b|%E|%S|%SS|%L|%UA|%a" />
  <UnixListener address="/tmp/shibd.sock"/>
-  
+
     <!--
     By default, in-memory StorageService, ReplayCache, ArtifactMap, and SessionCache
     are used. See example-shibboleth2.xml for samples of explicitly configuring them.
     -->
     <RequestMapper type="XML">
     <RequestMap>
-        <Host name="weko3.example.org"
+        <Host name="research.ren.ng"
                 authType="shibboleth"
                 requireSession="true"
                 redirectToSSL="443">
@@ -23,7 +23,7 @@
     </RequestMapper>
 
     <!-- The ApplicationDefaults element is where most of Shibboleth's SAML bits are defined. -->
-    <ApplicationDefaults entityID="https://weko3.example.org/shibboleth-sp"
+    <ApplicationDefaults entityID="https://research.ren.ng/shibboleth-sp"
         REMOTE_USER="eppn persistent-id targeted-id"
         cipherSuites="DEFAULT:!EXP:!LOW:!aNULL:!eNULL:!DES:!IDEA:!SEED:!RC4:!3DES:!kRSA:!SSLv2:!SSLv3:!TLSv1:!TLSv1.1">
 
@@ -43,8 +43,7 @@
             entityID property and adjust discoveryURL to point to discovery service.
             You can also override entityID on /Login query string, or in RequestMap/htaccess.
             -->
-            <SSO entityID="https://weko3.example.org/idp/simplesamlphp"
-                 discoveryProtocol="SAMLDS" discoveryURL="https://ds.example.org/DS/WAYF">
+        <SSO entityID="https://wacren.wacren.eduid.africa/saml2/idp/metadata.php">
               SAML2
             </SSO>
 
@@ -53,15 +52,12 @@
 
             <!-- Administrative logout. -->
             <LogoutInitiator type="Admin" Location="/Logout/Admin" acl="127.0.0.1 ::1" />
-          
+
             <!-- Extension service that generates "approximate" metadata based on SP configuration. -->
             <Handler type="MetadataGenerator" Location="/Metadata" signing="false"/>
 
             <!-- Status reporting service. -->
-            <!--
-                <Handler type="Status" Location="/Status" acl="127.0.0.1 ::1"/>
-            -->
-            <Handler type="Status" Location="/Status" acl="127.0.0.1 ::1 0.0.0.0/0"/>
+            <Handler type="Status" Location="/Status" acl="127.0.0.1 ::1"/>
 
             <!-- Session diagnostic service. -->
             <Handler type="Session" Location="/Session" showAttributeValues="false"/>
@@ -80,21 +76,20 @@
             styleSheet="/shibboleth-sp/main.css"/>
 
         <!-- Example of locally maintained metadata. -->
-        <!--
-        <MetadataProvider type="XML" validate="true" path="partner-metadata.xml"/>
-        -->
 
-        <MetadataProvider type="XML" validate="true" path="idp-metadata.xml"/>
-        
+        <MetadataProvider type="XML" validate="false" file="idp-metadata.xml"/>
+        <MetadataProvider type="XML" validate="true"
+                url="https://wacren.wacren.eduid.africa/saml2/idp/metadata.php">
+        </MetadataProvider>
 
         <!-- Example of remotely supplied batch of signed metadata. -->
         <!--
         <MetadataProvider type="XML" validate="true"
-	            url="http://federation.org/federation-metadata.xml"
+                url="http://federation.org/federation-metadata.xml"
               backingFilePath="federation-metadata.xml" maxRefreshDelay="7200">
             <MetadataFilter type="RequireValidUntil" maxValidityInterval="2419200"/>
             <MetadataFilter type="Signature" certificate="fedsigner.pem" verifyBackup="false"/>
-            <DiscoveryFilter type="Blacklist" matcher="EntityAttributes" trimTags="true" 
+            <DiscoveryFilter type="Blacklist" matcher="EntityAttributes" trimTags="true"
               attributeName="http://macedir.org/entity-category"
               attributeNameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"
               attributeValue="http://refeds.org/category/hide-from-discovery" />
@@ -104,7 +99,7 @@
         <!-- Example of remotely supplied "on-demand" signed metadata. -->
         <!--
         <MetadataProvider type="MDQ" validate="true" cacheDirectory="mdq"
-	            baseUrl="http://mdq.federation.org" ignoreTransport="true">
+                baseUrl="http://mdq.federation.org" ignoreTransport="true">
             <MetadataFilter type="RequireValidUntil" maxValidityInterval="2419200"/>
             <MetadataFilter type="Signature" certificate="mdqsigner.pem" />
         </MetadataProvider>
@@ -117,13 +112,15 @@
         <AttributeFilter type="XML" validate="true" path="attribute-policy.xml"/>
 
         <!-- Simple file-based resolvers for separate signing/encryption keys. -->
+        <!--
         <CredentialResolver type="File" use="signing"
-            key="server.key" certificate="server.crt"/>
+            key="shibboleth-common.key" certificate="shibboleth-common.cer"/>
         <CredentialResolver type="File" use="encryption"
-            key="server.key" certificate="server.crt"/>
-        
+            key="shibboleth-common.key" certificate="shibboleth-common.cer"/>
+        -->
+        <CredentialResolver type="File" key="server.key" certificate="server.crt"/>
     </ApplicationDefaults>
-    
+
     <!-- Policies that determine how to process and authenticate runtime messages. -->
     <SecurityPolicyProvider type="XML" validate="true" path="security-policy.xml"/>
 
