@@ -8,7 +8,6 @@
 """Module of weko-swordserver."""
 
 import os
-import sys
 import tempfile
 import traceback
 from copy import deepcopy
@@ -17,14 +16,12 @@ from dateutil import parser
 from hashlib import sha256
 from zipfile import ZipFile
 
-from flask import current_app
-from invenio_oauth2server.models import Token
+from flask import current_app, request
 
 from .api import SwordClient, SwordItemTypeMapping
 from .errors import WekoSwordserverException, ErrorType
-from .decorators import check_digest
 
-@check_digest()
+
 def check_import_file_format(file, packaging):
     """Check inport file format.
 
@@ -79,7 +76,7 @@ def unpack_zip(file):
     data_path = (
         tempfile.gettempdir()
         + "/"
-        + current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
+        + current_app.config.get("WEKO_SEARCH_UI_IMPORT_TMP_PREFIX")
         + datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     )
 
@@ -88,7 +85,7 @@ def unpack_zip(file):
 
     # Extract zip file, Extracted files remain.
     with ZipFile(file) as zip_ref:
-        file_list =  zip_ref.namelist()
+        file_list = []
         for info in zip_ref.infolist():
             try:
                 info.filename = (
@@ -96,9 +93,10 @@ def unpack_zip(file):
                 # replace backslash to slash
                 if os.sep != "/" and os.sep in info.filename:
                     info.filename = info.filename.replace(os.sep, "/")
-            except Exception as ex:
-                traceback.print_exc(file=sys.stdout)
-            zip_ref.extract(info, path=data_path)
+                file_list.append(info.filename)
+            except Exception:
+                traceback.print_exc()
+        zip_ref.extractall(path=data_path)
 
     return data_path, file_list
 
@@ -131,23 +129,17 @@ def is_valid_body_hash(digest, body):
     return result
 
 
-def get_record_by_token(access_token):
-    """Get mapping by token.
-
-    Get mapping for RO-Crate matadata by access token.
+def get_record_by_client_id(client_id):
+    """
+    Get the SwordClient and SwordItemTypeMapping records associated with client ID.
 
     Args:
-        access_token (str): Access token.
+        client_id (str): The ID of the client to get the settings records for.
 
     Returns:
-        SwordItemTypeMapping: Mapping for RO-Crate matadata.
+        tuple (SwordClientModel, SwordItemTypeMappingModel): A tuple containing the SwordClient object and the SwordItemTypeMapping object.
+               If the client or mapping is not found, the corresponding value in the tuple will be None.
     """
-    token = Token.query.filter_by(access_token=access_token).first()
-    if token is None:
-        current_app.logger.error(f"Accesstoken not found.")
-        raise Exception("Accesstoken not found.")
-
-    client_id = token.client_id
     sword_client = SwordClient.get_client_by_id(client_id)
 
     mapping_id = sword_client.mapping_id if sword_client is not None else None
