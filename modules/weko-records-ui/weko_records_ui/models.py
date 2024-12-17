@@ -297,30 +297,6 @@ class DownloadMixin:
         This mixin class is specifically designed for managing URL-related
         downloads, particularly one-time URLs and secret URLs.
     """
-    @classmethod
-    def create(cls, **data):
-        """Create a new instance and save it to the database.
-        
-        Args:
-            **data: The attributes for the new instance.
-        
-        Returns:
-            object: The created instance, or None if an error occurred.
-
-        Raises:
-            Exception: If the database commit fails, the transaction is rolled
-            back and the exception is re-raised.
-        """
-        try:
-            file_download = cls(**data)
-            db.session.add(file_download)
-            db.session.commit()
-            return file_download
-        except Exception as ex:
-            db.session.rollback()
-            current_app.logger.error(ex)
-            return None
-
 
     def increment_download_count(self):
         """Increment the 'download_count' attribute by 1 and commit the change.
@@ -332,19 +308,23 @@ class DownloadMixin:
             self: The updated instance with 'download_count' incremented.
 
         Raises:
+            ValueError: If the download count has already reached the limit.
             Exception: If the database commit fails, the transaction is rolled
             back and the exception is re-raised.
         """
-        try:
-            self.download_count += 1
-            db.session.commit()
-            return self
-        except Exception as ex:
-            db.session.rollback()
-            current_app.logger.error(ex)
-            raise ex
+        if self.download_count >= self.download_limit:
+            raise ValueError('Download limit has been reached.')
+        else:
+            try:
+                self.download_count += 1
+                db.session.commit()
+                return self
+            except Exception as ex:
+                db.session.rollback()
+                current_app.logger.error(ex)
+                raise ex
 
-    def delete_logicaly(self):
+    def delete_logically(self):
         """Execute logical deletion by setting the 'is_deleted' flag to True.
 
         This marks the record as deleted without removing it from the database.
@@ -390,7 +370,7 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
     """
     __tablename__   = 'file_onetime_download'
     id              = db.Column(db.Integer,primary_key=True,autoincrement=True)
-    creator_id      = db.Column(
+    approver_id      = db.Column(
                         db.Integer,
                         db.ForeignKey(
                             'accounts_user.id',
@@ -443,6 +423,30 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
         self.user_mail       = user_mail
         self.is_guest        = is_guest
         self.extra_info      = extra_info
+
+    @classmethod
+    def create(cls, **data):
+        """Create a new instance and save it to the database.
+        
+        Args:
+            **data: The attributes for the new instance.
+        
+        Returns:
+            FileOnetimeDownload: The created instance, or None if an error occurred.
+
+        Raises:
+            Exception: If the database commit fails, the transaction is rolled
+            back and the exception is re-raised.
+        """
+        try:
+            file_download = cls(**data)
+            db.session.add(file_download)
+            db.session.commit()
+            return file_download
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            return None
 
     @classmethod
     def update_download(cls, **data):
@@ -503,6 +507,30 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
             now() < cls.created  + func.cast( concat( cls.expiration_date , ' days' ) , INTERVAL)
         )
         return query.order_by(desc(cls.id)).all()
+
+    def update_extra_info(self, new_info: dict):
+        """Update the 'extra_info' field with the provided new data.
+
+        Args:
+            new_info (dict): A dictionary containing the new info to update.
+
+        Returns:
+            self: The updated instance with the new 'extra_info'.
+
+        Raises:
+            Exception: If the database commit fails, the transaction is rolled
+            back and the exception is re-raised.
+        """
+        try:
+            if not self.extra_info:
+                self.extra_info = {}
+            self.extra_info.update(new_info)
+            db.session.commit()
+            return self
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            raise ex
 
 
 class FileSecretDownload(db.Model, Timestamp, DownloadMixin):
@@ -565,6 +593,20 @@ class FileSecretDownload(db.Model, Timestamp, DownloadMixin):
         self.expiration_date = expiration_date
         self.download_limit = download_limit
 
+    @classmethod
+    def create(cls, **data):
+        """Create a new instance and save it to the database.
+        
+        Args:
+            **data: The attributes for the new instance.
+        
+        Returns:
+            object: The created instance, or None if an error occurred.
+
+        Raises:
+            Exception: If the database commit fails, the transaction is rolled
+            back and the exception is re-raised.
+        """
 
     @classmethod
     def update_download(cls, **data):
