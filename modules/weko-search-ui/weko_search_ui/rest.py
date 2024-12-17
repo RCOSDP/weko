@@ -57,6 +57,7 @@ from invenio_rest.views import create_api_errorhandler
 from webargs import fields
 from webargs.flaskparser import use_kwargs
 from weko_admin.models import SearchManagement as sm
+from weko_admin.utils import get_facet_search_query
 from werkzeug.http import generate_etag
 from werkzeug.exceptions import NotFound
 from weko_index_tree.api import Indexes
@@ -639,7 +640,6 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
             search._sort = sort_query
 
             # Facet Setting
-            from weko_admin.utils import get_facet_search_query
             facets = get_facet_search_query(has_permission=False)
             search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
             aggs = facets.get(search_index, {}).get('aggs', {})
@@ -789,7 +789,8 @@ class IndexSearchResultList(ContentNegotiatedMethodView):
             item_type_ids = [x.item_type_id for x in mapping]
             item_types = ItemTypes.get_records(item_type_ids)
             additional_params = {
-                'itemtype': ','.join([x.model.item_type_name.name for x in item_types])
+                'itemtype': ','.join([x.model.item_type_name.name for x in item_types]),
+                'exact_title_match': request.args.get('exact_title_match') == 'true'
             }
 
             # Query Generate

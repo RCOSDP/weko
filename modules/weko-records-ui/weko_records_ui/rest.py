@@ -45,6 +45,7 @@ from invenio_stats.views import QueryRecordViewCount, QueryFileStatsCount
 from sqlalchemy.exc import SQLAlchemyError
 from weko_deposit.api import WekoRecord
 from weko_records.serializers import citeproc_v1
+from weko_records.api import RequestMailList
 from weko_records_ui.api import create_captcha_image, send_request_mail, validate_captcha_answer
 from weko_items_ui.scopes import item_read_scope
 from weko_workflow.utils import  check_pretty
@@ -368,7 +369,6 @@ class WekoRecordsResource(ContentNegotiatedMethodView):
             indent = 4 if request.args.get('pretty') == 'true' else None
 
             # Check presence of requestmail address
-            from weko_records.api import RequestMailList
             mail = RequestMailList.get_mail_list_by_item_id(pid.object_uuid)
             metadata = self._convert_metadata(record, language)
             metadata['hasRequestmailAddress'] = len(mail) > 0
