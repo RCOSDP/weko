@@ -35,14 +35,13 @@ class WekoSwordMapper(JsonMapper):
         item_map = self._create_item_map()
         metadata = self._create_metadata(item_map)
 
-        # resourcetype.Type Setting
-        if "resourcetype.Type" in item_map:
-            item_path = item_map["resourcetype.Type"]
-            item_paths = item_path.split(".")
-            metadata[item_paths[0]] = {}
-            metadata[item_paths[0]][item_paths[1]] = "dataset"
+        files_info = []
+        for k, v in self.itemtype.schema.get("properties").items():
+            if v.get("title") == "File":
+                files_info.append({"key": k, "items": metadata.get(k)})
+        files_info = {"files_info": files_info}
 
-        res = {**res, **metadata}
+        res = {**res, **files_info, **metadata}
         return res
 
 
@@ -72,10 +71,15 @@ class WekoSwordMapper(JsonMapper):
         """Get json value.
 
         If the value got from self.json is in list, the result is list.
-        If the value got from self.json is in multiple dimensions, the result is multi dimension list.
+        If the value got from self.json is in multiple dimensions, the result
+        is multi dimension list.
 
-        e.g.
-            {
+        Examples:
+
+        1. If the value of json_map_key includes single [] like below, the
+           result is one dimension list.
+
+            "example_key_1": {
                 "key_arr": [
                     {
                         "key_val": "value1"
@@ -86,9 +90,13 @@ class WekoSwordMapper(JsonMapper):
                 ],
             }
 
-            result --> ["value1", "value2"]
+            _get_json_metadata_value("example_key_1") -> ["value1", "value2"]
 
-            {
+
+        2. If the value of json_map_key includes double [] like below, the
+           result is two dimension list.
+
+            "example_key_2": {
                 "key_arr1": [
                     {
                         "key_arr2": [
@@ -113,7 +121,9 @@ class WekoSwordMapper(JsonMapper):
                 ]
             }
 
-            result --> [["value1", "value2"], ["value3", "value4"]]
+            _get_json_metadata_value("example_key_2")
+                -> [["value1", "value2"], ["value3", "value4"]]
+
 
         Args:
             json_map_key (str): Path of ProcessedJson get from json_map

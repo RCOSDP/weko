@@ -53,10 +53,9 @@ class SwordItemTypeMapping():
         Raises:
             SQLAlchemyError: An error occurred while creating the mapping.
         """
-        mapping = json.dumps(mapping or {})
         obj = SwordItemTypeMappingModel(
             name=name,
-            mapping=mapping,
+            mapping=mapping or {},
             item_type_id=item_type_id,
         )
 
@@ -100,9 +99,7 @@ class SwordItemTypeMapping():
                 "Mapping not defined.", errorType=ErrorType.MappingNotDefined)
 
         obj.name = name if name is not None else obj.name
-        obj.mapping = json.dumps(
-            mapping if mapping is not None else obj.mapping
-        )
+        obj.mapping = mapping if mapping is not None else obj.mapping
         obj.item_type_id = (
             item_type_id if item_type_id is not None else obj.item_type_id
         )

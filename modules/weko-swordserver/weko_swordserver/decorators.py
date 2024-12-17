@@ -128,7 +128,7 @@ def check_digest():
 
             if current_app.config['WEKO_SWORDSERVER_DIGEST_VERIFICATION']:
                 if (
-                    (file_format or result) in ["SWORD", "ROCRATE"]
+                    (file_format or result) in ["JSON"]
                     and (digest is None or not is_valid_bodyhash)
                 ):
                     raise WekoSwordserverException(

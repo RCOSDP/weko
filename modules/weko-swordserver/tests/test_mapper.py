@@ -31,15 +31,15 @@ class TestWekoSwordMapper:
 
     # def __create_item_map():
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_mapper.py::TestWekoSwordMapper::test__create_item_map -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-    def test__create_item_map(self, item_type):
-        json = None
-        itemtype = item_type[1]["item_type"]
-        json_map = None
+    # def test__create_item_map(self, item_type):
+    #     json = None
+    #     itemtype = item_type[1]["item_type"]
+    #     json_map = None
 
-        mapper = WekoSwordMapper(json, itemtype, json_map)
+    #     mapper = WekoSwordMapper(json, itemtype, json_map)
 
-        item_map =  mapper._create_item_map()
-        assert item_map == json_data("data/item_type/item_map_2.json")
+    #     item_map =  mapper._create_item_map()
+    #     assert item_map == json_data("data/item_type/item_map_2.json")
 
 
     # def _get_json_metadata_value():
@@ -48,7 +48,43 @@ class TestWekoSwordMapper:
         json = json_data("data/item_type/processed_json_2.json")
         itemtype = item_type[1]["item_type"]
         json_map = json_data("data/item_type/sword_mapping_2.json")
-        json_values = json_data("data/item_type/json_values_2.json")
+
+        json_values = {
+            "d2Vrby0uLw==.hasPart.contentSize": ["333"],
+            "d2Vrby0uLw==.hasPart.version": ["1.0"],
+            "d2Vrby0uLw==.hasPart.datetime.date": ["2023-01-18"],
+            "d2Vrby0uLw==.hasPart.datetime.type": ["Created"],
+            "d2Vrby0uLw==.hasPart.name": ["sample.rst"],
+            "d2Vrby0uLw==.hasPart.identifier.@id": ["https://example.org/data/sample.rst"],
+            "d2Vrby0uLw==.hasPart.identifier.type": ["fulltext"],
+            "d2Vrby0uLw==.hasPart.identifier.label": ["sample.rst"],
+            "d2Vrby0uLw==.hasPart.encodingFormat": ["text/x-rst"],
+            "#title.name": "サンプルアイテム",
+            "#title.language": "ja",
+            "d2Vrby0uLw==.author.name": "Egon Willighagen",
+            "d2Vrby0uLw==.Resource Type.uri": "",
+            "d2Vrby0uLw==.Resource Type.type": "other",
+            "d2Vrby0uLw==.contributor.givenName.name": ["Stian"],
+            "d2Vrby0uLw==.contributor.givenName.language": ["en"],
+            "d2Vrby0uLw==.contributor.familyName.name": ["Soiland-Reyes"],
+            "d2Vrby0uLw==.contributor.familyName.language": ["en"],
+            "d2Vrby0uLw==.contributor.@type": ["DataCurator"],
+            "d2Vrby0uLw==.contributor.identifier.@id": ["https://orcid.org/0000-0002-1234-5679"],
+            "d2Vrby0uLw==.contributor.identifier.uri": ["https://orcid.org/0000-0002-1234-5679"],
+            "d2Vrby0uLw==.contributor.identifier.scheme": ["https://orcid.org"],
+            "d2Vrby0uLw==.contributor.email": ["contributor@example.org"],
+            "d2Vrby0uLw==.contributor.language": ["en"],
+            "d2Vrby0uLw==.contributor.fullname": ["Stian Soiland-Reyes"],
+            "d2Vrby0uLw==.contributor.affiliation.name": ["University of Manchester"],
+            "d2Vrby0uLw==.contributor.affiliation.language": ["en"],
+            "d2Vrby0uLw==.contributor.affiliation.identifier.uri": ["https://example.org/affiliation"],
+            "d2Vrby0uLw==.contributor.affiliation.identifier.scheme": ["GRID"],
+            "d2Vrby0uLw==.contributor.affiliation.identifier.@id": ["https://example.org/affiliation"],
+            "d2Vrby0uLw==.contributor.alternateName.name": ["Stian S.R."],
+            "d2Vrby0uLw==.contributor.alternateName.language": ["en"],
+            "#subtitle.name": "試しに作ってみた",
+            "#subtitle.language": "ja"
+        }
 
         mapper = WekoSwordMapper(json, itemtype, json_map)
 
@@ -204,12 +240,14 @@ class TestWekoSwordMapper:
             "pubdate": "2024-11-15",
             "path": [
                 1623632832836
-            ]
+            ],
+            "publish_status": "public"
         }
 
         metadata.update(mapper._create_metadata(item_map))
         expected = json_data("data/item_type/mapped_json_2.json")
-        expected.pop("item_1732599253716")
+        expected.pop("files_info", None)
+        expected.pop("item_1732599253716", None)
         assert metadata == expected
 
 

@@ -29,9 +29,10 @@ from invenio_db import db
 from invenio_oaiserver.api import OaiIdentify
 from weko_workflow.utils import get_site_info_name
 
+from .api import SwordClient, SwordItemTypeMapping
 from .decorators import check_on_behalf_of, check_package_contents
 from .errors import ErrorType, WekoSwordserverException
-from .utils import check_import_file_format
+from .utils import check_import_file_format, is_valid_body_hash
 from .registration import (
     check_bagit_import_items,
     check_import_items as check_others_import_items
@@ -210,14 +211,27 @@ def post_service_document():
 
     packaging = request.headers.get("Packaging").split("/")[-1]
     # check digest and file format
-    file_format = check_import_file_format(file=file, packaging=packaging)
+    digest = request.headers.get("Digest")
+    file_format = check_import_file_format(file, packaging)
     if file_format == "JSON":
+        is_valid_bodyhash = is_valid_body_hash(digest, file)
+        if (
+            current_app.config['WEKO_SWORDSERVER_DIGEST_VERIFICATION']
+            and (digest is None or not is_valid_bodyhash)
+        ):
+            raise WekoSwordserverException(
+                "Request body and digest verification failed.",
+                ErrorType.DigestMismatch
+                )
 
         check_result = check_bagit_import_items(file, packaging)
         register_format = check_result.get("register_format")
 
     else:
         check_result, file_format = check_others_import_items(file, False)
+    data_path = check_result.get("data_path","")
+    expire = datetime.now() + timedelta(days=1)
+    TempDirInfo().set(data_path, {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")})
 
     item = (
         check_result.get("list_record")[0]
@@ -240,9 +254,6 @@ def post_service_document():
     if item.get("status") != "new":
         raise WekoSwordserverException("This item is already registered: {0]".format(item.get("item_title")), ErrorType.BadRequest)
 
-    data_path = check_result.get("data_path","")
-    expire = datetime.now() + timedelta(days=1)
-    TempDirInfo().set(data_path, {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")})
     item["root_path"] = data_path+"/data"
 
     # import item
