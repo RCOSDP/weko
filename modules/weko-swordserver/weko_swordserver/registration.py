@@ -14,6 +14,7 @@ import json
 import traceback
 from flask import current_app, request
 from zipfile import BadZipFile
+from sqlalchemy.exc import SQLAlchemyError
 
 from invenio_accounts.models import User
 from invenio_oauth2server.models import Token
@@ -87,26 +88,35 @@ def check_bagit_import_items(file, packaging):
     check_result = {}
 
     shared_id = None
-    # parse On-Behalf-Of
-    if "On-Behalf-Of" in request.headers:
-        # get weko user id from email
-        on_behalf_of = request.headers.get("On-Behalf-Of")
-        user = User.query.filter_by(email=on_behalf_of).one_or_none()
-        shared_id = user.id if user is not None else None
-        if shared_id is None:
-            # get weko user id from personal access token
-            token = (
-                Token.query
-                .filter_by(access_token=on_behalf_of).one_or_none()
-            )
-            shared_id = token.user_id if token is not None else None
-        if shared_id is None:
-            # get weko user id from shibboleth user eppn
-            shib_user = (
-                ShibbolethUser.query
-                .filter_by(shib_eppn=on_behalf_of).one_or_none()
-            )
-            shared_id = shib_user.weko_uid if shib_user is not None else None
+    try:
+        # parse On-Behalf-Of
+        if "On-Behalf-Of" in request.headers:
+            # get weko user id from email
+            on_behalf_of = request.headers.get("On-Behalf-Of")
+            user = User.query.filter_by(email=on_behalf_of).one_or_none()
+            shared_id = user.id if user is not None else None
+            if shared_id is None:
+                # get weko user id from personal access token
+                token = (
+                    Token.query
+                    .filter_by(access_token=on_behalf_of).one_or_none()
+                )
+                shared_id = token.user_id if token is not None else None
+            if shared_id is None:
+                # get weko user id from shibboleth user eppn
+                shib_user = (
+                    ShibbolethUser.query
+                    .filter_by(shib_eppn=on_behalf_of).one_or_none()
+                )
+                shared_id = shib_user.weko_uid if shib_user is not None else None
+    except SQLAlchemyError as ex:
+        current_app.logger.error(
+            "Somthing went wrong while searching user by On-Behalf-Of.")
+        traceback.print_exc()
+        raise WekoSwordserverException(
+            "An error occurred while searching user by On-Behalf-Of.",
+            errorType=ErrorType.ServerError
+        )
 
     if isinstance(file, str):
         filename = os.path.basename(file)
@@ -117,7 +127,7 @@ def check_bagit_import_items(file, packaging):
         data_path, files_list = unpack_zip(file)
         check_result.update({"data_path": data_path})
 
-        # get json file name
+        # metadata json file name
         json_name = (
             current_app.config['WEKO_SWORDSERVER_METADATA_FILE_SWORD']
                 if packaging == "SWORDBagIt"
@@ -140,7 +150,7 @@ def check_bagit_import_items(file, packaging):
         # Check workflow and item type
         register_format = sword_client.registration_type
         if register_format == "Workflow":
-            workflow = WorkFlow.get_workflow_by_id(sword_client.workflow_id)
+            workflow = WorkFlow().get_workflow_by_id(sword_client.workflow_id)
             if workflow is None or workflow.is_deleted:
                 current_app.logger.error(f"Workflow not found for sword client.")
                 raise WekoSwordserverException(
