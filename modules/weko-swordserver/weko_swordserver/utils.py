@@ -38,8 +38,10 @@ def check_import_file_format(file, packaging):
     Returns:
         str: Import file format
     """
+    with ZipFile(file, "r") as zip_ref:
+        file_list =  zip_ref.namelist()
+
     if "SWORDBagIt" in packaging:
-        file_list = get_file_list_of_zip(file)
         if "metadata/sword.json" in file_list:
             file_format = "JSON"
         else:
@@ -48,7 +50,6 @@ def check_import_file_format(file, packaging):
                 ErrorType.MetadataFormatNotAcceptable
                 )
     elif "SimpleZip" in packaging:
-        file_list = get_file_list_of_zip(file)
         if "ro-crate-metadata.json" in file_list:
             file_format = "JSON"
         else:
@@ -60,21 +61,6 @@ def check_import_file_format(file, packaging):
             )
 
     return file_format
-
-
-def get_file_list_of_zip(file):
-    """Get file list of zip.
-
-    Args:
-        file (_type_): Zip file.
-
-    Returns:
-        list: File list
-    """
-    with ZipFile(file, "r") as zip_ref:
-        file_list =  zip_ref.namelist()
-
-    return file_list
 
 
 def unpack_zip(file):
