@@ -255,9 +255,10 @@ def get_user_roles():
 def get_user_groups():
     """Get user groups."""
     grps = []
-    groups = Group.query_by_user(current_user, eager=False)
-    for group in groups:
-        grps.append(group.id)
+    if current_user:
+        groups = Group.query_by_user(current_user, eager=False)
+        for group in groups:
+            grps.append(group.id)
 
     return grps
 
@@ -268,7 +269,7 @@ def check_roles(user_role, roles):
     if isinstance(roles, str):
         roles = roles.split(',')
     if not user_role[0]:
-        if current_user.is_authenticated:
+        if current_user and current_user.is_authenticated:
             role = [x for x in (user_role[1] or ['-98'])
                     if str(x) in (roles or [])]
             if not role and (user_role[1] or "-98" not in roles):
@@ -281,7 +282,7 @@ def check_roles(user_role, roles):
 def check_groups(user_group, groups):
     """Check groups."""
     is_can = False
-    if current_user.is_authenticated:
+    if current_user and current_user.is_authenticated:
         group = [x for x in user_group if str(x) in (groups or [])]
         if group:
             is_can = True
