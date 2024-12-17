@@ -32,7 +32,7 @@ from weko_workflow.utils import get_site_info_name
 from .api import SwordClient, SwordItemTypeMapping
 from .decorators import check_on_behalf_of, check_package_contents
 from .errors import ErrorType, WekoSwordserverException
-from .utils import check_import_file_format, is_valid_body_hash
+from .utils import check_import_file_format, is_valid_file_hash
 from .registration import (
     check_bagit_import_items,
     check_import_items as check_others_import_items
@@ -209,19 +209,21 @@ def post_service_document():
             f"Not found {filename} in request body.", ErrorType.BadRequest
         )
 
+    # pick end of packaging, "SimpleZip" or "SWORDBagIt"
     packaging = request.headers.get("Packaging").split("/")[-1]
-    # check digest and file format
-    digest = request.headers.get("Digest")
     file_format = check_import_file_format(file, packaging)
+
     if file_format == "JSON":
-        is_valid_bodyhash = is_valid_body_hash(digest, file)
-        if (
-            current_app.config['WEKO_SWORDSERVER_DIGEST_VERIFICATION']
-            and (digest is None or not is_valid_bodyhash)
-        ):
-            raise WekoSwordserverException(
-                "Request body and digest verification failed.",
-                ErrorType.DigestMismatch
+        digest = request.headers.get("Digest")
+        if current_app.config['WEKO_SWORDSERVER_DIGEST_VERIFICATION']:
+            if (
+                digest is None
+                or not digest.startswith("SHA-256=")
+                or not is_valid_file_hash(digest.split("SHA-256=")[-1], file)
+            ):
+                raise WekoSwordserverException(
+                    "Request body and digest verification failed.",
+                    ErrorType.DigestMismatch
                 )
 
         check_result = check_bagit_import_items(file, packaging)

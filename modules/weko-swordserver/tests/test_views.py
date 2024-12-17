@@ -124,7 +124,7 @@ def test_post_service_document_json_ld(app,client,db,users,esindex,location,inde
     token_workflow = tokens[1]["token"].access_token
 
     # Digest VERIFICATION ON
-    app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = False
+    app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = True
 
     # Direct registration
     url = url_for("weko_swordserver.post_service_document")
@@ -137,8 +137,8 @@ def test_post_service_document_json_ld(app,client,db,users,esindex,location,inde
         "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
         "Digest":"SHA-256={}".format(calculate_hash(storage))
     }
-    print("")
-    print("Direct registration")
+    # print("")
+    # print("Direct registration")
     with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
         with patch("weko_swordserver.registration.bagit.Bag.validate"):
             res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
@@ -155,8 +155,10 @@ def test_post_service_document_json_ld(app,client,db,users,esindex,location,inde
     sleep(1)
 
     # invalid hash and be rejected
+    app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = True
     zip = make_crate()
     storage = FileStorage(filename="payload.zip",stream=zip)
+    mapped_json = json_data("data/item_type/mapped_json_2.json")
     headers = {
         "Authorization":"Bearer {}".format(token_direct),
         "Content-Disposition":"attachment; filename=payload.zip",
@@ -182,6 +184,34 @@ def test_post_service_document_json_ld(app,client,db,users,esindex,location,inde
 
     # invalid Content-Length and be rejected
     app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = True
+
+    # print("Workflow registration")
+    login_user_via_session(client=client,email=users[1]["email"])
+    app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = False
+    # mocker.patch("weko_swordserver.views._get_status_workflow_document",side_effect=lambda a,x:{"activity":a.id,"recid":x})
+
+    # login_user_via_session(client=client,email=users[1]["email"])
+    zip = make_crate()
+    storage = FileStorage(filename="payload.zip",stream=zip)
+    headers = {
+        "Authorization":"Bearer {}".format(token_workflow),
+        "Content-Disposition":"attachment; filename=payload.zip",
+        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
+        "Digest":"SHA-256={}".format(calculate_hash(storage))
+    }
+    mapped_json = json_data("data/item_type/mapped_json_2.json")
+    with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+        with patch("weko_swordserver.registration.bagit.Bag.validate"):
+            res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
+        assert res.status_code == 200
+        recid = json.loads(res.data)["recid"]
+        recid = PersistentIdentifier.get("recid",recid)
+        record = RecordMetadata.query.filter_by(id=recid.object_uuid).one_or_none()
+        assert record is not None
+        record = record.json
+        file_metadata = record["item_1617604990215"]["attribute_value_mlt"][0]
+        assert file_metadata.get("url") is not None
+        # assert file_metadata.get("url").get("url") == f"https://localhost/record/{recid.id}/files/sample.rst"
 
 
 # def get_status_document(recid):

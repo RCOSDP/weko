@@ -227,32 +227,60 @@ def db(app):
 
 @pytest.fixture
 def tokens(app,users,db):
-    tokens = []
-    for user in users:
-        user_id = str(user["id"])
-        test_client = Client(
-            client_id=f"dev{user_id}",
-            client_secret=f"dev{user_id}",
-            name="Test name",
-            description="test description",
-            is_confidential=False,
-            user_id=user_id,
-            _default_scopes="deposit:write"
-        )
-        test_token = Token(
-            client=test_client,
-            user_id=user_id,
-            token_type="bearer",
-            access_token=jwt_create_token(user_id=user_id),
-            expires=datetime.now() + timedelta(hours=10),
-            is_personal=False,
-            is_internal=True,
-            _scopes="deposit:write"
-        )
-        db.session.add(test_client)
-        db.session.add(test_token)
-        tokens.append({"token":test_token, "client":test_client})
+    user = users[0]
+    user_id = str(user["id"])
+    test_client_1 = Client(
+        client_id=f"dev{user_id}",
+        client_secret=f"dev{user_id}",
+        name="Test name",
+        description="test description",
+        is_confidential=False,
+        user_id=user_id,
+        _default_scopes="deposit:write"
+    )
+    test_token_1 = Token(
+        client=test_client_1,
+        user_id=user_id,
+        token_type="bearer",
+        access_token=jwt_create_token(user_id=user_id),
+        expires=datetime.now() + timedelta(hours=10),
+        is_personal=False,
+        is_internal=True,
+        _scopes="deposit:write"
+    )
+
+    user = users[1]
+    user_id = str(user["id"])
+    test_client_2 = Client(
+        client_id=f"dev{user_id}",
+        client_secret=f"dev{user_id}",
+        name="Test name",
+        description="test description",
+        is_confidential=False,
+        user_id=user_id,
+        _default_scopes="deposit:write"
+    )
+    test_token_2 = Token(
+        client=test_client_2,
+        user_id=user_id,
+        token_type="bearer",
+        access_token=jwt_create_token(user_id=user_id),
+        expires=datetime.now() + timedelta(hours=10),
+        is_personal=False,
+        is_internal=True,
+        _scopes="deposit:write user:activity"
+    )
+
+    db.session.add(test_client_1)
+    db.session.add(test_token_1)
+    db.session.add(test_client_2)
+    db.session.add(test_token_2)
     db.session.commit()
+
+    tokens = [
+        {"token":test_token_1, "client":test_client_1},
+        {"token":test_token_2, "client":test_client_2},
+    ]
 
     return tokens
 
@@ -706,7 +734,7 @@ def workflow(app, db, item_type, action_data, users):
     workflow = WorkFlow(
         flows_id=uuid.uuid4(),
         flows_name='test workflow01',
-        itemtype_id=1,
+        itemtype_id=item_type[1]["item_type"].id,
         index_tree_id=None,
         flow_id=1,
         is_deleted=False,
