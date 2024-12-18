@@ -526,14 +526,17 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
             Exception: If the database commit fails, the transaction is rolled
             back and the exception is re-raised.
         """
-        try:
-            self.extra_info = new_info
-            db.session.commit()
-            return self
-        except Exception as ex:
-            db.session.rollback()
-            current_app.logger.error(ex)
-            raise ex
+        if not isinstance(new_info, dict):
+            raise ValueError('The new info must be a dictionary.')
+        else:
+            try:
+                self.extra_info = new_info
+                db.session.commit()
+                return self
+            except Exception as ex:
+                db.session.rollback()
+                current_app.logger.error(ex)
+                raise ex
 
 
 class FileSecretDownload(db.Model, Timestamp, DownloadMixin):
