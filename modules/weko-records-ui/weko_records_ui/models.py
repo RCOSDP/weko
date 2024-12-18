@@ -293,9 +293,14 @@ class DownloadMixin:
     """A mixin class that provides common methods for managing download-related
     functionality.
 
+    This mixin class is specifically designed for managing URL-related
+    downloads, particularly one-time URLs and secret URLs.
+
     Note:
-        This mixin class is specifically designed for managing URL-related
-        downloads, particularly one-time URLs and secret URLs.
+        To use this mixin, the model class must have the following attributes:
+        - download_limit (int): The maximum number of downloads allowed.
+        - download_count (int): The number the URL has been downloaded.
+        - is_deleted (bool): Indicates whether the record is deleted.
     """
 
     def increment_download_count(self):
@@ -376,7 +381,7 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
                             'accounts_user.id',
                             name='fk_file_onetime_download_approver_id'),
                         nullable=False)
-    record_id       = db.Column(db.String(255),nullable=False)
+    record_id       = db.Column(db.String(255), nullable=False)
     file_name       = db.Column(db.String(255), nullable=False)
     expiration_date = db.Column(db.DateTime, nullable=False)
     download_limit  = db.Column(db.Integer, nullable=False)
@@ -432,7 +437,7 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
             **data: The attributes for the new instance.
         
         Returns:
-            FileOnetimeDownload: The created instance, or None if an error occurred.
+            FileOnetimeDownload: The created instance, or None if error occurs.
 
         Raises:
             Exception: If the database commit fails, the transaction is rolled
@@ -601,12 +606,21 @@ class FileSecretDownload(db.Model, Timestamp, DownloadMixin):
             **data: The attributes for the new instance.
         
         Returns:
-            object: The created instance, or None if an error occurred.
+            FileSecretDownload: The created instance, or None if error occurs.
 
         Raises:
             Exception: If the database commit fails, the transaction is rolled
             back and the exception is re-raised.
         """
+        try:
+            file_download = cls(**data)
+            db.session.add(file_download)
+            db.session.commit()
+            return file_download
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            return None
 
     @classmethod
     def update_download(cls, **data):
