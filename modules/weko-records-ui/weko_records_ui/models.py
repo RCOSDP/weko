@@ -527,9 +527,7 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
             back and the exception is re-raised.
         """
         try:
-            if not self.extra_info:
-                self.extra_info = {}
-            self.extra_info.update(new_info)
+            self.extra_info = new_info
             db.session.commit()
             return self
         except Exception as ex:
