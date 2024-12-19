@@ -152,7 +152,7 @@ class WekoSwordMapper(JsonMapper):
                 current_app.logger.error(f"Invalid mapping definition: No value got from {json_key}.")
                 raise WekoSwordserverException(
                     f"No value got from {json_key}. Check the mapping definition.",
-                    errorType=ErrorType.InvalidMappingDefinition
+                    errorType=ErrorType.ServerError
                 )
             # dict in dict: {"json_key": {}}
             elif isinstance(value, dict):
@@ -174,7 +174,7 @@ class WekoSwordMapper(JsonMapper):
                     )
                     raise WekoSwordserverException(
                         f"Value: {value} got from {json_key} but still need to get {json_keys[1:]}. Check the mapping definition.",
-                        errorType=ErrorType.InvalidMappingDefinition
+                        errorType=ErrorType.ServerError
                     )
 
         def _detect_list(json_keys, list_):
@@ -200,7 +200,7 @@ class WekoSwordMapper(JsonMapper):
                     )
                     raise WekoSwordserverException(
                         "List in list not supported. Check your metadata file.",
-                        errorType=ErrorType.InvalidMetadataFile
+                        errorType=ErrorType.ContentMalformed
                     )
                 # value in list: [value, value, ...]
                 else:
@@ -209,7 +209,7 @@ class WekoSwordMapper(JsonMapper):
                     )
                     raise WekoSwordserverException(
                         f"Value: {value} got from list but still need to get {json_keys}. Check the mapping definition.",
-                        errorType=ErrorType.InvalidMappingDefinition
+                        errorType=ErrorType.ServerError
                     )
             return list_result
 
@@ -237,7 +237,7 @@ class WekoSwordMapper(JsonMapper):
                 )
                 raise WekoSwordserverException(
                     f"Value: {value} got from {json_key} but still need to get {json_keys[1:]}. Check the mapping definition.",
-                    errorType=ErrorType.InvalidMappingDefinition
+                    errorType=ErrorType.ServerError
                 )
 
 
@@ -323,7 +323,7 @@ class WekoSwordMapper(JsonMapper):
                 )
                 raise WekoSwordserverException(
                     f"The property in metadata JSON file is nested in arrays more than 2 times compared to the target ItemType. Please check the metadata JSON file.",
-                    errorType=ErrorType.InvalidMetadataFile
+                    errorType=ErrorType.ContentMalformed
                 )
 
         # If num_array_type is bigger than  dim_json_value, only one {} created in array
