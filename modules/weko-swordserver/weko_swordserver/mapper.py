@@ -310,21 +310,14 @@ class WekoSwordMapper(JsonMapper):
         dim_json_value = self._get_dimensions(json_value)
         num_array_type = type_of_item_type_path.count("array")
 
-        # Check if json_value is too many dimensions
-        if dim_json_value > num_array_type:
-            # If json_value is list and dim_json_value - num_array_type == 1, use only first element
-            if dim_json_value - num_array_type == 1:
-                json_value = json_value[0]
-                dim_json_value = self._get_dimensions(json_value)
-            # If json_value is list and dim_json_value - num_array_type > 1, raise error
-            else:
-                current_app.logger.error(
-                    f"Failed to create metadata: {json_value} contains too many dimensions."
-                )
-                raise WekoSwordserverException(
-                    f"The property in metadata JSON file is nested in arrays more than 2 times compared to the target ItemType. Please check the metadata JSON file.",
-                    errorType=ErrorType.ContentMalformed
-                )
+        # If dim_json_value is bigger than num_array_type, pick the first element of json_value until dim_json_value equals to num_array_type
+        executed = False
+        while dim_json_value > num_array_type:
+            if not executed:
+                # TODO: add warning
+                executed = True
+            json_value = json_value[0]
+            dim_json_value = self._get_dimensions(json_value)
 
         # If num_array_type is bigger than  dim_json_value, only one {} created in array
         # then, dicrease diff_array and do the same thing until diff_array is 0
