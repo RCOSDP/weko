@@ -149,11 +149,7 @@ class WekoSwordMapper(JsonMapper):
 
             # No json_key in dict: {"other_key": value}
             if value is None:
-                current_app.logger.error(f"Invalid mapping definition: No value got from {json_key}.")
-                raise WekoSwordserverException(
-                    f"No value got from {json_key}. Check the mapping definition.",
-                    errorType=ErrorType.ServerError
-                )
+                return None
             # dict in dict: {"json_key": {}}
             elif isinstance(value, dict):
                 if len(json_keys) == 1:
@@ -222,7 +218,11 @@ class WekoSwordMapper(JsonMapper):
         # dict in dict: {"json_key": {}}
         elif isinstance(value, dict):
             if len(json_keys) == 1:
-                return value
+                current_app.logger.error("Invalid mapping definition: Value is dict but still need to get more keys.")
+                raise WekoSwordserverException(
+                    "Value is dict but still need to get more keys. Check the mapping definition.",
+                    errorType=ErrorType.ServerError
+                )
             return _detect_dict(json_keys[1:], value)
         # list in dict: {"json_key": []}
         elif isinstance(value, list):
