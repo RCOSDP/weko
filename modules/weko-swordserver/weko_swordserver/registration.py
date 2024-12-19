@@ -18,6 +18,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from invenio_accounts.models import User
 from invenio_oauth2server.models import Token
+
 from weko_accounts.models import ShibbolethUser
 from weko_search_ui.utils import (
     handle_check_and_prepare_index_tree,
@@ -31,7 +32,6 @@ from weko_search_ui.utils import (
     handle_set_change_identifier_flag,
     handle_validate_item_import
 )
-
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkFlow
 from .errors import ErrorType, WekoSwordserverException

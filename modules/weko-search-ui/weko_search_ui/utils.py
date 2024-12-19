@@ -32,7 +32,7 @@ import traceback
 import uuid
 import zipfile
 from collections import Callable, OrderedDict
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import partial, reduce, wraps
 import io
 from io import StringIO
@@ -468,7 +468,7 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
         tempfile.gettempdir()
         + "/"
         + tmp_prefix
-        + datetime.utcnow().strftime(r"%Y%m%d%H%M%S")
+        + datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")[:-3]
     )
     result = {"data_path": data_path}
 
