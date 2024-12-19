@@ -285,10 +285,10 @@ class WekoSwordMapper(JsonMapper):
                 "Some error occurred in the server. Can not create metadata.",
                 errorType=ErrorType.ServerError
             )
-        # Validate last element of type_of_item_type_path
-        if type_of_item_type_path[-1] != "value":
+        # Check if the list ends with 'value' and contains 'value' only once
+        if not (type_of_item_type_path[-1] == "value" and type_of_item_type_path.count("value") == 1):
             current_app.logger.error(
-                "Failed in mapping process: Last element of type_of_item_type_path must be value."
+                "Failed in mapping process: type_of_item_type_path must contain exactly one 'value' element at the end."
             )
             raise WekoSwordserverException(
                 "Some error occurred in the server. Can not create metadata.",
@@ -343,18 +343,8 @@ class WekoSwordMapper(JsonMapper):
             _item_map_key = item_map_keys[0]
             _type = type_of_item_type_path[0]
 
-            # If _type is "value", _type must be the last element of type_of_item_type_path but still have more elements
-            # because the length of type_of_item_type_path is equal to the length of item_map_keys
-            if _type == "value":
-                current_app.logger.error(
-                    f"Faied to create metadata: 'value' must be the last key of type_of_item_type_path but got at first."
-                )
-                raise WekoSwordserverException(
-                    "Some error occurred in the server. Can not create metadata.",
-                    errorType=ErrorType.ServerError
-                )
             # If _type is "object", create nested metadata
-            elif _type == "object":
+            if _type == "object":
                 if not metadata.get(_item_map_key):
                     metadata[_item_map_key] = {}
                 metadata = metadata[_item_map_key]
