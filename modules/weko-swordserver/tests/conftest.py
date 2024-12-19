@@ -227,62 +227,46 @@ def db(app):
 
 @pytest.fixture
 def tokens(app,users,db):
-    user = users[0]
-    user_id = str(user["id"])
-    test_client_1 = Client(
-        client_id=f"dev{user_id}",
-        client_secret=f"dev{user_id}",
-        name="Test name",
-        description="test description",
-        is_confidential=False,
-        user_id=user_id,
-        _default_scopes="deposit:write"
-    )
-    test_token_1 = Token(
-        client=test_client_1,
-        user_id=user_id,
-        token_type="bearer",
-        access_token=jwt_create_token(user_id=user_id),
-        expires=datetime.now() + timedelta(hours=10),
-        is_personal=False,
-        is_internal=True,
-        _scopes="deposit:write"
-    )
+    scopes = [
+        "deposit:write",
+        "deposit:write user:activity",
+        ""
+    ]
+    tokens = []
 
-    user = users[1]
-    user_id = str(user["id"])
-    test_client_2 = Client(
-        client_id=f"dev{user_id}",
-        client_secret=f"dev{user_id}",
-        name="Test name",
-        description="test description",
-        is_confidential=False,
-        user_id=user_id,
-        _default_scopes="deposit:write"
-    )
-    test_token_2 = Token(
-        client=test_client_2,
-        user_id=user_id,
-        token_type="bearer",
-        access_token=jwt_create_token(user_id=user_id),
-        expires=datetime.now() + timedelta(hours=10),
-        is_personal=False,
-        is_internal=True,
-        _scopes="deposit:write user:activity"
-    )
+    for i, scope in enumerate(scopes):
+        user = users[i]
+        user_id = str(user["id"])
 
-    db.session.add(test_client_1)
-    db.session.add(test_token_1)
-    db.session.add(test_client_2)
-    db.session.add(test_token_2)
+        test_client = Client(
+            client_id=f"dev{user_id}",
+            client_secret=f"dev{user_id}",
+            name="Test name",
+            description="test description",
+            is_confidential=False,
+            user_id=user_id,
+            _default_scopes="deposit:write"
+        )
+        test_token = Token(
+            client=test_client,
+            user_id=user_id,
+            token_type="bearer",
+            access_token=jwt_create_token(user_id=user_id),
+            expires=datetime.now() + timedelta(hours=10),
+            is_personal=False,
+            is_internal=True,
+            _scopes=scope
+        )
+
+        db.session.add(test_client)
+        db.session.add(test_token)
+
+        tokens.append({"token":test_token, "client":test_client})
+
     db.session.commit()
 
-    tokens = [
-        {"token":test_token_1, "client":test_client_1},
-        {"token":test_token_2, "client":test_client_2},
-    ]
-
     return tokens
+
 
 @pytest.fixture()
 def users(app, db):
@@ -756,7 +740,7 @@ def workflow(app, db, item_type, action_data, users):
 @pytest.fixture
 def sword_mapping(db, item_type):
     sword_mapping = []
-    for i in range(1, 3):
+    for i in range(1, 4):
         obj = SwordItemTypeMappingModel(
             name=f"test{i}",
             mapping=json_data("data/item_type/sword_mapping_2.json"),
@@ -795,10 +779,21 @@ def sword_client(db, tokens, sword_mapping, workflow):
         mapping_id=sword_mapping[1]["sword_mapping"].id,
         workflow_id=workflow["workflow"].id,
     )
+    client = tokens[2]["client"]
+    sword_client3 = SwordClientModel(
+        client_id=client.client_id,
+        registration_type_id=SwordClientModel.RegistrationType.DIRECT,
+        mapping_id=sword_mapping[0]["sword_mapping"].id,
+    )
 
     with db.session.begin_nested():
         db.session.add(sword_client1)
         db.session.add(sword_client2)
+        db.session.add(sword_client3)
     db.session.commit()
 
-    return [{"sword_client": sword_client1}, {"sword_client": sword_client2}]
+    return [
+        {"sword_client": sword_client1},
+        {"sword_client": sword_client2},
+        {"sword_client": sword_client3}
+        ]

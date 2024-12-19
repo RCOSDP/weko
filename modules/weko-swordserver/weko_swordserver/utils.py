@@ -16,7 +16,7 @@ from dateutil import parser
 from hashlib import sha256
 from zipfile import ZipFile
 
-from flask import current_app, request
+from flask import current_app
 
 from .api import SwordClient, SwordItemTypeMapping
 from .errors import WekoSwordserverException, ErrorType
@@ -77,7 +77,7 @@ def unpack_zip(file):
         tempfile.gettempdir()
         + "/"
         + current_app.config.get("WEKO_SEARCH_UI_IMPORT_TMP_PREFIX")
-        + datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+        + datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")[:-3]
     )
 
     # Create temp dir for import data
