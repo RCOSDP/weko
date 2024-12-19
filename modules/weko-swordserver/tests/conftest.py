@@ -227,9 +227,17 @@ def db(app):
 
 @pytest.fixture
 def tokens(app,users,db):
+    scopes = [
+        "deposit:write",
+        "deposit:write user:activity",
+        ""
+    ]
     tokens = []
-    for user in users:
+
+    for i, scope in enumerate(scopes):
+        user = users[i]
         user_id = str(user["id"])
+
         test_client = Client(
             client_id=f"dev{user_id}",
             client_secret=f"dev{user_id}",
@@ -247,14 +255,18 @@ def tokens(app,users,db):
             expires=datetime.now() + timedelta(hours=10),
             is_personal=False,
             is_internal=True,
-            _scopes="deposit:write"
+            _scopes=scope
         )
+
         db.session.add(test_client)
         db.session.add(test_token)
+
         tokens.append({"token":test_token, "client":test_client})
+
     db.session.commit()
 
     return tokens
+
 
 @pytest.fixture()
 def users(app, db):
@@ -706,7 +718,7 @@ def workflow(app, db, item_type, action_data, users):
     workflow = WorkFlow(
         flows_id=uuid.uuid4(),
         flows_name='test workflow01',
-        itemtype_id=1,
+        itemtype_id=item_type[1]["item_type"].id,
         index_tree_id=None,
         flow_id=1,
         is_deleted=False,
@@ -728,7 +740,7 @@ def workflow(app, db, item_type, action_data, users):
 @pytest.fixture
 def sword_mapping(db, item_type):
     sword_mapping = []
-    for i in range(1, 3):
+    for i in range(1, 4):
         obj = SwordItemTypeMappingModel(
             name=f"test{i}",
             mapping=json_data("data/item_type/sword_mapping_2.json"),
@@ -767,10 +779,21 @@ def sword_client(db, tokens, sword_mapping, workflow):
         mapping_id=sword_mapping[1]["sword_mapping"].id,
         workflow_id=workflow["workflow"].id,
     )
+    client = tokens[2]["client"]
+    sword_client3 = SwordClientModel(
+        client_id=client.client_id,
+        registration_type_id=SwordClientModel.RegistrationType.DIRECT,
+        mapping_id=sword_mapping[0]["sword_mapping"].id,
+    )
 
     with db.session.begin_nested():
         db.session.add(sword_client1)
         db.session.add(sword_client2)
+        db.session.add(sword_client3)
     db.session.commit()
 
-    return [{"sword_client": sword_client1}, {"sword_client": sword_client2}]
+    return [
+        {"sword_client": sword_client1},
+        {"sword_client": sword_client2},
+        {"sword_client": sword_client3}
+        ]

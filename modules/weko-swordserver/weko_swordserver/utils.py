@@ -16,7 +16,7 @@ from dateutil import parser
 from hashlib import sha256
 from zipfile import ZipFile
 
-from flask import current_app, request
+from flask import current_app
 
 from .api import SwordClient, SwordItemTypeMapping
 from .errors import WekoSwordserverException, ErrorType
@@ -26,7 +26,7 @@ def check_import_file_format(file, packaging):
     """Check inport file format.
 
     Args:
-        file (str): Import file
+        file (`FileStorage`): Import file
         packaging (str): Packaging in request header
 
     Raises:
@@ -77,7 +77,7 @@ def unpack_zip(file):
         tempfile.gettempdir()
         + "/"
         + current_app.config.get("WEKO_SEARCH_UI_IMPORT_TMP_PREFIX")
-        + datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+        + datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")[:-3]
     )
 
     # Create temp dir for import data
@@ -101,7 +101,7 @@ def unpack_zip(file):
     return data_path, file_list
 
 
-def is_valid_body_hash(digest, body):
+def is_valid_file_hash(expected_hash, file):
     """Validate body hash.
 
     Validate body hash by comparing to digest in request headers.
@@ -115,18 +115,13 @@ def is_valid_body_hash(digest, body):
     Returns:
         bool: Check result.
     """
-    body.seek(0)
-    sha256_hash = sha256()
-    for byte_block in iter(lambda: body.read(4096), b""):
-        sha256_hash.update(byte_block)
-    body_hash = sha256_hash.hexdigest()
+    file.seek(0)
+    hasher = sha256()
+    for chunk in iter(lambda: file.read(4096), b""):
+        hasher.update(chunk)
+    body_hash = hasher.hexdigest()
 
-    result = False
-    if (digest is not None and "SHA-256=" in digest
-        and digest.split("SHA-256=")[-1] == body_hash):
-        result = True
-
-    return result
+    return expected_hash == body_hash
 
 
 def get_record_by_client_id(client_id):
@@ -163,15 +158,18 @@ def process_json(json_ld):
     """
     json = deepcopy(json_ld)
 
-    # transform list that contains @id to dict in @graph
+    # transform list which contains @id to dict in @graph
     if "@graph" in json and isinstance(json["@graph"], list):
         new_value = {}
         for v in json["@graph"]:
             if isinstance(v, dict) and "@id" in v:
                 new_value[v["@id"]] = v
             else:
-                new_value = value
-                break
+                current_app.logger.error("Invalid json-ld format.")
+                raise WekoSwordserverException(
+                    "Invalid json-ld format.",
+                    ErrorType.InvalidMetadataFormat
+                )
         json["@graph"] = new_value
     # Remove unnecessary keys
     json = json.get("@graph")

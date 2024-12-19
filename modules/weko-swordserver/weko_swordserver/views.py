@@ -9,17 +9,26 @@
 
 from __future__ import absolute_import, print_function
 
+import shutil
 from datetime import datetime, timedelta
 import shutil
 
 import sword3common
 from flask import Blueprint, current_app, jsonify, request, url_for
 from flask_login import current_user
+from sword3common import (
+    ServiceDocument, StatusDocument, constants, Error as sword3commonError
+)
+from sword3common.lib.seamless import SeamlessException
+from werkzeug.http import parse_options_header
+
+from invenio_db import db
 from invenio_deposit.scopes import write_scope
+from invenio_oaiserver.api import OaiIdentify
+from invenio_oauth2server.decorators import require_oauth_scopes
 from invenio_oauth2server.ext import verify_oauth_token_and_set_current_user
 from invenio_oauth2server.provider import oauth2
-from sword3common import ServiceDocument, StatusDocument, constants
-from sword3common.lib.seamless import SeamlessException
+
 from weko_admin.api import TempDirInfo
 from weko_records_ui.utils import get_record_permalink, soft_delete
 from weko_search_ui.utils import check_import_items, import_items_to_system
@@ -32,11 +41,12 @@ from weko_workflow.utils import get_site_info_name
 from .api import SwordClient, SwordItemTypeMapping
 from .decorators import check_on_behalf_of, check_package_contents
 from .errors import ErrorType, WekoSwordserverException
-from .utils import check_import_file_format, is_valid_body_hash
+from .utils import check_import_file_format, is_valid_file_hash
 from .registration import (
     check_bagit_import_items,
     check_import_items as check_others_import_items
 )
+from .utils import check_import_file_format, is_valid_file_hash
 
 
 class SwordState:
@@ -135,7 +145,8 @@ def get_service_document():
 
 
 @blueprint.route("/service-document", methods=["POST"])
-@oauth2.require_oauth(write_scope.id)
+@oauth2.require_oauth()
+@require_oauth_scopes(write_scope.id)
 @check_on_behalf_of()
 @check_package_contents()
 def post_service_document():
@@ -209,19 +220,21 @@ def post_service_document():
             f"Not found {filename} in request body.", ErrorType.BadRequest
         )
 
+    # pick end of packaging, "SimpleZip" or "SWORDBagIt"
     packaging = request.headers.get("Packaging").split("/")[-1]
-    # check digest and file format
-    digest = request.headers.get("Digest")
     file_format = check_import_file_format(file, packaging)
+
     if file_format == "JSON":
-        is_valid_bodyhash = is_valid_body_hash(digest, file)
-        if (
-            current_app.config['WEKO_SWORDSERVER_DIGEST_VERIFICATION']
-            and (digest is None or not is_valid_bodyhash)
-        ):
-            raise WekoSwordserverException(
-                "Request body and digest verification failed.",
-                ErrorType.DigestMismatch
+        digest = request.headers.get("Digest")
+        if current_app.config['WEKO_SWORDSERVER_DIGEST_VERIFICATION']:
+            if (
+                digest is None
+                or not digest.startswith("SHA-256=")
+                or not is_valid_file_hash(digest.split("SHA-256=")[-1], file)
+            ):
+                raise WekoSwordserverException(
+                    "Request body and digest verification failed.",
+                    ErrorType.DigestMismatch
                 )
 
         check_result = check_bagit_import_items(file, packaging)
@@ -436,7 +449,7 @@ def delete_item(recid):
     return ("", 204)
 
 def _create_error_document(type, error):
-    class Error(sword3common.Error):
+    class Error(sword3commonError):
         # fix to timestamp coerce function not defined
         __SEAMLESS_STRUCT__ = {
             "fields": {
