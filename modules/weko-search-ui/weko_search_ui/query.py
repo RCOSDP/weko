@@ -173,7 +173,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                 return
 
             if isinstance(v, str):
-                split_text_list = split_text_by_or(kv)
+                split_text_list = _split_text_by_or(kv)
 
                 if len(split_text_list) == 1:
                     name_dict = dict(operator="and")
@@ -189,13 +189,13 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                     qry = Q("bool", should=should_list, minimum_should_match=1)
 
             elif isinstance(v, list):
-                if k == "title" and isinstance(additional_params, dict) and additional_params.get("exact_title_match"):
+                if k == "title" and params.get("exact_title_match"):
                     should_list = []
                     should_list.append(Q("term", **{"title":kv}))
                     should_list.append(Q("term", **{"alternative":kv}))
                     qry = Q("bool", should=should_list, minimum_should_match=1)
                 else:
-                    split_text_list = split_text_by_or(kv)
+                    split_text_list = _split_text_by_or(kv)
                     if len(split_text_list) == 1:
                         qry = Q(
                             "multi_match",
@@ -337,7 +337,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                                                     Q("term", **{field_name: val_attr_lst[1]})
                                                 ]
 
-                                            split_text_list = split_text_by_or(kv)
+                                            split_text_list = _split_text_by_or(kv)
                                             if len(split_text_list) == 1:
                                                 name = alst[0] + ".value"
                                                 name_dict = dict(operator="and")
@@ -505,7 +505,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                 return
 
             if isinstance(v, str):
-                split_text_list = split_text_by_or(kv)
+                split_text_list = _split_text_by_or(kv)
                 if len(split_text_list) == 1:
                     name_dict = dict(operator="and")
                     name_dict.update(dict(query=kv))
@@ -699,7 +699,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
 
     def _get_file_content_query(qstr):
         """Query for searching indexed file contents."""
-        split_text_list = split_text_by_or(qstr)
+        split_text_list = _split_text_by_or(qstr)
         if len(split_text_list) == 1:
             multi_cont_q = Q(
                 "multi_match",
@@ -1423,7 +1423,7 @@ def feedback_email_search_factory(self, search):
     current_app.logger.debug(json.dumps((search.query()).to_dict()))
     return search
 
-def split_text_by_or(text):
+def _split_text_by_or(text):
     """split text by " OR " or " | "
     :param text: input text
 
@@ -1431,4 +1431,5 @@ def split_text_by_or(text):
     text = text.replace("　", " ")
     pattern = r'(?<= )(?:OR|\|)(?= )'
     split_text_list = re.split(pattern, text)
+    split_text_list = [item.strip() for item in split_text_list]
     return split_text_list

@@ -612,6 +612,10 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
             # Query Generate
             search, qs_kwargs = self.search_factory(self, search, additional_params=additional_params)
 
+            # search only if mapping exists
+            if len(item_type_ids) == 0:
+                search = search.query('match_none')
+
             # Sort Setting
             sort = request.values.get('sort')
             sort_query = []
@@ -795,6 +799,10 @@ class IndexSearchResultList(ContentNegotiatedMethodView):
 
             # Query Generate
             search, qs_kwargs = self.search_factory(self, search, additional_params=additional_params)
+
+            # search only if mapping exists
+            if len(item_type_ids) == 0:
+                search = search.query('match_none')
 
             # Sort Setting
             sort = request.values.get('sort')
