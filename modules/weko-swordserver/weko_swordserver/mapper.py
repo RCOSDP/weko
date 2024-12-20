@@ -354,24 +354,13 @@ class WekoSwordMapper(JsonMapper):
                 # If diff_array is 0, create [{}, {}, ...] in metadata
                 # The number of {} is equal to the length of json_value
                 else:
-                    # If json_value is not list, raise error
-                    if dim_json_value == 0:
-                        current_app.logger.error(
-                            "Failed to create metadata: If diff_array is 0 and dim_json_value is 0, num_array_type must be 0 but got 1"
-                        )
-                        raise WekoSwordserverException(
-                            "Some error occurred in the server. Can not create metadata.",
-                            errorType=ErrorType.ServerError
-                        )
-                    # If json_value is list, create nested metadata for each element of json_value
-                    else:
-                        if not metadata.get(_item_map_key):
-                            metadata[_item_map_key] = [{} for _ in range(len(json_value))]
-                        metadata = metadata[_item_map_key]
+                    if not metadata.get(_item_map_key):
+                        metadata[_item_map_key] = [{} for _ in range(len(json_value))]
+                    metadata = metadata[_item_map_key]
 
-                        # Create nested metadata for each element of json_value
-                        for i in range(len(json_value)):
-                            self._create_child_metadata_of_a_property(diff_array, metadata[i], item_map_keys[1:], type_of_item_type_path[1:], json_value[i])
+                    # Create nested metadata for each element of json_value
+                    for i in range(len(json_value)):
+                        self._create_child_metadata_of_a_property(diff_array, metadata[i], item_map_keys[1:], type_of_item_type_path[1:], json_value[i])
         return
 
 
@@ -420,24 +409,13 @@ class WekoSwordMapper(JsonMapper):
                 # If diff_array is 0, create [{}, {}, ...] in metadata
                 # The number of {} is equal to the length of json_value
                 else:
-                    # If json_value is not list, raise error
-                    if dim_json_value == 0:
-                        current_app.logger.error(
-                            "Failed to create metadata: If diff_array is 0 and dim_json_value is 0, num_array_type must be 0 but got 1."
-                        )
-                        raise WekoSwordserverException(
-                            "Some error occurred in the server. Can not create metadata.",
-                            errorType=ErrorType.ServerError
-                        )
-                    # If json_value is list, create nested metadata for each element of json_value
-                    else:
-                        if not child_metadata.get(_item_map_key):
-                            child_metadata[_item_map_key] = [{} for _ in range(len(json_value))]
-                        child_metadata = child_metadata[_item_map_key]
+                    if not child_metadata.get(_item_map_key):
+                        child_metadata[_item_map_key] = [{} for _ in range(len(json_value))]
+                    child_metadata = child_metadata[_item_map_key]
 
-                        # Create nested metadata for each element of json_value
-                        for i in range(len(json_value)):
-                            self._create_child_metadata_of_a_property(diff_array, child_metadata[i], item_map_keys[1:], type_of_item_type_path[1:], json_value[i])
+                    # Create nested metadata for each element of json_value
+                    for i in range(len(json_value)):
+                        self._create_child_metadata_of_a_property(diff_array, child_metadata[i], item_map_keys[1:], type_of_item_type_path[1:], json_value[i])
         return
 
 
