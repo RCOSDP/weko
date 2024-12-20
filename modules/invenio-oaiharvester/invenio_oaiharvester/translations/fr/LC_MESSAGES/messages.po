@@ -1,0 +1,133 @@
+# French translations for invenio-oaiharvester.
+# Copyright (C) 2019 National Institute of Informatics
+# This file is distributed under the same license as the
+# invenio-oaiharvester project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2019.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: invenio-oaiharvester 1.0.0a4.dev20171205\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2019-06-13 07:47+0000\n"
+"PO-Revision-Date: 2024-12-21 05:10+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.14.0\n"
+
+#: invenio_oaiharvester/admin.py:68
+msgid "Run"
+msgstr ""
+
+#: invenio_oaiharvester/admin.py:71
+msgid "Resume"
+msgstr ""
+
+#: invenio_oaiharvester/admin.py:75
+msgid "Pause"
+msgstr ""
+
+#: invenio_oaiharvester/admin.py:79
+msgid "Clear"
+msgstr ""
+
+#: invenio_oaiharvester/admin.py:172
+msgid "OAI-PMH"
+msgstr ""
+
+#: invenio_oaiharvester/admin.py:173
+msgid "Harvesting"
+msgstr ""
+
+#: invenio_oaiharvester/api.py:181
+msgid "Successful"
+msgstr ""
+
+#: invenio_oaiharvester/api.py:183
+msgid "Suspended"
+msgstr ""
+
+#: invenio_oaiharvester/api.py:185
+msgid "Cancel"
+msgstr ""
+
+#: invenio_oaiharvester/api.py:187
+msgid "Failed"
+msgstr ""
+
+#: invenio_oaiharvester/api.py:189
+msgid "harvester running status"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:29
+msgid "Organization Name"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:34
+msgid "Result"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:44
+msgid "Repository Name"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:49
+msgid "Start Time"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:54
+msgid "End Time"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:59
+msgid "Processed Items"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:64
+msgid "Created Items"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:69
+msgid "Updated Items"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:74
+msgid "Deleted Items"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:79
+msgid "Error Items"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:84
+msgid "Base Url"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:89
+msgid "From Date"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:94
+msgid "Until Date"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:99
+msgid "Set Spec"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:104
+msgid "Metadata Prefix"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:109
+msgid "Target Index.Index Name"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:114
+msgid "Update Style"
+msgstr ""
+

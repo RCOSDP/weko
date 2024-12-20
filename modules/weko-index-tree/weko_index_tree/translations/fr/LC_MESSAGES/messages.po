@@ -1,0 +1,117 @@
+# French translations for weko-index-tree.
+# Copyright (C) 2019 National Institute of Informatics
+# This file is distributed under the same license as the weko-index-tree
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2019.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: weko-index-tree 0.1.0.dev20170000\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2019-07-02 06:08+0000\n"
+"PO-Revision-Date: 2024-12-21 05:19+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.14.0\n"
+
+#: weko_index_tree/admin.py:70
+msgid "The information was updated."
+msgstr ""
+
+#: weko_index_tree/admin.py:137
+msgid "No file part"
+msgstr ""
+
+#: weko_index_tree/admin.py:142
+msgid "No selected file"
+msgstr ""
+
+#: weko_index_tree/admin.py:157 weko_index_tree/admin.py:166
+#: weko_index_tree/admin.py:175
+msgid "Setting"
+msgstr ""
+
+#: weko_index_tree/admin.py:158
+msgid "Index Tree"
+msgstr ""
+
+#: weko_index_tree/admin.py:167
+msgid "Index Link"
+msgstr ""
+
+#: weko_index_tree/admin.py:176
+msgid "Edit Tree"
+msgstr ""
+
+#: weko_index_tree/templates/weko_index_tree/base.html:33
+msgid "Add Logo file..."
+msgstr ""
+
+#: weko_index_tree/templates/weko_index_tree/base.html:38
+msgid "Start upload"
+msgstr ""
+
+msgid "You cannot keep an item private because it has a DOI."
+msgstr ""
+
+msgid "Please wait a moment."
+msgstr ""
+
+msgid "The item cannot be deleted because it has a DOI."
+msgstr ""
+
+msgid ""
+"Since the item has a DOI, it must be associated with an index whose index"
+" status is \"Public\" and whose Harvest Publishing is \"Public\"."
+msgstr ""
+
+msgid ""
+"The index cannot be kept private because there are links from items that "
+"have a DOI."
+msgstr ""
+
+msgid ""
+"Index harvests cannot be kept private because there are links from items "
+"that have a DOI."
+msgstr ""
+
+msgid ""
+"The index cannot be deleted because there is a link from an item that has"
+" a DOI."
+msgstr ""
+
+msgid ""
+"When assigning a DOI to an item, it must be associated with an index "
+"whose index status is \"Public\" and Harvest Publishing is \"Public\"."
+msgstr ""
+
+msgid ""
+"This index cannot be deleted because the item belonging to this index is "
+"being edited by the import function."
+msgstr ""
+
+msgid ""
+"The index cannot be kept publication date to a future date because there "
+"are links from items that have a DOI."
+msgstr ""
+
+msgid "The index cannot be updated becase import is in progress."
+msgstr ""
+
+msgid "The index cannot be deleted becase import is in progress."
+msgstr ""
+
+msgid "The index cannot be moved becase import is in progress."
+msgstr ""
+
+msgid "Index Delete is in progress on another device."
+msgstr ""
+
+msgid "Select an index to move."
+msgstr ""
+

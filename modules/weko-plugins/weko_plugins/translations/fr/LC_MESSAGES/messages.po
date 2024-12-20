@@ -1,0 +1,75 @@
+# French translations for weko-plugins.
+# Copyright (C) 2019 National Institute of Informatics
+# This file is distributed under the same license as the weko-plugins
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2019.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: weko-plugins 0.1.0.dev20170000\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2019-07-02 06:39+0000\n"
+"PO-Revision-Date: 2024-12-21 05:19+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.14.0\n"
+
+#: weko_plugins/admin.py:131
+msgid "Plugins"
+msgstr ""
+
+#: weko_plugins/admin.py:132
+msgid "Plugin List"
+msgstr ""
+
+#: weko_plugins/views.py:41
+msgid "weko-plugins"
+msgstr ""
+
+#: weko_plugins/templates/weko_plugins/index.html:28
+#, python-format
+msgid "Welcome to %(module_name)s"
+msgstr ""
+
+#: weko_plugins/templates/weko_plugins/plugin_setting.html:38
+msgid "Sending"
+msgstr ""
+
+#: weko_plugins/templates/weko_plugins/plugin_setting.html:42
+msgid "Reset"
+msgstr ""
+
+#: weko_plugins/templates/weko_plugins/macros/display_plugin.html:24
+msgid "Name"
+msgstr ""
+
+#: weko_plugins/templates/weko_plugins/macros/display_plugin.html:30
+msgid "Author"
+msgstr ""
+
+#: weko_plugins/templates/weko_plugins/macros/display_plugin.html:36
+msgid "Description"
+msgstr ""
+
+#: weko_plugins/templates/weko_plugins/macros/display_plugin.html:42
+msgid "ID"
+msgstr ""
+
+#: weko_plugins/templates/weko_plugins/macros/display_plugin.html:48
+msgid "Version"
+msgstr ""
+
+#: weko_plugins/templates/weko_plugins/macros/display_plugin.html:54
+msgid "License"
+msgstr ""
+
+#: weko_plugins/templates/weko_plugins/macros/display_plugin.html:64
+#: weko_plugins/templates/weko_plugins/macros/display_plugin.html:67
+msgid "WebSite"
+msgstr ""
+

@@ -1,0 +1,43 @@
+# French translations for weko-items-autofill.
+# Copyright (C) 2019 National Institute of Informatics
+# This file is distributed under the same license as the weko-items-autofill
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2019.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: weko-items-autofill 1.0.0.dev20190000\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2019-07-02 06:17+0000\n"
+"PO-Revision-Date: 2024-12-21 05:19+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.14.0\n"
+
+#. NOTE: This is a note to a translator.
+#: weko_items_autofill/ext.py:25
+msgid "A translation string"
+msgstr ""
+
+#: weko_items_autofill/views.py:42
+msgid "WEKO-Items-Autofill"
+msgstr ""
+
+#: weko_items_autofill/views.py:54
+msgid "Select the ID"
+msgstr ""
+
+#: weko_items_autofill/views.py:88
+msgid "Header Error"
+msgstr ""
+
+#: weko_items_autofill/templates/weko_items_autofill/index.html:12
+#, python-format
+msgid "Welcome to %(module_name)s"
+msgstr ""
+

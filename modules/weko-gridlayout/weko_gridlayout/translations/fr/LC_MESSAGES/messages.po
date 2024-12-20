@@ -1,0 +1,142 @@
+# French translations for weko-gridlayout.
+# Copyright (C) 2020 National Institute of Informatics
+# This file is distributed under the same license as the weko-gridlayout
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: weko-gridlayout 1.0.0.dev20190000\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2020-04-21 15:28+0700\n"
+"PO-Revision-Date: 2024-12-21 05:19+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.14.0\n"
+
+#: weko_gridlayout/admin.py:261 weko_gridlayout/admin.py:318
+msgid "Record does not exist."
+msgstr ""
+
+#: weko_gridlayout/admin.py:349
+#, python-format
+msgid "Record was successfully deleted."
+msgid_plural "%(count)s records were successfully deleted."
+msgstr[0] ""
+msgstr[1] ""
+
+#: weko_gridlayout/admin.py:358
+#, python-format
+msgid "Failed to delete records. %(error)s"
+msgstr ""
+
+#: weko_gridlayout/admin.py:376
+#, python-format
+msgid ""
+"Cannot delete widget (ID: %(widget_id)s, because it's setting in Widget "
+"Design."
+msgstr ""
+
+#: weko_gridlayout/admin.py:392
+#, python-format
+msgid "Failed to delete record. %(error)s"
+msgstr ""
+
+#: weko_gridlayout/admin.py:445
+msgid "ID"
+msgstr ""
+
+#: weko_gridlayout/admin.py:446
+msgid "Repository"
+msgstr ""
+
+#: weko_gridlayout/admin.py:447
+msgid "Widget Type"
+msgstr ""
+
+#: weko_gridlayout/admin.py:448
+msgid "Label"
+msgstr ""
+
+#: weko_gridlayout/admin.py:449
+msgid "Enable"
+msgstr ""
+
+#: weko_gridlayout/admin.py:450
+msgid "Has Frame Border"
+msgstr ""
+
+#: weko_gridlayout/admin.py:457 weko_gridlayout/admin.py:464
+msgid "Setting"
+msgstr ""
+
+#: weko_gridlayout/admin.py:458
+msgid "Widget"
+msgstr ""
+
+#: weko_gridlayout/admin.py:465
+msgid "Widget Design"
+msgstr ""
+
+#: weko_gridlayout/services.py:624
+msgid ""
+"Failed to save design:\n"
+"                         Main contents may only be set to one layout."
+msgstr ""
+
+#: weko_gridlayout/services.py:629
+msgid ""
+"Failed to save design:\n"
+" Check input values."
+msgstr ""
+
+#: weko_gridlayout/services.py:633
+msgid "Failed to save design: Unexpected error."
+msgstr ""
+
+#: weko_gridlayout/services.py:758 weko_gridlayout/services.py:986
+msgid "Unable to retrieve page: Page not found."
+msgstr ""
+
+#: weko_gridlayout/services.py:761 weko_gridlayout/services.py:989
+msgid "Unable to retrieve page: Unexpected error."
+msgstr ""
+
+#: weko_gridlayout/services.py:800
+msgid "Unable to save page: URL already exists."
+msgstr ""
+
+#: weko_gridlayout/services.py:803
+msgid "Unable to save page: Unexpected error."
+msgstr ""
+
+#: weko_gridlayout/services.py:908
+msgid "Unable to delete page."
+msgstr ""
+
+#: weko_gridlayout/services.py:939
+msgid "Unable to retrieve page list."
+msgstr ""
+
+#: weko_gridlayout/views.py:81
+msgid "weko-gridlayout"
+msgstr ""
+
+#: weko_gridlayout/views.py:184 weko_gridlayout/views.py:250
+#: weko_gridlayout/views.py:268
+msgid "Header Error"
+msgstr ""
+
+#: weko_gridlayout/templates/weko_gridlayout/index.html:12
+#, python-format
+msgid "Welcome to %(module_name)s"
+msgstr ""
+
+msgid "Do you wan to unlock this widget?"
+msgstr ""
+

@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: weko-accounts 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
 "POT-Creation-Date: 2019-07-01 05:51+0000\n"
-"PO-Revision-Date: 2024-12-20 21:07+0900\n"
+"PO-Revision-Date: 2024-12-21 05:19+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -81,7 +81,7 @@ msgstr ""
 
 #: weko_accounts/templates/weko_accounts/login_user.html:38
 msgid "Log In"
-msgstr "Se connectercd"
+msgstr ""
 
 #: weko_accounts/templates/weko_accounts/shib_user.html:27
 msgid "test commit shibboleth account"
