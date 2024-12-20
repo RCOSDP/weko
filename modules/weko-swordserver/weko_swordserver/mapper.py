@@ -255,17 +255,8 @@ class WekoSwordMapper(JsonMapper):
         current_schema = self.itemtype.schema.get("properties")
 
         for item_map_key in item_map_keys:
-            # item_map_key is not defined in item_tyep_schema
-            if item_map_key not in current_schema:
-                current_app.logger.error(
-                    f"Failed in mapping process: {item_map_key} is not defined in item type schema."
-                )
-                raise WekoSwordserverException(
-                    "Some error occurred in the server. Can not create metadata.",
-                    errorType=ErrorType.ServerError
-                )
             # If "type" is "object" in item_tyep_schema, next path is in "properties"
-            elif current_schema[item_map_key].get("type") == "object":
+            if current_schema[item_map_key].get("type") == "object":
                 type_of_item_type_path.append("object")
                 current_schema = current_schema[item_map_key].get("properties")
             # If "type" is "array" in item_tyep_schema, next path is in "items" > "properties"
