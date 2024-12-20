@@ -333,6 +333,9 @@ ${INVENIO_WEB_INSTANCE} language create \
 
 ${INVENIO_WEB_INSTANCE} language create \
          --active --registered "ja" "日本語" 002
+
+${INVENIO_WEB_INSTANCE} language create \
+         --active --registered "fr" "French" 003
 #### sphinxdoc-create-language-data-end
 
 ##### sphinxdoc-create-test-data-begin
