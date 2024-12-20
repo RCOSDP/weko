@@ -1,0 +1,144 @@
+# French translations for weko-accounts.
+# Copyright (C) 2019 National Institute of Informatics
+# This file is distributed under the same license as the weko-accounts
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2019.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: weko-accounts 0.1.0.dev20170000\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2019-07-01 05:51+0000\n"
+"PO-Revision-Date: 2024-12-20 21:07+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.14.0\n"
+
+#: weko_accounts/admin.py:56
+msgid "Shibboleth flag was updated."
+msgstr ""
+
+#: weko_accounts/admin.py:69
+msgid "Setting"
+msgstr ""
+
+#: weko_accounts/admin.py:70
+msgid "Shibboleth"
+msgstr ""
+
+#. NOTE: This is a note to a translator.
+#: weko_accounts/ext.py:41
+msgid "A translation string"
+msgstr ""
+
+#: weko_accounts/views.py:66
+msgid "WEKO-Accounts"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/confirm_user.html:28
+msgid "confirm for account"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/confirm_user.html:46
+msgid "Login (Visitors with a WEKO-ID)"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/confirm_user.html:49
+msgid "Login (New WEKO users)"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/confirm_user.html:58
+#: weko_accounts/templates/weko_accounts/login_user.html:52
+#: weko_accounts/templates/weko_accounts/shib_user.html:76
+#, python-format
+msgid "New to %(sitename)s?"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/confirm_user.html:59
+#: weko_accounts/templates/weko_accounts/login_user.html:52
+#: weko_accounts/templates/weko_accounts/shib_user.html:76
+msgid "Sign Up"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/confirm_user.html:66
+#: weko_accounts/templates/weko_accounts/login_user.html:59
+#: weko_accounts/templates/weko_accounts/shib_user.html:83
+msgid "Forgot password?"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/index.html:24
+msgid "Welcome to"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/login_user.html:29
+msgid "Log in to account"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/login_user.html:38
+msgid "Log In"
+msgstr "Se connectercd"
+
+#: weko_accounts/templates/weko_accounts/shib_user.html:27
+msgid "test commit shibboleth account"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:29
+msgid "Life Time"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:40
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:53
+msgid "Allow shibboleth user"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:46
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:59
+msgid "Deny shibboleth user"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:68
+msgid "Save"
+msgstr ""
+
+#: weko_accounts/api.py:202
+msgid "Failed to get attribute."
+msgstr ""
+
+#: weko_accounts/api.py:209
+msgid "Invalid attribute."
+msgstr ""
+
+#: weko_accounts/api.py:223
+msgid "Failed to login."
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/login_shibuser_pattern_1.html
+msgid "Institutional Login for institutions in Japan."
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/login_shibuser_pattern_1.html
+msgid ""
+"Users who belongs to institution outside Japan, please choose your "
+"institution's location."
+msgstr ""
+"Users who belongs to institution outside Japan, please choose your "
+"institution's location."
+
+#: weko_accounts/templates/weko_accounts/login_shibuser_pattern_2.html
+msgid "Select Institution"
+msgstr ""
+
+msgid "login_pattern_2_description_header"
+msgstr ""
+
+msgid "Back to Top Page"
+msgstr ""
+
+msgid "Create a New Account"
+msgstr ""
+
