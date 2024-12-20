@@ -9,6 +9,7 @@
 
 from __future__ import absolute_import, print_function
 
+import os
 import shutil
 from datetime import datetime, timedelta
 
@@ -32,7 +33,6 @@ from weko_records_ui.utils import get_record_permalink, soft_delete
 from weko_search_ui.utils import import_items_to_system
 from weko_workflow.utils import get_site_info_name
 
-from .api import SwordClient, SwordItemTypeMapping
 from .decorators import check_on_behalf_of, check_package_contents
 from .errors import ErrorType, WekoSwordserverException
 from .registration import (
@@ -214,7 +214,7 @@ def post_service_document():
         )
 
     # pick end of packaging, "SimpleZip" or "SWORDBagIt"
-    packaging = request.headers.get("Packaging").split("/")[-1]
+    packaging = request.headers.get("Packaging")
     file_format = check_import_file_format(file, packaging)
 
     if file_format == "JSON":
@@ -260,7 +260,7 @@ def post_service_document():
     if item.get("status") != "new":
         raise WekoSwordserverException("This item is already registered: {0]".format(item.get("item_title")), ErrorType.BadRequest)
 
-    item["root_path"] = data_path+"/data"
+    item["root_path"] = os.path.join(data_path, "data")
 
     # import item
     owner = -1

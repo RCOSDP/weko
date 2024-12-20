@@ -96,7 +96,7 @@ class SwordItemTypeMapping():
         obj = SwordItemTypeMapping.get_mapping_by_id(id)
         if obj is None:
             raise WekoSwordserverException(
-                "Mapping not defined.", errorType=ErrorType.MappingNotDefined)
+                "Mapping not defined.", errorType=ErrorType.ServerError)
 
         obj.name = name if name is not None else obj.name
         obj.mapping = mapping if mapping is not None else obj.mapping

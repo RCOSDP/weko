@@ -35,10 +35,6 @@ class ErrorType(Enum):
     PackagingFormatNotAcceptable    = ("PackagingFormatNotAcceptable",  415, "UnsupportedMediaType")
 
     # Addlitional ErrorType
-    # TODO: define additional error type name
-    MappingNotDefined               = ("MappingNotFound",               400, "BadRequest")
-    WorkflowNotFound                = ("WorkflowNotFound",              400, "BadRequest")
-    ItemTypeNotFound                = ("ItemTypeNotFound",              400, "BadRequest")
     NotFound                        = ("NotFound",                      404, "NotFound")
     ServerError                     = ("ServerError",                   500, "InternalServerError")
 
