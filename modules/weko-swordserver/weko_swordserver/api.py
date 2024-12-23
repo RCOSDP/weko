@@ -7,7 +7,6 @@
 
 """Module of weko-swordserver."""
 
-import json
 import traceback
 from flask import current_app
 from sqlalchemy.exc import SQLAlchemyError
@@ -64,7 +63,6 @@ class SwordItemTypeMapping():
                 db.session.add(obj)
             db.session.commit()
         except SQLAlchemyError as ex:
-            traceback.print_exc()
             db.session.rollback()
             raise
 
@@ -107,7 +105,6 @@ class SwordItemTypeMapping():
         try:
             db.session.commit()
         except SQLAlchemyError as ex:
-            traceback.print_exc()
             db.session.rollback()
             raise
 
@@ -134,17 +131,17 @@ class SwordItemTypeMapping():
 
 
     @classmethod
-    def get_mapping_by_id(cls, id, ignore_deleted=True):
+    def get_mapping_by_id(cls, id, include_deleted=False):
         """Get mapping by mapping_id.
 
         Get mapping latest version by mapping_id.
-        If ignore_deleted=True, return None if the mapping is deleted(default).
-        Specify ignore_deleted=False to get the mapping even if it is deleted.
+        If include_deleted=False, return None if the mapping is deleted(default).
+        Specify include_deleted=True to get the mapping even if it is deleted.
 
         Args:
             id (int): Mapping ID.
-            ignore_deleted (bool, optional):
-                Ignore deleted mapping. Default is True.
+            include_deleted (bool, optional):
+                Include deleted mapping. Default is False.
 
         Returns:
             SwordItemTypeMapping:
@@ -157,7 +154,7 @@ class SwordItemTypeMapping():
             .first()
         )
 
-        if ignore_deleted and obj is not None and obj.is_deleted:
+        if not include_deleted and obj is not None and obj.is_deleted:
             return None
         return obj
 
@@ -206,7 +203,6 @@ class SwordClient():
                 db.session.add(obj)
             db.session.commit()
         except SQLAlchemyError as ex:
-            traceback.print_exc()
             db.session.rollback()
             raise
 
@@ -263,7 +259,6 @@ class SwordClient():
         try:
             db.session.commit()
         except SQLAlchemyError as ex:
-            traceback.print_exc()
             db.session.rollback()
             raise
 

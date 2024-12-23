@@ -299,6 +299,20 @@ def generate_metadata_from_json(json, mapping, item_type, is_change_identifier=F
     return list_record
 
 def handle_files_info(list_record, files_list, data_path, filename):
+    """ Handle files_info in metadata.
+
+    Handle metadata for Direct registration and Workflow registration.
+    pick up files infomation from metadata and add it to files_info.
+
+    Args:
+        list_record (list): List of metadata.
+        files_list (list): List of files in the zip file.
+        data_path (str): Path to the temporary directory.
+        filename (str): Name of the zip file.
+
+    Returns:
+        list: list_record with files_info.
+    """
     # for Direct registration handling
     target_files_list = []
     for file in files_list:
@@ -312,7 +326,7 @@ def handle_files_info(list_record, files_list, data_path, filename):
     key = files_info[0].get("key")
     file_metadata = metadata.get(key)  # for Direct registration
 
-    # add dataset zip file to files_info
+    # add dataset zip file's info to files_info if dataset will be deposited.
     if current_app.config.get("WEKO_SWORDSERVER_DEPOSIT_DATASET"):
         dataset_info = {
             "filesize": [
