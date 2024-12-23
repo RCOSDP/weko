@@ -1425,9 +1425,14 @@ def feedback_email_search_factory(self, search):
 
 def _split_text_by_or(text):
     """split text by " OR " or " | "
-    :param text: input text
 
+    Args:
+        text(str): input text
+    Returns:
+        list: list of split text
     """
+    if not isinstance(text, str):
+        return []
     text = text.replace("　", " ")
     pattern = r'(?<= )(?:OR|\|)(?= )'
     split_text_list = re.split(pattern, text)
