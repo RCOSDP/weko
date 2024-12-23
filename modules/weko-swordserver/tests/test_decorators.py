@@ -73,6 +73,7 @@ def test_check_on_behalf_of(app):
         res = check_on_behalf_of()(lambda x, y: x + y)(x=1, y=2)
         assert res == 3
 
+
 # def check_package_contents():
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_decorators.py::test_check_package_contents -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
 def test_check_package_contents(app, client, make_crate, tokens, mocker):
@@ -80,8 +81,13 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
     # error message:"Not accept packaging: "
     app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = True
     maxSize = app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE"] = 10000
-    contentType =app.config.get("WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT")
-    app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_PACKAGING"] = ["http://purl.org/net/sword/3.0/package/Binary","http://purl.org/net/sword/3.0/package/SimpleZip"]
+    contentType = app.config.get(
+        "WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT"
+    )
+    app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_PACKAGING"] = [
+        "http://purl.org/net/sword/3.0/package/Binary",
+        "http://purl.org/net/sword/3.0/package/SimpleZip",
+    ]
     zip = make_crate()
     mock_data = io.BytesIO(zip.read())
     mock_data.seek(0, io.SEEK_END)
@@ -102,7 +108,13 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
         original = request.files
         request.files = LocalProxy(lambda: {"file": mock_file})
         original_headers = request.headers
-        request.headers = LocalProxy(lambda:  {"Content-Length": str(size),"Content-Type": contentType[0],"Packaging": "XXXX"})
+        request.headers = LocalProxy(
+            lambda: {
+                "Content-Length": str(size),
+                "Content-Type": contentType[0],
+                "Packaging": "XXXX",
+            }
+        )
         try:
             with pytest.raises(WekoSwordserverException) as e:
                 res = check_package_contents()(lambda x, y: x + y)(x=1, y=2)
@@ -115,7 +127,9 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
     # error message:"Not accept Content-Type:
     app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = True
     maxSize = app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE"] = 10000
-    contentType =app.config.get("WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT")
+    contentType = app.config.get(
+        "WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT"
+    )
     zip = make_crate()
     mock_data = io.BytesIO(zip.read())
     mock_data.seek(0, io.SEEK_END)
@@ -136,7 +150,9 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
         original = request.files
         request.files = LocalProxy(lambda: {"file": mock_file})
         original_headers = request.headers
-        request.headers = LocalProxy(lambda:  {"Content-Length": str(size),"Content-Type": "application/json"})
+        request.headers = LocalProxy(
+            lambda: {"Content-Length": str(size), "Content-Type": "application/json"}
+        )
         try:
             with pytest.raises(WekoSwordserverException) as e:
                 res = check_package_contents()(lambda x, y: x + y)(x=1, y=2)
@@ -168,12 +184,17 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
         original_files = request.files
         request.files = LocalProxy(lambda: {"file": mock_file})
         original_headers = request.headers
-        request.headers = LocalProxy(lambda:  {"Content-Length": str(size),"Content-Type": "application/zip"})
+        request.headers = LocalProxy(
+            lambda: {"Content-Length": str(size), "Content-Type": "application/zip"}
+        )
         try:
             with pytest.raises(WekoSwordserverException) as e:
                 res = check_package_contents()(lambda x, y: x + y)(x=1, y=2)
             assert e.value.errorType == ErrorType.MaxUploadSizeExceeded
-            assert e.value.message == f"Content size is too large. (request:{size}, maxUploadSize:{maxSize})"
+            assert (
+                e.value.message
+                == f"Content size is too large. (request:{size}, maxUploadSize:{maxSize})"
+            )
         finally:
             request.files = original_files
             request.headers = original_headers
@@ -204,7 +225,10 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
             with pytest.raises(WekoSwordserverException) as e:
                 res = check_package_contents()(lambda x, y: x + y)(x=1, y=2)
             assert e.value.errorType == ErrorType.ContentMalformed
-            assert e.value.message == f"Content-Length is not match. (request:1000, real:{size})"
+            assert (
+                e.value.message
+                == f"Content-Length is not match. (request:1000, real:{size})"
+            )
         finally:
             request.files = original
             request.headers = original_headers
@@ -237,7 +261,7 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
         finally:
             request.files = original
 
-   # error message:"Content size is too large."
+    # error message:"Content size is too large."
     app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = False
     maxSize = app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE"] = 1000
     zip = make_crate()
@@ -262,7 +286,10 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
             with pytest.raises(WekoSwordserverException) as e:
                 res = check_package_contents()(lambda x, y: x + y)(x=1, y=2)
             assert e.value.errorType == ErrorType.MaxUploadSizeExceeded
-            assert e.value.message == f"Content size is too large. (request:{size}, maxUploadSize:{maxSize})"
+            assert (
+                e.value.message
+                == f"Content size is too large. (request:{size}, maxUploadSize:{maxSize})"
+            )
         finally:
             request.files = original_files
 
