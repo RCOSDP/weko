@@ -126,7 +126,7 @@ def test_post_service_document_json_ld(app,client,db,users,esindex,location,inde
 
     # Direct registration
     url = url_for("weko_swordserver.post_service_document")
-    zip = make_crate()
+    zip, _ = make_crate()
     storage = FileStorage(filename="payload.zip",stream=zip)
     mapped_json = json_data("data/item_type/mapped_json_2.json")
     headers = {
@@ -153,7 +153,7 @@ def test_post_service_document_json_ld(app,client,db,users,esindex,location,inde
 
     # invalid hash and be rejected
     app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = True
-    zip = make_crate()
+    zip, _ = make_crate()
     storage = FileStorage(filename="payload.zip",stream=zip)
     mapped_json = json_data("data/item_type/mapped_json_2.json")
     headers = {
@@ -185,7 +185,7 @@ def test_post_service_document_json_ld(app,client,db,users,esindex,location,inde
     # mocker.patch("weko_swordserver.views._get_status_workflow_document",side_effect=lambda a,x:{"activity":a.id,"recid":x})
 
     # Workflow registration
-    zip = make_crate()
+    zip, _ = make_crate()
     storage = FileStorage(filename="payload.zip",stream=zip)
     headers = {
         "Authorization":"Bearer {}".format(token_workflow),
@@ -208,7 +208,7 @@ def test_post_service_document_json_ld(app,client,db,users,esindex,location,inde
         # assert file_metadata.get("url").get("url") == f"https://localhost/record/{recid.id}/files/sample.rst"
 
     # no scopes
-    zip = make_crate()
+    zip, _  = make_crate()
     storage = FileStorage(filename="payload.zip",stream=zip)
     headers = {
         "Authorization":"Bearer {}".format(token_none),

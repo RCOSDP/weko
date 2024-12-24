@@ -6,7 +6,7 @@
   "File.表示名": "d2Vrby0uLw==.hasPart.name",
   "File.本文URL.本文URL": "d2Vrby0uLw==.hasPart.identifier.@id",
   "File.本文URL.オブジェクトタイプ": "d2Vrby0uLw==.hasPart.identifier.type",
-  "File.本文URL.ラベル": "d2Vrby0uLw==.hasPart.identifier.label",
+  "File.本文URL.ラベル": "d2Vrby0uLw==.hasPart.@id",
   "File.フォーマット": "d2Vrby0uLw==.hasPart.encodingFormat",
   "Title.Title": "#title.name",
   "Title.Language": "#title.language",

@@ -9,11 +9,10 @@
 
 from __future__ import absolute_import, print_function
 
+import os
 import shutil
 from datetime import datetime, timedelta
-import shutil
 
-import sword3common
 from flask import Blueprint, current_app, jsonify, request, url_for
 from flask_login import current_user
 from sword3common import (
@@ -31,17 +30,11 @@ from invenio_oauth2server.provider import oauth2
 
 from weko_admin.api import TempDirInfo
 from weko_records_ui.utils import get_record_permalink, soft_delete
-from weko_search_ui.utils import check_import_items, import_items_to_system
-from werkzeug.http import parse_options_header
-from invenio_db import db
-
-from invenio_oaiserver.api import OaiIdentify
+from weko_search_ui.utils import import_items_to_system
 from weko_workflow.utils import get_site_info_name
 
-from .api import SwordClient, SwordItemTypeMapping
 from .decorators import check_on_behalf_of, check_package_contents
 from .errors import ErrorType, WekoSwordserverException
-from .utils import check_import_file_format, is_valid_file_hash
 from .registration import (
     check_bagit_import_items,
     check_import_items as check_others_import_items
@@ -221,7 +214,7 @@ def post_service_document():
         )
 
     # pick end of packaging, "SimpleZip" or "SWORDBagIt"
-    packaging = request.headers.get("Packaging").split("/")[-1]
+    packaging = request.headers.get("Packaging")
     file_format = check_import_file_format(file, packaging)
 
     if file_format == "JSON":
@@ -267,9 +260,35 @@ def post_service_document():
     if item.get("status") != "new":
         raise WekoSwordserverException("This item is already registered: {0]".format(item.get("item_title")), ErrorType.BadRequest)
 
-    item["root_path"] = data_path+"/data"
+    item["root_path"] = os.path.join(data_path, "data")
 
     # import item
+
+    ### TODO: Check and fix code below.
+    # response = {}
+    # if register_format == 'Direct':
+
+    #     item["root_path"] = data_path+"/data"
+
+    #     import_result = import_items_to_system(item, None)
+    #     if not import_result.get('success'):
+    #         raise WekoSwordserverException('Error in import_items_to_system: {0}'.format(item.get('error_id')), ErrorType.ServerError)
+    #     recid = import_result.get('recid')
+    #     response = jsonify(_get_status_document(recid))
+    # elif register_format == 'Workflow':
+    #     try:
+    #         activity, recid = create_activity_from_jpcoar(check_result, data_path)
+    #     except:
+    #         raise WekoSwordserverException('Error in create_activity_from_jpcoar', ErrorType.ServerError)
+    #     response = jsonify(_get_status_workflow_document(activity, recid))
+    # else:
+    #     if os.path.exists(data_path):
+    #         shutil.rmtree(data_path)
+    #         TempDirInfo().delete(data_path)
+    #     raise WekoSwordserverException('Invalid register format has been set for admin setting', ErrorType.ServerError)
+    ###
+
+    ## ここいる？
     owner = -1
     if current_user.is_authenticated:
         owner = current_user.id
