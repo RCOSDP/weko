@@ -89,7 +89,7 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
         "http://purl.org/net/sword/3.0/package/SimpleZip",
     ]
     zip = make_crate()
-    mock_data = io.BytesIO(zip.read())
+    mock_data = io.BytesIO(zip[0].read())
     mock_data.seek(0, io.SEEK_END)
     size = mock_data.tell()
     mock_data.seek(0, 0)
@@ -131,7 +131,7 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
         "WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT"
     )
     zip = make_crate()
-    mock_data = io.BytesIO(zip.read())
+    mock_data = io.BytesIO(zip[0].read())
     mock_data.seek(0, io.SEEK_END)
     size = mock_data.tell()
     mock_data.seek(0, 0)
@@ -166,7 +166,7 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
     app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = True
     maxSize = app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE"] = 1000
     zip = make_crate()
-    mock_data = io.BytesIO(zip.read())
+    mock_data = io.BytesIO(zip[0].read())
     mock_data.seek(0, io.SEEK_END)
     size = mock_data.tell()
     mock_data.seek(0, 0)
@@ -202,7 +202,7 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
     # error message:"Content-Length is not equal to real content length."
     app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = True
     zip = make_crate()
-    mock_data = io.BytesIO(zip.read())
+    mock_data = io.BytesIO(zip[0].read())
     mock_data.seek(0, io.SEEK_END)
     size = mock_data.tell()
     mock_data.seek(0, 0)
@@ -236,7 +236,7 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
     # error message:"Content-Length is required."
     app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = True
     zip = make_crate()
-    mock_data = io.BytesIO(zip.read())
+    mock_data = io.BytesIO(zip[0].read())
     mock_data.seek(0, io.SEEK_END)
     size = mock_data.tell()
     mock_data.seek(0, 0)
@@ -265,7 +265,7 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
     app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = False
     maxSize = app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE"] = 1000
     zip = make_crate()
-    mock_data = io.BytesIO(zip.read())
+    mock_data = io.BytesIO(zip[0].read())
     mock_data.seek(0, io.SEEK_END)
     size = mock_data.tell()
     mock_data.seek(0, 0)
@@ -303,7 +303,7 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
 
     # error message:"No selected file
     zip = make_crate()
-    storage = FileStorage(filename="", stream=zip)
+    storage = FileStorage(filename="", stream=zip[0])
     with app.test_request_context(data=dict(file=storage)):
         with pytest.raises(WekoSwordserverException) as e:
             res = check_package_contents()(lambda x, y: x + y)(x=1, y=2)
