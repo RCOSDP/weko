@@ -25,7 +25,7 @@
           "url": {
             "url": "https://example.org/data/sample.rst",
             "objectType": "fulltext",
-            "label": "sample.rst"
+            "label": "data/sample.rst"
           },
           "format": "text/x-rst"
         }
@@ -50,7 +50,7 @@
       "url": {
         "url": "https://example.org/data/sample.rst",
         "objectType": "fulltext",
-        "label": "sample.rst"
+        "label": "data/sample.rst"
       },
       "format": "text/x-rst"
     }

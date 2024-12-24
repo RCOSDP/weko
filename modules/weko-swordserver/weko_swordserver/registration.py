@@ -130,7 +130,7 @@ def check_bagit_import_items(file, packaging):
         # metadata json file name
         json_name = (
             current_app.config['WEKO_SWORDSERVER_METADATA_FILE_SWORD']
-                if packaging == "SWORDBagIt"
+                if "SWORDBagIt" in packaging
                 else current_app.config['WEKO_SWORDSERVER_METADATA_FILE_ROCRATE']
         )
 
@@ -144,7 +144,7 @@ def check_bagit_import_items(file, packaging):
             current_app.logger.error(f"Mapping not defined for sword client.")
             raise WekoSwordserverException(
                 "Metadata mapping not defined for registration your item.",
-                errorType=ErrorType.MappingNotDefined
+                errorType=ErrorType.ServerError
             )
 
         # Check workflow and item type
@@ -155,7 +155,7 @@ def check_bagit_import_items(file, packaging):
                 current_app.logger.error(f"Workflow not found for sword client.")
                 raise WekoSwordserverException(
                     "Workflow not found for registration your item.",
-                    errorType=ErrorType.WorkflowNotFound
+                    errorType=ErrorType.ServerError
                 )
             # Check if workflow and item type match
             if workflow.itemtype_id != sword_mapping.item_type_id:
@@ -175,7 +175,7 @@ def check_bagit_import_items(file, packaging):
             current_app.logger.error(f"Item type not found for sword client.")
             raise WekoSwordserverException(
                 "Item type not found for registration your item.",
-                errorType=ErrorType.ItemTypeNotFound
+                errorType=ErrorType.ServerError
             )
         check_result.update({"item_type_id": item_type.id})
 
@@ -201,14 +201,17 @@ def check_bagit_import_items(file, packaging):
         handle_check_file_metadata(list_record, data_path)
 
         # add zip file to temporary dictionary
-        if isinstance(file, str):
-            shutil.copy(file, os.path.join(data_path, "data", filename))
-        else:
-            file.seek(0, 0)
-            file.save(os.path.join(data_path, "data", filename))
-        files_list.append(f"data/{filename}")
+        if current_app.config.get("WEKO_SWORDSERVER_DEPOSIT_DATASET"):
+            if isinstance(file, str):
+                shutil.copy(file, os.path.join(data_path, "data", filename))
+            else:
+                file.seek(0, 0)
+                file.save(os.path.join(data_path, "data", filename))
+            files_list.append(f"data/{filename}")
+
         handle_files_info(list_record, files_list, data_path, filename)
 
+        # add on-behalf-of user id to metadata
         if shared_id is not None:
             list_record[0].get("metadata").update({"weko_shared_id": shared_id})
 
@@ -296,6 +299,20 @@ def generate_metadata_from_json(json, mapping, item_type, is_change_identifier=F
     return list_record
 
 def handle_files_info(list_record, files_list, data_path, filename):
+    """ Handle files_info in metadata.
+
+    Handle metadata for Direct registration and Workflow registration.
+    pick up files infomation from metadata and add it to files_info.
+
+    Args:
+        list_record (list): List of metadata.
+        files_list (list): List of files in the zip file.
+        data_path (str): Path to the temporary directory.
+        filename (str): Name of the zip file.
+
+    Returns:
+        list: list_record with files_info.
+    """
     # for Direct registration handling
     target_files_list = []
     for file in files_list:
@@ -309,16 +326,23 @@ def handle_files_info(list_record, files_list, data_path, filename):
     key = files_info[0].get("key")
     file_metadata = metadata.get(key)  # for Direct registration
 
-    dataset_info = {
-        "filesize": [
-            {
-                "value": str(os.path.getsize(os.path.join(data_path, "data", filename))),
-            }
-        ],
-        "filename":  filename,
-        "format": "application/zip",
-    }
-    files_info[0].get("items").append(dataset_info)
-    file_metadata.append(dataset_info)
+    # add dataset zip file's info to files_info if dataset will be deposited.
+    if current_app.config.get("WEKO_SWORDSERVER_DEPOSIT_DATASET"):
+        dataset_info = {
+            "filesize": [
+                {
+                    "value": str(os.path.getsize(os.path.join(data_path, "data", filename))),
+                }
+            ],
+            "filename":  filename,
+            "format": "application/zip",
+            "url": {
+                "url": "",
+                "objectType": "fulltext",
+                "label": f"data/{filename}"
+            },
+        }
+        files_info[0].get("items").append(dataset_info)
+        file_metadata.append(dataset_info)
 
     return list_record
