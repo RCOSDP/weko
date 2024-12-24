@@ -1064,7 +1064,8 @@ class ItemTypes(RecordBase):
                 if "title_i18n_temp" in item2 and renew_value not in ["ALL", "LOC"]:
                     title_i18n_temp = item2["title_i18n_temp"]
                 if ("titleMap" in item2 and renew_value not in ["ALL", "VAL"]) or \
-                         ('titleMap' in new_value["items"][idx2] and 
+                         ("titleMap" in item2 and
+                          'titleMap' in new_value["items"][idx2] and 
                           not new_value["items"][idx2]["titleMap"]):
                     titleMap = item2["titleMap"]
                                         
