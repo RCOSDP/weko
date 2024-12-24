@@ -309,8 +309,9 @@ class DownloadMixin:
         This method increases the download count for the instance by one
         and persists the change to the database.
 
-        Returns:
-            bool: True if the download count is successfully updated
+        Raises:
+            ValueError: If the download limit has been reached.
+            Exception: If an unexpected error occurs during the update.
         """
         if self.download_count >= self.download_limit:
             raise ValueError('Download limit has been reached.')
@@ -318,28 +319,26 @@ class DownloadMixin:
             try:
                 self.download_count += 1
                 db.session.commit()
-                return True
             except Exception as ex:
                 db.session.rollback()
                 current_app.logger.error(ex)
-                return False
+                raise ex
 
     def delete_logically(self):
         """Execute logical deletion by setting the 'is_deleted' flag to True.
 
         This marks the record as deleted without removing it from the database.
 
-        Returns:
-            bool: True if the record is successfully marked as deleted.
+        Raises:
+            Exception: If an unexpected error occurs during the deletion.
         """
         try:
             self.is_deleted = True
             db.session.commit()
-            return True
         except Exception as ex:
             db.session.rollback()
             current_app.logger.error(ex)
-            return False
+            raise ex
 
 
 class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
@@ -428,7 +427,10 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
             **data: The attributes for the new instance.
 
         Returns:
-            FileOnetimeDownload: The created instance, or None if error occurs.
+            FileOnetimeDownload: The created instance.
+
+        Raises:
+            Exception: If an unexpected error occurs during the creation.
         """
         try:
             file_download = cls(**data)
@@ -438,37 +440,7 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
         except Exception as ex:
             db.session.rollback()
             current_app.logger.error(ex)
-            return None
-
-    @classmethod
-    def update_download(cls, **data):
-        """Update download count.
-
-        :param data:
-        :return:
-        """
-        try:
-            file_name = data.get("file_name")
-            user_mail = data.get("user_mail")
-            record_id = data.get("record_id")
-            file_permission = cls.find(file_name=file_name, user_mail=user_mail,
-                                       record_id=record_id)
-            if file_permission and len(file_permission) > 0:
-                for file in file_permission:
-                    if data.get("download_count") is not None:
-                        file.download_count = data.get("download_count")
-                    if data.get("expiration_date") is not None:
-                        file.expiration_date = data.get("expiration_date")
-                    if data.get("extra_info"):
-                        file.extra_info = data.get("extra_info")
-                    db.session.merge(file)
-                db.session.commit()
-                return file_permission
-            return None
-        except Exception as ex:
-            db.session.rollback()
-            current_app.logger.error(ex)
-            return None
+            raise ex
 
     @classmethod
     def find(cls, **obj) -> list:
@@ -506,8 +478,9 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
         Args:
             new_info (dict): A dictionary containing the new info to update.
 
-        Returns:
-            bool: True if the update is successful, False otherwise.
+        Raises:
+            ValueError: If the new info is not a dictionary.
+            Exception: If an unexpected error occurs during the update.
         """
         if not isinstance(new_info, dict):
             raise ValueError('The new info must be a dictionary.')
@@ -515,11 +488,10 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
             try:
                 self.extra_info = new_info
                 db.session.commit()
-                return True
             except Exception as ex:
                 db.session.rollback()
                 current_app.logger.error(ex)
-                return False
+                raise ex
 
 
 class FileSecretDownload(db.Model, Timestamp, DownloadMixin):
@@ -591,6 +563,9 @@ class FileSecretDownload(db.Model, Timestamp, DownloadMixin):
 
         Returns:
             FileSecretDownload: The created instance, or None if error occurs.
+
+        Raises:
+            Exception: If an unexpected error occurs during the creation.
         """
         try:
             file_download = cls(**data)
@@ -600,36 +575,6 @@ class FileSecretDownload(db.Model, Timestamp, DownloadMixin):
         except Exception as ex:
             db.session.rollback()
             current_app.logger.error(ex)
-            return None
-
-    @classmethod
-    def update_download(cls, **data):
-        """Update download count.
-
-        :param data:
-        :return:
-        """
-        try:
-            file_name = data.get("file_name")
-            id = data.get("id")
-            record_id = data.get("record_id")
-            created = data.get("created")
-            current_app.logger.debug("data: {}".format(data))
-            file_permission = cls.find(file_name=file_name, id=id,
-                                        record_id=record_id,created=created)
-            current_app.logger.debug("file_permission: {}".format(file_permission))
-            if len(file_permission) == 1:
-                file = file_permission[0]
-                if data.get("download_count") is not None:
-                    file.download_count = data.get("download_count")
-                db.session.merge(file)
-                db.session.commit()
-                return file_permission
-            else:
-                return None
-        except Exception as ex:
-            db.session.rollback()
-            current_app.logger.error(traceback.format_exc())
             raise ex
 
     @classmethod

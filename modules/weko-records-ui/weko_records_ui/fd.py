@@ -469,8 +469,10 @@ def file_download_onetime(pid, record, _record_file_factory=None, **kwargs):
             return render_template(error_template, error=_("Unexpected error occurred."))
 
     # Update download data
-    if (not onetime_download.increment_download_count() or
-        not onetime_download.update_extra_info(extra_info)):
+    try:
+        onetime_download.increment_download_count()
+        onetime_download.update_extra_info(extra_info)
+    except:
         return render_template(error_template,
                                error=_("Unexpected error occurred."))
 
@@ -560,9 +562,11 @@ def file_download_secret(pid, record, _record_file_factory=None, **kwargs):
                                 error="{} does not exist.".format(filename))
 
     # Update download data
-    if not secret_download.increment_download_count():
+    try:
+        secret_download.increment_download_count()
+    except:
         return render_template(error_template,
-                               error=_("Unexpected error occurred"))
+                               error=_("Unexpected error occurred."))
 
     # Get user's language and defautl language for PDF coverpage.
     lang = 'en'
