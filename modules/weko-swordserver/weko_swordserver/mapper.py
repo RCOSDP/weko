@@ -365,8 +365,6 @@ class WekoSwordMapper(JsonMapper):
             type_of_item_type_path (list): "type" of each key in ItemType, contains "value", "object", and "array"
             json_value (any): Value got from ProcessedJson
         """
-        dim_json_value = self._get_dimensions(json_value)
-
         # If item_map_keys length is 1, it means that the item_map_keys contains only last key
         if len(item_map_keys) == 1:
             # Only if json_value is not None, add json_value to metadata
