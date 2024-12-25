@@ -12,7 +12,7 @@ from sqlalchemy_continuum import version_class
 
 from weko_swordserver.api import SwordItemTypeMapping, SwordClient
 from weko_swordserver.models import SwordItemTypeMappingModel, SwordClientModel
-
+from weko_swordserver.errors import ErrorType, WekoSwordserverException
 from .helpers import json_data
 
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
@@ -25,10 +25,23 @@ class TestSwordItemTypeMapping:
     def test_get_mapping_by_id(app, db, sword_mapping):
         obj = sword_mapping[0]["sword_mapping"]
         assert SwordItemTypeMapping.get_mapping_by_id(obj.id) == obj
+        assert SwordItemTypeMapping.get_mapping_by_id(obj.id).is_deleted == False
+
         # not found
         assert SwordItemTypeMapping.get_mapping_by_id(999) is None
-        # invalid id
-        assert SwordItemTypeMapping.get_mapping_by_id(None) is None
+
+        # Retrieval with include_deleted=False
+        obj.is_deleted = True
+        db.session.commit()
+        mapping = SwordItemTypeMapping.get_mapping_by_id(obj.id, include_deleted=False)
+        assert mapping is None
+
+        # Retrieve with include_deleted=True
+        obj.is_deleted = True
+        db.session.commit()
+        mapping = SwordItemTypeMapping.get_mapping_by_id(obj.id, include_deleted=True)
+        assert mapping.id == obj.id
+        assert mapping.is_deleted == True
 
     # def create(cls, name, mapping, item_type_id):
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordItemTypeMapping::test_create -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
@@ -53,17 +66,19 @@ class TestSwordItemTypeMapping:
             .first()) == obj
 
         # occurs DB error. invalid item_type_id
-        with pytest.raises(SQLAlchemyError):
+        with pytest.raises(SQLAlchemyError) as e:
             SwordItemTypeMapping.create(
             name="test2",
             mapping={"test": "test"},
             item_type_id=999
             )
+        assert isinstance(e.value, SQLAlchemyError)
         assert SwordItemTypeMappingModel.query.filter_by(id=3).first() == None
 
     # def update(cls, id, name=None, mapping=None, item_type_id=None):
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordItemTypeMapping::test_update -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
     def test_update(app, db, item_type, sword_mapping):
+        # No 4
         obj = SwordItemTypeMapping.update(
             id=sword_mapping[0]["id"],
             mapping={"test2": "test2"},
@@ -74,6 +89,23 @@ class TestSwordItemTypeMapping:
         assert result == obj
         assert result.mapping == obj.mapping
         assert result.version_id == sword_mapping[0]["version_id"] + 1
+
+        # No 4: Update with non-existent id
+        with pytest.raises(WekoSwordserverException) as e:
+            SwordItemTypeMapping.update(
+                id=999,
+                item_type_id=sword_mapping[0]["item_type_id"]
+            )
+        assert e.value.errorType == ErrorType.ServerError
+        assert e.value.message == "Mapping not defined."
+
+        # No 5: Update with invalid item_type_id
+        with pytest.raises(SQLAlchemyError) as e:
+            SwordItemTypeMapping.update(
+                id=sword_mapping[0]["id"],
+                item_type_id=999
+            )
+        assert isinstance(e.value, SQLAlchemyError)
 
     # def versions()
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordItemTypeMapping::test_versions -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
@@ -96,6 +128,19 @@ class TestSwordItemTypeMapping:
         assert versions[1].mapping == obj.mapping
         assert versions[0].version_id == sword_mapping[1]["version_id"]
         assert versions[1].version_id == sword_mapping[1]["version_id"] + 1
+
+    # delete(cls, id):
+    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordItemTypeMapping::test_delete -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+    def test_delete(app, db, sword_mapping):
+        # No 1: Successful delete
+        print("sword_mapping[2][id]:", sword_mapping[2]["id"])
+        SwordItemTypeMapping.delete(id=sword_mapping[2]["id"])
+        assert SwordItemTypeMappingModel.query.filter_by(id=3).first().is_deleted == True
+
+        # No 2: Delete with non-existent id
+        res = SwordItemTypeMapping.delete(id=999)
+        assert res == None
+
 
 #  .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordClient -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
 class TestSwordClient:
