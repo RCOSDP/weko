@@ -967,8 +967,7 @@ class ItemTypes(RecordBase):
                                 # cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'],data['table_row_map']['schema']['properties'][_prop_id])
                                 _form = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.form, -1))).replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_form, -1))
-                                _tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))
-                                cls.update_attribute_options(tmp_data, _tmp_data, renew_value)
+                                cls.update_attribute_options(tmp_data, data['table_row_map']['form'][idx], renew_value)
                                 cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'][_prop_id],data['table_row_map']['schema']['properties'][_prop_id])
                                                                                
         from weko_itemtypes_ui.utils import fix_json_schema,update_required_schema_not_exist_in_form, update_text_and_textarea
@@ -1018,22 +1017,29 @@ class ItemTypes(RecordBase):
         return result
 
     @classmethod
-    def update_property_enum(cls, old_value, new_value):        
+    def update_property_enum(cls, old_value, new_value):
+        managed_key_list = current_app.config.get("WEKO_RECORDS_MANAGED_KEYS")
         if isinstance(old_value, dict):
             for key, value in old_value.items():
                 if isinstance(old_value[key], dict):
                     if key in new_value and key in old_value:
                         if "enum" in old_value[key]:
-                            new_value[key]["enum"] = old_value[key]["enum"]
-                        elif "currentEnum" in old_value[key]:
-                            new_value[key]["currentEnum"] = old_value[key]["currentEnum"]  
-                        else:
+                            if key not in managed_key_list:
+                                if old_value[key]["enum"] != [None]:
+                                    new_value[key]["enum"] = old_value[key]["enum"]
+                        if "currentEnum" in old_value[key]:
+                            if key not in managed_key_list:
+                                if old_value[key]["currentEnum"] != [None]:
+                                    new_value[key]["currentEnum"] = old_value[key]["currentEnum"]  
+                        if "enum" not in old_value[key] and "currentEnum" not in old_value[key]:
                             if key in new_value and key in old_value:
                                 cls.update_property_enum(old_value[key], new_value[key])
 
 
     @classmethod
-    def update_attribute_options(cls, old_value, new_value, renew_value = 'None'):     
+    def update_attribute_options(cls, old_value, new_value, renew_value = 'None'):
+        managed_key_list = current_app.config.get("WEKO_RECORDS_MANAGED_KEYS")
+           
         if "items" in old_value:
             for idx2,item2 in enumerate(old_value["items"]):
                 if "key" in item2:
@@ -1064,8 +1070,9 @@ class ItemTypes(RecordBase):
                             title_i18n = title_i18n_temp
                         if "title_i18n_temp" in item2 and renew_value not in ["ALL", "LOC"]:
                             title_i18n_temp = item2["title_i18n_temp"]
-                        if ("titleMap" in item2 and renew_value not in ["ALL", "VAL"]) or ('titleMap' in new_value["items"][idx2] and not new_value["items"][idx2]["titleMap"]):
+                        if ("titleMap" in item2 and key.split(".")[-1] not in managed_key_list) or ("titleMap" in item2 and renew_value not in ["ALL", "VAL"]) or ('titleMap' in new_value["items"][idx2] and not new_value["items"][idx2]["titleMap"]):
                             titleMap = item2["titleMap"]
+                        
                         new_item["isHide"] = isHide
                         new_item["isShowList"] = isShowList
                         new_item["isNonDisplay"] = isNonDisplay
@@ -1076,6 +1083,7 @@ class ItemTypes(RecordBase):
                         if title_i18n_temp:
                             new_item["title_i18n_temp"] = title_i18n_temp
                         if titleMap:
+
                             new_item["titleMap"] = titleMap
                         if 'items' in item2:
                             cls.update_attribute_options(item2, new_item, renew_value)

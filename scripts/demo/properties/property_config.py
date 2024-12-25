@@ -823,6 +823,7 @@ AFFILIATION_SCHEME_VAL = [None, "kakenhi", "ISNI", "Ringgold", "GRID"]
 CREATOR_IDENTIFIER_SCHEMA_LBL = [
 None,
 "e-Rad_Researcher",
+"e-Rad",
 "NRID【非推奨】", 
 "ORCID",
 "ISNI", 
@@ -831,10 +832,11 @@ None,
 "kakenhi【非推奨】", 
 "Ringgold",
 "GRID【非推奨】",
-"ROR"]
+"ROR","WEKO"]
 CREATOR_IDENTIFIER_SCHEMA_VAL = [
 None,
 "e-Rad_Researcher",
+"e-Rad",
 "NRID", 
 "ORCID",
 "ISNI", 
@@ -843,7 +845,7 @@ None,
 "kakenhi", 
 "Ringgold",
 "GRID",
-"ROR"]
+"ROR","WEKO"]
 DATE_TYPE_VAL = [
     None,
     "Accepted",

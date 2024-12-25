@@ -1604,6 +1604,7 @@ def validate_form_input_data(
     remove_excluded_items_in_json_schema(item_id, json_schema)
 
     data['$schema'] = json_schema.copy()
+    
     validation_data = RecordBase(data)
 
     try:

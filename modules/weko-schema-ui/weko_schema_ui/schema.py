@@ -977,7 +977,7 @@ class SchemaTree:
                     'RESOURCE_TYPE_URI'][new_type]
 
         def replace_nameIdentifierScheme_for_jpcoar_v1(atr_vm_item):
-            if 'nameIdentifiers' in atr_vm_item:
+            if 'nameIdentifiers' in atr_vm_item and atr_vm_item['nameIdentifiers'] is not None:
                 for idx,val in enumerate(atr_vm_item['nameIdentifiers']):
                     if 'nameIdentifierScheme' in val and val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V1_NAMEIDSCHEME_REPLACE']:
                         new_type = current_app.config[
@@ -985,7 +985,8 @@ class SchemaTree:
                         val['nameIdentifierScheme'] = new_type
 
         def replace_nameIdentifierScheme_for_jpcoar_v2(atr_vm_item):
-            if 'nameIdentifiers' in atr_vm_item:
+            current_app.logger.error("atr_vm_item: {}".format(atr_vm_item))
+            if 'nameIdentifiers' in atr_vm_item and atr_vm_item['nameIdentifiers'] is not None:
                 for idx,val in enumerate(atr_vm_item['nameIdentifiers']):
                     if 'nameIdentifierScheme' in val and val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE']:
                         new_type = current_app.config[

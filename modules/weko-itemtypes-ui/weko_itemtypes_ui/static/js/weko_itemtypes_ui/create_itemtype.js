@@ -1923,6 +1923,8 @@ $(document).ready(function () {
           titleMap.push({"name": val, "value": val});
         }
       });
+      console.log("titleMap");
+      console.log(titleMap);
       form.titleMap = titleMap;
     }
     // Rearrange data for form in case of radio, checkbox, select
