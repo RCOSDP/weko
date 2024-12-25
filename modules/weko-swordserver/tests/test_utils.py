@@ -6,29 +6,186 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 import pytest
-
+import os
+from io import BytesIO
+from hashlib import sha256,sha512
+from zipfile import ZipFile, BadZipFile
+from weko_swordserver.api import SwordClient, SwordItemTypeMapping
+from unittest.mock import patch
 from weko_swordserver.utils import (
+    check_import_file_format,
     get_record_by_client_id,
-    process_json
+    process_json,
+    unpack_zip,
+    is_valid_file_hash
 )
 from .helpers import json_data
+from weko_swordserver.errors import ErrorType, WekoSwordserverException
+from weko_swordserver.models import SwordClientModel, SwordItemTypeMappingModel
 
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
 
-# def get_record_by_token(access_token):
-# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::get_record_by_client_id -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-def test_get_record_by_client_id(app,db,tokens,sword_mapping,sword_client):
-    client_id = tokens[0]["client"].client_id
-    client, mapping = get_record_by_client_id(client_id)
+# def check_import_file_format(file, packaging):
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_check_import_file_format -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+def test_check_import_file_format(app):
+    # No 1
+    file_content = BytesIO()
+    with ZipFile(file_content, 'w') as zip_file:
+        zip_file.writestr('metadata/sword.json', '{}')
+    file_content.seek(0)
+    assert check_import_file_format(file_content, 'SWORDBagIt') == 'JSON'
 
-    assert client == sword_client[0]["sword_client"]
-    assert mapping == sword_mapping[0]["sword_mapping"]
+
+    # No 2
+    file_content = BytesIO()
+    with ZipFile(file_content, 'w') as zip_file:
+        zip_file.writestr('metadata/invalid.json', '{}')
+    file_content.seek(0)
+    with pytest.raises(WekoSwordserverException) as e:
+        check_import_file_format(file_content, 'SWORDBagIt')
+    assert e.value.errorType == ErrorType.MetadataFormatNotAcceptable
+    assert e.value.message == "SWORDBagIt requires metadate/sword.json."
+
+    # No 3
+    file_content = BytesIO()
+    with ZipFile(file_content, 'w') as zip_file:
+        zip_file.writestr('ro-crate-metadata.json', '{}')
+    file_content.seek(0)
+    assert check_import_file_format(file_content, 'SimpleZip') == 'JSON'
+
+    # No 4
+    file_content = BytesIO()
+    with ZipFile(file_content, 'w') as zip_file:
+        zip_file.writestr('invalid.json', '{}')
+    file_content.seek(0)
+    assert check_import_file_format(file_content, 'SimpleZip') == 'OTHERS'
+
+    # No 5
+    file_content = BytesIO()
+    with ZipFile(file_content, 'w') as zip_file:
+        zip_file.writestr('metadata/sword.json', '{}')
+    file_content.seek(0)
+    packaging = 'InvalidPackaging'
+    with pytest.raises(WekoSwordserverException) as e:
+        check_import_file_format(file_content, packaging)
+    assert e.value.errorType == ErrorType.PackagingFormatNotAcceptable
+    assert e.value.message == f"Not accept packaging format: {packaging}"
 
 
-# def process_json():
+# def unpack_zip(file):
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_unpack_zip -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+def test_unpack_zip(app):
+    # No 1
+    file_content = BytesIO()
+    with ZipFile(file_content, 'w') as zip_file:
+        zip_file.writestr('test.txt', 'This is a test file.')
+        zip_file.writestr('test1.txt', 'This is a test1 file.')
+    file_content.seek(0)
+
+    data_path, file_list = unpack_zip(file_content)
+
+    assert os.path.exists(data_path)
+    assert 'test.txt' in file_list
+    assert 'test1.txt' in file_list
+    assert os.path.isfile(os.path.join(data_path, 'test.txt'))
+    assert os.path.isfile(os.path.join(data_path, 'test1.txt'))
+
+    # Clean up
+    for file in file_list:
+        os.remove(os.path.join(data_path, file))
+    os.rmdir(data_path)
+
+    # No 2
+    file_content = BytesIO(b"This is not a zip file")
+    with pytest.raises(Exception) as e:
+        unpack_zip(file_content)
+    assert e.type == BadZipFile
+    assert str(e.value) == "File is not a zip file"
+
+    # No 19
+
+
+# def is_valid_file_hash(expected_hash, file):
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_is_valid_file_hash -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+def test_is_valid_file_hash():
+    # No 1
+    file_content = BytesIO(b'This is a test file content')
+    file_content.seek(0)
+    expected_hash = sha256(b'This is a test file content').hexdigest()
+    result = is_valid_file_hash(expected_hash,file_content)
+    assert result is True
+
+    # No 2
+    file_content.seek(0)
+    invalid_hash = sha256(b'Invalid content').hexdigest()
+    result = is_valid_file_hash(invalid_hash ,file_content)
+    assert result is False
+
+    # No 3:
+    file_content = BytesIO(b'This is a test file content')
+    file_content.seek(0)
+    expected_hash = sha512(b'This is a test file content').hexdigest()
+    result = is_valid_file_hash(expected_hash,file_content )
+    assert result is False
+
+    # No 4:
+    file_content = BytesIO(b'This is a test file content')
+    file_content.seek(0)
+    expected_hash = sha256(b'This is a test file content')
+    result = is_valid_file_hash(expected_hash,file_content )
+    assert result is False
+
+# def get_record_by_client_id(client_id):
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_get_record_by_client_id -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+def test_get_record_by_client_id(app,mocker):
+    # No 1
+    client_id = "valid_client_id"
+    expected_client = SwordClientModel(client_id="client_id", mapping_id="mapping_id")
+    expected_mapping = SwordItemTypeMappingModel(id="mapping_id")
+
+    with patch.object(SwordClient, 'get_client_by_id', return_value=expected_client):
+        with patch.object(SwordItemTypeMapping, 'get_mapping_by_id', return_value=expected_mapping):
+            client, mapping = get_record_by_client_id(client_id)
+            assert client == expected_client
+            assert mapping == expected_mapping
+
+    # No 2
+    invalid_client_id = "invalid_client_id"
+
+    with patch.object(SwordClient, 'get_client_by_id', return_value=None):
+        with patch.object(SwordItemTypeMapping, 'get_mapping_by_id', return_value=expected_mapping):
+            client, mapping = get_record_by_client_id(invalid_client_id)
+            assert client == None
+            assert mapping == expected_mapping
+
+    # No 3
+    valid_client_id = "valid_client_id"
+    expected_client = SwordClientModel(client_id="client_id", mapping_id="invalid_mapping_id")
+    with patch.object(SwordClient, 'get_client_by_id', return_value=expected_client):
+        with patch.object(SwordItemTypeMapping, 'get_mapping_by_id', return_value=None):
+            client, mapping = get_record_by_client_id(valid_client_id)
+            assert client == expected_client
+            assert mapping == None
+
+# def process_json(json_ld):
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_process_json -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
 def test_process_json(app):
+    # No 1: Valid JSON-LD
     json_ld = json_data("data/item_type/ro-crate-metadata_2.json")
-    json = process_json(json_ld)
+    expected_json = json_data("data/item_type/processed_json_2.json")
+    result = process_json(json_ld)
+    assert result == expected_json
 
-    assert json == json_data("data/item_type/processed_json_2.json")
+    # No 2: Invalid JSON-LD format
+    invalid_json_ld = {}
+    with pytest.raises(WekoSwordserverException) as e:
+        process_json(invalid_json_ld)
+    assert e.value.errorType == ErrorType.InvalidMetadataFormat
+    assert e.value.message == "Invalid json-ld format."
+
+    # # No 3: Invalid JSON-LD format
+    invalid_json_ld = {"@graph1": [{"@id": "invalid"}]}
+    with pytest.raises(WekoSwordserverException) as e:
+        process_json(invalid_json_ld)
+    assert e.value.errorType == ErrorType.InvalidMetadataFormat
+    assert e.value.message == "Invalid json-ld format."
