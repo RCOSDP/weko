@@ -1325,15 +1325,6 @@ def create_onetime_download_url(
     return False
 
 
-def update_onetime_download(**kwargs) -> Optional[List[FileOnetimeDownload]]:
-    """Update onetime download.
-
-    @param kwargs:
-    @return:
-    """
-    return FileOnetimeDownload.update_download(**kwargs)
-
-
 def get_workflows():
     """Get workflow.
 
@@ -1928,16 +1919,3 @@ def _create_secret_download_url(file_name: str, record_id: str, user_mail: str) 
         "download_count": download_limit,
     })
     return file_secret
-    
-
-
-def update_secret_download(**kwargs) -> Optional[List[FileSecretDownload]]:
-    """Update secret download.
-
-    Args
-        kwargs:
-    Returns
-        updated List[FileSecretDownload] or None
-    """
-    current_app.logger.debug("update_secret_download:{}".format(kwargs))
-    return FileSecretDownload.update_download(**kwargs)

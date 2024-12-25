@@ -50,11 +50,12 @@ from .models import FileOnetimeDownload, FileSecretDownload, PDFCoverPageSetting
 from .pdf import make_combined_pdf
 from .permissions import check_original_pdf_download_permission, \
     file_permission_factory, is_owners_or_superusers
-from .utils import check_and_send_usage_report, get_billing_file_download_permission, \
-    get_groups_price, get_min_price_billing_file_download, \
-    get_onetime_download, get_secret_download, is_billing_item, parse_one_time_download_token, parse_secret_download_token, \
-    update_onetime_download, update_secret_download, validate_download_record, \
-    validate_onetime_download_token, validate_secret_download_token
+from .utils import (
+    check_and_send_usage_report, get_billing_file_download_permission,
+    get_groups_price, get_min_price_billing_file_download, get_onetime_download,
+    get_secret_download, is_billing_item, parse_one_time_download_token,
+    parse_secret_download_token, validate_download_record,
+    validate_onetime_download_token, validate_secret_download_token)
 
 
 def weko_view_method(pid, record, template=None, **kwargs):
@@ -449,12 +450,6 @@ def file_download_onetime(pid, record, _record_file_factory=None, **kwargs):
         return render_template(error_template,
                                error="{} does not exist.".format(filename))
 
-    # Create updated data
-    update_data = dict(
-        file_name=filename, record_id=record_id, user_mail=user_mail,
-        download_count=onetime_download.download_count - 1,
-    )
-
     # Check and send usage report for Guest User.
     if onetime_download.extra_info and 'open_restricted' == file_object.get(
             'accessrole'):
@@ -473,10 +468,11 @@ def file_download_onetime(pid, record, _record_file_factory=None, **kwargs):
             db.session.rollback()
             return render_template(error_template, error=_("Unexpected error occurred."))
 
-        update_data['extra_info'] = extra_info
-
     # Update download data
-    if not update_onetime_download(**update_data):
+    try:
+        onetime_download.increment_download_count()
+        onetime_download.update_extra_info(extra_info)
+    except:
         return render_template(error_template,
                                error=_("Unexpected error occurred."))
 
@@ -565,16 +561,12 @@ def file_download_secret(pid, record, _record_file_factory=None, **kwargs):
         return render_template(error_template,
                                 error="{} does not exist.".format(filename))
 
-    # Create updated data
-    update_data = dict(
-        file_name=filename, record_id=record_id, id=id,
-        download_count=secret_download.download_count - 1,created=str(date)
-    )
-
     # Update download data
-    if not update_secret_download(**update_data):
+    try:
+        secret_download.increment_download_count()
+    except:
         return render_template(error_template,
-                                error=_("Unexpected error occurred."))
+                               error=_("Unexpected error occurred."))
 
     # Get user's language and defautl language for PDF coverpage.
     lang = 'en'
