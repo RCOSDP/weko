@@ -22,13 +22,11 @@
 """Database models for weko-admin."""
 
 from datetime import datetime
-from datetime import timedelta
-import traceback
 from typing import List
 
 from flask import current_app
 from invenio_db import db
-from sqlalchemy import CheckConstraint, desc, ForeignKey, func
+from sqlalchemy import CheckConstraint, desc, func
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import INTERVAL
 from sqlalchemy.sql.functions import concat ,now
@@ -315,14 +313,13 @@ class DownloadMixin:
         """
         if self.download_count >= self.download_limit:
             raise ValueError('Download limit has been reached.')
-        else:
-            try:
-                self.download_count += 1
-                db.session.commit()
-            except Exception as ex:
-                db.session.rollback()
-                current_app.logger.error(ex)
-                raise ex
+        try:
+            self.download_count += 1
+            db.session.commit()
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            raise ex
 
     def delete_logically(self):
         """Execute logical deletion by setting the 'is_deleted' flag to True.
@@ -386,8 +383,12 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
         default=lambda: dict(),
         nullable=True,)
     __table_args__   = (
-        CheckConstraint('created < expiration_date', name='check_expire_date'),
-        CheckConstraint('download_limit > 0', name='check_dl_limit_positive'),
+        CheckConstraint('created < expiration_date',
+                        name='check_expiration_date'),
+        CheckConstraint('download_limit > 0',
+                        name='check_download_limit_positive'),
+        CheckConstraint('download_count <= download_limit',
+                        name='check_download_count_limit'),
     )
 
     def __init__(
@@ -432,6 +433,10 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
         Raises:
             Exception: If an unexpected error occurs during the creation.
         """
+        if data.get('expiration_date') < datetime.now():
+            raise ValueError('The expiration date must be in the future.')
+        if data.get('download_limit') <= 0:
+            raise ValueError('The download limit must be greater than 0.')
         try:
             file_download = cls(**data)
             db.session.add(file_download)
@@ -484,14 +489,13 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
         """
         if not isinstance(new_info, dict):
             raise ValueError('The new info must be a dictionary.')
-        else:
-            try:
-                self.extra_info = new_info
-                db.session.commit()
-            except Exception as ex:
-                db.session.rollback()
-                current_app.logger.error(ex)
-                raise ex
+        try:
+            self.extra_info = new_info
+            db.session.commit()
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            raise ex
 
 
 class FileSecretDownload(db.Model, Timestamp, DownloadMixin):
@@ -512,7 +516,6 @@ class FileSecretDownload(db.Model, Timestamp, DownloadMixin):
         is_deleted (bool): A flag indicating whether the record is deleted.
     """
     __tablename__ = 'file_secret_download'
-
     id              = db.Column(db.Integer,primary_key=True,autoincrement=True)
     creator_id      = db.Column(db.Integer,
                                 db.ForeignKey(
@@ -526,9 +529,13 @@ class FileSecretDownload(db.Model, Timestamp, DownloadMixin):
     download_limit  = db.Column(db.Integer, nullable=False)
     download_count  = db.Column(db.Integer, nullable=False, default=0)
     is_deleted      = db.Column(db.Boolean, nullable=False, default=False)
-    __table_args__  = (
-        CheckConstraint('created < expiration_date', name='check_expire_date'),
-        CheckConstraint('download_limit > 0', name='check_dl_limit_positive'),
+    __table_args__   = (
+        CheckConstraint('created < expiration_date',
+                        name='check_expiration_date'),
+        CheckConstraint('download_limit > 0',
+                        name='check_download_limit_positive'),
+        CheckConstraint('download_count <= download_limit',
+                        name='check_download_count_limit'),
     )
 
     def __init__(self, creator_id, record_id, file_name, label_name,
@@ -562,11 +569,16 @@ class FileSecretDownload(db.Model, Timestamp, DownloadMixin):
             **data: The attributes for the new instance.
 
         Returns:
-            FileSecretDownload: The created instance, or None if error occurs.
+            FileSecretDownload: The created instance.
 
         Raises:
+            ValueError: If the arguments are invalid.
             Exception: If an unexpected error occurs during the creation.
         """
+        if data.get('expiration_date') < datetime.now():
+            raise ValueError('The expiration date must be in the future.')
+        if data.get('download_limit') <= 0:
+            raise ValueError('The download limit must be greater than 0.')
         try:
             file_download = cls(**data)
             db.session.add(file_download)
