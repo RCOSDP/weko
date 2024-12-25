@@ -1884,10 +1884,10 @@ $(document).ready(function () {
     //Set TitleMap for form.
     let _enum, editAble;
     editAble = property.hasOwnProperty('editAble') && property['editAble'];
-    if(property.hasOwnProperty('currentEnum')){
-      _enum = property['currentEnum'];
-    } else if(property.hasOwnProperty('enum')){
+    if(property.hasOwnProperty('enum')&& property['enum']){
       _enum = property['enum'];
+    } else if(property.hasOwnProperty('currentEnum')&& property['currentEnum']){
+      _enum = property['currentEnum'];
     }
     //Trim space for value of enum in item type schema.
     if(_enum){
