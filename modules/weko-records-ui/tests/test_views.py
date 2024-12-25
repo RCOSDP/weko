@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 import uuid
 import pytest
 import io
-from flask import Flask, json, jsonify, session, url_for ,make_response
+from flask import Flask, json, jsonify, session, url_for ,make_response, current_app
 from flask_security.utils import login_user
 from invenio_accounts.testutils import login_user_via_session
 from invenio_files_rest.models import ObjectVersion
@@ -24,7 +24,6 @@ from weko_workflow.models import (
 )
 from weko_records_ui.models import PDFCoverPageSettings, FilePermission
 from weko_records_ui.views import (
-    _get_show_secret_url_button,
     check_permission,
     citation,
     escape_newline,
@@ -53,7 +52,7 @@ from weko_records_ui.views import (
     preview_able,
     get_uri,
 )
-
+from weko_records_ui.utils import can_manage_secret_url
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 
 # def record_from_pid(pid_value):
@@ -446,7 +445,7 @@ def test_get_workflow_detail(app,workflows):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 #     """Display default view.
 #     def _get_rights_title(result, rights_key, rights_values, current_lang, meta_options):
-def test_default_view_method(app, records, itemtypes, indexstyle ,users):
+def test_default_view_method(app, records, itemtypes, indexstyle, users):
     indexer, results = records
     record = results[0]["record"]
     recid = results[0]["recid"]
@@ -456,16 +455,41 @@ def test_default_view_method(app, records, itemtypes, indexstyle ,users):
                 with patch("weko_records_ui.views.get_index_link_list", return_value=[]):
                     with patch("weko_records_ui.views.render_template", return_value=make_response()):
                         assert default_view_method(recid, record, 'helloworld.pdf').status_code == 200
-                        # # need to fix
-                        # with pytest.raises(Exception) as e:
-                        #     res = default_view_method(recid, record, 'helloworld.pdf')
-                        # assert e.type==TemplatesNotFound
 
-                        default_view_method(recid, record )
-                        with pytest.raises(NotFound) : #404
-                            default_view_method(recid, record ,'notfound.pdf')
-                        with pytest.raises(NotFound) : #404
-                            default_view_method(recid, record ,'[No FileName]')
+                        #メソッド_get_show_secret_url_buttonからcan_manage_secret_urlに変更に伴うケース追加: show_secret_URLのテスト
+                        with patch('weko_records_ui.views.can_manage_secret_url', return_value=True):
+                            response = default_view_method(recid, record, 'helloworld.pdf')
+                            assert response.status_code == 200
+                            # show_secret_URLがTrueの場合の動作確認
+                            with patch('weko_records_ui.views.render_template') as mock_render_template:
+                                default_view_method(recid, record, 'helloworld.pdf')
+                                args, kwargs = mock_render_template.call_args
+                                assert kwargs['show_secret_URL'] is True
+
+                        with patch('weko_records_ui.views.can_manage_secret_url', return_value=False):
+                            response = default_view_method(recid, record, 'helloworld.pdf')
+                            assert response.status_code == 200
+                            # show_secret_URLがFalseの場合の動作確認
+                            with patch('weko_records_ui.views.render_template') as mock_render_template:
+                                default_view_method(recid, record, 'helloworld.pdf')
+                                args, kwargs = mock_render_template.call_args
+                                assert kwargs['show_secret_URL'] is False
+
+                        with patch('weko_records_ui.views.can_manage_secret_url', return_value=None):
+                            response = default_view_method(recid, record, 'helloworld.pdf')
+                            assert response.status_code == 200
+                            # show_secret_URLがNoneの場合の動作確認
+                            with patch('weko_records_ui.views.render_template') as mock_render_template:
+                                default_view_method(recid, record, 'helloworld.pdf')
+                                args, kwargs = mock_render_template.call_args
+                                assert kwargs['show_secret_URL'] is None
+
+                        # 既存のテストケース
+                        default_view_method(recid, record)
+                        with pytest.raises(NotFound):  # 404
+                            default_view_method(recid, record, 'notfound.pdf')
+                        with pytest.raises(NotFound):  # 404
+                            default_view_method(recid, record, '[No FileName]')
 
                         def cannnot():
                             return False
@@ -473,38 +497,35 @@ def test_default_view_method(app, records, itemtypes, indexstyle ,users):
                         file_permission_factory.can = cannnot
                         with patch('weko_records_ui.views.file_permission_factory', return_value=file_permission_factory):
                             with patch('weko_records_ui.views._redirect_method', return_value="redirect"):
-                                assert default_view_method(recid, record ,'helloworld.pdf') == "redirect"
+                                assert default_view_method(recid, record, 'helloworld.pdf') == "redirect"
                             with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
-                                with pytest.raises(Forbidden) : #404
-                                    assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-                        with patch('weko_records_ui.views.AdminSettings.get'
-                                    , side_effect=lambda name , dict_to_object : {'display_stats' : False} if name == 'display_stats_settings' else None):
-                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-                        with patch('weko_records_ui.views.AdminSettings.get'
-                                    , side_effect=lambda name , dict_to_object : {'items_search_author' : "author"} if name == 'items_display_settings' else None):
-                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-                        with patch('weko_search_ui.utils.get_data_by_property', return_value=(False,False)):
-                            with patch('weko_records_ui.views.selected_value_by_language' ,return_value="helloworld.pdf"):
-                                assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                                with pytest.raises(Forbidden):  # 404
+                                    assert default_view_method(recid, record, 'helloworld.pdf').status_code == 200
+                        with patch('weko_records_ui.views.AdminSettings.get',
+                                   side_effect=lambda name, dict_to_object: {'display_stats': False} if name == 'display_stats_settings' else None):
+                            assert default_view_method(recid, record, 'helloworld.pdf').status_code == 200
+                        with patch('weko_records_ui.views.AdminSettings.get',
+                                   side_effect=lambda name, dict_to_object: {'items_search_author': "author"} if name == 'items_display_settings' else None):
+                            assert default_view_method(recid, record, 'helloworld.pdf').status_code == 200
+                        with patch('weko_search_ui.utils.get_data_by_property', return_value=(False, False)):
+                            with patch('weko_records_ui.views.selected_value_by_language', return_value="helloworld.pdf"):
+                                assert default_view_method(recid, record, 'helloworld.pdf').status_code == 200
                         with patch('weko_records_ui.views.get_record_permalink', return_value=False):
-                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-                        
-                            record.update(
-                                {'system_identifier_doi' :  
-                                    {"attribute_value_mlt" :[{'subitem_systemidt_identifier':"permalink_uri"}]}})
-                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                            assert default_view_method(recid, record, 'helloworld.pdf').status_code == 200
 
+                        record.update(
+                            {'system_identifier_doi':
+                             {"attribute_value_mlt": [{'subitem_systemidt_identifier': "permalink_uri"}]}})
+                        assert default_view_method(recid, record, 'helloworld.pdf').status_code == 200
 
                         def side_effect(arg):
                             values = ['a', 'b']
                             return values[arg]
-                        # with patch('weko_search_ui.utils.get_sub_item_value', side_effect=side_effect):
-                        #     default_view_method(recid, record ,'helloworld.pdf')
                         pid_ver = MagicMock
                         pid_ver.exists = False
-                        with patch('weko_records_ui.views.PIDVersioning',return_value=pid_ver):
-                            with pytest.raises(NotFound) : #404
-                                assert default_view_method(recid, record ,'helloworld.pdf')
+                        with patch('weko_records_ui.views.PIDVersioning', return_value=pid_ver):
+                            with pytest.raises(NotFound):  # 404
+                                assert default_view_method(recid, record, 'helloworld.pdf')
 
                         pid_ver = MagicMock
                         pid_ver.exists = True
@@ -512,21 +533,21 @@ def test_default_view_method(app, records, itemtypes, indexstyle ,users):
                         mock = MagicMock
                         mock.object_uuid = uuid.uuid4()
                         pid_ver.children = [mock]
-                        pid_ver.get_children = lambda ordered,pid_status : [mock]
-                        with patch('weko_records_ui.views.PIDVersioning',return_value=pid_ver):
-                            with patch('weko_records_ui.views.WekoRecord.get_record',return_value={'_deposit':{'status':'draft'}}):
-                                assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-                        
-                        with patch('weko_records_ui.views.WekoRecord.get_record',side_effect=Exception):
-                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-                        with patch('weko_records_ui.views.ItemLink.get_item_link_info',return_value={"relation":"res"}):
-                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-                        
+                        pid_ver.get_children = lambda ordered, pid_status: [mock]
+                        with patch('weko_records_ui.views.PIDVersioning', return_value=pid_ver):
+                            with patch('weko_records_ui.views.WekoRecord.get_record', return_value={'_deposit': {'status': 'draft'}}):
+                                assert default_view_method(recid, record, 'helloworld.pdf').status_code == 200
+
+                        with patch('weko_records_ui.views.WekoRecord.get_record', side_effect=Exception):
+                            assert default_view_method(recid, record, 'helloworld.pdf').status_code == 200
+                        with patch('weko_records_ui.views.ItemLink.get_item_link_info', return_value={"relation": "res"}):
+                            assert default_view_method(recid, record, 'helloworld.pdf').status_code == 200
+
                         index = MagicMock()
                         index.index_name = ""
-                        index.index_name_english ="index"
-                        with patch('weko_records_ui.views.Indexes.get_index',return_value=index):
-                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                        index.index_name_english = "index"
+                        with patch('weko_records_ui.views.Indexes.get_index', return_value=index):
+                            assert default_view_method(recid, record, 'helloworld.pdf').status_code == 200
                    
 
 
@@ -981,7 +1002,7 @@ def test_create_secret_url_and_send_mail(app,client,db,users,records):
                                 ,pid_value=results[1]["recid"].pid_value
                                 ,filename=results[1]["filename"])
     login_user_via_session(client=client, user=users[id]["obj"] ,email=users[id]["email"])
-    with patch('weko_records_ui.views._get_show_secret_url_button',return_value = True):
+    with patch('weko_records_ui.views.can_manage_secret_url',return_value = True):
         with patch('weko_records_ui.views.process_send_mail',return_value = True):
             # with app.test_request_context():
             res = client.get(secret_file_url)
@@ -993,110 +1014,10 @@ def test_create_secret_url_and_send_mail(app,client,db,users,records):
             with patch("flask.templating._render", return_value=""):
                 res = client.post(secret_file_url ,data=json.dumps({}), content_type='application/json')
                 assert res.status_code == 500
-    with patch('weko_records_ui.views._get_show_secret_url_button',return_value = False):
+    with patch('weko_records_ui.views.can_manage_secret_url',return_value = False):
         with patch('weko_records_ui.views.process_send_mail',return_value = True):
             with patch("flask.templating._render", return_value=""):
                 res = client.post(secret_file_url ,data=json.dumps({}), content_type='application/json')
                 assert res.status_code == 403
 
 # def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord, filename:str, **kwargs) -> str:
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__get_show_secret_url_button -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-@pytest.mark.parametrize(
-    "id, is_show",
-    [
-        (0, False), #contributor
-        (1, False), #repoadmin
-        (2, False), #sysadmin
-        (3, False), #comadmin
-        (4, False), #generaluser
-        (5, False), #originalroleuser (owner)
-        (6, False), #originalroleuser2 (repoadmin)
-        (7, False), #user (weko_shared owner)
-    ],
-)
-def test__get_show_secret_url_button(users,records,id ,is_show):
-    indexer, results = records
-    # 80
-    i = 0
-    role = ["open_access" , "open_no" ,"open_date"]
-    for record in results:
-        record["record"]['owner'] = users[5]["id"]
-        record["record"]['weko_shared_id'] = users[7]["id"]
-        file_data = record["record"].get_file_data()
-        if len(file_data) > 0:
-            file_data[0].update({'accessrole':role[i%3]})
-            file_data[0].update({'date':[{"dateValue" :'2999-12-31'}]})
-            i = i + 1
-
-    with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
-        res = []
-        for record in results:
-            if 'filename' in record:
-                res.append( _get_show_secret_url_button(record["record"] , record["filename"]) )
-        
-    assert not res[0]
-    assert res[1] == is_show
-    assert res[2] == is_show
-
-# def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord, filename:str, **kwargs) -> str:
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__get_show_secret_url_button2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-@pytest.mark.parametrize(
-    "id, is_show",
-    [
-        (1, True), #repoadmin
-    ],
-)
-def test__get_show_secret_url_button2(users,records ,id,is_show):
-    indexer, results = records
-    # 80
-    # pattern of not db_restricted_access_secret 
-    i = 0
-    role = ["open_access" , "open_no" ,"open_date"]
-    for record in results:
-        record["record"]['owner'] = users[5]["id"]
-        record["record"]['weko_shared_id'] = users[7]["id"]
-        file_data = record["record"].get_file_data()
-        if len(file_data) > 0:
-            file_data[0].update({'accessrole':role[i%3]})
-            file_data[0].update({'date':[{"dateValue" :'2999-12-31'}]})
-            i = i + 1
-    with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
-        res = []
-        for record in results:
-            if 'filename' in record:
-                res.append( _get_show_secret_url_button(record["record"] , record["filename"]) )
-    
-    assert res[0] == False
-    assert res[1] == False
-    assert res[2] == False
-
-# def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord, filename:str, **kwargs) -> str:
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__get_show_secret_url_button3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-@pytest.mark.parametrize(
-    "id, is_show",
-    [
-        (1, False), #repoadmin
-    ],
-)
-def test__get_show_secret_url_button3(users,records,id,is_show):
-    indexer, results = records
-    # 80
-    i = 0
-    role = ["open_access" , "open_no" ,"open_date"]
-    for record in results:
-        record["record"]['owner'] = users[5]["id"]
-        record["record"]['weko_shared_id'] = users[7]["id"]
-        file_data = record["record"].get_file_data()
-        if len(file_data) > 0:
-            file_data[0].update({'accessrole':role[i%3]})
-            file_data[0].update({'date':[{"dateValue" :'2999-12-31'}]})
-            i = i + 1
-    with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
-        res = []
-        for record in results:
-            if 'filename' in record:
-                res.append( _get_show_secret_url_button(record["record"] , record["filename"]) )
-    
-    assert res[0] == False
-    assert res[1] == is_show
-    assert res[2] == False
