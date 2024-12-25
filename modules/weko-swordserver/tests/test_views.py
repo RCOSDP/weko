@@ -120,7 +120,7 @@ def test_post_service_document_json_ld(app,client,db,users,esindex,location,inde
 
     token_direct = tokens[0]["token"].access_token
     token_workflow = tokens[1]["token"].access_token
-    token_none = tokens[2]["token"].access_token
+    token_none = tokens[3]["token"].access_token
     # Digest VERIFICATION ON
     app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = True
 
