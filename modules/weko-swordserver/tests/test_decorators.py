@@ -40,8 +40,8 @@ def test_check_oauth(app, client, users, tokens):
     with app.test_request_context(headers=headers):
         with pytest.raises(WekoSwordserverException) as e:
             res = check_oauth(write_scope.id)(lambda x, y: x + y)(x=1, y=2)
-            assert e.errorType == ErrorType.AuthenticationFailed
-            assert e.message == "Authentication is failed."
+        assert e.value.errorType == ErrorType.AuthenticationFailed
+        assert e.value.message == "Authentication is failed."
 
 
 # def check_on_behalf_of():
