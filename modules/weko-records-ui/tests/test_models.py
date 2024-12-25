@@ -1,5 +1,6 @@
 import io
 from datetime import datetime, timedelta, timezone
+from sqlite3 import IntegrityError
 from unittest import mock  # python3
 #from unittest.mock import MagicMock
 
@@ -135,6 +136,204 @@ def test_find_by_activity(db_file_permission):
     sorted_list = sorted(listpermission, key= lambda x: x.id ,reverse=True)
     assert listpermission == sorted_list
 
+
+class TestFileOnetimeDownload:
+    expiration_date = datetime.now() + timedelta(hours=24)
+    base_data = {
+        'approver_id': 1,
+        'record_id': '1',
+        'file_name': 'test file',
+        'expiration_date': expiration_date,
+        'download_limit': 1,
+        'user_mail': 'test@example.org',
+        'is_guest': False,
+        'extra_info': {'info': 'value'}
+    }
+
+    # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::TestFileOnetimeDownload::test_init -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+    def test_init(self, db):
+        obj = FileOnetimeDownload(**self.base_data)
+        for key, value in self.base_data.items():
+            assert getattr(obj, key) == value
+        for key in self.base_data.keys():
+            bad_data = self.base_data.copy()
+            bad_data.pop(key)
+            with pytest.raises(TypeError):
+                FileOnetimeDownload(**bad_data)
+
+    # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::TestFileOnetimeDownload::test_create -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+    def test_create(self, users):
+        assert FileOnetimeDownload.query.count() == 0
+        obj = FileOnetimeDownload.create(**self.base_data)
+        assert isinstance(obj, FileOnetimeDownload)
+        assert FileOnetimeDownload.query.count() == 1
+        rec = FileOnetimeDownload.query.first()
+        for key, value in self.base_data.items():
+            assert getattr(rec, key) == value
+
+        bad_data1 = self.base_data.copy()
+        bad_data1['expiration_date'] = datetime.now() - timedelta(hours=24)
+        with pytest.raises(Exception):
+            FileOnetimeDownload.create(**bad_data1)
+        assert FileOnetimeDownload.query.count() == 1
+
+        bad_data2 = self.base_data.copy()
+        bad_data2['download_limit'] = -1
+        with pytest.raises(Exception):
+            FileOnetimeDownload.create(**bad_data2)
+        assert FileOnetimeDownload.query.count() == 1
+
+        with patch('weko_records_ui.models.db.session.commit') as mock_commit:
+            mock_commit.side_effect = Exception('DB error test')
+            with pytest.raises(Exception):
+                FileOnetimeDownload.create(**self.base_data)
+            mock_commit.assert_called_once()
+        assert FileOnetimeDownload.query.count() == 1
+
+    # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::TestFileOnetimeDownload::test_update_extra_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+    def test_update_extra_info(self, users):
+        obj = FileOnetimeDownload.create(**self.base_data)
+        obj.update_extra_info({'new': 'value'})
+        assert obj.extra_info == {'new': 'value'}
+
+        with pytest.raises(ValueError):
+            obj.update_extra_info('invalid')
+        assert obj.extra_info == {'new': 'value'}
+
+        with patch('weko_records_ui.models.db.session.commit') as mock_commit:
+            mock_commit.side_effect = Exception('DB error test')
+            with pytest.raises(Exception):
+                obj.update_extra_info({'new': 'value2'})
+            mock_commit.assert_called_once()
+        assert obj.extra_info == {'new': 'value'}
+
+    # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::TestFileOnetimeDownload::test_increment_download_count -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+    def test_increment_download_count(self, users):
+        rec = FileOnetimeDownload.create(**self.base_data)
+        assert rec.download_count == 0
+        rec.increment_download_count()
+        assert rec.download_count == 1
+
+        with pytest.raises(ValueError):
+            rec.increment_download_count()
+        assert rec.download_count == 1
+
+        rec2 = FileOnetimeDownload.create(**self.base_data)
+        with patch('weko_records_ui.models.db.session.commit') as mock_commit:
+            mock_commit.side_effect = Exception('DB error test')
+            with pytest.raises(Exception):
+                rec2.increment_download_count()
+            mock_commit.assert_called_once()
+        assert rec2.download_count == 0
+
+
+    # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::TestFileOnetimeDownload::test_delete_logically -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+    def test_delete_logically(self, users):
+        rec = FileOnetimeDownload.create(**self.base_data)
+        assert rec.is_deleted is False
+        rec.delete_logically()
+        assert rec.is_deleted is True
+
+        rec.delete_logically()
+        assert rec.is_deleted is True
+
+        rec2 = FileOnetimeDownload.create(**self.base_data)
+        with patch('weko_records_ui.models.db.session.commit') as mock_commit:
+            mock_commit.side_effect = Exception('DB error test')
+            with pytest.raises(Exception):
+                rec2.delete_logically()
+            mock_commit.assert_called_once()
+        assert rec2.is_deleted is False
+
+class TestFileSecretDownload:
+    expiration_date = datetime.now() + timedelta(hours=24)
+    base_data = {
+        'creator_id': 1,
+        'record_id': '1',
+        'file_name': 'test file',
+        'label_name': 'test label',
+        'expiration_date': expiration_date,
+        'download_limit': 1
+    }
+
+    # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::TestFileSecretDownload::test_init -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+    def test_init(self, db):
+        obj = FileSecretDownload(**self.base_data)
+        for key, value in self.base_data.items():
+            assert getattr(obj, key) == value
+        for key in self.base_data.keys():
+            bad_data = self.base_data.copy()
+            bad_data.pop(key)
+            with pytest.raises(TypeError):
+                FileSecretDownload(**bad_data)
+
+    # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::TestFileSecretDownload::test_create -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+    def test_create(self, users):
+        assert FileSecretDownload.query.count() == 0
+        obj = FileSecretDownload.create(**self.base_data)
+        assert isinstance(obj, FileSecretDownload)
+        assert FileSecretDownload.query.count() == 1
+        rec = FileSecretDownload.query.first()
+        for key, value in self.base_data.items():
+            assert getattr(rec, key) == value
+
+        bad_data1 = self.base_data.copy()
+        bad_data1['expiration_date'] = datetime.now() - timedelta(hours=24)
+        with pytest.raises(Exception):
+            FileSecretDownload.create(**bad_data1)
+        assert FileSecretDownload.query.count() == 1
+
+        bad_data2 = self.base_data.copy()
+        bad_data2['download_limit'] = -1
+        with pytest.raises(Exception):
+            FileSecretDownload.create(**bad_data2)
+        assert FileSecretDownload.query.count() == 1
+
+        with patch('weko_records_ui.models.db.session.commit') as mock_commit:
+            mock_commit.side_effect = Exception('DB error test')
+            with pytest.raises(Exception):
+                FileSecretDownload.create(**self.base_data)
+            mock_commit.assert_called_once()
+        assert FileSecretDownload.query.count() == 1
+
+    # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::TestFileSecretDownload::test_increment_download_count -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+    def test_increment_download_count(self, users):
+        rec = FileSecretDownload.create(**self.base_data)
+        assert rec.download_count == 0
+        rec.increment_download_count()
+        assert rec.download_count == 1
+
+        with pytest.raises(ValueError):
+            rec.increment_download_count()
+        assert rec.download_count == 1
+
+        rec2 = FileSecretDownload.create(**self.base_data)
+        with patch('weko_records_ui.models.db.session.commit') as mock_commit:
+            mock_commit.side_effect = Exception('DB error test')
+            with pytest.raises(Exception):
+                rec2.increment_download_count()
+            mock_commit.assert_called_once()
+        assert rec2.download_count == 0
+
+    # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::TestFileSecretDownload::test_delete_logically -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+    def test_delete_logically(self, users):
+        rec = FileSecretDownload.create(**self.base_data)
+        assert rec.is_deleted is False
+        rec.delete_logically()
+        assert rec.is_deleted is True
+
+        rec.delete_logically()
+        assert rec.is_deleted is True
+
+        rec2 = FileSecretDownload.create(**self.base_data)
+        with patch('weko_records_ui.models.db.session.commit') as mock_commit:
+            mock_commit.side_effect = Exception('DB error test')
+            with pytest.raises(Exception):
+                rec2.delete_logically()
+            mock_commit.assert_called_once()
+        assert rec2.is_deleted is False
+
+
 # def find_downloadable_only(cls, **obj) -> list:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::test_find_downloadable_only -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @pytest.mark.skip(reason="'from sqlalchemy.dialects.postgresql import INTERVAL' can't tests on SQLite.")
@@ -153,116 +352,3 @@ def test_find_downloadable_only(app,db):
 
         recs = FileOnetimeDownload.find_downloadable_only(user_mail=user_mail,record_id=record_id,file_name=file_name)
         assert len(recs) == 2
-
-
-# def find_by_activity:
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::test_find_by_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_init():
-    # 36
-    dl = FileSecretDownload("a","b","c",1,2)
-    assert dl.file_name == "a"
-    assert dl.user_mail == "b"
-    assert dl.record_id == "c"
-    assert dl.download_count == 1
-    assert dl.expiration_date == 2
-
-# def create(cls, **data):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::test_create -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_create(app,db):
-    # 37 42
-    with app.test_request_context():
-        dl = FileSecretDownload.create(
-                    file_name = "a"
-                    ,user_mail ="b"
-                    ,record_id = "c"
-                    ,download_count = 1
-                    ,expiration_date= 2
-            )
-        assert dl.id
-        assert dl.created
-        rec = FileSecretDownload.find(
-                    id = dl.id
-                    ,file_name = "a"
-                    ,record_id = "c"
-                    ,created = dl.created
-            )
-        assert len(rec) == 1
-        rec = rec[0]
-        assert rec.file_name == "a"
-        assert rec.user_mail == "b"
-        assert rec.record_id == "c"
-        assert rec.download_count == 1
-        assert rec.expiration_date == 2
-
-    # 38
-    with app.test_request_context():
-        with patch("weko_records_ui.models.db.session.add", side_effect=Exception("test_error")):
-            defaultlength = len(FileSecretDownload.query.filter_by().all())
-            with pytest.raises(Exception):
-                dl = FileSecretDownload.create(
-                    file_name = "a"
-                    ,user_mail ="b"
-                    ,record_id = "c"
-                )
-                assert defaultlength == len(FileSecretDownload.query.filter_by().all())
-
-# def update_download(cls, **data):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::test_update_download -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_update_download(app,db):
-    with app.test_request_context():
-        # 39
-        dl = FileSecretDownload.create(
-            file_name = "a"
-            ,user_mail ="b"
-            ,record_id = "c"
-            ,download_count = 1
-            ,expiration_date= 2
-        )
-        result = FileSecretDownload.update_download(
-            id = dl.id
-            ,file_name = "a"
-            ,record_id = "c"
-            ,created = dl.created
-            ,download_count = 100
-        )
-        if result:
-            assert result[0].download_count == 100
-        else:
-            assert False
-
-        # 40
-        assert FileSecretDownload.update_download(
-            id = dl.id + 1
-            ,file_name = "a"
-            ,record_id = "c"
-            ,created = dl.created
-        ) == None
-        assert FileSecretDownload.update_download(
-            id = dl.id
-            ,file_name = "a"
-            ,record_id = "c"
-            ,created = dl.created
-        )
-def test_update_download2(app,db):
-    with app.test_request_context():
-        # 41
-        dl = FileSecretDownload.create(
-            file_name = "a"
-            ,user_mail ="b"
-            ,record_id = "c"
-            ,download_count = 1
-            ,expiration_date= 2
-        )
-        with patch("weko_records_ui.models.db.session.merge", side_effect=Exception("test_error")):
-            before = FileSecretDownload.query.filter_by().one_or_none().download_count
-            try:
-                dl = FileSecretDownload.update_download(
-                    id = dl.id
-                    ,file_name = "a"
-                    ,record_id = "c"
-                    ,created = dl.created
-                    ,download_count = 200
-                )
-                assert False
-            except:
-                assert before == FileSecretDownload.query.filter_by().one_or_none().download_count
