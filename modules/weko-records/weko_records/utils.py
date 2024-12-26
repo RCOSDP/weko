@@ -2099,28 +2099,34 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
                     for x in save:
                         if x.get(ob):
                             save = x.get(ob)
-            for s in save:
-                if s is not None and str_lang is None:
-                    value = s
-                    if isinstance(s,dict):
-                        value = s.get(str_key_val[len(str_key_val) - 1])
-                        if value:
-                            value.strip()
-                            if len(value) > 0:
-                                return value
-                
-                if (
-                    s and str_key_lang 
-                    and isinstance(s, dict)
-                    and s.get(str_key_lang[-1])
-                    and s.get(str_key_val[-1])
-                ):
+            
+            try:
+                iterator = iter(save)
+                for s in save:
+                    if s is not None and str_lang is None:
+                        value = s
+                        if isinstance(s,dict):
+                            value = s.get(str_key_val[len(str_key_val) - 1])
+                            if value:
+                                value.strip()
+                                if len(value) > 0:
+                                    return value
+                    
                     if (
-                        s.get(str_key_lang[-1]).strip() == str_lang.strip()
-                        and str_key_val[-1] in s
-                        and len(s.get(str_key_val[-1]).strip()) > 0
+                        s and str_key_lang 
+                        and isinstance(s, dict)
+                        and s.get(str_key_lang[-1])
+                        and s.get(str_key_val[-1])
                     ):
-                        return s.get(str_key_val[-1])
+                        if (
+                            s.get(str_key_lang[-1]).strip() == str_lang.strip()
+                            and str_key_val[-1] in s
+                            and len(s.get(str_key_val[-1]).strip()) > 0
+                        ):
+                            return s.get(str_key_val[-1])
+            except TypeError as e:
+                current_app.logger.error("TypeError: {}".format(e))
+
     return None
 
 
