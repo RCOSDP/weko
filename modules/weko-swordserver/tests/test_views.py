@@ -61,7 +61,7 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
     file_metadata = record["item_1617605131499"]["attribute_value_mlt"][0]
     assert file_metadata.get("url") is not None
     assert file_metadata.get("url").get("url") == "https://localhost/record/1/files/sample.html"
-    assert json.loads(res.data) == {"recid":"1"}
+    assert res.json == {"recid":"1"}
 
     zip = make_zip()
     storage=FileStorage(filename="payload.zip",stream=zip)
@@ -120,7 +120,7 @@ def test_post_service_document_json_ld(app,client,db,users,esindex,location,inde
 
     token_direct = tokens[0]["token"].access_token
     token_workflow = tokens[1]["token"].access_token
-    token_none = tokens[2]["token"].access_token
+    token_none = tokens[3]["token"].access_token
     # Digest VERIFICATION ON
     app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = True
 
@@ -141,7 +141,7 @@ def test_post_service_document_json_ld(app,client,db,users,esindex,location,inde
         with patch("weko_swordserver.registration.bagit.Bag.validate"):
             res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
         assert res.status_code == 200
-        recid = json.loads(res.data)["recid"]
+        recid = res.json["recid"]
         recid = PersistentIdentifier.get("recid",recid)
         record = RecordMetadata.query.filter_by(id=recid.object_uuid).one_or_none()
         assert record is not None
@@ -166,8 +166,8 @@ def test_post_service_document_json_ld(app,client,db,users,esindex,location,inde
         with patch("weko_swordserver.registration.bagit.Bag.validate"):
             res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
         assert res.status_code == 412
-        assert json.loads(res.data).get("@type") == "DigestMismatch"
-        assert json.loads(res.data).get("error") == "Request body and digest verification failed."
+        assert res.json.get("@type") == "DigestMismatch"
+        assert res.json.get("error") == "Request body and digest verification failed."
 
 
     # invalid hash but setting is off
@@ -198,7 +198,7 @@ def test_post_service_document_json_ld(app,client,db,users,esindex,location,inde
         with patch("weko_swordserver.registration.bagit.Bag.validate"):
             res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
         assert res.status_code == 200
-        recid = json.loads(res.data)["recid"]
+        recid = res.json["recid"]
         recid = PersistentIdentifier.get("recid",recid)
         record = RecordMetadata.query.filter_by(id=recid.object_uuid).one_or_none()
         assert record is not None
@@ -235,7 +235,7 @@ def test_get_status_document(client, users, tokens):
     with patch("weko_swordserver.views._get_status_document",side_effect=lambda x:{"recid":x}):
         res = client.get(url, headers=headers)
         assert res.status_code == 200
-        assert json.loads(res.data) == {"recid":"test_recid"}
+        assert res.json == {"recid":"test_recid"}
 
 
 # def _get_status_document(recid):
@@ -397,7 +397,7 @@ def test_handle_unauthorized(client,sessionlifetime):
     with patch("weko_swordserver.views._create_error_document",side_effect=lambda x,y:{"type":x,"msg":y}):
         res = client.get(url)
         assert res.status_code == 401
-        assert json.loads(res.data) == {"type":"AuthenticationRequired","msg":"Authentication is required."}
+        assert res.json == {"type":"AuthenticationRequired","msg":"Authentication is required."}
 
 
 # def handle_forbidden(ex):
@@ -407,7 +407,7 @@ def test_handle_forbidden(client,sessionlifetime):
     with patch("weko_swordserver.views._create_error_document",side_effect=lambda x,y:{"type":x,"msg":y}):
         res = client.get(url)
         assert res.status_code == 403
-        assert json.loads(res.data) == {"type":"Forbidden","msg":"Not allowed operation in your token scope."}
+        assert res.json == {"type":"Forbidden","msg":"Not allowed operation in your token scope."}
 
 
 # def handle_seamless_exception(ex):
@@ -417,7 +417,7 @@ def test_handle_seamless_exception(client,sessionlifetime):
     with patch("weko_swordserver.views._create_error_document",side_effect=lambda x,y:{"type":x,"msg":y}):
         res = client.get(url)
         assert res.status_code == 500
-        assert json.loads(res.data) == {"type":"ServerError","msg":"this is test SeamlessException"}
+        assert res.json == {"type":"ServerError","msg":"this is test SeamlessException"}
 
 
 # def handle_exception(ex):
@@ -427,7 +427,7 @@ def test_handle_exception(client,sessionlifetime):
     with patch("weko_swordserver.views._create_error_document",side_effect=lambda x,y:{"type":x,"msg":y}):
         res = client.get(url)
         assert res.status_code == 500
-        assert json.loads(res.data) == {"type":"ServerError","msg":"Internal Server Error"}
+        assert res.json == {"type":"ServerError","msg":"Internal Server Error"}
 
 
 # def handle_weko_swordserver_exception(ex):
@@ -437,4 +437,4 @@ def test_handle_weko_swordserver_exception(client,sessionlifetime):
     with patch("weko_swordserver.views._create_error_document",side_effect=lambda x,y:{"type":x,"msg":y}):
         res = client.get(url)
         assert res.status_code == 400
-        assert json.loads(res.data) == {"type":"BadRequest","msg":"this is test BadRequest exception"}
+        assert res.json == {"type":"BadRequest","msg":"this is test BadRequest exception"}

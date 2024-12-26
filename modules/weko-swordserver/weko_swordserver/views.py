@@ -258,7 +258,7 @@ def post_service_document():
         raise WekoSwordserverException(
             f"Error in check_import_items: {check_result_msg}", errorType)
     if item.get("status") != "new":
-        raise WekoSwordserverException("This item is already registered: {0]".format(item.get("item_title")), ErrorType.BadRequest)
+        raise WekoSwordserverException("This item is already registered: {0}".format(item.get("item_title")), ErrorType.BadRequest)
 
     item["root_path"] = os.path.join(data_path, "data")
 
@@ -283,6 +283,9 @@ def post_service_document():
     TempDirInfo().delete(data_path)
 
     recid = import_result.get("recid")
+    current_app.logger.info(
+        f"item imported by sword from {request.oauth.client.name} (recid={recid})"
+    )
 
     return jsonify(_get_status_document(recid))
 
