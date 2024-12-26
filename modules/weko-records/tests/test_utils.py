@@ -1253,6 +1253,21 @@ def test_check_info_in_metadata(app, meta):
     _str_key_val = 'item_1551264418667.subitem_1551257245638.subitem_1551257276108'
     res = check_info_in_metadata(_str_key_lang, _str_key_val, 'en', meta[0])
     assert res=='Contributor'
+    _str_key_lang = 'item_30002_title0.subitem_title_language'
+    _str_key_val = 'item_30002_title0.subitem_title'
+    _lang = 'ja'
+    _meta = {'path': ['1623632832836'], 'pubdate': '2024-12-26', 'item_30002_title0': {'subitem_title': 'title', 'subitem_title_language': 'ja'}, 'item_30002_resource_type13': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_30002_file35': [{'filename': '日本語.png'}], 'item_1735223788720': {'subitem_thumbnail': [{'thumbnail_label': 'jdcat.jsps.go.jp_about.png', 'thumbnail_url': '/api/files/d88a107f-c3a7-4ad6-81ca-4c34691682d1/jdcat.jsps.go.jp_about.png?versionId=37ad1676-9099-4f82-ba7a-35ef4f325b39'}]}}
+    res = check_info_in_metadata(_str_key_lang, _str_key_val, _lang, _meta)
+    assert res=='title'
+    _str_key_lang = 'item_30002_title0.subitem_title_language'
+    _str_key_val = 'item_30002_title0.subitem_title'
+    _lang = 'ja'
+    _meta = {'path': ['1623632832836'], 'pubdate': '2024-12-26', 'item_30002_title0': [{'subitem_title': 'title', 'subitem_title_language': 'ja'}], 'item_30002_resource_type13': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_30002_file35': [{'filename': '日本語.png'}], 'item_1735223788720': {'subitem_thumbnail': [{'thumbnail_label': 'jdcat.jsps.go.jp_about.png', 'thumbnail_url': '/api/files/d88a107f-c3a7-4ad6-81ca-4c34691682d1/jdcat.jsps.go.jp_about.png?versionId=37ad1676-9099-4f82-ba7a-35ef4f325b39'}]}}
+    res = check_info_in_metadata(_str_key_lang, _str_key_val, _lang, _meta)
+
+
+
+
 
 # def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_value_and_lang_by_key -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp

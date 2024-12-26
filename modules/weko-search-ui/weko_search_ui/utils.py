@@ -1713,7 +1713,7 @@ def handle_item_title(list_record):
                     ):
                         title_val = check_info_in_metadata(
                             lang_key, val_key, title_lang_data[0], item["metadata"]
-                        )
+                        )                        
                         item["item_title"] = title_val
                 if title_val:
                     break
