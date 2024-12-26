@@ -3133,6 +3133,8 @@ def get_thumbnail_key(item_type_id=0):
         item_type = item_type.render
         schema = item_type.get("schemaeditor", {}).get("schema", {})
         for key, item in schema.items():
+            if not isinstance(item, dict):
+                continue
             if item.get("properties") and item["properties"].get("subitem_thumbnail"):
                 return key
 
