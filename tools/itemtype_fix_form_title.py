@@ -57,13 +57,7 @@ def fix_form_title(db_list):
                         if not render_title:
                             continue
 
-                        # renderのtitle_i18nが空文字の場合、keyが表示されてしまうため、renderのtitleを設定
-                        if render_title.get('en') == "":
-                            render_title['en'] = render_meta_list[form_key]['title']
-                        if render_title.get('ja') == "":
-                            render_title['ja'] = render_meta_list[form_key]['title']
-
-                        # formのtitle_i18nをrenderのtitle_i18nに合わせる
+                        # 管理画面はrenderのmeta_listを参照している。renderに沿った状態に修正する。
                         if form[i].get('title_i18n') != render_title:
                             is_form_changed = True
                             form[i]['title_i18n'] = render_title

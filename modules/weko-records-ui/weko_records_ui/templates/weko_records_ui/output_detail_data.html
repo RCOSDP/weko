@@ -58,7 +58,7 @@
               <tr>
                 <th scope="row" colspan="6"
                 style="border-bottom: none">
-                {%- if record_detail_data['attribute_name_i18n'] -%}
+                {%- if record_detail_data['attribute_name_i18n'] and record_detail_data['attribute_name_i18n']|length>0 -%}
                 {{ record_detail_data['attribute_name_i18n'] }}
                 {%- else -%}
                 {{ record_detail_data['attribute_name'] }}
