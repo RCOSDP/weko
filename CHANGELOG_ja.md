@@ -130,3 +130,4 @@
 [v1.0.8] https://github.com/RCOSDP/weko/compare/v1.0.7...v1.0.8
 [v1.0.7] https://github.com/RCOSDP/weko/compare/v0.9.6...v1.0.7
 [v1.0.7a] https://github.com/RCOSDP/weko/compare/v1.0.7...v1.0.7a
+[v1.0.7a2] https://github.com/RCOSDP/weko/compare/v1.0.7a...v1.0.7a2
