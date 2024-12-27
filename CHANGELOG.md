@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v1.0.7a2] - 2024-12-27  
 ### Changed
+- Enabled the edit of metadata fields, including author identifier URLs and author affiliation identifier URLs.
 - Updated nginx to version 1.26.2.  
 ### Fixed
 - Fixed a bug in the data correction tool (`itemtype_fix_form_title.py`) for resolving inconsistencies between render and form.  
