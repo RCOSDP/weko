@@ -12,7 +12,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 ### Security
 
-## [v1.0.7a] - planning
+## [v1.0.7a2] - 2024-12-27  
+### Changed
+- Updated nginx to version 1.26.2.  
+### Fixed
+- Fixed a bug in the data correction tool (`itemtype_fix_form_title.py`) for resolving inconsistencies between render and form.  
+- Fixed an issue where importing items would fail if "Allow Multiple" was not checked for the item title.  
+- Fixed a bug causing errors when importing items with thumbnails.  
+- Resolved an issue where the item details screen could not be displayed if the creator identifier was set to "hide."  
+
+## [v1.0.7a] - 2024-10-29
 ### Changed
 - Added a feature that allows users to forcibly unlock activity locks.
 ### Fixed
