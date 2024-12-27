@@ -48,7 +48,7 @@
     {%- if record_detail_data['attribute_value_mlt'] is string or not record_detail_data['attribute_value_mlt'] -%}
       <tr>
         <th scope="row"
-            colspan="6">{{ record_detail_data['attribute_name_i18n'] }}</th>
+            colspan="6">{{ output_detail_data['attribute_name_i18n'] }}</th>
         <td>{{ record_detail_data['attribute_value_mlt'] }}</td>
       </tr>
     {%- else -%}
@@ -57,7 +57,13 @@
               {%- if attribute_data -%}
               <tr>
                 <th scope="row" colspan="6"
-                style="border-bottom: none">{{ record_detail_data['attribute_name_i18n'] }}</th>
+                style="border-bottom: none">
+                {%- if record_detail_data['attribute_name_i18n'] -%}
+                {{ record_detail_data['attribute_name_i18n'] }}
+                {%- else -%}
+                {{ record_detail_data['attribute_name'] }}
+                {%- endif -%}
+                </th>
                 <td>
                 </td>
               </tr>
