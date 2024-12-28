@@ -1,4 +1,3 @@
-
 CREATE OR REPLACE FUNCTION update_v107a2()
 RETURNS void AS $$
 BEGIN
@@ -26,3 +25,4 @@ BEGIN
     END IF;
 END;
 $$ LANGUAGE plpgsql;
+SELECT update_v107a2();
