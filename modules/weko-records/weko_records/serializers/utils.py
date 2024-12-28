@@ -59,17 +59,19 @@ def get_mapping(item_type_id, mapping_type):
 
     schema = {}
     item_type_mapping = Mapping.get_record(item_type_id)
-    item_type_list = ItemTypes.get_by_id(item_type_id).render.get('table_row')
-    for item_id in item_type_list:
-        if item_id in item_type_mapping:
-            maps = item_type_mapping.get(item_id)
-            if isinstance(maps,dict) and mapping_type in maps.keys() and isinstance(maps[mapping_type], dict):
-                item_schema = get_schema_key_info(maps[mapping_type], '', {})
-                for k, v in item_schema.items():
-                    if k in schema:
-                        schema[k] += ',' + item_id + '.' + v if v else ',' + item_id
-                    else:
-                        schema[k] = item_id + '.' + v if v else item_id
+    _item_type = ItemTypes.get_by_id(item_type_id)
+    if _item_type:
+        item_type_list = _item_type.render.get('table_row')
+        for item_id in item_type_list:
+            if item_id in item_type_mapping:
+                maps = item_type_mapping.get(item_id)
+                if isinstance(maps,dict) and mapping_type in maps.keys() and isinstance(maps[mapping_type], dict):
+                    item_schema = get_schema_key_info(maps[mapping_type], '', {})
+                    for k, v in item_schema.items():
+                        if k in schema:
+                            schema[k] += ',' + item_id + '.' + v if v else ',' + item_id
+                        else:
+                            schema[k] = item_id + '.' + v if v else item_id
 
     return schema
 

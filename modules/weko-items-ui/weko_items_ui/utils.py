@@ -3247,8 +3247,9 @@ def get_hide_list_by_schema_form(item_type_id=None, schemaform=None):
     """Get hide list by schema form."""
     ids = []
     if item_type_id and not schemaform:
-        item_type = ItemTypes.get_by_id(item_type_id).render
-        schemaform = item_type.get('table_row_map', {}).get('form', {})
+        item_type = ItemTypes.get_by_id(item_type_id)
+        if item_type:
+            schemaform = item_type.render.get('table_row_map', {}).get('form', {})
     if schemaform:
         for item in schemaform:
             if not item.get('items'):
@@ -3310,10 +3311,12 @@ def get_options_list(item_type_id, json_item=None):
     :param json_item:
     :return: options dict
     """
+    meta_options = {}
     if json_item is None:
         json_item = ItemTypes.get_record(item_type_id)
-    meta_options = json_item.model.render.get('meta_fix')
-    meta_options.update(json_item.model.render.get('meta_list'))
+    if json_item:
+        meta_options = json_item.model.render.get('meta_fix')
+        meta_options.update(json_item.model.render.get('meta_list'))
     return meta_options
 
 

@@ -830,11 +830,14 @@ def get_options_and_order_list(item_type_id, ojson=None):
     :param ojson:
     :return: options dict and sorted list
     """
+    meta_options = {}
+    solst = []
     if ojson is None:
         ojson = ItemTypes.get_record(item_type_id)
-    solst = find_items(ojson.model.form)
-    meta_options = ojson.model.render.get("meta_fix")
-    meta_options.update(ojson.model.render.get("meta_list"))
+    if ojson:
+        solst = find_items(ojson.model.form)
+        meta_options = ojson.model.render.get("meta_fix")
+        meta_options.update(ojson.model.render.get("meta_list"))
     return solst, meta_options
 
 
