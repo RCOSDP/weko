@@ -451,13 +451,15 @@ class SchemaTree:
                             # nd:{'@value': [['2021-12-01']], '@attributes': {'dateType': '=hoge'}}
                             return
                         else:
-                            if len(va) == 0 or \
-                                (va.get(self._atr)
-                                 and not va.get(self._v) and len(va) == 1):
+                            if isinstance(va, dict) and \
+                                    va.get(self._atr) and \
+                                    not va.get(self._v):
                                 # current_app.logger.debug(
                                 #     "self._v".format(self._v))
                                 # current_app.logger.debug("nv".format(nv))
                                 va.update({self._v: nv})
+                                if self._atr in va:
+                                    va.pop(self._atr)
                                 return
 
                         set_value(va, nv)
