@@ -3,19 +3,14 @@
 $base =  $_SERVER['REQUEST_SCHEME']."://".$_SERVER['SERVER_NAME'];
 
 // ERROR
-if(!$_SERVER['HTTP_WEKOSOCIETYAFFILIATION'] && $_SERVER['NO_CHECK_WEKOSOCIETYAFFILIATION'] != "TRUE"){
+if(!$_SERVER['HTTP_WEKOSOCIETYAFFILIATION']){
   echo "<script type='text/javascript'>
   window.alert('Permission is invalid');
   window.location.href='".$base."';</script>";
   //header("HTTP/1.1 403 Forbidden");
   //header("Location: ".$base);
 }else{
-  if(isset($_REQUEST['next'])){
-    $next=$_REQUEST['next'];
-  }else{
-    $next='%2F';
-  }
-  $url = $base."/weko/shib/login?next=".$next;
+  $url = $base."/weko/shib/login?next=%2F";
   $curl = curl_init();
   $post_args=[];
   $post_args['SHIB_ATTR_USER_NAME']=$_SERVER['HTTP_WEKOID'];
