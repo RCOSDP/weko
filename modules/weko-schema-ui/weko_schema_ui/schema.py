@@ -793,10 +793,10 @@ class SchemaTree:
                 key_item_type = get_type_item(
                     self.item_type_mapping, atr_name.lower())
                 if key_item_type in atr_vm.keys():
-                    _item_type = atr_vm[key_item_type]
-                    if _item_type in list_type:
+                    item_type = atr_vm[key_item_type]
+                    if item_type in list_type:
                         vlst['stdyDscr'] = get_item_by_type(
-                            vlst['stdyDscr'], _item_type)
+                            vlst['stdyDscr'], item_type)
                     else:
                         vlst['stdyDscr'] = {}
                 else:
@@ -995,8 +995,7 @@ class SchemaTree:
                 
 
         vlst = []
-        from weko_records.models import ItemType
-        item_type = ItemType.query.filter_by(id=self._item_type_id).one_or_none()                
+             
         for key_item_parent, value_item_parent in sorted(self._record.items()):
             if isinstance(value_item_parent, dict):
                 # Dict
@@ -1015,15 +1014,6 @@ class SchemaTree:
                 atr_vm = value_item_parent.get('attribute_value_mlt',[])
                 # attr of name
                 atr_name = value_item_parent.get('attribute_name')
-
-                # current_app.logger.debug("mpdic:{0}".format(mpdic))
-                # mpdic:{'date': {'@value': '=hogehoge', '@attributes': {'dateType': '=hoge'}}}
-                # current_app.logger.debug("atr_v:{0}".format(atr_v))
-                # atr_v:2021-12-01
-                # current_app.logger.debug("atr_vm:{0}".format(atr_vm))
-                # atr_vm:None
-                # current_app.logger.debug("atr_name:{0}".format(atr_name))
-                # atr_name:PubDate
 
                 if atr_v:
                     if isinstance(atr_v, list):
@@ -1052,6 +1042,8 @@ class SchemaTree:
                             if vlst_child and vlst_child[0]:
                                 vlst.extend(vlst_child)
                     else:
+                        from weko_records.models import ItemType
+                        item_type = ItemType.query.filter_by(id=self._item_type_id).one_or_none()   
                         # current_app.logger.error(item_type.schema["properties"][key_item_parent])
                         atr_name = ""
                         if "title" in item_type.schema.get("properties", {}).get(key_item_parent, {}):
