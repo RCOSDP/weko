@@ -1030,7 +1030,13 @@ class ItemTypes(RecordBase):
                         if "currentEnum" in old_value[key]:
                             if key not in managed_key_list:
                                 if old_value[key]["currentEnum"] != [None]:
-                                    new_value[key]["currentEnum"] = old_value[key]["currentEnum"]  
+                                    new_value[key]["currentEnum"] = old_value[key]["currentEnum"]
+                        # if "title" in old_value[key]:
+                        #     if old_value[key]["title"] != "":
+                        #         new_value[key]["title"] = old_value[key]["title"]
+                        # if "title_i18n" in old_value[key]:
+                        #     if old_value[key]["title_i18n"] != "":
+                        #         new_value[key]["title_i18n"] = old_value[key]["title_i18n"]
                         if "enum" not in old_value[key] and "currentEnum" not in old_value[key]:
                             if key in new_value and key in old_value:
                                 cls.update_property_enum(old_value[key], new_value[key])

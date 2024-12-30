@@ -1,6 +1,6 @@
 from weko_records.models import ItemType
 from weko_itemtypes_ui.utils import fix_json_schema, update_required_schema_not_exist_in_form
-from sqlalchemy import desc
+from sqlalchemy import desc,asc
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from invenio_db import db
@@ -28,6 +28,9 @@ def replace_schema(schema_old, schema_new):
     if schema_old and schema_old.get("currentEnum") and \
             isinstance(schema_new, dict):
         schema_new["currentEnum"] = schema_old.get("currentEnum")
+    if schema_old and schema_old.get("title") and \
+            isinstance(schema_new, dict):
+        schema_new["title"] = schema_old.get("title")
     if schema_old and schema_old.get("title_i18n") and \
             isinstance(schema_new, dict):
         schema_new["title_i18n"] = schema_old.get("title_i18n")
@@ -67,6 +70,7 @@ def replace_form(form_old, form_new):
                 "isNonDisplay": i.get("isNonDisplay", False),
             }
             _titleMap = i.get("titleMap")
+            _title = i.get("title")
             _title_i18n = i.get("title_i18n")
             _title_i18n_temp = i.get("title_i18n_temp")
             for j in form_new:
@@ -116,7 +120,7 @@ def main():
             FROM item_type_version
             WHERE id = :item_type_id
               AND  updated < :update_date
-            ORDER BY version_id DESC;
+            ORDER BY version_id ASC;
             """.strip()
         res = db.session.query(ItemType.id).all()
         current_app.logger.info('{} (update_date = {})'.format(sql.strip(), _update_date))
