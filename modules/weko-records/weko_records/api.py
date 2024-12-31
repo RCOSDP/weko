@@ -1041,70 +1041,81 @@ class ItemTypes(RecordBase):
                             if key in new_value and key in old_value:
                                 cls.update_property_enum(old_value[key], new_value[key])
 
-
     @classmethod
     def update_attribute_options(cls, old_value, new_value, renew_value = 'None'):
         managed_key_list = current_app.config.get("WEKO_RECORDS_MANAGED_KEYS")
-           
-        if "items" in old_value:
-            for idx2,item2 in enumerate(old_value["items"]):
-                if "key" in item2:
-                    key = item2["key"]
-                    new_item = cls.getItemByItemsKey(new_value,key)
-                    if new_item is not None:
-                        isHide = False
-                        isShowList = False
-                        isNonDisplay = False
-                        isSpecifyNewline = False
-                        isRequired = False
-                        title_i18n = None
-                        title_i18n_temp = None
-                        titleMap = None
-                        
-                        if "isHide" in item2:
-                            isHide = item2["isHide"]
-                        if "isShowList" in item2:
-                            isShowList = item2["isShowList"]
-                        if "isNonDisplay" in item2:
-                            isNonDisplay = item2["isNonDisplay"]
-                        if "isSpecifyNewline" in item2:
-                            isSpecifyNewline = item2["isSpecifyNewline"]
-                        if "required" in item2:
-                            isRequired = item2["required"]
-                        if "title_i18n" in item2 and renew_value not in ["ALL", "LOC"]:
-                            title_i18n_temp = item2["title_i18n"]
-                            title_i18n = title_i18n_temp
-                        if "title_i18n_temp" in item2 and renew_value not in ["ALL", "LOC"]:
-                            title_i18n_temp = item2["title_i18n_temp"]
-                        if ("titleMap" in item2 and key.split(".")[-1] not in managed_key_list) or ("titleMap" in item2 and renew_value not in ["ALL", "VAL"]) or ('titleMap' in new_value["items"][idx2] and not new_value["items"][idx2]["titleMap"]):
-                            titleMap = item2["titleMap"]
-                        
-                        new_item["isHide"] = isHide
-                        new_item["isShowList"] = isShowList
-                        new_item["isNonDisplay"] = isNonDisplay
-                        new_item["isSpecifyNewline"] = isSpecifyNewline
-                        new_item["required"] = isRequired
-                        if title_i18n:
-                            new_item["title_i18n"] = title_i18n
-                        if title_i18n_temp:
-                            new_item["title_i18n_temp"] = title_i18n_temp
-                        if titleMap:
-
-                            new_item["titleMap"] = titleMap
-                        if 'items' in item2:
-                            cls.update_attribute_options(item2, new_item, renew_value)
+        if isinstance(old_value, list):
+           for i in old_value:
+               cls.update_attribute_options(i, new_value, renew_value)     
+        elif isinstance(old_value, dict): 
+            if "key" in old_value:
+                key = old_value["key"]
+                new_item = cls.getItemByItemsKey(new_value,key)
+                if new_item is not None:    
+                    isHide = False
+                    isShowList = False
+                    isNonDisplay = False
+                    isSpecifyNewline = False
+                    isRequired = False
+                    title_i18n = None
+                    title_i18n_temp = None
+                    titleMap = None
+                    title = None
+                    
+                    if "title" in old_value:
+                        title = old_value["title"]
+                    if "isHide" in old_value:
+                        isHide = old_value["isHide"]
+                    if "isShowList" in old_value:
+                        isShowList = old_value["isShowList"]
+                    if "isNonDisplay" in old_value:
+                        isNonDisplay = old_value["isNonDisplay"]
+                    if "isSpecifyNewline" in old_value:
+                        isSpecifyNewline = old_value["isSpecifyNewline"]
+                    if "required" in old_value:
+                        isRequired = old_value["required"]
+                    if "title_i18n" in old_value and renew_value not in ["ALL", "LOC"]:
+                        title_i18n_temp = old_value["title_i18n"]
+                        title_i18n = title_i18n_temp
+                    if "title_i18n_temp" in old_value and renew_value not in ["ALL", "LOC"]:
+                        title_i18n_temp = old_value["title_i18n_temp"]
+                    if ("titleMap" in old_value and key.split(".")[-1] not in managed_key_list) or ("titleMap" in old_value and renew_value not in ["ALL", "VAL"]) :
+                        titleMap = old_value["titleMap"]
+                    
+                    new_item["isHide"] = isHide
+                    new_item["isShowList"] = isShowList
+                    new_item["isNonDisplay"] = isNonDisplay
+                    new_item["isSpecifyNewline"] = isSpecifyNewline
+                    new_item["required"] = isRequired
+                    if title:
+                        new_item["title"] = title
+                    if title_i18n:
+                        new_item["title_i18n"] = title_i18n
+                    if title_i18n_temp:
+                        new_item["title_i18n_temp"] = title_i18n_temp
+                    if titleMap:
+                        new_item["titleMap"] = titleMap
+                    if 'items' in old_value:
+                        cls.update_attribute_options(old_value["items"], new_item, renew_value)
 
     @classmethod
     def getItemByItemsKey(cls,prop,key):
-        if "items" in prop:
-            for idx,item in enumerate(prop["items"]):
-                if "key" in item and item["key"] == key:
-                    return item
-                if "items" in item:
-                    return cls.getItemByItemsKey(item,key)
-        else:
+        if isinstance(prop, list):
+            for i in prop:
+                ret = cls.getItemByItemsKey(i,key)
+                if ret is not None:
+                    return ret
+        elif isinstance(prop, dict):
             if "key" in prop and prop["key"] == key:
                 return prop
+            elif "items" in prop:
+                for item in prop["items"]:
+                    if "key" in item and item["key"] == key:
+                        return item
+                    if "items" in item:
+                        ret = cls.getItemByItemsKey(item,key)
+                        if ret is not None:
+                            return ret
         return None
  
             

@@ -56,40 +56,7 @@ def replace_schema(schema_old, schema_new):
                         schema_new["properties"][subkey]
                     )
     
-        
-
-def replace_form(form_old, form_new):
-    if form_old and form_new:
-        for i in form_old:
-            _k = i.get("key")
-            _option = {
-                "required": i.get("required", False),
-                "isShowList": i.get("isShowList", False),
-                "isSpecifyNewline": i.get("isSpecifyNewline", False),
-                "isHide": i.get("isHide", False),
-                "isNonDisplay": i.get("isNonDisplay", False),
-            }
-            _titleMap = i.get("titleMap")
-            _title = i.get("title")
-            _title_i18n = i.get("title_i18n")
-            _title_i18n_temp = i.get("title_i18n_temp")
-            for j in form_new:
-                if j.get("key") == _k:
-                    for k, v in _option.items():
-                        j[k] = v
-                    if _title:
-                        j["title"] = _title
-                    if _titleMap:
-                        j["titleMap"] = _titleMap
-                    if _title_i18n:
-                        j["title_i18n"] = _title_i18n
-                    if _title_i18n_temp:
-                        j["title_i18n_temp"] = _title_i18n_temp
-                    if "items" in i and "items" in j:
-                        replace_form(i["items"], j["items"])
-                    break
-
-def replace_form2(item_old, item_new):
+def replace_form(item_old, item_new):
     if item_old and item_new:
         if isinstance(item_old, dict) and isinstance(item_new, dict):
             _option = {
@@ -114,12 +81,12 @@ def replace_form2(item_old, item_new):
             if _title_i18n_temp:
                 item_new["title_i18n_temp"] = _title_i18n_temp
             if "items" in item_old and "items" in item_new:
-                replace_form2(item_old["items"], item_new["items"])
+                replace_form(item_old["items"], item_new["items"])
         elif isinstance(item_old, list) and isinstance(item_new, list):
             for i in item_old:
                 for j in item_new:
                     if i.get("key") == j.get("key"):
-                        replace_form2(i, j)
+                        replace_form(i, j)
                         break
 
 def replace_item_type_data(render_old, render_new, _form_prop_old, item_key):
@@ -152,7 +119,7 @@ def replace_item_type_data(render_old, render_new, _form_prop_old, item_key):
                             f["title_i18n"] = _title_i18n
                         if _title_i18n_temp:
                             f["title_i18n_temp"] = _title_i18n_temp
-                        replace_form2(j["items"], f["items"])
+                        replace_form(j["items"], f["items"])
                         break
     except Exception as e:
         import traceback

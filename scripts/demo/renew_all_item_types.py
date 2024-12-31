@@ -20,6 +20,7 @@ def main():
             print("itemtype id:{}, itemtype name:{}".format(itemtype.id,itemtype.item_type_name.name))
             print(ret['msg'])
         db.session.commit()
+        # db.session.rollback()
     except Exception as e:
         print(traceback.format_exc())
         db.session.rollback()
