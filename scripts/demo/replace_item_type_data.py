@@ -77,6 +77,8 @@ def replace_form(form_old, form_new):
                 if j.get("key") == _k:
                     for k, v in _option.items():
                         j[k] = v
+                    if _title:
+                        j["title"] = _title
                     if _titleMap:
                         j["titleMap"] = _titleMap
                     if _title_i18n:
