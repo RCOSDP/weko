@@ -943,7 +943,7 @@ class ItemTypes(RecordBase):
                         _prop = ItemTypeProps.get_record(_tmp)
                         if _prop:
                             # data['meta_list'][_prop_id] = json.loads('{"input_maxItems": "9999","input_minItems": "1","input_type": "cus_'+str(_prop.id)+'","input_value": "","option": {"crtf": false,"hidden": false,"multiple": true,"oneline": false,"required": false,"showlist": false},"title": "'+_prop.name+'","title_i18n": {"en": "", "ja": "'+_prop.name+'"}}')
-                            data['schemaeditor']['schema'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
+                            # data['schemaeditor']['schema'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
                             if multiple_flg:
                                 data['table_row_map']['schema']['properties'][_prop_id]['items']=pickle.loads(pickle.dumps(_prop.schema, -1))
                                 data['table_row_map']['schema']['properties'][_prop_id]['type']="array"
@@ -984,7 +984,8 @@ class ItemTypes(RecordBase):
         
         if 'schemaeditor' in data:
             if 'schema' in data['schemaeditor']:
-                data['schemaeditor']['schema'] = json_schema
+                if 'properties' in data['schemaeditor']['schema']:
+                    data['schemaeditor']['schema'] = json_schema
         
         # item_type_mapping = (
         #             ItemTypeMapping.query.filter(ItemTypeMapping.item_type_id == itemtype_id)
