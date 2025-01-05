@@ -273,12 +273,14 @@ class IndexActionResource(ContentNegotiatedMethodView):
         errors = []
         status = 200
         check = is_import_running()
+        
         if check == "is_import_running":
             errors.append(_('The index cannot be updated becase '
                             'import is in progress.'))
         else:
             public_state = data.get('public_state') and data.get(
                 'harvest_public_state')
+            
             if is_index_locked(index_id):
                 errors.append(_('Index Delete is in progress on another device.'))
             elif not public_state and check_doi_in_index(index_id):
@@ -307,6 +309,7 @@ class IndexActionResource(ContentNegotiatedMethodView):
                     raise IndexUpdatedRESTError()
                 msg = 'Index updated successfully.'
 
+            
             #roles = get_account_role()
             #for role in roles:
             langs = AdminLangSettings.get_registered_language()
