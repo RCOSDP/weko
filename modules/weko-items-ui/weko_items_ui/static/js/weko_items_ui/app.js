@@ -967,6 +967,10 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 $(this).closest('li')
                   .find('input, select')
                   .attr('disabled', true);
+              }else{
+                $(this).closest('li')
+                  .find('input, select')
+                  .attr('disabled', false);
               }
             });
         }, 1000);
