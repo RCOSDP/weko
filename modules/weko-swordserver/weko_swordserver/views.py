@@ -494,7 +494,6 @@ def handle_exception(ex):
 
 @blueprint.errorhandler(WekoSwordserverException)
 def handle_weko_swordserver_exception(ex):
-    current_app.logger.error(ex.message)
     return jsonify(_create_error_document(ex.errorType.type, ex.message)), ex.errorType.code
 
 @blueprint.teardown_request

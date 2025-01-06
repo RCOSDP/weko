@@ -189,6 +189,7 @@ def check_bagit_import_items(file, packaging):
         processed_json = process_json(json_ld)
         # FIXME: if workflow registration, check if the indextree is valid
         indextree = processed_json.get("record").get("header").get("indextree")
+        # if workflow.index_tree_id is None
 
         list_record = generate_metadata_from_json(
             processed_json, mapping, item_type
