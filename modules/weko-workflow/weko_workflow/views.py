@@ -74,7 +74,7 @@ from weko_records.api import FeedbackMailList, ItemLink
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
-from weko_search_ui.utils import check_import_items, import_items_to_system
+from weko_search_ui.utils import check_tsv_import_items, import_items_to_system
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
@@ -3204,7 +3204,7 @@ class ActivityActionResource(ContentNegotiatedMethodView):
             raise InvalidInputRESTError()
 
         # checking the metadata
-        check_result = check_import_items(itemmetadata, False, True)
+        check_result = check_tsv_import_items(itemmetadata, False, True)
         item = check_result.get('list_record')[0] \
             if check_result.get('list_record') else None
         if check_result.get('error') or not item or item.get('errors'):

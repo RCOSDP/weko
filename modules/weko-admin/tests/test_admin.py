@@ -11,6 +11,9 @@ import pytest
 from datetime import datetime
 from wtforms.validators import ValidationError
 from werkzeug.datastructures import ImmutableMultiDict
+from flask_wtf import FlaskForm,Form
+from weko_workflow.api import WorkFlow
+from weko_workflow.models import WorkFlow
 
 import pytest
 from requests import Response
@@ -24,7 +27,7 @@ from invenio_communities.models import Community
 
 from weko_index_tree.models import IndexStyle,Index
 from weko_admin.admin import StyleSettingView,LogAnalysisSettings,ItemExportSettingsView,IdentifierSettingView,\
-    identifier_adminview,facet_search_adminview,FacetSearchSettingView
+    identifier_adminview,facet_search_adminview,FacetSearchSettingView,SwordAPISettingsView
 from weko_admin.models import AdminSettings,StatisticsEmail,LogAnalysisRestrictedCrawlerList,\
                                 RankingSettings,SearchManagement, Identifier,FacetSearchSetting
 
@@ -1826,3 +1829,118 @@ class TestsReindexElasticSearchView:
             res = client.get(url)
             assert res.status_code == 500
             assert res.data != str(dict({ "isError":False ,"isExecuting":False,"disabled_Btn":False }))     
+
+#class SwordAPISettingsView(BaseView):
+#
+class TestSwordAPISettingsView:
+#    def index(self):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPISettingsView::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp --full-trace
+
+    def test_index(self, client, users, db, admin_settings, mocker):
+        url = url_for("swordapi.index")
+        
+        #no administrator
+        res = client.get(url)
+        assert res.status_code == 302
+
+        login_user_via_session(client,email=users[7]["email"])
+        res = client.get(url)
+        assert res.status_code == 403
+
+        #get
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        deleted_workflow = WorkFlow(
+            id = "1",
+            flows_name = "test_workflow"
+        )
+        mock_render = mocker.patch("weko_admin.admin.SwordAPISettingsView.render", return_value=make_response())
+        with patch("weko_admin.admin.WorkFlow.get_workflows_by_roles", return_value=["workflow 1"]):
+            with patch("weko_admin.admin.WorkFlow.get_deleted_workflow_list", return_value=[deleted_workflow]):
+             res = client.get(url)
+        assert res.status_code == 200
+        current_settings = { "default_format": "TSV",
+                            "data_format":{ "TSV":{"register_format": "Direct"},
+                                           "XML":{"workflow": '31001',  "register_format": "Workflow"}}}
+        args, kwargs = mock_render.call_args
+        assert args[0] == "weko_admin/admin/sword_api_settings.html"
+        assert kwargs["current_settings"] == current_settings
+        assert json.loads(kwargs["current_settings_json"]) == current_settings
+        assert kwargs["deleted_workflow_name_dict"] == '{"1": "test_workflow"}'
+        assert kwargs["workflows"] == ["workflow 1"]
+
+
+        # not exist admin_settings
+        default_settings = { "default_format": "TSV",
+                            "data_format":{ "TSV":{"register_format": "Direct"},
+                                           "XML":{"workflow": "-1",  "register_format": "Workflow"}}}
+        AdminSettings.query.filter_by(name="sword_api_setting").delete()
+        db.session.commit()
+        mock_render = mocker.patch("weko_admin.admin.SwordAPISettingsView.render", return_value = make_response())
+        res = client.get(url)
+        assert res.status_code == 200
+        args, kwargs = mock_render.call_args
+        assert args[0] == "weko_admin/admin/sword_api_settings.html"
+        assert kwargs["current_settings"] == default_settings
+        assert json.loads(kwargs["current_settings_json"]) == default_settings
+        assert kwargs["deleted_workflow_name_dict"] == '{}'
+        assert kwargs["workflows"] == []
+
+#    def default_format(self):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPISettingsView::test_default_format -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp --full-trace
+
+    def test_default_format(self,client,users,mocker,db,admin_settings):
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        url = url_for('swordapi.default_format')
+        mocker.patch("weko_admin.admin.redirect",return_value=make_response())
+
+        data = {"default_format":"XML"}
+        res = client.post(url,data=json.dumps(data),headers={"content-type": "application/json"})
+        assert res.status_code == 200
+        setting = AdminSettings.get("sword_api_setting")
+        assert setting.default_format == "XML"
+
+        with patch("weko_admin.admin.AdminSettings.update", side_effect = Exception("test_error")):
+            data = {"default_format":"TSV"}
+            res = client.post(url, data=json.dumps(data),headers={"content-type": "application/json"})
+            assert res.status_code == 400
+            setting = AdminSettings.get("sword_api_setting")
+            assert setting.default_format == "XML"
+        
+
+#    def data_format(self):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPISettingsView::test_data_format -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp --full-trace
+       
+    def test_data_format(self,client, db, users, admin_settings, mocker):
+        url = url_for('swordapi.data_format')
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        mocker.patch("weko_admin.admin.redirect",return_value=make_response())
+
+        data = { 
+            "data_format": "TSV",
+            "register_format": "Direct", 
+            "workflow": ""
+            }
+        res = client.post(url,json=data)
+        assert res.status_code == 200
+        setting = AdminSettings.get("sword_api_setting")
+        assert setting.data_format["TSV"]["register_format"] == "Direct"
+
+        data = { 
+            "data_format": "XML",
+            "register_format": "Workflow",
+            "workflow": "-1"
+            }
+        res = client.post(url,json=data)
+        assert res.status_code == 200
+        setting = AdminSettings.get("sword_api_setting")
+        assert setting.data_format["XML"]["register_format"] == "Workflow"
+        assert setting.data_format["XML"]["workflow"] == "-1"
+
+
+        with patch("weko_admin.admin.AdminSettings.update", side_effect=Exception("test_error")):
+            data = { "data_format": "XML", "register_format": "Workflow", "workflow": "31001"}
+            res = client.post(url, data=json.dumps(data),headers={"content-type": "application/json"})
+            assert res.status_code == 400
+            setting = AdminSettings.get("sword_api_setting")
+            assert setting.data_format["XML"]["register_format"] == "Workflow"
+            assert setting.data_format["XML"]["workflow"] == "-1"
