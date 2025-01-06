@@ -23,6 +23,7 @@ from invenio_search import current_search_client
 from invenio_search.cli import index
 from sqlalchemy.dialects import postgresql
 
+from weko_records.models import ItemMetadata
 
 from .api import RecordIndexer
 from .tasks import process_bulk_queue
@@ -100,8 +101,9 @@ def run(delayed, concurrency, version_type=None, queue=None,
 @click.option('--include-delete', is_flag=True, default=False)
 @click.option('--skip-exists', is_flag=True, default=False)
 @click.option('--size',type=int,default=6000)
+@click.option('--item-type-id',type=int,default=None)
 @with_appcontext
-def reindex(pid_type, include_delete,skip_exists,size):
+def reindex(pid_type, include_delete,skip_exists,size,item_type_id):
     """Reindex all records.
 
     :param pid_type: Pid type.
@@ -124,6 +126,9 @@ def reindex(pid_type, include_delete,skip_exists,size):
     query = query.filter(
         PersistentIdentifier.pid_type.in_(pid_type)
     )
+    if item_type_id is not None:
+        query = query.filter(ItemMetadata.id==PersistentIdentifier.object_uuid)
+        query = query.filter(ItemMetadata.item_type_id==item_type_id)
     current_app.logger.debug(query.statement.compile(dialect=postgresql.dialect(),compile_kwargs={"literal_binds": True}))
     values = query.values(
         PersistentIdentifier.object_uuid

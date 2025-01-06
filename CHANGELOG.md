@@ -14,7 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v1.0.7b] 2025-01-06 
 ### Changed
-- Improved data compatibility with migrated institutions.  
+- Improved data compatibility with migrated institutions. 
+- Added the function to specify an itemtype ID as a target for reindexing. 
 ### Fixed  
 - Reduced the increasing number of database queries.  
 
