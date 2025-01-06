@@ -445,6 +445,7 @@ def file_download_onetime(pid, record, filename, _record_file_factory=None,
                 extra_info, url_obj.user_mail ,record, file_object)
             if error:
                 return error_response(error, 403)
+            url_obj.update_extra_info(extra_info)
             db.session.commit()
         except SQLAlchemyError as ex:
             current_app.logger.error(f'SQLAlchemy error: {ex}')
@@ -455,10 +456,9 @@ def file_download_onetime(pid, record, filename, _record_file_factory=None,
             db.session.rollback()
             return error_response('Unexpected error occurred.', 500)
 
-    # Update download count and extra info
+    # Update download count
     try:
         url_obj.increment_download_count()
-        url_obj.update_extra_info(extra_info)
     except:
         return error_response('Unexpected error occurred.', 500)
 
