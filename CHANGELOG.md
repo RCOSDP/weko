@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 ### Security
 
-## [v1.0.7b] [v1.0.8b] 2025-01-06 
+## [v1.0.7b] [v1.0.8b] [v1.0.9b] 2025-01-06 
 ### Changed
 - Improved data compatibility with migrated institutions. 
 - Added the function to specify an itemtype ID as a target for reindexing. 
