@@ -42,37 +42,31 @@ def fix_form_title(db_list):
                     itemtype_name = itemtype[1]
                     form = itemtype[2]
                     render = itemtype[3]
-
+                    
                     if isinstance(form, str):
                         form = json.loads(form)
                     if isinstance(render, str):
                         render = json.loads(render)
 
-                    render = render.get('meta_list')
+                    render_meta_list = render.get('meta_list')
 
                     for i, f in enumerate(form):
                         form_key = f['key']
-                        render_title = render.get(form_key, {}).get('title_i18n')
-
+                        render_title = render_meta_list.get(form_key, {}).get('title_i18n')
                         # pubdateやsystem_fileなど、meta_list内に存在しないものは無視
                         if not render_title:
                             continue
 
-                        # renderのtitle_i18nが空文字の場合、keyが表示されてしまうため、renderのtitleを設定
-                        if render_title.get('en') == "":
-                            render_title['en'] = render[form_key]['title']
-                        if render_title.get('ja') == "":
-                            render_title['ja'] = render[form_key]['title']
-
-                        # formのtitle_i18nをrenderのtitle_i18nに合わせる
+                        # 管理画面はrenderのmeta_listを参照している。renderに沿った状態に修正する。
                         if form[i].get('title_i18n') != render_title:
                             is_form_changed = True
                             form[i]['title_i18n'] = render_title
                             update_logs.append(f"{db_name},{itemtype_name},{itemtype_id},{form_key}")
-
+                    
                     # formが変更されていたら更新
                     if is_form_changed:
-                        cur.execute('UPDATE item_type SET updated = CURRENT_TIMESTAMP, form = %s WHERE id = %s', (json.dumps(form), itemtype_id))
+                        render['table_row_map']['form']=form
+                        cur.execute('UPDATE item_type SET updated = CURRENT_TIMESTAMP, form = %s, render= %s WHERE id = %s', (json.dumps(form),json.dumps(render), itemtype_id))
 
                 for log in update_logs:
                     print(log)
