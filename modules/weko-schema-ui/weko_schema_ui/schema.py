@@ -32,7 +32,7 @@ from flask import abort, current_app, request, url_for
 from lxml import etree
 from lxml.builder import ElementMaker
 from simplekv.memory.redisstore import RedisStore
-from weko_records.api import ItemLink, Mapping
+from weko_records.api import ItemLink, Mapping, ItemTypes
 from weko_redis import RedisConnection
 from xmlschema.validators import XsdAnyAttribute, XsdAnyElement, \
     XsdAtomicBuiltin, XsdAtomicRestriction, XsdEnumerationFacet, XsdGroup, \
@@ -248,9 +248,11 @@ class SchemaTree:
         self._location = ''
         self._target_namespace = ''
         schemas = WekoSchema.get_all()
+        self._item_type = None
         if self._record and self._item_type_id:
             self._ignore_list_all, self._ignore_list = \
                 self.get_ignore_item_from_option()
+            self._item_type = ItemTypes.get_by_id(self._item_type_id)
         if isinstance(schemas, list):
             for schema in schemas:
                 if isinstance(schema, OAIServerSchema) and self._schema_name == schema.schema_name:
@@ -1042,12 +1044,10 @@ class SchemaTree:
                             if vlst_child and vlst_child[0]:
                                 vlst.extend(vlst_child)
                     else:
-                        from weko_records.models import ItemType
-                        item_type = ItemType.query.filter_by(id=self._item_type_id).one_or_none()   
                         # current_app.logger.error(item_type.schema["properties"][key_item_parent])
                         atr_name = ""
-                        if "title" in item_type.schema.get("properties", {}).get(key_item_parent, {}):
-                            atr_name = item_type.schema["properties"][key_item_parent]["title"]
+                        if self._item_type and self._item_type.schema and "title" in self._item_type.schema.get("properties", {}).get(key_item_parent):
+                            atr_name = self._item_type.schema["properties"][key_item_parent]["title"]
                         vlst_child = get_mapping_value(mpdic, {},
                                                            key_item_parent,
                                                            atr_name)

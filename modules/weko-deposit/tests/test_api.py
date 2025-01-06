@@ -599,6 +599,15 @@ class TestWekoDeposit:
         ret = deposit.get_file_data()
         assert ret==[]
 
+    # def get_file_data_with_item_type(self):
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_get_file_data_with_item_type -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_get_file_data_with_item_type(sel,app,db,location,es_records,db_itemtype):
+        indexer, records = es_records
+        record = records[0]
+        deposit = record['deposit']
+        ret = deposit.get_file_data(item_type=db_itemtype["item_type"])
+        assert ret==[]
+
     # def delete_old_file_index(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_delete_old_file_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_delete_old_file_index(sel,app,db,location,es_records):

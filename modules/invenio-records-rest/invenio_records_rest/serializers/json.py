@@ -11,6 +11,7 @@
 from __future__ import absolute_import, print_function
 
 from flask import json, request
+from weko_records.api import ItemTypes
 
 from .base import PreprocessorMixin, SerializerMixinInterface
 from .marshmallow import MarshmallowMixin
@@ -88,9 +89,14 @@ class JSONSerializerMixin(SerializerMixinInterface):
                     'weko_shared_id':hit['_source'].get('weko_shared_id')
                 }
                 if hide_meta_data_for_role(item_roles) and 'item_type_id' in hit['_source']['_item_metadata']:
-                    list_hidden = get_ignore_item(hit['_source']['_item_metadata']['item_type_id'])
-                    hit['_source']['_item_metadata'] = hide_by_itemtype(hit['_source']['_item_metadata'], list_hidden)
-                    list_hidden_mapping = get_ignore_item_from_mapping(hit['_source']['_item_metadata']['item_type_id'])
+                    item_type_id = hit['_source']['_item_metadata']['item_type_id']
+                    item_type = ItemTypes.get_by_id(item_type_id)
+                    list_hidden = []
+                    list_hidden_mapping = []
+                    if item_type:
+                        list_hidden = get_ignore_item(item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
+                        hit['_source']['_item_metadata'] = hide_by_itemtype(hit['_source']['_item_metadata'], list_hidden)
+                        list_hidden_mapping = get_ignore_item_from_mapping(item_type_id, item_type)
                     for hide_key in list_hidden_mapping:
                         if isinstance(hide_key, str) \
                                 and hit['_source'].get(hide_key):
