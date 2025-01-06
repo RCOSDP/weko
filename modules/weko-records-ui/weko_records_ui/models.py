@@ -448,6 +448,18 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
             raise ex
 
     @classmethod
+    def get_by_id(cls, id):
+        """Get a record by its ID.
+
+        Args:
+            id (int): The ID of the record to retrieve.
+
+        Returns:
+            FileOnetimeDownload: The record instance, or None if not found.
+        """
+        return cls.query.get(id)
+
+    @classmethod
     def find(cls, **obj) -> list:
         """Find file onetime download.
 
@@ -472,8 +484,9 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
             cls.file_name == obj.get("file_name"),
             cls.record_id == obj.get("record_id"),
             cls.user_mail == obj.get("user_mail"),
-            cls.download_count > 0 ,
-            now() < cls.created  + func.cast( concat( cls.expiration_date , ' days' ) , INTERVAL)
+            cls.download_count < cls.download_limit,
+            cls.expiration_date > now(),
+            cls.is_deleted == False
         )
         return query.order_by(desc(cls.id)).all()
 
@@ -588,6 +601,18 @@ class FileSecretDownload(db.Model, Timestamp, DownloadMixin):
             db.session.rollback()
             current_app.logger.error(ex)
             raise ex
+
+    @classmethod
+    def get_by_id(cls, id):
+        """Get a record by its ID.
+
+        Args:
+            id (int): The ID of the record to retrieve.
+
+        Returns:
+            FileSecretDownload: The record instance, or None if not found.
+        """
+        return cls.query.get(id)
 
     @classmethod
     def find(cls, **obj) -> list:

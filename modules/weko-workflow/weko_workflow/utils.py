@@ -3324,10 +3324,15 @@ def create_onetime_download_url_to_guest(activity_id: str,
                                          extra_info: dict):
     """Create onetime download URL to guest.
 
-    @param activity_id:
-    @param extra_info:
-    @return:
+    Args:
+        activity_id (str): The ID of the usage application activity.
+        extra_info (dict): Additional information.
+
+    Returns:
+        dict: onetime URL and expiration date.
     """
+    from weko_records_ui.utils import (create_download_url,
+                                       create_onetime_download_record)
     file_name = extra_info.get('file_name')
     record_id = extra_info.get('record_id')
     user_mail = extra_info.get('user_mail')
@@ -3335,39 +3340,24 @@ def create_onetime_download_url_to_guest(activity_id: str,
     if not user_mail:
         user_mail = extra_info.get('guest_mail')
         is_guest_user = True
-    if file_name and record_id and user_mail:
-        from weko_records_ui.utils import generate_one_time_download_url
-        onetime_file_url = generate_one_time_download_url(
-            file_name, record_id, user_mail)
+    if not file_name or not record_id or not user_mail:
+        return {}
 
-        # Delete guest activity.
-        delete_guest_activity(activity_id)
+    try:
+        url_obj = create_onetime_download_record(
+            activity_id, current_user.id, record_id, file_name, user_mail,
+            is_guest_user)
+    except:
+        return {}
+    if not url_obj:
+        return {}
 
-        # Save onetime to Database.
-        from weko_records_ui.utils import create_onetime_download_url
-        one_time_obj = create_onetime_download_url(
-            activity_id, file_name, record_id, user_mail, is_guest_user)
-        expiration_tmp = {
-            "expiration_date": "",
-            "expiration_date_ja": "",
-            "expiration_date_en": "",
-        }
-        if one_time_obj:
-            try:
-                expiration_date = timedelta(days=one_time_obj.expiration_date)
-                expiration_date = datetime.today() + expiration_date
-                expiration_date = expiration_date.strftime("%Y-%m-%d")
-                expiration_tmp['expiration_date'] = expiration_date
-            except OverflowError:
-                expiration_tmp["expiration_date_ja"] = "無制限"
-                expiration_tmp["expiration_date_en"] = "Unlimited"
-            return {
-                "file_url": onetime_file_url,
-                **expiration_tmp,
-            }
-        else:
-            current_app.logger.error("Can not create onetime download.")
-            return False
+    delete_guest_activity(activity_id)
+
+    return {
+        'file_url': create_download_url(url_obj, is_secret_file=False),
+        'expiration_date': url_obj.expiration_date
+    }
 
 
 def delete_guest_activity(activity_id: str) -> bool:
