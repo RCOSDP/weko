@@ -29,7 +29,8 @@ from weko_authors.utils import (
     set_record_status,
     flatten_authors_mapping,
     import_author_to_system,
-    get_count_item_link
+    get_count_item_link,
+    count_authors,
 )
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -667,3 +668,36 @@ def test_get_count_item_link(app,mocker):
     record_indexer.client.return_data={"hits":{"total":10}}
     result = get_count_item_link(1)
     assert result == 10
+
+
+# def count_authors():
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_count_authors -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_count_authors(app2, esindex):
+    import json
+    index = app2.config["WEKO_AUTHORS_ES_INDEX_NAME"]
+    doc_type = "author-v1.0.0"
+
+    def register(i):
+        with open(f"tests/data/test_authors/author{i:02}.json","r") as f:
+            esindex.index(index=index, doc_type=doc_type, id=f"{i}", body=json.load(f), refresh="true")
+
+    def delete(i):
+        esindex.delete(index=index, doc_type=doc_type, id=f"{i}", refresh="true")
+
+    # 3 Register 1 author data
+    register(1)
+    assert count_authors()['count'] == 1
+    delete(1)
+
+    # 4 Register gather_flg = 1
+    register(2)
+    assert count_authors()['count'] == 0
+    delete(2)
+
+    # 5 Register is_deleted = "true"
+    register(3)
+    assert count_authors()['count'] == 0
+    delete(3)
+
+    # 6 Not register author data
+    assert count_authors()['count'] == 0

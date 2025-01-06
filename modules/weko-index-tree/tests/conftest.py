@@ -781,6 +781,8 @@ def test_indices(app, db):
             position=position,
             index_name="テストインデックス {}".format(id),
             index_name_english="Test index {}".format(id),
+            index_name="テストインデックス {}".format(id),
+            index_name_english="Test index {}".format(id),
             index_link_name="Test index link {}_ja".format(id),
             index_link_name_english="Test index link {}_en".format(id),
             index_link_enabled=True,

@@ -369,6 +369,10 @@ msgid "Admin menu_Item Types_Properties"
 msgstr "Properties"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Item Types_RO-Crate Mapping"
+msgstr "RO-Crate Mapping"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Items_Bulk Update"
 msgstr "Bulk Update"
 

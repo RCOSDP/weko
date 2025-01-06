@@ -19,7 +19,7 @@ from invenio_stats.contrib.event_builders import build_celery_task_unique_id, \
 from invenio_stats.processors import EventsIndexer, anonymize_user, \
     flag_restricted, flag_robots
 from invenio_stats.queries import ESDateHistogramQuery, ESTermsQuery, \
-    ESWekoFileStatsQuery, ESWekoTermsQuery, ESWekoRankingQuery
+    ESWekoFileStatsQuery, ESWekoTermsQuery, ESWekoRankingQuery, ESWekoFileRankingQuery
 
 from weko_schema_ui.models import PublishStatus
 
@@ -911,5 +911,40 @@ def register_queries():
                     }
                 }
             )
-        )
+        ),
+        dict(
+            query_name='item-file-download-aggs',
+            query_class=ESWekoFileRankingQuery,
+            query_config=dict(
+                index='{}-events-stats-file-download'.format(search_index_prefix),
+                doc_type='stats-file-download',
+                copy_fields=dict(),
+                metric_fields=dict(
+                    download_ranking=('terms', 'file_key', {})
+                ),
+                main_fields=['item_id'],
+                main_query={
+                    "query": {
+                        "bool": {
+                            "filter": [
+                                {
+                                    "term": {
+                                        "item_id": {
+                                            "value": "@item_id",
+                                            "boost": 1
+                                        }
+                                    }
+                                },
+                                {
+                                    "terms": {
+                                        "root_file_id": "@root_file_id_list"
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "size": 0
+                },
+            )
+        ),
     ]

@@ -1147,6 +1147,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'sitelicensesettings',
     'itemtypesregister',
     'itemtypesmapping',
+    'itemtypesrocratemapping',
     'itemtypes/mapping',
     'items/bulk-export',
     'feedbackmail',

@@ -21,17 +21,22 @@
 """Module of weko-records-ui utils."""
 
 import base64
-import os
+import csv
+import json
+import re
 from datetime import datetime as dt
 from datetime import timedelta
 from decimal import Decimal
 from typing import List, NoReturn, Optional, Tuple
 from urllib.parse import urlparse,quote
+from io import StringIO
 
-from flask import abort, current_app, json, request, url_for
+from flask import abort, current_app, json, request, url_for, make_response, Flask
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
 from flask_babelex import to_user_timezone, to_utc
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_login import current_user
 from sqlalchemy import desc
 from invenio_accounts.models import Role, User
@@ -1950,3 +1955,393 @@ def update_secret_download(**kwargs) -> Optional[List[FileSecretDownload]]:
     """
     current_app.logger.debug("update_secret_download:{}".format(kwargs))
     return FileSecretDownload.update_download(**kwargs)
+
+
+class RoCrateConverter:
+    """Metadata to RO-Crate Converter."""
+
+    REGEX = re.compile(r'(.+)\[([0-9]+)\]$')
+    DEFAULT_LANG = 'en'
+
+    def __init__(self):
+        from rocrate.rocrate import ROCrate
+        self.crate = ROCrate()
+
+    def convert(self, metadata, format, lang='en'):
+        """
+        Convert metadata to RO-Crate.
+
+        Args:
+            metadata (dict) : record metadata
+            format (dict)   : conversion format
+            lang (str)      : language
+
+        Returns:
+            ROCrate: ROCrate class
+        """
+        from rocrate.rocrate import ROCrate
+
+        self.lang = lang
+        self.crate = ROCrate()
+
+        tree_structure = format.get('tree_structure', {})
+        entity_types = format.get('entity_types', {})
+
+        # Add file entities
+        self.__add_file_entities(metadata, format)
+
+        # Add root properties
+        root_entity = self.crate.root_dataset
+        root_map = tree_structure.get('map', {})
+        self.__add_properties(root_entity, root_map, metadata)
+
+        # Add entities
+        child_entities = self.__add_child_entities(tree_structure.get('children', {}), metadata, entity_types)
+        root_entity['hasPart'] = child_entities
+
+        return self.__get_json()
+
+    def __add_file_entities(self, metadata, format):
+        """
+        Add file entity.
+
+        Args:
+            metadata (dict) : record metadata
+            format (dict)   : conversion format
+        """
+
+        metadata_files = self.__get_metadata_files(metadata)
+        map_file = format.get('file', {}).get('map', {})
+        file_entities = []
+        for index, metadata_file in enumerate(metadata_files):
+            file_entity = self.crate.add_file(metadata_file.get('filename', ''))
+            # TODO: RO-Crate Mapping画面のfileのkey項目一覧からaccessModeとdateCreatedを削除（下記で使用するから）
+            file_entity['accessMode'] = metadata_file.get('accessrole', '')
+            file_entity['dateCreated'] =  metadata_file.get('date')[0]['dateValue'] if isinstance(metadata_file.get('date', ''), list) else ''
+            self.__add_file_properties(file_entity, map_file, metadata, index)
+            file_entities.append(file_entity)
+        self.crate.root_dataset['mainEntity'] = file_entities
+
+    def __get_metadata_files(self, metadata):
+        """
+        Get file metadata.
+
+        Args:
+            metadata (dict) : record metadata
+        """
+
+        files = []
+        for key, value in metadata.items():
+            if isinstance(value, dict) and value.get('attribute_type') == 'file':
+                files = value.get('attribute_value_mlt', [])
+                break
+
+        return files
+
+    def __add_file_properties(self, entity, map, metadata, index):
+        """
+        Add properties to entity.
+
+        Args:
+            entity          : RO-Crate entity
+            map (dict)      : mapping information
+            metadata (dict) : metadata
+            index (int)     : file index
+        """
+
+        for rocrate_property, item_property in map.items():
+            property_value = None
+            if isinstance(item_property, list):
+                property_value = []
+                for key in item_property:
+                    key_list = key.split('.')
+                    key_list[0] = f'{key_list[0]}[{index}]'
+                    key = '.'.join(key_list)
+                    keys = self.__sprit_property_key(key)
+                    value = self.__get_property_value(keys, 0, metadata)
+                    if isinstance(value, list):
+                        property_value = property_value + value
+                    else:
+                        property_value.append(value)
+            elif isinstance(item_property, dict):
+                if 'static_value' in item_property:
+                    property_value = item_property.get('static_value')
+            else:
+                key_list = item_property.split('.')
+                key_list[0] = f'{key_list[0]}[{index}]'
+                item_property = '.'.join(key_list)
+                keys = self.__sprit_property_key(item_property)
+                property_value = self.__get_property_value(keys, 0, metadata)
+
+            if property_value:
+                if isinstance(property_value, list):
+                    entity[rocrate_property] = property_value
+                else:
+                    entity[rocrate_property] = [property_value]
+
+    def __add_properties(self, entity, map, metadata):
+        """
+        Add properties to entity.
+
+        Args:
+            entity          : RO-Crate entity
+            map (dict)      : mapping information
+            metadata (dict) : metadata
+        """
+
+        for rocrate_property, item_property in map.items():
+            property_value = self.__get_property(item_property, metadata)
+            if property_value:
+                if isinstance(property_value, list):
+                    entity[rocrate_property] = property_value
+                else:
+                    entity[rocrate_property] = [property_value]
+
+    def __get_property(self, item_property, metadata):
+        """
+        Get property.
+
+        Args:
+            item_property   : Item property key
+            metadata (dict) : metadata
+
+        Returns:
+            any: property value
+        """
+
+        if isinstance(item_property, list):
+            property_value = []
+            for key in item_property:
+                value = self.__get_property(key, metadata)
+                if isinstance(value, list):
+                    property_value = property_value + value
+                else:
+                    property_value.append(value)
+        elif isinstance(item_property, dict):
+            if 'static_value' in item_property:
+                property_value = item_property.get('static_value')
+            else:
+                value_keys = self.__sprit_property_key(item_property.get('value'))
+                values = self.__get_property_value(value_keys, 0, metadata)
+                language_keys = self.__sprit_property_key(item_property.get('lang'))
+                languages = self.__get_property_value(language_keys, 0, metadata)
+                if not values or not languages:
+                    return None
+                if len(values) != len(languages):
+                    return None
+                indices = [i for i, x in enumerate(languages) if x == self.lang]
+                if not indices:
+                    indices = [i for i, x in enumerate(languages) if x == self.DEFAULT_LANG]
+                if not indices:
+                    indices = [0]
+                property_value = [x for i, x in enumerate(values) if i in indices]
+        else:
+            keys = self.__sprit_property_key(item_property)
+            property_value = self.__get_property_value(keys, 0, metadata)
+
+        return property_value
+
+    def __sprit_property_key(self, item_property):
+        """
+        Sprit property key from string to list.
+
+        Args:
+            item_property   : Item property key
+
+        Returns:
+            list: property key list
+        """
+
+        keys = []
+        for key in item_property.split('.'):
+            name = None
+            index = None
+            match_result = self.REGEX.findall(key)  # Check if key has index
+            if match_result:
+                name = match_result[0][0]
+                index = int(match_result[0][1])
+            else:
+                name = key
+            keys.append({
+                'name': name,
+                'index': index,
+            })
+
+        return keys
+
+    def __get_property_value(self, keys, depth, metadata):
+        """
+        Get property value from metadata.
+
+        Args:
+            keys (list)     : key lest divided by dot
+            depth (int)     : tree depth
+            metadata (dict) : metadata
+
+        Returns:
+            any: property value
+        """
+
+        if len(keys) <= depth:
+            return None
+
+        key_name = keys[depth].get('name')
+        index = keys[depth].get('index')
+
+        if isinstance(metadata, dict):
+            if key_name not in metadata:
+                return None
+            metadata = metadata.get(key_name)
+        if isinstance(metadata, dict):
+            if 'attribute_value_mlt' in metadata:
+                metadata = metadata.get('attribute_value_mlt')
+        if index is not None and isinstance(metadata, list):
+            if len(metadata) <= index:
+                return None
+            metadata = metadata[index]
+
+        property_value = None
+        if isinstance(metadata, dict):
+            property_value = self.__get_property_value(keys, depth + 1, metadata)
+        elif isinstance(metadata, list):
+            property_value = []
+            for metadatum in metadata:
+                value = self.__get_property_value(keys, depth + 1, metadatum)
+                if isinstance(value, list):
+                    property_value = property_value + value
+                else:
+                    property_value.append(value)
+        else:
+            property_value = metadata
+
+        return property_value
+
+    def __add_child_entities(self, children, metadata, entity_types, parent_id=''):
+        """
+        Add child entity.
+
+        Args:
+            children (list)     : child information
+            metadata (dict)     : metadata
+            entity_types (list) : entity type list
+            parent_id (str)     : parent ID
+
+        Returns:
+            list: child entities
+        """
+        from rocrate.model.dataset import Dataset
+
+        entities = []
+        for child in children:
+            # Entity ID
+            if parent_id:
+                id = parent_id + '/' + child.get('name', '')
+            else:
+                id = child.get('name', '')
+
+            # Create entity
+            entity = self.crate.add(Dataset(self.crate, id, id))
+            if 'depth' in child:
+                depth = child.get('depth')
+                if len(entity_types) > depth:
+                    entity['additionalType'] = entity_types[depth]
+            name = self.__get_name(child)
+            if name:
+                entity['name'] = name
+            self.__add_properties(entity, child.get('map', {}), metadata)
+            entities.append(entity)
+
+            # Create child entity
+            child_entities = self.__add_child_entities(child.get('children', {}), metadata, entity_types, id)
+            if child_entities:
+                entity['hasPart'] = child_entities
+
+        return entities
+
+    def __get_name(self, node):
+        name = ''
+        if 'name_i18n' in node:
+            name_i18n = node.get('name_i18n')
+            if self.lang in name_i18n:
+                name = name_i18n.get(self.lang)
+        if not name:
+            if 'name' in node:
+                name = node.get('name')
+        return name
+
+    def __get_json(self):
+        """Get RO-Crate metadata."""
+
+        return self.crate.metadata.generate()
+
+
+def create_limmiter():
+    from .config import WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT
+    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT)
+
+def create_tsv(files, language='en'):
+    """Create TSV file from files information.
+
+    Args:
+        files (list): File List.
+        language (str): Language
+
+    Returns:
+        _io.StringIO: TSV file
+    """
+    # Language setting
+    from .config import (
+        WEKO_RECORDS_UI_TSV_FIELD_NAMES_DEFAULT,
+        WEKO_RECORDS_UI_TSV_FIELD_NAMES_EN,
+        WEKO_RECORDS_UI_TSV_FIELD_NAMES_JA,
+    )
+
+    fieldnames = WEKO_RECORDS_UI_TSV_FIELD_NAMES_EN
+    if language == 'ja':
+        fieldnames = WEKO_RECORDS_UI_TSV_FIELD_NAMES_JA
+
+    if not fieldnames:
+        fieldnames = []
+    fieldnames_num = len(fieldnames) - len(WEKO_RECORDS_UI_TSV_FIELD_NAMES_DEFAULT)
+
+    if fieldnames_num < 0:
+        for i in range(fieldnames_num, 0):
+            fieldnames.append(WEKO_RECORDS_UI_TSV_FIELD_NAMES_DEFAULT[i])
+
+    # License dict list
+    from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
+    license_dict_list = [
+        d.get('check_val')
+        for d in WEKO_ADMIN_MANAGEMENT_OPTIONS.get('detail_condition')
+        if d.get('id') == 'license'
+    ]
+
+    # Create TSV
+    file_output = StringIO()
+    file_writer = csv.DictWriter(
+        file_output,
+        fieldnames=fieldnames,
+        delimiter='\t',
+        lineterminator='\n'
+    )
+
+    file_writer.writeheader()
+    for file in files:
+        file_writer.writerow({
+            # file name
+            fieldnames[0]:file.obj.basename,
+            # file size
+            fieldnames[1]:file.info().get('filesize', [{}])[0].get('value'),
+            # license type
+            fieldnames[2]:[
+                    d.get('contents', [None]) for d in license_dict_list[0]
+                    if d.get('id') == file.info().get('licensetype')
+                ][0] if file.info().get('licensetype') else None,
+            # date
+            fieldnames[3]:file.info().get('date', [{}])[0].get('dateValue'),
+            # url
+            fieldnames[4]:file.info().get('url', {}).get('url')
+        })
+
+    StringIO().close()
+    return file_output

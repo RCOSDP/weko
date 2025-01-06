@@ -7,7 +7,7 @@ from invenio_deposit.utils import check_oauth2_scope_write, \
     check_oauth2_scope_write_elasticsearch
 from invenio_records_rest.utils import check_elasticsearch
 from sqlalchemy.exc import SQLAlchemyError
-#from weko_records_ui.errors import AvailableFilesNotFoundRESTError, FilesNotFoundRESTError, InvalidRequestError
+from weko_records_ui.errors import AvailableFilesNotFoundRESTError, FilesNotFoundRESTError, InvalidRequestError
 from weko_records_ui.rest import (
     create_error_handlers,
     create_blueprint,

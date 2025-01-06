@@ -717,6 +717,10 @@ msgid "Admin menu_Item Types_Properties"
 msgstr "プロパティ"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Item Types_RO-Crate Mapping"
+msgstr "RO-Crate マッピング"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Items_Bulk Update"
 msgstr "一括更新"
 
