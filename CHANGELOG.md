@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 ### Security
 
+## [v1.0.7b] 2025-01-06 
+### Changed
+- Improved data compatibility with migrated institutions.  
+### Fixed  
+- Reduced the increasing number of database queries.  
+
+
 ## [v1.0.7a2] - 2024-12-27  
 ### Changed
 - Enabled the edit of metadata fields, including author identifier URLs and author affiliation identifier URLs.
