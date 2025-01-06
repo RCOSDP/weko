@@ -63,7 +63,6 @@ def form(
         """Form text."""
         _d = {
             "key": key.replace("[]", ""),
-            "type": "fieldset",
             "items": [
                 {
                     "key": "{}.subitem_checkbox_language".format(key),
@@ -74,7 +73,8 @@ def form(
                 },
                 {
                     "key": "{}.subitem_checkbox_item".format(key),
-                    "type": "checkboxes",
+                    "type": "template",
+                    "templateUrl": "/static/templates/weko_deposit/checkboxes.html",
                     "title": "値",
                     "titleMap": [],
                     "title_i18n": {"en": "Value", "ja": "値"},

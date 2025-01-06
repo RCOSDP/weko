@@ -274,6 +274,7 @@ class IndexActionResource(ContentNegotiatedMethodView):
         errors = []
         status = 200
         check = is_import_running()
+        
         if check == "is_import_running":
             errors.append(_('The index cannot be updated becase '
                             'import is in progress.'))
@@ -308,7 +309,8 @@ class IndexActionResource(ContentNegotiatedMethodView):
                 if not self.record_class.update(index_id, **data):
                     raise IndexUpdatedRESTError()
                 msg = 'Index updated successfully.'
-                
+
+            
             #roles = get_account_role()
             #for role in roles:
             langs = AdminLangSettings.get_registered_language()

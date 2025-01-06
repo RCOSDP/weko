@@ -35,7 +35,7 @@ def schema(title="", multi_flag=multiple_flag):
             "properties": {
                 "subitem_select_item": {
                     "enum": [None],
-                    "type": ["null","string"],
+                    "type": ["null", "string"],
                     "title": "値",
                     "format": "select",
                     "editAble": True,
@@ -64,7 +64,6 @@ def form(
         """Form text."""
         _d = {
             "key": key.replace("[]", ""),
-            "type": "fieldset",
             "items": [
                 {
                     "key": "{}.subitem_select_language".format(key),

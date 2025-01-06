@@ -607,6 +607,10 @@ def test_get_options_and_order_list(app, db, item_type):
     assert solst==[]
     assert meta_options=={}
 
+    solst, meta_options = get_options_and_order_list(1, item_type_data=item_type)
+    assert solst==[]
+    assert meta_options=={}
+
 # async def sort_meta_data_by_options(
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_sort_meta_data_by_options -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 params=[
@@ -656,17 +660,13 @@ async def test_sort_meta_data_by_options(i18n_app, db, admin_settings, mocker,
         form=json_data(form),
         tag=1
     )
-    item_type_mapping = Mapping.create(
-        item_type_id=item_type.id,
-        mapping=json_data(mapping)
-    )
     record_hit=json_data(hit)
     settings = AdminSettings.get('items_display_settings')
     if not licence:
         i18n_app.config.update(
             WEKO_RECORDS_UI_LICENSE_DICT=False
         )
-    await sort_meta_data_by_options(record_hit,settings,item_type_mapping,item_type)
+    await sort_meta_data_by_options(record_hit,settings,item_type)
 
     
 
@@ -687,13 +687,9 @@ async def test_sort_meta_data_by_options_exception(i18n_app, db, admin_settings)
         form={},
         tag=1
     )
-    item_type_mapping=Mapping.create(
-        item_type_id=item_type.id,
-        mapping={}
-    )
     settings = AdminSettings.get("items_display_settings")
     with patch("weko_records.serializers.utils.get_mapping",side_effect=Exception):
-        await sort_meta_data_by_options(record_hit,settings,item_type_mapping,item_type)
+        await sort_meta_data_by_options(record_hit,settings,item_type)
 
 @pytest.mark.asyncio
 async def test_sort_meta_data_by_options_no_item_type_id(i18n_app, db, admin_settings):
@@ -712,12 +708,8 @@ async def test_sort_meta_data_by_options_no_item_type_id(i18n_app, db, admin_set
         form={},
         tag=1
     )
-    item_type_mapping=Mapping.create(
-        item_type_id=item_type.id,
-        mapping={}
-    )
     settings = AdminSettings.get("items_display_settings")
-    await sort_meta_data_by_options(record_hit,settings,item_type_mapping,item_type)
+    await sort_meta_data_by_options(record_hit,settings,item_type)
 
 #     def convert_data_to_dict(solst):
 #     def get_author_comment(data_result, key, result, is_specify_newline_array):
@@ -760,10 +752,6 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
         form={},
         tag=1
     )
-    item_type_mapping=Mapping.create(
-        item_type_id=item_type.id,
-        mapping={}
-    )
     settings = AdminSettings.get("items_display_settings")
     
     data1 = {
@@ -794,7 +782,7 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
     
     with patch("weko_records.serializers.utils.get_mapping", return_value=data1):
         with patch("weko_search_ui.utils.get_data_by_property", return_value=("1", "2")):
-            await sort_meta_data_by_options(record_hit,settings,item_type_mapping,item_type)
+            await sort_meta_data_by_options(record_hit,settings,item_type)
 
             record_hit_2 = {
                 "_source": {
@@ -827,14 +815,12 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
             await sort_meta_data_by_options(
                 record_hit=record_hit_2,
                 settings=settings,
-                item_type_mapping=item_type_mapping,
                 item_type_data=data3
             )
 
             await sort_meta_data_by_options(
                 record_hit=record_hit_2,
                 settings=settings,
-                item_type_mapping=item_type_mapping,
                 item_type_data=data2
             )
 
@@ -845,7 +831,6 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
             await sort_meta_data_by_options(
                 record_hit=record_hit_2,
                 settings=settings,
-                item_type_mapping=item_type_mapping,
                 item_type_data=data2
             )
 
@@ -854,7 +839,6 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
             await sort_meta_data_by_options(
                 record_hit=record_hit_2,
                 settings=settings,
-                item_type_mapping=item_type_mapping,
                 item_type_data=data2
             )
 
@@ -865,7 +849,6 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
             await sort_meta_data_by_options(
                 record_hit=record_hit_2,
                 settings=settings,
-                item_type_mapping=item_type_mapping,
                 item_type_data=data2
             )
 
@@ -877,7 +860,6 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
             await sort_meta_data_by_options(
                 record_hit=record_hit_2,
                 settings=settings,
-                item_type_mapping=item_type_mapping,
                 item_type_data=data2
             )
 
@@ -886,7 +868,6 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
             await sort_meta_data_by_options(
                 record_hit=record_hit_2,
                 settings=settings,
-                item_type_mapping=item_type_mapping,
                 item_type_data=data2
             )
 
@@ -918,7 +899,6 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
             await sort_meta_data_by_options(
                 record_hit=record_hit_2,
                 settings=settings,
-                item_type_mapping=item_type_mapping,
                 item_type_data=data4
             )
 
@@ -929,7 +909,6 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
                 await sort_meta_data_by_options(
                     record_hit=record_hit_2,
                     settings=settings,
-                    item_type_mapping=item_type_mapping,
                     item_type_data=None
                 )
             except:
@@ -1312,6 +1291,23 @@ def test_check_info_in_metadata(app, meta):
     _str_key_val = 'item_1551264418667.subitem_1551257245638.subitem_1551257276108'
     res = check_info_in_metadata(_str_key_lang, _str_key_val, 'en', meta[0])
     assert res=='Contributor'
+    _str_key_lang = 'item_30002_title0.subitem_title_language'
+    _str_key_val = 'item_30002_title0.subitem_title'
+    _lang = 'ja'
+    _meta = {'path': ['1623632832836'], 'pubdate': '2024-12-26', 'item_30002_title0': {'subitem_title': 'title', 'subitem_title_language': 'ja'}, 'item_30002_resource_type13': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_30002_file35': [{'filename': '日本語.png'}], 'item_1735223788720': {'subitem_thumbnail': [{'thumbnail_label': 'jdcat.jsps.go.jp_about.png', 'thumbnail_url': '/api/files/d88a107f-c3a7-4ad6-81ca-4c34691682d1/jdcat.jsps.go.jp_about.png?versionId=37ad1676-9099-4f82-ba7a-35ef4f325b39'}]}}
+    res = check_info_in_metadata(_str_key_lang, _str_key_val, _lang, _meta)
+    assert res is not None
+    assert res=='title'
+    _str_key_lang = 'item_30002_title0.subitem_title_language'
+    _str_key_val = 'item_30002_title0.subitem_title'
+    _lang = 'ja'
+    _meta = {'path': ['1623632832836'], 'pubdate': '2024-12-26', 'item_30002_title0': [{'subitem_title': 'title', 'subitem_title_language': 'ja'}], 'item_30002_resource_type13': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_30002_file35': [{'filename': '日本語.png'}], 'item_1735223788720': {'subitem_thumbnail': [{'thumbnail_label': 'jdcat.jsps.go.jp_about.png', 'thumbnail_url': '/api/files/d88a107f-c3a7-4ad6-81ca-4c34691682d1/jdcat.jsps.go.jp_about.png?versionId=37ad1676-9099-4f82-ba7a-35ef4f325b39'}]}}
+    res = check_info_in_metadata(_str_key_lang, _str_key_val, _lang, _meta)
+    assert res=='title'
+
+
+
+
 
 # def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_value_and_lang_by_key -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
