@@ -651,7 +651,7 @@ def test_validate_download_record(app, records):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_secret_url_feature_enabled -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
 def test_is_secret_url_feature_enabled(app):
     with app.app_context():
-        # Case 1: Trueを返す
+        # Case 1: secret_enableがTrueを返す
         with patch('weko_records_ui.utils.AdminSettings.get') as mock_get:
             mock_get.return_value = {
                 'secret_URL_file_download': {
@@ -660,7 +660,7 @@ def test_is_secret_url_feature_enabled(app):
             }
             assert is_secret_url_feature_enabled() is True
 
-        # Case 2: Falseを返す
+        # Case 2: secret_enableがFalseを返す
         with patch('weko_records_ui.utils.AdminSettings.get') as mock_get:
             mock_get.return_value = {
                 'secret_URL_file_download': {
@@ -733,7 +733,7 @@ def test_is_secret_file(file_data, filename, expected):
 
     # dt（日時関連）をモックして、現在の日付や日付文字列の変換を制御する
     with patch('weko_records_ui.utils.dt') as mock_dt:
-        mock_dt.now.return_value = dt(2024, 1, 1)  # 現在の日付を2023年1月1日に設定
+        mock_dt.now.return_value = dt(2024, 1, 1)  # 現在の日付を2024年1月1日に設定
         mock_dt.strptime.side_effect = lambda *args, **kwargs: dt.strptime(*args, **kwargs)  # strptimeの動作をモック
 
         # is_secret_file関数を実行して、結果が期待される値と一致するかを確認
