@@ -75,7 +75,7 @@ from .permissions import check_content_clickable, check_created_id, \
 from .utils import create_secret_url, get_billing_file_download_permission, \
     get_google_detaset_meta, get_google_scholar_meta, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
-    delete_version, is_show_email_of_creator,hide_by_itemtype
+    delete_version, is_show_email_of_creator,hide_by_itemtype, can_manage_secret_url
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
 
@@ -722,7 +722,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         flg_display_itemtype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE') ,
         flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
         search_author_flg=search_author_flg,
-        show_secret_URL=_get_show_secret_url_button(record,filename),
+        show_secret_URL=can_manage_secret_url(record,filename),
         **ctx,
         **kwargs
     )
@@ -747,7 +747,7 @@ def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord,
 
     #permission check
     # "Someone who can show Secret URL button" can also use generate Secret URL function.
-    if not _get_show_secret_url_button(record ,filename):
+    if not can_manage_secret_url(record ,filename):
         abort(403)
 
     userprof:UserProfile = UserProfile.get_by_userid(current_user.id)
@@ -766,51 +766,6 @@ def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord,
         return _('Success Secret URL Generate')
     else:
         abort(500)
-
-def _get_show_secret_url_button(record : WekoRecord, filename :str) -> bool:
-    """ 
-        Args:
-            WekoRecord : records_metadata for target item
-            str : target content name
-        Returns:
-            bool : return true if be able to show Secret URL button. or false.
-    """
-
-    #1.check secret url function is enabled
-    restricted_access = AdminSettings.get('restricted_access', False)
-    if not restricted_access:
-        restricted_access = current_app.config[
-            'WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
-        
-    enable:bool = restricted_access.get('secret_URL_file_download',{}).get('secret_enable',False)
-
-    #2.check the user has permittion
-    has_parmission = False
-    # Registered user
-    owner_user_id = [int(record['owner'])] if record.get('owner') else []
-    shared_user_id = [int(record['weko_shared_id'])] if int(record.get('weko_shared_id', -1)) != -1 else []
-    if current_user and current_user.is_authenticated and \
-        current_user.id in owner_user_id + shared_user_id:
-        has_parmission = True
-    # Super users
-    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] 
-    for role in list(current_user.roles or []):
-        if role.name in supers:
-            has_parmission = True
-
-    #3.check the file's accessrole is "open_no" ,or "open_date" and not open yet.
-    is_secret_file = False
-    current_app.logger.info(record.get_file_data())
-    for content in record.get_file_data():
-        if content.get('filename') == filename:
-            if content.get('accessrole') == "open_no":
-                is_secret_file = True
-            elif content.get('accessrole') == "open_date" and \
-                datetime.now() < datetime.strptime(content.get('date',[{"dateValue" :'1970-01-01'}])[0].get("dateValue" ,'1970-01-01'), '%Y-%m-%d')  :
-                is_secret_file = True
-
-    # all true is show
-    return enable and has_parmission and is_secret_file
 
 @blueprint.route('/r/<parent_pid_value>', methods=['GET'])
 @blueprint.route('/r/<parent_pid_value>.<int:version>', methods=['GET'])

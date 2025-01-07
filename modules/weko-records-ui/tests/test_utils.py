@@ -45,6 +45,10 @@ from weko_records_ui.utils import (
     check_items_settings,
     #RoCrateConverter,
     #create_tsv
+    is_secret_url_feature_enabled,
+    has_permission_to_manage_secret_url,
+    is_secret_file,
+    can_manage_secret_url,
     )
 import base64
 from unittest.mock import MagicMock
@@ -644,6 +648,135 @@ def test_validate_download_record(app, records):
         except:
             pass
 
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_secret_url_feature_enabled -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+def test_is_secret_url_feature_enabled(app):
+    with app.app_context():
+        # Case 1: secret_enableがTrueを返す
+        with patch('weko_records_ui.utils.AdminSettings.get') as mock_get:
+            mock_get.return_value = {
+                'secret_URL_file_download': {
+                    'secret_enable': True,
+                }
+            }
+            assert is_secret_url_feature_enabled() is True
+
+        # Case 2: secret_enableがFalseを返す
+        with patch('weko_records_ui.utils.AdminSettings.get') as mock_get:
+            mock_get.return_value = {
+                'secret_URL_file_download': {
+                    'secret_enable': False,
+                }
+            }
+            assert is_secret_url_feature_enabled() is False
+
+        # Case 3: AdminSettingsがNoneでcurrent_app.configが存在し、期待するデフォルト設定がある場合
+        with patch('weko_records_ui.utils.AdminSettings.get', return_value=None):
+            with patch('weko_records_ui.utils.current_app.config', {
+                'WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS': {
+                    'secret_URL_file_download': {}
+                }
+            }):
+                # secret_enable は存在しないのでデフォルト値の False を返すことを検証
+                assert is_secret_url_feature_enabled() is False
+
+        # Case 4: AdminSettingsがNoneでcurrent_app.configが存在しない場合
+        with patch('weko_records_ui.utils.AdminSettings.get', return_value=None):
+            with patch('weko_records_ui.utils.current_app.config', {'WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS': {}}):
+                # 設定がない場合も False を返すことを検証
+                assert is_secret_url_feature_enabled() is False
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_has_permission_to_manage_secret_url -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+@pytest.mark.parametrize(
+    "user_id, expected",
+    [
+        (0, True),  # Owner
+        (4, True),  # Shared user
+        (1, True),  # Superuser
+        (2, True),  # Superuser
+        (3, False), # No permission
+        (5, False), # No superuser role
+    ],
+)
+def test_has_permission_to_manage_secret_url(user_id, expected, app, users):
+    # レコードに必要なデータを設定
+    # 'owner'と'weko_shared_id'は、usersリストから取り出した値を使用
+    record = {'owner': str(users[0]["id"]), 'weko_shared_id': users[4]["id"]}
+
+    # アプリケーションコンテキスト内でテスト実行
+    with app.app_context():
+        # has_permission_to_manage_secret_url関数を実行し、
+        # 結果が期待される値 (expected) と一致するかを検証
+        assert has_permission_to_manage_secret_url(record, users[user_id]["id"]) == expected
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_secret_file -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+@pytest.mark.parametrize(
+    "file_data, filename, expected",
+    [
+        # ケース1: accessroleが 'open_no' の場合
+        ([{'filename': 'testfile.txt', 'accessrole': 'open_no', 'date': [{'dateValue': '2999-12-31'}]}], 'testfile.txt', True),
+        # ケース2: accessroleが 'open_date' で公開日が未来の場合
+        ([{'filename': 'testfile.txt', 'accessrole': 'open_date', 'date': [{'dateValue': '2999-12-31'}]}], 'testfile.txt', True),
+        # ケース3: accessroleが 'open_date' で公開日が過去の場合
+        ([{'filename': 'testfile.txt', 'accessrole': 'open_date', 'date': [{'dateValue': '2000-01-01'}]}], 'testfile.txt', False),
+        # ケース4: accessroleが 'open_no' や 'open_date' でない場合
+        ([{'filename': 'testfile.txt', 'accessrole': 'open_test', 'date': [{'dateValue': '2999-12-31'}]}], 'testfile.txt', False),
+        # ケース5: ファイル名が一致しない場合
+        ([{'filename': 'otherfile.txt', 'accessrole': 'open_no', 'date': [{'dateValue': '2999-12-31'}]}], 'testfile.txt', False),
+        # ケース6: file_dataが空の場合
+        ([], 'testfile.txt', False),
+    ],
+)
+def test_is_secret_file(file_data, filename, expected):
+    # WekoRecordのモックを作成し、get_file_dataメソッドをファイルデータでモックする
+    mock_record = MagicMock(spec=WekoRecord)
+    mock_record.get_file_data.return_value = file_data  # モックのget_file_dataメソッドが返す値を設定
+
+    # dt（日時関連）をモックして、現在の日付や日付文字列の変換を制御する
+    with patch('weko_records_ui.utils.dt') as mock_dt:
+        mock_dt.now.return_value = dt(2024, 1, 1)  # 現在の日付を2024年1月1日に設定
+        mock_dt.strptime.side_effect = lambda *args, **kwargs: dt.strptime(*args, **kwargs)  # strptimeの動作をモック
+
+        # is_secret_file関数を実行して、結果が期待される値と一致するかを確認
+        result = is_secret_file(mock_record, filename)
+
+        # 実際の結果が期待値と一致することを確認
+        assert result == expected
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_can_manage_secret_url -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+@pytest.mark.parametrize(
+    "is_authenticated, feature_enabled, has_permission, is_secret, expected",
+    [
+        # Case 1: ユーザーが認証されていない場合
+        (False, True, True, True, False),
+        # Case 2: 機能が有効でない場合
+        (True, False, True, True, False),
+        # Case 3: ユーザーに権限がない場合
+        (True, True, False, True, False),
+        # Case 4: ファイルが秘密でない場合
+        (True, True, True, False, False),
+        # Case 5: すべての条件を満たす場合
+        (True, True, True, True, True),
+    ],
+)
+def test_can_manage_secret_url(is_authenticated, feature_enabled, has_permission, is_secret, expected):
+    # WekoRecordのモックを作成
+    mock_record = MagicMock(spec=WekoRecord)
+    
+    # ユーザーのモックを作成
+    mock_user = MagicMock()
+    mock_user.is_authenticated = is_authenticated  # ユーザーが認証されているかどうかを設定
+
+    # current_userのモックを作成して、`mock_user`を返すように設定
+    with patch('weko_records_ui.utils.current_user', mock_user):
+        # is_secret_url_feature_enabledのモックを作成して、`feature_enabled`を返すように設定
+        with patch('weko_records_ui.utils.is_secret_url_feature_enabled', return_value=feature_enabled):
+            # has_permission_to_manage_secret_urlのモックを作成して、`has_permission`を返すように設定
+            with patch('weko_records_ui.utils.has_permission_to_manage_secret_url', return_value=has_permission):
+                # is_secret_fileのモックを作成して、`is_secret`を返すように設定
+                with patch('weko_records_ui.utils.is_secret_file', return_value=is_secret):
+                    # can_manage_secret_url関数を実行し、結果が期待される値と一致するかを確認
+                    assert can_manage_secret_url(mock_record, 'testfile.txt') == expected
+
 
 # def get_onetime_download(file_name: str, record_id: str,
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_onetime_download -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -1034,3 +1167,4 @@ def test_create_tsv(app, records):
         res_tsv = create_tsv(record.files)
         for field in WEKO_RECORDS_UI_TSV_FIELD_NAMES_DEFAULT:
             assert field in res_tsv.getvalue()
+
