@@ -76,7 +76,8 @@ def base_app():
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI',
         #     'sqlite:///:memory:'),
-        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',        
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),       
         WTF_CSRF_ENABLED=False,
         SERVER_NAME='invenio.org',
         SECURITY_PASSWORD_SALT='TEST_SECURITY_PASSWORD_SALT',
