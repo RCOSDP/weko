@@ -1239,6 +1239,95 @@ def can_manage_secret_url(record, filename):
         )
         return result
 
+def is_secret_url_feature_enabled():
+    """Check if the feature is enabled.
+
+    Returns:
+        bool: True if the feature is enabled, False otherwise.
+    """
+    settings = AdminSettings.get(name='restricted_access',dict_to_object=False)
+    if not settings:
+        settings = current_app.config['WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
+    secret_url_settings = settings.get('secret_URL_file_download', {})
+    is_enabled = secret_url_settings.get('secret_enable', False)
+    return is_enabled
+
+
+def has_permission_to_manage_secret_url(record, user_id):
+    """Check if the user has permission to manage the secret URL feature.
+
+    Following users have the permission.
+    - The administrators.
+    - The user who registered the item(record).
+    - The user who registered the item on behalf of other users.
+
+    Returns:
+        bool: True if the user has permission, False otherwise.
+    """
+    super_roles = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+    user = User.query.filter_by(id=user_id).first()
+    # Need to change the 'weko_shared_id' to 'weko_shared_ids' in the future.
+    has_permission = (
+        user_id == int(record['owner']) or
+        user_id in [record['weko_shared_id']] or
+        any(role.name in super_roles for role in user.roles or [])
+    )
+    return has_permission
+
+
+def is_secret_file(record: WekoRecord, filename):
+    """Check if the target file meets the requirements for secret URL use.
+
+    Args:
+        record (WekoRecord): The record object.
+        filename (str): The target file name.
+
+    Returns:
+        bool: True if the file is for secret URL use, False otherwise.
+    """
+    target_data = {}
+    for file_data in record.get_file_data():
+        if file_data.get('filename') == filename:
+            target_data = file_data
+            break
+    if not target_data:
+        return False
+
+    publish_date = dt.strptime(
+        target_data.get('date')[0].get('dateValue'), '%Y-%m-%d')
+    is_secret_file = (
+        target_data.get('accessrole') == 'open_no' or (
+            target_data.get('accessrole') == 'open_date' and
+            dt.now() < publish_date
+        ))
+    return is_secret_file
+
+
+def can_manage_secret_url(record, filename):
+    """Determine if the user can manage the secret URL feature for a file.
+
+    This function checks whether the secret URL feature can be used for a given
+    file in a record by evaluating the following conditions:
+    1. The secret URL feature is enabled system-wide.
+    2. The logged-in user has the necessary permissions.
+    3. The specified file qualifies for secret URL use.
+
+    Args:
+        record (WekoRecord): The record object containing the file.
+        filename (str): The name of the target file.
+
+    Returns:
+        bool: True if all conditions are met, False otherwise.
+    """
+    if not current_user or not current_user.is_authenticated:
+        return False
+    else:
+        result = (
+            is_secret_url_feature_enabled() and
+            has_permission_to_manage_secret_url(record, current_user.id) and
+            is_secret_file(record, filename)
+        )
+        return result
 
 def get_onetime_download(file_name: str, record_id: str,
                          user_mail: str) -> Optional[FileOnetimeDownload]:
