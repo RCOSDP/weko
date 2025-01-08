@@ -1899,13 +1899,13 @@ def validate_token(token):
     try:
         bytes = base64.urlsafe_b64decode(token.encode())
         token_hash, token_id = bytes.split(b'_')
-        url_obj = FileSecretDownload.get_by_id(token_id.decode())
-        if not url_obj:
-            url_obj = FileOnetimeDownload.get_by_id(token_id.decode())
-        if url_obj and (token_hash == generate_sha256_hash(url_obj)):
+        secret_obj = FileSecretDownload.get_by_id(token_id.decode())
+        if secret_obj and (token_hash == generate_sha256_hash(secret_obj)):
             return True
-        else:
-            return False
+        onetime_obj = FileOnetimeDownload.get_by_id(token_id.decode())
+        if onetime_obj and (token_hash == generate_sha256_hash(onetime_obj)):
+            return True
+        return False
     except Exception as e:
         current_app.logger.error(e)
         return False
