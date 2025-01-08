@@ -143,108 +143,124 @@ def map_field(schema):
     return res
 
 
-def subitem_recs(schema, keys, value, metadata):
+def update_recs(subitems, subitem_key, data_list):
+    if data_list != [{}]:
+        if subitem_key in subitems:
+            if len(subitems[subitem_key]) != len(data_list):
+                subitems[subitem_key].extend(data_list)
+            else:
+                for idx, meta in enumerate(data_list):
+                    if isinstance(meta, dict):
+                        for key, val in meta.items():
+                            if isinstance(val, list):
+                                update_recs(
+                                    subitems[subitem_key][idx],
+                                    key,
+                                    val
+                                )
+                            else:
+                                subitems[subitem_key][idx].update(meta)
+                    else:
+                        subitems[subitem_key].extend(meta)
+        else:
+            subitems[subitem_key] = data_list
+
+
+def subitem_recs(subitems, subitem_key_list, schema, oai_key_list, metadata):
     """Generate subitem metadata.
 
     Args:
-        schema ([type]): [description]
-        keys ([type]): [description]
-        value ([type]): [description]
-        metadata ([type]): [description]
-
-    Returns:
-        [type]: [description]
-
+        subitems ([type]): [description] result
+        subitem_key_list ([type]): [description] subitem key list
+        schema ([type]): [description] property schema
+        oai_key_list ([type]): [description] oai key list
+        metadata ([type]): [description] oai metadata from base url
     """
-    subitems = None
-    item_key = keys[0] if keys else None
-    if schema.get('items', {}).get('properties', {}).get(item_key):
-        subitems = []
-        if len(keys) > 1:
-            _subitems = subitem_recs(schema['items']['properties'][item_key],
-                                     keys[1:], value, metadata)
-            if _subitems:
-                subitems.append(_subitems)
-        else:
-            if '.' in value:
-                _v = value.split('.')
-                if len(_v) > 2 or not metadata.get(_v[0]):
-                    return None
+    subitem_key = subitem_key_list[0] if subitem_key_list else None
+    if not subitem_key:
+        return None
 
-                if isinstance(metadata.get(_v[0]), str) and _v[1] == TEXT:
-                    subitems.append({
-                        item_key: metadata.get(_v[0], "")
-                    })
-                elif isinstance(metadata.get(_v[0]), list):
-                    for item in metadata.get(_v[0]):
-                        if isinstance(item, str):
-                                subitems.append({
-                                item_key: item
-                            })
-                        else:
-                            subitems.append({
-                                item_key: item.get(_v[1], "")
-                            })
-                elif isinstance(metadata.get(_v[0]), OrderedDict):
-                    subitems.append({
-                        item_key: metadata.get(_v[0], {}).get(_v[1], "")
-                    })
-            else:
-                if isinstance(metadata, str) and value == TEXT:
-                    subitems.append({
-                        item_key: metadata
-                    })
-                elif isinstance(metadata, OrderedDict):
-                    subitems.append({
-                        item_key: metadata.get(value, "")
-                    })
-    elif schema.get('properties', {}).get(item_key):
-        subitems = {}
-        if len(keys) > 1:
-            subitems = subitem_recs(schema['properties'][item_key], keys[1:],
-                                    value, metadata)
-        else:
-            if '.' in value:
-                _v = value.split('.')
-                if len(_v) > 2 or not metadata.get(_v[0]):
-                    if len(_v) > 2:
-                        subitems[item_key] = metadata.get(_v[0], {}).get(_v[1], {}).get(_v[2], {})
-                    else:
-                        return None
-                elif isinstance(metadata.get(_v[0]), str) and _v[1] == TEXT:
-                    subitems[item_key] = metadata.get(_v[0])
-                elif isinstance(metadata.get(_v[0]), list):
-                    subitems[item_key] = metadata.get(_v[0])[0].get(_v[1], "")
-                elif isinstance(metadata.get(_v[0]), OrderedDict):
-                    subitems[item_key] = metadata.get(_v[0], {}).get(_v[1], "")
-            else:
-                if isinstance(metadata, str) and value == TEXT:
-                    subitems[item_key] = metadata
-                elif isinstance(metadata, OrderedDict):
-                    subitems[item_key] = metadata.get(value, "")
-    elif not item_key:
-        if '.' in value:
-            _v = value.split('.')
-            if len(_v) > 2 or not metadata.get(_v[0]):
-                return None
-
-            if isinstance(metadata.get(_v[0]), str) and _v[1] == TEXT:
-                subitems = metadata.get(_v[0])
-            elif isinstance(metadata.get(_v[0]), list):
-                subitems = metadata.get(_v[0])[0].get(_v[1], "")
-            elif isinstance(metadata.get(_v[0]), OrderedDict):
-                subitems = metadata.get(_v[0], {}).get(_v[1], "")
-        else:
-            if isinstance(metadata, str) and value == TEXT:
-                subitems = metadata
-            if isinstance(metadata, list):
-                subitems = metadata[0]
-            elif isinstance(metadata, OrderedDict):
-                subitems = metadata.get(value, "")
+    subschema = None
+    oai_key = oai_key_list[0] if oai_key_list else None
+    if schema.get('items', {}).get('properties', {}).get(subitem_key):
+        subschema = schema['items']['properties'][subitem_key]
+    elif schema.get('properties', {}).get(subitem_key):
+        subschema = schema['properties'][subitem_key]
     else:
-        current_app.logger.debug("item_key: {0}".format(item_key))
+        current_app.logger.debug("subitem_key: {}, schema: {}".format(subitem_key, schema))
 
-    return subitems
+    if subschema:
+        if subschema.get('items', {}).get('properties', None):
+            if oai_key and oai_key in metadata:
+                if isinstance(metadata[oai_key], list):
+                    _tmp = []
+                    for m in metadata[oai_key]:
+                        _i = {}
+                        subitem_recs(
+                            _i,
+                            subitem_key_list[1:],
+                            subschema,
+                            oai_key_list[1:],
+                            m
+                        )
+                        _tmp.append(_i)
+                    if _tmp:
+                        update_recs(subitems, subitem_key, _tmp)
+                else:
+                    _tmp = {}
+                    subitem_recs(
+                        _tmp,
+                        subitem_key_list[1:],
+                        subschema,
+                        oai_key_list[1:],
+                        metadata[oai_key]
+                    )
+                    if _tmp:
+                        update_recs(subitems, subitem_key, [_tmp])
+            else:
+                current_app.logger.debug("oai_key: {}, metadata: {}".format(oai_key, metadata))
+        elif subschema.get('properties', None):
+            if oai_key and oai_key in metadata:
+                if subitem_key in subitems:
+                    _tmp = subitems[subitem_key]
+                else:
+                    _tmp = {}
+                    subitems[subitem_key] = _tmp
+                if isinstance(metadata[oai_key], list):
+                    for m in metadata[oai_key]:
+                        subitem_recs(
+                            _tmp,
+                            subitem_key_list[1:],
+                            subschema,
+                            oai_key_list[1:],
+                            m
+                        )
+                        if _tmp:
+                            break
+                else:
+                    subitem_recs(
+                        _tmp,
+                        subitem_key_list[1:],
+                        subschema,
+                        oai_key_list[1:],
+                        metadata[oai_key]
+                    )
+                if not _tmp:
+                    subitems.pop(subitem_key)
+            else:
+                current_app.logger.debug("oai_key: {}, metadata: {}".format(oai_key, metadata))
+        else:
+            if isinstance(metadata, OrderedDict):
+                if isinstance(metadata.get(oai_key), str) or isinstance(metadata.get(oai_key), list):
+                    subitems[subitem_key] = metadata.get(oai_key)
+                else:
+                    current_app.logger.debug("oai_key: {}, metadata: {}".format(oai_key, metadata))
+            elif isinstance(metadata, str) and oai_key == TEXT:
+                subitems[subitem_key] = metadata
+            elif isinstance(metadata, list) and len(metadata) > 0:
+                subitems[subitem_key] = metadata[0]
+            else:
+                current_app.logger.debug("metadata: {}".format(metadata))
 
 
 def parsing_metadata(mappin, props, patterns, metadata, res):
@@ -279,63 +295,30 @@ def parsing_metadata(mappin, props, patterns, metadata, res):
     item_key = mapping[0].split('.')[0]
 
     if item_key and props.get(item_key):
-        if props[item_key].get('items'):
-            item_schema = props[item_key]['items']['properties']
-        else:
-            item_schema = props[item_key]['properties']
-        # current_app.logger.debug('{0} {1} {2}: {3}'.format(
-        #     __file__, 'parsing_metadata()', 'item_schema', item_schema))
+        item_schema = props[item_key]
         ret = []
-        for it in metadata:
+        for data in metadata:
             items = {}
-            for elem, value in patterns:
-                mapping = mappin.get(elem)
-                #if not mappin.get(elem) or not value:
-                #    continue
-                #else:
-                if mappin.get(elem) and value:
+            for mapping_key, oai_key in patterns:
+                mapping = mappin.get(mapping_key)
+                if mapping and oai_key:
                     mapping.sort()
 
-                    subitems = None
+                    subitem_key_list = None
                     if ',' in mapping[0]:
-                        subitems = mapping[0].split(',')[0].split('.')[1:]
+                        subitem_key_list = mapping[0].split(',')[0].split('.')[1:]
                     else:
-                        subitems = mapping[0].split('.')[1:]
+                        subitem_key_list = mapping[0].split('.')[1:]
+                    
+                    if subitem_key_list:
+                        subitem_recs(
+                            items,
+                            subitem_key_list,
+                            item_schema,
+                            oai_key.split('.'),
+                            data
+                        )
 
-                    if subitems:
-                        if subitems[0] in item_schema:
-                            submetadata = subitem_recs(
-                                item_schema[subitems[0]],
-                                subitems[1:],
-                                value,
-                                it
-                            )
-
-                            if submetadata:
-                                if isinstance(submetadata, list):
-                                    if items.get(subitems[0]):
-                                        if len(items[subitems[0]]) != len(submetadata):
-                                            items[subitems[0]].extend(submetadata)
-                                            continue
-
-                                        for idx, meta in enumerate(submetadata):
-                                            if isinstance(meta, dict):
-                                                items[subitems[0]][idx].update(
-                                                    meta)
-                                            else:
-                                                items[subitems[0]].extend(meta)
-                                    else:
-                                        items[subitems[0]] = submetadata
-                                elif isinstance(submetadata, dict):
-                                    submetadata_key = None
-                                    if len(list(submetadata.keys())) > 0:
-                                        submetadata_key = list(submetadata.keys())[0]
-                                    if items.get(subitems[0]):
-                                        items[subitems[0]].update(submetadata)
-                                    else:
-                                        items[subitems[0]] = submetadata
-                                else:
-                                    items[subitems[0]] = submetadata
             if items:
                 ret.append(items)
 
@@ -413,13 +396,13 @@ def add_creator_jpcoar(schema, mapping, res, metadata):
         ('creator.creatorAlternative.@attributes.xml:lang',
             'jpcoar:creatorAlternative.@xml:lang'),
         ('creator.@attributes.creatorType',
-            'jpcoar:creator.@creatorType'),
-        # ('creator.nameIdentifier.@value',
-        #     'jpcoar:nameIdentifier.#text'),
-        # ('creator.nameIdentifier.@attributes.nameIdentifierURI',
-        #     'jpcoar:nameIdentifier.@nameIdentifierURI'),
-        # ('creator.nameIdentifier.@attributes.nameIdentifierScheme',
-        #     'jpcoar:nameIdentifier.@nameIdentifierScheme'),
+            '@creatorType'),
+        ('creator.nameIdentifier.@value',
+            'jpcoar:nameIdentifier.#text'),
+        ('creator.nameIdentifier.@attributes.nameIdentifierURI',
+            'jpcoar:nameIdentifier.@nameIdentifierURI'),
+        ('creator.nameIdentifier.@attributes.nameIdentifierScheme',
+            'jpcoar:nameIdentifier.@nameIdentifierScheme'),
         ('creator.affiliation.nameIdentifier.@value',
             'jpcoar:affiliation.jpcoar:nameIdentifier.#text'),
         ('creator.affiliation.nameIdentifier.@attributes.nameIdentifierURI',
@@ -454,7 +437,7 @@ def add_contributor_jpcoar(schema, mapping, res, metadata):
         ('contributor.nameIdentifier.@attributes.nameIdentifierScheme',
             'jpcoar:nameIdentifier.@nameIdentifierScheme'),
         ('contributor.givenName.@value',
-            'jpcoar:givenName#text'),
+            'jpcoar:givenName.#text'),
         ('contributor.givenName.@attributes.xml:lang',
             'jpcoar:givenName.@xml:lang'),
         ('contributor.familyName.@value',
@@ -510,8 +493,16 @@ def add_publisher_jpcoar(schema, mapping, res, metadata):
             'dcndl:location.#text'
         ),
         (
+            'publisher_jpcoar.location.@attributes.xml:lang',
+            'dcndl:location.@xml:lang'
+        ),
+        (
             'publisher_jpcoar.publicationPlace.@value',
             'dcndl:publicationPlace.#text'
+        ),
+        (
+            'publisher_jpcoar.publicationPlace.@attributes.xml:lang',
+            'dcndl:publicationPlace.@xml:lang'
         ),
     ]
 
@@ -628,7 +619,8 @@ def add_date(schema, mapping, res, metadata):
 
 def add_date_dcterms(schema, mapping, res, metadata):
     patterns = [
-        ('date_dcterms.@value', '#text'),
+        ('date_dcterms.@value', TEXT),
+        ('date_dcterms.@attributes.xml:lang', LANG),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -636,14 +628,8 @@ def add_date_dcterms(schema, mapping, res, metadata):
 
 def add_edition(schema, mapping, res, metadata):
     patterns = [
-        (
-            'edition.@value',
-            '#text'
-        ),
-        (
-            'edition.@attributes.xml:lang',
-            '@xml:lang'
-        ),
+        ('edition.@value', TEXT),
+        ('edition.@attributes.xml:lang', LANG),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -651,14 +637,8 @@ def add_edition(schema, mapping, res, metadata):
 
 def add_volumeTitle(schema, mapping, res, metadata):
     patterns = [
-        (
-            'volumeTitle.@value',
-            '#text'
-        ),
-        (
-            'volumeTitle.@attributes.xml:lang',
-            '@xml:lang'
-        ),
+        ('volumeTitle.@value', TEXT),
+        ('volumeTitle.@attributes.xml:lang', LANG),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -666,10 +646,7 @@ def add_volumeTitle(schema, mapping, res, metadata):
 
 def add_originalLanguage(schema, mapping, res, metadata):
     patterns = [
-        (
-            'originalLanguage.@value',
-            '#text'
-        ),
+        ('originalLanguage.@value', TEXT),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -677,14 +654,8 @@ def add_originalLanguage(schema, mapping, res, metadata):
 
 def add_extent(schema, mapping, res, metadata):
     patterns = [
-        (
-            'extent.@value',
-            '#text'
-        ),
-        (
-            'extent.@attributes.xml:lang',
-            '@xml:lang'
-        ),
+        ('extent.@value', TEXT),
+        ('extent.@attributes.xml:lang', LANG),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -692,14 +663,8 @@ def add_extent(schema, mapping, res, metadata):
 
 def add_format(schema, mapping, res, metadata):
     patterns = [
-        (
-            'format.@value',
-            '#text'
-        ),
-        (
-            'format.@attributes.xml:lang',
-            '@xml:lang'
-        ),
+        ('format.@value', TEXT),
+        ('format.@attributes.xml:lang', LANG),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -734,10 +699,7 @@ def add_holdingAgent(schema, mapping, res, metadata):
 
 def add_datasetSeries(schema, mapping, res, metadata):
     patterns = [
-        (
-            'datasetSeries.@value',
-            '#text',
-        ),
+        ('datasetSeries.@value', TEXT),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -871,7 +833,8 @@ def add_version(schema, mapping, res, metadata):
 def add_version_type(schema, mapping, res, metadata):
     """Add version type."""
     patterns = [
-        ('versionType.@value', TEXT),
+        ('versiontype.@value', TEXT),
+        ('versiontype.@attributes.rdf:resource', '@rdf:resource'),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -992,7 +955,7 @@ def add_page_start(schema, mapping, res, metadata):
 def add_page_end(schema, mapping, res, metadata):
     """Add page end."""
     patterns = [
-        ('pageStart.@value', TEXT),
+        ('pageEnd.@value', TEXT),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -1031,6 +994,31 @@ def add_conference(schema, mapping, res, metadata):
             'jpcoar:conferenceName.#text'),
         ('conference.conferenceName.@attributes.xml:lang',
             'jpcoar:conferenceName.@xml:lang'),
+        ('conference.conferenceSponsor.@value',
+            'jpcoar:conferenceSponsor.#text'),
+        ('conference.conferenceSponsor.@attributes.xml:lang',
+            'jpcoar:conferenceSponsor.@xml:lang'),
+        ('conference.conferenceDate.@value',
+            'jpcoar:conferenceDate.#text'),
+        ('conference.conferenceDate.@attributes.startYear',
+            'jpcoar:conferenceDate.@startYear'),
+        ('conference.conferenceDate.@attributes.startMonth',
+            'jpcoar:conferenceDate.@startMonth'),
+        ('conference.conferenceDate.@attributes.startDay',
+            'jpcoar:conferenceDate.@startDay'),
+        ('conference.conferenceDate.@attributes.endYear',
+            'jpcoar:conferenceDate.@endYear'),
+        ('conference.conferenceDate.@attributes.endMonth',
+            'jpcoar:conferenceDate.@endMonth'),
+        ('conference.conferenceDate.@attributes.endDay',
+            'jpcoar:conferenceDate.@endDay'),
+        ('conference.conferenceDate.@attributes.xml:lang',
+            'jpcoar:conferenceDate.@xml:lang'),
+        ('conference.conferenceVenue.@value',
+            'jpcoar:conferenceVenue.#text'),
+        ('conference.conferenceVenue.@attributes.xml:lang',
+            'jpcoar:conferenceVenue.@xml:lang'),
+        
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -1056,10 +1044,8 @@ def add_degree_name(schema, mapping, res, metadata):
     """Add academic degree and field of the degree specified in \
     the Degree Regulation."""
     patterns = [
-        ('degreeName.@value',
-            TEXT),
-        ('degreeName.@attributes.xml:lang',
-            LANG),
+        ('degreeName.@value', TEXT),
+        ('degreeName.@attributes.xml:lang', LANG),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -1139,19 +1125,19 @@ def add_geo_location(schema, mapping, res, metadata):
     gathered or about which the data is focused."""
     patterns = [
         ('geoLocation.geoLocationPoint.pointLongitude.@value',
-            None),
+            'datacite:geoLocationPoint.datacite:pointLongitude.#text'),
         ('geoLocation.geoLocationPoint.pointLatitude.@value',
-            None),
+            'datacite:geoLocationPoint.datacite:pointLatitude.#text'),
         ('geoLocation.geoLocationPlace.@value',
-            None),
+            'datacite:geoLocationPlace.#text'),
         ('geoLocation.geoLocationBox.westBoundLongitude.@value',
-            None),
+            'datacite:geoLocationBox.datacite:westBoundLongitude.#text'),
         ('geoLocation.geoLocationBox.southBoundLatitude.@value',
-            None),
+            'datacite:geoLocationBox.datacite:southBoundLatitude.#text'),
         ('geoLocation.geoLocationBox.northBoundLatitude.@value',
-            None),
+            'datacite:geoLocationBox.datacite:northBoundLatitude.#text'),
         ('geoLocation.geoLocationBox.eastBoundLongitude.@value',
-            None),
+            'datacite:geoLocationBox.datacite:eastBoundLongitude.#text'),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -1692,24 +1678,40 @@ class JPCOARMapper(BaseMapper):
                 partial(add_apc, *args),
             'dc:rights':
                 partial(add_right, *args),
+            'jpcoar:rightsHolder':
+                partial(add_rights_holder, *args),
             'jpcoar:subject':
                 partial(add_subject, *args),
             'datacite:description':
                 partial(add_description, *args),
             'dc:publisher':
                 partial(add_publisher, *args),
+            'jpcoar:publisher':
+                partial(add_publisher_jpcoar, *args),
             'datacite:date':
                 partial(add_date, *args),
+            'dcterms:date':
+                partial(add_date_dcterms, *args),
             'dc:language':
                 partial(add_language, *args),
+            'dc:type':
+                partial(add_resource_type, *args),
             'datacite:version':
                 partial(add_version, *args),
             'oaire:version':
                 partial(add_version_type, *args),
+            'jpcoar:identifier':
+                partial(add_identifier, *args),
             'jpcoar:identifierRegistration':
                 partial(add_identifier_registration, *args),
+            'jpcoar:relation':
+                partial(add_relation, *args),
             'dcterms:temporal':
                 partial(add_temporal, *args),
+            'datacite:geoLocation':
+                partial(add_geo_location, *args),
+            'jpcoar:fundingReference':
+                partial(add_funding_reference, *args),
             'jpcoar:sourceIdentifier':
                 partial(add_source_identifier, *args),
             'jpcoar:sourceTitle':
@@ -1726,30 +1728,14 @@ class JPCOARMapper(BaseMapper):
                 partial(add_page_end, *args),
             'dcndl:dissertationNumber':
                 partial(add_dissertation_number, *args),
-            'dcndl:dateGranted':
-                partial(add_date_granted, *args),
-            'dc:type':
-                partial(add_resource_type, *args),
-            'jpcoar:relation':
-                partial(add_relation, *args),
-            'jpcoar:degreeGrantor':
-                partial(add_degree_grantor, *args),
             'dcndl:degreeName':
                 partial(add_degree_name, *args),
+            'dcndl:dateGranted':
+                partial(add_date_granted, *args),
+            'jpcoar:degreeGrantor':
+                partial(add_degree_grantor, *args),
             'jpcoar:conference':
                 partial(add_conference, *args),
-            'jpcoar:fundingReference':
-                partial(add_funding_reference, *args),
-            'jpcoar:rightsHolder':
-                partial(add_rights_holder, *args),
-            'jpcoar:file':
-                partial(add_file, *args),
-            'jpcoar:identifier':
-                partial(add_identifier, *args),
-            'jpcoar:publisher':
-                partial(add_publisher_jpcoar, *args),
-            'dcterms:date':
-                partial(add_date_dcterms, *args),
             'dcndl:edition':
                 partial(add_edition, *args),
             'dcndl:volumeTitle':
@@ -1764,6 +1750,8 @@ class JPCOARMapper(BaseMapper):
                 partial(add_holdingAgent, *args),
             'jpcoar:datasetSeries':
                 partial(add_datasetSeries, *args),
+            'jpcoar:file':
+                partial(add_file, *args),
             'jpcoar:catalog':
                 partial(add_catalog, *args),
         }
