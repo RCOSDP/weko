@@ -915,17 +915,20 @@ class ItemTypes(RecordBase):
         return RevisionsIterator(self.model)
 
     @classmethod
-    def reload(cls,itemtype_id):
+    def reload(cls, itemtype_id, mapping_dict, specified_list=[], renew_value='None'):
         """reload itemtype properties.
 
         Args:
             itemtype_id (_type_): _description_
+            mapping_dict: properties mapping data
+            specified_list: renew properties id list
+            renew_value: None, ALL, VAL, LOC
         """
         # with db.session.begin_nested():
         result = {"msg":"Update ItemType({})".format(itemtype_id),"code":0}
         item_type = ItemTypes.get_by_id(itemtype_id)
         data = pickle.loads(pickle.dumps(item_type.render, -1))
-        
+
         pat1 = re.compile(r'cus_(\d+)')
         for idx, i in enumerate(data['table_row_map']['form']):
             if isinstance(i,dict) and 'key' in i:
@@ -935,8 +938,14 @@ class ItemTypes(RecordBase):
                     multiple_flg = data['meta_list'][_prop_id]['option']['multiple']
                     if pat1.match(_tmp):
                         _tmp = int(_tmp.replace('cus_', ''))
+                        if specified_list and _tmp not in specified_list:
+                            continue
+                        # fix properties to item_type
                         _prop = ItemTypeProps.get_record(_tmp)
                         if _prop:
+                            # fix mapping
+                            if _tmp in mapping_dict:
+                                data['table_row_map']['mapping'][_prop_id] = mapping_dict.get(_tmp)
                             # data['meta_list'][_prop_id] = json.loads('{"input_maxItems": "9999","input_minItems": "1","input_type": "cus_'+str(_prop.id)+'","input_value": "","option": {"crtf": false,"hidden": false,"multiple": true,"oneline": false,"required": false,"showlist": false},"title": "'+_prop.name+'","title_i18n": {"en": "", "ja": "'+_prop.name+'"}}')
                             data['schemaeditor']['schema'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
                             if multiple_flg:
@@ -950,14 +959,25 @@ class ItemTypes(RecordBase):
                                     data['table_row_map']['schema']['properties'][_prop_id].pop('properties')
                                 if 'format' in data['table_row_map']['schema']['properties'][_prop_id]:
                                     data['table_row_map']['schema']['properties'][_prop_id].pop('format')
+                                
+                                tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))                               
                                 _forms = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.forms, -1))).replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_forms, -1))
+                                _tmp_data = data['table_row_map']['form'][idx]
+                                cls.update_attribute_options(tmp_data, _tmp_data, renew_value)
+                                cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'][_prop_id],data['table_row_map']['schema']['properties'][_prop_id])
                             else:
+                                tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))
                                 data['table_row_map']['schema']['properties'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
+                                # cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'],data['table_row_map']['schema']['properties'][_prop_id])
                                 _form = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.form, -1))).replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_form, -1))
-                                                       
+                                _tmp_data = data['table_row_map']['form'][idx]
+                                cls.update_attribute_options(tmp_data, _tmp_data, renew_value)
+                                cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'][_prop_id],data['table_row_map']['schema']['properties'][_prop_id])
+                                                                               
         from weko_itemtypes_ui.utils import fix_json_schema,update_required_schema_not_exist_in_form, update_text_and_textarea
+
         table_row_map = data.get('table_row_map')
         json_schema = fix_json_schema(table_row_map.get('schema'))
         json_form = table_row_map.get('form')
@@ -967,7 +987,11 @@ class ItemTypes(RecordBase):
         if itemtype_id != 0:
             json_schema, json_form = update_text_and_textarea(
                 itemtype_id, json_schema, json_form)
-        
+
+        if 'schemaeditor' in data:
+            if 'schema' in data['schemaeditor']:
+                data['schemaeditor']['schema'] = json_schema
+
         # item_type_mapping = (
         #             ItemTypeMapping.query.filter(ItemTypeMapping.item_type_id == itemtype_id)
         #             .order_by(desc(ItemTypeMapping.created))
@@ -982,26 +1006,83 @@ class ItemTypes(RecordBase):
                                       render=data)
         mapping = Mapping.get_record(itemtype_id)
         if mapping:
-            _a = [p for p in data.get("table_row") if p in mapping]
-            if len(_a) is not len(data.get("table_row")):
-                mapping.model.mapping = table_row_map.get('mapping')
-                flag_modified(mapping.model, 'mapping')
-                db.session.add(mapping.model)
-                result['msg'] = "Fix ItemType({}) mapping".format(itemtype_id)
-                result['code'] = 0  
+            mapping.model.mapping = table_row_map.get('mapping')
+            flag_modified(mapping.model, 'mapping')
+            db.session.add(mapping.model)
+            result['msg'] = "Fix ItemType({}) mapping".format(itemtype_id)
+            result['code'] = 0  
         
         ItemTypeEditHistory.create_or_update(
             item_type_id=record.model.id,
             user_id=1,
             notes=data.get('edit_notes', {})
         )
-            
+
         return result
 
+    @classmethod
+    def update_property_enum(cls, old_value, new_value):
+            if isinstance(old_value, dict):
+               for key, value in old_value.items():
+                    if isinstance(old_value[key], dict):
+                        if key in new_value and key in old_value:
+                            if "enum" in old_value[key]:
+                                new_value[key]["enum"] = old_value[key]["enum"]
+                            elif "currentEnum" in old_value[key]:
+                                new_value[key]["currentEnum"] = old_value[key]["currentEnum"]  
+                            else:
+                                if key in new_value and key in old_value:
+                                    cls.update_property_enum(old_value[key], new_value[key])
 
+    @classmethod
+    def update_attribute_options(cls, old_value, new_value, renew_value):        
+        if "items" in old_value:
+            for idx2,item2 in enumerate(old_value["items"]):
+                if 'items' not in new_value or len(new_value['items']) <= idx2:
+                    break
+                isHide = False
+                isShowList = False
+                isNonDisplay = False
+                isSpecifyNewline = False
+                isRequired = False
+                title_i18n = None
+                title_i18n_temp = None
+                titleMap = None
+                if "isHide" in item2:
+                    isHide = item2["isHide"]
+                if "isShowList" in item2:
+                    isShowList = item2["isShowList"]
+                if "isNonDisplay" in item2:
+                    isNonDisplay = item2["isNonDisplay"]
+                if "isSpecifyNewline" in item2:
+                    isSpecifyNewline = item2["isSpecifyNewline"]
+                if "required" in item2:
+                   isRequired = item2["required"]
+                if "title_i18n" in item2 and renew_value not in ["ALL", "LOC"]:
+                    title_i18n_temp = item2["title_i18n"]
+                    title_i18n = title_i18n_temp
+                if "title_i18n_temp" in item2 and renew_value not in ["ALL", "LOC"]:
+                    title_i18n_temp = item2["title_i18n_temp"]
+                if ("titleMap" in item2 and renew_value not in ["ALL", "VAL"]) or \
+                         ("titleMap" in item2 and
+                          'titleMap' in new_value["items"][idx2] and 
+                          not new_value["items"][idx2]["titleMap"]):
+                    titleMap = item2["titleMap"]
+                                        
+                new_value["items"][idx2]["isHide"] = isHide
+                new_value["items"][idx2]["isShowList"] = isShowList
+                new_value["items"][idx2]["isNonDisplay"] = isNonDisplay
+                new_value["items"][idx2]["isSpecifyNewline"] = isSpecifyNewline
+                new_value["items"][idx2]["required"] = isRequired
+                if title_i18n:
+                    new_value["items"][idx2]["title_i18n"] = title_i18n
+                if title_i18n_temp:
+                    new_value["items"][idx2]["title_i18n_temp"] = title_i18n_temp
+                if titleMap:
+                    new_value["items"][idx2]["titleMap"] = titleMap
 
-            
-            
+                if 'items' in item2:
+                    cls.update_attribute_options(item2, new_value["items"][idx2], renew_value)
 
 
 class ItemTypeEditHistory(object):
