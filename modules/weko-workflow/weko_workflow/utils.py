@@ -3345,8 +3345,7 @@ def create_onetime_download_url_to_guest(activity_id: str,
 
     try:
         url_obj = create_onetime_download_record(
-            activity_id, current_user.id, record_id, file_name, user_mail,
-            is_guest_user)
+            activity_id, record_id, file_name, user_mail, is_guest_user)
     except:
         return {}
     if not url_obj:

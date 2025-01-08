@@ -1138,15 +1138,20 @@ def is_private_index(record):
     return False
 
 
-def validate_download_record(record: dict):
-    """Validate record.
+def validate_download_record(record):
+    """Validate the record(item) if it is downloadable.
 
-    :param record:
+    Args:
+        record (dict): Record meta data.
+
+    Returns:
+        bool: True if record is downloadable, False otherwise.
     """
     if record['publish_status'] != PublishStatus.PUBLIC.value:
         return False
     if is_private_index(record):
         return False
+    return True
 
 
 def is_secret_url_feature_enabled():
@@ -1760,7 +1765,10 @@ def validate_secret_url_generation_request(request_data):
     """Validate request for secret URL generation.
 
     Args:
-        request_data (dict): The request object.
+        request_data (dict): The request object containing the following keys:
+            - link_name (str): The name of the secret link.
+            - expiration_date (str): The expiration date of the link.
+            - download_limit (int): The maximum number of downloads allowed.
 
     Returns:
         bool: True if the request is valid, False otherwise.
@@ -1768,15 +1776,29 @@ def validate_secret_url_generation_request(request_data):
     if not request_data:
         return False
 
-    label_name      = request_data.get('link_name')
-    expiration_date = request_data.get('expiration_date')
-    download_limit  = request_data.get('download_limit')
-    if not isinstance(label_name, str) or len(label_name) > 255:
+    expected_keys = ['link_name', 'expiration_date', 'download_limit']
+    if not all(key in request_data for key in expected_keys):
         return False
-    if not isinstance(expiration_date, dt) or expiration_date < dt.now():
-        return False
-    if not isinstance(download_limit, int) or download_limit <= 0:
-        return False
+
+    link_name       = request_data['link_name']
+    expiration_date = request_data['expiration_date']
+    download_limit  = request_data['download_limit']
+    if link_name:
+        if not isinstance(link_name, str) or len(link_name) > 255:
+            return False
+    if expiration_date:
+        if not isinstance(expiration_date, str):
+            return False
+        try:
+            dt_expiration_date = dt.strptime(expiration_date, '%Y-%m-%d')
+        except ValueError:
+            current_app.logger.error(f'Invalid date format: {expiration_date}')
+            return False
+        if dt_expiration_date < dt.now():
+            return False
+    if download_limit is not None:
+        if not isinstance(download_limit, int) or download_limit <= 0:
+            return False
 
     return True
 
@@ -1800,24 +1822,34 @@ def create_secret_url_record(record_id, file_name, request_data):
         not isinstance(content_file_download, dict)):
         return None
 
+    label_name = request_data['link_name']
+    if not label_name:
+        label_name = f'{file_name}_{dt.now().strftime('%Y/%m/%d')}'
+    expiration_date = request_data['expiration_date']
+    if not expiration_date:
+        default_days = content_file_download.get('expiration_date', 30)
+        expiration_date = dt.now() + timedelta(days=default_days)
+    download_limit = request_data['download_limit']
+    if not download_limit:
+        download_limit = content_file_download.get('download_limit', 10)
+
     secret_url_obj = FileSecretDownload.create(
         creator_id      = current_user.id,
         record_id       = record_id,
         file_name       = file_name,
-        label_name      = request_data['link_name'],
-        expiration_date = request_data['expiration_date'],
-        download_limit  = request_data['download_limit'])
+        label_name      = label_name,
+        expiration_date = expiration_date,
+        download_limit  = download_limit)
     return secret_url_obj
 
 
 def create_onetime_download_record(
-    activity_id, approver_id, record_id, file_name, user_mail, is_guest=False,
+    activity_id, record_id, file_name, user_mail, is_guest=False,
     extra_info=None):
     """Create onetime download record.
 
     Args:
-        activity_id:
-        approver_id: The ID of the user who approved the usage application.
+        activity_id: The ID of the usage application activity.
         record_id: The ID of the record which the file belongs to.
         file_name: The name of the file to be downloaded.
         user_mail: The email address of the user who requested the download.
@@ -1833,13 +1865,13 @@ def create_onetime_download_record(
         not isinstance(content_file_download, dict)):
         return None
 
-    default_days = content_file_download.get("expiration_date", 30)
+    default_days = content_file_download.get('expiration_date', 30)
     expiration_date = dt.now() + timedelta(days=default_days)
-    download_limit = content_file_download.get("download_limit", 10)
+    download_limit = content_file_download.get('download_limit', 10)
     extra_info = {'usage_application_activity_id': activity_id,
                   'send_usage_report': True}
     onetime_url_obj = FileOnetimeDownload.create(
-        approver_id     = approver_id,
+        approver_id     = current_user.id,
         record_id       = record_id,
         file_name       = file_name,
         expiration_date = expiration_date,
