@@ -1885,13 +1885,14 @@ def send_secret_url_mail(uuid, secret_url_obj, item_title):
     return is_succeeded
 
 
-def validate_token(token):
+def validate_token(token, is_secret_url):
     """Validate the provided token.
 
     This function can be used for both secret URL and onetime URL.
 
     Args:
         token (str): The token to validate.
+        is_secret_url (bool): True if for secret URL, False if for onetime URL.
 
     Returns:
         bool: True if the token is valid, False otherwise.
@@ -1899,34 +1900,36 @@ def validate_token(token):
     try:
         bytes = base64.urlsafe_b64decode(token.encode())
         token_hash, token_id = bytes.split(b'_')
-        secret_obj = FileSecretDownload.get_by_id(token_id.decode())
-        if secret_obj and (token_hash == generate_sha256_hash(secret_obj)):
+        if is_secret_url:
+            url_obj = FileSecretDownload.get_by_id(token_id.decode())
+        else:
+            url_obj = FileOnetimeDownload.get_by_id(token_id.decode())
+        if url_obj and (token_hash == generate_sha256_hash(url_obj)):
             return True
-        onetime_obj = FileOnetimeDownload.get_by_id(token_id.decode())
-        if onetime_obj and (token_hash == generate_sha256_hash(onetime_obj)):
-            return True
-        return False
+        else:
+            return False
     except Exception as e:
         current_app.logger.error(e)
         return False
 
 
-def convert_token_into_obj(token, is_secret_file):
+def convert_token_into_obj(token, is_secret_url):
     """Convert the token into a download URL object.
 
     Args:
         token (str): The token to convert.
-        is_secret_file (bool):
+        is_secret_url (bool):
             True if the URL is for secret URL, False if for onetime URL.
 
     Returns:
-        FileSecretDownload or FileOnetimeDownload: The download URL object.
+        FileSecretDownload or FileOnetimeDownload or None:
+            The download URL object, or None if the token is invalid.
     """
-    if not validate_token(token):
+    if not validate_token(token, is_secret_url):
         return None
     bytes = base64.urlsafe_b64decode(token.encode())
     url_obj_id = bytes.split(b'_')[1].decode()
-    if is_secret_file:
+    if is_secret_url:
         url_obj = FileSecretDownload.get_by_id(url_obj_id)
     else:
         url_obj = FileOnetimeDownload.get_by_id(url_obj_id)
@@ -1948,7 +1951,7 @@ def validate_url_download(record, filename, token, is_secret_url):
     """
     # Check if the token is valid
     token = request.args.get('token', type=str)
-    if not validate_token(token):
+    if not validate_token(token, is_secret_url):
         return False, 'The provided token is invalid.'
 
     if is_secret_url:
