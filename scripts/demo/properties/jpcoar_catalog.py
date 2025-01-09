@@ -45,9 +45,9 @@ mapping = {
             "file": {
                 "URI": {
                     "@attributes": {
-                        "objectType": "catalog_file.catalog_file_uri.catalog_file_object_type"
+                        "objectType": "catalog_file.catalog_file_object_type"
                     },
-                    "@value": "catalog_file.catalog_file_uri.catalog_file_uri_value",
+                    "@value": "catalog_file.catalog_file_uri",
                 }
             },
             "identifier": {
@@ -437,28 +437,23 @@ def schema(title="", multi_flag=multiple_flag):
                     "format": "object",
                     "properties": {
                         "catalog_file_uri": {
-                            "type": "object",
-                            "format": "object",
-                            "properties": {
-                                "catalog_file_uri_value": {
-                                    "type": "string",
-                                    "format": "text",
-                                    "title": "Thumbnail URI",
-                                    "title_i18n": {"ja": "代表画像URI", "en": "Thumbnail URI"},
-                                },
-                                "catalog_file_object_type": {
-                                    "type": "string",
-                                    "format": "select",
-                                    "enum": ["thumbnail"],
-                                    "currentEnum": ["thumbnail"],
-                                    "title": "Object Type",
-                                    "title_i18n": {"ja": "オブジェクトタイプ", "en": "Object Type"},
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+                            "type": "string",
+                            "format": "text",
+                            "title": "Thumbnail URI",
+                            "title_i18n": {"ja": "代表画像URI", "en": "Thumbnail URI"},
+                        },
+                        "catalog_file_object_type": {
+                            "type": "string",
+                            "format": "select",
+                            "enum": ["thumbnail"],
+                            "currentEnum": ["thumbnail"],
+                            "title": "Object Type",
+                            "title_i18n": {"ja": "オブジェクトタイプ", "en": "Object Type"},
+                        },
+                    },
+                    "title": "Thumbnail",
+                },
+            },
         }
 
         return _d
@@ -805,28 +800,22 @@ def form(
                     "title_i18n": {"ja": "代表画像", "en": "Thumbnail"},
                     "items": [
                         {
-                            "items": [
-                                {
-                                    "key": "{}.catalog_file.catalog_file_uri.catalog_file_uri_value".format(key),
-                                    "type": "text",
-                                    "title": "Thumbnail URI",
-                                    "title_i18n": {"ja": "代表画像URI", "en": "Thumbnail URI"},
-                                },
-                                {
-                                    "key": "{}.catalog_file.catalog_file_uri.catalog_file_object_type".format(key),
-                                    "type": "select",
-                                    "title": "Object Type",
-                                    "title_i18n": {"ja": "オブジェクトタイプ", "en": "Object Type"},
-                                    "titleMap": [{"value": "thumbnail", "name": "thumbnail"}],
-                                }
-                            ],
                             "key": "{}.catalog_file.catalog_file_uri".format(key),
-                            "type": "fieldset",
-                            "title": "代表画像URI",
-                            "title_i18n": {"en": "Thumbnail URI", "ja": "代表画像URI"},
-                        }
-                    ]
-                }
+                            "type": "text",
+                            "title": "Thumbnail URI",
+                            "title_i18n": {"ja": "代表画像URI", "en": "Thumbnail URI"},
+                        },
+                        {
+                            "key": "{}.catalog_file.catalog_file_object_type".format(
+                                key
+                            ),
+                            "type": "select",
+                            "title": "Object Type",
+                            "title_i18n": {"ja": "オブジェクトタイプ", "en": "Object Type"},
+                            "titleMap": [{"value": "thumbnail", "name": "thumbnail"}],
+                        },
+                    ],
+                },
             ],
             "key": key.replace("[]", ""),
         }

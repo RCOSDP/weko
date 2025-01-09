@@ -18,7 +18,8 @@ mapping = {
     "jpcoar_v1_mapping": "",
     "jpcoar_mapping": {
         "originalLanguage": {
-            "@value": "original_language"
+            "@value": "original_language",
+            "@attributes": {"xml:lang": "original_language_language"},
         }
     },
     "junii2_mapping": "",
@@ -56,6 +57,14 @@ def schema(title="", multi_flag=multiple_flag):
                     "title": "Original Language",
                     "title_i18n": {"ja": "原文の言語", "en": "Volume Title"},
                 },
+                "original_language_language": {
+                    "type": "string",
+                    "format": "select",
+                    "enum": config.LANGUAGE_VAL2_1,
+                    "currentEnum": config.LANGUAGE_VAL2_1,
+                    "title": "Language",
+                    "title_i18n": {"ja": "言語", "en": "Language"},
+                },
             },
         }
         return _d
@@ -77,6 +86,13 @@ def form(
                     "type": "text",
                     "title": "原文の言語",
                     "title_i18n": {"ja": "原文の言語", "en": "Original Language"},
+                },
+                {
+                    "key": "{}.original_language_language".format(key),
+                    "type": "select",
+                    "title": "言語",
+                    "title_i18n": {"ja": "言語", "en": "Language"},
+                    "titleMap": get_select_value(config.LANGUAGE_VAL2_1),
                 },
             ],
             "key": key.replace("[]", ""),
