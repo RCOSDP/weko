@@ -354,7 +354,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                                                     name = alst[0] + ".value"
                                                     name_dict = dict(operator="and")
                                                     name_dict.update(dict(query=split_text))
-                                                    should_list.append(Q("match", **{v: name_dict}))
+                                                    should_list.append(Q("match", **{name: name_dict}))
                                                 mut = []
                                                 mut.extend(qt or [])
                                                 qry = Q("bool", must=mut, should=should_list, minimum_should_match=1)
