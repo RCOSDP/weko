@@ -1909,7 +1909,6 @@ class WorkActivity(object):
             query_action_activities = query_action_activities.limit(
                 size).offset(offset)
         action_activities = query_action_activities.all()
-        current_app.logger.debug('========= action_activities: {}'.format(action_activities))
         if action_activities:
             # Format activities
             self.__format_activity_data_to_show_on_workflow(
