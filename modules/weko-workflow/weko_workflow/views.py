@@ -738,7 +738,7 @@ def verify_deletion(activity_id="0"):
 @workflow_blueprint.route('/activity/detail/<string:activity_id>',
                  methods=['GET', 'POST'])
 @login_required_customize
-def display_activity(activity_id="0"):
+def display_activity(activity_id="0", community_id=None):
     """各アクティビティのビューをレンダリングする
 
     各アクティビティの画面表示に必要な情報を取得し、
@@ -822,7 +822,7 @@ def display_activity(activity_id="0"):
     # display_activity of Identifier grant
     identifier_setting = None
     if action_endpoint == 'identifier_grant' and item:
-        community_id = request.args.get('community', None)
+        community_id = request.args.get('community') or community_id
         if not community_id:
             community_id = 'Root Index'
         identifier_setting = get_identifier_setting(community_id)
@@ -967,14 +967,13 @@ def display_activity(activity_id="0"):
                                        is_auto_set_index_action,
                                        activity_detail.action_order)
 
-    getargs = request.args
+    # getargs = request.args
     ctx = {'community': None}
-    community_id = ""
-    if 'community' in getargs:
-        comm = GetCommunity.get_community_by_id(request.args.get('community'))
+    # community_id = ""
+    if community_id is not None:
+        comm = GetCommunity.get_community_by_id(community_id)
         ctx = {'community': comm}
-        if comm is not None:
-            community_id = comm.id
+        community_id = comm.id if comm is not None else ""
     # be use for index tree and comment page.
     if 'item_login' == action_endpoint or \
             'item_login_application' == action_endpoint or \
