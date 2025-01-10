@@ -452,7 +452,7 @@ def new_activity():
 
 @workflow_blueprint.route('/activity/init', methods=['POST'])
 @login_required
-def init_activity():
+def init_activity(json_data=None, community_id=None):
     """Return URL of workflow activity made from the request body.
     Args:
 
@@ -506,7 +506,7 @@ def init_activity():
     url = ''
     post_activity = None
     try:
-        post_activity = ActivitySchema().load(request.get_json())
+        post_activity = ActivitySchema().load(json_data or request.get_json())
     except ValidationError as err:
         res = ResponseMessageSchema().load({'code':-1,'msg':str(err)})
         return jsonify(res.data), 400
@@ -521,10 +521,10 @@ def init_activity():
         return jsonify(res.data), 200
 
     activity = WorkActivity()
+    community_id = request.args.get('community') or community_id
     try:
-        if 'community' in request.args:
-            rtn = activity.init_activity(
-                post_activity.data, request.args.get('community'))
+        if community_id is not None:
+            rtn = activity.init_activity(post_activity.data, community_id)
         else:
             rtn = activity.init_activity(post_activity.data)
         if rtn is None:
@@ -533,19 +533,20 @@ def init_activity():
 
         url = url_for('weko_workflow.display_activity',
                       activity_id=rtn.activity_id)
-        if 'community' in request.args and request.args.get('community') != 'undefined':
-            comm = GetCommunity.get_community_by_id(
-                request.args.get('community'))
+        if community_id is not None and community_id != 'undefined':
+            comm = GetCommunity.get_community_by_id(community_id)
             if comm is not None:
                 url = url_for('weko_workflow.display_activity',
                           activity_id=rtn.activity_id, community=comm.id)
         db.session.commit()
     except SQLAlchemyError as ex:
+        traceback.print_exc()
         current_app.logger.error("sqlalchemy error: {}".format(ex))
         db.session.rollback()
         res = ResponseMessageSchema().load({'code':-1,'msg':"sqlalchemy error: {}".format(ex)})
         return jsonify(res.data), 500
     except Exception as ex:
+        traceback.print_exc()
         current_app.logger.error("Unexpected error: {}".format(ex))
         db.session.rollback()
         res = ResponseMessageSchema().load({'code':-1,'msg':"Unexpected error: {}".format(ex)})
