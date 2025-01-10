@@ -117,7 +117,7 @@ def check_bagit_import_items(file, packaging):
         raise WekoSwordserverException(
             "An error occurred while searching user by On-Behalf-Of.",
             errorType=ErrorType.ServerError
-        )
+        ) from ex
 
     if isinstance(file, str):
         filename = os.path.basename(file)
