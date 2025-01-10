@@ -323,6 +323,9 @@ def post_service_document():
     TempDirInfo().delete(data_path)
 
     recid = import_result.get("recid")
+    current_app.logger.info(
+        f"item imported by sword from {request.oauth.client.name} (recid={recid})"
+    )
 
     return jsonify(_get_status_document(recid))
 
@@ -531,7 +534,6 @@ def handle_exception(ex):
 
 @blueprint.errorhandler(WekoSwordserverException)
 def handle_weko_swordserver_exception(ex):
-    current_app.logger.error(ex.message)
     return jsonify(_create_error_document(ex.errorType.type, ex.message)), ex.errorType.code
 
 @blueprint.teardown_request

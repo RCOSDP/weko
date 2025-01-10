@@ -230,6 +230,7 @@ def tokens(app,users,db):
     scopes = [
         "deposit:write",
         "deposit:write user:activity",
+        "deposit:write deposit:actions user:activity",
         ""
     ]
     tokens = []
@@ -261,7 +262,7 @@ def tokens(app,users,db):
         db.session.add(test_client)
         db.session.add(test_token)
 
-        tokens.append({"token":test_token, "client":test_client})
+        tokens.append({"token":test_token, "client":test_client, "scope":scope})
 
     db.session.commit()
 

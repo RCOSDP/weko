@@ -12,11 +12,12 @@ import shutil
 import bagit
 import json
 import traceback
-from flask import current_app, request
+from flask import current_app, request, abort
 from zipfile import BadZipFile
 from sqlalchemy.exc import SQLAlchemyError
 
 from invenio_accounts.models import User
+from invenio_deposit.scopes import actions_scope
 from invenio_oauth2server.models import Token
 
 from weko_accounts.models import ShibbolethUser
@@ -116,7 +117,7 @@ def check_bagit_import_items(file, packaging):
         raise WekoSwordserverException(
             "An error occurred while searching user by On-Behalf-Of.",
             errorType=ErrorType.ServerError
-        )
+        ) from ex
 
     if isinstance(file, str):
         filename = os.path.basename(file)
@@ -188,6 +189,7 @@ def check_bagit_import_items(file, packaging):
         processed_json = process_json(json_ld)
         # FIXME: if workflow registration, check if the indextree is valid
         indextree = processed_json.get("record").get("header").get("indextree")
+        # if workflow.index_tree_id is None
 
         list_record = generate_metadata_from_json(
             processed_json, mapping, item_type
@@ -198,6 +200,16 @@ def check_bagit_import_items(file, packaging):
         handle_check_id(list_record)
         handle_check_and_prepare_index_tree(list_record, True, [])
         handle_check_and_prepare_publish_status(list_record)
+
+        # check if the user has scopes to publish
+        required_scopes = set([actions_scope.id])
+        token_scopes = set(request.oauth.access_token.scopes)
+        if (
+            list_record[0].get("publish_status") == "public"
+            and not required_scopes.issubset(token_scopes)
+        ):
+            abort(403)
+
         handle_check_file_metadata(list_record, data_path)
 
         # add zip file to temporary dictionary
