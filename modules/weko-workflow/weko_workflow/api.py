@@ -1529,21 +1529,16 @@ class WorkActivity(object):
     def query_activities_by_tab_is_all(
         query,
         is_community_admin,
-        community_user_ids,
     ):
         """Query activities by tab is all.
 
         :param query:
         :param is_community_admin:
-        :param community_user_ids:
         :return:
         """
         self_user_id = int(current_user.get_id())
         self_group_ids = [role.id for role in current_user.roles]
-        if is_community_admin:
-            query = query \
-                .filter(_Activity.activity_login_user.in_(community_user_ids))
-        else:
+        if not is_community_admin:
             query = query.filter(
                 or_(
                     and_(
@@ -1601,12 +1596,13 @@ class WorkActivity(object):
         return is_admin, is_community_admin
 
     @staticmethod
-    def query_activities_by_tab_is_todo(query, is_admin):
+    def query_activities_by_tab_is_todo(query, is_admin, is_community_admin):
         """
         Query activities by tab is todo.
 
         :param query:
         :param is_admin:
+        :param is_community_admin:
         :return:
         """
         query = query \
@@ -1614,7 +1610,7 @@ class WorkActivity(object):
                         == ActivityStatusPolicy.ACTIVITY_BEGIN,
                         _Activity.activity_status
                         == ActivityStatusPolicy.ACTIVITY_MAKING))
-        if not is_admin or current_app.config[
+        if (not is_admin and not is_community_admin) or current_app.config[
                 'WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']:
             self_user_id = int(current_user.get_id())
             self_group_ids = [role.id for role in current_user.roles]
@@ -1639,7 +1635,7 @@ class WorkActivity(object):
                 )\
                 .filter(_FlowAction.action_id == _Activity.action_id) \
                 .filter(_FlowAction.action_order == _Activity.action_order)
-            if is_admin:
+            if is_admin or is_community_admin:
                 query = query.filter(
                     ActivityAction.action_handler.in_([-1, self_user_id])
                 )
@@ -1773,7 +1769,8 @@ class WorkActivity(object):
             activity_data.role_name = role_name if role_name else ''
 
             if is_community_admin:
-                if not self._check_community_permission(activity_data, index_ids):
+                if activity_data.activity_login_user != int(current_user.get_id()) and \
+                        not self._check_community_permission(activity_data, index_ids):
                     continue
             # Append to do and action activities into the master list
             activities.append(activity_data)
@@ -1845,11 +1842,9 @@ class WorkActivity(object):
                 if size_all and size_all[0].isnumeric():
                     size = size_all[0]
                 if not is_admin:
-                    community_user_ids = self.__get_community_user_ids()
                     query_action_activities = self \
                         .query_activities_by_tab_is_all(
-                            query_action_activities, is_community_admin,
-                            community_user_ids
+                            query_action_activities, is_community_admin
                         )
             # query activities by tab is todo
             elif tab == WEKO_WORKFLOW_TODO_TAB:
@@ -1860,15 +1855,13 @@ class WorkActivity(object):
                 if size_todo and size_todo[0].isnumeric():
                     size = size_todo[0]
                 if not is_admin:
-                    community_user_ids = self.__get_community_user_ids()
                     query_action_activities = self\
                         .query_activities_by_tab_is_all(
-                            query_action_activities, is_community_admin,
-                            community_user_ids
+                            query_action_activities, is_community_admin
                         )
 
                 query_action_activities = self.query_activities_by_tab_is_todo(
-                    query_action_activities, is_admin
+                    query_action_activities, is_admin, is_community_admin
                 )
 
             # Filter conditions
@@ -1916,6 +1909,7 @@ class WorkActivity(object):
             query_action_activities = query_action_activities.limit(
                 size).offset(offset)
         action_activities = query_action_activities.all()
+        current_app.logger.debug('========= action_activities: {}'.format(action_activities))
         if action_activities:
             # Format activities
             self.__format_activity_data_to_show_on_workflow(
