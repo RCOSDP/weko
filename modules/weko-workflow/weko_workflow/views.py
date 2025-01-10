@@ -1228,7 +1228,7 @@ def check_authority_action(activity_id='0', action_id=0,
     methods=['POST'])
 @login_required_customize
 @check_authority
-def next_action(activity_id='0', action_id=0):
+def next_action(activity_id='0', action_id=0, json_data=None):
     """そのアクションにおける処理を行い、アクティビティの状態を更新する。
 
     Args:
@@ -1305,8 +1305,9 @@ def next_action(activity_id='0', action_id=0):
             current_app.logger.error("next_action: can not get schema by action_id")
             res = ResponseMessageSchema().load({"code":-2, "msg":"can not get schema by action_id"})
             return jsonify(res.data), 500
-        schema_load = schema.load(request.get_json())
+        schema_load = schema.load(json_data or request.get_json())
     except ValidationError as err:
+        traceback.print_exc()
         current_app.logger.error("next_action: "+str(err))
         res = ResponseMessageSchema().load({"code":-1, "msg":str(err)})
         return jsonify(res.data), 500
