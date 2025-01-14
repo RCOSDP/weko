@@ -3367,6 +3367,7 @@ def export_all(root_url, user_id, data, timezone):
         with open(file_full_path, "w", encoding="utf-8-sig") as file:
             file_output = package_export_file(item_type_data)
             file.write(file_output.getvalue())
+        db.session.commit()
 
     def _get_item_type_list(item_type_id):
         """Get item type list."""
