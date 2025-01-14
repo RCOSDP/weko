@@ -55,7 +55,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
     assert result.get("error") is None
 
 
-    # Case # 1
+    # case # 1
     client_id = tokens[2]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -92,7 +92,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                     assert res["list_record"][0]["errors"] is None
 
 
-    # Case # 2
+    # case # 2
     client_id = tokens[2]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -130,7 +130,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                         mock_handle_files_info.assert_called_once()
 
 
-    # Case # 3
+    # case # 3
     client_id = tokens[2]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -175,7 +175,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                         mock_handle_validate_item_import.assert_called_once()
 
 
-    # Case # 4
+    # case # 4
     client_id = tokens[2]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -210,7 +210,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                     mock_json_load.assert_called_once()
 
 
-    # Case # 5
+    # case # 5
     client_id = tokens[2]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -245,7 +245,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                     mock_get_by_id.assert_called_once()
 
 
-    # Case # 6
+    # case # 6
     client_id = tokens[2]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -285,7 +285,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
     db.session.commit()
 
 
-    # Case # 7
+    # case # 7
     client_id = tokens[2]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -320,7 +320,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                     mock_get_workflow_by_id.assert_called_once()
 
 
-    # Case # 8
+    # case # 8
     client_id = tokens[2]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -356,7 +356,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                 assert res["list_record"][0]["errors"] is None
 
 
-    # Case # 9
+    # case # 9
     client_id = tokens[2]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -393,7 +393,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                     mock_handle_files_info.assert_called_once()
 
 
-    # Case # 10
+    # case # 10
     client_id = tokens[2]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -437,7 +437,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                     mock_handle_validate_item_import.assert_called_once()
 
 
-    # Case # 11
+    # case # 11
     client_id = tokens[2]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -472,7 +472,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                     mock_json_load.assert_called_once()
 
 
-    # Case # 12
+    # case # 12
     client_id = tokens[2]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -507,7 +507,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                     mock_get_by_id.assert_called_once()
 
 
-    # Case # 13
+    # case # 13
     client_id = tokens[2]["client"].client_id
     user_email = users[2]["email"]
 
@@ -538,7 +538,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                 assert res["error"] == "Metadata mapping not defined for registration your item."
                 mock_get_record_by_client_id.assert_called_once()
 
-    # Case # 14
+    # case # 14
     file_name = "mockfile.zip"
     packaging = [
         "http://purl.org/net/sword/3.0/package/SimpleZip",
@@ -566,7 +566,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                 mock_bag.assert_called_once()
 
 
-    # Case # 15
+    # case # 15
     file_name = "mockfile.zip"
     packaging = [
         "http://purl.org/net/sword/3.0/package/SimpleZip",
@@ -591,7 +591,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
             mock_unpack_zip.assert_called_once()
 
 
-    # Case # 16
+    # case # 16
     file_name = "mockfile.zip"
     packaging = [
         "http://purl.org/net/sword/3.0/package/SimpleZip",
@@ -655,7 +655,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
 def test_generate_metadata_from_json(app,db,index,users,tokens,sword_mapping,sword_client,item_type,make_crate,mocker,workflow):
     # sucsess case for publish_status is "public". It is required to scope "deposit:actions".
 
-    # Case # 17
+    # case # 17
     sword__mapping = sword_mapping[0]["sword_mapping"]
     item__type = item_type[0]["item_type"]
     mapped__json = json_data("data/item_type/mapped_json_2.json")
@@ -666,7 +666,7 @@ def test_generate_metadata_from_json(app,db,index,users,tokens,sword_mapping,swo
             assert res[0]["errors"] is None, "errors is not None"
         mock_map.assert_called_once()
 
-    # Case # 18
+    # case # 18
     sword__mapping = sword_mapping[0]["sword_mapping"]
     item__type = item_type[0]["item_type"]
     mapped__json = json_data("data/item_type/mapped_json_2.json")
@@ -678,7 +678,7 @@ def test_generate_metadata_from_json(app,db,index,users,tokens,sword_mapping,swo
                 assert res[0]["is_change_identifier"] is True, "errors is not True"
         mock_map.assert_called_once()
 
-    # Case # 19
+    # case # 19
     sword__mapping = sword_mapping[0]["sword_mapping"]
     item__type = item_type[0]["item_type"]
     mapped__json = json_data("data/item_type/mapped_json_2.json")
@@ -697,7 +697,7 @@ def test_generate_metadata_from_json(app,db,index,users,tokens,sword_mapping,swo
 def test_handle_files_info(app,sword_mapping,item_type,make_crate):
     # sucsess case for publish_status is "public". It is required to scope "deposit:actions".
 
-    # Case # 20
+    # case # 20
     file__name = "payload.zip"
     zip, _ = make_crate()
     storage = FileStorage(filename=file__name,stream=zip)
@@ -716,7 +716,7 @@ def test_handle_files_info(app,sword_mapping,item_type,make_crate):
             assert len(res[0]["file_path"]) > 0
 
 
-    # Case # 21
+    # case # 21
     file__name = "payload.zip"
     zip, _ = make_crate()
     storage = FileStorage(filename=file__name,stream=zip)
@@ -735,7 +735,7 @@ def test_handle_files_info(app,sword_mapping,item_type,make_crate):
             assert not hasattr(res[0], 'file_path')
 
 
-    # Case # 22
+    # case # 22
     file__name = "payload.zip"
     zip, file__size = make_crate()
     storage = FileStorage(filename=file__name,stream=zip)
