@@ -41,7 +41,6 @@ from weko_accounts.views import _redirect_method
 from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
 from weko_records.api import FilesMetadata, ItemTypes
-from weko_records_ui.utils import generate_one_time_download_url
 from weko_user_profiles.models import UserProfile
 from weko_workflow.utils import is_terms_of_use_only
 from werkzeug.datastructures import Headers
@@ -425,8 +424,8 @@ def file_download_onetime(pid, record, filename, _record_file_factory=None,
         return render_template(error_template, error_message), status_code
 
     token = request.args.get('token', type=str)
-    is_validated, error_msg = (
-        validate_url_download(record, filename, token, is_secret_url=False))
+    is_validated, error_msg = validate_url_download(
+        record, filename, token, is_secret_url=False)
     if not is_validated:
         return error_response(error_msg, 403)
 
@@ -514,10 +513,11 @@ def file_download_secret(pid, record, filename, _record_file_factory=None,
     """
     def error_response(error_message, status_code=400):
         error_template = "weko_theme/error.html"
-        return render_template(error_template, error_message), status_code
+        return render_template(error_template, error=error_message), status_code
 
+    token = request.args.get('token', type=str)
     is_validated, error_msg = (
-        validate_url_download(record, filename, is_secret_url=True))
+        validate_url_download(record, filename, token, is_secret_url=True))
     if not is_validated:
         return error_response(error_msg, 403)
 
@@ -532,7 +532,7 @@ def file_download_secret(pid, record, filename, _record_file_factory=None,
         user_profile = UserProfile.get_by_userid(current_user.get_id())
         lang = user_profile.language if user_profile else 'en'
 
-    url_obj = convert_token_into_obj(request.args.get('token'))
+    url_obj = convert_token_into_obj(token, is_secret_url=True)
     try:
         url_obj.increment_download_count()
     except:

@@ -72,7 +72,7 @@ from .models import FilePermission, PDFCoverPageSettings
 from .permissions import check_content_clickable, check_created_id, \
     check_file_download_permission, check_original_pdf_download_permission, \
     check_permission_period, file_permission_factory, get_permission
-from .utils import can_manage_secret_url, create_secret_url_record, \
+from .utils import can_manage_secret_url, create_download_url, create_secret_url_record, \
     get_billing_file_download_permission, get_google_detaset_meta, \
     get_google_scholar_meta, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
@@ -755,21 +755,23 @@ def create_secret_url_and_send_mail(pid, record, filename, **kwargs):
         url_obj = create_secret_url_record(pid.pid_value,
                                            filename,
                                            request.json)
-    except:
+    except Exception as e:
+        current_app.logger.error(e)
         abort(500)
 
-    message = 'Secret URL generated successfully'
+    url = create_download_url(url_obj)
+
+    message = f'Secret URL generated successfully: "{url}"'
     if request.json['send_email'] is True:
         sending_result = send_secret_url_mail(
             pid.object_uuid, url_obj, record.get('item_title', ''))
         if sending_result:
-            message += ', please check your email inbox.'
+            message += ', please check your email inbox'
         else:
             message += (', but there was an error while sending the email. '
                         'To use the URL, please refresh the page and copy it '
-                        'from the issued URL list.')
-    else:
-        return jsonify({'message': message + '.'})
+                        'from the issued URL list')
+    return jsonify({'message': message + '.'})
 
 
 @blueprint.route('/r/<parent_pid_value>', methods=['GET'])

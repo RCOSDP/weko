@@ -1672,44 +1672,80 @@ def get_google_detaset_meta(record,record_tree=None):
     return json.dumps(res_data, ensure_ascii=False)
 
 
-def validate_secret_url_generation_request(request_data):
-    """Validate request for secret URL generation.
+def to_utc_datetime(str_date, offset_minutes=0):
+    """Parse string date info into datetime object in UTC timezone.
 
     Args:
-        request_data (dict): The request object containing the following keys:
-            - link_name (str): The name of the secret link.
-            - expiration_date (str): The expiration date of the link.
-            - download_limit (int): The maximum number of downloads allowed.
+        str_date (str): The date string as 'YYYY-MM-DD'.
+        offset_minutes (int): The timezone offset in minutes.
+
+    Returns:
+        datetime: The datetime object in UTC timezone.
+    """
+    local_naive_dt = dt.strptime(str_date, '%Y-%m-%d')
+    local_tz = timezone(timedelta(minutes=-offset_minutes))
+    local_aware_dt = local_naive_dt.replace(tzinfo=local_tz)
+    utc_dt = local_aware_dt.astimezone(timezone.utc)
+    return utc_dt
+
+
+def validate_secret_url_generation_request(request_json):
+    """Validate request for secret URL generation.
+
+    The reqeust data must contain the following keys:
+        - link_name (optional): The name of the secret link.
+        - expiration_date (optional): The expiration date of the link.
+        - download_limit (optional): The maximum number of downloads allowed.
+        - send_email: True if the user wants to send an email, False otherwise.
+        - timezone_offset_minutes: The timezone offset in minutes.
+
+    Keys marked as optional must exist in the request, but their values can be
+    empty.
+
+    Args:
+        request_json (dict): The request.json data from the user.
 
     Returns:
         bool: True if the request is valid, False otherwise.
     """
-    if not request_data:
+    current_app.logger.error(f'request_json: {request_json}')
+    if not isinstance(request_json, dict):
+        return False
+    expected_keys = ['link_name',
+                     'expiration_date',
+                     'download_limit',
+                     'send_email',
+                     'timezone_offset_minutes']
+    if not all(key in request_json for key in expected_keys):
         return False
 
-    expected_keys = ['link_name', 'expiration_date', 'download_limit']
-    if not all(key in request_data for key in expected_keys):
-        return False
-
-    link_name       = request_data['link_name']
-    expiration_date = request_data['expiration_date']
-    download_limit  = request_data['download_limit']
+    link_name      = request_json['link_name']
+    expiration_str = request_json['expiration_date']
+    download_limit = request_json['download_limit']
+    send_email     = request_json['send_email']
+    offset_minutes = request_json['timezone_offset_minutes']
     if link_name:
         if not isinstance(link_name, str) or len(link_name) > 255:
             return False
-    if expiration_date:
-        if not isinstance(expiration_date, str):
+    if (not isinstance(offset_minutes, int) or
+        abs(offset_minutes) > 720):  # Max timezone offset is ±720 minutes
+        return False
+    if expiration_str:
+        if not isinstance(expiration_str, str):
             return False
-        try:
-            dt_expiration_date = dt.strptime(expiration_date, '%Y-%m-%d')
-        except ValueError:
-            current_app.logger.error(f'Invalid date format: {expiration_date}')
+        expiration_dt = to_utc_datetime(expiration_str, offset_minutes)
+        if not expiration_dt:
             return False
-        if dt_expiration_date < dt.now():
+        expiration_dt += timedelta(days=1)
+        if expiration_dt < dt.now(timezone.utc):
             return False
-    if download_limit is not None:
-        if not isinstance(download_limit, int) or download_limit <= 0:
+    if download_limit is not None:  # To detect 0
+        if not isinstance(download_limit, int):
             return False
+        if int(download_limit) <= 0:
+            return False
+    if not isinstance(send_email, bool):
+        return False
 
     return True
 
@@ -1723,40 +1759,51 @@ def create_secret_url_record(record_id, file_name, request_data):
         request_data (dict): The request data from the user.
 
     Returns:
-        FileSecretDownload: The created secret URL object.
+        FileSecretDownload, or None:
+            The created secret URL object, or None if the restricted access
+            settings are not configured properly.
 
     Raises:
         Exception: If an unexpected error occurs during the creation.
     """
-    content_file_download = get_restricted_access('content_file_download')
-    if (not content_file_download or
-        not isinstance(content_file_download, dict)):
+    secret_url_settings = get_restricted_access('secret_URL_file_download')
+    if (not secret_url_settings or
+        not isinstance(secret_url_settings, dict)):
         return None
 
-    label_name = request_data['link_name']
-    if not label_name:
-        label_name = f'{file_name}_{dt.now().strftime('%Y/%m/%d')}'
-    expiration_date = request_data['expiration_date']
-    if not expiration_date:
-        default_days = content_file_download.get('expiration_date', 30)
-        expiration_date = dt.now() + timedelta(days=default_days)
+    label_name     = request_data['link_name']
+    local_expiration_str = request_data['expiration_date']
     download_limit = request_data['download_limit']
-    if not download_limit:
-        download_limit = content_file_download.get('download_limit', 10)
+    offset_minutes = request_data['timezone_offset_minutes']
+    # Set default values if these values are empty.
+    if label_name == '':
+        utc_today = dt.now(timezone.utc).strftime('%Y-%m-%d')
+        url_created_at = to_utc_datetime(
+            utc_today, offset_minutes).strftime('%Y-%m-%d')
+        label_name = f'{file_name}_{url_created_at}'
+    if local_expiration_str == '':
+        expiration_days = secret_url_settings.get('secret_expiration_date', 30)
+        local_tz = timezone(timedelta(minutes=offset_minutes))
+        local_date = dt.now(timezone.utc).replace(tzinfo=local_tz).date()
+        local_expiration_date = local_date + timedelta(expiration_days)
+        local_expiration_str = dt.strftime(local_expiration_date, '%Y-%m-%d')
+    utc_expiration_dt = to_utc_datetime(local_expiration_str, offset_minutes)
+    utc_expiration_dt += timedelta(days=1)  # To include the last day
+    if download_limit is None:
+        download_limit = secret_url_settings.get('secret_download_limit', 10)
 
     secret_url_obj = FileSecretDownload.create(
         creator_id      = current_user.id,
         record_id       = record_id,
         file_name       = file_name,
         label_name      = label_name,
-        expiration_date = expiration_date,
+        expiration_date = utc_expiration_dt,
         download_limit  = download_limit)
     return secret_url_obj
 
 
-def create_onetime_download_record(
-    activity_id, record_id, file_name, user_mail, is_guest=False,
-    extra_info=None):
+def create_onetime_url_record(activity_id, record_id, file_name,
+                              user_mail, is_guest=False):
     """Create onetime download record.
 
     Args:
@@ -1765,22 +1812,24 @@ def create_onetime_download_record(
         file_name: The name of the file to be downloaded.
         user_mail: The email address of the user who requested the download.
         is_guest: True if the user is a guest user, False otherwise.
-        extra_info: Additional information.
 
     Returns:
-        FileOnetimeDownload: The created onetime download record, or None if
-        the restricted access settings are not configured properly.
+        FileOnetimeDownload or None:
+            The created onetime download record, or None if the restricted
+            access settings are not configured properly.
     """
-    content_file_download = get_restricted_access('content_file_download')
-    if (not content_file_download or
-        not isinstance(content_file_download, dict)):
+    onetime_url_settings = get_restricted_access('content_file_download')
+    if (not onetime_url_settings or
+        not isinstance(onetime_url_settings, dict)):
         return None
 
-    default_days = content_file_download.get('expiration_date', 30)
-    expiration_date = dt.now() + timedelta(days=default_days)
-    download_limit = content_file_download.get('download_limit', 10)
+    expiration_days = onetime_url_settings.get('expiration_date', 30)
+    expiration_date = dt.now(timezone.utc) + timedelta(days=expiration_days)
+    expiration_date += timedelta(days=1)  # To include the last day
+    download_limit = onetime_url_settings.get('download_limit', 10)
     extra_info = {'usage_application_activity_id': activity_id,
                   'send_usage_report': True}
+
     onetime_url_obj = FileOnetimeDownload.create(
         approver_id     = current_user.id,
         record_id       = record_id,
@@ -1791,11 +1840,10 @@ def create_onetime_download_record(
         is_guest        = is_guest,
         extra_info      = extra_info
     )
-
     return onetime_url_obj
 
 
-def create_download_url(url_obj, is_secret_url):
+def create_download_url(url_obj):
     """Create a download URL from a object.
 
     Note:
@@ -1811,9 +1859,15 @@ def create_download_url(url_obj, is_secret_url):
     Returns:
         str: The generated URL.
     """
+    if isinstance(url_obj, FileSecretDownload):
+        url_type = 'secret'
+    elif isinstance(url_obj, FileOnetimeDownload):
+        url_type = 'onetime'
+    else:
+        return None
     host_url = request.host_url
-    url_type = 'secret' if is_secret_url else 'onetime'
     hash = generate_sha256_hash(url_obj)
+    current_app.logger.error(f'generated hash: {hash}')
     bytes = hash + b'_' + str(url_obj.id).encode()
     token = base64.urlsafe_b64encode(bytes).decode()
     url = (f'{host_url}record/{url_obj.record_id}/file/{url_type}/'
@@ -1865,11 +1919,14 @@ def send_secret_url_mail(uuid, secret_url_obj, item_title):
     # Setup mail info
     user_profile = UserProfile.get_by_userid(current_user.id)
     fullname = user_profile._displayname if user_profile else ''
+    expiration_dt = secret_url_obj.expiration_date
+    jst_date = expiration_dt.astimezone(timezone(timedelta(hours=9))).date()
+    jst_str = jst_date.strftime('%Y-%m-%d') + ' 23:59:59(JST)'
     secret_url_info = {
         'restricted_download_link'  : create_download_url(secret_url_obj),
         'mail_recipient'            : current_user.email,
         'file_name'                 : secret_url_obj.file_name,
-        'restricted_expiration_date': str(secret_url_obj.expiration_date),
+        'restricted_expiration_date': jst_str,
         'restricted_download_count' : str(secret_url_obj.download_limit),
         'restricted_fullname'       : fullname,
         'restricted_data_name'      : item_title,
@@ -1950,7 +2007,6 @@ def validate_url_download(record, filename, token, is_secret_url):
         Tuple[bool, str]: A tuple of the validation result and error message.
     """
     # Check if the token is valid
-    token = request.args.get('token', type=str)
     if not validate_token(token, is_secret_url):
         return False, 'The provided token is invalid.'
 

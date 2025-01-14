@@ -3332,7 +3332,7 @@ def create_onetime_download_url_to_guest(activity_id: str,
         dict: onetime URL and expiration date.
     """
     from weko_records_ui.utils import (create_download_url,
-                                       create_onetime_download_record)
+                                       create_onetime_url_record)
     file_name = extra_info.get('file_name')
     record_id = extra_info.get('record_id')
     user_mail = extra_info.get('user_mail')
@@ -3344,7 +3344,7 @@ def create_onetime_download_url_to_guest(activity_id: str,
         return {}
 
     try:
-        url_obj = create_onetime_download_record(
+        url_obj = create_onetime_url_record(
             activity_id, record_id, file_name, user_mail, is_guest_user)
     except:
         return {}
@@ -3354,7 +3354,7 @@ def create_onetime_download_url_to_guest(activity_id: str,
     delete_guest_activity(activity_id)
 
     return {
-        'file_url': create_download_url(url_obj, is_secret_file=False),
+        'file_url': create_download_url(url_obj),
         'expiration_date': url_obj.expiration_date
     }
 
