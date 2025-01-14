@@ -2245,68 +2245,38 @@ def test_validate_guest_activity_expired(app,workflow,mocker):
     with patch("weko_workflow.utils.timedelta",side_effect=OverflowError):
         result = validate_guest_activity_expired(activity_id)
         assert result == ""
-# def create_onetime_download_url_to_guest(activity_id: str,
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_create_onetime_download_url_to_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_create_onetime_download_url_to_guest(app, workflow,mocker):
-    with app.test_request_context():
-        today = datetime.datetime(2022,10,6,1,2,3,4)
-        datetime_mock = mocker.patch("weko_workflow.utils.datetime")
-        datetime_mock.today.return_value=today
-        datetime_mock.utcnow.return_value=today
-        file_name="test_file.txt"
-        record_id = str(uuid.uuid4())
-        user_mail = "user@test.org"
-        extra_info = {
-            "file_name":file_name,
-            "record_id":record_id,
-            "user_mail":user_mail
-        }
-        token_value="A-20221003-00001 2022-10-01 guest@test.org CE06FDFB15823A5C"
-        token_value = base64.b64encode(token_value.encode()).decode()
-        activity_id = "A-20221003-00001"
-        guest_activity = GuestActivity.create(
-            user_mail="guest@test.org",
-            record_id=record_id,
-            file_name=file_name,
-            activity_id=activity_id,
-            token=token_value,
-            expiration_date=30
-        )
-        datetime_mock_ui = mocker.patch("weko_records_ui.utils.dt")
-        datetime_mock_ui.utcnow.return_value=today
-        expiration_date = today + datetime.timedelta(days=30)
-        mocker.patch("weko_records_ui.utils.oracle10.hash",return_value="CE06FDFB15823A5C")
-        url_token = "{} {} {} {}".format(record_id,user_mail,"2022-10-06","CE06FDFB15823A5C")
-        url_token_value = base64.b64encode(url_token.encode()).decode()
-        url = 'http://TEST_SERVER.localdomain/record/{}/file/onetime/test_file.txt?token={}'.format(record_id,url_token_value)
-        test = {
-            "file_url":url,
-            "expiration_date":expiration_date.strftime("%Y-%m-%d"),
-            "expiration_date_ja":"",
-            "expiration_date_en":""
-        }
-        result = create_onetime_download_url_to_guest(activity_id, extra_info)
-        assert result == test
-        
-        # not exist user_mail
-        extra_info = {
-            "file_name":file_name,
-            "record_id":record_id,
-            "guest_mail":user_mail
-        }
-        result = create_onetime_download_url_to_guest(activity_id, extra_info)
-        assert result == test
-        
-        # raise OverflowError
-        with patch("weko_workflow.utils.timedelta",side_effect=OverflowError):
-            test = {
-                "file_url":url,
-                "expiration_date":"",
-                "expiration_date_ja":"無制限",
-                "expiration_date_en":"Unlimited"
-            }
-            result = create_onetime_download_url_to_guest(activity_id, extra_info)
-            assert result == test
+
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_create_onetime_download_url_to_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp -p no:warnings
+@patch('weko_workflow.utils.delete_guest_activity')
+@patch('weko_records_ui.utils.current_user')
+def test_create_onetime_download_url_to_guest(login_user, delete_activity, db,
+                                              users):
+    login_user.id = 1
+    valid_dicts = [
+        {'file_name': 'test_file.txt',
+         'record_id': '1',
+         'user_mail': 'test@example.org'},
+        {'file_name':
+         'test_file.txt',
+         'record_id': '1',
+         'guest_mail': 'test@example.org'},
+    ]
+    invalid_dicts = [
+        {'record_id': '1', 'user_mail': 'test@example.org'},
+        {'file_name': 'test_file.txt', 'user_mail': 'test@example.org'},
+        {'file_name': 'test_file.txt', 'record_id': '1'},
+    ]
+    for valid_dict in valid_dicts:
+        result = create_onetime_download_url_to_guest(1, valid_dict)
+        assert 'file_url' in result
+        assert 'expiration_date' in result
+        delete_activity.reset_mock()
+    for invalid_dict in invalid_dicts:
+        result = create_onetime_download_url_to_guest(1, invalid_dict)
+        assert result == {}
+
+
 # def delete_guest_activity(activity_id: str) -> bool:
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_delete_guest_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_delete_guest_activity(client,workflow):
