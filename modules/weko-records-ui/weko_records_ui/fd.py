@@ -46,14 +46,16 @@ from weko_workflow.utils import is_terms_of_use_only
 from werkzeug.datastructures import Headers
 from werkzeug.urls import url_quote
 
-from .models import FileOnetimeDownload, PDFCoverPageSettings
+from .models import FileOnetimeDownload, FileSecretDownload, \
+                    PDFCoverPageSettings
 from .pdf import make_combined_pdf
 from .permissions import check_original_pdf_download_permission, \
     file_permission_factory, is_owners_or_superusers
 from .utils import check_and_send_usage_report, convert_token_into_obj, \
     create_download_url, get_billing_file_download_permission, \
     get_groups_price, get_min_price_billing_file_download, \
-    get_onetime_download, is_billing_item, validate_url_download
+    get_onetime_download, is_billing_item, save_download_log, \
+    validate_url_download
 
 
 def weko_view_method(pid, record, template=None, **kwargs):
@@ -423,18 +425,21 @@ def file_download_onetime(pid, record, filename, _record_file_factory=None,
         error_template = "weko_theme/error.html"
         return render_template(error_template, error_message), status_code
 
+    # Validate the one-time download URL
     token = request.args.get('token', type=str)
     is_validated, error_msg = validate_url_download(
         record, filename, token, is_secret_url=False)
     if not is_validated:
         return error_response(error_msg, 403)
 
+    # Locate the file object
     _record_file_factory = _record_file_factory or record_file_factory
     file_object = _record_file_factory(pid, record, filename)
     if not file_object or not file_object.obj:
         return error_response(f'The file "{filename}" does not exist.', 404)
 
-    url_obj = convert_token_into_obj(token)
+    # Update extra_info of the one-time URL object
+    url_obj:FileOnetimeDownload = convert_token_into_obj(token)
     if (url_obj.extra_info and
        (file_object.get('accessrole') == 'open_restricted')):
         extra_info = url_obj.extra_info
@@ -455,10 +460,17 @@ def file_download_onetime(pid, record, filename, _record_file_factory=None,
             db.session.rollback()
             return error_response('Unexpected error occurred.', 500)
 
-    # Update download count
+    # Increase the download count and save the download log
+    target_data = {}
+    for file_data in record.get_file_data():
+        if file_data.get('filename') == filename:
+            target_data = file_data
+            break
     try:
         url_obj.increment_download_count()
-    except:
+        save_download_log(token, target_data, is_secret_url=False)
+    except Exception as e:
+        current_app.logger.error(e)
         return error_response('Unexpected error occurred.', 500)
 
     return _download_file(
@@ -515,12 +527,14 @@ def file_download_secret(pid, record, filename, _record_file_factory=None,
         error_template = "weko_theme/error.html"
         return render_template(error_template, error=error_message), status_code
 
+    # Validate the secret URL
     token = request.args.get('token', type=str)
     is_validated, error_msg = (
         validate_url_download(record, filename, token, is_secret_url=True))
     if not is_validated:
         return error_response(error_msg, 403)
 
+    # Locate the file object
     _record_file_factory = _record_file_factory or record_file_factory
     file_object = _record_file_factory(pid, record, filename)
     if not file_object or not file_object.obj:
@@ -532,10 +546,18 @@ def file_download_secret(pid, record, filename, _record_file_factory=None,
         user_profile = UserProfile.get_by_userid(current_user.get_id())
         lang = user_profile.language if user_profile else 'en'
 
-    url_obj = convert_token_into_obj(token, is_secret_url=True)
+    # Increase the download count and save the download log
+    url_obj:FileSecretDownload = convert_token_into_obj(token, is_secret_url=True)
+    target_data = {}
+    for file_data in record.get_file_data():
+        if file_data.get('filename') == filename:
+            target_data = file_data
+            break
     try:
         url_obj.increment_download_count()
-    except:
+        save_download_log(token, target_data, is_secret_url=True)
+    except Exception as e:
+        current_app.logger.error(e)
         return error_response('Unexpected error occurred.', 500)
 
     return _download_file(
