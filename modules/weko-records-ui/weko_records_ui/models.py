@@ -485,7 +485,7 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
             cls.record_id == obj.get("record_id"),
             cls.user_mail == obj.get("user_mail"),
             cls.download_count < cls.download_limit,
-            cls.expiration_date > now(),
+            cls.expiration_date > now(timezone.utc),
             cls.is_deleted == False
         )
         return query.order_by(desc(cls.id)).all()

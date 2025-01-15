@@ -761,7 +761,7 @@ def create_secret_url_and_send_mail(pid, record, filename, **kwargs):
 
     url = create_download_url(url_obj)
 
-    message = f'Secret URL generated successfully: "{url}"'
+    message = 'Secret URL generated successfully'
     if request.json['send_email'] is True:
         sending_result = send_secret_url_mail(
             pid.object_uuid, url_obj, record.get('item_title', ''))

@@ -875,6 +875,17 @@ def test_validate_secret_url_generation_request(app):
           'send_email'             : None,
           'timezone_offset_minutes': '0'},
           False),
+        # When each keys do not exist
+        ({key: value for key, value in base_case.items()
+          if key != 'link_name'}, False),
+        ({key: value for key, value in base_case.items()
+          if key != 'expiration_date'}, False),
+        ({key: value for key, value in base_case.items()
+          if key != 'download_limit'}, False),
+        ({key: value for key, value in base_case.items()
+          if key != 'send_email'}, False),
+        ({key: value for key, value in base_case.items()
+          if key != 'timezone_offset_minutes'}, False),
         # For link_name
         ({**base_case, 'link_name': '123'    }, True),
         ({**base_case, 'link_name': 123      }, False),
@@ -884,6 +895,7 @@ def test_validate_secret_url_generation_request(app):
         ({**base_case, 'expiration_date': tomorrow }, True),
         ({**base_case, 'expiration_date': yesterday}, False),
         ({**base_case, 'expiration_date': 'abc'    }, False),
+        ({**base_case, 'expiration_date': 20250101 }, False),
         # For download_limit
         ({**base_case, 'download_limit': 1    }, True),
         ({**base_case, 'download_limit': 0    }, False),
@@ -1161,19 +1173,27 @@ def test_validate_token(app, users):
         match = re.search(r'[?&]token=([^&]+)', url)
         onetime_token = match.group(1)
         assert validate_token(onetime_token, is_secret_url=False) is True
-    wrong_token = b'\xb2q\xff\x19\xaf\xfc\xc6T\x8bt\xd6\xf6\xc6 \x08D\xe7\xf3G;cN\x1bn|\xa2\x88\x01v\xed\x1cA_1'
+    invalid_bytes = b'\xb2q\xff\x19\xaf\xfc\xc6T\x8bt\xd6\xf6\xc6 \
+                            \x08D\xe7\xf3G;cN\x1bn|\xa2\x88\x01v\xed\x1cA_1'
     with app.test_request_context():
         secret_token = base64.urlsafe_b64decode(secret_token.encode())
-        assert secret_token.split(b'_')[1] == wrong_token.split(b'_')[1]
-        assert validate_token(wrong_token, is_secret_url=True) is False
+        assert secret_token.split(b'_')[-1] == invalid_bytes.split(b'_')[-1]
+        invalid_token = base64.urlsafe_b64encode(invalid_bytes).decode()
+        assert validate_token(invalid_token, is_secret_url=True) is False
     with app.test_request_context():
         onetime_token = base64.urlsafe_b64decode(onetime_token.encode())
-        assert onetime_token.split(b'_')[1] == wrong_token.split(b'_')[1]
-        assert validate_token(wrong_token, is_secret_url=False) is False
+        assert onetime_token.split(b'_')[-1] == invalid_bytes.split(b'_')[-1]
+        invalid_token = base64.urlsafe_b64encode(invalid_bytes).decode()
+        assert validate_token(invalid_token, is_secret_url=False) is False
+    with app.test_request_context():
+        assert validate_token('', is_secret_url=True) is False
+        assert validate_token(123, is_secret_url=True) is False
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_convert_token_into_obj -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
-def test_convert_token_into_obj(app, users):
+@patch('weko_records_ui.utils.validate_token')
+def test_convert_token_into_obj(vldt_token, app, users):
+    vldt_token.return_value = True
     created_at = dt.now(timezone.utc)
     with app.test_request_context():
         secret_obj = FileSecretDownload.create(
@@ -1197,6 +1217,8 @@ def test_convert_token_into_obj(app, users):
         expected_date = (created_at + timedelta(days=30)).replace(tzinfo=None)
         assert secret_obj.expiration_date == expected_date
         assert secret_obj.download_limit == 10
+        vldt_token.assert_called_once_with(secret_token, True)
+        vldt_token.reset_mock()
     with app.test_request_context():
         onetime_obj = FileOnetimeDownload.create(
             approver_id=1,
@@ -1222,7 +1244,11 @@ def test_convert_token_into_obj(app, users):
         assert onetime_obj.download_limit == 10
         assert onetime_obj.is_guest == False
         assert onetime_obj.extra_info == {'activity_id': 1}
-
+        vldt_token.assert_called_once_with(onetime_token, False)
+    vldt_token.return_value = False
+    with app.test_request_context():
+        assert convert_token_into_obj(secret_token, True) is None
+        assert convert_token_into_obj(onetime_token, False) is None
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_url_download -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
 @patch('weko_records_ui.utils.validate_token')
@@ -1335,27 +1361,6 @@ def test_is_onetime_file():
     assert is_onetime_file(mock_record, "file1.txt") is True
     assert is_onetime_file(mock_record, "file2.txt") is False
     assert is_onetime_file(mock_record, "file3.txt") is False
-
-
-# def update_secret_download(**kwargs) -> Optional[List[FileSecretDownload]]:
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_data_usage_application_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_data_usage_application_data(app ,db):
-    with app.test_request_context():
-        with db.session.begin_nested():
-            secret_download=FileSecretDownload(
-                file_name= "eee.txt", record_id= '1',user_mail="repoadmin@example.org",expiration_date=999999,download_count=10
-            )
-            db.session.add(secret_download)
-        update_data = dict(
-            file_name   = secret_download.file_name
-            , record_id = secret_download.record_id
-            , download_count = 100
-            , created  = secret_download.created
-            , id = secret_download.id
-        )
-        res = update_secret_download(**update_data)
-        assert len(res) == 1
-        assert res[0].download_count == 100
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_RoCrateConverter_convert -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

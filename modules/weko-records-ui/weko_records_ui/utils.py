@@ -1958,11 +1958,15 @@ def validate_token(token, is_secret_url):
     """
     try:
         bytes = base64.urlsafe_b64decode(token.encode())
-        token_hash, token_id = bytes.split(b'_')
+        parts = bytes.split(b'_')
+        if len(parts) < 2:  # Generated hash may contain additional '_'
+            return False
+        token_id = parts[-1].decode()  # The last part is the URL object ID
+        token_hash = b'_'.join(parts[:-1])  # The rest is hash value
         if is_secret_url:
-            url_obj = FileSecretDownload.get_by_id(token_id.decode())
+            url_obj = FileSecretDownload.get_by_id(token_id)
         else:
-            url_obj = FileOnetimeDownload.get_by_id(token_id.decode())
+            url_obj = FileOnetimeDownload.get_by_id(token_id)
         if url_obj and (token_hash == generate_sha256_hash(url_obj)):
             return True
         else:
@@ -1987,7 +1991,7 @@ def convert_token_into_obj(token, is_secret_url):
     if not validate_token(token, is_secret_url):
         return None
     bytes = base64.urlsafe_b64decode(token.encode())
-    url_obj_id = bytes.split(b'_')[1].decode()
+    url_obj_id = bytes.split(b'_')[-1].decode()
     if is_secret_url:
         url_obj = FileSecretDownload.get_by_id(url_obj_id)
     else:
