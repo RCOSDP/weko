@@ -830,9 +830,8 @@ def test_get_google_detaset_meta(app, records, itemtypes, oaischema, oaiidentify
             assert get_google_detaset_meta(record) == None
 
 
-
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_to_utc_datetime -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
-def test_to_utc_datetime():
+def test_to_utc_datetime(app):
     assert to_utc_datetime('2025-1-1') == datetime(
         2025, 1, 1, 0, 0, tzinfo=timezone.utc)
     assert to_utc_datetime('2025-01-01') == datetime(
@@ -843,8 +842,8 @@ def test_to_utc_datetime():
         2024, 12, 31, 12, 0, tzinfo=timezone.utc)
     assert to_utc_datetime('2025-1-1', -540) == datetime(
         2024, 12, 31, 15, 0, tzinfo=timezone.utc)
-    with pytest.raises(ValueError):
-        to_utc_datetime('2025/01/01')
+    assert to_utc_datetime('2025/01/01') is None
+
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_secret_url_generation_request -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
 def test_validate_secret_url_generation_request(app):
@@ -999,10 +998,9 @@ def test_create_onetime_download_record(mock_user, mock_get, users):
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_create_download_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
-@patch('weko_records_ui.utils.base64.urlsafe_b64encode', return_value=b'test')
-def test_create_download_url(mock_encode, app):
-    with patch('weko_records_ui.utils.base64.urlsafe_b64encode') as m_encode:
-        m_encode.return_value = b'test'
+def test_create_download_url(app):
+    with patch('weko_records_ui.utils.base64.urlsafe_b64encode') as encoded:
+        encoded.return_value = b'test'
         with app.test_request_context():
             secret_obj = FileSecretDownload(
                 creator_id=1,
@@ -1027,6 +1025,10 @@ def test_create_download_url(mock_encode, app):
             url = create_download_url(onetime_obj)
             assert url == (f'http://TEST_SERVER/record/1/file/onetime/test.txt'
                            f'?token={b"test".decode()}')
+        with app.test_request_context():
+            invalid_obj = MagicMock()
+            url = create_download_url(invalid_obj)
+            assert url is None
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_generate_sha256_hash -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings

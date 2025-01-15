@@ -1682,7 +1682,11 @@ def to_utc_datetime(str_date, offset_minutes=0):
     Returns:
         datetime: The datetime object in UTC timezone.
     """
-    local_naive_dt = dt.strptime(str_date, '%Y-%m-%d')
+    try:
+        local_naive_dt = dt.strptime(str_date, '%Y-%m-%d')
+    except ValueError:
+        current_app.logger.error(f'Failed to parse date string: {str_date}')
+        return None
     local_tz = timezone(timedelta(minutes=-offset_minutes))
     local_aware_dt = local_naive_dt.replace(tzinfo=local_tz)
     utc_dt = local_aware_dt.astimezone(timezone.utc)

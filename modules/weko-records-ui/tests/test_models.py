@@ -107,17 +107,6 @@ def test_FilePermission_delete_object(app, db, db_FilePermission):
     assert db.session.query(FilePermission).count() == 0
 
 
-def test_FileOnetimeDownload_update_download(app, db, db_FileOneTimeDownload):
-    data1 = {
-        "file_name": db_FileOneTimeDownload.file_name,
-        "user_mail": db_FileOneTimeDownload.user_mail,
-        "record_id": db_FileOneTimeDownload.record_id,
-    }
-
-    db_FileOneTimeDownload.update_download(
-        data=data1
-    )
-
 # def find_list_permission_approved(record_id, file_name):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::test_find_list_permission_approved -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_find_list_permission_approved(app, records_restricted, users,db_file_permission):
@@ -177,7 +166,8 @@ class TestFileOnetimeDownload:
             assert getattr(rec, key) == value
 
         bad_data1 = self.base_data.copy()
-        bad_data1['expiration_date'] = datetime.now() - timedelta(hours=24)
+        bad_data1['expiration_date'] = (datetime.now(timezone.utc)
+                                        - timedelta(hours=24))
         with pytest.raises(Exception):
             FileOnetimeDownload.create(**bad_data1)
         assert FileOnetimeDownload.query.count() == 1
@@ -295,7 +285,8 @@ class TestFileSecretDownload:
             assert getattr(rec, key) == value
 
         bad_data1 = self.base_data.copy()
-        bad_data1['expiration_date'] = datetime.now() - timedelta(hours=24)
+        bad_data1['expiration_date'] = (datetime.now(timezone.utc)
+                                        - timedelta(hours=24))
         with pytest.raises(Exception):
             FileSecretDownload.create(**bad_data1)
         assert FileSecretDownload.query.count() == 1

@@ -29,7 +29,7 @@ import shutil
 import tempfile
 import time
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from collections import OrderedDict
 from unittest.mock import patch
 from datetime import timedelta
@@ -4330,15 +4330,16 @@ def site_license_ipaddr(app, db,site_license_info):
     return record1
 
 @pytest.fixture()
-def db_fileonetimedownload(app, db):
-    record = FileOnetimeDownload(
-        file_name="helloworld.pdf",
-        user_mail="wekosoftware@nii.ac.jp",
+def db_fileonetimedownload(app, users):
+    record = FileOnetimeDownload.create(
+        approver_id=1,
         record_id='1',
-        download_count=10,
-        expiration_date=0)
-    with db.session.begin_nested():
-        db.session.add(record)
+        file_name="helloworld.pdf",
+        expiration_date=datetime.now(timezone.utc) + timedelta(days=30),
+        download_limit=10,
+        user_mail="wekosoftware@nii.ac.jp",
+        is_guest=False,
+        extra_info={})
     return record
 
 
