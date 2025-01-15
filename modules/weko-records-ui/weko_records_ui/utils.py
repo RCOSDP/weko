@@ -1708,7 +1708,6 @@ def validate_secret_url_generation_request(request_json):
     Returns:
         bool: True if the request is valid, False otherwise.
     """
-    current_app.logger.error(f'request_json: {request_json}')
     if not isinstance(request_json, dict):
         return False
     expected_keys = ['link_name',
@@ -1867,7 +1866,6 @@ def create_download_url(url_obj):
         return None
     host_url = request.host_url
     hash = generate_sha256_hash(url_obj)
-    current_app.logger.error(f'generated hash: {hash}')
     bytes = hash + b'_' + str(url_obj.id).encode()
     token = base64.urlsafe_b64encode(bytes).decode()
     url = (f'{host_url}record/{url_obj.record_id}/file/{url_type}/'
