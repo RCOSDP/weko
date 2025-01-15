@@ -743,8 +743,8 @@ def users(app, db):
     index = Index()
     db.session.add(index)
     db.session.commit()
-    comm = Community.create(community_id="comm01", role_id=sysadmin_role.id,
-                            id_user=sysadmin.id, title="test community",
+    comm = Community.create(community_id="comm01", role_id=comadmin_role.id,
+                            id_user=comadmin.id, title="test community",
                             description=("this is test community"),
                             root_node_id=index.id)
     db.session.commit()
