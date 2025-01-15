@@ -228,9 +228,9 @@ def db(app):
 @pytest.fixture
 def tokens(app,users,db):
     scopes = [
-        "deposit:write",
-        "deposit:write user:activity",
+        "deposit:write deposit:actions",
         "deposit:write deposit:actions user:activity",
+        "deposit:write user:activity",
         ""
     ]
     tokens = []

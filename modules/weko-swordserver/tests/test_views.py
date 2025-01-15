@@ -125,18 +125,13 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
     with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
         mapped_json = json_data("data/item_type/mapped_json_2.json")
         with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
-            def mock_generate_metadata_from_json(*args, **kwargs):
-                res = generate_metadata_from_json(*args, **kwargs)
-                res[0]["publish_status"] = "private"
+            def mock_import_items_to_system(*args, **kwargs):
+                res = import_items_to_system(*args, **kwargs)
+                res["success"] = True
                 return res
-            with patch("weko_swordserver.registration.generate_metadata_from_json", side_effect=mock_generate_metadata_from_json):
-                def mock_import_items_to_system(*args, **kwargs):
-                    res = import_items_to_system(*args, **kwargs)
-                    res["success"] = True
-                    return res
-                with patch("weko_swordserver.views.import_items_to_system",side_effect=mock_import_items_to_system):
-                    res = post_service_document()
-                    assert res.status_code == 200
+            with patch("weko_swordserver.views.import_items_to_system",side_effect=mock_import_items_to_system):
+                res = post_service_document()
+                assert res.status_code == 200
 
 
     # case # 2
@@ -152,20 +147,18 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
     with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
         mapped_json = json_data("data/item_type/mapped_json_2.json")
         with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
-            def mock_generate_metadata_from_json(*args, **kwargs):
-                res = generate_metadata_from_json(*args, **kwargs)
-                res[0]["publish_status"] = "private"
+            def mock_import_items_to_system(*args, **kwargs):
+                res = import_items_to_system(*args, **kwargs)
+                res["success"] = False
                 return res
-            with patch("weko_swordserver.registration.generate_metadata_from_json", side_effect=mock_generate_metadata_from_json):
-                def mock_import_items_to_system(*args, **kwargs):
-                    res = import_items_to_system(*args, **kwargs)
-                    res["success"] = False
-                    return res
-                with patch("weko_swordserver.views.import_items_to_system",side_effect=mock_import_items_to_system):
-                    with pytest.raises(WekoSwordserverException) as e:
-                        post_service_document()
-                    assert e.value.errorType == ErrorType.ServerError
-                    assert e.value.message.startswith("Error in import_items_to_system: ")
+            with patch("weko_swordserver.views.import_items_to_system",side_effect=mock_import_items_to_system):
+                with pytest.raises(WekoSwordserverException) as e:
+                    post_service_document()
+                assert e.value.errorType == ErrorType.ServerError
+                assert e.value.message.startswith("Error in import_items_to_system: ")
+
+
+    # case # 3-5 TODO
 
 
     # case # 6
@@ -181,20 +174,15 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
     with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
         mapped_json = json_data("data/item_type/mapped_json_2.json")
         with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
-            def mock_generate_metadata_from_json(*args, **kwargs):
-                res = generate_metadata_from_json(*args, **kwargs)
-                res[0]["publish_status"] = "private"
+            def mock_handle_check_exist_record(*args, **kwargs):
+                res = handle_check_exist_record(*args, **kwargs)
+                res[0]["status"] = None
                 return res
-            with patch("weko_swordserver.registration.generate_metadata_from_json", side_effect=mock_generate_metadata_from_json):
-                def mock_handle_check_exist_record(*args, **kwargs):
-                    res = handle_check_exist_record(*args, **kwargs)
-                    res[0]["status"] = None
-                    return res
-                with patch("weko_swordserver.registration.handle_check_exist_record",side_effect=mock_handle_check_exist_record):
-                    with pytest.raises(WekoSwordserverException) as e:
-                        post_service_document()
-                    assert e.value.errorType == ErrorType.BadRequest
-                    assert e.value.message.startswith("This item is already registered: ")
+            with patch("weko_swordserver.registration.handle_check_exist_record",side_effect=mock_handle_check_exist_record):
+                with pytest.raises(WekoSwordserverException) as e:
+                    post_service_document()
+                assert e.value.errorType == ErrorType.BadRequest
+                assert e.value.message.startswith("This item is already registered: ")
 
 
     # case # 7
@@ -230,21 +218,16 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
     with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
         mapped_json = json_data("data/item_type/mapped_json_2.json")
         with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
-            def mock_generate_metadata_from_json(*args, **kwargs):
-                res = generate_metadata_from_json(*args, **kwargs)
-                res[0]["publish_status"] = "private"
-                return res
-            with patch("weko_swordserver.registration.generate_metadata_from_json", side_effect=mock_generate_metadata_from_json):
-                def mock_handle_check_date(*args, **kwargs):
-                    list_record = args[0]
-                    list_record[0]["metadata"]["pubdate"] = "20241115"
-                    modified_args = (list_record,) + args[1:]
-                    return handle_check_date(*modified_args, **kwargs)
-                with patch("weko_swordserver.registration.handle_check_date", side_effect=mock_handle_check_date):
-                    with pytest.raises(WekoSwordserverException) as e:
-                        post_service_document()
-                    assert e.value.errorType == ErrorType.ContentMalformed
-                    assert e.value.message == "Error in check_import_items: Please specify PubDate with YYYY-MM-DD."
+            def mock_handle_check_date(*args, **kwargs):
+                list_record = args[0]
+                list_record[0]["metadata"]["pubdate"] = "20241115"
+                modified_args = (list_record,) + args[1:]
+                return handle_check_date(*modified_args, **kwargs)
+            with patch("weko_swordserver.registration.handle_check_date", side_effect=mock_handle_check_date):
+                with pytest.raises(WekoSwordserverException) as e:
+                    post_service_document()
+                assert e.value.errorType == ErrorType.ContentMalformed
+                assert e.value.message == "Error in check_import_items: Please specify PubDate with YYYY-MM-DD."
 
     # not item
     zip, _  = make_crate()
@@ -259,21 +242,16 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
     with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
         mapped_json = json_data("data/item_type/mapped_json_2.json")
         with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
-            def mock_generate_metadata_from_json(*args, **kwargs):
-                res = generate_metadata_from_json(*args, **kwargs)
-                res[0]["publish_status"] = "private"
+            def mock_check_bagit_import_items(*args, **kwargs):
+                res = check_bagit_import_items(*args, **kwargs)
+                del res["list_record"]
                 return res
-            with patch("weko_swordserver.registration.generate_metadata_from_json", side_effect=mock_generate_metadata_from_json):
-                def mock_check_bagit_import_items(*args, **kwargs):
-                    res = check_bagit_import_items(*args, **kwargs)
-                    del res["list_record"]
-                    return res
-                with patch("weko_swordserver.views.check_bagit_import_items", side_effect=mock_check_bagit_import_items):
-                    with pytest.raises(WekoSwordserverException) as e:
-                        post_service_document()
-                    assert e.value.errorType == ErrorType.ContentMalformed
-                    print("e.value.message:",e.value.message)
-                    assert e.value.message == "Error in check_import_items: item_missing"
+            with patch("weko_swordserver.views.check_bagit_import_items", side_effect=mock_check_bagit_import_items):
+                with pytest.raises(WekoSwordserverException) as e:
+                    post_service_document()
+                assert e.value.errorType == ErrorType.ContentMalformed
+                print("e.value.message:",e.value.message)
+                assert e.value.message == "Error in check_import_items: item_missing"
 
 
     # case # 8
@@ -344,18 +322,13 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
     with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
         mapped_json = json_data("data/item_type/mapped_json_2.json")
         with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
-            def mock_generate_metadata_from_json(*args, **kwargs):
-                res = generate_metadata_from_json(*args, **kwargs)
-                res[0]["publish_status"] = "private"
+            def mock_import_items_to_system(*args, **kwargs):
+                res = import_items_to_system(*args, **kwargs)
+                res["success"] = True
                 return res
-            with patch("weko_swordserver.registration.generate_metadata_from_json", side_effect=mock_generate_metadata_from_json):
-                def mock_import_items_to_system(*args, **kwargs):
-                    res = import_items_to_system(*args, **kwargs)
-                    res["success"] = True
-                    return res
-                with patch("weko_swordserver.views.import_items_to_system",side_effect=mock_import_items_to_system):
-                    res = post_service_document()
-                    assert res.status_code == 200
+            with patch("weko_swordserver.views.import_items_to_system",side_effect=mock_import_items_to_system):
+                res = post_service_document()
+                assert res.status_code == 200
 
 
     # case # 10
@@ -371,41 +344,18 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
     with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
         mapped_json = json_data("data/item_type/mapped_json_2.json")
         with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
-            def mock_generate_metadata_from_json(*args, **kwargs):
-                res = generate_metadata_from_json(*args, **kwargs)
-                res[0]["publish_status"] = "private"
+            def mock_import_items_to_system(*args, **kwargs):
+                res = import_items_to_system(*args, **kwargs)
+                res["success"] = False
                 return res
-            with patch("weko_swordserver.registration.generate_metadata_from_json", side_effect=mock_generate_metadata_from_json):
-                def mock_import_items_to_system(*args, **kwargs):
-                    res = import_items_to_system(*args, **kwargs)
-                    res["success"] = False
-                    return res
-                with patch("weko_swordserver.views.import_items_to_system",side_effect=mock_import_items_to_system):
-                    with pytest.raises(WekoSwordserverException) as e:
-                        post_service_document()
-                    assert e.value.errorType == ErrorType.ServerError
-                    assert e.value.message.startswith("Error in import_items_to_system: ")
+            with patch("weko_swordserver.views.import_items_to_system",side_effect=mock_import_items_to_system):
+                with pytest.raises(WekoSwordserverException) as e:
+                    post_service_document()
+                assert e.value.errorType == ErrorType.ServerError
+                assert e.value.message.startswith("Error in import_items_to_system: ")
 
 
-    # # case # 13 XXX
-    # zip = make_zip()
-    # file_name = "payload.zip"
-    # storage = FileStorage(filename=file_name,stream=zip)
-    # headers = {
-    #     "Authorization":"Bearer {}".format(token),
-    #     "Content-Disposition":f"attachment; filename={file_name}",
-    #     "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
-    #     "Digest":"SHA-256={}".format(calculate_hash(storage))
-    # }
-    # with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
-    #     mapped_json = json_data("data/item_type/mapped_json_2.json")
-    #     with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
-    #         with patch("weko_swordserver.views.check_import_file_format",return_value="OTHERS"):
-    #             with patch("weko_search_ui.utils.check_import_items",side_effect=mock_check_import_items):
-    #                 with pytest.raises(WekoSwordserverException) as e:
-    #                     post_service_document()
-    #                 assert e.value.errorType == ErrorType.BadRequest
-    #                 assert e.value.message.startswith("This item is already registered: ")
+    # # case # 11-13 TODO
 
 
     # case # 14
@@ -572,8 +522,6 @@ def test_post_service_document_json_ld(app,client,db,users,esindex,location,inde
         "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
         "Digest":"SHA-256={}".format(calculate_hash(storage))
     }
-    # print("")
-    # print("Direct registration")
     with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
         with patch("weko_swordserver.registration.bagit.Bag.validate"):
             res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
