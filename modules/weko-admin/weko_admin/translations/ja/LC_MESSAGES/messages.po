@@ -1094,6 +1094,14 @@ msgstr "ダウンロード回数"
 msgid "Expiration Date"
 msgstr "有効期限日数"
 
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:47
+msgid "Max Expiration Date"
+msgstr "有効期限日数上限"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:488
+msgid "Max Download Limit"
+msgstr "ダウンロード回数上限"
+
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:48
 msgid "Content File Download"
 msgstr "コンテンツファイルのダウンロード"
@@ -1107,10 +1115,14 @@ msgid "Usage Report Workflow Access"
 msgstr "利用報告ワークフローへのアクセス"
 
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:55
+#, python-format
+msgid "Must set a positive integer and less than %(name1)s for %(name2)s."
+msgstr "%(name2)sは1以上の整数かつ%(name1)s以下の値を設定する必要があります。"
+
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:57
 #, python-format
-msgid "Must set a positive integer for %(name)s."
-msgstr "%(name)sは1以上の整数を設定する必要があります。"
+msgid "Must set a positive integer and less than %(name1)s for %(name2)s."
+msgstr "%(name2)sは1以上の整数かつ%(name1)s以下の値を設定する必要があります。"
 
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:58
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:59

@@ -727,6 +727,39 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         **kwargs
     )
 
+@blueprint.route('/get-secret-settings', methods=['GET'])
+def get_secret_setting():
+    """
+    Get secret URL settings.
+
+    :return: JSON result containing secret download settings.
+    """
+    try:
+        # 初期化
+        result = {}
+
+        # AdminSettingsから設定を取得
+        admin_settings = AdminSettings.query.filter_by(name='restricted_access').first()
+        if admin_settings:
+            settings = admin_settings.settings
+            # 値を取得し、結果に追加
+            result['secret_expiration_date'] = settings.get('secret_URL_file_download', {}).get('secret_expiration_date',30)
+            result['secret_download_limit'] = settings.get('secret_URL_file_download', {}).get('secret_download_limit',10)
+            result['max_secret_expiration_date'] = settings.get('secret_URL_file_download', {}).get('max_secret_expiration_date',30)
+            result['max_secret_download_limit'] = settings.get('secret_URL_file_download', {}).get('max_secret_download_limit',10)
+            print(f'secret_expiration_dateです', result['secret_expiration_date'])
+        else:
+            # デフォルト値を設定
+            result['secret_expiration_date'] = 30
+            result['secret_download_limit'] = 10
+            result['max_secret_expiration_date'] = 30
+            result['max_secret_download_limit'] = 10
+
+        # JSON形式で返す
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500
 
 def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord, filename:str, **kwargs) -> str:
     """on click button 'Secret URL' 

@@ -76,12 +76,12 @@
 .action-button {
   margin-top: 5px;
   margin-bottom: 5px;
-//  display: block;
+/*  display: block;*/
   margin-right: auto;
   margin-left: auto;
   font-size: 13px;
   line-height: 12px;
-//  background-color: #D3D3D3;
+/*  background-color: #D3D3D3;*/
   height: 27px;
 }
 
@@ -99,4 +99,82 @@
   border-radius: 5px;
   background-color: #f7f7f7 !important;
   border: 1px solid #ebebeb;
+}
+
+.icon-space {
+  padding-right: 8px;
+}
+#secret_url_form {
+  display: flex; /* フォーム全体を横一列に配置 */
+  flex-direction: row;
+  gap: 20px; /* 各要素間のスペース */
+  align-items: flex-start; /* 上揃え */
+}
+
+#secret_url_form #link_name,
+#secret_url_form #expiration_date,
+#secret_url_form #download_limit {
+  display: flex; /* ラベルとフィールドを縦並びに */
+  flex-direction: column; /* ラベルを上に配置 */
+  align-items: flex-start; /* 左揃え */
+}
+
+#secret_url_form #link_name label,
+#secret_url_form #expiration_date label,
+#secret_url_form #download_limit label {
+  margin-bottom: 5px; /* ラベルとフィールドの間のスペース */
+  font-weight: bold;
+}
+
+#secret_url_form input[type="text"],
+#secret_url_form input[type="date"],
+#secret_url_form input[type="number"] {
+  width: 150px; /* 各入力フィールドの幅を調整 */
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-sizing: border-box;
+}
+
+#secret_url_form button {
+  align-self: center; /* ボタンを中央揃え */
+  padding: 10px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+#secret_url_form button:hover {
+  background-color: #0056b3;
+}
+
+#secret_url_section {
+  border: 1px solid #ccc;
+  margin-bottom: 20px;
+  padding: 15px 5px;
+}
+
+#max_date_display,
+#max_download_display {
+  font-size: 14px;
+  color: #555;
+  margin-top: 5px; /* フィールドとテキストの間にスペース */
+}
+
+#secret_url_form #checkbox-container {
+  display: flex;
+  flex-direction: row-reverse; /* 順番を逆にする */
+  align-items: center;
+}
+
+#secret_url_form #checkbox-container label {
+  margin-left: 5px; /* チェックボックスとラベルの間にスペース */
+  font-weight: normal; /* チェックボックスラベルのフォントを通常に */
+}
+
+.error-message {
+  color: red;
 }

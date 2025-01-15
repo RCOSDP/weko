@@ -273,6 +273,46 @@ msgstr "アクション"
 msgid "Secret URL"
 msgstr "シークレットURL"
 
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html
+msgid "Link Name"
+msgstr "リンク名"
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html
+msgid "URL Expiry Date"
+msgstr "URL有効期限"
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html
+msgid "Download Limit"
+msgstr "ダウンロード回数"
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html
+msgid "Max Expiry Date"
+msgstr "有効期限上限"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:45
+msgid "Download Limit Initial Value"
+msgstr "ダウンロード回数初期値"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:46
+msgid "Expiration Date Initial Value"
+msgstr "有効期限日数初期値"
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html
+msgid "Max Download Count"
+msgstr "ダウンロード回数上限"
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html
+msgid "Create Secret URL"
+msgstr "シークレットURL作成"
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html
+msgid "Send Email"
+msgstr "メール通知"
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html
+msgid "Item has not been filled in."
+msgstr "項目が未入力です"
+
 #: weko_records_ui/templates/weko_records_ui/box/stats.html:29
 #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:208
 msgid "See details"

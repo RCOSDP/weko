@@ -44,20 +44,29 @@
   {% from "weko_theme/macros/modal_page.html" import all_modal %}
   {% set download_limit = _("Download Limit") %}
   {% set expiration_date = _("Expiration Date") %}
+  {% set max_download_limit = _("Max Download Limit") %}
+  {% set max_expiration_date = _("Max Expiration Date") %}
+  {% set expiration_date_initial = _("Expiration Date Initial Value") %}
+  {% set download_limit_initial = _("Download Limit Initial Value") %}
   <input id="init_data" type="hidden" value='{{ data }}'/>
   <input id="content_file_download_label" type="hidden" value='{{ _("Content File Download") }}'/>
   <input id="download_limit_label" type="hidden" value='{{ download_limit }}'/>
   <input id="expiration_date_label" type="hidden" value='{{ expiration_date }}'/>
+  <input id="max_download_limit_label" type="hidden" value='{{ max_download_limit }}'/>
+  <input id="max_expiration_date_label" type="hidden" value='{{ max_expiration_date }}'/>
+  <input id="expiration_date_initial_label" type="hidden" value='{{ expiration_date_initial }}'/>
+  <input id="download_limit_initial_label" type="hidden" value='{{ download_limit_initial }}'/>
   <input id="unlimited_label" type="hidden" value='{{ _("Unlimited") }}'/>
   <input id="save_label" type="hidden" value='{{ _("Save") }}'/>
   <input id="usage_report_workflow_access_label" type="hidden" value='{{ _("Usage Report Workflow Access") }}'/>
   <input id="check_input_download" type="hidden"
-         value='{{ _("Must set a positive integer for %(name)s.", name=download_limit) }}'/>
+         value='{{ _("Must set a positive integer and less than %(name1)s for %(name2)s.", name1=max_download_limit, name2=download_limit) }}'/>
   <input id="check_input_expiration_date" type="hidden"
-         value='{{ _("Must set a positive integer for %(name)s.", name=expiration_date) }}'/>
+         value='{{ _("Must set a positive integer and less than %(name1)s for %(name2)s.", name1=max_expiration_date, name2=expiration_date) }}'/>
   <input id="empty_download" type="hidden" value='{{ _("Please set %(name)s.", name=download_limit) }}'/>
   <input id="empty_expiration_date" type="hidden" value='{{ _("Please set %(name)s.", name=expiration_date) }}'/>
-
+  <input id="empty_max_expiration_date" type="hidden" value='{{ _("Please set %(name)s.", name=max_expiration_date) }}'/>
+  <input id="empty_max_download_limit" type="hidden" value='{{ _("Please set %(name)s.", name=max_download_limit) }}'/>
   <input type="hidden" id="english" value='{{_("English")}}'/>
   <input type="hidden" id="japanese" value='{{_("Japanese")}}'/>
   <input type="hidden" id="terms_and_conditions" value='{{_("Terms and Conditions")}}'/>

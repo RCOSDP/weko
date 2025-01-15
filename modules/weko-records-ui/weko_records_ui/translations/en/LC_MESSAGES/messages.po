@@ -1385,3 +1385,7 @@ msgstr ""
 
 msgid "Success Secret URL Generate"
 msgstr "Success: Secret URL Generate is succeed. Sent the URL to your email adress."
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html
+msgid "Max Download Count"
+msgstr "Max Download Limit"

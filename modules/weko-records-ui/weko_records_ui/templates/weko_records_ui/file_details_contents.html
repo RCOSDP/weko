@@ -167,6 +167,49 @@
               </table>
             </div>
             <div class="table-responsive">
+              <div id="secret_url_section" style="display: none;">
+                {%- for file in files | sort(attribute='key') if file.key == filename -%}
+                  {%- set is_billing_file = False -%}
+                  {%- set billing_file_data = "" -%}
+                  {%- set billing_file_url = "" -%}
+                  {%- set billing_file_class = "" -%}
+                  {%- if billing_files_permission -%}
+                    {%- set billing_file_permission = billing_files_permission.get(file.filename) -%}
+                    {%- set is_billing_file = True -%}
+                    {%- set billing_file_class = " billing-file" -%}
+                    {%- set file_url = "javascript:void(0);" -%}
+                    {%- set access_permission = record | check_file_permission(file.info()) -%}
+                  {%- endif %}
+                  <form id="secret_url_form" data-secret-download-limit="{{ secret_download_limit }}" data-secret-download-data="{{ secret_download_data }}">
+                    <div>
+                      <label for="link_name">{{_('Link Name')}}</label>
+                      <input type="text" id="link_name">
+                      <p id="link_name_error" class="error-message" style="display: none;">{{_('Item has not been filled in.')}}</p>
+                    </div>
+                    <div>
+                      <label for="expiration_date">{{_('URL Expiry Date')}}</label>
+                      <input type="date" id="expiration_date">
+                      <p id="expiration_date_error" class="error-message" style="display: none;">{{_('Item has not been filled in.')}}</p>
+                      <p id="max_date_display" data-expiration-date="{{_('Max Expiry Date')}}:"></p> <!-- 日付設定フィールドの下に表示 -->
+                    </div>
+                    <div>
+                      <label for="download_limit">{{_('Download Limit')}}</label>
+                      <input type="number" id="download_limit">
+                      <p id="download_limit_error" class="error-message" style="display: none;">{{_('Item has not been filled in.')}}</p>
+                      <p id="max_download_display" data-download-count="{{_('Max Download Count')}}:"></p> <!-- ダウンロード制限フィールドの下に表示 -->
+                    </div>
+                    <div>
+                      <button type="submit" id="create_secret_url" url="{{ url_for('invenio_records_ui.recid_secret_url', filename=file.filename, pid_value=pid.pid_value) }}">
+                        {{_('Create Secret URL')}}
+                      </button>
+                      <div class="checkbox-container">
+                        <label for="send_email">{{_('Send Email')}}</label>
+                        <input type="checkbox" id="send_email">
+                      </div>
+                    </div>
+                  </form>
+                {%- endfor -%}
+              </div>
               {% from "weko_records_ui/output_detail_data.html" import output_attribute_value_mlt %}
               {%- set display_file_info = record.display_file_info -%}
               <table class="table table-bordered table-striped detail-table">
