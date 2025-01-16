@@ -408,6 +408,10 @@ def add_signals_info(record, obj):
     obj.item_id = record['_deposit']['id']
 
 
+def error_response(error_message, status_code=400):
+    error_template = "weko_theme/error.html"
+    return render_template(error_template, error=error_message), status_code
+
 
 def file_download_onetime(pid, record, filename, _record_file_factory=None,
                           **kwargs):
@@ -421,10 +425,6 @@ def file_download_onetime(pid, record, filename, _record_file_factory=None,
     Returns:
         Response: The Flask wrapper object for the file download
     """
-    def error_response(error_message, status_code=400):
-        error_template = "weko_theme/error.html"
-        return render_template(error_template, error_message), status_code
-
     # Validate the one-time download URL
     token = request.args.get('token', type=str)
     is_validated, error_msg = validate_url_download(
@@ -461,14 +461,9 @@ def file_download_onetime(pid, record, filename, _record_file_factory=None,
             return error_response('Unexpected error occurred.', 500)
 
     # Increase the download count and save the download log
-    target_data = {}
-    for file_data in record.get_file_data():
-        if file_data.get('filename') == filename:
-            target_data = file_data
-            break
     try:
         url_obj.increment_download_count()
-        save_download_log(token, target_data, is_secret_url=False)
+        save_download_log(record, filename, token, is_secret_url=False)
     except Exception as e:
         current_app.logger.error(e)
         return error_response('Unexpected error occurred.', 500)
@@ -523,10 +518,6 @@ def file_download_secret(pid, record, filename, _record_file_factory=None,
     Returns:
         Response: The Flask wrapper object for the file download.
     """
-    def error_response(error_message, status_code=400):
-        error_template = "weko_theme/error.html"
-        return render_template(error_template, error=error_message), status_code
-
     # Validate the secret URL
     token = request.args.get('token', type=str)
     is_validated, error_msg = (
@@ -548,14 +539,9 @@ def file_download_secret(pid, record, filename, _record_file_factory=None,
 
     # Increase the download count and save the download log
     url_obj:FileSecretDownload = convert_token_into_obj(token, is_secret_url=True)
-    target_data = {}
-    for file_data in record.get_file_data():
-        if file_data.get('filename') == filename:
-            target_data = file_data
-            break
     try:
         url_obj.increment_download_count()
-        save_download_log(token, target_data, is_secret_url=True)
+        save_download_log(record, filename, token, is_secret_url=True)
     except Exception as e:
         current_app.logger.error(e)
         return error_response('Unexpected error occurred.', 500)

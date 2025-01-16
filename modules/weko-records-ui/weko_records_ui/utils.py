@@ -2052,7 +2052,7 @@ def is_onetime_file(record, file_name):
     return False
 
 
-def save_download_log(token, file_data, is_secret_url):
+def save_download_log(record, file_name, token, is_secret_url):
     """Save the download log for the given token.
 
     Befor calling this function, the token must be validated by the function
@@ -2060,8 +2060,9 @@ def save_download_log(token, file_data, is_secret_url):
     the 'accessrole' value in the 'file_data' must be already checked.
 
     Args:
+        record (WekoRecord): The record metadata of the item.
+        file_name (str): The name of the downloaded file.
         token (str): The token used for the download.
-        file_data (dict): The downloaded file data.
         is_secret_url (bool): True if for secret URL, False if for onetime URL.
 
     Raises:
@@ -2070,9 +2071,14 @@ def save_download_log(token, file_data, is_secret_url):
     Returns:
         FileUrlDownloadLog: The created download log object.
     """
+    target_data = {}
+    for file_data in record.get_file_data():
+        if file_data.get('filename') == file_name:
+            target_data = file_data
+            break
     url_obj = convert_token_into_obj(token, is_secret_url)
     if is_secret_url:
-        file_access_role = file_data.get('accessrole')
+        file_access_role = target_data.get('accessrole')
         access_status = (
             AccessStatus.OPEN_NO
             if file_access_role == 'open_no'
