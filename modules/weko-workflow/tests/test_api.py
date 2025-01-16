@@ -264,15 +264,72 @@ def test_WorkActivity_get_activity_list_todo(app, db, workflow, users):
         extra_info={},
         action_order=4
     )
-    
+    # 代理登録 repo → system
+    activity8 = Activity(
+        status='N',
+        activity_id='A-00000001-00008',
+        workflow_id=workflow['workflow'].id,
+        flow_id=workflow['flow'].id,
+        action_id=5,
+        action_status = 'M',
+        activity_login_user=users[1]['id'],
+        activity_update_user=users[1]['id'],
+        activity_status='M',
+        activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+        activity_confirm_term_of_use=True,
+        title='test_share_repo_to_system',
+        shared_user_id=users[2]['id'],
+        extra_info={},
+        action_order=4
+    )
+    # 代理登録 comm → repo
+    activity9 = Activity(
+        status='N',
+        activity_id='A-00000001-00009',
+        workflow_id=workflow['workflow'].id,
+        flow_id=workflow['flow'].id,
+        action_id=5,
+        action_status = 'M',
+        activity_login_user=users[3]['id'],
+        activity_update_user=users[3]['id'],
+        activity_status='M',
+        activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+        activity_confirm_term_of_use=True,
+        title='test_share_comm_to_repo',
+        shared_user_id=users[1]['id'],
+        extra_info={},
+        action_order=4
+    )
+    # 代理登録 contributor → comm
+    activity10 = Activity(
+        status='N',
+        activity_id='A-00000001-00010',
+        workflow_id=workflow['workflow'].id,
+        flow_id=workflow['flow'].id,
+        action_id=5,
+        action_status = 'M',
+        activity_login_user=users[0]['id'],
+        activity_update_user=users[0]['id'],
+        activity_status='M',
+        activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+        activity_confirm_term_of_use=True,
+        title='test_share_con_to_comm',
+        shared_user_id=users[3]['id'],
+        extra_info={},
+        action_order=4
+    )
+
     with db.session.begin_nested():
-        db.session.add(activity1)        
-        db.session.add(activity2)        
-        db.session.add(activity3)        
-        db.session.add(activity4)        
-        db.session.add(activity5)        
-        db.session.add(activity6)        
+        db.session.add(activity1)
+        db.session.add(activity2)
+        db.session.add(activity3)
+        db.session.add(activity4)
+        db.session.add(activity5)
+        db.session.add(activity6)
         db.session.add(activity7)
+        db.session.add(activity8)
+        db.session.add(activity9)
+        db.session.add(activity10)
     db.session.commit()
 
     activity_action1 = ActivityAction(
@@ -324,6 +381,27 @@ def test_WorkActivity_get_activity_list_todo(app, db, workflow, users):
         action_handler=-1,
         action_order=4
     )
+    activity_action8 = ActivityAction(
+        activity_id=activity8.activity_id,
+        action_id=5,
+        action_status="M",
+        action_handler=users[1]['id'],
+        action_order=4
+    )
+    activity_action9 = ActivityAction(
+        activity_id=activity9.activity_id,
+        action_id=5,
+        action_status="M",
+        action_handler=users[3]['id'],
+        action_order=4
+    )
+    activity_action10 = ActivityAction(
+        activity_id=activity10.activity_id,
+        action_id=5,
+        action_status="M",
+        action_handler=users[0]['id'],
+        action_order=4
+    )
 
     with db.session.begin_nested():
         db.session.add(activity_action1)
@@ -333,6 +411,9 @@ def test_WorkActivity_get_activity_list_todo(app, db, workflow, users):
         db.session.add(activity_action5)
         db.session.add(activity_action6)
         db.session.add(activity_action7)
+        db.session.add(activity_action8)
+        db.session.add(activity_action9)
+        db.session.add(activity_action10)
     db.session.commit()
 
     with app.test_request_context():
@@ -340,23 +421,23 @@ def test_WorkActivity_get_activity_list_todo(app, db, workflow, users):
         login_user(users[2]["obj"])
         activities, max_page, size, page, name_param = wa.get_activity_list(
             None, {}, False, False)
-        assert len(activities) == 3
+        assert len(activities) == 4
 
         # repo admin
         login_user(users[1]["obj"])
         activities, max_page, size, page, name_param = wa.get_activity_list(
             None, {}, False, False)
-        assert len(activities) == 3
+        assert len(activities) == 5
 
         # comm admin
         login_user(users[3]["obj"])
         with patch('weko_workflow.api.WekoDeposit.get_record', return_value={'path': [1]}):
             activities, max_page, size, page, name_param = wa.get_activity_list(
                 None, {}, False, False)
-            assert len(activities) == 3
+            assert len(activities) == 5
 
         # contributor admin
         login_user(users[0]["obj"])
         activities, max_page, size, page, name_param = wa.get_activity_list(
             None, {}, False, False)
-        assert len(activities) == 1
+        assert len(activities) == 2

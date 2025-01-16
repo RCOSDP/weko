@@ -1614,45 +1614,48 @@ class WorkActivity(object):
             .filter(_FlowAction.action_order == _Activity.action_order)
         if is_admin or is_community_admin:
             query = query \
-            .filter(
-                ActivityAction.action_handler.in_([-1, self_user_id])
-            )
+                .filter(
+                    or_(
+                        ActivityAction.action_handler.in_([-1, self_user_id]),
+                        _Activity.shared_user_id == self_user_id
+                    )
+                )
         else:
             query = query \
-            .filter(
-                or_(
-                    and_(
-                        _FlowActionRole.action_user == self_user_id,
-                        _FlowActionRole.action_user_exclude == '0'
-                    ),
-                    and_(
-                        _FlowActionRole.action_role.in_(self_group_ids),
-                        _FlowActionRole.action_role_exclude == '0'
-                    ),
-                    and_(
-                        _FlowActionRole.id.is_(None)
-                    ),
-                    and_(
-                        _Activity.shared_user_id == self_user_id,
-                    ),
+                .filter(
+                    or_(
+                        and_(
+                            _FlowActionRole.action_user == self_user_id,
+                            _FlowActionRole.action_user_exclude == '0'
+                        ),
+                        and_(
+                            _FlowActionRole.action_role.in_(self_group_ids),
+                            _FlowActionRole.action_role_exclude == '0'
+                        ),
+                        and_(
+                            _FlowActionRole.id.is_(None)
+                        ),
+                        and_(
+                            _Activity.shared_user_id == self_user_id,
+                        ),
+                    )
+                ) \
+                .filter(
+                    or_(
+                        ActivityAction.action_handler == self_user_id,
+                        and_(
+                            _FlowActionRole.action_user == self_user_id,
+                            _FlowActionRole.action_user_exclude == '0'
+                        ),
+                        and_(
+                            _FlowActionRole.action_role.in_(self_group_ids),
+                            _FlowActionRole.action_role_exclude == '0'
+                        ),
+                        and_(
+                            _Activity.shared_user_id == self_user_id,
+                        ),
+                    )
                 )
-            ) \
-            .filter(
-                or_(
-                    ActivityAction.action_handler == self_user_id,
-                    and_(
-                        _FlowActionRole.action_user == self_user_id,
-                        _FlowActionRole.action_user_exclude == '0'
-                    ),
-                    and_(
-                        _FlowActionRole.action_role.in_(self_group_ids),
-                        _FlowActionRole.action_role_exclude == '0'
-                    ),
-                    and_(
-                        _Activity.shared_user_id == self_user_id,
-                    ),
-                )
-            )
 
         return query
 
@@ -1753,6 +1756,7 @@ class WorkActivity(object):
 
             if is_community_admin:
                 if activity_data.activity_login_user != int(current_user.get_id()) and \
+                        activity_data.shared_user_id != int(current_user.get_id()) and \
                         not self._check_community_permission(activity_data, index_ids):
                     continue
             # Append to do and action activities into the master list
