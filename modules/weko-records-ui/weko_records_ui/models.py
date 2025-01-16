@@ -21,7 +21,7 @@
 
 """Database models for weko-admin."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 
 from flask import current_app
@@ -433,9 +433,9 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
         Raises:
             Exception: If an unexpected error occurs during the creation.
         """
-        if data.get('expiration_date') < datetime.now():
+        if data['expiration_date'] < datetime.now(tz=timezone.utc):
             raise ValueError('The expiration date must be in the future.')
-        if data.get('download_limit') <= 0:
+        if data['download_limit'] <= 0:
             raise ValueError('The download limit must be greater than 0.')
         try:
             file_download = cls(**data)
@@ -446,6 +446,18 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
             db.session.rollback()
             current_app.logger.error(ex)
             raise ex
+
+    @classmethod
+    def get_by_id(cls, id):
+        """Get a record by its ID.
+
+        Args:
+            id (int): The ID of the record to retrieve.
+
+        Returns:
+            FileOnetimeDownload: The record instance, or None if not found.
+        """
+        return cls.query.get(id)
 
     @classmethod
     def find(cls, **obj) -> list:
@@ -472,8 +484,9 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
             cls.file_name == obj.get("file_name"),
             cls.record_id == obj.get("record_id"),
             cls.user_mail == obj.get("user_mail"),
-            cls.download_count > 0 ,
-            now() < cls.created  + func.cast( concat( cls.expiration_date , ' days' ) , INTERVAL)
+            cls.download_count < cls.download_limit,
+            cls.expiration_date > now(timezone.utc),
+            cls.is_deleted == False
         )
         return query.order_by(desc(cls.id)).all()
 
@@ -551,15 +564,15 @@ class FileSecretDownload(db.Model, Timestamp, DownloadMixin):
             record_id (str): The ID of the record that has the file.
             file_name (str): The name of the file.
             label_name (str): The label of the secret URL.
-            expiration_date (datetime): The date and time when the URL expires.
+            expiration_date (date): The date when the URL expires.
             download_limit (int): The download limit of the URL.
         """
-        self.creator_id = creator_id
-        self.record_id = record_id
-        self.file_name = file_name
-        self.label_name = label_name
+        self.creator_id      = creator_id
+        self.record_id       = record_id
+        self.file_name       = file_name
+        self.label_name      = label_name
         self.expiration_date = expiration_date
-        self.download_limit = download_limit
+        self.download_limit  = download_limit
 
     @classmethod
     def create(cls, **data):
@@ -575,9 +588,9 @@ class FileSecretDownload(db.Model, Timestamp, DownloadMixin):
             ValueError: If the arguments are invalid.
             Exception: If an unexpected error occurs during the creation.
         """
-        if data.get('expiration_date') < datetime.now():
+        if data['expiration_date'] < datetime.now(tz=timezone.utc):
             raise ValueError('The expiration date must be in the future.')
-        if data.get('download_limit') <= 0:
+        if data['download_limit'] <= 0:
             raise ValueError('The download limit must be greater than 0.')
         try:
             file_download = cls(**data)
@@ -588,6 +601,18 @@ class FileSecretDownload(db.Model, Timestamp, DownloadMixin):
             db.session.rollback()
             current_app.logger.error(ex)
             raise ex
+
+    @classmethod
+    def get_by_id(cls, id):
+        """Get a record by its ID.
+
+        Args:
+            id (int): The ID of the record to retrieve.
+
+        Returns:
+            FileSecretDownload: The record instance, or None if not found.
+        """
+        return cls.query.get(id)
 
     @classmethod
     def find(cls, **obj) -> list:
