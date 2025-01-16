@@ -162,6 +162,44 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
             request.files = original
             request.headers = original_headers
 
+    # error message:"Not accept Content-Type and file's Content-Type is None:
+    app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = True
+    maxSize = app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE"] = 10000
+    contentType = app.config.get(
+        "WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT"
+    )
+    zip = make_crate()
+    mock_data = io.BytesIO(zip[0].read())
+    mock_data.seek(0, io.SEEK_END)
+    size = mock_data.tell()
+    mock_data.seek(0, 0)
+    mock_stream = MagicMock()
+    mock_stream.read = MagicMock(side_effect=mock_data.read)
+    mock_stream.seek = MagicMock(side_effect=mock_data.seek)
+    mock_stream.tell = MagicMock(side_effect=mock_data.tell)
+    mock_file = MagicMock(spec=FileStorage)
+    mock_file.filename = "mockfile.zip"
+    mock_file.stream = mock_stream
+    mock_file.seek = MagicMock(side_effect=mock_stream.seek)
+    mock_file.tell = MagicMock(side_effect=mock_stream.tell)
+    mock_file.headers = {"Content-Type": None}
+
+    with app.test_request_context():
+        original = request.files
+        request.files = LocalProxy(lambda: {"file": mock_file})
+        original_headers = request.headers
+        request.headers = LocalProxy(
+            lambda: {"Content-Length": str(size), "Content-Type": "application/json"}
+        )
+        try:
+            with pytest.raises(WekoSwordserverException) as e:
+                res = check_package_contents()(lambda x, y: x + y)(x=1, y=2)
+            assert e.value.errorType == ErrorType.ContentTypeNotAcceptable
+            assert e.value.message == f"Not accept Content-Type: application/json"
+        finally:
+            request.files = original
+            request.headers = original_headers
+
     # error message:"Content size is too large."
     app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = True
     maxSize = app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE"] = 1000
@@ -309,3 +347,45 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
             res = check_package_contents()(lambda x, y: x + y)(x=1, y=2)
         assert e.value.errorType == ErrorType.ContentMalformed
         assert e.value.message == "No selected file."
+
+    # success case
+    app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = True
+    maxSize = app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE"] = 10000
+    contentType = app.config.get(
+        "WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT"
+    )
+    app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_PACKAGING"] = [
+        "http://purl.org/net/sword/3.0/package/Binary",
+        "http://purl.org/net/sword/3.0/package/SimpleZip",
+    ]
+    zip = make_crate()
+    mock_data = io.BytesIO(zip[0].read())
+    mock_data.seek(0, io.SEEK_END)
+    size = mock_data.tell()
+    mock_data.seek(0, 0)
+    mock_stream = MagicMock()
+    mock_stream.read = MagicMock(side_effect=mock_data.read)
+    mock_stream.seek = MagicMock(side_effect=mock_data.seek)
+    mock_stream.tell = MagicMock(side_effect=mock_data.tell)
+    mock_file = MagicMock(spec=FileStorage)
+    mock_file.filename = "mockfile.zip"
+    mock_file.stream = mock_stream
+    mock_file.seek = MagicMock(side_effect=mock_stream.seek)
+    mock_file.tell = MagicMock(side_effect=mock_stream.tell)
+    mock_file.headers = {"Content-Type": contentType[0]}
+
+    with app.test_request_context():
+        original = request.files
+        request.files = LocalProxy(lambda: {"file": mock_file})
+        original_headers = request.headers
+        request.headers = LocalProxy(
+            lambda: {
+                "Content-Length": str(size),
+                "Content-Type": contentType[0],
+                "Packaging": "http://purl.org/net/sword/3.0/package/Binary"
+            }
+        )
+        res = check_package_contents()(lambda x, y: x + y)(x=1, y=2)
+        assert res == 3
+        request.files = original
+        request.headers = original_headers
