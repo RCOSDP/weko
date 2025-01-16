@@ -213,7 +213,7 @@ def post_service_document():
             f"Not found {filename} in request body.", ErrorType.BadRequest
         )
 
-    # pick end of packaging, "SimpleZip" or "SWORDBagIt"
+    # check packaging, "SimpleZip" or "SWORDBagIt"
     packaging = request.headers.get("Packaging")
     file_format = check_import_file_format(file, packaging)
 

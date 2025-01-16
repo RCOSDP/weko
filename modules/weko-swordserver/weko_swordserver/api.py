@@ -277,7 +277,12 @@ class SwordClient():
         """
         obj = SwordClient.get_client_by_id(client_id)
         if obj is not None:
-            obj.delete()
+            try:
+                db.session.delete(obj)
+                db.session.commit()
+            except SQLAlchemyError as ex:
+                db.session.rollback()
+                raise
         return obj
 
 

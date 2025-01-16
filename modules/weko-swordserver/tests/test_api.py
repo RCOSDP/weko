@@ -183,3 +183,16 @@ class TestSwordClient:
         assert obj.client_id == client.client_id
         assert obj.registration_type == "Direct"
         assert obj.mapping_id == sword_mapping[0]["sword_mapping"].id
+
+    # def remove(cls, client_id, registration_type=None, mapping_id=None, workflow_id):
+    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordClient::test_remove -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+    def test_remove(app, db, tokens, sword_mapping, sword_client, workflow):
+        client = sword_client[0]["sword_client"]
+        count = SwordClientModel.query.count()
+        obj = SwordClient.remove(client_id=client.client_id)
+        assert obj == client
+        assert SwordClientModel.query.filter_by(client_id=client.client_id).first() == None
+        assert SwordClientModel.query.count() == count - 1
+
+        obj = SwordClient.remove(client_id=client.client_id)
+        assert obj == None
