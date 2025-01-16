@@ -2718,6 +2718,8 @@ class UpdateItem(object):
         :return: The rendered template.
         """
         from weko_deposit.api import WekoIndexer
+        from weko_records_ui.models import FileOnetimeDownload
+
         publish_status = record.get('publish_status')
         if not publish_status:
             record.update({'publish_status': PublishStatus.PUBLIC.value})
@@ -2725,6 +2727,14 @@ class UpdateItem(object):
             record['publish_status'] = PublishStatus.PUBLIC.value
 
         record.commit()
+        db.session.commit()
+
+        # シークレットURLの論理削除を実行
+        control_number = record.get('control_number')#control_nuibmer=record_id
+        secret_urls = FileOnetimeDownload.query.filter_by(record_id=control_number, is_deleted=False).all()
+        for urls in secret_urls:
+            #論理削除メソッドを使用
+            urls.delete_logically()
         db.session.commit()
 
         indexer = WekoIndexer()
