@@ -3980,7 +3980,7 @@ def test_display_activity(client, users, db_register,mocker,redis_connect,withou
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_check_authority_action -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_check_authority_action(app,db,users,db_register,db_records):
-    # no authentiated
+    # no authenticated
     with app.test_request_context():
         result = check_authority_action()
         assert result == 1
@@ -4012,14 +4012,14 @@ def test_check_authority_action(app,db,users,db_register,db_records):
         with patch("weko_workflow.views.WorkActivity.get_activity_action_role",return_value=(rs,us)):
             result = check_authority_action()
             assert result == 1
-            
-        # role not in allow
-        rs = {"allow":[1,2],"deny":[]}
+
+        # role in allow
+        rs = {"allow":[2,3],"deny":[]}
         us = {"allow":[],"deny":[]}
         with patch("weko_workflow.views.WorkActivity.get_activity_action_role",return_value=(rs,us)):
             result = check_authority_action()
-            assert result == 1
-            
+            assert result == 0
+
     rs = {"allow":[], "deny":[]}
     us = {"allow":[], "deny":[]}
     with patch("weko_workflow.views.WorkActivity.get_activity_action_role",return_value=(rs,us)):
@@ -4028,10 +4028,7 @@ def test_check_authority_action(app,db,users,db_register,db_records):
             # cur_user == activity_login_user
             result = check_authority_action(activity_id=activity.activity_id)
             assert result == 0
-            
-    rs = {"allow":[3], "deny":[]}
-    us = {"allow":[], "deny":[]}
-    with patch("weko_workflow.views.WorkActivity.get_activity_action_role",return_value=(rs,us)):
+
         with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
             activity = db_register["activities"][1]
             # item_metadata.json[shared_user_id]=cur_user

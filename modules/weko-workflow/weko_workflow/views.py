@@ -1188,8 +1188,8 @@ def check_authority_action(activity_id='0', action_id=0,
     for role in cur_role:
         if roles['deny'] and role.id in roles['deny']:
             return 1
-        if roles['allow'] and role.id not in roles['allow']:
-            return 1
+        if roles['allow'] and role.id in roles['allow']:
+            return 0
 
     # If action_roles is not set
     # or action roles does not contain any role of current_user:
