@@ -1046,8 +1046,11 @@ class SchemaTree:
                     else:
                         # current_app.logger.error(item_type.schema["properties"][key_item_parent])
                         atr_name = ""
-                        if self._item_type and self._item_type.schema and "title" in self._item_type.schema.get("properties", {}).get(key_item_parent):
-                            atr_name = self._item_type.schema["properties"][key_item_parent]["title"]
+                        if self._item_type and self._item_type.schema:
+                            if "properties" in self._item_type.schema:
+                                if key_item_parent in self._item_type.schema.get("properties"):
+                                    if "title" in  self._item_type.schema.get("properties").get(key_item_parent):
+                                        atr_name = self._item_type.schema["properties"][key_item_parent]["title"]
                         vlst_child = get_mapping_value(mpdic, {},
                                                            key_item_parent,
                                                            atr_name)
