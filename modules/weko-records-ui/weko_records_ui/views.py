@@ -723,6 +723,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
         search_author_flg=search_author_flg,
         show_secret_URL=can_manage_secret_url(record,filename),
+        secret_url_section=can_manage_secret_url(record, filename),
         **ctx,
         **kwargs
     )

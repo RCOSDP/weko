@@ -272,11 +272,13 @@ require([
     }
   });
 
-
+    // シークレットURL作成フォーム
     // link_name フィールドの入力を検証
     const MAX_LENGTH=50;
     const linkNameInput = document.querySelector('#link_name');
-    linkNameInput.setAttribute('maxlength', MAX_LENGTH.toString());
+    if (linkNameInput) {
+      linkNameInput.maxLength = MAX_LENGTH;
+    }
 
     // APIエンドポイントから設定を取得
     fetch('/get-secret-settings')
@@ -314,10 +316,7 @@ require([
           expirationDateInput.max = maxFormattedDate;
           expirationDateInput.min = todayFormatted;
           console.log(`Expiration date set to: ${formattedDate}`);
-        } else {
-          console.error('Error: #expiration_date element not found.');
         }
-
         // フォームのフィールドに値を設定
         const downloadLimitInput = document.querySelector('#download_limit');
         if (downloadLimitInput) {
@@ -329,28 +328,20 @@ require([
               downloadLimitInput.value = maxSecretDownloadLimit;
             }
           });
-        } else {
-          console.error('Error: #download_limit element not found.');
         }
-
         // 有効期限の下に表示するメッセージを設定
         const maxExpirationData = document.querySelector('#max_date_display');
         if (maxExpirationData) {
           const translationDate = maxExpirationData.dataset.expirationDate;
           maxExpirationData.textContent = ` ※${translationDate} ${maxFormattedDate}`;
           console.log(`Max Expiration Data displayed as: ${translationDate}`);
-        } else {
-          console.error('Error: #max_download_display element not found.');
         }
-
         // ダウンロード制限の下に表示するメッセージを設定
         const maxDownloadDisplay = document.querySelector('#max_download_display');
         if (maxDownloadDisplay) {
           const downloadcount = maxDownloadDisplay.dataset.downloadCount;
           maxDownloadDisplay.textContent = ` ※${downloadcount} ${maxSecretDownloadLimit}`;
           console.log(`Max download limit displayed as: ${downloadcount}`);
-        } else {
-          console.error('Error: #max_download_display element not found.');
         }
       })
       .catch(error => {
@@ -398,16 +389,6 @@ require([
         return;
       }
 
-
-      // AJAXリクエストのデータをコンソールに出力
-      const requestData = {
-        link_name: linkName,
-        expiration_date: expirationDate,
-        download_limit: downloadLimit,
-        send_email: sendEmail
-      };
-      console.log('AJAX request data:', requestData);
-    
       $.ajax({
         url: url,
         method: 'POST',
@@ -425,7 +406,6 @@ require([
         },
         error: function(jqXHR, status, msg) {
           webelement.prop('disabled', false);
-          console.error('Errorです:', jqXHR.responseJSON || msg);
           alert("Error: " + (jqXHR.responseJSON?.message || msg));
         }
       });

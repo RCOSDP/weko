@@ -1230,7 +1230,7 @@ WEKO_INDEX_TREE_STYLE_OPTIONS = {
     'widths': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
 }
 
-WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = True
+WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = False
 """
 Restricted access feature display flag.
 True: display all feature
