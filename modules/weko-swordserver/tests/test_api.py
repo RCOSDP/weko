@@ -244,8 +244,6 @@ class TestSwordClient:
 
         # Update to workflow to workflow without workflow_id
         client = sword_client[0]["sword_client"]
-        print("client")
-        print(client)
         with pytest.raises(WekoSwordserverException) as e:
             SwordClient.update(
                 client_id=client.client_id,
@@ -284,13 +282,20 @@ class TestSwordClient:
     # def remove(cls, client_id):
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordClient::test_remove -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
     def test_remove(app, db, sword_client):
-        # # Successful removal NG
-        # client = sword_client[0]["sword_client"]
-        # obj = SwordClient.remove(client_id=client.client_id)
-        # assert obj == client
-        # assert (
-        #     SwordClientModel.query.filter_by(client_id=client.client_id).first() is None
-        # )
+        # Successful removal
+        client = sword_client[0]["sword_client"]
+        obj = SwordClient.remove(client_id=client.client_id)
+        assert obj == client
+        assert (
+            SwordClientModel.query.filter_by(client_id=client.client_id).first() is None
+        )
+
+        # Exception during removal
+        client = sword_client[1]["sword_client"]
+        with patch('weko_swordserver.api.db.session.commit', side_effect=SQLAlchemyError):
+            with pytest.raises(SQLAlchemyError):
+                SwordClient.remove(client_id=client.client_id)
+            assert SwordClientModel.query.filter_by(client_id=client.client_id).first() is not None
 
         # Removal of non-existent client
         obj = SwordClient.remove(client_id="non_existent_client_id")
@@ -314,3 +319,5 @@ class TestSwordClient:
         # Get client by non-existent ID
         result = SwordClient.get_client_by_id("non_existent_client_id")
         assert result is None
+
+

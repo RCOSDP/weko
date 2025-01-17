@@ -596,7 +596,7 @@ class TestWekoSwordMapper:
         # If _type is "value", add json_value to metadata
         # json_value is not None
         child_metadata = {}
-        item_map_keys = ["subitem_1551255647225"]
+        item_map_keys = ["item_1617186331708"]
         type_of_item_type_path = ["value"]
         json_value = "サンプルアイテム"
         mapper._create_child_metadata_of_a_property(0, child_metadata, item_map_keys, type_of_item_type_path, json_value)
@@ -644,70 +644,70 @@ class TestWekoSwordMapper:
 
         mapper = WekoSwordMapper(json, itemtype, json_map)
 
-        # # case: value in dict  If json_value is not list, use json_value
-        # metadata = {}
-        # item_map_key = "item_1617258105262"
-        # type_of_item_type_path = ["value"]
-        # json_value = "other"
-        # mapper._create_metadata_of_a_property(metadata, item_map_key, type_of_item_type_path, json_value)
-        # assert metadata == {"item_1617258105262": "other"}
+        # case: value in dict  If json_value is not list, use json_value
+        metadata = {}
+        item_map_key = "item_1617258105262"
+        type_of_item_type_path = ["value"]
+        json_value = "other"
+        mapper._create_metadata_of_a_property(metadata, item_map_key, type_of_item_type_path, json_value)
+        assert metadata == {"item_1617258105262": "other"}
 
-        # # case: value in dict  If json_value is list, use only first element
-        # metadata = {}
-        # item_map_key = "item_1617258105262"
-        # type_of_item_type_path = ["array"]
-        # json_value = ["Stian"]
-        # mapper._create_metadata_of_a_property(metadata, item_map_key, type_of_item_type_path, json_value)
-        # assert metadata == {"item_1617258105262": "Stian"}
+        # case: value in dict  If json_value is list, use only first element
+        metadata = {}
+        item_map_key = "item_1617258105262"
+        type_of_item_type_path = ["array"]
+        json_value = ["Stian"]
+        mapper._create_metadata_of_a_property(metadata, item_map_key, type_of_item_type_path, json_value)
+        assert metadata == {"item_1617258105262": "Stian"}
 
-        # # case: nested object If _type is "object", create nested metadata  if not metadata.get(_item_map_key):
-        # metadata = {}
-        # item_map_key = "item_1617258105262.subitem_1551255647225"
-        # type_of_item_type_path = ["object", "value"]
-        # json_value = "サンプルアイテム"
-        # mapper._create_metadata_of_a_property(metadata, item_map_key, type_of_item_type_path, json_value)
-        # assert metadata == {"item_1617258105262": {"subitem_1551255647225": "サンプルアイテム"}}
+        # case: nested object If _type is "object", create nested metadata  if not metadata.get(_item_map_key):
+        metadata = {}
+        item_map_key = "item_1617258105262.subitem_1551255647225"
+        type_of_item_type_path = ["object", "value"]
+        json_value = "サンプルアイテム"
+        mapper._create_metadata_of_a_property(metadata, item_map_key, type_of_item_type_path, json_value)
+        assert metadata == {"item_1617258105262": {"subitem_1551255647225": "サンプルアイテム"}}
 
-        # # case: nested array
-        # # If _type is "array", do the following method # If diff_array is 0, create [{}, {}, ...] in metadata if not metadata.get(_item_map_key):
-        # metadata = {}
-        # item_map_key = "item_1617349709064.givenNames"
-        # type_of_item_type_path = ["array", "value"]
-        # json_value = ["Stian"]
-        # mapper._create_metadata_of_a_property(metadata, item_map_key, type_of_item_type_path, json_value)
-        # assert metadata == {'item_1617349709064': [{'givenNames': 'Stian'}]}
+        # case: nested array
+        # If _type is "array", do the following method # If diff_array is 0, create [{}, {}, ...] in metadata if not metadata.get(_item_map_key):
+        metadata = {}
+        item_map_key = "item_1617349709064.givenNames"
+        type_of_item_type_path = ["array", "value"]
+        json_value = ["Stian"]
+        mapper._create_metadata_of_a_property(metadata, item_map_key, type_of_item_type_path, json_value)
+        assert metadata == {'item_1617349709064': [{'givenNames': 'Stian'}]}
 
-        # # case: nested object in array
-        # metadata = {}
-        # item_map_key = "item_1617349709064.givenNames.givenName"
-        # type_of_item_type_path = ["array", "object", "value"]
-        # json_value = ["Stian"]
-        # mapper._create_metadata_of_a_property(metadata, item_map_key, type_of_item_type_path, json_value)
-        # assert metadata == {'item_1617349709064': [{'givenNames': {'givenName': 'Stian'}}]}
+        # case: nested object in array
+        metadata = {}
+        item_map_key = "item_1617349709064.givenNames.givenName"
+        type_of_item_type_path = ["array", "object", "value"]
+        json_value = ["Stian"]
+        mapper._create_metadata_of_a_property(metadata, item_map_key, type_of_item_type_path, json_value)
+        assert metadata == {'item_1617349709064': [{'givenNames': {'givenName': 'Stian'}}]}
 
-        # # case: if diff_array > 0
-        # metadata = {}
-        # item_map_key = "item_1617186419668.givenNames.givenName"
-        # type_of_item_type_path = ["array", "array", "value"]
-        # json_value = ["Stian"]
-        # mapper._create_metadata_of_a_property(metadata, item_map_key, type_of_item_type_path, json_value)
-        # assert metadata == {'item_1617186419668': [{'givenNames': [{'givenName': 'Stian'}]}]}
+        # case: if diff_array > 0
+        metadata = {}
+        item_map_key = "item_1617186419668.givenNames.givenName"
+        type_of_item_type_path = ["array", "array", "value"]
+        json_value = ["Stian"]
+        mapper._create_metadata_of_a_property(metadata, item_map_key, type_of_item_type_path, json_value)
+        assert metadata == {'item_1617186419668': [{'givenNames': [{'givenName': 'Stian'}]}]}
 
-        # # case: If dim_json_value is bigger than num_array_type, pick the first element of json_value until dim_json_value equals to num_array_type
-        # metadata = {}
-        # item_map_key = "item_1617186419668.givenName"
-        # type_of_item_type_path = ["array", "value"]
-        # json_value = [[["Stian","Stian1"],["Stian2","Stian3"]],[["Stian4", "Stian5"], ["Stian6", "Stian7"]]]
-        # mapper._create_metadata_of_a_property(metadata, item_map_key, type_of_item_type_path, json_value)
-        # assert metadata == {'item_1617186419668': [{'givenName': 'Stian'}, {'givenNames': 'Stian1'}]}
+        # case: If dim_json_value is bigger than num_array_type, pick the first element of json_value until dim_json_value equals to num_array_type
+        metadata = {}
+        item_map_key = "item_1617186419668.givenName"
+        type_of_item_type_path = ["array", "value"]
+        json_value = [[["Stian","Stian1"],["Stian2","Stian3"]],[["Stian4", "Stian5"], ["Stian6", "Stian7"]]]
+        mapper._create_metadata_of_a_property(metadata, item_map_key, type_of_item_type_path, json_value)
+        assert metadata == {'item_1617186419668': [{'givenName': 'Stian'}, {'givenName': 'Stian1'}]}
 
-        # # case: nested object　not if not metadata.get(_item_map_key):
-        # metadata = {"item_1617186476635": {"subitem_1600958577026": "existing_value"}}
-        # item_map_key = "item_1617186476635.subitem_1600958577026"
-        # type_of_item_type_path = ["object", "value"]
-        # json_value = "サンプルアイテム"
-        # mapper._create_metadata_of_a_property(metadata, item_map_key, type_of_item_type_path, json_value)
-        # assert metadata == {"item_1617186476635": {"subitem_1600958577026": "サンプルアイテム"}}
+        # case: nested object　not if not metadata.get(_item_map_key):
+        metadata = {"item_1617186476635": {"subitem_1600958577026": "existing_value"}}
+        item_map_key = "item_1617186476635.subitem_1600958577026"
+        type_of_item_type_path = ["object", "value"]
+        json_value = "サンプルアイテム"
+        mapper._create_metadata_of_a_property(metadata, item_map_key, type_of_item_type_path, json_value)
+        assert metadata == {"item_1617186476635": {"subitem_1600958577026": "サンプルアイテム"}}
 
 
 
@@ -716,12 +716,12 @@ class TestWekoSwordMapper:
 
 
         # case: not if not metadata.get(_item_map_key):
-        metadata =  {"item_1617349709064" : [{"givenNames": {"givenName":"XXXXXXXXXXXXXXXXX"}},{"givenNames1": {"givenName":"YYYYYYYYYYYYYYYYY"}}]}
-        item_map_key = "item_1617349709064.givenNames1.givenName"
-        type_of_item_type_path = ["array","object","value"]
-        json_value = ["Stian"]
-        mapper._create_metadata_of_a_property(metadata, item_map_key, type_of_item_type_path, json_value)
-        print(metadata)
+        # metadata =  {"item_1617349709064" : [{"givenNames": {"givenName":"XXXXXXXXXXXXXXXXX"}},{"givenNames1": {"givenName":"YYYYYYYYYYYYYYYYY"}}]}
+        # item_map_key = "item_1617349709064.givenNames1.givenName"
+        # type_of_item_type_path = ["array","object","value"]
+        # json_value = ["Stian"]
+        # mapper._create_metadata_of_a_property(metadata, item_map_key, type_of_item_type_path, json_value)
+        # print(metadata)
         # {'item_1617349709064': [{'givenNames': {'givenName': 'XXXXXXXXXXXXXXXXX'}, 'givenNames1': {'givenName': 'Stian'}}, {'givenNames1': {'givenName': 'YYYYYYYYYYYYYYYYY'}}]}
         # {"item_1617349709064" : [{"givenNames": {"givenName":"XXXXXXXXXXXXXXXXX"}},{"givenNames1": {"givenName":"Stian"}}]}
 
