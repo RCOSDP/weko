@@ -28,13 +28,13 @@ from .helpers import json_data
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_registration.py::test_check_bagit_import_items -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
 def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_client,make_crate,mocker,workflow):
     # sucsess case for publish_status is "public". It is required to scope "deposit:actions".
-    client_id = tokens[2]["client"].client_id
+    client_id = tokens[0]["client"].client_id
 
     # mock_request = mocker.patch("weko_swordserver.registration.request")
     with patch("weko_swordserver.registration.request") as mock_request:
         mock_oauth = MagicMock()
         mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[2]["scope"].split(" ")
+        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
         mock_request.oauth = mock_oauth
 
         mapped_json = json_data("data/item_type/mapped_json_2.json")
@@ -56,7 +56,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
 
 
     # case # 1
-    client_id = tokens[2]["client"].client_id
+    client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
     sword__client = sword_client[1]["sword_client"]
@@ -76,7 +76,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
     with patch("weko_swordserver.registration.request") as mock_request:
         mock_oauth = MagicMock()
         mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[2]["scope"].split(" ")
+        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
         mock_request.oauth = mock_oauth
 
         mapped_json = json_data("data/item_type/mapped_json_2.json")
@@ -93,7 +93,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
 
 
     # case # 2
-    client_id = tokens[2]["client"].client_id
+    client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
     sword__client = sword_client[1]["sword_client"]
@@ -113,7 +113,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
     with patch("weko_swordserver.registration.request") as mock_request:
         mock_oauth = MagicMock()
         mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[2]["scope"].split(" ")
+        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
         mock_request.oauth = mock_oauth
 
         mapped_json = json_data("data/item_type/mapped_json_2.json")
@@ -131,7 +131,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
 
 
     # case # 3
-    client_id = tokens[2]["client"].client_id
+    client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
     sword__client = sword_client[1]["sword_client"]
@@ -151,7 +151,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
     with patch("weko_swordserver.registration.request") as mock_request:
         mock_oauth = MagicMock()
         mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[2]["scope"].split(" ")
+        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
         mock_request.oauth = mock_oauth
 
         mapped_json = json_data("data/item_type/mapped_json_2.json")
@@ -176,7 +176,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
 
 
     # case # 4
-    client_id = tokens[2]["client"].client_id
+    client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
     sword__client = sword_client[1]["sword_client"]
@@ -196,7 +196,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
     with patch("weko_swordserver.registration.request") as mock_request:
         mock_oauth = MagicMock()
         mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[2]["scope"].split(" ")
+        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
         mock_request.oauth = mock_oauth
 
         zip, _ = make_crate()
@@ -204,14 +204,14 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
 
         with app.test_request_context(headers=headers):
             with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword__client, sword__mapping)):
-                with patch("weko_swordserver.registration.json.load", side_effect=UnicodeDecodeError) as mock_json_load:
+                with patch("weko_swordserver.registration.json.load", side_effect=UnicodeDecodeError("utf-8",b"test",0,1,"mock UnicodeDecodeError")) as mock_json_load:
                     res = check_bagit_import_items(file, packaging[0])
-                    assert res["error"] == "function takes exactly 5 arguments (0 given)"
+                    assert res["error"] == "mock UnicodeDecodeError"
                     mock_json_load.assert_called_once()
 
 
     # case # 5
-    client_id = tokens[2]["client"].client_id
+    client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
     sword__client = sword_client[1]["sword_client"]
@@ -231,7 +231,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
     with patch("weko_swordserver.registration.request") as mock_request:
         mock_oauth = MagicMock()
         mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[2]["scope"].split(" ")
+        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
         mock_request.oauth = mock_oauth
 
         zip, _ = make_crate()
@@ -246,7 +246,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
 
 
     # case # 6
-    client_id = tokens[2]["client"].client_id
+    client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
     sword__client = sword_client[1]["sword_client"]
@@ -270,7 +270,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
     with patch("weko_swordserver.registration.request") as mock_request:
         mock_oauth = MagicMock()
         mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[2]["scope"].split(" ")
+        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
         mock_request.oauth = mock_oauth
 
         zip, _ = make_crate()
@@ -286,7 +286,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
 
 
     # case # 7
-    client_id = tokens[2]["client"].client_id
+    client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
     sword__client = sword_client[1]["sword_client"]
@@ -306,7 +306,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
     with patch("weko_swordserver.registration.request") as mock_request:
         mock_oauth = MagicMock()
         mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[2]["scope"].split(" ")
+        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
         mock_request.oauth = mock_oauth
 
         zip, _ = make_crate()
@@ -321,7 +321,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
 
 
     # case # 8
-    client_id = tokens[2]["client"].client_id
+    client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
     sword__client = sword_client[0]["sword_client"]
@@ -341,7 +341,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
     with patch("weko_swordserver.registration.request") as mock_request:
         mock_oauth = MagicMock()
         mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[2]["scope"].split(" ")
+        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
         mock_request.oauth = mock_oauth
 
         mapped_json = json_data("data/item_type/mapped_json_2.json")
@@ -356,8 +356,44 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                 assert res["list_record"][0]["errors"] is None
 
 
-    # case # 9
+    # case # 8.1
     client_id = tokens[2]["client"].client_id
+    user_email = users[2]["email"]
+    sword__mapping = sword_mapping[0]["sword_mapping"]
+    sword__client = sword_client[0]["sword_client"]
+
+    file_name = "mockfile.zip"
+    packaging = [
+        "http://purl.org/net/sword/3.0/package/SimpleZip",
+        "http://purl.org/net/sword/3.0/package/SWORDBagIt",
+    ]
+    headers = {
+        "Authorization": "Bearer {}".format(tokens[2]["token"].access_token),
+        "Content-Disposition": f"attachment;filename={file_name}",
+        "Packaging": packaging[0],
+        "On-Behalf-Of": user_email,
+    }
+
+    with patch("weko_swordserver.registration.request") as mock_request:
+        mock_oauth = MagicMock()
+        mock_oauth.client.client_id = client_id
+        mock_oauth.access_token.scopes = tokens[2]["scope"].split(" ")
+        mock_request.oauth = mock_oauth
+        mock_request.headers = headers
+
+        mapped_json = json_data("data/item_type/mapped_json_2.json")
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+
+            zip, _ = make_crate()
+            file = FileStorage(filename=file_name, stream=zip)
+
+            with app.test_request_context(headers=headers):
+                res = check_bagit_import_items(file, packaging[0])
+                assert res["error"].startswith("403 Forbidden:")
+
+
+    # case # 8.2
+    client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
     sword__client = sword_client[0]["sword_client"]
@@ -377,7 +413,70 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
     with patch("weko_swordserver.registration.request") as mock_request:
         mock_oauth = MagicMock()
         mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[2]["scope"].split(" ")
+        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
+        mock_request.oauth = mock_oauth
+        mock_request.headers = headers
+
+        mapped_json = json_data("data/item_type/mapped_json_2.json")
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+
+            zip, _ = make_crate()
+            file = FileStorage(filename=file_name, stream=zip)
+
+            with app.test_request_context(headers=headers):
+                with patch.dict("flask.current_app.config", {"WEKO_SWORDSERVER_DEPOSIT_DATASET": True}):
+                    res = check_bagit_import_items(file, packaging[0])
+                    assert not hasattr(res, "error")
+                    assert res["list_record"][0]["errors"] is None
+
+
+    # case # 8.3
+    # isinstance
+    file__name = "payload.zip"
+    zip, _ = make_crate()
+    storage = FileStorage(filename=file__name,stream=zip)
+    data__path, files__list = unpack_zip(storage)
+
+    with patch("weko_swordserver.registration.request") as mock_request:
+        mock_oauth = MagicMock()
+        mock_oauth.client.client_id = client_id
+        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
+        mock_request.oauth = mock_oauth
+        mock_request.headers = headers
+
+        mapped__json = json_data("data/item_type/mapped_json_2.json")
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json):
+            with app.test_request_context(headers=headers):
+                with patch.dict("flask.current_app.config", {"WEKO_SWORDSERVER_DEPOSIT_DATASET": True}):
+                    with patch("weko_swordserver.registration.unpack_zip") as mock_unpack_zip:
+                        mock_unpack_zip.return_value = data__path, files__list
+                        with patch("shutil.copy", side_effect=Exception({"error_msg":"test_error"})):
+                            res = check_bagit_import_items(f"{data__path}/{file_name}", packaging[0])
+                            assert res["error"] == "test_error"
+
+
+    # case # 9
+    client_id = tokens[0]["client"].client_id
+    user_email = users[2]["email"]
+    sword__mapping = sword_mapping[0]["sword_mapping"]
+    sword__client = sword_client[0]["sword_client"]
+
+    file_name = "mockfile.zip"
+    packaging = [
+        "http://purl.org/net/sword/3.0/package/SimpleZip",
+        "http://purl.org/net/sword/3.0/package/SWORDBagIt",
+    ]
+    headers = {
+        "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
+        "Content-Disposition": f"attachment;filename={file_name}",
+        "Packaging": packaging[0],
+        "On-Behalf-Of": user_email,
+    }
+
+    with patch("weko_swordserver.registration.request") as mock_request:
+        mock_oauth = MagicMock()
+        mock_oauth.client.client_id = client_id
+        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
         mock_request.oauth = mock_oauth
 
         mapped_json = json_data("data/item_type/mapped_json_2.json")
@@ -394,7 +493,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
 
 
     # case # 10
-    client_id = tokens[2]["client"].client_id
+    client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
     sword__client = sword_client[0]["sword_client"]
@@ -414,7 +513,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
     with patch("weko_swordserver.registration.request") as mock_request:
         mock_oauth = MagicMock()
         mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[2]["scope"].split(" ")
+        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
         mock_request.oauth = mock_oauth
 
         mapped_json = json_data("data/item_type/mapped_json_2.json")
@@ -438,7 +537,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
 
 
     # case # 11
-    client_id = tokens[2]["client"].client_id
+    client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
     sword__client = sword_client[0]["sword_client"]
@@ -458,7 +557,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
     with patch("weko_swordserver.registration.request") as mock_request:
         mock_oauth = MagicMock()
         mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[2]["scope"].split(" ")
+        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
         mock_request.oauth = mock_oauth
 
         zip, _ = make_crate()
@@ -473,7 +572,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
 
 
     # case # 12
-    client_id = tokens[2]["client"].client_id
+    client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
     sword__client = sword_client[0]["sword_client"]
@@ -493,7 +592,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
     with patch("weko_swordserver.registration.request") as mock_request:
         mock_oauth = MagicMock()
         mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[2]["scope"].split(" ")
+        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
         mock_request.oauth = mock_oauth
 
         zip, _ = make_crate()
@@ -508,7 +607,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
 
 
     # case # 13
-    client_id = tokens[2]["client"].client_id
+    client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
 
     file_name = "mockfile.zip"
@@ -526,7 +625,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
     with patch("weko_swordserver.registration.request") as mock_request:
         mock_oauth = MagicMock()
         mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[2]["scope"].split(" ")
+        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
         mock_request.oauth = mock_oauth
 
         zip, _ = make_crate()
@@ -557,12 +656,9 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
     with app.test_request_context(headers=headers):
         with patch("weko_swordserver.registration.unpack_zip") as mock_unpack_zip:
             mock_unpack_zip.return_value = data_path, []
-            with patch("bagit.Bag", side_effect=bagit.BagValidationError) as mock_bag:
+            with patch("bagit.Bag", side_effect=bagit.BagValidationError("mock bagit.BagValidationError")) as mock_bag:
                 res = check_bagit_import_items(file, packaging[0])
-                assert res == {
-                    "data_path": data_path,
-                    "error": "__init__() missing 1 required positional argument: 'message'"
-                }
+                assert res["error"] == "mock bagit.BagValidationError"
                 mock_bag.assert_called_once()
 
 
@@ -573,7 +669,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
         "http://purl.org/net/sword/3.0/package/SWORDBagIt",
     ]
     zip, _ = make_crate()
-    file = FileStorage(filename=file_name, stream=zip)
+    file = f"test_file/{file_name}"
     user_email = users[0]["email"]
     headers = {
         "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
@@ -592,6 +688,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
 
 
     # case # 16
+    # Mock User.query.filter_by
     file_name = "mockfile.zip"
     packaging = [
         "http://purl.org/net/sword/3.0/package/SimpleZip",
@@ -617,6 +714,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
             assert e.value.errorType == ErrorType.ServerError
             assert e.value.message == "An error occurred while searching user by On-Behalf-Of."
 
+    # Mock Token.query.filter_by
     access_token = tokens[0]["token"].access_token
     headers["On-Behalf-Of"] = access_token
     with app.test_request_context(headers=headers):
@@ -630,6 +728,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
             assert e.value.errorType == ErrorType.ServerError
             assert e.value.message == "An error occurred while searching user by On-Behalf-Of."
 
+    # Mock ShibbolethUser.query.filter_by
     shib_eppn = "test_shib_eppn"
     headers = {
         "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
@@ -647,6 +746,27 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                 mock_shib_query.filter_by.assert_called_once_with(shib_eppn=shib_eppn)
             assert e.value.errorType == ErrorType.ServerError
             assert e.value.message == "An error occurred while searching user by On-Behalf-Of."
+
+    # Mock no query.filter_by
+    shib_eppn = "test_shib_eppn"
+    headers = {
+        "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
+        "Content-Disposition": f"attachment;filename={file_name}",
+        "Packaging": packaging[0],
+        "On-Behalf-Of": shib_eppn,
+    }
+    with patch("weko_swordserver.registration.request") as mock_request:
+        mock_oauth = MagicMock()
+        mock_oauth.client.client_id = client_id
+        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
+        mock_request.oauth = mock_oauth
+        mock_request.headers = headers
+        mapped_json = json_data("data/item_type/mapped_json_2.json")
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+            with app.test_request_context(headers=headers):
+                res = check_bagit_import_items(file, packaging[0])
+                assert not hasattr(res, "error")
+                assert res["list_record"][0]["errors"] is None
 
 
 
@@ -710,7 +830,6 @@ def test_handle_files_info(app,sword_mapping,item_type,make_crate):
         with app.test_request_context():
             list__record = generate_metadata_from_json(mapped__json, sword__mapping, item__type)
             res = handle_files_info(list__record, files__list, data__path, file__name)
-            print("res:" + str(res))
             assert len(res) == 1
             assert res[0]["errors"] is None
             assert len(res[0]["file_path"]) > 0
@@ -729,7 +848,6 @@ def test_handle_files_info(app,sword_mapping,item_type,make_crate):
         with app.test_request_context():
             list__record = generate_metadata_from_json(mapped__json, sword__mapping, item__type)
             res = handle_files_info(list__record, [], data__path, file__name)
-            print("res:" + str(res))
             assert len(res) == 1
             assert res[0]["errors"] is None, "errors is not None"
             assert not hasattr(res[0], 'file_path')
