@@ -109,7 +109,7 @@ BEGIN
             UPDATE item_type SET render=replace(render::text, key, value)::jsonb WHERE id = full_itemtype_id AND render::text like '%' || key || '"%';
             UPDATE item_type SET render=replace(render::text, key, value)::jsonb WHERE id = full_itemtype_id AND render::text like '%' || key || '[%';
             UPDATE item_type SET render=replace(render::text, key, value)::jsonb WHERE id = full_itemtype_id AND render::text like '%' || key || '.%';
-            UPDATE item_type_mapping SET mapping=replace(mapping::text, key, value)::jsonb WHERE id = 40001 AND mapping::text like '%' || key || '"%';
+            UPDATE item_type_mapping SET mapping=replace(mapping::text, key, value)::jsonb WHERE item_type_id=full_itemtype_id AND mapping::text like '%' || key || '"%';
             UPDATE records_metadata SET json=replace(json::text, key, value)::jsonb WHERE json::text like '%' || key || '%';
             UPDATE item_metadata SET json=replace(json::text, key, value)::jsonb WHERE json::text like '%' || key || '%';
         END LOOP;
@@ -130,7 +130,7 @@ BEGIN
             UPDATE item_type SET render=replace(render::text, key, value)::jsonb WHERE id = simple_itemtype_id AND render::text like '%' || key || '"%';
             UPDATE item_type SET render=replace(render::text, key, value)::jsonb WHERE id = simple_itemtype_id AND render::text like '%' || key || '[%';
             UPDATE item_type SET render=replace(render::text, key, value)::jsonb WHERE id = simple_itemtype_id AND render::text like '%' || key || '.%';
-            UPDATE item_type_mapping SET mapping=replace(mapping::text, key, value)::jsonb WHERE id = simple_itemtype_id AND mapping::text like '%' || key || '"%';
+            UPDATE item_type_mapping SET mapping=replace(mapping::text, key, value)::jsonb WHERE item_type_id = simple_itemtype_id AND mapping::text like '%' || key || '"%';
             UPDATE records_metadata SET json=replace(json::text, key, value)::jsonb WHERE json::text like '%' || key || '%';
             UPDATE item_metadata SET json=replace(json::text, key, value)::jsonb WHERE json::text like '%' || key || '%';
         END LOOP;
