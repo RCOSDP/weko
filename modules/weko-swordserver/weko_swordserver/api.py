@@ -93,6 +93,9 @@ class SwordItemTypeMapping():
         """
         obj = SwordItemTypeMapping.get_mapping_by_id(id)
         if obj is None:
+            current_app.logger.error(
+                f"Mapping not found. ID: {id}"
+            )
             raise WekoSwordserverException(
                 "Mapping not defined.", errorType=ErrorType.ServerError)
 
@@ -186,6 +189,9 @@ class SwordClient():
         if registration_type_id is current_app.config.get(
             'WEKO_SWORDSERVER_REGISTRATION_TYPE'
         ).WORKFLOW and  workflow_id is None:
+            current_app.logger.error(
+                "Workflow ID is required for workflow registration."
+            )
             raise WekoSwordserverException(
                 "Workflow ID is required for workflow registration.",
                 errorType=ErrorType.BadRequest
@@ -232,13 +238,18 @@ class SwordClient():
         """
         obj = SwordClient.get_client_by_id(client_id)
         if obj is None:
+            current_app.logger.error(
+                f"Client not found. ID: {client_id}"
+            )
             raise WekoSwordserverException(
                 "Client not found.", errorType=ErrorType.BadRequest)
 
         if ((registration_type_id or obj.registration_type_id) is
             current_app.config.get('WEKO_SWORDSERVER_REGISTRATION_TYPE')
             .WORKFLOW) and (workflow_id or obj.wworkflow_id) is None:
-
+            current_app.logger.error(
+                "Workflow ID is required for workflow registration."
+            )
             raise WekoSwordserverException(
                 "Workflow ID is required for workflow registration.",
                 errorType=ErrorType.BadRequest
