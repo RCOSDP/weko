@@ -97,7 +97,7 @@ DECLARE
     }';
 BEGIN
     -- デフォルトアイテムタイプ（フル）
-    IF (SELECT name FROM item_type_name WHERE id = (SELECT name_id FROM item_type WHERE id = full_itemtype_id))=full_itemtype_name THEN
+    IF (SELECT COUNT(name_id) FROM item_type WHERE id = full_itemtype_id)=1 THEN
         RAISE NOTICE 'processing item type: %', full_itemtype_name;
         FOR key, value IN SELECT * FROM jsonb_each_text(full_update_dict)
         LOOP
@@ -109,7 +109,7 @@ BEGIN
             UPDATE item_type SET render=replace(render::text, key, value)::jsonb WHERE id = full_itemtype_id AND render::text like '%' || key || '"%';
             UPDATE item_type SET render=replace(render::text, key, value)::jsonb WHERE id = full_itemtype_id AND render::text like '%' || key || '[%';
             UPDATE item_type SET render=replace(render::text, key, value)::jsonb WHERE id = full_itemtype_id AND render::text like '%' || key || '.%';
-            UPDATE item_type_mapping SET mapping=replace(mapping::text, key, value)::jsonb WHERE id = 40001 AND mapping::text like '%' || key || '"%';
+            UPDATE item_type_mapping SET mapping=replace(mapping::text, key, value)::jsonb WHERE item_type_id=full_itemtype_id AND mapping::text like '%' || key || '"%';
             UPDATE records_metadata SET json=replace(json::text, key, value)::jsonb WHERE json::text like '%' || key || '%';
             UPDATE item_metadata SET json=replace(json::text, key, value)::jsonb WHERE json::text like '%' || key || '%';
         END LOOP;
@@ -118,7 +118,7 @@ BEGIN
     END IF;
 
     -- デフォルトアイテムタイプ（シンプル）
-    IF (SELECT name FROM item_type_name WHERE id = (SELECT name_id FROM item_type WHERE id = simple_itemtype_id))=simple_itemtype_name THEN
+    IF (SELECT COUNT(name_id) FROM item_type WHERE id = simple_itemtype_id)=1 THEN
         RAISE NOTICE 'processing item type: %', simple_itemtype_name;
         FOR key, value IN SELECT * FROM jsonb_each_text(simple_update_dict)
         LOOP
@@ -130,7 +130,7 @@ BEGIN
             UPDATE item_type SET render=replace(render::text, key, value)::jsonb WHERE id = simple_itemtype_id AND render::text like '%' || key || '"%';
             UPDATE item_type SET render=replace(render::text, key, value)::jsonb WHERE id = simple_itemtype_id AND render::text like '%' || key || '[%';
             UPDATE item_type SET render=replace(render::text, key, value)::jsonb WHERE id = simple_itemtype_id AND render::text like '%' || key || '.%';
-            UPDATE item_type_mapping SET mapping=replace(mapping::text, key, value)::jsonb WHERE id = simple_itemtype_id AND mapping::text like '%' || key || '"%';
+            UPDATE item_type_mapping SET mapping=replace(mapping::text, key, value)::jsonb WHERE item_type_id = simple_itemtype_id AND mapping::text like '%' || key || '"%';
             UPDATE records_metadata SET json=replace(json::text, key, value)::jsonb WHERE json::text like '%' || key || '%';
             UPDATE item_metadata SET json=replace(json::text, key, value)::jsonb WHERE json::text like '%' || key || '%';
         END LOOP;
