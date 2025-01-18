@@ -26,6 +26,7 @@ Blueprint.
 
 import json
 import sys
+from urllib.parse import quote_plus
 
 import redis
 from redis import sentinel
@@ -359,6 +360,11 @@ def shib_stub_login():
             return_url = return_url,
             module_name=_('WEKO-Accounts'))
 
+
+@blueprint.app_template_filter('urlencode')
+def urlencode(value):
+    """Encode url value."""
+    return quote_plus(value)
 
 @blueprint.route('/shib/logout')
 def shib_logout():

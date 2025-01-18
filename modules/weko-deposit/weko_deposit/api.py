@@ -2033,8 +2033,15 @@ class WekoRecord(Record):
             TypeError
         """
         from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
-        meta_option, item_type_mapping = get_options_and_order_list(self.get('item_type_id'))
-        hide_list = get_hide_list_by_schema_form(self.get('item_type_id'))
+        item_type_id = self.get('item_type_id')
+        item_type = ItemTypes.get_by_id(item_type_id)
+        hide_list = []
+        if item_type:
+            meta_option, item_type_mapping = get_options_and_order_list(
+                item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
+            hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+        else:
+             meta_option, item_type_mapping = get_options_and_order_list(item_type_id)
         parent_key, title_key, language_key = self.__get_titles_key(
             item_type_mapping, meta_option, hide_list)
         title_metadata = self.get(parent_key)
@@ -2068,10 +2075,16 @@ class WekoRecord(Record):
         items = []
         settings = AdminSettings.get('items_display_settings')
         hide_email_flag = not settings.items_display_email
-        solst, meta_options = get_options_and_order_list(
-            self.get('item_type_id'))
-        hide_list = get_hide_list_by_schema_form(self.get('item_type_id'))
-        item_type = ItemTypes.get_by_id(self.get('item_type_id'))
+
+        item_type_id = self.get('item_type_id')
+        item_type = ItemTypes.get_by_id(item_type_id)
+        hide_list = []
+        if item_type:
+            solst, meta_options = get_options_and_order_list(
+                item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
+            hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+        else:
+             solst, meta_options = get_options_and_order_list(item_type_id)
         meta_list = item_type.render.get('meta_list', []) if item_type else {}
 
         for lst in solst:
@@ -2410,10 +2423,14 @@ class WekoRecord(Record):
 
         item_link.update(relation_data)
 
-    def get_file_data(self):
+    def get_file_data(self, item_type=None):
         """Get file data."""
         item_type_id = self.get('item_type_id')
-        solst, _ = get_options_and_order_list(item_type_id)
+        if item_type:
+            solst, _ = get_options_and_order_list(
+                item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
+        else:
+            solst, _ = get_options_and_order_list(item_type_id)
         items = []
         for lst in solst:
             key = lst[0]
