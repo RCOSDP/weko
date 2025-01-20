@@ -315,13 +315,11 @@ require([
           expirationDateInput.value = formattedDate;
           expirationDateInput.max = maxFormattedDate;
           expirationDateInput.min = todayFormatted;
-          console.log(`Expiration date set to: ${formattedDate}`);
         }
         // フォームのフィールドに値を設定
         const downloadLimitInput = document.querySelector('#download_limit');
         if (downloadLimitInput) {
           downloadLimitInput.value = secretDownloadLimit;
-          console.log(`Download limit set to: ${secretDownloadLimit}`);
           // maxSecretDownloadLimit 以上の入力を制御
           downloadLimitInput.addEventListener('input', function () {
             if (parseInt(downloadLimitInput.value, 10) > maxSecretDownloadLimit) {
@@ -334,14 +332,12 @@ require([
         if (maxExpirationData) {
           const translationDate = maxExpirationData.dataset.expirationDate;
           maxExpirationData.textContent = ` ※${translationDate} ${maxFormattedDate}`;
-          console.log(`Max Expiration Data displayed as: ${translationDate}`);
         }
         // ダウンロード制限の下に表示するメッセージを設定
         const maxDownloadDisplay = document.querySelector('#max_download_display');
         if (maxDownloadDisplay) {
           const downloadcount = maxDownloadDisplay.dataset.downloadCount;
           maxDownloadDisplay.textContent = ` ※${downloadcount} ${maxSecretDownloadLimit}`;
-          console.log(`Max download limit displayed as: ${downloadcount}`);
         }
       })
       .catch(error => {
