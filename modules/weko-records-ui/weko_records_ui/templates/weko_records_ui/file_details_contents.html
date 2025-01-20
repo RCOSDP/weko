@@ -167,7 +167,7 @@
               </table>
             </div>
             <div class="table-responsive">
-              {%- if secret_url_section -%}
+              {%- if show_secret_URL -%}
               <div id="secret_url_section" style="display: none;">
                 {%- for file in files | sort(attribute='key') if file.key == filename -%}
                   {%- set is_billing_file = False -%}
