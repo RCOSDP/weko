@@ -2709,7 +2709,7 @@ class UpdateItem(object):
     """The class about item."""
 
     def publish(self, record):
-        r"""Record publish  status change view.
+        """Record publish  status change view.
 
         Change record publish status with given status and renders record
         export template.
@@ -2718,7 +2718,7 @@ class UpdateItem(object):
         :return: The rendered template.
         """
         from weko_deposit.api import WekoIndexer
-        from weko_records_ui.models import FileOnetimeDownload
+        from weko_records_ui.models import FileSecretDownload
 
         publish_status = record.get('publish_status')
         if not publish_status:
@@ -2729,13 +2729,27 @@ class UpdateItem(object):
         record.commit()
         db.session.commit()
 
-        # シークレットURLの論理削除を実行
-        control_number = record.get('control_number')#control_nuibmer=record_id
-        secret_urls = FileOnetimeDownload.query.filter_by(record_id=control_number, is_deleted=False).all()
-        for urls in secret_urls:
-            #論理削除メソッドを使用
-            urls.delete_logically()
-        db.session.commit()
+        accessrole = None
+
+        # レコード内のすべてのキーと値をループし、"accessrole"を検索
+        for key, value in record.items():
+            # 値が辞書であり、"attribute_value_mlt"キーを持つ場合
+            if isinstance(value, dict):
+                attribute_values = value.get("attribute_value_mlt", [])
+                # attribute_valuesがリストで、最初のアイテムが辞書で "accessrole" が含まれているか確認
+                if attribute_values and isinstance(attribute_values, list):
+                    accessrole = next((item.get("accessrole") for item in attribute_values if isinstance(item, dict) and "accessrole" in item), None)
+                    if accessrole:
+                        break  # 見つかった時ループを終了
+
+        #ワークフロー更新時、accessroleがopen_no, open_date以外の場合、シークレットURLを論理削除
+        if not accessrole in ['open_no', 'open_date']:
+            rec_number = record.get('recid')  # recid=record_id
+            secret_urls = FileSecretDownload.query.filter_by(record_id=rec_number, is_deleted=False).all()
+            for urls in secret_urls:
+                # 論理削除メソッドを使用
+                urls.delete_logically()
+            db.session.commit()
 
         indexer = WekoIndexer()
         indexer.update_es_data(record, update_revision=False, field='publish_status')
