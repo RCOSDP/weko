@@ -97,7 +97,7 @@ DECLARE
     }';
 BEGIN
     -- デフォルトアイテムタイプ（フル）
-    IF (SELECT COUNT(name_id) FROM item_type WHERE id = full_itemtype_id)=1 THEN
+    IF (SELECT COUNT(id) FROM item_type WHERE id = target_full_itemtype_id)=0 THEN
         RAISE NOTICE 'processing item type: %', full_itemtype_name;
         FOR key, value IN SELECT * FROM jsonb_each_text(full_update_dict)
         LOOP
@@ -113,12 +113,10 @@ BEGIN
             UPDATE records_metadata SET json=replace(json::text, key, value)::jsonb WHERE json::text like '%' || key || '%';
             UPDATE item_metadata SET json=replace(json::text, key, value)::jsonb WHERE json::text like '%' || key || '%';
         END LOOP;
-    ELSE
-        RAISE EXCEPTION 'item_type_id and name do not match. id: %, name: %', full_itemtype_id, full_itemtype_name;
     END IF;
 
     -- デフォルトアイテムタイプ（シンプル）
-    IF (SELECT COUNT(name_id) FROM item_type WHERE id = simple_itemtype_id)=1 THEN
+    IF (SELECT COUNT(id) FROM item_type WHERE id = target_simple_itemtype_id)=0 THEN
         RAISE NOTICE 'processing item type: %', simple_itemtype_name;
         FOR key, value IN SELECT * FROM jsonb_each_text(simple_update_dict)
         LOOP
@@ -134,37 +132,9 @@ BEGIN
             UPDATE records_metadata SET json=replace(json::text, key, value)::jsonb WHERE json::text like '%' || key || '%';
             UPDATE item_metadata SET json=replace(json::text, key, value)::jsonb WHERE json::text like '%' || key || '%';
         END LOOP;
-    ELSE
-        RAISE EXCEPTION 'item_type_id and name do not match. id: %, name: %', simple_itemtype_id, simple_itemtype_name;
     END IF;
 
-    -- スペルミス修正
-    FOR key, value IN SELECT * FROM jsonb_each_text(spell_miss_update_dict)
-    LOOP
-        RAISE NOTICE 'fix spell miss: % > %', key, value;
-        UPDATE item_type SET schema=replace(schema::text, key || '"', value || '"')::jsonb WHERE schema::text like '%' || key || '"%';
-        UPDATE item_type SET form=replace(form::text, key || '"', value || '"')::jsonb WHERE form::text like '%' || key || '"%';
-        UPDATE item_type SET form=replace(form::text, key || '[', value || '[')::jsonb WHERE form::text like '%' || key || '[%';
-        UPDATE item_type SET form=replace(form::text, key || '.', value || '.')::jsonb WHERE form::text like '%' || key || '.%';
-        UPDATE item_type SET render=replace(render::text, key || '"', value || '"')::jsonb WHERE render::text like '%' || key || '"%';
-        UPDATE item_type SET render=replace(render::text, key || '[', value || '[')::jsonb WHERE render::text like '%' || key || '[%';
-        UPDATE item_type SET render=replace(render::text, key || '.', value || '.')::jsonb WHERE render::text like '%' || key || '.%';
-
-        UPDATE item_type_mapping SET mapping=replace(mapping::text, key || '"', value || '"')::jsonb WHERE mapping::text like '%' || key || '"%';
-
-        UPDATE item_type_property SET schema=replace(schema::text, key || '"', value || '"')::jsonb WHERE schema::text like '%' || key || '"%';
-        UPDATE item_type_property SET form=replace(form::text, key || '"', value || '"')::jsonb WHERE form::text like '%' || key || '"%';
-        UPDATE item_type_property SET form=replace(form::text, key || '[', value || '[')::jsonb WHERE form::text like '%' || key || '[%';
-        UPDATE item_type_property SET form=replace(form::text, key || '.', value || '.')::jsonb WHERE form::text like '%' || key || '.%';
-        UPDATE item_type_property SET forms=replace(forms::text, key || '"', value || '"')::jsonb WHERE forms::text like '%' || key || '"%';
-        UPDATE item_type_property SET forms=replace(forms::text, key || '[', value || '[')::jsonb WHERE forms::text like '%' || key || '[%';
-        UPDATE item_type_property SET forms=replace(forms::text, key || '.', value || '.')::jsonb WHERE forms::text like '%' || key || '.%';
-
-        UPDATE records_metadata SET json=replace(json::text, key || '"', value || '"')::jsonb WHERE json::text like '%' || key || '"%';
-        UPDATE item_metadata SET json=replace(json::text, key || '"', value || '"')::jsonb WHERE json::text like '%' || key || '"%';
-    END LOOP;
-
-    IF (SELECT id FROM item_type WHERE id = full_itemtype_id) = full_itemtype_id THEN
+    IF (SELECT COUNT(id) FROM item_type WHERE id = target_full_itemtype_id)=0 AND (SELECT COUNT(id) FROM item_type WHERE id = target_simple_itemtype_id)=0 THEN
         RAISE NOTICE 'fix item_type_id';
         CREATE TEMPORARY TABLE tmp_item_type AS SELECT * FROM item_type where id in (full_itemtype_id,simple_itemtype_id);
         CREATE TEMPORARY TABLE tmp_item_type_name  AS SELECT * FROM item_type_name where id in (full_itemtype_name_id,simple_itemtype_name_id);
@@ -198,5 +168,33 @@ BEGIN
         UPDATE records_metadata SET json=replace(json::text,format('"item_type_id": "%s"',full_itemtype_id),format('"item_type_id": "%s"',target_full_itemtype_id))::jsonb WHERE json::text like format('%%"item_type_id": "%s"%%',full_itemtype_id);
         UPDATE records_metadata SET json=replace(json::text,format('"item_type_id": "%s"',simple_itemtype_id),format('"item_type_id": "%s"',target_simple_itemtype_id))::jsonb WHERE json::text like format('%%"item_type_id": "%s"%%',simple_itemtype_id);
     END IF;
+
+    -- スペルミス修正
+    FOR key, value IN SELECT * FROM jsonb_each_text(spell_miss_update_dict)
+    LOOP
+        IF (SELECT COUNT(id) FROM item_type WHERE schema::text like '%' || key || '"%')>0 THEN
+            RAISE NOTICE 'fix spell miss: % > %', key, value;
+            UPDATE item_type SET schema=replace(schema::text, key || '"', value || '"')::jsonb WHERE schema::text like '%' || key || '"%';
+            UPDATE item_type SET form=replace(form::text, key || '"', value || '"')::jsonb WHERE form::text like '%' || key || '"%';
+            UPDATE item_type SET form=replace(form::text, key || '[', value || '[')::jsonb WHERE form::text like '%' || key || '[%';
+            UPDATE item_type SET form=replace(form::text, key || '.', value || '.')::jsonb WHERE form::text like '%' || key || '.%';
+            UPDATE item_type SET render=replace(render::text, key || '"', value || '"')::jsonb WHERE render::text like '%' || key || '"%';
+            UPDATE item_type SET render=replace(render::text, key || '[', value || '[')::jsonb WHERE render::text like '%' || key || '[%';
+            UPDATE item_type SET render=replace(render::text, key || '.', value || '.')::jsonb WHERE render::text like '%' || key || '.%';
+
+            UPDATE item_type_mapping SET mapping=replace(mapping::text, key || '"', value || '"')::jsonb WHERE mapping::text like '%' || key || '"%';
+
+            UPDATE item_type_property SET schema=replace(schema::text, key || '"', value || '"')::jsonb WHERE schema::text like '%' || key || '"%';
+            UPDATE item_type_property SET form=replace(form::text, key || '"', value || '"')::jsonb WHERE form::text like '%' || key || '"%';
+            UPDATE item_type_property SET form=replace(form::text, key || '[', value || '[')::jsonb WHERE form::text like '%' || key || '[%';
+            UPDATE item_type_property SET form=replace(form::text, key || '.', value || '.')::jsonb WHERE form::text like '%' || key || '.%';
+            UPDATE item_type_property SET forms=replace(forms::text, key || '"', value || '"')::jsonb WHERE forms::text like '%' || key || '"%';
+            UPDATE item_type_property SET forms=replace(forms::text, key || '[', value || '[')::jsonb WHERE forms::text like '%' || key || '[%';
+            UPDATE item_type_property SET forms=replace(forms::text, key || '.', value || '.')::jsonb WHERE forms::text like '%' || key || '.%';
+
+            UPDATE records_metadata SET json=replace(json::text, key || '"', value || '"')::jsonb WHERE json::text like '%' || key || '"%';
+            UPDATE item_metadata SET json=replace(json::text, key || '"', value || '"')::jsonb WHERE json::text like '%' || key || '"%';
+        END IF;
+    END LOOP;
 END;
 $$ LANGUAGE plpgsql;
