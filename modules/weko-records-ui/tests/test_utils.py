@@ -3,6 +3,7 @@ import pytest
 from weko_records_ui.utils import (
     convert_token_into_obj,
     is_onetime_file,
+    save_download_log,
     to_utc_datetime,
     create_download_url,
     create_onetime_url_record,
@@ -69,7 +70,8 @@ from invenio_accounts.testutils import login_user_via_session
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from mock import patch
 from weko_deposit.api import WekoRecord
-from weko_records_ui.models import FileOnetimeDownload, FileSecretDownload
+from weko_records_ui.models import (AccessStatus, FileOnetimeDownload,
+    FileSecretDownload, FileUrlDownloadLog, UrlType)
 from weko_records.api import ItemTypes,Mapping
 from werkzeug.exceptions import NotFound
 from weko_admin.models import AdminSettings
@@ -907,10 +909,12 @@ def test_validate_secret_url_generation_request(app):
         ({**base_case, 'send_email': True }, True),
         ({**base_case, 'send_email': None }, False),
         # For timezone_offset_minutes
-        ({**base_case, 'timezone_offset_minutes': 0   }, True),
-        ({**base_case, 'timezone_offset_minutes': 720 }, True),
-        ({**base_case, 'timezone_offset_minutes': -720}, True),
-        ({**base_case, 'timezone_offset_minutes': 800 }, False),
+        ({**base_case, 'timezone_offset_minutes': 0    }, True),
+        ({**base_case, 'timezone_offset_minutes': 720  }, True),
+        ({**base_case, 'timezone_offset_minutes': -720 }, True),
+        ({**base_case, 'timezone_offset_minutes': 800  }, False),
+        ({**base_case, 'timezone_offset_minutes': -800 }, False),
+        ({**base_case, 'timezone_offset_minutes': '100'}, False),
     ]
 
     for request_data, expected in test_cases:
@@ -1361,6 +1365,55 @@ def test_is_onetime_file():
     assert is_onetime_file(mock_record, "file1.txt") is True
     assert is_onetime_file(mock_record, "file2.txt") is False
     assert is_onetime_file(mock_record, "file3.txt") is False
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_save_download_log -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+@patch('weko_records_ui.utils.request')
+def test_save_download_log(request, secret_url, onetime_url):
+    file_name = 'test.txt'
+    record = MagicMock()
+    request.remote_addr = '192.168.56.1'
+    secret_token = secret_url['secret_token']
+
+    # When accessrole is open_no
+    record.get_file_data.return_value = [
+        {'filename': file_name, 'accessrole': 'open_no'}
+    ]
+    open_no_dl = save_download_log(
+        record, file_name, secret_token, is_secret_url=True)
+    assert isinstance(open_no_dl, FileUrlDownloadLog)
+    assert open_no_dl.url_type       is UrlType.SECRET
+    assert open_no_dl.secret_url_id  == 1
+    assert open_no_dl.onetime_url_id is None
+    assert open_no_dl.ip_address     == '192.168.56.1'
+    assert open_no_dl.access_status  is AccessStatus.OPEN_NO
+    assert open_no_dl.used_token     == secret_token
+
+    # When accessrole is open_date
+    record.get_file_data.return_value = [
+        {'filename': file_name, 'accessrole': 'open_date'}
+    ]
+    open_date_dl = save_download_log(
+        record, file_name, secret_token, is_secret_url=True)
+    assert isinstance(open_date_dl, FileUrlDownloadLog)
+    assert open_date_dl.url_type       is UrlType.SECRET
+    assert open_date_dl.secret_url_id  == 1
+    assert open_date_dl.onetime_url_id is None
+    assert open_date_dl.ip_address     == '192.168.56.1'
+    assert open_date_dl.access_status  is AccessStatus.OPEN_DATE
+    assert open_date_dl.used_token     == secret_token
+
+    # When accessrole is open_restricted
+    onetime_token = onetime_url['onetime_token']
+    open_restricted = save_download_log(
+        record, file_name, onetime_token, is_secret_url=False)
+    assert isinstance(open_restricted, FileUrlDownloadLog)
+    assert open_restricted.url_type       is UrlType.ONETIME
+    assert open_restricted.secret_url_id  is None
+    assert open_restricted.onetime_url_id == 1
+    assert open_restricted.ip_address     is None
+    assert open_restricted.access_status  is AccessStatus.OPEN_RESTRICTED
+    assert open_restricted.used_token     == onetime_token
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_RoCrateConverter_convert -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

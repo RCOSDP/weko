@@ -25,6 +25,7 @@ import json
 from os.path import dirname, exists, join
 import mimetypes
 import os
+import re
 import shutil
 import tempfile
 import time
@@ -108,7 +109,8 @@ from weko_records.api import ItemsMetadata, FilesMetadata
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLicenseInfo, FeedbackMailList,SiteLicenseIpAddress
 from weko_records.utils import get_options_and_order_list
 from weko_records_ui.config import WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,RECORDS_UI_ENDPOINTS,WEKO_RECORDS_UI_SECRET_KEY,WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN
-from weko_records_ui.models import PDFCoverPageSettings,FileOnetimeDownload, FilePermission #RocrateMapping
+from weko_records_ui.models import FileSecretDownload, PDFCoverPageSettings,FileOnetimeDownload, FilePermission #RocrateMapping
+from weko_records_ui.utils import create_download_url
 from weko_schema_ui.config import (
     WEKO_SCHEMA_DDI_SCHEMA_NAME,
     WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,
@@ -4484,3 +4486,59 @@ def db_rocrate_mapping(db):
     with db.session.begin_nested():
         db.session.add(rocrate_mapping)
     db.session.commit()
+
+
+@pytest.fixture
+def secret_url(users, params=None):
+    """Fixture that creates secret URL object and provides the token of it.
+
+    Args:
+        params (dict, optional): Custom parameters for the secret object.
+    """
+    params = params or {}
+    ex_date = datetime.now(timezone.utc) + timedelta(days=30)
+    secret_obj = FileSecretDownload.create(
+        creator_id      =params.get('creator_id'     , 1         ),
+        record_id       =params.get('record_id'      , '1'       ),
+        file_name       =params.get('file_name'      , 'test.txt'),
+        label_name      =params.get('label_name'     , 'test_url'),
+        expiration_date =params.get('expiration_date', ex_date   ),
+        download_limit  =params.get('download_limit' , 10        )
+    )
+    secret_url = create_download_url(secret_obj)
+    match = re.search(r'[?&]token=([^&]+)', secret_url)
+    secret_token = match.group(1)
+    return {
+        'secret_obj'  : secret_obj,
+        'secret_token': secret_token,
+        'secret_url'  : secret_url
+    }
+
+
+@pytest.fixture
+def onetime_url(users, params=None):
+    """Fixture that creates onetime URL object and provides the token of it.
+
+    Args:
+        params (dict, optional): Custom parameters for the onetime object.
+    """
+    params = params or {}
+    ex_date = datetime.now(timezone.utc) + timedelta(days=30)
+    onetime_obj = FileOnetimeDownload.create(
+        approver_id     = params.get('approver_id'    , 1                 ),
+        record_id       = params.get('record_id'      , '1'               ),
+        file_name       = params.get('file_name'      , 'test.txt'        ),
+        expiration_date = params.get('expiration_date', ex_date           ),
+        download_limit  = params.get('download_limit' , 10                ),
+        user_mail       = params.get('user_mail'      , 'test@example.org'),
+        is_guest        = params.get('is_guest'       , False             ),
+        extra_info      = params.get('extra_info'     , {'activity_id': 1})
+    )
+    onetime_url = create_download_url(onetime_obj)
+    match = re.search(r'[?&]token=([^&]+)', onetime_url)
+    onetime_token = match.group(1)
+    return {
+        'onetime_obj'  : onetime_obj,
+        'onetime_token': onetime_token,
+        'onetime_url'  : onetime_url
+    }
