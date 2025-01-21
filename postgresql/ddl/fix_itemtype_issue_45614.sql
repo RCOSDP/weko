@@ -111,7 +111,7 @@ BEGIN
             UPDATE item_type SET render=replace(render::text, key, value)::jsonb WHERE id = full_itemtype_id AND render::text like '%' || key || '[%';
             UPDATE item_type SET render=replace(render::text, key, value)::jsonb WHERE id = full_itemtype_id AND render::text like '%' || key || '.%';
             UPDATE item_type_mapping SET mapping=replace(mapping::text, key, value)::jsonb WHERE item_type_id=full_itemtype_id AND mapping::text like '%' || key || '"%';
-            UPDATE records_metadata SET json=replace(json::text, key, value)::jsonb WHERE json->>'item_type_id'=full_itemtype_id AND json::text like '%' || key || '%';
+            UPDATE records_metadata SET json=replace(json::text, key, value)::jsonb WHERE json->>'item_type_id'=CAST(full_itemtype_id as text) AND json::text like '%' || key || '%';
             UPDATE item_metadata SET json=replace(json::text, key, value)::jsonb WHERE item_type_id=full_itemtype_id AND json::text like '%' || key || '%';
         END LOOP;
         RAISE NOTICE 'end: %', timeofday();
@@ -132,7 +132,7 @@ BEGIN
             UPDATE item_type SET render=replace(render::text, key, value)::jsonb WHERE id = simple_itemtype_id AND render::text like '%' || key || '[%';
             UPDATE item_type SET render=replace(render::text, key, value)::jsonb WHERE id = simple_itemtype_id AND render::text like '%' || key || '.%';
             UPDATE item_type_mapping SET mapping=replace(mapping::text, key, value)::jsonb WHERE item_type_id = simple_itemtype_id AND mapping::text like '%' || key || '"%';
-            UPDATE records_metadata SET json=replace(json::text, key, value)::jsonb WHERE json->>'item_type_id'=simple_itemtype_id AND json::text like '%' || key || '%';
+            UPDATE records_metadata SET json=replace(json::text, key, value)::jsonb WHERE json->>'item_type_id'=CAST(simple_itemtype_id as text) AND json::text like '%' || key || '%';
             UPDATE item_metadata SET json=replace(json::text, key, value)::jsonb WHERE item_type_id=simple_itemtype_id AND json::text like '%' || key || '%';
         END LOOP;
         RAISE NOTICE 'end: %', timeofday();
@@ -170,8 +170,8 @@ BEGIN
         UPDATE item_metadata SET json=replace(json::text,format('"$schema": "%s"',full_itemtype_id),format('"$schema": "/items/jsonschema/%s"',target_full_itemtype_id))::jsonb WHERE item_type_id=full_itemtype_id AND json::text like format('%%"$schema": "%s"%%',full_itemtype_id);
         UPDATE item_metadata SET json=replace(json::text,format('"$schema": "%s"',simple_itemtype_id),format('"$schema": "/items/jsonschema/%s"',target_simple_itemtype_id))::jsonb WHERE item_type_id=simple_itemtype_id AND json::text like format('%%"$schema": "%s"%%',simple_itemtype_id);
 
-        UPDATE records_metadata SET json=replace(json::text,format('"item_type_id": "%s"',full_itemtype_id),format('"item_type_id": "%s"',target_full_itemtype_id))::jsonb WHERE json->>'item_type_id'=full_itemtype_id AND json::text like format('%%"item_type_id": "%s"%%',full_itemtype_id);
-        UPDATE records_metadata SET json=replace(json::text,format('"item_type_id": "%s"',simple_itemtype_id),format('"item_type_id": "%s"',target_simple_itemtype_id))::jsonb WHERE json->>'item_type_id'=simple_itemtype_id AND json::text like format('%%"item_type_id": "%s"%%',simple_itemtype_id);
+        UPDATE records_metadata SET json=replace(json::text,format('"item_type_id": "%s"',full_itemtype_id),format('"item_type_id": "%s"',target_full_itemtype_id))::jsonb WHERE json->>'item_type_id'=CAST(full_itemtype_id as text) AND json::text like format('%%"item_type_id": "%s"%%',full_itemtype_id);
+        UPDATE records_metadata SET json=replace(json::text,format('"item_type_id": "%s"',simple_itemtype_id),format('"item_type_id": "%s"',target_simple_itemtype_id))::jsonb WHERE json->>'item_type_id'=CAST(simple_itemtype_id as text) AND json::text like format('%%"item_type_id": "%s"%%',simple_itemtype_id);
         RAISE NOTICE 'end: %', timeofday();
     END IF;
 
