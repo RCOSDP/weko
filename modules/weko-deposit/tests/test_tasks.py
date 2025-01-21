@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 """Module tests."""
-
+import uuid
 import pytest
 import json
 from elasticsearch.exceptions import NotFoundError
@@ -27,8 +27,9 @@ from tests.helpers import json_data
 from mock import patch, MagicMock
 from invenio_pidstore.errors import PIDDoesNotExistError
 from weko_authors.models import AuthorsAffiliationSettings,AuthorsPrefixSettings
+from weko_records.models import FeedbackMailList
 
-from weko_deposit.tasks import update_items_by_authorInfo
+from weko_deposit.tasks import update_items_by_authorInfo, update_feedback_mail_data
 [
     {
         "recid": "1",
@@ -223,3 +224,29 @@ def test_update_authorInfo(app, db, records,mocker):
         with patch("weko_deposit.tasks.RecordIndexer", MockRecordIndexer):
             update_items_by_authorInfo(["1","xxx"], _target)
 
+
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_update_feedback_mail_data -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+def test_update_feedback_mail_data(app, db):
+    feedback_mail_list1 = FeedbackMailList(
+        id=1,
+        item_id=uuid.uuid4(),
+        mail_list=[],
+        account_author="2"
+    )
+    feedback_mail_list2 = FeedbackMailList(
+        id=2,
+        item_id=uuid.uuid4(),
+        mail_list=[],
+        account_author="3"
+    )
+    db.session.add(feedback_mail_list1)
+    db.session.add(feedback_mail_list2)
+    db.session.commit()
+
+    update_feedback_mail_data({"pk_id": "1"}, ["2", "3"])
+
+    feedback_mail_datas = FeedbackMailList.query.filter(
+        FeedbackMailList.account_author.in_(["1"])).all()
+    
+    assert feedback_mail_datas[0].account_author == "1"
+    assert feedback_mail_datas[1].account_author == "1"
