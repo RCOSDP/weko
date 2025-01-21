@@ -155,6 +155,8 @@ BEGIN
         DROP TABLE tmp_item_type_name;
         DROP TABLE tmp_item_type;
 
+        UPDATE item_type_edit_history SET item_type_id = target_full_itemtype_id WHERE item_type_id = full_itemtype_id;
+        UPDATE item_type_edit_history SET item_type_id = target_simple_itemtype_id WHERE item_type_id = simple_itemtype_id;
         UPDATE workflow_workflow SET itemtype_id = target_full_itemtype_id WHERE itemtype_id = full_itemtype_id;
         UPDATE workflow_workflow SET itemtype_id = target_simple_itemtype_id WHERE itemtype_id = simple_itemtype_id;
         UPDATE item_metadata SET item_type_id = target_full_itemtype_id WHERE item_type_id = full_itemtype_id;
