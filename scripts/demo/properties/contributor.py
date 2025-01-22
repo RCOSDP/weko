@@ -329,8 +329,8 @@ def schema(title="", multi_flag=multiple_flag):
                                         "contributorAffiliationScheme": {
                                             "type": ["null", "string"],
                                             "format": "select",
-                                            "enum": [],
-                                            #"enum": config.AFFILIATION_SCHEME_VAL,
+                                            # "enum": [],
+                                            "enum": config.AFFILIATION_SCHEME_VAL,
                                             "title": "所属機関識別子Scheme",
                                         },
                                         "contributorAffiliationNameIdentifier": {

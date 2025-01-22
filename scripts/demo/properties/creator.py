@@ -285,12 +285,12 @@ def schema(title="", multi_flag=multiple_flag):
                                         "affiliationNameIdentifierScheme": {
                                             "type": ["null", "string"],
                                             "format": "select",
-                                            "enum": [],
+                                            # "enum": [],
                                             # "currentEnum": [],
-                                            # "enum": config.AFFILIATION_SCHEME_VAL,
-                                            # "currentEnum": (
-                                            #     config.AFFILIATION_SCHEME_VAL
-                                            # )[1:],
+                                            "enum": config.AFFILIATION_SCHEME_VAL,
+                                            "currentEnum": (
+                                                config.AFFILIATION_SCHEME_VAL
+                                            )[1:],
                                             "title": "所属機関識別子Scheme",
                                             "title_i18n": {
                                                 "en": "Affiliation Name Identifier Scheme",
