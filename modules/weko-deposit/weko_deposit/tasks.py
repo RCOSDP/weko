@@ -34,11 +34,13 @@ from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm.attributes import flag_modified
 from weko_authors.models import Authors, AuthorsPrefixSettings, AuthorsAffiliationSettings
 from weko_records.api import ItemsMetadata
 from weko_records.models import FeedbackMailList
 from weko_schema_ui.models import PublishStatus
 from weko_workflow.utils import delete_cache_data, update_cache_data
+from weko_workflow.models import ActionFeedbackMail, Activity, ActivityStatusPolicy
 
 from .api import WekoDeposit
 
@@ -497,6 +499,23 @@ def update_feedback_mail_data(target, origin_pkid_list):
             for fdata in feedback_mail_datas:
                 fdata.account_author = target.get('pk_id')
                 db.session.merge(fdata)
+            action_feedback_mails = ActionFeedbackMail.query \
+                    .outerjoin(Activity,
+                               ActionFeedbackMail.activity_id==Activity.activity_id) \
+                    .filter(Activity.activity_status.in_(
+                        [ActivityStatusPolicy.ACTIVITY_BEGIN,
+                         ActivityStatusPolicy.ACTIVITY_MAKING])) \
+                    .all()
+            for adata in action_feedback_mails:
+                for j, fdata in enumerate(adata.feedback_maillist):
+                    if str(fdata.get("author_id")) in origin_pkid_list:
+                        adata.feedback_maillist[j]["author_id"] = target.get('pk_id')
+                        if len(target.get("emailInfo", [])) > 0 and \
+                                target.get("emailInfo")[0].get("email"):
+                            adata.feedback_maillist[j]["email"] = \
+                                target.get("emailInfo")[0].get("email")
+                flag_modified(adata, 'feedback_maillist')
+                db.session.merge(adata)
         db.session.commit()
     except Exception as ex:
         current_app.logger.debug(ex)
