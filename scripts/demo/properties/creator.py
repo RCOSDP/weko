@@ -235,7 +235,7 @@ def schema(title="", multi_flag=multiple_flag):
                                 "type": ["null", "string"],
                                 "format": "select",
                                 "enum": [],
-                                "currentEnum": [],
+                                # "currentEnum": [],
                                 # "enum": config.CREATOR_IDENTIFIER_SCHEMA_VAL,
                                 # "currentEnum": (
                                 #                 config.CREATOR_IDENTIFIER_SCHEMA_VAL
@@ -286,7 +286,7 @@ def schema(title="", multi_flag=multiple_flag):
                                             "type": ["null", "string"],
                                             "format": "select",
                                             "enum": [],
-                                            "currentEnum": [],
+                                            # "currentEnum": [],
                                             # "enum": config.AFFILIATION_SCHEME_VAL,
                                             # "currentEnum": (
                                             #     config.AFFILIATION_SCHEME_VAL

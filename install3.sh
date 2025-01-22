@@ -6,7 +6,7 @@ DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker-compose -f docker-compose2.y
 
 # Initialize resources
 docker-compose -f docker-compose2.yml run --rm web ./scripts/populate-instance.sh
-docker cp scripts/demo/item_type4.sql $(docker-compose -f docker-compose2.yml ps -q postgresql):/tmp/item_type.sql
+docker cp scripts/demo/item_type.sql $(docker-compose -f docker-compose2.yml ps -q postgresql):/tmp/item_type.sql
 docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio -f /tmp/item_type.sql
 docker cp scripts/demo/indextree.sql $(docker-compose -f docker-compose2.yml ps -q postgresql):/tmp/indextree.sql
 docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio -f /tmp/indextree.sql
