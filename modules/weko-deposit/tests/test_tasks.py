@@ -28,6 +28,7 @@ from mock import patch, MagicMock
 from invenio_pidstore.errors import PIDDoesNotExistError
 from weko_authors.models import AuthorsAffiliationSettings,AuthorsPrefixSettings
 from weko_records.models import FeedbackMailList
+from weko_workflow.models import ActionFeedbackMail
 
 from weko_deposit.tasks import update_items_by_authorInfo, update_feedback_mail_data
 [
@@ -226,7 +227,7 @@ def test_update_authorInfo(app, db, records,mocker):
 
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_update_feedback_mail_data -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-def test_update_feedback_mail_data(app, db):
+def test_update_feedback_mail_data(app, db, db_activity):
     feedback_mail_list1 = FeedbackMailList(
         id=1,
         item_id=uuid.uuid4(),
@@ -247,6 +248,24 @@ def test_update_feedback_mail_data(app, db):
 
     feedback_mail_datas = FeedbackMailList.query.filter(
         FeedbackMailList.account_author.in_(["1"])).all()
-    
-    assert feedback_mail_datas[0].account_author == "1"
-    assert feedback_mail_datas[1].account_author == "1"
+    assert len(feedback_mail_datas) == 2
+
+    action_feedback_mail = ActionFeedbackMail(
+        id=1,
+        activity_id='A1',
+        action_id=3,
+        feedback_maillist=[
+            {"email": "c@test.com", "author_id": ""},
+            {"email": "b@test.com", "author_id": "2"}
+        ]
+    )
+    db.session.add(action_feedback_mail)
+    db.session.commit()
+
+    update_feedback_mail_data({"pk_id": "1", "emailInfo": [{"email": "a@test.com"}]}, ["2"])
+
+    action_feedback_mails = ActionFeedbackMail.query.all()
+    assert action_feedback_mails.feedback_maillist == [
+        {"email": "c@test.com", "author_id": ""},
+        {"email": "a@test.com", "author_id": "1"}
+    ]
