@@ -2742,13 +2742,16 @@ class UpdateItem(object):
                     if accessrole:
                         break  # 見つかった時ループを終了
 
-        #ワークフロー更新時、accessroleがopen_no, open_date以外の場合、シークレットURLを論理削除
-        if not accessrole in ['open_no', 'open_date']:
+        #ワークフロー更新時、accessroleがopen_no, open_dateまたはNone以外の場合、シークレットURLを論理削除
+        if accessrole and accessrole not in ['open_no', 'open_date']:
             rec_number = record.get('recid')  # recid=record_id
-            secret_urls = FileSecretDownload.query.filter_by(record_id=rec_number, is_deleted=False).all()
-            for urls in secret_urls:
-                # 論理削除メソッドを使用
-                urls.delete_logically()
+            if rec_number is not None:
+                secret_urls = FileSecretDownload.query.filter_by(record_id=rec_number, is_deleted=False).all()
+                for urls in secret_urls:
+                    # 論理削除メソッドを使用
+                    urls.delete_logically()
+                    # 処理するデータ量に応じて以下のような一括で論理削除を行うような処理を使用する。
+                    #FileSecretDownload.query.filter_by(record_id=rec_number, is_deleted=False).update({'is_deleted': True})
             db.session.commit()
 
         indexer = WekoIndexer()

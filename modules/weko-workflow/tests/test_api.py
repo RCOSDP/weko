@@ -1,6 +1,11 @@
 from flask_login.utils import login_user
 
-from weko_workflow.api import Flow, WorkActivity
+from weko_workflow.api import Flow, WorkActivity,UpdateItem, PublishStatus
+import unittest
+from unittest.mock import MagicMock, patch
+from weko_deposit.api import WekoIndexer
+from weko_records_ui.models import FileSecretDownload
+from weko_schema_ui.models import PublishStatus
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_Flow_action -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_Flow_action(app, client, users, db, action_data):
@@ -134,3 +139,97 @@ def test_WorkActivity_get_corresponding_usage_activities(app, db_register):
     usage_application_list, output_report_list = activity.get_corresponding_usage_activities(1)
     assert usage_application_list == {'activity_data_type': {}, 'activity_ids': []}
     assert output_report_list == {'activity_data_type': {}, 'activity_ids': []}
+
+from unittest.mock import call, patch, MagicMock
+
+class MockRecord(dict):
+    def commit(self):
+        pass
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_publish -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@patch('weko_records_ui.models.FileSecretDownload')
+@patch('weko_deposit.api.WekoIndexer')
+@patch('weko_workflow.api.db.session.commit')
+def test_publish(mock_db_commit, mock_WekoIndexer, mock_FileSecretDownload):
+    def create_mock_record(publish_status, accessrole, recid='12345'):
+        record = MockRecord({
+            'publish_status': publish_status,
+            'recid': recid,
+            'some_field': {
+                'attribute_value_mlt': [
+                    {'accessrole': accessrole}
+                ]
+            }
+        })
+        record.commit = MagicMock()
+        return record
+
+    def assert_publish(record, reset_mock=True):
+        update_item.publish(record)
+        assert record['publish_status'] == PublishStatus.PUBLIC.value
+        record.commit.assert_called_once()
+        mock_db_commit.assert_called()
+        mock_WekoIndexer.return_value.update_es_data.assert_called_with(record, update_revision=False, field='publish_status')
+        if reset_mock:
+            mock_FileSecretDownload.query.filter_by.return_value.all.reset_mock()
+
+    # Mock record objects
+    record1 = create_mock_record(None, None)
+    record2 = create_mock_record(PublishStatus.PRIVATE.value, 'open_date')
+    record3 = create_mock_record(PublishStatus.NEW.value, 'open_no')
+    record4 = create_mock_record(PublishStatus.DELETE.value, 'other_date')
+    record5 = create_mock_record(PublishStatus.PUBLIC.value, 'other_date', None)
+
+    # Mock secret URLs
+    mock_secret_url = MagicMock()
+    mock_secret_url.delete_logically = MagicMock()
+    mock_FileSecretDownload.query.filter_by.return_value.all.return_value = [mock_secret_url]
+
+    # Create instance of UpdateItem
+    update_item = UpdateItem()
+
+    # record1のテスト
+    assert_publish(record1)
+
+    # record2のテスト
+    assert_publish(record2)
+
+    # record3のテスト
+    assert_publish(record3)
+
+    # record4のテスト
+    assert_publish(record4, reset_mock=False)
+    # record4のシークレットURL削除確認
+    mock_FileSecretDownload.query.filter_by.assert_called_with(record_id='12345', is_deleted=False)
+    assert mock_secret_url.delete_logically.call_count == 1
+
+    # モックの呼び出し履歴をリセット
+    mock_FileSecretDownload.query.filter_by.reset_mock()
+    mock_secret_url.delete_logically.reset_mock()
+
+    # record5のテスト (recidがNoneの場合)
+    assert_publish(record5, reset_mock=False)
+    mock_FileSecretDownload.query.filter_by.assert_not_called()
+    mock_secret_url.delete_logically.assert_not_called()
+
+    # attribute_value_mltが空のリストの場合のテスト
+    record_empty_role = MockRecord({
+        'publish_status': PublishStatus.PRIVATE.value,
+        'recid': '12345',
+        'some_field': {
+            'attribute_value_mlt': []
+        }
+    })
+    update_item.publish(record_empty_role)
+    assert record_empty_role['publish_status'] == PublishStatus.PUBLIC.value
+
+    # "accessrole"が欠落しているケースのテスト
+    record_no_role = MockRecord({
+        'publish_status': PublishStatus.PRIVATE.value,
+        'recid': '12345',
+        'some_field': {
+            'attribute_value_mlt': [{}]
+        }
+    })
+    update_item.publish(record_no_role)
+    assert record_no_role['publish_status'] == PublishStatus.PUBLIC.value
