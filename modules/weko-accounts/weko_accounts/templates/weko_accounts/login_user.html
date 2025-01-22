@@ -18,7 +18,7 @@
 # MA 02111-1307, USA.
 #}
 
-{%- if config.WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED and config.WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED and config.WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED %}
+- if config.WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED and config.WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED and config.WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED %}
 {%- set url_args = request.args.get('next', '/') | urlencode -%}
 <meta http-equiv="Refresh" content="0; url={{ config.WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL.format(request.url_root) + request.path + '?next=' + url_args }}" />
 {%- else %}
@@ -48,6 +48,7 @@
         {% endif %}
         {%- endblock form_header %}
       
+        {%- if config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] %}
         <div class="text-center">
           <label style="margin-bottom: 15px;">{{_('Institutional Login for institutions in Japan.')}}</label>
           <img src="https://www.gakunin.jp/themes/custom/gakunin/logo.svg" width="100px" style="vertical-align: sub;">
@@ -327,12 +328,10 @@
         </noscript>
   
         <!-- EMBEDDED-WAYF-END -->
-      </div>
-
-      <div class="panel-body">
         <div class="text-divider">
           OR
         </div>
+        {%- endif %}
 
         {%- block form_outer %}    
         {%- with form = login_user_form %}
@@ -346,7 +345,6 @@
         {%- endwith %}
         {%- endblock form_outer %}
       </div>
-
     {%- block registerable %}
     {%- if security.registerable %}
     <div class="panel-footer text-center">
