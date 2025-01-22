@@ -200,6 +200,7 @@ def schema(title="", multi_flag=multiple_flag):
                                 "format": "select",
                                 "title": "寄与者識別子Scheme",
                                 "type": ["null", "string"],
+                                "enum": [],
                             },
                             "nameIdentifierURI": {
                                 "format": "text",
@@ -328,6 +329,7 @@ def schema(title="", multi_flag=multiple_flag):
                                         "contributorAffiliationScheme": {
                                             "type": ["null", "string"],
                                             "format": "select",
+                                            # "enum": [],
                                             "enum": config.AFFILIATION_SCHEME_VAL,
                                             "title": "所属機関識別子Scheme",
                                         },
