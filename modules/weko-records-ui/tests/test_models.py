@@ -1,6 +1,5 @@
 import io
 from datetime import datetime, timedelta, timezone
-from sqlite3 import IntegrityError
 from unittest import mock  # python3
 #from unittest.mock import MagicMock
 
@@ -15,13 +14,10 @@ from invenio_accounts.models import Role, User
 from invenio_accounts.testutils import create_test_user, login_user_via_session
 from mock import patch
 
-from weko_records_ui.models import (
-    InstitutionName
-    ,FileSecretDownload
-    ,FilePermission
-    ,FileOnetimeDownload
-)
-    
+from weko_records_ui.models import (AccessStatus, FileUrlDownloadLog,
+    InstitutionName, FileSecretDownload, FilePermission ,FileOnetimeDownload,
+    UrlType)
+
 
 institution_name = InstitutionName(
     name="test"
@@ -368,3 +364,148 @@ def test_find_downloadable_only(app,db):
 
         recs = FileOnetimeDownload.find_downloadable_only(user_mail=user_mail,record_id=record_id,file_name=file_name)
         assert len(recs) == 2
+
+
+class TestFileUrlDownloadLog:
+    # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::TestFileUrlDownloadLog::test_init -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+    def test_init(self):
+        secret_dl_data = {
+            'url_type': UrlType.SECRET,
+            'secret_url_id': 1,
+            'onetime_url_id': None,
+            'ip_address': '192.168.56.1',
+            'access_status': AccessStatus.OPEN_NO,
+            'used_token': 'test token'
+        }
+        # When each key is present
+        log_obj = FileUrlDownloadLog(**secret_dl_data)
+        for key, value in secret_dl_data.items():
+            assert getattr(log_obj, key) == value
+        #  When each key is missing
+        for key in secret_dl_data.keys():
+            bad_data = secret_dl_data.copy()
+            bad_data.pop(key)
+            with pytest.raises(TypeError):
+                FileUrlDownloadLog(**bad_data)
+
+        onetime_dl_data = {
+            'url_type': UrlType.ONETIME,
+            'secret_url_id': None,
+            'onetime_url_id': 1,
+            'ip_address': None,
+            'access_status': AccessStatus.OPEN_RESTRICTED,
+            'used_token': 'test token'
+        }
+        # When each key is present
+        log_obj = FileUrlDownloadLog(**onetime_dl_data)
+        for key, value in onetime_dl_data.items():
+            assert getattr(log_obj, key) == value
+        #  When each key is missing
+        for key in onetime_dl_data.keys():
+            bad_data = onetime_dl_data.copy()
+            bad_data.pop(key)
+            with pytest.raises(TypeError):
+                FileUrlDownloadLog(**bad_data)
+
+    # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::TestFileUrlDownloadLog::test_create -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+    def test_create(self, secret_url, onetime_url):
+        # Happy path with secret URL(open_no)
+        open_no = {
+            'url_type': UrlType.SECRET,
+            'secret_url_id': secret_url['secret_obj'].id,
+            'onetime_url_id': None,
+            'ip_address': '192.168.56.1',
+            'access_status': AccessStatus.OPEN_NO,
+            'used_token': secret_url['secret_token']
+        }
+        assert FileUrlDownloadLog.query.count() == 0
+        log_obj = FileUrlDownloadLog.create(**open_no)
+        assert isinstance(log_obj, FileUrlDownloadLog)
+        assert FileUrlDownloadLog.query.count() == 1
+        log_rec = FileUrlDownloadLog.query.filter_by(id=1).first()
+        for key, value in open_no.items():
+            assert getattr(log_rec, key) == value
+
+        # Happy path with secret URL(open_date)
+        open_date = {
+            'url_type': UrlType.SECRET,
+            'secret_url_id': secret_url['secret_obj'].id,
+            'onetime_url_id': None,
+            'ip_address': '192.168.56.1',
+            'access_status': AccessStatus.OPEN_DATE,
+            'used_token': secret_url['secret_token']
+        }
+        assert FileUrlDownloadLog.query.count() == 1
+        log_obj = FileUrlDownloadLog.create(**open_date)
+        assert isinstance(log_obj, FileUrlDownloadLog)
+        assert FileUrlDownloadLog.query.count() == 2
+        log_rec = FileUrlDownloadLog.query.filter_by(id=2).first()
+        for key, value in open_date.items():
+            assert getattr(log_rec, key) == value
+
+        # Happy path with onetime URL(open_restricted)
+        open_restricted = {
+            'url_type': UrlType.ONETIME,
+            'secret_url_id': None,
+            'onetime_url_id': onetime_url['onetime_obj'].id,
+            'ip_address': None,
+            'access_status': AccessStatus.OPEN_RESTRICTED,
+            'used_token': onetime_url['onetime_token']
+        }
+        assert FileUrlDownloadLog.query.count() == 2
+        log_obj = FileUrlDownloadLog.create(**open_restricted)
+        assert isinstance(log_obj, FileUrlDownloadLog)
+        assert FileUrlDownloadLog.query.count() == 3
+        log_rec = FileUrlDownloadLog.query.filter_by(id=3).first()
+        for key, value in open_restricted.items():
+            assert getattr(log_rec, key) == value
+
+        # Either secret_url_id or onetime_url_id must be null
+        secret_id_err = open_no.copy()
+        secret_id_err['onetime_url_id'] = onetime_url['onetime_obj'].id
+        with pytest.raises(IntegrityError):
+            FileUrlDownloadLog.create(**secret_id_err)
+        onetime_id_err = open_restricted.copy()
+        onetime_id_err['secret_url_id'] = secret_url['secret_obj'].id
+        with pytest.raises(IntegrityError):
+            FileUrlDownloadLog.create(**onetime_id_err)
+
+        # Either secret_url_id or onetime_url_id must be present
+        no_id_err = open_no.copy()
+        no_id_err['secret_url_id'] = None
+        with pytest.raises(IntegrityError):
+            FileUrlDownloadLog.create(**no_id_err)
+        no_id_err = open_restricted.copy()
+        no_id_err['onetime_url_id'] = None
+        with pytest.raises(IntegrityError):
+            FileUrlDownloadLog.create(**no_id_err)
+
+        # ip_address must be present if url_type is secret
+        secret_ip_err = open_no.copy()
+        secret_ip_err['ip_address'] = None
+        with pytest.raises(IntegrityError):
+            FileUrlDownloadLog.create(**secret_ip_err)
+
+        # ip_address must be null if url_type is onetime
+        onetime_ip_err = open_restricted.copy()
+        onetime_ip_err['ip_address'] = open_no['ip_address']
+        with pytest.raises(IntegrityError):
+            FileUrlDownloadLog.create(**onetime_ip_err)
+
+        # access_status must be 'open_no' or 'open_date' if url_type is secret
+        secret_access_err = open_no.copy()
+        secret_access_err['access_status'] = AccessStatus.OPEN_RESTRICTED
+        with pytest.raises(IntegrityError):
+            FileUrlDownloadLog.create(**secret_access_err)
+
+        # access_status must be 'open_restricted' if url_type is onetime
+        onetime_access_err = open_restricted.copy()
+        onetime_access_err['access_status'] = AccessStatus.OPEN_NO
+        with pytest.raises(IntegrityError):
+            FileUrlDownloadLog.create(**onetime_access_err)
+
+        # used_token must be present
+        token_err = open_no.copy()
+        token_err['used_token'] = None
+        with pytest.raises(IntegrityError):
+            FileUrlDownloadLog.create(**token_err)

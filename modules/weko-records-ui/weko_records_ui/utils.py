@@ -61,7 +61,7 @@ from weko_records_ui.models import InstitutionName
 from weko_workflow.models import Activity
 from weko_workflow.utils import get_item_info, process_send_mail, set_mail_info
 
-from .models import FileOnetimeDownload, FilePermission, FileSecretDownload
+from .models import AccessStatus, FileOnetimeDownload, FilePermission, FileSecretDownload, FileUrlDownloadLog, UrlType
 from .permissions import check_create_usage_report, \
     check_file_download_permission, check_user_group_permission, \
     is_open_restricted
@@ -2050,3 +2050,54 @@ def is_onetime_file(record, file_name):
         if file_data.get('filename') == file_name:
             return file_data.get('accessrole') == 'open_restricted'
     return False
+
+
+def save_download_log(record, file_name, token, is_secret_url):
+    """Save the download log for the given token.
+
+    Befor calling this function, the token must be validated by the function
+    'validate_url_download()' to ensure that the token is valid. Especially,
+    the 'accessrole' value in the 'file_data' must be already checked.
+
+    Args:
+        record (WekoRecord): The record metadata of the item.
+        file_name (str): The name of the downloaded file.
+        token (str): The token used for the download.
+        is_secret_url (bool): True if for secret URL, False if for onetime URL.
+
+    Raises:
+        Exception: If an unexpected error occurs during the log creation.
+
+    Returns:
+        FileUrlDownloadLog: The created download log object.
+    """
+    target_data = {}
+    for file_data in record.get_file_data():
+        if file_data.get('filename') == file_name:
+            target_data = file_data
+            break
+    url_obj = convert_token_into_obj(token, is_secret_url)
+    if is_secret_url:
+        file_access_role = target_data.get('accessrole')
+        access_status = (
+            AccessStatus.OPEN_NO
+            if file_access_role == 'open_no'
+            else AccessStatus.OPEN_DATE  # Assume 'open_date'
+        )
+        url_type = UrlType.SECRET
+        secret_url_id = url_obj.id
+        onetime_url_id = None
+    else:
+        access_status = AccessStatus.OPEN_RESTRICTED
+        url_type = UrlType.ONETIME
+        secret_url_id = None
+        onetime_url_id = url_obj.id
+
+    return FileUrlDownloadLog.create(
+        url_type       = url_type,
+        secret_url_id  = secret_url_id,
+        onetime_url_id = onetime_url_id,
+        ip_address     = request.remote_addr,
+        access_status  = access_status,
+        used_token     = token,
+    )
