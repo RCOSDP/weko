@@ -273,33 +273,6 @@ def post_service_document():
 
     item["root_path"] = os.path.join(data_path, "data")
 
-    # import item
-
-    ### TODO: Check and fix code below.
-    # response = {}
-    # if register_format == 'Direct':
-
-    #     item["root_path"] = data_path+"/data"
-
-    #     import_result = import_items_to_system(item, None)
-    #     if not import_result.get('success'):
-    #         raise WekoSwordserverException('Error in import_items_to_system: {0}'.format(item.get('error_id')), ErrorType.ServerError)
-    #     recid = import_result.get('recid')
-    #     response = jsonify(_get_status_document(recid))
-    # elif register_format == 'Workflow':
-    #     try:
-    #         activity, recid = create_activity_from_jpcoar(check_result, data_path)
-    #     except:
-    #         raise WekoSwordserverException('Error in create_activity_from_jpcoar', ErrorType.ServerError)
-    #     response = jsonify(_get_status_workflow_document(activity, recid))
-    # else:
-    #     if os.path.exists(data_path):
-    #         shutil.rmtree(data_path)
-    #         TempDirInfo().delete(data_path)
-    #     raise WekoSwordserverException('Invalid register format has been set for admin setting', ErrorType.ServerError)
-    ###
-
-    ## ここいる？
     owner = -1
     if current_user.is_authenticated:
         owner = current_user.id
