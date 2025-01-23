@@ -2729,29 +2729,34 @@ class UpdateItem(object):
         record.commit()
         db.session.commit()
 
-        accessrole = None
+        # レコード内のすべてのキーと値をループし、"attribute_value_mlt"の中のすべての"accessrole"と"filename"のペアを検索
+        file_access_pairs = []
 
-        # レコード内のすべてのキーと値をループし、"accessrole"を検索
         for key, value in record.items():
             # 値が辞書であり、"attribute_value_mlt"キーを持つ場合
             if isinstance(value, dict):
                 attribute_values = value.get("attribute_value_mlt", [])
-                # attribute_valuesがリストで、最初のアイテムが辞書で "accessrole" が含まれているか確認
+                # attribute_valuesがリストで、最初のアイテムが辞書で "accessrole" と "filename" が含まれているか確認
                 if attribute_values and isinstance(attribute_values, list):
-                    accessrole = next((item.get("accessrole") for item in attribute_values if isinstance(item, dict) and "accessrole" in item), None)
-                    if accessrole:
-                        break  # 見つかった時ループを終了
+                    for item in attribute_values:
+                        if isinstance(item, dict):
+                            accessrole = item.get("accessrole")
+                            filename = item.get("filename")
+                            if accessrole and filename:
+                                file_access_pairs.append((filename, accessrole))
 
         #ワークフロー更新時、accessroleがopen_no, open_dateまたはNone以外の場合、シークレットURLを論理削除
-        if accessrole and accessrole not in ['open_no', 'open_date']:
-            rec_number = record.get('recid')  # recid=record_id
-            if rec_number is not None:
-                secret_urls = FileSecretDownload.query.filter_by(record_id=rec_number, is_deleted=False).all()
-                for urls in secret_urls:
-                    # 論理削除メソッドを使用
-                    urls.delete_logically()
-                    # 処理するデータ量に応じて以下のような一括で論理削除を行うような処理を使用する。
-                    #FileSecretDownload.query.filter_by(record_id=rec_number, is_deleted=False).update({'is_deleted': True})
+        rec_number = record.get('recid')  # recid=record_id
+        if rec_number is not None:
+            for filename, accessrole in file_access_pairs:
+                # accessroleがopen_no, open_dateまたはNone以外の場合、シークレットURLを論理削除
+                if accessrole and accessrole not in ['open_no', 'open_date']:
+                    secret_urls = FileSecretDownload.query.filter_by(record_id=rec_number, is_deleted=False, file_name=filename).all()
+                    for urls in secret_urls:
+                        # 論理削除メソッドを使用
+                        urls.delete_logically()
+                        # 処理するデータ量に応じて以下のような一括で論理削除を行うような処理を使用する。
+                        # FileSecretDownload.query.filter_by(record_id=rec_number, is_deleted=False).update({'is_deleted': True})
             db.session.commit()
 
         indexer = WekoIndexer()
