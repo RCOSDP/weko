@@ -1147,11 +1147,23 @@ def check_authority(func):
             return jsonify(code=403, msg=error_msg)
         if users['allow'] and int(cur_user) not in users['allow']:
             return jsonify(code=403, msg=error_msg)
+
+        role_flg = 0
         for role in cur_role:
+            # If current_role is in denied action_role
             if roles['deny'] and role.id in roles['deny']:
                 return jsonify(code=403, msg=error_msg)
-            if roles['allow'] and role.id not in roles['allow']:
+            if roles['allow']:
+                # If current_role is in allowed action_role
+                if role.id in roles['allow']:
+                    break
+                else:
+                    role_flg = 1
+        else:
+            # If allowed action_role does not contain current_role
+            if role_flg:
                 return jsonify(code=403, msg=error_msg)
+
         return func(*args, **kwargs)
 
     return decorated_function
