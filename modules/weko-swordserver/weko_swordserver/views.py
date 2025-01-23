@@ -198,6 +198,7 @@ def post_service_document():
     filename = content_disposition_options.get("filename")
     if (content_disposition != "attachment"
             or filename is None):
+        current_app.logger.error("Cannot get filename by Content-Disposition.")
         raise WekoSwordserverException(
             "Cannot get filename by Content-Disposition.",
             ErrorType.BadRequest
@@ -209,11 +210,12 @@ def post_service_document():
         if value.filename == filename:
             file = value
     if file is None:
+        current_app.logger.error(f"Not found {filename} in request body.")
         raise WekoSwordserverException(
             f"Not found {filename} in request body.", ErrorType.BadRequest
         )
 
-    # pick end of packaging, "SimpleZip" or "SWORDBagIt"
+    # check packaging, "SimpleZip" or "SWORDBagIt"
     packaging = request.headers.get("Packaging")
     file_format = check_import_file_format(file, packaging)
 
@@ -225,6 +227,9 @@ def post_service_document():
                 or not digest.startswith("SHA-256=")
                 or not is_valid_file_hash(digest.split("SHA-256=")[-1], file)
             ):
+                current_app.logger.error(
+                    "Request body and digest verification failed."
+                )
                 raise WekoSwordserverException(
                     "Request body and digest verification failed.",
                     ErrorType.DigestMismatch
@@ -255,14 +260,19 @@ def post_service_document():
         else:
             errorType = ErrorType.ContentMalformed
             check_result_msg = "item_missing"
+        current_app.logger.error(
+            f"Error in check_import_items: {check_result_msg}"
+        )
         raise WekoSwordserverException(
             f"Error in check_import_items: {check_result_msg}", errorType)
     if item.get("status") != "new":
-        raise WekoSwordserverException("This item is already registered: {0}".format(item.get("item_title")), ErrorType.BadRequest)
+        current_app.logger.error(
+            f"This item is already registered: {item.get('item_title')}"
+        )
+        raise WekoSwordserverException("This item is already registered: {0]".format(item.get("item_title")), ErrorType.BadRequest)
 
     item["root_path"] = os.path.join(data_path, "data")
 
-    # import item
     owner = -1
     if current_user.is_authenticated:
         owner = current_user.id
@@ -276,6 +286,9 @@ def post_service_document():
 
     import_result = import_items_to_system(item, request_info=request_info)
     if not import_result.get("success"):
+        current_app.logger.error(
+            f"Error in import_items_to_system: {item.get('error_id')}"
+        )
         raise WekoSwordserverException("Error in import_items_to_system: {0}".format(item.get("error_id")), ErrorType.ServerError)
 
     # remove temp dir
@@ -494,7 +507,6 @@ def handle_exception(ex):
 
 @blueprint.errorhandler(WekoSwordserverException)
 def handle_weko_swordserver_exception(ex):
-    current_app.logger.error(ex.message)
     return jsonify(_create_error_document(ex.errorType.type, ex.message)), ex.errorType.code
 
 @blueprint.teardown_request

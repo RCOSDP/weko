@@ -42,6 +42,9 @@ def check_import_file_format(file, packaging):
         if "metadata/sword.json" in file_list:
             file_format = "JSON"
         else:
+            current_app.logger.error(
+                "SWORDBagIt requires metadate/sword.json."
+            )
             raise WekoSwordserverException(
                 "SWORDBagIt requires metadate/sword.json.",
                 ErrorType.MetadataFormatNotAcceptable
@@ -52,6 +55,9 @@ def check_import_file_format(file, packaging):
         else:
             file_format = "OTHERS"
     else:
+        current_app.logger.error(
+            f"Not accept packaging format: {packaging}"
+        )
         raise WekoSwordserverException(
             f"Not accept packaging format: {packaging}",
             ErrorType.PackagingFormatNotAcceptable
