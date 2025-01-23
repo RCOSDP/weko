@@ -1169,7 +1169,7 @@ def is_secret_url_feature_enabled():
 
 
 def has_permission_to_manage_secret_url(record, user_id):
-    """Check if the user has permission to manage the secret URL feature.
+    """Check if the user has permission to manage a secret URL.
 
     Following users have the permission.
     - The administrators.
@@ -1190,11 +1190,31 @@ def has_permission_to_manage_secret_url(record, user_id):
     return has_permission
 
 
+def has_permission_to_manage_onetime_url(record, user_id):
+    """Check if the user has permission to manage a onetime URL.
+
+    Following users have the permission.
+    - The administrators.
+    - The user who registered the item(record).
+
+    Returns:
+        bool: True if the user has permission, False otherwise.
+    """
+    super_roles = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+    user = User.query.filter_by(id=user_id).first()
+    # Need to change the 'weko_shared_id' to 'weko_shared_ids' in the future.
+    has_permission = (
+        user_id == int(record['owner']) or
+        any(role.name in super_roles for role in user.roles or [])
+    )
+    return has_permission
+
+
 def is_secret_file(record, file_name):
     """Check if the target file meets the requirements for secret URL use.
 
     Args:
-        record (WekoRecord): The record object.
+        record (WekoRecord): The record object to which the file belongs.
         filename (str): The target file name.
 
     Returns:
@@ -1213,13 +1233,29 @@ def is_secret_file(record, file_name):
     is_secret_file = (
         target_data.get('accessrole') == 'open_no' or (
             target_data.get('accessrole') == 'open_date' and
-            dt.now() < publish_date
+            dt.now(timezone.utc) < publish_date
         ))
     return is_secret_file
 
 
+def is_onetime_file(record, file_name):
+    """Check if the target file meets the requirements for onetime URL use.
+
+    Args:
+        record (WekoRecord): The record object to which the file belongs.
+        filename (str): The target file name.
+
+    Returns:
+        bool: True if the file is for onetime URL use, False otherwise.
+    """
+    for file_data in record.get_file_data():
+        if file_data.get('filename') == file_name:
+            return file_data.get('accessrole') == 'open_restricted'
+    return False
+
+
 def can_manage_secret_url(record, filename):
-    """Determine if the user can manage the secret URL feature for a file.
+    """Determine if the user can manage a secret URL.
 
     This function checks whether the secret URL feature can be used for a given
     file in a record by evaluating the following conditions:
@@ -1237,12 +1273,35 @@ def can_manage_secret_url(record, filename):
     if not current_user or not current_user.is_authenticated:
         return False
     else:
-        result = (
+        return (
             is_secret_url_feature_enabled() and
             has_permission_to_manage_secret_url(record, current_user.id) and
             is_secret_file(record, filename)
         )
-        return result
+
+
+def can_manage_onetime_url(record, filename):
+    """Determine if the user can manage a onetime URL.
+
+    This function checks whether the onetime URL feature can be used for a
+    given file in a record by evaluating the following conditions:
+    1. The logged-in user has the necessary permissions.
+    2. The specified file qualifies for onetime URL use.
+
+    Args:
+        record (WekoRecord): The record object containing the file.
+        filename (str): The name of the target file.
+
+    Returns:
+        bool: True if all conditions are met, False otherwise.
+    """
+    if not current_user or current_user.is_authenticated:
+        return False
+    else:
+        return (
+            has_permission_to_manage_onetime_url(record, current_user.id) and
+            is_onetime_file(record, filename)
+        )
 
 
 def get_onetime_download(file_name: str, record_id: str,
@@ -2045,13 +2104,6 @@ def validate_file_access(record, filename, is_secret_url):
         return is_onetime_file(record, filename)
 
 
-def is_onetime_file(record, file_name):
-    for file_data in record.get_file_data():
-        if file_data.get('filename') == file_name:
-            return file_data.get('accessrole') == 'open_restricted'
-    return False
-
-
 def save_download_log(record, file_name, token, is_secret_url):
     """Save the download log for the given token.
 
@@ -2078,26 +2130,22 @@ def save_download_log(record, file_name, token, is_secret_url):
             break
     url_obj = convert_token_into_obj(token, is_secret_url)
     if is_secret_url:
-        file_access_role = target_data.get('accessrole')
-        access_status = (
-            AccessStatus.OPEN_NO
-            if file_access_role == 'open_no'
-            else AccessStatus.OPEN_DATE  # Assume 'open_date'
+        return FileUrlDownloadLog.create(
+            url_type       = UrlType.SECRET,
+            secret_url_id  = url_obj.id,
+            onetime_url_id = None,
+            ip_address     = request.remote_addr,
+            access_status  = (AccessStatus.OPEN_NO
+                              if target_data.get('accessrole') == 'open_no'
+                              else AccessStatus.OPEN_DATE),
+            used_token     = token,
         )
-        url_type = UrlType.SECRET
-        secret_url_id = url_obj.id
-        onetime_url_id = None
     else:
-        access_status = AccessStatus.OPEN_RESTRICTED
-        url_type = UrlType.ONETIME
-        secret_url_id = None
-        onetime_url_id = url_obj.id
-
-    return FileUrlDownloadLog.create(
-        url_type       = url_type,
-        secret_url_id  = secret_url_id,
-        onetime_url_id = onetime_url_id,
-        ip_address     = request.remote_addr,
-        access_status  = access_status,
-        used_token     = token,
-    )
+        return FileUrlDownloadLog.create(
+            url_type       = UrlType.ONETIME,
+            secret_url_id  = None,
+            onetime_url_id = url_obj.id,
+            ip_address     = None,
+            access_status  = AccessStatus.OPEN_RESTRICTED,
+            used_token     = token,
+        )

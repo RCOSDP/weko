@@ -72,7 +72,8 @@ from .models import FilePermission, PDFCoverPageSettings
 from .permissions import check_content_clickable, check_created_id, \
     check_file_download_permission, check_original_pdf_download_permission, \
     check_permission_period, file_permission_factory, get_permission
-from .utils import can_manage_secret_url, create_download_url, create_secret_url_record, \
+from .utils import can_manage_onetime_url, can_manage_secret_url, \
+    create_download_url, create_secret_url_record, \
     get_billing_file_download_permission, get_google_detaset_meta, \
     get_google_scholar_meta, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
@@ -744,7 +745,8 @@ def create_secret_url_and_send_mail(pid, record, filename, **kwargs):
         filename (str): The file name to download.
 
     Returns:
-        dict: A dictionary containing the message to be displayed to the user.
+        flask.Response:
+            A JSON response containing result messages.
     """
     if not validate_secret_url_generation_request(request.json):
         abort(400)
@@ -759,8 +761,6 @@ def create_secret_url_and_send_mail(pid, record, filename, **kwargs):
         current_app.logger.error(e)
         abort(500)
 
-    url = create_download_url(url_obj)
-
     message = 'Secret URL generated successfully'
     if request.json['send_email'] is True:
         sending_result = send_secret_url_mail(
@@ -772,6 +772,46 @@ def create_secret_url_and_send_mail(pid, record, filename, **kwargs):
                         'To use the URL, please refresh the page and copy it '
                         'from the issued URL list')
     return jsonify({'message': message + '.'})
+
+
+def copy_download_url(pid, record, **kwargs):
+    """
+    Copy a download-URL to the logged-in user's clipboard.
+
+    Args:
+        pid (str): A persistent identifier of the record.
+        record (dict): Record data associated with the target file.
+        **kwargs: Additional arguments, including:
+            - filename (str): The name of the file.
+            - url_id (str): The ID of the URL to be copied.
+
+    Returns:
+        flask.Response:
+            A JSON response containing the URL and a success message.
+
+    Raises:
+        flask.abort:
+            - 403 if the user does not have enough permissions.
+            - 500 if an error occurs while preparing the URL.
+    """
+    try:
+        if request['url_type'] == 'secret':
+            if not can_manage_secret_url(record, kwargs['filename']):
+                abort(403)
+            url_obj = FileSecretDownload.get_by_id(kwargs['url_id'])
+        elif request['url_type'] == 'onetime':
+            if not can_manage_onetime_url(record, kwargs['filename']):
+                abort(403)
+            url_obj = FileOnetimeDownload.get_by_id(kwargs['url_id'])
+        else:
+            abort(400)
+        url = create_download_url(url_obj)
+    except Exception as e:
+        current_app.logger.error(e)
+        abort(500)
+
+    return jsonify({'url': url,
+                    'message': 'The URL copied to your clipboard.'})
 
 
 @blueprint.route('/r/<parent_pid_value>', methods=['GET'])

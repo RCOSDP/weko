@@ -184,6 +184,14 @@ RECORDS_UI_ENDPOINTS = dict(
         view_imp='weko_records_ui.fd.file_download_secret',
         record_class='weko_deposit.api:WekoRecord',
     ),
+    recid_copy_url=dict(
+        pid_type='recid',
+        route='/records/<pid_value>/copy_url/<path:filename>/<url_id>',
+        view_imp='weko_records_ui.views.copy_download_url',
+        record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions'
+                               ':page_permission_factory',
+    ),
 )
 
 WEKO_RECORDS_UI_SECRET_KEY = "secret"
