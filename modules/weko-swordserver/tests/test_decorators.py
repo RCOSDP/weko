@@ -1,6 +1,7 @@
 import pytest
 import io
 from werkzeug.datastructures import FileStorage
+from werkzeug.local import LocalProxy
 from flask_login.utils import login_user
 from flask import request
 from invenio_deposit.scopes import write_scope
@@ -12,6 +13,7 @@ from weko_swordserver.decorators import (
     check_on_behalf_of,
     check_package_contents,
 )
+
 from weko_swordserver.decorators import check_package_contents
 from werkzeug.local import LocalProxy
 
@@ -40,6 +42,7 @@ def test_check_oauth(app, client, users, tokens):
     with app.test_request_context(headers=headers):
         with pytest.raises(WekoSwordserverException) as e:
             res = check_oauth(write_scope.id)(lambda x, y: x + y)(x=1, y=2)
+
         assert e.value.errorType == ErrorType.AuthenticationFailed
         assert e.value.message == "Authentication is failed."
 
@@ -47,6 +50,7 @@ def test_check_oauth(app, client, users, tokens):
 # def check_on_behalf_of():
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_decorators.py::test_check_on_behalf_of -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
 def test_check_on_behalf_of(app):
+
     # when accept on behalf of , "On-Behalf-Of" has been set
     app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_ON_BEHALF_OF"] = True
     with app.test_request_context(headers={"On-Behalf-Of": "test"}):

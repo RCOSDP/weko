@@ -1,8 +1,9 @@
 
+from zipfile import BadZipFile
 import pytest
 import datetime
 from time import sleep
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from flask import url_for,json,abort
 from sword3common.lib.seamless import SeamlessException
@@ -13,7 +14,9 @@ from invenio_pidstore.models import PersistentIdentifier
 from invenio_files_rest.models import Location
 from invenio_records.models import RecordMetadata
 
+from weko_search_ui.utils import check_import_items, handle_check_date, handle_check_exist_record, import_items_to_system
 from weko_swordserver.errors import *
+from weko_swordserver.registration import check_bagit_import_items, generate_metadata_from_json
 from weko_swordserver.views import blueprint, _get_status_document,_create_error_document,post_service_document
 from .helpers import json_data, calculate_hash
 
@@ -34,11 +37,12 @@ def test_get_service_document(client,users,tokens):
 
 # def post_service_document():
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test_post_service_document -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
-def test_post_service_document(app,client,db,users,esindex,location,index,make_zip,tokens,item_type,doi_identifier,mocker):
-    token=tokens[0]["token"].access_token
+def test_post_service_document(app,client,db,users,esindex,location,index,make_zip,tokens,item_type,doi_identifier,mocker,sword_mapping,sword_client):
+    login_user_via_session(client=client,email=users[0]["email"])
+    token_direct = tokens[0]["token"].access_token
     url = url_for("weko_swordserver.post_service_document")
     headers = {
-        "Authorization":"Bearer {}".format(token),
+        "Authorization":"Bearer {}".format(token_direct),
         "Content-Disposition":"attachment; filename=payload.zip",
         "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
     }
@@ -107,6 +111,192 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
                     assert e.errorType == ErrorType.ServerError
                     assert e.message == "Error in import_items_to_system: test error in import"
 
+
+    # case # 9
+    zip = make_zip()
+    file_name = "payload.zip"
+    storage = FileStorage(filename=file_name,stream=zip)
+    headers = {
+        "Authorization":"Bearer {}".format(token_direct),
+        "Content-Disposition":f"attachment; filename={file_name}",
+        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
+        "Digest":"SHA-256={}".format(calculate_hash(storage))
+    }
+    with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
+        mapped_json = json_data("data/item_type/mapped_json_2.json")
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+            def mock_import_items_to_system(*args, **kwargs):
+                res = import_items_to_system(*args, **kwargs)
+                res["success"] = True
+                return res
+            with patch("weko_swordserver.views.import_items_to_system",side_effect=mock_import_items_to_system):
+                res = post_service_document()
+                assert res.status_code == 200
+
+
+    # case # 10
+    zip = make_zip()
+    file_name = "payload.zip"
+    storage = FileStorage(filename=file_name,stream=zip)
+    headers = {
+        "Authorization":"Bearer {}".format(token_direct),
+        "Content-Disposition":f"attachment; filename={file_name}",
+        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
+        "Digest":"SHA-256={}".format(calculate_hash(storage))
+    }
+    with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
+        mapped_json = json_data("data/item_type/mapped_json_2.json")
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+            def mock_import_items_to_system(*args, **kwargs):
+                res = import_items_to_system(*args, **kwargs)
+                res["success"] = False
+                return res
+            with patch("weko_swordserver.views.import_items_to_system",side_effect=mock_import_items_to_system):
+                with pytest.raises(WekoSwordserverException) as e:
+                    post_service_document()
+                assert e.value.errorType == ErrorType.ServerError
+                assert e.value.message.startswith("Error in import_items_to_system: ")
+
+
+    # case # 11-13 TODO
+
+
+    # case # 14
+    zip = make_zip()
+    file_name = "payload.zip"
+    storage = FileStorage(filename=file_name,stream=zip)
+    headers = {
+        "Authorization":"Bearer {}".format(token_direct),
+        "Content-Disposition":f"attachment; filename={file_name}",
+        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
+        "Digest":"SHA-256={}".format(calculate_hash(storage))
+    }
+    with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
+        mapped_json = json_data("data/item_type/mapped_json_2.json")
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+            with patch("weko_swordserver.views.check_import_file_format",return_value="OTHERS"):
+                def mock_check_import_items(*args, **kwargs):
+                    res = check_import_items(*args, **kwargs)
+                    res["list_record"][0]["status"] = "update"
+                    return res
+                with patch("weko_search_ui.utils.check_import_items",side_effect=mock_check_import_items):
+                    with pytest.raises(WekoSwordserverException) as e:
+                        post_service_document()
+                    assert e.value.errorType == ErrorType.BadRequest
+                    assert e.value.message.startswith("This item is already registered: ")
+
+
+    # case # 15
+    # ErrorType.ServerError
+    zip = make_zip()
+    file_name = "payload.zip"
+    storage = FileStorage(filename=file_name,stream=zip)
+    headers = {
+        "Authorization":"Bearer {}".format(token_direct),
+        "Content-Disposition":f"attachment; filename={file_name}",
+        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
+        "Digest":"SHA-256={}".format(calculate_hash(storage))
+    }
+    with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
+        mapped_json = json_data("data/item_type/mapped_json_2.json")
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+            with patch("weko_swordserver.views.check_import_file_format",return_value="OTHERS"):
+                with patch("weko_search_ui.utils.unpackage_import_file",side_effect=FileNotFoundError):
+                    with pytest.raises(WekoSwordserverException) as e:
+                        post_service_document()
+                    assert e.value.errorType == ErrorType.ServerError
+                    assert e.value.message == f"Error in check_import_items: The csv/tsv file was not found in the specified file {file_name}. Check if the directory structure is correct."
+
+    # ErrorType.ContentMalformed
+    zip = make_zip()
+    file_name = "payload.zip"
+    storage = FileStorage(filename=file_name,stream=zip)
+    headers = {
+        "Authorization":"Bearer {}".format(token_direct),
+        "Content-Disposition":f"attachment; filename={file_name}",
+        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
+        "Digest":"SHA-256={}".format(calculate_hash(storage))
+    }
+    with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
+        mapped_json = json_data("data/item_type/mapped_json_2.json")
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+            with patch("weko_swordserver.views.check_import_file_format",return_value="OTHERS"):
+                def mock_handle_check_date(*args, **kwargs):
+                    list_record = args[0]
+                    list_record[0]["metadata"]["pubdate"] = "20221111"
+                    modified_args = (list_record,) + args[1:]
+                    return handle_check_date(*modified_args, **kwargs)
+                with patch("weko_search_ui.utils.handle_check_date", side_effect=mock_handle_check_date):
+                    with pytest.raises(WekoSwordserverException) as e:
+                        post_service_document()
+                    assert e.value.errorType == ErrorType.ContentMalformed
+                    assert e.value.message == "Error in check_import_items: Please specify PubDate with YYYY-MM-DD."
+
+    # not item
+    zip = make_zip()
+    file_name = "payload.zip"
+    storage = FileStorage(filename=file_name,stream=zip)
+    headers = {
+        "Authorization":"Bearer {}".format(token_direct),
+        "Content-Disposition":f"attachment; filename={file_name}",
+        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
+        "Digest":"SHA-256={}".format(calculate_hash(storage))
+    }
+    with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
+        mapped_json = json_data("data/item_type/mapped_json_2.json")
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+            with patch("weko_swordserver.views.check_import_file_format",return_value="OTHERS"):
+                def mock_check_import_items(*args, **kwargs):
+                    res = check_import_items(*args, **kwargs)
+                    del res["list_record"]
+                    return res
+                with patch("weko_search_ui.utils.check_import_items", side_effect=mock_check_import_items):
+                    with pytest.raises(WekoSwordserverException) as e:
+                        post_service_document()
+                    assert e.value.errorType == ErrorType.ContentMalformed
+                    assert e.value.message == "Error in check_import_items: item_missing"
+
+
+    # case # 16
+    zip = make_zip()
+    file_name = "payload.zip"
+    file_name2 = "payload2.zip"
+    storage = FileStorage(filename=file_name,stream=zip)
+    headers = {
+        "Authorization":"Bearer {}".format(token_direct),
+        "Content-Disposition":f"attachment; filename={file_name2}",
+        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
+        "Digest":"SHA-256={}".format(calculate_hash(storage))
+    }
+    with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
+        mapped_json = json_data("data/item_type/mapped_json_2.json")
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+            with pytest.raises(WekoSwordserverException) as e:
+                post_service_document()
+            assert e.value.errorType == ErrorType.BadRequest
+            assert e.value.message == f"Not found {file_name2} in request body."
+
+
+    # case # 17
+    zip = make_zip()
+    file_name = "payload.zip"
+    storage = FileStorage(filename=file_name,stream=zip)
+    headers = {
+        "Authorization":"Bearer {}".format(token_direct),
+        "Content-Disposition":"",
+        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
+        "Digest":"SHA-256={}".format(calculate_hash(storage))
+    }
+    with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
+        mapped_json = json_data("data/item_type/mapped_json_2.json")
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+            with pytest.raises(WekoSwordserverException) as e:
+                post_service_document()
+            assert e.value.errorType == ErrorType.BadRequest
+            assert e.value.message == "Cannot get filename by Content-Disposition."
+
+
+
 # def post_service_document():
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test_post_service_document_json_ld -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
 def test_post_service_document_json_ld(app,client,db,users,esindex,location,index,make_crate,tokens,item_type,doi_identifier,sword_mapping,sword_client,mocker):
@@ -135,8 +325,6 @@ def test_post_service_document_json_ld(app,client,db,users,esindex,location,inde
         "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
         "Digest":"SHA-256={}".format(calculate_hash(storage))
     }
-    # print("")
-    # print("Direct registration")
     with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
         with patch("weko_swordserver.registration.bagit.Bag.validate"):
             res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
@@ -221,6 +409,205 @@ def test_post_service_document_json_ld(app,client,db,users,esindex,location,inde
         with patch("weko_swordserver.registration.bagit.Bag.validate"):
             res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
         assert res.status_code == 403
+
+
+    app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = True
+
+    # case # 1
+    zip, _  = make_crate()
+    file_name = "payload.zip"
+    storage = FileStorage(filename=file_name,stream=zip)
+    headers = {
+        "Authorization":"Bearer {}".format(token_direct),
+        "Content-Disposition":f"attachment; filename={file_name}",
+        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
+        "Digest":"SHA-256={}".format(calculate_hash(storage))
+    }
+    with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
+        mapped_json = json_data("data/item_type/mapped_json_2.json")
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+            def mock_import_items_to_system(*args, **kwargs):
+                res = import_items_to_system(*args, **kwargs)
+                res["success"] = True
+                return res
+            with patch("weko_swordserver.views.import_items_to_system",side_effect=mock_import_items_to_system):
+                res = post_service_document()
+                assert res.status_code == 200
+
+
+    # case # 2
+    zip, _  = make_crate()
+    file_name = "payload.zip"
+    storage = FileStorage(filename=file_name,stream=zip)
+    headers = {
+        "Authorization":"Bearer {}".format(token_direct),
+        "Content-Disposition":f"attachment; filename={file_name}",
+        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
+        "Digest":"SHA-256={}".format(calculate_hash(storage))
+    }
+    with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
+        mapped_json = json_data("data/item_type/mapped_json_2.json")
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+            def mock_import_items_to_system(*args, **kwargs):
+                res = import_items_to_system(*args, **kwargs)
+                res["success"] = False
+                return res
+            with patch("weko_swordserver.views.import_items_to_system",side_effect=mock_import_items_to_system):
+                with pytest.raises(WekoSwordserverException) as e:
+                    post_service_document()
+                assert e.value.errorType == ErrorType.ServerError
+                assert e.value.message.startswith("Error in import_items_to_system: ")
+
+
+    # case # 3-5 TODO
+
+
+    # case # 6
+    zip, _  = make_crate()
+    file_name = "payload.zip"
+    storage = FileStorage(filename=file_name,stream=zip)
+    headers = {
+        "Authorization":"Bearer {}".format(token_direct),
+        "Content-Disposition":f"attachment; filename={file_name}",
+        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
+        "Digest":"SHA-256={}".format(calculate_hash(storage))
+    }
+    with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
+        mapped_json = json_data("data/item_type/mapped_json_2.json")
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+            def mock_handle_check_exist_record(*args, **kwargs):
+                res = handle_check_exist_record(*args, **kwargs)
+                res[0]["status"] = None
+                return res
+            with patch("weko_swordserver.registration.handle_check_exist_record",side_effect=mock_handle_check_exist_record):
+                with pytest.raises(WekoSwordserverException) as e:
+                    post_service_document()
+                assert e.value.errorType == ErrorType.BadRequest
+                assert e.value.message.startswith("This item is already registered: ")
+
+
+    # case # 7
+    # ErrorType.ServerError
+    zip, _  = make_crate()
+    file_name = "payload.zip"
+    storage = FileStorage(filename=file_name,stream=zip)
+    headers = {
+        "Authorization":"Bearer {}".format(token_direct),
+        "Content-Disposition":f"attachment; filename={file_name}",
+        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
+        "Digest":"SHA-256={}".format(calculate_hash(storage))
+    }
+    with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
+        mapped_json = json_data("data/item_type/mapped_json_2.json")
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+            with patch("weko_swordserver.registration.unpack_zip", side_effect=BadZipFile):
+                with pytest.raises(WekoSwordserverException) as e:
+                    post_service_document()
+                assert e.value.errorType == ErrorType.ServerError
+                assert e.value.message == f"Error in check_import_items: The format of the specified file {file_name} dose not support import. Please specify a zip file."
+
+    # ErrorType.ContentMalformed
+    zip, _  = make_crate()
+    file_name = "payload.zip"
+    storage = FileStorage(filename=file_name,stream=zip)
+    headers = {
+        "Authorization":"Bearer {}".format(token_direct),
+        "Content-Disposition":f"attachment; filename={file_name}",
+        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
+        "Digest":"SHA-256={}".format(calculate_hash(storage))
+    }
+    with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
+        mapped_json = json_data("data/item_type/mapped_json_2.json")
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+            def mock_handle_check_date(*args, **kwargs):
+                list_record = args[0]
+                list_record[0]["metadata"]["pubdate"] = "20241115"
+                modified_args = (list_record,) + args[1:]
+                return handle_check_date(*modified_args, **kwargs)
+            with patch("weko_swordserver.registration.handle_check_date", side_effect=mock_handle_check_date):
+                with pytest.raises(WekoSwordserverException) as e:
+                    post_service_document()
+                assert e.value.errorType == ErrorType.ContentMalformed
+                assert e.value.message == "Error in check_import_items: Please specify PubDate with YYYY-MM-DD."
+
+    # not item
+    zip, _  = make_crate()
+    file_name = "payload.zip"
+    storage = FileStorage(filename=file_name,stream=zip)
+    headers = {
+        "Authorization":"Bearer {}".format(token_direct),
+        "Content-Disposition":f"attachment; filename={file_name}",
+        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
+        "Digest":"SHA-256={}".format(calculate_hash(storage))
+    }
+    with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
+        mapped_json = json_data("data/item_type/mapped_json_2.json")
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+            def mock_check_bagit_import_items(*args, **kwargs):
+                res = check_bagit_import_items(*args, **kwargs)
+                del res["list_record"]
+                return res
+            with patch("weko_swordserver.views.check_bagit_import_items", side_effect=mock_check_bagit_import_items):
+                with pytest.raises(WekoSwordserverException) as e:
+                    post_service_document()
+                assert e.value.errorType == ErrorType.ContentMalformed
+                assert e.value.message == "Error in check_import_items: item_missing"
+
+
+    # case # 8
+    # no digest
+    zip, _  = make_crate()
+    file_name = "payload.zip"
+    storage = FileStorage(filename=file_name,stream=zip)
+    headers = {
+        "Authorization":"Bearer {}".format(token_direct),
+        "Content-Disposition":f"attachment; filename={file_name}",
+        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
+    }
+    with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
+        mapped_json = json_data("data/item_type/mapped_json_2.json")
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+            with pytest.raises(WekoSwordserverException) as e:
+                post_service_document()
+            assert e.value.errorType == ErrorType.DigestMismatch
+            assert e.value.message == "Request body and digest verification failed."
+
+    # not SHA-256
+    zip, _  = make_crate()
+    file_name = "payload.zip"
+    storage = FileStorage(filename=file_name,stream=zip)
+    headers = {
+        "Authorization":"Bearer {}".format(token_direct),
+        "Content-Disposition":f"attachment; filename={file_name}",
+        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
+        "Digest":"SHA-1={}".format(calculate_hash(storage))
+    }
+    with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
+        mapped_json = json_data("data/item_type/mapped_json_2.json")
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+            with pytest.raises(WekoSwordserverException) as e:
+                post_service_document()
+            assert e.value.errorType == ErrorType.DigestMismatch
+            assert e.value.message == "Request body and digest verification failed."
+
+    # digest check failed
+    zip, _  = make_crate()
+    file_name = "payload.zip"
+    storage = FileStorage(filename=file_name,stream=zip)
+    headers = {
+        "Authorization":"Bearer {}".format(token_direct),
+        "Content-Disposition":f"attachment; filename={file_name}",
+        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
+        "Digest":"SHA-256={}".format("dummydigest")
+    }
+    with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
+        mapped_json = json_data("data/item_type/mapped_json_2.json")
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+            with pytest.raises(WekoSwordserverException) as e:
+                post_service_document()
+            assert e.value.errorType == ErrorType.DigestMismatch
+            assert e.value.message == "Request body and digest verification failed."
+
 
 
 # def get_status_document(recid):
