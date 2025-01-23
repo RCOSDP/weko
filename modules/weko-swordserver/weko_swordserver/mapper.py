@@ -7,9 +7,11 @@
 
 """Module of weko-swordserver."""
 
+from flask import current_app
+
 from invenio_oaiharvester.harvester import JsonMapper
 
-from .errors import WekoSwordserverException
+from .errors import WekoSwordserverException, ErrorType
 
 
 class WekoSwordMapper(JsonMapper):
@@ -132,7 +134,7 @@ class WekoSwordMapper(JsonMapper):
             any: Element of metadata
         """
         # define internal functions
-        def _detect_dict(json_keys, dict_, _in_list):
+        def _detect_dict(json_keys, dict_):
             """Get json value from dict.
 
             Args:
@@ -147,30 +149,31 @@ class WekoSwordMapper(JsonMapper):
 
             # No json_key in dict: {"other_key": value}
             if value is None:
-                raise WekoSwordserverException(
-                    f"Invalid mapping: No value got from {json_key}"
-                )
+                return None
             # dict in dict: {"json_key": {}}
             elif isinstance(value, dict):
                 if len(json_keys) == 1:
                     return value
-                return _detect_dict(json_keys[1:], value, _in_list)
+                return _detect_dict(json_keys[1:], value)
             # list in dict: {"json_key": []}
             elif isinstance(value, list):
-                _in_list = True
                 if len(json_keys) == 1:
                     return value
-                return _detect_list(json_keys[1:], value, _in_list)
+                return _detect_list(json_keys[1:], value)
             # value in dict: {"json_key": value}
             else:
                 if len(json_keys) == 1:
                     return value
                 else:
+                    current_app.logger.error(
+                        f"Invalid mapping definition: Value: {value} got from {json_key} but still need to get {json_keys[1:]}."
+                    )
                     raise WekoSwordserverException(
-                        f"Invalid mapping: Got {value} from {json_key} but still need to get {json_keys[1:]}"
+                        f"Value: {value} got from {json_key} but still need to get {json_keys[1:]}. Check the mapping definition.",
+                        errorType=ErrorType.ServerError
                     )
 
-        def _detect_list(json_keys, list_, _in_list):
+        def _detect_list(json_keys, list_):
             """Get json value from list.
 
             Args:
@@ -180,26 +183,29 @@ class WekoSwordMapper(JsonMapper):
             Returns:
                 any: Element of metadata
             """
-            if not _in_list:
-                raise WekoSwordserverException(
-                    "Invalid mapping: No value got from list"
-                )
-
             list_result = []
             for value in list_:
                 # dict in list: [{}, {}, ...]
                 if isinstance(value, dict):
-                    result = _detect_dict(json_keys, value, _in_list)
+                    result = _detect_dict(json_keys, value)
                     list_result.append(result)
                 # list in list: [[], [], ...]
                 elif isinstance(value, list):
+                    current_app.logger.error(
+                        "Invalid metadata file: List in list not supported."
+                    )
                     raise WekoSwordserverException(
-                        "Invalid mapping: List in list not supported"
+                        "List in list not supported. Check your metadata file.",
+                        errorType=ErrorType.ContentMalformed
                     )
                 # value in list: [value, value, ...]
                 else:
+                    current_app.logger.error(
+                        f"Invalid mapping definition: Value: {value} got from list but still need to get {json_keys}."
+                    )
                     raise WekoSwordserverException(
-                        f"Invalid mapping: Got value from list but still need to get {json_keys}"
+                        f"Value: {value} got from list but still need to get {json_keys}. Check the mapping definition.",
+                        errorType=ErrorType.ServerError
                     )
             return list_result
 
@@ -212,18 +218,26 @@ class WekoSwordMapper(JsonMapper):
         # dict in dict: {"json_key": {}}
         elif isinstance(value, dict):
             if len(json_keys) == 1:
-                return value
-            return _detect_dict(json_keys[1:], value, False)
+                current_app.logger.error("Invalid mapping definition: Value is dict but still need to get more keys.")
+                raise WekoSwordserverException(
+                    "Value is dict but still need to get more keys. Check the mapping definition.",
+                    errorType=ErrorType.ServerError
+                )
+            return _detect_dict(json_keys[1:], value)
         # list in dict: {"json_key": []}
         elif isinstance(value, list):
-            return _detect_list(json_keys[1:], value, True)
+            return _detect_list(json_keys[1:], value)
         # value in dict: {"json_key": value}
         else:
             if len(json_keys) == 1:
                 return value
             else:
+                current_app.logger.error(
+                    f"Invalid mapping definition: Value: {value} got from {json_key} but still need to get {json_keys[1:]}."
+                )
                 raise WekoSwordserverException(
-                    f"Invalid mapping: Got {value} from {json_key} but still need to get {json_keys[1:]}"
+                    f"Value: {value} got from {json_key} but still need to get {json_keys[1:]}. Check the mapping definition.",
+                    errorType=ErrorType.ServerError
                 )
 
 
@@ -241,13 +255,8 @@ class WekoSwordMapper(JsonMapper):
         current_schema = self.itemtype.schema.get("properties")
 
         for item_map_key in item_map_keys:
-            # item_map_key is not defined in item_tyep_schema
-            if item_map_key not in current_schema:
-                raise WekoSwordserverException(
-                    f"Invalid mapping: {item_map_key} is not defined in item type schema"
-                )
             # If "type" is "object" in item_tyep_schema, next path is in "properties"
-            elif current_schema[item_map_key].get("type") == "object":
+            if current_schema[item_map_key].get("type") == "object":
                 type_of_item_type_path.append("object")
                 current_schema = current_schema[item_map_key].get("properties")
             # If "type" is "array" in item_tyep_schema, next path is in "items" > "properties"
@@ -260,13 +269,21 @@ class WekoSwordMapper(JsonMapper):
 
         # Validate length of type_of_item_type_path
         if len(type_of_item_type_path) != len(item_map_keys):
-            raise WekoSwordserverException(
-                f"Invalid mapping: type_of_item_type_path length: {len(type_of_item_type_path)} is not equal to item_map_keys length: {len(item_map_keys)}"
+            current_app.logger.error(
+                f"Failed in mapping process: type_of_item_type_path length: {len(type_of_item_type_path)} is not equal to item_map_keys length: {len(item_map_keys)}."
             )
-        # Validate last element of type_of_item_type_path
-        if type_of_item_type_path[-1] != "value":
             raise WekoSwordserverException(
-                f"Invalid mapping: Last element of type_of_item_type_path must be value"
+                "Some error occurred in the server. Can not create metadata.",
+                errorType=ErrorType.ServerError
+            )
+        # Check if the list ends with 'value' and contains 'value' only once
+        if not (type_of_item_type_path[-1] == "value" and type_of_item_type_path.count("value") == 1):
+            current_app.logger.error(
+                "Failed in mapping process: type_of_item_type_path must contain exactly one 'value' element at the end."
+            )
+            raise WekoSwordserverException(
+                "Some error occurred in the server. Can not create metadata.",
+                errorType=ErrorType.ServerError
             )
         return type_of_item_type_path
 
@@ -284,17 +301,14 @@ class WekoSwordMapper(JsonMapper):
         dim_json_value = self._get_dimensions(json_value)
         num_array_type = type_of_item_type_path.count("array")
 
-        # Check if json_value is too many dimensions
-        if dim_json_value > num_array_type:
-            # If json_value is list and dim_json_value - num_array_type == 1, use only first element
-            if dim_json_value - num_array_type == 1:
-                json_value = json_value[0]
-                dim_json_value = self._get_dimensions(json_value)
-            # If json_value is list and dim_json_value - num_array_type > 1, raise error
-            else:
-                raise WekoSwordserverException(
-                    f"Invalid mapping: {json_value} contains too many dimensions"
-                )
+        # If dim_json_value is bigger than num_array_type, pick the first element of json_value until dim_json_value equals to num_array_type
+        executed = False
+        while dim_json_value > num_array_type:
+            if not executed:
+                # TODO: add warning
+                executed = True
+            json_value = json_value[0]
+            dim_json_value = self._get_dimensions(json_value)
 
         # If num_array_type is bigger than  dim_json_value, only one {} created in array
         # then, dicrease diff_array and do the same thing until diff_array is 0
@@ -313,14 +327,8 @@ class WekoSwordMapper(JsonMapper):
             _item_map_key = item_map_keys[0]
             _type = type_of_item_type_path[0]
 
-            # If _type is "value", _type must be the last element of type_of_item_type_path but still have more elements
-            # because the length of type_of_item_type_path is equal to the length of item_map_keys
-            if _type == "value":
-                raise WekoSwordserverException(
-                    f"Invalid mapping: 'value' must be the last key of type_of_item_type_path but got at first"
-                )
             # If _type is "object", create nested metadata
-            elif _type == "object":
+            if _type == "object":
                 if not metadata.get(_item_map_key):
                     metadata[_item_map_key] = {}
                 metadata = metadata[_item_map_key]
@@ -337,20 +345,13 @@ class WekoSwordMapper(JsonMapper):
                 # If diff_array is 0, create [{}, {}, ...] in metadata
                 # The number of {} is equal to the length of json_value
                 else:
-                    # If json_value is not list, raise error
-                    if dim_json_value == 0:
-                        raise WekoSwordserverException(
-                            f"Invalid mapping: If diff_array is 0 and dim_json_value is 0, num_array_type must be 0 but got 1"
-                        )
-                    # If json_value is list, create nested metadata for each element of json_value
-                    else:
-                        if not metadata.get(_item_map_key):
-                            metadata[_item_map_key] = [{} for _ in range(len(json_value))]
-                        metadata = metadata[_item_map_key]
+                    if not metadata.get(_item_map_key):
+                        metadata[_item_map_key] = [{} for _ in range(len(json_value))]
+                    metadata = metadata[_item_map_key]
 
-                        # Create nested metadata for each element of json_value
-                        for i in range(len(json_value)):
-                            self._create_child_metadata_of_a_property(diff_array, metadata[i], item_map_keys[1:], type_of_item_type_path[1:], json_value[i])
+                    # Create nested metadata for each element of json_value
+                    for i in range(len(json_value)):
+                        self._create_child_metadata_of_a_property(diff_array, metadata[i], item_map_keys[1:], type_of_item_type_path[1:], json_value[i])
         return
 
 
@@ -364,8 +365,6 @@ class WekoSwordMapper(JsonMapper):
             type_of_item_type_path (list): "type" of each key in ItemType, contains "value", "object", and "array"
             json_value (any): Value got from ProcessedJson
         """
-        dim_json_value = self._get_dimensions(json_value)
-
         # If item_map_keys length is 1, it means that the item_map_keys contains only last key
         if len(item_map_keys) == 1:
             # Only if json_value is not None, add json_value to metadata
@@ -399,20 +398,13 @@ class WekoSwordMapper(JsonMapper):
                 # If diff_array is 0, create [{}, {}, ...] in metadata
                 # The number of {} is equal to the length of json_value
                 else:
-                    # If json_value is not list, raise error
-                    if dim_json_value == 0:
-                        raise WekoSwordserverException(
-                            f"Invalid mapping: If diff_array is 0 and dim_json_value is 0, num_array_type must be 0 but got 1"
-                        )
-                    # If json_value is list, create nested metadata for each element of json_value
-                    else:
-                        if not child_metadata.get(_item_map_key):
-                            child_metadata[_item_map_key] = [{} for _ in range(len(json_value))]
-                        child_metadata = child_metadata[_item_map_key]
+                    if not child_metadata.get(_item_map_key):
+                        child_metadata[_item_map_key] = [{} for _ in range(len(json_value))]
+                    child_metadata = child_metadata[_item_map_key]
 
-                        # Create nested metadata for each element of json_value
-                        for i in range(len(json_value)):
-                            self._create_child_metadata_of_a_property(diff_array, child_metadata[i], item_map_keys[1:], type_of_item_type_path[1:], json_value[i])
+                    # Create nested metadata for each element of json_value
+                    for i in range(len(json_value)):
+                        self._create_child_metadata_of_a_property(diff_array, child_metadata[i], item_map_keys[1:], type_of_item_type_path[1:], json_value[i])
         return
 
 

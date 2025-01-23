@@ -284,11 +284,13 @@ class TestSwordClient:
     def test_remove(app, db, sword_client):
         # Successful removal
         client = sword_client[0]["sword_client"]
+        count = SwordClientModel.query.count()
         obj = SwordClient.remove(client_id=client.client_id)
         assert obj == client
         assert (
             SwordClientModel.query.filter_by(client_id=client.client_id).first() is None
         )
+        assert SwordClientModel.query.count() == count - 1
 
         # Exception during removal
         client = sword_client[1]["sword_client"]
