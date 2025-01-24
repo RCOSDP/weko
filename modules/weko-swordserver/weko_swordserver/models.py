@@ -53,7 +53,7 @@ class SwordItemTypeMappingModel(db.Model, Timestamp):
 
     mapping = db.Column(
         db.JSON().with_variant(
-            postgresql.JSONB(none_as_null=True),
+            postgresql.JSONB(none_as_null=False),
             'postgresql',
         ).with_variant(
             JSONType(),

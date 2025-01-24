@@ -78,25 +78,28 @@ class TestSwordItemTypeMapping:
         # Update Successful
         obj = SwordItemTypeMapping.update(
             id=sword_mapping[0]["id"],
+            name="test2",
             mapping={"test2": "test2"},
+            item_type_id=sword_mapping[0]["item_type_id"],
         )
 
         result = SwordItemTypeMappingModel.query.filter_by(id=obj.id).first()
         assert result == obj
+        assert result.name == "test2"
         assert result.mapping == obj.mapping
         assert result.version_id == sword_mapping[0]["version_id"] + 1
 
         # Update with non-existent id
         with pytest.raises(WekoSwordserverException) as e:
             SwordItemTypeMapping.update(
-                id=999, item_type_id=sword_mapping[0]["item_type_id"]
+                name="test2", id=999, mapping=None, item_type_id=sword_mapping[0]["item_type_id"]
             )
         assert e.value.errorType == ErrorType.ServerError
         assert e.value.message == "Mapping not defined."
 
         # Update with invalid item_type_id
         with pytest.raises(SQLAlchemyError) as e:
-            SwordItemTypeMapping.update(id=sword_mapping[0]["id"], item_type_id=999)
+            SwordItemTypeMapping.update(name="test2", id=sword_mapping[0]["id"], mapping=None, item_type_id=999)
         assert isinstance(e.value, SQLAlchemyError)
 
     # def versions()
@@ -229,7 +232,7 @@ class TestSwordClient:
         assert obj.client_id == client.client_id
         assert obj.registration_type_id == SwordClientModel.RegistrationType.DIRECT
         assert obj.mapping_id == sword_mapping[0]["sword_mapping"].id
-        assert obj.workflow_id == 1
+        assert obj.workflow_id == None
 
         # Update workflow to direct with non-existent client_id
         client = sword_client[0]["sword_client"]

@@ -55,7 +55,7 @@ def check_on_behalf_of():
             )
             onBehalfOf = request.headers.get("On-Behalf-Of", "")
             if not allowOnBehalfOf and onBehalfOf:
-                current_app.logger.info(
+                current_app.logger.error(
                     "Not support On-Behalf-Of but request has it.")
                 raise WekoSwordserverException(
                     "Not support On-Behalf-Of.", ErrorType.OnBehalfOfNotAllowed

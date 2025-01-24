@@ -79,11 +79,10 @@ def unpack_zip(file):
         data_path: Path of extracted files, file_list: List of extracted files.
 
     """
-    data_path = (
-        tempfile.gettempdir()
-        + "/"
-        + current_app.config.get("WEKO_SEARCH_UI_IMPORT_TMP_PREFIX")
-        + datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")[:-3]
+    data_path = os.path.join(
+        tempfile.gettempdir(),
+        current_app.config.get("WEKO_SEARCH_UI_IMPORT_TMP_PREFIX")
+            + datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")[:-3]
     )
 
     # Create temp dir for import data
@@ -102,6 +101,7 @@ def unpack_zip(file):
                 file_list.append(info.filename)
             except Exception:
                 traceback.print_exc()
+                raise
         zip_ref.extractall(path=data_path)
 
     return data_path, file_list
@@ -138,8 +138,10 @@ def get_record_by_client_id(client_id):
         client_id (str): The ID of the client to get the settings records for.
 
     Returns:
-        tuple (SwordClientModel, SwordItemTypeMappingModel): A tuple containing the SwordClient object and the SwordItemTypeMapping object.
-               If the client or mapping is not found, the corresponding value in the tuple will be None.
+        tuple (SwordClientModel, SwordItemTypeMappingModel):
+            A tuple containing the SwordClient object and the SwordItemTypeMapping
+            object. If the client or mapping is not found, the corresponding
+            value in the tuple will be None.
     """
     sword_client = SwordClient.get_client_by_id(client_id)
 
@@ -174,7 +176,7 @@ def process_json(json_ld):
                 current_app.logger.error("Invalid json-ld format.")
                 raise WekoSwordserverException(
                     "Invalid json-ld format.",
-                    ErrorType.InvalidMetadataFormat
+                    ErrorType.MetadataFormatNotAcceptable
                 )
         json["@graph"] = new_value
     # Remove unnecessary keys
