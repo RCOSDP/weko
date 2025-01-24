@@ -34,6 +34,17 @@ def test_get_service_document(client,users,tokens):
     res = client.get(url,headers=headers)
     assert res.status_code == 200
 
+    mock_identify = MagicMock()
+    mock_identify.repositoryName = "testRepositoryName1"
+    with patch("invenio_oaiserver.api.OaiIdentify.get_all",return_value=mock_identify):
+        res = client.get(url,headers=headers)
+        assert res.status_code == 200
+        assert res.json["dc:title"] == "testRepositoryName1"
+    with patch("weko_swordserver.views.get_site_info_name", return_value=("testRepositoryName2","")):
+        res = client.get(url,headers=headers)
+        assert res.status_code == 200
+        assert res.json["dc:title"] == "testRepositoryName2"
+
 
 # def post_service_document():
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test_post_service_document -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
@@ -745,6 +756,10 @@ def test_delete_item(client, tokens, users,es_records):
     target = PersistentIdentifier.query.filter_by(pid_type="recid",pid_value=delete_item).first()
     assert target.status == "D"
 
+    # coverage - Exception
+    with patch("weko_swordserver.views.soft_delete", side_effect=Exception):
+        res = client.delete(url, headers=headers)
+        assert res.status_code == 204
 
 # def _create_error_document(type, error):
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test__create_error_document -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp

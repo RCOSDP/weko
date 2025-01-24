@@ -269,7 +269,7 @@ def post_service_document():
         current_app.logger.error(
             f"This item is already registered: {item.get('item_title')}"
         )
-        raise WekoSwordserverException("This item is already registered: {0]".format(item.get("item_title")), ErrorType.BadRequest)
+        raise WekoSwordserverException("This item is already registered: {0}".format(item.get("item_title")), ErrorType.BadRequest)
 
     item["root_path"] = os.path.join(data_path, "data")
 
