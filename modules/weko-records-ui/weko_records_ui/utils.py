@@ -1193,6 +1193,11 @@ def has_permission_to_manage_secret_url(record, user_id):
 def has_permission_to_manage_onetime_url(record, user_id):
     """Check if the user has permission to manage a onetime URL.
 
+    The current difference in required permissions between a secret URL and a
+    one-time URL is that users who registered the item on behalf of others do
+    not have permission to manage the one-time URL (though they can manage
+    secret URLs).
+
     Following users have the permission.
     - The administrators.
     - The user who registered the item(record).
@@ -1202,7 +1207,6 @@ def has_permission_to_manage_onetime_url(record, user_id):
     """
     super_roles = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
     user = User.query.filter_by(id=user_id).first()
-    # Need to change the 'weko_shared_id' to 'weko_shared_ids' in the future.
     has_permission = (
         user_id == int(record['owner']) or
         any(role.name in super_roles for role in user.roles or [])
