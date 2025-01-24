@@ -189,7 +189,7 @@ RECORDS_UI_ENDPOINTS = dict(
     ),
     recid_copy_onetime_url=dict(
         pid_type='recid',
-        route='/records/<pid_value>/secret/<path:filename>/<onetime_url_id>',
+        route='/records/<pid_value>/onetime/<path:filename>/<onetime_url_id>',
         view_imp='weko_records_ui.views.copy_onetime_url',
         record_class='weko_deposit.api:WekoRecord',
         permission_factory_imp='weko_records_ui.permissions'
