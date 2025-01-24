@@ -151,14 +151,13 @@ class MockRecord(dict):
 @patch('weko_deposit.api.WekoIndexer')
 @patch('weko_workflow.api.db.session.commit')
 def test_publish(mock_db_commit, mock_WekoIndexer, mock_FileSecretDownload):
-    def create_mock_record(publish_status, accessrole, recid='12345'):
+    def create_mock_record(publish_status, accessroles, filenames, recid='12345'):
+        attribute_value_mlt = [{'accessrole': role, 'filename': filename} for role, filename in zip(accessroles, filenames)]
         record = MockRecord({
             'publish_status': publish_status,
             'recid': recid,
             'some_field': {
-                'attribute_value_mlt': [
-                    {'accessrole': accessrole}
-                ]
+                'attribute_value_mlt': attribute_value_mlt
             }
         })
         record.commit = MagicMock()
@@ -174,11 +173,12 @@ def test_publish(mock_db_commit, mock_WekoIndexer, mock_FileSecretDownload):
             mock_FileSecretDownload.query.filter_by.return_value.all.reset_mock()
 
     # Mock record objects
-    record1 = create_mock_record(None, None)
-    record2 = create_mock_record(PublishStatus.PRIVATE.value, 'open_date')
-    record3 = create_mock_record(PublishStatus.NEW.value, 'open_no')
-    record4 = create_mock_record(PublishStatus.DELETE.value, 'other_date')
-    record5 = create_mock_record(PublishStatus.PUBLIC.value, 'other_date', None)
+    record1 = create_mock_record(None, [None], ['testfile.txt'])
+    record2 = create_mock_record(PublishStatus.PRIVATE.value, ['open_date'], ['testfile.txt'])
+    record3 = create_mock_record(PublishStatus.NEW.value, ['open_no'], ['testfile.txt'])
+    record4 = create_mock_record(PublishStatus.DELETE.value, ['other_date'], ['testfile.txt'])
+    record5 = create_mock_record(PublishStatus.PUBLIC.value, ['other_date'], ['testfile.txt'], None)
+    record_multiple_files = create_mock_record(PublishStatus.PUBLIC.value, ['open_no', 'open_date', 'other_date'], ['testfile1.txt', 'testfile2.txt', 'testfile3.txt'])
 
     # Mock secret URLs
     mock_secret_url = MagicMock()
@@ -200,7 +200,7 @@ def test_publish(mock_db_commit, mock_WekoIndexer, mock_FileSecretDownload):
     # record4のテスト
     assert_publish(record4, reset_mock=False)
     # record4のシークレットURL削除確認
-    mock_FileSecretDownload.query.filter_by.assert_called_with(record_id='12345', is_deleted=False)
+    mock_FileSecretDownload.query.filter_by.assert_called_with(record_id='12345', is_deleted=False, file_name='testfile.txt')
     assert mock_secret_url.delete_logically.call_count == 1
 
     # モックの呼び出し履歴をリセット
@@ -211,6 +211,45 @@ def test_publish(mock_db_commit, mock_WekoIndexer, mock_FileSecretDownload):
     assert_publish(record5, reset_mock=False)
     mock_FileSecretDownload.query.filter_by.assert_not_called()
     mock_secret_url.delete_logically.assert_not_called()
+
+    
+    # 複数のファイルが含まれている場合のテスト
+    record_multiple_files = create_mock_record(PublishStatus.DELETE.value, ['other_date', 'other_date'], ['testfile1.txt', 'testfile2.txt'])
+    assert_publish(record_multiple_files, reset_mock=False)
+    mock_FileSecretDownload.query.filter_by.assert_any_call(record_id='12345', is_deleted=False, file_name='testfile1.txt')
+    mock_FileSecretDownload.query.filter_by.assert_any_call(record_id='12345', is_deleted=False, file_name='testfile2.txt')
+    assert mock_secret_url.delete_logically.call_count == 2
+
+    # モックの呼び出し履歴をリセット
+    mock_secret_url.delete_logically.reset_mock()
+
+    # 片方のファイルが更新され、片方が更新されない場合のテスト
+    record_partial_update = create_mock_record(PublishStatus.DELETE.value, ['other_date', 'open_no'], ['testfile1.txt', 'testfile2.txt'])
+    assert_publish(record_partial_update, reset_mock=False)
+    mock_FileSecretDownload.query.filter_by.assert_any_call(record_id='12345', is_deleted=False, file_name='testfile1.txt')
+    mock_FileSecretDownload.query.filter_by.assert_any_call(record_id='12345', is_deleted=False, file_name='testfile2.txt')
+    assert mock_secret_url.delete_logically.call_count == 1
+
+    # モックの呼び出し履歴をリセット
+    mock_secret_url.delete_logically.reset_mock()
+
+    # どちらのファイルも論理削除が行われない場合のテスト
+    record_partial_update = create_mock_record(PublishStatus.DELETE.value, ['open_no', 'open_no'], ['testfile1.txt', 'testfile2.txt'])
+    assert_publish(record_partial_update, reset_mock=False)
+    mock_FileSecretDownload.query.filter_by.assert_any_call(record_id='12345', is_deleted=False, file_name='testfile1.txt')
+    mock_FileSecretDownload.query.filter_by.assert_any_call(record_id='12345', is_deleted=False, file_name='testfile2.txt')
+    mock_secret_url.delete_logically.assert_not_called()
+
+    # モックの呼び出し履歴をリセット
+    mock_secret_url.delete_logically.reset_mock()
+
+    # 2つ以上のファイルすべてが更新され、論理削除が行われる場合のテスト
+    record_partial_update = create_mock_record(PublishStatus.DELETE.value, ['other_date', 'other_date','other_date'], ['testfile1.txt', 'testfile2.txt', 'testfile3.txt'])
+    assert_publish(record_partial_update, reset_mock=False)
+    mock_FileSecretDownload.query.filter_by.assert_any_call(record_id='12345', is_deleted=False, file_name='testfile1.txt')
+    mock_FileSecretDownload.query.filter_by.assert_any_call(record_id='12345', is_deleted=False, file_name='testfile2.txt')
+    mock_FileSecretDownload.query.filter_by.assert_any_call(record_id='12345', is_deleted=False, file_name='testfile3.txt')
+    assert mock_secret_url.delete_logically.call_count == 3
 
     # attribute_value_mltが空のリストの場合のテスト
     record_empty_role = MockRecord({
@@ -228,8 +267,19 @@ def test_publish(mock_db_commit, mock_WekoIndexer, mock_FileSecretDownload):
         'publish_status': PublishStatus.PRIVATE.value,
         'recid': '12345',
         'some_field': {
-            'attribute_value_mlt': [{}]
+            'attribute_value_mlt': [{'filename': 'testfile.txt'}]
         }
     })
     update_item.publish(record_no_role)
     assert record_no_role['publish_status'] == PublishStatus.PUBLIC.value
+
+    # "attribute_value_mlt"が辞書ではない場合のテスト
+    record_non_dict_attribute_value_mlt = MockRecord({
+        'publish_status': PublishStatus.PRIVATE.value,
+        'recid': '12345',
+        'some_field': {
+            'attribute_value_mlt': ['not_dict']
+        }
+    })
+    update_item.publish(record_non_dict_attribute_value_mlt)
+    assert record_non_dict_attribute_value_mlt['publish_status'] == PublishStatus.PUBLIC.value
