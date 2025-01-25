@@ -159,8 +159,6 @@ BEGIN
         UPDATE item_type_edit_history SET item_type_id = target_simple_itemtype_id WHERE item_type_id = simple_itemtype_id;
         UPDATE workflow_workflow SET itemtype_id = target_full_itemtype_id WHERE itemtype_id = full_itemtype_id;
         UPDATE workflow_workflow SET itemtype_id = target_simple_itemtype_id WHERE itemtype_id = simple_itemtype_id;
-        UPDATE item_metadata SET item_type_id = target_full_itemtype_id WHERE item_type_id = full_itemtype_id;
-        UPDATE item_metadata SET item_type_id = target_simple_itemtype_id WHERE item_type_id = simple_itemtype_id;
         UPDATE item_type_mapping SET item_type_id = target_full_itemtype_id WHERE item_type_id = full_itemtype_id;
         UPDATE item_type_mapping SET item_type_id = target_simple_itemtype_id WHERE item_type_id = simple_itemtype_id;
 
@@ -172,6 +170,8 @@ BEGIN
 
         UPDATE item_metadata SET json=replace(json::text,format('/items/jsonschema/%s"',simple_itemtype_id),format('/items/jsonschema/%s"',target_simple_itemtype_id))::jsonb WHERE item_type_id=simple_itemtype_id AND json::text like format('%%/items/jsonschema/%s"%%',simple_itemtype_id);
         UPDATE item_metadata set json=jsonb_set(json,'{$schema}',cast(format('"%s"',target_simple_itemtype_id) as jsonb)) WHERE json->>'$schema'=CAST(simple_itemtype_id as text);
+        UPDATE item_metadata SET item_type_id = target_full_itemtype_id WHERE item_type_id = full_itemtype_id;
+        UPDATE item_metadata SET item_type_id = target_simple_itemtype_id WHERE item_type_id = simple_itemtype_id;
         
         UPDATE records_metadata set json=jsonb_set(json,'{item_type_id}',cast(format('"%s"',target_full_itemtype_id) as jsonb)) WHERE json->>'item_type_id'=CAST(full_itemtype_id as text);
         UPDATE records_metadata set json=jsonb_set(json,'{item_type_id}',cast(format('"%s"',target_simple_itemtype_id) as jsonb)) WHERE json->>'item_type_id'=CAST(simple_itemtype_id as text);
