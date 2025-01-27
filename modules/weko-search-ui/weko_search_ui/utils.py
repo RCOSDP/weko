@@ -839,6 +839,8 @@ def read_stats_file(file_path: str, file_name: str, file_format: str) -> dict:
                         str_keys = ", ".join(item_path_not_existed).replace(
                             ".metadata.", ""
                         )
+                        if len(str_keys) > 200:
+                            str_keys = str_keys[:200] + "..."
                         item_data["warnings"] = [
                             _(
                                 "The following items are not registered because "
@@ -3262,6 +3264,8 @@ def handle_get_all_id_in_item_type(item_type_id):
                         else item.get("items").get("properties")
                     )
                     result += handle_get_all_sub_id_and_name(sub_items, new_key)[0]
+    db.session.commit()
+    db.session.close()
     return result
 
 
