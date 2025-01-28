@@ -1299,7 +1299,7 @@ def can_manage_onetime_url(record, filename):
     Returns:
         bool: True if all conditions are met, False otherwise.
     """
-    if not current_user or current_user.is_authenticated:
+    if not current_user or not current_user.is_authenticated:
         return False
     else:
         return (
