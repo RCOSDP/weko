@@ -1,3 +1,5 @@
+"""Add a free textarea to itemtype property and itemtypes"""
+
 import copy, traceback, os
 from datetime import datetime, timezone
 from sqlalchemy import create_engine, Column, Integer, JSON, DateTime, Text
@@ -114,6 +116,8 @@ class ItemTypeProperty(Base):
     updated = Column(DateTime)
     name = Column(Text)
 
+updated_itemtype_ids = []
+updated_itemtype_property_id = None
 try:
     # update file property
     record = session.query(ItemTypeProperty).filter(ItemTypeProperty.id == FILE_PROP_ID).first()
@@ -136,6 +140,7 @@ try:
         flag_modified(record, "forms")
 
         record.updated = datetime.now(timezone.utc)
+        updated_itemtype_property_id = record.id
 
     # update itemtypes
     records = session.query(ItemType).all()
@@ -163,6 +168,7 @@ try:
             flag_modified(record, "render")
 
             record.updated = datetime.now(timezone.utc)
+            updated_itemtype_ids.append(record.id)
 
 
 except Exception as e:
@@ -171,3 +177,5 @@ except Exception as e:
 else:
     session.commit()
     print("success")
+    print("updated_itemtype_property_id:", updated_itemtype_property_id)
+    print("updated_itemtype_ids:", updated_itemtype_ids)
