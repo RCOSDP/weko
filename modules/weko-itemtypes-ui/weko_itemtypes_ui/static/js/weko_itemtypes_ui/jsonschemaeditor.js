@@ -217,7 +217,7 @@
 					type: "string",
 					enum: arr
 				}
-		};
+			};
 		},
 		render: function render() {
 			var self = this;
@@ -345,9 +345,9 @@
 			var arr = [];
 			if (this.state.enum.length > 0) {
 				arr = this.state.enum.split('|');
-			}
-			if (!arr.includes(null)) {
-				arr.unshift(null);
+				if (!arr.includes(null)) {
+					arr.unshift(null);
+				}
 			}
 			return {
 				type: this.state.type,
