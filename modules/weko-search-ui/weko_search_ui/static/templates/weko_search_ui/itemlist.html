@@ -18,14 +18,6 @@
             alt="{{record.metadata._thumbnail.thumbnail_label}}" width="{{record.metadata._thumbnail.thumbnail_width}}">
         </td>
         <td style="vertical-align: top;">
-          <span ng-repeat="(keys, list_author) in record.metadata._creator_info track by $index">
-            <span ng-repeat="(key, author) in list_author track by $index">
-              <span ng-if="author.creatorNames.creatorName">{{ author.creatorNames.creatorName|escapeTitle }}</span>
-              <span ng-if="!author.creatorNames.creatorName && author.familyNames.familyName">{{ author.familyNames.familyName|escapeTitle }}, </span>
-              <span ng-if="!author.creatorNames.creatorName && author.givenNames.givenName">{{ author.givenNames.givenName|escapeTitle }}</span>
-              <span ng-if="author.creatorNames.creatorName || author.familyNames.familyName || author.givenNames.givenName">;</span>
-            </span><br/>
-          </span>
           <pre class="hide">{{record.metadata._comment}}</pre>
 
           <span ng-repeat="comment in record.metadata._comment track by $index"> {{ comment|escapeTitle }} <br> </span>
