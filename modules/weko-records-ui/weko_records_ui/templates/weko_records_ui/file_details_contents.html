@@ -179,7 +179,74 @@
                 {%- endfor -%}
               </table>
             </div>
-
+            {%- if active_secret_URLs -%}
+            <div class="secret-url-area">
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th colspan="6">{{_('Secret URL')}}</th>
+                        </tr>
+                        <tr>
+                            <th class="col-label-name">{{_('label Name')}}</th>
+                            <th class="col-created">{{_('Create Date')}}</th>
+                            <th class="col-expiration-date">{{_('Expiration Date')}}</th>
+                            <th class="col-download-count">{{_('Download Count')}}</th>
+                            <th class="col-action">{{_('Action')}}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {%- for url in active_secret_URLs -%}
+                        <tr>
+                            <td class="col-label-name">{{ url.label_name }}</td>
+                            <td class="col-created date-format">{{ url.created }}</td>
+                            <td class="col-expiration-date date-format">{{ url.expiration_date }}</td>
+                            <td class="col-download-count">{{ url.download_count }}/{{url.download_limit}}</td>
+                            <td class="col-action">
+                                <button class="delete_secret_url img-rounded action-button button-sm"
+                                    url="{{url_for('invenio_records_ui.recid_delete_secret_url', filename=filename, pid_value=pid.pid_value, secret_url_id=url.id)}}">
+                                    <i class="action-icon"></i>
+                                    {{_('Delete')}}
+                                </button>
+                                <button class="copy_secret_url img-rounded action-button button-sm"
+                                    url="{{url_for('invenio_records_ui.recid_copy_secret_url', filename=filename, pid_value=pid.pid_value, secret_url_id=url.id)}}">
+                                    <i class="action-icon"></i>
+                                    {{_('Copy')}}
+                                </button>
+                            </td>
+                        </tr>
+                        {%- endfor -%}
+                    </tbody>
+                </table>
+            </div>
+            {%- endif -%}
+            {%- if active_onetime_URLs -%}
+              <div class="secret-url-area">
+                <table class="table table-bordered table-striped">
+                  <thead>
+                    <tr>
+                      <th colspan="6">ワンタイムURL</th>
+                    </tr>
+                    <tr>
+                      <th>アクセスユーザー名</th>
+                      <th>作成日時</th>
+                      <th>DL期限</th>
+                      <th>DL回数</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                      {%- for url in active_onetime_URLs -%}
+                        <tr>
+                          <td>{{ url.file_name }}</td>
+                          <td>{{ url.created }}</td>
+                          <td>{{ url.expiration_date }}</td>
+                          <td>{{ url.download_count }}</td>
+                        </tr>
+                      {%- endfor -%}
+                  </tbody>
+                </table>
+              </div>
+            {%- endif -%}
             <div role="navigation">
               <ul class="nav nav-tabs">
                 <li class="active"><a  href="#versions" data-toggle="tab">{{_('Version')}}</a></li>

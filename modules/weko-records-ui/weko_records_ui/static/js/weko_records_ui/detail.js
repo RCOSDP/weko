@@ -294,3 +294,81 @@ require([
     }
   });
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+  // 日付をフォーマットする関数
+  function formatDate(dateString) {
+      // Dateオブジェクトを作成
+      const date = new Date(dateString);
+      const year = date.getFullYear();
+      const month = ('0' + (date.getMonth() + 1)).slice(-2);
+      const day = ('0' + date.getDate()).slice(-2);
+      return `${year}-${month}-${day}`;
+  }
+
+  // .date-format クラスを持つすべての要素を取得
+  const dateElements = document.querySelectorAll('.date-format');
+
+  // 各要素の日付をフォーマット
+  dateElements.forEach(function(element) {
+      const originalDate = element.textContent;
+      element.textContent = formatDate(originalDate);
+  });
+});
+
+$(document).ready(function() {
+  // シークレットURLの削除
+  $('.delete_secret_url').on('click', function(event) {
+      event.preventDefault();
+      const $button = $(this);
+      const url = $button.attr('url');
+
+      // 確認ポップアップを表示
+      if (confirm("If you delete this URL, it will no longer be available. Are you sure you want to delete it?")) {
+          $button.prop('disabled', true);
+          $.ajax({
+              url: url,
+              method: 'DELETE',
+              contentType: 'application/json',
+              dataType: 'json',
+              success: function(response) {
+                  $button.prop('disabled', false);
+                  alert(response.message || "Success!");
+                  location.reload(); // 画面をリロード
+              },
+              error: function(jqXHR, status, msg) {
+                  $button.prop('disabled', false);
+                  alert("Error: " + (jqXHR.responseJSON?.message || msg));
+              }
+          });
+      }
+  });
+});
+
+$(document).ready(function() {
+  // シークレットURLのコピー
+  $('.copy_secret_url').on('click', function(event) {
+      event.preventDefault();
+      const $button = $(this);
+      const url = $button.attr('url');
+      $button.prop('disabled', true);
+      $.ajax({
+          url: url,
+          method: 'GET',
+          contentType: 'application/json',
+          dataType: 'json',
+          success: function(response) {
+              $button.prop('disabled', false);
+              alert(response.message || "Success!");
+              navigator.clipboard.writeText(response.url)
+                  .catch(function(err) {
+                      alert('Could not copy URL: ', err);
+                  });
+          },
+          error: function(jqXHR, status, msg) {
+              $button.prop('disabled', false);
+              alert("Error: " + (jqXHR.responseJSON?.message || msg));
+          }
+      });
+  });
+});

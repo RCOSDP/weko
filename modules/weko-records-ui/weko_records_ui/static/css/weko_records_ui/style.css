@@ -76,12 +76,12 @@
 .action-button {
   margin-top: 5px;
   margin-bottom: 5px;
-//  display: block;
+  display: block;
   margin-right: auto;
   margin-left: auto;
   font-size: 13px;
   line-height: 12px;
-//  background-color: #D3D3D3;
+  background-color: #D3D3D3;
   height: 27px;
 }
 
@@ -99,4 +99,58 @@
   border-radius: 5px;
   background-color: #f7f7f7 !important;
   border: 1px solid #ebebeb;
+}
+
+/* 削除ボタンのスタイル */
+.delete_secret_url {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* コピーボタンのスタイル */
+.copy_secret_url {
+  background-color: #F0F8FF;
+  color: black;
+}
+
+.secret-url-area table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.secret-url-area th, .secret-url-area td {
+  padding: 10px;
+  text-align: left;
+  border: 1px solid #ddd;
+  vertical-align: middle; /* 縦方向の中央揃え */
+}
+
+.secret-url-area th {
+  background-color: #f2f2f2;
+}
+
+.secret-url-area .action-button {
+  margin-right: 5px;
+  display: inline-block; /* ボタンを横並びにする */
+}
+
+/* 各列の幅を設定 */
+.secret-url-area .col-label-name {
+  width: 30%;
+}
+
+.secret-url-area .col-created {
+  width: 10%;
+}
+
+.secret-url-area .col-expiration-date {
+  width: 10%;
+}
+
+.secret-url-area .col-download-count {
+  width: 8%;
+}
+
+.secret-url-area .col-action {
+  width: 13%;
 }

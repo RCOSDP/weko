@@ -655,5 +655,17 @@ msgstr "ダウンロード制限回数を超過しています。"
 msgid "This data is not available for this user."
 msgstr "このデータは利用できません（権限がないため）。"
 
-msgid "Success Secret URL Generate"
-msgstr "成功: シークレットURLを生成し、あなたのメールアドレス宛に送信しました。"
+msgid "label Name"
+msgstr "ラベル名"
+
+msgid "Create Date"
+msgstr "作成日時"
+
+msgid "Expiration Date"
+msgstr "DL期限"
+
+msgid "Download Count"
+msgstr "DL回数"
+
+msgid "Action"
+msgstr "アクション"
