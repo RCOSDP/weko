@@ -251,6 +251,9 @@ def test_publish(mock_db_commit, mock_WekoIndexer, mock_FileSecretDownload):
     mock_FileSecretDownload.query.filter_by.assert_any_call(record_id='12345', is_deleted=False, file_name='testfile3.txt')
     assert mock_secret_url.delete_logically.call_count == 3
 
+    # モックの呼び出し履歴をリセット
+    mock_secret_url.delete_logically.reset_mock()
+
     # attribute_value_mltが空のリストの場合のテスト
     record_empty_role = MockRecord({
         'publish_status': PublishStatus.PRIVATE.value,
@@ -260,6 +263,7 @@ def test_publish(mock_db_commit, mock_WekoIndexer, mock_FileSecretDownload):
         }
     })
     update_item.publish(record_empty_role)
+    mock_secret_url.delete_logically.assert_not_called()
     assert record_empty_role['publish_status'] == PublishStatus.PUBLIC.value
 
     # "accessrole"が欠落しているケースのテスト
@@ -271,6 +275,7 @@ def test_publish(mock_db_commit, mock_WekoIndexer, mock_FileSecretDownload):
         }
     })
     update_item.publish(record_no_role)
+    mock_secret_url.delete_logically.assert_not_called()
     assert record_no_role['publish_status'] == PublishStatus.PUBLIC.value
 
     # "attribute_value_mlt"が辞書ではない場合のテスト
@@ -282,4 +287,5 @@ def test_publish(mock_db_commit, mock_WekoIndexer, mock_FileSecretDownload):
         }
     })
     update_item.publish(record_non_dict_attribute_value_mlt)
+    mock_secret_url.delete_logically.assert_not_called()
     assert record_non_dict_attribute_value_mlt['publish_status'] == PublishStatus.PUBLIC.value
