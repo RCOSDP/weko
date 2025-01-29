@@ -18,21 +18,6 @@ from .models import SwordItemTypeMappingModel, SwordClientModel
 
 
 class SwordItemTypeMapping():
-
-    @staticmethod
-    def versions():
-        """Get version class.
-
-        Get the versions of the SwordItemTypeMappingModel.
-
-        Returns:
-            version_class: An instance of the version_class initialized with
-            SwordItemTypeMappingModel.
-        """
-
-        return version_class(SwordItemTypeMappingModel)
-
-
     @classmethod
     def create(cls, name, mapping, item_type_id):
         """Create mapping.

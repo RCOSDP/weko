@@ -105,12 +105,12 @@ class TestSwordItemTypeMapping:
     # def versions()
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordItemTypeMapping::test_versions -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
     def test_versions(app, db, sword_mapping):
-        ItemTypeMappingVersion = SwordItemTypeMapping.versions()
+
         obj = sword_mapping[1]["sword_mapping"]
         obj.mapping = {"test2": "test2"}
         db.session.commit()
 
-        versions = ItemTypeMappingVersion.query.filter_by(id=2).all()
+        versions = obj.versions.all()
         assert len(versions) == 2
         assert versions[0].id == sword_mapping[1]["id"]
         assert versions[1].id == obj.id

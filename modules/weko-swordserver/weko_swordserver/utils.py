@@ -179,6 +179,13 @@ def process_json(json_ld):
                     ErrorType.MetadataFormatNotAcceptable
                 )
         json["@graph"] = new_value
+    # TODO: support SWORD json-ld format
+    else:
+        current_app.logger.error("Invalid json-ld format.")
+        raise WekoSwordserverException(
+            "Invalid json-ld format.",
+            ErrorType.MetadataFormatNotAcceptable
+        )
     # Remove unnecessary keys
     json = json.get("@graph")
 
