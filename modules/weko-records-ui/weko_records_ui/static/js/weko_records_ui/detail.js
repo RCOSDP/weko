@@ -317,58 +317,71 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 $(document).ready(function() {
+  // 共通のAJAXリクエスト関数
+  function handleAjaxRequest($button, url, method, successMessage, clipboardText) {
+    $button.prop('disabled', true);
+    $.ajax({
+      url: url,
+      method: method,
+      contentType: 'application/json',
+      dataType: 'json',
+      success: function(response) {
+        $button.prop('disabled', false);
+        alert(response.message || successMessage);
+        if (clipboardText) {
+          navigator.clipboard.writeText(response.url)
+            .catch(function(err) {
+              alert('Could not copy URL: ', err);
+            });
+        } else {
+          location.reload(); // 画面をリロード
+        }
+      },
+      error: function(jqXHR, status, msg) {
+        $button.prop('disabled', false);
+        alert("Error: " + (jqXHR.responseJSON?.message || msg));
+      }
+    });
+  }
+
   // シークレットURLの削除
   $('.delete_secret_url').on('click', function(event) {
-      event.preventDefault();
-      const $button = $(this);
-      const url = $button.attr('url');
+    event.preventDefault();
+    const $button = $(this);
+    const url = $button.attr('url');
 
-      // 確認ポップアップを表示
-      if (confirm("If you delete this URL, it will no longer be available. Are you sure you want to delete it?")) {
-          $button.prop('disabled', true);
-          $.ajax({
-              url: url,
-              method: 'DELETE',
-              contentType: 'application/json',
-              dataType: 'json',
-              success: function(response) {
-                  $button.prop('disabled', false);
-                  alert(response.message || "Success!");
-                  location.reload(); // 画面をリロード
-              },
-              error: function(jqXHR, status, msg) {
-                  $button.prop('disabled', false);
-                  alert("Error: " + (jqXHR.responseJSON?.message || msg));
-              }
-          });
-      }
+    // 確認ポップアップを表示
+    if (confirm("If you delete this URL, it will no longer be available. Are you sure you want to delete it?")) {
+      handleAjaxRequest($button, url, 'DELETE', "Success!", false);
+    }
   });
-});
 
-$(document).ready(function() {
   // シークレットURLのコピー
   $('.copy_secret_url').on('click', function(event) {
-      event.preventDefault();
-      const $button = $(this);
-      const url = $button.attr('url');
-      $button.prop('disabled', true);
-      $.ajax({
-          url: url,
-          method: 'GET',
-          contentType: 'application/json',
-          dataType: 'json',
-          success: function(response) {
-              $button.prop('disabled', false);
-              alert(response.message || "Success!");
-              navigator.clipboard.writeText(response.url)
-                  .catch(function(err) {
-                      alert('Could not copy URL: ', err);
-                  });
-          },
-          error: function(jqXHR, status, msg) {
-              $button.prop('disabled', false);
-              alert("Error: " + (jqXHR.responseJSON?.message || msg));
-          }
-      });
+    event.preventDefault();
+    const $button = $(this);
+    const url = $button.attr('url');
+    handleAjaxRequest($button, url, 'GET', "Success!", true);
+  });
+
+  // ワンタイムURLの削除
+  $('.delete_onetime_url').on('click', function(event) {
+    event.preventDefault();
+    const $button = $(this);
+    const url = $button.attr('url');
+
+    // 確認ポップアップを表示
+    if (confirm("If you delete this URL, it will no longer be available. Are you sure you want to delete it?")) {
+      handleAjaxRequest($button, url, 'DELETE', "Success!", false);
+    }
+  });
+
+  // ワンタイムURLのコピー
+  $('.copy_onetime_url').on('click', function(event) {
+    event.preventDefault();
+    const $button = $(this);
+    const url = $button.attr('url');
+    handleAjaxRequest($button, url, 'GET', "Success!", true);
   });
 });
+
