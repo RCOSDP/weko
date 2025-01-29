@@ -34,6 +34,7 @@ from flask import Flask
 from flask_babelex import Babel
 from invenio_i18n import InvenioI18N
 from invenio_accounts import InvenioAccounts
+from invenio_accounts.models import Role
 from invenio_accounts.testutils import create_test_user
 from invenio_db import InvenioDB
 from invenio_db import db as db_
@@ -328,9 +329,14 @@ def admin_settings(app, db):
         name="items_display_settings",
         settings={"items_display_email": True, "items_search_author": "name"}
     )
+    setting2 = AdminSettings(
+        name="billing_settings",
+        settings={"tax_rate": 0.1, "currency_unit": "&yen;"}
+    )
     
     with db.session.begin_nested():
         db.session.add(setting)
+        db.session.add(setting2)
 
 
 @pytest.fixture()
@@ -429,3 +435,30 @@ def meta():
     with open(filepath, encoding="utf-8") as f:
             input_data = json.load(f)
     return input_data
+
+@pytest.fixture()
+def roles(app):
+    ds = app.extensions["invenio-accounts"].datastore
+    role_count = Role.query.filter_by(name='System Administrator').count()
+    if role_count != 1:
+        sysadmin_role = ds.create_role(name='System Administrator')
+        repoadmin_role = ds.create_role(name='Repository Administrator')
+        contributor_role = ds.create_role(name='Contributor')
+        comadmin_role = ds.create_role(name='Community Administrator')
+        general_role = ds.create_role(name='General')
+        original_role = ds.create_role(name='Original Role')
+    else:
+        sysadmin_role = Role.query.filter_by(name='System Administrator').first()
+        repoadmin_role = Role.query.filter_by(name='Repository Administrator').first()
+        contributor_role = Role.query.filter_by(name='Contributor').first()
+        comadmin_role = Role.query.filter_by(name='Community Administrator').first()
+        general_role = Role.query.filter_by(name='General').first()
+        original_role = Role.query.filter_by(name='Original Role').first()
+    return {
+        'System Administrator': sysadmin_role,
+        'Repository Administrator': repoadmin_role,
+        'Contributor': contributor_role,
+        'Community Administrator': comadmin_role,
+        "General": general_role,
+        "Original Role": original_role
+    }
