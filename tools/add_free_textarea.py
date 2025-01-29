@@ -118,7 +118,11 @@ class ItemTypeProperty(Base):
 
 updated_itemtype_ids = []
 updated_itemtype_property_id = None
+
 try:
+    if not SUBPROP_NAME:
+        raise Exception("subproperty name must not be empty")
+
     # update file property
     record = session.query(ItemTypeProperty).filter(ItemTypeProperty.id == FILE_PROP_ID).first()
 
@@ -141,6 +145,8 @@ try:
 
         record.updated = datetime.now(timezone.utc)
         updated_itemtype_property_id = record.id
+    else:
+        raise Exception(f"property with id = {FILE_PROP_ID} does not exist")
 
     # update itemtypes
     records = session.query(ItemType).all()
