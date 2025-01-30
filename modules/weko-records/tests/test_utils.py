@@ -34,6 +34,7 @@ from weko_records.utils import (
     to_orderdict,
     get_options_and_order_list,
     sort_meta_data_by_options,
+    convert_array_to_dict,
     get_keywords_data_load,
     is_valid_openaire_type,
     check_has_attribute_value,
@@ -422,7 +423,7 @@ def test_find_items():
 #     def get_name(key):
 #     def get_items(nlst):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_all_items -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_get_all_items():
+def test_get_all_items(admin_settings,roles):
     _nlst = [
         {
             'subitem_1': 'en_value',
@@ -453,6 +454,16 @@ def test_get_all_items():
 
     res2 = get_all_items(_nlst2, _klst2)
     assert res2[0][0][0][1]['item_1617605131499[].priceinfo[].billingrole'] == role_name
+    assert res2[0][1]['item_1617605131499[].billing'] == 'billing_file'
+
+    role_name = '6'
+    _nlst2 = [
+        {'billing': ['billing_file'], 
+        'priceinfo': [{'tax': 'include_tax', 'price': '110', 'billingrole': role_name, 'has_role': True}], 
+        }
+    ]
+    res2 = get_all_items(_nlst2, _klst2)
+    assert res2[0][0][0][1]['item_1617605131499[].priceinfo[].billingrole'] == 'Original Role'
     assert res2[0][1]['item_1617605131499[].billing'] == 'billing_file'
 
     data1 = {
@@ -551,6 +562,11 @@ params=[
      "data/item_type/item_type_mapping_title.json",
      "data/record_hit/record_hit_title3.json",
      False),
+    ("data/item_type/item_type_render1.json",
+     "data/item_type/item_type_form1.json",
+     "data/item_type/item_type_mapping1.json",
+     "data/record_hit/record_hit6.json",
+     True),
 ]
 @pytest.mark.parametrize("render,form,mapping,hit,licence",params)
 @pytest.mark.asyncio
@@ -634,6 +650,8 @@ async def test_sort_meta_data_by_options_no_item_type_id(i18n_app, db, admin_set
 #     def data_comment(result, data_result, stt_key, is_specify_newline_array):
 #     def get_comment(solst_dict_array, hide_email_flag, _item_metadata, src, solst):
 #         def get_option_value(option_type, parent_option, child_option):
+#     def get_value_by_selected_language:
+#     def get_creator_comments:
 #     def get_file_comments(record, files):
 #         def __get_label_extension():
 #     def get_file_thumbnail(thumbnails):
@@ -835,7 +853,18 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
                 )
             except:
                 pass
-    
+
+# def convert_array_to_dict(solst_dict_array,key):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_convert_array_to_dict -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_convert_array_to_dict():
+    _solst_dict_array=[{'familyName': 'Tanaka', 'familyNameLang': 'en'}]
+    key='familyNameLang'
+    res = convert_array_to_dict(_solst_dict_array, key)
+    assert res=={'en': {'familyName': 'Tanaka', 'familyNameLang': 'en', 'idx': 0}}
+    _solst_dict_array=[{'familyName': 'Tanaka', 'familyNameLang': ''}]
+    key='familyNameLang'
+    res = convert_array_to_dict(_solst_dict_array, key)
+    assert res=={'None': {'familyName': 'Tanaka', 'familyNameLang': '', 'idx': 0}}
 
 # def get_keywords_data_load(str):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_keywords_data_load -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -1105,8 +1134,7 @@ def test_remove_weko2_special_character():
     assert remove_weko2_special_character("HOGE,&EMPTY&,HOGE")=="HOGE,,HOGE"
 
     with patch("re.sub", return_value=","):
-        assert remove_weko2_special_character(",,,,") == None
-        raise BaseException
+        assert remove_weko2_special_character(",,,,") == ''
 
 #     def __remove_special_character(_s_str: str):
 
@@ -1151,7 +1179,7 @@ def test_selected_value_by_language_3(app):
     
 
     with patch("weko_records.utils.check_info_in_metadata", return_value="en"):
-        res = selected_value_by_language(["ja-Latn"], ['ja-Latn'], _lang_id, _val_id, 'en', meta[0])
+        res = selected_value_by_language(["ja-Latn"], ['ja-Latn'], _lang_id, _val_id, 'en', meta)
         assert res=='en'
 
 def test_selected_value_by_language_2(app, meta):
@@ -1363,7 +1391,7 @@ def test_get_show_list_author(i18n_app):
     }]
 
     res = get_show_list_author(_solst_dict_array, False, _author_key, _creates)
-    assert res=={'creatorName': ['en_name'], 'familyName': ['en_fname']}
+    assert res==[{'creatorName': ['en_name'], 'familyName': ['en_fname']}]
 
 # def format_creates(creates, hide_creator_keys):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_format_creates -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -1417,7 +1445,7 @@ def test_format_creates(i18n_app):
     _hide_creator_keys = ['familyNames']
     
     res = format_creates(_creates, _hide_creator_keys)
-    assert res=={'creatorName': ['en_name'], 'affiliationName': ['en_af'], 'creatorAlternative': ['en_al']}
+    assert res==[{'creatorName': ['en_name'], 'affiliationName': ['en_af'], 'creatorAlternative': ['en_al']}]
 
 # def get_creator(create, result_end, hide_creator_keys, current_lang):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_creator -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -1550,7 +1578,7 @@ def test_get_author_has_language(app):
 
     with patch("weko_records.utils.get_value_by_selected_lang", return_value="test"):
         res = get_author_has_language(_create, {}, 'en', ['test1', 'test1'])
-        assert res=={}
+        assert res=={'test1': ['test']}
 
 # def add_author(author_data, stt_key, is_specify_newline_array, s, value, data_result, is_specify_newline, is_hide, is_show_list):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_add_author -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
