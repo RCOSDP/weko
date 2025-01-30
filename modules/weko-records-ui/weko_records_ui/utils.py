@@ -52,7 +52,7 @@ from passlib.handlers.oracle import oracle10
 from weko_admin.models import AdminSettings
 from weko_admin.utils import UsageReport, get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
-from weko_records.api import FeedbackMailList, ItemTypes, Mapping
+from weko_records.api import FeedbackMailList, RequestMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import replace_fqdn
 from weko_records.models import ItemReference
@@ -463,6 +463,8 @@ def soft_delete(recid):
             dep.indexer.update_es_data(dep, update_revision=False, field='publish_status')
             FeedbackMailList.delete(ver.object_uuid)
             dep.remove_feedback_mail()
+            RequestMailList.delete(ver.object_uuid)
+            dep.remove_request_mail()
             for f in dep.files:
                 if f.file.uri not in del_files:
                     del_files[f.file.uri] = f.file.storage()

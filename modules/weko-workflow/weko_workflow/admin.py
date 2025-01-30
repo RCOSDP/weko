@@ -74,8 +74,7 @@ class FlowSettingView(BaseView):
                 flows=None,
                 users=users,
                 roles=roles,
-                actions=None,
-                action_list=actions
+                actions=None
             )
         UUID_PATTERN = re.compile(r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$',
                                   re.IGNORECASE)
@@ -96,8 +95,7 @@ class FlowSettingView(BaseView):
             users=users,
             roles=roles,
             actions=flow.flow_actions,
-            action_list=actions,
-            specifed_properties=specified_properties
+            action_list=actions
         )
 
     @staticmethod

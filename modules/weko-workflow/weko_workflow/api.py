@@ -37,13 +37,14 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 from weko_deposit.api import WekoDeposit
 from weko_records.serializers.utils import get_item_type_name
+from weko_records.api import RequestMailList
 from weko_schema_ui.models import PublishStatus
 from weko_index_tree.api import Indexes
 
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
     WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB
 from .models import Action as _Action
-from .models import ActionCommentPolicy, ActionFeedbackMail, \
+from .models import ActionCommentPolicy, ActionFeedbackMail, ActivityRequestMail,\
     ActionIdentifier, ActionJournal, ActionStatusPolicy
 from .models import Activity as _Activity
 from .models import ActivityAction, ActivityHistory, ActivityStatusPolicy
@@ -1110,6 +1111,39 @@ class WorkActivity(object):
             db.session.rollback()
             current_app.logger.exception(str(ex))
 
+
+    def create_or_update_activity_request_mail(self,
+                                             activity_id,
+                                             request_maillist,
+                                             is_display_request_button):
+        """Create or update action ActivityRequestMail's model.
+
+        :param activity_id: activity identifier
+        :param request_maillist: list of request mail in json format
+        :param is_display_request_button: whether display request button on the item detail page.
+        :return:
+        """
+        try:
+            with db.session.begin_nested():
+                activity_request_mail = ActivityRequestMail.query.filter_by(
+                    activity_id=activity_id).one_or_none()
+                if activity_request_mail:
+                    activity_request_mail.request_maillist = request_maillist
+                    activity_request_mail.display_request_button = is_display_request_button
+                    db.session.merge(activity_request_mail)
+                else:
+                    activity_request_mail = ActivityRequestMail(
+                        activity_id=activity_id,
+                        display_request_button=is_display_request_button,
+                        request_maillist=request_maillist
+                    )
+                    db.session.add(activity_request_mail)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+
+
     def get_action_journal(self, activity_id, action_id):
         """Get action journal info.
 
@@ -1166,6 +1200,17 @@ class WorkActivity(object):
             action_feedbackmail = ActionFeedbackMail.query.filter_by(
                 activity_id=activity_id).one_or_none()
             return action_feedbackmail
+
+    def get_activity_request_mail(self, activity_id):
+        """Get ActivityRequestMail object from model base on activity's id.
+
+        :param activity_id: acitivity identifier
+        :return:    object's model or none
+        """
+        with db.session.no_autoflush:
+            activity_request_mail = ActivityRequestMail.query.filter_by(
+                activity_id=activity_id).one_or_none()
+            return activity_request_mail
 
     def get_activity_action_status(self, activity_id, action_id, action_order):
         """Get activity action status."""

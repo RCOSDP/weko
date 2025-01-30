@@ -57,7 +57,7 @@ from weko_admin.models import Identifier, SiteInfo
 from weko_admin.utils import get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
-from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
+from weko_records.api import FeedbackMailList, RequestMailList, ItemsMetadata, ItemTypeNames, \
     ItemTypes, Mapping
 from weko_records.models import ItemType
 from weko_records.serializers.utils import get_full_mapping, get_item_type_name
@@ -1844,6 +1844,15 @@ def prepare_edit_workflow(post_activity, recid, deposit):
                 feedback_maillist=mail_list
             )
 
+        request_maillist = RequestMailList.get_mail_list_by_item_id(
+            item_id=recid.object_uuid)
+        if request_maillist:
+            activity.create_or_update_activity_request_mail(
+                activity_id=rtn.activity_id,
+                request_maillist=request_maillist,
+                is_display_request_button=True
+            )
+
     return rtn
 
 
@@ -1883,6 +1892,12 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     item_id=item_id,
                     feedback_maillist=feedback_mail_list
                 )
+            request_mail_list = RequestMailList.get_mail_list_by_item_id(pid_without_ver.object_uuid)
+            if request_mail_list:
+                RequestMailList.update(
+                    item_id=item_id,
+                    request_maillist=request_mail_list
+                )
             ver_attaching_deposit.publish()
 
             weko_record = WekoRecord.get_record_by_pid(new_deposit.pid.pid_value)
@@ -1918,6 +1933,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     new_parent_record = maintain_deposit. \
                         merge_data_to_record_without_version(current_pid, True)
                     maintain_deposit.publish()
+                    new_parent_record.update_request_mail()
                     new_parent_record.commit()
                     updated_item.publish(new_parent_record)
                     # update item link info of main record
@@ -1936,6 +1952,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     new_draft_record = draft_deposit. \
                         merge_data_to_record_without_version(current_pid)
                     draft_deposit.publish()
+                    new_draft_record.update_request_mail()
                     new_draft_record.commit()
                     updated_item.publish(new_draft_record)
                     # update item link info of draft record
@@ -1949,6 +1966,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     pid_without_ver.pid_value)
                 if weko_record:
                     weko_record.update_item_link(current_pid.pid_value)
+                parent_record.update_request_mail()
                 parent_record.commit()
                 updated_item.publish(parent_record)
                 if ".0" in current_pid.pid_value and last_ver:

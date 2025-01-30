@@ -591,6 +591,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.usage_report_activity_id = '';
       $scope.is_item_owner = false;
       $scope.feedback_emails = [];
+      $scope.request_emails = [];
       $scope.render_requirements = false;
       $scope.error_list = [];
       $scope.required_list = [];
@@ -3568,6 +3569,37 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         return invalid_emails;
       }
 
+      $scope.getRequestMailList = function() {
+        const emais_info = $scope.getMailList('#sltBoxListRequestEmail');
+        $scope.request_emails = emais_info['valid_emails'];
+        return emais_info['invalid_emails'];
+      }
+
+      $scope.getMailList = function(list_id) {
+        const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        let mails_info = {
+          'valid_emails': [],
+          'invalid_emails': []
+        }
+        let emails = $(list_id).children('a');
+        if (emails.length === 0) {
+          return mails_info;
+        }
+        emails.each(function (idx) {
+          const email = emails[idx]
+          const result = re.test(String(email.text).toLowerCase());
+          if (result) {
+            mails_info['valid_emails'].push({
+              "author_id": email.attributes[1]['value'],
+              "email": email.text
+            })
+          } else {
+            mails_info['invalid_emails'].push(email.text);
+          }
+        });
+        return mails_info;
+      }
+
       $scope.getItemsDictionary = function (item) {
         let result = {};
         if (item.hasOwnProperty('items')) {
@@ -4108,6 +4140,12 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             $("#react-component-version").addClass("has-error");
           }
         }
+
+        const emais_info = $scope.getMailList('#sltBoxListRequestEmail');
+        if($("#display_request_btn_checkbox").prop('checked') == true && (emais_info['valid_emails'] == "") ){
+          const blank_request_mail =$("#request-email-list-label").val();
+          listItemErrors.push(blank_request_mail);
+        }
         
         if (listItemErrors.length > 0) {
           let message = $("#validate_error").val() + '<br/><br/>';
@@ -4133,13 +4171,13 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           }
         }
       }
-      $scope.updateDataJson = function (activityId, steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail) {
+      $scope.updateDataJson = function (activityId, steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail, enableRequestMail) {
           if (!validateSession()) {
           return;
         }
         $scope.startLoading();
         let currActivityId = $("#activity_id").text();
-        if (!$scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail, true)) {
+        if (!$scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail, enableRequestMail, true)) {
           return;
         }
         $scope.UpdateApplicationDate();
@@ -4149,7 +4187,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           $("#allModal").modal("show");
           $scope.endLoading();
           return false;
-        } else if (enableFeedbackMail === 'True' && $scope.getFeedbackMailList().length > 0) {
+        } else if ((enableFeedbackMail === 'True' && $scope.getFeedbackMailList().length > 0)
+          || (enableRequestMail === 'True' && $scope.getRequestMailList().length > 0)) {
           let modalcontent = $('#invalid-email-format').val();
           $("#inputModal").html(modalcontent);
           $("#allModal").modal("show");
@@ -4361,8 +4400,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         sessionStorage.removeItem(key);
       }
 
-      $scope.saveActivityData = function(item_save_uri, currActivityId, enableContributor,enableFeedbackMail,startLoading,sessionValid) {
-        if (!$scope.saveDataJson(item_save_uri, currActivityId, enableContributor,enableFeedbackMail,startLoading,sessionValid)){
+      $scope.saveActivityData = function(item_save_uri, currActivityId, enableContributor,enableFeedbackMail, enableRequestMail,startLoading,sessionValid) {
+        if (!$scope.saveDataJson(item_save_uri, currActivityId, enableContributor,enableFeedbackMail, enableRequestMail,startLoading,sessionValid)){
           return;
         }
         $scope.genTitleAndPubDate();
@@ -4372,7 +4411,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         return true
       }
 
-      $scope.saveDataJson = function (item_save_uri, currentActionId, enableContributor, enableFeedbackMail, startLoading,sessionValid) {
+      $scope.saveDataJson = function (item_save_uri, currentActionId, enableContributor, enableFeedbackMail, enableRequestMail, startLoading,sessionValid) {
         //When press 'Next' or 'Save' button, setting data for model.
         //This function is called in updataDataJson function.
         if(!sessionValid){
@@ -4405,7 +4444,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               permission = true;
             }
             if (permission) {
-              if ($scope.getFeedbackMailList().length > 0) {
+              if (($scope.getFeedbackMailList().length > 0) || ($scope.getRequestMailList().length > 0)) {
                 let modalcontent = $('#invalid-email-format').val();
                 $("#inputModal").html(modalcontent);
                 $("#allModal").modal("show");
@@ -4413,6 +4452,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               }
               this.saveDataJsonCallback(item_save_uri, startLoading);
               this.saveFeedbackMailListCallback(currentActionId);
+              this.saveRequestMailListCallback(currentActionId);
             }
           } else {
             this.saveDataJsonCallback(item_save_uri, startLoading);
@@ -4507,6 +4547,41 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           },
           error: function(data, status) {
             var modalcontent =  "Cannot save Feedback-Mail list!";
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
+            result = false;
+          }
+        });
+        return result;
+      };
+
+      $scope.saveRequestMailListCallback = function (cur_action_id) {
+        const activityID = $("#activity_id").text();
+        const actionID = cur_action_id;
+        const display_request_btn = $("#display_request_btn_checkbox").prop('checked');
+        const emails = $scope.request_emails;
+
+        let result = true;
+        if ($.isEmptyObject(emails)) {
+          return result;
+        }
+        let request_body = {
+          'is_display_request_button': display_request_btn,
+          'request_maillist': emails
+        }
+        $.ajax({
+          url: '/workflow/save_request_maillist' + '/' + activityID + '/' + actionID,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          method: 'POST',
+          async: false,
+          data: JSON.stringify(request_body),
+          dataType: "json",
+          success: function(data, stauts) {
+          },
+          error: function(data, status) {
+            var modalcontent =  "Cannot save Request-Mail list!";
             $("#inputModal").html(modalcontent);
             $("#allModal").modal("show");
             result = false;
