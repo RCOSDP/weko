@@ -21,14 +21,15 @@
 
 """Database models for weko-admin."""
 
-from datetime import datetime
+from datetime import datetime, timezone
+import enum
 from typing import List
 
 from flask import current_app
 from invenio_db import db
 from sqlalchemy import CheckConstraint, desc, func
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.dialects.postgresql import INTERVAL
+from sqlalchemy.dialects.postgresql import INET, INTERVAL
 from sqlalchemy.sql.functions import concat ,now
 from sqlalchemy_utils.models import Timestamp
 from sqlalchemy_utils.types import JSONType
@@ -431,11 +432,12 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
             FileOnetimeDownload: The created instance.
 
         Raises:
+            ValueError: If the arguments are invalid.
             Exception: If an unexpected error occurs during the creation.
         """
-        if data.get('expiration_date') < datetime.now():
+        if data['expiration_date'] < datetime.now(tz=timezone.utc):
             raise ValueError('The expiration date must be in the future.')
-        if data.get('download_limit') <= 0:
+        if data['download_limit'] <= 0:
             raise ValueError('The download limit must be greater than 0.')
         try:
             file_download = cls(**data)
@@ -446,6 +448,18 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
             db.session.rollback()
             current_app.logger.error(ex)
             raise ex
+
+    @classmethod
+    def get_by_id(cls, id):
+        """Get a record by its ID.
+
+        Args:
+            id (int): The ID of the record to retrieve.
+
+        Returns:
+            FileOnetimeDownload: The record instance, or None if not found.
+        """
+        return cls.query.get(id)
 
     @classmethod
     def find(cls, **obj) -> list:
@@ -472,8 +486,9 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
             cls.file_name == obj.get("file_name"),
             cls.record_id == obj.get("record_id"),
             cls.user_mail == obj.get("user_mail"),
-            cls.download_count > 0 ,
-            now() < cls.created  + func.cast( concat( cls.expiration_date , ' days' ) , INTERVAL)
+            cls.download_count < cls.download_limit,
+            cls.expiration_date > now(timezone.utc),
+            cls.is_deleted == False
         )
         return query.order_by(desc(cls.id)).all()
 
@@ -551,15 +566,15 @@ class FileSecretDownload(db.Model, Timestamp, DownloadMixin):
             record_id (str): The ID of the record that has the file.
             file_name (str): The name of the file.
             label_name (str): The label of the secret URL.
-            expiration_date (datetime): The date and time when the URL expires.
+            expiration_date (date): The date when the URL expires.
             download_limit (int): The download limit of the URL.
         """
-        self.creator_id = creator_id
-        self.record_id = record_id
-        self.file_name = file_name
-        self.label_name = label_name
+        self.creator_id      = creator_id
+        self.record_id       = record_id
+        self.file_name       = file_name
+        self.label_name      = label_name
         self.expiration_date = expiration_date
-        self.download_limit = download_limit
+        self.download_limit  = download_limit
 
     @classmethod
     def create(cls, **data):
@@ -575,9 +590,9 @@ class FileSecretDownload(db.Model, Timestamp, DownloadMixin):
             ValueError: If the arguments are invalid.
             Exception: If an unexpected error occurs during the creation.
         """
-        if data.get('expiration_date') < datetime.now():
+        if data['expiration_date'] < datetime.now(tz=timezone.utc):
             raise ValueError('The expiration date must be in the future.')
-        if data.get('download_limit') <= 0:
+        if data['download_limit'] <= 0:
             raise ValueError('The download limit must be greater than 0.')
         try:
             file_download = cls(**data)
@@ -588,6 +603,18 @@ class FileSecretDownload(db.Model, Timestamp, DownloadMixin):
             db.session.rollback()
             current_app.logger.error(ex)
             raise ex
+
+    @classmethod
+    def get_by_id(cls, id):
+        """Get a record by its ID.
+
+        Args:
+            id (int): The ID of the record to retrieve.
+
+        Returns:
+            FileSecretDownload: The record instance, or None if not found.
+        """
+        return cls.query.get(id)
 
     @classmethod
     def find(cls, **obj) -> list:
@@ -605,4 +632,108 @@ class FileSecretDownload(db.Model, Timestamp, DownloadMixin):
         return query.order_by(desc(cls.id)).all()
 
 
-__all__ = ('PDFCoverPageSettings', 'FilePermission', 'FileOnetimeDownload' ,'FileSecretDownload')
+class UrlType(enum.Enum):
+    """An ENUM data type for the used URL."""
+    SECRET = 'SECRET'
+    ONETIME = 'ONETIME'
+
+
+class AccessStatus(enum.Enum):
+    """An ENUM data type for the access status of the downloaded file."""
+    OPEN_NO = 'OPEN_NO'
+    OPEN_DATE = 'OPEN_DATE'
+    OPEN_RESTRICTED = 'OPEN_RESTRICTED'
+
+
+class FileUrlDownloadLog(db.Model, Timestamp):
+    """Stores information of the executed download by download-URLs.
+
+    This class(table) is used to store information of the executed download of
+    a file using either secret URL or onetime URL.
+
+    Attributes:
+        id (int): The identifier of each download information.
+        url_type (UrlType): The used URL type('SECRET' or 'ONETIME').
+        secret_url_id (int): The secret URL record ID.
+        onetime_url_id (int): The onetime URL record ID.
+        ip_address (str): The IP address of the downloader.
+        access_status (AccessStatus): The access status of the downloaded file.
+        used_token (str): The URL token used to access the file.
+    """
+    __tablename__ = 'file_url_download_log'
+    id             = db.Column(db.Integer(),
+                               primary_key=True,
+                               autoincrement=True)
+    url_type       = db.Column(db.Enum(UrlType), nullable=False)
+    secret_url_id  = db.Column(db.Integer(),
+                               db.ForeignKey(FileSecretDownload.id))
+    onetime_url_id = db.Column(db.Integer(),
+                               db.ForeignKey(FileOnetimeDownload.id))
+    ip_address     = db.Column(INET()
+                               .with_variant(db.String(255), 'sqlite')
+                               .with_variant(db.String(255), 'mysql'))
+    access_status  = db.Column(db.Enum(AccessStatus), nullable=False)
+    used_token     = db.Column(db.String(255), nullable=False)
+    __table_args__ = (
+        CheckConstraint(
+            "((url_type = 'SECRET' AND secret_url_id IS NOT NULL AND "
+            "onetime_url_id IS NULL)"
+            "OR"
+            "(url_type = 'ONETIME' AND onetime_url_id IS NOT NULL AND "
+            "secret_url_id IS NULL))",
+            name="chk_url_type",),
+        CheckConstraint(
+            "(url_type = 'SECRET' AND ip_address IS NOT NULL)"
+            "OR"
+            "(url_type = 'ONETIME' AND ip_address IS NULL)",
+            name="chk_ip_address",),
+    )
+
+    def __init__(self, url_type, secret_url_id, onetime_url_id, ip_address,
+                 access_status, used_token):
+        """Initializes the FileUrlDownloadLog instance.
+
+        Args:
+            url_type (UrlType): The used URL type.
+            secret_url_id (int): The secret URL record ID.
+            onetime_url_id (int): The onetime URL record ID.
+            ip_address (str): The IP address of the downloader.
+            access_status (AccessStatus): The status of the downloaded file.
+            used_token (str): The URL token used to access the file.
+        """
+        self.url_type       = url_type
+        self.secret_url_id  = secret_url_id
+        self.onetime_url_id = onetime_url_id
+        self.ip_address     = ip_address
+        self.access_status  = access_status
+        self.used_token     = used_token
+
+    @classmethod
+    def create(cls, **data):
+        """Create a new instance and save it to the database.
+
+        Args:
+            **data: The attributes for the new instance.
+
+        Returns:
+            FileUrlDownloadLog: The created instance.
+
+        Raises:
+            Exception: If an unexpected error occurs during the creation.
+        """
+        try:
+            file_download = cls(**data)
+            db.session.add(file_download)
+            db.session.commit()
+            return file_download
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            raise ex
+
+
+__all__ = ('PDFCoverPageSettings',
+           'FilePermission',
+           'FileOnetimeDownload',
+           'FileSecretDownload',
+           'FileUrlDownloadLog',)

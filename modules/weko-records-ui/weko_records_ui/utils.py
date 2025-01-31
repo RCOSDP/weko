@@ -21,8 +21,9 @@
 """Module of weko-records-ui utils."""
 
 import base64
+import hashlib
 import os
-from datetime import datetime as dt
+from datetime import datetime as dt, timezone
 from datetime import timedelta
 from decimal import Decimal
 from typing import List, NoReturn, Optional, Tuple
@@ -52,13 +53,15 @@ from weko_records.serializers.utils import get_mapping
 from weko_records.utils import replace_fqdn
 from weko_records.models import ItemReference
 from weko_schema_ui.models import PublishStatus
+from weko_user_profiles.models import UserProfile
 from weko_workflow.api import WorkActivity, WorkFlow, UpdateItem
 from weko_workflow.models import ActivityStatusPolicy
 
 from weko_records_ui.models import InstitutionName
 from weko_workflow.models import Activity
+from weko_workflow.utils import get_item_info, process_send_mail, set_mail_info
 
-from .models import FileOnetimeDownload, FilePermission, FileSecretDownload
+from .models import AccessStatus, FileOnetimeDownload, FilePermission, FileSecretDownload, FileUrlDownloadLog, UrlType
 from .permissions import check_create_usage_report, \
     check_file_download_permission, check_user_group_permission, \
     is_open_restricted
@@ -1115,110 +1118,6 @@ def check_and_send_usage_report(extra_info:dict, user_mail:str ,record:dict, fil
         FilePermission.update_usage_report_activity_id(permission,activity_id)
 
 
-def generate_one_time_download_url(
-    file_name: str, record_id: str, guest_mail: str
-) -> str:
-    """Generate one time download URL.
-
-    :param file_name: File name
-    :param record_id: File Version ID
-    :param guest_mail: guest email
-    :return:
-    """    
-    secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
-    download_pattern = current_app.config[
-        'WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN']
-    current_date = dt.utcnow().strftime("%Y-%m-%d")
-    hash_value = download_pattern.format(file_name, record_id, guest_mail,
-                                         current_date)
-    secret_token = oracle10.hash(secret_key, hash_value)
-
-    token_pattern = "{} {} {} {}"
-    token = token_pattern.format(record_id, guest_mail, current_date,
-                                 secret_token)
-    token_value = base64.b64encode(token.encode()).decode()
-    host_name = request.host_url
-    url = "{}record/{}/file/onetime/{}?token={}" \
-        .format(host_name, record_id, file_name, token_value)
-    return url
-
-
-def parse_one_time_download_token(token: str) -> Tuple[str, Tuple]:
-    """Parse onetime download token.
-
-    @param token:
-    @return:
-    """
-    # current_app.logger.debug("token:{}".format(token))
-    error = _("Token is invalid.")
-    if token is None:
-        return error, ()
-    try:
-        decode_token = base64.b64decode(token.encode()).decode()
-        param = decode_token.split(" ")
-        if not param or len(param) != 4:
-            return error, ()
-
-        return "", (param[0], param[1], param[2], param[3])
-    except Exception as err:
-        current_app.logger.error(err)
-        return error, ()
-
-
-def validate_onetime_download_token(
-    onetime_download: FileOnetimeDownload, file_name: str, record_id: str,
-    guest_mail: str, date: str, token: str
-) -> Tuple[bool, str]:
-    """Validate onetime download token.
-
-    @param onetime_download:
-    @param file_name:
-    @param record_id:
-    @param guest_mail:
-    @param date:
-    @param token:
-    @return:
-    """
-    # current_app.logger.debug("onetime_download:{}".format(onetime_download))
-    # current_app.logger.debug("file_name:{}".format(file_name))
-    # current_app.logger.debug("record_id:{}".format(record_id))
-    # current_app.logger.debug("guest_mail:{}".format(guest_mail))
-    # current_app.logger.debug("date:{}".format(date))
-    # current_app.logger.debug("token:{}".format(token))
-
-    token_invalid = _("Token is invalid.")
-    secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
-    download_pattern = current_app.config[
-        'WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN']
-    hash_value = download_pattern.format(
-        file_name, record_id, guest_mail, date)
-    
-    if not oracle10.verify(secret_key, token, hash_value):
-        current_app.logger.debug('Validate token error: {}'.format(hash_value))
-        return False, token_invalid
-    try:
-        if not onetime_download:
-            return False, token_invalid
-        try:
-            expiration_date = timedelta(onetime_download.expiration_date)
-            download_date = onetime_download.created.date() + expiration_date
-            current_date = dt.utcnow().date()
-            if current_date > download_date:
-                return False, _(
-                    "The expiration date for download has been exceeded.")
-        except OverflowError:
-            current_app.logger.error('date value out of range:',
-                                     onetime_download.expiration_date)
-
-        if onetime_download.download_count <= 0:
-            return False, _("The download limit has been exceeded.")
-        return True, ""
-    except Exception as err:
-        current_app.logger.error('Validate onetime download token error:')
-        current_app.logger.error(err)
-        return False, token_invalid
-
-
 def is_private_index(record):
     """Check index of workflow is private.
 
@@ -1239,15 +1138,21 @@ def is_private_index(record):
     return False
 
 
-def validate_download_record(record: dict):
-    """Validate record.
+def validate_download_record(record):
+    """Validate the record(item) if it is downloadable.
 
-    :param record:
+    Args:
+        record (dict): Record meta data.
+
+    Returns:
+        bool: True if record is downloadable, False otherwise.
     """
     if record['publish_status'] != PublishStatus.PUBLIC.value:
-        abort(403)
+        return False
     if is_private_index(record):
-        abort(403)
+        return False
+    return True
+
 
 def is_secret_url_feature_enabled():
     """Check if the feature is enabled.
@@ -1285,7 +1190,7 @@ def has_permission_to_manage_secret_url(record, user_id):
     return has_permission
 
 
-def is_secret_file(record: WekoRecord, filename):
+def is_secret_file(record, file_name):
     """Check if the target file meets the requirements for secret URL use.
 
     Args:
@@ -1297,7 +1202,7 @@ def is_secret_file(record: WekoRecord, filename):
     """
     target_data = {}
     for file_data in record.get_file_data():
-        if file_data.get('filename') == filename:
+        if file_data.get('filename') == file_name:
             target_data = file_data
             break
     if not target_data:
@@ -1339,6 +1244,7 @@ def can_manage_secret_url(record, filename):
         )
         return result
 
+
 def get_onetime_download(file_name: str, record_id: str,
                          user_mail: str) -> Optional[FileOnetimeDownload]:
     """Get onetime download count.
@@ -1378,40 +1284,6 @@ def get_valid_onetime_download(file_name: str, record_id: str,user_mail: str) ->
         return file_downloads[0]
     else:
         return None
-
-
-def create_onetime_download_url(
-    activity_id: str, file_name: str, record_id: str, user_mail: str,
-    is_guest: bool = False
-):
-    """Create onetime download.
-
-    :param activity_id:
-    :param file_name:
-    :param record_id:
-    :param user_mail:
-    :param is_guest:
-    :return:
-    """
-    content_file_download = get_restricted_access('content_file_download')
-    if content_file_download and isinstance(content_file_download, dict):
-        expiration_date = content_file_download.get("expiration_date", 30)
-        download_limit = content_file_download.get("download_limit", 10)
-        extra_info = dict(
-            usage_application_activity_id=activity_id,
-            send_usage_report=True,
-            is_guest=is_guest
-        )
-        file_onetime = FileOnetimeDownload.create(**{
-            "file_name": file_name,
-            "record_id": record_id,
-            "user_mail": user_mail,
-            "expiration_date": expiration_date,
-            "download_count": download_limit,
-            "extra_info": extra_info,
-        })
-        return file_onetime
-    return False
 
 
 def get_workflows():
@@ -1799,212 +1671,433 @@ def get_google_detaset_meta(record,record_tree=None):
 
     return json.dumps(res_data, ensure_ascii=False)
 
-def create_secret_url(record_id:str ,file_name:str ,user_mail:str ,restricted_fullname='',restricted_data_name='') -> dict:
-    """
-    Save in FileSecretDownload
-    and Generate Secret Download URL.
-    
+
+def to_utc_datetime(str_date, offset_minutes=0):
+    """Parse string date info into datetime object in UTC timezone.
+
     Args:
-        str :record_id:
-        str :file_name:
-        str :user_mail
-        str :restricted_fullname  :embed mail string
-        str :restricted_data_name :embed mail string
-    Return: 
-        dict: created info 
+        str_date (str): The date string as 'YYYY-MM-DD'.
+        offset_minutes (int): The timezone offset in minutes.
+
+    Returns:
+        datetime: The datetime object in UTC timezone.
     """
-    # Save to Database.
-    secret_obj:FileSecretDownload = _create_secret_download_url(
-        file_name, record_id, user_mail)
-    
-    # generate url
-    secret_file_url = _generate_secret_download_url(
-        file_name, record_id, secret_obj.id , secret_obj.created)
+    try:
+        local_naive_dt = dt.strptime(str_date, '%Y-%m-%d')
+    except ValueError:
+        current_app.logger.error(f'Failed to parse date string: {str_date}')
+        return None
+    local_tz = timezone(timedelta(minutes=-offset_minutes))
+    local_aware_dt = local_naive_dt.replace(tzinfo=local_tz)
+    utc_dt = local_aware_dt.astimezone(timezone.utc)
+    return utc_dt
 
-    return_dict:dict = {
-        "restricted_download_link":"",
-        "mail_recipient":"",
-        "file_name":file_name,
-        "restricted_expiration_date": "",
-        "restricted_expiration_date_ja": "",
-        "restricted_expiration_date_en": "",
-        "restricted_download_count":"",
-        "restricted_download_count_ja":"",
-        "restricted_download_count_en":"",
-        "restricted_fullname" :restricted_fullname,
-        "restricted_data_name" :restricted_data_name,
-    }
-    return_dict["mail_recipient"] = secret_obj.user_mail
-    return_dict["restricted_download_link"] = secret_file_url
 
-    max_int :int = current_app.config["WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER"]
-    if secret_obj.expiration_date < max_int:
-        expiration_date = timedelta(days=secret_obj.expiration_date)
-        expiration_date = dt.today() + expiration_date
-        expiration_date = expiration_date.strftime("%Y-%m-%d")
-        return_dict['restricted_expiration_date'] = expiration_date
+def validate_secret_url_generation_request(request_json):
+    """Validate request for secret URL generation.
+
+    The reqeust data must contain the following keys:
+        - link_name (optional): The name of the secret link.
+        - expiration_date (optional): The expiration date of the link.
+        - download_limit (optional): The maximum number of downloads allowed.
+        - send_email: True if the user wants to send an email, False otherwise.
+        - timezone_offset_minutes: The timezone offset in minutes.
+
+    Keys marked as optional must exist in the request, but their values can be
+    empty.
+
+    Args:
+        request_json (dict): The request.json data from the user.
+
+    Returns:
+        bool: True if the request is valid, False otherwise.
+    """
+    if not isinstance(request_json, dict):
+        return False
+    expected_keys = ['link_name',
+                     'expiration_date',
+                     'download_limit',
+                     'send_email',
+                     'timezone_offset_minutes']
+    if not all(key in request_json for key in expected_keys):
+        return False
+
+    link_name      = request_json['link_name']
+    expiration_str = request_json['expiration_date']
+    download_limit = request_json['download_limit']
+    send_email     = request_json['send_email']
+    offset_minutes = request_json['timezone_offset_minutes']
+    if link_name:
+        if not isinstance(link_name, str) or len(link_name) > 255:
+            return False
+    if (not isinstance(offset_minutes, int) or
+        abs(offset_minutes) > 720):  # Max timezone offset is ±720 minutes
+        return False
+    if expiration_str:
+        if not isinstance(expiration_str, str):
+            return False
+        expiration_dt = to_utc_datetime(expiration_str, offset_minutes)
+        if not expiration_dt:
+            return False
+        expiration_dt += timedelta(days=1)
+        if expiration_dt < dt.now(timezone.utc):
+            return False
+    if download_limit is not None:  # To detect 0
+        if not isinstance(download_limit, int):
+            return False
+        if int(download_limit) <= 0:
+            return False
+    if not isinstance(send_email, bool):
+        return False
+
+    return True
+
+
+def create_secret_url_record(record_id, file_name, request_data):
+    """Create a secret URL record.
+
+    Args:
+        record_id (int): The record(item) ID to which the file belongs.
+        file_name (str): The file name for which the secret URL is created.
+        request_data (dict): The request data from the user.
+
+    Returns:
+        FileSecretDownload, or None:
+            The created secret URL object, or None if the restricted access
+            settings are not configured properly.
+
+    Raises:
+        Exception: If an unexpected error occurs during the creation.
+    """
+    secret_url_settings = get_restricted_access('secret_URL_file_download')
+    if (not secret_url_settings or
+        not isinstance(secret_url_settings, dict)):
+        return None
+
+    label_name     = request_data['link_name']
+    local_expiration_str = request_data['expiration_date']
+    download_limit = request_data['download_limit']
+    offset_minutes = request_data['timezone_offset_minutes']
+    # Set default values if these values are empty.
+    if label_name == '':
+        utc_today = dt.now(timezone.utc).strftime('%Y-%m-%d')
+        url_created_at = to_utc_datetime(
+            utc_today, offset_minutes).strftime('%Y-%m-%d')
+        label_name = f'{file_name}_{url_created_at}'
+    if local_expiration_str == '':
+        expiration_days = secret_url_settings.get('secret_expiration_date', 30)
+        local_tz = timezone(timedelta(minutes=offset_minutes))
+        local_date = dt.now(timezone.utc).replace(tzinfo=local_tz).date()
+        local_expiration_date = local_date + timedelta(expiration_days)
+        local_expiration_str = dt.strftime(local_expiration_date, '%Y-%m-%d')
+    utc_expiration_dt = to_utc_datetime(local_expiration_str, offset_minutes)
+    utc_expiration_dt += timedelta(days=1)  # To include the last day
+    if download_limit is None:
+        download_limit = secret_url_settings.get('secret_download_limit', 10)
+
+    secret_url_obj = FileSecretDownload.create(
+        creator_id      = current_user.id,
+        record_id       = record_id,
+        file_name       = file_name,
+        label_name      = label_name,
+        expiration_date = utc_expiration_dt,
+        download_limit  = download_limit)
+    return secret_url_obj
+
+
+def create_onetime_url_record(activity_id, record_id, file_name,
+                              user_mail, is_guest=False):
+    """Create onetime download record.
+
+    Args:
+        activity_id: The ID of the usage application activity.
+        record_id: The ID of the record which the file belongs to.
+        file_name: The name of the file to be downloaded.
+        user_mail: The email address of the user who requested the download.
+        is_guest: True if the user is a guest user, False otherwise.
+
+    Returns:
+        FileOnetimeDownload or None:
+            The created onetime download record, or None if the restricted
+            access settings are not configured properly.
+    """
+    onetime_url_settings = get_restricted_access('content_file_download')
+    if (not onetime_url_settings or
+        not isinstance(onetime_url_settings, dict)):
+        return None
+
+    expiration_days = onetime_url_settings.get('expiration_date', 30)
+    expiration_date = dt.now(timezone.utc) + timedelta(days=expiration_days)
+    expiration_date += timedelta(days=1)  # To include the last day
+    download_limit = onetime_url_settings.get('download_limit', 10)
+    extra_info = {'usage_application_activity_id': activity_id,
+                  'send_usage_report': True}
+
+    onetime_url_obj = FileOnetimeDownload.create(
+        approver_id     = current_user.id,
+        record_id       = record_id,
+        file_name       = file_name,
+        expiration_date = expiration_date,
+        download_limit  = download_limit,
+        user_mail       = user_mail,
+        is_guest        = is_guest,
+        extra_info      = extra_info
+    )
+    return onetime_url_obj
+
+
+def create_download_url(url_obj):
+    """Create a download URL from a object.
+
+    Note:
+        - This function can be used for both secret URL and onetime URL.
+        - Same URL is generated from a same object.
+
+    Args:
+        url_obj (FileSecretDownload or FileOnetimeDownload):
+            The secret URL or onetime URL object.
+        is_secret_url (bool):
+            True if the URL is for secret URL, False if for onetime URL.
+
+    Returns:
+        str: The generated URL.
+    """
+    if isinstance(url_obj, FileSecretDownload):
+        url_type = 'secret'
+    elif isinstance(url_obj, FileOnetimeDownload):
+        url_type = 'onetime'
     else:
-        return_dict["restricted_expiration_date_ja"] = "無制限"
-        return_dict["restricted_expiration_date_en"] = "Unlimited"
-            
-
-    if secret_obj.download_count < max_int :
-        return_dict["restricted_download_count"] = str(secret_obj.download_count)
-    else:
-        return_dict["restricted_download_count_ja"] = "無制限"
-        return_dict["restricted_download_count_en"] = "Unlimited"
-            
-    return return_dict
-
-
-def _generate_secret_download_url(file_name: str, record_id: str, id: str ,created :dt) -> str:
-    """Generate Secret download URL.
-    
-    Args
-        str: file_name: File name
-        str: record_id: File Version ID
-        str: id: FileSecretDownload id
-        datetime :created :FileSecretDownload created
-    
-    Returns
-        str: generated url
-    """    
-    secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
-    download_pattern = current_app.config[
-        'WEKO_RECORDS_UI_SECRET_DOWNLOAD_PATTERN']
-    current_date = created
-    hash_value = download_pattern.format(file_name, record_id, id,
-                                         current_date.isoformat())
-    secret_token = oracle10.hash(secret_key, hash_value)
-
-    token_pattern = "{} {} {} {}"
-    token = token_pattern.format(record_id, id, current_date.isoformat(),
-                                 secret_token)
-    token_value = base64.b64encode(token.encode()).decode()
-    host_name = request.host_url
-    url = "{}record/{}/file/secret/{}?token={}" \
-        .format(host_name, record_id, file_name, token_value)
-    current_app.logger.debug("secret_file_url:{}".format(url))
+        return None
+    host_url = request.host_url
+    hash = generate_sha256_hash(url_obj)
+    bytes = hash + b'_' + str(url_obj.id).encode()
+    token = base64.urlsafe_b64encode(bytes).decode()
+    url = (f'{host_url}record/{url_obj.record_id}/file/{url_type}/'
+           f'{url_obj.file_name}?token={token}')
     return url
 
 
-def parse_secret_download_token(token: str) -> Tuple[str, Tuple]:
-    """Parse secret download token.
+def generate_sha256_hash(url_obj):
+    """Generate a SHA-256 hash value from a download URL object.
 
-    Args
-        token:
-    Returns: 
-        str   : error message
-        Tuple : (record_id, id, date, secret_token)
-    """
-    # current_app.logger.debug("token:{}".format(token))
-    error = _("Token is invalid.")
-    if token is None:
-        return error, ()
-    try:
-        decode_token = base64.b64decode(token.encode()).decode()
-        current_app.logger.debug("decode_token:{}".format(decode_token))
-        param = decode_token.split(" ")
-        if not param or len(param) != 4:
-            return error, ()
-
-        return "", (param[0], param[1], param[2], param[3]) #record_id, id, current_date, secret_token
-    except Exception as err:
-        current_app.logger.error(err)
-        return error, ()
-
-
-def validate_secret_download_token(
-    secret_download: FileSecretDownload , file_name: str, record_id: str,
-    id: str, date: str, token: str
-) -> Tuple[bool, str]:
-    """Validate secret download token.
-
-    Args
-        FileSecretDownload:secret_download:
-        str:file_name:
-        str:record_id:
-        str:id:
-        str:date:
-        str:token:
-    Returns 
-        Tuple:
-            bool : is valid 
-            str  : error message
-    """
-    token_invalid = _("Token is invalid.")
-    secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
-    download_pattern = current_app.config[
-        'WEKO_RECORDS_UI_SECRET_DOWNLOAD_PATTERN']
-    hash_value = download_pattern.format(
-        file_name, record_id, id, date)
-    
-    if not oracle10.verify(secret_key, token, hash_value):
-        current_app.logger.error('Validate token error: {}'.format(hash_value))
-        return False, token_invalid
-    try:
-        if not secret_download:
-            return False, token_invalid
-        try:
-            expiration_date = timedelta(secret_download.expiration_date)
-            download_date = secret_download.created.date() + expiration_date
-            current_date = dt.utcnow().date()
-            if current_date > download_date:
-                return False, _(
-                    "The expiration date for download has been exceeded.")
-        except OverflowError:
-            # in case of "Unlimited"
-            current_app.logger.debug('date value out of range:'+
-                                    str(secret_download.expiration_date))
-
-        if secret_download.download_count <= 0:
-            return False, _("The download limit has been exceeded.")
-        return True, ""
-    except Exception as err:
-        current_app.logger.error('Validate secret download token error:')
-        current_app.logger.error(err)
-        return False, token_invalid
-        
-def get_secret_download(file_name: str, record_id: str,
-                        id: str , created :dt ) -> Optional[FileSecretDownload]:
-    """Get secret download count.
-
-    Args :
-        str:file_name
-        str:record_id
-        str:id
-        dt :created
-    @return:
-        FileSecretDownload or None
-    """
-    file_downloads = FileSecretDownload.find(
-        file_name=file_name, record_id=record_id, id=id ,created=created
-    )
-    if file_downloads and len(file_downloads) == 1:
-        return file_downloads[0]
-    else:
-        return None
-
-def _create_secret_download_url(file_name: str, record_id: str, user_mail: str) -> FileSecretDownload:
-    """Create secret download.
+    Note:
+        Same object always generates the same value, so it can be used both for
+        creating a new hash and verifying it.
 
     Args:
-        str : file_name:
-        str : record_id:
-        str : user_mail:
-    Returns:
-        FileSecretDownload : inserted record
-    """
-    secret_url_file_download:dict = get_restricted_access('secret_URL_file_download')
-        
-    expiration_date = secret_url_file_download.get("secret_expiration_date", 30)
-    download_limit = secret_url_file_download.get("secret_download_limit", 10)
+        url_obj (FileSecretDownload or FileOnetimeDownload):
+            The secret URL or onetime URL object.
 
-    file_secret = FileSecretDownload.create(**{
-        "file_name": file_name,
-        "record_id": record_id,
-        "user_mail": user_mail,
-        "expiration_date": expiration_date,
-        "download_count": download_limit,
-    })
-    return file_secret
+    Returns:
+        bytes: The SHA-256 hash value.
+    """
+    secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
+    token_parts = [
+        secret_key,
+        str(url_obj.created),
+        str(url_obj.id),
+        str(url_obj.record_id),
+        str(url_obj.file_name),
+        str(url_obj.expiration_date),
+        str(url_obj.download_limit),
+    ]
+    hash_obj = hashlib.sha256()
+    for part in token_parts:
+        hash_obj.update(part.encode())
+    return hash_obj.digest()
+
+
+def send_secret_url_mail(uuid, secret_url_obj, item_title):
+    """Send an email with a secret URL.
+
+    Args:
+        uuid (UUID): The UUID of the item.
+        secret_url_obj (FileSecretDownload): The secret URL object.
+        item_title (str): The item title.
+
+    Returns:
+        bool: True if the email sent successfully, False otherwise.
+    """
+    # Setup mail info
+    user_profile = UserProfile.get_by_userid(current_user.id)
+    fullname = user_profile._displayname if user_profile else ''
+    expiration_dt = secret_url_obj.expiration_date
+    jst_date = expiration_dt.astimezone(timezone(timedelta(hours=9))).date()
+    jst_str = jst_date.strftime('%Y-%m-%d') + ' 23:59:59(JST)'
+    secret_url_info = {
+        'restricted_download_link'  : create_download_url(secret_url_obj),
+        'mail_recipient'            : current_user.email,
+        'file_name'                 : secret_url_obj.file_name,
+        'restricted_expiration_date': jst_str,
+        'restricted_download_count' : str(secret_url_obj.download_limit),
+        'restricted_fullname'       : fullname,
+        'restricted_data_name'      : item_title,
+    }
+    mail_info = set_mail_info(get_item_info(uuid),
+                              type('' ,(object,), {'activity_id': ''})())
+    mail_info.update(secret_url_info)
+
+    # Send mail
+    mail_pattern = current_app.config.get(
+        'WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_URL')
+    is_succeeded = process_send_mail(mail_info, mail_pattern)
+    return is_succeeded
+
+
+def validate_token(token, is_secret_url):
+    """Validate the provided token.
+
+    This function can be used for both secret URL and onetime URL.
+
+    Args:
+        token (str): The token to validate.
+        is_secret_url (bool): True if for secret URL, False if for onetime URL.
+
+    Returns:
+        bool: True if the token is valid, False otherwise.
+    """
+    try:
+        bytes = base64.urlsafe_b64decode(token.encode())
+        parts = bytes.split(b'_')
+        if len(parts) < 2:  # Generated hash may contain additional '_'
+            return False
+        token_id = parts[-1].decode()  # The last part is the URL object ID
+        token_hash = b'_'.join(parts[:-1])  # The rest is hash value
+        if is_secret_url:
+            url_obj = FileSecretDownload.get_by_id(token_id)
+        else:
+            url_obj = FileOnetimeDownload.get_by_id(token_id)
+        if url_obj and (token_hash == generate_sha256_hash(url_obj)):
+            return True
+        else:
+            return False
+    except Exception as e:
+        current_app.logger.error(e)
+        return False
+
+
+def convert_token_into_obj(token, is_secret_url):
+    """Convert the token into a download URL object.
+
+    Args:
+        token (str): The token to convert.
+        is_secret_url (bool):
+            True if the URL is for secret URL, False if for onetime URL.
+
+    Returns:
+        FileSecretDownload or FileOnetimeDownload or None:
+            The download URL object, or None if the token is invalid.
+    """
+    if not validate_token(token, is_secret_url):
+        return None
+    bytes = base64.urlsafe_b64decode(token.encode())
+    url_obj_id = bytes.split(b'_')[-1].decode()
+    if is_secret_url:
+        url_obj = FileSecretDownload.get_by_id(url_obj_id)
+    else:
+        url_obj = FileOnetimeDownload.get_by_id(url_obj_id)
+    return url_obj
+
+
+def validate_url_download(record, filename, token, is_secret_url):
+    """Validate the request for URL download.
+
+    Args:
+        record (WekoRecord): The record object.
+        filename (str): The name of the target file.
+        token (str): The token for the download URL.
+        is_secret_url (bool):
+            True if the URL is for secret URL, False if for onetime URL.
+
+    Returns:
+        Tuple[bool, str]: A tuple of the validation result and error message.
+    """
+    # Check if the token is valid
+    if not validate_token(token, is_secret_url):
+        return False, 'The provided token is invalid.'
+
+    if is_secret_url:
+        if not is_secret_url_feature_enabled():
+            return False, 'This feature is currently disabled.'
+
+    # Check if the file is available for download
+    if (not validate_file_access(record, filename, is_secret_url) or
+        not validate_download_record(record)):
+        return False, 'This file is currently not available for this feature.'
+
+    # Check if the URL is still valid
+    url_obj = convert_token_into_obj(token, is_secret_url)
+    if url_obj.is_deleted is True:
+        return False, 'This URL has been deactivated.'
+    if url_obj.download_count >= url_obj.download_limit:
+        return False, 'The download limit has been exceeded.'
+    limit_date = url_obj.expiration_date.replace(tzinfo=timezone.utc)
+    if limit_date < dt.now(timezone.utc):
+        return False, 'The expiration date for download has been exceeded.'
+
+    return True, ''
+
+
+def validate_file_access(record, filename, is_secret_url):
+    if is_secret_url:
+        return is_secret_file(record, filename)
+    else:
+        return is_onetime_file(record, filename)
+
+
+def is_onetime_file(record, file_name):
+    for file_data in record.get_file_data():
+        if file_data.get('filename') == file_name:
+            return file_data.get('accessrole') == 'open_restricted'
+    return False
+
+
+def save_download_log(record, file_name, token, is_secret_url):
+    """Save the download log for the given token.
+
+    Befor calling this function, the token must be validated by the function
+    'validate_url_download()' to ensure that the token is valid. Especially,
+    the 'accessrole' value in the 'file_data' must be already checked.
+
+    Args:
+        record (WekoRecord): The record metadata of the item.
+        file_name (str): The name of the downloaded file.
+        token (str): The token used for the download.
+        is_secret_url (bool): True if for secret URL, False if for onetime URL.
+
+    Raises:
+        Exception: If an unexpected error occurs during the log creation.
+
+    Returns:
+        FileUrlDownloadLog: The created download log object.
+    """
+    target_data = {}
+    for file_data in record.get_file_data():
+        if file_data.get('filename') == file_name:
+            target_data = file_data
+            break
+    url_obj = convert_token_into_obj(token, is_secret_url)
+    if is_secret_url:
+        file_access_role = target_data.get('accessrole')
+        access_status = (
+            AccessStatus.OPEN_NO
+            if file_access_role == 'open_no'
+            else AccessStatus.OPEN_DATE  # Assume 'open_date'
+        )
+        url_type = UrlType.SECRET
+        secret_url_id = url_obj.id
+        onetime_url_id = None
+    else:
+        access_status = AccessStatus.OPEN_RESTRICTED
+        url_type = UrlType.ONETIME
+        secret_url_id = None
+        onetime_url_id = url_obj.id
+
+    return FileUrlDownloadLog.create(
+        url_type       = url_type,
+        secret_url_id  = secret_url_id,
+        onetime_url_id = onetime_url_id,
+        ip_address     = request.remote_addr,
+        access_status  = access_status,
+        used_token     = token,
+    )

@@ -72,10 +72,12 @@ from .models import FilePermission, PDFCoverPageSettings
 from .permissions import check_content_clickable, check_created_id, \
     check_file_download_permission, check_original_pdf_download_permission, \
     check_permission_period, file_permission_factory, get_permission
-from .utils import create_secret_url, get_billing_file_download_permission, \
-    get_google_detaset_meta, get_google_scholar_meta, get_groups_price, \
+from .utils import can_manage_secret_url, create_download_url, create_secret_url_record, \
+    get_billing_file_download_permission, get_google_detaset_meta, \
+    get_google_scholar_meta, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
-    delete_version, is_show_email_of_creator,hide_by_itemtype, can_manage_secret_url
+    delete_version, is_show_email_of_creator,hide_by_itemtype, \
+    send_secret_url_mail, validate_secret_url_generation_request
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
 
@@ -722,7 +724,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         flg_display_itemtype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE') ,
         flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
         search_author_flg=search_author_flg,
-        show_secret_URL=can_manage_secret_url(record,filename),
+        show_secret_URL=can_manage_secret_url(record, filename),
         **ctx,
         **kwargs
     )
@@ -761,44 +763,49 @@ def get_secret_setting():
         print(f"Error: {e}")
         return jsonify({"error": str(e)}), 500
 
-def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord, filename:str, **kwargs) -> str:
-    """on click button 'Secret URL' 
-    generate secret URL and send mail.
-    about entrypoint settings, see at .config RECORDS_UI_ENDPOINTS.recid_secret_url
-    
+def create_secret_url_and_send_mail(pid, record, filename, **kwargs):
+    """Issue a new secret URL for a file in a record.
+
+    This method issues a new secret URL by creating a new record in the
+    FileSecretDownload table. The method also sends an email including the
+    URL to the user if the 'send_email' parameter of the request is set to
+    True.
+
     Args:
-        pid: PID object.
-        record: Record object.
-        filename: File name.
+        pid (PersistentIdentifier): The identifier for the item.
+        record (WekoRecord): The record metadata of the item.
+        filename (str): The file name to download.
 
     Returns:
-        result status and message text.
+        dict: A dictionary containing the message to be displayed to the user.
     """
-    current_app.logger.info("pid:" + pid.pid_value)
-    current_app.logger.info("record:" + str(record.id))
-    current_app.logger.info("filename:" + filename)
-
-    #permission check
-    # "Someone who can show Secret URL button" can also use generate Secret URL function.
-    if not can_manage_secret_url(record ,filename):
+    if not validate_secret_url_generation_request(request.json):
+        abort(400)
+    if not can_manage_secret_url(record, filename):
         abort(403)
 
-    userprof:UserProfile = UserProfile.get_by_userid(current_user.id)
-    restricted_fullname = userprof._displayname or '' if userprof else ''
-    restricted_data_name = record.get('item_title','')
-
-    #generate url and regist db(FileSecretDownload)
-    result = create_secret_url(pid.pid_value,filename,current_user.email , restricted_fullname , restricted_data_name)
-    
-    #send mail
-    mail_pattern_name:str = current_app.config.get('WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_URL')
-
-    mail_info = set_mail_info(get_item_info(pid.object_uuid), type("" ,(object,),dict(activity_id = '')))
-    mail_info.update(result)
-    if process_send_mail( mail_info = mail_info, mail_pattern_name=mail_pattern_name) :
-        return _('Success Secret URL Generate')
-    else:
+    try:
+        url_obj = create_secret_url_record(pid.pid_value,
+                                           filename,
+                                           request.json)
+    except Exception as e:
+        current_app.logger.error(e)
         abort(500)
+
+    url = create_download_url(url_obj)
+
+    message = 'Secret URL generated successfully'
+    if request.json['send_email'] is True:
+        sending_result = send_secret_url_mail(
+            pid.object_uuid, url_obj, record.get('item_title', ''))
+        if sending_result:
+            message += ', please check your email inbox'
+        else:
+            message += (', but there was an error while sending the email. '
+                        'To use the URL, please refresh the page and copy it '
+                        'from the issued URL list')
+    return jsonify({'message': message + '.'})
+
 
 @blueprint.route('/r/<parent_pid_value>', methods=['GET'])
 @blueprint.route('/r/<parent_pid_value>.<int:version>', methods=['GET'])
