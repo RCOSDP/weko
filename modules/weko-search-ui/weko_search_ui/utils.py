@@ -1548,9 +1548,10 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
             ):
                 error_id = ex.args[0].get("error_id")
 
+            error_id = error_id if error_id else str(ex)
             return {"success": False, "error_id": error_id}
         except ElasticsearchException as ex:
-            current_app.logger.error("elasticsearch  error: ", ex)
+            current_app.logger.error("elasticsearch error: ", ex)
             db.session.rollback()
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
@@ -1572,9 +1573,10 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
             ):
                 error_id = ex.args[0].get("error_id")
 
+            error_id = error_id if error_id else str(ex)
             return {"success": False, "error_id": error_id}
         except redis.RedisError as ex:
-            current_app.logger.error("redis  error: ", ex)
+            current_app.logger.error("redis error: ", ex)
             db.session.rollback()
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
@@ -1596,6 +1598,7 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
             ):
                 error_id = ex.args[0].get("error_id")
 
+            error_id = error_id if error_id else str(ex)
             return {"success": False, "error_id": error_id}
         except BaseException as ex:
             current_app.logger.error("Unexpected error: {}".format(ex))
@@ -1620,6 +1623,7 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
             ):
                 error_id = ex.args[0].get("error_id")
 
+            error_id = error_id if error_id else str(ex)
             return {"success": False, "error_id": error_id}
     return {"success": True, "recid": item["id"]}
 

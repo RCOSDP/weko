@@ -40,6 +40,7 @@ const end = document.getElementById("end").value;
 const work_flow_status = document.getElementById("work_flow_status").value;
 const done = document.getElementById("done").value;
 const to_do = document.getElementById("to_do").value;
+const doing = document.getElementById("doing").value;
 const result_label = document.getElementById("result").value;
 const next = document.getElementById("next").value;
 const error_download = document.getElementById("error_download").value;
@@ -98,9 +99,9 @@ function getResultErrorMsg(error_id) {
       break;
   }
   if (msg === '') {
-    return 'Error';
+    return 'Error msg : ' + error_id;
   } else {
-    return 'Error: ' + msg;
+    return 'Error msg : ' + msg;
   }
 }
 
@@ -133,7 +134,9 @@ class MainLayout extends React.Component {
       is_import: true,
       import_status: false,
       isShowMessage: false,
-      isChecking: false
+      isChecking: false,
+      success_count: 0,
+      fail_count: 0
     }
     this.handleChangeTab = this.handleChangeTab.bind(this)
     this.handleCheck = this.handleCheck.bind(this)
@@ -324,7 +327,9 @@ class MainLayout extends React.Component {
       .done((res) => {
 
         that.setState({
-          tasks: res.result
+          tasks: res.result,
+          success_count: res.success_count,
+          fail_count: res.fail_count
         })
         if (res.status === 'done') {
           that.setState({
@@ -342,7 +347,7 @@ class MainLayout extends React.Component {
   }
 
   render() {
-    const { tab, tabs, list_record, is_import, tasks, import_status, isShowMessage, isChecking } = this.state;
+    const { tab, tabs, list_record, is_import, tasks, import_status, isShowMessage, isChecking, success_count, fail_count } = this.state;
     return (
       <div>
         <ul className="nav nav-tabs">
@@ -375,6 +380,8 @@ class MainLayout extends React.Component {
               tasks={tasks || []}
               getStatus={this.getStatus}
               import_status={import_status}
+              success_count={success_count}
+              fail_count={fail_count}
             />
           }
 
@@ -1039,8 +1046,16 @@ class ResultComponent extends React.Component {
         'Start Date': item.start_date ? item.start_date : '',
         'End Date': item.end_date ? item.end_date : '',
         'Item Id': item.item_id || '',
-        'Action': item.task_result ? (item.task_result.success ? "End" : getResultErrorMsg(item.task_result.error_id)) : "Start",
-        'Work Flow Status': item.task_status ? item.task_status === "PENDING" ? "To Do" : item.task_status === "SUCCESS" ? "Done" : item.task_status === "FAILURE" ? "FAILURE" : '' : ''
+        'Action': item.task_result ? (item.task_result.success ? end : (item.task_status && item.task_status === "STARTED") ? "Started" : "Error") : "Start",
+        'Work Flow Status': 
+          item.task_status ? 
+            item.task_status === "PENDING" ? to_do : 
+            item.task_status === "STARTED" ? doing : 
+            (item.task_status === "SUCCESS" && item.task_result && item.task_result.success) ? done : 
+            (item.task_status === "SUCCESS" && item.task_result && !item.task_result.success) ? getResultErrorMsg(item.task_result.error_id) : 
+            item.task_status === "FAILURE" ? "FAILURE" : 
+          '' : 
+          ''
       }
     })
     const data = {
@@ -1082,7 +1097,7 @@ class ResultComponent extends React.Component {
   }
 
   render() {
-    const { tasks, import_status } = this.props
+    const { tasks, import_status, success_count, fail_count } = this.props
     return (
       <div className="result_container row">
         <div className="col-md-12 text-align-right">
@@ -1093,6 +1108,10 @@ class ResultComponent extends React.Component {
           >
             <span className="glyphicon glyphicon-cloud-download icon"></span>{download}
           </button>
+        </div>
+        <div className="col-md-12 m-t-20">
+          <strong>Success : </strong> {success_count}
+          <strong>, Fail : </strong> {fail_count}
         </div>
         <div className="col-md-12 m-t-20">
           <table class="table table-striped table-bordered">
@@ -1117,11 +1136,18 @@ class ResultComponent extends React.Component {
                       <td>{item.start_date ? item.start_date : ''}</td>
                       <td>{item.end_date ? item.end_date : ''}</td>
                       <td>{item.item_id || ''}</td>
-                      <td>{item.task_result ? (item.task_result.success ? end : getResultErrorMsg(item.task_result.error_id)) : "Start"}</td>
                       <td>
-                        {item.task_status && item.task_status === "PENDING" ? to_do : ''}
-                        {item.task_status && item.task_status === "SUCCESS" ? done : ''}
-                        {item.task_status && item.task_status === "FAILURE" ? "FAILURE" : ''}
+                        {item.task_result ? (item.task_result.success ? end : (item.task_status && item.task_status === "STARTED") ? "Started" : <strong>Error</strong>) : "Start"}
+                      </td>
+                      <td>
+                        {item.task_status ? 
+                          item.task_status === "PENDING" ? to_do : 
+                          item.task_status === "STARTED" ? doing : 
+                          (item.task_status === "SUCCESS" && item.task_result && item.task_result.success) ? done : 
+                          (item.task_status === "SUCCESS" && item.task_result && !item.task_result.success) ? getResultErrorMsg(item.task_result.error_id) : 
+                          item.task_status === "FAILURE" ? "FAILURE" : 
+                        '' : 
+                        ''}
                       </td>
                     </tr>
                   )
