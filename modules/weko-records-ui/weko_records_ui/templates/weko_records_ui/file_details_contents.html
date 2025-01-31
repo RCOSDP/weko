@@ -184,24 +184,24 @@
                 <table class="table table-bordered table-striped">
                     <thead>
                         <tr>
-                            <th colspan="6">{{_('Secret URL')}}</th>
+                            <th colspan="5">{{_('Secret URL')}}</th>
                         </tr>
                         <tr>
-                            <th class="col-md-4">{{_('label Name')}}</th>
-                            <th class="col-md-2">{{_('Create Date')}}</th>
-                            <th class="col-md-2">{{_('Expiration Date')}}</th>
-                            <th class="col-md-2">{{_('Download Count')}}</th>
-                            <th class="col-md-2">{{_('Action')}}</th>
+                            <th class="col-sm-4 col-md-4">{{_('Label Name')}}</th>
+                            <th class="col-sm-2 col-md-2">{{_('Create Date')}}</th>
+                            <th class="col-sm-2 col-md-2">{{_('Expiration Date')}}</th>
+                            <th class="col-sm-2 col-md-2">{{_('Download Count')}}</th>
+                            <th class="col-sm-2 col-md-2">{{_('Action')}}</th>
                         </tr>
                     </thead>
                     <tbody>
                         {%- for url in active_secret_URLs -%}
                         <tr>
-                            <td class="col-md-3">{{ url.label_name }}</td>
-                            <td class="col-md-2 date-format">{{ url.created }}</td>
-                            <td class="col-md-2 date-format">{{ url.expiration_date }}</td>
-                            <td class="col-md-2">{{ url.download_count }}/{{url.download_limit}}</td>
-                            <td class="col-md-3">
+                            <td class="col-sm-4 col-md-4">{{ url.label_name }}</td>
+                            <td class="col-sm-2 col-md-2 date-format">{{ url.created }}</td>
+                            <td class="col-sm-2 col-md-2 date-format">{{ url.expiration_date }}</td>
+                            <td class="col-sm-2 col-md-2">{{ url.download_count }}/{{url.download_limit}}</td>
+                            <td class="col-sm-2 col-md-2">
                               <div class="button-group">
                                 <button class="delete_secret_url img-rounded action-button button-sm"
                                     url="{{url_for('invenio_records_ui.recid_delete_secret_url', filename=filename, pid_value=pid.pid_value, secret_url_id=url.id)}}">
@@ -226,32 +226,32 @@
                 <table class="table table-bordered table-striped">
                     <thead>
                         <tr>
-                            <th colspan="6">{{_('Onetime URL')}}</th>
+                            <th colspan="5">{{_('Onetime URL')}}</th>
                         </tr>
                         <tr>
-                            <th class="col-md-3">{{_('User Name')}}</th>
-                            <th class="col-md-2">{{_('Create Date')}}</th>
-                            <th class="col-md-2">{{_('Expiration Date')}}</th>
-                            <th class="col-md-2">{{_('Download Count')}}</th>
-                            <th class="col-md-3">{{_('Action')}}</th>
+                            <th class="col-sm-4 col-md-4">{{_('User Name')}}</th>
+                            <th class="col-sm-2 col-md-2">{{_('Create Date')}}</th>
+                            <th class="col-sm-2 col-md-2">{{_('Expiration Date')}}</th>
+                            <th class="col-sm-2 col-md-2">{{_('Download Count')}}</th>
+                            <th class="col-sm-2 col-md-2">{{_('Action')}}</th>
                         </tr>
                     </thead>
                     <tbody>
                         {%- for url in active_onetime_URLs -%}
                         <tr>
-                            <td class="col-md-3">{{ url.user_name }}</td>
-                            <td class="ccol-md-2 date-format">{{ url.created }}</td>
-                            <td class="col-md-2 date-format">{{ url.expiration_date }}</td>
-                            <td class="col-md-2">{{ url.download_count }}/{{url.download_limit}}</td>
-                            <td class="col-md-3">
+                            <td class="col-sm-4 col-md-4">{{ url.user_mail }}</td>
+                            <td class="col-sm-2 col-md-2 date-format">{{ url.created }}</td>
+                            <td class="col-sm-2 col-md-2 date-format">{{ url.expiration_date }}</td>
+                            <td class="col-sm-2 col-md-2">{{ url.download_count }}/{{url.download_limit}}</td>
+                            <td class="col-sm-2 col-md-2">
                               <div class="button-group">
                                 <button class="delete_onetime_url img-rounded action-button button-sm"
-                                    url="{{url_for('invenio_records_ui.recid_delete_onetime_url', filename=filename, pid_value=pid.pid_value, secret_url_id=url.id)}}">
+                                    url="{{url_for('invenio_records_ui.recid_delete_onetime_url', filename=filename, pid_value=pid.pid_value, onetime_url_id=url.id)}}">
                                     <i class="action-icon"></i>
                                     {{_('Delete')}}
                                 </button>
-                                <button class="copy_secret_url img-rounded action-button button-sm"
-                                    url="{{url_for('invenio_records_ui.recid_copy_onetime_url', filename=filename, pid_value=pid.pid_value, secret_url_id=url.id)}}">
+                                <button class="copy_onetime_url img-rounded action-button button-sm"
+                                    url="{{url_for('invenio_records_ui.recid_copy_onetime_url', filename=filename, pid_value=pid.pid_value, onetime_url_id=url.id)}}">
                                     <i class="action-icon"></i>
                                     {{_('Copy')}}
                                 </button>
