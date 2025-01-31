@@ -45,10 +45,10 @@ from weko_records_ui.permissions import page_permission_factory
 
 from .errors import VersionNotFoundRESTError, InternalServerError, \
     PermissionError, NoRankingtypeError, RequestParameterError
-from .utils import get_ranking, create_limmiter
+from .utils import get_ranking, create_limiter
 from .scopes import ranking_read_scope
 
-limiter = create_limmiter()
+limiter = create_limiter()
 
 
 def create_error_handlers(blueprint):

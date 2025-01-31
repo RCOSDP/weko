@@ -43,7 +43,7 @@ def get_remote_addr():
 
     # current_app.logger.debug('{0} {1} {2}: {3}'.format(
     #     __file__, 'get_remote_addr()', 'request.headers', request.headers))
-    
+
     address = None
     if "WEKO_ACCOUNTS_REAL_IP" not in current_app.config or current_app.config["WEKO_ACCOUNTS_REAL_IP"] == None:
         address = request.headers.get('X-Real-IP', None)
@@ -59,7 +59,7 @@ def get_remote_addr():
         address = request.headers.get('X-Forwarded-For', None)
         if address is not None:
             _tmp = address.encode('utf-8').split(b',')
-            address = _tmp[0].strip().decode()            
+            address = _tmp[0].strip().decode()
     elif current_app.config["WEKO_ACCOUNTS_REAL_IP"] == "x_forwarded_for_rev":
         address = request.headers.get('X-Forwarded-For', None)
         if address is not None:
@@ -182,6 +182,6 @@ def roles_required(roles):
     return decorator
 
 
-def create_limmiter():
+def create_limiter():
     from .config import WEKO_ACCOUNTS_API_LIMIT_RATE_DEFAULT
     return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_ACCOUNTS_API_LIMIT_RATE_DEFAULT)

@@ -54,9 +54,9 @@ from .permissions import page_permission_factory, file_permission_factory
 from .errors import AvailableFilesNotFoundRESTError, ContentsNotFoundError, InvalidRequestError, VersionNotFoundRESTError, InternalServerError, \
     RecordsNotFoundRESTError, PermissionError, DateFormatRESTError, FilesNotFoundRESTError, ModeNotFoundRESTError, RequiredItemNotExistError
 from .scopes import file_read_scope
-from .utils import create_limmiter
+from .utils import create_limiter
 
-limiter = create_limmiter()
+limiter = create_limiter()
 
 
 def create_error_handlers(blueprint):

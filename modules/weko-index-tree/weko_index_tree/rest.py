@@ -49,11 +49,11 @@ from .models import Index
 from .scopes import read_index_scope
 from .utils import check_doi_in_index, check_index_permissions, \
     is_index_locked, perform_delete_index, save_index_trees_to_redis, reset_tree, \
-    create_limmiter
+    create_limiter
 
 JST = timezone(timedelta(hours=+9), 'JST')
 
-limiter = create_limmiter()
+limiter = create_limiter()
 
 
 def need_record_permission(factory_name):
@@ -96,7 +96,7 @@ def create_blueprint(app, endpoints):
         __name__,
         url_prefix='',
     )
-    
+
     @blueprint.teardown_request
     def dbsession_clean(exception):
         current_app.logger.debug("weko_index_tree dbsession_clean: {}".format(exception))
@@ -295,14 +295,14 @@ class IndexActionResource(ContentNegotiatedMethodView):
             if "ja" in [lang["lang_code"] for lang in langs]:
                 tree_ja = self.record_class.get_index_tree(lang="ja")
             tree = self.record_class.get_index_tree(lang="other_lang")
-            
+
             for lang in langs:
                 lang_code = lang["lang_code"]
                 if lang_code == "ja":
                     save_index_trees_to_redis(tree_ja, lang=lang_code)
                 else:
                     save_index_trees_to_redis(tree, lang=lang_code)
-                
+
         return make_response(
             jsonify({'status': status, 'message': msg, 'errors': errors}),
             status)
@@ -320,14 +320,14 @@ class IndexActionResource(ContentNegotiatedMethodView):
         errors = []
         status = 200
         check = is_import_running()
-        
+
         if check == "is_import_running":
             errors.append(_('The index cannot be updated becase '
                             'import is in progress.'))
         else:
             public_state = data.get('public_state') and data.get(
                 'harvest_public_state')
-            
+
             if is_index_locked(index_id):
                 errors.append(_('Index Delete is in progress on another device.'))
             elif not public_state and check_doi_in_index(index_id):
@@ -356,7 +356,7 @@ class IndexActionResource(ContentNegotiatedMethodView):
                     raise IndexUpdatedRESTError()
                 msg = 'Index updated successfully.'
 
-            
+
             #roles = get_account_role()
             #for role in roles:
             langs = AdminLangSettings.get_registered_language()
