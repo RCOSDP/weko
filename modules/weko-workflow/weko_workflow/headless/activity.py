@@ -40,7 +40,6 @@ class HeadlessActivity(WorkActivity):
         """Initialize."""
         super().__init__()
         self.params = {}
-        self.detail = ""
         self.recid = None
         self.item_type = None
         self.user_id = None
@@ -50,7 +49,7 @@ class HeadlessActivity(WorkActivity):
 
         actions = Action().get_action_list()
         self._actions = {
-            f"{action.id}": action.action_endpoint for action in actions
+            action.id: action.action_endpoint for action in actions
         }
 
     @property
@@ -69,6 +68,20 @@ class HeadlessActivity(WorkActivity):
         if self.current_action_id is None:
             return None
         return self._actions.get(self.current_action_id)
+
+    @property
+    def community_id(self):
+        """Get community id."""
+        return self._model.activity_community_id if self._model is not None else None
+
+    @property
+    def detail(self):
+        """Get activity detail URL."""
+        return url_for(
+            "weko_workflow.display_activity",
+            activity_id=self.activity_id, community=self.community_id,
+            _external=True
+        ) if self._model is not None else ""
 
     def init_activity(
             self, user_id, workflow_id=None, community_id=None,
@@ -102,6 +115,7 @@ class HeadlessActivity(WorkActivity):
             # restart activity
             # TODO: check user permission to restart activity
             # it should be equal to "weko_workflow.views.index" without pagenation.
+            # TODO: suport "contributor" by "weko_shared_user"
 
             result = verify_deletion(activity_id).json
             if result.get("is_delete"):
@@ -113,17 +127,7 @@ class HeadlessActivity(WorkActivity):
                     current_app.logger.error(f"activity({activity_id}) is not found.")
                     raise WekoWorkflowException(f"activity({activity_id}) is not found.")
 
-                self.detail = url_for(
-                    "weko_workflow.display_activity", activity_id=activity_id
-                )
-                if self._model.activity_community_id is not None:
-                    self.detail = url_for(
-                        "weko_workflow.display_activity",
-                        activity_id=activity_id,
-                        community=self._model.activity_community_id,
-                    )
-                current_app.logger.info(f"activity({activity_id}) is restarted.")
-
+                current_app.logger.info(f"activity({self.activity_id}) is restarted.")
                 self.user_id = user_id
             return self.detail
 
@@ -140,21 +144,21 @@ class HeadlessActivity(WorkActivity):
 
         if item_id is None:
             # create activity for new item
-            activity.update("activity_login_user") = user_id
-            result = init_activity(activity, community_id).json
+            activity.update({"activity_login_user": user_id})
+            result, _ = init_activity(activity, community_id)
 
-            if result.get("code") == 0:
-                self.detail = result.get("redirect")
+            if result.json.get("code") == 0:
+                url = result.json.get("data").get("redirect")
 
-                activity_id = self.detail.split("/activity/detail/")[1]
+                activity_id = url.split("/activity/detail/")[1]
                 if "?" in activity_id:
-                    self.params.update({community_id: activity_id.split("?")[1]})
                     activity_id = activity_id.split("?")[0]
+                    community_id = activity_id.split("?")[1].split("=")[1]
                 self._model = super().get_activity_by_id(activity_id)
             else:
                 current_app.logger.error(
-                    f"failed to create headless activity: {result.get('msg')}")
-                raise WekoWorkflowException(result.get("msg"))
+                    f"failed to create headless activity: {result.json.get('msg')}")
+                raise WekoWorkflowException(result.json.get("msg"))
 
         else:
             # create activity for existing item edit
@@ -219,7 +223,7 @@ class HeadlessActivity(WorkActivity):
 
         # TODO: metadata input assist (W-OA-06 2.2)
 
-        metadata.setdefault("pubdate") = datetime.now().strftime("%Y-%m-%d")
+        metadata.setdefault({"pubdate": datetime.now().strftime("%Y-%m-%d")})
 
         # grouplist = Group.get_group_list()
         # authors_prefix_settings = get_data_authors_prefix_settings()
@@ -256,7 +260,7 @@ class HeadlessActivity(WorkActivity):
         result = {"is_valid": True}
         validate_form_input_data(result, self.item_type.id, metadata)
         if not result.get("is_valid"):
-            current_app.logger.error(f"failed to input metadata: {result.get("error")}")
+            current_app.logger.error(f"failed to input metadata: {result.get('error')}")
             raise WekoWorkflowException(result.get("error"))
 
 
