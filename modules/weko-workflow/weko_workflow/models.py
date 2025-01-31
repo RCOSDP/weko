@@ -610,11 +610,6 @@ class FlowActionRole(db.Model, TimestampMixin):
         db.String(255), nullable=True)
     """the name of flows."""
 
-    action_request_mail = db.Column(
-        db.Boolean(name='request_mail'),
-        nullable=False, default=False, server_default='0')
-    """If set to True, item_request mail allow action"""
-
 
 class WorkFlow(db.Model, TimestampMixin):
     """Define WorkFlow."""
