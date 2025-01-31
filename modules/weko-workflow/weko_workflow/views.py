@@ -452,7 +452,7 @@ def new_activity():
 
 @workflow_blueprint.route('/activity/init', methods=['POST'])
 @login_required
-def init_activity(json_data=None, community_id=None):
+def init_activity(json_data=None, community=None):
     """Return URL of workflow activity made from the request body.
     Args:
 
@@ -522,7 +522,7 @@ def init_activity(json_data=None, community_id=None):
         return jsonify(res.data), 200
 
     activity = WorkActivity()
-    community_id = request.args.get('community') or community_id
+    community_id = request.args.get('community') or community
     try:
         if community_id is not None:
             rtn = activity.init_activity(post_activity.data, community_id)

@@ -36,8 +36,13 @@ class HeadlessActivity(WorkActivity):
 
     This class is used to handle the activity without UI.
     """
-    def __init__(self):
-        """Initialize."""
+    def __init__(self, is_headless=True):
+        """Initialize.
+
+        Args:
+            is_headless (bool, optional): Headless flag. Defaults to True.
+                if True, skip user and activity lock and unlock process.
+        """
         super().__init__()
         self.params = {}
         self.recid = None
@@ -45,7 +50,7 @@ class HeadlessActivity(WorkActivity):
         self.user_id = None
         self.files_info = None
         self._model = None
-        self._lock_skip = False
+        self._lock_skip = is_headless
 
         actions = Action().get_action_list()
         self._actions = {
@@ -70,7 +75,7 @@ class HeadlessActivity(WorkActivity):
         return self._actions.get(self.current_action_id)
 
     @property
-    def community_id(self):
+    def community(self):
         """Get community id."""
         return self._model.activity_community_id if self._model is not None else None
 
@@ -79,12 +84,12 @@ class HeadlessActivity(WorkActivity):
         """Get activity detail URL."""
         return url_for(
             "weko_workflow.display_activity",
-            activity_id=self.activity_id, community=self.community_id,
+            activity_id=self.activity_id, community=self.community,
             _external=True
         ) if self._model is not None else ""
 
     def init_activity(
-            self, user_id, workflow_id=None, community_id=None,
+            self, user_id, workflow_id=None, community=None,
             activity_id=None, item_id=None
         ):
         """Initialize activity.
@@ -97,7 +102,7 @@ class HeadlessActivity(WorkActivity):
         Args:
             user_id (int): User ID
             workflow_id (int, optional): Workflow ID
-            community_id (str, optional): Community ID
+            community (str, optional): Community ID
             activity_id (str, optional): Activity ID
             item_id (str, optional): Item ID
 
@@ -106,6 +111,8 @@ class HeadlessActivity(WorkActivity):
         """
         # TODO: check user lock
         """weko_workflow.views.is_user_locked"""
+
+        # TODO: check user permission
 
         if self._model is not None:
             current_app.logger.error("activity is already initialized.")
@@ -131,10 +138,14 @@ class HeadlessActivity(WorkActivity):
                 self.user_id = user_id
             return self.detail
 
-        if "workflow_id" is None:
+        if workflow_id is None:
             current_app.logger.error("workflow_id is required to create activity.")
             raise WekoWorkflowException("workflow_id is required to create activity.")
         workflow = WorkFlow().get_workflow_by_id(workflow_id)
+        if workflow is None:
+            current_app.logger.error(f"workflow(id={workflow_id}) is not found.")
+            raise WekoWorkflowException(f"workflow(id={workflow_id}) is not found.")
+
         self.item_type = ItemTypes.get_by_id(workflow.itemtype_id)
         activity = {
         "flow_id": workflow.flow_id,
@@ -145,7 +156,7 @@ class HeadlessActivity(WorkActivity):
         if item_id is None:
             # create activity for new item
             activity.update({"activity_login_user": user_id})
-            result, _ = init_activity(activity, community_id)
+            result, _ = init_activity(activity, community)
 
             if result.json.get("code") == 0:
                 url = result.json.get("data").get("redirect")
@@ -153,7 +164,6 @@ class HeadlessActivity(WorkActivity):
                 activity_id = url.split("/activity/detail/")[1]
                 if "?" in activity_id:
                     activity_id = activity_id.split("?")[0]
-                    community_id = activity_id.split("?")[1].split("=")[1]
                 self._model = super().get_activity_by_id(activity_id)
             else:
                 current_app.logger.error(
@@ -175,18 +185,18 @@ class HeadlessActivity(WorkActivity):
 
         self.init_activity(
             self.params.get("user_id"), self.params.get("workflow_id"),
-            self.params.get("community_id"), self.params.get("activity_id"),
+            self.params.get("community"), self.params.get("activity_id"),
             self.params.get("item_id")
         )
 
-        self._lock_skip = False
+        _lf = self._lock_skip
         self._user_lock()
         locked_value = self._activity_lock()
         self._lock_skip = True
 
         # 動的に次のアクションを取得して実行できるようにする
 
-        self._lock_skip = False
+        self._lock_skip = _lf
         self._activity_unlock(locked_value)
         self._user_unlock()
 
