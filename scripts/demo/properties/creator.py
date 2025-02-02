@@ -234,10 +234,12 @@ def schema(title="", multi_flag=multiple_flag):
                             "nameIdentifierScheme": {
                                 "type": ["null", "string"],
                                 "format": "select",
-                                "enum": config.CREATOR_IDENTIFIER_SCHEMA_VAL,
-                                "currentEnum": (
-                                                config.CREATOR_IDENTIFIER_SCHEMA_VAL
-                                            )[1:],
+                                "enum": [],
+                                # "currentEnum": [],
+                                # "enum": config.CREATOR_IDENTIFIER_SCHEMA_VAL,
+                                # "currentEnum": (
+                                #                 config.CREATOR_IDENTIFIER_SCHEMA_VAL
+                                #             )[1:],
                                 "title": "作成者識別子Scheme",
                                 "title_i18n": {
                                     "en": "IdentifierScheme",
@@ -283,6 +285,8 @@ def schema(title="", multi_flag=multiple_flag):
                                         "affiliationNameIdentifierScheme": {
                                             "type": ["null", "string"],
                                             "format": "select",
+                                            # "enum": [],
+                                            # "currentEnum": [],
                                             "enum": config.AFFILIATION_SCHEME_VAL,
                                             "currentEnum": (
                                                 config.AFFILIATION_SCHEME_VAL
@@ -454,7 +458,7 @@ def form(
                                 "en": "Creator Name Identifier Scheme",
                                 "ja": "作成者識別子Scheme",
                             },
-                            "titleMap": make_title_map(config.CREATOR_IDENTIFIER_SCHEMA_LBL, config.CREATOR_IDENTIFIER_SCHEMA_VAL),
+                            "titleMap": [], # make_title_map(config.CREATOR_IDENTIFIER_SCHEMA_LBL, config.CREATOR_IDENTIFIER_SCHEMA_VAL),
                             "type": "select",
                         },
                         {
