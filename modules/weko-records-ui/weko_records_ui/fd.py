@@ -441,22 +441,23 @@ def file_download_onetime(pid, record, filename, _record_file_factory=None,
     # Update 'extra_info' of the one-time URL object
     url_obj = convert_token_into_obj(token, is_secret_url=False)
     extra_info = url_obj.extra_info
-    try:
-        # 'extra_info' can be changed by this method
-        error = check_and_send_usage_report(
-            extra_info, url_obj.user_mail ,record, file_object)
-        if error:
-            return error_response(error, 403)
-        url_obj.update_extra_info(extra_info)
-        db.session.commit()
-    except SQLAlchemyError as ex:
-        current_app.logger.error(f'SQLAlchemy error: {ex}')
-        db.session.rollback()
-        return error_response('Unexpected error occurred.', 500)
-    except BaseException as ex:
-        current_app.logger.error(f'Unexpected error: {ex}')
-        db.session.rollback()
-        return error_response('Unexpected error occurred.', 500)
+    if extra_info:
+        try:
+            # 'extra_info' can be changed by this method
+            error = check_and_send_usage_report(
+                extra_info, url_obj.user_mail ,record, file_object)
+            if error:
+                return error_response(error, 403)
+            url_obj.update_extra_info(extra_info)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.error(f'SQLAlchemy error: {ex}')
+            db.session.rollback()
+            return error_response('Unexpected error occurred.', 500)
+        except BaseException as ex:
+            current_app.logger.error(f'Unexpected error: {ex}')
+            db.session.rollback()
+            return error_response('Unexpected error occurred.', 500)
 
     # Increase the download count and save the download log
     try:
