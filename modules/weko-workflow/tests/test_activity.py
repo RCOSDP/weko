@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import patch
 
+from flask import jsonify
 from flask_login.utils import login_user
-from invenio_accounts.testutils import login_user_via_session as login
 
 from weko_workflow.errors import WekoWorkflowException
 from weko_workflow.headless import HeadlessActivity
@@ -33,8 +33,8 @@ class TestHeadlessActivity:
     def test_init_activity(self, app, db, workflow, users, client):
         with patch('weko_workflow.views.WorkActivity.get_new_activity_id') as mock_get_new_activity_id:
             mock_get_new_activity_id.side_effect = [f"A-TEST-0000{i}" for i in range(1, 20)]
+            login_user(users[1]["obj"])
 
-            login_user(users[0]["obj"])
             assert Activity.query.count() == 0
             assert ActivityHistory.query.count() == 0
             assert ActivityAction.query.count() == 0
@@ -66,16 +66,21 @@ class TestHeadlessActivity:
             assert activity.community == "comm01"
             assert activity.detail == "http://test_server.localdomain/workflow/activity/detail/A-TEST-00002?community=comm01"
 
+        with pytest.raises(WekoWorkflowException) as ex:
+            activity.init_activity(users[0]["id"], workflow["workflow"].id)
+        assert str(ex.value) == "activity is already initialized."
+
+        activity = HeadlessActivity()
+        with pytest.raises(WekoWorkflowException) as ex:
+            activity.init_activity(users[0]["id"])
+        assert str(ex.value) == "workflow_id is required to create activity."
+
+        with pytest.raises(WekoWorkflowException) as ex:
+            activity.init_activity(users[0]["id"], 999)
+        assert str(ex.value) == "workflow(id=999) is not found."
+
+        with patch("weko_workflow.headless.activity.init_activity") as mock_init_activity:
+            mock_init_activity.return_value = jsonify({ "code": -1,"msg":"error"}), 500
             with pytest.raises(WekoWorkflowException) as ex:
                 activity.init_activity(users[0]["id"], workflow["workflow"].id)
-            assert str(ex.value) == "activity is already initialized."
-
-            activity = HeadlessActivity()
-            with pytest.raises(WekoWorkflowException) as ex:
-                activity.init_activity(users[1]["id"])
-            assert str(ex.value) == "workflow_id is required to create activity."
-
-            with pytest.raises(WekoWorkflowException) as ex:
-                activity.init_activity(users[1]["id"], 999)
-            assert str(ex.value) == "workflow(id=999) is not found."
-
+            assert str(ex.value) == "error"
