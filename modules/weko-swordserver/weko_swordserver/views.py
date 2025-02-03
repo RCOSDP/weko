@@ -28,6 +28,7 @@ from invenio_oauth2server.decorators import require_oauth_scopes
 from invenio_oauth2server.ext import verify_oauth_token_and_set_current_user
 from invenio_oauth2server.provider import oauth2
 
+from weko_accounts.utils import roles_required
 from weko_admin.api import TempDirInfo
 from weko_records_ui.utils import get_record_permalink, soft_delete
 from weko_search_ui.utils import import_items_to_system
@@ -140,6 +141,7 @@ def get_service_document():
 @blueprint.route("/service-document", methods=["POST"])
 @oauth2.require_oauth()
 @require_oauth_scopes(write_scope.id)
+@roles_required(current_app.config["WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE"])
 @check_on_behalf_of()
 @check_package_contents()
 def post_service_document():

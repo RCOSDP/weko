@@ -127,3 +127,9 @@ WEKO_SWORDSERVER_CONTENT_LENGTH = False
 
 WEKO_SWORDSERVER_DEPOSIT_DATASET = False
 """ Does register the zip file of the dataset as an item?"""
+
+WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE = [
+    "System Administrator",
+    "Repository Administrator"
+]
+""" Roles that can deposit items with token authentication. """
