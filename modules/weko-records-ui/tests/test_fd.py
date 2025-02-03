@@ -261,7 +261,7 @@ def test_add_signals_info(app,records,itemtypes,users):
                     add_signals_info(record,obj)
 
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_error_response -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_error_response -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @patch('weko_records_ui.fd.render_template')
 def test_error_response(mock_render):
     mock_render.return_value = '<html>Error Test</html>'
@@ -272,7 +272,7 @@ def test_error_response(mock_render):
     mock_render.assert_called_once_with(error_template, error='Error Test')
 
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_file_download_onetime -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_file_download_onetime -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @patch('weko_records_ui.fd.request.args.get')
 @patch('weko_records_ui.fd.validate_url_download')
 @patch('weko_records_ui.fd.error_response')
@@ -402,7 +402,7 @@ def test__is_terms_of_use_only(app, records_restricted, users, db_file_permissio
         with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
             assert not _is_terms_of_use_only(provide_not,{'terms_of_use_only': True})
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_file_download_secret -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_file_download_secret -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @patch('weko_records_ui.fd.request.args.get')
 @patch('weko_records_ui.fd.validate_url_download')
 @patch('weko_records_ui.fd.error_response')

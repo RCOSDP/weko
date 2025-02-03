@@ -29,7 +29,7 @@ from flask import current_app
 from invenio_db import db
 from sqlalchemy import CheckConstraint, desc, func
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.dialects.postgresql import INET, INTERVAL
+from sqlalchemy.dialects.postgresql import INET
 from sqlalchemy.sql.functions import concat ,now
 from sqlalchemy_utils.models import Timestamp
 from sqlalchemy_utils.types import JSONType
@@ -487,7 +487,7 @@ class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
             cls.record_id == obj.get("record_id"),
             cls.user_mail == obj.get("user_mail"),
             cls.download_count < cls.download_limit,
-            cls.expiration_date > now(timezone.utc),
+            cls.expiration_date > datetime.now(timezone.utc),
             cls.is_deleted == False
         )
         return query.order_by(desc(cls.id)).all()
@@ -676,17 +676,29 @@ class FileUrlDownloadLog(db.Model, Timestamp):
     used_token     = db.Column(db.String(255), nullable=False)
     __table_args__ = (
         CheckConstraint(
-            "((url_type = 'SECRET' AND secret_url_id IS NOT NULL AND "
-            "onetime_url_id IS NULL)"
-            "OR"
-            "(url_type = 'ONETIME' AND onetime_url_id IS NOT NULL AND "
-            "secret_url_id IS NULL))",
-            name="chk_url_type",),
+            """
+            (url_type = 'SECRET' AND secret_url_id IS NOT NULL AND
+            onetime_url_id IS NULL)
+            OR
+            (url_type = 'ONETIME' AND onetime_url_id IS NOT NULL AND
+            secret_url_id IS NULL)
+            """,
+            name="chk_url_id"),
         CheckConstraint(
-            "(url_type = 'SECRET' AND ip_address IS NOT NULL)"
-            "OR"
-            "(url_type = 'ONETIME' AND ip_address IS NULL)",
-            name="chk_ip_address",),
+            """
+            (url_type = 'SECRET' AND ip_address IS NOT NULL)
+            OR
+            (url_type = 'ONETIME' AND ip_address IS NULL)
+            """,
+            name="chk_ip_address"),
+        CheckConstraint(
+            """
+            (url_type = 'SECRET' AND
+            (access_status = 'OPEN_NO' OR access_status = 'OPEN_DATE'))
+            OR
+            (url_type = 'ONETIME' AND access_status = 'OPEN_RESTRICTED')
+            """,
+            name="chk_access_status")
     )
 
     def __init__(self, url_type, secret_url_id, onetime_url_id, ip_address,

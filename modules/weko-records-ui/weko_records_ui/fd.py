@@ -425,7 +425,7 @@ def file_download_onetime(pid, record, filename, _record_file_factory=None,
     Returns:
         Response: The Flask wrapper object for the file download
     """
-    # Validate the one-time download URL
+    # Validate the download request
     token = request.args.get('token', type=str)
     is_validated, error_msg = validate_url_download(
         record, filename, token, is_secret_url=False)
@@ -438,27 +438,25 @@ def file_download_onetime(pid, record, filename, _record_file_factory=None,
     if not file_object or not file_object.obj:
         return error_response(f'The file "{filename}" does not exist.', 404)
 
-    # Update extra_info of the one-time URL object
-    url_obj:FileOnetimeDownload = convert_token_into_obj(token)
-    if (url_obj.extra_info and
-       (file_object.get('accessrole') == 'open_restricted')):
-        extra_info = url_obj.extra_info
-        try:
-            # extra_info can be changed by this method
-            error = check_and_send_usage_report(
-                extra_info, url_obj.user_mail ,record, file_object)
-            if error:
-                return error_response(error, 403)
-            url_obj.update_extra_info(extra_info)
-            db.session.commit()
-        except SQLAlchemyError as ex:
-            current_app.logger.error(f'SQLAlchemy error: {ex}')
-            db.session.rollback()
-            return error_response('Unexpected error occurred.', 500)
-        except BaseException as ex:
-            current_app.logger.error(f'Unexpected error: {ex}')
-            db.session.rollback()
-            return error_response('Unexpected error occurred.', 500)
+    # Update 'extra_info' of the one-time URL object
+    url_obj = convert_token_into_obj(token, is_secret_url=False)
+    extra_info = url_obj.extra_info
+    try:
+        # 'extra_info' can be changed by this method
+        error = check_and_send_usage_report(
+            extra_info, url_obj.user_mail ,record, file_object)
+        if error:
+            return error_response(error, 403)
+        url_obj.update_extra_info(extra_info)
+        db.session.commit()
+    except SQLAlchemyError as ex:
+        current_app.logger.error(f'SQLAlchemy error: {ex}')
+        db.session.rollback()
+        return error_response('Unexpected error occurred.', 500)
+    except BaseException as ex:
+        current_app.logger.error(f'Unexpected error: {ex}')
+        db.session.rollback()
+        return error_response('Unexpected error occurred.', 500)
 
     # Increase the download count and save the download log
     try:
@@ -518,7 +516,7 @@ def file_download_secret(pid, record, filename, _record_file_factory=None,
     Returns:
         Response: The Flask wrapper object for the file download.
     """
-    # Validate the secret URL
+    # Validate the download request
     token = request.args.get('token', type=str)
     is_validated, error_msg = (
         validate_url_download(record, filename, token, is_secret_url=True))
@@ -538,7 +536,7 @@ def file_download_secret(pid, record, filename, _record_file_factory=None,
         lang = user_profile.language if user_profile else 'en'
 
     # Increase the download count and save the download log
-    url_obj:FileSecretDownload = convert_token_into_obj(token, is_secret_url=True)
+    url_obj = convert_token_into_obj(token, is_secret_url=True)
     try:
         url_obj.increment_download_count()
         save_download_log(record, filename, token, is_secret_url=True)

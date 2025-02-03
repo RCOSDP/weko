@@ -178,6 +178,24 @@ RECORDS_UI_ENDPOINTS = dict(
                                ':page_permission_factory',
         methods=['POST'],
     ),
+    recid_copy_secret_url=dict(
+        pid_type='recid',
+        route='/records/<pid_value>/secret/<path:filename>/<secret_url_id>',
+        view_imp='weko_records_ui.views.copy_secret_url',
+        record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions'
+                               ':page_permission_factory',
+        methods=['GET'],
+    ),
+    recid_copy_onetime_url=dict(
+        pid_type='recid',
+        route='/records/<pid_value>/onetime/<path:filename>/<onetime_url_id>',
+        view_imp='weko_records_ui.views.copy_onetime_url',
+        record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions'
+                               ':page_permission_factory',
+        methods=['GET'],
+    ),
     recid_secret_file_download=dict(
         pid_type='recid',
         route='/record/<pid_value>/file/secret/<string:filename>',
