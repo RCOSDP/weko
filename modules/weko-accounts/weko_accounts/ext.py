@@ -55,6 +55,8 @@ class WekoAccounts(object):
         app.register_blueprint(blueprint)
         app.extensions['weko-accounts'] = self
 
+        self.init_limiter(app)
+
     def init_config(self, app):
         """
         Initialize configuration.
@@ -105,6 +107,15 @@ class WekoAccounts(object):
         from .sessions import login_listener, logout_listener
         user_logged_in.connect(login_listener, app)
         user_logged_out.connect(logout_listener, app)
+
+    def init_limiter(self, app):
+        """
+        Initialize rate limiting.
+
+        :param app: The flask application.
+        """
+        from .utils import limiter
+        limiter.init_app(app)
 
 
 class WekoAccountsREST(object):

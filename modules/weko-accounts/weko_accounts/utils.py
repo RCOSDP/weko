@@ -30,6 +30,15 @@ from flask_login import current_user
 from flask_login.config import EXEMPT_METHODS
 
 
+WEKO_API_LIMIT_RATE_DEFAULT = ["100 per minute"]
+
+limiter = Limiter(
+            app=None,
+            key_func=lambda: f"{request.endpoint}_{get_remote_addr()}",
+            default_limits=WEKO_API_LIMIT_RATE_DEFAULT
+)
+
+
 def get_remote_addr():
     """
     Get remote ip address.
