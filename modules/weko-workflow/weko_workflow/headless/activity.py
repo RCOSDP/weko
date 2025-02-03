@@ -32,7 +32,7 @@ from weko_search_ui.utils import get_data_by_property
 
 from ..api import Action, WorkActivity, WorkFlow
 from ..errors import WekoWorkflowException
-from ..utils import check_authority_by_admin
+from ..utils import check_authority_by_admin, delete_lock_activity_cache, delete_user_lock_activity_cache
 from ..views import next_action, verify_deletion, init_activity, get_feedback_maillist
 
 class HeadlessActivity(WorkActivity):
@@ -48,10 +48,9 @@ class HeadlessActivity(WorkActivity):
                 if True, skip user and activity lock and unlock process.
         """
         super().__init__()
-        self.params = {}
-        self.recid = None
-        self.item_type = None
         self.user = None
+        self.item_type = None
+        self.recid = None
         self.files_info = None
         self._model = None
         self._lock_skip = is_headless
@@ -136,6 +135,8 @@ class HeadlessActivity(WorkActivity):
                     and self._model.shared_user_id != user_id
                     and not check_authority_by_admin(self.activity_id, user)
             ):
+                current_app.logger.error(
+                    f"user({user_id}) cannot restart activity({activity_id}).")
                 raise WekoWorkflowException(
                     f"user({user_id}) cannot restart activity({activity_id}).")
 
@@ -189,12 +190,11 @@ class HeadlessActivity(WorkActivity):
 
     def auto(self, **params):
         """Automatically progressing the action."""
-        self.params.update(params)
 
         self.init_activity(
-            self.params.get("user_id"), self.params.get("workflow_id"),
-            self.params.get("community"), self.params.get("activity_id"),
-            self.params.get("item_id")
+            params.get("user_id"), params.get("workflow_id"),
+            params.get("community"), params.get("activity_id"),
+            params.get("item_id")
         )
 
         # skip locks temporarily even if skip flag is not True
@@ -210,15 +210,15 @@ class HeadlessActivity(WorkActivity):
         ):
             if self.current_action == "item_login":
                 self.item_registration(
-                    self.params.get("metadata"), self.params.get("files"),
-                    self.params.get("index"), self.params.get("comment")
+                    params.get("metadata"), params.get("files"),
+                    params.get("index"), params.get("comment")
                 )
             elif self.current_action == "item_link":
-                self.item_link(self.params.get("link_data"))
+                self.item_link(params.get("link_data"))
             elif self.current_action == "identifier_grant":
-                self.identifier_grant(self.params.get("grant_data"))
+                self.identifier_grant(params.get("grant_data"))
             elif self.current_action == "oa_policy":
-                self.oa_policy(self.params.get("policy"))
+                self.oa_policy(params.get("policy"))
 
         self._lock_skip = _lf
         self._activity_unlock(locked_value)
@@ -250,7 +250,7 @@ class HeadlessActivity(WorkActivity):
         return self.detail
 
 
-    def _input_metadata(self, metadata, files):
+    def _input_metadata(self, metadata, files=None):
         """input metadata."""
         self._user_lock()
         locked_value = self._activity_lock()
@@ -264,12 +264,12 @@ class HeadlessActivity(WorkActivity):
         journal = get_workflow_journal(self.activity_id)
 
         # update feedback mail list
-        feedback_maillist = get_feedback_maillist(self.activity_id).json
-        feedback_maillist.append(metadata.pop("feedback_mail_list", []))
+        feedback_maillist, _ = get_feedback_maillist(self.activity_id)
+        feedback_maillist.json.extend(metadata.pop("feedback_mail_list", []))
         self.create_or_update_action_feedbackmail(
             activity_id=self.activity_id,
             action_id=self.current_action_id,
-            feedback_maillist=feedback_maillist
+            feedback_maillist=feedback_maillist.json
         )
 
         # get value of "Title" from metadata by jpcoar_mapping
@@ -293,11 +293,13 @@ class HeadlessActivity(WorkActivity):
             pid = current_pidstore.minters["weko_deposit_minter"](record_uuid, data=record_data)
             self._deposit = WekoDeposit.create(record_data, id_=record_uuid)
         else:
-            pid = PersistentIdentifier.query.filter_by(
-                    pid_type="recid", pid_value=self.recid
-                ).first()
+            # pid = PersistentIdentifier.query.filter_by(
+            #         pid_type="recid", pid_value=self.recid
+            #     ).first()
             # TODO: case witch pid is already assigned (self.recid is not None)
             # self._deposit = WekoDeposit...
+            # TODO: check edit mode
+            pass
 
         data = {
             "metainfo": metadata,
@@ -319,7 +321,7 @@ class HeadlessActivity(WorkActivity):
 
         return pid["recid"]
 
-    def _upload_files(self, files):
+    def _upload_files(self, files=[]):
         """upload files."""
 
         RecordIndexer().index(self._deposit)
@@ -467,10 +469,12 @@ class HeadlessActivity(WorkActivity):
 
     def end(self):
         """Action for End."""
-        self.params = {}
-        self._model = None
-        self.detail = ""
         self.user = None
+        self.item_type = None
+        self.recid = None
+        self.files_info = None
+        self._model = None
+        self._lock_skip = None
         pass
 
     def _save_activity(self):
@@ -479,23 +483,33 @@ class HeadlessActivity(WorkActivity):
 
     def _user_lock(self):
         """User lock."""
-        if not self._lock_skip:
-            pass
+        if self._lock_skip:
+            return
 
-    def _user_unlock(self):
+        """weko_workflow.views.user_lock_activity"""
+        pass
+
+    def _user_unlock(self, data=None):
         """User unlock."""
-        if not self._lock_skip:
-            pass
+        if self._lock_skip:
+            return
+
+        return delete_user_lock_activity_cache(self.activity_id, data)
 
     def _activity_lock(self):
         """Activity lock."""
         locked_value = None
-        if not self._lock_skip:
-            pass
+        if self._lock_skip:
+            return None
+
+        """weko_workflow.views.lock_activity"""
 
         return locked_value
 
     def _activity_unlock(self, locked_value):
         """Activity unlock."""
-        if not self._lock_skip:
-            pass
+        if self._lock_skip:
+            return None
+
+        return delete_lock_activity_cache(
+            self.activity_id, {"locked_value":locked_value})

@@ -53,10 +53,7 @@ class TestHeadlessActivity:
 
             activity = HeadlessActivity()
 
-            activity.init_activity(
-                users[0]["id"], workflow["workflow"].id,
-                community="comm01"
-            )
+            activity.init_activity(users[0]["id"], workflow["workflow"].id,community="comm01")
 
             assert Activity.query.count() == 2
             assert activity._model is not None
@@ -84,3 +81,53 @@ class TestHeadlessActivity:
             with pytest.raises(WekoWorkflowException) as ex:
                 activity.init_activity(users[0]["id"], workflow["workflow"].id)
             assert str(ex.value) == "error"
+
+    #  item_registration(slef, metadata, files, index, comment):
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_activity.py::TestHeadlessActivity::test_item_registration -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test_item_registration(self, app, db, workflow, users, client, mocker):
+
+        activity = HeadlessActivity()
+
+        with pytest.raises(WekoWorkflowException) as ex:
+            activity.item_registration(metadata={}, files=[], index=[], comment="")
+        assert str(ex.value) == "activity is not initialized."
+
+        login_user(users[1]["obj"])
+        activity.init_activity(users[0]["id"], workflow["workflow"].id)
+
+        with patch("weko_workflow.headless.activity.check_validation_error_msg") as mock_validation_msg:
+            msg = ["error<br/>title"]
+            error_list = {"mapping": {"title": "error"}}
+            mock_validation_msg.return_value = jsonify(code=1, msg=msg, error_list=error_list)
+            with pytest.raises(WekoWorkflowException) as ex:
+                activity.item_registration(metadata={}, files=[], index=[], comment="")
+
+            assert ex.value.args[0] == {"msg": ["error<br/>title"], "error_list": {"mapping": {"title": "error"}}}
+
+        mock_get_new_activity_id = mocker.patch('weko_workflow.views.WorkActivity.get_new_activity_id')
+        mock_get_new_activity_id.side_effect = [f"A-TEST-0000{i}" for i in range(1, 20)]
+
+        patch("weko_workflow.headless.activity.check_validation_error_msg")
+        with patch("weko_workflow.headless.activity.HeadlessActivity._input_metadata", return_value=200001):
+            with patch("weko_workflow.headless.activity.HeadlessActivity._comment"):
+                activity = HeadlessActivity()
+                activity.init_activity(users[0]["id"], workflow["workflow"].id)
+                url = activity.item_registration({}, [], [])
+                assert activity.recid == 200001
+                assert url == "http://test_server.localdomain/workflow/activity/detail/A-TEST-00001"
+
+
+    def test__input_metadata(self):
+        pass
+
+    def test__upload_files(self):
+        pass
+
+    def test__designate_index(self):
+        pass
+
+    def test__comment(self):
+        pass
+
+    def test_item_link(self):
+        pass
