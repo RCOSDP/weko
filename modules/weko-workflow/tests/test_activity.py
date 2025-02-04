@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 from flask import jsonify
 from flask_login.utils import login_user
@@ -116,6 +116,75 @@ class TestHeadlessActivity:
                 assert activity.recid == 200001
                 assert url == "http://test_server.localdomain/workflow/activity/detail/A-TEST-00001"
 
+    # def auto(self, **params):
+    def test_auto(self, app, workflow, mocker):
+        detail = "http://test_server.localdomain/workflow/activity/detail/A-TEST-00001"
+        actions = actions = ["item_login"] * 3 + ["item_link"] * 4 + ["identifier_grant"] * 5 + ["end_action"] * 2
+
+        activity = HeadlessActivity()
+        mock_detail = PropertyMock(return_value=detail)
+        mock_current_action = PropertyMock(side_effect=actions)
+        mocker.patch("weko_workflow.headless.activity.HeadlessActivity.init_activity")
+
+        mock_init_activity = MagicMock()
+        mock_item_registration = MagicMock()
+        mock_item_link = MagicMock()
+        mock_oa_policy = MagicMock()
+        mock_end = MagicMock()
+
+        activity.init_activity = mock_init_activity
+        activity.item_registration = mock_item_registration
+        activity.item_link = mock_item_link
+        activity.identifier_grant = mock_oa_policy
+        activity.end = mock_end
+
+        type(activity).detail = mock_detail
+        type(activity).current_action = mock_current_action
+
+        url, current_action, _ = activity.auto(user_id=1, workflow_id=1)
+        assert url == detail
+        assert current_action == "end_action"
+
+        assert mock_init_activity.call_count == 1
+        assert mock_item_registration.call_count == 1
+        assert mock_item_link.call_count == 1
+        assert mock_oa_policy.call_count == 1
+        assert mock_end.call_count == 1
+
+
+        detail = "http://test_server.localdomain/workflow/activity/detail/A-TEST-00002"
+        actions = actions = ["item_login"] * 3 + ["item_link"] * 4 + ["oa_policy"] * 5 + ["approval"] * 3
+
+        activity = HeadlessActivity()
+        mock_detail = PropertyMock(return_value=detail)
+        mock_current_action = PropertyMock(side_effect=actions)
+        mocker.patch("weko_workflow.headless.activity.HeadlessActivity.init_activity")
+
+        mock_init_activity = MagicMock()
+        mock_item_registration = MagicMock()
+        mock_item_link = MagicMock()
+        mock_oa_policy = MagicMock()
+        mock_end = MagicMock()
+
+        activity.init_activity = mock_init_activity
+        activity.item_registration = mock_item_registration
+        activity.item_link = mock_item_link
+        activity.oa_policy = mock_oa_policy
+        activity.end = mock_end
+
+        type(activity).detail = mock_detail
+        type(activity).current_action = mock_current_action
+
+        url, current_action, _ = activity.auto(user_id=1, workflow_id=1)
+        assert url == detail
+        assert current_action == "end_action"
+
+        assert mock_init_activity.call_count == 1
+        assert mock_item_registration.call_count == 1
+        assert mock_item_link.call_count == 1
+        assert mock_oa_policy.call_count == 1
+        assert mock_end.call_count == 1
+
 
     def test__input_metadata(self):
         pass
@@ -131,3 +200,27 @@ class TestHeadlessActivity:
 
     def test_item_link(self):
         pass
+
+    def test_approval(self):
+        pass
+
+    def test_oa_policy(self):
+        pass
+
+    def test_identifier_grant(self):
+        pass
+
+    # def end(self):
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_activity.py::TestHeadlessActivity::test_end -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test_end(self, app, db, workflow, users, client):
+        with patch('weko_workflow.views.WorkActivity.get_new_activity_id') as mock_get_new_activity_id:
+            mock_get_new_activity_id.side_effect = [f"A-TEST-0000{i}" for i in range(1, 20)]
+            login_user(users[1]["obj"])
+            activity = HeadlessActivity()
+            activity.init_activity(users[0]["id"], workflow["workflow"].id)
+
+            activity.end()
+
+            assert activity.user is None
+            assert activity.current_action == None
+            assert activity._model is None
