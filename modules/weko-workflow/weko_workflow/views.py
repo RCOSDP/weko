@@ -1554,7 +1554,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
     if action_endpoint == 'item_link' and item_id:
 
         item_link = ItemLink(current_pid.pid_value)
-        relation_data = post_json.get('link_data')
+        relation_data = post_json.get('link_data') or []
         err = item_link.update(relation_data)
         if err:
             res = ResponseMessageSchema().load({"code":-1, "msg":_(err)})

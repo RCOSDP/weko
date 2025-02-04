@@ -54,6 +54,7 @@ class HeadlessActivity(WorkActivity):
         self.recid = None
         self.files_info = None
         self._model = None
+        self._deposit = None
         self._lock_skip = is_headless
 
         actions = Action().get_action_list()
@@ -334,12 +335,9 @@ class HeadlessActivity(WorkActivity):
 
     def _upload_files(self, files=[]):
         """upload files."""
-
         RecordIndexer().index(self._deposit)
         bucket = Bucket.query.get(self._deposit["_buckets"]["deposit"])
-
         files_info = []
-        # [{"key": basename, "uri": False, "progress": 100, ...}]
 
         def upload(file_name, stream, size):
             size_limit = bucket.size_limit
@@ -359,7 +357,7 @@ class HeadlessActivity(WorkActivity):
             obj = ObjectVersion.create(bucket, file_name, is_thumbnail=False)
             obj.set_contents(stream, size=size, size_limit=size_limit)
 
-            url = f"{request.url_root}/api/files/{obj.bucket_id}/{obj.basename}"
+            url = f"{request.url_root}api/files/{obj.bucket_id}/{obj.basename}"
             return {
                 "created": obj.created.isoformat(),
                 "updated": obj.updated.isoformat(),
@@ -432,8 +430,8 @@ class HeadlessActivity(WorkActivity):
         locked_value = self._activity_lock()
 
         """weko_workflow.views.next_action"""
-        result, _ = next_action(self.activity_id, self.current_action_id,
-                    {"commond": comment}
+        result, _ = next_action(
+            self.activity_id, self.current_action_id, {"commond": comment}
         )
         if result.json.get("code") != 0:
             current_app.logger.error(f"failed to set comment: {result.json.get('msg')}")
@@ -442,11 +440,17 @@ class HeadlessActivity(WorkActivity):
         self._user_unlock()
         self._activity_unlock(locked_value)
 
-    def item_link(self, link_data):
+    def item_link(self, link_data=[]):
         """Action for Item Link."""
         self._user_lock()
         locked_value = self._activity_lock()
 
+        result, _ = next_action(
+            self.activity_id, self.current_action_id, {"link_data": link_data}
+        )
+        if result.json.get("code") != 0:
+            current_app.logger.error(f"failed in Item Link: {result.json.get('msg')}")
+            raise WekoWorkflowException(result.json.get("msg"))
 
         self._user_unlock()
         self._activity_unlock(locked_value)
@@ -456,6 +460,20 @@ class HeadlessActivity(WorkActivity):
         self._user_lock()
         locked_value = self._activity_lock()
 
+        grant_data = grant_data or {}
+        """ FIXME: get prefix from weko_admin.models.Identifier into '##' """
+        grant_data.setdefault("identifier_grant", "0")
+        grant_data.setdefault("identifier_grant_jalc_doi_suffix", f"https://doi.org/{'##'}/{self.recid}")
+        grant_data.setdefault("identifier_grant_jalc_cr_doi_suffix", f"https://doi.org/{'##'}/{self.recid}")
+        grant_data.setdefault("identifier_grant_jalc_dc_doi_suffix", f"https://doi.org/{'##'}/{self.recid}")
+        grant_data.setdefault("identifier_grant_ndl_jalc_doi_suffix", f"https://doi.org/{'##'}/{self.recid}")
+
+        result, _ = next_action(
+            self.activity_id, self.current_action_id, grant_data
+        )
+        if result.json.get("code") != 0:
+            current_app.logger.error(f"failed in Identifier Grant: {result.json.get('msg')}")
+            raise WekoWorkflowException(result.json.get("msg"))
 
         self._user_unlock()
         self._activity_unlock(locked_value)
@@ -465,6 +483,7 @@ class HeadlessActivity(WorkActivity):
         self._user_lock()
         locked_value = self._activity_lock()
 
+        # TODO:
 
         self._user_unlock()
         self._activity_unlock(locked_value)
@@ -474,6 +493,7 @@ class HeadlessActivity(WorkActivity):
         self._user_lock()
         locked_value = self._activity_lock()
 
+        # TODO:
 
         self._user_unlock()
         self._activity_unlock(locked_value)
@@ -485,11 +505,8 @@ class HeadlessActivity(WorkActivity):
         self.recid = None
         self.files_info = None
         self._model = None
+        self._deposit = None
         self._lock_skip = None
-        pass
-
-    def _save_activity(self):
-        """Save activity."""
         pass
 
     def _user_lock(self):
