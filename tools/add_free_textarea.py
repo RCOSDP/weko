@@ -39,18 +39,21 @@ DBNAME = os.getenv('INVENIO_POSTGRESQL_DBNAME')
 
 COMMENT_DICT_A = {
     "type": "string",
-    "title": TITLE,
+    "title": "",
     "format": "textarea"
 }
 COMMENT_DICT_B_TEMPLATE = {
     "key": "",
     "type": "textarea",
-    "title": TITLE,
+    "title": "",
     "title_i18n": {
-        "en": TITLE_EN,
-        "ja": TITLE_JA
+        "en": "",
+        "ja": ""
     }
 }
+
+# テーブル名
+TABLE_NAME_DICT = {'ITEM_TYPE':'item_type', 'ITEM_TYPE_PROPERTY': 'item_type_property'}
 
 
 def update_schema(prop):
@@ -93,95 +96,124 @@ def update_render(record, file_prop_name, comment_dict):
             update_items(data.get("items"), comment_dict)
 
 
-# セッション作成
-engine = create_engine(f'postgresql+psycopg2://{USERNAME}:{PASSWORD}@{HOST}:{PORT}/{DBNAME}')
-Session = sessionmaker(bind=engine)
-session = Session()
-Base = declarative_base()
+def add_textarea(title=TITLE, title_ja=TITLE_JA, title_en=TITLE_EN, username=USERNAME, password=PASSWORD,
+        host=HOST, port=PORT, dbname=DBNAME, file_prop_id=FILE_PROP_ID, subprop_name=SUBPROP_NAME):
+    """
+    file_prop_idで指定したプロパティとプロパティを使用しているアイテムタイプにテキストエリアを追加する
 
-class ItemType(Base):
-    __tablename__ = 'item_type'
-    id = Column(Integer, primary_key=True)
-    schema = Column(JSON)
-    form = Column(JSON)
-    render = Column(JSON)
-    updated = Column(DateTime)
+    Args:
+        title (str): The title of the textarea.
+        title_ja (str): The Japanese title of the textarea.
+        title_en (str): The English title of the textarea.
+        username (str): The username for the database connection.
+        password (str): The password for the database connection.
+        host (str): The host of the database.
+        port (int): The port of the database.
+        dbname (str): The name of the database.
+        file_prop_id (str): The file property ID.
+        subprop_name (str): The subproperty name.
 
-class ItemTypeProperty(Base):
-    __tablename__ = 'item_type_property'
-    id = Column(Integer, primary_key=True)
-    schema = Column(JSON)
-    form = Column(JSON)
-    forms = Column(JSON)
-    updated = Column(DateTime)
-    name = Column(Text)
+    Returns:
+        None
+    """
 
-updated_itemtype_ids = []
-updated_itemtype_property_id = None
+    COMMENT_DICT_A["title"] = title
+    COMMENT_DICT_B_TEMPLATE["title"] = title
+    COMMENT_DICT_B_TEMPLATE["title_i18n"]["ja"] = title_ja
+    COMMENT_DICT_B_TEMPLATE["title_i18n"]["en"] = title_en
 
-try:
-    if not SUBPROP_NAME:
-        raise Exception("subproperty name must not be empty")
+    # セッション作成
+    engine = create_engine(f'postgresql+psycopg2://{username}:{password}@{host}:{port}/{dbname}')
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    Base = declarative_base()
 
-    # update file property
-    record = session.query(ItemTypeProperty).filter(ItemTypeProperty.id == FILE_PROP_ID).first()
+    class ItemType(Base):
+        __tablename__ = TABLE_NAME_DICT.get('ITEM_TYPE')
+        id = Column(Integer, primary_key=True)
+        schema = Column(JSON)
+        form = Column(JSON)
+        render = Column(JSON)
+        updated = Column(DateTime)
 
-    if record:
-        # update schema
-        update_schema(record.schema["properties"])
-        flag_modified(record, "schema")
+    class ItemTypeProperty(Base):
+        __tablename__ = TABLE_NAME_DICT.get('ITEM_TYPE_PROPERTY')
+        id = Column(Integer, primary_key=True)
+        schema = Column(JSON)
+        form = Column(JSON)
+        forms = Column(JSON)
+        updated = Column(DateTime)
+        name = Column(Text)
 
-        # update form
-        comment_dict = copy.deepcopy(COMMENT_DICT_B_TEMPLATE)
-        comment_dict["key"] = "parentkey." + SUBPROP_NAME
-        update_items(record.form["items"], comment_dict)
-        flag_modified(record, "form")
+    updated_itemtype_ids = []
+    updated_itemtype_property_id = None
 
-        # update forms
-        comment_dict = copy.deepcopy(COMMENT_DICT_B_TEMPLATE)
-        comment_dict["key"] = "parentkey[]." + SUBPROP_NAME
-        update_items(record.forms["items"], comment_dict)
-        flag_modified(record, "forms")
+    try:
+        if not subprop_name:
+            raise Exception("subproperty name must not be empty")
 
-        record.updated = datetime.now(timezone.utc)
-        updated_itemtype_property_id = record.id
-    else:
-        raise Exception(f"property with id = {FILE_PROP_ID} does not exist")
+        # update file property
+        record = session.query(ItemTypeProperty).filter(ItemTypeProperty.id == file_prop_id).first()
 
-    # update itemtypes
-    records = session.query(ItemType).all()
-    for record in records:
-
-        # get file property name
-        file_prop_name = None
-        for metadata_name, value in record.render.get("meta_list").items():
-            if value.get("input_type") == "cus_" + FILE_PROP_ID:
-                file_prop_name = metadata_name
-
-        if file_prop_name:
-            comment_dict = copy.deepcopy(COMMENT_DICT_B_TEMPLATE)
-            comment_dict["key"] = file_prop_name + "[]." + SUBPROP_NAME
-
-            update_schema(record.schema.get("properties", {}).get(file_prop_name, {}).get("items", {}).get("properties", {}))
+        if record:
+            # update schema
+            update_schema(record.schema["properties"])
             flag_modified(record, "schema")
 
-            for data in record.form:
-                if data.get("key") == file_prop_name:
-                    update_items(data.get("items"), comment_dict)
+            # update form
+            comment_dict = copy.deepcopy(COMMENT_DICT_B_TEMPLATE)
+            comment_dict["key"] = "parentkey." + subprop_name
+            update_items(record.form["items"], comment_dict)
             flag_modified(record, "form")
 
-            update_render(record, file_prop_name, comment_dict)
-            flag_modified(record, "render")
+            # update forms
+            comment_dict = copy.deepcopy(COMMENT_DICT_B_TEMPLATE)
+            comment_dict["key"] = "parentkey[]." + subprop_name
+            update_items(record.forms["items"], comment_dict)
+            flag_modified(record, "forms")
 
             record.updated = datetime.now(timezone.utc)
-            updated_itemtype_ids.append(record.id)
+            updated_itemtype_property_id = record.id
+        else:
+            raise Exception(f"property with id = {file_prop_id} does not exist")
+
+        # update itemtypes
+        records = session.query(ItemType).all()
+        for record in records:
+
+            # get file property name
+            file_prop_name = None
+            for metadata_name, value in record.render.get("meta_list").items():
+                if value.get("input_type") == "cus_" + file_prop_id:
+                    file_prop_name = metadata_name
+
+            if file_prop_name:
+                comment_dict = copy.deepcopy(COMMENT_DICT_B_TEMPLATE)
+                comment_dict["key"] = file_prop_name + "[]." + subprop_name
+
+                update_schema(record.schema.get("properties", {}).get(file_prop_name, {}).get("items", {}).get("properties", {}))
+                flag_modified(record, "schema")
+
+                for data in record.form:
+                    if data.get("key") == file_prop_name:
+                        update_items(data.get("items"), comment_dict)
+                flag_modified(record, "form")
+
+                update_render(record, file_prop_name, comment_dict)
+                flag_modified(record, "render")
+
+                record.updated = datetime.now(timezone.utc)
+                updated_itemtype_ids.append(record.id)
 
 
-except Exception as e:
-    traceback.print_exc()
-    session.rollback()
-else:
-    session.commit()
-    print("success")
-    print("updated_itemtype_property_id:", updated_itemtype_property_id)
-    print("updated_itemtype_ids:", updated_itemtype_ids)
+    except Exception:
+        traceback.print_exc()
+        session.rollback()
+    else:
+        session.commit()
+        print("success")
+        print("updated_itemtype_property_id:", updated_itemtype_property_id)
+        print("updated_itemtype_ids:", updated_itemtype_ids)
+
+
+add_textarea()
