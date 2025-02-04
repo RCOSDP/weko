@@ -119,7 +119,7 @@ class TestHeadlessActivity:
     # def auto(self, **params):
     def test_auto(self, app, workflow, mocker):
         detail = "http://test_server.localdomain/workflow/activity/detail/A-TEST-00001"
-        actions = actions = ["item_login"] * 3 + ["item_link"] * 4 + ["identifier_grant"] * 5 + ["end_action"] * 2
+        actions = actions = ["item_login"] * 2 + ["item_link"] * 3 + ["identifier_grant"] * 4 + ["end_action"] * 2
 
         activity = HeadlessActivity()
         mock_detail = PropertyMock(return_value=detail)
@@ -153,7 +153,7 @@ class TestHeadlessActivity:
 
 
         detail = "http://test_server.localdomain/workflow/activity/detail/A-TEST-00002"
-        actions = actions = ["item_login"] * 3 + ["item_link"] * 4 + ["oa_policy"] * 5 + ["approval"] * 3
+        actions = actions = ["item_login"] * 2 + ["item_link"] * 3 + ["oa_policy"] * 5 + ["approval"] * 2
 
         activity = HeadlessActivity()
         mock_detail = PropertyMock(return_value=detail)
@@ -177,7 +177,7 @@ class TestHeadlessActivity:
 
         url, current_action, _ = activity.auto(user_id=1, workflow_id=1)
         assert url == detail
-        assert current_action == "end_action"
+        assert current_action == "approval"
 
         assert mock_init_activity.call_count == 1
         assert mock_item_registration.call_count == 1

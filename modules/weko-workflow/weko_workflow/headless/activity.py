@@ -204,10 +204,7 @@ class HeadlessActivity(WorkActivity):
         self._lock_skip = True
 
         # automatically progressing the action
-        while (
-            self.current_action != "end_action"
-                and self.current_action != "approval"
-        ):
+        while self.current_action not in {"end_action", "approval"}:
             if self.current_action == "item_login":
                 self.item_registration(
                     params.get("metadata"), params.get("files"),
