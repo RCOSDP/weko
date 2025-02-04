@@ -10,15 +10,16 @@
 import os
 import json
 import uuid
+from copy import deepcopy
 from datetime import datetime
 from flask import current_app, url_for, request
 
 from invenio_accounts.models import User
+from invenio_db import db
 from invenio_files_rest.errors import FileSizeError
 from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore import current_pidstore
-from invenio_pidstore.models import PersistentIdentifier
 
 from weko_deposit.api import WekoDeposit
 from weko_deposit.links import base_factory
@@ -254,19 +255,22 @@ class HeadlessActivity(WorkActivity):
 
         # TODO: metadata input assist (W-OA-06 2.2)
 
-        metadata.setdefault({"pubdate": datetime.now().strftime("%Y-%m-%d")})
+        metadata.setdefault("pubdate", datetime.now().strftime("%Y-%m-%d"))
 
         # grouplist = Group.get_group_list()
         # authors_prefix_settings = get_data_authors_prefix_settings()
         journal = get_workflow_journal(self.activity_id)
 
         # update feedback mail list
-        feedback_maillist, _ = get_feedback_maillist(self.activity_id)
-        feedback_maillist.json.extend(metadata.pop("feedback_mail_list", []))
+        feedback_maillist = []
+        result, _ = get_feedback_maillist(self.activity_id)
+        if result.json.get("code") == 1:
+            feedback_maillist = result.json.get("data")
+        feedback_maillist.extend(metadata.pop("feedback_mail_list", []))
         self.create_or_update_action_feedbackmail(
             activity_id=self.activity_id,
             action_id=self.current_action_id,
-            feedback_maillist=feedback_maillist.json
+            feedback_maillist=feedback_maillist
         )
 
         # get value of "Title" from metadata by jpcoar_mapping
@@ -279,7 +283,7 @@ class HeadlessActivity(WorkActivity):
         })
 
         result = {"is_valid": True}
-        validate_form_input_data(result, self.item_type.id, metadata)
+        validate_form_input_data(result, self.item_type.id, deepcopy(metadata))
         if not result.get("is_valid"):
             current_app.logger.error(f"failed to input metadata: {result.get('error')}")
             raise WekoWorkflowException(result.get("error"))
@@ -289,6 +293,9 @@ class HeadlessActivity(WorkActivity):
             record_uuid = uuid.uuid4()
             pid = current_pidstore.minters["weko_deposit_minter"](record_uuid, data=record_data)
             self._deposit = WekoDeposit.create(record_data, id_=record_uuid)
+            self._model.item_id = record_uuid
+            db.session.commit()
+
         else:
             # pid = PersistentIdentifier.query.filter_by(
             #         pid_type="recid", pid_value=self.recid
@@ -298,6 +305,12 @@ class HeadlessActivity(WorkActivity):
             # TODO: check edit mode
             pass
 
+        metadata.update({"$schema": f"/items/jsonschema/{self.item_type.id}"})
+        index = {'index': metadata.get('path', []),
+                    'actions': metadata.get('publish_status')}
+        self._deposit.update(index, metadata)
+        self._deposit.commit()
+
         data = {
             "metainfo": metadata,
             "files": [],
@@ -305,6 +318,7 @@ class HeadlessActivity(WorkActivity):
                 "initialization": f"/api/deposits/redirect/{pid}",
             }
         }
+
         if files is not None:
             data["files"] = self.files_info = self._upload_files(files)
         # TODO: update propaties of files metadata, but it is difficult to
@@ -316,7 +330,7 @@ class HeadlessActivity(WorkActivity):
         self._user_unlock()
         self._activity_unlock(locked_value)
 
-        return pid["recid"]
+        return pid.pid_value
 
     def _upload_files(self, files=[]):
         """upload files."""
