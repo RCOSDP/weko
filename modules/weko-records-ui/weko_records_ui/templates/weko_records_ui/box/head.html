@@ -23,8 +23,13 @@
 {%- if pid in active_versions and pid | pid_value_version %}
 <div style="padding: 0 15px;">
   <div class="alert alert-warning" style="margin-bottom: 0;">
-    {{ _('There is a') }}&nbsp;<a class="alert-link"
-      href="{{ url_for('invenio_records_ui.recid', pid_value=all_versions[0].pid_value) }}">{{ _('newer version') }}</a>&nbsp;{{ _('of this record available.') }}
+    {{ _('There is a') }}&nbsp;
+    {%- if community -%}
+      <a class="alert-link" href="{{ url_for('invenio_records_ui.recid', pid_value=all_versions[0].pid_value, community=community.id) }}">{{ _('newer version') }}</a>
+    {%- else -%}
+      <a class="alert-link" href="{{ url_for('invenio_records_ui.recid', pid_value=all_versions[0].pid_value) }}">{{ _('newer version') }}</a>
+    {%- endif -%}
+    &nbsp;{{ _('of this record available.') }}
   </div>
 </div>
 {%- endif %}

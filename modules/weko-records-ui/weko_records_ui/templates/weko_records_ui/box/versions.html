@@ -8,7 +8,11 @@
         {%- set current_version_index = all_versions[-1].pid_value | pid_value_version | int %}
         <tr class="{% if pid_version_index == 0 %}info {% endif %}">
           <td>
-            <a href="{{ url_for('invenio_records_ui.recid', pid_value=active_versions[0].pid_value) }}">{{ version_label_const + current_version_index | string }} </a>
+            {%- if community -%}
+              <a href="{{ url_for('invenio_records_ui.recid', pid_value=active_versions[0].pid_value, community=community.id) }}">{{ version_label_const + current_version_index | string }} </a>
+            {%- else -%}
+              <a href="{{ url_for('invenio_records_ui.recid', pid_value=active_versions[0].pid_value) }}">{{ version_label_const + current_version_index | string }} </a>
+            {%- endif -%}
           </td>
           <td align="right" style="word-wrap: anywhere;">
             <small class="text-muted">{{ all_versions[-1].updated }}</small>
@@ -23,7 +27,11 @@
           {%- set version_date = pid_version.updated %}
           <tr class="{% if pid_version_index == active_versions.index(pid_version) %}info {% endif %}{% if loop.index0 > 2 %}ng-hidden {% endif %}" {% if loop.index0 > 2 %}ng-show="versionsCollapse" {% endif %}>
             <td>
-              <a href="{{ url_for('invenio_records_ui.recid', pid_value=pid_version.pid_value) }}">{{ version_label }} </a>
+              {%- if community -%}
+                <a href="{{ url_for('invenio_records_ui.recid', pid_value=pid_version.pid_value, community=community.id) }}">{{ version_label }} </a>
+              {%- else -%}
+                <a href="{{ url_for('invenio_records_ui.recid', pid_value=pid_version.pid_value) }}">{{ version_label }} </a>
+              {%- endif -%}
             </td>
             <td align="right" style="word-wrap: anywhere;">
               <small class="text-muted">{{ version_date }}</small>
