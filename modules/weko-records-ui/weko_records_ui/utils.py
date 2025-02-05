@@ -464,7 +464,6 @@ def soft_delete(recid):
             FeedbackMailList.delete(ver.object_uuid)
             dep.remove_feedback_mail()
             RequestMailList.delete(ver.object_uuid)
-            dep.remove_request_mail()
             for f in dep.files:
                 if f.file.uri not in del_files:
                     del_files[f.file.uri] = f.file.storage()

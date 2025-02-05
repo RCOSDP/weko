@@ -1573,8 +1573,6 @@ def next_action(activity_id='0', action_id=0):
             else:
                 RequestMailList.delete_by_list_item_id(item_ids)
 
-        deposit.update_request_mail()
-
 
     if action_endpoint == 'item_link' and item_id:
 

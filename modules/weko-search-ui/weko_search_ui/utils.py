@@ -1515,10 +1515,8 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
         RequestMailList.update(
             item_id = deposit.id, request_maillist=request_mail_list
         )
-        deposit.update_request_mail()
     else:
         RequestMailList.delete_without_commit(deposit.id)
-        deposit.remove_request_mail()
 
     if not is_gakuninrdm:
         deposit.publish_without_commit()
@@ -1546,7 +1544,6 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
                 RequestMailList.update(
                     item_id=_deposit.id, request_maillist=request_mail_list
                 )
-                _deposit.update_request_mail()
 
             # Update draft version
             _draft_pid = PersistentIdentifier.query.filter_by(
