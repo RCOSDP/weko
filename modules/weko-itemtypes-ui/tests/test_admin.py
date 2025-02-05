@@ -103,58 +103,67 @@ class TestItemTypeMetaDataView:
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_delete_itemtype -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
     def test_delete_itemtype(self,client,admin_view,db,users,item_type,mocker):
         login_user_via_session(client=client,email=users[0]["email"])
-        url = url_for("itemtypesregister.delete_itemtype")
-        res = client.post(url)
-        assert json.loads(res.data)["code"] == -1
         
-        url = url_for("itemtypesregister.delete_itemtype",item_type_id=100)
-        res = client.post(url)
-        assert json.loads(res.data)["code"] == -1
-        
-        url = url_for("itemtypesregister.delete_itemtype",item_type_id=1)
-        mock_flash = mocker.patch("weko_itemtypes_ui.admin.flash")
-        res = client.post(url)
-        mock_flash.assert_called_with("Cannot delete Item type for Harvesting.","error")
-        assert json.loads(res.data)["code"] == -1
-        
-        item_type1 = item_type[0]["item_type"]
-        item_type1.harvesting_type = False
-        item_type2 = item_type[1]["item_type"]
-        item_type2.harvesting_type = False
-        db.session.merge(item_type1)
-        db.session.merge(item_type2)
-        item = ItemMetadata(item_type_id=item_type1.id,json={})
-        
-        db.session.add(item)
-        db.session.commit()
-        pid = PersistentIdentifier(
-            pid_type="recid",
-            pid_value="1",
-            status="R",
-            object_type="rec",
-            object_uuid=item.id
-        )
-        db.session.add(pid)
-        db.session.commit()
-        mock_flash = mocker.patch("weko_itemtypes_ui.admin.flash")
-        url = url_for("itemtypesregister.delete_itemtype",item_type_id=item_type1.id)
-        res = client.post(url)
-        mock_flash.assert_called_with("Cannot delete due to child existing item types.","error")
-        assert json.loads(res.data)["code"] == -1#
+        with patch("weko_itemtypes_ui.admin.is_import_running", return_value="is_import_running"):
+            url = url_for("itemtypesregister.delete_itemtype")
+            res = client.post(url)
+            assert json.loads(res.data)["code"] == -1
+            
+        with patch("weko_itemtypes_ui.admin.is_import_running", return_value=None), \
+            patch("weko_workflow.utils.get_cache_data", return_value=False):
+            
+            url = url_for("itemtypesregister.delete_itemtype",item_type_id=0)
+            res = client.post(url)
+            assert json.loads(res.data)["code"] == -1
+            
+            url = url_for("itemtypesregister.delete_itemtype",item_type_id=1)
+            mock_flash = mocker.patch("weko_itemtypes_ui.admin.flash")
+            res = client.post(url)
+            mock_flash.assert_called_with("Cannot delete Item type for Harvesting.","error")
+            assert json.loads(res.data)["code"] == -1
+            
+            item_type1 = item_type[0]["item_type"]
+            item_type1.harvesting_type = False
+            item_type2 = item_type[1]["item_type"]
+            item_type2.harvesting_type = False
+            db.session.merge(item_type1)
+            db.session.merge(item_type2)
+            item = ItemMetadata(item_type_id=item_type1.id,json={})
+            
+            db.session.add(item)
+            db.session.commit()
+            pid = PersistentIdentifier(
+                pid_type="recid",
+                pid_value="1",
+                status="R",
+                object_type="rec",
+                object_uuid=item.id
+            )
+            db.session.add(pid)
+            db.session.commit()
+            mock_flash = mocker.patch("weko_itemtypes_ui.admin.flash")
+            url = url_for("itemtypesregister.delete_itemtype",item_type_id=item_type1.id)
+            res = client.post(url)
+            mock_flash.assert_called_with("Cannot delete due to child existing item types.","error")
+            assert json.loads(res.data)["code"] == -1
 
-        with patch("weko_workflow.utils.get_cache_data", return_value=True):
+        with patch("weko_itemtypes_ui.admin.is_import_running", return_value=None), \
+            patch("weko_workflow.utils.get_cache_data", return_value=True):
             mock_flash = mocker.patch("weko_itemtypes_ui.admin.flash")
             url = url_for("itemtypesregister.delete_itemtype",item_type_id=item_type2.id)
             res = client.post(url)
-            mock_flash.assert_called_with("Item type cannot be deleted becase import is in progress.")
+            mock_flash.assert_called_with("Item type cannot be deleted becase import is in progress.","error")
             assert json.loads(res.data)["code"] == -1
 
+        with patch("weko_itemtypes_ui.admin.is_import_running", return_value=None), \
+            patch("weko_workflow.utils.get_cache_data", return_value=False):
+            mock_flash = mocker.patch("weko_itemtypes_ui.admin.flash")
+            url = url_for("itemtypesregister.delete_itemtype",item_type_id=item_type2.id)
+            res = client.post(url)
+            mock_flash.assert_called_with("Deleted Item type successfully.")
+            assert json.loads(res.data)["code"] == 0
 
-        mock_flash = mocker.patch("weko_itemtypes_ui.admin.flash")
-        url = url_for("itemtypesregister.delete_itemtype",item_type_id=item_type2.id)
-        res = client.post(url)
-        mock_flash.assert_called_with("Deleted Item type successfully.")
-        assert json.loads(res.data)["code"] == 0
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_register_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
 #     def register(self, item_type_id=0):
     @pytest.mark.parametrize("index,is_permission",[
         (0,True),
@@ -168,70 +177,89 @@ class TestItemTypeMetaDataView:
     def test_register_acl(self,client,admin_view,users,item_type,index,is_permission):
         login_user_via_session(client=client,email=users[index]["email"])
         url = url_for("itemtypesregister.register",item_type_id=1)
-        res = client.post(url,json={})
-        assert_statuscode_with_role(res,is_permission)
+
+        with patch("weko_itemtypes_ui.admin.is_import_running", return_value="is_import_running"):
+            res = client.post(url,headers={"Content-Type":"application/json"})
+            assert json.loads(res.data)=={'msg': 'Item type cannot be updated becase import is in progress.'}
+            assert res.status_code == 400
+        
+        with patch("weko_itemtypes_ui.admin.is_import_running", return_value=None),\
+            patch("weko_workflow.utils.get_cache_data", return_value=True):
+            res = client.post(url,json={})
+            if is_permission:
+                assert res.status_code == 400
+                result = json.loads(res.data)
+                assert result["msg"] == 'Item type cannot be updated becase import is in progress.'
+            else:
+                assert res.status_code == 403
+
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_register -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
     def test_register(self,app,client,db,admin_view,users,item_type,mocker):
         login_user_via_session(client=client,email=users[0]["email"])
         login(app,client,obj=users[0]["obj"])
-        mocker.patch("weko_records.api.after_record_insert.send")
-        mocker.patch("weko_records.api.before_record_insert.send")
-        url = url_for("itemtypesregister.register")
-        res = client.post(url,headers={"Content-Type":"plain/text"})
-        assert json.loads(res.data)["msg"] == "Header Error"
-        
-        data = {
-            "table_row_map":{
-                "schema":{"object":"test schema"},
-                "form":["test form"],
-                "name":"new item type name",
+        with patch("weko_itemtypes_ui.admin.is_import_running", return_value=None),\
+            patch("weko_workflow.utils.get_cache_data", return_value=False):
+            mocker.patch("weko_records.api.after_record_insert.send")
+            mocker.patch("weko_records.api.before_record_insert.send")
+            url = url_for("itemtypesregister.register")
+            res = client.post(url,headers={"Content-Type":"plain/text"})
+            assert json.loads(res.data)["msg"] == "Header Error"
+            
+            data = {
+                "table_row_map":{
+                    "schema":{"object":"test schema"},
+                    "form":["test form"],
+                    "name":"new item type name",
+                }
             }
-        }
-        schema = copy.deepcopy(data["table_row_map"]["schema"])
-        form = copy.deepcopy(data["table_row_map"]["form"])
-        mocker.patch("weko_itemtypes_ui.admin.fix_json_schema",return_value=schema)
-        mocker.patch("weko_itemtypes_ui.admin.update_text_and_textarea",return_value=(schema,form))
-        
-        # raise ValueError
-        mocker.patch("weko_itemtypes_ui.admin.update_required_schema_not_exist_in_form",return_value={})
-        res = client.post(url,json=data,headers={"Content-Type":"application/json"})
-        assert res.status_code == 400
-        result = json.loads(res.data)
-        assert result["msg"] == "Failed to register Item type. Schema is in wrong format."
-        
-        
-        flow_define = FlowDefine(id=1,flow_id=uuid.uuid4(),
-                             flow_name='Registration Flow',
-                             flow_user=1)
-        with db.session.begin_nested():
-            db.session.add(flow_define)
-        db.session.commit()
-        workflow = WorkFlow(flows_id=uuid.uuid4(),
-                        flows_name='test workflow01',
-                        itemtype_id=1,
-                        index_tree_id=None,
-                        flow_id=1,
-                        is_deleted=False,
-                        open_restricted=False,
-                        location_id=None,
-                        is_gakuninrdm=False)
-        with db.session.begin_nested():
-            db.session.add(workflow)
-        db.session.commit()
+            schema = copy.deepcopy(data["table_row_map"]["schema"])
+            form = copy.deepcopy(data["table_row_map"]["form"])
+            mocker.patch("weko_itemtypes_ui.admin.fix_json_schema",return_value=schema)
+            mocker.patch("weko_itemtypes_ui.admin.update_text_and_textarea",return_value=(schema,form))
+            
+            # raise ValueError
+            mocker.patch("weko_itemtypes_ui.admin.update_required_schema_not_exist_in_form",return_value={})
+            res = client.post(url,json=data,headers={"Content-Type":"application/json"})
+            assert res.status_code == 400
+            result = json.loads(res.data)
+            assert result["msg"] == "Failed to register Item type. Schema is in wrong format."
+            
+            
+            flow_define = FlowDefine(id=1,flow_id=uuid.uuid4(),
+                                flow_name='Registration Flow',
+                                flow_user=1)
+            with db.session.begin_nested():
+                db.session.add(flow_define)
+            db.session.commit()
+            workflow = WorkFlow(flows_id=uuid.uuid4(),
+                            flows_name='test workflow01',
+                            itemtype_id=1,
+                            index_tree_id=None,
+                            flow_id=1,
+                            is_deleted=False,
+                            open_restricted=False,
+                            location_id=None,
+                            is_gakuninrdm=False)
+            with db.session.begin_nested():
+                db.session.add(workflow)
+            db.session.commit()
 
-        with patch("weko_workflow.utils.get_cache_data", return_value=True):
+        with patch("weko_itemtypes_ui.admin.is_import_running", return_value=None),\
+            patch("weko_workflow.utils.get_cache_data", return_value=True):
             url = url_for("itemtypesregister.register",item_type_id=0)
             res = client.post(url,json=data,headers={"Content-Type":"application/json"})
             result = json.loads(res.data)
             res.status_code == 400
-            assert result["msg"] == "Item type cannot be updated becase import is in progress."
+            assert result["msg"] == "Failed to register Item type. Schema is in wrong format."
         
-        url = url_for("itemtypesregister.register",item_type_id=0)
-        mocker.patch("weko_itemtypes_ui.admin.update_required_schema_not_exist_in_form",return_value=schema)
-        res = client.post(url,json=data,headers={"Content-Type":"application/json"})
-        result = json.loads(res.data)
-        assert result["msg"] == "Successfuly registered Item type."
-        assert result["redirect_url"] == "/admin/itemtypes/8"
+        with patch("weko_itemtypes_ui.admin.is_import_running", return_value=None),\
+            patch("weko_workflow.utils.get_cache_data", return_value=False):
+            url = url_for("itemtypesregister.register",item_type_id=0)
+            mocker.patch("weko_itemtypes_ui.admin.update_required_schema_not_exist_in_form",return_value=schema)
+            res = client.post(url,json=data,headers={"Content-Type":"application/json"})
+            result = json.loads(res.data)
+            assert result["msg"] == "Successfuly registered Item type."
+            assert result["redirect_url"] == "/admin/itemtypes/8"
         
 #     def restore_itemtype(self, item_type_id=0):
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_restore_itemtype -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
@@ -414,6 +442,7 @@ class TestItemTypePropertiesView():
         url = url_for("itemtypesproperties.index")
         res = client.get(url)
         assert_statuscode_with_role(res,is_permission)
+
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypePropertiesView::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
     def test_index(self,client,db,admin_view,users,itemtype_props,mocker):
         login_user_via_session(client,email=users[0]["email"])

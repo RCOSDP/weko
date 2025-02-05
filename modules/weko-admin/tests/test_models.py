@@ -1025,7 +1025,8 @@ class TestFacetSearchSetting:
             active=None,
             ui_type="test_ui_type",
             display_number=1,
-            is_open=None
+            is_open=None,
+            search_condition="AND"
         )
         db.session.add(fss)
         db.session.commit()
@@ -1059,7 +1060,8 @@ class TestFacetSearchSetting:
             "active":True,
             "ui_type":"SelectBox",
             "display_number":1,
-            "is_open":True
+            "is_open":True,
+            "search_condition":"AND"
         }
         result = FacetSearchSetting.create(data)
         assert result.name_en == "test setting"
@@ -1122,11 +1124,11 @@ class TestFacetSearchSetting:
         test = {
             "Data Language": "language",
             "Data Type": "description.value",
-            "raw_test": "test.fields.raw"
+            "Time Period(s)": "temporal"
         }
         result = FacetSearchSetting.get_activated_facets_mapping()
         assert result == test
-        
+
 #    def get_by_name(cls, name_en, name_jp):
 
 #    def get_by_mapping(cls, mapping):

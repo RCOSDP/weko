@@ -265,7 +265,7 @@ def admin_app(instance_path):
         SERVER_NAME='test_server',
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        WEKO_ADMIN_FACET_SEARCH_SETTING={"name_en": "","name_jp": "","mapping": "","active": True,"aggregations": []},
+        WEKO_ADMIN_FACET_SEARCH_SETTING={"name_en": "","name_jp": "","mapping": "","active": True,"aggregations": [],"display_number": 5,"is_open": True,"search_condition": "OR","ui_type": "CheckboxList"},
         WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE="weko_admin/admin/facet_search_setting.html"
     )
     base_app.testing = True
@@ -755,6 +755,7 @@ def admin_settings(db):
     settings.append(AdminSettings(id=7,name="display_stats_settings",settings={"display_stats":False}))
     settings.append(AdminSettings(id=8,name='convert_pdf_settings',settings={"path":"/tmp/file","pdf_ttl":1800}))
     settings.append(AdminSettings(id=9,name="elastic_reindex_settings",settings={"has_errored": False}))
+    settings.append(AdminSettings(id=10,name="sword_api_setting",settings={ "default_format": "TSV","data_format":{ "TSV":{"register_format": "Direct"},"XML":{"workflow": '31001',  "register_format": "Workflow"}}}))
     db.session.add_all(settings)
     db.session.commit()
     return settings
@@ -909,9 +910,11 @@ def facet_search_settings(db):
         mapping="language",
         aggregations=[],
         active=True,
-        ui_type="SelectBox",
-        display_number=1,
-        is_open=True
+        ui_type='SelectBox',
+        display_number="1",
+        is_open=True,
+        search_condition='OR'
+
     )
     access = FacetSearchSetting(
         name_en="Access",
@@ -919,9 +922,10 @@ def facet_search_settings(db):
         mapping="accessRights",
         aggregations=[],
         active=False,
-        ui_type="SelectBox",
-        display_number=2,
-        is_open=True
+        ui_type='CheckboxList',
+        display_number="1",
+        is_open=True,
+        search_condition='AND'
     )
     data_type = FacetSearchSetting(
         name_en="Data Type",
@@ -929,25 +933,40 @@ def facet_search_settings(db):
         mapping="description.value",
         aggregations=[{"agg_value":"Other","agg_mapping":"description.descriptionType"}],
         active=True,
-        ui_type="SelectBox",
-        display_number=3,
-        is_open=True
+        ui_type='CheckboxList',
+        display_number="1",
+        is_open=True,
+        search_condition='AND'
     )
     
     fields_raw = FacetSearchSetting(
         name_en="raw_test",
         name_jp="raw_test",
-        mapping="test.fields.raw",
+        mapping="fields.raw",
         aggregations=[],
         active=True,
-        ui_type="SelectBox",
-        display_number=4,
-        is_open=True
+        ui_type='CheckboxList',
+        display_number="1",
+        is_open=True,
+        search_condition='AND'
+    )
+        
+    temporal = FacetSearchSetting(
+        name_en="Time Period(s)",
+        name_jp="対象時期",
+        mapping="temporal",
+        aggregations=[],
+        active=True,
+        ui_type='RangeSlider',
+        display_number="1",
+        is_open=True,
+        search_condition='AND'
     )
     db.session.add(language)
     db.session.add(access)
     db.session.add(data_type)
     db.session.add(fields_raw)
+    db.session.add(temporal)
     db.session.commit()
 
 @pytest.fixture()

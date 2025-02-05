@@ -25,6 +25,8 @@ import os
 import shutil
 import tempfile
 import uuid
+import xml.etree.ElementTree as ET
+import xmltodict
 from datetime import date, datetime, timedelta
 from os.path import join
 from time import sleep
@@ -33,6 +35,7 @@ import requests
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import RequestError
 from flask import Flask, url_for
+from flask.cli import ScriptInfo
 from flask_babelex import Babel
 from flask_babelex import lazy_gettext as _
 from flask_celeryext import FlaskCeleryExt
@@ -101,7 +104,7 @@ from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore import InvenioPIDStore, current_pidstore
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus, RecordIdentifier
 from invenio_pidstore.providers.recordid import RecordIdProvider
 from invenio_queues.proxies import current_queues
 from invenio_records import InvenioRecords
@@ -141,6 +144,7 @@ from weko_records import WekoRecords
 from weko_records.api import ItemsMetadata, ItemTypes, Mapping
 from weko_records.config import WEKO_ITEMTYPE_EXCLUDED_KEYS
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
+from weko_records.serializers.utils import get_full_mapping
 from weko_records_ui.config import (
     EMAIL_DISPLAY_FLG,
     WEKO_PERMISSION_ROLE_COMMUNITY,
@@ -158,6 +162,12 @@ from weko_search_ui import WekoSearchREST, WekoSearchUI
 from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX, WEKO_SEARCH_TYPE_DICT, WEKO_SEARCH_UI_BASE_TEMPLATE, WEKO_SEARCH_KEYWORDS_DICT
 from weko_search_ui.rest import create_blueprint
 from weko_search_ui.views import blueprint_api
+
+
+from invenio_oaiharvester.models import OAIHarvestConfig, HarvestSettings
+
+
+
 
 # from moto import mock_s3
 
@@ -1900,9 +1910,9 @@ def db_activity(db, db_records2, db_itemtype, db_workflow, users):
 
 @pytest.fixture()
 def db_itemtype(app, db, make_itemtype):
-    itemtype_id = 1
+    itemtype_id = 1000
     itemtype_data = {
-        "name": "テストアイテムタイプ",
+        "name": "テストアイテムタイプ_" + str(itemtype_id),
         "schema": "tests/data/itemtype_schema.json",
         "form": "tests/data/itemtype_form.json",
         "render": "tests/data/itemtype_render.json",

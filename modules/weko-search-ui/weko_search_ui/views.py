@@ -38,7 +38,7 @@ from weko_admin.utils import get_search_setting
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
-from weko_records.api import ItemLink
+from weko_records.api import ItemLink, FeedbackMailList
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_workflow.utils import (
     get_allow_multi_thumbnail,
@@ -53,7 +53,6 @@ from .config import WEKO_SEARCH_TYPE_DICT
 from .utils import (
     check_index_access_permissions,
     check_permission,
-    get_feedback_mail_list,
     get_journal_info,
 )
 
@@ -358,7 +357,7 @@ def journal_detail(index_id=0):
 @login_required
 def search_feedback_mail_list():
     """Render a check view."""
-    result = get_feedback_mail_list()
+    result = FeedbackMailList.get_feedback_mail_list()
     return jsonify(result)
 
 
@@ -392,7 +391,7 @@ def get_path_name_dict(path_str=""):
 def gettitlefacet():
     """Soft getname Facet Search."""
     from weko_admin.utils import get_title_facets
-    titles, order, uiTypes, isOpens, displayNumbers = get_title_facets()
+    titles, order, uiTypes, isOpens, displayNumbers, searchConditions = get_title_facets()
     result = {
         "status": True,
         "data": {
@@ -400,8 +399,11 @@ def gettitlefacet():
             "order": order,
             "uiTypes": uiTypes,
             "isOpens": isOpens,
-            "displayNumbers": displayNumbers
-        }
+            "displayNumbers": displayNumbers,
+            "searchConditions": searchConditions
+        },
+        "isFacetLangDisplay":
+            current_app.config["WEKO_SEARCH_UI_FACET_LANG_DISP_FLG"]
     }
     return jsonify(result), 200
 

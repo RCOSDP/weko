@@ -364,8 +364,12 @@ WEKO_THEME_ADMIN_MENU = [
                 'order': 20
             },
             {
-                'name': 'Others',
+                'name': 'SWORD API',
                 'order': 21
+            },
+            {
+                'name': 'Others',
+                'order': 22
             }
         ]
     },
@@ -491,3 +495,6 @@ DISPLAY_LOGIN = True
 
 ENABLE_COOKIE_CONSENT = False
 """ Enable klaro cookie consent function """
+
+WEKO_THEME_FETCH_SEARCH_FLG = True
+""" Enable DOM differential update functionality when searching. """

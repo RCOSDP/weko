@@ -148,7 +148,8 @@ def test_gettitlefacet(i18n_app, users, client, facet_search_setting):
         assert data.get("displayNumbers")
         assert data.get("isOpens")
         assert data.get("uiTypes")
-
+        assert data.get("searchConditions")
+        assert not result.get("isFacetLangDisplay")
 
 # def get_last_item_id():
 def test_get_last_item_id(i18n_app, users, db_activity):

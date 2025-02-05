@@ -38,6 +38,8 @@ INVENIO_RESYNC_INDEXES_MODE = {
 
 INVENIO_RESYNC_INDEXES_SAVING_FORMAT = {
     'jpcoar': 'JPCOAR-XML',
+    'biosample': 'BIOSAMPLE-JSON-LD',
+    'bioproject': 'BIOPROJECT-JSON-LD',
     # 'json': 'JSON',
 }
 """Value of resync_indexes_mode."""
@@ -55,3 +57,6 @@ INVENIO_RESYNC_MODE = True
 
 INVENIO_RESYNC_ENABLE_ITEM_VERSIONING = False
 """ If True, the version of the item will be updated upon import.  """
+
+INVENIO_RESOURCESYNCCLIENT_DEFAULT_TIME = '00:00:00'
+""" Start time of changelist in Resync sync process.  """

@@ -985,7 +985,7 @@ def perform_delete_index(index_id, record_class, action: str):
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        current_app.logger.erorr(e)
+        current_app.logger.error(e)
         msg = 'Failed to delete index.'
     finally:
         if is_unlock:

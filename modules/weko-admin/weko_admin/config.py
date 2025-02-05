@@ -51,6 +51,9 @@ WEKO_ADMIN_SITE_LICENSE_TEMPLATE = 'weko_admin/admin/site_license_settings.html'
 WEKO_ADMIN_SITE_LICENSE_SEND_MAIL_TEMPLATE = 'weko_admin/admin/site_license_send_mail_settings.html'
 """Site-license send mail settings templates."""
 
+WEKO_ADMIN_SWORD_API_TEMPLATE = 'weko_admin/admin/sword_api_settings.html'
+"""SWORD API template."""
+
 WEKO_ADMIN_BlOCK_STYLE_TEMPLATE = 'weko_admin/admin/block_style.html'
 """Block-style template."""
 
@@ -1231,6 +1234,13 @@ WEKO_INDEX_TREE_STYLE_OPTIONS = {
     'widths': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
 }
 
+WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = False
+"""
+Restricted access feature display flag.
+True: display all feature
+False: only display secret url download
+"""
+
 WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
     "secret_URL_file_download": {
         "secret_expiration_date": 30,
@@ -1271,7 +1281,8 @@ WEKO_ADMIN_FACET_SEARCH_SETTING = {
     "aggregations": [],
     "ui_type": "CheckboxList",
     "display_number": 5,
-    "is_open": True
+    "is_open": True,
+    "search_condition": "OR"
 }
 """Default Facet Search settings."""
 

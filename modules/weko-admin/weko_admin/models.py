@@ -1557,7 +1557,7 @@ class FeedbackMailHistory(db.Model):
             session.commit()
         except BaseException as ex:
             session.rollback()
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
 
     @classmethod
     def update_lastest_status(cls, id, status):
@@ -1682,7 +1682,7 @@ class FeedbackMailFailed(db.Model):
             session.commit()
         except BaseException as ex:
             session.rollback()
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
 
 
 class Identifier(db.Model):
@@ -1793,7 +1793,10 @@ class FacetSearchSetting(db.Model):
     is_open = db.Column(db.Boolean(name='is_open'), default=True, nullable=False)
     """Indicates whether the faceted search item is open or closed, and if true, it is open."""
 
-    def __init__(self, name_en, name_jp, mapping, aggregations, active, ui_type, display_number, is_open):
+    search_condition = db.Column(db.String(20), nullable=False)
+    """Indicates search conditions for faceted search items; OR or AND can be set."""
+
+    def __init__(self, name_en, name_jp, mapping, aggregations, active, ui_type, display_number, is_open, search_condition):
         """Initial Facet search setting.
 
         Args:
@@ -1805,6 +1808,7 @@ class FacetSearchSetting(db.Model):
             ui_type:
             display_number:
             is_open:
+            search_condition:
         """
         self.name_en = name_en
         self.name_jp = name_jp
@@ -1814,6 +1818,7 @@ class FacetSearchSetting(db.Model):
         self.ui_type = ui_type
         self.display_number = display_number
         self.is_open = is_open
+        self.search_condition = search_condition
 
     def to_dict(self) -> dict:
         """Convert object to dictionary.
@@ -1830,7 +1835,8 @@ class FacetSearchSetting(db.Model):
             "active": self.active,
             "ui_type": self.ui_type,
             "display_number": self.display_number,
-            "is_open": self.is_open
+            "is_open": self.is_open,
+            "search_condition": self.search_condition
         }
 
     @classmethod

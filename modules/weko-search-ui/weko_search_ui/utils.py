@@ -30,7 +30,9 @@ import pytz
 import tempfile
 import traceback
 import uuid
+import xml.etree.ElementTree as ET
 import zipfile
+import chardet
 from collections import Callable, OrderedDict
 from datetime import datetime
 from functools import partial, reduce, wraps
@@ -61,6 +63,7 @@ from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+
 from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
 from invenio_records_rest.errors import InvalidQueryRESTError
@@ -68,8 +71,9 @@ from invenio_search import RecordsSearch
 from jsonschema import Draft4Validator
 from sqlalchemy import func as _func
 from sqlalchemy.exc import SQLAlchemyError
-from weko_admin.models import SessionLifetime
+from weko_admin.models import AdminSettings, SessionLifetime
 from weko_admin.utils import get_redis_cache, reset_redis_cache
+from weko_authors.models import Authors
 from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
@@ -80,11 +84,12 @@ from weko_index_tree.utils import (
     check_restrict_doi_with_indexes,
 )
 from weko_indextree_journal.api import Journals
-from weko_records.api import FeedbackMailList, ItemTypes, Mapping
+from weko_records.api import FeedbackMailList, ItemTypeNames, ItemTypes, Mapping
 from weko_records.models import ItemMetadata
-from weko_records.serializers.utils import get_mapping
+from weko_records.serializers.utils import get_full_mapping, get_mapping
 from weko_redis.redis import RedisConnection
 from weko_schema_ui.models import PublishStatus
+from weko_search_ui.mapper import BaseMapper, JPCOARV2Mapper
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.config import (
     IDENTIFIER_GRANT_LIST,
@@ -133,7 +138,7 @@ from .config import (
     WEKO_SEARCH_UI_BULK_EXPORT_URI,
     WEKO_SYS_USER,
 )
-from .query import feedback_email_search_factory, item_path_search_factory
+from .query import item_path_search_factory
 
 
 class DefaultOrderedDict(OrderedDict):
@@ -301,51 +306,6 @@ def get_journal_info(index_id=0):
     return result
 
 
-def get_feedback_mail_list():
-    """Get feedback items."""
-    records_search = RecordsSearch()
-    records_search = records_search.with_preference_param().params(version=False)
-    records_search._index[0] = current_app.config["SEARCH_UI_SEARCH_INDEX"]
-    ret = {}
-
-    try:
-        search_instance = feedback_email_search_factory(None, records_search)
-        aggr = (
-            search_instance.execute()
-            .to_dict()
-            .get("aggregations", {})
-            .get("feedback_mail_list", {})
-            .get("email_list", {})
-            .get("buckets", [])
-        )
-    except (NotFoundError, InvalidQueryRESTError):
-        current_app.logger.debug("FeedbackMail data cannot found!")
-        return ret
-
-    for item in aggr:
-        if item.get("doc_count"):
-            ret[item.get("key")] = {"items": {}, "author_id": ""}
-
-    for hit in search_instance.scan():
-        source = hit.to_dict()
-        for item in source.get("feedback_mail_list", []):
-            _email = ret.get(item.get("email"))
-            if _email:
-                _email["author_id"] = item.get("author_id", _email["author_id"])
-                _email["items"][source.get("control_number")] = hit.meta.id
-
-    for item in ret.values():
-        _items = []
-        _keys = list(item["items"].keys())
-        _keys = [int(x) for x in _keys]
-        _keys.sort()
-        for idx in _keys:
-            _items.append(item["items"][str(idx)])
-        item["items"] = _items
-
-    return ret
-
-
 def check_permission():
     """Check user login is repo_user or sys_user."""
     from flask_security import current_user
@@ -489,7 +449,7 @@ def parse_to_json_form(data: list, item_path_not_existed=[], include_empty=False
     return result
 
 
-def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
+def check_tsv_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
                        all_index_permission=True, can_edit_indexes=[]):
     """Validation importing zip file.
 
@@ -523,13 +483,15 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
     try:
         # Create temp dir for import data
         os.mkdir(data_path)
-
         with zipfile.ZipFile(file) as z:
             for info in z.infolist():
                 try:
-                    info.filename = info.orig_filename.encode("cp437").decode("cp932")
-                    if os.sep != "/" and os.sep in info.filename:
-                        info.filename = info.filename.replace(os.sep, "/")
+                    info.filename = info.orig_filename
+                    inf = chardet.detect(info.orig_filename)                    
+                    if inf['encoding'] is not None and inf['encoding'] == 'cp437':
+                        info.filename = info.orig_filename.encode("cp437").decode("cp932")
+                        if os.sep != "/" and os.sep in info.filename:
+                            info.filename = info.filename.replace(os.sep, "/")
                 except Exception:
                     current_app.logger.warning("-" * 60)
                     traceback.print_exc(file=sys.stdout)
@@ -619,6 +581,116 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
     return result
 
 
+def check_xml_import_items(file, item_type_id, is_gakuninrdm=False):
+    """Validation importing zip file.
+
+    :argument
+        file -- zip file path.
+        item_id -- import item type id.
+        is_gakuninrdm -- Is call by gakuninrdm api.
+    :return
+        return       -- PID object if exist.
+
+    """
+    if isinstance(file, str):
+        filename = os.path.basename(file)
+    else:
+        filename = file.filename
+    if not is_gakuninrdm:
+        tmp_prefix = current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
+    else:
+        tmp_prefix = "deposit_activity_"
+    tmp_dirname = tmp_prefix + datetime.utcnow().strftime(r"%Y%m%d%H%M%S")
+    data_path = os.path.join(tempfile.gettempdir(), tmp_dirname)
+    result = {"data_path": data_path}
+
+    # check item type id
+    item_type = ItemTypes.get_by_id(item_type_id)
+    if not item_type or item_type.is_deleted:
+        result["error"] =  _("The item type of the item to be imported is missing or has already been deleted.")
+        return result
+
+    try:
+        # Create temp dir for import data
+        os.mkdir(data_path)
+
+        with zipfile.ZipFile(file) as z:
+            for info in z.infolist():
+                try:
+                    info.filename = info.orig_filename.encode("cp437").decode("cp932")
+                    if os.sep != "/" and os.sep in info.filename:
+                        info.filename = info.filename.replace(os.sep, "/")
+                except Exception:
+                    current_app.logger.warning("-" * 60)
+                    traceback.print_exc(file=sys.stdout)
+                    current_app.logger.warning("-" * 60)
+                z.extract(info, path=data_path)
+
+        data_path += "/data"
+        list_record = []
+        # get settings from table
+        list_xml = list(filter(lambda filename: filename.endswith('.xml'), os.listdir(data_path)))
+
+        if not list_xml:
+            raise FileNotFoundError()
+        list_record.extend(generate_metadata_from_jpcoar(data_path, list_xml, item_type_id))
+
+        # current_app.logger.debug("list_record1: {}".format(list_record))
+
+        # add: {"id": null, "status": "new"}
+        list_record = handle_check_exist_record(list_record)
+        # current_app.logger.debug("list_record2: {}".format(list_record))
+
+        # add: {"item_title": "****"}
+        handle_item_title(list_record)
+        # current_app.logger.debug("list_record3: {}".format(list_record))
+
+        list_record = handle_check_date(list_record)
+        # current_app.logger.debug("list_record4: {}".format(list_record))
+
+        handle_check_id(list_record)
+
+        # add: {"filenames": [{"filename": "sample.pdf", "id": ".metadata.item_1617605131499[0].filename"}], "metadata": {"feedback_mail_list": [{"author_id": "", "email": "wekosoftware@nii.ac.jp"}], "path": [1031]} }
+        handle_check_file_metadata(list_record, data_path)
+        # current_app.logger.debug("list_record5: {}".format(list_record))
+
+        if not is_gakuninrdm:
+            handle_check_cnri(list_record)
+            handle_check_doi_indexes(list_record)
+            handle_check_doi_ra(list_record)
+            handle_check_doi(list_record)
+
+        result["list_record"] = list_record
+    except zipfile.BadZipFile as ex:
+        result["error"] =  _(
+            "The format of the specified file {} does not support import." \
+            " Please specify one of the following formats: zip, tar, gztar, bztar, xztar.").format(filename)
+        current_app.logger.error("-" * 60)
+        traceback.print_exc(file=sys.stdout)
+        current_app.logger.error("-" * 60)
+    except FileNotFoundError as ex:
+        result["error"] =  _(
+            "The xml file was not found in the specified file {}." \
+            " Check if the directory structure is correct.").format(filename)
+        current_app.logger.error("-" * 60)
+        traceback.print_exc(file=sys.stdout)
+        current_app.logger.error("-" * 60)
+    except UnicodeDecodeError as ex:
+        result["error"] =  ex.reason
+        current_app.logger.error("-" * 60)
+        traceback.print_exc(file=sys.stdout)
+        current_app.logger.error("-" * 60)
+    except Exception as ex:
+        error = _("Internal server error")
+        if (ex.args and len(ex.args) and isinstance(ex.args[0], dict) and ex.args[0].get("error_msg")):
+            error = ex.args[0].get("error_msg")
+        result["error"] = error
+        current_app.logger.error("-" * 60)
+        traceback.print_exc(file=sys.stdout)
+        current_app.logger.error("-" * 60)
+    return result
+
+
 def unpackage_import_file(data_path: str, file_name: str, file_format: str, force_new=False, is_change_identifier=False):
     """Getting record data from CSV/TSV file.
 
@@ -658,6 +730,43 @@ def unpackage_import_file(data_path: str, file_name: str, file_format: str, forc
 
     
 
+    return list_record
+
+
+def generate_metadata_from_jpcoar(data_path: str, filenames: list, item_type_id: int, is_change_identifier=False):
+    """Getting record data from JPCOAR file.
+
+    :argument
+        data_path -- Path of xml file.
+        file_name -- XML file name.
+        item_type_id -- XML item type id.
+        is_change_identifier -- Change Identifier Mode.
+    :return
+        return -- List records.
+
+    """
+    # Get item type name from item type id
+    item_type_info = get_item_type(item_type_id)
+    if not item_type_info:
+        raise Exception(
+            {
+                "error_msg": _("The item type ID specified in the XML file does not exist.")
+            }
+        )
+    file_paths = [os.path.join(data_path, filename) for filename in filenames]
+    list_record = []
+    for file_path in file_paths:
+        data = read_jpcoar_xml_file(file_path, item_type_info)
+        list_record.extend(data.get('data_list'))
+
+        handle_set_change_identifier_flag(list_record, is_change_identifier)
+        # handle_fill_system_item(list_record)
+
+        list_record = handle_validate_item_import(
+            list_record, data.get("item_type_schema", {})
+        )
+
+    # current_app.logger.debug('list_record: {}'.format(list_record))
     return list_record
 
 
@@ -780,7 +889,7 @@ def read_stats_file(file_path: str, file_name: str, file_format: str) -> dict:
                             }
                         )
                     if check_item_type:
-                        current_app.logger.error("item:{}".format(check_item_type))
+                        current_app.logger.debug("item:{}".format(check_item_type))
                         mapping_ids = handle_get_all_id_in_item_type(
                             check_item_type.get("item_type_id")
                         )
@@ -861,6 +970,45 @@ def read_stats_file(file_path: str, file_name: str, file_format: str) -> dict:
         except Exception as ex:
             raise ex
     result["data_list"] = data_list
+    return result
+
+def read_jpcoar_xml_file(file_path, item_type_info) -> dict:
+    """Read JPCOAR(V2) metadata from xml file
+
+    Args:
+        file_path (str): XML file path
+        item_type_info (dict): Item type info of imported item.
+
+    Returns:
+        dict: item metadata
+    """
+    result = {"error": False, "error_code": 0, "data_list": [], "item_type_schema": {}}
+    enc = getEncode(file_path)
+    try:
+        # register namespace
+        namespaces = dict([node for _, node in ET.iterparse(file_path, events=['start-ns'])])
+        for key, value in namespaces.items():
+            ET.register_namespace(key, value)
+        tree = ET.parse(file_path)
+        # mapping
+        mapper = JPCOARV2Mapper(ET.tostring(tree.getroot()).decode(enc))
+        res = mapper.map(item_type_info['name'])
+    except UnicodeDecodeError as ex:
+        ex.reason = _(
+            "The XML file could not be read. Make sure the file"
+            + " format is XML and that the file is"
+            + " UTF-8 encoded."
+        ).format(file_path)
+        raise ex
+    except Exception as ex:
+        raise ex
+    result["data_list"].append({
+        "$schema": item_type_info['schema'],
+        "metadata": res,
+        "item_type_name": item_type_info['name'],
+        "item_type_id": item_type_info['item_type_id'],
+    })
+    result['item_type_schema'] = item_type_info['schema']
     return result
 
 
@@ -996,7 +1144,7 @@ def handle_check_exist_record(list_record) -> list:
     current_app.logger.debug("handle_check_exist_record")
     for item in list_record:
         item = dict(**item, **{"status": "new"})
-        current_app.logger.debug("item:{}".format(item))
+        # current_app.logger.debug("item:{}".format(item))
         errors = item.get("errors") or []
         item_id = item.get("id")
         # current_app.logger.debug("item_id:{}".format(item_id))
@@ -1341,6 +1489,8 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
                 deleted_items = new_data.get("deleted_items") or []
                 deleted_items.append(metadata_id)
                 new_data["deleted_items"] = deleted_items
+    if "feedback_mail_list" in new_data:
+        new_data.pop("feedback_mail_list")
 
     deposit.update(item_status, new_data)
     deposit['_deposit']['owners'] = [int(owner)]
@@ -1350,10 +1500,10 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
 
     feedback_mail_list = item["metadata"].get("feedback_mail_list")
     if feedback_mail_list:
+        item["metadata"].pop("feedback_mail_list")
         FeedbackMailList.update(
             item_id=deposit.id, feedback_maillist=feedback_mail_list
         )
-        deposit.update_feedback_mail()
     else:
         FeedbackMailList.delete_without_commit(deposit.id)
         deposit.remove_feedback_mail()
@@ -1379,7 +1529,6 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
                 FeedbackMailList.update(
                     item_id=_deposit.id, feedback_maillist=feedback_mail_list
                 )
-                _deposit.update_feedback_mail()
 
             # Update draft version
             _draft_pid = PersistentIdentifier.query.filter_by(
@@ -1681,10 +1830,20 @@ def handle_item_title(list_record):
         
     for item in list_record:
         error = None
-        meta_option, item_type_mapping = get_options_and_order_list(item["item_type_id"])
-        hide_list = get_hide_list_by_schema_form(item["item_type_id"])
-        item_map = get_mapping(item["item_type_id"], "jpcoar_mapping")
-        # current_app.logger.debug("item_type_mapping: {}".format(item_type_mapping))
+        item_type_id = item["item_type_id"]
+
+        item_type = ItemTypes.get_by_id(item_type_id)
+        hide_list = []
+        if item_type:
+            meta_option = get_options_and_order_list(
+                item_type_id,
+                item_type_data=ItemTypes(item_type.schema, model=item_type),
+                mapping_flag=False)
+            hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+        else:
+            meta_option = get_options_and_order_list(item_type_id, mapping_flag=False)
+        item_map = get_mapping(item_type_id, 'jpcoar_mapping', item_type=item_type)
+
         # current_app.logger.debug("item_map: {}".format(item_map))
         title_data, _title_key = get_data_by_property(
             item["metadata"], item_map, "title.@value"
@@ -1714,7 +1873,7 @@ def handle_item_title(list_record):
                     ):
                         title_val = check_info_in_metadata(
                             lang_key, val_key, title_lang_data[0], item["metadata"]
-                        )
+                        )                        
                         item["item_title"] = title_val
                 if title_val:
                     break
@@ -2495,7 +2654,13 @@ def handle_doi_required_check(record):
         )
 
         if error_list:
-            errors = [_("PID does not meet the conditions.<br/>")]
+            errors = []
+            current_app.logger.error("error_list: {0}".format(error_list))
+            if error_list.get("pattern"):
+                pattern_err_msg = _("One of the following required values ​​has not been registered.<br/>{}<br/>")
+                errors.append(
+                    pattern_err_msg.format(error_list.get("pattern"))
+                )
             if error_list.get("mapping"):
                 mapping_err_msg = _(
                     "The mapping of required items for DOI "
@@ -3131,6 +3296,8 @@ def get_thumbnail_key(item_type_id=0):
         item_type = item_type.render
         schema = item_type.get("schemaeditor", {}).get("schema", {})
         for key, item in schema.items():
+            if not isinstance(item, dict):
+                continue
             if item.get("properties") and item["properties"].get("subitem_thumbnail"):
                 return key
 
@@ -3464,6 +3631,11 @@ def export_all(root_url, user_id, data, timezone):
                 record_ids = [(recid.pid_value, recid.object_uuid) 
                     for recid in recids if 'publish_status' in recid.json 
                     and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]]
+                
+                if len(record_ids) == 0:
+                    item_types.remove(it)
+                    continue
+                
                 for recid, uuid in record_ids:
                     if counter % WEKO_SEARCH_UI_BULK_EXPORT_LIMIT == 0 and item_datas:
                         # Create export info file
@@ -3577,7 +3749,7 @@ def export_all(root_url, user_id, data, timezone):
             else:
                 fromid = item_id_range
                 toid = item_id_range
-        
+
         result = None
         if not fromid or not toid or (fromid and toid and int(fromid) <= int(toid)):
             result = _get_export_data(export_path, item_types, 0, fromid, toid)

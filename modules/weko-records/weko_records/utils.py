@@ -45,7 +45,7 @@ from .api import ItemTypes, Mapping
 from .config import COPY_NEW_FIELD, WEKO_TEST_FIELD
 
 
-def json_loader(data, pid, owner_id=None, with_deleted=False):
+def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True):
     """Convert the item data and mapping to jpcoar.
 
     :param data: json from item form post.
@@ -180,7 +180,7 @@ def json_loader(data, pid, owner_id=None, with_deleted=False):
         jpcoar[k] = item.copy()
 
     # convert to es jpcoar mapping data
-    jrc = SchemaTree.get_jpcoar_json(jpcoar)
+    jrc = SchemaTree.get_jpcoar_json(jpcoar,replace_field=replace_field)
     list_key = []
     for k, v in jrc.items():
         if not v:
@@ -292,9 +292,18 @@ def copy_field_test(dc, map, jrc, iid=None):
                                 "id: {0} , inputType: {1}  , path: {2}".format(_id, _inputType,val['path'])
                             )
                             if _inputType == "text":
-                                txt = get_values_from_dict(
-                                    dc, val["path"], val["path_type"], iid
-                                )
+                                if val.get("condition_path") and val.get(
+                                    "condition_value"):
+                                    txt = get_values_from_dict_with_condition(
+                                        dc, val["path"], val["path_type"],
+                                        val["condition_path"],
+                                        val["condition_value"], iid
+                                    )
+                                else:
+                                    txt = get_values_from_dict(
+                                        dc, val["path"], val["path_type"], iid
+                                    )
+
                                 if txt:
                                     jrc[k_v.get("id")] = txt
                             elif _inputType == "range":
@@ -480,13 +489,16 @@ def makeDateRangeValue(start, end):
     b = None
     if p2.match(start):
         a = time.strptime(start, "%Y-%m-%d")
-        b = time.strptime(end, "%Y-%m-%d")
-
     elif p3.match(start):
         a = time.strptime(start, "%Y-%m")
-        b = time.strptime(end, "%Y-%m")
     elif p4.match(start):
         a = time.strptime(start, "%Y")
+        
+    if p2.match(end):
+        b = time.strptime(end, "%Y-%m-%d")
+    elif p3.match(end):
+        b = time.strptime(end, "%Y-%m")
+    elif p4.match(end):
         b = time.strptime(end, "%Y")
 
     if a is not None and b is not None:
@@ -516,6 +528,54 @@ def get_values_from_dict(dc, path, path_type, iid=None):
         ret = copy_values_json_path(dc, path)
 
     current_app.logger.debug("get_values_from_dict: {0}".format(ret))
+    return ret
+
+
+def get_values_from_dict_with_condition(dc, path, path_type, condition_path,
+                                        condition_value, iid=None):
+    """Extracts the values to be used in the advanced search according to the
+    conditions.
+
+    The difference between this function and get_values_from_dict() is that it
+    does not extract values unless the specified conditions are met.
+
+    The condition is judged by extracting the value specified in condition_path
+    for the metadata defined in dc, and then judging whether the value matches
+    the condition_value.
+
+    Args:
+        dc: Item metadata.
+        path: Path to the value to be extracted.
+        path_type: json or xml.
+        condition_path: Path to the value that is the extraction condition
+        condition_value: Condition-determining value.
+        iid: Oai id.
+    Return:
+        Value used in detail search.
+    """
+    ret = None
+
+    if path_type == "xml":
+        ret = copy_value_xml_path(dc, path, iid)
+    elif path_type == "json":
+        path_tmps = path.split('.')
+        cpath_tmps = condition_path.split('.')
+        common_path = None
+        for index, tmp in enumerate(path_tmps):
+            if len(cpath_tmps) > index and tmp == cpath_tmps[index]:
+                common_path = '.'.join(path_tmps[0:index + 1])
+        if common_path:
+            vpath = path.split(common_path + '.')[1]
+            cpath = condition_path.split(common_path + '.')[1]
+            ret = []
+            matches = parse(common_path).find(dc)
+            for match in matches:
+                cval = copy_value_json_path(match, cpath)
+                if condition_value == cval:
+                    ret += copy_values_json_path(match, vpath)
+            if not ret:
+                ret = None
+
     return ret
 
 
@@ -823,32 +883,33 @@ def to_orderdict(alst, klst, is_full_key=False):
                     to_orderdict(v, klst, is_full_key)
 
 
-def get_options_and_order_list(item_type_id, ojson=None):
+def get_options_and_order_list(item_type_id, item_type_data=None):
     """Get Options by item type id.
 
     :param item_type_id:
-    :param ojson:
+    :param item_type_data:
     :return: options dict and sorted list
     """
-    if ojson is None:
-        ojson = ItemTypes.get_record(item_type_id)
-    solst = find_items(ojson.model.form)
-    meta_options = ojson.model.render.get("meta_fix")
-    meta_options.update(ojson.model.render.get("meta_list"))
+    meta_options = {}
+    solst = []
+    if item_type_data is None:
+        item_type_data = ItemTypes.get_record(item_type_id)
+    if item_type_data:
+        solst = find_items(item_type_data.model.form)
+        meta_options = item_type_data.model.render.get("meta_fix")
+        meta_options.update(item_type_data.model.render.get("meta_list"))
     return solst, meta_options
 
 
 async def sort_meta_data_by_options(
     record_hit,
     settings,
-    item_type_mapping,
     item_type_data,
 ):
     """Reset metadata by '_options'.
 
     :param record_hit:
     :param settings:
-    :param item_type_mapping:
     :param item_type_data:
     """
     
@@ -1328,12 +1389,19 @@ async def sort_meta_data_by_options(
         item_type_id = record_hit["_source"].get("item_type_id") or src.get(
             "item_type_id"
         )
-        item_map = get_mapping(item_type_id, "jpcoar_mapping")
         
         # selected title
         from weko_items_ui.utils import get_hide_list_by_schema_form
-        solst, meta_options = get_options_and_order_list(item_type_id, item_type_data)
-        hide_list = get_hide_list_by_schema_form(item_type_id)
+
+        item_type = ItemTypes.get_by_id(item_type_id)
+        hide_list = []
+        if item_type:
+            solst, meta_options = get_options_and_order_list(
+                item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
+            hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+        else:
+            solst, meta_options = get_options_and_order_list(item_type_id)
+        item_map = get_mapping(item_type_id, "jpcoar_mapping", item_type=item_type)
         title_value_key = 'title.@value'
         title_lang_key = 'title.@attributes.xml:lang'
         title_languages = []
@@ -1367,15 +1435,12 @@ async def sort_meta_data_by_options(
 
         if not item_type_id:
             return
-        
-        from weko_items_ui.utils import get_hide_list_by_schema_form
-        solst, meta_options = get_options_and_order_list(item_type_id, item_type_data)
-        hide_list = get_hide_list_by_schema_form(item_type_id)
+
         solst_dict_array = convert_data_to_dict(solst)
         files_info = []
         creator_info = None
         thumbnail = None
-        hide_item_metadata(src, settings, item_type_mapping, item_type_data)
+        hide_item_metadata(src, settings, item_type_data)
         # Set value and parent option
         for lst in solst:
             key = lst[0]
@@ -2089,7 +2154,7 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
         if str_key_val[0] in metadata:
             obj = metadata.get(str_key_val[0])
             if not isinstance(obj,list):
-                obj = obj.get("attribute_value_mlt")
+                obj = obj.get("attribute_value_mlt",obj)
             save = obj
             for ob in str_key_val:
                 if (
@@ -2099,28 +2164,38 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
                     for x in save:
                         if x.get(ob):
                             save = x.get(ob)
-            for s in save:
-                if s is not None and str_lang is None:
-                    value = s
-                    if isinstance(s,dict):
-                        value = s.get(str_key_val[len(str_key_val) - 1])
-                        if value:
-                            value.strip()
-                            if len(value) > 0:
-                                return value
-                
-                if (
-                    s and str_key_lang 
-                    and isinstance(s, dict)
-                    and s.get(str_key_lang[-1])
-                    and s.get(str_key_val[-1])
-                ):
+            
+            if isinstance(save, list):
+                for s in save:
+                    if s is not None and str_lang is None:
+                        value = s
+                        if isinstance(s,dict):
+                            value = s.get(str_key_val[len(str_key_val) - 1])
+                            if value:
+                                value.strip()
+                                if len(value) > 0:
+                                    return value
+                    
                     if (
-                        s.get(str_key_lang[-1]).strip() == str_lang.strip()
-                        and str_key_val[-1] in s
-                        and len(s.get(str_key_val[-1]).strip()) > 0
+                        s and str_key_lang 
+                        and isinstance(s, dict)
+                        and s.get(str_key_lang[-1])
+                        and s.get(str_key_val[-1])
                     ):
-                        return s.get(str_key_val[-1])
+                        if (
+                            s.get(str_key_lang[-1]).strip() == str_lang.strip()
+                            and str_key_val[-1] in s
+                            and len(s.get(str_key_val[-1]).strip()) > 0
+                        ):
+                            return s.get(str_key_val[-1])
+            elif isinstance(save, dict):
+                if (
+                    save.get(str_key_lang[-1])
+                    and save.get(str_key_val[-1])
+                    and save.get(str_key_lang[-1]).strip() == str_lang.strip()
+                ):
+                    return save.get(str_key_val[-1])
+
     return None
 
 

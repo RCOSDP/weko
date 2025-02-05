@@ -610,6 +610,7 @@ RESOURCE_TYPE_URI = {
     "data paper": "http://purl.org/coar/resource_type/c_beb9",
     "departmental bulletin paper": "http://purl.org/coar/resource_type/c_6501",
     "editorial": "http://purl.org/coar/resource_type/c_b239",
+    "journal": "http://purl.org/coar/resource_type/c_0640",
     "journal article": "http://purl.org/coar/resource_type/c_6501",
     "newspaper": "http://purl.org/coar/resource_type/c_2fe3",
     "periodical": "http://purl.org/coar/resource_type/c_2659",
@@ -731,6 +732,9 @@ CELERY_RESULT_PERSISTENT = True
 """ If set to True, result messages will be persistent. This means the messages will not be lost after a broker restart. The default is for the results to be transient."""
 CELERY_TASK_TRACK_STARTED=True
 """ If True the task will report its status as ‘started’ when the task is executed by a worker. """
+WEKO_SEARCH_UI_FACET_LANG_DISP_FLG = False
+""" Enable the Facet Search specified language display feature. """
+
 
 WEKO_SEARCH_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 

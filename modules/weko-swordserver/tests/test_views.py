@@ -1,5 +1,8 @@
 
+import os
+from unittest.mock import MagicMock, PropertyMock
 from flask import url_for,json,request,abort
+from flask_login.utils import login_user
 import pytest
 from mock import patch
 import datetime
@@ -12,7 +15,8 @@ from invenio_files_rest.models import Location
 
 from weko_swordserver.errors import *
 
-from weko_swordserver.views import blueprint, _get_status_document,_create_error_document,post_service_document
+from weko_swordserver.views import _get_status_workflow_document, blueprint, _get_status_document,_create_error_document,post_service_document
+from weko_workflow.models import Activity
 
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
 
@@ -26,13 +30,13 @@ def test_get_service_document(client,users,tokens):
         "Authorization":"Bearer {}".format(token),
     }
     res = client.get(url,headers=headers)
+    assert res.status_code == 200
 
 
 # def post_service_document():
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test_post_service_document -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
-def test_post_service_document(app,client,db,users,esindex,location,index,make_zip,tokens,item_type,doi_identifier,mocker):
-    login_user_via_session(client=client,email=users[0]["email"])
-    token=tokens["token"].access_token
+def test_post_service_document(app,client,db,users,esindex,location,index,make_zip,tokens,item_type,doi_identifier,mocker,admin_settings, workflow):
+    token=tokens["import_token"].access_token
     url = url_for("weko_swordserver.post_service_document")
     headers = {
         "Authorization":"Bearer {}".format(token),
@@ -41,16 +45,17 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
     }
     def update_location_size():
         from decimal import Decimal
-        loc = db.session.query(Location).filter(
-                    Location.id == 1).one()
+        loc = db.session.query(Location).filter(Location.id == 1).one()
         loc.size = 1547
     mocker.patch("weko_swordserver.views._get_status_document",side_effect=lambda x:{"recid":x})
     mocker.patch("weko_search_ui.utils.find_and_update_location_size",side_effect=update_location_size)
     mocker.patch("weko_search_ui.utils.send_item_created_event_to_es")
     zip = make_zip()
-    storage = FileStorage(filename="payload.zip",stream=zip)
-    res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-    assert res.status_code == 200
+    with patch("weko_swordserver.views.import_items_to_system", return_value={"success": True, "recid": 1}):
+        login_user_via_session(client=client,email=users[0]["email"])
+        storage = FileStorage(filename="payload.zip",stream=zip)
+        res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
+        assert res.status_code == 200
 
     #recid = PersistentIdentifier.get("recid","1").object_uuid
     #record = RecordMetadata.query.filter_by(id=recid).one_or_none()
@@ -59,52 +64,98 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
     #file_metadata = record["item_1617605131499"]["attribute_value_mlt"][0]
     #assert file_metadata.get("url") is not None
     #assert file_metadata.get("url").get("url") == "https://localhost/record/1/files/sample.html"
-    assert json.loads(res.data) == {"recid":"1"}
+        assert json.loads(res.data) == {"recid": 1 }
+
+    expected_activity_id = "A-20240301-00001"
+    activity = MagicMock(spec=Activity)
+    prop_mock = PropertyMock(return_value=expected_activity_id)
+    type(activity).activity_id = prop_mock
+    with patch("weko_swordserver.views.create_activity_from_jpcoar", return_value=(activity, 1)):
+        login_user_via_session(client=client,email=users[0]["email"])
+        file_data2 = FileStorage(
+            stream=open("tests/data/workflow_data/sample_file_jpcoar_xml.zip", "rb"),
+            filename="sample_file_jpcoar_xml.zip",
+            content_type="application/zip",
+        )
+        headers2 = {
+            "Authorization":"Bearer {}".format(token),
+            "Content-Disposition":"attachment; filename=sample_file_jpcoar_xml.zip",
+            "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
+        }
+        res = client.post(url, data=dict(file=file_data2),content_type="multipart/form-data",headers=headers2)
+        print(res)
+        assert res.status_code == 200
+
     zip = make_zip()
     storage=FileStorage(filename="payload.zip",stream=zip)
     with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
+        login_user(users[0]['obj'])
         # exist "error" in check_result
-        checked = {"error":"test_check_error","item":"test_item"}
-        with patch("weko_swordserver.views.check_import_items",return_value=checked):
+        checked = {"error":"test_check_error","list_record":["test_item"]}
+        with patch("weko_swordserver.views.check_import_items",return_value=(checked, None)):
             with pytest.raises(WekoSwordserverException) as e:
                 post_service_document()
                 assert e.errorType == ErrorType.ServerError
                 assert e.message == "Error in check_import_items: test_check_error"
-        
+
         # exist "error" in item
-        checked = {"error":"","item":{"errors":["this is test item error1","this is test item error2"]}}
-        with patch("weko_swordserver.views.check_import_items",return_value=checked):
+        checked = {"error":"","list_record":[{"errors":["this is test item error1","this is test item error2"]}]}
+        with patch("weko_swordserver.views.check_import_items",return_value=(checked, None)):
             with pytest.raises(WekoSwordserverException) as e:
                 post_service_document()
                 assert e.errorType == ErrorType.ContentMalformed
                 assert e.message == "Error in check_import_items: this is test item error1, this is test item error2"
-        
+
         # else
-        checked = {"error":"","item":{}}
-        with patch("weko_swordserver.views.check_import_items",return_value=checked):
+        checked = {"error":"","list_record":[{}]}
+        with patch("weko_swordserver.views.check_import_items",return_value=(checked, None)):
             with pytest.raises(WekoSwordserverException) as e:
                 post_service_document()
                 assert e.errorType == ErrorType.ContentMalformed
                 assert e.message == "Error in check_import_items: item_missing"
-        
+
         # item.status is not new
-        checked = {"error":"","item":{"status":"update","item_title":"not_new_item"}}
-        with patch("weko_swordserver.views.check_import_items",return_value=checked):
+        checked = {"error":"","list_record":[{"status":"update","item_title":"not_new_item"}]}
+        with patch("weko_swordserver.views.check_import_items",return_value=(checked, None)):
             with pytest.raises(WekoSwordserverException) as e:
                 post_service_document()
                 assert e.errorType == ErrorType.BadRequest
                 assert e.message == "This item is already registered: not_new_item"
-        
-        # import failed
-        checked = {"error":"","item":{"status":"new","item_title":"new_item"}}
-        with patch("weko_swordserver.views.check_import_items",return_value=checked):
-            with patch("weko_swordserver.views.import_items_to_system",return_value={"error_id":"test error in import"}):
+
+        # import failed (Direct)
+        checked = {"error":"","list_record":[{"status":"new","item_title":"new_item"}]}
+        with patch("weko_swordserver.views.check_import_items", return_value=(checked, "Direct")):
+            with patch("weko_swordserver.views.import_items_to_system", return_value={"error_id":"test error in import"}):
                 with pytest.raises(WekoSwordserverException) as e:
                     post_service_document()
                     assert e.errorType == ErrorType.ServerError
                     assert e.message == "Error in import_items_to_system: test error in import"
-        
-        
+
+        # import failed (Workflow)
+        checked = {"error":"","list_record":[{"status":"new","item_title":"new_item"}]}
+        with patch("weko_swordserver.views.check_import_items", return_value=(checked, "Workflow")):
+            with patch("weko_swordserver.views.import_items_to_system", return_value={"error_id":"test error in import"}):
+                with pytest.raises(WekoSwordserverException) as e:
+                    post_service_document()
+                    assert e.errorType == ErrorType.ServerError
+                    assert e.message == "Error in create_activity_from_jpcoar"
+
+        # invalid register format
+        checked = {"error":"","list_record":[{"status":"new","item_title":"new_item"}]}
+        with patch("weko_swordserver.views.check_import_items", return_value=(checked, "invalid")):
+            with pytest.raises(WekoSwordserverException) as e:
+                post_service_document()
+                assert e.errorType == ErrorType.ServerError
+                assert e.message == "Invalid register format has been set for admin setting"
+
+        checked = {"error":"","list_record":[{"status":"new","item_title":"new_item"}], "data_path": "test"}
+        with patch("weko_swordserver.views.check_import_items", return_value=(checked, "invalid")):
+            with pytest.raises(WekoSwordserverException) as e:
+                os.mkdir("test")
+                post_service_document()
+                assert e.errorType == ErrorType.ServerError
+                assert e.message == "Invalid register format has been set for admin setting"
+
 
 # def get_status_document(recid):
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test__get_status_document -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
@@ -222,6 +273,78 @@ def test__get_status_document(app,records):
         with pytest.raises(WekoSwordserverException) as e:
             _get_status_document("not_exist_recid")
             assert e.message == "Item not found. (recid=not_exist_recid)"
+            assert e.errorType == ErrorType.NotFound
+
+
+# def _get_status_workflow_document(activity, recid):
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test__get_status_workflow_document -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
+def test__get_status_workflow_document(app, records):
+    recid_doi = records[0][0].pid_value
+    recid_not_doi = records[2][0].pid_value
+
+    expected_activity_id = "A-20240301-00001"
+    activity = MagicMock(spec=Activity)
+    prop_mock = PropertyMock(return_value=expected_activity_id)
+    type(activity).activity_id = prop_mock
+
+    test_doi = {
+        "@id" : url_for('weko_swordserver.get_status_document', recid=recid_doi, _external=True),
+        "@context": "https://swordapp.github.io/swordv3/swordv3.jsonld",
+        "@type": "ServiceDocument",
+        "actions" : {"getMetadata" : False,"getFiles" : False,"appendMetadata" : False,"appendFiles" : False,"replaceMetadata" : False,"replaceFiles" : False,"deleteMetadata" : False,"deleteFiles" : False,"deleteObject" : True,},
+        "fileSet" : {},
+        "metadata" : {},
+        "service" : url_for('weko_swordserver.get_service_document',_external=False),
+        "state" : [
+            {
+                "@id" : "http://purl.org/net/sword/3.0/state/inWorkflow",
+                "description" : ""
+            }
+        ],
+        "links": [
+            {
+                "@id" : url_for('weko_workflow.display_activity', activity_id=expected_activity_id, _external=True),
+                "rel" : ["alternate"],
+                "contentType" : "text/html"
+            },
+        ]
+    }
+    test_doi_no_recid = {
+        "@id" : "",
+        "@context": "https://swordapp.github.io/swordv3/swordv3.jsonld",
+        "@type": "ServiceDocument",
+        "actions" : {"getMetadata" : False,"getFiles" : False,"appendMetadata" : False,"appendFiles" : False,"replaceMetadata" : False,"replaceFiles" : False,"deleteMetadata" : False,"deleteFiles" : False,"deleteObject" : True,},
+        "fileSet" : {},
+        "metadata" : {},
+        "service" : url_for('weko_swordserver.get_service_document',_external=False),
+        "state" : [
+            {
+                "@id" : "http://purl.org/net/sword/3.0/state/inWorkflow",
+                "description" : ""
+            }
+        ],
+        "links" : [
+            {
+                "@id" : url_for('weko_workflow.display_activity', activity_id=expected_activity_id, _external=True),
+                "rel" : ["alternate"],
+                "contentType" : "text/html"
+            }
+        ]
+    }
+
+    with app.test_request_context("/test_req"):
+        # exist recid
+        result = _get_status_workflow_document(activity, recid_doi)
+        assert result == test_doi
+
+        # not exist recid
+        result = _get_status_workflow_document(activity, None)
+        assert result == test_doi_no_recid
+
+        # raise WekoSwordserverException
+        with pytest.raises(WekoSwordserverException) as e:
+            _get_status_workflow_document(None, None)
+            assert e.message == "Activity created, but not found."
             assert e.errorType == ErrorType.NotFound
 
 

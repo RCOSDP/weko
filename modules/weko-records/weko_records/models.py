@@ -698,6 +698,13 @@ class RequestMailList(db.Model, Timestamp):
         nullable=True
     )
     """List of request mail in json format."""
+    account_author = db.Column(
+        db.Text,
+        nullable=False,
+        default=''
+    )
+    """Author identifier."""
+
 
 class ItemReference(db.Model, Timestamp):
     """Model of item reference relations."""

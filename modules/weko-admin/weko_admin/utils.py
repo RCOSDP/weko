@@ -42,7 +42,7 @@ from invenio_indexer.api import RecordIndexer
 from invenio_mail.admin import MailSettingView
 from invenio_mail.models import MailConfig
 from invenio_records.models import RecordMetadata
-from invenio_records_rest.facets import terms_filter
+from invenio_records_rest.facets import terms_filter, terms_condition_filter, range_filter
 from invenio_stats.views import QueryFileStatsCount, QueryRecordViewCount
 from jinja2 import Template
 from simplekv.memory.redisstore import RedisStore
@@ -569,7 +569,7 @@ class StatisticMail:
     @classmethod
     def send_mail_to_all(cls, list_mail_data=None, stats_date=None):
         """Send mail to all setting email."""
-        from weko_search_ui.utils import get_feedback_mail_list
+        from weko_records.api import FeedbackMailList
         from weko_workflow.utils import get_site_info_name
 
         # Load setting:
@@ -588,7 +588,7 @@ class StatisticMail:
         total_mail = 0
         try:
             if not list_mail_data:
-                list_mail_data = get_feedback_mail_list()
+                list_mail_data = FeedbackMailList.get_feedback_mail_list()
                 if not list_mail_data:
                     return
 
@@ -1096,11 +1096,12 @@ class FeedbackMail:
         for author_id in list_author_id:
             if not author_id:
                 continue
-            email = Authors.get_first_email_by_id(author_id)
-            new_data = dict()
-            new_data['author_id'] = author_id
-            new_data['email'] = email
-            list_data.append(new_data)
+            emails = Authors.get_emails_by_id(author_id)
+            for e in emails:
+                new_data = dict()
+                new_data['author_id'] = author_id
+                new_data['email'] = e
+                list_data.append(new_data)
         if list_manual_mail:
             for mail in list_manual_mail:
                 new_data = dict()
@@ -1174,11 +1175,11 @@ class FeedbackMail:
         """
         if not isinstance(data, list):
             return None
-        result = ''
+        result = set()
         for item in data:
             if item.get(keyword):
-                result = result + ',' + item.get(keyword)
-        return result[1:]
+                result.add(str(item.get(keyword)))
+        return ','.join(list(result))
 
     @classmethod
     def get_list_manual_email(cls, data):
@@ -1438,7 +1439,7 @@ class FeedbackMail:
             dictionary -- resend mail data
 
         """
-        from weko_search_ui.utils import get_feedback_mail_list
+        from weko_records.api import FeedbackMailList
 
         result = {
             'data': dict(),
@@ -1453,7 +1454,7 @@ class FeedbackMail:
         if len(list_failed_mail) == 0:
             return None
 
-        list_mail_data = get_feedback_mail_list()
+        list_mail_data = FeedbackMailList.get_feedback_mail_list()
         if not list_mail_data:
             return None
 
@@ -1724,7 +1725,7 @@ def get_restricted_access(key: Optional[str] = None) -> Optional[dict]:
         return restricted_access
     elif key in restricted_access:
         return restricted_access[key]
-    return None
+    return {}
 
 
 def update_restricted_access(restricted_access: dict):
@@ -2106,6 +2107,24 @@ def get_item_mapping_list():
         result = result + mapping_list
     return result
 
+def get_detail_search_list():
+    """
+    Gets the name and type of the search condition used in the detail search.
+    The purpose of this function is to return the information of a detail search in order to prevent 
+    duplication of parameter names used in a facet search with those used in a detail search.
+
+    It extracts the part related to the detail_condition from the search settings and returns [id], 
+    which is the source of the parameter name, and [inputType], which determines the type.
+
+    If there is a special search parameter, the parameter name is defined in [mappingName] and is included in the response.
+    """
+    detail_conditions = get_search_setting()["detail_condition"]
+    result = []
+    for k_v in detail_conditions:
+        result.append([k_v.get("id"), k_v.get("inputType")])
+        if k_v.get("mappingName"): result.append([k_v.get("mappingName"), k_v.get("id") + ".mappingName"])
+    return result
+
 
 def create_facet_search_query():
     """Create facet search query."""
@@ -2204,9 +2223,17 @@ def get_facet_search_query(has_permission=True):
     # Get query on redis.
     result = json.loads(get_redis_cache(key)) or {}
     # Update terms filter function for post filters.
+
     post_filters = result.get(search_index).get('post_filters')
+    from weko_admin.utils import get_title_facets
+    titles, order, uiTypes, isOpens, displayNumbers, searchConditions = get_title_facets()
     for k, v in post_filters.items():
-        post_filters.update({k: terms_filter(v)})
+        if v == 'temporal':
+            # If the mapping name is [template], it is assumed to be a Filter to date_range1.
+            post_filters.update({k: range_filter('date_range1', False, False)})
+        else:
+            # Set whether the Filter is an AND or OR condition from the facet definition.
+            post_filters.update({k: terms_condition_filter(v, searchConditions[k] == 'AND')})
     return result
 
 
@@ -2225,6 +2252,7 @@ def get_title_facets():
     uiTypes = {}
     isOpens = {}
     displayNumbers = {}
+    searchConditions = {}
     activated_facets = FacetSearchSetting.get_activated_facets()
     for item in activated_facets:
         titles[item.name_en] = item.name_jp if lang == 'ja' else item.name_en
@@ -2232,7 +2260,8 @@ def get_title_facets():
         uiTypes[item.name_en] = item.ui_type
         isOpens[item.name_en] = item.is_open
         displayNumbers[item.name_en] = item.display_number
-    return titles, order, uiTypes, isOpens, displayNumbers
+        searchConditions[item.name_en] = item.search_condition
+    return titles, order, uiTypes, isOpens, displayNumbers, searchConditions
 
 
 def is_exits_facet(data, id):

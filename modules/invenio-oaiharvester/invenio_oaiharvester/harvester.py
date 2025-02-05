@@ -21,7 +21,7 @@
 
 import copy
 import re
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from functools import partial
 from json import dumps, loads
 
@@ -277,7 +277,7 @@ def parsing_metadata(mappin, props, patterns, metadata, res):
         mapping.sort()
 
     item_key = mapping[0].split('.')[0]
-    
+
     if item_key and props.get(item_key):
         if props[item_key].get('items'):
             item_schema = props[item_key]['items']['properties']
@@ -301,7 +301,7 @@ def parsing_metadata(mappin, props, patterns, metadata, res):
                         subitems = mapping[0].split(',')[0].split('.')[1:]
                     else:
                         subitems = mapping[0].split('.')[1:]
-                    
+
                     if subitems:
                         if subitems[0] in item_schema:
                             submetadata = subitem_recs(
@@ -351,7 +351,7 @@ def parsing_metadata(mappin, props, patterns, metadata, res):
         #     __file__, 'parsing_metadata()', 'ret', ret))
 
         return item_key, ret
-        
+
     else:
         return None, None
 
@@ -477,7 +477,7 @@ def add_contributor_jpcoar(schema, mapping, res, metadata):
             'jpcoar:affiliation.jpcoar:nameIdentifier.@nameIdentifierURI'),
         ('contributor.affiliation.nameIdentifier.@attributes.nameIdentifierScheme',
             'jpcoar:affiliation.jpcoar:nameIdentifier.@nameIdentifierScheme'),
-        ('contributor.affiliation.affiliationName.@value', 
+        ('contributor.affiliation.affiliationName.@value',
             'jpcoar:affiliation.jpcoar:affiliationName.#text'),
         ('contributor.affiliation.affiliationName.@attributes.xml:lang',
             'jpcoar:affiliation.jpcoar:affiliationName.@xml:lang'),
@@ -1451,92 +1451,86 @@ RESOURCE_TYPE_MAP = {
 }
 
 RESOURCE_TYPE_URI = {
-    'interactive resource':
-        "http://purl.org/coar/resource_type/c_e9a0",
-    'learning object':
-        "http://purl.org/coar/resource_type/c_1843",
-    'musical notation':
-        "http://purl.org/coar/resource_type/c_18cw",
-    'research proposal':
-        "http://purl.org/coar/resource_type/c_baaf",
-    'software':
-        "http://purl.org/coar/resource_type/c_5ce6",
-    'technical documentation':
-        "http://purl.org/coar/resource_type/c_71bd",
-    'workflow':
-        "http://purl.org/coar/resource_type/c_393c",
-    'other（その他）':
-        "http://purl.org/coar/resource_type/c_1843",
-    'other（プレプリント）':
-        "",
-    'conference object':
-        "http://purl.org/coar/resource_type/c_c94f",
-    'conference proceedings':
-        "http://purl.org/coar/resource_type/c_f744",
-    'conference poster':
-        "http://purl.org/coar/resource_type/c_6670",
-    'patent':
-        "http://purl.org/coar/resource_type/c_15cd",
-    'lecture':
-        "http://purl.org/coar/resource_type/c_8544",
-    'book':
-        "http://purl.org/coar/resource_type/c_2f33",
-    'book part':
-        "http://purl.org/coar/resource_type/c_3248",
-    'dataset':
-        "http://purl.org/coar/resource_type/c_ddb1",
-    'conference paper':
-        "http://purl.org/coar/resource_type/c_5794",
-    'data paper':
-        "http://purl.org/coar/resource_type/c_beb9",
-    'departmental bulletin paper':
-        "http://purl.org/coar/resource_type/c_6501",
-    'editorial':
-        "http://purl.org/coar/resource_type/c_b239",
-    'journal article':
-        "http://purl.org/coar/resource_type/c_6501",
-    'periodical':
-        "http://purl.org/coar/resource_type/c_2659",
-    'review article':
-        "http://purl.org/coar/resource_type/c_dcae04bc",
-    'article':
-        "http://purl.org/coar/resource_type/c_6501",
-    'image':
-        "http://purl.org/coar/resource_type/c_c513",
-    'still image':
-        "http://purl.org/coar/resource_type/c_ecc8",
-    'moving image':
-        "http://purl.org/coar/resource_type/c_8a7e",
-    'video':
-        "http://purl.org/coar/resource_type/c_12ce",
-    'cartographic material':
-        "http://purl.org/coar/resource_type/c_12cc",
-    'map':
-        "http://purl.org/coar/resource_type/c_12cd",
-    'sound':
-        "http://purl.org/coar/resource_type/c_18cc",
-    'internal report':
-        "http://purl.org/coar/resource_type/c_18ww",
-    'report':
-        "http://purl.org/coar/resource_type/c_93fc",
-    'research report':
-        "http://purl.org/coar/resource_type/c_18ws",
-    'technical report':
-        "http://purl.org/coar/resource_type/c_18gh",
-    'policy report':
-        "http://purl.org/coar/resource_type/c_186u",
-    'report part':
-        "http://purl.org/coar/resource_type/c_ba1f",
-    'working paper':
-        "http://purl.org/coar/resource_type/c_8042",
-    'thesis':
-        "http://purl.org/coar/resource_type/c_46ec",
-    'bachelor thesis':
-        "http://purl.org/coar/resource_type/c_7a1f",
-    'master thesis':
-        "http://purl.org/coar/resource_type/c_bdcc",
-    'doctoral thesis':
-        "http://purl.org/coar/resource_type/c_db06"
+    'conference paper': 'http://purl.org/coar/resource_type/c_5794',
+    'data paper': 'http://purl.org/coar/resource_type/c_beb9',
+    'departmental bulletin paper': 'http://purl.org/coar/resource_type/c_6501',
+    'editorial': 'http://purl.org/coar/resource_type/c_b239',
+    'journal': 'http://purl.org/coar/resource_type/c_0640',
+    'journal article': 'http://purl.org/coar/resource_type/c_6501',
+    'newspaper': 'http://purl.org/coar/resource_type/c_2fe3',
+    'periodical': 'http://purl.org/coar/resource_type/c_2659',
+    'review article': 'http://purl.org/coar/resource_type/c_dcae04bc',
+    'other periodical': 'http://purl.org/coar/resource_type/QX5C-AR31',
+    'software paper': 'http://purl.org/coar/resource_type/c_7bab',
+    'article': 'http://purl.org/coar/resource_type/c_6501',
+    'book': 'http://purl.org/coar/resource_type/c_2f33',
+    'book part': 'http://purl.org/coar/resource_type/c_3248',
+    'cartographic material': 'http://purl.org/coar/resource_type/c_12cc',
+    'map': 'http://purl.org/coar/resource_type/c_12cd',
+    'conference output': 'http://purl.org/coar/resource_type/c_c94f',
+    'conference presentation': 'http://purl.org/coar/resource_type/c_c94f',
+    'conference object': 'http://purl.org/coar/resource_type/c_c94f',
+    'conference proceedings': 'http://purl.org/coar/resource_type/c_f744',
+    'conference poster': 'http://purl.org/coar/resource_type/c_6670',
+    'dataset': 'http://purl.org/coar/resource_type/c_ddb1',
+    'interview': 'http://purl.org/coar/resource_type/c_26e4',
+    'image': 'http://purl.org/coar/resource_type/c_c513',
+    'still image': 'http://purl.org/coar/resource_type/c_ecc8',
+    'moving image': 'http://purl.org/coar/resource_type/c_8a7e',
+    'video': 'http://purl.org/coar/resource_type/c_12ce',
+    'lecture': 'http://purl.org/coar/resource_type/c_8544',
+    'patent': 'http://purl.org/coar/resource_type/c_15cd',
+    'internal report': 'http://purl.org/coar/resource_type/c_18ww',
+    'report': 'http://purl.org/coar/resource_type/c_93fc',
+    'research report': 'http://purl.org/coar/resource_type/c_18ws',
+    'technical report': 'http://purl.org/coar/resource_type/c_18gh',
+    'policy report': 'http://purl.org/coar/resource_type/c_186u',
+    'report part': 'http://purl.org/coar/resource_type/c_ba1f',
+    'working paper': 'http://purl.org/coar/resource_type/c_8042',
+    'data management plan': 'http://purl.org/coar/resource_type/c_ab20',
+    'sound': 'http://purl.org/coar/resource_type/c_18cc',
+    'thesis': 'http://purl.org/coar/resource_type/c_46ec',
+    'bachelor thesis': 'http://purl.org/coar/resource_type/c_7a1f',
+    'master thesis': 'http://purl.org/coar/resource_type/c_bdcc',
+    'doctoral thesis': 'http://purl.org/coar/resource_type/c_db06',
+    'interactive resource': 'http://purl.org/coar/resource_type/c_e9a0',
+    'learning object': 'http://purl.org/coar/resource_type/c_e059',
+    'manuscript': 'http://purl.org/coar/resource_type/c_0040',
+    'musical notation': 'http://purl.org/coar/resource_type/c_18cw',
+    'research proposal': 'http://purl.org/coar/resource_type/c_baaf',
+    'software': 'http://purl.org/coar/resource_type/c_5ce6',
+    'technical documentation': 'http://purl.org/coar/resource_type/c_71bd',
+    'workflow': 'http://purl.org/coar/resource_type/c_393c',
+    'other（その他）': 'http://purl.org/coar/resource_type/c_1843',
+    'other（プレプリント）': '',
+    'aggregated data': 'http://purl.org/coar/resource_type/ACF7-8YT9',
+    'clinical trial data': 'http://purl.org/coar/resource_type/c_cb28',
+    'compiled data': 'http://purl.org/coar/resource_type/FXF3-D3G7',
+    'encoded data': 'http://purl.org/coar/resource_type/AM6W-6QAW',
+    'experimental data': 'http://purl.org/coar/resource_type/63NG-B465',
+    'genomic data': 'http://purl.org/coar/resource_type/A8F1-NPV9',
+    'geospatial data': 'http://purl.org/coar/resource_type/2H0M-X761',
+    'laboratory notebook': 'http://purl.org/coar/resource_type/H41Y-FW7B',
+    'measurement and test data': 'http://purl.org/coar/resource_type/DD58-GFSX',
+    'observational data': 'http://purl.org/coar/resource_type/FF4C-28RK',
+    'recorded data': 'http://purl.org/coar/resource_type/CQMR-7K63',
+    'simulation data': 'http://purl.org/coar/resource_type/W2XT-7017',
+    'survey data': 'http://purl.org/coar/resource_type/NHD0-W6SY',
+    'design patent': 'http://purl.org/coar/resource_type/C53B-JCY5/',
+    'PCT application': 'http://purl.org/coar/resource_type/SB3Y-W4EH/',
+    'plant patent': 'http://purl.org/coar/resource_type/Z907-YMBB/',
+    'plant variety protection': 'http://purl.org/coar/resource_type/GPQ7-G5VE/',
+    'software patent': 'http://purl.org/coar/resource_type/MW8G-3CR8/',
+    'trademark': 'http://purl.org/coar/resource_type/H6QP-SC1X/',
+    'utility model': 'http://purl.org/coar/resource_type/9DKX-KSAF/',
+    'commentary': 'http://purl.org/coar/resource_type/D97F-VB57',
+    'design': 'http://purl.org/coar/resource_type/542X-3S04/',
+    'industrial design': 'http://purl.org/coar/resource_type/JBNF-DYAD/',
+    'layout design': 'http://purl.org/coar/resource_type/BW7T-YM2G/',
+    'peer review': 'http://purl.org/coar/resource_type/H9BQ-739P/',
+    'research protocol': 'http://purl.org/coar/resource_type/YZ1N-ZFT9/',
+    'source code': 'http://purl.org/coar/resource_type/QH80-2R4E/',
+    'transcription': 'http://purl.org/coar/resource_type/6NC7-GK9S/',
 }
 
 
@@ -1775,7 +1769,7 @@ class JPCOARMapper(BaseMapper):
         }
 
         tags = self.json['record']['metadata']['jpcoar:jpcoar']
-        
+
         for t in tags:
             if t in add_funcs:
                 if not isinstance(tags[t], list):
@@ -2047,3 +2041,349 @@ class DDIMapper(BaseMapper):
             type = [{"resourcetype": "dataset","resourceuri": "http://purl.org/coar/resource_type/c_ddb1"}]
             res['type'] = type
             return res
+
+
+class JsonMapper(BaseMapper):
+    """ Mapper to map from Json format file to ItemType.
+
+        The original file to be mapped by this Mapper is assumed to be a
+        JSON-LD or a file described in JSON.
+
+        The information to be used for this mapper mapping is created and used
+        based on the contents of item_type.schema.
+
+        In this Mapper, do not write your own mapping code for individual
+        items, but implement mapping by the rules of item_type.schema,
+        JSON-LD or JSON description format.
+
+    """
+    def __init__(self, json, itemtype_name):
+        self.json = json
+        self.itemtype_name = itemtype_name
+
+        if not BaseMapper.itemtype_map:
+            BaseMapper.update_itemtype_map()
+
+        for item in BaseMapper.itemtype_map:
+            if self.itemtype_name == item:
+                self.itemtype = BaseMapper.itemtype_map.get(item)
+
+    def map_itemtype(self, type_tag):
+        """Map itemtype."""
+        self.itemtype = BaseMapper.itemtype_map[self.itemtype_name]
+
+    def _create_item_map(self):
+        """ Create Mapping information from ItemType.
+
+            This mapping information consists of the following.
+
+                KEY: Identifier for the ItemType item
+                     (value obtained by concatenating the “title”
+                     attribute of each item in the schema)
+                VALUE: Item Code. Subitem code identifier.
+
+            Returns:
+                item_map: Mapping information about ItemType.
+
+            Examples:
+                For example, in the case of “Title of BioSample of ItemType”,
+                it would be as follows.
+
+                KEY: title.Title
+                VALUE: item_1723710826523.subitem_1551255647225
+        """
+
+        item_map = {}
+        for prop_k, prop_v in self.itemtype.schema['properties'].items():
+            self._apply_property(item_map, '', '', prop_k, prop_v)
+        return item_map
+
+    def _apply_property(self, item_map, key, value, prop_k, prop_v):
+        """
+            This process is part of “_create_item_map” and is not
+            intended for any other use.
+        """
+        if 'title' in prop_v:
+            key = key + '.' + prop_v['title'] if key else prop_v['title']
+            value = value + '.' + prop_k if value else prop_k
+
+        if prop_v['type'] == 'object':
+            for child_k, child_v in prop_v['properties'].items():
+                self._apply_property(item_map, key, value, child_k, child_v)
+        elif prop_v['type'] == 'array':
+            self._apply_property(item_map, key, value,
+                                 'items', prop_v['items'])
+        else:
+            item_map[key] = value
+
+    def _create_metadata(self, item_map, json_map):
+        """ Create Metadata.
+
+            For the parameter “item_map”, see “_create_item_map”.
+            The parameter “json_map” is assumed to be
+            the following information.
+
+                KEY: KEY similar to the KEY information in “item_map”.
+                VALUE: Information that is the path to the target
+                       item in the json file.
+                       To assign multiple json values to a single ItemType
+                       item, define the values as an array.
+
+            For the same KEY in item_map and json_map,
+            link the json file value to the item code.
+
+            Args:
+                item_map: Mapping information for ItemyType
+                json_map: Mapping information in Json file
+
+            Returns:
+                result: Metadata corresponding to ItemType
+
+            Example
+                For example, in the case of “Title of BioSample of ItemType”,
+                it would be as follows.
+
+                item_map:
+                    KEY: title.Title
+                    VALUE: item_1723710826523.subitem_1551255647225
+                json_map;
+                    KEY: title.Title
+                    VALUE: title
+
+                Combining the above, the “title” value in the json file is
+                defined as the Metadata for
+                “item_1723710826523.subitem_1551255647225”.
+        """
+
+        result = {}
+        for k, v in json_map.items():
+            if isinstance(v, list):
+                # Assign multiple json values to ItemType items
+                for cv in v:
+                    self._apply_item_metadata(result, k, cv, item_map)
+            else:
+                self._apply_item_metadata(result, k, v, item_map)
+
+        return result
+
+    def _apply_item_metadata(self, metadata, item_map_key, json_key_path,
+                             item_map):
+        """
+            This process is part of “_create_metadata” and is not
+            intended for any other use.
+        """
+
+        json_keys = json_key_path.split('.')
+        json_key = json_keys[0]
+        value = self.json['record']['metadata'].get(json_key)
+        if value:
+            # Perform processing only if there are values to be set
+            # in the json file.
+            item_path = item_map[item_map_key]
+
+            item_paths = item_path.split('.')
+            item_key = item_paths[0]
+            if isinstance(value, list):
+                # If the json value is a List.
+                if not metadata.get(item_key):
+                    # If Metadata does not yet have a definition,
+                    # create a container array.
+                    metadata[item_key] = []
+                for i, v in enumerate(value):
+                    # If the json value is a List, the element is a dict.
+                    # If there is no dict container for the element,
+                    # a container is created.
+                    if i >= len(metadata[item_key]):
+                        metadata[item_key].append({})
+                    self._apply_child_metadata(metadata[item_key][i], v,
+                                               json_keys[1:], item_paths[1:])
+            else:
+                # If the json value is not a List.
+                if not metadata.get(item_key):
+                    # If Metadata does not yet have a definition,
+                    # create a dict that will serve as a container.
+                    metadata[item_key] = {}
+                self._apply_child_metadata(
+                            metadata[item_key],
+                            self.json['record']['metadata'],
+                            json_keys, item_paths[1:])
+
+    def _apply_child_metadata(self, child_metadata, json_data, json_keys,
+                              subitem_keys):
+        """
+            This process is part of “_create_metadata” and is not
+            intended for any other use.
+        """
+        json_key = json_keys[0]
+        value = json_data.get(json_key)
+        if not value:
+            # Perform processing only if there are values
+            # to be set in the json file.
+            return
+        elif isinstance(value, dict):
+            if len(subitem_keys) == 1:
+                # If the subitem code is fixed, the item
+                # to be retrieved is fixed.
+                if value.get(json_keys[1]):
+                    child_metadata[subitem_keys[0]] = str(value[json_keys[1]])
+            else:
+                if not child_metadata.get(subitem_keys[0]):
+                    # If Metadata does not yet have a definition,
+                    # create a dict that will serve as a container.
+                    child_metadata[subitem_keys[0]] = {}
+                self._apply_child_metadata(
+                    child_metadata[subitem_keys[0]],
+                    value, json_keys[1:], subitem_keys[1:])
+        else:
+            if len(subitem_keys) == 1:
+                # If the subitem code is fixed, the item
+                #  to be retrieved is fixed.
+                child_metadata[subitem_keys[0]] = str(value)
+            else:
+                if not child_metadata.get(subitem_keys[0]):
+                    # If Metadata does not yet have a definition,
+                    # create a dict that will serve as a container.
+                    child_metadata[subitem_keys[0]] = {}
+                if child_metadata[subitem_keys[0]].get(subitem_keys[1:][0]):
+                    # The case where multiple json values are set for
+                    # one item of ItemType.
+                    child_metadata[subitem_keys[0]] = [
+                        child_metadata[subitem_keys[0]]]
+                    child_metadata[subitem_keys[0]].append({})
+                    self._apply_child_metadata(
+                        child_metadata[subitem_keys[0]][-1],
+                        json_data, json_keys, subitem_keys[1:])
+                else:
+                    self._apply_child_metadata(
+                        child_metadata[subitem_keys[0]],
+                        json_data, json_keys, subitem_keys[1:])
+
+
+class BIOSAMPLEMapper(JsonMapper):
+    """
+       Mapper for BioSample. Please refer to JsonMapper
+       for details on how to use it.
+    """
+    def __init__(self, json):
+        """Init."""
+        super().__init__(json, 'Biosample')
+
+    def map(self):
+        if self.is_deleted():
+            return {}
+
+        res = {'$schema': self.itemtype.id,
+               'pubdate': str(self.datestamp())}
+
+        item_map = self._create_item_map()
+        json_map = {
+            'identifier.入力内容': 'identifier',
+            'type.入力内容': 'type',
+            'title.Title': 'title',
+            'sameAs.関連名称.関連名称': ['sameAs.identifier', 'sameAs.type'],
+            'sameAs.関連識別子.関連識別子': 'sameAs.url',
+            'organism.Organism Identifier': 'organism.identifier',
+            'organism.Organism Name': 'organism.name',
+            'attributes.Attribute Name': 'attribute.attribute_name',
+            'attributes.Attribute Display Name': 'attribute.display_name',
+            'attributes.Attribute Harmonized Name':
+                'attribute.harmonized_name',
+            'attributes.Attribute Content': 'attribute.content',
+            'description.入力内容': 'description',
+            'Model Name.入力内容': 'model.name',
+            'package.Package Display Name': 'Package.display_name',
+            'package.Package Name': 'Package.name',
+            'dbXrefs.関連名称.関連名称': ['dbXrefs.identifier', 'dbXrefs.type'],
+            'dbXrefs.関連識別子.関連識別子': 'dbXrefs.url',
+            'dbXrefsStatistics.Statistic Count': 'dbXrefsStatistics.count',
+            'dbXrefsStatistics.Statistic Type': 'dbXrefsStatistics.type',
+            'distribution.Distribution URL': 'distribution.contentUrl',
+            'distribution.Distribution Format': 'distribution.encodingFormat',
+            'distribution.Distribution Type': 'distribution.type',
+            'downloadUrl.Download Name': 'downloadUrl.name',
+            'downloadUrl.Download FTP URL': 'downloadUrl.ftpUrl',
+            'downloadUrl.Download Type': 'downloadUrl.type',
+            'downloadUrl.Download URL': 'downloadUrl.url',
+            'status.入力内容': 'status',
+            'visibility.入力内容': 'visibility',
+            'dateCreated.日付': 'dateCreated',
+            'dateModified.日付': 'dateModified',
+            'datePublished.日付': 'datePublished',
+            'isPartOf.入力内容': 'isPartOf',
+            'name.入力内容': 'name',
+            'url.識別子': 'url'
+        }
+        metadata = self._create_metadata(item_map, json_map)
+
+        """ resourcetype.Type Setting """
+        item_path = item_map['resourcetype.Type']
+        item_paths = item_path.split('.')
+        metadata[item_paths[0]] = {}
+        metadata[item_paths[0]][item_paths[1]] = 'dataset'
+        res = {**res, **metadata}
+
+        return res
+
+
+class BIOPROJECTMapper(JsonMapper):
+    """
+       Mapper for BioProject. Please refer to JsonMapper
+       for details on how to use it.
+    """
+    def __init__(self, json):
+        """Init."""
+        super().__init__(json, 'Bioproject')
+
+    def map(self):
+        if self.is_deleted():
+            return {}
+
+        res = {'$schema': self.itemtype.id,
+               'pubdate': str(self.datestamp())}
+
+        item_map = self._create_item_map()
+        json_map = {
+            'identifier.入力内容': 'identifier',
+            'type.入力内容': 'type',
+            'objectType.入力内容': 'objectType',
+            'organism.Organism Identifier': 'organism.identifier',
+            'organism.Organism Name': 'organism.name',
+            'title.Title': 'title',
+            'description.内容記述': 'description',
+            'publication.Publication Date': 'publication.date',
+            'publication.Publication Id': 'publication.id',
+            'publication.Publication Status': 'publication.status',
+            'publication.Publication Reference': 'publication.Reference',
+            'publication.Publication Db Type': 'publication.DbType',
+            'grant.Grant Id': 'grant.id',
+            'grant.Grant Title': 'grant.title',
+            'grant.Agency.Agency Abberiation': 'grant.agency.abbreviation',
+            'grant.Agency.Agency Name': 'grant.agency.name',
+            'externalLink.関連識別子.関連識別子': 'externalLink.URL',
+            'externalLink.関連名称.関連名称': 'externalLink.label',
+            'distribution.Distribution URL': 'distribution.contentUrl',
+            'distribution.Distribution Format': 'distribution.encodingFormat',
+            'distribution.Distribution Type': 'distribution.type',
+            'download.入力内容': 'download',
+            'status.入力内容': 'status',
+            'visibility.入力内容': 'visibility',
+            'dateCreated.日付': 'dateCreated',
+            'dateModified.日付': 'dateModified',
+            'datePublished.日付': 'datePublished',
+            'isPartOf.入力内容': 'isPartOf',
+            'name.入力内容': 'name',
+            'url.識別子': 'url',
+            'dbXrefs.関連名称.関連名称': ['dbXrefs.identifier', 'dbXrefs.type'],
+            'dbXrefs.関連識別子.関連識別子': 'dbXrefs.url'
+        }
+
+        metadata = self._create_metadata(item_map, json_map)
+
+        """ resourcetype.Type Setting """
+        item_path = item_map['resourcetype.Type']
+        item_paths = item_path.split('.')
+        metadata[item_paths[0]] = {}
+        metadata[item_paths[0]][item_paths[1]] = 'dataset'
+
+        res = {**res, **metadata}
+        return res

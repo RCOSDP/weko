@@ -52,7 +52,7 @@ from passlib.handlers.oracle import oracle10
 from weko_admin.models import AdminSettings
 from weko_admin.utils import UsageReport, get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
-from weko_records.api import FeedbackMailList, ItemTypes
+from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import replace_fqdn
 from weko_records.models import ItemReference
@@ -356,7 +356,6 @@ def delete_version(recid):
             )
         parent_deposit["relation_version_is_last"] = True
         parent_deposit.publish()
-        new_parent_record.update_feedback_mail()
         new_parent_record.commit()
         updated_item.publish(new_parent_record)
         weko_record = WekoRecord.get_record_by_pid(
@@ -382,7 +381,6 @@ def delete_version(recid):
             )
         draft_deposit["relation_version_is_last"] = True
         draft_deposit.publish()
-        new_draft_record.update_feedback_mail()
         new_draft_record.commit()
         updated_item.publish(new_draft_record)
         # update item link info of draft record
@@ -622,13 +620,11 @@ def get_pair_value(name_keys, lang_keys, datas):
                 yield name, lang
 
 
-def hide_item_metadata(record, settings=None, item_type_mapping=None,
-                       item_type_data=None):
+def hide_item_metadata(record, settings=None, item_type_data=None):
     """Hiding emails and hidden item metadata.
 
     :param record:
     :param settings:
-    :param item_type_mapping:
     :param item_type_data:
     :return:
     """
@@ -639,7 +635,7 @@ def hide_item_metadata(record, settings=None, item_type_mapping=None,
 
     if hide_meta_data_for_role(record):
         list_hidden = get_ignore_item(
-            record['item_type_id'], item_type_mapping, item_type_data
+            record['item_type_id'], item_type_data
         )
         record = hide_by_itemtype(record, list_hidden)
         
@@ -708,11 +704,12 @@ def hide_by_file(item_metadata):
     return item_metadata
 
 
-def hide_by_email(item_metadata, force_flag=False):
+def hide_by_email(item_metadata, force_flag=False, item_type=None):
     """Hiding emails.
 
     :param item_metadata:
     :param force_flag: force to hide
+    :param item_type: item type data
     :return:
     """
     from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
@@ -720,28 +717,36 @@ def hide_by_email(item_metadata, force_flag=False):
     subitem_keys = current_app.config['WEKO_RECORDS_UI_EMAIL_ITEM_KEYS']
 
     item_type_id = item_metadata.get('item_type_id')
-    meta_options, type_mapping = get_options_and_order_list(item_type_id)
-    hide_list = get_hide_list_by_schema_form(item_type_id)
 
-    # Hidden owners_ext.email
-    if item_metadata.get('_deposit') and \
-        item_metadata['_deposit'].get('owners_ext') and item_metadata['_deposit']['owners_ext'].get('email'):
-        if force_flag or not show_email_flag:
-            del item_metadata['_deposit']['owners_ext']['email']
+    if item_type_id:
+        hide_list = []
+        if item_type:
+            meta_options = get_options_and_order_list(
+                item_type_id,
+                item_type_data=ItemTypes(item_type.schema, model=item_type),
+                mapping_flag=False)
+            hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+        else:
+            meta_options = get_options_and_order_list(item_type_id, mapping_flag=False)
 
-    for item in item_metadata:
-        _item = item_metadata[item]
-        prop_hidden = meta_options.get(item, {}).get('option', {}).get('hidden', False)
-        if isinstance(_item, dict) and \
-                _item.get('attribute_value_mlt'):
-            for _idx, _value in enumerate(_item['attribute_value_mlt']):
-                if _value is not None:
-                    for key in subitem_keys:
-                        for h in hide_list:
-                            if h.startswith(item) and h.endswith(key):
-                                prop_hidden = True
-                        if key in _value.keys() and (force_flag or not show_email_flag or prop_hidden):
-                            del _item['attribute_value_mlt'][_idx][key]
+        # Hidden owners_ext info
+        if item_metadata.get('_deposit') and \
+                item_metadata['_deposit'].get('owners_ext'):
+            del item_metadata['_deposit']['owners_ext']
+
+        for item in item_metadata:
+            _item = item_metadata[item]
+            prop_hidden = meta_options.get(item, {}).get('option', {}).get('hidden', False)
+            if isinstance(_item, dict) and \
+                    _item.get('attribute_value_mlt'):
+                for _idx, _value in enumerate(_item['attribute_value_mlt']):
+                    if _value is not None:
+                        for key in subitem_keys:
+                            for h in hide_list:
+                                if h.startswith(item) and h.endswith(key):
+                                    prop_hidden = True
+                            if key in _value.keys() and (force_flag or not show_email_flag or prop_hidden):
+                                del _item['attribute_value_mlt'][_idx][key]
 
     return item_metadata
 
@@ -790,6 +795,45 @@ def item_setting_show_email():
         is_display = False
     return is_display
 
+def is_show_email_of_creator(item_type_id, item_type=None):
+    """Check setting show/hide email for 'Detail' and 'PDF Cover Page' screen.
+
+    :param item_type_id: item type id of current record.
+    :param item_type: item type data
+    :return: True/False, True: show, False: hide.
+    """
+    def get_creator_id(item_type_id, item_type):
+        item_map = get_mapping(item_type_id, "jpcoar_mapping", item_type=item_type)
+        creator = 'creator.creatorName.@value'
+        creator_id = None
+        if creator in item_map:
+            creator_id = item_map[creator].split('.')[0]
+        return creator_id
+
+    def item_type_show_email(item_type_id, item_type):
+        # Get flag of creator's email hide from item type.
+        if not item_type:
+            item_type = ItemTypes.get_by_id(item_type_id)
+        creator_id = get_creator_id(item_type_id, item_type)
+        if not creator_id:
+            return None
+        schema_editor = item_type.render.get('schemaeditor', {})
+        schema = schema_editor.get('schema', {})
+        creator = schema.get(creator_id)
+        if not creator:
+            return None
+        properties = creator.get('properties', {})
+        creator_mails = properties.get('creatorMails', {})
+        items = creator_mails.get('items', {})
+        properties = items.get('properties', {})
+        creator_mail = properties.get('creatorMail', {})
+        is_hide = creator_mail.get('isHide', None)
+        return is_hide
+
+    is_hide = item_type_show_email(item_type_id, item_type)
+    is_display = item_setting_show_email()
+
+    return not is_hide and is_display
 
 def replace_license_free(record_metadata, is_change_label=True):
     """Change the item name 'licensefree' to 'license_note'.
@@ -823,10 +867,11 @@ def replace_license_free(record_metadata, is_change_label=True):
                         del attr[_license_free]
 
 
-def get_file_info_list(record):
+def get_file_info_list(record, item_type=None):
     """File Information of all file in record.
 
     :param record: all metadata of a record.
+    :param item_type: item type data
     :return: json files.
     """
     def get_file_size(p_file):
@@ -885,7 +930,7 @@ def get_file_info_list(record):
                 meta_data.get('attribute_type', '') == "file":
             file_metadata = meta_data.get("attribute_value_mlt", [])
             for f in file_metadata:
-                if check_file_download_permission(record, f, True)\
+                if check_file_download_permission(record, f, True, item_type=item_type)\
                         or is_open_restricted(f):
                     # Set default version_id.
                     f["version_id"] = f.get('version_id', '')
@@ -1274,7 +1319,7 @@ def create_onetime_download_url(
     :return:
     """
     content_file_download = get_restricted_access('content_file_download')
-    if isinstance(content_file_download, dict):
+    if content_file_download and isinstance(content_file_download, dict):
         expiration_date = content_file_download.get("expiration_date", 30)
         download_limit = content_file_download.get("download_limit", 10)
         extra_info = dict(
@@ -1338,13 +1383,14 @@ def get_terms():
     terms_result = [{'id': 'term_free', 'name': _('Free Input')}]
     terms_list = get_restricted_access('terms_and_conditions')
     current_lang = current_i18n.language
-    for term in terms_list:
-        terms_result.append(
-            {'id': term.get("key"), "name": term.get("content", {}).
-                get(current_lang, "en").get("title", ""),
-                "content": term.get("content", {}).
-                get(current_lang, "en").get("content", "")}
-        )
+    if terms_list and isinstance(terms_list, list):
+        for term in terms_list:
+            terms_result.append(
+                {'id': term.get("key"), "name": term.get("content", {}).
+                    get(current_lang, "en").get("title", ""),
+                    "content": term.get("content", {}).
+                    get(current_lang, "en").get("content", "")}
+            )
     return terms_result
 
 
@@ -1885,8 +1931,8 @@ def _create_secret_download_url(file_name: str, record_id: str, user_mail: str) 
     """
     secret_url_file_download:dict = get_restricted_access('secret_URL_file_download')
         
-    expiration_date = secret_url_file_download.get("secret_expiration_date")
-    download_limit = secret_url_file_download.get("secret_download_limit")
+    expiration_date = secret_url_file_download.get("secret_expiration_date", 30)
+    download_limit = secret_url_file_download.get("secret_download_limit", 10)
 
     file_secret = FileSecretDownload.create(**{
         "file_name": file_name,

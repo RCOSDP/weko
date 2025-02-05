@@ -44,6 +44,9 @@ from .config import INVENIO_RESYNC_INDEXES_MODE, \
 from .models import ResyncIndexes, ResyncLogs
 from .utils import get_list_records, process_item, process_sync
 
+RESYNC_SAVING_FORMAT_BIOPROJECT = 'BIOPROJECT-JSON-LD'
+RESYNC_SAVING_FORMAT_BIOSAMPLE = 'BIOSAMPLE-JSON-LD'
+
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
@@ -77,6 +80,7 @@ def run_sync_import(id):
     resync = db.session.query(ResyncIndexes).filter_by(id=id).first()
     counter = init_counter()
     resync_index = ResyncHandler.get_resync(id)
+
     resync_log = prepare_log(
         resync,
         id,
@@ -97,7 +101,6 @@ def run_sync_import(id):
         while True:
             current_app.logger.info('[{0}] [{1}]'.format(
                 0, 'Processing records'))
-            # for record_id in records:
             try:
                 hostname = urlparse(resync.base_url)
                 records = get_list_records(resync.id)
@@ -109,7 +112,14 @@ def run_sync_import(id):
                         current_app.logger.debug('{0} {1} {2}: {3}'.format(
                             __file__, 'run_sync_import()', 'resource', i))
                         if INVENIO_RESYNC_MODE:
-                            record = get_record_from_file(i)
+                            if (resync.saving_format ==
+                                    RESYNC_SAVING_FORMAT_BIOSAMPLE) or \
+                                (resync.saving_format ==
+                                    RESYNC_SAVING_FORMAT_BIOPROJECT):
+                                record = get_record_from_json_file(i)
+                            else:
+                                record = get_record_from_file(i)
+
                         else:
                             record = get_record(
                                 url='{}://{}/oai'.format(
@@ -189,7 +199,6 @@ def run_sync_import(id):
                     'task_id': resync_sync.request.id
                 },
             )
-
     return res
 
 
@@ -210,6 +219,44 @@ def get_record_from_file(rc):
     try:
         et = etree.parse(filename)
         metadata.extend(et.findall('.'))
+        records = [record]
+    except Exception as e:
+        current_app.logger.error(e)
+        records = []
+
+    return records
+
+
+def get_record_from_json_file(rc):
+    """ Creates and returns record information from a JSON-LD format file.
+
+        Create and return record information based on the following
+          information contained in <url> of ResourceList.
+            ['timestamp']: Time the resource was updated.
+            ['ln']['href']: Path where the resource file retrieved
+                            by ResouceSync is stored.
+       If creation of record information fails, empty information is returned.
+
+        Args:
+            rc: Information equivalent to <url> in ResourceList.
+
+        Returns:
+            record: record information created from a file in JSON-LD
+                    format. If creation fails, empty information is returned.
+    """
+    filename = ''
+    for l in rc['ln']:
+        if (l['rel'] == 'file'):
+            filename = l['href']
+    record = {'record': {'header': {}}}
+    try:
+        with open(filename, "r") as f:
+            json_data = json.load(f)
+            record['record']['metadata'] = json_data
+
+        record['record']['header']['identifier'] = json_data['identifier']
+        record['record']['header']['datestamp'] = (datetime.fromtimestamp(
+            rc['timestamp'], tz=pytz.utc)).strftime("%Y/%m/%dT%H:%M:%SZ")
         records = [record]
     except Exception as e:
         current_app.logger.error(e)
@@ -270,6 +317,7 @@ def resync_sync(id):
         task_id=resync_sync.request.id,
         log_type='sync'
     )
+    resync_log_id = resync_log.id
 
     try:
         pause = False
@@ -281,17 +329,15 @@ def resync_sync(id):
         signal.signal(signal.SIGTERM, sigterm_handler)
         current_app.logger.info('[{0}] [{1}]'.format(
             0, 'Processing records'))
-        try:
-            process_sync(id, counter)
-
-        except Exception as e:
-            current_app.logger.info(e)
+        process_sync(id, counter)
+        resync_log = ResyncLogs.query.filter_by(id=resync_log_id).first()
         resync_log.status = current_app.config.get(
             "INVENIO_RESYNC_LOGS_STATUS",
             INVENIO_RESYNC_LOGS_STATUS
         ).get('successful')
 
     except Exception as ex:
+        resync_log = ResyncLogs.query.filter_by(id=resync_log_id).first()
         resync_log.status = current_app.config.get(
             "INVENIO_RESYNC_LOGS_STATUS",
             INVENIO_RESYNC_LOGS_STATUS
@@ -300,6 +346,7 @@ def resync_sync(id):
         resync_log.errmsg = str(ex)[:255]
     finally:
         try:
+            resync = ResyncIndexes.query.filter_by(id=id).first()
             res = finish(
                 resync,
                 resync_log,

@@ -27,17 +27,20 @@ from sys import path
 from urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunsplit
 
 import dateutil
+import pytz
 from flask import current_app, jsonify
 from frozendict import frozendict
 from invenio_db import db
-from invenio_oaiharvester.harvester import DCMapper, DDIMapper, JPCOARMapper
+from invenio_oaiharvester.harvester import DCMapper, DDIMapper, JPCOARMapper, \
+                    BIOSAMPLEMapper, BIOPROJECTMapper
 from invenio_oaiharvester.tasks import event_counter, map_indexes
 from invenio_oaiharvester.utils import ItemEvents
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from lxml import etree
 from resync.client import Client
-from resync.client_utils import init_logging, url_or_file_open
+from resync.client_utils import init_logging
+from resync.url_or_file_open import url_or_file_open
 from resync.mapper import MapperError
 from resync.resource_list_builder import ResourceListBuilder
 from resync.sitemap import Sitemap
@@ -46,6 +49,9 @@ from weko_records_ui.utils import soft_delete
 
 from .config import INVENIO_RESYNC_ENABLE_ITEM_VERSIONING, \
     INVENIO_RESYNC_INDEXES_MODE, INVENIO_RESYNC_MODE
+
+RESYNC_SAVING_FORMAT_BIOPROJECT = 'BIOPROJECT-JSON-LD'
+RESYNC_SAVING_FORMAT_BIOSAMPLE = 'BIOSAMPLE-JSON-LD'
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -63,6 +69,92 @@ def read_capability(url):
     return capability
 
 
+def get_resync_list(base_url, target):
+    """ Get the URL of the sync target.
+
+        Get the value of “capability” from “base_url” and get the required
+        Sync target according to the value.
+
+        Args:
+            base_url: Where to get Sync processing
+            target: Either resoucelist / changelist.
+
+        Returns:
+            List of URLs of the actual resource to be retrieved
+    """
+    result = []
+    capability = read_capability(base_url)
+    if capability == 'description':
+        """ When “capability” is “description" """
+
+        """  Recursively reads the “capabilitylist” URL listed
+          in the “base_url” resource """
+        for url in read_url_list(base_url, 'capabilitylist'):
+            result = result + get_resync_list(url, target)
+        """ Otherwise, URLs listed in the “base_url” resource are used. """
+        result = result + read_url_list(base_url, target)
+
+    elif capability == 'capabilitylist':
+        """ If “capability” is “capabilitylist”, read recursively """
+        result = result + read_url_list(base_url, target)
+
+    elif capability == target and target == 'changelist':
+        """ When “capability” is “changelist" """
+        s = Sitemap()
+        try:
+            document = s.parse_xml(url_or_file_open(base_url))
+            if s.parsed_index:
+                """ If “base_url” is “changelist-INDEX”,
+                the “changelist” URL listed in the “base_url” resource
+                is the target of acquisition. """
+                for resource in document.resources:
+                    result.append(resource.uri)
+            else:
+                """ If “base_url” is “changelist”, it is the target
+                  of acquisition. """
+                result.append(base_url)
+        except IOError as e:
+            raise e
+
+    elif capability == target:
+        """ If the “capability” is “resoucelist”, it is an
+          acquisition target. """
+        result.append(base_url)
+
+    if not result:
+        raise ValueError('Bad URL')
+
+    return result
+
+
+def read_url_list(url, target):
+    """ Returns a list of URLs to be retrieved for ResouceSync defined
+      within the specified URL.
+
+        Args:
+            url: Where to get Sync processing
+            target: Either resoucelist / changelist.
+
+        Returns:
+            List of URLs of the actual resource to be retrieved
+    """
+    s = Sitemap()
+    result = []
+    try:
+        document = s.parse_xml(url_or_file_open(url))
+        for resource in document.resources:
+            child = s.parse_xml(url_or_file_open(resource.uri))
+            if 'capability' in child.md and child.md['capability'] == target:
+                if target == 'changelist' and s.parsed_index:
+                    for child_resource in child.resources:
+                        result.append(child_resource.uri)
+                else:
+                    result.append(resource.uri)
+    except IOError as e:
+        raise e
+    return result
+
+
 def sync_baseline(_map, base_url, counter, dryrun=False,
                   from_date=None, to_date=None):
     """Run resync baseline."""
@@ -71,31 +163,31 @@ def sync_baseline(_map, base_url, counter, dryrun=False,
     # ignore fail to continue running, log later
     client.ignore_failures = True
     init_logging(verbose=True)
+    client.dryrun = dryrun
     try:
-        if from_date:
-            base_url = set_query_parameter(base_url, 'from_date', from_date)
-        if to_date:
-            base_url = set_query_parameter(base_url, 'to_date', to_date)
-        # set sitemap_name to specify the only url to sync
-        # set mappings to specify the url will
-        # be used to validate subitem in resync library
-        client.sitemap_name = base_url
-        client.dryrun = dryrun
-        client.set_mappings(_map)
-        result = client.baseline_or_audit()
-        current_app.logger.debug('{0} {1} {2}: {3}'.format(
-            __file__, 'sync_baseline()', 'result', result))
-        update_counter(counter, result)
+        db.session.close()
+
+        for url in get_resync_list(base_url, 'resourcelist'):
+
+            # set sitemap_name to specify the only url to sync
+            # set mappings to specify the url will
+            # be used to validate subitem in resync library
+            client.sitemap_name = url
+
+            _map[0] = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(url))
+
+            client.set_mappings(_map)
+            result = client.baseline_or_audit()
+
+            current_app.logger.debug('{0} {1} {2}: {3}'.format(
+                __file__, 'sync_baseline()', 'result', result))
+            update_counter(counter, result)
+
         return True
-    except MapperError:
-        # if mapper error then remove one element in url and retry
-        current_app.logger.info('MapperError')
-        paths = _map[0].rsplit('/', 1)
-        _map[0] = paths[0]
-        return False
     except Exception as e:
         current_app.logger.error('Error when Sync :' + str(e))
-        return False
+        current_app.logger.error(traceback.format_exc())
+        raise e
 
 
 def sync_audit(_map, counter):
@@ -140,65 +232,36 @@ def sync_incremental(_map, counter, base_url, from_date, to_date):
     from .resync import ResourceSyncClient
     client = ResourceSyncClient()
     client.ignore_failures = True
+
     try:
-        single_sync_incremental(_map, counter, base_url, from_date, to_date)
+        db.session.close()
+
+        for url in get_resync_list(base_url, 'changelist'):
+
+            _map[0] = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(url))
+
+            single_sync_incremental(_map, counter, url, from_date, to_date)
+
         return True
-    except MapperError as e:
-        current_app.logger.info(e)
-        paths = _map[0].rsplit('/', 1)
-        _map[0] = paths[0]
     except Exception as e:
-        # maybe url contain a list of changelist, instead of changelist
-        current_app.logger.info(e)
-        s = Sitemap()
-        try:
-            docs = s.parse_xml(url_or_file_open(base_url))
-        except IOError as ioerror:
-            raise ioerror
-        if docs:
-            for doc in docs:
-                # make sure sub url is a changelist/ changedump
-                capability = read_capability(doc.uri)
-                if capability is None:
-                    raise('Bad URL, not a changelist/changedump,'
-                          ' cannot sync incremental')
-                if capability != 'changelist' and capability != 'changedump':
-                    raise ('Bad URL, not a changelist/changedump,'
-                           ' cannot sync incremental')
-                single_sync_incremental(_map, counter,
-                                        doc.uri, from_date, to_date)
-            return True
+        current_app.logger.error('Error when Sync :' + str(e))
+        current_app.logger.error(traceback.format_exc())
         raise e
 
 
 def single_sync_incremental(_map, counter, url, from_date, to_date):
     """Run resync incremental for 1 changelist url only."""
     from .resync import ResourceSyncClient
-    if from_date:
-        url = set_query_parameter(url, 'from_date', from_date)
-    else:
-        from_date = get_from_date_from_url(url)
-    if to_date:
-        url = set_query_parameter(url, 'to_date', to_date)
+
     client = ResourceSyncClient()
     client.ignore_failures = True
-    parts = urlsplit(_map[0])
-    uri_host = urlunsplit([parts[0], parts[1], '', '', ''])
-    sync_result = False
-    while _map[0] != uri_host and not sync_result:
-        try:
-            client.set_mappings(_map)
-            result = client.incremental(
-                change_list_uri=url,
-                from_datetime=from_date
-            )
-            update_counter(counter, result)
-            sync_result = True
-        except MapperError as e:
-            # if error then remove one element in url and retry
-            current_app.logger.info('MapperError')
-            paths = _map[0].rsplit('/', 1)
-            _map[0] = paths[0]
+    client.set_mappings(_map)
+
+    result = client.incremental(
+        change_list_uri=url,
+        from_datetime=from_date
+    )
+    update_counter(counter, result)
 
 
 def set_query_parameter(url, param_name, param_value):
@@ -234,11 +297,16 @@ def process_item(record, resync, counter):
         __file__, 'start process_item()', record, counter))
     event_counter('processed_items', counter)
     event = ItemEvents.INIT
-    xml = etree.tostring(record, encoding='utf-8').decode()
-    # current_app.logger.debug('{0} {1} {2}: {3}'.format(
-    #     __file__, 'process_item()', 'xml', xml))
+    if resync.saving_format == RESYNC_SAVING_FORMAT_BIOSAMPLE:
+        mapper = BIOSAMPLEMapper(record)
 
-    mapper = JPCOARMapper(xml)
+    elif resync.saving_format == RESYNC_SAVING_FORMAT_BIOPROJECT:
+        mapper = BIOPROJECTMapper(record)
+    else:
+        xml = etree.tostring(record, encoding='utf-8').decode()
+        # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        #     __file__, 'process_item()', 'xml', xml))
+        mapper = JPCOARMapper(xml)
 
     current_app.logger.debug('{0} {1} {2}: {3}'.format(
         __file__, 'process_item()', 'mapper.identifier()', mapper.identifier()))
@@ -371,19 +439,16 @@ def process_sync(resync_id, counter):
         ).get('baseline'):
             if not capability:
                 raise ValueError('Bad URL')
-            if capability != 'resourcelist' and capability != 'resourcedump':
-                raise ValueError('Bad URL')
-            result = False
-            while _map[0] != uri_host and not result:
-                result = sync_baseline(_map=_map,
-                                       base_url=base_url,
-                                       counter=counter,
-                                       dryrun=False,
-                                       from_date=from_date,
-                                       to_date=to_date)
+            result = sync_baseline(_map=_map,
+                                   base_url=base_url,
+                                   counter=counter,
+                                   dryrun=False,
+                                   from_date=from_date,
+                                   to_date=to_date)
             tmp = get_list_records(resync_id)
             tmp.extend(counter.get('list'))
             new_result = list(map(json.loads, set(map(json.dumps, tmp))))
+            resync_index = ResyncHandler.get_resync(resync_id)
             resync_index.update({
                 'result': json.dumps(new_result)
             })
@@ -416,27 +481,31 @@ def process_sync(resync_id, counter):
             'INVENIO_RESYNC_INDEXES_MODE',
             INVENIO_RESYNC_INDEXES_MODE
         ).get('incremental'):
+
+            date_time_str = None
+            if from_date:
+                date_time_str = from_date.strftime('%Y-%m-%d') + 'T' + current_app.config['INVENIO_RESOURCESYNCCLIENT_DEFAULT_TIME']
+                date_time = dt.strptime(date_time_str, '%Y-%m-%dT%H:%M:%S')
+                tz = pytz.timezone(current_app.config['BABEL_DEFAULT_TIMEZONE'])
+                """ from_date = date_time.astimezone(tz).strftime('%Y-%m-%dT%H:%M:%S%z')"""
+                """ date_time_str = str(date_time.astimezone(tz))"""
+                date_time_str = date_time.astimezone(tz).isoformat()
+
             if not capability:
-                raise (
-                    'Bad URL, not a changelist/changedump,'
-                    ' cannot sync incremental')
-            if capability != 'changelist' and capability != 'changedump':
-                raise (
-                    'Bad URL, not a changelist/changedump,'
-                    ' cannot sync incremental')
-            result = False
-            while _map[0] != uri_host and not result:
-                result = sync_incremental(_map, counter,
-                                          base_url, from_date, to_date)
-            new_result = list(
-                set(get_list_records(resync_id) + counter.get('list')))
+                raise ValueError('Bad URL')
+            result = sync_incremental(_map, counter,
+                                      base_url, date_time_str, to_date)
+            tmp = get_list_records(resync_id)
+            tmp.extend(counter.get('list'))
+            new_result = list(map(json.loads, set(map(json.dumps, tmp))))
+            resync_index = ResyncHandler.get_resync(resync_id)
             resync_index.update({
                 'result': json.dumps(new_result)
             })
             return jsonify({'result': result})
     except Exception as e:
         current_app.logger.error(traceback.format_exc())
-        return jsonify({'status': 'error', 'message': str(e)})
+        raise e
 
 
 def update_counter(counter, result):
@@ -461,22 +530,6 @@ def update_counter(counter, result):
             list_resources.append(rc)
     #counter.update({'list': list_item})
     counter.update({'list': list_resources})
-
-
-def get_from_date_from_url(url):
-    """Get smallest timestamp from url and parse to string."""
-    s = Sitemap()
-    try:
-        document = s.parse_xml(url_or_file_open(url))
-    except IOError as e:
-        raise e
-    date_list = []
-    for item in document.resources:
-        if item.timestamp:
-            date_list.append(item.timestamp)
-    if len(date_list) > 0:
-        from_date = dt.fromtimestamp(min(date_list))
-        return from_date.strftime("%Y-%m-%d")
 
 
 def gen_resync_pid_value(resync, pid):

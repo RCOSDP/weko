@@ -15,6 +15,7 @@ import os
 import shutil
 import tempfile
 
+from invenio_access import InvenioAccess
 import pytest
 from flask import Flask
 from flask.cli import ScriptInfo
@@ -23,6 +24,8 @@ from flask_babelex import Babel
 from flask_celeryext import FlaskCeleryExt
 from flask_mail import Mail
 from flask_menu import Menu
+from invenio_access.models import ActionRoles, ActionUsers
+from invenio_accounts.models import Role
 from invenio_db import InvenioDB, db
 from invenio_i18n import InvenioI18N
 from simplekv.memory.redisstore import RedisStore
@@ -66,7 +69,7 @@ def _app_factory(config=None):
         TESTING=True,
         WTF_CSRF_ENABLED=False,
         ACCOUNTS_JWT_ALOGORITHM = 'HS256',
-        ACCOUNTS_JWT_SECRET_KEY = None
+        ACCOUNTS_JWT_SECRET_KEY = 'None'
     )
 
     # Set key value session store to use Redis when running on TravisCI.
@@ -117,6 +120,7 @@ def app(request):
     """Flask application fixture with Invenio Accounts."""
     app = _app_factory()
     app.config.update(ACCOUNTS_USERINFO_HEADERS=True)
+    InvenioAccess(app)
     InvenioAccounts(app)
 
     from invenio_accounts.views.settings import blueprint
@@ -204,10 +208,36 @@ def users(app):
         user2_email = user2.email
         user2_id = user2.id
         user2_pw = user2.password_plaintext
+        user3 = create_test_user(email='admin1@inveniosoftware.org',
+                                 password='tester3')
+        user3_email = user3.email
+        user3_id = user3.id
+        user3_pw = user3.password_plaintext
+
+        ds = app.extensions["invenio-accounts"].datastore
+        role_count = Role.query.filter_by(name="System Administrator").count()
+        if role_count != 1:
+            sysadmin_role = ds.create_role(name="System Administrator")
+        else:
+            sysadmin_role = Role.query.filter_by(name="System Administrator").first()
+
+        # Assign access authorization
+        with db.session.begin_nested():
+            action_users = [
+                ActionUsers(action="superuser-access", user=user3),
+            ]
+            db.session.add_all(action_users)
+            action_roles = [
+                ActionRoles(action="superuser-access", role=sysadmin_role)
+            ]
+            db.session.add_all(action_roles)
+            ds.add_role_to_user(user3, sysadmin_role)
 
     return [
         {'email': user1_email, 'id': user1_id,
          'password': user1_pw, 'obj': user1},
         {'email': user2_email, 'id': user2_id,
          'password': user2_pw, 'obj': user2},
+        {'email': user3_email, 'id': user3_id,
+         'password': user3_pw, 'obj': user3},
     ]

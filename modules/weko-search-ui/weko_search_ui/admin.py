@@ -50,7 +50,6 @@ from weko_index_tree.utils import (
 )
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkFlow
-from weko_workflow.utils import delete_cache_data, get_cache_data, update_cache_data
 
 from weko_search_ui.api import get_search_detail_keyword
 
@@ -73,7 +72,6 @@ from .tasks import (
 )
 from .utils import (
     cancel_export_all,
-    check_import_items,
     check_sub_item_is_system,
     create_flow_define,
     delete_records,
@@ -209,27 +207,33 @@ class ItemManagementCustomSort(BaseView):
     def save_sort(self):
         """Save custom sort."""
         try:
-            data = request.get_json()
-            index_id = data.get("q_id")
-            sort_data = data.get("sort")
+            with db.session.begin_nested():
+                data = request.get_json()
+                index_id = data.get("q_id")
+                sort_data = data.get("sort")
 
-            # save data to DB
-            item_sort = {}
-            for sort in sort_data:
-                sd = sort.get("custom_sort", {}).get(index_id)
-                if sd:
-                    item_sort[sort.get("id")] = sd
+                # save data to DB
+                item_sort = {}
+                for sort in sort_data:
+                    sd = sort.get("custom_sort", {}).get(index_id)
+                    if sd:
+                        item_sort[sort.get("id")] = sd
 
-            Indexes.set_item_sort_custom(index_id, item_sort)
+                result = Indexes.set_item_sort_custom(index_id, item_sort)
 
             # update es
             # fp = Indexes.get_self_path(index_id)
             # Indexes.update_item_sort_custom_es(fp.path, sort_data)
 
-            jfy = {"status": 200, "message": "Data is successfully updated."}
+            if result:
+                jfy = {"status": 200, "message": "Data is successfully updated."}
+                db.session.commit()
+            else:
+                jfy = {"status": 405, "message": "Data update failed."}
         except Exception as ex:
             jfy = {"status": 405, "message": "Error."}
             current_app.logger.error(ex)
+            db.session.rollback()
         return make_response(jsonify(jfy), jfy["status"])
 
 
@@ -452,7 +456,6 @@ class ItemImportView(BaseView):
         list_record = [
             item for item in data.get("list_record", []) if not item.get("errors")
         ]
-        import_start_time = ""
         if list_record:
             group_tasks = []
             for item in list_record:
@@ -475,13 +478,10 @@ class ItemImportView(BaseView):
                         "item_id": list_record[idx].get("id"),
                     }
                 )
-            # save start time of import progress into cache
-            import_start_time = datetime.now().strftime("%Y-%m-%dT%H:%M:%S%z")
-            update_cache_data("import_start_time", import_start_time, 0)
 
         response_object = {
             "status": "success",
-            "data": {"tasks": tasks, "import_start_time": import_start_time},
+            "data": {"tasks": tasks},
         }
         return jsonify(response_object)
 
@@ -714,18 +714,16 @@ class ItemImportView(BaseView):
     @expose("/check_import_is_available", methods=["GET"])
     def check_import_available(self):
         check = is_import_running()
-        if not check:
-            delete_cache_data("import_start_time")
-            return jsonify({"is_available": True})
-        else:
+        if check:
             return jsonify(
                 {
                     "is_available": False,
-                    "start_time": get_cache_data("import_start_time"),
                     "error_id": check,
                 }
             )
-
+            
+        else:
+            return jsonify({"is_available": True})
 
 
 class ItemBulkExport(BaseView):

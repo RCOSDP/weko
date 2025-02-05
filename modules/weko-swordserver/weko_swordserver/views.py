@@ -14,16 +14,23 @@ import shutil
 
 import sword3common
 from flask import Blueprint, current_app, jsonify, request, url_for
+from flask_login import current_user
 from invenio_deposit.scopes import write_scope
+from invenio_oauth2server import require_api_auth
 from invenio_oauth2server.ext import verify_oauth_token_and_set_current_user
 from invenio_oauth2server.provider import oauth2
 from sword3common import ServiceDocument, StatusDocument, constants
 from sword3common.lib.seamless import SeamlessException
 from weko_admin.api import TempDirInfo
 from weko_records_ui.utils import get_record_permalink, soft_delete
-from weko_search_ui.utils import check_import_items, import_items_to_system
+from weko_search_ui.utils import import_items_to_system
+from weko_swordserver.registration import check_import_items, create_activity_from_jpcoar
+from weko_workflow.scopes import activity_scope
 from werkzeug.http import parse_options_header
 from invenio_db import db
+
+from invenio_oaiserver.api import OaiIdentify
+from weko_workflow.utils import get_site_info_name
 
 from .decorators import *
 from .errors import *
@@ -84,12 +91,19 @@ def get_service_document():
     """
     Set raw data to ServiceDocument
     """
+    repositoryName, site_name_ja = get_site_info_name()
+    if repositoryName is None or len(repositoryName) == 0:
+        identify = OaiIdentify.get_all()
+        repositoryName = current_app.config['THEME_SITENAME']
+        if identify is not None:
+            repositoryName = identify.repositoryName
+
     raw_data = {
         "@context": constants.JSON_LD_CONTEXT,
         "@type": constants.DocumentType.ServiceDocument,
         "@id": request.url,
         "root": request.url,
-        "dc:title": current_app.config['THEME_SITENAME'],
+        "dc:title": repositoryName,
         "version": current_app.config['WEKO_SWORDSERVER_SWORD_VERSION'],
         "accept": current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT'],
         "digest": current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_DIGEST'],
@@ -117,7 +131,9 @@ def get_service_document():
 
 
 @blueprint.route("/service-document", methods=['POST'])
-@oauth2.require_oauth(write_scope.id)
+@require_api_auth()
+@require_oauth_scopes(write_scope.id)
+@require_oauth_scopes(activity_scope.id)
 @check_on_behalf_of()
 @check_package_contents()
 def post_service_document():
@@ -163,7 +179,7 @@ def post_service_document():
         * If the server does not accept packages in the format identified in the Packaging header, MUST respond with a 415 (PackagingFormatNotAcceptable)
         * If the Packaging header does not match the format found in the body content, SHOULD return 415 (FormatHeaderMismatch). Note that the server may not be able to inspect the package during the request-response, so MAY NOT return this response.
     """
-    
+
     """
     Check content-disposition
         Request format:
@@ -184,7 +200,7 @@ def post_service_document():
     if file is None:
         raise WekoSwordserverException("Not found {0} in request body.".format(filename), ErrorType.BadRequest)
 
-    check_result = check_import_items(file, False)
+    check_result, register_format = check_import_items(file, False)
     item = check_result.get('list_record')[0] if check_result.get('list_record') else None
     if check_result.get('error') or not item or item.get('errors'):
         errorType = None
@@ -192,7 +208,7 @@ def post_service_document():
         if check_result.get('error'):
             errorType = ErrorType.ServerError
             check_result_msg = check_result.get('error')
-        elif item.get('errors'):
+        elif item and item.get('errors'):
             errorType = ErrorType.ContentMalformed
             check_result_msg = ', '.join(item.get('errors'))
         else:
@@ -200,25 +216,48 @@ def post_service_document():
             check_result_msg = 'item_missing'
         raise WekoSwordserverException('Error in check_import_items: {0}'.format(check_result_msg), errorType)
     if item.get('status') != 'new':
-        raise WekoSwordserverException('This item is already registered: {0]'.format(item.get('item_title')), ErrorType.BadRequest)
+        raise WekoSwordserverException('This item is already registered: {0}'.format(item.get('item_title')), ErrorType.BadRequest)
 
     data_path = check_result.get("data_path","")
     expire = datetime.now() + timedelta(days=1)
     TempDirInfo().set(data_path, {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")})
-    item["root_path"] = data_path+"/data"
-    
+
     # import item
-    import_result = import_items_to_system(item, None)
-    if not import_result.get('success'):
-        raise WekoSwordserverException('Error in import_items_to_system: {0}'.format(item.get('error_id')), ErrorType.ServerError)
-    
-    shutil.rmtree(data_path)
-    TempDirInfo().delete(data_path)
-    
-    recid = import_result.get('recid')
+    owner = -1
+    if current_user.is_authenticated:
+        owner = current_user.id
+    request_info = {
+            "remote_addr": request.remote_addr,
+            "referrer": request.referrer,
+            "hostname": request.host,
+            "user_id": owner,
+            "action": "IMPORT"
+    }
+    response = {}
+    if register_format == 'Direct':
+        item["root_path"] = data_path+"/data"
+        import_result = import_items_to_system(item, request_info=request_info)
+        if not import_result.get('success'):
+            raise WekoSwordserverException('Error in import_items_to_system: {0}'.format(item.get('error_id')), ErrorType.ServerError)
+        recid = import_result.get('recid')
+        response = jsonify(_get_status_document(recid))
+    elif register_format == 'Workflow':
+        try:
+            activity, recid = create_activity_from_jpcoar(check_result, data_path)
+        except:
+            raise WekoSwordserverException('Error in create_activity_from_jpcoar', ErrorType.ServerError)
+        response = jsonify(_get_status_workflow_document(activity, recid))
+    else:
+        if os.path.exists(data_path):
+            shutil.rmtree(data_path)
+            TempDirInfo().delete(data_path)
+        raise WekoSwordserverException('Invalid register format has been set for admin setting', ErrorType.ServerError)
 
-    return jsonify(_get_status_document(recid))
+    if os.path.exists(data_path):
+        shutil.rmtree(data_path)
+        TempDirInfo().delete(data_path)
 
+    return response
 
 @blueprint.route("/deposit/<recid>", methods=['GET'])
 @oauth2.require_oauth()
@@ -332,6 +371,70 @@ def _get_status_document(recid):
                 "rel" : ["alternate"],
                 "contentType" : "text/html"
             })
+
+    statusDocument = StatusDocument(raw=raw_data)
+
+    return statusDocument.data
+
+def _get_status_workflow_document(activity, recid):
+    """
+    :param recid: Record Identifier.
+    :returns: A :class:`sword3common.StatusDocument` instance.
+    """
+
+    """
+    Set raw data to StatusDocument
+
+    The following fields are set by sword3common
+        # "@context"
+        # "@type"
+    """
+    if not activity:
+        raise WekoSwordserverException("Activity created, but not found.", ErrorType.NotFound)
+
+    # Get record uri
+    record_url = ''
+    if recid:
+        record_url = url_for('weko_swordserver.get_status_document', recid=recid, _external=True)
+
+    raw_data = {
+        "@id": record_url,
+        "@context": constants.JSON_LD_CONTEXT,
+        "@type": constants.DocumentType.ServiceDocument,
+        "actions" : {
+            "getMetadata" : False,      # Not implimented
+            "getFiles" : False,         # Not implimented
+            "appendMetadata" : False,   # Not implimented
+            "appendFiles" : False,      # Not implimented
+            "replaceMetadata" : False,  # Not implimented
+            "replaceFiles" : False,     # Not implimented
+            "deleteMetadata" : False,   # Not implimented
+            "deleteFiles" : False,      # Not implimented
+            "deleteObject" : True,
+        },
+        "fileSet" : {
+            # "@id" : "",
+            # "eTag" : ""
+        },
+        "metadata" : {
+            # "@id" : "",
+            # "eTag" : ""
+        },
+        "service" : url_for('weko_swordserver.get_service_document', _external=False),
+        "state" : [
+            {
+                "@id" : SwordState.inWorkflow,
+                "description" : ""
+            }
+        ],
+        "links" : [
+            {
+                "@id" : url_for('weko_workflow.display_activity', activity_id=activity.activity_id, _external=True),
+                "rel" : ["alternate"],
+                "contentType" : "text/html"
+            },
+        ]
+    }
 
     statusDocument = StatusDocument(raw=raw_data)
 

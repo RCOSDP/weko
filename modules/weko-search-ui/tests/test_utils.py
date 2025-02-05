@@ -4,6 +4,8 @@ import copy
 from io import StringIO
 import json
 import os
+import re
+import time
 import unittest
 from datetime import datetime
 import uuid
@@ -22,6 +24,7 @@ from tests.test_rest import DummySearchResult
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
 from weko_deposit.api import WekoDeposit, WekoIndexer
 from weko_records.api import ItemsMetadata, WekoRecord
+from weko_records.models import ItemType
 
 from weko_search_ui import WekoSearchUI
 from weko_search_ui.config import (
@@ -35,7 +38,8 @@ from weko_search_ui.config import (
 from weko_search_ui.utils import (
     DefaultOrderedDict,
     cancel_export_all,
-    check_import_items,
+    check_tsv_import_items,
+    check_xml_import_items,
     check_index_access_permissions,
     check_permission,
     check_sub_item_is_system,
@@ -49,6 +53,7 @@ from weko_search_ui.utils import (
     delete_exported,
     delete_records,
     export_all,
+    generate_metadata_from_jpcoar,
     get_change_identifier_mode_content,
     get_content_workflow,
     get_current_language,
@@ -57,7 +62,6 @@ from weko_search_ui.utils import (
     get_doi_link,
     get_doi_prefix,
     get_export_status,
-    get_feedback_mail_list,
     get_file_name,
     get_filenames_from_metadata,
     get_item_type,
@@ -108,6 +112,7 @@ from weko_search_ui.utils import (
     parse_to_json_form,
     prepare_doi_link,
     prepare_doi_setting,
+    read_jpcoar_xml_file,
     read_stats_file,
     register_item_doi,
     register_item_handle,
@@ -259,24 +264,6 @@ def test_get_journal_info(i18n_app, indices, client_request_args, mocker):
         mock_abort.assert_called_with(500)
 
 
-# def get_feedback_mail_list(): *** not yet done
-def test_get_feedback_mail_list(i18n_app, db_records2, es):
-    search_instance = '{"size": 1, "query": {"bool": {"filter": [{"bool": {"must": [{"match": {"publish_status": "0"}}, {"range": {"publish_date": {"lte": "now/d"}}}, {"terms": {"path": ["1031", "1029", "1025", "952", "953", "943", "940", "1017", "1015", "1011", "881", "893", "872", "869", "758", "753", "742", "530", "533", "502", "494", "710", "702", "691", "315", "351", "288", "281", "759", "754", "744", "531", "534", "503", "495", "711", "704", "692", "316", "352", "289", "282", "773", "771", "767", "538", "539", "519", "510", "756", "745", "733", "337", "377", "308", "299", "2063", "2061", "2057", "1984", "1985", "1975", "1972", "2049", "2047", "2043", "1913", "1925", "1904", "1901", "1790", "1785", "1774", "1562", "1565", "1534", "1526", "1742", "1734", "1723", "1347", "1383", "1320", "1313", "1791", "1786", "1776", "1563", "1566", "1535", "1527", "1743", "1736", "1724", "1348", "1384", "1321", "1314", "1805", "1803", "1799", "1570", "1571", "1551", "1542", "1788", "1777", "1765", "1369", "1409", "1340", "1331", "4127", "4125", "4121", "4048", "4049", "4039", "4036", "4113", "4111", "4107", "3977", "3989", "3968", "3965", "3854", "3849", "3838", "3626", "3629", "3598", "3590", "3806", "3798", "3787", "3411", "3447", "3384", "3377", "3855", "3850", "3840", "3627", "3630", "3599", "3591", "3807", "3800", "3788", "3412", "3448", "3385", "3378", "3869", "3867", "3863", "3634", "3635", "3615", "3606", "3852", "3841", "3829", "3433", "3473", "3404", "3395", "1631495207665", "1631495247023", "1631495289664", "1631495340640", "1631510190230", "1631510251689", "1631510324260", "1631510380602", "1631510415574", "1631511387362", "1631511432362", "1631511521954", "1631511525655", "1631511606115", "1631511735866", "1631511740808", "1631511841882", "1631511874428", "1631511843164", "1631511845163", "1631512253601", "1633380618401", "1638171727119", "1638171753803", "1634120530242", "1636010714174", "1636010749240", "1638512895916", "1638512971664"]}}, {"bool": {"must": [{"match": {"publish_status": "0"}}, {"match": {"relation_version_is_last": "true"}}]}}, {"bool": {"should": [{"nested": {"query": {"multi_match": {"query": "simple", "operator": "and", "fields": ["content.attachment.content"]}}, "path": "content"}}, {"query_string": {"query": "simple", "default_operator": "and", "fields": ["search_*", "search_*.ja"]}}]}}]}}], "must": [{"match_all": {}}]}}, "aggs": {"Data Language": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Data Language": {"terms": {"field": "language", "size": 1000}}}}, "Access": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Access": {"terms": {"field": "accessRights", "size": 1000}}}}, "Location": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Location": {"terms": {"field": "geoLocation.geoLocationPlace", "size": 1000}}}}, "Temporal": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Temporal": {"terms": {"field": "temporal", "size": 1000}}}}, "Topic": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Topic": {"terms": {"field": "subject.value", "size": 1000}}}}, "Distributor": {"filter": {"bool": {"must": [{"term": {"contributor.@attributes.contributorType": "Distributor"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Distributor": {"terms": {"field": "contributor.contributorName", "size": 1000}}}}, "Data Type": {"filter": {"bool": {"must": [{"term": {"description.descriptionType": "Other"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Data Type": {"terms": {"field": "description.value", "size": 1000}}}}}, "sort": [{"_id": {"order": "desc", "unmapped_type": "long"}}], "_source": {"excludes": ["content"]}}'
-    execute_result = {
-        "aggregations": {"doc_count": 1, "key": 2},
-        "feedback_mail_list": {},
-        "email_list": {},
-        "buckets": [],
-    }
-    # mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
-    # side_effect=mock_recordssearch
-    with patch(
-        "weko_search_ui.query.feedback_email_search_factory",
-        return_value=search_instance,
-    ):
-        assert get_feedback_mail_list() == {}
-
-
 # def check_permission():
 def test_check_permission(i18n_app, users):
     with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
@@ -337,13 +324,99 @@ def test_parse_to_json_form(i18n_app, record_with_metadata):
     assert parse_to_json_form(data)
 
 
-# def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
-def test_check_import_items(i18n_app):
+# def check_tsv_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_tsv_import_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_tsv_import_items(i18n_app):
     current_path = os.path.dirname(os.path.abspath(__file__))
     file_name = "sample_file.zip"
     file_path = os.path.join(current_path, "data", "sample_file", file_name)
 
-    assert check_import_items(file_path, True)
+    assert check_tsv_import_items(file_path, True)
+
+
+# def check_xml_import_items(file, item_type_id, is_gakuninrdm=False)
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_xml_import_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_xml_import_items(i18n_app, db_itemtype_jpcoar):
+    file_name = "sample_file_jpcoar_xml.zip"
+    file_path = os.path.join('tests', "data", "jpcoar", "v2", file_name)
+
+    item_type = db_itemtype_jpcoar["item_type_multiple"]
+
+    # Case01: Call with file path as argument
+    with i18n_app.test_request_context():
+        result = check_xml_import_items(file_path, item_type.id)
+        assert re.fullmatch(r'^/tmp/weko_import_\d{14}', result['data_path']) is not None
+        assert 'error' not in result
+        assert 'list_record' in result
+
+    # Case02: Call with if is_gakuninrdm = True
+    with i18n_app.test_request_context():
+        result = check_xml_import_items(file_path, item_type.id, is_gakuninrdm=True)
+        assert re.fullmatch(r'^/tmp/deposit_activity_\d{14}', result['data_path']) is not None
+        assert 'error' not in result
+        assert 'list_record' in result
+
+    # Case03: zip files is broken
+    with i18n_app.test_request_context():
+        broken_file_name = "sample_zip_broken.zip"
+        broken_file_path = os.path.join('tests', "data", "jpcoar", "v2", broken_file_name)
+        time.sleep(2)
+        result = check_xml_import_items(broken_file_path, item_type.id)
+        assert result["error"] == "The format of the specified file sample_zip_broken.zip does not support import." \
+            " Please specify one of the following formats: zip, tar, gztar, bztar, xztar."
+
+    # Case04: Xml files not included
+    with i18n_app.test_request_context():
+        zip_file_path = os.path.join('tests', "data", "helloworld.zip")
+        time.sleep(2)
+        result = check_xml_import_items(zip_file_path, item_type.id)
+        assert result["error"] ==  "The xml file was not found in the specified file helloworld.zip." \
+            " Check if the directory structure is correct."
+
+    with i18n_app.test_request_context():
+        failed_file_name = "no_jpcoar_xml_file.zip"
+        failed_file_path = os.path.join('tests', "data", "jpcoar", "v2", failed_file_name)
+        time.sleep(2)
+        print("Case04")
+        result = check_xml_import_items(failed_file_path, item_type.id)
+        assert result["error"] ==  "The xml file was not found in the specified file no_jpcoar_xml_file.zip." \
+            " Check if the directory structure is correct."
+
+
+    # Case05: UnicodeDecodeError occured
+    with i18n_app.test_request_context():
+        with patch("weko_search_ui.utils.handle_check_file_metadata", side_effect=lambda x,y: "foo".encode('utf-16').decode('utf-8')):
+            time.sleep(2)
+            result = check_xml_import_items(file_path, item_type.id)
+            assert result["error"] == "invalid start byte"
+
+    # Case06: Other exception occured (without args)
+    with i18n_app.test_request_context():
+        with patch("weko_search_ui.utils.handle_check_file_metadata", side_effect=Exception()):
+            time.sleep(2)
+            result = check_xml_import_items(file_path, item_type.id)
+            assert result["error"] == "Internal server error"
+
+    # Case07: Other exception occured (with args)
+    with i18n_app.test_request_context():
+        with patch("weko_search_ui.utils.handle_check_file_metadata", side_effect=Exception({"error_msg": "error_msg_sample"})):
+            time.sleep(2)
+            result = check_xml_import_items(file_path, item_type.id)
+            assert result["error"] == "error_msg_sample"
+
+    # Case08: item_type is not found
+    with i18n_app.test_request_context():
+        result = check_xml_import_items(file_path, 9999)
+        assert result["error"] == "The item type of the item to be imported is missing or has already been deleted."
+
+    # Case09: item_type has been already deleted
+    with i18n_app.test_request_context():
+        item_type = MagicMock(spec=ItemType)
+        item_type.is_deleted = True
+
+        with patch("weko_search_ui.utils.ItemTypes.get_by_id", return_value=item_type):
+            result = check_xml_import_items(file_path, 9999)
+            assert result["error"] == "The item type of the item to be imported is missing or has already been deleted."
 
 
 # def unpackage_import_file(data_path: str, file_name: str, file_format: str, force_new=False):
@@ -388,6 +461,35 @@ def test_unpackage_import_file(app, db,mocker, mocker_itemtype):
                 unpackage_import_file(path, "items.csv", "csv", True)
                 == result_force_new
             )
+
+
+# def generate_metadata_from_jpcoar(data_path: str, filenames: list, item_type_id: int, is_change_identifier=False)
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_generate_metadata_from_jpcoar -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_generate_metadata_from_jpcoar(app, db_itemtype_jpcoar):
+    item_type = db_itemtype_jpcoar['item_type_multiple']
+
+    with app.test_request_context():
+        # Case01: parse and mapping metadata success
+        result = generate_metadata_from_jpcoar('tests/data/jpcoar/v2', ['test_base.xml'], item_type.id)
+        for record in result:
+            assert '$schema' in record
+            assert 'metadata' in record
+            assert record['item_type_name'] == item_type.item_type_name.name
+            assert record['item_type_id'] == item_type.id
+            assert record['errors'] is None
+            assert record['is_change_identifier'] == False
+
+        # Case02: schema validation error happend
+        result = generate_metadata_from_jpcoar('tests/data/jpcoar/v2', ['test_base_failed.xml'], item_type.id)
+        for record in result:
+            assert len(record['errors']) > 0
+
+        # Case03: item type not found
+        with pytest.raises(Exception) as ex:
+            result = generate_metadata_from_jpcoar('tests/data/jpcoar/v2', ['test_base.xml'], item_type.id+1)
+        assert ex.value.args[0] == {
+            "error_msg": "The item type ID specified in the XML file does not exist."
+        }
 
 
 # def getEncode(filepath):
@@ -438,6 +540,52 @@ def test_read_stats_file(i18n_app, db_itemtype, users):
             assert read_stats_file(file_path_tsv, file_name_tsv, "tsv")
             assert read_stats_file(file_path_csv, file_name_csv, "csv")
             assert read_stats_file(file_path_tsv_2, file_name_tsv_2, "tsv")
+
+
+# def read_jpcoar_xml_file(file_path, item_type_info) -> dict:
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_read_jpcoar_xml_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_read_jpcoar_xml_file(i18n_app, db_itemtype, users):
+    xml_file_name = "test_base.xml"
+    xml_file_path = os.path.join('tests', "data", "jpcoar", "v2", xml_file_name)
+
+    item_type_info = {
+        "schema": "test",
+        "is_lastest": "test",
+        "name": "テストアイテムタイプ",
+        "item_type_id": "test",
+    }
+
+    # Case01: read JPCOAR xml correctly
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        result = read_jpcoar_xml_file(xml_file_path, item_type_info)
+        assert 'metadata' in result['data_list'][0]
+        metadata = result['data_list'][0].pop('metadata')
+        assert result == {
+            'error': False,
+            'error_code': 0,
+            'data_list': [
+                {
+                    "$schema": item_type_info['schema'],
+                    "item_type_name": item_type_info['name'],
+                    "item_type_id": item_type_info['item_type_id'],
+                }
+            ],
+            'item_type_schema': item_type_info['schema']
+        }
+
+    # Case02: UnicodeDecodeError occured
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        with patch("weko_search_ui.mapper.JPCOARV2Mapper.map", side_effect=lambda x: "foo".encode('utf-16').decode('utf-8')):
+            try:
+                result = read_jpcoar_xml_file(xml_file_path, item_type_info)
+                pytest.fail()
+            except UnicodeDecodeError as ex:
+                assert ex.reason == "The XML file could not be read. Make sure the file format is XML and that the file is UTF-8 encoded."
+
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        with patch("weko_search_ui.mapper.JPCOARV2Mapper.map", side_effect=Exception()):
+            with pytest.raises(Exception) as ex:
+                result = read_jpcoar_xml_file(xml_file_path, item_type_info)
 
 
 # def handle_convert_validate_msg_to_jp(message: str):
@@ -866,6 +1014,7 @@ def test_handle_check_and_prepare_index_tree2(i18n_app, record_with_metadata, in
 
 
 # def handle_check_and_prepare_feedback_mail(list_record):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_and_prepare_feedback_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_handle_check_and_prepare_feedback_mail(i18n_app, record_with_metadata):
     list_record = [record_with_metadata[0]]
 

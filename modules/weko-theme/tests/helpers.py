@@ -54,3 +54,7 @@ def create_record(record_data, item_data):
         item = ItemsMetadata.create(item_data, id_=rec_uuid)
     
     return depid, recid,parent,doi,record, item
+
+def get_json(response):
+    """Get JSON from response."""
+    return json.loads(response.get_data(as_text=True))

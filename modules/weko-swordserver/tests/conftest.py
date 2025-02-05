@@ -15,19 +15,23 @@ from __future__ import absolute_import, print_function
 
 import shutil
 import json
+import subprocess
 import tempfile
 import os
 from os.path import join, dirname
 from io import BytesIO
+import uuid
 from zipfile import ZipFile, ZIP_DEFLATED
 import datetime
 
+from invenio_theme import InvenioTheme
 import pytest
 from flask import Flask
 from flask_babelex import Babel
 from flask_mail import Mail
 from flask_menu import Menu
 from sqlalchemy_utils.functions import create_database, database_exists
+from werkzeug.local import LocalProxy
 
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers,ActionRoles
@@ -36,13 +40,16 @@ from invenio_accounts.models import User, Role
 from invenio_accounts.utils import jwt_create_token
 from invenio_accounts.testutils import create_test_user
 from invenio_admin import InvenioAdmin
+from invenio_assets import InvenioAssets
 from invenio_cache import InvenioCache
+from invenio_communities.ext import InvenioCommunities
 from invenio_communities.models import Community
+from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
 from invenio_deposit import InvenioDeposit
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_files_rest import InvenioFilesREST
-from invenio_files_rest.models import Location
+from invenio_files_rest.models import Bucket, Location
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_pidstore import InvenioPIDStore
 from invenio_i18n import InvenioI18N
@@ -50,21 +57,28 @@ from invenio_jsonschemas import InvenioJSONSchemas
 from invenio_oauth2server import InvenioOAuth2Server
 from invenio_oauth2server.models import Client, Token
 from invenio_records import InvenioRecords
+from invenio_records_ui import InvenioRecordsUI
 from invenio_search import InvenioSearch, current_search_client
 
 from weko_admin import WekoAdmin
-from weko_admin.models import Identifier,SessionLifetime
+from weko_admin.models import AdminSettings, Identifier,SessionLifetime
 from weko_authors import WekoAuthors
 from weko_deposit import WekoDeposit
+from weko_deposit.api import WekoIndexer
+from weko_index_tree.ext import WekoIndexTree
 from weko_index_tree.models import Index
+from weko_items_ui.ext import WekoItemsUI
 from weko_records.models import ItemTypeName, ItemType,ItemTypeMapping
+from weko_schema_ui.ext import WekoSchemaUI
 from weko_search_ui import WekoSearchUI
+from weko_theme.ext import WekoTheme
 from weko_workflow import WekoWorkflow
 
 from weko_swordserver import WekoSWORDServer
-from weko_swordserver.views import blueprint
+from weko_swordserver.views import blueprint as weko_swordserver_blueprint
 
 from tests.helpers import json_data, create_record
+from weko_workflow.models import Action, ActionStatus, FlowAction, FlowDefine, WorkFlow
 
 @pytest.yield_fixture()
 def instance_path():
@@ -79,6 +93,7 @@ def base_app(instance_path):
     app_ = Flask(
         "testapp",
         instance_path=instance_path,
+        static_folder=join(instance_path, "static")
     )
     app_.config.update(
         TESTING=True,
@@ -105,8 +120,17 @@ def base_app(instance_path):
         INDEXER_FILE_DOC_TYPE="content",
         INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format("test"),
         WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME = 'jpcoar_v1_mapping',
+        WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME='jpcoar_mapping',
         WEKO_SCHEMA_DDI_SCHEMA_NAME='ddi_mapping',
+        WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE = {'e-Rad':'e-Rad_Researcher'},
+        WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE={
+            'periodical':'journal',
+            'interview':'other',
+            'internal report':'other',
+            'report part':'other',
+        },
         THEME_SITEURL="https://localhost",
+        WEKO_ITEMS_UI_INDEX_PATH_SPLIT="///",
         WEKO_MIMETYPE_WHITELIST_FOR_ES = [
             'text/plain',
             'application/msword',
@@ -120,12 +144,13 @@ def base_app(instance_path):
     )
     Babel(app_)
     Mail(app_)
-    Menu(app_)
+    # Menu(app_)
     InvenioDB(app_)
     InvenioI18N(app_)
     InvenioAccess(app_)
     InvenioAccounts(app_)
     InvenioAdmin(app_)
+    InvenioAssets(app_)
     InvenioCache(app_)
     InvenioDeposit(app_)
     InvenioFilesREST(app_)
@@ -133,6 +158,7 @@ def base_app(instance_path):
     InvenioOAuth2Server(app_)
     InvenioRecords(app_)
     InvenioSearch(app_)
+    InvenioTheme(app_)
     InvenioPIDRelations(app_)
     InvenioPIDStore(app_)
     WekoSearchUI(app_)
@@ -140,10 +166,19 @@ def base_app(instance_path):
     WekoAdmin(app_)
     WekoAuthors(app_)
     WekoDeposit(app_)
-    
+    WekoIndexTree(app_)
+    WekoItemsUI(app_)
+    WekoSchemaUI(app_)
+    WekoTheme(app_)
+
+    # InvenioCommunities(app_)
+    app_.register_blueprint(invenio_communities_blueprint)
     WekoSWORDServer(app_)
-    app_.register_blueprint(blueprint)
-    
+    app_.register_blueprint(weko_swordserver_blueprint)
+
+    current_assets = LocalProxy(lambda: app_.extensions["invenio-assets"])
+    current_assets.collect.collect()
+
     yield app_
 
 @pytest.yield_fixture()
@@ -164,24 +199,37 @@ def esindex(app):
     )
     current_search_client.indices.delete(index="test-*")
     mapping_author = json_data("data/author-v1.0.0.json")
-    current_search_client.indices.create(
-        app.config["WEKO_AUTHORS_ES_INDEX_NAME"], body=mapping_author
-    )
-    current_search_client.indices.put_alias(
-        index=app.config["WEKO_AUTHORS_ES_INDEX_NAME"],name="test-weko-authors"
-    )
-    
+    try:
+        current_search_client.indices.create(
+            app.config["WEKO_AUTHORS_ES_INDEX_NAME"], body=mapping_author
+        )
+        current_search_client.indices.put_alias(
+            index=app.config["WEKO_AUTHORS_ES_INDEX_NAME"],name="test-weko-authors"
+        )
+    except:
+        current_search_client.indices.create("test-weko-author", body=mapping_author)
+        current_search_client.indices.put_alias(
+            index="test-weko-author", name="test-weko-authors"
+        )
+
     mapping_item = json_data("data/item-v1.0.0.json")
-    current_search_client.indices.create(
-        app.config["INDEXER_DEFAULT_INDEX"], body=mapping_item
-    )
-    current_search_client.indices.put_alias(
-        index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko"
-    )
-    
-    yield current_search_client
-    
-    current_search_client.indices.delete(index="test-*")
+    try:
+        current_search_client.indices.create(
+            app.config["INDEXER_DEFAULT_INDEX"], body=mapping_item
+        )
+        current_search_client.indices.put_alias(
+            index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko"
+        )
+    except:
+        current_search_client.indices.create("test-weko-item-v1.0.0", body=mapping_item)
+        current_search_client.indices.put_alias(
+            index="test-weko-item-v1.0.0", name="test-weko"
+        )
+
+    try:
+        yield current_search_client
+    finally:
+        current_search_client.indices.delete(index="test-*")
 
 
 @pytest.yield_fixture
@@ -213,10 +261,19 @@ def tokens(app,users,db):
                   is_personal=False,
                   is_internal=True,
                   _scopes="deposit:write")
+    import_token = Token(client=test_client,
+                  user_id=user,
+                  token_type="bearer",
+                  access_token=jwt_create_token(user_id=user),
+                  expires=datetime.datetime.now() + datetime.timedelta(hours=10),
+                  is_personal=False,
+                  is_internal=True,
+                  _scopes="deposit:write user:activity")
     db.session.add(test_client)
     db.session.add(test_token)
+    db.session.add(import_token)
     db.session.commit()
-    return {"token":test_token,"client":test_client}
+    return {"token":test_token, "import_token": import_token, "client":test_client}
 
 @pytest.fixture()
 def users(app, db):
@@ -452,6 +509,108 @@ def records(db,location):
     return result
 
 @pytest.fixture()
+def workflow(db, users, item_type):
+    action_datas = dict()
+    with open("tests/data/workflow_data/actions.json", "r") as f:
+        action_datas = json.load(f)
+    actions_db = list()
+    with db.session.begin_nested():
+        for data in action_datas:
+            actions_db.append(Action(**data))
+        db.session.add_all(actions_db)
+
+    actionstatus_datas = dict()
+    with open("tests/data/workflow_data/action_status.json", 'r') as f:
+        actionstatus_datas = json.load(f)
+    actionstatus_db = list()
+    with db.session.begin_nested():
+        for data in actionstatus_datas:
+            actionstatus_db.append(ActionStatus(**data))
+        db.session.add_all(actionstatus_db)
+
+    flow_id = uuid.uuid4()
+    sys_user = users[0]['obj']
+    flow_define = FlowDefine(id=1, flow_id=flow_id, flow_name="Registration Flow", flow_user=sys_user.id, flow_status="A")
+    flow_action1 = FlowAction(
+        status="N",
+        flow_id=flow_id,
+        action_id=1,
+        action_version="1.0.0",
+        action_order=1,
+        action_condition="",
+        action_status="A",
+        action_date=datetime.datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+        send_mail_setting={},
+    )
+    flow_action2 = FlowAction(
+        status="N",
+        flow_id=flow_id,
+        action_id=3,
+        action_version="1.0.0",
+        action_order=2,
+        action_condition="",
+        action_status="A",
+        action_date=datetime.datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+        send_mail_setting={},
+    )
+    flow_action3 = FlowAction(
+        status="N",
+        flow_id=flow_id,
+        action_id=5,
+        action_version="1.0.0",
+        action_order=3,
+        action_condition="",
+        action_status="A",
+        action_date=datetime.datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+        send_mail_setting={},
+    )
+    def_workflow = WorkFlow(
+        id=-1,
+        flows_id=flow_id,
+        flows_name="test workflow1",
+        itemtype_id=item_type["item_type"].id,
+        index_tree_id=None,
+        flow_id=flow_define.id,
+        is_deleted=False,
+        open_restricted=False,
+        location_id=None,
+        is_gakuninrdm=False,
+    )
+
+    with db.session.begin_nested():
+        db.session.add(flow_define)
+        db.session.add(flow_action1)
+        db.session.add(flow_action2)
+        db.session.add(flow_action3)
+        db.session.add(def_workflow)
+
+    return def_workflow
+
+
+@pytest.fixture()
+def admin_settings(db):
+    settings = list()
+    settings.append(AdminSettings(id=1,name='items_display_settings',settings={"items_display_email": False, "items_search_author": "name", "item_display_open_date": False}))
+    settings.append(AdminSettings(id=2,name='storage_check_settings',settings={"day": 0, "cycle": "weekly", "threshold_rate": 80}))
+    settings.append(AdminSettings(id=3,name='site_license_mail_settings',settings={"auto_send_flag": False}))
+    settings.append(AdminSettings(id=4,name='default_properties_settings',settings={"show_flag": True}))
+    settings.append(AdminSettings(id=5,name='item_export_settings',settings={"allow_item_exporting": True, "enable_contents_exporting": True}))
+    settings.append(AdminSettings(id=6,name="restricted_access",settings={"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": []}))
+    settings.append(AdminSettings(id=7,name="display_stats_settings",settings={"display_stats":False}))
+    settings.append(AdminSettings(id=8,name='convert_pdf_settings',settings={"path":"/tmp/file","pdf_ttl":1800}))
+    settings.append(AdminSettings(id=9,name="elastic_reindex_settings",settings={"has_errored": False}))
+    settings.append(AdminSettings(id=10,name="sword_api_setting",settings={"data_format": {"TSV": {"item_type": "15", "register_format": "Direct"}, "XML": {"workflow": "-1", "item_type": "15", "register_format": "Workflow"}}, "default_format": "TSV"}))
+    db.session.add_all(settings)
+    db.session.commit()
+    return settings
+
+
+@pytest.fixture()
+def bucket(app, db, location):
+    bucket = Bucket.create()
+    return bucket
+
+@pytest.fixture()
 def es_records(app, esindex, records):
     for recid, depid, record, item, parent, doi, deposit in records:
         esindex.index(
@@ -481,3 +640,19 @@ def make_zip():
         fp.seek(0)
         return fp
     return factory
+
+@pytest.fixture()
+def install_node_module(app):
+    current_path = os.getcwd()
+    os.chdir(app.instance_path+'/static')
+    assert subprocess.call('npm install bootstrap-sass@3.3.5 font-awesome@4.4.0 angular@1.4.9 angular-gettext angular-loading-bar@0.9.0 bootstrap-datepicker@1.7.1 almond@0.3.1 jquery@1.9.1 d3@3.5.17 invenio-search-js@1.3.1', shell=True) == 0
+    os.chdir(current_path)
+
+@pytest.yield_fixture()
+def indexer(app):
+    """Create a record indexer."""
+    InvenioRecordsUI(app)
+    WekoIndexer(app)
+    # before_record_index.connect(record_indexer_receiver, sender=app)
+    app.extensions['invenio-indexer'] = WekoIndexer()
+    yield WekoIndexer()

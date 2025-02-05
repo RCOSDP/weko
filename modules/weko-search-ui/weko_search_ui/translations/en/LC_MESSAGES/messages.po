@@ -137,6 +137,10 @@ msgstr ""
 msgid "Title is required item."
 msgstr ""
 
+#: weko_search_ui/utils.py:2496
+msgid "One of the following required values ​​has not been registered.<br/>{}<br/>"
+msgstr ""
+
 #: weko_search_ui/utils.py:1276
 msgid "{} is required item."
 msgstr ""
@@ -763,6 +767,18 @@ msgstr "Go to"
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:27
 msgid "search"
 msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:29
+msgid "facet slider required validation"
+msgstr "Set the value."
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:30
+msgid "facet slider value Validation"
+msgstr "Set the correct value."
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:31
+msgid "facet slider correlation validation"
+msgstr "The range from should be less than or equal to the range to."
 
 msgid "The following item(s) cannot be deleted."
 msgstr ""
