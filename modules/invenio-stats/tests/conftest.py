@@ -255,6 +255,7 @@ def base_app(instance_path, mock_gethostbyaddr):
         CACHE_REDIS_URL="redis://redis:6379/0",
         CACHE_REDIS_DB=0,
         CACHE_REDIS_HOST="redis",
+
         QUEUES_BROKER_URL="amqp://guest:guest@rabbitmq:5672//",
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite://'),
