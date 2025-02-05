@@ -100,6 +100,43 @@ def test_WekoRecordsResource(app, records_rest, db_rocrate_mapping):
         data = json.loads(res.get_data())
         assert data['rocrate']['@graph'][0]['name'][0] == 'test data'
 
+        with patch('weko_records_ui.rest.RequestMailList.get_mail_list_by_item_id', return_value=['']):
+            res = client.get('/v1/records/1')
+            assert res.status_code == 200
+            data = json.loads(res.get_data())
+            assert data['metadata']['hasRequestmailAddress'] == True
+
+        with patch('weko_records_ui.rest.RequestMailList.get_mail_list_by_item_id', return_value=[]):
+            res = client.get('/v1/records/1')
+            assert res.status_code == 200
+            data = json.loads(res.get_data())
+            assert data['metadata']['hasRequestmailAddress'] == False
+
+        with patch('weko_records_ui.rest.RequestMailList.get_mail_list_by_item_id', return_value=None):
+            res = client.get('/v1/records/1')
+            assert res.status_code == 200
+            data = json.loads(res.get_data())
+            assert data['metadata']['hasRequestmailAddress'] == False
+
+        with patch('weko_records_ui.rest.RequestMailList.get_mail_list_by_item_id', return_value=1):
+            res = client.get('/v1/records/1')
+            assert res.status_code == 200
+            data = json.loads(res.get_data())
+            assert data['metadata']['hasRequestmailAddress'] == False
+
+        with patch('weko_records_ui.config.WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE', False):
+            headers = {}
+            headers['Accept-Language'] = 'ja'
+            res = client.get('/v1/records/1', headers=headers)
+            assert res.status_code == 200
+            data = json.loads(res.get_data())
+            assert data.get("metadata").get("アイテムタイプ") is None
+
+        headers = {}
+        headers['Accept-Language'] = 'en'
+        res = client.get('/v1/records/1', headers=headers)
+        assert res.status_code == 200
+
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoRecordsResource_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_WekoRecordsResource_error(app, records_rest, db_rocrate_mapping):
@@ -143,6 +180,14 @@ def test_WekoRecordsResource_error(app, records_rest, db_rocrate_mapping):
             url = '/v1/records/1'
             res = client.get(url)
             assert res.status_code == 500
+
+        with patch('weko_records_ui.rest.WekoRecord.get_record') as mock_get_record:
+            mock_get_record.return_value = {'path': [''], 'item_type_id': -1}
+            with patch('weko_records_ui.rest.page_permission_factory') as mock_page_permission_factory:
+                mock_page_permission_factory.return_value.can = lambda : True
+                url = '/v1/records/1'
+                res = client.get(url)
+                assert res.status_code == 500
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoRecordsStats -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
