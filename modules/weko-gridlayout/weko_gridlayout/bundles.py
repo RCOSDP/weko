@@ -111,3 +111,8 @@ react_trumbowyg_js = Bundle(
     trumbowyg_js_plugin,
     output="gen/react_trumbowyg_js.%(version)s.js",
 )
+
+date_picker_js = Bundle(
+    'js/weko_gridlayout/bootstrap-datepicker.min.js',
+    output="gen/weko_gridlayout_date_picker.%(version)s.js"
+)
