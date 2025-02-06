@@ -35,6 +35,7 @@ let isRegenerate = false;
 let isClickMainContent = false;
 
 const PageBodyGrid = function () {
+    this.intervalId;
     this.init = function () {
         let options = {
             width: 12,
@@ -435,7 +436,11 @@ const PageBodyGrid = function () {
             }
             content = this.buildAccessCounter(widgetId, node.created_date, languageDescription);
             let _this = this
-            setInterval(function() { return _this.setAccessCounterValue(); }, INTERVAL_TIME);
+            if (!this.intervalId) {
+                this.intervalId = setInterval(function() {
+                    return _this.setAccessCounterValue(widgetId);
+                }, INTERVAL_TIME);
+            }
         } else if (node.type === NEW_ARRIVALS) {
             let innerID = 'new_arrivals' + '_' + index;
             id = 'id="' + innerID + '"';
@@ -508,12 +513,16 @@ const PageBodyGrid = function () {
         var currentTime = new Date().getTime();
         var current_path=location.pathname
         var url = (current_path === "/" || current_path.indexOf("/c/") !==-1) ? "/main" : current_path;
+        var _this = this
         $.ajax({
             url: '/api/admin/access_counter_record/' + repository_id + url + '/' + current_language, 
             method: 'GET',
             async: false,
             success: function(response) {
                 data = response;
+            },
+            error: function() {
+                clearInterval(_this.intervalId);
             }
         });
         return data;
