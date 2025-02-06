@@ -869,6 +869,8 @@ def delete_secret_url(pid, record, **kwargs):
         if not can_manage_secret_url(record, kwargs['filename']):
             abort(403)
         url_record = FileSecretDownload.get_by_id(kwargs['secret_url_id'])
+        if not url_record:
+            abort(404)
         url_record.delete_logically()
     except Exception as e:
         current_app.logger.error(e)
@@ -902,6 +904,8 @@ def delete_onetime_url(pid, record, **kwargs):
         if not can_manage_onetime_url(record, kwargs['filename']):
             abort(403)
         url_record = FileOnetimeDownload.get_by_id(kwargs['onetime_url_id'])
+        if not url_record:
+            abort(404)
         url_record.delete_logically()
     except Exception as e:
         current_app.logger.error(e)
