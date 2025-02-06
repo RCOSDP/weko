@@ -678,3 +678,15 @@ msgstr "ワンタイムURL"
 
 msgid "User Name"
 msgstr "ユーザー名"
+
+msgid "Copy"
+msgstr "コピー"
+
+msgid "massage_del_check"
+msgstr "このURLを削除すると、利用できなくなります。本当に削除しますか？"
+
+msgid "massage_del_success"
+msgstr "URLが削除されました"
+
+msgid "massage_copy_success"
+msgstr "URLがクリップボードにコピーされました"

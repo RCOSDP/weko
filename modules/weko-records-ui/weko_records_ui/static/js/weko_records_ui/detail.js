@@ -316,9 +316,14 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
+// 確認メッセージを取得
+const deleteConfirmationMessage = $('#delete-confirmation-message').data('message');
+const deleteSuccssesMessage = $('#delete-success-message').data('message');
+const copyMassage = $('#copy-message').data('message');
+
 $(document).ready(function() {
   // 共通のAJAXリクエスト関数
-  function handleAjaxRequest($button, url, method, successMessage, clipboardText) {
+  function handleAjaxRequest($button, url, method, successMessage, clipboardText, finalMessage) {
     $button.prop('disabled', true);
     $.ajax({
       url: url,
@@ -327,7 +332,6 @@ $(document).ready(function() {
       dataType: 'json',
       success: function(response) {
         $button.prop('disabled', false);
-        alert(response.message || successMessage);
         if (clipboardText) {
           navigator.clipboard.writeText(response.url)
             .catch(function(err) {
@@ -335,6 +339,9 @@ $(document).ready(function() {
             });
         } else {
           location.reload(); // 画面をリロード
+        }
+        if (finalMessage) {
+          alert(finalMessage);
         }
       },
       error: function(jqXHR, status, msg) {
@@ -351,8 +358,8 @@ $(document).ready(function() {
     const url = $button.attr('url');
 
     // 確認ポップアップを表示
-    if (confirm("If you delete this URL, it will no longer be available. Are you sure you want to delete it?")) {
-      handleAjaxRequest($button, url, 'DELETE', "Success!", false);
+    if (confirm(deleteConfirmationMessage)) {
+      handleAjaxRequest($button, url, 'DELETE', "Success!", false, deleteSuccssesMessage);
     }
   });
 
@@ -361,7 +368,7 @@ $(document).ready(function() {
     event.preventDefault();
     const $button = $(this);
     const url = $button.attr('url');
-    handleAjaxRequest($button, url, 'GET', "Success!", true);
+    handleAjaxRequest($button, url, 'GET', "Success!", true, copyMassage);
   });
 
   // ワンタイムURLの削除
@@ -371,8 +378,8 @@ $(document).ready(function() {
     const url = $button.attr('url');
 
     // 確認ポップアップを表示
-    if (confirm("If you delete this URL, it will no longer be available. Are you sure you want to delete it?")) {
-      handleAjaxRequest($button, url, 'DELETE', "Success!", false);
+    if (confirm(deleteConfirmationMessage)) {
+      handleAjaxRequest($button, url, 'DELETE', "Success!", false, deleteSuccssesMessage);
     }
   });
 
@@ -381,7 +388,7 @@ $(document).ready(function() {
     event.preventDefault();
     const $button = $(this);
     const url = $button.attr('url');
-    handleAjaxRequest($button, url, 'GET', "Success!", true);
+    handleAjaxRequest($button, url, 'GET', "Success!", true, copyMassage);
   });
 });
 

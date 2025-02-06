@@ -219,6 +219,9 @@
                         {%- endfor -%}
                     </tbody>
                 </table>
+                <div id="delete-confirmation-message" data-message="{{ _('massage_del_check') }}"></div>
+                <div id="delete-success-message" data-message="{{ _('massage_del_success') }}"></div>
+                <div id="copy-message" data-message="{{ _('massage_copy_success') }}"></div>
             </div>
             {%- endif -%}
             {%- if active_onetime_URLs -%}
@@ -261,6 +264,9 @@
                         {%- endfor -%}
                     </tbody>
                 </table>
+                <div id="delete-confirmation-message" data-message="{{ _('massage_del_check') }}"></div>
+                <div id="delete-success-message" data-message="{{ _('massage_del_success') }}"></div>
+                <div id="copy-message" data-message="{{ _('massage_copy_success') }}"></div>
             </div>
             {%- endif -%}
             <div role="navigation">

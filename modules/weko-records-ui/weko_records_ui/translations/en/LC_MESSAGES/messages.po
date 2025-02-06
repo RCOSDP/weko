@@ -1385,3 +1385,12 @@ msgstr ""
 
 msgid "Success Secret URL Generate"
 msgstr "Success: Secret URL Generate is succeed. Sent the URL to your email adress."
+
+msgid "massage_del_check"
+msgstr "If you delete this URL, it will no longer be available. Are you sure you want to delete it?"
+
+msgid "massage_del_success"
+msgstr "URL has been removed"
+
+msgid "massage_copy_success"
+msgstr "URL has been copied to the clipboard"
