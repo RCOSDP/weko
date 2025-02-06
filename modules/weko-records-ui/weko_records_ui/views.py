@@ -845,6 +845,76 @@ def copy_onetime_url(pid, record, **kwargs):
                     'message': 'The onetime URL copied to your clipboard.'})
 
 
+def delete_secret_url(pid, record, **kwargs):
+    """
+    Delete a secret URL from the database.
+
+    Args:
+        pid (str): A persistent identifier of the record.
+        record (dict): Record data associated with the target file.
+        **kwargs: Additional arguments, including:
+            - filename (str): The name of the file.
+            - url_id (str): The ID of the URL to be deleted.
+
+    Returns:
+        flask.Response:
+            A JSON response containing a success message.
+
+    Raises:
+        flask.abort:
+            - 403 if the user does not have enough permissions.
+            - 500 if an error occurs while deleting the URL.
+    """
+    try:
+        if not can_manage_secret_url(record, kwargs['filename']):
+            abort(403)
+        url_record = FileSecretDownload.get_by_id(kwargs['secret_url_id'])
+        if not url_record:
+            abort(404)
+        url_record.delete_logically()
+    except Exception as e:
+        current_app.logger.error(e)
+        abort(500)
+
+    return jsonify(
+        {'message': 'The secret URL has been successfully deleted.'})
+
+
+def delete_onetime_url(pid, record, **kwargs):
+    """
+    Delete an onetime URL from the database.
+
+    Args:
+        pid (str): A persistent identifier of the record.
+        record (dict): Record data associated with the target file.
+        **kwargs: Additional arguments, including:
+            - filename (str): The name of the file.
+            - url_id (str): The ID of the URL to be deleted.
+
+    Returns:
+        flask.Response:
+            A JSON response containing a success message.
+
+    Raises:
+        flask.abort:
+            - 403 if the user does not have enough permissions.
+            - 500 if an error occurs while deleting the URL.
+    """
+    try:
+        if not can_manage_onetime_url(record, kwargs['filename']):
+            abort(403)
+        url_record = FileOnetimeDownload.get_by_id(kwargs['onetime_url_id'])
+        if not url_record:
+            abort(404)
+        url_record.delete_logically()
+    except Exception as e:
+        current_app.logger.error(e)
+        abort(500)
+
+    return jsonify(
+        {'message': 'The one-time URL has been successfully deleted.'})
+
+
 @blueprint.route('/r/<parent_pid_value>', methods=['GET'])
 @blueprint.route('/r/<parent_pid_value>.<int:version>', methods=['GET'])
 @login_required
