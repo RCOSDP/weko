@@ -699,6 +699,96 @@ def test_copy_onetime_url(client, records):
         assert res.json['url'] is None
 
 
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_delete_secret_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_delete_secret_url(client, records):
+    _, records = records
+    url = url_for('invenio_records_ui.recid_delete_secret_url',
+                    pid_value=records[1]['recid'].pid_value,
+                    filename=records[1]['filename'],
+                    secret_url_id=1)
+    secret_obj = FileSecretDownload.create(
+        creator_id=1,
+        record_id=records[1]['recid'].pid_value,
+        file_name=records[1]['filename'],
+        label_name='test link',
+        expiration_date=datetime.now(timezone.utc) + timedelta(days=1),
+        download_limit=1,
+    )
+    assert secret_obj.is_deleted == False
+    with patch('weko_records_ui.views.can_manage_secret_url',
+                return_value=True):
+        res = client.delete(url)
+        assert res.status_code == 200
+        assert ('The secret URL has been successfully deleted.'
+                 in res.get_data(as_text=True))
+        assert secret_obj.is_deleted == True
+    with patch('weko_records_ui.views.can_manage_secret_url',
+                return_value=False):
+        with pytest.raises(Exception):
+            res = client.delete(url)
+            assert res.status_code == 403
+    with patch('weko_records_ui.models.FileSecretDownload.delete_logically',
+                side_effect=Exception('Test Error')):
+        with pytest.raises(Exception):
+            res = client.delete(url)
+            assert res.status_code == 500
+    with patch('weko_records_ui.views.can_manage_secret_url',
+                return_value=True):
+        url = url_for('invenio_records_ui.recid_delete_secret_url',
+                        pid_value=records[1]['recid'].pid_value,
+                        filename=records[1]['filename'],
+                        secret_url_id=99)  # invalid secret_url_id
+        with pytest.raises(Exception):
+            res = client.delete(url)
+            assert res.status_code == 404
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_delete_onetime_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_delete_onetime_url(client, records):
+    _, records = records
+    url = url_for('invenio_records_ui.recid_delete_onetime_url',
+                    pid_value=records[1]['recid'].pid_value,
+                    filename=records[1]['filename'],
+                    onetime_url_id=1)
+    onetime_obj = FileOnetimeDownload.create(
+        approver_id=1,
+        record_id=records[1]['recid'].pid_value,
+        file_name=records[1]['filename'],
+        expiration_date=datetime.now(timezone.utc) + timedelta(days=1),
+        download_limit=1,
+        user_mail='test@example.org',
+        is_guest=False,
+        extra_info={}
+    )
+    assert onetime_obj.is_deleted == False
+    with patch('weko_records_ui.views.can_manage_onetime_url',
+                return_value=True):
+        res = client.delete(url)
+        assert res.status_code == 200
+        assert ('The one-time URL has been successfully deleted.'
+                 in res.get_data(as_text=True))
+        assert onetime_obj.is_deleted == True
+    with patch('weko_records_ui.views.can_manage_onetime_url',
+                return_value=False):
+        with pytest.raises(Exception):
+            res = client.delete(url)
+            assert res.status_code == 403
+    with patch('weko_records_ui.models.FileOnetimeDownload.delete_logically',
+                side_effect=Exception('Test Error')):
+        with pytest.raises(Exception):
+            res = client.delete(url)
+            assert res.status_code == 500
+    with patch('weko_records_ui.views.can_manage_onetime_url',
+                return_value=True):
+        url = url_for('invenio_records_ui.recid_delete_onetime_url',
+                        pid_value=records[1]['recid'].pid_value,
+                        filename=records[1]['filename'],
+                        onetime_url_id=99)
+        with pytest.raises(Exception):
+            res = client.delete(url)
+            assert res.status_code == 404
+
+
 # def doi_ish_view_method(parent_pid_value=0, version=0):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_doi_ish_view_method_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_doi_ish_view_method_acl_guest(app,client,records):
