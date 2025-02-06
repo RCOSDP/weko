@@ -766,17 +766,17 @@ def create_secret_url_and_send_mail(pid, record, filename, **kwargs):
         current_app.logger.error(e)
         abort(500)
 
-    message = 'Secret URL generated successfully'
+    message = _('Secret URL generated successfully')
     if request.json['send_email'] is True:
         sending_result = send_secret_url_mail(
             pid.object_uuid, url_obj, record.get('item_title', ''))
         if sending_result:
-            message += ', please check your email inbox'
+            message += _(', please check your email inbox')
         else:
-            message += (', but there was an error while sending the email. '
+            message += _(', but there was an error while sending the email. '
                         'To use the URL, please refresh the page and copy it '
                         'from the issued URL list')
-    return jsonify({'message': message + '.'})
+    return jsonify({'message': message + _('.')})
 
 
 def copy_secret_url(pid, record, **kwargs):
@@ -809,7 +809,7 @@ def copy_secret_url(pid, record, **kwargs):
         abort(500)
 
     return jsonify({'url': url,
-                    'message': 'The secret URL copied to your clipboard.'})
+                    'message': _('The secret URL copied to your clipboard.')})
 
 
 def copy_onetime_url(pid, record, **kwargs):
@@ -842,7 +842,7 @@ def copy_onetime_url(pid, record, **kwargs):
         abort(500)
 
     return jsonify({'url': url,
-                    'message': 'The onetime URL copied to your clipboard.'})
+                    'message': _('The onetime URL copied to your clipboard.')})
 
 
 def delete_secret_url(pid, record, **kwargs):
@@ -877,7 +877,7 @@ def delete_secret_url(pid, record, **kwargs):
         abort(500)
 
     return jsonify(
-        {'message': 'The secret URL has been successfully deleted.'})
+        {'message': _('The secret URL has been successfully deleted.')})
 
 
 def delete_onetime_url(pid, record, **kwargs):
@@ -912,7 +912,7 @@ def delete_onetime_url(pid, record, **kwargs):
         abort(500)
 
     return jsonify(
-        {'message': 'The one-time URL has been successfully deleted.'})
+        {'message': _('The one-time URL has been successfully deleted.')})
 
 
 @blueprint.route('/r/<parent_pid_value>', methods=['GET'])

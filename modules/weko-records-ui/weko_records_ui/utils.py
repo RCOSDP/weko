@@ -2077,26 +2077,26 @@ def validate_url_download(record, filename, token, is_secret_url):
     """
     # Check if the token is valid
     if not validate_token(token, is_secret_url):
-        return False, 'The provided token is invalid.'
+        return False, _('The provided token is invalid.')
 
     if is_secret_url:
         if not is_secret_url_feature_enabled():
-            return False, 'This feature is currently disabled.'
+            return False, _('This feature is currently disabled.')
 
     # Check if the file is available for download
     if (not validate_file_access(record, filename, is_secret_url) or
         not validate_download_record(record)):
-        return False, 'This file is currently not available for this feature.'
+        return False, _('This file is currently not available for this feature.')
 
     # Check if the URL is still valid
     url_obj = convert_token_into_obj(token, is_secret_url)
     if url_obj.is_deleted is True:
-        return False, 'This URL has been deactivated.'
+        return False, _('This URL has been deactivated.')
     if url_obj.download_count >= url_obj.download_limit:
-        return False, 'The download limit has been exceeded.'
+        return False, _('The download limit has been exceeded.')
     limit_date = url_obj.expiration_date.replace(tzinfo=timezone.utc)
     if limit_date < dt.now(timezone.utc):
-        return False, 'The expiration date for download has been exceeded.'
+        return False, _('The expiration date for download has been exceeded.')
 
     return True, ''
 
