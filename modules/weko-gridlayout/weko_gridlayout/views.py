@@ -476,9 +476,15 @@ def get_access_counter_record(repository_id, path,current_language):
         page_id = WidgetDesignPage.get_by_url("/"+path).id
         widget_design_setting = WidgetDesignPageServices.get_widget_design_setting(
             page_id, current_language or get_default_language())
-    widget_ids = [str(widget.get("widget_id")) for widget in widget_design_setting.get("widget-settings",{}) 
-                  if widget.get("type")==WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE ]
-    if not cached_data or set(list(json.loads(cached_data.data).keys()))!=set(widget_ids):
+
+    widget_ids = [
+        str(widget.get("widget_id")) for widget in widget_design_setting.get("widget-settings", {})
+        if widget.get("type") == WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE
+    ]
+    if len(widget_ids) == 0:
+        return abort(404)
+
+    if not cached_data or set(list(json.loads(cached_data.data).keys())) != set(widget_ids):
         result = {}
         # need to logic check
         if widget_design_setting.get('widget-settings'):
@@ -498,7 +504,7 @@ def get_access_counter_record(repository_id, path,current_language):
                         count = 0
                         for item in top_view_total_by_widget_id['all'].values():
                             count = count + int(item['count'])
-                        
+
                         top_view_total_by_widget_id['all'] = {} # clear all data
                         top_view_total_by_widget_id['all'].update(
                             {'count': count})

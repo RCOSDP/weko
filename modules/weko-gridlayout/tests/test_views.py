@@ -653,6 +653,15 @@ def test_get_access_counter_record(i18n_app, db, es, monkeypatch):
                 assert args[2] == 50
         
 
+            # not exist widget_ids
+            with patch("weko_gridlayout.services.WidgetDesignServices.get_widget_design_setting", return_value={}):
+                url = url_for("weko_gridlayout_api.get_access_counter_record",
+                          repository_id="test_community01",
+                          path="main",
+                          current_language="en")
+                res = client.get(url)
+                assert res.status_code==404
+
 
 # def upload_file(community_id): 
 def test_upload_file(client, communities):
