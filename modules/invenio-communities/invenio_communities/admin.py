@@ -25,18 +25,27 @@
 
 from __future__ import absolute_import, print_function
 
+import os
+import json
 import re
+import sys
 
+from flask import request, abort, jsonify, redirect, url_for, flash
 from flask.globals import current_app
 from flask_admin.contrib.sqla import ModelView
+from flask_admin import expose
 from flask_login import current_user
 from invenio_db import db
 from sqlalchemy import func, or_
 from weko_index_tree.models import Index
 from wtforms.validators import ValidationError
+from wtforms import FileField, RadioField
+from wtforms.utils import unset_value
+from invenio_i18n.ext import current_i18n
+from weko_gridlayout.services import WidgetDesignPageServices
 
 from .models import Community, FeaturedCommunity, InclusionRequest
-from .utils import get_user_role_ids
+from .utils import get_user_role_ids, delete_empty
 
 
 def _(x):
@@ -53,7 +62,7 @@ class CommunityModelView(ModelView):
     can_view_details = True
     column_display_all_relations = True
     form_columns = ('id', 'owner', 'index', 'title', 'description', 'page',
-                    'curation_policy', 'ranking', 'fixed_points')
+                    'curation_policy', 'ranking', 'fixed_points', 'thumbnail','login_menu_enabled')
 
     column_list = (
         'id',
@@ -68,6 +77,379 @@ class CommunityModelView(ModelView):
 
     column_searchable_list = ('id', 'title', 'description')
     edit_template = "invenio_communities/admin/edit.html"
+
+    @expose('/new/', methods=['GET', 'POST'])
+    def create_view(self):
+
+        def validate_input_id(id):
+            the_patterns = {
+                "ASCII_LETTER_PATTERN": "[a-zA-Z0-9_-]+$",
+                "FIRST_LETTER_PATTERN1": "^[a-zA-Z_-].*",
+                "FIRST_LETTER_PATTERN2": "^[-]+[0-9]+",
+            }
+            the_result = {
+                "ASCII_LETTER_PATTERN": "Don't use space or special "
+                                        "character except `-` and `_`.",
+                "FIRST_LETTER_PATTERN1": 'The first character cannot '
+                                        'be a number or special character. '
+                                        'It should be an '
+                                        'alphabet character, "-" or "_"',
+                "FIRST_LETTER_PATTERN2": "Cannot set negative number to ID.",
+            }
+
+            m = re.match(the_patterns['FIRST_LETTER_PATTERN1'], id)
+            if m is None:
+                raise ValidationError(the_result['FIRST_LETTER_PATTERN1'])
+            m = re.match(the_patterns['FIRST_LETTER_PATTERN2'], id)
+            if m is not None:
+                raise ValidationError(the_result['FIRST_LETTER_PATTERN2'])
+            m = re.match(the_patterns['ASCII_LETTER_PATTERN'], id)
+            if m is None:
+                raise ValidationError(the_result['ASCII_LETTER_PATTERN'])
+
+        form = self.create_form()
+
+        if(request.method == 'POST'):
+            try:
+                pageaddFlag = True
+                form_data = request.form.to_dict()
+                model = Community()
+                validate_input_id(form_data['id'])
+                model.id = form_data['id']
+                model.id_role = form_data['owner']
+                model.root_node_id = form_data['index']
+                model.title = form_data['title']
+                model.description = form_data['description']
+                model.page = form_data['page']
+                model.curation_policy = form_data['curation_policy']
+                model.ranking = form_data['ranking']
+                model.fixed_points = form_data['fixed_points']
+                if form_data['login_menu_enabled'] == 'True':
+                    model.login_menu_enabled = True
+                else:
+                    model.login_menu_enabled = False
+                the_result = {
+                    "FILE_PATTERN": "Thumbnail file only 'jpeg', 'jpg', 'png', 'gif' format.",
+                }
+                fp = request.files.get('thumbnail')
+                if '' != fp.filename:
+                    directory = os.path.join(
+                        current_app.instance_path,
+                        current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'],
+                        'c')
+                    if not os.path.exists(directory):
+                        os.makedirs(directory)
+
+                    ext = os.path.splitext(fp.filename)[1].lower()
+                    allowed_extensions = {'.png', '.jpg', '.jpeg', '.gif'}
+                    if ext not in allowed_extensions:
+                        raise ValidationError(the_result['FILE_PATTERN'])
+                    filename = os.path.join(
+                        directory,
+                        model.id + '_' + fp.filename)
+                    file_uri = '/data/' + 'c/' + model.id + '_' + fp.filename
+                    fp.save(filename)
+                    model.thumbnail_path = file_uri
+
+                catalog_json = json.loads(form_data['catalog_data'])
+                flg, result_json = delete_empty(catalog_json['metainfo'])
+                if flg:
+                    model.catalog_json = result_json['parentkey']
+                else:
+                    model.catalog_json = None
+                model.id_user = current_user.get_id()
+
+                comm = Community.create(
+                    id=model.id,
+                    id_role=model.id_role,
+                    id_user=model.id_user,
+                    root_node_id=model.root_node_id,
+                    title=model.title,
+                    description=model.description,
+                    page=model.page,
+                    curation_policy=model.curation_policy,
+                    ranking=model.ranking,
+                    fixed_points=model.fixed_points,
+                    login_menu_enabled=model.login_menu_enabled,
+                    thumbnail_path=model.thumbnail_path,
+                    catalog_json=model.catalog_json,
+                )
+                db.session.commit()
+                data = [
+                    {
+                        "is_edit": False,
+                        "page_id": 0,
+                        "repository_id": model.id,
+                        "title": "About",
+                        "url": "/c/" + model.id + "/about",
+                        "content": "",
+                        "settings": "",
+                        "multi_lang_data": {"en": "About"},
+                        "is_main_layout": False,
+                    },
+                {
+                        "is_edit": False,
+                        "page_id": 0,
+                        "repository_id": model.id,
+                        "title": "Editorial board",
+                        "url": "/c/" + model.id + "/eb",
+                        "content": "",
+                        "settings": "",
+                        "multi_lang_data": {"en": "Editorial board"},
+                        "is_main_layout": False,
+                    },
+                {
+                        "is_edit": False,
+                        "page_id": 0,
+                        "repository_id": model.id,
+                        "title": "OA Policy",
+                        "url": "/c/" + model.id + "/oapolicy",
+                        "content": "",
+                        "settings": "",
+                        "multi_lang_data": {"en": "OA Policy"},
+                        "is_main_layout": False,
+                    }
+                ]
+                for page in data:
+                    addPageResult = WidgetDesignPageServices.add_or_update_page(page)
+                    if addPageResult['result'] == False:
+                        print(page['url'] + "のページの追加に失敗しました。")
+                        pageaddFlag = False
+
+                if pageaddFlag == False:
+                    return redirect(url_for('.index_view', pageaddFlag=pageaddFlag))
+                else:
+                    return redirect(url_for('.index_view'))
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({"error": str(e)}), 400
+
+        else:
+            form.login_menu_enabled.data = 'False'
+
+            return  self.render(
+                "invenio_communities/admin/edit.html",
+                form=form,
+                jsonschema="/admin/community/jsonschema",
+                schemaform="/admin/community/schemaform",
+                pid=None,
+                record=None,
+                type = 'create',
+
+                return_url=request.args.get('url'),
+                c_id=id,
+            )
+
+    @expose('/edit/<string:id>/', methods=['GET', 'POST'])
+    def edit_view(self, id):
+        model = self.get_one(id)
+        form=super(CommunityModelView, self).edit_form(id)
+        if model:
+            form.id.data = model.id or ''
+            form.title.data = model.title or ''
+            form.owner.data = model.owner or ''
+            form.index.data = model.index or ''
+            form.description.data = model.description or ''
+            form.page.data = model.page or ''
+            form.curation_policy.data = model.curation_policy or ''
+            form.ranking.data = model.ranking or '0'
+            form.fixed_points.data = model.fixed_points or '0'
+            if model.login_menu_enabled:
+                form.login_menu_enabled.data = 'True'
+            else:
+                form.login_menu_enabled.data = 'False'
+
+        if(request.method == 'POST'):
+            form_data = request.form.to_dict()
+            try:
+                model.id_role = form_data['owner']
+                model.root_node_id = form_data['index']
+                model.title = form_data['title']
+                model.description = form_data['description']
+                model.page = form_data['page']
+                model.curation_policy = form_data['curation_policy']
+                model.ranking = form_data['ranking']
+                model.fixed_points = form_data['fixed_points']
+                if form_data['login_menu_enabled'] == 'True':
+                    model.login_menu_enabled = True
+                else:
+                    model.login_menu_enabled = False
+                the_result = {
+                    "FILE_PATTERN": "Thumbnail file only 'jpeg', 'jpg', 'png', 'gif' format.",
+                }
+                fp = request.files.get('thumbnail')
+                if '' != fp.filename:
+                    directory = os.path.join(
+                        current_app.instance_path,
+                        current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'],
+                        'c')
+                    if not os.path.exists(directory):
+                        os.makedirs(directory)
+
+                    ext = os.path.splitext(fp.filename)[1].lower()
+                    allowed_extensions = {'.png', '.jpg', '.jpeg', '.gif'}
+                    if ext not in allowed_extensions:
+                        raise ValidationError(the_result['FILE_PATTERN'])
+                    filename = os.path.join(
+                        directory,
+                        model.id + '_' + fp.filename)
+                    file_uri = '/data/' + 'c/' + model.id  + '_' +  fp.filename
+                    if model.thumbnail_path is not None:
+                        currentfile = os.path.join(
+                            current_app.instance_path,
+                            current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'],
+                            'c',
+                            model.thumbnail_path[8:])
+                        if os.path.exists(currentfile):
+                            try:
+                                os.remove(currentfile)
+                                print(f"{currentfile} を削除しました。")
+                            except Exception as e:
+                                print(f"ファイルの削除中にエラーが発生しました: {e}")
+                        else:
+                            print(f"{currentfile} は存在しません。")
+                    fp.save(filename)
+                    model.thumbnail_path = file_uri
+
+                catalog_json = json.loads(form_data['catalog_data'])
+                flg, result_json = delete_empty(catalog_json['metainfo'])
+                if flg:
+                    model.catalog_json = result_json['parentkey']
+                else:
+                    model.catalog_json = None
+
+                db.session.commit()
+                return redirect(url_for('.index_view'))
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({"error": str(e)}), 400
+
+        else:
+
+            record = {}
+            if model.catalog_json is not None:
+                record['parentkey'] = model.catalog_json
+            else:
+                record = None
+            return  self.render(
+                "invenio_communities/admin/edit.html",
+                form=form,
+                jsonschema="/admin/community/jsonschema",
+                schemaform="/admin/community/schemaform",
+                pid=None,
+                record=record,
+                type = 'edit',
+
+                return_url=request.args.get('url'),
+                c_id=id,
+            )
+
+
+    @expose('/jsonschema', methods=['GET'])
+    def get_json_schema(self):
+        """Get json schema.
+
+        :return: The json object.
+        """
+        try:
+            json_schema = None
+            # cur_lang = current_i18n.language
+
+            """Log error for output info of journal, level: ERROR, status code: 101,
+            content: Invalid setting file error"""
+            filepath = "schemas/jsonschema.json"
+            if (filepath
+                != filepath)\
+                or (filepath
+                    == ""
+                    or (current_app.config[
+                        'WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE'
+                    ] is None)):
+                current_app.logger.error(
+                    '[{0}] Invalid setting file error'.format(101)
+                )
+
+            schema_file = os.path.join(
+                os.path.dirname(__file__),
+                filepath)
+
+            json_schema = json.load(open(schema_file))
+            if json_schema == {}:
+                return '{}'
+
+            result = db.session.execute("SELECT schema FROM item_type_property WHERE id = 1057;").fetchone()
+            catalogschema = result[0]
+            tempschema = catalogschema["properties"]
+            keys_to_keep = [ 'catalog_contributors', 'catalog_identifiers', 'catalog_subjects', 'catalog_licenses', 'catalog_rights', 'catalog_access_rights']
+            keys_to_remove = [k for k in tempschema.keys() if k not in keys_to_keep]
+            for key in keys_to_remove:
+                tempschema.pop(key)
+
+            json_schema["properties"]["parentkey"]["items"]["properties"] = tempschema
+
+        except BaseException:
+            current_app.logger.error(
+                "Unexpected error: {}".format(sys.exc_info()))
+            abort(500)
+        return jsonify(json_schema)
+
+    @expose('/schemaform', methods=['GET'])
+    def get_schema_form(self):
+        """Get schema form.
+
+        :return: The json object.
+        """
+        try:
+            schema_form = None
+            cur_lang = current_i18n.language
+
+            """Log error for output info of journal, level: ERROR, status code: 101,
+            content: Invalid setting file error."""
+
+            result = db.session.execute("SELECT forms FROM item_type_property WHERE id = 1057;").fetchone()
+            temp_schema_form = [result[0]]
+
+            schema_form = temp_schema_form
+
+            i = 1
+            for elem in schema_form:
+                if 'title_i18n' in elem:
+                    if cur_lang in elem['title_i18n']:
+                        if len(elem['title_i18n'][cur_lang]) > 0:
+                            elem['title'] = elem['title_i18n'][cur_lang]
+                if 'items' in elem:
+                    for sub_elem in elem['items'][:]:
+                        if sub_elem['key'] in ['parentkey[].catalog_contributors', 'parentkey[].catalog_identifiers', 'parentkey[].catalog_subjects', 'parentkey[].catalog_licenses', 'parentkey[].catalog_rights', 'parentkey[].catalog_access_rights']:
+                            if 'title_i18n' in sub_elem:
+                                if cur_lang in sub_elem['title_i18n']:
+                                    if len(sub_elem['title_i18n']
+                                        [cur_lang]) > 0:
+                                        sub_elem['title'] = sub_elem['title_i18n'][
+                                            cur_lang]
+                            if 'items' in sub_elem:
+                                for sub_sub_elem in sub_elem['items'][:]:
+                                    if 'title_i18n' in sub_sub_elem:
+                                        if cur_lang in sub_sub_elem['title_i18n']:
+                                            if len(sub_sub_elem['title_i18n']
+                                                [cur_lang]) > 0:
+                                                sub_sub_elem['title'] = sub_sub_elem['title_i18n'][
+                                                    cur_lang]
+                                    if 'items' in sub_sub_elem:
+                                        for sub_sub_sub_elem in sub_sub_elem['items'][:]:
+                                            if 'title_i18n' in sub_sub_sub_elem:
+                                                if cur_lang in sub_sub_sub_elem['title_i18n']:
+                                                    if len(sub_sub_sub_elem['title_i18n']
+                                                        [cur_lang]) > 0:
+                                                        sub_sub_sub_elem['title'] = sub_sub_sub_elem['title_i18n'][
+                                                            cur_lang]
+                        else:
+                            elem['items'].remove(sub_elem)
+
+        except BaseException:
+            current_app.logger.error(
+                "Unexpected error: {}".format(sys.exc_info()))
+            abort(500)
+        return jsonify(schema_form)
 
     def on_model_change(self, form, model, is_created):
         """Perform some actions before a model is created or updated.
@@ -115,7 +497,11 @@ class CommunityModelView(ModelView):
     form_args = {
         'id': {
             'validators': [_validate_input_id]
-        }
+        },
+    }
+    form_extra_fields = {
+        'thumbnail': FileField(),
+        'login_menu_enabled': RadioField('login_menu_enabled', choices=[('False', 'Disabled'), ('True', 'Enabled')] ),
     }
 
     form_widget_args = {
