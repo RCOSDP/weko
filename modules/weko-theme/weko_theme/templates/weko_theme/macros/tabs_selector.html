@@ -34,4 +34,13 @@
     {% endif %}
   {%- endif %}
   <li role="presentation" class="{{ check_ranking_show() }} {% if tab_value=='rank' %}active{% endif %}"><a href="{{url_for('weko_items_ui.ranking')}}">{{ _('Ranking') }}</a></li>
+
+    <!-- guan.shuang 登録者ユーザーのみ表示する start-->
+ 
+    {# {%- if current_user.is_authenticated and current_user.has_role('Contributor') %} #}
+    <li role="presentation" {% if tab_value=='workspace' %}class="active" {% endif %}>
+      <a href="{{url_for('weko_workspace.workspace')}}">{{ _('Workspace--workspace') }}</a>
+    </li>
+    {# {%- endif %} #}
+    <!-- guan.shuang 登録者ユーザーのみ表示する end-->
 {% endmacro %}

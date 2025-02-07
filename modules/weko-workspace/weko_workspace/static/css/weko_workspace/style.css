@@ -1,0 +1,71 @@
+.rightFoward_font{
+    font-size: 50px;
+    color: silver;
+    top:40px !important;
+}
+.align_right{
+  text-align: right;
+}
+
+.style_li{
+  background-color:#ff8800;
+}
+.style_a{
+  color: white;
+}
+
+.modal-info {
+  vertical-align: middle;
+  margin: 0 10px;
+}
+
+.schema-form-section .form-control.ng-invalid {
+  border-color: #843534;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 6px #ce8483;
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 6px #ce8483;
+}
+
+/* Custom popup Author */
+.remove-padding-right {
+  padding-right: 0;
+  margin-bottom: 5px;
+}
+.remove-padding-left {
+  padding-left: 0;
+}
+.panel-padding {
+  padding: 15px;
+}
+.modal-xlg {
+  width: 1140px;
+}
+.add-author-surname {
+  width: 28% !important;
+  float: left;
+  margin-right: 2%;
+}
+.add-author-name {
+  width: 28% !important;
+  float: left;
+  margin-right: 2%;
+}
+.add-author-lang-option {
+  width: 14%;
+  float: left;
+  margin-right: 2%;
+}
+.add-author-name-option {
+  width: 24%;
+}
+
+.term-and-condition {
+    padding-left: 20px;
+    margin-top: -5px;
+    margin-bottom: -5px;
+}
+
+.clear-activitylog {
+  color: #fff;
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
