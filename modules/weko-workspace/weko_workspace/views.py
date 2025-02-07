@@ -92,16 +92,23 @@ workspace_blueprint = Blueprint(
     url_prefix='/workspace'
 )
 
-@workspace_blueprint.route('/workspace')
+@workspace_blueprint.route('/getworkspaceitemlist')
 @login_required
 # @register_menu(
 #     workspace_blueprint, 'settings.Workspace',
 #     _('%(icon)s Workspace', icon='<i class="fa fa-list-alt" aria-hidden="true" style="margin-right: 8px;"></i>'),
 #     order=20)
 # @register_breadcrumb(workspace_blueprint, 'breadcrumbs.settings.Workspace', _('Workspace'))
-def workspace():
+def get_workspace_itemlist():
         print("==========guan.shuang workspace =========")
         # return None
         return render_template(
         'weko_workspace/workspace_base.html'
     )
+
+
+@workspace_blueprint.route('/updateworkspacestatusmanagement')
+@login_required
+def update_workspace_status_management(statusTyp):
+
+        return None
