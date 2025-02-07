@@ -1,0 +1,76 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+  {% block css %}
+    <link href="{{ url_for('static', filename='css/weko_admin/quill.snow.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/KaTeX/katex.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/highlight.js/monokai-sublime.min.css') }}" rel="stylesheet">
+  {% endblock %}
+
+  <!-- <p>{{render_header_footer}}</p>
+  <p>{{render_widgets}}</p>
+  <p>{{page}}</p> -->
+
+  {% if render_header_footer %}
+    <div id="header" class="hidden">
+  {% else -%}
+    <div id="header" {% if render_widgets or page %}class="hidden" {% endif %}>
+  {% endif %}
+
+    {%- block navbar %}
+      <nav class="navbar-default navbar-static-top full-height">
+        <div class="container-fluid container-fluid2" id="fixed_header">
+          {%- block navbar_header %}
+            {% if not render_widgets and not page and not render_header_footer %}
+              {% include "weko_theme/header_wysiwyg.html" %}
+            {% endif %}
+            {%- block navbar_right %}
+              {% if config.DISPLAY_LOGIN %}
+                {%- include config.THEME_HEADER_LOGIN_TEMPLATE %}
+              {% endif %}
+            {%- endblock navbar_right %}
+            <div class="navbar-form navbar-right navbar-form2">
+              {%- if config.I18N_LANGUAGES %}
+                {% from "weko_theme/macros/language_selector.html" import language_selector_dropdown %}
+                {{ language_selector_dropdown() }}
+              {%- endif %}
+            </div>
+          {%- endblock navbar_header %}
+        </div>
+        {% if render_widgets or page or render_header_footer %}
+          <div class="container-fluid container-fluid2" id="header_nav">
+            <div id="header_content" class="ql-editor"></div>
+          </div>
+        {% endif %}
+      </nav>
+    {%- endblock navbar %}
+
+    {%- block flashmessages %}
+      {%- from "invenio_theme/macros/messages.html" import flashed_messages with context -%}
+      {{ flashed_messages() }}
+    {%- endblock %}
+
+    {%- block breadcrumbs %}
+      {%- include "invenio_theme/breadcrumbs.html" %}
+    {%- endblock breadcrumbs %}
+  </div>
+
+  {% block tail %}
+  {% endblock %}
