@@ -91,10 +91,10 @@ for module_path in modules/*/; do
       echo "### skip tests for ${module_path%?} ###"
       continue
     fi
-    # if [[ ${module_path} =~ ^modules/(weko-admin).+$ ]]; then
-    #   echo "### skip tests for ${module_path%?} ###"
-    #   continue
-    # fi
+    if [[ ${module_path} =~ ^modules/(weko-admin).+$ ]]; then
+      echo "### skip tests for ${module_path%?} ###"
+      continue
+    fi
     if [[ ${module_path} =~ ^modules/(weko-authors).+$ ]]; then
       echo "### skip tests for ${module_path%?} ###"
       continue

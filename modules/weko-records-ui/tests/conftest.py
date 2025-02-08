@@ -579,6 +579,73 @@ def itemtypes(app, db):
     item_type_name = ItemTypeName(
         id=1, name="テストアイテムタイプ", has_site_license=True, is_active=True
     )
+
+    item_type_name_31001 = ItemTypeName(
+        id=31001, name="利用申請", has_site_license=True, is_active=True
+    )
+    item_type_schema_31001 = dict()
+    with open("tests/data/itemtype_schema_31001.json", "r") as f:
+        item_type_schema_31001 = json.load(f)
+
+    item_type_form_31001 = dict()
+    with open("tests/data/itemtype_form_31001.json", "r") as f:
+        item_type_form_31001 = json.load(f)
+
+    item_type_render_31001 = dict()
+    with open("tests/data/itemtype_render_31001.json", "r") as f:
+        item_type_render_31001 = json.load(f)
+
+    item_type_mapping_31001 = dict()
+    with open("tests/data/itemtype_mapping_31001.json", "r") as f:
+        item_type_mapping_31001 = json.load(f)
+
+    item_type_31001 = ItemType(
+        id=31001,
+        name_id=31001,
+        harvesting_type=True,
+        schema=item_type_schema_31001,
+        form=item_type_form_31001,
+        render=item_type_render_31001,
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+
+    item_type_mapping_31001 = ItemTypeMapping(id=31001, item_type_id=31001, mapping=item_type_mapping_31001)
+
+    item_type_name_31002 = ItemTypeName(
+        id=31002, name="二段階利用申請", has_site_license=True, is_active=True
+    )
+    item_type_schema_31002 = dict()
+    with open("tests/data/itemtype_schema_31002.json", "r") as f:
+        item_type_schema_31002 = json.load(f)
+
+    item_type_form_31002 = dict()
+    with open("tests/data/itemtype_form_31002.json", "r") as f:
+        item_type_form_31002 = json.load(f)
+
+    item_type_render_31002 = dict()
+    with open("tests/data/itemtype_render_31002.json", "r") as f:
+        item_type_render_31002 = json.load(f)
+
+    item_type_mapping_31002 = dict()
+    with open("tests/data/itemtype_mapping_31002.json", "r") as f:
+        item_type_mapping_31002 = json.load(f)
+
+    item_type_31002 = ItemType(
+        id=31002,
+        name_id=31002,
+        harvesting_type=True,
+        schema=item_type_schema_31002,
+        form=item_type_form_31002,
+        render=item_type_render_31002,
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+
+    item_type_mapping_31002 = ItemTypeMapping(id=31002, item_type_id=31002, mapping=item_type_mapping_31002)
+
     item_type_schema = dict()
     with open("tests/data/itemtype_schema.json", "r") as f:
         item_type_schema = json.load(f)
@@ -613,6 +680,12 @@ def itemtypes(app, db):
         db.session.add(item_type_name)
         db.session.add(item_type)
         db.session.add(item_type_mapping)
+        db.session.add(item_type_name_31001)
+        db.session.add(item_type_31001)
+        db.session.add(item_type_mapping_31001)
+        db.session.add(item_type_name_31002)
+        db.session.add(item_type_31002)
+        db.session.add(item_type_mapping_31002)
 
     return {
         "item_type_name": item_type_name,
