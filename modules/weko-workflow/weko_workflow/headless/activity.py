@@ -279,7 +279,7 @@ class HeadlessActivity(WorkActivity):
         title_value_key = "title.@value"
         title, _ = get_data_by_property(metadata, item_map, title_value_key)
         self.update_activity(self.activity_id, {
-            "title": title,
+            "title": title[0] if len(title) > 0 else "",
             "shared_user_id": metadata.pop("shared_user_id", -1)
         })
 
