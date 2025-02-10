@@ -99,7 +99,7 @@ function getResultErrorMsg(error_id) {
       break;
   }
   if (msg === '') {
-    return 'Error msg : ' + error_id;
+    return error_id;
   } else {
     return 'Error msg : ' + msg;
   }

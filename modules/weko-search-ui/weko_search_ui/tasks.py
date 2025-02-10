@@ -84,7 +84,7 @@ def import_item(item, request_info):
         return result
     except Exception as ex:
         current_app.logger.error(ex)
-        return {"success": False, "start_date": start_date, "error_id": str(ex)}
+        return {"success": False, "start_date": start_date, "error_id": 'Internal server error'}
 
 
 @shared_task
