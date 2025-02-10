@@ -38,330 +38,330 @@ from weko_records.models import ItemType
 from invenio_files_rest.models import Location
 
 
-class ActionStatusPolicy(object):
-    """Action status policies."""
-
-    ACTION_BEGIN = 'B'
-    """The action status of begin."""
-
-    ACTION_DONE = 'F'
-    """The action status of done."""
-
-    ACTION_DOING = 'M'
-    """The action status of doing."""
-
-    ACTION_THROWN_OUT = 'T'
-    """The action status of thrown out."""
-
-    ACTION_NOT_DONE = 'P'
-    """The action status of not done."""
-
-    ACTION_RETRY = 'R'
-    """The action status of retry."""
-
-    ACTION_SKIPPED = 'S'
-    """The action status of skipped."""
-
-    ACTION_ERROR = 'E'
-    """The action status of error."""
-
-    ACTION_CANCELED = 'C'
-    """The action status of canceled."""
-
-    descriptions = dict([
-        (ACTION_BEGIN,
-         _('action_begin')),
-        (ACTION_DONE,
-         _('action_done')),
-        (ACTION_DOING,
-         _('action_doing')),
-        (ACTION_THROWN_OUT,
-         _('action_thrown_out')),
-        (ACTION_NOT_DONE,
-         _('action_not_done')),
-        (ACTION_RETRY,
-         _('action_retry')),
-        (ACTION_SKIPPED,
-         _('action_skipped')),
-        (ACTION_ERROR,
-         _('action_error')),
-        (ACTION_CANCELED,
-         _('action_canceled')),
-    ])
-    """Policies descriptions."""
-
-    @classmethod
-    def describe(cls, policy):
-        """
-        Policy description.
-
-        :param policy:
-        """
-        if cls.validate(policy):
-            return cls.descriptions[policy]
-
-    @classmethod
-    def validate(cls, policy):
-        """
-        Validate subscription policy value.
-
-        :param policy:
-        """
-        return policy in [cls.ACTION_BEGIN, cls.ACTION_DONE,
-                          cls.ACTION_DOING, cls.ACTION_THROWN_OUT,
-                          cls.ACTION_NOT_DONE, cls.ACTION_RETRY,
-                          cls.ACTION_SKIPPED, cls.ACTION_ERROR,
-                          cls.ACTION_CANCELED]
-
-
-class ActivityStatusPolicy(object):
-    """Activity status policies."""
-
-    ACTIVITY_BEGIN = 'B'
-    """The activity status of active."""
-
-    ACTIVITY_FINALLY = 'F'
-    """The activity status of completed."""
-
-    ACTIVITY_FORCE_END = 'P'
-    """The activity status of stop."""
-
-    ACTIVITY_CANCEL = 'C'
-    """The activity status of cancel."""
-
-    ACTIVITY_MAKING = 'M'
-    """The activity status of doing."""
-
-    ACTIVITY_ERROR = 'E'
-    """The activity status of error."""
-
-    descriptions = dict([
-        (ACTIVITY_BEGIN,
-         _('activity_active')),
-        (ACTIVITY_FINALLY,
-         _('activity_completed')),
-        (ACTIVITY_FORCE_END,
-         _('activity_stopped')),
-        (ACTIVITY_CANCEL,
-         _('activity_canceled')),
-        (ACTIVITY_MAKING,
-         _('activity_doing')),
-        (ACTIVITY_ERROR,
-         _('activity_error')),
-    ])
-    """Policies descriptions."""
-
-    @classmethod
-    def describe(cls, policy):
-        """
-        Policy description.
-
-        :param policy:
-        """
-        if cls.validate(policy):
-            return cls.descriptions[policy]
-
-    @classmethod
-    def validate(cls, policy):
-        """
-        Validate subscription policy value.
-
-        :param policy:
-        """
-        return policy in [cls.ACTIVITY_BEGIN, cls.ACTIVITY_FINALLY,
-                          cls.ACTIVITY_FORCE_END, cls.ACTIVITY_CANCEL,
-                          cls.ACTIVITY_MAKING, cls.ACTIVITY_ERROR]
-
-
-class FlowStatusPolicy(object):
-    """Workflow status policies."""
-
-    AVAILABLE = 'A'
-    """Flow is availabled."""
-
-    INUSE = 'U'
-    """Flow has be used."""
-
-    MAKING = 'M'
-    """Flow is making."""
-
-    descriptions = dict([
-        (AVAILABLE,
-         _('Available')),
-        (INUSE,
-         _('In use')),
-        (MAKING,
-         _('Making')),
-    ])
-    """Policies descriptions."""
-
-    @classmethod
-    def describe(cls, policy):
-        """
-        Policy description.
-
-        :param policy:
-        """
-        if cls.validate(policy):
-            return cls.descriptions[policy]
-
-    @classmethod
-    def validate(cls, policy):
-        """
-        Validate subscription policy value.
-
-        :param policy:
-        """
-        return policy in [cls.AVAILABLE, cls.INUSE, cls.MAKING]
-
-
-class StatusPolicy(object):
-    """Workflow status policies."""
-
-    NEW = 'N'
-    """Record has be created."""
-
-    UPT = 'U'
-    """Record has be updated."""
-
-    DEL = 'D'
-    """Record has be deleted(logic)."""
-
-    descriptions = dict([
-        (NEW,
-         _('Created')),
-        (UPT,
-         _('Updated')),
-        (DEL,
-         _('Deleted')),
-    ])
-    """Policies descriptions."""
-
-    @classmethod
-    def describe(cls, policy):
-        """
-        Policy description.
-
-        :param policy:
-        """
-        if cls.validate(policy):
-            return cls.descriptions[policy]
-
-    @classmethod
-    def validate(cls, policy):
-        """
-        Validate subscription policy value.
-
-        :param policy:
-        """
-        return policy in [cls.NEW, cls.UPT, cls.DEL]
-
-
-class AvailableStautsPolicy(object):
-    """availabled status policies."""
-
-    USABLE = 'A'
-    """usable."""
-
-    UNUSABLE = 'N'
-    """unusable."""
-
-    descriptions = dict([
-        (USABLE,
-         _('Usable')),
-        (UNUSABLE,
-         _('Unusable')),
-    ])
-    """Policies descriptions."""
-
-    @classmethod
-    def describe(cls, policy):
-        """
-        Policy description.
-
-        :param policy:
-        """
-        if cls.validate(policy):
-            return cls.descriptions[policy]
-
-    @classmethod
-    def validate(cls, policy):
-        """
-        Validate subscription policy value.
-
-        :param policy:
-        """
-        return policy in [cls.USABLE, cls.UNUSABLE]
-
-
-class ActionCommentPolicy(object):
-    """action comment policies."""
-
-    BEGIN_ACTION_COMMENT = 'Begin Action'
-    """usable."""
-
-    FINALLY_ACTION_COMMENT = 'End Action'
-    """unusable."""
-
-    descriptions = dict([
-        (BEGIN_ACTION_COMMENT,
-         _('Begin Action')),
-        (FINALLY_ACTION_COMMENT,
-         _('End Action')),
-    ])
-    """Policies descriptions."""
-
-    @classmethod
-    def describe(cls, policy):
-        """
-        Policy description.
-
-        :param policy:
-        """
-        if cls.validate(policy):
-            return cls.descriptions[policy]
-        return policy
-
-    @classmethod
-    def validate(cls, policy):
-        """
-        Validate subscription policy value.
-
-        :param policy:
-        """
-        return policy in [cls.BEGIN_ACTION_COMMENT, cls.FINALLY_ACTION_COMMENT]
-
-
-class TimestampMixin(object):
-    """Timestamp model mix-in with fractional seconds support.
-
-    SQLAlchemy-Utils timestamp model does not have support for
-    fractional seconds.
-    """
-
-    STATUSPOLICY = [
-        (StatusPolicy.NEW, _('Record has be created.')),
-        (StatusPolicy.UPT, _('Record has be updated.')),
-        (StatusPolicy.DEL, _('Record has be deleted.')),
-    ]
-    """Status policy choices."""
-
-    status = db.Column(
-        ChoiceType(STATUSPOLICY, impl=db.String(1)), nullable=False,
-        default=StatusPolicy.NEW,
-        info=dict(
-            label=_('Status Policy'),
-            widget=RadioGroupWidget(StatusPolicy.descriptions),
-        )
-    )
-    """Policy for status to db record."""
-
-    created = db.Column(db.DateTime, nullable=False, default=datetime.now)
-    """Creation timestamp."""
-
-    updated = db.Column(db.DateTime, nullable=False, default=datetime.now,
-                        onupdate=datetime.now)
-    """Updated timestamp."""
+# class ActionStatusPolicy(object):
+#     """Action status policies."""
+
+#     ACTION_BEGIN = 'B'
+#     """The action status of begin."""
+
+#     ACTION_DONE = 'F'
+#     """The action status of done."""
+
+#     ACTION_DOING = 'M'
+#     """The action status of doing."""
+
+#     ACTION_THROWN_OUT = 'T'
+#     """The action status of thrown out."""
+
+#     ACTION_NOT_DONE = 'P'
+#     """The action status of not done."""
+
+#     ACTION_RETRY = 'R'
+#     """The action status of retry."""
+
+#     ACTION_SKIPPED = 'S'
+#     """The action status of skipped."""
+
+#     ACTION_ERROR = 'E'
+#     """The action status of error."""
+
+#     ACTION_CANCELED = 'C'
+#     """The action status of canceled."""
+
+#     descriptions = dict([
+#         (ACTION_BEGIN,
+#          _('action_begin')),
+#         (ACTION_DONE,
+#          _('action_done')),
+#         (ACTION_DOING,
+#          _('action_doing')),
+#         (ACTION_THROWN_OUT,
+#          _('action_thrown_out')),
+#         (ACTION_NOT_DONE,
+#          _('action_not_done')),
+#         (ACTION_RETRY,
+#          _('action_retry')),
+#         (ACTION_SKIPPED,
+#          _('action_skipped')),
+#         (ACTION_ERROR,
+#          _('action_error')),
+#         (ACTION_CANCELED,
+#          _('action_canceled')),
+#     ])
+#     """Policies descriptions."""
+
+#     @classmethod
+#     def describe(cls, policy):
+#         """
+#         Policy description.
+
+#         :param policy:
+#         """
+#         if cls.validate(policy):
+#             return cls.descriptions[policy]
+
+#     @classmethod
+#     def validate(cls, policy):
+#         """
+#         Validate subscription policy value.
+
+#         :param policy:
+#         """
+#         return policy in [cls.ACTION_BEGIN, cls.ACTION_DONE,
+#                           cls.ACTION_DOING, cls.ACTION_THROWN_OUT,
+#                           cls.ACTION_NOT_DONE, cls.ACTION_RETRY,
+#                           cls.ACTION_SKIPPED, cls.ACTION_ERROR,
+#                           cls.ACTION_CANCELED]
+
+
+# class ActivityStatusPolicy(object):
+#     """Activity status policies."""
+
+#     ACTIVITY_BEGIN = 'B'
+#     """The activity status of active."""
+
+#     ACTIVITY_FINALLY = 'F'
+#     """The activity status of completed."""
+
+#     ACTIVITY_FORCE_END = 'P'
+#     """The activity status of stop."""
+
+#     ACTIVITY_CANCEL = 'C'
+#     """The activity status of cancel."""
+
+#     ACTIVITY_MAKING = 'M'
+#     """The activity status of doing."""
+
+#     ACTIVITY_ERROR = 'E'
+#     """The activity status of error."""
+
+#     descriptions = dict([
+#         (ACTIVITY_BEGIN,
+#          _('activity_active')),
+#         (ACTIVITY_FINALLY,
+#          _('activity_completed')),
+#         (ACTIVITY_FORCE_END,
+#          _('activity_stopped')),
+#         (ACTIVITY_CANCEL,
+#          _('activity_canceled')),
+#         (ACTIVITY_MAKING,
+#          _('activity_doing')),
+#         (ACTIVITY_ERROR,
+#          _('activity_error')),
+#     ])
+#     """Policies descriptions."""
+
+#     @classmethod
+#     def describe(cls, policy):
+#         """
+#         Policy description.
+
+#         :param policy:
+#         """
+#         if cls.validate(policy):
+#             return cls.descriptions[policy]
+
+#     @classmethod
+#     def validate(cls, policy):
+#         """
+#         Validate subscription policy value.
+
+#         :param policy:
+#         """
+#         return policy in [cls.ACTIVITY_BEGIN, cls.ACTIVITY_FINALLY,
+#                           cls.ACTIVITY_FORCE_END, cls.ACTIVITY_CANCEL,
+#                           cls.ACTIVITY_MAKING, cls.ACTIVITY_ERROR]
+
+
+# class FlowStatusPolicy(object):
+#     """Workflow status policies."""
+
+#     AVAILABLE = 'A'
+#     """Flow is availabled."""
+
+#     INUSE = 'U'
+#     """Flow has be used."""
+
+#     MAKING = 'M'
+#     """Flow is making."""
+
+#     descriptions = dict([
+#         (AVAILABLE,
+#          _('Available')),
+#         (INUSE,
+#          _('In use')),
+#         (MAKING,
+#          _('Making')),
+#     ])
+#     """Policies descriptions."""
+
+#     @classmethod
+#     def describe(cls, policy):
+#         """
+#         Policy description.
+
+#         :param policy:
+#         """
+#         if cls.validate(policy):
+#             return cls.descriptions[policy]
+
+#     @classmethod
+#     def validate(cls, policy):
+#         """
+#         Validate subscription policy value.
+
+#         :param policy:
+#         """
+#         return policy in [cls.AVAILABLE, cls.INUSE, cls.MAKING]
+
+
+# class StatusPolicy(object):
+#     """Workflow status policies."""
+
+#     NEW = 'N'
+#     """Record has be created."""
+
+#     UPT = 'U'
+#     """Record has be updated."""
+
+#     DEL = 'D'
+#     """Record has be deleted(logic)."""
+
+#     descriptions = dict([
+#         (NEW,
+#          _('Created')),
+#         (UPT,
+#          _('Updated')),
+#         (DEL,
+#          _('Deleted')),
+#     ])
+#     """Policies descriptions."""
+
+#     @classmethod
+#     def describe(cls, policy):
+#         """
+#         Policy description.
+
+#         :param policy:
+#         """
+#         if cls.validate(policy):
+#             return cls.descriptions[policy]
+
+#     @classmethod
+#     def validate(cls, policy):
+#         """
+#         Validate subscription policy value.
+
+#         :param policy:
+#         """
+#         return policy in [cls.NEW, cls.UPT, cls.DEL]
+
+
+# class AvailableStautsPolicy(object):
+#     """availabled status policies."""
+
+#     USABLE = 'A'
+#     """usable."""
+
+#     UNUSABLE = 'N'
+#     """unusable."""
+
+#     descriptions = dict([
+#         (USABLE,
+#          _('Usable')),
+#         (UNUSABLE,
+#          _('Unusable')),
+#     ])
+#     """Policies descriptions."""
+
+#     @classmethod
+#     def describe(cls, policy):
+#         """
+#         Policy description.
+
+#         :param policy:
+#         """
+#         if cls.validate(policy):
+#             return cls.descriptions[policy]
+
+#     @classmethod
+#     def validate(cls, policy):
+#         """
+#         Validate subscription policy value.
+
+#         :param policy:
+#         """
+#         return policy in [cls.USABLE, cls.UNUSABLE]
+
+
+# class ActionCommentPolicy(object):
+#     """action comment policies."""
+
+#     BEGIN_ACTION_COMMENT = 'Begin Action'
+#     """usable."""
+
+#     FINALLY_ACTION_COMMENT = 'End Action'
+#     """unusable."""
+
+#     descriptions = dict([
+#         (BEGIN_ACTION_COMMENT,
+#          _('Begin Action')),
+#         (FINALLY_ACTION_COMMENT,
+#          _('End Action')),
+#     ])
+#     """Policies descriptions."""
+
+#     @classmethod
+#     def describe(cls, policy):
+#         """
+#         Policy description.
+
+#         :param policy:
+#         """
+#         if cls.validate(policy):
+#             return cls.descriptions[policy]
+#         return policy
+
+#     @classmethod
+#     def validate(cls, policy):
+#         """
+#         Validate subscription policy value.
+
+#         :param policy:
+#         """
+#         return policy in [cls.BEGIN_ACTION_COMMENT, cls.FINALLY_ACTION_COMMENT]
+
+
+# class TimestampMixin(object):
+#     """Timestamp model mix-in with fractional seconds support.
+
+#     SQLAlchemy-Utils timestamp model does not have support for
+#     fractional seconds.
+#     """
+
+#     STATUSPOLICY = [
+#         (StatusPolicy.NEW, _('Record has be created.')),
+#         (StatusPolicy.UPT, _('Record has be updated.')),
+#         (StatusPolicy.DEL, _('Record has be deleted.')),
+#     ]
+#     """Status policy choices."""
+
+#     status = db.Column(
+#         ChoiceType(STATUSPOLICY, impl=db.String(1)), nullable=False,
+#         default=StatusPolicy.NEW,
+#         info=dict(
+#             label=_('Status Policy'),
+#             widget=RadioGroupWidget(StatusPolicy.descriptions),
+#         )
+#     )
+#     """Policy for status to db record."""
+
+#     created = db.Column(db.DateTime, nullable=False, default=datetime.now)
+#     """Creation timestamp."""
+
+#     updated = db.Column(db.DateTime, nullable=False, default=datetime.now,
+#                         onupdate=datetime.now)
+#     """Updated timestamp."""
 
 
 # class ActionStatus(db.Model, TimestampMixin):
@@ -670,7 +670,7 @@ class TimestampMixin(object):
 #         Location,
 #         backref=db.backref('workflow', lazy='dynamic')
 #     )
-    
+
 #     is_gakuninrdm = db.Column(db.Boolean(name='is_gakuninrdm'), nullable=False, default=False)
 #     """GakuninRDM flag."""
 

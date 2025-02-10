@@ -32,56 +32,12 @@ from datetime import datetime
 from functools import wraps
 from typing import List
 
-import redis
-from redis import sentinel
-from marshmallow.exceptions import ValidationError
-
 from flask import Response, Blueprint, abort, current_app, has_request_context, \
     jsonify, make_response, render_template, request, session, url_for, send_file
 from flask_babelex import gettext as _
-from flask_login import current_user, login_required
-from weko_admin.api import validate_csrf_header
-from flask_wtf import FlaskForm
-from invenio_accounts.models import Role, User, userrole
-from invenio_db import db
-from invenio_files_rest.utils import remove_file_cancel_action
-from invenio_oauth2server import require_api_auth, require_oauth_scopes
-from invenio_pidrelations.contrib.versioning import PIDVersioning
-from invenio_pidrelations.models import PIDRelation
-from invenio_pidstore.errors import PIDDoesNotExistError,PIDDeletedError
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-from invenio_rest import ContentNegotiatedMethodView
-from simplekv.memory.redisstore import RedisStore
-from sqlalchemy import types,or_
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.sql.expression import cast
-from weko_redis import RedisConnection
-from weko_accounts.api import ShibUser
-from weko_accounts.utils import login_required_customize
-from weko_authors.models import Authors
-from weko_deposit.api import WekoDeposit, WekoRecord
-from weko_deposit.links import base_factory
-from weko_deposit.pidstore import get_record_identifier, \
-    get_record_without_version
-from weko_deposit.signals import item_created
-from weko_records.api import FeedbackMailList, ItemLink
-from weko_records.models import ItemMetadata
-from weko_records.serializers.utils import get_item_type_name
-from weko_user_profiles.config import \
-    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
-    WEKO_USERPROFILES_POSITION_LIST
-from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
-    IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
-from .errors import ActivityBaseRESTError, ActivityNotFoundRESTError, \
-    DeleteActivityFailedRESTError, InvalidInputRESTError, \
-    RegisteredActivityNotFoundRESTError
-
-from .romeo import search_romeo_issn, search_romeo_jtitles
-from .scopes import activity_scope
-
-# =============本物=================
-from flask_menu import register_menu
 from flask_breadcrumbs import register_breadcrumb
+from flask_login import current_user, login_required
+from flask_menu import current_menu
 
 
 workspace_blueprint = Blueprint(
@@ -92,11 +48,13 @@ workspace_blueprint = Blueprint(
     url_prefix='/workspace'
 )
 
-@workspace_blueprint.route('/getworkspaceitemlist')
+
+# 2.1. アイテム一覧情報取得API
+@workspace_blueprint.route('/')
 @login_required
 # @register_menu(
 #     workspace_blueprint, 'settings.Workspace',
-#     _('%(icon)s Workspace', icon='<i class="fa fa-list-alt" aria-hidden="true" style="margin-right: 8px;"></i>'),
+#     _('%(icon)sWorkspace', icon='<i class="fa fa-list-alt" aria-hidden="true" style="margin-right: 8px;"></i>'),
 #     order=20)
 # @register_breadcrumb(workspace_blueprint, 'breadcrumbs.settings.Workspace', _('Workspace'))
 def get_workspace_itemlist():
@@ -106,9 +64,17 @@ def get_workspace_itemlist():
         'weko_workspace/workspace_base.html'
     )
 
-
-@workspace_blueprint.route('/updateworkspacestatusmanagement')
+# 2.2. お気に入り既読未読ステータス更新API
+@workspace_blueprint.route('/updateStatus')
 @login_required
 def update_workspace_status_management(statusTyp):
-
         return None
+
+
+# 2.1. デフォルト絞込み条件更新API
+@workspace_blueprint.route('/updateDefaultConditon')
+@login_required
+def update_workspace_default_conditon(buttonTyp,default_con):
+        return None
+
+

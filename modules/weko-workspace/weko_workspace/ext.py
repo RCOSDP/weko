@@ -20,11 +20,8 @@
 
 """Flask extension for weko-workspace."""
 
-from weko_deposit.signals import item_created
-
 from . import config
 from .views import workspace_blueprint
-
 
 class WekoWorkspace(object):
     """weko-workspace extension."""
@@ -52,11 +49,11 @@ class WekoWorkspace(object):
         :param app: The Flask application.
         """
         # Use theme's base template if theme is installed
-        if 'BASE_EDIT_TEMPLATE' in app.config:
-            app.config.setdefault(
-                'WEKO_WORKSPACE_BASE_TEMPLATE',
-                app.config['BASE_PAGE_TEMPLATE'],
-            )
-        for k in dir(config):
-            if k.startswith('WEKO_WORKSPACE_'):
-                app.config.setdefault(k, getattr(config, k))
+        # if 'BASE_EDIT_TEMPLATE' in app.config:
+        #     app.config.setdefault(
+        #         'WEKO_WORKSPACE_BASE_TEMPLATE',
+        #         app.config['BASE_PAGE_TEMPLATE'],
+        #     )
+        # for k in dir(config):
+        #     if k.startswith('WEKO_WORKSPACE_'):
+        #         app.config.setdefault(k, getattr(config, k))

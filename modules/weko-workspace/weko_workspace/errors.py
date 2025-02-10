@@ -23,40 +23,40 @@
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
 """Index errors."""
-from flask_babelex import gettext as _
-from invenio_rest.errors import RESTException
+# from flask_babelex import gettext as _
+# from invenio_rest.errors import RESTException
 
 
-class ActivityBaseRESTError(RESTException):
-    """Invalid argument."""
+# class ActivityBaseRESTError(RESTException):
+#     """Invalid argument."""
 
-    code = 400
-    description = _('Invalid ID supplied.')
-
-
-class InvalidInputRESTError(RESTException):
-    """Invalid request body."""
-
-    code = 405
-    description = _('Invalid input.')
+#     code = 400
+#     description = _('Invalid ID supplied.')
 
 
-class ActivityNotFoundRESTError(RESTException):
-    """Can't get Activity detail by ID."""
+# class InvalidInputRESTError(RESTException):
+#     """Invalid request body."""
 
-    code = 404
-    description = _('指定されたIDによる登録アクティビティが存在しない。')
-
-
-class RegisteredActivityNotFoundRESTError(RESTException):
-    """Can't get Registered Activity by ID."""
-
-    code = 404
-    description = _('登録アクティビティが見つからない。')
+#     code = 405
+#     description = _('Invalid input.')
 
 
-class DeleteActivityFailedRESTError(RESTException):
-    """Can't finish Delete Activity process."""
+# class ActivityNotFoundRESTError(RESTException):
+#     """Can't get Activity detail by ID."""
 
-    code = 404
-    description = _('登録アクティビティを削除エラー。')
+#     code = 404
+#     description = _('指定されたIDによる登録アクティビティが存在しない。')
+
+
+# class RegisteredActivityNotFoundRESTError(RESTException):
+#     """Can't get Registered Activity by ID."""
+
+#     code = 404
+#     description = _('登録アクティビティが見つからない。')
+
+
+# class DeleteActivityFailedRESTError(RESTException):
+#     """Can't finish Delete Activity process."""
+
+#     code = 404
+#     description = _('登録アクティビティを削除エラー。')

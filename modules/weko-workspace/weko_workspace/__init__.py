@@ -20,9 +20,7 @@
 
 """Module of weko-workspace."""
 
-# from .ext import WekoWorkflow
 from .ext import WekoWorkspace
 from .version import __version__
 
-# __all__ = ('__version__', 'WekoWorkflow')
 __all__ = ('__version__', 'WekoWorkspace')

@@ -54,9 +54,25 @@ setup_requires = [
     'pytest-runner>=3.0.0,<5',
 ]
 
+# install_requires = [
+#     'Flask>=0.11.1',
+#     'Flask-BabelEx>=0.9.2',
+# ]
+
+# weko groupsを参照して以下のように修正した。
 install_requires = [
-    'Flask>=0.11.1',
     'Flask-BabelEx>=0.9.2',
+    'Flask-Menu>=0.4.0',
+    'Flask-Breadcrumbs>=0.3.0',
+    'Flask-Security>=1.7.5',
+    'Flask-WTF>=0.13',
+    'Flask>=0.11.1',
+    'invenio-accounts>=1.0.0a15',
+    'invenio-admin>=1.0.0b4',
+    'invenio-assets>=1.0.0b1',
+    'invenio-db>=1.0.0b8',
+    'WTForms>=2.1.0',
+    'WTForms-Alchemy>=0.15.0',
 ]
 
 packages = find_packages()

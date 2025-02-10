@@ -38,8 +38,8 @@
 {%- else %}
 <div class="navbar-form navbar-right navbar-form2">
 {%- if config.USERPROFILES %}
-  <!-- <div class="btn-group"> -->
-  <div class="btn-group open">
+  <div class="btn-group">
+  <!-- <div class="btn-group open"> -->
     <a class="btn btn-default btn-primary bg-transparent" href="{{ url_for('weko_user_profiles.profile')}}">
       <input id="current_user_email" type="hidden" value="{{current_user.email}}"/>
       <i class="fa fa-user"></i> {{current_user.email}}
