@@ -168,6 +168,7 @@ def test_export_acl_guest(client, records):
         # (7, 302),
     ],
 )
+@pytest.mark.timeout(60)
 def test_export_acl(client, records, users, id, status_code):
     login_user_via_session(client=client, email=users[id]["email"])
     url = url_for(

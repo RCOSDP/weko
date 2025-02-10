@@ -473,10 +473,11 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
             elif action and 'browsing' in action and comm_id is None:
                 if more_id_list is None:
                     tree = self.record_class.get_browsing_tree()
+                    
                 else:
                     tree = self.record_class.get_more_browsing_tree(
                         more_ids=more_ids)
-
+            
             elif action and 'browsing' in action and comm_id is not None:
                 comm = Community.get(comm_id)
 
@@ -492,6 +493,7 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
             else:
                 tree = []
                 role_ids = []
+                
                 if current_user and current_user.is_authenticated:
                     for role in current_user.roles:
                         if role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
@@ -515,6 +517,7 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                             if index_id not in check_list:
                                 tree += self.record_class.get_index_tree(index_id)
                                 check_list.append(index_id)
+            
             return make_response(jsonify(tree), 200)
         except Exception as ex:
             current_app.logger.error('IndexTree Action Exception: ', ex)
