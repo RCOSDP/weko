@@ -167,24 +167,16 @@ class JsonLdMapper(JsonMapper):
         elif "https://w3id.org/ro/crate/1.1/context" in context:
             # check structure of RO-Crate json-ld
             format = "ro-crate"
-            error = True
             if "@graph" not in json_ld or not isinstance(json_ld.get("@graph"), list):
                 msg = 'Invalid json-ld format: "@graph" is not found.'
                 raise ValueError(msg)
             # transform list which contains @id to dict in @graph
             for v in json_ld.get("@graph"):
-                if v.get("@id") == current_app.config["WEKO_SWORDSERVER_METADATA_FILE_ROCRATE"]:
-                    continue
                 if isinstance(v, dict) and "@id" in v:
                     metadata.update({v["@id"]: v})
-                    if v.get("@id") == "./":
-                        error = False
                 else:
                     msg = "Invalid json-ld format: Objects without “@id” are directly under “@graph"
                     raise ValueError(msg)
-            if error:
-                msg = "Invalid json-ld format: Detaset root (./) is not found."
-                raise ValueError(msg)
         else:
             msg = 'Invalid json-ld format: "@context" is not found.'
             raise ValueError(msg)
@@ -227,7 +219,14 @@ class JsonLdMapper(JsonMapper):
                 processed_metadata[key_name] = value
 
         # Get the root of the metadata tree structure
-        for key, value in metadata.get("./").items():
+        root = metadata.get(
+            current_app.config["WEKO_SWORDSERVER_METADATA_FILE_ROCRATE"]
+            ).get("about").get("@id")
+        if not root in metadata:
+            msg = "Invalid json-ld format: Root object is not found."
+            raise ValueError(msg)
+
+        for key, value in metadata.get(root).items():
             _parse_metadata("", key, value)
 
         return processed_metadata, format
