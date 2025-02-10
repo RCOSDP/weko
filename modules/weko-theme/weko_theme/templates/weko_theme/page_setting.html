@@ -40,13 +40,13 @@
             {%- endblock %}
             {%- endfor %}
 
-            <!-- ###### test ####### -->
+            {#{%- if current_user.roles[0].id in [2, 3] %}#}
             <a href="{{url_for('weko_workspace.get_workspace_itemlist')}}" class="list-group-item">
-              <!-- <i class="fa fa-user" aria-hidden="true" style="margin-right: 10px;"></i> -->
               <i class="fa fa-list-alt" aria-hidden="true" style="margin-right: 8px;"></i>
               Workspace
             </a>
-            <!-- ###### test ####### -->
+            {#{%- endif %}#}
+
             </ul>
           </div>
         </div>

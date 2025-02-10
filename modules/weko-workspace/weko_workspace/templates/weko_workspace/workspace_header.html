@@ -50,6 +50,7 @@
               {%- if config.I18N_LANGUAGES %}
                 {% from "weko_theme/macros/language_selector.html" import language_selector_dropdown %}
                 {{ language_selector_dropdown() }}
+                workspace header
               {%- endif %}
             </div>
           {%- endblock navbar_header %}

@@ -31,7 +31,7 @@
     {% assets "weko_admin_quill_css" %}
     <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
     {%- endblock css %}
-  
+
     <head>
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -39,14 +39,12 @@
       <title>WEKO3</title>
     </head>
     <body>
-      <!-- <h1> workspace page header!</h1> -->
-      {% include 'weko_workspace/workspace_header.html' %}
-  
-      <!-- <h1> workspace page body!</h1> -->
-       {% include 'weko_workspace/workspace_body_contents.html' %} 
-  
-      <!-- <h1> workspace page footer!</h1> -->
-      {% include 'weko_workspace/workspace_footer.html' %}
+
+      {% include 'weko_theme/header.html' %}
+
+      {% include 'weko_workspace/workspace_body_contents.html' %}
+
+      {% include 'weko_theme/footer.html' %}
+
     </body>
   </html>
-  
