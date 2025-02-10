@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-records-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-02-06 17:25+0900\n"
+"POT-Creation-Date: 2025-02-10 15:07+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -204,22 +204,6 @@ msgstr ""
 
 #: weko_records_ui/views.py:779
 msgid "."
-msgstr ""
-
-#: weko_records_ui/views.py:812
-msgid "The secret URL copied to your clipboard."
-msgstr ""
-
-#: weko_records_ui/views.py:845
-msgid "The onetime URL copied to your clipboard."
-msgstr ""
-
-#: weko_records_ui/views.py:880
-msgid "The secret URL has been successfully deleted."
-msgstr ""
-
-#: weko_records_ui/views.py:915
-msgid "The one-time URL has been successfully deleted."
 msgstr ""
 
 #: weko_records_ui/views.py:1008

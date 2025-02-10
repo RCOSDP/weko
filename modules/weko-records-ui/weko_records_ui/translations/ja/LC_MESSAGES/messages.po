@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-records-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-02-06 17:25+0900\n"
+"POT-Creation-Date: 2025-02-10 15:07+0900\n"
 "PO-Revision-Date: 2021-02-02 03:25+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -209,22 +209,6 @@ msgstr "が、メール送信エラーが発生しました。ページを更新
 #: weko_records_ui/views.py:779
 msgid "."
 msgstr "。"
-
-#: weko_records_ui/views.py:812
-msgid "The secret URL copied to your clipboard."
-msgstr "シークレットURLをコピーしました。"
-
-#: weko_records_ui/views.py:845
-msgid "The onetime URL copied to your clipboard."
-msgstr "ワンタイムURLをコピーしました。"
-
-#: weko_records_ui/views.py:880
-msgid "The secret URL has been successfully deleted."
-msgstr "シークレットURLは正常に削除されました。"
-
-#: weko_records_ui/views.py:915
-msgid "The one-time URL has been successfully deleted."
-msgstr "ワンタイムURLは正常に削除されました。"
 
 #: weko_records_ui/views.py:1008
 msgid "PDF cover page settings have been updated."
