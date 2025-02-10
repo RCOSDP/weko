@@ -809,7 +809,7 @@ def copy_secret_url(pid, record, **kwargs):
         abort(500)
 
     return jsonify({'url': url,
-                    'message': _('The secret URL copied to your clipboard.')})
+                    'message': 'The secret URL copied to your clipboard.'})
 
 
 def copy_onetime_url(pid, record, **kwargs):
@@ -842,7 +842,7 @@ def copy_onetime_url(pid, record, **kwargs):
         abort(500)
 
     return jsonify({'url': url,
-                    'message': _('The onetime URL copied to your clipboard.')})
+                    'message': 'The onetime URL copied to your clipboard.'})
 
 
 def delete_secret_url(pid, record, **kwargs):
@@ -877,7 +877,7 @@ def delete_secret_url(pid, record, **kwargs):
         abort(500)
 
     return jsonify(
-        {'message': _('The secret URL has been successfully deleted.')})
+        {'message': 'The secret URL has been successfully deleted.'})
 
 
 def delete_onetime_url(pid, record, **kwargs):
@@ -912,7 +912,7 @@ def delete_onetime_url(pid, record, **kwargs):
         abort(500)
 
     return jsonify(
-        {'message': _('The one-time URL has been successfully deleted.')})
+        {'message': 'The one-time URL has been successfully deleted.'})
 
 
 @blueprint.route('/r/<parent_pid_value>', methods=['GET'])
