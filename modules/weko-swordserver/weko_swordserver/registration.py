@@ -261,17 +261,21 @@ def check_bagit_import_items(file, packaging):
         })
 
     except Exception as ex:
-        current_app.logger.error("An error occurred while checking the file.")
-        traceback.print_exc()
+        msg = ""
         if (
             ex.args
             and len(ex.args)
             and isinstance(ex.args[0], dict)
             and ex.args[0].get("error_msg")
         ):
-            check_result.update({"error": ex.args[0].get("error_msg")})
+            msg = ex.args[0].get("error_msg")
+            check_result.update({"error": msg})
         else:
+            msg = str(ex)
             check_result.update({"error": str(ex)})
+        current_app.logger.error(
+            f"Check items error: {msg}")
+        traceback.print_exc()
 
     return check_result
 
