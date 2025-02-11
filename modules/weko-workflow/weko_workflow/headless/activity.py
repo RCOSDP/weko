@@ -339,7 +339,6 @@ class HeadlessActivity(WorkActivity):
 
     def _upload_files(self, files=[]):
         """upload files."""
-        RecordIndexer().index(self._deposit)
         bucket = Bucket.query.get(self._deposit["_buckets"]["deposit"])
         files_info = []
 
