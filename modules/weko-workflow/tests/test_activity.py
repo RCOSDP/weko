@@ -120,6 +120,9 @@ class TestHeadlessActivity:
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_activity.py::TestHeadlessActivity::test_auto -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     # def auto(self, **params):
     def test_auto(self, app, workflow, mocker):
+        original_detail = HeadlessActivity.detail
+        original_current_action = HeadlessActivity.current_action
+
         detail = "http://test_server.localdomain/workflow/activity/detail/A-TEST-00001"
         actions = ["item_login"] * 2 + ["item_link"] * 3 + ["identifier_grant"] * 4 + ["end_action"] * 2
 
@@ -227,6 +230,9 @@ class TestHeadlessActivity:
         assert mock_identifier_grant.call_count == 0
         assert mock_oa_policy.call_count == 0
         assert mock_end.call_count == 1
+
+        type(activity).detail = original_detail
+        type(activity).current_action = original_current_action
 
     def test__input_metadata(self):
         pass
