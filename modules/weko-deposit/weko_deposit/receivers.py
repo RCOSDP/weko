@@ -67,10 +67,10 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
     except NoResultFound:
         current_app.logger.error('Indexing error: record does not exists: {0}'.format(
             record.id))
-        raise NoResultFound
+        raise
     except PIDDoesNotExistError:
         current_app.logger.error('Indexing error: pid does not exists: {0}'.format(
             record.id))
     except Exception:
         import traceback
-        current_app.logger.error(traceback.print_exc())
+        traceback.print_exc()

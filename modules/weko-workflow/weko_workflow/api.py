@@ -356,11 +356,11 @@ class Flow(object):
                 flow_id=flow_id,
                 action_id=action_id).all()
             return flow_action
-    
+
     def get_flow_action_list(self, flow_define_id :int) -> List[_FlowAction]:
-        """ get workflow_flow_action from workflow_workflow.flow_id 
+        """ get workflow_flow_action from workflow_workflow.flow_id
             Args:
-                flow_define_id : int  workflow_workflow.flow_id 
+                flow_define_id : int  workflow_workflow.flow_id
             Eeturns:
                 record list of workflow_flow_action
         """
@@ -713,20 +713,20 @@ class WorkActivity(object):
                                 get_item_type_name(activity.get('itemtype_id'))
                             if item_type_name in application_item_types:
                                 action_has_term_of_use = True
-            extra_info = dict()
+            extra_info = {}
             # Get extra info
-            if activity.get('extra_info'):
+            if 'extra_info' in activity:
                 extra_info = activity["extra_info"]
             # Get related title.
-            if activity.get('related_title'):
+            if 'related_title' in activity:
                 extra_info["related_title"] = urllib.parse.unquote(
                     activity["related_title"])
             # Get confirm term of use.
             if activity.get('activity_confirm_term_of_use') is True:
                 activity_confirm_term_of_use = True
             else:
-                activity_confirm_term_of_use = False if\
-                    action_has_term_of_use else True
+                activity_confirm_term_of_use = (
+                    False if action_has_term_of_use else True)
 
             # Get created user
             if activity.get("activity_login_user") is not None:
@@ -758,7 +758,7 @@ class WorkActivity(object):
             db.session.add(db_activity)
             db.session.commit()
         except BaseException as ex:
-            raise ex
+            raise
         else:
             try:
                 # Update the activity with calculated activity_id
@@ -803,7 +803,7 @@ class WorkActivity(object):
                         db.session.add(db_activity_action)
 
             except BaseException as ex:
-                raise ex
+                raise
             else:
                 return db_activity
 
@@ -821,9 +821,9 @@ class WorkActivity(object):
 
             # Calculate activity_id based on id
             utc_now = datetime.utcnow()
-            current_date = utc_now.strftime("%Y-%m-%d")       
+            current_date = utc_now.strftime("%Y-%m-%d")
             today_count = ActivityCount.query.filter_by(date=current_date).one_or_none()
-            # Cannot use '.with_for_update()'. FOR UPDATE is not allowed 
+            # Cannot use '.with_for_update()'. FOR UPDATE is not allowed
             # with aggregate functions
 
             if today_count:
@@ -832,7 +832,7 @@ class WorkActivity(object):
                 if number > current_app.config['WEKO_WORKFLOW_MAX_ACTIVITY_ID']:
                     raise IndexError('The number is out of range \
                         (maximum is {}, current is {}'.format(current_app.config['WEKO_WORKFLOW_MAX_ACTIVITY_ID'],number))
-                today_count.activity_count = number          
+                today_count.activity_count = number
             else:
                 # The default activity Id of the current day
                 _activty_count = ActivityCount(date=current_date, activity_count=number)
@@ -844,7 +844,7 @@ class WorkActivity(object):
         except SQLAlchemyError as ex:
             raise ex
         except IndexError as ex:
-            raise ex          
+            raise ex
 
         # Activity Id's format
         activity_id_format = current_app.\
@@ -1521,13 +1521,13 @@ class WorkActivity(object):
                         ),
                         and_(
                             _Activity.shared_user_id == self_user_id,
-                            _FlowActionRole.action_user 
+                            _FlowActionRole.action_user
                             != _Activity.activity_login_user,
                             _FlowActionRole.action_user_exclude == '0'
                         ),
                         and_(
                             _Activity.shared_user_id == self_user_id,
-                            ActivityAction.action_handler 
+                            ActivityAction.action_handler
                             != _Activity.activity_login_user
                         ),
                     )
@@ -1593,7 +1593,7 @@ class WorkActivity(object):
 
         Returns:
             _type_: _description_
-        """        
+        """
         is_admin = False
         is_community_admin = False
         # Super admin roles
@@ -1726,7 +1726,7 @@ class WorkActivity(object):
                     )
                 )
         return common_query
-    
+
     @staticmethod
     def _check_community_permission(activity_data, index_ids):
         flag = False

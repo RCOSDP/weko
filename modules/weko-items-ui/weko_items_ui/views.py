@@ -120,10 +120,10 @@ def index(item_type_id=0):
             content:
                 text/html
           302:
-            description: 
+            description:
           403:
             description: no item_permission
-            
+
     """
     try:
         from weko_theme.utils import get_design_layout
@@ -144,7 +144,7 @@ def index(item_type_id=0):
         json_schema = '/items/jsonschema/{}'.format(item_type_id)
         schema_form = '/items/schemaform/{}'.format(item_type_id)
         need_file, need_billing_file = is_schema_include_key(item_type.schema)
-        
+
         return render_template(
             current_app.config.get('WEKO_ITEMS_UI_FORM_TEMPLATE',WEKO_ITEMS_UI_FORM_TEMPLATE),
             page=page,
@@ -473,7 +473,7 @@ def iframe_items_index(pid_value='0'):
             workflow = WorkFlow()
             workflow_detail = workflow.get_workflow_by_id(
                 cur_activity.workflow_id)
-            
+
             if workflow_detail and workflow_detail.index_tree_id:
                 index_id = get_index_id(cur_activity.activity_id)
                 update_index_tree_for_record(pid_value, index_id)
@@ -520,9 +520,9 @@ def iframe_items_index(pid_value='0'):
             # current_app.logger.debug("session['itemlogin_histories']: {}".format(session['itemlogin_histories']))
             # current_app.logger.debug("session['itemlogin_res_check']: {}".format(session['itemlogin_res_check']))
             # current_app.logger.debug("session['itemlogin_pid']: {}".format(session['itemlogin_pid']))
-            
+
             form = FlaskForm(request.form)
-            
+
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
                 page=page,
@@ -1026,7 +1026,7 @@ def ranking():
         upd_data.statistical_period = dafault_data['statistical_period']
         upd_data.display_rank = dafault_data['display_rank']
         upd_data.rankings = dafault_data['rankings']
-        RankingSettings.update(data=upd_data) 
+        RankingSettings.update(data=upd_data)
         settings = RankingSettings.get()
 
     # get statistical period
@@ -1039,7 +1039,7 @@ def ranking():
     page, render_widgets = get_design_layout(
         current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
 
-    
+
     rankings = get_ranking(settings)
 
     x = rankings.get('most_searched_keywords')
@@ -1171,7 +1171,7 @@ def validate():
         request_data.get('data')
     )
 
-        
+
     return jsonify(result)
 
 
@@ -1305,7 +1305,7 @@ def check_record_doi(pid_value='0'):
 @blueprint_api.route('/check_record_doi_indexes/<string:pid_value>',
                      methods=['GET'])
 @login_required
-def check_record_doi_indexes(pid_value='0'):
+def check_record_doi_indexes(pid_value='0', doi='0'):
     """Check restrict DOI and Indexes.
 
     Args:
@@ -1315,8 +1315,8 @@ def check_record_doi_indexes(pid_value='0'):
         _type_: _description_
     Rises:
         invenio_pidstore.errors.PIDDoesNotExistError
-    """    
-    doi = int(request.args.get('doi', '0'))
+    """
+    doi = int(request.args.get('doi') or doi)
     record = WekoRecord.get_record_by_pid(pid_value)
     if (record.pid_doi or doi > 0) and \
             not check_index_permissions(record=record, is_check_doi=True):
