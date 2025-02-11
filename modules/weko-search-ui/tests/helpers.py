@@ -11,8 +11,8 @@ from weko_records.api import ItemsMetadata, WekoRecord
 from weko_deposit.pidstore import weko_deposit_minter
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
 from weko_deposit.api import WekoDeposit, WekoIndexer
-from invenio_search import InvenioSearch, RecordsSearch, current_search, current_search_client
-from invenio_search import current_search
+# from invenio_search import InvenioSearch, RecordsSearch, current_search, current_search_client
+# from invenio_search import cusearchrrent_
 import pytest
 from mock import patch
 from unittest.mock import MagicMock
@@ -45,12 +45,12 @@ def create_record(record_data, item_data):
             parent = PersistentIdentifier.get('parent','parent:{}'.format((str(record_data["recid"])).split('.')[0]))
             rel = PIDRelation.create(parent,recid,2,(str(record_data["recid"])).split('.')[1])
             db.session.add(rel)
-            
+
         record = WekoRecord.create(record_data, id_=rec_uuid)
         deposit = WekoDeposit(record, record.model)
 
         deposit.commit()
 
         item = ItemsMetadata.create(item_data, id_=rec_uuid)
-    
+
     return depid, recid,parent,doi,record, item

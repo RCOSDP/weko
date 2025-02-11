@@ -11,7 +11,6 @@ import xmltodict
 from flask import current_app
 
 from weko_records.api import ItemTypes
-from weko_records.serializers.utils import get_full_mapping
 
 class BaseMapper:
     """BaseMapper."""
@@ -164,7 +163,11 @@ class JsonLdMapper(JsonMapper):
             # TODO: support SWORD json-ld format
             format = "sword-bagit"
             pass
-        elif "https://w3id.org/ro/crate/1.1/context" in context:
+        elif (
+            "https://w3id.org/ro/crate/1.1/context" in context
+                or isinstance(context, dict)
+                and "https://w3id.org/ro/crate/1.1/context" in context.values()
+            ):
             # check structure of RO-Crate json-ld
             format = "ro-crate"
             if "@graph" not in json_ld or not isinstance(json_ld.get("@graph"), list):
@@ -200,6 +203,8 @@ class JsonLdMapper(JsonMapper):
         processed_metadata = {}
 
         def _parse_metadata(parent, key, value):
+            if "@type" in key:
+                return
             if isinstance(value, dict):
                 for k, v in value.items():
                     key_name = key if parent == "" else f"{parent}.{key}"
@@ -213,8 +218,6 @@ class JsonLdMapper(JsonMapper):
                     else:
                         processed_metadata[key_name] = d
             else:
-                if key == "@type":
-                    return
                 key_name = key if parent == "" else f"{parent}.{key}"
                 processed_metadata[key_name] = value
 
