@@ -47,6 +47,7 @@ class ErrorType(Enum):
 class WekoSwordserverException(Exception):
     errorType = ErrorType.ServerError
     message = ""
+    # TODO: message for user
 
     def __init__(self, message, errorType=None, **kwargs):
         """Initialize WekoSwordserverException."""
