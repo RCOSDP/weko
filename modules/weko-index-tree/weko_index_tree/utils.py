@@ -141,7 +141,7 @@ def get_tree_json(index_list, root_id):
         index_name = str(index_element.name).replace("&EMPTY&", "")
         index_name = Markup.escape(index_name)
         index_name = index_name.replace("\n", r"<br\>")
-        
+
         index_link_name = str(index_element.link_name).replace("&EMPTY&", "")
         index_link_name = index_link_name.replace("\n", r"<br\>")
 
@@ -1031,7 +1031,7 @@ def get_editing_items_in_index(index_id, recursively=False):
 
 def save_index_trees_to_redis(tree, lang=None):
     """save inde_tree to redis for roles
-    
+
     """
     def default(o):
         if hasattr(o, "isoformat"):
@@ -1043,7 +1043,7 @@ def save_index_trees_to_redis(tree, lang=None):
         lang = current_i18n.language
     try:
         v = bytes(json.dumps(tree, default=default), encoding='utf-8')
-        
+
         redis.put("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + lang,v)
     except ConnectionError:
         current_app.logger.error("Fail save index_tree to redis")
@@ -1063,6 +1063,6 @@ def str_to_datetime(str_dt, format):
         return None
 
 
-def create_limmiter():
+def create_limiter():
     from .config import WEKO_INDEX_TREE_API_LIMIT_RATE_DEFAULT
     return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_INDEX_TREE_API_LIMIT_RATE_DEFAULT)
