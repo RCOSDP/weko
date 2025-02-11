@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, PropertyMock, patch
 from flask import jsonify
 from flask_login.utils import login_user
 
+from weko_workflow.api import WorkActivity
 from weko_workflow.errors import WekoWorkflowException
 from weko_workflow.headless import HeadlessActivity
 from weko_workflow.models import Activity, ActivityAction, ActivityHistory
@@ -258,10 +259,23 @@ class TestHeadlessActivity:
             mock_get_new_activity_id.side_effect = [f"A-TEST-0000{i}" for i in range(1, 20)]
             login_user(users[1]["obj"])
             activity = HeadlessActivity()
-            activity.init_activity(users[0]["id"], workflow["workflow"].id)
+            act_data = {
+                "workflow_id": workflow["workflow"].id,
+                "flow_id": workflow["workflow"].flow_id,
+                "itemtype_id": workflow["workflow"].itemtype_id,
+                "activity_login_user": users[0]["id"],
+            }
+            activity.user = users[0]["obj"]
+            activity._model = WorkActivity().init_activity(act_data)
+            assert activity.user is not None
+            assert activity.activity_id == "A-TEST-00001"
+            assert activity.detail == "http://test_server.localdomain/workflow/activity/detail/A-TEST-00001"
+            assert activity.current_action == "item_login"
 
             activity.end()
 
             assert activity.user is None
-            assert activity.current_action == None
             assert activity._model is None
+            assert activity.activity_id == None
+            assert activity.detail == ""
+            assert activity.current_action == None
