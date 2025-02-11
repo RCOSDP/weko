@@ -29,8 +29,7 @@ from flask_limiter.util import get_remote_address
 from flask_login import current_user
 from flask_login.config import EXEMPT_METHODS
 
-
-WEKO_API_LIMIT_RATE_DEFAULT = ["100 per minute"]
+from .config import WEKO_API_LIMIT_RATE_DEFAULT
 
 limiter = Limiter(
             app=None,
