@@ -40,7 +40,7 @@ def admin_tsv_settings(workflow):
                 "register_format": "Direct"
             },
             "XML": {
-                "workflow": str(workflow.id),
+                "workflow": str(workflow[0]["workflow"].id),
                 "register_format": "Workflow"
             }
         }
@@ -56,7 +56,7 @@ def admin_xml_settings(workflow):
                 "register_format": "Direct"
             },
             "XML": {
-                "workflow": str(workflow.id),
+                "workflow": str(workflow[0]["workflow"].id),
                 "register_format": "Workflow"
             }
         }
@@ -75,55 +75,55 @@ def test_check_import_items(app, admin_tsv_settings, admin_xml_settings):
     # Case01:  default_format = TSV and import tsv
     with patch("weko_admin.admin.AdminSettings.get", return_value=admin_tsv_settings):
         with patch("weko_swordserver.registration.check_tsv_import_items", return_value=check_tsv_result):
-            check_result, register_format = check_import_items(sample_files)
+            check_result, file_format = check_import_items(sample_files)
             assert check_result == check_tsv_result
-            assert register_format == "Direct"
+            assert file_format == "TSV/CSV"
 
     # Case02: default_format = TSV but try import xml
     with patch("weko_admin.admin.AdminSettings.get", return_value=admin_tsv_settings):
         with patch("weko_swordserver.registration.check_tsv_import_items", return_value=check_tsv_error_result):
             with patch("weko_swordserver.registration.check_xml_import_items", return_value=check_xml_result):
-                check_result, register_format = check_import_items(sample_files)
+                check_result, file_format = check_import_items(sample_files)
                 assert check_result == check_xml_result
-                assert register_format == "Workflow"
+                assert file_format == "Workflow"
 
     # Case03: default_format = TSV and import error
     with patch("weko_admin.admin.AdminSettings.get", return_value=admin_tsv_settings):
         with patch("weko_swordserver.registration.check_tsv_import_items", return_value=check_tsv_error_result):
             with patch("weko_swordserver.registration.check_xml_import_items", return_value=check_xml_error_result):
-                check_result, register_format = check_import_items(sample_files)
+                check_result, file_format = check_import_items(sample_files)
                 assert check_result == check_tsv_error_result
-                assert register_format is None
+                assert file_format is None
 
     # Case04:  default_format = XML and import xml
     with patch("weko_admin.admin.AdminSettings.get", return_value=admin_xml_settings):
         with patch("weko_swordserver.registration.check_xml_import_items", return_value=check_xml_result):
-            check_result, register_format = check_import_items(sample_files)
+            check_result, file_format = check_import_items(sample_files)
             assert check_result == check_xml_result
-            assert register_format == "Workflow"
+            assert file_format == "Workflow"
 
     # Case05: default_format = XML but try import tsv
     with patch("weko_admin.admin.AdminSettings.get", return_value=admin_xml_settings):
         with patch("weko_swordserver.registration.check_xml_import_items", return_value=check_xml_error_result):
             with patch("weko_swordserver.registration.check_tsv_import_items", return_value=check_tsv_result):
-                check_result, register_format = check_import_items(sample_files)
+                check_result, file_format = check_import_items(sample_files)
                 assert check_result == check_tsv_result
-                assert register_format == "Direct"
+                assert file_format == "TSV/CSV"
 
     # Case06: default_format = XML and import error
     with patch("weko_admin.admin.AdminSettings.get", return_value=admin_xml_settings):
         with patch("weko_swordserver.registration.check_xml_import_items", return_value=check_xml_error_result):
             with patch("weko_swordserver.registration.check_tsv_import_items", return_value=check_tsv_error_result):
-                check_result, register_format = check_import_items(sample_files)
+                check_result, file_format = check_import_items(sample_files)
                 assert check_result == check_xml_error_result
-                assert register_format is None
+                assert file_format is None
 
     # Case07: default_format = <unknown>
     admin_unknown_settings = {"default_format": "anonymous"}
     with patch("weko_admin.admin.AdminSettings.get", return_value=admin_unknown_settings):
-        check_result, register_format = check_import_items(sample_files)
+        check_result, file_format = check_import_items(sample_files)
         assert check_result == {}
-        assert register_format is None
+        assert file_format is None
 
     # Case08: workflow not found (TSV)
     admin_unknown_settings = {"default_format": "anonymous"}
@@ -141,7 +141,7 @@ def test_check_import_items(app, admin_tsv_settings, admin_xml_settings):
     }):
         with patch("weko_swordserver.registration.check_tsv_import_items", return_value=check_tsv_error_result):
             with pytest.raises(WekoSwordserverException) as ex:
-                check_result, register_format = check_import_items(sample_files)
+                check_result, file_format = check_import_items(sample_files)
                 assert ex.value.errorType == ErrorType.ServerError
                 assert ex.value.message == "Workflow is not configured for importing xml."
 
@@ -160,7 +160,7 @@ def test_check_import_items(app, admin_tsv_settings, admin_xml_settings):
         }
     }):
         with pytest.raises(WekoSwordserverException) as ex:
-            check_result, register_format = check_import_items(sample_files)
+            check_result, file_format = check_import_items(sample_files)
             assert ex.errorType == ErrorType.ServerError
             assert ex.message == "Workflow is not configured for importing xml."
 
@@ -171,7 +171,7 @@ def test_check_import_items(app, admin_tsv_settings, admin_xml_settings):
         with patch("weko_swordserver.registration.check_tsv_import_items", return_value=check_tsv_error_result):
             with patch("sqlalchemy.orm.Query.get", return_value=workflow):
                 with pytest.raises(WekoSwordserverException) as ex:
-                    check_result, register_format = check_import_items(sample_files)
+                    check_result, file_format = check_import_items(sample_files)
                     assert ex.value.errorType == ErrorType.ServerError
                     assert ex.value.message == "Workflow is not configured for importing xml."
 
@@ -179,7 +179,7 @@ def test_check_import_items(app, admin_tsv_settings, admin_xml_settings):
     with patch("weko_admin.admin.AdminSettings.get", return_value=admin_xml_settings):
         with patch("sqlalchemy.orm.Query.get", return_value=workflow):
             with pytest.raises(WekoSwordserverException) as ex:
-                check_result, register_format = check_import_items(sample_files)
+                check_result, file_format = check_import_items(sample_files)
                 assert ex.value.errorType == ErrorType.ServerError
                 assert ex.value.message == "Workflow is not configured for importing xml."
 
@@ -629,7 +629,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
     sword__client = sword_client[1]["sword_client"]
-    workflow_ = workflow["workflow"]
+    workflow_ = workflow[0]["workflow"]
     original_itemtype_id = workflow_.itemtype_id
     workflow_.itemtype_id = 1
     db.session.commit()

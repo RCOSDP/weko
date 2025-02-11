@@ -68,7 +68,6 @@ def check_import_items(file, is_change_identifier: bool = False):
         check_tsv_result = check_tsv_import_items(file, is_change_identifier)
         if check_tsv_result.get("error"):
             # try xml
-            time.sleep(1)
             workflow_id = int(data_format.get("XML", {}).get("workflow", "-1"))
             workflow = WorkFlow.query.get(workflow_id)
             if not workflow or workflow.is_deleted:
@@ -80,9 +79,9 @@ def check_import_items(file, is_change_identifier: bool = False):
             if check_xml_result.get("error"):
                 return check_tsv_result, None
             else:
-                return check_xml_result, "Workflow" # data_format['XML']['register_format']
+                return check_xml_result, "XML"
         else:
-            return check_tsv_result, "Direct" # data_format['TSV']['register_format']
+            return check_tsv_result, "TSV/CSV"
     elif default_format == "XML":
         workflow_id = int(data_format.get("XML", {}).get("workflow", "-1"))
         workflow = WorkFlow.query.get(workflow_id)
@@ -94,14 +93,13 @@ def check_import_items(file, is_change_identifier: bool = False):
         )
         if check_xml_result.get("error"):
             # try tsv
-            time.sleep(1)
             check_tsv_result = check_tsv_import_items(file, is_change_identifier)
             if check_tsv_result.get("error"):
                 return check_xml_result, None
             else:
-                return check_tsv_result, "Direct" # data_format['TSV']['register_format']
+                return check_tsv_result, "TSV/CSV"
         else:
-            return check_xml_result, "Workflow" # data_format['XML']['register_format']
+            return check_xml_result, "XML"
 
     return {}, None
 

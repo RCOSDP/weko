@@ -288,14 +288,14 @@ def post_service_document():
             "action": "IMPORT"
     }
     response = {}
-    if register_format == 'Direct':
+    if file_format == "TSV/CSV" or file_format == "JSON" and register_format == "Direct":
         item["root_path"] = data_path+"/data"
         import_result = import_items_to_system(item, request_info=request_info)
         if not import_result.get('success'):
             raise WekoSwordserverException('Error in import_items_to_system: {0}'.format(item.get('error_id')), ErrorType.ServerError)
         recid = import_result.get('recid')
         response = jsonify(_get_status_document(recid))
-    elif register_format == 'Workflow':
+    elif file_format == "XML" or file_format == "JSON" and register_format == "Workflow":
         try:
             activity, recid = create_activity_from_jpcoar(check_result, data_path)
         except:

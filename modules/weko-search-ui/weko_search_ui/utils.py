@@ -600,7 +600,7 @@ def check_xml_import_items(file, item_type_id, is_gakuninrdm=False):
         tmp_prefix = current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
     else:
         tmp_prefix = "deposit_activity_"
-    tmp_dirname = tmp_prefix + datetime.utcnow().strftime(r"%Y%m%d%H%M%S")
+    tmp_dirname = tmp_prefix + datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")[:-3]
     data_path = os.path.join(tempfile.gettempdir(), tmp_dirname)
     result = {"data_path": data_path}
 
