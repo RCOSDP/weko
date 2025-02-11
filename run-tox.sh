@@ -147,10 +147,10 @@ for module_path in modules/*/; do
       echo "### skip tests for ${module_path%?} ###"
       continue
     fi
-    # if [[ ${module_path} =~ ^modules/(weko-records-ui).+$ ]]; then
-    #   echo "### skip tests for ${module_path%?} ###"
-    #   continue
-    # fi
+    if [[ ${module_path} =~ ^modules/(weko-records-ui).+$ ]]; then
+      echo "### skip tests for ${module_path%?} ###"
+      continue
+    fi
     if [[ ${module_path} =~ ^modules/weko-records/$ ]];then
       echo "### skip tests for ${module_path%?} ###"
       continue
@@ -171,10 +171,10 @@ for module_path in modules/*/; do
       echo "### skip tests for ${module_path%?} ###"
       continue
     fi
-    if [[ ${module_path} =~ ^modules/(weko-theme).+$ ]]; then
-      echo "### skip tests for ${module_path%?} ###"
-      continue
-    fi
+    # if [[ ${module_path} =~ ^modules/(weko-theme).+$ ]]; then
+    #   echo "### skip tests for ${module_path%?} ###"
+    #   continue
+    # fi
     if [[ ${module_path} =~ ^modules/(weko-user-profiles).+$ ]]; then
       echo "### skip tests for ${module_path%?} ###"
       continue

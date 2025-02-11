@@ -1,22 +1,10 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of WEKO3.
+# This file is part of Invenio.
 # Copyright (C) 2017 National Institute of Informatics.
 #
-# WEKO3 is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# WEKO3 is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with WEKO3; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 """Pytest configuration."""
 import os,sys
@@ -206,11 +194,14 @@ def base_app2(instance_path,search_class):
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
         SERVER_NAME='app2',
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+           'SQLALCHEMY_DATABASE_URI',
+           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #    'SQLALCHEMY_DATABASE_URI',
         #    'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         INDEX_IMG='indextree/36466818-image.jpg',
         INDEXER_DEFAULT_INDEX="{}-authors-author-v1.0.0".format(
