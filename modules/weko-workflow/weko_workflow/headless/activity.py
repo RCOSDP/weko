@@ -254,82 +254,86 @@ class HeadlessActivity(WorkActivity):
         self._user_lock()
         locked_value = self._activity_lock()
 
-        # TODO: metadata input assist (W-OA-06 2.2)
+        try:
+            # TODO: metadata input assist (W-OA-06 2.2)
 
-        metadata.setdefault("pubdate", datetime.now().strftime("%Y-%m-%d"))
+            metadata.setdefault("pubdate", datetime.now().strftime("%Y-%m-%d"))
 
-        # grouplist = Group.get_group_list()
-        # authors_prefix_settings = get_data_authors_prefix_settings()
-        journal = get_workflow_journal(self.activity_id)
+            # grouplist = Group.get_group_list()
+            # authors_prefix_settings = get_data_authors_prefix_settings()
+            journal = get_workflow_journal(self.activity_id)
 
-        # update feedback mail list
-        feedback_maillist = []
-        result, _ = get_feedback_maillist(self.activity_id)
-        if result.json.get("code") == 1:
-            feedback_maillist = result.json.get("data")
-        feedback_maillist.extend(metadata.pop("feedback_mail_list", []))
-        self.create_or_update_action_feedbackmail(
-            activity_id=self.activity_id,
-            action_id=self.current_action_id,
-            feedback_maillist=feedback_maillist
-        )
+            # update feedback mail list
+            feedback_maillist = []
+            result, _ = get_feedback_maillist(self.activity_id)
+            if result.json.get("code") == 1:
+                feedback_maillist = result.json.get("data")
+            feedback_maillist.extend(metadata.pop("feedback_mail_list", []))
+            self.create_or_update_action_feedbackmail(
+                activity_id=self.activity_id,
+                action_id=self.current_action_id,
+                feedback_maillist=feedback_maillist
+            )
 
-        # get value of "Title" from metadata by jpcoar_mapping
-        item_map = get_mapping(self.item_type.id, 'jpcoar_mapping', self.item_type)
-        title_value_key = "title.@value"
-        title, _ = get_data_by_property(metadata, item_map, title_value_key)
-        self.update_activity(self.activity_id, {
-            "title": title[0] if len(title) > 0 else "",
-            "shared_user_id": metadata.pop("shared_user_id", -1)
-        })
+            # get value of "Title" from metadata by jpcoar_mapping
+            item_map = get_mapping(self.item_type.id, 'jpcoar_mapping', self.item_type)
+            title_value_key = "title.@value"
+            title, _ = get_data_by_property(metadata, item_map, title_value_key)
+            self.update_activity(self.activity_id, {
+                "title": title[0] if len(title) > 0 else "",
+                "shared_user_id": metadata.pop("shared_user_id", -1)
+            })
 
-        result = {"is_valid": True}
-        validate_form_input_data(result, self.item_type.id, deepcopy(metadata))
-        if not result.get("is_valid"):
-            current_app.logger.error(f"failed to input metadata: {result.get('error')}")
-            raise WekoWorkflowException(result.get("error"))
+            result = {"is_valid": True}
+            validate_form_input_data(result, self.item_type.id, deepcopy(metadata))
+            if not result.get("is_valid"):
+                current_app.logger.error(f"failed to input metadata: {result.get('error')}")
+                raise WekoWorkflowException(result.get("error"))
 
-        if self.recid is None:
-            record_data = {}
-            record_uuid = uuid.uuid4()
-            pid = current_pidstore.minters["weko_deposit_minter"](record_uuid, data=record_data)
-            self._deposit = WekoDeposit.create(record_data, id_=record_uuid)
-            self._model.item_id = record_uuid
-            db.session.commit()
+            if self.recid is None:
+                record_data = {}
+                record_uuid = uuid.uuid4()
+                pid = current_pidstore.minters["weko_deposit_minter"](record_uuid, data=record_data)
+                self._deposit = WekoDeposit.create(record_data, id_=record_uuid)
+                self._model.item_id = record_uuid
+                db.session.commit()
 
-        else:
-            # pid = PersistentIdentifier.query.filter_by(
-            #         pid_type="recid", pid_value=self.recid
-            #     ).first()
-            # TODO: case witch pid is already assigned (self.recid is not None)
-            # self._deposit = WekoDeposit...
-            # TODO: check edit mode
-            pass
+            else:
+                # TODO: check edit mode
+                # pid = PersistentIdentifier.query.filter_by(
+                #         pid_type="recid", pid_value=self.recid
+                #     ).first()
+                # TODO: case witch pid is already assigned (self.recid is not None)
+                # self._deposit = WekoDeposit...
+                pass
 
-        metadata.update({"$schema": f"/items/jsonschema/{self.item_type.id}"})
-        index = {'index': metadata.get('path', []),
-                    'actions': metadata.get('publish_status')}
-        self._deposit.update(index, metadata)
-        self._deposit.commit()
+            metadata.update({"$schema": f"/items/jsonschema/{self.item_type.id}"})
+            index = {'index': metadata.get('path', []),
+                        'actions': metadata.get('publish_status')}
+            self._deposit.update(index, metadata)
+            self._deposit.commit()
 
-        data = {
-            "metainfo": metadata,
-            "files": [],
-            "endpoint": {
-                "initialization": f"/api/deposits/redirect/{pid}",
+            data = {
+                "metainfo": metadata,
+                "files": [],
+                "endpoint": {
+                    "initialization": f"/api/deposits/redirect/{pid}",
+                }
             }
-        }
 
-        if files is not None:
-            data["files"] = self.files_info = self._upload_files(files)
-        # TODO: update propaties of files metadata, but it is difficult to
-        # decide whitch key should be updated.
+            if files is not None:
+                data["files"] = self.files_info = self._upload_files(files)
+            # TODO: update propaties of files metadata, but it is difficult to
+            # decide whitch key should be updated.
 
-        data["endpoint"].update(base_factory(pid))
-        self.upt_activity_metadata(self.activity_id, json.dumps(data))
-
-        self._user_unlock()
-        self._activity_unlock(locked_value)
+            data["endpoint"].update(base_factory(pid))
+            self.upt_activity_metadata(self.activity_id, json.dumps(data))
+        except Exception as ex:
+            current_app.logger.error(f"failed to input metadata: {ex}")
+            raise WekoWorkflowException(f"failed to input metadata: {ex}")
+        finally:
+            self._user_unlock()
+            self._activity_unlock(locked_value)
 
         return pid.pid_value
 
@@ -416,44 +420,57 @@ class HeadlessActivity(WorkActivity):
         self._user_lock()
         locked_value = self._activity_lock()
 
-        if not isinstance(index, list):
-            index = [index]
-        for idx in index:
-            update_index_tree_for_record(self.recid, idx)
-
-        self._user_unlock()
-        self._activity_unlock(locked_value)
+        try:
+            if not isinstance(index, list):
+                index = [index]
+            for idx in index:
+                update_index_tree_for_record(self.recid, idx)
+        except Exception as ex:
+            current_app.logger.error(f"failed to designate index: {ex}")
+            raise WekoWorkflowException("failed to designate index.") from ex
+        finally:
+            self._user_unlock()
+            self._activity_unlock(locked_value)
 
     def _comment(self, comment):
         """Set Comment."""
         self._user_lock()
         locked_value = self._activity_lock()
 
-        """weko_workflow.views.next_action"""
-        result, _ = next_action(
-            self.activity_id, self.current_action_id, {"commond": comment}
-        )
+        try:
+            result, _ = next_action(
+                self.activity_id, self.current_action_id, {"commond": comment}
+            )
+        except Exception as ex:
+            current_app.logger.error(f"failed to set comment: {ex}")
+            raise WekoWorkflowException("failed to set comment.") from ex
+        finally:
+            self._user_unlock()
+            self._activity_unlock(locked_value)
+
         if result.json.get("code") != 0:
             current_app.logger.error(f"failed to set comment: {result.json.get('msg')}")
             raise WekoWorkflowException(result.json.get("msg"))
-
-        self._user_unlock()
-        self._activity_unlock(locked_value)
 
     def item_link(self, link_data=[]):
         """Action for Item Link."""
         self._user_lock()
         locked_value = self._activity_lock()
 
-        result, _ = next_action(
-            self.activity_id, self.current_action_id, {"link_data": link_data}
-        )
+        try:
+            result, _ = next_action(
+                self.activity_id, self.current_action_id, {"link_data": link_data}
+            )
+        except Exception as ex:
+            current_app.logger.error(f"failed in Item Link: {ex}")
+            raise WekoWorkflowException("failed in Item Link.") from ex
+        finally:
+            self._user_unlock()
+            self._activity_unlock(locked_value)
+
         if result.json.get("code") != 0:
             current_app.logger.error(f"failed in Item Link: {result.json.get('msg')}")
             raise WekoWorkflowException(result.json.get("msg"))
-
-        self._user_unlock()
-        self._activity_unlock(locked_value)
 
     def identifier_grant(self, grant_data):
         """Action for Identifier Grant."""
@@ -468,35 +485,50 @@ class HeadlessActivity(WorkActivity):
         grant_data.setdefault("identifier_grant_jalc_dc_doi_suffix", f"https://doi.org/{'##'}/{self.recid}")
         grant_data.setdefault("identifier_grant_ndl_jalc_doi_suffix", f"https://doi.org/{'##'}/{self.recid}")
 
-        result, _ = next_action(
-            self.activity_id, self.current_action_id, grant_data
-        )
+        try:
+            result, _ = next_action(
+                self.activity_id, self.current_action_id, grant_data
+            )
+        except Exception as ex:
+            current_app.logger.error(f"failed in Identifier Grant: {ex}")
+            raise WekoWorkflowException("failed in Identifier Grant.") from ex
+        finally:
+            self._user_unlock()
+            self._activity_unlock(locked_value)
+
         if result.json.get("code") != 0:
             current_app.logger.error(f"failed in Identifier Grant: {result.json.get('msg')}")
             raise WekoWorkflowException(result.json.get("msg"))
-
-        self._user_unlock()
-        self._activity_unlock(locked_value)
 
     def approval(self, approve, reject):
         """Action for Approval."""
         self._user_lock()
         locked_value = self._activity_lock()
 
-        # TODO:
-
-        self._user_unlock()
-        self._activity_unlock(locked_value)
+        try:
+            # TODO:
+            pass
+        except Exception as ex:
+            current_app.logger.error(f"failed in Approval: {ex}")
+            raise WekoWorkflowException("failed in Approval.") from ex
+        finally:
+            self._user_unlock()
+            self._activity_unlock(locked_value)
 
     def oa_policy(self, policy):
         """Action for OA Policy Confirmation."""
         self._user_lock()
         locked_value = self._activity_lock()
 
-        # TODO:
-
-        self._user_unlock()
-        self._activity_unlock(locked_value)
+        try:
+            # TODO:
+            pass
+        except Exception as ex:
+            current_app.logger.error(f"failed in OA Policy Confirmation: {ex}")
+            raise WekoWorkflowException("failed in OA Policy Confirmation.") from ex
+        finally:
+            self._user_unlock()
+            self._activity_unlock(locked_value)
 
     def end(self):
         """Action for End."""
@@ -507,7 +539,6 @@ class HeadlessActivity(WorkActivity):
         self._model = None
         self._deposit = None
         self._lock_skip = None
-        pass
 
     def _user_lock(self):
         """User lock."""
@@ -517,7 +548,7 @@ class HeadlessActivity(WorkActivity):
         """weko_workflow.views.user_lock_activity"""
         pass
 
-    def _user_unlock(self, data=None):
+    def _user_unlock(self, data={}):
         """User unlock."""
         if self._lock_skip:
             return
