@@ -116,11 +116,13 @@ class TestHeadlessActivity:
                 assert activity.recid == 200001
                 assert url == "http://test_server.localdomain/workflow/activity/detail/A-TEST-00001"
 
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_activity.py::TestHeadlessActivity::test_auto -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     # def auto(self, **params):
     def test_auto(self, app, workflow, mocker):
         detail = "http://test_server.localdomain/workflow/activity/detail/A-TEST-00001"
-        actions = actions = ["item_login"] * 2 + ["item_link"] * 3 + ["identifier_grant"] * 4 + ["end_action"] * 2
+        actions = ["item_login"] * 2 + ["item_link"] * 3 + ["identifier_grant"] * 4 + ["end_action"] * 2
 
+        # Flow of actions: start_action -> item_login -> item_link -> identifier_grant -> end_action
         activity = HeadlessActivity()
         mock_detail = PropertyMock(return_value=detail)
         mock_current_action = PropertyMock(side_effect=actions)
@@ -129,13 +131,15 @@ class TestHeadlessActivity:
         mock_init_activity = MagicMock()
         mock_item_registration = MagicMock()
         mock_item_link = MagicMock()
+        mock_identifier_grant = MagicMock()
         mock_oa_policy = MagicMock()
         mock_end = MagicMock()
 
         activity.init_activity = mock_init_activity
         activity.item_registration = mock_item_registration
         activity.item_link = mock_item_link
-        activity.identifier_grant = mock_oa_policy
+        activity.identifier_grant = mock_identifier_grant
+        activity.oa_policy = mock_oa_policy
         activity.end = mock_end
 
         type(activity).detail = mock_detail
@@ -148,12 +152,14 @@ class TestHeadlessActivity:
         assert mock_init_activity.call_count == 1
         assert mock_item_registration.call_count == 1
         assert mock_item_link.call_count == 1
-        assert mock_oa_policy.call_count == 1
+        assert mock_identifier_grant.call_count == 1
+        assert mock_oa_policy.call_count == 0
         assert mock_end.call_count == 1
 
-
+        # Flow of actions: start_action -> item_login -> item_link -> oa_policy -> approval -> end_action
+        # Stop at approval
         detail = "http://test_server.localdomain/workflow/activity/detail/A-TEST-00002"
-        actions = actions = ["item_login"] * 2 + ["item_link"] * 3 + ["oa_policy"] * 5 + ["approval"] * 2
+        actions = ["item_login"] * 2 + ["item_link"] * 3 + ["oa_policy"] * 5 + ["approval"] * 2
 
         activity = HeadlessActivity()
         mock_detail = PropertyMock(return_value=detail)
@@ -163,6 +169,7 @@ class TestHeadlessActivity:
         mock_init_activity = MagicMock()
         mock_item_registration = MagicMock()
         mock_item_link = MagicMock()
+        mock_identifier_grant = MagicMock()
         mock_oa_policy = MagicMock()
         mock_end = MagicMock()
 
@@ -182,9 +189,43 @@ class TestHeadlessActivity:
         assert mock_init_activity.call_count == 1
         assert mock_item_registration.call_count == 1
         assert mock_item_link.call_count == 1
+        assert mock_identifier_grant.call_count == 0
         assert mock_oa_policy.call_count == 1
         assert mock_end.call_count == 1
 
+        # continue from item_link
+        detail = "http://test_server.localdomain/workflow/activity/detail/A-TEST-00003"
+        actions = ["item_link"] * 3 + ["end_action"] * 2
+
+        activity = HeadlessActivity()
+        mock_detail = PropertyMock(return_value=detail)
+        mock_current_action = PropertyMock(side_effect=actions)
+        mocker.patch("weko_workflow.headless.activity.HeadlessActivity.init_activity")
+
+        mock_init_activity = MagicMock()
+        mock_item_registration = MagicMock()
+        mock_item_link = MagicMock()
+        mock_identifier_grant = MagicMock()
+        mock_oa_policy = MagicMock()
+        mock_end = MagicMock()
+
+        activity.init_activity = mock_init_activity
+        activity.item_link = mock_item_link
+        activity.end = mock_end
+
+        type(activity).detail = mock_detail
+        type(activity).current_action = mock_current_action
+
+        url, current_action, _ = activity.auto(user_id=1, workflow_id=1)
+        assert url == detail
+        assert current_action == "end_action"
+
+        assert mock_init_activity.call_count == 1
+        assert mock_item_registration.call_count == 0
+        assert mock_item_link.call_count == 1
+        assert mock_identifier_grant.call_count == 0
+        assert mock_oa_policy.call_count == 0
+        assert mock_end.call_count == 1
 
     def test__input_metadata(self):
         pass
