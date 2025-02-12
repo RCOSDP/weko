@@ -1562,3 +1562,12 @@ msgstr "Success: Secret URL Generate is succeed. Sent the URL to your email adre
 #: weko_records_ui/templates/weko_records_ui/file_details_contents.html
 msgid "Max Download Count"
 msgstr "Max Download Limit"
+
+msgid "massage_del_check"
+msgstr "If you delete this URL, it will no longer be available. Are you sure you want to delete it?"
+
+msgid "massage_del_success"
+msgstr "URL has been removed"
+
+msgid "massage_copy_success"
+msgstr "URL has been copied to the clipboard"

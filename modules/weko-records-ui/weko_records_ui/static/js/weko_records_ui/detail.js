@@ -469,6 +469,103 @@ $('#mailaddress_confirm_download').click(function () {
         }
       })
   }
-}
-);
+});
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  // 日付をフォーマットする関数
+  function formatDate(dateString) {
+      // Dateオブジェクトを作成
+      const date = new Date(dateString);
+      const year = date.getFullYear();
+      const month = ('0' + (date.getMonth() + 1)).slice(-2);
+      const day = ('0' + date.getDate()).slice(-2);
+      return `${year}-${month}-${day}`;
+  }
+
+  // .date-format クラスを持つすべての要素を取得
+  const dateElements = document.querySelectorAll('.date-format');
+
+  // 各要素の日付をフォーマット
+  dateElements.forEach(function(element) {
+      const originalDate = element.textContent;
+      element.textContent = formatDate(originalDate);
+  });
+});
+
+// 確認メッセージを取得
+const deleteConfirmationMessage = $('#delete-confirmation-message').data('message');
+const deleteSuccssesMessage = $('#delete-success-message').data('message');
+const copyMassage = $('#copy-message').data('message');
+
+$(document).ready(function() {
+  // 共通のAJAXリクエスト関数
+  function handleAjaxRequest($button, url, method, successMessage, clipboardText, finalMessage) {
+    $button.prop('disabled', true);
+    $.ajax({
+      url: url,
+      method: method,
+      contentType: 'application/json',
+      dataType: 'json',
+      success: function(response) {
+        $button.prop('disabled', false);
+        if (clipboardText) {
+          navigator.clipboard.writeText(response.url)
+            .catch(function(err) {
+              alert('Could not copy URL: ', err);
+            });
+        } else {
+          location.reload(); // 画面をリロード
+        }
+        if (finalMessage) {
+          alert(finalMessage);
+        }
+      },
+      error: function(jqXHR, status, msg) {
+        $button.prop('disabled', false);
+        alert("Error: " + (jqXHR.responseJSON?.message || msg));
+      }
+    });
+  }
+
+  // シークレットURLの削除
+  $('.delete_secret_url').on('click', function(event) {
+    event.preventDefault();
+    const $button = $(this);
+    const url = $button.attr('url');
+
+    // 確認ポップアップを表示
+    if (confirm(deleteConfirmationMessage)) {
+      handleAjaxRequest($button, url, 'DELETE', "Success!", false, deleteSuccssesMessage);
+    }
+  });
+
+  // シークレットURLのコピー
+  $('.copy_secret_url').on('click', function(event) {
+    event.preventDefault();
+    const $button = $(this);
+    const url = $button.attr('url');
+    handleAjaxRequest($button, url, 'GET', "Success!", true, copyMassage);
+  });
+
+  // ワンタイムURLの削除
+  $('.delete_onetime_url').on('click', function(event) {
+    event.preventDefault();
+    const $button = $(this);
+    const url = $button.attr('url');
+
+    // 確認ポップアップを表示
+    if (confirm(deleteConfirmationMessage)) {
+      handleAjaxRequest($button, url, 'DELETE', "Success!", false, deleteSuccssesMessage);
+    }
+  });
+
+  // ワンタイムURLのコピー
+  $('.copy_onetime_url').on('click', function(event) {
+    event.preventDefault();
+    const $button = $(this);
+    const url = $button.attr('url');
+    handleAjaxRequest($button, url, 'GET', "Success!", true, copyMassage);
+  });
+});
 

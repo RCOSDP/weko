@@ -63,7 +63,8 @@ from weko_schema_ui.models import PublishStatus
 from weko_workflow.api import WorkFlow
 
 from weko_records_ui.fd import add_signals_info
-from weko_records_ui.utils import check_items_settings, get_file_info_list
+from weko_records_ui.utils import check_items_settings, get_file_info_list,can_manage_onetime_url
+from weko_records_ui.models import FileSecretDownload, FileOnetimeDownload
 
 from .ipaddr import check_site_license_permission
 from .models import FileOnetimeDownload, FilePermission, FileSecretDownload, \
@@ -725,6 +726,10 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
         search_author_flg=search_author_flg,
         show_secret_URL=can_manage_secret_url(record, filename),
+        active_secret_URLs=FileSecretDownload.fetch_active_urls(
+        record_id=pid.pid_value, file_name=filename, ascending=True),
+        active_onetime_URLs=FileOnetimeDownload.fetch_active_urls(
+            record_id=pid.pid_value, file_name=filename, ascending=True),
         **ctx,
         **kwargs
     )
