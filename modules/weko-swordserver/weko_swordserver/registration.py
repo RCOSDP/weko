@@ -203,7 +203,7 @@ def create_activity_from_jpcoar(check_result, data_path):
             except:
                 traceback.print_exc()
                 current_app.logger.exception("activity quit canceled.")
-        raise ex
+        raise
     return activity, deposit.get("recid")
 
 

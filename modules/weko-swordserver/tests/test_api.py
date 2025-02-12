@@ -186,12 +186,12 @@ class TestSwordClient:
             client_id=client.client_id,
             registration_type_id=SwordClientModel.RegistrationType.WORKFLOW,
             mapping_id=sword_mapping[1]["sword_mapping"].id,
-            workflow_id=workflow["workflow"].id,
+            workflow_id=workflow[1]["workflow"].id,
         )
         assert result.client_id == client.client_id
         assert result.registration_type == "Workflow"
         assert result.mapping_id == sword_mapping[1]["sword_mapping"].id
-        assert result.workflow_id == workflow["workflow"].id
+        assert result.workflow_id == workflow[1]["workflow"].id
 
         # workflow with non-existent workflow_id
         client = tokens[1]["client"]
@@ -272,7 +272,7 @@ class TestSwordClient:
             client_id=client.client_id,
             registration_type_id=SwordClientModel.RegistrationType.WORKFLOW,
             mapping_id=sword_mapping[1]["sword_mapping"].id,
-            workflow_id=workflow["workflow"].id,
+            workflow_id=workflow[1]["workflow"].id,
         )
         assert (
             obj == SwordClientModel.query.filter_by(client_id=client.client_id).first()
@@ -280,7 +280,7 @@ class TestSwordClient:
         assert obj.client_id == client.client_id
         assert obj.registration_type_id == SwordClientModel.RegistrationType.WORKFLOW
         assert obj.mapping_id == sword_mapping[1]["sword_mapping"].id
-        assert obj.workflow_id == workflow["workflow"].id
+        assert obj.workflow_id == workflow[1]["workflow"].id
 
     # def remove(cls, client_id):
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordClient::test_remove -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
