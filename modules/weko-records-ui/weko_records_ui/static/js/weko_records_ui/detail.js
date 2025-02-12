@@ -272,28 +272,205 @@ require([
     }
   });
 
-  $('#secret_url')?.on('click', function(){
-    const webelement = $('#secret_url');
-    if (webelement){
+    // シークレットURL作成フォーム
+    // link_name フィールドの入力を検証
+    const MAX_LENGTH=50;
+    const linkNameInput = document.querySelector('#link_name');
+    if (linkNameInput) {
+      linkNameInput.maxLength = MAX_LENGTH;
+    }
+
+    // APIエンドポイントから設定を取得
+    fetch('/get-secret-settings')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Network response was not ok: ${response.statusText}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        // APIからのデータをフォームに反映
+        const secretDownloadLimit = data.secret_download_limit;
+        const secretExpirationDate = data.secret_expiration_date;
+        const maxSecretExpirationDate = data.max_secret_expiration_date;
+        const maxSecretDownloadLimit = data.max_secret_download_limit;
+
+        // 今日の日付を取得
+        const today = new Date();
+        const todayFormatted = today.toISOString().split('T')[0];
+
+        // secret_expiration_date を使用して日付を計算
+        const expirationDate = new Date();
+        expirationDate.setDate(today.getDate() + parseInt(secretExpirationDate, 10));
+        const formattedDate = expirationDate.toISOString().split('T')[0];
+
+        // maxSecretExpirationDate を適切な日付形式に変換
+        const maxDate = new Date();
+        maxDate.setDate(maxDate.getDate() + parseInt(maxSecretExpirationDate, 10));
+        const maxFormattedDate = maxDate.toISOString().split('T')[0];
+
+        // <input type="date">要素に設定
+        const expirationDateInput = document.querySelector('#expiration_date');
+        if (expirationDateInput) {
+          expirationDateInput.value = formattedDate;
+          expirationDateInput.max = maxFormattedDate;
+          expirationDateInput.min = todayFormatted;
+        }
+        // フォームのフィールドに値を設定
+        const downloadLimitInput = document.querySelector('#download_limit');
+        if (downloadLimitInput) {
+          downloadLimitInput.value = secretDownloadLimit;
+          // maxSecretDownloadLimit 以上の入力を制御
+          downloadLimitInput.addEventListener('input', function () {
+            if (parseInt(downloadLimitInput.value, 10) > maxSecretDownloadLimit) {
+              downloadLimitInput.value = maxSecretDownloadLimit;
+            }
+          });
+        }
+        // 有効期限の下に表示するメッセージを設定
+        const maxExpirationData = document.querySelector('#max_date_display');
+        if (maxExpirationData) {
+          const translationDate = maxExpirationData.dataset.expirationDate;
+          maxExpirationData.textContent = ` ※${translationDate} ${maxFormattedDate}`;
+        }
+        // ダウンロード制限の下に表示するメッセージを設定
+        const maxDownloadDisplay = document.querySelector('#max_download_display');
+        if (maxDownloadDisplay) {
+          const downloadcount = maxDownloadDisplay.dataset.downloadCount;
+          maxDownloadDisplay.textContent = ` ※${downloadcount} ${maxSecretDownloadLimit}`;
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching secret settings:', error);
+      });
+  });
+
+
+  $("#secret_url").click(function() {
+    $("#secret_url_section").toggle();
+  });
+
+  $('#create_secret_url')?.on('click', function(event) {
+    event.preventDefault();
+    const webelement = $('#create_secret_url');
+    if (webelement) {
       const url = webelement.attr('url');
-      webelement.prop('disabled' ,true);
+      const linkName = $('#link_name').val();
+      const expirationDate = $('#expiration_date').val();
+      const downloadLimit = $('#download_limit').val();
+      const sendEmail = $('#send_email').is(':checked');
+      const linkNameError = $('#link_name_error');
+      const expirationDateError = $('#expiration_date_error');
+      const downloadLimitError = $('#download_limit_error');
+  
+      let hasError = false;
+
+      // エラーチェック関数
+      function checkError(input, errorElement) {
+        if (!input) {
+          errorElement.css('display', 'block'); // エラーメッセージを表示
+          hasError = true;
+        } else {
+          errorElement.css('display', 'none'); // エラーメッセージを非表示
+        }
+      }
+
+      // 各項目のエラーチェック
+      checkError(linkName, linkNameError);
+      checkError(expirationDate, expirationDateError);
+      checkError(downloadLimit, downloadLimitError);
+
+      // エラーがある場合は処理を停止
+      if (hasError) {
+        return;
+      }
+
       $.ajax({
         url: url,
         method: 'POST',
         contentType: 'application/json',
-        data: null,
-        success: function (responce) {
-          webelement.prop('disabled',false);
-          alert(responce);
+        dataType: 'json',
+        data: JSON.stringify({
+          link_name: linkName,
+          expiration_date: expirationDate,
+          download_limit: downloadLimit,
+          send_email: sendEmail
+        }),
+        success: function(response) {
+          webelement.prop('disabled', false);
+          alert(response.message || "Success!");
         },
-        error: function (jqXHE, status ,msg) {
-          webelement.prop('disabled',false);
-          alert(msg);
+        error: function(jqXHR, status, msg) {
+          webelement.prop('disabled', false);
+          alert("Error: " + (jqXHR.responseJSON?.message || msg));
         }
       });
     }
   });
+
+  $('#print-btn')?.on('click',() => {
+    const iframe = document.createElement('iframe');
+    iframe.srcdoc = "<!DOCTYPE html>"
+    document.body.appendChild(iframe);
+    iframe.onload = () => {
+      iframe.contentDocument.body.appendChild(document.getElementById('terms').cloneNode(true));
+      iframe.contentWindow.print();
+    }
+  })
+
+
+$('#close_btn, #modal_close_btn').on('click', function () {
+  document.location.href = location.pathname;
+  })
+$('#mailcheck_download_modal').on('hidden.bs.modal', function () {
+  document.location.href = location.pathname;
+})
+$('#mailaddress_confirm_download').click(function () {
+ let mailaddress = document.getElementById('mail_form').value;
+ let password_checkflag = document.getElementById("password_checkflag").value;
+ var input_password;
+ var post_data = {};
+ if(password_checkflag == "True"){
+  input_password = document.getElementById('input_password').value;
+  post_data = {'input_password': input_password};
+}
+ let input_error = document.getElementById('input_error_messsge').value;
+ let url_element = document.getElementById('url_element');
+ let onetime_file_url = url_element.dataset.onetime_file_url;
+ const get_uri =  onetime_file_url + '&mailaddress='+ mailaddress + '&isajax=true';
+ let item_detailes_url = location.pathname;
+ if(mailaddress == null || mailaddress == ""){
+   alert(input_error);
+   document.location.href = onetime_file_url;
+ }else{
+    $.ajax({
+      url: get_uri,
+      method: 'POST',
+      async: true,
+      data: JSON.stringify(post_data),
+      contentType: 'application/json',
+      success: function (response) {
+          let link = document.createElement("a");
+          link.download = "";
+          if (!!response.guest_token) {
+            link.href = get_uri + "&guest-token=" + response.guest_token;
+          } else {
+            link.href = get_uri;
+          }
+          link.click();
+          $('#mailcheck_download_modal').modal('hide');
+          document.location.href = item_detailes_url;
+        },
+      error: function (error) {
+          response_text = error['responseText'];
+          alert(response_text);
+          $('#mailcheck_download_modal').modal('hide');
+          document.location.href = item_detailes_url;
+        }
+      })
+  }
 });
+
 
 document.addEventListener('DOMContentLoaded', function() {
   // 日付をフォーマットする関数

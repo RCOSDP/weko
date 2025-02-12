@@ -1240,8 +1240,10 @@ False: only display secret url download
 WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
     "secret_URL_file_download": {
         "secret_expiration_date": 30,
+        "max_secret_expiration_date":30,
         "secret_expiration_date_unlimited_chk": False,
         "secret_download_limit": 10,
+        "max_secret_download_limit":10,
         "secret_download_limit_unlimited_chk": False,
     },
     "content_file_download": {
