@@ -1,7 +1,9 @@
 import re
 import pytest
 from weko_records_ui.utils import (
+    can_manage_onetime_url,
     convert_token_into_obj,
+    has_permission_to_manage_onetime_url,
     is_onetime_file,
     save_download_log,
     to_utc_datetime,
@@ -585,7 +587,7 @@ def test_is_private_index(app,records):
 
 
 # def validate_download_record(record: dict):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_download_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_download_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_validate_download_record():
     record = {'publish_status': PublishStatus.PUBLIC.value}
     with patch('weko_records_ui.utils.is_private_index', return_value=False):
@@ -599,7 +601,7 @@ def test_validate_download_record():
         assert validate_download_record(record) is False
 
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_secret_url_feature_enabled -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_secret_url_feature_enabled -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_is_secret_url_feature_enabled(app):
     with app.app_context():
         # Case 1: secret_enableがTrueを返す
@@ -636,7 +638,7 @@ def test_is_secret_url_feature_enabled(app):
                 # 設定がない場合も False を返すことを検証
                 assert is_secret_url_feature_enabled() is False
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_has_permission_to_manage_secret_url -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_has_permission_to_manage_secret_url -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @pytest.mark.parametrize(
     "user_id, expected",
     [
@@ -659,7 +661,27 @@ def test_has_permission_to_manage_secret_url(user_id, expected, app, users):
         # 結果が期待される値 (expected) と一致するかを検証
         assert has_permission_to_manage_secret_url(record, users[user_id]["id"]) == expected
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_secret_file -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_has_permission_to_manage_onetime_url -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "user_id, expected",
+    [
+        (0, True),  # Owner
+        (4, False), # Shared user
+        (1, True),  # Superuser
+        (2, True),  # Superuser
+        (3, False), # No permission
+        (5, False), # No superuser role
+    ],
+)
+def test_has_permission_to_manage_onetime_url(user_id, expected, app, users):
+    record = {'owner': str(users[0]["id"]), 'weko_shared_id': users[4]["id"]}
+    with app.app_context():
+        assert has_permission_to_manage_onetime_url(
+            record, users[user_id]["id"]) is expected
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_secret_file -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @pytest.mark.parametrize(
     "file_data, filename, expected",
     [
@@ -693,7 +715,20 @@ def test_is_secret_file(file_data, filename, expected):
         # 実際の結果が期待値と一致することを確認
         assert result == expected
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_can_manage_secret_url -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_onetime_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_is_onetime_file():
+    mock_record = MagicMock()
+    mock_record.get_file_data.return_value = [
+        {"filename": "file1.txt", "accessrole": "open_restricted"},
+        {"filename": "file2.txt", "accessrole": "public"}
+    ]
+    assert is_onetime_file(mock_record, "file1.txt") is True
+    assert is_onetime_file(mock_record, "file2.txt") is False
+    assert is_onetime_file(mock_record, "file3.txt") is False
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_can_manage_secret_url -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @pytest.mark.parametrize(
     "is_authenticated, feature_enabled, has_permission, is_secret, expected",
     [
@@ -727,6 +762,30 @@ def test_can_manage_secret_url(is_authenticated, feature_enabled, has_permission
                 with patch('weko_records_ui.utils.is_secret_file', return_value=is_secret):
                     # can_manage_secret_url関数を実行し、結果が期待される値と一致するかを確認
                     assert can_manage_secret_url(mock_record, 'testfile.txt') == expected
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_can_manage_onetime_url -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "is_authenticated, has_permission, is_onetime, expected",
+    [
+        # Case 1: ユーザーが認証されていない場合
+        (False, True, True, False),
+        # Case 2: ユーザーに権限がない場合
+        (True, False, True, False),
+        # Case 3: ファイルが制限公開アイテムでない場合
+        (True, True, False, False),
+        # Case 4: すべての条件を満たす場合
+        (True, True, True, True),
+    ],
+)
+def test_can_manage_onetime_url(is_authenticated, has_permission, is_onetime, expected):
+    mock_record = MagicMock(spec=WekoRecord)
+    mock_user = MagicMock()
+    mock_user.is_authenticated = is_authenticated
+    with patch('weko_records_ui.utils.current_user', mock_user):
+        with patch('weko_records_ui.utils.has_permission_to_manage_onetime_url', return_value=has_permission):
+            with patch('weko_records_ui.utils.is_onetime_file', return_value=is_onetime):
+                assert can_manage_onetime_url(mock_record, 'testfile.txt') == expected
 
 
 # def get_onetime_download(file_name: str, record_id: str,
@@ -832,7 +891,7 @@ def test_get_google_detaset_meta(app, records, itemtypes, oaischema, oaiidentify
             assert get_google_detaset_meta(record) == None
 
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_to_utc_datetime -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_to_utc_datetime -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_to_utc_datetime(app):
     assert to_utc_datetime('2025-1-1') == datetime(
         2025, 1, 1, 0, 0, tzinfo=timezone.utc)
@@ -847,7 +906,7 @@ def test_to_utc_datetime(app):
     assert to_utc_datetime('2025/01/01') is None
 
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_secret_url_generation_request -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_secret_url_generation_request -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_validate_secret_url_generation_request(app):
     today = datetime.now().strftime("%Y-%m-%d")
     tomorrow = (datetime.now() + timedelta(1)).strftime("%Y-%m-%d")
@@ -921,7 +980,7 @@ def test_validate_secret_url_generation_request(app):
         assert validate_secret_url_generation_request(request_data) is expected
 
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_create_secret_url_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings -p no:warnings
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_create_secret_url_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @patch('weko_records_ui.utils.get_restricted_access')
 @patch('weko_records_ui.utils.current_user')
 def test_create_secret_url_record(mock_user, mock_settings, users):
@@ -979,7 +1038,7 @@ def test_create_secret_url_record(mock_user, mock_settings, users):
     assert create_secret_url_record(record_id, file_name, request) is None
 
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_create_onetime_download_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_create_onetime_download_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @patch('weko_records_ui.utils.get_restricted_access')
 @patch('weko_records_ui.utils.current_user')
 def test_create_onetime_download_record(mock_user, mock_get, users):
@@ -1013,7 +1072,7 @@ def test_create_onetime_download_record(mock_user, mock_get, users):
         activity_id, record_id, file_name, user_mail) is None
 
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_create_download_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_create_download_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_create_download_url(app):
     with patch('weko_records_ui.utils.base64.urlsafe_b64encode') as encoded:
         encoded.return_value = b'test'
@@ -1047,7 +1106,7 @@ def test_create_download_url(app):
             assert url is None
 
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_generate_sha256_hash -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_generate_sha256_hash -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_generate_sha256_hash(app):
     app.config['WEKO_RECORDS_UI_SECRET_KEY'] = 'secret'
     secret_ubj = FileSecretDownload(
@@ -1099,7 +1158,7 @@ def test_generate_sha256_hash(app):
     assert onetime_url == same_url
 
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_send_secret_url_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_send_secret_url_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @patch('weko_records_ui.utils.UserProfile.get_by_userid')
 @patch('weko_records_ui.utils.current_user')
 @patch('weko_records_ui.utils.set_mail_info', return_value={})
@@ -1149,7 +1208,7 @@ def test_send_secret_url_mail(mock_send, mock_set_info, mock_user,
         assert send_secret_url_mail(uuid, url_obj, item_title) is False
 
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_token -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_token -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_validate_token(app, users):
     with app.test_request_context():
         secret_obj = FileSecretDownload.create(
@@ -1194,7 +1253,7 @@ def test_validate_token(app, users):
         assert validate_token(123, is_secret_url=True) is False
 
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_convert_token_into_obj -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_convert_token_into_obj -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @patch('weko_records_ui.utils.validate_token')
 def test_convert_token_into_obj(vldt_token, app, users):
     vldt_token.return_value = True
@@ -1254,7 +1313,7 @@ def test_convert_token_into_obj(vldt_token, app, users):
         assert convert_token_into_obj(secret_token, True) is None
         assert convert_token_into_obj(onetime_token, False) is None
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_url_download -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_url_download -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @patch('weko_records_ui.utils.validate_token')
 @patch('weko_records_ui.utils.is_secret_url_feature_enabled')
 @patch('weko_records_ui.utils.validate_file_access')
@@ -1343,7 +1402,7 @@ def test_validate_url_download(vldt_record, vldt_file, is_enabled, vldt_token,
             False, 'The expiration date for download has been exceeded.')
 
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_file_access -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_file_access -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_validate_file_access():
     with patch('weko_records_ui.utils.is_secret_file', return_value=True):
         assert validate_file_access('', '', is_secret_url=True) is True
@@ -1355,19 +1414,7 @@ def test_validate_file_access():
         assert validate_file_access('', '', is_secret_url=False) is False
 
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_onetime_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
-def test_is_onetime_file():
-    mock_record = MagicMock()
-    mock_record.get_file_data.return_value = [
-        {"filename": "file1.txt", "accessrole": "open_restricted"},
-        {"filename": "file2.txt", "accessrole": "public"}
-    ]
-    assert is_onetime_file(mock_record, "file1.txt") is True
-    assert is_onetime_file(mock_record, "file2.txt") is False
-    assert is_onetime_file(mock_record, "file3.txt") is False
-
-
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_save_download_log -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_save_download_log -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @patch('weko_records_ui.utils.request')
 def test_save_download_log(request, secret_url, onetime_url):
     file_name = 'test.txt'

@@ -60,20 +60,20 @@ from weko_records.utils import custom_record_medata_for_export, \
     remove_weko2_special_character, selected_value_by_language
 from weko_search_ui.api import get_search_detail_keyword
 from weko_schema_ui.models import PublishStatus
-from weko_user_profiles.models import UserProfile
 from weko_workflow.api import WorkFlow
 
 from weko_records_ui.fd import add_signals_info
 from weko_records_ui.utils import check_items_settings, get_file_info_list,can_manage_onetime_url
 from weko_records_ui.models import FileSecretDownload, FileOnetimeDownload
-from weko_workflow.utils import get_item_info, process_send_mail, set_mail_info
 
 from .ipaddr import check_site_license_permission
-from .models import FilePermission, PDFCoverPageSettings
+from .models import FileOnetimeDownload, FilePermission, FileSecretDownload, \
+    PDFCoverPageSettings
 from .permissions import check_content_clickable, check_created_id, \
     check_file_download_permission, check_original_pdf_download_permission, \
     check_permission_period, file_permission_factory, get_permission
-from .utils import can_manage_secret_url, create_download_url, create_secret_url_record, \
+from .utils import can_manage_onetime_url, can_manage_secret_url, \
+    create_download_url, create_secret_url_record, \
     get_billing_file_download_permission, get_google_detaset_meta, \
     get_google_scholar_meta, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
@@ -749,7 +749,14 @@ def create_secret_url_and_send_mail(pid, record, filename, **kwargs):
         filename (str): The file name to download.
 
     Returns:
-        dict: A dictionary containing the message to be displayed to the user.
+        flask.Response:
+            A JSON response containing result messages.
+
+    Raises:
+        flask.abort:
+            - 400 if the request is invalid.
+            - 403 if the user does not have enough permissions.
+            - 500 if an error occurs while creating the secret URL.
     """
     if not validate_secret_url_generation_request(request.json):
         abort(400)
@@ -764,19 +771,153 @@ def create_secret_url_and_send_mail(pid, record, filename, **kwargs):
         current_app.logger.error(e)
         abort(500)
 
-    url = create_download_url(url_obj)
-
-    message = 'Secret URL generated successfully'
+    message = _('Secret URL generated successfully')
     if request.json['send_email'] is True:
         sending_result = send_secret_url_mail(
             pid.object_uuid, url_obj, record.get('item_title', ''))
         if sending_result:
-            message += ', please check your email inbox'
+            message += _(', please check your email inbox')
         else:
-            message += (', but there was an error while sending the email. '
+            message += _(', but there was an error while sending the email. '
                         'To use the URL, please refresh the page and copy it '
                         'from the issued URL list')
-    return jsonify({'message': message + '.'})
+    return jsonify({'message': message + _('.')})
+
+
+def copy_secret_url(pid, record, **kwargs):
+    """
+    Validate the request and return a secret URL to the user.
+
+    Args:
+        pid (str): A persistent identifier of the record.
+        record (dict): Record data associated with the target file.
+        **kwargs: Additional arguments, including:
+            - filename (str): The name of the file.
+            - url_id (str): The ID of the URL to be copied.
+
+    Returns:
+        flask.Response:
+            A JSON response containing the URL and a success message.
+
+    Raises:
+        flask.abort:
+            - 403 if the user does not have enough permissions.
+            - 500 if an error occurs while preparing the URL.
+    """
+    try:
+        if not can_manage_secret_url(record, kwargs['filename']):
+            abort(403)
+        url_record = FileSecretDownload.get_by_id(kwargs['secret_url_id'])
+        url = create_download_url(url_record)
+    except Exception as e:
+        current_app.logger.error(e)
+        abort(500)
+
+    return jsonify({'url': url,
+                    'message': 'The secret URL copied to your clipboard.'})
+
+
+def copy_onetime_url(pid, record, **kwargs):
+    """
+    Validate the request and return a onetime URL to the user.
+
+    Args:
+        pid (str): A persistent identifier of the record.
+        record (dict): Record data associated with the target file.
+        **kwargs: Additional arguments, including:
+            - filename (str): The name of the file.
+            - url_id (str): The ID of the URL to be copied.
+
+    Returns:
+        flask.Response:
+            A JSON response containing the URL and a success message.
+
+    Raises:
+        flask.abort:
+            - 403 if the user does not have enough permissions.
+            - 500 if an error occurs while preparing the URL.
+    """
+    try:
+        if not can_manage_onetime_url(record, kwargs['filename']):
+            abort(403)
+        url_record = FileOnetimeDownload.get_by_id(kwargs['onetime_url_id'])
+        url = create_download_url(url_record)
+    except Exception as e:
+        current_app.logger.error(e)
+        abort(500)
+
+    return jsonify({'url': url,
+                    'message': 'The onetime URL copied to your clipboard.'})
+
+
+def delete_secret_url(pid, record, **kwargs):
+    """
+    Delete a secret URL from the database.
+
+    Args:
+        pid (str): A persistent identifier of the record.
+        record (dict): Record data associated with the target file.
+        **kwargs: Additional arguments, including:
+            - filename (str): The name of the file.
+            - url_id (str): The ID of the URL to be deleted.
+
+    Returns:
+        flask.Response:
+            A JSON response containing a success message.
+
+    Raises:
+        flask.abort:
+            - 403 if the user does not have enough permissions.
+            - 500 if an error occurs while deleting the URL.
+    """
+    try:
+        if not can_manage_secret_url(record, kwargs['filename']):
+            abort(403)
+        url_record = FileSecretDownload.get_by_id(kwargs['secret_url_id'])
+        if not url_record:
+            abort(404)
+        url_record.delete_logically()
+    except Exception as e:
+        current_app.logger.error(e)
+        abort(500)
+
+    return jsonify(
+        {'message': 'The secret URL has been successfully deleted.'})
+
+
+def delete_onetime_url(pid, record, **kwargs):
+    """
+    Delete an onetime URL from the database.
+
+    Args:
+        pid (str): A persistent identifier of the record.
+        record (dict): Record data associated with the target file.
+        **kwargs: Additional arguments, including:
+            - filename (str): The name of the file.
+            - url_id (str): The ID of the URL to be deleted.
+
+    Returns:
+        flask.Response:
+            A JSON response containing a success message.
+
+    Raises:
+        flask.abort:
+            - 403 if the user does not have enough permissions.
+            - 500 if an error occurs while deleting the URL.
+    """
+    try:
+        if not can_manage_onetime_url(record, kwargs['filename']):
+            abort(403)
+        url_record = FileOnetimeDownload.get_by_id(kwargs['onetime_url_id'])
+        if not url_record:
+            abort(404)
+        url_record.delete_logically()
+    except Exception as e:
+        current_app.logger.error(e)
+        abort(500)
+
+    return jsonify(
+        {'message': 'The one-time URL has been successfully deleted.'})
 
 
 @blueprint.route('/r/<parent_pid_value>', methods=['GET'])

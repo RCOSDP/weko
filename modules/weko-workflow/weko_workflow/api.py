@@ -2709,7 +2709,7 @@ class UpdateItem(object):
     """The class about item."""
 
     def publish(self, record):
-        r"""Record publish  status change view.
+        """Record publish  status change view.
 
         Change record publish status with given status and renders record
         export template.
@@ -2718,6 +2718,8 @@ class UpdateItem(object):
         :return: The rendered template.
         """
         from weko_deposit.api import WekoIndexer
+        from weko_records_ui.models import FileSecretDownload
+
         publish_status = record.get('publish_status')
         if not publish_status:
             record.update({'publish_status': PublishStatus.PUBLIC.value})
@@ -2726,6 +2728,36 @@ class UpdateItem(object):
 
         record.commit()
         db.session.commit()
+
+        # レコード内のすべてのキーと値をループし、"attribute_value_mlt"の中のすべての"accessrole"と"filename"のペアを検索
+        file_access_pairs = []
+
+        for key, value in record.items():
+            # 値が辞書であり、"attribute_value_mlt"キーを持つ場合
+            if isinstance(value, dict):
+                attribute_values = value.get("attribute_value_mlt", [])
+                # attribute_valuesがリストで、最初のアイテムが辞書で "accessrole" と "filename" が含まれているか確認
+                if attribute_values and isinstance(attribute_values, list):
+                    for item in attribute_values:
+                        if isinstance(item, dict):
+                            accessrole = item.get("accessrole")
+                            filename = item.get("filename")
+                            if accessrole and filename:
+                                file_access_pairs.append((filename, accessrole))
+
+        #ワークフロー更新時、accessroleがopen_no, open_dateまたはNone以外の場合、シークレットURLを論理削除
+        rec_number = record.get('recid')  # recid=record_id
+        if rec_number is not None:
+            for filename, accessrole in file_access_pairs:
+                # accessroleがopen_no, open_dateまたはNone以外の場合、シークレットURLを論理削除
+                if accessrole and accessrole not in ['open_no', 'open_date']:
+                    secret_urls = FileSecretDownload.query.filter_by(record_id=rec_number, is_deleted=False, file_name=filename).all()
+                    for urls in secret_urls:
+                        # 論理削除メソッドを使用
+                        urls.delete_logically()
+                        # 処理するデータ量に応じて以下のような一括で論理削除を行うような処理を使用する。
+                        # FileSecretDownload.query.filter_by(record_id=rec_number, is_deleted=False).update({'is_deleted': True})
+            db.session.commit()
 
         indexer = WekoIndexer()
         indexer.update_es_data(record, update_revision=False, field='publish_status')

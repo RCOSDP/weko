@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock
 import uuid
 import pytest
@@ -22,7 +23,9 @@ from weko_workflow.models import (
     FlowDefine,
     WorkFlow,
 )
-from weko_records_ui.models import PDFCoverPageSettings, FilePermission
+from weko_records_ui.models import (
+    FileOnetimeDownload, FileSecretDownload, PDFCoverPageSettings,
+    FilePermission)
 from weko_records_ui.views import (
     check_permission,
     citation,
@@ -52,7 +55,7 @@ from weko_records_ui.views import (
     preview_able,
     get_uri,
 )
-from weko_records_ui.utils import can_manage_secret_url
+from weko_records_ui.utils import create_download_url
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 
 # def record_from_pid(pid_value):
@@ -548,7 +551,242 @@ def test_default_view_method(app, records, itemtypes, indexstyle, users):
                         index.index_name_english = "index"
                         with patch('weko_records_ui.views.Indexes.get_index', return_value=index):
                             assert default_view_method(recid, record, 'helloworld.pdf').status_code == 200
-                   
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_create_secret_url_and_send_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@patch('weko_records_ui.views.validate_secret_url_generation_request')
+@patch('weko_records_ui.views.can_manage_secret_url')
+@patch('weko_records_ui.utils.current_user')
+@patch('weko_records_ui.views.send_secret_url_mail')
+def test_create_secret_url_and_send_mail(send_mail, login_user, can_manage,
+                                         vldt_req, client, users, records):
+    vldt_req.return_value = True
+    can_manage.return_value = True
+    login_user.id = 1
+    tmp, results = records
+    url = url_for('invenio_records_ui.recid_secret_url',
+           pid_value=results[1]["recid"].pid_value,
+           filename=results[1]["filename"])
+    base_data = {
+        'link_name': '',
+        'expiration_date': '',
+        'download_limit': None,
+        'send_email': False,
+        'timezone_offset_minutes': 0
+    }
+
+    # Success
+    res = client.post(url, data=json.dumps(base_data),
+                      content_type='application/json')
+    assert res.status_code == 200
+    assert 'Secret URL generated successfully' in res.get_data(as_text=True)
+    send_mail.return_value = True
+    data = {**base_data, 'send_email': True}
+    res = client.post(url, data=json.dumps(data),
+                      content_type='application/json')
+    assert res.status_code == 200
+    assert 'Secret URL generated successfully' in res.get_data(as_text=True)
+    assert 'please check your email inbox' in res.get_data(as_text=True)
+    send_mail.return_value = False
+    res = client.post(url, data=json.dumps(data),
+                      content_type='application/json')
+    assert res.status_code == 200
+    assert 'Secret URL generated successfully' in res.get_data(as_text=True)
+    assert 'there was an error' in res.get_data(as_text=True)
+
+    # Fail
+    with patch('weko_records_ui.views.create_secret_url_record',
+               side_effect=Exception('Test DB Error')):
+        with pytest.raises(Exception):
+            res = client.post(url, data=json.dumps(data),
+                            content_type='application/json')
+            assert res.status_code == 500
+    can_manage.return_value = False
+    with pytest.raises(Exception):
+        res = client.post(url, data=json.dumps(data),
+                        content_type='application/json')
+        assert res.status_code == 403
+    vldt_req.return_value = False
+    res = client.post(url, data=json.dumps(data),
+                    content_type='application/json')
+    assert res.status_code == 400
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_secret_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_copy_secret_url(client, records):
+    _, records = records
+    url = url_for('invenio_records_ui.recid_copy_secret_url',
+                    pid_value=records[1]['recid'].pid_value,
+                    filename=records[1]['filename'],
+                    secret_url_id=1)
+    secret_obj = FileSecretDownload.create(
+        creator_id=1,
+        record_id=records[1]['recid'].pid_value,
+        file_name=records[1]['filename'],
+        label_name='test link',
+        expiration_date=datetime.now(timezone.utc) + timedelta(days=1),
+        download_limit=1,
+    )
+    expected_secret_url = create_download_url(secret_obj)
+    with patch('weko_records_ui.views.can_manage_secret_url',
+                return_value=True):
+        res = client.get(url)
+        assert res.status_code == 200
+        assert ('The secret URL copied to your clipboard.'
+                 in res.get_data(as_text=True))
+        assert res.json['url'] == expected_secret_url
+    with patch('weko_records_ui.views.can_manage_secret_url',
+                return_value=False):
+        with pytest.raises(Exception):
+            res = client.get(url)
+            assert res.status_code == 403
+    with patch('weko_records_ui.views.create_download_url',
+                side_effect=Exception('Test Error')):
+        with pytest.raises(Exception):
+            res = client.get(url)
+            assert res.status_code == 500
+    with patch('weko_records_ui.views.can_manage_secret_url',
+                return_value=True):
+        url = url_for('invenio_records_ui.recid_copy_secret_url',
+                        pid_value=records[1]['recid'].pid_value,
+                        filename=records[1]['filename'],
+                        secret_url_id=99)  # invalid secret_url_id
+        res = client.get(url)
+        assert res.json['url'] is None
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_onetime_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_copy_onetime_url(client, records):
+    _, records = records
+    url = url_for('invenio_records_ui.recid_copy_onetime_url',
+                    pid_value=records[1]['recid'].pid_value,
+                    filename=records[1]['filename'],
+                    onetime_url_id=1)
+    onetime_obj = FileOnetimeDownload.create(
+        approver_id=1,
+        record_id=records[1]['recid'].pid_value,
+        file_name=records[1]['filename'],
+        expiration_date=datetime.now(timezone.utc) + timedelta(days=1),
+        download_limit=1,
+        user_mail='test@example.org',
+        is_guest=False,
+        extra_info={}
+    )
+    expected_onetime_url = create_download_url(onetime_obj)
+    with patch('weko_records_ui.views.can_manage_onetime_url',
+                return_value=True):
+        res = client.get(url)
+        assert res.status_code == 200
+        assert ('The onetime URL copied to your clipboard.'
+                 in res.get_data(as_text=True))
+        assert res.json['url'] == expected_onetime_url
+    with patch('weko_records_ui.views.can_manage_onetime_url',
+                return_value=False):
+          with pytest.raises(Exception):
+                res = client.get(url)
+                assert res.status_code == 403
+    with patch('weko_records_ui.views.create_download_url',
+                side_effect=Exception('Test Error')):
+          with pytest.raises(Exception):
+                res = client.get(url)
+                assert res.status_code == 500
+    with patch('weko_records_ui.views.can_manage_onetime_url',
+                return_value=True):
+        url = url_for('invenio_records_ui.recid_copy_onetime_url',
+                        pid_value=records[1]['recid'].pid_value,
+                        filename=records[1]['filename'],
+                        onetime_url_id=99)  # invalid onetime_url_id
+        res = client.get(url)
+        assert res.json['url'] is None
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_delete_secret_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_delete_secret_url(client, records):
+    _, records = records
+    url = url_for('invenio_records_ui.recid_delete_secret_url',
+                    pid_value=records[1]['recid'].pid_value,
+                    filename=records[1]['filename'],
+                    secret_url_id=1)
+    secret_obj = FileSecretDownload.create(
+        creator_id=1,
+        record_id=records[1]['recid'].pid_value,
+        file_name=records[1]['filename'],
+        label_name='test link',
+        expiration_date=datetime.now(timezone.utc) + timedelta(days=1),
+        download_limit=1,
+    )
+    assert secret_obj.is_deleted == False
+    with patch('weko_records_ui.views.can_manage_secret_url',
+                return_value=True):
+        res = client.delete(url)
+        assert res.status_code == 200
+        assert ('The secret URL has been successfully deleted.'
+                 in res.get_data(as_text=True))
+        assert secret_obj.is_deleted == True
+    with patch('weko_records_ui.views.can_manage_secret_url',
+                return_value=False):
+        with pytest.raises(Exception):
+            res = client.delete(url)
+            assert res.status_code == 403
+    with patch('weko_records_ui.models.FileSecretDownload.delete_logically',
+                side_effect=Exception('Test Error')):
+        with pytest.raises(Exception):
+            res = client.delete(url)
+            assert res.status_code == 500
+    with patch('weko_records_ui.views.can_manage_secret_url',
+                return_value=True):
+        url = url_for('invenio_records_ui.recid_delete_secret_url',
+                        pid_value=records[1]['recid'].pid_value,
+                        filename=records[1]['filename'],
+                        secret_url_id=99)  # invalid secret_url_id
+        with pytest.raises(Exception):
+            res = client.delete(url)
+            assert res.status_code == 404
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_delete_onetime_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_delete_onetime_url(client, records):
+    _, records = records
+    url = url_for('invenio_records_ui.recid_delete_onetime_url',
+                    pid_value=records[1]['recid'].pid_value,
+                    filename=records[1]['filename'],
+                    onetime_url_id=1)
+    onetime_obj = FileOnetimeDownload.create(
+        approver_id=1,
+        record_id=records[1]['recid'].pid_value,
+        file_name=records[1]['filename'],
+        expiration_date=datetime.now(timezone.utc) + timedelta(days=1),
+        download_limit=1,
+        user_mail='test@example.org',
+        is_guest=False,
+        extra_info={}
+    )
+    assert onetime_obj.is_deleted == False
+    with patch('weko_records_ui.views.can_manage_onetime_url',
+                return_value=True):
+        res = client.delete(url)
+        assert res.status_code == 200
+        assert ('The one-time URL has been successfully deleted.'
+                 in res.get_data(as_text=True))
+        assert onetime_obj.is_deleted == True
+    with patch('weko_records_ui.views.can_manage_onetime_url',
+                return_value=False):
+        with pytest.raises(Exception):
+            res = client.delete(url)
+            assert res.status_code == 403
+    with patch('weko_records_ui.models.FileOnetimeDownload.delete_logically',
+                side_effect=Exception('Test Error')):
+        with pytest.raises(Exception):
+            res = client.delete(url)
+            assert res.status_code == 500
+    with patch('weko_records_ui.views.can_manage_onetime_url',
+                return_value=True):
+        url = url_for('invenio_records_ui.recid_delete_onetime_url',
+                        pid_value=records[1]['recid'].pid_value,
+                        filename=records[1]['filename'],
+                        onetime_url_id=99)
+        with pytest.raises(Exception):
+            res = client.delete(url)
+            assert res.status_code == 404
 
 
 # def doi_ish_view_method(parent_pid_value=0, version=0):
@@ -989,96 +1227,3 @@ def test_default_view_method_fix35133(app, records, itemtypes, indexstyle,mocker
                         {'name': 'citation_abstract_html_url','data': 'http://TEST_SERVER/records/1'},
                     ]
                 assert kwargs["google_dataset_meta"] == '{"@context": "https://schema.org/", "@type": "Dataset", "citation": ["http://hdl.handle.net/2261/0002005680", "https://repository.dl.itc.u-tokyo.ac.jp/records/2005680"], "creator": [{"@type": "Person", "alternateName": "creator alternative name", "familyName": "creator family name", "givenName": "creator given name", "identifier": "123", "name": "creator name"}], "description": "『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。", "distribution": [{"@type": "DataDownload", "contentUrl": "https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx", "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt", "encodingFormat": "text/plain"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml", "encodingFormat": "application/x-yaml"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild", "encodingFormat": "text/x-shellscript"}], "includedInDataCatalog": {"@type": "DataCatalog", "name": "https://localhost"}, "license": ["CC BY"], "name": "『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表", "spatialCoverage": [{"@type": "Place", "geo": {"@type": "GeoCoordinates", "latitude": "point latitude test", "longitude": "point longitude test"}}, {"@type": "Place", "geo": {"@type": "GeoShape", "box": "1 3 2 4"}}, "geo location place test"]}' 
-# def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord, filename:str, **kwargs) -> str:
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_create_secret_url_and_send_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp -p no:warnings
-@patch('weko_records_ui.views.validate_secret_url_generation_request')
-@patch('weko_records_ui.views.can_manage_secret_url')
-@patch('weko_records_ui.utils.current_user')
-@patch('weko_records_ui.views.send_secret_url_mail')
-def test_create_secret_url_and_send_mail(send_mail, login_user, can_manage,
-                                         vldt_req, client, users, records):
-    vldt_req.return_value = True
-    can_manage.return_value = True
-    login_user.id = 1
-    tmp, results = records
-    record = results[1]
-    url = url_for('invenio_records_ui.recid_secret_url',
-           pid_value=results[1]["recid"].pid_value,
-           filename=results[1]["filename"])
-    base_data = {
-        'link_name': '',
-        'expiration_date': '',
-        'download_limit': None,
-        'send_email': False,
-        'timezone_offset_minutes': 0
-    }
-
-    # Success
-    res = client.post(url, data=json.dumps(base_data),
-                      content_type='application/json')
-    assert res.status_code == 200
-    assert 'Secret URL generated successfully' in res.get_data(as_text=True)
-    send_mail.return_value = True
-    data = {**base_data, 'send_email': True}
-    res = client.post(url, data=json.dumps(data),
-                      content_type='application/json')
-    assert res.status_code == 200
-    assert 'Secret URL generated successfully' in res.get_data(as_text=True)
-    assert 'please check your email inbox' in res.get_data(as_text=True)
-    send_mail.return_value = False
-    res = client.post(url, data=json.dumps(data),
-                      content_type='application/json')
-    assert res.status_code == 200
-    assert 'Secret URL generated successfully' in res.get_data(as_text=True)
-    assert 'there was an error' in res.get_data(as_text=True)
-
-    # Fail
-    with patch('weko_records_ui.views.create_secret_url_record',
-               side_effect=Exception('Test DB Error')):
-        with pytest.raises(Exception):
-            res = client.post(url, data=json.dumps(data),
-                            content_type='application/json')
-            assert res.status_code == 500
-    can_manage.return_value = False
-    with pytest.raises(Exception):
-        res = client.post(url, data=json.dumps(data),
-                        content_type='application/json')
-        assert res.status_code == 403
-    vldt_req.return_value = False
-    res = client.post(url, data=json.dumps(data),
-                    content_type='application/json')
-    assert res.status_code == 400
-
-
-
-
-# def test_create_secret_url_and_send_mail(app,client,db,users,records):
-#     app.config['WEKO_WORKFLOW_DATE_FORMAT'] = "%Y-%m-%d"
-#     indexer, results = records
-#     record = results[1]
-
-#     # 79
-#     id = 1 #repoadmin
-#     secret_file_url = url_for("invenio_records_ui.recid_secret_url"
-#                                 ,pid_value=results[1]["recid"].pid_value
-#                                 ,filename=results[1]["filename"])
-#     login_user_via_session(client=client, user=users[id]["obj"] ,email=users[id]["email"])
-#     with patch('weko_records_ui.views.can_manage_secret_url',return_value = True):
-#         with patch('weko_records_ui.views.process_send_mail',return_value = True):
-#             # with app.test_request_context():
-#             res = client.get(secret_file_url)
-#             assert res.status_code == 405
-            
-#             res = client.post(secret_file_url ,data=json.dumps({}), content_type='application/json')
-#             assert res.status_code == 200
-#         with patch('weko_records_ui.views.process_send_mail',return_value = False):
-#             with patch("flask.templating._render", return_value=""):
-#                 res = client.post(secret_file_url ,data=json.dumps({}), content_type='application/json')
-#                 assert res.status_code == 500
-#     with patch('weko_records_ui.views.can_manage_secret_url',return_value = False):
-#         with patch('weko_records_ui.views.process_send_mail',return_value = True):
-#             with patch("flask.templating._render", return_value=""):
-#                 res = client.post(secret_file_url ,data=json.dumps({}), content_type='application/json')
-#                 assert res.status_code == 403
-
-# def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord, filename:str, **kwargs) -> str:

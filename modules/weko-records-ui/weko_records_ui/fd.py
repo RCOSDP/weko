@@ -425,7 +425,7 @@ def file_download_onetime(pid, record, filename, _record_file_factory=None,
     Returns:
         Response: The Flask wrapper object for the file download
     """
-    # Validate the one-time download URL
+    # Validate the download request
     token = request.args.get('token', type=str)
     is_validated, error_msg = validate_url_download(
         record, filename, token, is_secret_url=False)
@@ -436,15 +436,14 @@ def file_download_onetime(pid, record, filename, _record_file_factory=None,
     _record_file_factory = _record_file_factory or record_file_factory
     file_object = _record_file_factory(pid, record, filename)
     if not file_object or not file_object.obj:
-        return error_response(f'The file "{filename}" does not exist.', 404)
+        return error_response(_('The file "%s" does not exist.') % filename, 404)
 
-    # Update extra_info of the one-time URL object
-    url_obj:FileOnetimeDownload = convert_token_into_obj(token)
-    if (url_obj.extra_info and
-       (file_object.get('accessrole') == 'open_restricted')):
-        extra_info = url_obj.extra_info
+    # Update 'extra_info' of the one-time URL object
+    url_obj = convert_token_into_obj(token, is_secret_url=False)
+    extra_info = url_obj.extra_info
+    if extra_info:
         try:
-            # extra_info can be changed by this method
+            # 'extra_info' can be changed by this method
             error = check_and_send_usage_report(
                 extra_info, url_obj.user_mail ,record, file_object)
             if error:
@@ -466,7 +465,7 @@ def file_download_onetime(pid, record, filename, _record_file_factory=None,
         save_download_log(record, filename, token, is_secret_url=False)
     except Exception as e:
         current_app.logger.error(e)
-        return error_response('Unexpected error occurred.', 500)
+        return error_response(_('Unexpected error occurred.'), 500)
 
     return _download_file(
         file_object, False, 'en', file_object.obj, pid, record)
@@ -518,7 +517,7 @@ def file_download_secret(pid, record, filename, _record_file_factory=None,
     Returns:
         Response: The Flask wrapper object for the file download.
     """
-    # Validate the secret URL
+    # Validate the download request
     token = request.args.get('token', type=str)
     is_validated, error_msg = (
         validate_url_download(record, filename, token, is_secret_url=True))
@@ -529,7 +528,7 @@ def file_download_secret(pid, record, filename, _record_file_factory=None,
     _record_file_factory = _record_file_factory or record_file_factory
     file_object = _record_file_factory(pid, record, filename)
     if not file_object or not file_object.obj:
-        return error_response(f'The file "{filename}" does not exist.', 404)
+        return error_response(_('The file "%s" does not exist.') % filename, 404)
 
     # Set language for PDF cover page
     lang = 'en'
@@ -538,13 +537,13 @@ def file_download_secret(pid, record, filename, _record_file_factory=None,
         lang = user_profile.language if user_profile else 'en'
 
     # Increase the download count and save the download log
-    url_obj:FileSecretDownload = convert_token_into_obj(token, is_secret_url=True)
+    url_obj = convert_token_into_obj(token, is_secret_url=True)
     try:
         url_obj.increment_download_count()
         save_download_log(record, filename, token, is_secret_url=True)
     except Exception as e:
         current_app.logger.error(e)
-        return error_response('Unexpected error occurred.', 500)
+        return error_response(_('Unexpected error occurred.'), 500)
 
     return _download_file(
         file_object, False, lang, file_object.obj, pid, record)
