@@ -1526,3 +1526,44 @@ msgstr ""
 #~ " Sent the URL to your email "
 #~ "adress."
 
+msgid "Download / Preview is available from {}/{}/{}."
+msgstr "Download / Preview is available from {}/{}/{}."
+
+msgid "Apply JGSS"
+msgstr "Apply"
+
+msgid "This data is not available for undergraduate students or those who do not register their positions."
+msgstr ""
+
+msgid "Please input email address."
+msgstr ""
+
+msgid "Email address"
+msgstr ""
+
+msgid "Email address(reconfirmation)"
+msgstr ""
+
+msgid "Token is invalid."
+msgstr ""
+
+msgid "The expiration date for download has been exceeded."
+msgstr ""
+
+msgid "The download limit has been exceeded."
+msgstr ""
+
+msgid "This data is not available for this user."
+msgstr ""
+
+msgid "Success Secret URL Generate"
+msgstr "Success: Secret URL Generate is succeed. Sent the URL to your email adress."
+
+msgid "massage_del_check"
+msgstr "If you delete this URL, it will no longer be available. Are you sure you want to delete it?"
+
+msgid "massage_del_success"
+msgstr "URL has been removed"
+
+msgid "massage_copy_success"
+msgstr "URL has been copied to the clipboard"

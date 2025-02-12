@@ -100,3 +100,68 @@
   background-color: #f7f7f7 !important;
   border: 1px solid #ebebeb;
 }
+
+/* 削除ボタンのスタイル */
+.delete_secret_url {
+  background-color: #dc3545;
+  width: 130px;
+  color: white;
+}
+
+/* コピーボタンのスタイル */
+.copy_secret_url {
+  background-color: #F0F8FF;
+  width: 130px;
+  color: black;
+}
+
+.secret-url-area table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.secret-url-area th, .secret-url-area td {
+  padding: 10px;
+  text-align: left;
+  border: 1px solid #ddd;
+  vertical-align: middle; /* 縦方向の中央揃え */
+}
+
+.secret-url-area th {
+  background-color: #f2f2f2;
+}
+
+/* 削除ボタンのスタイル */
+.delete_onetime_url {
+  background-color: #dc3545;
+  width: 130px;
+  color: white;
+}
+
+/* コピーボタンのスタイル */
+.copy_onetime_url {
+  background-color: #F0F8FF;
+  width: 130px;
+  color: black;
+}
+
+.onetime-url-area table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.onetime-url-area th, .onetime-url-area td {
+  padding: 10px;
+  text-align: left;
+  border: 1px solid #ddd;
+  vertical-align: middle; /* 縦方向の中央揃え */
+}
+
+.onetime-url-area th {
+  background-color: #f2f2f2;
+}
+
+.button-group {
+  margin-right: 5px;
+  display: inline-block; /* ボタンを横並びにする */
+}

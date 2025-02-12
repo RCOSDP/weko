@@ -27,7 +27,7 @@ from typing import List
 
 from flask import current_app
 from invenio_db import db
-from sqlalchemy import CheckConstraint, desc, func
+from sqlalchemy import CheckConstraint, desc, func, asc
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import INET
 from sqlalchemy.sql.functions import concat ,now
@@ -337,6 +337,30 @@ class DownloadMixin:
             db.session.rollback()
             current_app.logger.error(ex)
             raise ex
+
+    @classmethod
+    def fetch_active_urls(cls, record_id, file_name, ascending=False):
+        """Fetch the active URLs for a specified file from the database.
+
+        Args:
+            record_id (str): The ID of the record to which the file belongs.
+            file_name (str): The name of the file.
+            ascending (bool): A flag indicating how the results are ordered.
+
+        Returns:
+            List[cls]: A list of active URLs.
+        """
+        query = cls.query.filter(
+            cls.record_id      == record_id,
+            cls.file_name      == file_name,
+            cls.expiration_date > datetime.utcnow(),
+            cls.download_count  < cls.download_limit,
+            cls.is_deleted     == False
+        )
+        if ascending:
+            return query.order_by(asc(cls.id)).all()
+        else:
+            return query.order_by(desc(cls.id)).all()
 
 
 class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):
