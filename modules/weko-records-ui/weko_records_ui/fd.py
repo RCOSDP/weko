@@ -436,7 +436,7 @@ def file_download_onetime(pid, record, filename, _record_file_factory=None,
     _record_file_factory = _record_file_factory or record_file_factory
     file_object = _record_file_factory(pid, record, filename)
     if not file_object or not file_object.obj:
-        return error_response(f'The file "{filename}" does not exist.', 404)
+        return error_response(_('The file "%s" does not exist.') % filename, 404)
 
     # Update 'extra_info' of the one-time URL object
     url_obj = convert_token_into_obj(token, is_secret_url=False)
@@ -465,7 +465,7 @@ def file_download_onetime(pid, record, filename, _record_file_factory=None,
         save_download_log(record, filename, token, is_secret_url=False)
     except Exception as e:
         current_app.logger.error(e)
-        return error_response('Unexpected error occurred.', 500)
+        return error_response(_('Unexpected error occurred.'), 500)
 
     return _download_file(
         file_object, False, 'en', file_object.obj, pid, record)
@@ -528,7 +528,7 @@ def file_download_secret(pid, record, filename, _record_file_factory=None,
     _record_file_factory = _record_file_factory or record_file_factory
     file_object = _record_file_factory(pid, record, filename)
     if not file_object or not file_object.obj:
-        return error_response(f'The file "{filename}" does not exist.', 404)
+        return error_response(_('The file "%s" does not exist.') % filename, 404)
 
     # Set language for PDF cover page
     lang = 'en'
@@ -543,7 +543,7 @@ def file_download_secret(pid, record, filename, _record_file_factory=None,
         save_download_log(record, filename, token, is_secret_url=True)
     except Exception as e:
         current_app.logger.error(e)
-        return error_response('Unexpected error occurred.', 500)
+        return error_response(_('Unexpected error occurred.'), 500)
 
     return _download_file(
         file_object, False, lang, file_object.obj, pid, record)
