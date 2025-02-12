@@ -1053,7 +1053,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
                         new_label += '[{}]'
                         if isinstance(data, dict):
                             data = [data]
-                        if data and data[idx].get(key):
+                        if data and data[idx].get(key) and idx < len(data):
                             for idx_c in range(len(data[idx][key])):
                                 key_list.append(new_key.format(idx_c))
                                 key_label.append(new_label.format(idx_c))
