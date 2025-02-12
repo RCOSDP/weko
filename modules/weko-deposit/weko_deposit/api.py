@@ -2239,17 +2239,12 @@ class WekoRecord(Record):
 
         :return: .
         """
-        # Get current date.
-        today = datetime.now().date()
+        from weko_records_ui.utils import is_future
         # Get 'open_date' and convert to datetime.date.
         date_value = self.get_open_date_value(file_metadata)
-        _format = '%Y-%m-%d'
         if date_value is None:
             date_value = str(date.max)
-        dt = datetime.strptime(date_value, _format)
-        # Compare open_date with current date.
-        is_future = dt.date() > today
-        return is_future
+        return is_future(date_value)
 
     @property
     def pid_doi(self):

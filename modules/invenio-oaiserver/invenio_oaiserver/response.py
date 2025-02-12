@@ -340,9 +340,9 @@ def is_private_workflow(record):
 
 def is_pubdate_in_future(record):
     """Check pubdate of workflow is in future."""
+    from weko_records_ui.utils import is_future
     adt = record.get('publish_date')
-    pdt = to_utc(datetime.strptime(adt, '%Y-%m-%d'))
-    return pdt > datetime.utcnow()
+    return is_future(adt)
 
 
 def is_private_index(record):

@@ -1,5 +1,6 @@
 import pytest
 from weko_records_ui.utils import (
+    is_future,
     check_and_create_usage_report,
     check_items_settings, create_onetime_download_url,
     create_usage_report_for_user, display_oaiset_path,
@@ -39,6 +40,18 @@ from weko_records.serializers.utils import get_mapping
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+
+# def is_future(settings=None):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_future -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_is_future(app):
+    assert is_future(None) == True
+    assert is_future('2100-01-01') == True
+    assert is_future('2000-01-01T00:00:00') == False
+    assert is_future('2000-01-01 00:00:00') == False
+    assert is_future(dt(2100, 1, 1)) == True
+    assert is_future('2000-01-01 00:00') == True
+    assert is_future('2024-12-15T25:61:61') == True
+    assert is_future([1]) == True
 
 # def check_items_settings(settings=None):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_check_items_settings -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

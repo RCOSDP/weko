@@ -13,6 +13,7 @@ from __future__ import absolute_import, print_function
 import os
 from flask_login import current_user
 
+from flask_babelex import get_timezone
 from kombu import Exchange
 
 from .permissions import stats_api_permission
@@ -215,7 +216,7 @@ STATS_AGGREGATION_INDEXES = [
 """Stats aggregation indexes."""
 
 
-STATS_WEKO_DEFAULT_TIMEZONE = 'Asia/Tokyo'
+STATS_WEKO_DEFAULT_TIMEZONE = get_timezone
 """Bucketing should use a different time zone."""
 
 STATS_WEKO_DB_BACKUP_EVENTS = True
