@@ -14,8 +14,9 @@ import shutil
 import traceback
 from datetime import datetime, timedelta
 
-from flask import Blueprint, current_app, jsonify, request, url_for
+from flask import Blueprint, current_app, jsonify, request, url_for, abort
 from flask_login import current_user
+from flask_limiter.errors import RateLimitExceeded
 from sword3common import (
     ServiceDocument, StatusDocument, constants, Error as sword3commonError
 )
@@ -36,6 +37,7 @@ from weko_search_ui.utils import import_items_to_system
 from weko_workflow.utils import get_site_info_name
 from weko_workflow.scopes import activity_scope
 
+from .config import WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE
 from .decorators import check_on_behalf_of, check_package_contents
 from .errors import ErrorType, WekoSwordserverException
 from .registration import (
@@ -148,7 +150,7 @@ def get_service_document():
 @oauth2.require_oauth()
 @limiter.limit("")
 @require_oauth_scopes(write_scope.id)
-@roles_required(current_app.config["WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE"])
+@roles_required(WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE)
 @check_on_behalf_of()
 @check_package_contents()
 def post_service_document():
@@ -452,7 +454,7 @@ def _get_status_document(recid):
 
     return statusDocument.data
 
-def _get_status_workflow_document(activity, recid):
+def _get_status_workflow_document(activity_id, recid):
     """
     :param recid: Record Identifier.
     :returns: A :class:`sword3common.StatusDocument` instance.
@@ -465,13 +467,13 @@ def _get_status_workflow_document(activity, recid):
         # "@context"
         # "@type"
     """
-    if not activity:
+    if not activity_id:
         raise WekoSwordserverException("Activity created, but not found.", ErrorType.NotFound)
 
     # Get record uri
-    record_url = ''
+    record_url = ""
     if recid:
-        record_url = url_for('weko_swordserver.get_status_document', recid=recid, _external=True)
+        record_url = url_for("weko_swordserver.get_status_document", recid=recid, _external=True)
 
     raw_data = {
         "@id": record_url,
@@ -496,7 +498,7 @@ def _get_status_workflow_document(activity, recid):
             # "@id" : "",
             # "eTag" : ""
         },
-        "service" : url_for('weko_swordserver.get_service_document', _external=False),
+        "service" : url_for("weko_swordserver.get_service_document", _external=False),
         "state" : [
             {
                 "@id" : SwordState.inWorkflow,
@@ -505,7 +507,7 @@ def _get_status_workflow_document(activity, recid):
         ],
         "links" : [
             {
-                "@id" : url_for('weko_workflow.display_activity', activity_id=activity.activity_id, _external=True),
+                "@id" : url_for("weko_workflow.display_activity", activity_id=activity_id, _external=True),
                 "rel" : ["alternate"],
                 "contentType" : "text/html"
             },
@@ -588,6 +590,13 @@ def handle_forbidden(ex):
     msg = "Not allowed operation in your token scope."
     current_app.logger.error(msg)
     return jsonify(_create_error_document(ErrorType.Forbidden.type, msg)), ErrorType.Forbidden.code
+
+from flask_limiter.errors import RateLimitExceeded
+
+@blueprint.errorhandler(RateLimitExceeded)
+def handle_ratelimit(ex):
+    current_app.logger.error(ex)
+    return jsonify(_create_error_document(ErrorType.TooManyRequests.type, "Too many requests.")), ErrorType.TooManyRequests.code
 
 @blueprint.errorhandler(SeamlessException)
 def handle_seamless_exception(ex):
