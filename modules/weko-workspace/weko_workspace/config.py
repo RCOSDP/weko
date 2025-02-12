@@ -18,7 +18,21 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Configuration for weko-workflow."""
+"""Configuration for weko-workspace."""
+
+# Front-end variable definition
+WEKO_WORKSPACE_BASE_TEMPLATE = 'weko_workspace/workspace_base.html'
+"""Default base template for the demo page."""
+
+
+# Back-end variable definition
+
+# Error message variable definition
+
+# Others
+
+# ============================================================================================
+
 
 WEKO_WORKFLOW_BASE_TEMPLATE = 'weko_workflow/base.html'
 """Default base template for the demo page."""
