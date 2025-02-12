@@ -430,6 +430,49 @@ class WekoSwordMapper(JsonMapper):
             return 1 + self._get_dimensions(lst[0])
 
 
+    # TODO: Add methods for extra area.
+    def _get_extra_dict(self, path_and_value, all_properties):
+        """Get dict of Extra field.
+
+        Args:
+            path_and_value (dict): dict contains pairs of path of JSON metadata and a value or list of values
+            all_properties (dict): dict contains pairs of path of JSON metadata and a value
+
+        Returns:
+            dict: dict to be Extra field
+        """
+        import re
+
+        list_pop_keys = []
+
+        for k, v in all_properties.items():
+            # case that '[' is included in the key.
+            if '[' in k:
+                # get indices of '[' and ']'
+                indice = [int(i) for i in re.findall(r'\[(\d)+\]', k)]
+                # get key name without '[' and ']'
+                key = re.sub(r'\[\d+\]', '', k)
+                if key in path_and_value.keys():
+                    # get value from path_and_value
+                    value = path_and_value
+                    for idx in indice:
+                        try:
+                            value = value[key][idx]
+                        except:
+                            value = None
+                    if value:
+                        list_pop_keys.append(k)
+            # case that NO '[' is included in the key.
+            else:
+                if k in path_and_value.keys():
+                    list_pop_keys.append(k)
+
+        for k in list_pop_keys:
+            all_properties.pop(k)
+
+        return all_properties
+
+
     def is_valid_mapping(self):
         """Check if the mapping is valid."""
         try:
