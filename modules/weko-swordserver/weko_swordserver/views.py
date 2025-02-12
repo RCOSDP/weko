@@ -11,6 +11,7 @@ from __future__ import absolute_import, print_function
 
 import os
 import shutil
+import traceback
 from datetime import datetime, timedelta
 
 from flask import Blueprint, current_app, jsonify, request, url_for
@@ -41,8 +42,10 @@ from .registration import (
     check_bagit_import_items,
     check_import_items,
     create_activity_from_jpcoar,
+    import_items_to_activity
 )
 from .utils import check_import_file_format, is_valid_file_hash
+from weko_accounts.utils import limiter
 
 
 class SwordState:
@@ -66,6 +69,7 @@ blueprint.before_request(verify_oauth_token_and_set_current_user)
 
 @blueprint.route("/service-document", methods=["GET"])
 @oauth2.require_oauth()
+@limiter.limit("")
 @check_on_behalf_of()
 def get_service_document():
     """
@@ -142,6 +146,7 @@ def get_service_document():
 
 @blueprint.route("/service-document", methods=["POST"])
 @oauth2.require_oauth()
+@limiter.limit("")
 @require_oauth_scopes(write_scope.id)
 @roles_required(current_app.config["WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE"])
 @check_on_behalf_of()
@@ -271,7 +276,7 @@ def post_service_document():
             f"Error in check_import_items: {check_result_msg}", errorType)
     if item.get("status") != "new":
         current_app.logger.error(
-            f"This item is already registered: {item.get("item_title")}"
+            f"This item is already registered: {item.get('item_title')}"
         )
         raise WekoSwordserverException("This item is already registered: {0}".format(item.get("item_title")), ErrorType.BadRequest)
 
@@ -291,29 +296,32 @@ def post_service_document():
     if file_format == "TSV/CSV" or file_format == "JSON" and register_format == "Direct":
         item["root_path"] = data_path+"/data"
         import_result = import_items_to_system(item, request_info=request_info)
-        if not import_result.get('success'):
-            raise WekoSwordserverException('Error in import_items_to_system: {0}'.format(item.get('error_id')), ErrorType.ServerError)
-        recid = import_result.get('recid')
+        if not import_result.get("success"):
+            current_app.logger.error(
+                f"Error in import_items_to_system: {item.get('error_id')}"
+            )
+            raise WekoSwordserverException("Error in import_items_to_system: {0}".format(item.get("error_id")), ErrorType.ServerError)
+        recid = import_result.get("recid")
         response = jsonify(_get_status_document(recid))
     elif file_format == "XML" or file_format == "JSON" and register_format == "Workflow":
+        required_scopes = set([activity_scope.id])
+        token_scopes = set(request.oauth.access_token.scopes)
+        if not required_scopes.issubset(token_scopes):
+            abort(403)
         try:
-            activity, recid = create_activity_from_jpcoar(check_result, data_path)
+            # activity, recid = create_activity_from_jpcoar(check_result, data_path)
+            url, recid, aution = import_items_to_activity(item, data_path, request_info=request_info)
+            activity_id = url.split("/")[-1]
         except:
-            raise WekoSwordserverException('Error in create_activity_from_jpcoar', ErrorType.ServerError)
-        response = jsonify(_get_status_workflow_document(activity, recid))
+            traceback.print_exc()
+            raise WekoSwordserverException("An error occurred while import to activity", ErrorType.ServerError)
+        response = jsonify(_get_status_workflow_document(activity_id, recid))
     else:
         if os.path.exists(data_path):
             shutil.rmtree(data_path)
             TempDirInfo().delete(data_path)
-        raise WekoSwordserverException('Invalid register format has been set for admin setting', ErrorType.ServerError)
-
-    import_result = import_items_to_system(item, request_info=request_info)
-    if not import_result.get("success"):
-        current_app.logger.error(
-            f"Error in import_items_to_system: {item.get('error_id')}"
-        )
-        raise WekoSwordserverException("Error in import_items_to_system: {0}".format(item.get("error_id")), ErrorType.ServerError)
-    # remove temp dir
+        raise WekoSwordserverException("Invalid register format has been set for admin setting", ErrorType.ServerError)
+    # FIXME: finaly block
     if os.path.exists(data_path):
         shutil.rmtree(data_path)
         TempDirInfo().delete(data_path)

@@ -48,6 +48,7 @@ from weko_search_ui.utils import (
 )
 from weko_workflow.api import WorkActivity, WorkFlow as WorkFlows
 from weko_workflow.models import ActionStatusPolicy, WorkFlow
+from weko_workflow.headless import HeadlessActivity
 
 
 from weko_records.api import ItemTypes
@@ -102,6 +103,45 @@ def check_import_items(file, is_change_identifier: bool = False):
             return check_xml_result, "XML"
 
     return {}, None
+
+
+def import_items_to_activity(item, data_path, request_info):
+    workflow_id = request_info.get("workflow_id")
+    # when metadata format was XML, get id from admin setting
+    if workflow_id is None:
+        settings = AdminSettings.get("sword_api_setting", dict_to_object=False)
+        default_format = settings.get("default_format", "XML")
+        data_format = settings.get("data_format")
+        workflow_id = int(data_format.get(default_format, {}).get("workflow", "-1"))
+
+    metadata = item.get("metadata")
+    publish_status = item.get("publish_status")
+    index = metadata.get("path")
+    files_info = metadata.pop("files_info", [{}])
+    files = [
+        os.path.join(item.get("root_path"), file_info.get("url", {}).get("label"))
+            for file_info
+            in files_info[0].get("items", {})
+    ]
+    comment = metadata.get("comment")
+    link_data = item.get("link_data")
+    grant_data = item.get("grant_data")
+
+    try:
+        headless = HeadlessActivity()
+        url, current_action, recid = headless.auto(
+            user_id= request_info.get("user_id"), workflow_id=workflow_id,
+            index=index, metadata=metadata, files=files, comment=comment,
+            link_data=link_data, grant_data=grant_data
+        )
+    except Exception as ex:
+        traceback.print_exc()
+        raise WekoSwordserverException(
+            f"An error occurred while {headless.current_action}.",
+            ErrorType.ServerError
+        ) from ex
+
+    return url, recid, current_action
 
 
 def create_activity_from_jpcoar(check_result, data_path):
