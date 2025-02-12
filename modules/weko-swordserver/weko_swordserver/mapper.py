@@ -13,15 +13,18 @@ from invenio_oaiharvester.harvester import JsonMapper
 
 from .errors import WekoSwordserverException, ErrorType
 
+from weko_search_ui.mapper import JsonLdMapper
+
 
 class WekoSwordMapper(JsonMapper):
     """WekoSwordMapper."""
-    def __init__(self, json, itemtype, json_map):
+    def __init__(self, json, json_ld, itemtype, json_map):
         """Init."""
         self.json = json
         self.itemtype = itemtype
         self.itemtype_name = itemtype.item_type_name.name
         self.json_map = json_map
+        self.all_properties, _ = JsonLdMapper.process_json_ld(json_ld)
 
     def map(self):
         """Maping JSON-LD;self.json Metadata into item_type format."""
@@ -58,6 +61,7 @@ class WekoSwordMapper(JsonMapper):
             dict: mapped metadata
         """
         metadata = {}
+        path_and_value = {}
 
         # Create metadata for each item in json_map
         for k, v in self.json_map.items():
@@ -66,6 +70,17 @@ class WekoSwordMapper(JsonMapper):
                 continue
             type_of_item_type_path = self._get_type_of_item_type_path(item_map[k])
             self._create_metadata_of_a_property(metadata, item_map[k], type_of_item_type_path, json_value)
+
+            # Create path_and_value
+            path_and_value[v] = json_value
+
+        # Create Extra field
+        extra_dict = self._get_extra_dict(path_and_value, self.all_properties)
+
+        # Check if "Extra" prepared in itemtype schema form item_map
+        if "Extra" in item_map:
+            metadata["Extra"] = extra_dict
+
         return metadata
 
 
