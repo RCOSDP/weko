@@ -27,7 +27,7 @@ from b2handle.clientcredentials import PIDClientCredentials
 from b2handle.handleclient import EUDATHandleClient
 from b2handle.handleexceptions import CredentialsFormatError, \
     GenericHandleError, HandleAuthenticationError, \
-    HandleAlreadyExistsException
+    HandleAlreadyExistsException, HandleNotFoundException
 from flask import current_app, jsonify
 
 
@@ -83,6 +83,41 @@ class Handle(object):
             current_app.logger.error(traceback.format_exc())
             current_app.logger.error(e)
             return None
+        except AttributeError:
+            current_app.logger.error('Missing Private Key!')
+            current_app.logger.error(traceback.format_exc())
+            return None
+        except Exception as e:
+            current_app.logger.error(traceback.format_exc())
+            current_app.logger.error(e)
+            return None
+
+    def delete_hundle(self, hdl, overwrite=False):
+        """Delete a handle."""
+        current_app.logger.debug("hdl:{0}".format(hdl))
+        try:
+            credential = PIDClientCredentials.load_from_JSON(
+                self.credential_path)
+            client = EUDATHandleClient.instantiate_with_credentials(credential)
+
+            current_app.logger.debug(
+                'call delete_hundle({0})'.format(hdl))
+            client.delete_hundle(hdl)
+            current_app.logger.info(
+                'Delete successfully handle:{0}'.format(hdl))
+            return hdl
+        except (FileNotFoundError, CredentialsFormatError,
+                HandleAuthenticationError, GenericHandleError) as e:
+            current_app.logger.error(
+                'Delete failed of handle {0}. {1} in '
+                'HandleClient.delete_handle'.format(hdl, e))
+            current_app.logger.error(traceback.format_exc())
+            return None
+        except HandleNotFoundException:
+            current_app.logger.debug(
+                'Handle: {0} is not exists.'.format(hdl))
+            """The deleted handle is returned to the caller, and the Notfound also works correctly."""
+            return hdl
         except AttributeError:
             current_app.logger.error('Missing Private Key!')
             current_app.logger.error(traceback.format_exc())

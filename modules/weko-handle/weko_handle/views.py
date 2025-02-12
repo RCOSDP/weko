@@ -69,7 +69,19 @@ def register_handle():
     except Exception as e:
         current_app.logger.error('Unexpected error: ', e)
 
+@blueprint.route('/delete', methods=['POST'])
+def delete_handle():
+    """Delete a handle."""
+    try:
+        hdl = request.form['hdl']
+        handle_obj = Handle()
+        if hdl:
+            handle = handle_obj.delete_handle(hdl)
+            return jsonify(handle)
 
+        return jsonify({'code': -1, 'msg': 'error'})
+    except Exception as e:
+        current_app.logger.error('Unexpected error: ', e)
 
 @blueprint.teardown_request
 @blueprint_api.teardown_request
