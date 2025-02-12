@@ -228,8 +228,17 @@ class Community(db.Model, Timestamp):
         db.ForeignKey(Index.id),
         nullable=False
     )
-
     """Id of Root Node"""
+    
+    content_policy = db.Column(db.Text, nullable=False, default='')
+    """Community content policy."""
+    
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey(Role.id),
+        nullable=False
+    )
+    """Group of the community."""
 
     #
     # Relationships
@@ -248,6 +257,9 @@ class Community(db.Model, Timestamp):
                             backref='index',
                             foreign_keys=[root_node_id])
     """Relation to the owner (Index) of the community."""
+    
+    group = db.relationship(Role, backref='group',
+                            foreign_keys=[group_id])
 
     def __repr__(self):
         """String representation of the community object."""
@@ -322,6 +334,12 @@ class Community(db.Model, Timestamp):
         else:
             query = query.order_by(db.desc(cls.ranking))
         return query
+    
+    @classmethod
+    def get_repositories_by_user(cls, user):
+        """Get repository ids for user."""
+        role_ids = [role.id for role in user.roles]
+        return Community.query.filter(Community.group_id.in_(role_ids)).all()
 
     def add_record(self, record):
         """Add a record to the community.
@@ -410,6 +428,9 @@ class Community(db.Model, Timestamp):
             raise CommunitiesError(community=self)
         else:
             self.deleted_at = None
+
+    def to_dict(self):
+        return {column.name: getattr(self, column.name) for column in self.__table__.columns}
 
     @property
     def is_deleted(self):

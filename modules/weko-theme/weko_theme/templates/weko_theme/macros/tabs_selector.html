@@ -34,4 +34,7 @@
     {% endif %}
   {%- endif %}
   <li role="presentation" class="{{ check_ranking_show() }} {% if tab_value=='rank' %}active{% endif %}"><a href="{{url_for('weko_items_ui.ranking')}}">{{ _('Ranking') }}</a></li>
+  {%- if community_id %}
+    <li role="presentation" {% if tab_value=='content_policy' %}class="active"{% endif %}><a href="/c/{{community_id}}/content_policy">コンテンツポリシー</a></li>
+  {% endif %}
 {% endmacro %}

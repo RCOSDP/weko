@@ -21,8 +21,10 @@ from flask_babelex import gettext as _
 from flask_security import current_user
 from flask_security.recoverable import send_reset_password_instructions
 from flask_security.utils import hash_password
+from invenio_communities.models import Community
 from invenio_db import db
 from passlib import pwd
+from sqlalchemy import func
 from werkzeug.local import LocalProxy
 from wtforms.fields import BooleanField
 from wtforms.validators import DataRequired
@@ -91,6 +93,24 @@ class UserView(ModelView):
         if is_created and form.notification.data is True:
             send_reset_password_instructions(User)
 
+    def get_query(self):
+        """Return a query for the model type."""
+        if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles):
+            return self.session.query(self.model)
+        else:
+            repositories = Community.get_repositories_by_user(current_user)
+            groups = [repository.group for repository in repositories]
+            return self.session.query(self.model).filter(self.model.roles.any(Role.id.in_([group.id for group in groups])))
+
+    def get_count_query(self):
+        """Return a the count query for the model type"""
+        if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles):
+            return self.session.query(func.count('*')).select_from(self.model)
+        else:
+            repositories = Community.get_repositories_by_user(current_user)
+            groups = [repository.group for repository in repositories]
+            return self.session.query(func.count('*')).select_from(self.model).filter(self.model.roles.any(Role.id.in_([group.id for group in groups])))
+
     @action('inactivate', _('Inactivate'),
             _('Are you sure you want to inactivate selected users?'))
     @commit
@@ -147,12 +167,12 @@ class UserView(ModelView):
     @property
     def can_edit(self):
         """Check permission for Editing."""
-        return self._system_role in [role.name for role in current_user.roles]
+        return True
 
     @property
     def can_delete(self):
         """Check permission for Deleting."""
-        return self._system_role in [role.name for role in current_user.roles]
+        return True
 
 
 class RoleView(ModelView):

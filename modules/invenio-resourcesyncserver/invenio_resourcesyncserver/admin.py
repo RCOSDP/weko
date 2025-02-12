@@ -23,6 +23,7 @@
 from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
+from flask_login import current_user
 
 from .api import ChangeListHandler, ResourceListHandler
 from .config import INVENIO_RESOURCESYNC_CHANGE_LIST_ADMIN
@@ -120,7 +121,7 @@ class AdminChangeListView(BaseView):
         :param
         :return: The rendered template.
         """
-        change_lists = ChangeListHandler.get_all()
+        change_lists = ChangeListHandler.get_all(user=current_user)
         response = [c.to_dict() for c in change_lists]
         return jsonify(response)
 

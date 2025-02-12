@@ -20,6 +20,7 @@ const urlGetLogs = window.location.origin + "/admin/resync/get_logs";
 const urlSync = window.location.origin + "/admin/resync/run_sync";
 const urltoggleRunning = window.location.origin + "/admin/resync/toggle_auto";
 const urlGetTreeList = window.location.origin + "/api/tree";
+const urlGetRepositoryList = window.location.origin + "/resync/get_repository";
 const status = JSON.parse($("#status").text())
 const resync_mode = JSON.parse($("#resync_mode").text())
 const saving_format = JSON.parse($("#saving_format").text())
@@ -338,8 +339,7 @@ class CreateResyncComponent extends React.Component {
     this.handleChangeState = this.handleChangeState.bind(this);
     this.handleChangeURL = this.handleChangeURL.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
-    this.generateTreeList = this.generateTreeList.bind(this);
-    this.getTreeList = this.getTreeList.bind(this);
+    this.getRepositoryList = this.getRepositoryList.bind(this);
   }
 
   handleChangeState(name, value) {
@@ -401,8 +401,8 @@ class CreateResyncComponent extends React.Component {
       .catch(() => alert("Error in Create"));
   }
 
-  getTreeList() {
-    fetch(urlGetTreeList, {
+  getRepositoryList() {
+    fetch(urlGetRepositoryList, {
       method: "GET",
       headers: {
         "Content-Type": "application/json"
@@ -410,34 +410,16 @@ class CreateResyncComponent extends React.Component {
     })
       .then(res => res.json())
       .then(res => {
-        let treeList = [];
-        res.map(item => {
-          treeList = [...treeList, ...this.generateTreeList(item, "")];
-        });
+        const filteredList = res.filter(item => item.value !== "Root Index");
         this.setState({
-          tree_list: treeList
+          tree_list: filteredList
         });
       })
-      .catch(() => alert("Error in get Tree list"));
-  }
-
-  generateTreeList(item, path = "") {
-    const real_path = path
-      ? path + " / " + item.value + " <ID:" + item.id + ">"
-      : item.value + " <ID:" + item.id + ">";
-    if (!item.children.length) {
-      return [{ id: item.id, value: real_path }];
-    } else {
-      let result = [];
-      item.children.map(i => {
-        result = [...result, ...this.generateTreeList(i, real_path)];
-      });
-      return [{ id: item.id, value: real_path }, ...result];
-    }
+      .catch(() => alert("Error in get Repository list"));
   }
 
   componentDidMount() {
-    this.getTreeList();
+    this.getRepositoryList();
     const {mode} = this.props
     initDatepicker();
     this.state.from_date = this.state.from_date ? moment(this.state.from_date).format("YYYY/MM/DD"):"";

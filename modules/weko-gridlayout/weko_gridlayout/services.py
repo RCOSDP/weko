@@ -28,9 +28,10 @@ from operator import itemgetter
 from flask import Markup, current_app, session
 from flask_babelex import gettext as _
 from flask_login import current_user
+from invenio_communities.models import Community
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
-from invenio_stats.utils import QueryRankingHelper
+from invenio_stats.utils import QueryRankingHelper  
 from sqlalchemy.orm.exc import NoResultFound
 from weko_admin.config import WEKO_ADMIN_DEFAULT_LIFETIME
 from weko_index_tree.api import Indexes
@@ -422,13 +423,18 @@ class WidgetDesignServices:
         :return: Repository list.
         """
         result = {
-            "repositories": [{"id": "Root Index", "title": ""}],
+            "repositories": [],
             "error": ""
         }
+        is_super = set(role.name for role in current_user.roles) & \
+            set(current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'])
         try:
-            from invenio_communities.models import Community
             with db.session.no_autoflush:
-                communities = Community.query.all()
+                if is_super:
+                    communities = Community.query.all()
+                    result['repositories'].append({"id": "Root Index", "title": ""})
+                else:
+                    communities = Community.get_repositories_by_user(current_user)
             if communities:
                 for community in communities:
                     community_result = dict()

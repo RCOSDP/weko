@@ -49,11 +49,11 @@ class CommunityModelView(ModelView):
 
     can_create = True
     can_edit = True
-    can_delete = False
+    can_delete = True
     can_view_details = True
     column_display_all_relations = True
-    form_columns = ('id', 'owner', 'index', 'title', 'description', 'page',
-                    'curation_policy', 'ranking', 'fixed_points')
+    form_columns = ('id', 'owner', 'index', 'group', 'title', 'description', 'page',
+                    'curation_policy', 'ranking', 'fixed_points', 'content_policy',)
 
     column_list = (
         'id',
@@ -128,10 +128,7 @@ class CommunityModelView(ModelView):
     def role_query_cond(self, role_ids):
         """Query conditions by role_id and user_id."""
         if role_ids:
-            return or_(
-                Community.id_role.in_(role_ids),
-                Community.id_user == current_user.id
-            )
+            return Community.group_id.in_(role_ids)
 
     def get_query(self):
         """Return a query for the model type.

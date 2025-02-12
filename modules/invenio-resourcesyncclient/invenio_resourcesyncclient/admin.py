@@ -24,6 +24,7 @@ import json
 from flask import current_app, jsonify, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
+from flask_login import current_user
 
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -64,7 +65,7 @@ class AdminResyncClient(BaseView):
     @expose('/get_list', methods=['GET'])
     def get_list(self):
         """Get list."""
-        result = ResyncHandler.get_list_resync()
+        result = ResyncHandler.get_list_resync(user=current_user)
         result = list(map(lambda item: item.to_dict(), result))
         return jsonify(data=result)
 

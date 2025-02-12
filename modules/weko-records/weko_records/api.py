@@ -2079,14 +2079,25 @@ class SiteLicense(RecordBase):
     """Define API for SiteLicense creation and manipulation."""
 
     @classmethod
-    def get_records(cls):
+    def get_records(cls, user=None):
         """Retrieve multiple records.
 
         :returns: A list of :class:`Record` instances.
         """
+        from invenio_communities.models import Community
         with db.session.no_autoflush:
-            sl_obj = SiteLicenseInfo.query.order_by(
-                SiteLicenseInfo.organization_id).all()
+            if not user:
+                sl_obj = SiteLicenseInfo.query.order_by(
+                    SiteLicenseInfo.organization_id).all()
+            else:
+                if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in user.roles):
+                    sl_obj = SiteLicenseInfo.query.order_by(
+                        SiteLicenseInfo.organization_id).all()
+                else:
+                    repositories = Community.get_repositories_by_user(user)
+                    repository_id = repositories[0].id
+                    sl_obj = SiteLicenseInfo.query.filter_by(repository_id=repository_id).order_by(
+                        SiteLicenseInfo.organization_id).all()
             return [cls(dict(obj)) for obj in sl_obj]
 
     @classmethod
@@ -2106,14 +2117,26 @@ class SiteLicense(RecordBase):
                     )
                     sld.append(sl)
                 return sld
-
+        from flask_login import current_user
+        from invenio_communities.models import Community
         # update has_site_license field on item type name tbl
         ItemTypeNames.update(obj.get('item_type'))
         site_license = obj.get('site_license')
+        if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles):
+            repository_id = "Root Index"
+        else:
+            repositories = Community.get_repositories_by_user(current_user)
+            repository_id = repositories[0].id
         if isinstance(site_license, list):
             # delete all rows first
-            SiteLicenseIpAddress.query.delete()
-            SiteLicenseInfo.query.delete()
+            if repository_id == "Root Index":
+                SiteLicenseIpAddress.query.delete()
+                SiteLicenseInfo.query.delete()
+            else:   
+                site_license_info_ids = [info.organization_id for info in SiteLicenseInfo.query.filter_by(repository_id=repository_id).all()]
+                SiteLicenseIpAddress.query.filter(SiteLicenseIpAddress.organization_id.in_(site_license_info_ids)).delete(synchronize_session=False)
+                SiteLicenseInfo.query.filter_by(repository_id=repository_id).delete()
+            
             # add new rows
             if site_license:
                 sif = []
@@ -2124,14 +2147,12 @@ class SiteLicense(RecordBase):
                     else:
                         receive_mail_flag = 'F'
                     slif = SiteLicenseInfo(
-                        organization_id=i + 1,
                         organization_name=lst.get('organization_name'),
                         receive_mail_flag=receive_mail_flag,
                         mail_address=lst.get('mail_address'),
                         domain_name=lst.get('domain_name'),
-                        addresses=get_addr(
-                            lst.get('addresses'),
-                            i))
+                        repository_id=lst.get('repository_id', repository_id))
+                    slif.addresses = get_addr(lst.get('addresses'), slif.organization_id)
                     sif.append(slif)
                 # add new rows
                 db.session.add_all(sif)
@@ -2231,6 +2252,7 @@ class FeedbackMailList(object):
         :param feedback_maillist: list mail feedback
         :return boolean: True if success
         """
+        from invenio_communities.utils import get_repository_id_by_item_id
         with db.session.begin_nested():
             query_object = _FeedbackMailList.query.filter_by(
                 item_id=item_id).one_or_none()
@@ -2247,7 +2269,8 @@ class FeedbackMailList(object):
                 query_object = _FeedbackMailList(
                     item_id=item_id,
                     mail_list=mail_list,
-                    account_author=",".join(list(account_author_set))
+                    account_author=",".join(list(account_author_set)),
+                    repository_id=get_repository_id_by_item_id(item_id)
                 )
                 db.session.add(query_object)
             else:
@@ -2315,7 +2338,7 @@ class FeedbackMailList(object):
             return []
 
     @classmethod
-    def get_feedback_mail_list(cls):
+    def get_feedback_mail_list(cls, repo_id=None):
         """Get feedback mail list for send mail."""
         mail_list = {}
         checked_author_id = {}
@@ -2330,7 +2353,11 @@ class FeedbackMailList(object):
             PersistentIdentifier.pid_type == 'recid',
             PersistentIdentifier.status == PIDStatus.REGISTERED,
             PersistentIdentifier.pid_value.notlike("%.%")
-        ).all()
+        )
+        
+        if repo_id:
+            data.filter(_FeedbackMailList.repository_id == repo_id)
+        data = data.all()
 
         # create return data
         for d in data:

@@ -238,3 +238,21 @@ def get_user_role_ids():
         role_ids = [role.id for role in current_user.roles]
 
     return role_ids
+
+def get_repository_id_by_item_id(item_id):
+    """Get repository_id by item_id."""
+    from weko_index_tree.models import Index
+    from .models import Community
+    record = Record.get_record(item_id)
+    index_id = record.get("path")
+    index = Index.get_index_by_id(index_id[0])
+    repository_id = None
+    while True:
+        com = Community.query.filter_by(root_node_id=index.id).first()
+        if com:
+            repository_id = com.id
+            break
+        index = Index.get_index_by_id(index.parent)
+        if not index.parent:
+            break
+    return repository_id

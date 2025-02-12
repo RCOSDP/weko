@@ -13,10 +13,14 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import Blueprint, Response, abort, redirect, url_for, current_app
+from flask import Blueprint, Response, abort, redirect, url_for, current_app, jsonify
+from flask_login import current_user
+from invenio_communities.models import Community
 from invenio_db import db
 from invenio_oaiserver.response import getrecord
 from lxml import etree
+from weko_index_tree.api import Indexes
+from weko_index_tree.models import Index
 
 from .api import ChangeListHandler, ResourceListHandler
 from .utils import render_capability_xml, render_well_know_resourcesync
@@ -191,6 +195,37 @@ def record_detail_in_index(index_id, record_id):
     #return redirect(
     #    url_for('invenio_records_ui.recid',
     #            pid_value=record_id))
+
+
+@blueprint.route("/resync/get_repository", methods=['GET'])
+def get_repository():
+    """Get the list of repositories based on user role."""
+    def generate_repository_list(index, path=""):
+        real_path = f"{path} / {index.get('name')} <ID:{index.get('id')}>" \
+            if path else f"{index.get('name')} <ID:{index.get('id')}>"
+        if not index.get("children"):
+            return [{"id": index.get('id'), "value": real_path}]
+        else:
+            result = []
+            for child in index.get("children"):
+                result.extend(generate_repository_list(child, real_path))
+            return [{"id": index.get('id'), "value": real_path}] + result
+    if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles):
+        tree = Indexes.get_index_tree()
+        repository_list = [{"id": 0, "value": "Root Index"}]
+    else:
+        repositories = Community.get_repositories_by_user(current_user)
+        check_list = []
+        tree = []
+        for repository in repositories:
+            if repository.root_node_id not in check_list:
+                tree += Indexes.get_index_tree(repository.root_node_id)
+                check_list.append(repository.root_node_id)
+        repository_list = []
+    for idx in tree:
+        repository_list += generate_repository_list(idx)
+    print(repository_list)
+    return jsonify(repository_list)
 
 
 @blueprint.teardown_request

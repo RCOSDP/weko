@@ -91,7 +91,7 @@ def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
     """
     if more_ids is None:
         more_ids = []
-    roles = get_user_roles(is_super_role=True)
+    roles = get_user_roles(is_super_role=False)
     groups = get_user_groups()
     if path is not None:
         id_tp = []
@@ -1060,3 +1060,33 @@ def str_to_datetime(str_dt, format):
         return datetime.strptime(str_dt, format)
     except ValueError:
         return None
+    
+def get_descendant_index_names(index_id):
+    """Retrieve all indexes under the specified index_id
+        in the format of parent_index_name-/-child_index_name-/-grandchild_index_name.
+    """
+    def build_full_name(index):
+        """Retrieve the `full_index_name` of the specified index"""
+        names = []
+        current = index
+        while current:
+            names.append(current.index_name)
+            current = Index.query.get(current.parent) if current.parent else None
+        return "-/-".join(reversed(names))
+
+    def get_descendants(index):
+        """Retrieve all indexes under the specified index"""
+        descendants = []
+        children = db.session.query(Index).filter_by(parent=index.id).all()
+        for child in children:
+            descendants.append(build_full_name(child))
+            descendants.extend(get_descendants(child))
+        return descendants
+
+    root_index = Index.query.get(index_id)
+    if not root_index:
+        return []
+
+    result = [build_full_name(root_index)]
+    result.extend(get_descendants(root_index))
+    return result

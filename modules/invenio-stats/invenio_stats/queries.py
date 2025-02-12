@@ -147,9 +147,20 @@ class ESDateHistogramQuery(ESQuery):
 
         for query_param, filtered_field in self.required_filters.items():
             if query_param in kwargs:
-                agg_query = agg_query.filter(
-                    'term', **{filtered_field: kwargs[query_param]}
-                )
+                value = kwargs[query_param]
+                if value is None:
+                    continue
+                if isinstance(value, list):
+                    max_clause_count = current_app.config.get('OAISERVER_ES_MAX_CLAUSE_COUNT', 1024)
+                    if len(value) > max_clause_count:
+                        should_clauses = []
+                        for i in range(0, len(value), max_clause_count):
+                            should_clauses.append({'terms': {filtered_field: value[i:i + max_clause_count]}})
+                        agg_query = agg_query.filter('bool', should=should_clauses)
+                    else:
+                        agg_query = agg_query.filter('terms', **{filtered_field: value})
+                else:
+                    agg_query = agg_query.filter('term', **{filtered_field: value})
 
         return agg_query
 
@@ -295,10 +306,20 @@ class ESTermsQuery(ESQuery):
 
         for query_param, filtered_field in self.required_filters.items():
             if query_param in kwargs:
-                agg_query = agg_query.filter(
-                    'term', **{filtered_field: kwargs[query_param]}
-                )
-
+                value = kwargs[query_param]
+                if value is None:
+                    continue
+                if isinstance(value, list):
+                    max_clause_count = current_app.config.get('OAISERVER_ES_MAX_CLAUSE_COUNT', 1024)
+                    if len(value) > max_clause_count:
+                        should_clauses = []
+                        for i in range(0, len(value), max_clause_count):
+                            should_clauses.append({'terms': {filtered_field: value[i:i + max_clause_count]}})
+                        agg_query = agg_query.filter('bool', should=should_clauses)
+                    else:
+                        agg_query = agg_query.filter('terms', **{filtered_field: value})
+                else:
+                    agg_query = agg_query.filter('term', **{filtered_field: value})
         return agg_query
 
     def process_query_result(self, query_result, start_date, end_date):
@@ -485,8 +506,8 @@ class ESWekoTermsQuery(ESTermsQuery):
                 time_range['gte'] = start_date.isoformat()
             if end_date is not None:
                 time_range['lte'] = end_date.isoformat()
-            time_range['time_zone'] = current_app.config[
-                'STATS_WEKO_DEFAULT_TIMEZONE']
+            time_range['time_zone'] = str(current_app.config[
+                'STATS_WEKO_DEFAULT_TIMEZONE']())
             agg_query = agg_query.filter(
                 'range',
                 **{self.time_field: time_range})
@@ -538,6 +559,9 @@ class ESWekoTermsQuery(ESTermsQuery):
 
         if kwargs.get('agg_filter'):
             agg_query = agg_query.filter('terms', **kwargs.get('agg_filter'))
+            
+        if kwargs.get('wildcard'):
+            agg_query = agg_query.filter('wildcard', **kwargs.get('wildcard'))
 
         return agg_query
 
