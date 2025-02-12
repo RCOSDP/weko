@@ -161,6 +161,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, ch
                 return is_can
 
         try:
+            from .utils import is_future
             # can access
             if 'open_access' in acsrole:
                 if is_display_file_info:
@@ -171,8 +172,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, ch
                     if date and isinstance(date, list) and date[0]:
                         adt = date[0].get('dateValue')
                         if adt:
-                            pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
-                            is_can = True if dt.utcnow() >= pdt else False
+                            is_can = not is_future(adt)
                         else:
                             is_can = True
                     download_status["is_open_access"] = is_can
@@ -186,8 +186,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, ch
                         date = fjson.get('date')
                         if date and isinstance(date, list) and date[0]:
                             adt = date[0].get('dateValue')
-                            pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
-                            is_can = True if dt.utcnow() >= pdt else False
+                            is_can = not is_future(adt)
                             download_status["is_open_access"] = is_can
                     except BaseException:
                         is_can = False
@@ -400,24 +399,12 @@ def check_publish_status(record):
     """Check Publish Status.
 
     :param record:
-    :return: result
+    :return: record is public
     """
-    result = False
+    from .utils import is_future
     pst = record.get('publish_status')
     pdt = record.get('pubdate', {}).get('attribute_value')
-    try:
-        # offset-naive
-        pdt = to_utc(dt.strptime(pdt, '%Y-%m-%d'))
-        # offset-naive
-        now = dt.utcnow() 
-        pdt = True if now >= pdt else False
-    except BaseException as e:
-        current_app.logger.error(e)
-        pdt = False
-    # if it's publish
-    if pst and '0' in pst and pdt:
-        result = True
-    return result
+    return pst and '0' in pst and not is_future(pdt)
 
 
 # def check_created_id(record):
