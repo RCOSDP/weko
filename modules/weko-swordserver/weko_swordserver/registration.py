@@ -415,7 +415,10 @@ def check_bagit_import_items(file, packaging):
                     errorType=ErrorType.ServerError
                 )
 
-        check_result.update({"register_format": register_format})
+        check_result.update({
+            "register_format": register_format,
+            "workflow_id": sword_client.workflow_id
+        })
 
         item_type = ItemTypes.get_by_id(sword_mapping.item_type_id)
         if item_type is None:

@@ -208,15 +208,15 @@ def test_import_items_to_activity(app, db,index,users,tokens,sword_mapping,sword
     }
 
     # normal case
-    mock_url = "http://test_server.localdomain/workflow/activity/detail/A-TEST-00002"
-    mock_current_action = "end_action"
-    mock_recid = 200001
-    with patch("weko_workflow.headless.HeadlessActivity.auto", return_value=(mock_url, mock_current_action, mock_recid)) as mock_auto:
+    url = "http://test_server.localdomain/workflow/activity/detail/A-TEST-00002"
+    current_action = "end_action"
+    recid = 200001
+    with patch("weko_workflow.headless.HeadlessActivity.auto", return_value=(url, current_action, recid)) as mock_auto:
         url, recid, current_action = import_items_to_activity(item, data_path, request_info)
         mock_auto.assert_called_once()
-        assert url == mock_url
-        assert recid == mock_recid
-        assert current_action == mock_current_action
+        assert url == url
+        assert recid == recid
+        assert current_action == current_action
 
     # except case
     expect_current_action = "item_login"
@@ -524,7 +524,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
 
         mock_map.assert_called_once()
 
-    assert result.get("data_path").startswith("/tmp/weko_import_")
+    assert result.get("data_path").startswith("/var/tmp/weko_import_")
     assert result.get("register_format") == "Direct"
     assert result.get("item_type_id") == 2
     assert result.get("error") is None

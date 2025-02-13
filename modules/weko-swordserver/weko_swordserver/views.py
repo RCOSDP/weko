@@ -328,7 +328,6 @@ def post_service_document():
         shutil.rmtree(data_path)
         TempDirInfo().delete(data_path)
 
-    recid = import_result.get("recid")
     current_app.logger.info(
         f"item imported by sword from {request.oauth.client.name} (recid={recid})"
     )

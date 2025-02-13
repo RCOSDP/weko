@@ -61,6 +61,7 @@ from invenio_records import InvenioRecords
 from invenio_records_ui import InvenioRecordsUI
 from invenio_search import InvenioSearch, current_search_client
 
+from weko_accounts import WekoAccounts
 from weko_admin import WekoAdmin
 from weko_admin.models import AdminSettings, Identifier,SessionLifetime
 from weko_authors import WekoAuthors
@@ -169,6 +170,7 @@ def base_app(instance_path):
     InvenioTheme(app_)
     InvenioPIDRelations(app_)
     InvenioPIDStore(app_)
+    WekoAccounts(app_)
     WekoSearchUI(app_)
     WekoWorkflow(app_)
     WekoAdmin(app_)
