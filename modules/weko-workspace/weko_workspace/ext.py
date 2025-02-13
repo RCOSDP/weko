@@ -54,6 +54,6 @@ class WekoWorkspace(object):
         #         'WEKO_WORKSPACE_BASE_TEMPLATE',
         #         app.config['BASE_PAGE_TEMPLATE'],
         #     )
-        # for k in dir(config):
-        #     if k.startswith('WEKO_WORKSPACE_'):
-        #         app.config.setdefault(k, getattr(config, k))
+        for k in dir(config):
+            if k.startswith('WEKO_WORKSPACE_'):
+                app.config.setdefault(k, getattr(config, k))

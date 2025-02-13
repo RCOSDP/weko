@@ -18,7 +18,7 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Module of weko-workflow utils."""
+"""Module of weko-workspace utils."""
 
 import base64
 import json
@@ -32,7 +32,7 @@ import traceback
 import redis
 from redis import sentinel
 from celery.task.control import inspect
-from flask import current_app, request, session
+from flask import current_app, request, session,jsonify
 from flask_babelex import gettext as _
 from flask_security import current_user
 from invenio_accounts.models import Role, User, userrole
@@ -70,67 +70,141 @@ from weko_user_profiles.utils import get_user_profile_info
 from werkzeug.utils import import_string
 from weko_deposit.pidstore import get_record_without_version
 
-from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
-    IDENTIFIER_GRANT_SUFFIX_METHOD, \
-    WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST, \
-    WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST
+# =============================================================
+from invenio_stats.views import QueryFileStatsCount, QueryRecordViewCount
+from weko_user_profiles.models import UserProfile
 
 
-from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
-    WorkFlow , Flow
-from .config import DOI_VALIDATION_INFO, DOI_VALIDATION_INFO_CROSSREF, DOI_VALIDATION_INFO_DATACITE, IDENTIFIER_GRANT_SELECT_DICT, \
-    WEKO_SERVER_CNRI_HOST_LINK
-from .models import Action as _Action, Activity
-from .models import ActionStatusPolicy, ActivityStatusPolicy, GuestActivity,FlowAction
-from .models import WorkFlow as _WorkFlow
 
 
 # 2.1.2.1 デフォルト絞込み条件取得処理
 def get_workspace_filterCon():
+    default_con = {
+        "name":"guan.shuang",
+    }
+
+    #
+    user_id = current_user.id
+    print("user_id " + str(user_id))
+
+    # モデルクラスからデータを取得。
 
 
-    return None
+    return default_con
 
 # 2.1.2.2 ESからアイテム一覧取得処理
-def get_es_itemlist():
+def get_es_itemlist(jsonCondition):
 
-    return None
+    fake_response = {
+        "took": 5,
+        "timed_out": False,
+        "_shards": {
+            "total": 5,
+            "successful": 5,
+            "skipped": 0,
+            "failed": 0
+        },
+        "hits": {
+            "total": {
+                "value": 2,
+                "relation": "eq"
+            },
+            "max_score": 1.0,
+            "hits": [
+                {
+                    "_index": "your_index_name",
+                    "_type": "_doc",
+                    "_id": "90e81f37-8aa6-4bcd-abac-91d1df25fc45",
+                    "_score": 1.0,
+                    "_source": {
+                        "title": "First Document",
+                        "content": "This is the content of the first document.",
+                        "author": "John Doe",
+                        "date": "2023-10-01"
+                    }
+                },
+            ]
+        }
+    }
+    return json.dumps(fake_response, indent=4)
 
 
 # 2.1.2.3 お気に入り既読未読ステータス取得処理
-def get_workspace_status_management(recid):
-
-    return None
-
-# 2.1.2.4 アクセス数取得処理
-def get_access_cnt(recid):
-
-    accessCnt = 0
+def get_workspace_status_management(recid:int):
+    isFavoritedSts = False
+    isRead = True
 
 
-    return accessCnt
+    user_id = current_user.id
+
+
+    stsRes = (isFavoritedSts,isRead)
+    return stsRes
+
+
+def get_access_cnt(item_id:str):
+    """Get access count of item.
+
+    Arguments:
+        item_id {string} -- uuid of item
+
+    Returns:
+        [int] -- viewed of item
+
+    """
+    # print("======workspace def get_access_cnt(recid:int): ======")
+    return int(QueryRecordViewCount().get_data(item_id, datetime.now().strftime("%Y/%m/%d")).get("total"))
+
 
 # 2.1.2.5 アイテムステータス取得処理
-def get_item_status(recid):
+def get_item_status(recid:int):
 
-    accessCnt = 0
+    itemSts = ""
 
 
-    return accessCnt
+    return itemSts
 
 
 # 2.1.2.6 ダウンロード数取得処理
 def get_download_cnt(fielList):
+    """
+    """
 
     fileDownloadCnt = 0
 
 
     return fileDownloadCnt
 
-# 2.1.2.7 ユーザー名と所属情報取得処理
-def get_userNm_affiliation(fielList):
 
-    userNm = ""
-    affiliation= ""
-    userInfo = userInfo[userNm,affiliation]
-    return userInfo
+def get_userNm_affiliation():
+    """Get user name and affiliation information of item.
+
+    Arguments:
+        --
+
+    Returns:
+        [tuple] -- user name and affiliation information
+        tuple[0] -- user name
+        tuple[1] -- affiliation information
+
+    """
+
+    # print("======workspace def get_userNm_affiliation(): ======")
+    # userNm = "guan.shuang"
+    affiliation= "ivis"
+    
+    """Get user name"""
+    userNm = (
+    UserProfile.query
+        .filter_by(user_id=current_user.id)
+        .with_entities(UserProfile.username)
+        .scalar()
+    )
+
+    userNm = current_user.email if userNm is None else userNm
+    
+    
+    """Get user affiliation information"""
+    # TODO 外部サービスを参照する必要。
+
+    return (userNm,affiliation)

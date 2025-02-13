@@ -35,10 +35,9 @@ from typing import List
 from flask import Response, Blueprint, abort, current_app, has_request_context, \
     jsonify, make_response, render_template, request, session, url_for, send_file
 from flask_babelex import gettext as _
-from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
-from flask_menu import current_menu
 
+from .utils import *
 
 workspace_blueprint = Blueprint(
     'weko_workspace',
@@ -52,23 +51,70 @@ workspace_blueprint = Blueprint(
 # 2.1. アイテム一覧情報取得API
 @workspace_blueprint.route('/')
 @login_required
-# @register_menu(
-#     workspace_blueprint, 'settings.Workspace',
-#     _('%(icon)sWorkspace', icon='<i class="fa fa-list-alt" aria-hidden="true" style="margin-right: 8px;"></i>'),
-#     order=20)
-# @register_breadcrumb(workspace_blueprint, 'breadcrumbs.settings.Workspace', _('Workspace'))
 def get_workspace_itemlist():
-        print("==========guan.shuang workspace =========")
-        # return None
+        print("==========guan.shuang workspace start=========")
+        
+        # 変数初期化
+        #　JSON条件
+        jsonCondition  = {
+                "name": "Alice",
+                "age": 25,
+                "is_student": False     
+        }
+    
+        # reqeustからのパラメータを確認する。
+        # パラメータなし、1,デフォルト絞込み条件取得処理へ。
+        # パラメータあり、1,デフォルト絞込み条件取得処理をスキップ。
+        if request.args:
+            jsonCondition = request.args.to_dict()
+        else:
+            # 1,デフォルト絞込み条件取得処理
+            jsonCondition = get_workspace_filterCon()
+
+
+        # 2,ESからアイテム一覧取得処理
+        esResult = get_es_itemlist(jsonCondition)
+        data = json.loads(esResult)
+        # →ループ処理
+        for hit in data['hits']['hits']:
+            # レコードID
+            recid = hit['_id']
+            # uuid
+            uuid = hit['_id']
+            # print(recid)
+
+            # 3,お気に入り既読未読ステータス取得処理
+            stsRes = get_workspace_status_management(recid)
+
+            # 4,アクセス数取得処理
+            accessCnt = get_access_cnt(uuid)
+
+            # 5,アイテムステータス取得処理
+            itemSts = get_item_status(recid)
+
+            # 6,ダウンロード数取得処理
+            fielList = ""
+            fileDownloadCnt = get_download_cnt(fielList)
+
+        # 7,ユーザー名と所属情報取得処理
+        userInfo = get_userNm_affiliation()
+        # print(userInfo[0])
+        # print(userInfo[1])
+        print("==========guan.shuang workspace end=========")
+
         return render_template(
-        'weko_workspace/workspace_base.html'
+        current_app.config['WEKO_WORKSPACE_BASE_TEMPLATE'],
+        username=userInfo[0],
+        affiliation=userInfo[1]
     )
+
 
 # 2.2. お気に入り既読未読ステータス更新API
 @workspace_blueprint.route('/updateStatus')
 @login_required
 def update_workspace_status_management(statusTyp):
         return None
+
 
 
 # 2.1. デフォルト絞込み条件更新API
