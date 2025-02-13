@@ -591,8 +591,6 @@ def handle_forbidden(ex):
     current_app.logger.error(msg)
     return jsonify(_create_error_document(ErrorType.Forbidden.type, msg)), ErrorType.Forbidden.code
 
-from flask_limiter.errors import RateLimitExceeded
-
 @blueprint.errorhandler(RateLimitExceeded)
 def handle_ratelimit(ex):
     current_app.logger.error(ex)

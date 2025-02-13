@@ -412,9 +412,6 @@ def test_upload_jpcoar_contents(app, location, index, indexer):
             with patch("weko_swordserver.registration.url_for", dummy_url_for):
                 contents_data_copy = copy.deepcopy(contents_data)
                 pid, activity_files_data, deposit = upload_jpcoar_contents(data_path, contents_data_copy)
-                print(pid)
-                print(activity_files_data)
-                print(deposit)
                 assert pid.pid_type == "depid"
                 assert pid.id == 2
                 assert len(activity_files_data) == 3
@@ -513,7 +510,6 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
         mock_request.oauth = mock_oauth
 
         mapped_json = json_data("data/item_type/mapped_json_2.json")
-        mock_map = mocker.patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json)
 
         zip, _ = make_crate()
         storage = FileStorage(filename="payload.zip",stream=zip)
@@ -521,8 +517,6 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
 
         with app.test_request_context():
             result = check_bagit_import_items(storage,packaging)
-
-        mock_map.assert_called_once()
 
     assert result.get("data_path").startswith("/var/tmp/weko_import_")
     assert result.get("register_format") == "Direct"
@@ -1250,14 +1244,15 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_registration.py::test_generate_metadata_from_json -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
 def test_generate_metadata_from_json(app,db,index,users,tokens,sword_mapping,sword_client,item_type,make_crate,mocker,workflow):
     # sucsess case for publish_status is "public". It is required to scope "deposit:actions".
-
+    json_ld = json_data("data/item_type/ro-crate-metadata_2.json")
     # case # 17 : normal case
     sword__mapping = sword_mapping[0]["sword_mapping"]
     item__type = item_type[0]["item_type"]
+    processed__json = json_data("data/item_type/processed_json_2.json")
     mapped__json = json_data("data/item_type/mapped_json_2.json")
     with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json) as mock_map:
         with app.test_request_context():
-            res = generate_metadata_from_json(mapped__json, sword__mapping, item__type)
+            res = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type)
             assert len(res) == 1
             assert res[0]["errors"] is None, "errors is not None"
         mock_map.assert_called_once()
@@ -1265,11 +1260,12 @@ def test_generate_metadata_from_json(app,db,index,users,tokens,sword_mapping,swo
     # case # 18 : is_change_identifier is True
     sword__mapping = sword_mapping[0]["sword_mapping"]
     item__type = item_type[0]["item_type"]
+    processed__json = json_data("data/item_type/processed_json_2.json")
     mapped__json = json_data("data/item_type/mapped_json_2.json")
     with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json) as mock_map:
         with app.test_request_context():
             with patch.dict("flask.current_app.config", {"WEKO_HANDLE_ALLOW_REGISTER_CNRI": True}):
-                res = generate_metadata_from_json(mapped__json, sword__mapping, item__type, True)
+                res = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type, True)
                 assert len(res) == 1
                 assert res[0]["is_change_identifier"] is True, "errors is not True"
         mock_map.assert_called_once()
@@ -1277,11 +1273,12 @@ def test_generate_metadata_from_json(app,db,index,users,tokens,sword_mapping,swo
     # case # 19 : is_change_identifier is False
     sword__mapping = sword_mapping[0]["sword_mapping"]
     item__type = item_type[0]["item_type"]
+    processed__json = json_data("data/item_type/processed_json_2.json")
     mapped__json = json_data("data/item_type/mapped_json_2.json")
     with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json) as mock_map:
         with app.test_request_context():
             with patch.dict("flask.current_app.config", {"WEKO_HANDLE_ALLOW_REGISTER_CNRI": True}):
-                res = generate_metadata_from_json(mapped__json, sword__mapping, item__type, False)
+                res = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type, False)
                 assert len(res) == 1
                 assert res[0]["is_change_identifier"] is False, "errors is not False"
         mock_map.assert_called_once()
@@ -1298,13 +1295,15 @@ def test_handle_files_info(app,sword_mapping,item_type,make_crate):
     zip, _ = make_crate()
     storage = FileStorage(filename=file__name,stream=zip)
     data__path, files__list = unpack_zip(storage)
+    json_ld = json_data("data/item_type/ro-crate-metadata_2.json")
 
     sword__mapping = sword_mapping[0]["sword_mapping"]
     item__type = item_type[0]["item_type"]
     mapped__json = json_data("data/item_type/mapped_json_2.json")
+    processed__json = json_data("data/item_type/processed_json_2.json")
     with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json):
         with app.test_request_context():
-            list__record = generate_metadata_from_json(mapped__json, sword__mapping, item__type)
+            list__record = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type)
             res = handle_files_info(list__record, files__list, data__path, file__name)
             assert len(res) == 1
             assert res[0]["errors"] is None
@@ -1320,9 +1319,10 @@ def test_handle_files_info(app,sword_mapping,item_type,make_crate):
     sword__mapping = sword_mapping[0]["sword_mapping"]
     item__type = item_type[0]["item_type"]
     mapped__json = json_data("data/item_type/mapped_json_2.json")
+    processed__json = json_data("data/item_type/processed_json_2.json")
     with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json):
         with app.test_request_context():
-            list__record = generate_metadata_from_json(mapped__json, sword__mapping, item__type)
+            list__record = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type)
             res = handle_files_info(list__record, [], data__path, file__name)
             assert len(res) == 1
             assert res[0]["errors"] is None, "errors is not None"
@@ -1341,10 +1341,11 @@ def test_handle_files_info(app,sword_mapping,item_type,make_crate):
     sword__mapping = sword_mapping[0]["sword_mapping"]
     item__type = item_type[0]["item_type"]
     mapped__json = json_data("data/item_type/mapped_json_2.json")
+    processed__json = json_data("data/item_type/processed_json_2.json")
     with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json):
         with app.test_request_context():
             with patch.dict("flask.current_app.config", {"WEKO_SWORDSERVER_DEPOSIT_DATASET": True}):
-                list__record = generate_metadata_from_json(mapped__json, sword__mapping, item__type)
+                list__record = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type)
                 res = handle_files_info(list__record, files__list, data__path, file__name)
                 assert len(res) == 1
                 assert res[0]["errors"] is None, "errors is not None"
