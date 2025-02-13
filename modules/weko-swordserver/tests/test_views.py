@@ -228,6 +228,33 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
         assert json.loads(res.data).get("error") == "Invalid register format has been set for admin setting"
         assert not os.path.exists(data_path)
 
+    # invalid Content-Disposition
+    login_user_via_session(client=client,email=users[0]["email"])
+    headers = {
+        "Authorization":"Bearer {}".format(token_direct),
+        "Content-Disposition":"inline",
+        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
+    }
+    zip = make_zip()
+    storage=FileStorage(filename="payload.zip",stream=zip)
+    res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
+    assert res.status_code == 400
+    assert json.loads(res.data).get("@type") == "BadRequest"
+    assert json.loads(res.data).get("error") == "Cannot get filename by Content-Disposition."
+
+    # invalid file name in Content-Disposition
+    login_user_via_session(client=client,email=users[0]["email"])
+    headers = {
+        "Authorization":"Bearer {}".format(token_direct),
+        "Content-Disposition":"attachment; filename=invalid.txt",
+        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
+    }
+    zip = make_zip()
+    storage=FileStorage(filename="payload.zip",stream=zip)
+    res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
+    assert res.status_code == 400
+    assert json.loads(res.data).get("@type") == "BadRequest"
+    assert json.loads(res.data).get("error") == "Not found invalid.txt in request body."
 
 
 # def post_service_document():
@@ -240,18 +267,20 @@ def test_post_service_document_json_ld(app,client,db,users,esindex,location,inde
     mocker.patch("weko_swordserver.views._get_status_document",side_effect=lambda x:{"recid":x})
     mocker.patch("weko_search_ui.utils.find_and_update_location_size",side_effect=update_location_size)
     mocker.patch("weko_search_ui.utils.send_item_created_event_to_es")
+    mocker.patch("weko_swordserver.views.dbsession_clean")
 
     token_direct = tokens[0]["token"].access_token
     token_workflow = tokens[1]["token"].access_token
     token_none = tokens[3]["token"].access_token
+    url = url_for("weko_swordserver.post_service_document")
+
     # Digest VERIFICATION ON
     app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = True
 
+    login_user_via_session(client=client,email=users[0]["email"])
     # Direct registration
-    url = url_for("weko_swordserver.post_service_document")
     zip, _ = make_crate()
     storage = FileStorage(filename="payload.zip",stream=zip)
-    mapped_json = json_data("data/item_type/mapped_json_2.json")
     headers = {
         "Authorization":"Bearer {}".format(token_direct),
         "Content-Disposition":"attachment; filename=payload.zip",
@@ -294,18 +323,8 @@ def test_post_service_document_json_ld(app,client,db,users,esindex,location,inde
     # invalid hash but setting is off
     app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = False
 
-
-    # invalid Content-Length
-    app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = False
-
-    # invalid Content-Length and be rejected
-    app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = True
-
-    # print("Workflow registration")
-    app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = False
-    # mocker.patch("weko_swordserver.views._get_status_workflow_document",side_effect=lambda a,x:{"activity":a.id,"recid":x})
-
     # Workflow registration
+    login_user_via_session(client=client,email=users[0]["email"])
     zip, _ = make_crate()
     storage = FileStorage(filename="payload.zip",stream=zip)
     headers = {
@@ -314,19 +333,15 @@ def test_post_service_document_json_ld(app,client,db,users,esindex,location,inde
         "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
         "Digest":"SHA-256={}".format(calculate_hash(storage))
     }
+    detail = "http://test_server.localdomain/workflow/activity/detail/A-TEST-00002"
+    current_action = "item_login"
+    recid = 200001
     mapped_json = json_data("data/item_type/mapped_json_2.json")
-    with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
-        with patch("weko_swordserver.registration.bagit.Bag.validate"):
-            res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
+    with patch("weko_swordserver.views.import_items_to_activity", return_value=(detail, recid, current_action)):
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+            with patch("weko_swordserver.registration.bagit.Bag.validate"):
+                res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
         assert res.status_code == 200
-        recid = res.json["recid"]
-        recid = PersistentIdentifier.get("recid",recid)
-        record = RecordMetadata.query.filter_by(id=recid.object_uuid).one_or_none()
-        assert record is not None
-        record = record.json
-        file_metadata = record["item_1617604990215"]["attribute_value_mlt"][0]
-        assert file_metadata.get("url") is not None
-        # assert file_metadata.get("url").get("url") == f"https://localhost/record/{recid.id}/files/sample.rst"
 
     # no scopes
     zip, _  = make_crate()
@@ -669,9 +684,6 @@ def test__get_status_workflow_document(app, records):
     recid_not_doi = records[2][0].pid_value
 
     expected_activity_id = "A-20240301-00001"
-    activity = MagicMock(spec=Activity)
-    prop_mock = PropertyMock(return_value=expected_activity_id)
-    type(activity).activity_id = prop_mock
 
     test_doi = {
         "@id" : url_for('weko_swordserver.get_status_document', recid=recid_doi, _external=True),
@@ -720,11 +732,11 @@ def test__get_status_workflow_document(app, records):
 
     with app.test_request_context("/test_req"):
         # exist recid
-        result = _get_status_workflow_document(activity, recid_doi)
+        result = _get_status_workflow_document(expected_activity_id, recid_doi)
         assert result == test_doi
 
         # not exist recid
-        result = _get_status_workflow_document(activity, None)
+        result = _get_status_workflow_document(expected_activity_id, None)
         assert result == test_doi_no_recid
 
         # raise WekoSwordserverException

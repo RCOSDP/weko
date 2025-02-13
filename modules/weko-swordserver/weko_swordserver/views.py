@@ -292,7 +292,8 @@ def post_service_document():
             "referrer": request.referrer,
             "hostname": request.host,
             "user_id": owner,
-            "action": "IMPORT"
+            "action": "IMPORT",
+            "workflow_id": check_result.get("workflow_id"),
     }
     response = {}
     if file_format == "TSV/CSV" or file_format == "JSON" and register_format == "Direct":
@@ -302,7 +303,7 @@ def post_service_document():
             current_app.logger.error(
                 f"Error in import_items_to_system: {item.get('error_id')}"
             )
-            raise WekoSwordserverException("Error in import_items_to_system: {0}".format(item.get("error_id")), ErrorType.ServerError)
+            raise WekoSwordserverException("Error in import_items_to_system: {0}".format(import_result.get("error_id")), ErrorType.ServerError)
         recid = import_result.get("recid")
         response = jsonify(_get_status_document(recid))
     elif file_format == "XML" or file_format == "JSON" and register_format == "Workflow":
