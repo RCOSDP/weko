@@ -72,6 +72,9 @@ class WekoSwordMapper(JsonMapper):
             self._create_metadata_of_a_property(metadata, item_map[k], type_of_item_type_path, json_value)
 
             # Create path_and_value
+            # Remove "d2Vrby0uLw==." from v if it is included
+            if "d2Vrby0uLw==." in v:
+                v = v.replace("d2Vrby0uLw==.", "")
             path_and_value[v] = json_value
 
         # Create Extra field
@@ -79,7 +82,7 @@ class WekoSwordMapper(JsonMapper):
 
         # Check if "Extra" prepared in itemtype schema form item_map
         if "Extra" in item_map:
-            metadata["Extra"] = extra_dict
+            metadata[item_map.get("Extra")] = str(extra_dict)
 
         return metadata
 
@@ -282,15 +285,6 @@ class WekoSwordMapper(JsonMapper):
             else:
                 type_of_item_type_path.append("value")
 
-        # Validate length of type_of_item_type_path
-        if len(type_of_item_type_path) != len(item_map_keys):
-            current_app.logger.error(
-                f"Failed in mapping process: type_of_item_type_path length: {len(type_of_item_type_path)} is not equal to item_map_keys length: {len(item_map_keys)}."
-            )
-            raise WekoSwordserverException(
-                "Some error occurred in the server. Can not create metadata.",
-                errorType=ErrorType.ServerError
-            )
         # Check if the list ends with 'value' and contains 'value' only once
         if not (type_of_item_type_path[-1] == "value" and type_of_item_type_path.count("value") == 1):
             current_app.logger.error(
@@ -349,7 +343,7 @@ class WekoSwordMapper(JsonMapper):
                 metadata = metadata[_item_map_key]
                 self._create_child_metadata_of_a_property(diff_array, metadata, item_map_keys[1:], type_of_item_type_path[1:], json_value)
             # If _type is "array", do the following method
-            elif _type == "array":
+            else:
                 # If diff_array is bigger than 0, create [{}] in metadata
                 if diff_array > 0:
                     if not metadata.get(_item_map_key):
@@ -390,19 +384,14 @@ class WekoSwordMapper(JsonMapper):
             _item_map_key = item_map_keys[0]
             _type = type_of_item_type_path[0]
 
-            # If _type is "value", add json_value to metadata
-            if _type == "value":
-                # Only if json_value is not None, add json_value to metadata
-                if json_value is not None:
-                    child_metadata[_item_map_key] = json_value
             # If _type is "object", create nested metadata
-            elif _type == "object":
+            if _type == "object":
                 if not child_metadata.get(_item_map_key):
                     child_metadata[_item_map_key] = {}
                 child_metadata = child_metadata[_item_map_key]
                 self._create_child_metadata_of_a_property(diff_array, child_metadata, item_map_keys[1:], type_of_item_type_path[1:], json_value)
             # If _type is "array", do the following method
-            elif _type == "array":
+            else:
                 # If diff_array is bigger than 0, create [{}] in metadata
                 if diff_array > 0:
                     if not child_metadata.get(_item_map_key):
