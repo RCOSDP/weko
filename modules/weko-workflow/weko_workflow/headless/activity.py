@@ -113,6 +113,7 @@ class HeadlessActivity(WorkActivity):
             str: Activity detail URL.
         """
         # TODO: check user lock
+        # if not self._lock_skip:
         """weko_workflow.views.is_user_locked"""
 
         if self._model is not None:
@@ -120,6 +121,8 @@ class HeadlessActivity(WorkActivity):
             raise WekoWorkflowException("activity is already initialized.")
 
         if activity_id is not None:
+            # TODO: check activity lock
+
             result = verify_deletion(activity_id).json
             if result.get("is_delete"):
                 current_app.logger.error(f"activity({activity_id}) is already deleted.")
@@ -235,6 +238,7 @@ class HeadlessActivity(WorkActivity):
             current_app.logger.error("activity is not initialized.")
             raise WekoWorkflowException("activity is not initialized.")
 
+        # some error had occurred in idnentifier_grant if not enough metadata.
         error = check_validation_error_msg(self.activity_id).json
         if error.pop("code") == 1:
             current_app.logger.error(f"failed to input metadata: {error}")
@@ -339,7 +343,6 @@ class HeadlessActivity(WorkActivity):
 
     def _upload_files(self, files=[]):
         """upload files."""
-        RecordIndexer().index(self._deposit)
         bucket = Bucket.query.get(self._deposit["_buckets"]["deposit"])
         files_info = []
 
@@ -486,6 +489,8 @@ class HeadlessActivity(WorkActivity):
         grant_data.setdefault("identifier_grant_ndl_jalc_doi_suffix", f"https://doi.org/{'##'}/{self.recid}")
 
         try:
+            # If not enough metadata, return to item registration and
+            # leave error message in cache.
             result, _ = next_action(
                 self.activity_id, self.current_action_id, grant_data
             )
