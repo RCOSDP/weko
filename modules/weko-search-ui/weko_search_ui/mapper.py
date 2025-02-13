@@ -1075,11 +1075,7 @@ class JPCOARV2Mapper(BaseMapper):
         if not item_type_name or not self.json or "jpcoar:jpcoar" not in self.json.keys():
             return default_metadata
 
-        # get item type
-        for item_type in ItemType.query.all():
-            if item_type.item_type_name.name == item_type_name:
-                self.itemtype = item_type
-                break
+        self.itemtype = self.itemtype_map.get(item_type_name)
 
         if not self.itemtype:
             return default_metadata
@@ -1271,7 +1267,6 @@ class JsonLdMapper(JsonMapper):
         metadata = {}
         context = json_ld.get("@context", "")
         format = ""
-
         # check if the json-ld context is valid
         if "https://swordapp.github.io/swordv3/swordv3.jsonld" in context:
             # TODO: support SWORD json-ld format
@@ -1285,18 +1280,17 @@ class JsonLdMapper(JsonMapper):
             # check structure of RO-Crate json-ld
             format = "ro-crate"
             if "@graph" not in json_ld or not isinstance(json_ld.get("@graph"), list):
-                msg = 'Invalid json-ld format: "@graph" is not found.'
-                raise ValueError(msg)
+                raise ValueError('Invalid json-ld format: "@graph" is not found.')
             # transform list which contains @id to dict in @graph
             for v in json_ld.get("@graph"):
                 if isinstance(v, dict) and "@id" in v:
                     metadata.update({v["@id"]: v})
                 else:
-                    msg = "Invalid json-ld format: Objects without “@id” are directly under “@graph"
-                    raise ValueError(msg)
+                    raise ValueError('Invalid json-ld format: Objects without "@id" are directly under "@graph"')
         else:
-            msg = 'Invalid json-ld format: "@context" is not found.'
-            raise ValueError(msg)
+            raise ValueError('Invalid json-ld format: "@context" is not found.')
+        if metadata is None:
+            raise ValueError("Invalid json-ld format: Metadata is not found.")
 
 
         def _resolve_link(parent, key, value):

@@ -61,6 +61,7 @@ from invenio_records import InvenioRecords
 from invenio_records_ui import InvenioRecordsUI
 from invenio_search import InvenioSearch, current_search_client
 
+from weko_accounts import WekoAccounts
 from weko_admin import WekoAdmin
 from weko_admin.models import AdminSettings, Identifier,SessionLifetime
 from weko_authors import WekoAuthors
@@ -169,6 +170,7 @@ def base_app(instance_path):
     InvenioTheme(app_)
     InvenioPIDRelations(app_)
     InvenioPIDStore(app_)
+    WekoAccounts(app_)
     WekoSearchUI(app_)
     WekoWorkflow(app_)
     WekoAdmin(app_)
@@ -691,14 +693,26 @@ def action_data(db):
 @pytest.fixture()
 def workflow(app, db, item_type, action_data, users):
     flow_define = FlowDefine(
-        id=1,flow_id=uuid.uuid4(),
-        flow_name='Registration Flow',
-        flow_user=1)
+        id=1,
+        flow_id=uuid.uuid4(),
+        flow_name="Registration Flow",
+        flow_user=users[0]["obj"].id,
+        flow_status="A"
+    )
+
+    flow_define_2 = FlowDefine(
+        id=2,
+        flow_id=uuid.uuid4(),
+        flow_name='Registration Flow with approval',
+        flow_user=users[0]["obj"].id,
+        flow_status="A"
+    )
     with db.session.begin_nested():
         db.session.add(flow_define)
+        db.session.add(flow_define_2)
     db.session.commit()
 
-    # setting flow action(start, item register, oa policy, item link, identifier grant, approval, end)
+    # setting flow action(start, item register, item link, end)
     flow_actions = []
     # start
     flow_actions.append(FlowAction(
@@ -724,49 +738,13 @@ def workflow(app, db, item_type, action_data, users):
         action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
         send_mail_setting={}
     ))
-    # oa policy
-    flow_actions.append(FlowAction(
-        status='N',
-        flow_id=flow_define.flow_id,
-        action_id=6,
-        action_version='1.0.0',
-        action_order=3,
-        action_condition='',
-        action_status='A',
-        action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
-        send_mail_setting={}
-    ))
     # item link
     flow_actions.append(FlowAction(
         status='N',
         flow_id=flow_define.flow_id,
         action_id=5,
         action_version='1.0.0',
-        action_order=4,
-        action_condition='',
-        action_status='A',
-        action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
-        send_mail_setting={}
-    ))
-    # identifier grant
-    flow_actions.append(FlowAction(
-        status='N',
-        flow_id=flow_define.flow_id,
-        action_id=7,
-        action_version='1.0.0',
-        action_order=5,
-        action_condition='',
-        action_status='A',
-        action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
-        send_mail_setting={}
-    ))
-    # approval
-    flow_actions.append(FlowAction(
-        status='N',
-        flow_id=flow_define.flow_id,
-        action_id=4,
-        action_version='1.0.0',
-        action_order=6,
+        action_order=3,
         action_condition='',
         action_status='A',
         action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
@@ -778,7 +756,7 @@ def workflow(app, db, item_type, action_data, users):
         flow_id=flow_define.flow_id,
         action_id=2,
         action_version='1.0.0',
-        action_order=7,
+        action_order=4,
         action_condition='',
         action_status='A',
         action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
@@ -787,10 +765,102 @@ def workflow(app, db, item_type, action_data, users):
     with db.session.begin_nested():
         db.session.add_all(flow_actions)
     db.session.commit()
+
+    # setting flow action(start, item register, oa policy, item link, identifier grant, approval, end)
+    flow_actions_2 = []
+    # start
+    flow_actions_2.append(FlowAction(
+        status='N',
+        flow_id=flow_define_2.flow_id,
+        action_id=1,
+        action_version='1.0.0',
+        action_order=1,
+        action_condition='',
+        action_status='A',
+        action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+        send_mail_setting={}
+    ))
+    # item register
+    flow_actions_2.append(FlowAction(
+        status='N',
+        flow_id=flow_define_2.flow_id,
+        action_id=3,
+        action_version='1.0.0',
+        action_order=2,
+        action_condition='',
+        action_status='A',
+        action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+        send_mail_setting={}
+    ))
+    # oa policy
+    flow_actions_2.append(FlowAction(
+        status='N',
+        flow_id=flow_define_2.flow_id,
+        action_id=6,
+        action_version='1.0.0',
+        action_order=3,
+        action_condition='',
+        action_status='A',
+        action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+        send_mail_setting={}
+    ))
+    # item link
+    flow_actions_2.append(FlowAction(
+        status='N',
+        flow_id=flow_define_2.flow_id,
+        action_id=5,
+        action_version='1.0.0',
+        action_order=4,
+        action_condition='',
+        action_status='A',
+        action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+        send_mail_setting={}
+    ))
+    # identifier grant
+    flow_actions_2.append(FlowAction(
+        status='N',
+        flow_id=flow_define_2.flow_id,
+        action_id=7,
+        action_version='1.0.0',
+        action_order=5,
+        action_condition='',
+        action_status='A',
+        action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+        send_mail_setting={}
+    ))
+    # approval
+    flow_actions_2.append(FlowAction(
+        status='N',
+        flow_id=flow_define_2.flow_id,
+        action_id=4,
+        action_version='1.0.0',
+        action_order=6,
+        action_condition='',
+        action_status='A',
+        action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+        send_mail_setting={}
+    ))
+    # end
+    flow_actions_2.append(FlowAction(
+        status='N',
+        flow_id=flow_define_2.flow_id,
+        action_id=2,
+        action_version='1.0.0',
+        action_order=7,
+        action_condition='',
+        action_status='A',
+        action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+        send_mail_setting={}
+    ))
+    with db.session.begin_nested():
+        db.session.add_all(flow_actions_2)
+    db.session.commit()
+
+    # setting workflow
     workflow = WorkFlow(
         flows_id=uuid.uuid4(),
         flows_name='test workflow01',
-        itemtype_id=item_type[1]["item_type"].id,
+        itemtype_id=item_type[0]["item_type"].id,
         index_tree_id=None,
         flow_id=1,
         is_deleted=False,
@@ -798,15 +868,26 @@ def workflow(app, db, item_type, action_data, users):
         location_id=None,
         is_gakuninrdm=False
     )
+    workflow_2 = WorkFlow(
+        flows_id=uuid.uuid4(),
+        flows_name='test workflow02',
+        itemtype_id=item_type[1]["item_type"].id,
+        index_tree_id=None,
+        flow_id=2,
+        is_deleted=False,
+        open_restricted=False,
+        location_id=None,
+        is_gakuninrdm=False
+    )
     with db.session.begin_nested():
         db.session.add(workflow)
+        db.session.add(workflow_2)
     db.session.commit()
 
-    return {
-        "flow": flow_define,
-        "flow_action": flow_actions,
-        "workflow": workflow
-    }
+    return [
+        {"flow": flow_define, "flow_action": flow_actions, "workflow": workflow},
+        {"flow": flow_define_2, "flow_action": flow_actions_2, "workflow": workflow_2}
+        ]
 
 
 @pytest.fixture
@@ -849,7 +930,7 @@ def sword_client(db, tokens, sword_mapping, workflow):
         client_id=client.client_id,
         registration_type_id=SwordClientModel.RegistrationType.WORKFLOW,
         mapping_id=sword_mapping[1]["sword_mapping"].id,
-        workflow_id=workflow["workflow"].id,
+        workflow_id=workflow[1]["workflow"].id,
     )
     client = tokens[2]["client"]
     sword_client3 = SwordClientModel(

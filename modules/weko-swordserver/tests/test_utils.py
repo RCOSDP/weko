@@ -127,19 +127,17 @@ def test_unpack_zip(app,mocker):
     if os.path.exists(data_path):
         shutil.rmtree(data_path)
 
-    # # Exception
-    # mock_print_exc = mocker.patch("traceback.print_exc")
-    # file_content = BytesIO()
-    # with ZipFile(file_content, 'w') as zip_file:
-    #     zip_file.writestr('invalid\x80.txt', 'This is a test file.')
-    # file_content.seek(0)
-    # mocker.patch('traceback.print_exc', return_value=None)
-    # with pytest.raises(Exception) as e:
-    #     data_path, file_list = unpack_zip(file_content)
-    # mock_print_exc.assert_called_once()
-
-    # # Clean up
-    # shutil.rmtree(data_path)
+    # Exception
+    file_content = BytesIO()
+    with ZipFile(file_content, 'w') as zip_file:
+        zip_file.writestr('test.txt', 'This is a test file.')
+    file_content.seek(0)
+    zip_ref = ZipFile(file_content)
+    infolist = zip_ref.infolist()
+    infolist[0].orig_filename = "invalid\x80.txt"
+    with patch("zipfile.ZipFile.infolist", return_value=infolist):
+        with pytest.raises(UnicodeEncodeError):
+            unpack_zip(file_content)
 
 # def is_valid_file_hash(expected_hash, file):
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_is_valid_file_hash -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
@@ -216,13 +214,12 @@ def test_process_json(app):
     invalid_json_ld = {"@graph": [{"@type": "Dataset"}, {"@id": "#summary"}]}
     with pytest.raises(WekoSwordserverException) as e:
         process_json(invalid_json_ld)
-    assert e.value.errorType == ErrorType.InvalidMetadataFormat
+    assert e.value.errorType == ErrorType.MetadataFormatNotAcceptable
     assert e.value.message == "Invalid json-ld format."
 
-    # Todo : source code modify
-    # No 3: Invalid JSON-LD format
-    # invalid_json_ld = {"@graph1": [{"@id": "invalid"}]}
-    # with pytest.raises(WekoSwordserverException) as e:
-    #     process_json(invalid_json_ld)
-    # assert e.value.errorType == ErrorType.InvalidMetadataFormat
-    # assert e.value.message == "Invalid json-ld format."
+    # No 3: Invalid JSON-LD format "@graph" not in json
+    invalid_json_ld = {"@graph1": [{"@id": "invalid"}]}
+    with pytest.raises(WekoSwordserverException) as e:
+        process_json(invalid_json_ld)
+    assert e.value.errorType == ErrorType.MetadataFormatNotAcceptable
+    assert e.value.message == "Invalid json-ld format."

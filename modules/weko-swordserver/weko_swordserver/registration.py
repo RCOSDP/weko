@@ -203,7 +203,7 @@ def create_activity_from_jpcoar(check_result, data_path):
             except:
                 traceback.print_exc()
                 current_app.logger.exception("activity quit canceled.")
-        raise ex
+        raise
     return activity, deposit.get("recid")
 
 
@@ -415,7 +415,10 @@ def check_bagit_import_items(file, packaging):
                     errorType=ErrorType.ServerError
                 )
 
-        check_result.update({"register_format": register_format})
+        check_result.update({
+            "register_format": register_format,
+            "workflow_id": sword_client.workflow_id
+        })
 
         item_type = ItemTypes.get_by_id(sword_mapping.item_type_id)
         if item_type is None:
@@ -438,7 +441,7 @@ def check_bagit_import_items(file, packaging):
         # if workflow.index_tree_id is None
 
         list_record = generate_metadata_from_json(
-            processed_json, mapping, item_type
+            processed_json, json_ld, mapping, item_type
         )
         list_record = handle_check_exist_record(list_record)
         handle_item_title(list_record)
@@ -526,11 +529,12 @@ def check_bagit_import_items(file, packaging):
     return check_result
 
 
-def generate_metadata_from_json(json, mapping, item_type, is_change_identifier=False):
+def generate_metadata_from_json(json, json_ld, mapping, item_type, is_change_identifier=False):
     """Generate metadata from JSON-LD.
 
     Args:
         json (dict): Json data including metadata.
+        json_ld (dict): Original Json-LD data.
         mapping (dict): Mapping definition.
         item_type_id (int): ItemType ID used for registration.
         is_change_identifier (bool, optional):
@@ -541,7 +545,7 @@ def generate_metadata_from_json(json, mapping, item_type, is_change_identifier=F
     """
     list_record = []
 
-    mapper = WekoSwordMapper(json, item_type, mapping)
+    mapper = WekoSwordMapper(json, json_ld, item_type, mapping)
     metadata = mapper.map()
 
     list_record.append({

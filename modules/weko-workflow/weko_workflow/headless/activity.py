@@ -15,6 +15,7 @@ from datetime import datetime
 from flask import current_app, url_for, request
 
 from invenio_accounts.models import User
+from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.errors import FileSizeError
 from invenio_files_rest.models import Bucket, ObjectVersion
@@ -31,10 +32,21 @@ from weko_records.api import ItemTypes
 from weko_records.serializers.utils import get_mapping
 from weko_search_ui.utils import get_data_by_property
 
-from ..api import Action, WorkActivity, WorkFlow
+from ..api import Action, WorkActivity, WorkFlow, ActivityStatusPolicy
 from ..errors import WekoWorkflowException
-from ..utils import check_authority_by_admin, delete_lock_activity_cache, delete_user_lock_activity_cache
-from ..views import next_action, verify_deletion, init_activity, get_feedback_maillist
+from ..utils import (
+    check_authority_by_admin,
+    delete_lock_activity_cache,
+    delete_user_lock_activity_cache,
+    update_cache_data
+)
+from ..views import (
+    next_action,
+    verify_deletion,
+    init_activity,
+    get_feedback_maillist,
+    lock_activity
+)
 
 class HeadlessActivity(WorkActivity):
     """Handler of headless activity class.
@@ -113,6 +125,7 @@ class HeadlessActivity(WorkActivity):
             str: Activity detail URL.
         """
         # TODO: check user lock
+        # if not self._lock_skip:
         """weko_workflow.views.is_user_locked"""
 
         if self._model is not None:
@@ -120,6 +133,8 @@ class HeadlessActivity(WorkActivity):
             raise WekoWorkflowException("activity is already initialized.")
 
         if activity_id is not None:
+            # TODO: check activity lock
+
             result = verify_deletion(activity_id).json
             if result.get("is_delete"):
                 current_app.logger.error(f"activity({activity_id}) is already deleted.")
@@ -235,6 +250,7 @@ class HeadlessActivity(WorkActivity):
             current_app.logger.error("activity is not initialized.")
             raise WekoWorkflowException("activity is not initialized.")
 
+        # some error had occurred in idnentifier_grant if not enough metadata.
         error = check_validation_error_msg(self.activity_id).json
         if error.pop("code") == 1:
             current_app.logger.error(f"failed to input metadata: {error}")
@@ -339,7 +355,6 @@ class HeadlessActivity(WorkActivity):
 
     def _upload_files(self, files=[]):
         """upload files."""
-        RecordIndexer().index(self._deposit)
         bucket = Bucket.query.get(self._deposit["_buckets"]["deposit"])
         files_info = []
 
@@ -360,7 +375,6 @@ class HeadlessActivity(WorkActivity):
             # TODO: support thumbnail
             obj = ObjectVersion.create(bucket, file_name, is_thumbnail=False)
             obj.set_contents(stream, size=size, size_limit=size_limit)
-
             url = f"{request.url_root}api/files/{obj.bucket_id}/{obj.basename}"
             return {
                 "created": obj.created.isoformat(),
@@ -486,6 +500,8 @@ class HeadlessActivity(WorkActivity):
         grant_data.setdefault("identifier_grant_ndl_jalc_doi_suffix", f"https://doi.org/{'##'}/{self.recid}")
 
         try:
+            # If not enough metadata, return to item registration and
+            # leave error message in cache.
             result, _ = next_action(
                 self.activity_id, self.current_action_id, grant_data
             )
@@ -546,7 +562,24 @@ class HeadlessActivity(WorkActivity):
             return
 
         """weko_workflow.views.user_lock_activity"""
-        pass
+        cache_key = "workflow_userlock_activity_{}".format(str(self.user.id))
+        timeout = current_app.permanent_session_lifetime.seconds
+        cur_locked_val = str(current_cache.get(cache_key) or str()) or str()
+        message = ""
+        if cur_locked_val:
+            message = "Opened"
+        else:
+            work_activity = WorkActivity()
+            act = work_activity.get_activity_by_id(self.activity_id)
+            if act is None or act.activity_status in [ActivityStatusPolicy.ACTIVITY_BEGIN,ActivityStatusPolicy.ACTIVITY_MAKING]:
+                update_cache_data(
+                    cache_key,
+                    self.activity_id,
+                    timeout
+                )
+            message = "Locked"
+
+        return message
 
     def _user_unlock(self, data={}):
         """User unlock."""
@@ -563,7 +596,8 @@ class HeadlessActivity(WorkActivity):
 
         """weko_workflow.views.lock_activity"""
 
-        return locked_value
+        locked_value, _ = lock_activity(self.activity_id)
+        return locked_value.get_json().get("locked_value")
 
     def _activity_unlock(self, locked_value):
         """Activity unlock."""

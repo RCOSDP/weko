@@ -24,8 +24,16 @@ from weko_search_ui.utils import handle_validate_item_import
 from weko_workflow.models import Activity, WorkFlow
 
 from weko_swordserver.errors import ErrorType, WekoSwordserverException
-from weko_swordserver.registration import check_import_items, create_activity_from_jpcoar, create_file_info, upload_jpcoar_contents
-from weko_swordserver.registration import check_bagit_import_items, generate_metadata_from_json, handle_files_info
+from weko_swordserver.registration import (
+    check_import_items,
+    import_items_to_activity,
+    create_activity_from_jpcoar,
+    upload_jpcoar_contents,
+    create_file_info,
+    check_bagit_import_items,
+    generate_metadata_from_json,
+    handle_files_info,
+)
 from weko_swordserver.utils import unpack_zip
 
 from .helpers import json_data
@@ -85,7 +93,7 @@ def test_check_import_items(app, admin_tsv_settings, admin_xml_settings):
             with patch("weko_swordserver.registration.check_xml_import_items", return_value=check_xml_result):
                 check_result, file_format = check_import_items(sample_files)
                 assert check_result == check_xml_result
-                assert file_format == "Workflow"
+                assert file_format == "XML"
 
     # Case03: default_format = TSV and import error
     with patch("weko_admin.admin.AdminSettings.get", return_value=admin_tsv_settings):
@@ -100,7 +108,7 @@ def test_check_import_items(app, admin_tsv_settings, admin_xml_settings):
         with patch("weko_swordserver.registration.check_xml_import_items", return_value=check_xml_result):
             check_result, file_format = check_import_items(sample_files)
             assert check_result == check_xml_result
-            assert file_format == "Workflow"
+            assert file_format == "XML"
 
     # Case05: default_format = XML but try import tsv
     with patch("weko_admin.admin.AdminSettings.get", return_value=admin_xml_settings):
@@ -182,6 +190,76 @@ def test_check_import_items(app, admin_tsv_settings, admin_xml_settings):
                 check_result, file_format = check_import_items(sample_files)
                 assert ex.value.errorType == ErrorType.ServerError
                 assert ex.value.message == "Workflow is not configured for importing xml."
+
+
+# def import_items_to_activity(item, data_path, request_info)
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_registration.py::test_import_items_to_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
+def test_import_items_to_activity(app, db,index,users,tokens,sword_mapping,sword_client,make_zip,make_crate,mocker,workflow,admin_settings):
+
+    check_result = {"data_path": "/tmp/weko_import_20250210103204704","list_record": [{"$schema": "/items/jsonschema/2","metadata": {"path": [1623632832836],"publish_status": "public","files_info": [{"key": "item_1617604990215","items": [{"filesize": [{"value": "333"}],"version": "1.0","fileDate": [{"fileDateValue": "2023-01-18","fileDateType": "Created"}],"filename": "sample.rst","url": {"url": "https://example.org/data/sample.rst","objectType": "fulltext","label": "data/sample.rst"},"format": "text/x-rst"}]}]},"publish_status": "public","file_path": ["sample.rst"]}]}
+    item = check_result.get("list_record")[0]
+    data_path = check_result.get("data_path","")
+    item["root_path"] = os.path.join(data_path, "data")
+    owner = 1
+    request_info = {
+        "user_id": owner,
+        "action": "IMPORT",
+        "workflow_id": str(workflow[0]["workflow"].id),
+    }
+
+    # normal case
+    url = "http://test_server.localdomain/workflow/activity/detail/A-TEST-00002"
+    current_action = "end_action"
+    recid = 200001
+    with patch("weko_workflow.headless.HeadlessActivity.auto", return_value=(url, current_action, recid)) as mock_auto:
+        url, recid, current_action = import_items_to_activity(item, data_path, request_info)
+        mock_auto.assert_called_once()
+        assert url == url
+        assert recid == recid
+        assert current_action == current_action
+
+    # except case
+    expect_current_action = "item_login"
+    mock_activity = MagicMock()
+    type(mock_activity).current_action = mocker.PropertyMock(return_value=expect_current_action)
+    mocker.patch("weko_swordserver.registration.HeadlessActivity", return_value=mock_activity)
+    with patch("weko_workflow.headless.HeadlessActivity.auto", side_effect=Exception()) as mock_auto:
+        with pytest.raises(WekoSwordserverException) as e:
+            import_items_to_activity(item, data_path, request_info)
+            mock_auto.assert_called_once()
+        assert e.value.errorType == ErrorType.ServerError
+        assert e.value.message == f"An error occurred while {expect_current_action}."
+
+    # xml case
+    settings1 = {"data_format":{"TSV":{"item_type":"15","register_format":"Direct"},"XML":{"workflow":"1","item_type":"15","register_format":"Workflow"}},"default_format":"TSV"}
+    settings2 = {"data_format":{"TSV":{"item_type":"15","register_format":"Direct"},"XML":{"workflow":"-1","item_type":"15","register_format":"Workflow"}},"default_format":"TSV"}
+    sword_api_setting = admin_settings[9]
+    sword_api_setting.settings = settings1
+    db.session.merge(sword_api_setting)
+    db.session.commit()
+    item = check_result.get("list_record")[0]
+    data_path = check_result.get("data_path","")
+    item["root_path"] = os.path.join(data_path, "data")
+    owner = 1
+    request_info = {
+        "user_id": owner,
+        "action": "IMPORT",
+        "workflow_id": None,
+    }
+    expect_current_action = "item_login"
+    mock_activity = MagicMock()
+    type(mock_activity).current_action = mocker.PropertyMock(return_value=expect_current_action)
+    mocker.patch("weko_swordserver.registration.HeadlessActivity", return_value=mock_activity)
+    with patch("weko_workflow.headless.HeadlessActivity.auto", side_effect=Exception()) as mock_auto:
+        with pytest.raises(WekoSwordserverException) as e:
+            import_items_to_activity(item, data_path, request_info)
+            mock_auto.assert_called_once()
+        assert e.value.errorType == ErrorType.ServerError
+        assert e.value.message == f"An error occurred while {expect_current_action}."
+    sword_api_setting = admin_settings[9]
+    sword_api_setting.settings = settings2
+    db.session.merge(sword_api_setting)
+    db.session.commit()
 
 
 # def create_activity_from_jpcoar(check_result, data_path)
@@ -294,6 +372,24 @@ def test_create_activity_from_jpcoar(app, users, admin_xml_settings):
                     assert len(db_activity_doing) == 2
                     assert len(db_activity_quit) == 1
 
+            # Case05: exception occured when quit activity
+            with patch("weko_swordserver.registration.upload_jpcoar_contents", return_value=(mocker_pid, dummy_files, dummy_deposit)):
+                with patch("weko_workflow.api.WorkActivity.update_title", side_effect=Exception()):
+                    with patch("weko_workflow.api.WorkActivity.quit_activity", side_effect=Exception()):
+                        with pytest.raises(Exception):
+                            activity, recid = create_activity_from_jpcoar({
+                                "error": [],
+                                "list_record": [{"metadata": expected_metadata}]
+                            }, "tests/data/zip_data/data")
+                            assert json.loads(activity.temp_data) == {
+                                "metainfo": expected_metadata,
+                                "files": dummy_files
+                            }
+                        db_activity_doing = Activity.query.filter(Activity.action_status=='M').all()
+                        db_activity_quit = Activity.query.filter(Activity.action_status=='C').all()
+                        assert len(db_activity_doing) == 3
+                        assert len(db_activity_quit) == 1
+
 
 # def upload_jpcoar_contents(data_path, contents_data)
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_registration.py::test_upload_jpcoar_contents -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
@@ -316,9 +412,6 @@ def test_upload_jpcoar_contents(app, location, index, indexer):
             with patch("weko_swordserver.registration.url_for", dummy_url_for):
                 contents_data_copy = copy.deepcopy(contents_data)
                 pid, activity_files_data, deposit = upload_jpcoar_contents(data_path, contents_data_copy)
-                print(pid)
-                print(activity_files_data)
-                print(deposit)
                 assert pid.pid_type == "depid"
                 assert pid.id == 2
                 assert len(activity_files_data) == 3
@@ -417,7 +510,6 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
         mock_request.oauth = mock_oauth
 
         mapped_json = json_data("data/item_type/mapped_json_2.json")
-        mock_map = mocker.patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json)
 
         zip, _ = make_crate()
         storage = FileStorage(filename="payload.zip",stream=zip)
@@ -426,15 +518,13 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
         with app.test_request_context():
             result = check_bagit_import_items(storage,packaging)
 
-        mock_map.assert_called_once()
-
-    assert result.get("data_path").startswith("/tmp/weko_import_")
+    assert result.get("data_path").startswith("/var/tmp/weko_import_")
     assert result.get("register_format") == "Direct"
     assert result.get("item_type_id") == 2
     assert result.get("error") is None
 
 
-    # case # 1
+    # case # 01 : normal case(workflow)
     client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -471,7 +561,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                     assert res["list_record"][0]["errors"] is None
 
 
-    # case # 2
+    # case # 02 : other error(workflow)
     client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -509,7 +599,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                         mock_handle_files_info.assert_called_once()
 
 
-    # case # 3
+    # case # 03 : mapping error(workflow)
     client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -554,7 +644,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                         mock_handle_validate_item_import.assert_called_once()
 
 
-    # case # 4
+    # case # 04 : json.load error(workflow)
     client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -589,7 +679,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                     mock_json_load.assert_called_once()
 
 
-    # case # 5
+    # case # 05 : item type not found(workflow)
     client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -624,10 +714,11 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                     mock_get_by_id.assert_called_once()
 
 
-    # case # 6
+    # case # 06 : item type and workflow do not match(workflow)
     client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
+    sword__mapping.item_type_id = 1
     sword__client = sword_client[1]["sword_client"]
     workflow_ = workflow[0]["workflow"]
     original_itemtype_id = workflow_.itemtype_id
@@ -664,7 +755,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
     db.session.commit()
 
 
-    # case # 7
+    # case # 07 : workflow not found(workflow)
     client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -693,13 +784,13 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
 
         with app.test_request_context(headers=headers):
             with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword__client, sword__mapping)):
-                with patch("weko_swordserver.registration.WorkFlow.get_workflow_by_id", return_value=None) as mock_get_workflow_by_id:
+                with patch("weko_workflow.api.WorkFlow.get_workflow_by_id", return_value=None) as mock_get_workflow_by_id:
                     res = check_bagit_import_items(file, packaging[0])
                     assert res["error"] == "Workflow not found for registration your item."
                     mock_get_workflow_by_id.assert_called_once()
 
 
-    # case # 8
+    # case # 08 : normal case(direct)
     client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -735,7 +826,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                 assert res["list_record"][0]["errors"] is None
 
 
-    # case # 8.1
+    # case # 08-1 : normal case(direct)
     client_id = tokens[2]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -771,7 +862,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                 assert res["error"].startswith("403 Forbidden:")
 
 
-    # case # 8.2
+    # case # 08-2 : normal case(direct)
     client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -809,7 +900,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                     assert res["list_record"][0]["errors"] is None
 
 
-    # case # 8.3
+    # case # 08-3 : normal case(direct)
     # isinstance
     file__name = "payload.zip"
     zip, _ = make_crate()
@@ -834,7 +925,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                             assert res["error"] == "test_error"
 
 
-    # case # 9
+    # case # 09 : other error(direct)
     client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -871,7 +962,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                     mock_handle_files_info.assert_called_once()
 
 
-    # case # 10
+    # case # 10 : mapping error(direct)
     client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -915,7 +1006,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                     mock_handle_validate_item_import.assert_called_once()
 
 
-    # case # 11
+    # case # 11 : json.load error(direct)
     client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -950,7 +1041,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                     mock_json_load.assert_called_once()
 
 
-    # case # 12
+    # case # 12 : item type not found(direct)
     client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
     sword__mapping = sword_mapping[0]["sword_mapping"]
@@ -985,7 +1076,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                     mock_get_by_id.assert_called_once()
 
 
-    # case # 13
+    # case # 13 : no mapping
     client_id = tokens[0]["client"].client_id
     user_email = users[2]["email"]
 
@@ -1016,7 +1107,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                 assert res["error"] == "Metadata mapping not defined for registration your item."
                 mock_get_record_by_client_id.assert_called_once()
 
-    # case # 14
+    # case # 14 : bagit error
     file_name = "mockfile.zip"
     packaging = [
         "http://purl.org/net/sword/3.0/package/SimpleZip",
@@ -1041,7 +1132,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                 mock_bag.assert_called_once()
 
 
-    # case # 15
+    # case # 15 : BadZipFile
     file_name = "mockfile.zip"
     packaging = [
         "http://purl.org/net/sword/3.0/package/SimpleZip",
@@ -1066,7 +1157,7 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
             mock_unpack_zip.assert_called_once()
 
 
-    # case # 16
+    # case # 16 : other error
     # Mock User.query.filter_by
     file_name = "mockfile.zip"
     packaging = [
@@ -1153,38 +1244,41 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_registration.py::test_generate_metadata_from_json -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
 def test_generate_metadata_from_json(app,db,index,users,tokens,sword_mapping,sword_client,item_type,make_crate,mocker,workflow):
     # sucsess case for publish_status is "public". It is required to scope "deposit:actions".
-
-    # case # 17
+    json_ld = json_data("data/item_type/ro-crate-metadata_2.json")
+    # case # 17 : normal case
     sword__mapping = sword_mapping[0]["sword_mapping"]
     item__type = item_type[0]["item_type"]
+    processed__json = json_data("data/item_type/processed_json_2.json")
     mapped__json = json_data("data/item_type/mapped_json_2.json")
     with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json) as mock_map:
         with app.test_request_context():
-            res = generate_metadata_from_json(mapped__json, sword__mapping, item__type)
+            res = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type)
             assert len(res) == 1
             assert res[0]["errors"] is None, "errors is not None"
         mock_map.assert_called_once()
 
-    # case # 18
+    # case # 18 : is_change_identifier is True
     sword__mapping = sword_mapping[0]["sword_mapping"]
     item__type = item_type[0]["item_type"]
+    processed__json = json_data("data/item_type/processed_json_2.json")
     mapped__json = json_data("data/item_type/mapped_json_2.json")
     with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json) as mock_map:
         with app.test_request_context():
             with patch.dict("flask.current_app.config", {"WEKO_HANDLE_ALLOW_REGISTER_CNRI": True}):
-                res = generate_metadata_from_json(mapped__json, sword__mapping, item__type, True)
+                res = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type, True)
                 assert len(res) == 1
                 assert res[0]["is_change_identifier"] is True, "errors is not True"
         mock_map.assert_called_once()
 
-    # case # 19
+    # case # 19 : is_change_identifier is False
     sword__mapping = sword_mapping[0]["sword_mapping"]
     item__type = item_type[0]["item_type"]
+    processed__json = json_data("data/item_type/processed_json_2.json")
     mapped__json = json_data("data/item_type/mapped_json_2.json")
     with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json) as mock_map:
         with app.test_request_context():
             with patch.dict("flask.current_app.config", {"WEKO_HANDLE_ALLOW_REGISTER_CNRI": True}):
-                res = generate_metadata_from_json(mapped__json, sword__mapping, item__type, False)
+                res = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type, False)
                 assert len(res) == 1
                 assert res[0]["is_change_identifier"] is False, "errors is not False"
         mock_map.assert_called_once()
@@ -1196,25 +1290,27 @@ def test_generate_metadata_from_json(app,db,index,users,tokens,sword_mapping,swo
 def test_handle_files_info(app,sword_mapping,item_type,make_crate):
     # sucsess case for publish_status is "public". It is required to scope "deposit:actions".
 
-    # case # 20
+    # case # 20 : normal case
     file__name = "payload.zip"
     zip, _ = make_crate()
     storage = FileStorage(filename=file__name,stream=zip)
     data__path, files__list = unpack_zip(storage)
+    json_ld = json_data("data/item_type/ro-crate-metadata_2.json")
 
     sword__mapping = sword_mapping[0]["sword_mapping"]
     item__type = item_type[0]["item_type"]
     mapped__json = json_data("data/item_type/mapped_json_2.json")
+    processed__json = json_data("data/item_type/processed_json_2.json")
     with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json):
         with app.test_request_context():
-            list__record = generate_metadata_from_json(mapped__json, sword__mapping, item__type)
+            list__record = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type)
             res = handle_files_info(list__record, files__list, data__path, file__name)
             assert len(res) == 1
             assert res[0]["errors"] is None
             assert len(res[0]["file_path"]) > 0
 
 
-    # case # 21
+    # case # 21 : files_list is empty
     file__name = "payload.zip"
     zip, _ = make_crate()
     storage = FileStorage(filename=file__name,stream=zip)
@@ -1223,16 +1319,17 @@ def test_handle_files_info(app,sword_mapping,item_type,make_crate):
     sword__mapping = sword_mapping[0]["sword_mapping"]
     item__type = item_type[0]["item_type"]
     mapped__json = json_data("data/item_type/mapped_json_2.json")
+    processed__json = json_data("data/item_type/processed_json_2.json")
     with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json):
         with app.test_request_context():
-            list__record = generate_metadata_from_json(mapped__json, sword__mapping, item__type)
+            list__record = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type)
             res = handle_files_info(list__record, [], data__path, file__name)
             assert len(res) == 1
             assert res[0]["errors"] is None, "errors is not None"
             assert not hasattr(res[0], 'file_path')
 
 
-    # case # 22
+    # case # 22 : other error
     file__name = "payload.zip"
     zip, file__size = make_crate()
     storage = FileStorage(filename=file__name,stream=zip)
@@ -1244,10 +1341,11 @@ def test_handle_files_info(app,sword_mapping,item_type,make_crate):
     sword__mapping = sword_mapping[0]["sword_mapping"]
     item__type = item_type[0]["item_type"]
     mapped__json = json_data("data/item_type/mapped_json_2.json")
+    processed__json = json_data("data/item_type/processed_json_2.json")
     with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json):
         with app.test_request_context():
             with patch.dict("flask.current_app.config", {"WEKO_SWORDSERVER_DEPOSIT_DATASET": True}):
-                list__record = generate_metadata_from_json(mapped__json, sword__mapping, item__type)
+                list__record = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type)
                 res = handle_files_info(list__record, files__list, data__path, file__name)
                 assert len(res) == 1
                 assert res[0]["errors"] is None, "errors is not None"
