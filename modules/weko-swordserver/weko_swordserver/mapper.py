@@ -13,15 +13,18 @@ from invenio_oaiharvester.harvester import JsonMapper
 
 from .errors import WekoSwordserverException, ErrorType
 
+from weko_search_ui.mapper import JsonLdMapper
+
 
 class WekoSwordMapper(JsonMapper):
     """WekoSwordMapper."""
-    def __init__(self, json, itemtype, json_map):
+    def __init__(self, json, json_ld, itemtype, json_map):
         """Init."""
         self.json = json
         self.itemtype = itemtype
         self.itemtype_name = itemtype.item_type_name.name
         self.json_map = json_map
+        self.all_properties, _ = JsonLdMapper.process_json_ld(json_ld)
 
     def map(self):
         """Maping JSON-LD;self.json Metadata into item_type format."""
@@ -58,6 +61,7 @@ class WekoSwordMapper(JsonMapper):
             dict: mapped metadata
         """
         metadata = {}
+        path_and_value = {}
 
         # Create metadata for each item in json_map
         for k, v in self.json_map.items():
@@ -66,6 +70,20 @@ class WekoSwordMapper(JsonMapper):
                 continue
             type_of_item_type_path = self._get_type_of_item_type_path(item_map[k])
             self._create_metadata_of_a_property(metadata, item_map[k], type_of_item_type_path, json_value)
+
+            # Create path_and_value
+            # Remove "d2Vrby0uLw==." from v if it is included
+            if "d2Vrby0uLw==." in v:
+                v = v.replace("d2Vrby0uLw==.", "")
+            path_and_value[v] = json_value
+
+        # Create Extra field
+        extra_dict = self._get_extra_dict(path_and_value, self.all_properties)
+
+        # Check if "Extra" prepared in itemtype schema form item_map
+        if "Extra" in item_map:
+            metadata[item_map.get("Extra")] = str(extra_dict)
+
         return metadata
 
 
@@ -267,15 +285,6 @@ class WekoSwordMapper(JsonMapper):
             else:
                 type_of_item_type_path.append("value")
 
-        # Validate length of type_of_item_type_path
-        if len(type_of_item_type_path) != len(item_map_keys):
-            current_app.logger.error(
-                f"Failed in mapping process: type_of_item_type_path length: {len(type_of_item_type_path)} is not equal to item_map_keys length: {len(item_map_keys)}."
-            )
-            raise WekoSwordserverException(
-                "Some error occurred in the server. Can not create metadata.",
-                errorType=ErrorType.ServerError
-            )
         # Check if the list ends with 'value' and contains 'value' only once
         if not (type_of_item_type_path[-1] == "value" and type_of_item_type_path.count("value") == 1):
             current_app.logger.error(
@@ -334,7 +343,7 @@ class WekoSwordMapper(JsonMapper):
                 metadata = metadata[_item_map_key]
                 self._create_child_metadata_of_a_property(diff_array, metadata, item_map_keys[1:], type_of_item_type_path[1:], json_value)
             # If _type is "array", do the following method
-            elif _type == "array":
+            else:
                 # If diff_array is bigger than 0, create [{}] in metadata
                 if diff_array > 0:
                     if not metadata.get(_item_map_key):
@@ -375,19 +384,14 @@ class WekoSwordMapper(JsonMapper):
             _item_map_key = item_map_keys[0]
             _type = type_of_item_type_path[0]
 
-            # If _type is "value", add json_value to metadata
-            if _type == "value":
-                # Only if json_value is not None, add json_value to metadata
-                if json_value is not None:
-                    child_metadata[_item_map_key] = json_value
             # If _type is "object", create nested metadata
-            elif _type == "object":
+            if _type == "object":
                 if not child_metadata.get(_item_map_key):
                     child_metadata[_item_map_key] = {}
                 child_metadata = child_metadata[_item_map_key]
                 self._create_child_metadata_of_a_property(diff_array, child_metadata, item_map_keys[1:], type_of_item_type_path[1:], json_value)
             # If _type is "array", do the following method
-            elif _type == "array":
+            else:
                 # If diff_array is bigger than 0, create [{}] in metadata
                 if diff_array > 0:
                     if not child_metadata.get(_item_map_key):
@@ -428,6 +432,49 @@ class WekoSwordMapper(JsonMapper):
         # If lst is not empty, return 1 + dimensions of lst[0]
         else:
             return 1 + self._get_dimensions(lst[0])
+
+
+    # TODO: Add methods for extra area.
+    def _get_extra_dict(self, path_and_value, all_properties):
+        """Get dict of Extra field.
+
+        Args:
+            path_and_value (dict): dict contains pairs of path of JSON metadata and a value or list of values
+            all_properties (dict): dict contains pairs of path of JSON metadata and a value
+
+        Returns:
+            dict: dict to be Extra field
+        """
+        import re
+
+        list_pop_keys = []
+
+        for k, v in all_properties.items():
+            # case that '[' is included in the key.
+            if '[' in k:
+                # get indices of '[' and ']'
+                indice = [int(i) for i in re.findall(r'\[(\d)+\]', k)]
+                # get key name without '[' and ']'
+                key = re.sub(r'\[\d+\]', '', k)
+                if key in path_and_value.keys():
+                    # get value from path_and_value
+                    value = path_and_value
+                    for idx in indice:
+                        try:
+                            value = value[key][idx]
+                        except:
+                            value = None
+                    if value:
+                        list_pop_keys.append(k)
+            # case that NO '[' is included in the key.
+            else:
+                if k in path_and_value.keys():
+                    list_pop_keys.append(k)
+
+        for k in list_pop_keys:
+            all_properties.pop(k)
+
+        return all_properties
 
 
     def is_valid_mapping(self):
