@@ -135,16 +135,16 @@ from weko_groups import WekoGroups
 from invenio_pidrelations.config import PIDRELATIONS_RELATION_TYPES
 
 
-@event.listens_for(Engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=OFF;")
-    cursor.close()
+# @event.listens_for(Engine, "connect")
+# def set_sqlite_pragma(dbapi_connection, connection_record):
+#     cursor = dbapi_connection.cursor()
+#     cursor.execute("PRAGMA foreign_keys=OFF;")
+#     cursor.close()
 
 
-@event.listens_for(Session, "after_begin")
-def receive_after_begin(session, transaction, connection):
-    connection.execute("PRAGMA foreign_keys=OFF;")
+# @event.listens_for(Session, "after_begin")
+# def receive_after_begin(session, transaction, connection):
+#     connection.execute("PRAGMA foreign_keys=OFF;")
 
 
 @pytest.yield_fixture()
@@ -167,10 +167,10 @@ def base_app(instance_path):
         SECRET_KEY="SECRET_KEY",
         TESTING=True,
         SERVER_NAME="test_server",
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
-        ),
-        #SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
+        # ),
+        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         ACCOUNTS_USERINFO_HEADERS=True,
         WEKO_PERMISSION_SUPER_ROLE_USER=[
@@ -184,7 +184,8 @@ def base_app(instance_path):
         #  WEKO_ITEMS_UI_INDEX_TEMPLATE= 'weko_items_ui/item_index.html',
         CACHE_TYPE="redis",
         ACCOUNTS_SESSION_REDIS_DB_NO=1,
-        REDIS_PORT="6379"CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
+        REDIS_PORT="6379",
+        CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
         WEKO_BUCKET_QUOTA_SIZE=50 * 1024 * 1024 * 1024,
         WEKO_MAX_FILE_SIZE=50 * 1024 * 1024 * 1024,
         SEARCH_ELASTIC_HOSTS=os.environ.get("SEARCH_ELASTIC_HOSTS", "elasticsearch"),
