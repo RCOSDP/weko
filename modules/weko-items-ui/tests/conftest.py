@@ -240,6 +240,13 @@ def base_app(instance_path):
         DEPOSIT_JSONSCHEMAS_PREFIX=DEPOSIT_JSONSCHEMAS_PREFIX,
         WEKO_SEARCH_REST_ENDPOINTS=WEKO_SEARCH_REST_ENDPOINTS,
         INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
+        WEKO_IMPORT_DOI_TYPE = ["JaLC", "Crossref", "DataCite", "NDL JaLC"],
+        IDENTIFIER_GRANT_LIST = [(0, 'Not Grant', ''),
+                         (1, 'JaLC DOI', 'https://doi.org'),
+                         (2, 'JaLC CrossRef DOI', 'https://doi.org'),
+                         (3, 'JaLC DataCite DOI', 'https://doi.org'),
+                         (4, 'NDL JaLC DOI', 'https://doi.org')
+                         ]
     )
     
     app_.config['WEKO_SEARCH_REST_ENDPOINTS']['recid']['search_index']='test-weko'

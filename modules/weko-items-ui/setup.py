@@ -110,6 +110,8 @@ setup(
             'weko_items_ui.bundles:feedback_maillist_js',
             'weko_items_ui_feedback_maillist_css = '
             'weko_items_ui.bundles:feedback_maillist_css',
+            'weko_items_ui_request_maillist_js = '
+            'weko_items_ui.bundles:request_maillist_js',
         ],
         'invenio_access.actions': [
             'item_access = weko_items_ui.permissions:action_item_access',

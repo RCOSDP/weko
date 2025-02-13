@@ -613,6 +613,9 @@ msgstr "Specify Property"
 msgid "Specify property"
 msgstr "Specify Property"
 
+msgid "Request mail"
+msgstr "Request mail"
+
 msgid "Approval Request Notification Email"
 msgstr ""
 

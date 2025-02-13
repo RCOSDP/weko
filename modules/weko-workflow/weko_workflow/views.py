@@ -34,10 +34,11 @@ from typing import List
 
 import redis
 from redis import sentinel
+from weko_admin.models import AdminSettings
 from weko_workflow.schema.marshmallow import ActionSchema, \
     ActivitySchema, ResponseMessageSchema, CancelSchema, PasswdSchema, LockSchema,\
-    ResponseLockSchema, LockedValueSchema, GetFeedbackMailListSchema, SaveActivityResponseSchema,\
-    SaveActivitySchema, CheckApprovalSchema,ResponseUnlockSchema
+    ResponseLockSchema, LockedValueSchema, GetFeedbackMailListSchema, GetRequestMailListSchema, \
+    SaveActivityResponseSchema, SaveActivitySchema, CheckApprovalSchema,ResponseUnlockSchema
 from weko_workflow.schema.utils import get_schema_action, type_null_check
 from marshmallow.exceptions import ValidationError
 
@@ -70,7 +71,7 @@ from weko_deposit.pidstore import get_record_identifier, \
     get_record_without_version
 from weko_deposit.signals import item_created
 from weko_items_ui.api import item_login
-from weko_records.api import FeedbackMailList, ItemLink
+from weko_records.api import FeedbackMailList, RequestMailList, ItemLink
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
@@ -1060,6 +1061,13 @@ def display_activity(activity_id="0", community_id=None):
 
     form = FlaskForm(request.form)
 
+    # Get Settings
+    enable_request_maillist = False
+    items_display_settings = AdminSettings.get(name='items_display_settings',
+                                        dict_to_object=False)
+    if items_display_settings:
+        enable_request_maillist = items_display_settings.get('display_request_form', False)
+
     return render_template(
         'weko_workflow/activity_detail.html',
         action_endpoint_key=current_app.config.get(
@@ -1078,6 +1086,7 @@ def display_activity(activity_id="0", community_id=None):
             'WEKO_WORKFLOW_ENABLE_CONTRIBUTOR'],
         enable_feedback_maillist=current_app.config[
             'WEKO_WORKFLOW_ENABLE_FEEDBACK_MAIL'],
+        enable_request_maillist=enable_request_maillist,
         endpoints=endpoints,
         error_type='item_login_error',
         histories=histories,
@@ -1521,7 +1530,9 @@ def next_action(activity_id='0', action_id=0, json_data=None):
             activity_id=activity_id,
             action_id=current_app.config.get(
                 "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3))
-        if action_feedbackmail:
+        activity_request_mail = work_activity.get_activity_request_mail(
+            activity_id=activity_id)
+        if action_feedbackmail or activity_request_mail:
             item_ids = [item_id]
             if not recid:
                 if ".0" in current_pid.pid_value:
@@ -1542,13 +1553,27 @@ def next_action(activity_id='0', action_id=0, json_data=None):
                     item_ids.append(draft_pid.object_uuid)
                 item_ids.append(pid_without_ver.object_uuid)
 
-            if action_feedbackmail.feedback_maillist:
+            if action_feedbackmail and action_feedbackmail.feedback_maillist:
                 FeedbackMailList.update_by_list_item_id(
                     item_ids=item_ids,
                     feedback_maillist=action_feedbackmail.feedback_maillist
                 )
             else:
                 FeedbackMailList.delete_by_list_item_id(item_ids)
+
+            enable_request_maillist = False
+            items_display_settings = AdminSettings.get(name='items_display_settings',
+                                        dict_to_object=False)
+            if items_display_settings:
+                enable_request_maillist = items_display_settings.get('display_request_form', False)         
+
+            if activity_request_mail and activity_request_mail.request_maillist and enable_request_maillist:
+                RequestMailList.update_by_list_item_id(
+                    item_ids=item_ids,
+                    request_maillist=activity_request_mail.request_maillist
+                )
+            else:
+                RequestMailList.delete_by_list_item_id(item_ids)
 
 
     if action_endpoint == 'item_link' and item_id:
@@ -2360,6 +2385,37 @@ def save_feedback_maillist(activity_id='0', action_id='0'):
     return jsonify(code=-1, msg=_('Error'))
 
 
+@workflow_blueprint.route(
+    '/save_request_maillist/<string:activity_id>/<int:action_id>',
+    methods=['POST'])
+@login_required
+@check_authority
+def save_request_maillist(activity_id='0', action_id='0'):
+    """Save request_mail's list to Activity History models.
+
+    :return:
+    """
+    try:
+        if request.headers['Content-Type'] != 'application/json':
+            """Check header of request"""
+            return jsonify(code=-1, msg=_('Header Error'))
+
+        request_body = request.get_json(force=True)
+        request_maillist = request_body.get('request_maillist', [])
+        is_display_request_button = request_body.get('is_display_request_button', False)
+
+        work_activity = WorkActivity()
+        work_activity.create_or_update_activity_request_mail(
+            activity_id=activity_id,
+            request_maillist=request_maillist,
+            is_display_request_button=is_display_request_button
+        )
+        return jsonify(code=0, msg=_('Success'))
+    except Exception:
+        current_app.logger.exception("Unexpected error occured.")
+    return jsonify(code=-1, msg=_('Error'))
+
+
 @workflow_blueprint.route('/get_feedback_maillist/<string:activity_id>',
                  methods=['GET'])
 @login_required
@@ -2436,6 +2492,85 @@ def get_feedback_maillist(activity_id='0'):
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     res = ResponseMessageSchema().load({'code':-1,'msg':_('Error')})
     return jsonify(res.data), 400
+
+
+@workflow_blueprint.route('/get_request_maillist/<string:activity_id>', methods=['GET'])
+@login_required
+def get_request_maillist(activity_id='0'):
+    """アクティビティに設定されているリクエストメール送信先の情報を取得して返す
+
+    Args:
+       activity_id (str, optional): 対象のアクティビティID.パスパラメータから取得. Defaults to '0'.
+
+    Returns:
+        object: 設定されているリクエストメール送信先を示すResponse
+               json data validated by ResponseMessageSchema or GetRequestMailListSchema
+
+    Raises:
+        marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
+    ---
+    get:
+        description: "get request maillist"
+        security:
+            - login_required: []
+        responses:
+            200:
+                description: "success"
+                content:
+                    application/json:
+                        schema:
+                            GetRequestMailListSchema
+                        example: {"code":1,"msg":_('Success'),"data":mail_list}
+            400:
+                description: "arguments error"
+                content:
+                    application/json:
+                        schema:
+                            ResponseMessageSchema
+                        example: {"code": -1, "msg": "arguments error"}
+    """
+    check_flg = type_null_check(activity_id, str)
+    if not check_flg:
+        current_app.logger.error("get_request_maillist: argument error")
+        res = ResponseMessageSchema().load({"code":-1, "msg":"arguments error"})
+        return jsonify(res.data), 400
+    try:
+        activity_request_mail = WorkActivity().get_activity_request_mail(
+            activity_id=activity_id)
+        if activity_request_mail:
+            request_mail_list = activity_request_mail.request_maillist
+            if not isinstance(request_mail_list, list):
+                res = ResponseMessageSchema().load({"code":-1,"msg":"mail_list is not list"})
+                return jsonify(res.data), 400
+            temp_list = []
+            added_user = []
+            for mail in request_mail_list.copy():
+                aid = mail.get('author_id')
+                if aid:
+                    request_mail_list.remove(mail)
+                    if aid not in added_user:
+                        emails = Authors.get_emails_by_id(aid)
+                        temp_list += [
+                            {'email': e, 'author_id': mail.get('author_id')}
+                            for e in emails
+                        ]
+                        added_user.append(aid)
+            request_mail_list += temp_list
+            res = GetRequestMailListSchema().load({
+                'code':1,
+                'msg':_('Success'),
+                'request_maillist': request_mail_list,
+                'is_display_request_button': activity_request_mail.display_request_button
+            })
+            return jsonify(res.data), 200
+        else:
+            res = ResponseMessageSchema().load({'code':0,'msg':'Empty!'})
+            return jsonify(res.data), 200
+    except Exception:
+        current_app.logger.exception("Unexpected error:")
+    res = ResponseMessageSchema().load({'code':-1,'msg':_('Error')})
+    return jsonify(res.data), 400
+
 
 @workflow_blueprint.route('/activity/unlocks/<string:activity_id>',methods=["POST"])
 @login_required

@@ -41,6 +41,7 @@ from invenio_records.signals import after_record_delete, after_record_insert, \
     before_record_insert, before_record_revert, before_record_update
 from invenio_search import RecordsSearch
 from jsonpatch import apply_patch
+from sqlalchemy import cast, String
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import desc

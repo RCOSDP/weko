@@ -284,6 +284,13 @@ def base_app(instance_path, search_class, request):
         LOGIN_DISABLED=False,
         INDEXER_DEFAULT_DOCTYPE="item-v1.0.0",
         WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME = 'jpcoar_v1_mapping',
+        WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME = 'jpcoar_mapping',
+        WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE={
+            'periodical':'journal',
+            'interview':'other',
+            'internal report':'other',
+            'report part':'other',
+        },
         WEKO_SCHEMA_DDI_SCHEMA_NAME = "ddi_mapping",
         INDEXER_FILE_DOC_TYPE="content",
         INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format("test"),
@@ -1113,6 +1120,25 @@ def esindex(app, db_records):
         yield current_search_client
     finally:
         current_search_client.indices.delete(index="test-*")
+
+
+@pytest.fixture()
+def es_authors_index(app):
+    current_search_client.indices.delete(index="test-*")
+
+    try:
+        index_name = "test-authors"
+        current_search_client.indices.create(
+            index_name
+        )
+
+    except Exception:
+        pass
+
+    try:
+        yield current_search_client
+    finally:
+        current_search_client.indices.delete(index=index_name)
 
 
 @pytest.fixture()
