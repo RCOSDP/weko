@@ -57,7 +57,7 @@ from weko_admin.models import Identifier, SiteInfo
 from weko_admin.utils import get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
-from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
+from weko_records.api import FeedbackMailList, RequestMailList, ItemsMetadata, ItemTypeNames, \
     ItemTypes, Mapping
 from weko_records.models import ItemType
 from weko_records.serializers.utils import get_full_mapping, get_item_type_name
@@ -1844,6 +1844,15 @@ def prepare_edit_workflow(post_activity, recid, deposit):
                 feedback_maillist=mail_list
             )
 
+        request_maillist = RequestMailList.get_mail_list_by_item_id(
+            item_id=recid.object_uuid)
+        if request_maillist:
+            activity.create_or_update_activity_request_mail(
+                activity_id=rtn.activity_id,
+                request_maillist=request_maillist,
+                is_display_request_button=True
+            )
+
     return rtn
 
 
@@ -1882,6 +1891,12 @@ def handle_finish_workflow(deposit, current_pid, recid):
                 FeedbackMailList.update(
                     item_id=item_id,
                     feedback_maillist=feedback_mail_list
+                )
+            request_mail_list = RequestMailList.get_mail_list_by_item_id(pid_without_ver.object_uuid)
+            if request_mail_list:
+                RequestMailList.update(
+                    item_id=item_id,
+                    request_maillist=request_mail_list
                 )
             ver_attaching_deposit.publish()
 

@@ -11,6 +11,7 @@ import flask
 from werkzeug.datastructures import MultiDict
 from flask import current_app,session
 from flask_babelex import gettext as _
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 from mock import MagicMock
 from weko_deposit.pidstore import get_record_without_version
@@ -968,10 +969,45 @@ def test_prepare_edit_workflow(app, workflow, db_records,users,mocker):
         deposit = db_records[6][6]
         res = prepare_edit_workflow(data,recid,deposit)
         assert res.activity_id != None
-    
+
+
+# def prepare_edit_workflow(post_activity, recid, deposit):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize("order_if",[0, 1])
+def test_prepare_edit_workflow2(app, workflow, db_records,users,mocker, order_if):
+    with app.test_request_context():
+        login_user(users[2]["obj"])
+        mocker.patch("weko_workflow.utils.WekoDeposit.update")
+        mocker.patch("weko_workflow.utils.WekoDeposit.commit")
+        data = {
+            "flow_id":workflow["flow"].id,
+            "workflow_id":workflow["workflow"].id,
+            "community":1,
+            "itemtype_id":1,
+            "activity_login_user":1,
+            "activity_update_user":1
+        }
+        recid = db_records[6][0]
+        deposit = db_records[6][6]
+
+        if order_if == 0:
+            mocker.patch("weko_workflow.utils.FeedbackMailList.get_mail_list_by_item_id", return_value = [{"email":"exam@exam.com","author_id":""}])
+            mocker.patch("weko_workflow.utils.RequestMailList.get_mail_list_by_item_id", return_value = [{"email":"exam@exam.com","author_id":""}])
+            request_mail_mock = mocker.patch("weko_workflow.utils.WorkActivity.create_or_update_activity_request_mail")
+            assert prepare_edit_workflow(data,recid,deposit)
+            request_mail_mock.assert_called()
+
+        if order_if == 1:
+            mocker.patch("weko_workflow.utils.FeedbackMailList.get_mail_list_by_item_id", return_value = [])
+            mocker.patch("weko_workflow.utils.RequestMailList.get_mail_list_by_item_id", return_value = [])
+            request_mail_mock = mocker.patch("weko_workflow.utils.WorkActivity.create_or_update_activity_request_mail")
+            assert prepare_edit_workflow(data,recid,deposit)
+            request_mail_mock.assert_not_called()
+
+
 # def handle_finish_workflow(deposit, current_pid, recid):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_handle_finish_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_handle_finish_workflow(workflow, db_records, mocker):
+def test_handle_finish_workflow(workflow, db_records, mocker, db_itemtype2):
     result = handle_finish_workflow(None, None, None)
     assert result == None
     mocker.patch("weko_deposit.api.WekoDeposit.publish")
@@ -982,8 +1018,28 @@ def test_handle_finish_workflow(workflow, db_records, mocker):
     current_pid = db_records[2][0]
     recid = db_records[2][2]
     result = handle_finish_workflow(deposit,current_pid,recid)
-    assert result == None
+    assert result
 
+    with patch('weko_deposit.api.WekoIndexer.update_es_data'):
+        with patch("weko_workflow.utils.RequestMailList.update" )as update_request:
+            result = handle_finish_workflow(deposit,current_pid,recid)
+            assert result
+            update_request.assert_not_called()
+        with patch("weko_workflow.utils.RequestMailList.update" )as update_request:
+            result = handle_finish_workflow(deposit,current_pid,None)
+            assert result
+            update_request.assert_not_called()
+
+        mocker.patch("weko_workflow.utils.FeedbackMailList.get_mail_list_by_item_id", return_value = [{"email":"exam@exam.com","author_id":""}])
+        mocker.patch("weko_workflow.utils.RequestMailList.get_mail_list_by_item_id", return_value = [{"email":"exam@exam.com","author_id":""}])
+        with patch("weko_workflow.utils.RequestMailList.update") as update_request:
+            result = handle_finish_workflow(deposit,current_pid,recid)
+            assert result
+            update_request.assert_called()
+        with patch("weko_workflow.utils.RequestMailList.update") as update_request:
+            result = handle_finish_workflow(deposit,current_pid,None)
+            assert result
+            update_request.assert_not_called()
 
 # def delete_cache_data(key: str):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_delete_cache_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp

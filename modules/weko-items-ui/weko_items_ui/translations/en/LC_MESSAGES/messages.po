@@ -606,3 +606,8 @@ msgstr ""
 #~ "you do not have permission to view"
 #~ " it."
 
+msgid "Request Mail Destination"
+msgstr ""
+
+msgid "Display Request Mail Button"
+msgstr ""

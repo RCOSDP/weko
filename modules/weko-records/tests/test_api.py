@@ -36,7 +36,7 @@ import uuid
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 
-from weko_records.api import FeedbackMailList, FilesMetadata, ItemLink, \
+from weko_records.api import FeedbackMailList, RequestMailList, FilesMetadata, ItemLink, \
     ItemsMetadata, ItemTypeEditHistory, ItemTypeNames, ItemTypeProps, \
     ItemTypes, Mapping, SiteLicense, RecordBase, WekoRecord
 from weko_records.models import ItemType, ItemTypeName, \
@@ -1858,6 +1858,79 @@ def test_feedback_mail_list_delete(app, db):
     assert record3==[]
     assert record4==[]
 
+# class RequestMailList(object):
+#     def update(cls, item_id, request_maillist):
+#     def update_by_list_item_id(cls, item_ids, request_maillist):
+#     def get_mail_list_by_item_id(cls, item_id):
+#     def get_request_mail_by_mailaddress(cls, address):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_request_mail_list_create_and_update -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_request_mail_list_create_and_update(mocker, app, db):
+    _item_id1 = uuid.uuid4()
+    _item_id2 = uuid.uuid4()
+    _request_maillist1 = []
+    _request_maillist2 = [{'email':'nii2@nii.co.jp'}]
+    _request_maillist3 = [{'email':'nii3@nii.co.jp'}]
+
+    flag = RequestMailList.update(1, _request_maillist1)
+    assert flag==False
+    record0 = RequestMailList.get_mail_list_by_item_id(1)
+    assert record0==[]
+    assert not RequestMailList.get_request_mail_by_mailaddress(address='nii2@nii.co.jp')
+    record1 = RequestMailList.get_mail_list_by_item_id(_item_id1)
+    assert record1==[]
+    flag = RequestMailList.update(_item_id1, _request_maillist1)
+    record1 = RequestMailList.get_mail_list_by_item_id(_item_id1)
+    assert flag==True
+    assert record1==[]
+    flag = RequestMailList.update(_item_id1, _request_maillist2)
+    record1 = RequestMailList.get_mail_list_by_item_id(_item_id1)
+    item_ids=[]
+    for request_mail in RequestMailList.get_request_mail_by_mailaddress(address='nii2@nii.co.jp'):
+        item_ids.append(request_mail.item_id)
+    assert flag==True
+    assert record1==[{'email':'nii2@nii.co.jp'}]
+    assert [_item_id1] == item_ids
+    RequestMailList.update_by_list_item_id([_item_id1, _item_id2], _request_maillist3)
+    record1 = RequestMailList.get_mail_list_by_item_id(_item_id1)
+    record2 = RequestMailList.get_mail_list_by_item_id(_item_id2)
+    item_ids=[]
+    for request_mail in RequestMailList.get_request_mail_by_mailaddress(address='nii3@nii.co.jp'):
+        item_ids.append(request_mail.item_id)
+    assert record1==[{'email':'nii3@nii.co.jp'}]
+    assert record2==[{'email':'nii3@nii.co.jp'}]
+    assert [_item_id1,_item_id2] == item_ids
+    mocker.patch("flask_sqlalchemy.BaseQuery.all", side_effect=SQLAlchemyError)
+    assert not RequestMailList.get_request_mail_by_mailaddress(address='nii3@nii.co.jp')
+
+
+# class RequestMailList(object):
+#     def delete(cls, item_id):
+#     def delete_without_commit(cls, item_id):
+#     def delete_by_list_item_id(cls, item_ids):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_request_mail_list_delete -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_request_mail_list_delete(app, db):
+    _item_id1 = uuid.uuid4()
+    _item_id2 = uuid.uuid4()
+    _item_id3 = uuid.uuid4()
+    _item_id4 = uuid.uuid4()
+    _request_maillist = ['nii@nii.co.jp']
+    RequestMailList.update_by_list_item_id([_item_id1, _item_id2, _item_id3, _item_id4], _request_maillist)
+
+    flag = RequestMailList.delete(1)
+    assert flag==False
+    flag = RequestMailList.delete(_item_id1)
+    record1 = RequestMailList.get_mail_list_by_item_id(_item_id1)
+    assert flag==True
+    assert record1==[]
+    RequestMailList.delete_without_commit(_item_id2)
+    record2 = RequestMailList.get_mail_list_by_item_id(_item_id2)
+    assert record2==[]
+    RequestMailList.delete_by_list_item_id([_item_id3, _item_id4])
+    record3 = RequestMailList.get_mail_list_by_item_id(_item_id3)
+    record4 = RequestMailList.get_mail_list_by_item_id(_item_id4)
+    assert record3==[]
+    assert record4==[]
+
 
 # class ItemLink(object):
 #     def __init__(self, recid: str):
@@ -1993,8 +2066,3 @@ def test_item_link_bulk_delete(app, db, records):
     assert r[0]['item_links']=='3'
     assert r[0]['item_title']==records[2][1]['item_title']
     assert r[0]['value']=='HDL'
-
-
-
-
-

@@ -657,3 +657,18 @@ msgstr "このデータは利用できません（権限がないため）。"
 
 msgid "Success Secret URL Generate"
 msgstr "成功: シークレットURLを生成し、あなたのメールアドレス宛に送信しました。"
+
+msgid "Please enter the calculation result"
+msgstr "計算結果を入力してください"
+
+msgid "The calculation results are different."
+msgstr "計算結果が違います。"
+
+msgid "Email sent successfully"
+msgstr "メールを送信しました。"
+
+msgid "The image has expired. Please enter the calculation result again."
+msgstr "画像の有効期限が切れています。再度計算結果を入力してください。"
+
+msgid "There is an error in the input item"
+msgstr "入力項目に誤りがあります"
