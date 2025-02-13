@@ -1,5 +1,8 @@
 {
-  "@context": "https://schema.org/",
+  "@context": [
+    "https://schema.org/",
+    "https://w3id.org/ro/crate/1.1/context"
+  ],
   "@graph": [
     {
       "@id": "./",

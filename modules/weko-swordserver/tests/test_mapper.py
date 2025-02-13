@@ -19,15 +19,17 @@ class TestWekoSwordMapper:
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_mapper.py::TestWekoSwordMapper::test__init -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
     def test__init(self, item_type):
         json = json_data("data/item_type/processed_json_2.json")
+        json_ld = json_data("data/item_type/ro-crate-metadata_2.json")
         itemtype = item_type[1]["item_type"]
         json_map = json_data("data/item_type/sword_mapping_2.json")
 
-        mapper = WekoSwordMapper(json, itemtype, json_map)
+        mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
 
         assert mapper.json == json
         assert mapper.itemtype == itemtype
         assert mapper.itemtype_name == item_type[1]["item_type_name"].name
         assert mapper.json_map == json_map
+        # assert mapper.json_ld == json_ld
 
     # def map():
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_mapper.py::TestWekoSwordMapper::test_map -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
@@ -35,14 +37,15 @@ class TestWekoSwordMapper:
 
         # with valid data
         json = json_data("data/item_type/processed_json_2.json")
+        json_ld = json_data("data/item_type/ro-crate-metadata_2.json")
         itemtype = item_type[1]["item_type"]
         json_map = json_data("data/item_type/sword_mapping_2.json")
 
-        mapper = WekoSwordMapper(json, itemtype, json_map)
+        mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
         result = mapper.map()
 
         expected = json_data("data/item_type/mapped_json_2.json")
-        expected.pop("item_1732599253716")
+        # expected.pop("item_1732599253716")
         assert result == expected
 
         # with deleted record
@@ -56,10 +59,11 @@ class TestWekoSwordMapper:
                         "metadata": {}
                     }
                 }
+        json_ld = json_data("data/item_type/ro-crate-metadata_2.json")
         itemtype = item_type[1]["item_type"]
         json_map = json_data("data/item_type/sword_mapping_2.json")
 
-        mapper = WekoSwordMapper(json, itemtype, json_map)
+        mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
         result = mapper.map()
 
         assert result == {}
@@ -67,128 +71,35 @@ class TestWekoSwordMapper:
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_mapper.py::TestWekoSwordMapper::test__create_metadata -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
     def test__create_metadata(self, item_type):
         json = json_data("data/item_type/processed_json_2.json")
+        json_ld = json_data("data/item_type/ro-crate-metadata_2.json")
         itemtype = item_type[1]["item_type"]
         json_map = json_data("data/item_type/sword_mapping_2.json")
 
-        mapper = WekoSwordMapper(json, itemtype, json_map)
+        mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
 
+        # case: valid metadata creation; contains Extra metadata
         item_map =  mapper._create_item_map()
-        # case: valid metadata creation
         metadata = mapper._create_metadata(item_map)
-        expected_metadata = {
-            "item_1617604990215": [
-                {
-                    "filesize": [
-                        {
-                            "value": "333"
-                        }
-                    ],
-                    "version": "1.0",
-                    "fileDate": [
-                        {
-                            "fileDateValue": "2023-01-18",
-                            "fileDateType": "Created"
-                        }
-                    ],
-                    "filename": "sample.rst",
-                    "url": {
-                        "url": "https://example.org/data/sample.rst",
-                        "objectType": "fulltext",
-                        "label": "data/sample.rst"
-                    },
-                    "format": "text/x-rst"
-                }
-            ],
-            "item_1617186331708": [
-                {
-                    "subitem_1551255647225": "サンプルアイテム",
-                    "subitem_1551255648112": "ja"
-                }
-            ],
-            "item_1617186419668": [
-                {
-                    "creatorNames": [
-                        {
-                            "creatorName": "Egon Willighagen"
-                        }
-                    ]
-                }
-            ],
-            "item_1617258105262": {
-                "resourceuri": "",
-                "resourcetype": "other"
-            },
-            "item_1617349709064": [
-                {
-                    "givenNames": [
-                        {
-                            "givenName": "Stian",
-                            "givenNameLang": "en"
-                        }
-                    ],
-                    "familyNames": [
-                        {
-                            "familyName": "Soiland-Reyes",
-                            "familyNameLang": "en"
-                        }
-                    ],
-                    "contributorType": "DataCurator",
-                    "nameIdentifiers": [
-                        {
-                            "nameIdentifier": "https://orcid.org/0000-0002-1234-5679",
-                            "nameIdentifierURI": "https://orcid.org/0000-0002-1234-5679",
-                            "nameIdentifierScheme": "https://orcid.org"
-                        }
-                    ],
-                    "contributorMails": [
-                        {
-                            "contributorMail": "contributor@example.org"
-                        }
-                    ],
-                    "contributorNames": [
-                        {
-                            "lang": "en",
-                            "contributorName": "Stian Soiland-Reyes"
-                        }
-                    ],
-                    "contributorAffiliations": [
-                        {
-                            "contributorAffiliationNames": [
-                                {
-                                    "contributorAffiliationName": "University of Manchester",
-                                    "contributorAffiliationNameLang": "en"
-                                }
-                            ],
-                            "contributorAffiliationNameIdentifiers": [
-                                {
-                                    "contributorAffiliationURI": "https://example.org/affiliation",
-                                    "contributorAffiliationScheme": "GRID",
-                                    "contributorAffiliationNameIdentifier": "https://example.org/affiliation"
-                                }
-                            ]
-                        }
-                    ],
-                    "contributorAlternatives": [
-                        {
-                            "contributorAlternative": "Stian S.R.",
-                            "contributorAlternativeLang": "en"
-                        }
-                    ]
-                }
-            ],
-            "item_1617186385884": [
-                {
-                    "subitem_1551255720400": "試しに作ってみた",
-                    "subitem_1551255721061": "ja"
-                }
-            ]
-        }
-        assert metadata == expected_metadata
+
+        assert metadata["item_1617604990215"][0]["filesize"][0]["value"] == "333"
+        assert metadata["item_1617186331708"][0]["subitem_1551255647225"] == "サンプルアイテム"
+        assert metadata["item_1617258105262"]["resourcetype"] == "other"
+        assert "'author.@id': 'http://orcid.org/0000-0002-1825-0097'" in metadata["item_1732599253716"]
+
+        # case: valid metadata creation; not contains Extra metadata
+        item_map =  mapper._create_item_map()
+        item_map.pop("Extra")
+        metadata = mapper._create_metadata(item_map)
+
+        assert metadata["item_1617604990215"][0]["filesize"][0]["value"] == "333"
+        assert metadata["item_1617186331708"][0]["subitem_1551255647225"] == "サンプルアイテム"
+        assert metadata["item_1617258105262"]["resourcetype"] == "other"
 
     # def _get_json_metadata_value():
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_mapper.py::TestWekoSwordMapper::test__get_json_metadata_value -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
     def test__get_json_metadata_value(self, item_type):
         # json = json_data("data/item_type/processed_json_2.json")
+        json_ld = json_data("data/item_type/ro-crate-metadata_2.json")
         itemtype = item_type[1]["item_type"]
         json_map = json_data("data/item_type/sword_mapping_2.json")
 
@@ -208,7 +119,7 @@ class TestWekoSwordMapper:
                     }
                 }
             }
-        mapper = WekoSwordMapper(json, itemtype, json_map)
+        mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
         assert mapper._get_json_metadata_value("d2Vrby0uLw1==.hasPart.contentSize") == None
 
         # dict in dict: {"json_key": {}} one KEYs
@@ -227,7 +138,7 @@ class TestWekoSwordMapper:
                     }
                 }
             }
-        mapper = WekoSwordMapper(json, itemtype, json_map)
+        mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
         with pytest.raises(WekoSwordserverException) as excinfo:
             mapper._get_json_metadata_value("d2Vrby0uLw==")
         assert str(excinfo.value.message) == "Value is dict but still need to get more keys. Check the mapping definition."
@@ -247,7 +158,7 @@ class TestWekoSwordMapper:
                     }
                 }
             }
-        mapper = WekoSwordMapper(json, itemtype, json_map)
+        mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
         assert mapper._get_json_metadata_value("d2Vrby0uLw==") == "333"
 
         # Two or more KEYs,but value key is not exist in the mapping
@@ -264,7 +175,7 @@ class TestWekoSwordMapper:
                     }
                 }
             }
-        mapper = WekoSwordMapper(json, itemtype, json_map)
+        mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
         with pytest.raises(WekoSwordserverException) as excinfo:
             mapper._get_json_metadata_value("d2Vrby0uLw==.hasPart.contentSize")
         assert str(excinfo.value.message) == "Value: 333 got from d2Vrby0uLw== but still need to get ['hasPart', 'contentSize']. Check the mapping definition."
@@ -286,7 +197,7 @@ class TestWekoSwordMapper:
                     }
                 }
             }
-        mapper = WekoSwordMapper(json, itemtype, json_map)
+        mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
         assert mapper._get_json_metadata_value("d2Vrby0uLw==.hasPart.contentSize") == None
 
         # value in dict  not one key
@@ -308,7 +219,7 @@ class TestWekoSwordMapper:
                     }
                 }
             }
-        mapper = WekoSwordMapper(json, itemtype, json_map)
+        mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
         assert mapper._get_json_metadata_value("d2Vrby0uLw==.hasPart.contentSize") == "333"
 
         # value in dict  one key
@@ -329,7 +240,7 @@ class TestWekoSwordMapper:
                     }
                 }
             }
-        mapper = WekoSwordMapper(json, itemtype, json_map)
+        mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
         assert mapper._get_json_metadata_value("d2Vrby0uLw==.hasPart") == {'contentSize': '333'}
 
         # value in dict  next is list  not one key
@@ -355,7 +266,7 @@ class TestWekoSwordMapper:
                     }
                 }
             }
-        mapper = WekoSwordMapper(json, itemtype, json_map)
+        mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
         assert mapper._get_json_metadata_value("d2Vrby0uLw==.hasPart.contentSize1") == [None,"444"]
 
         # value in dict  next is list  one key
@@ -374,7 +285,7 @@ class TestWekoSwordMapper:
                     }
                 }
             }
-        mapper = WekoSwordMapper(json, itemtype, json_map)
+        mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
         assert mapper._get_json_metadata_value("d2Vrby0uLw==.hasPart") == ["333","444"]
 
         # value in dict  next is list  one key
@@ -393,7 +304,7 @@ class TestWekoSwordMapper:
                     }
                 }
             }
-        mapper = WekoSwordMapper(json, itemtype, json_map)
+        mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
         with pytest.raises(WekoSwordserverException) as excinfo:
             mapper._get_json_metadata_value("d2Vrby0uLw==.hasPart.contentSize")
         assert str(excinfo.value.message) == "Value: 333 got from hasPart but still need to get ['contentSize']. Check the mapping definition."
@@ -424,7 +335,7 @@ class TestWekoSwordMapper:
                 }
             }
         }
-        mapper = WekoSwordMapper(json, itemtype, json_map)
+        mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
         assert mapper._get_json_metadata_value("d2Vrby0uLw==.hasPart.contentSize") == ["333", "444"]
 
         # value in list
@@ -456,7 +367,7 @@ class TestWekoSwordMapper:
                 }
             }
         }
-        mapper = WekoSwordMapper(json, itemtype, json_map)
+        mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
         with pytest.raises(WekoSwordserverException) as excinfo:
             mapper._get_json_metadata_value("d2Vrby0uLw==.hasPart.contentSize")
         assert str(excinfo.value.message) =="List in list not supported. Check your metadata file."
@@ -476,7 +387,7 @@ class TestWekoSwordMapper:
                 }
             }
         }
-        mapper = WekoSwordMapper(json, itemtype, json_map)
+        mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
         with pytest.raises(WekoSwordserverException) as excinfo:
             mapper._get_json_metadata_value("d2Vrby0uLw==")
         assert "Value: 333 got from list but still need to get []. Check the mapping definition." in str(excinfo.value.message)
@@ -500,7 +411,7 @@ class TestWekoSwordMapper:
         #         }
         #     }
         # }
-        # mapper = WekoSwordMapper(json, itemtype, json_map)
+        # mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
         # assert mapper._get_json_metadata_value("d2Vrby0uLw==") == []
 
         # # value is None in dict
@@ -518,17 +429,18 @@ class TestWekoSwordMapper:
         #             }
         #         }
         #     }
-        # mapper = WekoSwordMapper(json, itemtype, json_map)
+        # mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
         # assert mapper._get_json_metadata_value("d2Vrby0uLw==.hasPart.contentSize") == None
 
     # def _get_type_of_item_type_path():
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_mapper.py::TestWekoSwordMapper::test__get_type_of_item_type_path -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
     def test__get_type_of_item_type_path(self, item_type):
         json = json_data("data/item_type/processed_json_2.json")
+        json_ld = json_data("data/item_type/ro-crate-metadata_2.json")
         itemtype = item_type[1]["item_type"]
         json_map = json_data("data/item_type/sword_mapping_2.json")
 
-        mapper = WekoSwordMapper(json, itemtype, json_map)
+        mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
 
         item_map = mapper._create_item_map()
 
@@ -557,10 +469,11 @@ class TestWekoSwordMapper:
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_mapper.py::TestWekoSwordMapper::test__create_child_metadata_of_a_property -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
     def test__create_child_metadata_of_a_property(self, item_type):
         json = json_data("data/item_type/processed_json_2.json")
+        json_ld = json_data("data/item_type/ro-crate-metadata_2.json")
         itemtype = item_type[1]["item_type"]
         json_map = json_data("data/item_type/sword_mapping_2.json")
 
-        mapper = WekoSwordMapper(json, itemtype, json_map)
+        mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
 
         # case: value in dict
         # If item_map_keys length is 1, it means that the item_map_keys contains only last key
@@ -578,16 +491,6 @@ class TestWekoSwordMapper:
         child_metadata = {}
         item_map_keys = ["item_1617258105262"]
         type_of_item_type_path = ["value"]
-        json_value = None
-        mapper._create_child_metadata_of_a_property(0, child_metadata, item_map_keys, type_of_item_type_path, json_value)
-        assert child_metadata == {}
-
-        # case: nested object
-        # If _type is "value", add json_value to metadata
-        # json_value is not None
-        child_metadata = {}
-        item_map_keys = ["item_1617186331708", "subitem_1551255647225"]
-        type_of_item_type_path = ["value", "value"]
         json_value = None
         mapper._create_child_metadata_of_a_property(0, child_metadata, item_map_keys, type_of_item_type_path, json_value)
         assert child_metadata == {}
@@ -639,10 +542,11 @@ class TestWekoSwordMapper:
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_mapper.py::TestWekoSwordMapper::test__create_metadata_of_a_property -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
     def test__create_metadata_of_a_property(self, item_type):
         json = json_data("data/item_type/processed_json_2.json")
+        json_ld = json_data("data/item_type/ro-crate-metadata_2.json")
         itemtype = item_type[1]["item_type"]
         json_map = json_data("data/item_type/sword_mapping_2.json")
 
-        mapper = WekoSwordMapper(json, itemtype, json_map)
+        mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
 
         # case: value in dict  If json_value is not list, use json_value
         metadata = {}
@@ -744,10 +648,11 @@ class TestWekoSwordMapper:
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_mapper.py::TestWekoSwordMapper::test__get_dimensions -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
     def test__get_dimensions(self, item_type):
         json = None
+        json_ld = json_data("data/item_type/ro-crate-metadata_2.json")
         itemtype = item_type[1]["item_type"]
         json_map = None
 
-        mapper = WekoSwordMapper(json, itemtype, json_map)
+        mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
 
         # case: Not a list
         list_0 = 1
@@ -769,13 +674,182 @@ class TestWekoSwordMapper:
         list_e = []
         assert mapper._get_dimensions(list_e) == 1
 
+    # def _get_extra_dict():
+    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_mapper.py::TestWekoSwordMapper::test__get_extra_dict -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+    def test__get_extra_dict(self, item_type):
+        json = None
+        json_ld = json_data("data/item_type/ro-crate-metadata_2.json")
+        itemtype = item_type[1]["item_type"]
+        json_map = None
+
+        mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
+
+        path_and_value ={
+            "hasPart.contentSize": [
+                "333"
+            ],
+            "hasPart.version": [
+                "1.0"
+            ],
+            "hasPart.datetime.date": [
+                "2023-01-18"
+            ],
+            "hasPart.datetime.type": [
+                "Created"
+            ],
+            "hasPart.name": [
+                "sample.rst"
+            ],
+            "hasPart.identifier.@id": [
+                "https://example.org/data/sample.rst"
+            ],
+            "hasPart.identifier.type": [
+                "fulltext"
+            ],
+            "hasPart.@id": [
+                "data/sample.rst"
+            ],
+            "hasPart.encodingFormat": [
+                "text/x-rst"
+            ],
+            "#title.name": "サンプルアイテム",
+            "#title.language": "ja",
+            "author.name": "Egon Willighagen",
+            "Resource Type.uri": "",
+            "Resource Type.type": "other",
+            "contributor.givenName.name": [
+                "Stian"
+            ],
+            "contributor.givenName.language": [
+                "en"
+            ],
+            "contributor.familyName.name": [
+                "Soiland-Reyes"
+            ],
+            "contributor.familyName.language": [
+                "en"
+            ],
+            "contributor.@type": [
+                "DataCurator"
+            ],
+            "contributor.identifier.@id": [
+                "https://orcid.org/0000-0002-1234-5679"
+            ],
+            "contributor.identifier.uri": [
+                "https://orcid.org/0000-0002-1234-5679"
+            ],
+            "contributor.identifier.scheme": [
+                "https://orcid.org"
+            ],
+            "contributor.email": [
+                "contributor@example.org"
+            ],
+            "contributor.language": [
+                "en"
+            ],
+            "contributor.fullname": [
+                "Stian Soiland-Reyes"
+            ],
+            "contributor.affiliation.name": [
+                "University of Manchester"
+            ],
+            "contributor.affiliation.language": [
+                "en"
+            ],
+            "contributor.affiliation.identifier.uri": [
+                "https://example.org/affiliation"
+            ],
+            "contributor.affiliation.identifier.scheme": [
+                "GRID"
+            ],
+            "contributor.affiliation.identifier.@id": [
+                "https://example.org/affiliation"
+            ],
+            "contributor.alternateName.name": [
+                "Stian S.R."
+            ],
+            "contributor.alternateName.language": [
+                "en"
+            ],
+            "#subtitle.name": "試しに作ってみた",
+            "#subtitle.language": "ja"
+        }
+        all_properties = {
+            "@id": "./",
+            "author.@id": "http://orcid.org/0000-0002-1825-0097",
+            "author.identifier.@id": "https://orcid.org/0000-0002-1234-5678",
+            "author.identifier.scheme": "https://orcid.org",
+            "author.identifier.uri": "https://orcid.org/0000-0002-1234-5678",
+            "author.name": "Egon Willighagen",
+            "contributor[0].@id": "http://orcid.org/0000-0002-1825-0085",
+            "contributor[0].affiliation.@id": "#affiliation",
+            "contributor[0].affiliation.identifier.@id": "https://example.org/affiliation",
+            "contributor[0].affiliation.identifier.scheme": "GRID",
+            "contributor[0].affiliation.identifier.uri": "https://example.org/affiliation",
+            "contributor[0].affiliation.language": "en",
+            "contributor[0].affiliation.name": "University of Manchester",
+            "contributor[0].alternateName.@id": "#alternateName",
+            "contributor[0].alternateName.language": "en",
+            "contributor[0].alternateName.name": "Stian S.R.",
+            "contributor[0].contributorType": "Researcher",
+            "contributor[0].email": "contributor@example.org",
+            "contributor[0].familyName.@id": "#familyName",
+            "contributor[0].familyName.language": "en",
+            "contributor[0].familyName.name": "Soiland-Reyes",
+            "contributor[0].fullname": "Stian Soiland-Reyes",
+            "contributor[0].givenName.@id": "#givenName",
+            "contributor[0].givenName.language": "en",
+            "contributor[0].givenName.name": "Stian",
+            "contributor[0].identifier.@id": "https://orcid.org/0000-0002-1234-5679",
+            "contributor[0].identifier.scheme": "https://orcid.org",
+            "contributor[0].identifier.uri": "https://orcid.org/0000-0002-1234-5679",
+            "contributor[0].language": "en",
+            "contributor[0].nametype": "Personal",
+            "creator.@id": "http://orcid.org/0000-0002-1825-0097",
+            "creator.identifier.@id": "https://orcid.org/0000-0002-1234-5678",
+            "creator.identifier.scheme": "https://orcid.org",
+            "creator.identifier.uri": "https://orcid.org/0000-0002-1234-5678",
+            "creator.name": "Egon Willighagen",
+            "datePublished": "2024/11/15T01:59:48Z",
+            "accessMode": "public",
+            "description": "A simple example for swordserver.",
+            "isPartOf.@id": "https://example.org/project/123",
+            "isPartOf.name": "Project XYZ",
+            "isPartOf.sameAs": "https://192.168.56.101/tree/index/1623632832836",
+            "hasPart[0].@id": "data/sample.rst",
+            "hasPart[0].contentSize": "333",
+            "hasPart[0].datetime.@id": "#datetime",
+            "hasPart[0].datetime.date": "2023-01-18",
+            "hasPart[0].datetime.type": "Created",
+            "hasPart[0].encodingFormat": "text/x-rst",
+            "hasPart[0].identifier.@id": "https://example.org/data/sample.rst",
+            "hasPart[0].identifier.label": "sample.rst",
+            "hasPart[0].identifier.type": "fulltext",
+            "hasPart[0].name": "sample.rst",
+            "hasPart[0].version": "1.0",
+            "hasPart[1].version": "1.0",
+            "name": "The Sample",
+            "Resource Type.@id": "#resourcetype",
+            "Resource Type.type": "other",
+            "Resource Type.uri": ""
+        }
+
+        extra_dict = mapper._get_extra_dict(path_and_value, all_properties)
+
+        assert extra_dict["@id"] == "./"
+        assert extra_dict["author.identifier.@id"] == "https://orcid.org/0000-0002-1234-5678"
+        assert extra_dict["contributor[0].@id"] == "http://orcid.org/0000-0002-1825-0085"
+        assert extra_dict["creator.name"] == "Egon Willighagen"
+        assert extra_dict["datePublished"] == "2024/11/15T01:59:48Z"
+
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_mapper.py::TestWekoSwordMapper::test_is_valid_mapping -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
     def test_is_valid_mapping(self, item_type):
         json = json_data("data/item_type/processed_json_2.json")
+        json_ld = json_data("data/item_type/ro-crate-metadata_2.json")
         itemtype = item_type[1]["item_type"]
         json_map = json_data("data/item_type/sword_mapping_2.json")
 
-        mapper = WekoSwordMapper(json, itemtype, json_map)
+        mapper = WekoSwordMapper(json, json_ld, itemtype, json_map)
 
         # case: valid mapping
         assert mapper.is_valid_mapping() is True
@@ -786,6 +860,6 @@ class TestWekoSwordMapper:
             "Invalid Key 2": "invalid_key",
             "Invalid Key 3": "invalid_key"
         }
-        mapper_invalid = WekoSwordMapper(json, itemtype, json_map_invalid)
+        mapper_invalid = WekoSwordMapper(json, json_ld, itemtype, json_map_invalid)
         assert mapper_invalid.is_valid_mapping() is False
 

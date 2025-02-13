@@ -132,7 +132,7 @@
       ]
     }
   ],
-  "item_1732599253716": "{'summary': 'the sample of simple itemtype', 'contributor': [{'nametype': 'Personal'}]}",
+  "item_1732599253716": "{'@id': './', 'author.@id': 'http://orcid.org/0000-0002-1825-0097', 'author.identifier.@id': 'https://orcid.org/0000-0002-1234-5678', 'author.identifier.scheme': 'https://orcid.org', 'author.identifier.uri': 'https://orcid.org/0000-0002-1234-5678', 'contributor[0].@id': 'http://orcid.org/0000-0002-1825-0085', 'contributor[0].affiliation.@id': '#affiliation', 'contributor[0].alternateName.@id': '#alternateName', 'contributor[0].contributorType': 'Researcher', 'contributor[0].familyName.@id': '#familyName', 'contributor[0].givenName.@id': '#givenName', 'contributor[0].nametype': 'Personal', 'creator.@id': 'http://orcid.org/0000-0002-1825-0097', 'creator.identifier.@id': 'https://orcid.org/0000-0002-1234-5678', 'creator.identifier.scheme': 'https://orcid.org', 'creator.identifier.uri': 'https://orcid.org/0000-0002-1234-5678', 'creator.name': 'Egon Willighagen', 'datePublished': '2024/11/15T01:59:48Z', 'accessMode': 'public', 'description': 'A simple example for swordserver.', 'isPartOf.@id': 'https://example.org/project/123', 'isPartOf.name': 'Project XYZ', 'isPartOf.sameAs': 'https://192.168.56.101/tree/index/1623632832836', 'hasPart[0].datetime.@id': '#datetime', 'hasPart[0].identifier.label': 'sample.rst', 'name': 'The Sample', 'Resource Type.@id': '#resourcetype'}",
   "item_1617186385884": [
     {
       "subitem_1551255720400": "試しに作ってみた",
