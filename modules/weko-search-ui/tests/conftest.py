@@ -646,6 +646,20 @@ def base_app(instance_path, search_class, request):
                 max_result_window=10000,
             ),
         ),
+        # WEKO_INDEX_TREE_REST_ENDPOINTS=dict(
+        #     tid=dict(
+        #         record_class="weko_index_tree.api:Indexes",
+        #         index_route="/tree/index/<int:index_id>",
+        #         tree_route="/tree",
+        #         item_tree_route="/tree/<string:pid_value>",
+        #         index_move_route="/tree/move/<int:index_id>",
+        #         default_media_type="application/json",
+        #         create_permission_factory_imp="weko_index_tree.permissions:index_tree_permission",
+        #         read_permission_factory_imp="weko_index_tree.permissions:index_tree_permission",
+        #         update_permission_factory_imp="weko_index_tree.permissions:index_tree_permission",
+        #         delete_permission_factory_imp="weko_index_tree.permissions:index_tree_permission",
+        #     )
+        # ),
         WEKO_INDEX_TREE_REST_ENDPOINTS=copy.deepcopy(_WEKO_INDEX_TREE_REST_ENDPOINTS),
         WEKO_INDEX_TREE_STYLE_OPTIONS={
             "id": "weko",
@@ -1165,7 +1179,7 @@ def db_records2(db, instance_path, users):
     result = []
     with db.session.begin_nested():
         for d in range(record_num):
-            result.append(create_record(record_data[d], item_data[d]))
+            result.append(create_record(db,record_data[d], item_data[d]))
     db.session.commit()
 
     index_metadata = {
@@ -3941,6 +3955,428 @@ def make_itemtype(app,db):
         return result
     return factory
 
+
+@pytest.fixture
+def test_indices(app, db):
+    def base_index(id, parent, position, public_date=None, coverpage_state=False, recursive_browsing_role=False,
+                   recursive_contribute_role=False, recursive_browsing_group=False,
+                   recursive_contribute_group=False, online_issn='',harvest_spec=""):
+        _browsing_role = "3,-98,-99"
+        _contribute_role = "1,2,3,4,-98,-99"
+        _group = "g1,g2"
+        return Index(
+            id=id,
+            parent=parent,
+            position=position,
+            index_name="Test index {}".format(id),
+            index_name_english="Test index {}".format(id),
+            index_link_name="Test index link {}".format(id),
+            index_link_name_english="Test index link {}".format(id),
+            index_link_enabled=False,
+            more_check=False,
+            display_no=position,
+            harvest_public_state=True,
+            public_state=True,
+            public_date=public_date,
+            recursive_public_state=True if not public_date else False,
+            coverpage_state=coverpage_state,
+            recursive_coverpage_check=True if coverpage_state else False,
+            browsing_role=_browsing_role,
+            recursive_browsing_role=recursive_browsing_role,
+            contribute_role=_contribute_role,
+            recursive_contribute_role=recursive_contribute_role,
+            browsing_group=_group,
+            recursive_browsing_group=recursive_browsing_group,
+            contribute_group=_group,
+            recursive_contribute_group=recursive_contribute_group,
+            biblio_flag=True if not online_issn else False,
+            online_issn=online_issn,
+            harvest_spec=harvest_spec
+        )
+    
+    with db.session.begin_nested():
+        db.session.add(base_index(1, 0, 0, datetime(2022, 1, 1), True, True, True, True, True, '1234-5678'))
+        db.session.add(base_index(2, 0, 1))
+        db.session.add(base_index(3, 0, 2))
+        db.session.add(base_index(11, 1, 0))
+        db.session.add(base_index(21, 2, 0))
+        db.session.add(base_index(22, 2, 1)),
+        db.session.add(base_index(12, 1, 1,harvest_spec="11"))
+    db.session.commit()
+
+
+@pytest.fixture()
+def script_info(app):
+    """Get ScriptInfo object for testing CLI."""
+    return ScriptInfo(create_app=lambda info: app)
+
+
+@pytest.fixture()
+def sample_config(app, db):
+    source_name = "arXiv"
+    with app.app_context():
+        source = OAIHarvestConfig(
+            name=source_name,
+            baseurl="http://export.arxiv.org/oai2",
+            metadataprefix="arXiv",
+            setspecs="physics",
+        )
+        source.save()
+        db.session.commit()
+    return source_name
+
+
+@pytest.fixture()
+def location(app, db):
+    """Create default location."""
+    tmppath = tempfile.mkdtemp()
+
+    location = Location.query.filter_by(name="testloc").count()
+    if location != 1:
+        loc = Location(name="testloc", uri=tmppath, default=True)
+        db.session.add(loc)
+        db.session.commit()
+    else:
+        loc = Location.query.filter_by(name="testloc").first()
+
+    yield loc
+
+    shutil.rmtree(tmppath)
+
+
+@pytest.fixture()
+def harvest_setting(app, db, test_indices):
+    setting_list = []
+
+    jpcoar_setting = HarvestSettings(
+        id=1,
+        repository_name="jpcoar_test",
+        base_url="http://export.arxiv.org/oai2",
+        from_date=datetime(2022, 10, 1),
+        until_date=datetime(2022, 10, 2),
+        metadata_prefix="jpcoar_1.0",
+        index_id=1,
+        update_style="0",
+        auto_distribution="1"
+    )
+    with db.session.begin_nested():
+        db.session.add(jpcoar_setting)
+    setting_list.append(jpcoar_setting)
+
+    ddi_setting = HarvestSettings(
+        id=2,
+        repository_name="ddi_test",
+        base_url="http://export.arxiv.org/oai2",
+        from_date=datetime(2022, 10, 1),
+        until_date=datetime(2022, 10, 2),
+        metadata_prefix="oai_ddi25",
+        index_id=1,
+        update_style="0",
+        auto_distribution="1"
+    )
+    with db.session.begin_nested():
+        db.session.add(ddi_setting)
+    setting_list.append(ddi_setting)
+
+    dc_setting = HarvestSettings(
+        id=3,
+        repository_name="dc_test",
+        base_url="http://export.arxiv.org/oai2",
+        from_date=datetime(2022, 10, 1),
+        until_date=datetime(2022, 10, 2),
+        metadata_prefix="oai_dc",
+        index_id=1,
+        update_style="0",
+        auto_distribution="1"
+    )
+    with db.session.begin_nested():
+        db.session.add(dc_setting)
+    setting_list.append(dc_setting)
+
+    other_setting = HarvestSettings(
+        id=4,
+        repository_name="other_test",
+        base_url="http://export.arxiv.org/oai2",
+        from_date=datetime(2022, 10, 1),
+        until_date=datetime(2022, 10, 2),
+        metadata_prefix="other_prefix",
+        index_id=1,
+        update_style="0",
+        auto_distribution="1"
+    )
+    with db.session.begin_nested():
+        db.session.add(other_setting)
+    setting_list.append(other_setting)
+
+    db.session.commit()
+
+    return setting_list
+
+
+@pytest.fixture()
+def sample_record_xml():
+    raw_xml = open(os.path.join(
+        os.path.dirname(__file__),
+        "data/sample_arxiv_response.xml"
+    )).read()
+    return raw_xml
+
+
+@pytest.fixture()
+def sample_record_xml_utf8():
+    raw_xml = open(os.path.join(
+        os.path.dirname(__file__),
+        "data/sample_arxiv_response_utf8.xml"
+    )).read()
+    return raw_xml
+
+
+@pytest.fixture()
+def sample_record_xml_oai_dc():
+    raw_xml = open(os.path.join(
+        os.path.dirname(__file__),
+        "data/sample_oai_dc_response.xml"
+    )).read()
+    return raw_xml
+
+
+@pytest.fixture()
+def sample_empty_set():
+    raw_xml = open(os.path.join(
+        os.path.dirname(__file__),
+        "data/sample_empty_response.xml"
+    )).read()
+    return raw_xml
+
+
+@pytest.fixture
+def sample_list_xml():
+    raw_physics_xml = open(os.path.join(
+        os.path.dirname(__file__),
+        "data/sample_arxiv_response_listrecords_physics.xml"
+    )).read()
+    return raw_physics_xml
+
+
+@pytest.fixture
+def sample_list_xml_cs():
+    raw_cs_xml = open(os.path.join(
+        os.path.dirname(__file__),
+        "data/sample_arxiv_response_listrecords_cs.xml"
+    )).read()
+    return raw_cs_xml
+
+@pytest.fixture
+def sample_list_xml_no_sets():
+    raw_cs_xml = open(os.path.join(
+        os.path.dirname(__file__),
+        "data/sample_arxiv_response_listrecords_no_sets.xml"
+    )).read()
+    return raw_cs_xml
+
+
+@pytest.fixture
+def sample_jpcoar_list_xml():
+    raw_cs_xml = open(os.path.join(
+        os.path.dirname(__file__),
+        "data/oai.xml"
+    )).read()
+    return raw_cs_xml
+
+
+@pytest.fixture()
+def location(app, db):
+    """Create default location."""
+    tmppath = tempfile.mkdtemp()
+    with db.session.begin_nested():
+        Location.query.delete()
+        loc = Location(name='local', uri=tmppath, default=True)
+        db.session.add(loc)
+    db.session.commit()
+    return loc
+
+
+@pytest.fixture()
+def db_itemtype_jpcoar(app, db):
+    # Multiple
+    item_type_multiple_name = ItemTypeName(
+        id=10, name="Multiple", has_site_license=True, is_active=True
+    )
+    item_type_multiple_schema = dict()
+    with open("tests/data/jpcoar/v2/itemtype_multiple_schema.json", "r") as f:
+        item_type_multiple_schema = json.load(f)
+
+    item_type_multiple_form = dict()
+    with open("tests/data/jpcoar/v2/itemtype_multiple_form.json", "r") as f:
+        item_type_multiple_form = json.load(f)
+
+    item_type_multiple_render = dict()
+    with open("tests/data/jpcoar/v2/itemtype_multiple_render.json", "r") as f:
+        item_type_multiple_render = json.load(f)
+
+    item_type_multiple_mapping = dict()
+    with open("tests/data/jpcoar/v2/itemtype_multiple_mapping.json", "r") as f:
+        item_type_multiple_mapping = json.load(f)
+
+    item_type_multiple = ItemType(
+        id=10,
+        name_id=10,
+        harvesting_type=True,
+        schema=item_type_multiple_schema,
+        form=item_type_multiple_form,
+        render=item_type_multiple_render,
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+
+    item_type_multiple_mapping = ItemTypeMapping(id=10, item_type_id=10, mapping=item_type_multiple_mapping)
+
+    with db.session.begin_nested():
+        db.session.add(item_type_multiple_name)
+        db.session.add(item_type_multiple)
+        db.session.add(item_type_multiple_mapping)
+    db.session.commit()
+
+    return {
+        "item_type_multiple_name": item_type_multiple_name,
+        "item_type_multiple": item_type_multiple,
+        "item_type_multiple_mapping": item_type_multiple_mapping,
+    }
+
+
+@pytest.fixture()
+def db_oaischema(app, db):
+    schema_name = "jpcoar_mapping"
+    form_data = {"name": "jpcoar", "file_name": "jpcoar_scm.xsd", "root_name": "jpcoar"}
+    xsd = '{"dc:title": {"type": {"maxOccurs": "unbounded", "minOccurs": 1, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "dcterms:alternative": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:creator": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "jpcoar:nameIdentifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "nameIdentifierScheme", "ref": null, "restriction": {"enumeration": ["e-Rad", "NRID", "ORCID", "ISNI", "VIAF", "AID", "kakenhi", "Ringgold", "GRID"]}}, {"use": "optional", "name": "nameIdentifierURI", "ref": null}]}}, "jpcoar:creatorName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:familyName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:givenName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:creatorAlternative": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:affiliation": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "jpcoar:nameIdentifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "nameIdentifierScheme", "ref": null, "restriction": {"enumeration": ["e-Rad", "NRID", "ORCID", "ISNI", "VIAF", "AID", "kakenhi", "Ringgold", "GRID"]}}, {"use": "optional", "name": "nameIdentifierURI", "ref": null}]}}, "jpcoar:affiliationName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}}}, "jpcoar:contributor": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "contributorType", "ref": null, "restriction": {"enumeration": ["ContactPerson", "DataCollector", "DataCurator", "DataManager", "Distributor", "Editor", "HostingInstitution", "Producer", "ProjectLeader", "ProjectManager", "ProjectMember", "RegistrationAgency", "RegistrationAuthority", "RelatedPerson", "Researcher", "ResearchGroup", "Sponsor", "Supervisor", "WorkPackageLeader", "Other"]}}]}, "jpcoar:nameIdentifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "nameIdentifierScheme", "ref": null, "restriction": {"enumeration": ["e-Rad", "NRID", "ORCID", "ISNI", "VIAF", "AID", "kakenhi", "Ringgold", "GRID"]}}, {"use": "optional", "name": "nameIdentifierURI", "ref": null}]}}, "jpcoar:contributorName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:familyName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:givenName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:contributorAlternative": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:affiliation": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "jpcoar:nameIdentifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "nameIdentifierScheme", "ref": null, "restriction": {"enumeration": ["e-Rad", "NRID", "ORCID", "ISNI", "VIAF", "AID", "kakenhi", "Ringgold", "GRID"]}}, {"use": "optional", "name": "nameIdentifierURI", "ref": null}]}}, "jpcoar:affiliationName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}}}, "dcterms:accessRights": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "required", "name": "rdf:resource", "ref": "rdf:resource"}], "restriction": {"enumeration": ["embargoed access", "metadata only access", "open access", "restricted access"]}}}, "rioxxterms:apc": {"type": {"maxOccurs": 1, "minOccurs": 0, "restriction": {"enumeration": ["Paid", "Partially waived", "Fully waived", "Not charged", "Not required", "Unknown"]}}}, "dc:rights": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "rdf:resource", "ref": "rdf:resource"}, {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:rightsHolder": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "jpcoar:nameIdentifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "nameIdentifierScheme", "ref": null, "restriction": {"enumeration": ["e-Rad", "NRID", "ORCID", "ISNI", "VIAF", "AID", "kakenhi", "Ringgold", "GRID"]}}, {"use": "optional", "name": "nameIdentifierURI", "ref": null}]}}, "jpcoar:rightsHolderName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}}, "jpcoar:subject": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}, {"use": "optional", "name": "subjectURI", "ref": null}, {"use": "required", "name": "subjectScheme", "ref": null, "restriction": {"enumeration": ["BSH", "DDC", "LCC", "LCSH", "MeSH", "NDC", "NDLC", "NDLSH", "Sci-Val", "UDC", "Other"]}}]}}, "datacite:description": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}, {"use": "required", "name": "descriptionType", "ref": null, "restriction": {"enumeration": ["Abstract", "Methods", "TableOfContents", "TechnicalInfo", "Other"]}}]}}, "dc:publisher": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "datacite:date": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "dateType", "ref": null, "restriction": {"enumeration": ["Accepted", "Available", "Collected", "Copyrighted", "Created", "Issued", "Submitted", "Updated", "Valid"]}}]}}, "dc:language": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "restriction": {"patterns": ["^[a-z]{3}$"]}}}, "dc:type": {"type": {"maxOccurs": 1, "minOccurs": 1, "attributes": [{"use": "required", "name": "rdf:resource", "ref": "rdf:resource"}], "restriction": {"enumeration": ["conference paper", "data paper", "departmental bulletin paper", "editorial", "journal article", "newspaper", "periodical", "review article", "software paper", "article", "book", "book part", "cartographic material", "map", "conference object", "conference proceedings", "conference poster", "dataset", "aggregated data", "clinical trial data", "compiled data", "encoded data", "experimental data", "genomic data", "geospatial data", "laboratory notebook", "measurement and test data", "observational data", "recorded data", "simulation data", "survey data", "interview", "image", "still image", "moving image", "video", "lecture", "patent", "internal report", "report", "research report", "technical report", "policy report", "report part", "working paper", "data management plan", "sound", "thesis", "bachelor thesis", "master thesis", "doctoral thesis", "interactive resource", "learning object", "manuscript", "musical notation", "research proposal", "software", "technical documentation", "workflow", "other"]}}}, "datacite:version": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "oaire:versiontype": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "required", "name": "rdf:resource", "ref": "rdf:resource"}], "restriction": {"enumeration": ["AO", "SMUR", "AM", "P", "VoR", "CVoR", "EVoR", "NA"]}}}, "jpcoar:identifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "identifierType", "ref": null, "restriction": {"enumeration": ["DOI", "HDL", "URI"]}}]}}, "jpcoar:identifierRegistration": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "required", "name": "identifierType", "ref": null, "restriction": {"enumeration": ["JaLC", "Crossref", "DataCite", "PMID"]}}]}}, "jpcoar:relation": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "relationType", "ref": null, "restriction": {"enumeration": ["isVersionOf", "hasVersion", "isPartOf", "hasPart", "isReferencedBy", "references", "isFormatOf", "hasFormat", "isReplacedBy", "replaces", "isRequiredBy", "requires", "isSupplementTo", "isSupplementedBy", "isIdenticalTo", "isDerivedFrom", "isSourceOf"]}}]}, "jpcoar:relatedIdentifier": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "required", "name": "identifierType", "ref": null, "restriction": {"enumeration": ["ARK", "arXiv", "DOI", "HDL", "ICHUSHI", "ISBN", "J-GLOBAL", "Local", "PISSN", "EISSN", "NAID", "PMID", "PURL", "SCOPUS", "URI", "WOS"]}}]}}, "jpcoar:relatedTitle": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}}, "dcterms:temporal": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "datacite:geoLocation": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "datacite:geoLocationPoint": {"type": {"maxOccurs": 1, "minOccurs": 0}, "datacite:pointLongitude": {"type": {"maxOccurs": 1, "minOccurs": 1, "restriction": {"maxInclusive": 180, "minInclusive": -180}}}, "datacite:pointLatitude": {"type": {"maxOccurs": 1, "minOccurs": 1, "restriction": {"maxInclusive": 90, "minInclusive": -90}}}}, "datacite:geoLocationBox": {"type": {"maxOccurs": 1, "minOccurs": 0}, "datacite:westBoundLongitude": {"type": {"maxOccurs": 1, "minOccurs": 1, "restriction": {"maxInclusive": 180, "minInclusive": -180}}}, "datacite:eastBoundLongitude": {"type": {"maxOccurs": 1, "minOccurs": 1, "restriction": {"maxInclusive": 180, "minInclusive": -180}}}, "datacite:southBoundLatitude": {"type": {"maxOccurs": 1, "minOccurs": 1, "restriction": {"maxInclusive": 90, "minInclusive": -90}}}, "datacite:northBoundLatitude": {"type": {"maxOccurs": 1, "minOccurs": 1, "restriction": {"maxInclusive": 90, "minInclusive": -90}}}}, "datacite:geoLocationPlace": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}}}, "jpcoar:fundingReference": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "datacite:funderIdentifier": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "required", "name": "funderIdentifierType", "ref": null, "restriction": {"enumeration": ["Crossref Funder", "GRID", "ISNI", "Other"]}}]}}, "jpcoar:funderName": {"type": {"maxOccurs": "unbounded", "minOccurs": 1, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "datacite:awardNumber": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "optional", "name": "awardURI", "ref": null}]}}, "jpcoar:awardTitle": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}}, "jpcoar:sourceIdentifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "identifierType", "ref": null, "restriction": {"enumeration": ["PISSN", "EISSN", "ISSN", "NCID"]}}]}}, "jpcoar:sourceTitle": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:volume": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "jpcoar:issue": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "jpcoar:numPages": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "jpcoar:pageStart": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "jpcoar:pageEnd": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "dcndl:dissertationNumber": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "dcndl:degreeName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "dcndl:dateGranted": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "jpcoar:degreeGrantor": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "jpcoar:nameIdentifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "nameIdentifierScheme", "ref": null, "restriction": {"enumeration": ["e-Rad", "NRID", "ORCID", "ISNI", "VIAF", "AID", "kakenhi", "Ringgold", "GRID"]}}, {"use": "optional", "name": "nameIdentifierURI", "ref": null}]}}, "jpcoar:degreeGrantorName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}}, "jpcoar:conference": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "jpcoar:conferenceName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:conferenceSequence": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "jpcoar:conferenceSponsor": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:conferenceDate": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "optional", "name": "startMonth", "ref": null, "restriction": {"maxInclusive": 12, "minInclusive": 1, "totalDigits": 2}}, {"use": "optional", "name": "endYear", "ref": null, "restriction": {"maxInclusive": 2200, "minInclusive": 1400, "totalDigits": 4}}, {"use": "optional", "name": "startDay", "ref": null, "restriction": {"maxInclusive": 31, "minInclusive": 1, "totalDigits": 2}}, {"use": "optional", "name": "endDay", "ref": null, "restriction": {"maxInclusive": 31, "minInclusive": 1, "totalDigits": 2}}, {"use": "optional", "name": "endMonth", "ref": null, "restriction": {"maxInclusive": 12, "minInclusive": 1, "totalDigits": 2}}, {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}, {"use": "optional", "name": "startYear", "ref": null, "restriction": {"maxInclusive": 2200, "minInclusive": 1400, "totalDigits": 4}}]}}, "jpcoar:conferenceVenue": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:conferencePlace": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:conferenceCountry": {"type": {"maxOccurs": 1, "minOccurs": 0, "restriction": {"patterns": ["^[A-Z]{3}$"]}}}}, "jpcoar:file": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "jpcoar:URI": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "optional", "name": "label", "ref": null}, {"use": "optional", "name": "objectType", "ref": null, "restriction": {"enumeration": ["abstract", "dataset", "fulltext", "software", "summary", "thumbnail", "other"]}}]}}, "jpcoar:mimeType": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "jpcoar:extent": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}}, "datacite:date": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "dateType", "ref": null, "restriction": {"enumeration": ["Accepted", "Available", "Collected", "Copyrighted", "Created", "Issued", "Submitted", "Updated", "Valid"]}}]}}, "datacite:version": {"type": {"maxOccurs": 1, "minOccurs": 0}}}, "custom:system_file": {"type": {"minOccurs": 0, "maxOccurs": "unbounded"}, "jpcoar:URI": {"type": {"minOccurs": 0, "maxOccurs": 1, "attributes": [{"name": "objectType", "ref": null, "use": "optional", "restriction": {"enumeration": ["abstract", "summary", "fulltext", "thumbnail", "other"]}}, {"name": "label", "ref": null, "use": "optional"}]}}, "jpcoar:mimeType": {"type": {"minOccurs": 0, "maxOccurs": 1}}, "jpcoar:extent": {"type": {"minOccurs": 0, "maxOccurs": "unbounded"}}, "datacite:date": {"type": {"minOccurs": 1, "maxOccurs": "unbounded", "attributes": [{"name": "dateType", "ref": null, "use": "required", "restriction": {"enumeration": ["Accepted", "Available", "Collected", "Copyrighted", "Created", "Issued", "Submitted", "Updated", "Valid"]}}]}}, "datacite:version": {"type": {"minOccurs": 0, "maxOccurs": 1}}}}'
+    namespaces = {
+        "": "https://github.com/JPCOAR/schema/blob/master/1.0/",
+        "dc": "http://purl.org/dc/elements/1.1/",
+        "xs": "http://www.w3.org/2001/XMLSchema",
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "xml": "http://www.w3.org/XML/1998/namespace",
+        "dcndl": "http://ndl.go.jp/dcndl/terms/",
+        "oaire": "http://namespace.openaire.eu/schema/oaire/",
+        "jpcoar": "https://github.com/JPCOAR/schema/blob/master/1.0/",
+        "dcterms": "http://purl.org/dc/terms/",
+        "datacite": "https://schema.datacite.org/meta/kernel-4/",
+        "rioxxterms": "http://www.rioxx.net/schema/v2.0/rioxxterms/",
+    }
+    schema_location = "https://github.com/JPCOAR/schema/blob/master/1.0/jpcoar_scm.xsd"
+    jpcoar_mapping = OAIServerSchema(
+        id=uuid.uuid4(),
+        schema_name=schema_name,
+        form_data=form_data,
+        xsd=xsd,
+        namespaces=namespaces,
+        schema_location=schema_location,
+        isvalid=True,
+        is_mapping=False,
+        isfixed=False,
+        version_id=1,
+    )
+    jpcoar_v1_mapping = OAIServerSchema(
+        id=uuid.uuid4(),
+        schema_name='jpcoar_v1_mapping',
+        form_data=form_data,
+        xsd=xsd,
+        namespaces=namespaces,
+        schema_location=schema_location,
+        isvalid=True,
+        is_mapping=False,
+        isfixed=False,
+        version_id=1,
+    )
+    with db.session.begin_nested():
+        db.session.add(jpcoar_mapping)
+        db.session.add(jpcoar_v1_mapping)
+
+
+@pytest.fixture(scope="function", autouse=True)
+def reset_class_value():
+    yield
+    from invenio_oaiharvester.harvester import (
+        BaseMapper,DCMapper,DDIMapper
+    )
+    BaseMapper.itemtype_map = {}
+    BaseMapper.identifiers = []
+    
+    DCMapper.itemtype_map = {}
+    DCMapper.identifiers = []
+    DDIMapper.itemtype_map = {}
+    DDIMapper.identifiers = []
+
+
+def create_record(db, record_data, item_data):
+    from weko_deposit.api import WekoDeposit, WekoRecord
+    with db.session.begin_nested():
+        record_data = copy.deepcopy(record_data)
+        item_data = copy.deepcopy(item_data)
+        rec_uuid = uuid.uuid4()
+        recid = PersistentIdentifier.create('recid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        depid = PersistentIdentifier.create('depid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        rel = PIDRelation.create(recid,depid,3)
+        db.session.add(rel)
+        parent=None
+        doi = None
+        
+        if '.' in record_data["recid"]:
+            parent = PersistentIdentifier.get("recid",int(float(record_data["recid"])))
+            recid_p = PIDRelation.get_child_relations(parent).one_or_none()
+            PIDRelation.create(recid_p.parent, recid,2)
+        else:
+            parent = PersistentIdentifier.create('parent', "parent:{}".format(record_data["recid"]),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            rel = PIDRelation.create(parent, recid,2,0)
+            db.session.add(rel)
+            RecordIdentifier.next()
+        if record_data.get("_oai").get("id"):
+            oaiid = PersistentIdentifier.create('oai', record_data["_oai"]["id"],pid_provider="oai",object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            hvstid = PersistentIdentifier.create('hvstid', record_data["_oai"]["id"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        if "item_1612345678910" in record_data:
+            for i in range(len(record_data["item_1612345678910"]["attribute_value_mlt"])):
+                data = record_data["item_1612345678910"]["attribute_value_mlt"][i]
+                PersistentIdentifier.create(data.get("subitem_16345678901234").lower(),data.get("subitem_1623456789123"),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        record = WekoRecord.create(record_data, id_=rec_uuid)
+        item = ItemsMetadata.create(item_data, id_=rec_uuid)
+        deposit = WekoDeposit(record, record.model)
+
+        deposit.commit()
+        
+    return recid, depid, record, item, parent, doi, deposit
+
+@pytest.fixture()
+def db_records(app,db):
+    record_datas = list()
+    with open("tests/data/test_record/record_metadata.json") as f:
+        record_datas = json.load(f)
+    
+    item_datas = list()
+    with open("tests/data/test_record/item_metadata.json") as f:
+        item_datas = json.load(f)
+        
+    for i in range(len(record_datas)):
+        recid, depid, record, item, parent, doi, deposit = create_record(db,record_datas[i],item_datas[i])
+
+@pytest.fixture()
+def mapper_jpcoar(db_itemtype_jpcoar):
+    def factory(type):
+        xml_str = ''
+        with open('tests/data/jpcoar/v2/test_base.xml', 'r', encoding='utf-8') as xml_file:
+            xml_str = xml_file.read()
+        self_json = xmltodict.parse(xml_str)
+        tags = self_json["jpcoar:jpcoar"]
+        item_type = ItemType.query.filter_by(id=10).first()
+        item_type_mapping = Mapping.get_record(item_type.id)
+        item_map = get_full_mapping(item_type_mapping, "jpcoar_mapping")
+        res = {"$schema":item_type.id,"pubdate": date.today()}
+        
+        if not isinstance(tags[type],list):
+            metadata = [tags[type]]
+        else:
+            metadata = tags[type]
+        return item_type.schema.get("properties"),item_map,res,metadata
+    return factory
 
 @pytest.fixture()
 def db_rocrate_mapping(db):
