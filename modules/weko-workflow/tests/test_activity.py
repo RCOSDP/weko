@@ -148,9 +148,6 @@ class TestHeadlessActivity:
         original_detail = HeadlessActivity.detail
         original_current_action = HeadlessActivity.current_action
 
-        original_detail = HeadlessActivity.detail
-        original_current_action = HeadlessActivity.current_action
-
         detail = "http://test_server.localdomain/workflow/activity/detail/A-TEST-00001"
         actions = (["item_login"] * 2 + ["item_link"] * 3 + ["identifier_grant"] * 4 + ["end_action"] * 2)
 
@@ -191,7 +188,7 @@ class TestHeadlessActivity:
         # Flow of actions: start_action -> item_login -> item_link -> oa_policy -> approval -> end_action
         # Stop at approval
         detail = "http://test_server.localdomain/workflow/activity/detail/A-TEST-00002"
-        actions = (["item_login"] * 2 + ["item_link"] * 3 + ["oa_policy"] * 5 + ["approval"] * 2)
+        actions = ["item_login"] * 2 + ["item_link"] * 3 + ["oa_policy"] * 5 + ["approval"] * 2
 
         activity = HeadlessActivity()
         mock_detail = PropertyMock(return_value=detail)
@@ -263,20 +260,236 @@ class TestHeadlessActivity:
         type(activity).detail = original_detail
         type(activity).current_action = original_current_action
 
-    def test__input_metadata(self):
-        pass
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_activity.py::TestHeadlessActivity::test__input_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test__input_metadata(self, app, db, workflow, users, client, mocker):
+        mocker.patch.object(HeadlessActivity, "_upload_files", return_value=[{"file_name": "test.txt", "file_id": "12345"}])
+        mocker.patch("weko_workflow.api.WorkActivity.upt_activity_metadata", return_value=None)
+        mocker.patch("weko_workflow.headless.activity.get_workflow_journal", return_value=None)
+        mocker.patch("weko_workflow.headless.activity.get_feedback_maillist", return_value=(MagicMock(json={"code": 1, "data": []}), None))
+        mocker.patch("weko_workflow.headless.activity.get_mapping", return_value={"title.@value": "title"})
+        mocker.patch("weko_workflow.headless.activity.get_data_by_property", return_value=(["Test Title"], None))
+        mocker.patch("weko_workflow.headless.activity.current_pidstore.minters", {"weko_deposit_minter": lambda record_uuid, data: MagicMock(pid_value="200001")})
+        mocker.patch("weko_workflow.headless.activity.WekoDeposit.create",return_value=MagicMock())
+        mocker.patch("weko_workflow.headless.activity.WekoDeposit.update")
+        mocker.patch("weko_workflow.headless.activity.WekoDeposit.commit")
+        mocker.patch("weko_workflow.headless.activity.delete_user_lock_activity_cache")
+        mocker.patch("weko_workflow.headless.activity.delete_lock_activity_cache")
+        with patch("weko_workflow.views.WorkActivity.get_new_activity_id") as mock_get_new_activity_id:
+            # case 1
+            mocker.patch("weko_workflow.headless.activity.validate_form_input_data",
+                side_effect=lambda result, itemtype_id, metadata: result.update({"is_valid": True}))
+            mock_get_new_activity_id.side_effect = [f"A-TEST-0000{i}" for i in range(1, 20)]
+            login_user(users[1]["obj"])
+            activity = HeadlessActivity()
 
-    def test__upload_files(self):
-        pass
+            activity.init_activity(users[1]["id"], workflow["workflow"].id, community="comm01")
 
-    def test__designate_index(self):
-        pass
+            metadata = {"title": "Test Title", "pubdate": "2024-01-01", "shared_user_id": users[1]["id"]}
+            files = []
+            recid = activity._input_metadata(metadata, files)
+            assert recid == "200001"
 
-    def test__comment(self):
-        pass
+            # files is None
+            mocker.patch("weko_workflow.headless.activity.validate_form_input_data",
+                side_effect=lambda result, itemtype_id, metadata: result.update({"is_valid": True}))
+            files = None
+            recid = activity._input_metadata(metadata, files)
+            assert recid == "200001"
 
-    def test_item_link(self):
-        pass
+            # input_metadata_invalid
+            mocker.patch("weko_workflow.headless.activity.validate_form_input_data",
+                side_effect=lambda result, itemtype_id, metadata: result.update({"is_valid": False, "error": "Invalid metadata"}))
+            with pytest.raises(WekoWorkflowException) as ex:
+                activity._input_metadata(metadata, files)
+            assert str(ex.value) == "failed to input metadata: Invalid metadata"
+
+            # TODO: metadata_existing_record
+            # activity.recid = "200001"
+            # mocker.patch("weko_workflow.headless.activity.validate_form_input_data", side_effect=lambda result, itemtype_id, metadata: result.update({"is_valid": True}))
+            # recid = activity._input_metadata(metadata, files)
+            # assert recid == "200001"
+
+            # upt_activity_metadata raises Exception
+            mocker.patch("weko_workflow.headless.activity.validate_form_input_data",
+                side_effect=lambda result, itemtype_id, metadata: result.update({"is_valid": True}))
+            mocker.patch("weko_workflow.api.WorkActivity.upt_activity_metadata",
+                side_effect=Exception("upt_activity_metadata error"))
+            with pytest.raises(WekoWorkflowException) as ex:
+                activity._input_metadata(metadata, files)
+            assert (str(ex.value) == "failed to input metadata: upt_activity_metadata error")
+
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_activity.py::TestHeadlessActivity::test__upload_files -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test__upload_files(self, app, db, workflow, users, client, mocker):
+        activity = HeadlessActivity()
+        activity._deposit = {"_buckets": {"deposit": uuid.uuid4()}}
+        mocker.patch.object(Bucket, "query", new=Mock())
+        mock_bucket = Mock(spec=Bucket)
+        mock_bucket.size_limit = 1000
+        mock_bucket.location.max_file_size = 500
+        mocker.patch.object(Bucket.query, "get", return_value=mock_bucket)
+        mock_object_version = MagicMock()
+        mock_object_version.basename = "test.txt"
+        mocker.patch("weko_workflow.headless.activity.ObjectVersion.create", return_value=mock_object_version,)
+        mocker.patch("weko_workflow.headless.activity.ObjectVersion.set_contents")
+
+        # Test case: file size exceeds limit
+        with pytest.raises(FileSizeError) as ex:
+            activity._upload_files([MagicMock(filename="test.txt", stream=mock_open(read_data="data"), content_length=501)])
+        assert "File size limit exceeded." in str(ex.value)
+
+        # Test case: file not found
+        with pytest.raises(WekoWorkflowException) as ex:
+            activity._upload_files(["non_existent_file.txt"])
+        assert str(ex.value) == "file(non_existent_file.txt) is not found."
+
+        # Test case: successful upload with file path
+        mocker.patch("os.path.isfile", return_value=True)
+        mocker.patch("os.path.getsize", return_value=10)
+        with patch("builtins.open", mock_open(read_data="data")):
+            files_info = activity._upload_files(["test.txt"])
+            assert len(files_info) == 1
+            assert files_info[0]["filename"] == "test.txt"
+
+        # Test case: successful upload with FileStorage object
+        file_storage = MagicMock(
+            filename="test.txt", stream=mock_open(read_data="data"), content_length=10)
+        files_info = activity._upload_files([file_storage])
+        assert len(files_info) == 1
+        assert files_info[0]["filename"] == "test.txt"
+
+
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_activity.py::TestHeadlessActivity::test__designate_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test__designate_index(self, app, db, workflow, users, client, mocker):
+        activity = HeadlessActivity()
+
+        login_user(users[1]["obj"])
+        activity.init_activity(users[1]["id"], workflow["workflow"].id)
+
+        # Mocking the necessary methods
+        mock_user_lock = mocker.patch.object(activity, "_user_lock")
+        mock_activity_lock = mocker.patch.object(
+            activity, "_activity_lock", return_value="locked_value")
+        mock_user_unlock = mocker.patch.object(activity, "_user_unlock")
+        mock_activity_unlock = mocker.patch.object(activity, "_activity_unlock")
+        mock_update_index_tree_for_record = mocker.patch(
+            "weko_workflow.headless.activity.update_index_tree_for_record")
+
+        # Test case: index is not a list
+        activity._designate_index(1)
+        mock_update_index_tree_for_record.assert_called_once_with(activity.recid, 1)
+
+        # Test case: index is a list
+        activity._designate_index([1, 2])
+        assert mock_update_index_tree_for_record.call_count == 3
+        mock_update_index_tree_for_record.assert_any_call(activity.recid, 1)
+        mock_update_index_tree_for_record.assert_any_call(activity.recid, 2)
+
+        # Verify locks and unlocks
+        assert mock_user_lock.call_count == 2
+        assert mock_activity_lock.call_count == 2
+        assert mock_user_unlock.call_count == 2
+        assert mock_activity_unlock.call_count == 2
+        mock_activity_unlock.assert_any_call("locked_value")
+
+        # update_index_tree_for_record raises Exception
+        mock_update_index_tree_for_record = mocker.patch(
+            "weko_workflow.headless.activity.update_index_tree_for_record",
+            side_effect=Exception("update_index_tree_for_record error"))
+        with pytest.raises(WekoWorkflowException) as ex:
+            activity._designate_index(1)
+        assert str(ex.value) == "failed to designate index."
+        mock_update_index_tree_for_record.assert_called_once_with(activity.recid, 1)
+
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_activity.py::TestHeadlessActivity::test__comment -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test__comment(self, app, db, workflow, users, client, mocker):
+        activity = HeadlessActivity()
+
+        login_user(users[1]["obj"])
+        activity.init_activity(users[1]["id"], workflow["workflow"].id)
+
+        # Mocking the necessary methods
+        mock_user_lock = mocker.patch.object(activity, "_user_lock")
+        mock_activity_lock = mocker.patch.object(
+            activity, "_activity_lock", return_value="locked_value")
+        mock_user_unlock = mocker.patch.object(activity, "_user_unlock")
+        mock_activity_unlock = mocker.patch.object(activity, "_activity_unlock")
+        mock_next_action = mocker.patch(
+            "weko_workflow.headless.activity.next_action",
+            return_value=(MagicMock(json={"code": 0, "msg": ""}), None))
+        # Test case: successful comment
+        activity._comment("This is a test comment")
+        mock_next_action.assert_called_once_with(
+            activity.activity_id,
+            activity.current_action_id,
+            {"commond": "This is a test comment"})
+        mock_user_lock.assert_called_once()
+        mock_activity_lock.assert_called_once()
+        mock_user_unlock.assert_called_once()
+        mock_activity_unlock.assert_called_once_with("locked_value")
+
+        # Test case: failed to set comment
+        mock_next_action.return_value = (MagicMock(json={"code": 1, "msg": "error"}),None)
+        with pytest.raises(WekoWorkflowException) as ex:
+            activity._comment("This is a test comment")
+        assert str(ex.value) == "error"
+        mock_user_lock.assert_called()
+        mock_activity_lock.assert_called()
+        mock_user_unlock.assert_called()
+        mock_activity_unlock.assert_called_with("locked_value")
+
+        # Test case: SQLAlchemyError occurs in next_action
+        mock_next_action.side_effect = SQLAlchemyError("SQLAlchemyError occurred")
+        with pytest.raises(WekoWorkflowException) as ex:
+            activity._comment("This is a test comment")
+        assert str(ex.value) == "failed to set comment."
+        mock_user_lock.assert_called()
+        mock_activity_lock.assert_called()
+        mock_user_unlock.assert_called()
+        mock_activity_unlock.assert_called_with("locked_value")
+
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_activity.py::TestHeadlessActivity::test_item_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test_item_link(self, app, db, workflow, users, client, mocker):
+        activity = HeadlessActivity()
+
+        login_user(users[1]["obj"])
+        activity.init_activity(users[1]["id"], workflow["workflow"].id)
+
+        # Mocking the necessary methods
+        mock_user_lock = mocker.patch.object(activity, "_user_lock")
+        mock_activity_lock = mocker.patch.object(activity, "_activity_lock", return_value="locked_value")
+        mock_user_unlock = mocker.patch.object(activity, "_user_unlock")
+        mock_activity_unlock = mocker.patch.object(activity, "_activity_unlock")
+        mock_next_action = mocker.patch("weko_workflow.headless.activity.next_action",return_value=(MagicMock(json={"code": 0, "msg": ""}), None))
+
+        # Test case: successful item link
+        link_data = [{"link": "test_link"}]
+        activity.item_link(link_data)
+        mock_next_action.assert_called_once_with(
+            activity.activity_id, activity.current_action_id, {"link_data": link_data})
+        mock_user_lock.assert_called_once()
+        mock_activity_lock.assert_called_once()
+        mock_user_unlock.assert_called_once()
+        mock_activity_unlock.assert_called_once_with("locked_value")
+
+        # Test case: failed item link
+        mock_next_action.return_value = (MagicMock(json={"code": 1, "msg": "error"}),None)
+        with pytest.raises(WekoWorkflowException) as ex:
+            activity.item_link(link_data)
+        assert str(ex.value) == "error"
+        mock_user_lock.assert_called()
+        mock_activity_lock.assert_called()
+        mock_user_unlock.assert_called()
+        mock_activity_unlock.assert_called_with("locked_value")
+
+        # Test case: SQLAlchemyError occurs in next_action
+        mock_next_action.side_effect = SQLAlchemyError("SQLAlchemyError occurred")
+        with pytest.raises(WekoWorkflowException) as ex:
+            activity.item_link(link_data)
+        assert str(ex.value) == "failed in Item Link."
+        mock_user_lock.assert_called()
+        mock_activity_lock.assert_called()
+        mock_user_unlock.assert_called()
+        mock_activity_unlock.assert_called_with("locked_value")
 
     def test_approval(self):
         pass
