@@ -432,6 +432,9 @@
               {% endif %}
             {% endif %}
           {% endif %}
+          {% if is_display_request_form %}
+            {%- include "weko_records_ui/box/request.html" %}
+          {% endif %}
 		  {% if config.WEKO_RECORDS_UI_DISPLAY_VERSION_BOX_FLG %}
              {%- include "weko_records_ui/box/versions.html" %}
 		  {% endif %}

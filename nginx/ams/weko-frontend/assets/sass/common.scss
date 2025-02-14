@@ -64,6 +64,15 @@
     vertical-align: middle;
   }
 
+  &.icon-up-arrow::before {
+    @include icons;
+    width: 10px;
+    height: 7px;
+    background-image: url(/img/icon/icon_up-arrow-bk.svg);
+    margin-left: 5px;
+    vertical-align: middle;
+  }
+
   &.icon-arrow-l::before {
     @include icons;
     width: 10px;
@@ -95,6 +104,13 @@
     width: 17px;
     height: 17px;
     background-image: url(/img/icon/icon_logout.svg);
+  }
+
+  &.icon-menu::before {
+    @include icons;
+    width: 17px;
+    height: 17px;
+    background-image: url(/img/icon/icon_menu.svg);
   }
 
   &.icon-search::before {
@@ -171,16 +187,16 @@
 
   &.icon-publish::before {
     @include icons;
-    width: 10px;
-    height: 10px;
+    width: 13px;
+    height: 13px;
     vertical-align: baseline;
     background-image: url(/img/icon/icon_upload-date.svg);
   }
 
   &.icon-update::before {
     @include icons;
-    width: 9px;
-    height: 9px;
+    width: 13px;
+    height: 13px;
     background-image: url(/img/icon/icon_update-date.svg);
   }
 
@@ -259,9 +275,8 @@
     @include icons;
     width: 24px;
     height: 24px;
-    margin-right: 10px;
+    margin-left: 10px;
     background-image: url(/img/icon/icon_remove.svg);
-    vertical-align: bottom;
   }
 
   &.icon-minus::before {
@@ -407,8 +422,8 @@
     &::before {
       content: '';
       display: inline-block;
-      width: 17px;
-      height: 12px;
+      width: 20px;
+      height: 15px;
       background-size: 100%;
       background-repeat: no-repeat;
       background-position: center;
@@ -464,6 +479,28 @@
       width: 12px;
       height: 12px;
       background-image: url(/img/icon/icon_approval.svg);
+    }
+  }
+
+  &.detail-search-open {
+    &::before {
+      @include icons;
+      width: 14px;
+      height: 7px;
+      background-image: url(/img/icon/icon_down-arrow.svg);
+      vertical-align: middle;
+      margin-right: 12px;
+    }
+  }
+
+  &.detail-search-close {
+    &::before {
+      @include icons;
+      width: 14px;
+      height: 7px;
+      background-image: url(/img/icon/icon_up-arrow.svg);
+      vertical-align: middle;
+      margin-right: 12px;
     }
   }
 }
@@ -732,7 +769,7 @@ dialog {
   }
 
   .modal {
-    z-index: 3;
+    z-index: 30;
 
     &-center {
       position: fixed;
@@ -1188,10 +1225,6 @@ input[type='file'] {
     min-width: 640px;
     max-width: auto;
 
-    &:last-of-type {
-      margin-bottom: 40px;
-    }
-
     .rows {
       &-index {
         font-size: 10px;
@@ -1413,4 +1446,120 @@ input[type='file'] {
       transform: translateY(-6px) rotate(45deg);
     }
   }
+}
+
+.deactive {
+  display: none;
+  margin-bottom: 0 !important;
+}
+
+.list-content {
+  width: 48rem;
+  margin: 0 10px;
+}
+
+#AddCondition,
+.bg-link-color {
+  background-color: rgb(25, 25, 112);
+  border-color: rgb(25, 25, 112);
+}
+
+.detail-search-label {
+  display: flex;
+  flex-flow: column;
+}
+
+.removeForm {
+  margin-bottom: auto;
+}
+
+.date-mr {
+  margin-right: 0.95rem;
+}
+
+.link-color {
+  color: #0055aa !important;
+}
+
+.filter-area {
+  width: 15%;
+}
+
+.result-area {
+  width: 85%;
+  padding: 0 1.25rem;
+}
+
+.filterSearchCheck {
+  word-wrap: break-word;
+  display: inline-block;
+}
+
+.open-file-button-area {
+  width: 15%;
+  margin: 0 0 0 auto;
+}
+
+.open-file-list-button {
+  background-color: #db6915;
+  font-size: 14px;
+}
+
+.indexbutton {
+  border-radius: 0 5px 5px 0;
+}
+
+.text-18px {
+  font-size: 18px;
+}
+
+.text-14px {
+  font-size: 14px;
+}
+
+.button-center {
+  display: flex;
+  justify-content: center;
+}
+
+.desabled-element {
+  opacity: 70%;
+}
+
+.dp__input {
+  font-size: 14px !important;
+  padding: 6px 26px 6px 32px !important;
+}
+
+.filter-date {
+  box-sizing: border-box;
+  width: 100%;
+  height: 34px;
+  font-size: 14px !important;
+  text-align: center;
+  font-family: var(--dp-font-family);
+  background-color: lightgray !important;
+}
+
+.tooltip-label {
+  position: relative;
+}
+
+.tooltip-label .tooltiptext {
+  visibility: hidden;
+  width: 200px;
+  background-color: black;
+  color: white;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1;
+  bottom: 100%;
+  left: 50%;
+  margin-left: -60px;
+}
+
+.tooltip-label:hover .tooltiptext {
+  visibility: visible;
 }

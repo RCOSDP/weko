@@ -19,7 +19,7 @@
           {{ index + 1 }}
         </p>
         <div class="ranking-text font-medium tooltip" :data-tip="file.name + '.' + file.extension">
-          <button class="ranking-text flex items-center w-full">
+          <button class="ranking-text flex items-center w-10/12">
             <span class="inline-block text-clamp">{{ file.name }}</span>
             <span class="inline-block mr-4 lg:mr-0">{{ '.' + file.extension }}</span>
           </button>
@@ -32,7 +32,7 @@
         @click="download(file.name + '.' + file.extension)">
         <p class="ranking-number bg-miby-border-gray">{{ index + 4 }}</p>
         <div class="ranking-text font-medium tooltip" :data-tip="file.name + '.' + file.extension">
-          <button class="ranking-text flex items-center w-full">
+          <button class="ranking-text flex items-center w-10/12">
             <span class="inline-block text-clamp">{{ file.name }}</span>
             <span class="inline-block mr-4 lg:mr-0">{{ '.' + file.extension }}</span>
           </button>
@@ -105,10 +105,13 @@ async function getRanking() {
         let counter = 1;
         const files = response._data.ranking;
         for (const file of files) {
+          const firstFileName: any = file.filename.split('.')[0];
+          const fileExtension: any = file.filename.split('.')[1];
+
           if (counter <= 3) {
-            topThree.value.push({ name: file.filename.split('.')[0], extension: file.filename.split('.')[1] });
+            topThree.value.push({ name: firstFileName, extension: fileExtension });
           } else {
-            other.value.push({ name: file.filename.split('.')[0], extension: file.filename.split('.')[1] });
+            other.value.push({ name: firstFileName, extension: fileExtension });
           }
           counter = counter + 1;
         }

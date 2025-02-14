@@ -9,6 +9,7 @@ import time
 import unittest
 from datetime import datetime
 import uuid
+import zipfile
 from elasticsearch import NotFoundError
 
 import pytest
@@ -76,6 +77,7 @@ from weko_search_ui.utils import (
     get_tree_items,
     getEncode,
     handle_check_and_prepare_feedback_mail,
+    handle_check_and_prepare_request_mail,
     handle_check_and_prepare_index_tree,
     handle_check_and_prepare_publish_status,
     handle_check_cnri,
@@ -331,7 +333,124 @@ def test_check_tsv_import_items(i18n_app):
     file_name = "sample_file.zip"
     file_path = os.path.join(current_path, "data", "sample_file", file_name)
 
-    assert check_tsv_import_items(file_path, True)
+    ret = check_tsv_import_items(file_path, True)
+    prefix = current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
+    assert ret
+    assert ret["data_path"].startswith(f'/tmp/{prefix}')
+
+    # test case is_gakuninrdm = True
+    ret = check_tsv_import_items(file_path, True, True)
+    assert ret["data_path"].startswith('/tmp/deposit_activity_')
+
+    # current_pathがdict
+    class TestFile(object):
+        @property
+        def filename(self):
+            return 'test_file.txt'
+        
+    file = TestFile()
+    assert check_tsv_import_items(file, True, True)
+
+    time.sleep(1)
+    file_name = "sample_file.zip"
+    file_path = os.path.join(current_path, "data", "sample_file", file_name)
+    prefix = current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
+
+    with patch("weko_search_ui.utils.chardet.detect", return_value = {'encoding': 'cp932'}):
+        ret = check_tsv_import_items(file_path, True)
+        assert ret
+
+    time.sleep(1)
+    with patch("weko_search_ui.utils.chardet.detect", return_value = {'encoding': 'cp437'}):
+        ret = check_tsv_import_items(file_path, True)
+        assert ret
+
+        time.sleep(1)
+        with patch("weko_search_ui.utils.os") as o:
+            type(o).sep = "_"
+            ret = check_tsv_import_items(file_path, True)
+            assert ret
+
+
+@pytest.mark.parametrize('order_if', [1,2,3,4,5,6,7,8,9])
+#def check_tsv_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_tsv_import_items2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_tsv_import_items2(app,test_importdata,mocker,db, order_if):
+    app.config['WEKO_SEARCH_UI_IMPORT_TMP_PREFIX'] = 'importtest'
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "item_map.json")
+    print(filepath)
+    with open(filepath,encoding="utf-8") as f:
+        item_map = json.load(f)
+
+    mocker.patch("weko_records.serializers.utils.get_mapping",return_value=item_map)
+    with app.test_request_context():
+        with set_locale('en'):
+            mocker.patch("weko_search_ui.utils.unpackage_import_file", return_value={"item_type_id":1})
+            mocker.patch("weko_search_ui.utils.handle_check_exist_record", return_value={"item_type_id":1})
+            mocker.patch("weko_search_ui.utils.handle_item_title")
+            mocker.patch("weko_search_ui.utils.handle_check_date", return_value={"item_type_id":1})
+            mocker.patch("weko_search_ui.utils.handle_check_id")
+            mocker.patch("weko_search_ui.utils.handle_check_and_prepare_index_tree")
+            mocker.patch("weko_search_ui.utils.handle_check_and_prepare_publish_status")
+            mocker.patch("weko_search_ui.utils.handle_check_and_prepare_feedback_mail")
+            check_request_mail = mocker.patch("weko_search_ui.utils.handle_check_and_prepare_request_mail")
+            mocker.patch("weko_search_ui.utils.handle_check_file_metadata")
+            mocker.patch("weko_search_ui.utils.handle_check_cnri")
+            mocker.patch("weko_search_ui.utils.handle_check_doi_indexes")
+            mocker.patch("weko_search_ui.utils.handle_check_doi_ra")
+            mocker.patch("weko_search_ui.utils.handle_check_doi")
+
+            for file in test_importdata:
+
+                # for exception
+                if order_if == 1:
+                    with patch("weko_search_ui.utils.zipfile.ZipFile.infolist",return_value=[1,2]):
+                        ret = check_tsv_import_items(file, False, False)
+
+                # for badzipfile exception
+                if order_if == 2:
+                    with patch("weko_search_ui.utils.zipfile.ZipFile",side_effect=zipfile.BadZipFile):
+                        ret = check_tsv_import_items(file, False, False)
+                        assert ret["error"] == 'The format of the specified file import00.zip does not support import. Please specify one of the following formats: zip, tar, gztar, bztar, xztar.'
+                
+                # for FileNotFoundError
+                if order_if == 3:
+                    with patch("weko_search_ui.utils.list",return_value=None):
+                        ret = check_tsv_import_items(file, False, False)
+                        assert ret["error"]=='The csv/tsv file was not found in the specified file import00.zip. Check if the directory structure is correct.'
+                
+                # for UnicodeDecodeError
+                if order_if == 4:
+                    with patch("weko_search_ui.utils.zipfile.ZipFile",side_effect=UnicodeDecodeError("uni", b'\xe3\x81\xad\xe3\x81\x93',2,4,"cp932 cant decode")):
+                        ret = check_tsv_import_items(file, False, False)
+
+                # for error is ex.args
+                if order_if == 5:
+                    with patch("weko_search_ui.utils.zipfile.ZipFile",side_effect=Exception({"error_msg":"エラーメッセージ"})):
+                        ret = check_tsv_import_items(file, False, False)
+
+                # for tsv
+                if order_if == 6:
+                    with patch("weko_search_ui.utils.list",return_value=['items.tsv']):
+                        check_tsv_import_items(file,False,False)==''
+                        check_request_mail.assert_called()
+                
+                # for gakuninrdm is False
+                if order_if == 7:
+                    check_tsv_import_items(file,False,False)==''
+                    check_request_mail.assert_called()
+                    
+                # for gakuninrdm is True
+                if order_if == 8:
+                    check_tsv_import_items(file,False,True)==''
+                    check_request_mail.assert_called()
+
+                # for os.sep is not "/"
+                if order_if == 9:
+                    with patch("weko_search_ui.utils.os") as o:
+                        with patch("weko_search_ui.utils.zipfile.ZipFile.infolist", return_value = [zipfile.ZipInfo(filename = filepath.replace("/","\\"))]):
+                            type(o).sep = "\\"
+                            check_tsv_import_items(file,False,False)
 
 
 # def check_xml_import_items(file, item_type_id, is_gakuninrdm=False)
@@ -840,6 +959,29 @@ def test_register_item_metadata(i18n_app, es_item_file_pipeline, deposit, es_rec
         assert register_item_metadata(item, root_path, is_gakuninrdm=False)
 
 
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_register_item_metadata2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_register_item_metadata2(i18n_app, es_item_file_pipeline, deposit, es_records, db_index, es, db, mocker):
+    item = es_records["results"][0]["item"]
+    item["item_type_id"] = 1000
+    item["$schema"] = "/items/jsonschema/1000"
+    item["metadata"]["item_1617605131499"] = item["metadata"]["item_1617605131499"]["attribute_value_mlt"]
+    root_path = os.path.dirname(os.path.abspath(__file__))
+
+    with patch("weko_search_ui.utils.find_and_update_location_size"):
+        with patch("weko_search_ui.utils.WekoDeposit.commit", return_value=None):
+            with patch("weko_search_ui.utils.WekoDeposit.publish_without_commit", return_value=None):
+                with patch("weko_search_ui.utils.RequestMailList.delete_without_commit") as delete_request_mail:
+                        register_item_metadata(item, root_path, -1, is_gakuninrdm=False)
+                        delete_request_mail.assert_called()
+
+                item["metadata"]["request_mail_list"]=[{"email": "contributor@test.org", "author_id": ""}]
+                item["metadata"]["feedback_mail_list"]=[{"email": "contributor@test.org", "author_id": ""}]
+                with patch("weko_search_ui.utils.WekoDeposit.merge_data_to_record_without_version"):
+                    with patch("weko_search_ui.utils.RequestMailList.update") as update_request_mail:
+                        register_item_metadata(item, root_path, -1, is_gakuninrdm=False)
+                        update_request_mail.assert_called()
+
+
 # def update_publish_status(item_id, status):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_update_publish_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_update_publish_status(i18n_app, es_item_file_pipeline, es_records):
@@ -1015,7 +1157,8 @@ def test_handle_check_and_prepare_index_tree2(i18n_app, record_with_metadata, in
 
 # def handle_check_and_prepare_feedback_mail(list_record):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_and_prepare_feedback_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_handle_check_and_prepare_feedback_mail(i18n_app, record_with_metadata):
+def test_handle_check_and_prepare_feedback_mail(i18n_app, record_with_metadata, es_authors_index):
+    i18n_app.config["WEKO_AUTHORS_ES_INDEX_NAME"] = "test-authors"
     list_record = [record_with_metadata[0]]
 
     # Doesn't return any value
@@ -1033,6 +1176,31 @@ def test_handle_check_and_prepare_feedback_mail(i18n_app, record_with_metadata):
 
     # Doesn't return any value
     assert not handle_check_and_prepare_feedback_mail([record])
+
+
+# def handle_check_and_prepare_request_mail(list_record):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_and_prepare_request_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_and_prepare_request_mail(i18n_app, record_with_metadata, es_authors_index):
+    i18n_app.config["WEKO_AUTHORS_ES_INDEX_NAME"] = "test-authors"
+    list_record = [record_with_metadata[0]]
+
+    # Doesn't return any value
+    assert not handle_check_and_prepare_request_mail(list_record)
+
+    record = {
+        "request_mail": ["wekosoftware@test.com"],
+        "metadata": {"request_mail_list": ""},
+    }
+
+    # Doesn't return any value
+    assert not handle_check_and_prepare_request_mail([record])
+    assert record["metadata"]["request_mail_list"] == [{'email': 'wekosoftware@test.com', 'author_id': ''}]
+
+    record["request_mail"] = ["test"]
+
+    # Doesn't return any value
+    assert not handle_check_and_prepare_request_mail([record])
+    assert record["errors"] == ['指定されたtestは不正です。']
 
 
 # def handle_set_change_identifier_flag(list_record, is_change_identifier):

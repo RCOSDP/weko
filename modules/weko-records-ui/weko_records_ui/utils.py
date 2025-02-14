@@ -52,7 +52,7 @@ from passlib.handlers.oracle import oracle10
 from weko_admin.models import AdminSettings
 from weko_admin.utils import UsageReport, get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
-from weko_records.api import FeedbackMailList, ItemTypes, Mapping
+from weko_records.api import FeedbackMailList, RequestMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import replace_fqdn
 from weko_records.models import ItemReference
@@ -99,9 +99,9 @@ def check_items_settings(settings=None):
         if isinstance(settings,dict):
             if 'items_display_email' in settings:
                 current_app.config['EMAIL_DISPLAY_FLG'] = settings['items_display_email']
-            if 'items_search_author' in settings:    
+            if 'items_search_author' in settings:
                 current_app.config['ITEM_SEARCH_FLG'] = settings['items_search_author']
-            if 'item_display_open_date' in settings:    
+            if 'item_display_open_date' in settings:
                 current_app.config['OPEN_DATE_DISPLAY_FLG'] = \
                 settings['item_display_open_date']
         else:
@@ -161,7 +161,7 @@ def get_billing_file_download_permission(groups_price: list) -> dict:
 
     Returns:
         dict: Billing file permission dictionary.
-    """    
+    """
     # current_app.logger.debug("groups_price:{}".format(groups_price))
     billing_file_permission = dict()
     for data in groups_price:
@@ -463,6 +463,7 @@ def soft_delete(recid):
             dep.indexer.update_es_data(dep, update_revision=False, field='publish_status')
             FeedbackMailList.delete(ver.object_uuid)
             dep.remove_feedback_mail()
+            RequestMailList.delete(ver.object_uuid)
             for f in dep.files:
                 if f.file.uri not in del_files:
                     del_files[f.file.uri] = f.file.storage()
@@ -564,7 +565,7 @@ def get_license_pdf(license, item_metadata_json, pdf, file_item_id, footer_w,
     # current_app.logger.debug("footer_h:{}".format(footer_h))
     # current_app.logger.debug("cc_logo_xposition:{}".format(cc_logo_xposition))
     # current_app.logger.debug("item:{}".format(item))
-        
+
     from .views import blueprint
     license_icon_pdf_location = \
         current_app.config['WEKO_RECORDS_UI_LICENSE_ICON_PDF_LOCATION']
@@ -600,7 +601,7 @@ def get_pair_value(name_keys, lang_keys, datas):
     current_app.logger.debug("name_keys:{}".format(name_keys))
     current_app.logger.debug("lang_keys:{}".format(lang_keys))
     current_app.logger.debug("datas:{}".format(datas))
-    
+
     if len(name_keys) == 1 and len(lang_keys) == 1:
         if isinstance(datas, list):
             for data in datas:
@@ -638,7 +639,7 @@ def hide_item_metadata(record, settings=None, item_type_data=None):
             record['item_type_id'], item_type_data
         )
         record = hide_by_itemtype(record, list_hidden)
-        
+
         hide_email = hide_meta_data_for_role(record)
         if hide_email:
             # Hidden owners_ext.email
@@ -668,7 +669,7 @@ def hide_item_metadata_email_only(record):
     check_items_settings()
 
     record['weko_creator_id'] = record.get('owner')
-    
+
     hide_email = hide_meta_data_for_role(record)
     if hide_email:
         # Hidden owners_ext.email
@@ -1138,7 +1139,7 @@ def generate_one_time_download_url(
     :param record_id: File Version ID
     :param guest_mail: guest email
     :return:
-    """    
+    """
     secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
     download_pattern = current_app.config[
         'WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN']
@@ -1206,7 +1207,7 @@ def validate_onetime_download_token(
         'WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN']
     hash_value = download_pattern.format(
         file_name, record_id, guest_mail, date)
-    
+
     if not oracle10.verify(secret_key, token, hash_value):
         current_app.logger.debug('Validate token error: {}'.format(hash_value))
         return False, token_invalid
@@ -1272,7 +1273,7 @@ def get_onetime_download(file_name: str, record_id: str,
         str:file_name:
         str:record_id:
         str:user_mail:
-    Returns: 
+    Returns:
         FileOnetimeDownload or None
     """
     file_downloads = FileOnetimeDownload.find(
@@ -1282,19 +1283,19 @@ def get_onetime_download(file_name: str, record_id: str,
         return file_downloads[0]
     else:
         return None
-    
+
 def get_valid_onetime_download(file_name: str, record_id: str,user_mail: str) -> Optional[FileOnetimeDownload]:
-    """Get file_onetime_download 
+    """Get file_onetime_download
         if expiration_date and download_count is set downloadable
 
     Args:
         str:file_name:
         str:record_id:
         str:user_mail:
-    Returns: 
+    Returns:
         FileOnetimeDownload or None
     """
-                
+
     file_downloads:List[FileOnetimeDownload] = FileOnetimeDownload \
     .find_downloadable_only(
         file_name=file_name, record_id=record_id, user_mail=user_mail
@@ -1564,7 +1565,7 @@ def get_google_detaset_meta(record,record_tree=None):
     # Required property check
     min_length = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN',WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN)
     max_length = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX',WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX)
-    
+
     for title in mtdata.findall('dc:title', namespaces=mtdata.nsmap):
         res_data['name'] = title.text
     for description in mtdata.findall('datacite:description', namespaces=mtdata.nsmap):
@@ -1737,20 +1738,20 @@ def create_secret_url(record_id:str ,file_name:str ,user_mail:str ,restricted_fu
     """
     Save in FileSecretDownload
     and Generate Secret Download URL.
-    
+
     Args:
         str :record_id:
         str :file_name:
         str :user_mail
         str :restricted_fullname  :embed mail string
         str :restricted_data_name :embed mail string
-    Return: 
-        dict: created info 
+    Return:
+        dict: created info
     """
     # Save to Database.
     secret_obj:FileSecretDownload = _create_secret_download_url(
         file_name, record_id, user_mail)
-    
+
     # generate url
     secret_file_url = _generate_secret_download_url(
         file_name, record_id, secret_obj.id , secret_obj.created)
@@ -1780,29 +1781,29 @@ def create_secret_url(record_id:str ,file_name:str ,user_mail:str ,restricted_fu
     else:
         return_dict["restricted_expiration_date_ja"] = "無制限"
         return_dict["restricted_expiration_date_en"] = "Unlimited"
-            
+
 
     if secret_obj.download_count < max_int :
         return_dict["restricted_download_count"] = str(secret_obj.download_count)
     else:
         return_dict["restricted_download_count_ja"] = "無制限"
         return_dict["restricted_download_count_en"] = "Unlimited"
-            
+
     return return_dict
 
 
 def _generate_secret_download_url(file_name: str, record_id: str, id: str ,created :dt) -> str:
     """Generate Secret download URL.
-    
+
     Args
         str: file_name: File name
         str: record_id: File Version ID
         str: id: FileSecretDownload id
         datetime :created :FileSecretDownload created
-    
+
     Returns
         str: generated url
-    """    
+    """
     secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
     download_pattern = current_app.config[
         'WEKO_RECORDS_UI_SECRET_DOWNLOAD_PATTERN']
@@ -1827,7 +1828,7 @@ def parse_secret_download_token(token: str) -> Tuple[str, Tuple]:
 
     Args
         token:
-    Returns: 
+    Returns:
         str   : error message
         Tuple : (record_id, id, date, secret_token)
     """
@@ -1861,9 +1862,9 @@ def validate_secret_download_token(
         str:id:
         str:date:
         str:token:
-    Returns 
+    Returns
         Tuple:
-            bool : is valid 
+            bool : is valid
             str  : error message
     """
     token_invalid = _("Token is invalid.")
@@ -1872,7 +1873,7 @@ def validate_secret_download_token(
         'WEKO_RECORDS_UI_SECRET_DOWNLOAD_PATTERN']
     hash_value = download_pattern.format(
         file_name, record_id, id, date)
-    
+
     if not oracle10.verify(secret_key, token, hash_value):
         current_app.logger.error('Validate token error: {}'.format(hash_value))
         return False, token_invalid
@@ -1898,7 +1899,7 @@ def validate_secret_download_token(
         current_app.logger.error('Validate secret download token error:')
         current_app.logger.error(err)
         return False, token_invalid
-        
+
 def get_secret_download(file_name: str, record_id: str,
                         id: str , created :dt ) -> Optional[FileSecretDownload]:
     """Get secret download count.
@@ -1930,7 +1931,7 @@ def _create_secret_download_url(file_name: str, record_id: str, user_mail: str) 
         FileSecretDownload : inserted record
     """
     secret_url_file_download:dict = get_restricted_access('secret_URL_file_download')
-        
+
     expiration_date = secret_url_file_download.get("secret_expiration_date", 30)
     download_limit = secret_url_file_download.get("secret_download_limit", 10)
 
@@ -1942,7 +1943,7 @@ def _create_secret_download_url(file_name: str, record_id: str, user_mail: str) 
         "download_count": download_limit,
     })
     return file_secret
-    
+
 
 
 def update_secret_download(**kwargs) -> Optional[List[FileSecretDownload]]:
@@ -2275,7 +2276,7 @@ class RoCrateConverter:
         return self.crate.metadata.generate()
 
 
-def create_limmiter():
+def create_limiter():
     from .config import WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT
     return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT)
 

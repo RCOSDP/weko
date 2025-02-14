@@ -484,6 +484,12 @@ def test_default_view_method(app, records, itemtypes, indexstyle ,users):
                         with patch('weko_records_ui.views.AdminSettings.get'
                                     , side_effect=lambda name , dict_to_object : {'items_search_author' : "author"} if name == 'items_display_settings' else None):
                             assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                        with patch('weko_records_ui.views.AdminSettings.get'
+                                    , side_effect=lambda name , dict_to_object : {'display_request_form' : False} if name == 'items_display_settings' else None):
+                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                        with patch('weko_records_ui.views.AdminSettings.get'
+                                    , side_effect=lambda name , dict_to_object : {'display_request_form' : True} if name == 'items_display_settings' else None):
+                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
                         with patch('weko_search_ui.utils.get_data_by_property', return_value=(False,False)):
                             with patch('weko_records_ui.views.selected_value_by_language' ,return_value="helloworld.pdf"):
                                 assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200

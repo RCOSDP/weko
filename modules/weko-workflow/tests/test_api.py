@@ -139,3 +139,15 @@ def test_WorkActivity_get_corresponding_usage_activities(app, db_register):
 def test_get_deleted_workflow_list(app,db,workflow):
     res = WorkFlow().get_deleted_workflow_list()
     assert res[0].flows_name == "test workflow02"
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_activity_request_mail_list_create_and_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_activity_request_mail_list_create_and_update(app, workflow, db, mocker):
+    activity = WorkActivity()
+    _request_maillist1 = []
+    _request_maillist2 = [{"email": "test@example.com", "author_id": ""}]
+    activity.create_or_update_activity_request_mail("1", _request_maillist1, True)
+    assert activity.get_activity_request_mail("1").request_maillist == []
+    activity.create_or_update_activity_request_mail("1", _request_maillist2, True)
+    assert activity.get_activity_request_mail("1").request_maillist == _request_maillist2
+    activity.create_or_update_activity_request_mail("1111111", _request_maillist1, "aaa")
+    assert activity.get_activity_request_mail("1").request_maillist == _request_maillist2
