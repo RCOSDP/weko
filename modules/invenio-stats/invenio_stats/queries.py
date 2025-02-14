@@ -20,6 +20,7 @@ from flask import current_app
 from invenio_search import current_search_client
 
 from .errors import InvalidRequestInputError
+from .utils import chunk_list
 
 
 class ESQuery(object):
@@ -558,7 +559,12 @@ class ESWekoTermsQuery(ESTermsQuery):
                 )
 
         if kwargs.get('agg_filter'):
-            agg_query = agg_query.filter('terms', **kwargs.get('agg_filter'))
+            max_clause_count = current_app.config.get('OAISERVER_ES_MAX_CLAUSE_COUNT', 1024)
+            field, values = next(iter(kwargs.get('agg_filter').items()))
+            chunks = list(chunk_list(values, max_clause_count))
+            
+            should_clauses = [{'terms': {field: chunk}} for chunk in chunks]
+            agg_query = agg_query.filter('bool', should=should_clauses, minimum_should_match=1)
             
         if kwargs.get('wildcard'):
             agg_query = agg_query.filter('wildcard', **kwargs.get('wildcard'))

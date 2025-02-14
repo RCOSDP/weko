@@ -11,6 +11,7 @@
 from __future__ import absolute_import, print_function
 
 import calendar
+from itertools import islice
 import operator
 import os
 import re
@@ -212,6 +213,26 @@ def is_valid_access():
                 if ipaddr == ip_list[i]:
                     return False
     return True
+
+
+def chunk_list(iterable, size):
+    """
+    Split a List into chunks of a specified size.
+    
+    Args:
+        iterable (list): The List to be split.
+        size (int): The size of each chunk.
+    
+    Yields:
+        list: A chunk of the original List with the specified size.
+    
+    """
+    it = iter(iterable)
+    while True:
+        chunk = list(islice(it, size))
+        if not chunk:
+            break
+        yield chunk
 
 
 class QueryFileReportsHelper(object):
@@ -922,7 +943,7 @@ class QueryItemRegReportHelper(object):
     @classmethod
     def get(cls, **kwargs):
         """Get item registration report."""
-        from weko_index_tree.utils import get_descendant_index_names
+        from weko_index_tree.utils import get_descendant_index_names, get_item_ids_in_index
         from invenio_communities.models import Community
 
         target_report = kwargs.get('target_report').title()
@@ -947,7 +968,7 @@ class QueryItemRegReportHelper(object):
                 query_name = 'get-file-download-per-item-report'
             else:
                 query_name = 'get-file-download-per-host-report' \
-                    if not empty_date_flg or unit == 'Ho    st' \
+                    if not empty_date_flg or unit == 'Host' \
                     else 'get-file-download-per-time-report'
         elif empty_date_flg:
             query_name = 'item-create-histogram'
@@ -969,7 +990,7 @@ class QueryItemRegReportHelper(object):
         if repository_id and repository_id != 'Root Index':
             repository = Community.query.get(repository_id)
             index_list = get_descendant_index_names(repository.root_node_id)
-            user_ids = get_user_ids_by_role(repository.group_id)
+            item_ids = get_item_ids_in_index(repository.root_node_id)
 
         result = []
         if empty_date_flg or end_date >= start_date:
@@ -978,11 +999,9 @@ class QueryItemRegReportHelper(object):
                     if empty_date_flg:
                         params = {'interval': 'day'}
                         if repository_id and repository_id != 'Root Index':
-                            params['index_list'] = index_list
-                            params['user_ids'] = user_ids
+                            params.update({'index_list': index_list,'item_ids': item_ids})
                         else:
-                            params['index_list'] = None
-                            params['user_ids'] = None
+                            params.update({'index_list': None,'item_ids': None})
                         res_total = query_total.run(**params)
                         # Get valuable items
                         items = []
@@ -1026,10 +1045,10 @@ class QueryItemRegReportHelper(object):
                                           'is_restricted': False
                                           }
                                 if repository_id and repository_id != 'Root Index':
-                                    params['index_list'] = index_list
-                                    params['agg_filter'] = {'cur_user_id': user_ids}
+                                    params.update({'index_list': index_list,
+                                                    'agg_filter': {'pid_value': item_ids}})
                                 else:
-                                    params['index_list'] = None
+                                    params.update({'index_list': None})
                                 res_total = query_total.run(**params)
                                 result.append({
                                     'count': res_total[count_keyname],
@@ -1044,11 +1063,9 @@ class QueryItemRegReportHelper(object):
                     if empty_date_flg:
                         params = {'interval': 'week', 'is_restricted': False}
                         if repository_id and repository_id != 'Root Index':
-                            params['index_list'] = index_list
-                            params['user_ids'] = user_ids
+                            params.update({'index_list': index_list, 'item_ids': item_ids})
                         else:
-                            params['index_list'] = None
-                            params['user_ids'] = None
+                            params.update({'index_list': None, 'item_ids': None})
                         res_total = query_total.run(**params)
                         # Get valuable items
                         items = []
@@ -1112,10 +1129,10 @@ class QueryItemRegReportHelper(object):
                                           'is_restricted': False
                                           }
                                 if repository_id and repository_id != 'Root Index':
-                                    params['index_list'] = index_list
-                                    params['agg_filter'] = {'cur_user_id': user_ids}
+                                    params.update({'index_list': index_list,
+                                                    'agg_filter': {'pid_value': item_ids}})
                                 else:
-                                    params['index_list'] = None
+                                    params.update({'index_list': None})
                                 res_total = query_total.run(**params)
                                 temp['count'] = res_total[count_keyname]
                                 result.append(temp)
@@ -1125,11 +1142,9 @@ class QueryItemRegReportHelper(object):
                     if empty_date_flg:
                         params = {'interval': 'year', 'is_restricted': False}
                         if repository_id and repository_id != 'Root Index':
-                            params['index_list'] = index_list
-                            params['user_ids'] = user_ids
+                            params.update({'index_list': index_list, 'item_ids': item_ids})
                         else:
-                            params['index_list'] = None
-                            params['user_ids'] = None   
+                            params.update({'index_list': None, 'item_ids': None})
                         res_total = query_total.run(**params)
                         # Get start day and end day
                         start_date_string = '{}-01-01'.format(
@@ -1177,10 +1192,10 @@ class QueryItemRegReportHelper(object):
                                           'is_restricted': False
                                           }
                                 if repository_id and repository_id != 'Root Index':
-                                    params['index_list'] = index_list
-                                    params['agg_filter'] = {'cur_user_id': user_ids}
+                                    params.update({'index_list': index_list,
+                                                    'agg_filter': {'pid_value': item_ids}})
                                 else:
-                                    params['index_list'] = None
+                                    params.update({'index_list': None})
                                 res_total = query_total.run(**params)
                                 result.append({
                                     'count': res_total[count_keyname],
@@ -1248,12 +1263,11 @@ class QueryItemRegReportHelper(object):
                         end_date_string = end_date.strftime('%Y-%m-%d 23:59:59')
                         params.update({'end_date': end_date_string})
                     if repository_id and repository_id != 'Root Index':
-                        params['index_list'] = index_list
-                        params['agg_filter'] = {'cur_user_id': user_ids}
-                        params['user_ids'] = user_ids
+                        params.update({'index_list': index_list,
+                                        'item_ids': item_ids,
+                                        'agg_filter': {'pid_value': item_ids}})
                     else:
-                        params['index_list'] = None
-                        params['user_ids'] = None
+                        params.update({'index_list': None, 'item_ids': None})
                     res_total = query_total.run(**params)
                     i = 0
                     for item in res_total['buckets']:

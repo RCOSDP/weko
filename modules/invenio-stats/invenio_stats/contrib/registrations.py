@@ -702,7 +702,7 @@ def register_queries():
                 doc_type='item-create-day-aggregation',
                 aggregated_fields=['timestamp'],
                 required_filters=dict(
-                    user_ids='cur_user_id',
+                    item_ids='pid_value',
                 )
             )
         ),

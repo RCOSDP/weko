@@ -1090,3 +1090,41 @@ def get_descendant_index_names(index_id):
     result = [build_full_name(root_index)]
     result.extend(get_descendants(root_index))
     return result
+
+def get_item_ids_in_index(index_id):
+    """Retrieve all items under the specified index_id"""
+    records = get_all_records_in_index(index_id)
+    result = []
+    for record in records:
+        item_id = record.get('_source', {}).get('control_number', 0)
+        result.append(item_id)
+    return result
+
+def get_all_records_in_index(index_id):
+    """Retrieve all records under the specified index_id"""
+    from .api import Indexes
+    child_idx = Indexes.get_child_list_recursive(index_id)
+    query_string = "relation_version_is_last:true"
+    size = 10000
+    search = RecordsSearch(
+        index=current_app.config['SEARCH_UI_SEARCH_INDEX']
+    ).query(
+        Bool(filter=[
+            QueryString(query=query_string),
+            Q("terms", path=child_idx),
+            Q("terms", publish_status=[
+                PublishStatus.PUBLIC.value,
+                PublishStatus.PRIVATE.value
+            ])
+        ])
+    ).sort('_doc').params(size=size)
+    # Use search_after to retrieve all records
+    records = []
+    page = search.execute().to_dict()
+    while page.get('hits', {}).get('hits', []):
+        records.extend(page.get('hits', {}).get('hits', []))
+        if len(page.get('hits', {}).get('hits', [])) < size:
+            break
+        search = search.extra(search_after=page.get('hits', {}).get('hits', [])[-1].get('sort'))
+        page = search.execute().to_dict()
+    return records
