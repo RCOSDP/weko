@@ -2,7 +2,7 @@
   <div class="flex justify-between p-5">
     <!-- 前のアイテムを表示 -->
     <a
-      v-if="prevNum !== 0"
+      v-if="props.prevNum !== 0"
       class="text-sm font-medium icons icon-arrow-l hover:cursor-pointer"
       @click="emits('clickPrev', 'prev')">
       <span class="hidden md:inline-block">
@@ -15,12 +15,12 @@
       </span>
     </a>
     <!-- 検索結果に戻る -->
-    <a class="text-sm font-medium text-miby-link-blue underline cursor-pointer" @click="goBack">
+    <a class="text-sm font-medium text-miby-link-blue underline cursor-pointer" @click="throughDblClick">
       {{ $t('returnResult') }}
     </a>
     <!-- 次のアイテムを表示 -->
     <a
-      v-if="nextNum !== 0"
+      v-if="props.nextNum !== 0"
       class="text-sm font-medium icons icon-arrow-r hover:cursor-pointer"
       @click="emits('clickNext', 'next')">
       <span class="hidden md:inline-block">
@@ -41,11 +41,6 @@
 /////////////////////////////////// */
 
 const props = defineProps({
-  // API Response(JSON)
-  sess: {
-    type: String,
-    default: ''
-  },
   // 前のアイテムID
   prevNum: {
     type: Number,
@@ -69,12 +64,10 @@ const emits = defineEmits(['clickPrev', 'clickNext']);
 /////////////////////////////////// */
 
 /**
- * 検索結果に戻る用イベント
+ * ダブルクリックを制御する
  */
-function goBack() {
-  if (props.sess === 'search') {
-    useRouter().back();
-  } else {
+function throughDblClick() {
+  if (location.pathname !== '/search') {
     navigateTo('/search');
   }
 }

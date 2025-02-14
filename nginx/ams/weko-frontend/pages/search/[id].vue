@@ -64,7 +64,7 @@
               <a
                 v-if="total"
                 class="pl-1.5 md:pl-0 icons icon-download after cursor-pointer"
-                @click="downlaodResultList">
+                @click="downloadResultList">
                 <span class="underline text-sm text-miby-link-blue pr-1">
                   {{ $t('searchDownloadAll') }}
                 </span>
@@ -183,8 +183,9 @@ async function search() {
   if (conditions.detail) {
     Object.assign(params, conditions.detail);
   }
+  const urlSearchParam = new URLSearchParams(params);
 
-  await $fetch(useAppConfig().wekoApi + '/records', {
+  await $fetch(useAppConfig().wekoApi + '/records?' + urlSearchParam, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
     headers: {
@@ -193,7 +194,6 @@ async function search() {
       'Accept-Language': localStorage.getItem('locale') ?? 'ja',
       Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
     },
-    params,
     onResponse({ response }) {
       if (response.status === 200) {
         searchResult.value = response._data.search_results;
@@ -284,7 +284,7 @@ async function getParentIndex() {
 /**
  * 検索結果一覧ダウンロード
  */
-async function downlaodResultList() {
+async function downloadResultList() {
   let statusCode = 0;
 
   const params = {
@@ -295,8 +295,9 @@ async function downlaodResultList() {
   if (conditions.detail) {
     Object.assign(params, conditions.detail);
   }
+  const urlSearchParam = new URLSearchParams(params);
 
-  await $fetch(useAppConfig().wekoApi + '/records/list', {
+  await $fetch(useAppConfig().wekoApi + '/records/list?' + urlSearchParam, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'POST',
     headers: {
@@ -305,7 +306,6 @@ async function downlaodResultList() {
       'Accept-Language': localStorage.getItem('locale') ?? 'ja',
       Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
     },
-    params,
     body: ResultJson,
     onResponse({ response }) {
       if (response.status === 200) {
@@ -337,7 +337,7 @@ async function downlaodResultList() {
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetchError';
+      alertMessage.value = 'message.error.fetch';
       alertType.value = 'error';
       visibleAlert.value = true;
     }
@@ -456,11 +456,17 @@ function openFilterModal() {
   modalFilter.value.showCheckBoxesWhenOpen();
 }
 
-/**
- * 作成者情報モーダル表示
- */
-function openCreaterModal() {
-  creater.value.openModal();
+// /**
+//  * 作成者情報モーダル表示
+//  */
+// function openCreaterModal() {
+//   creater.value.openModal();
+// }
+
+/** ファイル一覧画面からアイテム詳細画面へ戻るためのURL取得準備 */
+function setURL() {
+  sessionStorage.removeItem('url');
+  sessionStorage.setItem('url', window.location.href);
 }
 
 /* ///////////////////////////////////
@@ -482,6 +488,7 @@ try {
 /////////////////////////////////// */
 
 onMounted(() => {
+  setURL();
   refreshToken();
 });
 
