@@ -272,8 +272,8 @@ class ImportView(BaseView):
         if data and data.get('tasks'):
             for task_id in data.get('tasks'):
                 task = import_author.AsyncResult(task_id)
-                start_date = task.result['start_date'] if task.result else ''
-                end_date = task.result['end_date'] if task.result else ''
+                start_date = task.result.get('start_date', '') if task.result else ''
+                end_date = task.result.get('end_date', '') if task.result else ''
                 status = states.PENDING
                 error_id = None
                 if task.result and task.result.get('status'):
