@@ -9,7 +9,6 @@
 
 from flask import current_app
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy_continuum import version_class
 
 from invenio_db import db
 

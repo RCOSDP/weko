@@ -275,8 +275,7 @@ class HeadlessActivity(WorkActivity):
 
             metadata.setdefault("pubdate", datetime.now().strftime("%Y-%m-%d"))
 
-            # grouplist = Group.get_group_list()
-            # authors_prefix_settings = get_data_authors_prefix_settings()
+            # TODO: how use
             journal = get_workflow_journal(self.activity_id)
 
             # update feedback mail list

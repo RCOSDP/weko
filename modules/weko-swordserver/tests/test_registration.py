@@ -560,6 +560,22 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
                     assert not hasattr(res, "error")
                     assert res["list_record"][0]["errors"] is None
 
+        # not match indextree, metadata and setting
+        processed_json = json_data("data/item_type/processed_json_2.json")
+        processed_json.get("record").get("header").update({"indextree": 1234567891011})
+        mocker.patch("weko_swordserver.registration.process_json", return_value=processed_json)
+        mapped_json = json_data("data/item_type/mapped_json_2.json")
+        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+
+            zip, _ = make_crate()
+            file = FileStorage(filename=file_name, stream=zip)
+
+            with app.test_request_context(headers=headers):
+                with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword__client, sword__mapping)):
+                    res = check_bagit_import_items(file, packaging[0])
+                    assert not hasattr(res, "error")
+                    assert res["list_record"][0]["errors"] is None
+                    assert res["list_record"][0]["metadata"]["path"] == [1623632832836]
 
     # case # 02 : other error(workflow)
     client_id = tokens[0]["client"].client_id

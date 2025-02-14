@@ -8,7 +8,6 @@
 """Module of weko-swordserver."""
 
 import os
-import time
 import uuid
 import json
 import shutil
@@ -115,7 +114,6 @@ def import_items_to_activity(item, data_path, request_info):
         workflow_id = int(data_format.get(default_format, {}).get("workflow", "-1"))
 
     metadata = item.get("metadata")
-    publish_status = item.get("publish_status")
     index = metadata.get("path")
     files_info = metadata.pop("files_info", [{}])
     files = [
@@ -396,6 +394,7 @@ def check_bagit_import_items(file, packaging):
 
         # Check workflow and item type
         register_format = sword_client.registration_type
+        workflow = None
         if register_format == "Workflow":
             workflow = WorkFlows().get_workflow_by_id(sword_client.workflow_id)
             if workflow is None or workflow.is_deleted:
@@ -437,8 +436,19 @@ def check_bagit_import_items(file, packaging):
 
         processed_json = process_json(json_ld)
         # FIXME: if workflow registration, check if the indextree is valid
-        indextree = processed_json.get("record").get("header").get("indextree")
-        # if workflow.index_tree_id is None
+        index_tree_id = processed_json.get("record").get("header").get("indextree")
+        if (
+            register_format == "Workflow"
+                and workflow.index_tree_id is not None
+                and index_tree_id != workflow.index_tree_id
+        ):
+            processed_json.get("record").get("header").update(
+                {"indextree": workflow.index_tree_id}
+            )
+            current_app.logger.info(
+                f"Index is not matched with the workflow. "
+                f"Replace the index tree id to {workflow.index_tree_id}."
+            )
 
         list_record = generate_metadata_from_json(
             processed_json, json_ld, mapping, item_type

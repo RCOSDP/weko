@@ -872,7 +872,7 @@ def workflow(app, db, item_type, action_data, users):
         flows_id=uuid.uuid4(),
         flows_name='test workflow02',
         itemtype_id=item_type[1]["item_type"].id,
-        index_tree_id=None,
+        index_tree_id=1623632832836,
         flow_id=2,
         is_deleted=False,
         open_restricted=False,
