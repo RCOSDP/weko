@@ -1237,7 +1237,7 @@ def is_secret_file(record, file_name):
     is_secret_file = (
         target_data.get('accessrole') == 'open_no' or (
             target_data.get('accessrole') == 'open_date' and
-            dt.now(timezone.utc) < publish_date
+            dt.utcnow() < publish_date
         ))
     return is_secret_file
 
@@ -1775,6 +1775,7 @@ def validate_secret_url_generation_request(request_json):
     Returns:
         bool: True if the request is valid, False otherwise.
     """
+    # Validate format of the request data
     if not isinstance(request_json, dict):
         return False
     expected_keys = ['link_name',
@@ -1785,34 +1786,56 @@ def validate_secret_url_generation_request(request_json):
     if not all(key in request_json for key in expected_keys):
         return False
 
+    # Validate each value in the request data
     link_name      = request_json['link_name']
     expiration_str = request_json['expiration_date']
     download_limit = request_json['download_limit']
     send_email     = request_json['send_email']
     offset_minutes = request_json['timezone_offset_minutes']
-    if link_name:
-        if not isinstance(link_name, str) or len(link_name) > 255:
-            return False
+    if not isinstance(link_name, str) or len(link_name) > 255:
+        return False
     if (not isinstance(offset_minutes, int) or
         abs(offset_minutes) > 720):  # Max timezone offset is ±720 minutes
         return False
-    if expiration_str:
-        if not isinstance(expiration_str, str):
-            return False
-        expiration_dt = to_utc_datetime(expiration_str, offset_minutes)
-        if not expiration_dt:
-            return False
-        expiration_dt += timedelta(days=1)
-        if expiration_dt < dt.now(timezone.utc):
-            return False
-    if download_limit is not None:  # To detect 0
-        if not isinstance(download_limit, int):
-            return False
-        if int(download_limit) <= 0:
-            return False
+    if not isinstance(expiration_str, str):
+        return False
+    if not validate_expiration_date(expiration_str, offset_minutes):
+        return False
+    if not isinstance(download_limit, int) or download_limit <= 0:
+        return False
     if not isinstance(send_email, bool):
         return False
 
+    return True
+
+
+def validate_expiration_date(expiration_str, offset_minutes):
+    """Validate the expiration date.
+
+    Args:
+        expiration_str (str): The expiration date string.
+        offset_minutes (int): The timezone offset in minutes.
+
+    Returns:
+        bool: True if the expiration date is valid, False otherwise.
+    """
+    # Check the format of the expiration date.
+    expiration_dt = to_utc_datetime(expiration_str, offset_minutes)
+    if not expiration_dt:
+        return False
+
+    # Check if the expiration date is in the future.
+    expiration_dt += timedelta(days=1)
+    if expiration_dt < dt.now(timezone.utc):
+        return False
+
+    # Check if the expiration date is within the range of the allowed period.
+    secret_url_settings = get_restricted_access('secret_URL_file_download')
+    if not secret_url_settings:
+        return False
+    expiration_days = secret_url_settings.get('secret_expiration_date', 30) + 1
+    if expiration_dt > dt.now(timezone.utc) + timedelta(days=expiration_days):
+        return False
     return True
 
 

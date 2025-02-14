@@ -172,7 +172,7 @@ msgstr "トークンが無効です。"
 
 #: weko_records_ui/utils.py:2084
 msgid "This feature is currently disabled."
-msgstr "この機能は現在ご使用頂けません。"
+msgstr "この機能は現在ご利用頂けません。"
 
 #: weko_records_ui/utils.py:2089
 #, fuzzy
@@ -799,7 +799,7 @@ msgid "Success Secret URL Generate"
 msgstr "成功: シークレットURLを生成し、あなたのメールアドレス宛に送信しました。"
 
 msgid "Label Name"
-msgstr "ラベル名"
+msgstr "リンク名"
 
 msgid "Create Date"
 msgstr "作成日時"

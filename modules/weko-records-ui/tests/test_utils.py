@@ -45,6 +45,7 @@ from weko_records_ui.utils import (
     get_terms,
     get_roles,
     check_items_settings,
+    validate_expiration_date,
     validate_file_access,
     validate_secret_url_generation_request,
     #RoCrateConverter,
@@ -706,7 +707,7 @@ def test_is_secret_file(file_data, filename, expected):
 
     # dt（日時関連）をモックして、現在の日付や日付文字列の変換を制御する
     with patch('weko_records_ui.utils.dt') as mock_dt:
-        mock_dt.now.return_value = dt(2024, 1, 1)  # 現在の日付を2024年1月1日に設定
+        mock_dt.utcnow.return_value = dt(2024, 1, 1)  # 現在の日付を2024年1月1日に設定
         mock_dt.strptime.side_effect = lambda *args, **kwargs: dt.strptime(*args, **kwargs)  # strptimeの動作をモック
 
         # is_secret_file関数を実行して、結果が期待される値と一致するかを確認
@@ -907,31 +908,27 @@ def test_to_utc_datetime(app):
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_secret_url_generation_request -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_validate_secret_url_generation_request(app):
-    today = datetime.now().strftime("%Y-%m-%d")
-    tomorrow = (datetime.now() + timedelta(1)).strftime("%Y-%m-%d")
-    yesterday = (datetime.now() - timedelta(1)).strftime("%Y-%m-%d")
+@patch('weko_records_ui.utils.validate_expiration_date')
+def test_validate_secret_url_generation_request(mock_date, app):
+    mock_date.return_value = True
     base_case = {'link_name'              : '',
-                 'expiration_date'        : '',
-                 'download_limit'         : None,
+                 'expiration_date'        : 'mocked',
+                 'download_limit'         : 1,
                  'send_email'             : False,
                  'timezone_offset_minutes': 0}
     test_cases = [
         (None,
          False),
-        # Base case is valid
-        (base_case,
-         True),
         # When all fields are valid
         ({'link_name'              : '123',
-          'expiration_date'        : tomorrow,
+          'expiration_date'        : 'mocked',
           'download_limit'         : 1,
           'send_email'             : False,
           'timezone_offset_minutes': 0},
           True),
         # When all fields are invalid
         ({'link_name'              : 123,
-          'expiration_date'        : yesterday,
+          'expiration_date'        : 'mocked',
           'download_limit'         : 0,
           'send_email'             : None,
           'timezone_offset_minutes': '0'},
@@ -951,12 +948,6 @@ def test_validate_secret_url_generation_request(app):
         ({**base_case, 'link_name': '123'    }, True),
         ({**base_case, 'link_name': 123      }, False),
         ({**base_case, 'link_name': 'a' * 256}, False),
-        # For expiration_date
-        ({**base_case, 'expiration_date': today    }, True),
-        ({**base_case, 'expiration_date': tomorrow }, True),
-        ({**base_case, 'expiration_date': yesterday}, False),
-        ({**base_case, 'expiration_date': 'abc'    }, False),
-        ({**base_case, 'expiration_date': 20250101 }, False),
         # For download_limit
         ({**base_case, 'download_limit': 1    }, True),
         ({**base_case, 'download_limit': 0    }, False),
@@ -978,6 +969,31 @@ def test_validate_secret_url_generation_request(app):
 
     for request_data, expected in test_cases:
         assert validate_secret_url_generation_request(request_data) is expected
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_expiration_date -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_validate_expiration_date(app):
+    assert validate_expiration_date('1999-12-31', 0) is False
+
+    yesterday = (datetime.now() - timedelta(1)).strftime("%Y-%m-%d")
+    assert validate_expiration_date(yesterday, 0) is False
+
+    tomorrow = (datetime.now() + timedelta(1)).strftime("%Y-%m-%d")
+    with patch('weko_records_ui.utils.get_restricted_access') as mock_settings:
+        mock_settings.return_value = None
+        assert validate_expiration_date(tomorrow, 0) is False
+
+    in_a_week = (datetime.now() + timedelta(7)).strftime("%Y-%m-%d")
+    with patch('weko_records_ui.utils.get_restricted_access') as mock_settings:
+        mock_settings.return_value = {'secret_expiration_date': 1}
+        assert validate_expiration_date(in_a_week, 0) is False
+
+    in_an_year = (datetime.now() + timedelta(365)).strftime("%Y-%m-%d")
+    with patch('weko_records_ui.utils.get_restricted_access') as mock_settings:
+        mock_settings.return_value = {}
+        assert validate_expiration_date(in_an_year, 0) is False
+
+    assert validate_expiration_date(tomorrow, 0) is True
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_create_secret_url_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

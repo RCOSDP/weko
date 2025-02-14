@@ -461,8 +461,8 @@ def file_download_onetime(pid, record, filename, _record_file_factory=None,
 
     # Increase the download count and save the download log
     try:
-        url_obj.increment_download_count()
         save_download_log(record, filename, token, is_secret_url=False)
+        url_obj.increment_download_count()
     except Exception as e:
         current_app.logger.error(e)
         return error_response(_('Unexpected error occurred.'), 500)
@@ -539,8 +539,8 @@ def file_download_secret(pid, record, filename, _record_file_factory=None,
     # Increase the download count and save the download log
     url_obj = convert_token_into_obj(token, is_secret_url=True)
     try:
-        url_obj.increment_download_count()
         save_download_log(record, filename, token, is_secret_url=True)
+        url_obj.increment_download_count()
     except Exception as e:
         current_app.logger.error(e)
         return error_response(_('Unexpected error occurred.'), 500)

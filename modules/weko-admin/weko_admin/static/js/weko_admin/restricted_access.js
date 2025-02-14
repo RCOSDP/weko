@@ -528,13 +528,22 @@ function RestrictedAccessLayout({
       showErrorMessage(MESSAGE_MISSING_DATA);
       return false;
     }
-
+ 
+    // Ensure the values are integers
+    const parsedSecretURLFileDownload = {
+      ...secretURLFileDownload,
+      secret_download_limit: parseInt(secretURLFileDownload.secret_download_limit, 10),
+      max_secret_expiration_date: parseInt(secretURLFileDownload.max_secret_expiration_date, 10),
+      max_secret_download_limit: parseInt(secretURLFileDownload.max_secret_download_limit, 10),
+      secret_expiration_date: parseInt(secretURLFileDownload.secret_expiration_date, 10)
+    };
+ 
     let data = {
-      secret_URL_file_download:secretURLFileDownload,
+      secret_URL_file_download:parsedSecretURLFileDownload,
       content_file_download: contentFileDownload,
       usage_report_workflow_access: usageReportWorkflowAccess,
       terms_and_conditions: terms_data["data"]
-    }
+    };
 
     $.ajax({
       url: URL,

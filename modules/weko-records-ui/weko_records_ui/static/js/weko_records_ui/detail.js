@@ -359,10 +359,11 @@ require([
       const expirationDate = $('#expiration_date').val();
       const downloadLimit = $('#download_limit').val();
       const sendEmail = $('#send_email').is(':checked');
+      const timezoneOffsetMinutes = new Date().getTimezoneOffset();
       const linkNameError = $('#link_name_error');
       const expirationDateError = $('#expiration_date_error');
       const downloadLimitError = $('#download_limit_error');
-  
+
       let hasError = false;
 
       // エラーチェック関数
@@ -393,12 +394,14 @@ require([
         data: JSON.stringify({
           link_name: linkName,
           expiration_date: expirationDate,
-          download_limit: downloadLimit,
-          send_email: sendEmail
+          download_limit: parseInt(downloadLimit),
+          send_email: sendEmail,
+          timezone_offset_minutes: timezoneOffsetMinutes,
         }),
         success: function(response) {
           webelement.prop('disabled', false);
           alert(response.message || "Success!");
+          location.reload();
         },
         error: function(jqXHR, status, msg) {
           webelement.prop('disabled', false);

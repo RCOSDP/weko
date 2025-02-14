@@ -726,6 +726,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
         search_author_flg=search_author_flg,
         show_secret_URL=can_manage_secret_url(record, filename),
+        show_onetime_URL=can_manage_onetime_url(record, filename),
         active_secret_URLs=FileSecretDownload.fetch_active_urls(
         record_id=pid.pid_value, file_name=filename, ascending=True),
         active_onetime_URLs=FileOnetimeDownload.fetch_active_urls(
@@ -754,7 +755,6 @@ def get_secret_setting():
             result['secret_download_limit'] = settings.get('secret_URL_file_download', {}).get('secret_download_limit',10)
             result['max_secret_expiration_date'] = settings.get('secret_URL_file_download', {}).get('max_secret_expiration_date',30)
             result['max_secret_download_limit'] = settings.get('secret_URL_file_download', {}).get('max_secret_download_limit',10)
-            print(f'secret_expiration_dateです', result['secret_expiration_date'])
         else:
             # デフォルト値を設定
             result['secret_expiration_date'] = 30
@@ -765,7 +765,6 @@ def get_secret_setting():
         # JSON形式で返す
         return jsonify(result)
     except Exception as e:
-        print(f"Error: {e}")
         return jsonify({"error": str(e)}), 500
 
 def create_secret_url_and_send_mail(pid, record, filename, **kwargs):
