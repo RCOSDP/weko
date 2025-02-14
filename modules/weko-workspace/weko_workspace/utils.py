@@ -54,7 +54,7 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 from weko_admin.models import Identifier, SiteInfo
-from weko_admin.utils import get_restricted_access
+
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
 from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
@@ -71,28 +71,25 @@ from werkzeug.utils import import_string
 from weko_deposit.pidstore import get_record_without_version
 
 # =============================================================
-from invenio_stats.views import QueryFileStatsCount, QueryRecordViewCount
 from weko_user_profiles.models import UserProfile
+from weko_admin.utils import StatisticMail
 
 
-
-
-# 2.1.2.1 デフォルト絞込み条件取得処理
+# TODO 2.1.2.1 デフォルト絞込み条件取得処理
 def get_workspace_filterCon():
     default_con = {
         "name":"guan.shuang",
     }
 
-    #
     user_id = current_user.id
-    print("user_id " + str(user_id))
+    # print("user_id " + str(user_id))
 
     # モデルクラスからデータを取得。
 
 
     return default_con
 
-# 2.1.2.2 ESからアイテム一覧取得処理
+# TODO 2.1.2.2 ESからアイテム一覧取得処理
 def get_es_itemlist(jsonCondition):
 
     fake_response = {
@@ -129,7 +126,7 @@ def get_es_itemlist(jsonCondition):
     return json.dumps(fake_response, indent=4)
 
 
-# 2.1.2.3 お気に入り既読未読ステータス取得処理
+# TODO 2.1.2.3 お気に入り既読未読ステータス取得処理
 def get_workspace_status_management(recid:int):
     isFavoritedSts = False
     isRead = True
@@ -142,38 +139,35 @@ def get_workspace_status_management(recid:int):
     return stsRes
 
 
-def get_access_cnt(item_id:str):
-    """Get access count of item.
+def get_accessCnt_downloadCnt (item_id:str):
+    """Get access count and download count of item.
 
     Arguments:
         item_id {string} -- uuid of item
 
     Returns:
-        [int] -- viewed of item
+        [tuple] -- access count and download count
+        tuple[0] -- access count
+        tuple[1] -- download count
 
     """
     # print("======workspace def get_access_cnt(recid:int): ======")
-    return int(QueryRecordViewCount().get_data(item_id, datetime.now().strftime("%Y/%m/%d")).get("total"))
 
+    result = StatisticMail.get_item_information(item_id,datetime.now().strftime("%Y/%m/%d"),"")
 
-# 2.1.2.5 アイテムステータス取得処理
+    accessCnt = int(float(result["detail_view"]))
+    
+    downloadCnt = int(sum(float(value) for value in result["file_download"].values()))
+
+    return (accessCnt,downloadCnt)
+
+# TODO 2.1.2.5 アイテムステータス取得処理
 def get_item_status(recid:int):
 
     itemSts = ""
 
 
     return itemSts
-
-
-# 2.1.2.6 ダウンロード数取得処理
-def get_download_cnt(fielList):
-    """
-    """
-
-    fileDownloadCnt = 0
-
-
-    return fileDownloadCnt
 
 
 def get_userNm_affiliation():

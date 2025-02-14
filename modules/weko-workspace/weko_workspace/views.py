@@ -87,14 +87,13 @@ def get_workspace_itemlist():
             stsRes = get_workspace_status_management(recid)
 
             # 4,アクセス数取得処理
-            accessCnt = get_access_cnt(uuid)
+            # 6,ダウンロード数取得処理
+            accessCnt_downloadCnt = get_accessCnt_downloadCnt(uuid)
+            accessCnt = accessCnt_downloadCnt[0]
+            fileDownloadCnt = accessCnt_downloadCnt[1]
 
             # 5,アイテムステータス取得処理
             itemSts = get_item_status(recid)
-
-            # 6,ダウンロード数取得処理
-            fielList = ""
-            fileDownloadCnt = get_download_cnt(fielList)
 
         # 7,ユーザー名と所属情報取得処理
         userInfo = get_userNm_affiliation()
