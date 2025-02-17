@@ -1264,6 +1264,7 @@ async def sort_meta_data_by_options(
             _label = f.get("url", {}).get("label")
             _filename = f.get("filename", "")
             _extension = ""
+            _date = f.get("date", "")
             if not _label and not f.get("version_id"):
                 _label = f.get("url", {}).get("url", "")
             elif not _label:
@@ -1271,21 +1272,21 @@ async def sort_meta_data_by_options(
             if f.get("version_id"):
                 _idx = _filename.rfind(".") + 1
                 _extension = _filename[_idx:] if _idx > 0 else "unknown"
-            return _label, _extension
+            return _label, _extension, _date
 
         result = []
         for f in files:
-            label, extension = __get_label_extension()
+            label, extension, date = __get_label_extension()
             if "open_restricted" == f.get("accessrole", ""):
                 if label:
-                    result.append({"label": label, "extention": extension, "url": ""})
+                    result.append({"label": label, "extention": extension, "url": "", "date": date})
             elif label and (
                 not extension or check_file_download_permission(record, f, False)
             ):
                 file_url = f.get("url", {}).get("url", "")
                 if extension and file_url:
                     file_url = replace_fqdn(file_url)
-                result.append({"label": label, "extention": extension, "url": file_url})
+                result.append({"label": label, "extention": extension, "url": file_url, "date": date})
         return result
 
     def get_file_thumbnail(thumbnails):
