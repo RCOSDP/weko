@@ -524,9 +524,16 @@ class AddPageModal extends React.Component {
 
   handleSave(event) {
     event.preventDefault();
-    let url = (this.props.repositoryId === 'Root Index') || (this.props.repositoryId === '0')|| (this.props.repositoryId.length === 0) ?
-      this.state.url :
-      '/c/' + this.props.repositoryId + this.state.url;
+    let url = '';
+    if ((this.props.repositoryId === 'Root Index') || (this.props.repositoryId === '0')|| (this.props.repositoryId.length === 0)) {
+      url = this.state.url
+    } else {
+      if (this.state.url.startsWith('/c/' + this.props.repositoryId + '/page')) {
+        url = this.state.url
+      } else {
+        url = '/c/' + this.props.repositoryId + '/page' + this.state.url;
+      }
+    }
     if (this.validateInput()) {
       this.setState({'errorMessage': ''});
       this.props.handleClose();
@@ -594,7 +601,7 @@ class AddPageModal extends React.Component {
                 className="text-center text-danger">{this.state.errorMessage}</p>
               {(this.props.repositoryId === 'Root Index') || (this.props.repositoryId === '0')|| (this.props.repositoryId.length === 0) ?
                 null :
-                <p>※ For &nbsp;{this.props.repositoryId}&nbsp; page,&nbsp;"/c/{this.props.repositoryId}"&nbsp;will be automatically added to before the URL</p>
+                <p>※ For &nbsp;{this.props.repositoryId}&nbsp; page,&nbsp;"/c/{this.props.repositoryId}/page"&nbsp;will be automatically added to before the URL</p>
               }
               <AddPageForm
                 pageModalOpen={this.props.isOpen}

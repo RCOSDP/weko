@@ -181,29 +181,29 @@ class CommunityModelView(ModelView):
                         "page_id": 0,
                         "repository_id": model.id,
                         "title": "About",
-                        "url": "/c/" + model.id + "/about",
+                        "url": "/c/" + model.id + "/page/about",
                         "content": "",
                         "settings": "",
                         "multi_lang_data": {"en": "About"},
                         "is_main_layout": False,
                     },
-                {
+                    {
                         "is_edit": False,
                         "page_id": 0,
                         "repository_id": model.id,
                         "title": "Editorial board",
-                        "url": "/c/" + model.id + "/eb",
+                        "url": "/c/" + model.id + "/page/eb",
                         "content": "",
                         "settings": "",
                         "multi_lang_data": {"en": "Editorial board"},
                         "is_main_layout": False,
                     },
-                {
+                    {
                         "is_edit": False,
                         "page_id": 0,
                         "repository_id": model.id,
                         "title": "OA Policy",
-                        "url": "/c/" + model.id + "/oapolicy",
+                        "url": "/c/" + model.id + "/page/oapolicy",
                         "content": "",
                         "settings": "",
                         "multi_lang_data": {"en": "OA Policy"},
@@ -213,7 +213,7 @@ class CommunityModelView(ModelView):
                 for page in data:
                     addPageResult = WidgetDesignPageServices.add_or_update_page(page)
                     if addPageResult['result'] == False:
-                        print(page['url'] + "のページの追加に失敗しました。")
+                        current_app.logger.error(page['url'] + "のページの追加に失敗しました。")
                         pageaddFlag = False
 
                 if pageaddFlag == False:
@@ -243,21 +243,23 @@ class CommunityModelView(ModelView):
     @expose('/edit/<string:id>/', methods=['GET', 'POST'])
     def edit_view(self, id):
         model = self.get_one(id)
+        if model is None:
+            abort(404)
+
         form=super(CommunityModelView, self).edit_form(id)
-        if model:
-            form.id.data = model.id or ''
-            form.title.data = model.title or ''
-            form.owner.data = model.owner or ''
-            form.index.data = model.index or ''
-            form.description.data = model.description or ''
-            form.page.data = model.page or ''
-            form.curation_policy.data = model.curation_policy or ''
-            form.ranking.data = model.ranking or '0'
-            form.fixed_points.data = model.fixed_points or '0'
-            if model.login_menu_enabled:
-                form.login_menu_enabled.data = 'True'
-            else:
-                form.login_menu_enabled.data = 'False'
+        form.id.data = model.id or ''
+        form.title.data = model.title or ''
+        form.owner.data = model.owner or ''
+        form.index.data = model.index or ''
+        form.description.data = model.description or ''
+        form.page.data = model.page or ''
+        form.curation_policy.data = model.curation_policy or ''
+        form.ranking.data = model.ranking or '0'
+        form.fixed_points.data = model.fixed_points or '0'
+        if model.login_menu_enabled:
+            form.login_menu_enabled.data = 'True'
+        else:
+            form.login_menu_enabled.data = 'False'
 
         if(request.method == 'POST'):
             form_data = request.form.to_dict()
@@ -294,20 +296,17 @@ class CommunityModelView(ModelView):
                         directory,
                         model.id + '_' + fp.filename)
                     file_uri = '/data/' + 'c/' + model.id  + '_' +  fp.filename
-                    if model.thumbnail_path is not None:
+                    if model.thumbnail_path != '':
                         currentfile = os.path.join(
                             current_app.instance_path,
                             current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'],
                             'c',
                             model.thumbnail_path[8:])
-                        if os.path.exists(currentfile):
-                            try:
-                                os.remove(currentfile)
-                                print(f"{currentfile} を削除しました。")
-                            except Exception as e:
-                                print(f"ファイルの削除中にエラーが発生しました: {e}")
-                        else:
-                            print(f"{currentfile} は存在しません。")
+                        try:
+                            os.remove(currentfile)
+                            print(f"{currentfile} を削除しました。")
+                        except Exception as e:
+                            current_app.logger.error(f"ファイルの削除中にエラーが発生しました: {e}")
                     fp.save(filename)
                     model.thumbnail_path = file_uri
 

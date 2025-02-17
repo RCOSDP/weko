@@ -337,7 +337,7 @@ const PageBodyGrid = function () {
                 for (let i in endpoints) {  // Create links
                   let liClass = '';
                   let communityArgs = (repoID === DEFAULT_REPOSITORY) ? '' : '?c=' + repoID;
-                  let communityPath = (repoID === DEFAULT_REPOSITORY) ? '' : '/c/' + repoID;
+                  let communityPath = (repoID === DEFAULT_REPOSITORY) ? '' : '/c/' + repoID + '/page';
                   let title = endpoints[i].title;
                   let endpointsURL = endpoints[i].url;
                   if (endpoints[i].is_main_layout) {
