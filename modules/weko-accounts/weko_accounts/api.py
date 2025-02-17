@@ -19,7 +19,7 @@ from invenio_db import db
 from weko_user_profiles.models import UserProfile
 from werkzeug.local import LocalProxy
 
-from .models import ShibbolethUser
+from .models import ShibbolethUser,Role
 
 _datastore = LocalProxy(lambda: current_app.extensions['security'].datastore)
 
@@ -276,10 +276,88 @@ class ShibUser(object):
         if not check_role:
             return error
 
-        # ! NEED RELATION SHIB_ATTR
-        # check_license, error = self.valid_site_license()
-        # if not check_license:
-        #     return error
+        # WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPSがTrueのときSHIB_ATTR_IS_MEMBER_OFの情報に合わせる
+        if current_app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS']:
+            try:
+                shib_attr_is_member_of = self.shib_attr.get('SHIB_ATTR_IS_MEMBER_OF', [])
+                if shib_attr_is_member_of:
+                    # SHIB_ATTR_IS_MEMBER_OFの情報を取得
+                    member_of_list = shib_attr_is_member_of.split(';')
+                    print("SHIB_ATTR_IS_MEMBER_OF:", member_of_list)
+
+                    # accounts_roleテーブルの情報を取得
+                    existing_roles = {role.name for role in Role.query.all()}
+                    print("Existing roles in accounts_role table:", existing_roles)
+
+                    # 差異があった場合に更新
+                    if set(member_of_list) != existing_roles:
+                        try:
+                            with db.session.begin_nested():
+                                # 設定辞書を取得
+                                config = current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT']
+                                prefix = config['prefix']
+                                role_mapping = config['role_mapping']
+
+                                # 既存のロールを更新または追加
+                                for role_name in member_of_list:
+                                    # ロール名を変換
+                                    mapped_role_name = role_mapping.get(role_name[len(prefix) + 1:], role_name)
+                                    role = Role.query.filter_by(name=mapped_role_name).first()
+                                    if role:
+                                        role.description = ""  # 必要に応じて説明を更新
+                                    else:
+                                        db.session.add(Role(name=mapped_role_name, description=""))
+
+                                # 不要なロールを削除
+                                for role_name in existing_roles:
+                                    if role_name not in member_of_list:
+                                        role_to_remove = Role.query.filter_by(name=role_name).one()
+                                        db.session.delete(role_to_remove)
+
+                                db.session.commit()
+                        except Exception as ex:
+                            current_app.logger.error(ex)
+                            db.session.rollback()
+                            return str(ex)
+                else:
+                    # TODO: IDPのEntityIDを取得し、設定値の辞書からそのEntityIDに対応するロールを取得し、そのロールを割り当てる
+                    try:
+                        # IDPのEntityIDを取得
+                        idp_entity_id = self.shib_attr.get('WEKO_ACCOUNTS_IDP_ENTITY_ID')
+                        if not idp_entity_id:
+                            raise KeyError('WEKO_ACCOUNTS_IDP_ENTITY_ID is missing in shib_attr')
+
+                        # 設定値の辞書からそのEntityIDに対応するロールを取得
+                        default_roles = current_app.config['WEKO_ACCOUNTS_GAKUNIN_DEFAULT_GROUP_MAPPING'].get(idp_entity_id, [])
+                        if not default_roles:
+                            raise KeyError(f'No roles found for IDP Entity ID: {idp_entity_id}')
+
+                        # 取得したロールを割り当てる
+                        with db.session.begin_nested():
+                            for role_name in default_roles:
+                                role = Role.query.filter_by(name=role_name).first()
+                                if role:
+                                    role.description = ""  # 必要に応じて説明を更新
+                                else:
+                                    db.session.add(Role(name=role_name, description=""))
+                            db.session.commit()
+                    except KeyError as ke:
+                        current_app.logger.error(f"Missing key in shib_attr: {ke}")
+                        return str(ke)
+                    except Exception as ex:
+                        current_app.logger.error(f"Unexpected error: {ex}")
+                        return str(ex)
+            except KeyError as ke:
+                current_app.logger.error(f"Missing key in shib_attr: {ke}")
+                return str(ke)
+            except Exception as ex:
+                current_app.logger.error(f"Unexpected error: {ex}")
+                return str(ex)
+
+    # ! NEED RELATION SHIB_ATTR
+    # check_license, error = self.valid_site_license()
+    # if not check_license:
+    #     return error
 
         return None
 
