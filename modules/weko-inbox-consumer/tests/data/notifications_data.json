@@ -1,0 +1,58 @@
+[
+    {
+        "audience":{
+            "id": "1",
+            "type": "Person"
+        },
+        "object":{
+            "id":"http://records/1"
+        },
+        "id": "test_notification1",
+        "target":{
+            "id":"http://test.com"
+        },
+        "type": ["action1"]
+    },
+    {
+        "audience":{
+            "id": "1",
+            "type": "Person"
+        },
+        "object":{
+            "id":"http://records/2"
+        },
+        "id": "test_notification2",
+        "target":{
+            "id":"http://test.com"
+        },
+        "type": ["action1"]
+    },
+    {
+        "audience":{
+            "id": "2",
+            "type": "Person"
+        },
+        "object":{
+            "id":"http://records/3"
+        },
+        "id": "test_notification3",
+        "target":{
+            "id":"http://test.com"
+        },
+        "type": ["action1"]
+    },
+    {
+        "audience":{
+            "id": "1",
+            "type": "Person"
+        },
+        "object":{
+            "id":"http://records/4"
+        },
+        "id": "test_notification4",
+        "target":{
+            "id":"http://test.com"
+        },
+        "type": ["action2"]
+    }
+]

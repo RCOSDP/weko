@@ -1,0 +1,30 @@
+<div class="row">
+    <div class="col">
+        <h2>Metadata for posted notification</h2>
+        <h4>Activity ID</h4>
+        <p>{{ if ne .Notification.ActivityId "" }}{{ .Notification.ActivityId }} {{ else }} n/a {{ end }}</p>
+
+        <h4>Notification URL (this page)</h4>
+        <p>{{ .Notification.Url }}</p>
+
+        <h4>Created</h4>
+        <p>{{ .Notification.FormattedTimestamp }}</p>
+
+        <h4>Sender</h4>
+        <p>{{ .Notification.Sender }}</p>
+
+        <h4>HTTP Response Code</h4>
+        <p>{{ .Notification.HttpResponseCode }}</p>
+
+        <h4>JSON-LD Process Log</h4>
+        <p>{{ .Notification.ProcessLog }}</p>
+
+        {{ .Notification.HTMLFormattedHttpHeaders }}
+    </div>
+    <div class="col">
+        <h2>Payload</h2>
+        {{ .Notification.HTMLFormattedPayload }}
+    </div>
+</div>
+
+

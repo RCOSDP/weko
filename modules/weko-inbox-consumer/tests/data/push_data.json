@@ -1,0 +1,20 @@
+[
+    {
+        "cite-as":"http://cite-as",
+        "metadata":{
+            "json":"http://meta_json",
+            "bibtex":"http://meta_bibtex",
+            "oai_server":"http://meta_format"
+        },
+        "author":"http://author"
+    },
+    {
+        "cite-as":"http://cite-as2",
+        "metadata":{
+            "json":"http://meta_json2",
+            "bibtex":"http://meta_bibtex2",
+            "oai_server":"http://meta_format2"
+        },
+        "author":"http://author2"
+    }
+]

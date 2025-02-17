@@ -97,6 +97,12 @@ CSL_JSTEMPLATE_LOADING = os.path.join(CSL_JSTEMPLATE_DIR, 'loading.html')
 CSL_JSTEMPLATE_TYPEAHEAD = os.path.join(CSL_JSTEMPLATE_DIR, 'typeahead.html')
 
 RECORDS_UI_ENDPOINTS = dict(
+    recid_signposting=dict(
+        pid_type='recid',
+        route='/records/<pid_value>',
+        view_imp='weko_signpostingserver.api.requested_signposting',
+        methods=['HEAD']
+    ),
     recid=dict(
         pid_type='recid',
         route='/records/<pid_value>',
