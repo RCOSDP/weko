@@ -51,7 +51,7 @@
           {%- else %}
             {%- set param = '&q=0' -%}
           {%- endif %}
-          <h3 class="panel-title"><span class="toggle" onclick="toggleContent(this);" style="cursor: pointer;">▶ </span><a id="index-main-link" href="/search?page=1&size=20&search_type=2{{param}}">{{_('Index Tree')}}</a></h3>
+          <h3 class="panel-title"><span class="toggle" onclick="toggleContent(this);" style="cursor: pointer;">▼ </span><a id="index-main-link" href="/search?page=1&size=20&search_type=2{{param}}">{{_('Index Tree')}}</a></h3>
       </div>
       <div id="index-height" name="index-height" hidden>{{ height }}</div>
       <div class="panel-body index-body" id="index-background" style="overflow: auto;">
@@ -85,7 +85,7 @@
         }
         mainLink.style.display = 'inline';
         indexBackground.style.overflow = 'auto';
-        element.innerHTML = "▶ " + element.innerHTML.slice(2);
+        element.innerHTML = "▼ " + element.innerHTML.slice(2);
       } else {
         indexBox[0].style.width = '50px';
         if (displayWidht > 768) {
@@ -96,7 +96,7 @@
         boxContent[0].style.display = 'none';
         mainLink.style.display = 'none';
         indexBackground.style.overflow = 'hidden';
-        element.innerHTML = "▼ " + element.innerHTML.slice(2);
+        element.innerHTML = "▶ " + element.innerHTML.slice(2);
       }
     }
   </script>
