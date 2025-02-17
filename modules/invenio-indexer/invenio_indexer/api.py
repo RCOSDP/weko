@@ -185,6 +185,7 @@ class RecordIndexer(object):
         :param dict es_bulk_kwargs: Passed to
             :func:`elasticsearch:elasticsearch.helpers.bulk`.
         """
+        from weko_deposit.utils import update_pdf_contents_es
         success = 0
         fail = 0
         self.count = 0
@@ -208,15 +209,18 @@ class RecordIndexer(object):
                 es_bulk_kwargs = es_bulk_kwargs or {}
                 with consumer:
                     try:
+                        messages = list(consumer.iterqueue())
+                        ids = [message.decode().get("id") for message in messages]
                         _success,_fail  = bulk(
                             self.client,
-                            self._actionsiter(consumer.iterqueue(),with_deleted=with_deleted),
+                            self._actionsiter(messages,with_deleted=with_deleted),
                             stats_only=True,
                             request_timeout=req_timeout,
                             # raise_on_error=True,
                             # raise_on_exception=True,
                             **es_bulk_kwargs
                         )
+                        update_pdf_contents_es(ids)
                         success = success + _success
                         fail = fail + _fail
                     except BulkIndexError as be:
@@ -237,9 +241,12 @@ class RecordIndexer(object):
                                 # raise_on_exception=True,
                                 **es_bulk_kwargs
                             )
+                            update_pdf_contents_es(error_ids)
                             success = success + _success
                             fail = fail + _fail
                         except BulkIndexError as be2:
+                            success_retrys = list(set(error_ids)-set([error['index']['_id'] for error in be2.errors]))
+                            update_pdf_contents_es(success_retrys)
                             success = success + (len(error_ids)-len(be2.errors))
                             fail = fail + len(be2.errors)
                             for error in be2.errors:
@@ -260,6 +267,7 @@ class RecordIndexer(object):
                                 # raise_on_exception=True,
                                 **es_bulk_kwargs
                         )
+                        update_pdf_contents_es(error_ids)
                         success = success + _success
                         fail = fail + _fail
                     except ConnectionTimeout as ce:

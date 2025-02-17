@@ -88,6 +88,7 @@ services:
       - WEKO_RECORDS_UI_SECRET_KEY="secret"
       - SECRET_KEY="CHANGE ME"
       - WTF_CSRF_SECRET_KEY="CHANGE ME"
+      - TIKA_JAR_FILE_PATH=/code/tika/tika-app-2.6.0.jar
     volumes:
       - weko3_data:/var/tmp
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
@@ -212,6 +213,7 @@ services:
       - INVENIO_DB_POOL_CLASS=NullPool
       - GOOGLE_TRACKING_ID_SYSTEM=UA-86504114-1
       - GOOGLE_TRACKING_ID_USER=
+      - TIKA_JAR_FILE_PATH=/code/tika/tika-app-2.6.0.jar
     volumes:
       - weko3_data:/var/tmp
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static

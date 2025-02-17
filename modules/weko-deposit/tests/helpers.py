@@ -9,7 +9,9 @@ from invenio_pidstore import current_pidstore
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, RecordIdentifier
 from invenio_pidrelations.models import PIDRelation
 from weko_records.api import ItemsMetadata, WekoRecord
-from weko_deposit.api import WekoDeposit,WekoRecord
+from weko_deposit.api import WekoIndexer, WekoDeposit, WekoRecord
+from invenio_files_rest.models import Bucket, ObjectVersion
+from invenio_records_files.models import RecordsBuckets
 
 
 def json_data(filename):
@@ -97,3 +99,499 @@ def logout(app,client):
     with app.test_request_context():
         logout_url = url_for("security.logout")
     client.get(logout_url)
+
+def create_record_with_pdf(rec_uuid, recid):
+    indexer = WekoIndexer()
+    indexer.get_es_index()
+    record_data = {
+        "_oai": {"id": f"oai:weko3.example.org:{recid}","sets": ["1732762571081"]},
+        "path": ["1732762571081"],
+        "owner": "1",
+        "recid": str(recid),
+        "title": ["test"],
+        "pubdate": {"attribute_name": "PubDate","attribute_value": "2024-12-06"},
+        "_buckets": {"deposit": "42bd95d5-8b69-4675-975c-8ebeb0894ed6"},
+        "_deposit": {"id": str(recid),"owners": [1],"status": "draft","created_by": 1,"owners_ext": {"email": "wekosoftware@nii.ac.jp","username": None,"displayname": "sysadmin user"}},
+        "item_title": "test",
+        "author_link": [],
+        "item_type_id": "15",
+        "publish_date": "2024-12-06",
+        "control_number": str(recid),
+        "publish_status": "2",
+        "weko_shared_id": -1,
+        "item_1617186331708": {"attribute_name": "Title","attribute_value_mlt": [{"subitem_title": "test","subitem_title_language": "ja"}]},
+        "item_1617258105262": {"attribute_name": "Resource Type","attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794","resourcetype": "conference paper"}]},
+        "item_1617605131499": {
+            "attribute_name": "File",
+            "attribute_type": "file",
+            "attribute_value_mlt": [
+                {
+                    "url": {
+                        "url": f"https://192.168.56.134/record/{recid}/files/test_file_82K.pdf"
+                    },
+                    "date": [
+                        {
+                            "dateType": "Available",
+                            "dateValue": "2024-12-06"
+                        }
+                    ],
+                    "format": "application/pdf",
+                    "filename": "test_file_82K.pdf",
+                    "filesize": [
+                        {
+                            "value": "81 KB"
+                        }
+                    ],
+                    "accessrole": "open_access",
+                    "version_id": ""
+                },
+                {
+                    "url": {
+                        "url": f"https://192.168.56.134/record/{recid}/files/test_file_1.2M.pdf"
+                    },
+                    "date": [
+                        {
+                            "dateType": "Available",
+                            "dateValue": "2024-12-06"
+                        }
+                    ],
+                    "format": "application/pdf",
+                    "filename": "test_file_1.2M.pdf",
+                    "filesize": [
+                        {
+                            "value": "81 KB"
+                        }
+                    ],
+                    "accessrole": "open_access",
+                    "version_id": ""
+                },
+                {
+                    "url": {
+                        "url": f"https://weko3.example.org/record/{recid}/files/test.png"
+                    },
+                    "date": [
+                    {
+                        "dateType": "Available",
+                        "dateValue": "2024-12-02"
+                    }
+                    ],
+                    "format": "image/png",
+                    "filename": "test.png",
+                    "filesize": [
+                    {
+                        "value": "41 KB"
+                    }
+                    ],
+                    "mimetype": "image/png",
+                    "accessrole": "open_access",
+                    "version_id": "9cd56273-ccb5-420e-94e0-7d29dbaff777",
+                    "displaytype": "preview"
+                },
+                {
+                    "version_id": "a5c67cff-f40c-41b6-9db6-0b7651143775",
+                    "filename": "not_exist.pdf",
+                    "filesize": [
+                        {
+                            "value": "81 KB"
+                        }
+                    ],
+                    "format": "application/pdf",
+                    "date": [
+                        {
+                            "dateValue": "2024-12-06",
+                            "dateType": "Available"
+                        }
+                    ],
+                    "accessrole": "open_access",
+                    "url": {
+                        "url": f"https://192.168.56.134/record/{recid}/files/not_exist.pdf"
+                    },
+                    "mimetype": "application/pdf"
+                },
+            ]
+        },
+        "relation_version_is_last": True
+    }
+    es_data = {
+        "file": {
+            "URI": [
+                {"value": f"https://192.168.56.134/record/{recid}/files/test_file_82K.pdf"},
+                {"value": f"https://192.168.56.134/record/{recid}/files/test_file_1.2M.pdf"},
+                {"value": f"https://192.168.56.134/record/{recid}/files/test.png"},
+                {"value": f"https://192.168.56.134/record/{recid}/files/not_exist.pdf"},
+            ],
+            "mimeType": [
+                "application/pdf",
+                "application/pdf",
+                "image/png",
+                "application/pdf",
+            ],
+            "date": [
+                {"dateType": "fileDate.fileDateType"},
+                {"dateType": "fileDate.fileDateType"},
+                {"dateType": "fileDate.fileDateType"},
+                {"dateType": "fileDate.fileDateType"},
+            ],
+            "extent": [
+                "81 KB",
+                "81 KB",
+                "41 KB",
+                "81 KB",
+            ],
+            "version": []
+        },
+        "title": ["test"],
+        "type": ["conference paper"],
+        "control_number": str(recid),
+        "_oai": {"id": f"oai:weko3.example.org:{recid}","sets": ["1732762571081"]},
+        "_item_metadata": {
+            "pubdate": {"attribute_name": "PubDate","attribute_value": "2024-12-06"},
+            "item_1617186331708": {"attribute_name": "Title","attribute_value_mlt": [{"subitem_title": "test","subitem_title_language": "ja"}]},
+            "item_1617605131499": {
+                "attribute_name": "File",
+                "attribute_type": "file",
+                "attribute_value_mlt": [
+                    {
+                        "version_id": "6a2502c3-7139-4cb8-901e-f97ffddf3097",
+                        "filename": "test_file_82K.pdf",
+                        "filesize": [
+                            {
+                                "value": "81 KB"
+                            }
+                        ],
+                        "format": "application/pdf",
+                        "date": [
+                            {
+                                "dateValue": "2024-12-06",
+                                "dateType": "Available"
+                            }
+                        ],
+                        "accessrole": "open_access",
+                        "url": {
+                            "url": f"https://192.168.56.134/record/{recid}/files/test_file_82K.pdf"
+                        },
+                        "mimetype": "application/pdf"
+                    },
+                    {
+                        "version_id": "a5c67cff-f40c-41b6-9db6-0b7651143775",
+                        "filename": "test_file_1.2M.pdf",
+                        "filesize": [
+                            {
+                                "value": "81 KB"
+                            }
+                        ],
+                        "format": "application/pdf",
+                        "date": [
+                            {
+                                "dateValue": "2024-12-06",
+                                "dateType": "Available"
+                            }
+                        ],
+                        "accessrole": "open_access",
+                        "url": {
+                            "url": f"https://192.168.56.134/record/{recid}/files/test_file_1.2M.pdf"
+                        },
+                        "mimetype": "application/pdf"
+                    },
+                    {
+                        "url": {
+                        "url": f"https://weko3.example.org/record/{recid}/files/test.png"
+                        },
+                        "date": [
+                        {
+                            "dateType": "Available",
+                            "dateValue": "2024-12-02"
+                        }
+                        ],
+                        "format": "image/png",
+                        "filename": "test.png",
+                        "filesize": [
+                        {
+                            "value": "41 KB"
+                        }
+                        ],
+                        "mimetype": "image/png",
+                        "accessrole": "open_access",
+                        "version_id": "9cd56273-ccb5-420e-94e0-7d29dbaff777",
+                        "displaytype": "preview"
+                    },
+                    {
+                        "version_id": "a5c67cff-f40c-41b6-9db6-0b7651143775",
+                        "filename": "not_exist.pdf",
+                        "filesize": [
+                            {
+                                "value": "81 KB"
+                            }
+                        ],
+                        "format": "application/pdf",
+                        "date": [
+                            {
+                                "dateValue": "2024-12-06",
+                                "dateType": "Available"
+                            }
+                        ],
+                        "accessrole": "open_access",
+                        "url": {
+                            "url": f"https://192.168.56.134/record/{recid}/files/not_exist.pdf"
+                        },
+                        "mimetype": "application/pdf"
+                    },
+                ]
+            },
+            "item_1617258105262": {"attribute_name": "Resource Type","attribute_value_mlt": [{"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"}]},
+            "item_title": "test",
+            "item_type_id": "15",
+            "control_number": str(recid),
+            "author_link": [],
+            "_oai": {"id": f"oai:weko3.example.org:{recid}","sets": ["1732762571081"]},
+            "weko_shared_id": -1,
+            "owner": "1",
+            "publish_date": "2024-12-06",
+            "title": ["test"],
+            "relation_version_is_last": True,
+            "path": ["1732762571081"],
+            "publish_status": "2"
+        },
+        "itemtype": "デフォルトアイテムタイプ（フル）",
+        "publish_date": "2024-12-06",
+        "author_link": [],
+        "weko_creator_id": "1",
+        "weko_shared_id": -1,
+        "path": [
+            "1732762571081"
+        ],
+        "publish_status": "2",
+        "_created": "2024-12-06T02:27:18.553183+00:00",
+        "_updated": "2024-12-06T02:27:39.552181+00:00",
+        "content": [
+            {
+                "version_id": "a5c67cff-f40c-41b6-9db6-0b7651143775",
+                "filename": "test_file_1.2M.pdf",
+                "filesize": [
+                    {
+                        "value": "81 KB"
+                    }
+                ],
+                "format": "application/pdf",
+                "date": [
+                    {
+                        "dateValue": "2024-12-06",
+                        "dateType": "Available"
+                    }
+                ],
+                "accessrole": "open_access",
+                "url": {
+                    "url": f"https://192.168.56.134/record/{recid}/files/test_file_1.2M.pdf"
+                },
+                "mimetype": "application/pdf",
+                "attachment": {
+                    "content": ""
+                }
+            },
+            {
+                "version_id": "6a2502c3-7139-4cb8-901e-f97ffddf3097",
+                "filename": "test_file_82K.pdf",
+                "filesize": [
+                    {
+                        "value": "81 KB"
+                    }
+                ],
+                "format": "application/pdf",
+                "date": [
+                    {
+                        "dateValue": "2024-12-06",
+                        "dateType": "Available"
+                    }
+                ],
+                "accessrole": "open_access",
+                "url": {
+                    "url": f"https://192.168.56.134/record/{recid}/files/test_file_82K.pdf"
+                },
+                "mimetype": "application/pdf",
+                "attachment": {
+                    "content": ""
+                }
+            },
+            {
+                "url": {
+                    "url": f"http://localhost/record/{recid}/files/test.png"
+                },
+                "date": [
+                {
+                    "dateType": "Available",
+                    "dateValue": "2024-12-02"
+                }
+                ],
+                "format": "image/png",
+                "filename": "test.png",
+                "filesize": [
+                {
+                    "value": "41 KB"
+                }
+                ],
+                "mimetype": "image/png",
+                "accessrole": "open_access",
+                "version_id": "9cd56273-ccb5-420e-94e0-7d29dbaff777",
+                "displaytype": "preview",
+                "attachment": {}
+            },
+            {
+                "version_id": "6a2502c3-7139-4cb8-901e-f97ffddf3097",
+                "filename": "not_exist.pdf",
+                "filesize": [
+                    {
+                        "value": "81 KB"
+                    }
+                ],
+                "format": "application/pdf",
+                "date": [
+                    {
+                        "dateValue": "2024-12-06",
+                        "dateType": "Available"
+                    }
+                ],
+                "accessrole": "open_access",
+                "url": {
+                    "url": f"https://192.168.56.134/record/{recid}/files/not_exist.pdf"
+                },
+                "mimetype": "application/pdf",
+                "attachment": {
+                    "content": ""
+                }
+            },
+        ]
+    }
+    
+    item_metadata = {
+        "id": str(recid),
+        "pid":{"type":"depid","value":str(recid),"revision_id":0},
+        "lang": "ja", "owner": "1",
+        "title":"test",
+        "owners":[1],"status":"published","$schema":"/items/jsonschema/1",
+        "pubdate":"2024-12-06","created_by":1,"shared_user_id":-1,
+        "item_1617186331708":[{"subitem_title": "test","subitem_title_language": "ja"}],
+        "item_1617258105262":[{"resourceuri": "http://purl.org/coar/resource_type/c_5794","resourcetype": "conference paper"}],
+        "item_1617605131499":[
+            {
+                "url": {
+                    "url": f"https://192.168.56.134/record/{recid}/files/test_file_82K.pdf"
+                },
+                "date": [
+                    {
+                        "dateType": "Available",
+                        "dateValue": "2024-12-06"
+                    }
+                ],
+                "format": "application/pdf",
+                "filename": "test_file_82K.pdf",
+                "filesize": [
+                    {
+                        "value": "81 KB"
+                    }
+                ],
+                "accessrole": "open_access",
+                "version_id": ""
+            },
+            {
+                "url": {
+                    "url": f"https://192.168.56.134/record/{recid}/files/test_file_1.2M.pdf"
+                },
+                "date": [
+                    {
+                        "dateType": "Available",
+                        "dateValue": "2024-12-06"
+                    }
+                ],
+                "format": "application/pdf",
+                "filename": "test_file_1.2M.pdf",
+                "filesize": [
+                    {
+                        "value": "81 KB"
+                    }
+                ],
+                "accessrole": "open_access",
+                "version_id": ""
+            },
+            {
+                "url": {
+                    "url": f"https://weko3.example.org/record/{recid}/files/test.png"
+                },
+                "date": [
+                {
+                    "dateType": "Available",
+                    "dateValue": "2024-12-02"
+                }
+                ],
+                "format": "image/png",
+                "filename": "test.png",
+                "filesize": [
+                {
+                    "value": "41 KB"
+                }
+                ],
+                "mimetype": "image/png",
+                "accessrole": "open_access",
+                "version_id": "9cd56273-ccb5-420e-94e0-7d29dbaff777",
+                "displaytype": "preview"
+            },
+            {
+                "version_id": "a5c67cff-f40c-41b6-9db6-0b7651143775",
+                "filename": "not_exist.pdf",
+                "filesize": [
+                    {
+                        "value": "81 KB"
+                    }
+                ],
+                "format": "application/pdf",
+                "date": [
+                    {
+                        "dateValue": "2024-12-06",
+                        "dateType": "Available"
+                    }
+                ],
+                "accessrole": "open_access",
+                "url": {
+                    "url": f"https://192.168.56.134/record/{recid}/files/not_exist.pdf"
+                },
+                "mimetype": "application/pdf"
+            }
+        ]
+    }
+    record = WekoRecord.create(record_data, id_=rec_uuid)
+    item = ItemsMetadata.create(item_metadata,id_=rec_uuid)
+    bucket = Bucket.create()
+    RecordsBuckets.create(record=record.model, bucket=bucket)
+    
+    # mini size file
+    mini_filepath = "tests/data/test_files/test_file_82K.pdf"
+    with open(mini_filepath, "rb") as f:
+        obj=ObjectVersion.create(bucket=bucket.id, key='test_file_82K.pdf',stream=f)
+    es_data["_item_metadata"]["item_1617605131499"]["attribute_value_mlt"][0]["version_id"] = obj.version_id
+    es_data["content"][0]["version_id"] = obj.version_id
+    
+    # big size file
+    big_filepath = "tests/data/test_files/test_file_1.2M.pdf"
+    with open(big_filepath, "rb") as f:
+        obj=ObjectVersion.create(bucket=bucket.id, key='test_file_1.2M.pdf',stream=f)
+    es_data["_item_metadata"]["item_1617605131499"]["attribute_value_mlt"][1]["version_id"] = obj.version_id
+    es_data["content"][1]["version_id"] = obj.version_id
+    
+    # Phantom files
+    from six import BytesIO
+    f=BytesIO(b"this is not exist pdf.")
+    obj = ObjectVersion.create(bucket=bucket.id, key="not_exist.pdf",stream=f)
+    es_data["_item_metadata"]["item_1617605131499"]["attribute_value_mlt"][3]["version_id"] = obj.version_id
+    es_data["content"][3]["version_id"] = obj.version_id
+    obj.file.uri = "/not_exist_dir"+str(recid)
+    db.session.merge(obj.file)
+    db.session.commit()
+    indexer.upload_metadata(es_data,rec_uuid,1)
+    
+    pdf_files = {}
+    # pdfファイル複数渡す
+    deposit = WekoDeposit.get_record(rec_uuid)
+    for file in deposit.files:
+        print(f"file:{file.obj.key},mimetype:{file.obj.mimetype}")
+        if file.obj.mimetype == "application/pdf":
+            pdf_files[file.obj.key] = file
+    return pdf_files, deposit
