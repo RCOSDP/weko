@@ -26,6 +26,7 @@ import re
 import shutil
 import sys
 import traceback
+import requests
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime
@@ -73,27 +74,39 @@ def get_workspace_itemlist():
 
 
         # 2,ESからアイテム一覧取得処理
+        # invenio_api_url = "https://192.168.56.106/api/records/?search_type=0&q=&page=1&size=20&sort=controlnumber&timestamp=1739758780268
+        invenio_api_url = "https://192.168.56.106/api/records/"
+        headers = {"Accept": "application/json"}
+        headers.update({"Cookie": "; ".join([f"{key}={value}" for key, value in request.cookies.items()])})
+
+        response = requests.get(invenio_api_url, headers=headers)
+        records_data = response.json()
+        # print("=======records_data start=======")
+        # print(records_data)
+        # print("=======records_data end=======")
+
         esResult = get_es_itemlist(jsonCondition)
         data = json.loads(esResult)
         # →ループ処理
-        for hit in data['hits']['hits']:
+        for hit in records_data['hits']['hits']:
             # レコードID
-            recid = hit['_id']
+            recid = hit['id']
+            print(recid)
             # uuid
-            uuid = hit['_id']
-            # print(recid)
+            # uuid = hit['id']
+            # print(uuid)
 
             # 3,お気に入り既読未読ステータス取得処理
             stsRes = get_workspace_status_management(recid)
 
             # 4,アクセス数取得処理
             # 6,ダウンロード数取得処理
-            accessCnt_downloadCnt = get_accessCnt_downloadCnt(uuid)
-            accessCnt = accessCnt_downloadCnt[0]
-            fileDownloadCnt = accessCnt_downloadCnt[1]
+            accessCnt_downloadCnt = get_accessCnt_downloadCnt(recid)
+            # accessCnt = accessCnt_downloadCnt[0]
+            # fileDownloadCnt = accessCnt_downloadCnt[1]
 
             # 5,アイテムステータス取得処理
-            itemSts = get_item_status(recid)
+            # itemSts = get_item_status(recid)
 
         # 7,ユーザー名と所属情報取得処理
         userInfo = get_userNm_affiliation()

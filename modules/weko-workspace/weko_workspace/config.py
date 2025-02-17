@@ -24,8 +24,9 @@
 WEKO_WORKSPACE_BASE_TEMPLATE = 'weko_workspace/workspace_base.html'
 """Default base template for the demo page."""
 
-
 # Back-end variable definition
+WEKO_WORKSPACE_PID_TYPE = 'recid'
+"""Get object_uuid."""
 
 # Error message variable definition
 

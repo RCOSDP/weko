@@ -131,7 +131,6 @@ def get_workspace_status_management(recid:int):
     isFavoritedSts = False
     isRead = True
 
-
     user_id = current_user.id
 
 
@@ -143,7 +142,7 @@ def get_accessCnt_downloadCnt (item_id:str):
     """Get access count and download count of item.
 
     Arguments:
-        item_id {string} -- uuid of item
+        item_id {string} -- recid of item
 
     Returns:
         [tuple] -- access count and download count
@@ -152,11 +151,14 @@ def get_accessCnt_downloadCnt (item_id:str):
 
     """
     # print("======workspace def get_access_cnt(recid:int): ======")
+    
+    uuid = PersistentIdentifier.get(current_app.config['WEKO_WORKSPACE_PID_TYPE'],item_id).object_uuid
+    time = None
 
-    result = StatisticMail.get_item_information(item_id,datetime.now().strftime("%Y/%m/%d"),"")
+    result = StatisticMail.get_item_information(uuid,time,"")
 
     accessCnt = int(float(result["detail_view"]))
-    
+
     downloadCnt = int(sum(float(value) for value in result["file_download"].values()))
 
     return (accessCnt,downloadCnt)
@@ -199,6 +201,6 @@ def get_userNm_affiliation():
     
     
     """Get user affiliation information"""
-    # TODO 外部サービスを参照する必要。
+    # TODO 外部サービスを参照する必要。取得先確認待ち。
 
     return (userNm,affiliation)
