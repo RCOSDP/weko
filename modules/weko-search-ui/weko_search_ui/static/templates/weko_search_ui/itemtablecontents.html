@@ -1,4 +1,16 @@
 <div ng-repeat="record in vm.invenioSearchResults.hits.hits track by $index">
+  <span ng-if="record.metadata.heading!='' && ($index==0 || record.metadata.heading!=vm.invenioSearchResults.hits.hits[$index-1].metadata.heading)">
+    <div class="panel panel-info">
+      <div class="panel-heading">
+        <div class="form-inline">
+          {{record.metadata.heading}}
+        </div>
+      </div>
+    </div>
+  </span>
+  <span ng-if="record.metadata.heading=='' && $index!=0">
+    {{record.metadata.heading=vm.invenioSearchResults.hits.hits[$index-1].metadata.heading;""}}
+  </span>
   <table cellspacing="0" cellpadding="0" border="0" width="100%">
     <tr>
       <td ng-hide="!record.metadata._thumbnail" class="fitwidth" style="vertical-align: top;">
@@ -6,18 +18,6 @@
           alt="{{record.metadata._thumbnail.thumbnail_label}}" width="{{record.metadata._thumbnail.thumbnail_width}}">
       </td>
       <td style="vertical-align: top;">
-        <span ng-if="record.metadata.heading!='' && ($index==0 || record.metadata.heading!=vm.invenioSearchResults.hits.hits[$index-1].metadata.heading)">
-          <div class="panel panel-info">
-            <div class="panel-heading">
-              <div class="form-inline">
-                {{record.metadata.heading}}
-              </div>
-            </div>
-          </div>
-        </span>
-        <span ng-if="record.metadata.heading=='' && $index!=0">
-          {{record.metadata.heading=vm.invenioSearchResults.hits.hits[$index-1].metadata.heading;""}}
-        </span>
         <div class="panel border-color-transparent">
           <div class="panel-heading bg-color-white">
             <div class="form-inline">
