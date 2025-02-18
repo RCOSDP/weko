@@ -129,7 +129,7 @@ class CommunityModelView(ModelView):
                 else:
                     model.login_menu_enabled = False
                 the_result = {
-                    "FILE_PATTERN": "Thumbnail file only 'jpeg', 'jpg', 'png', 'gif' format.",
+                    "FILE_PATTERN": "Thumbnail file only 'jpeg', 'jpg', 'png' format.",
                 }
                 fp = request.files.get('thumbnail')
                 if '' != fp.filename:
@@ -141,7 +141,7 @@ class CommunityModelView(ModelView):
                         os.makedirs(directory)
 
                     ext = os.path.splitext(fp.filename)[1].lower()
-                    allowed_extensions = {'.png', '.jpg', '.jpeg', '.gif'}
+                    allowed_extensions = {'.png', '.jpg', '.jpeg'}
                     if ext not in allowed_extensions:
                         raise ValidationError(the_result['FILE_PATTERN'])
                     filename = os.path.join(
@@ -277,7 +277,7 @@ class CommunityModelView(ModelView):
                 else:
                     model.login_menu_enabled = False
                 the_result = {
-                    "FILE_PATTERN": "Thumbnail file only 'jpeg', 'jpg', 'png', 'gif' format.",
+                    "FILE_PATTERN": "Thumbnail file only 'jpeg', 'jpg', 'png' format.",
                 }
                 fp = request.files.get('thumbnail')
                 if '' != fp.filename:
@@ -289,7 +289,7 @@ class CommunityModelView(ModelView):
                         os.makedirs(directory)
 
                     ext = os.path.splitext(fp.filename)[1].lower()
-                    allowed_extensions = {'.png', '.jpg', '.jpeg', '.gif'}
+                    allowed_extensions = {'.png', '.jpg', '.jpeg'}
                     if ext not in allowed_extensions:
                         raise ValidationError(the_result['FILE_PATTERN'])
                     filename = os.path.join(
@@ -499,7 +499,7 @@ class CommunityModelView(ModelView):
         },
     }
     form_extra_fields = {
-        'thumbnail': FileField(),
+        'thumbnail': FileField(description='ファイルタイプ: JPG ,JPEG, PNG'),
         'login_menu_enabled': RadioField('login_menu_enabled', choices=[('False', 'Disabled'), ('True', 'Enabled')] ),
     }
 
