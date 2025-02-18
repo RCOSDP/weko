@@ -153,6 +153,7 @@ services:
       - elasticsearch
       - rabbitmq
       - worker
+      - inbox
     logging:
       driver: "json-file"
       options:
@@ -396,12 +397,16 @@ services:
     build: ./coar-notify-inbox
     ports:
       - "8000:8000"
-    # TODO: ポート条件
     environment:
       - NOTIFY_LDN_INBOX_DB_PATH=/opt/data/ldn_inbox.sqlite
       - NOTIFY_LDN_INBOX_HOST=127.0.0.1
       - NOTIFY_LDN_INBOX_DEBUG=true
       - NOTIFY_LDN_INBOX_PORT=8000
+    volumes:
+      - type: bind
+        source: ./coar-notify-inbox
+        target: /go/src/app
+
 #  kibana:
 #    build:
 #      context: .
