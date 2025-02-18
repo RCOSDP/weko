@@ -71,7 +71,7 @@ def create_blueprint(app, endpoints):
         __name__,
         url_prefix="",
     )
-    
+
     @blueprint.teardown_request
     def dbsession_clean(exception):
         current_app.logger.debug("weko_search_ui dbsession_clean: {}".format(exception))
@@ -81,7 +81,7 @@ def create_blueprint(app, endpoints):
             except:
                 db.session.rollback()
         db.session.remove()
-    
+
 
     for endpoint, options in (endpoints or {}).items():
         if "record_serializers" in options:
@@ -197,7 +197,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         from weko_admin.utils import get_facet_search_query
 
         page = request.values.get("page", 1, type=int)
-        size = request.values.get("size", 20, type=int) 
+        size = request.values.get("size", 20, type=int)
         is_search = request.values.get("is_search", 0 ,type=int ) #toppage and search_page is 1
         community_id = request.values.get("community")
         params = {}
@@ -219,7 +219,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         query = request.values.get("q")
         if query:
             urlkwargs["q"] = query
-        
+
         # Execute search
         weko_faceted_search_mapping = FacetSearchSetting.get_activated_facets_mapping()
         from weko_admin.utils import get_title_facets
@@ -236,7 +236,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     for value in params[param]:
                         q_list.append({ "term": {query_key: value}})
                     search = search.post_filter({"bool": {"must": q_list}})
-                else: 
+                else:
                     search = search.post_filter({"terms": {query_key: params[param]}})
         search_result = search.execute()
         # Generate links for prev/next
@@ -289,7 +289,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             for k in range(len(agp)):
                 if q == agp[k].get("key"):
                     current_idx = {}
-                    _child_indexes = [] 
+                    _child_indexes = []
                     p = {}
                     for path in paths:
                         if path.path == agp[k].get("key"):
@@ -328,6 +328,9 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     "date_range": {"pub_cnt": 0, "un_pub_cnt": 0},
                     "rss_status": rss_status,
                     "comment": p.comment,
+                    "image_name": index_info.image_name,
+                    "image_width": current_app.config['CHILD_INDEX_THUMBNAIL_WIDTH'],
+                    "image_height": current_app.config['CHILD_INDEX_THUMBNAIL_HEIGHT'],
                 }
                 current_idx = nd
                 for _path in is_perm_paths:
@@ -366,6 +369,9 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                         "date_range": {"pub_cnt": 0, "un_pub_cnt": 0},
                         "rss_status": rss_status,
                         "comment": p.comment,
+                        "image_name": index_info.image_name,
+                        "image_width": current_app.config['CHILD_INDEX_THUMBNAIL_WIDTH'],
+                        "image_height": current_app.config['CHILD_INDEX_THUMBNAIL_HEIGHT'],
                     }
                     current_idx = nd
                 _child_indexes = []
