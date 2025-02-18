@@ -27,10 +27,10 @@ func main() {
 }
 
 func runServer() {
-	//http.ListenAndServe(fmt.Sprintf(":%v", config.Port), router)
+	http.ListenAndServe(fmt.Sprintf(":%v", config.Port), router)
 	//TODO: これを使えばhttpsにすることはできる。ただし証明書を用意しないといけない？
-	http.ListenAndServeTLS(fmt.Sprintf(":%v", config.Port),
-							"/etc/inbox_sin/server.crt",
-							"/etc/inbox_sin/server.key",
-							router)
+	// http.ListenAndServeTLS(fmt.Sprintf(":%v", config.Port),
+	// 						"/etc/inbox_sin/server.crt",
+	// 						"/etc/inbox_sin/server.key",
+	// 						router)
 }

@@ -14,5 +14,6 @@ NGINX_PORT = '443'
 
 NGINX_HOST = 'nginx:' + NGINX_PORT
 
-INBOX_URL = 'https://' + NGINX_HOST + '/inbox'
+# INBOX_URL = 'https://' + NGINX_HOST + '/inbox'
+INBOX_URL = 'http://inbox:8000/inbox'
 # nginxのIPに合わせる

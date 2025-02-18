@@ -43,7 +43,7 @@ def check_inbox_publish():
 
     user_id = current_user.get_id()
     inbox = inbox_url()
-    send_cookie = dict()
+    send_cookie = {}
     latest_get = request.cookies.get('LatestGet', None)
     if latest_get:
         latest_get_users = json.loads(latest_get)
@@ -52,24 +52,25 @@ def check_inbox_publish():
             latest_get = latest_get_users[user_id]
         else:
             latest_get = None
-    if (latest_get is None) or \
-        ((datetime.now() - datetime.strptime(latest_get, DATE_FORMAT))
-         .days >= DEFAULT_NOTIFY_RETENTION_DAYS):
-        latest_get = \
-            (datetime.now()-timedelta(days=DEFAULT_NOTIFY_RETENTION_DAYS))\
-            .strftime(DATE_FORMAT)
-    notifications = \
-        get_notification_filter(inbox,
-                                latest_get,
-                                user=user_id,
-                                action=NOTIFY_ACTION.ENDORSEMENT.value,
-                                target=request.host_url
-                                )
-    send_data = list()
+    if (
+        latest_get is None
+            or (datetime.now() - datetime.strptime(latest_get, DATE_FORMAT)).days
+                >= DEFAULT_NOTIFY_RETENTION_DAYS
+    ):
+        latest_get = (
+            datetime.now() - timedelta(days=DEFAULT_NOTIFY_RETENTION_DAYS)
+        ).strftime(DATE_FORMAT)
+
+    notifications = get_notification_filter(
+        inbox, latest_get+"+09:00", user=user_id,
+        action=NOTIFY_ACTION.ENDORSEMENT.value,
+        target=request.host_url
+    )
+    send_data = []
     for notification in notifications:
         record_url = notification['object']['id']
         data = create_push_data(request_signposting(record_url))
-        push_data = dict()
+        push_data = {}
         push_data['title'] = _('Item release')
         push_data['body'] = _('Items awaiting approval have been published.')
         push_data['data'] = data

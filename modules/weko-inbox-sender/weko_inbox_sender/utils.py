@@ -28,7 +28,7 @@ def get_recid_p(recid):
 
 
 def get_records_pid(pid):
-    """Get the uuid of the latest record 
+    """Get the uuid of the latest record
     from the recid without the version number
 
     :param string pid: recid without the version number
@@ -94,11 +94,12 @@ def inbox_url(url=None):
     :rtype: string
     """
     if url is not None:
-        if ('localhost' in url) or (current_app.config['WEB_HOST'] in url):
-            return re.sub('https://(.*)/inbox',
-                          'https://'+current_app.config['NGINX_HOST']+'/inbox',
-                          url
-                          )
+        if ('localhost' in url) or (current_app.config['WEB_HOST'] in url) or get_url_root() in url:
+            return re.sub(
+                'https://(.*)/inbox',
+                current_app.config['INBOX_URL'],
+                url
+            )
         else:
             return url
     else:
