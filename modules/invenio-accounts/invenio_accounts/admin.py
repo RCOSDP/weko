@@ -158,7 +158,12 @@ class UserView(ModelView):
 
     _system_role = os.environ.get('INVENIO_ROLE_SYSTEM',
                                   'System Administrator')
-
+    _repo_role = os.environ.get('INVENIO_ROLE_REPOSITORY'
+                                'Repository Administrator')
+    _com_role = os.environ.get('INVENIO_ROLE_COMMUNITY',
+                               'Community Administrator')
+    _admin_roles = [_system_role, _repo_role, _com_role]
+    
     @property
     def can_create(self):
         """Check permission for creating."""
@@ -167,12 +172,12 @@ class UserView(ModelView):
     @property
     def can_edit(self):
         """Check permission for Editing."""
-        return True
+        return any(role.name in self._admin_roles for role in current_user.roles)
 
     @property
     def can_delete(self):
         """Check permission for Deleting."""
-        return True
+        return any(role.name in self._admin_roles for role in current_user.roles)
 
 
 class RoleView(ModelView):
