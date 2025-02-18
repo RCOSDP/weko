@@ -45,3 +45,4 @@
 -e /code/modules/weko-inbox-consumer
 -e /code/modules/weko-signpostingserver
 -e /code/modules/weko-signpostingclient
+-e /code/modules/weko-notifications
