@@ -58,7 +58,7 @@ WEKO_ACCOUNTS_STUB_USER_TEMPLATE = 'weko_accounts/shib_user.html'
 WEKO_ACCOUNTS_SHIB_LOGIN_CACHE_TTL = 180
 """Cache default timeout 3 minute"""
 
-WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL = '{}secure/login.php'
+WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL = '{}secure/login.py'
 """Login proxy URL."""
 
 WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP = {
