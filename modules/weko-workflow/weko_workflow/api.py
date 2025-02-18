@@ -356,11 +356,11 @@ class Flow(object):
                 flow_id=flow_id,
                 action_id=action_id).all()
             return flow_action
-    
+
     def get_flow_action_list(self, flow_define_id :int) -> List[_FlowAction]:
-        """ get workflow_flow_action from workflow_workflow.flow_id 
+        """ get workflow_flow_action from workflow_workflow.flow_id
             Args:
-                flow_define_id : int  workflow_workflow.flow_id 
+                flow_define_id : int  workflow_workflow.flow_id
             Eeturns:
                 record list of workflow_flow_action
         """
@@ -811,9 +811,9 @@ class WorkActivity(object):
 
             # Calculate activity_id based on id
             utc_now = datetime.utcnow()
-            current_date = utc_now.strftime("%Y-%m-%d")       
+            current_date = utc_now.strftime("%Y-%m-%d")
             today_count = ActivityCount.query.filter_by(date=current_date).one_or_none()
-            # Cannot use '.with_for_update()'. FOR UPDATE is not allowed 
+            # Cannot use '.with_for_update()'. FOR UPDATE is not allowed
             # with aggregate functions
 
             if today_count:
@@ -822,7 +822,7 @@ class WorkActivity(object):
                 if number > current_app.config['WEKO_WORKFLOW_MAX_ACTIVITY_ID']:
                     raise IndexError('The number is out of range \
                         (maximum is {}, current is {}'.format(current_app.config['WEKO_WORKFLOW_MAX_ACTIVITY_ID'],number))
-                today_count.activity_count = number          
+                today_count.activity_count = number
             else:
                 # The default activity Id of the current day
                 _activty_count = ActivityCount(date=current_date, activity_count=number)
@@ -834,7 +834,7 @@ class WorkActivity(object):
         except SQLAlchemyError as ex:
             raise ex
         except IndexError as ex:
-            raise ex          
+            raise ex
 
         # Activity Id's format
         activity_id_format = current_app.\
@@ -1511,13 +1511,13 @@ class WorkActivity(object):
                         ),
                         and_(
                             _Activity.shared_user_id == self_user_id,
-                            _FlowActionRole.action_user 
+                            _FlowActionRole.action_user
                             != _Activity.activity_login_user,
                             _FlowActionRole.action_user_exclude == '0'
                         ),
                         and_(
                             _Activity.shared_user_id == self_user_id,
-                            ActivityAction.action_handler 
+                            ActivityAction.action_handler
                             != _Activity.activity_login_user
                         ),
                     )
@@ -1583,7 +1583,7 @@ class WorkActivity(object):
 
         Returns:
             _type_: _description_
-        """        
+        """
         is_admin = False
         is_community_admin = False
         # Super admin roles
@@ -1716,7 +1716,7 @@ class WorkActivity(object):
                     )
                 )
         return common_query
-    
+
     @staticmethod
     def _check_community_permission(activity_data, index_ids):
         flag = False
@@ -2770,4 +2770,11 @@ class GetCommunity(object):
         """Get Community by ID."""
         from invenio_communities.models import Community
         c = Community.get(community_id)
+        return c
+
+    @classmethod
+    def get_community_by_root_node_id(cls, root_node_id):
+        """Get Community by ID."""
+        from invenio_communities.models import Community
+        c = Community.get_by_root_node_id(root_node_id)
         return c

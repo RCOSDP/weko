@@ -238,3 +238,34 @@ def get_user_role_ids():
         role_ids = [role.id for role in current_user.roles]
 
     return role_ids
+
+def delete_empty(data):
+    if isinstance(data, dict):
+        result = {}
+        flg = False
+        if len(data) == 0:
+            return flg, result
+        else:
+            for k, v in data.items():
+                not_empty, dd = delete_empty(v)
+                if not_empty:
+                    flg = True
+                    result[k] = dd
+            return flg, result
+    elif isinstance(data, list):
+        result = []
+        flg = False
+        if len(data) == 0:
+            return flg, None
+        else:
+            for d in data:
+                not_empty, dd = delete_empty(d)
+                if not_empty:
+                    flg = True
+                    result.append(dd)
+            return flg, result
+    else:
+        if data:
+            return True, data
+        else:
+            return False, None

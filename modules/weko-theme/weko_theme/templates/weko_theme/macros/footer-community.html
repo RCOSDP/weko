@@ -18,7 +18,7 @@
 # MA 02111-1307, USA.
 #}
 
-{%- from "invenio_communities/macros.html" import community_footer %}
+{%- from "invenio_communities/macros.html" import community_footer with context  %}
 
 {% macro community_footer_widget(render_widgets, community, link, subtitle) %}
   {%- if render_widgets %}
