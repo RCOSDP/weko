@@ -20,7 +20,6 @@
 
 """WEKO3 module docstring."""
 
-import sys
 import traceback
 
 from b2handle.clientcredentials import PIDClientCredentials
@@ -92,7 +91,7 @@ class Handle(object):
             current_app.logger.error(e)
             return None
 
-    def delete_hundle(self, hdl, overwrite=False):
+    def delete_handle(self, hdl, overwrite=False):
         """Delete a handle."""
         current_app.logger.debug("hdl:{0}".format(hdl))
         try:
@@ -101,8 +100,8 @@ class Handle(object):
             client = EUDATHandleClient.instantiate_with_credentials(credential)
 
             current_app.logger.debug(
-                'call delete_hundle({0})'.format(hdl))
-            client.delete_hundle(hdl)
+                'call delete_handle({0})'.format(hdl))
+            client.delete_handle(hdl)
             current_app.logger.info(
                 'Delete successfully handle:{0}'.format(hdl))
             return hdl
@@ -114,9 +113,9 @@ class Handle(object):
             current_app.logger.error(traceback.format_exc())
             return None
         except HandleNotFoundException:
+            """The deleted handle is returned to the caller, and the Notfound also works correctly."""
             current_app.logger.debug(
                 'Handle: {0} is not exists.'.format(hdl))
-            """The deleted handle is returned to the caller, and the Notfound also works correctly."""
             return hdl
         except AttributeError:
             current_app.logger.error('Missing Private Key!')
