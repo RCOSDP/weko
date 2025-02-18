@@ -6,7 +6,7 @@ const urlUpdate = window.location.origin + "/admin/change_list/update";
 const urlDelete = window.location.origin + "/admin/change_list/delete";
 const urlGetList = window.location.origin + "/admin/change_list/get_all";
 const urlGetTreeList = window.location.origin + "/api/tree";
-const urlGetRepositoryList = window.location.origin + "/resync/get_repository";
+const urlGetRepositoryList = window.location.origin + "/admin/resync/get_repository";
 const default_state = {
   status: null,
   repository_id: "",
