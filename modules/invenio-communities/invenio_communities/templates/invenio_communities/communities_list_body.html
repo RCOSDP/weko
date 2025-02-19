@@ -17,6 +17,9 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 #}
+{%- block javascript %}
+  <script src="{{ url_for('static', filename='js/invenio_communities/communities_list.js') }}"></script>
+{%- endblock javascript %}
 
 <div class="communities">
   <div class="row">
@@ -85,11 +88,21 @@
               {% if obj %}
                 <div class="col-sm-12 col-md-6">
                   <div class="well">
-                    <h4>
-                      <a href="{{ url_for('invenio_communities.view', community_id=obj.id, view='weko') }}">{{ obj.title }}</a>
-                    </h4>
-                    <br/>
+                    <div class="title" style="display: flex;">
+                      {% if obj.thumbnail_path is not none and obj.thumbnail_path != "" %}
+                        <img src="{{ obj.thumbnail_path }}" class="thumbnail"
+                        style="margin-right: 10px; max-width: {{ config.COMMUNITIES_LIST_THUMBNAIL_WIDTH }}px;
+                        max-height: {{ config.COMMUNITIES_LIST_THUMBNAIL_HEIGHT }}px;" />
+                      {% endif %}
+                      <h4>
+                        <a href="{{ url_for('invenio_communities.view', community_id=obj.id, view='weko') }}">{{ obj.title }}</a>
+                      </h4>
+                    </div>
+                    <!-- <br/> -->
                     <p>{{ obj.description|striptags|truncate }}</p>
+                    <script>
+                      printCatalogInfo( '{{ obj.catalog_json }}');
+                    </script>
                   </div>
                 </div>
               {% endif %}

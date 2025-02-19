@@ -555,7 +555,7 @@ WEKO_RECORDS_UI_EMAIL_ITEM_KEYS = ['creatorMails', 'contributorMails', 'mails']
 RECORDS_UI_TOMBSTONE_TEMPLATE = 'weko_records_ui/tombstone.html'
 # Setting the template of showing deleted record
 
-WEKO_RECORDS_UI_LANG_DISP_FLG = False 
+WEKO_RECORDS_UI_LANG_DISP_FLG = False
 """ Enable function of switching metadata by language of metadata """
 
 WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE = [
@@ -645,8 +645,17 @@ WEKO_RECORDS_UI_DISPLAY_VERSION_BOX_FLG = True
 WEKO_RECORDS_UI_DISPLAY_EXPORT_BOX_FLG = True
 """ Display Export box on item detail. """
 
-WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = False 
+WEKO_RECORDS_UI_DISPLAY_COMMUNITIES_BOX_FLG = True
+""" Display COMMUNITIES box on item detail. """
+
+WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = False
 """ Display resource type on item detail. """
 
 WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE = True
 """ Display item type name on item detail. """
+
+WEKO_RECORDS_UI_COMMUNITIES_BOX_THUMBNAIL_WIDTH = 50
+""" community thumbnail width in COMMUNITIES BOX. """
+
+WEKO_RECORDS_UI_COMMUNITIES_BOX_THUMBNAIL_HEIGHT = 50
+""" community thumbnail height in COMMUNITIES BOX. """

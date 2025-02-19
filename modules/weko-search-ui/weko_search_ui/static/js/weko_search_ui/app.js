@@ -57,15 +57,14 @@ require([
     var check = setInterval(show, 500);
     function show() {
       if ($('#index_list_length').val() !== undefined && $('#index_list_length').val() !== '' && $('#index_list_length').val() !== null) {
-        page_global.display_list_flg = $('#display_format').val() == 1;
-        if ($('#index_tree_list').length || !page_global.display_list_flg) {
+        if ($('#index_tree_list').length) {
           $("#journal_info").remove();
         } else {
           $("#journal_info").css({ display: "block" });
         }
         clearInterval(check);
         // display image
-        if ($("#thumbnail_img").length > 0 && page_global.display_list_flg) {
+        if ($("#thumbnail_img").length > 0) {
           $("#journal_info_img").show();
           $("#journal_info_img").html($("#thumbnail_img").get(0));
         }
@@ -163,7 +162,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
    * In this process, the search is reflected only in the search results,
    * but in the event [invenio.search.finished] after the search,
    * the search results are also reflected in the facet items.
-   * 
+   *
    * @param {URLSearchParams} search Search Conditions.
    */
   $rootScope.reSearchInvenio = (search) => {
@@ -174,7 +173,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     search.set('sort', $scope.vm.invenioSearchArgs.sort);
     search.set('timestamp',Date.now().toString());
     window.history.pushState(null,document.title,"/search?" + search);
-    
+
     let url = search.get('search_type') == 2 ? "/api/index/" : "/api/records/";
 
     $rootScope.$apply(function() {
@@ -414,7 +413,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
         }else {
           window.facetSearchFunctions.resetFacetData(evt.targetScope.vm.invenioSearchResults.aggregations);
         }
-        
+
     }
   });
 }

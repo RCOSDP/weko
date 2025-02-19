@@ -699,6 +699,7 @@ def community_list():
         'invenio_communities/communities_list.html',
         page=render_page,
         render_widgets=render_widgets,
+        communityModel = Community,
         **ctx)
 
 @blueprint.teardown_request

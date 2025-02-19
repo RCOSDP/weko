@@ -734,3 +734,9 @@ CELERY_TASK_TRACK_STARTED=True
 """ If True the task will report its status as ‘started’ when the task is executed by a worker. """
 WEKO_SEARCH_UI_FACET_LANG_DISP_FLG = False
 """ Enable the Facet Search specified language display feature. """
+
+CHILD_INDEX_THUMBNAIL_WIDTH = 100
+""" child index thumbnail width in result index serch"""
+
+CHILD_INDEX_THUMBNAIL_HEIGHT = 100
+""" child index thumbnail height in result index serch"""
