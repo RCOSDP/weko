@@ -145,6 +145,7 @@ services:
       - /code/modules/weko-inbox-consumer/weko_inbox_consumer.egg-info
       - /code/modules/weko-signpostingserver/weko_signpostingserver.egg-info
       - /code/modules/weko-signpostingclient/weko_signpostingclient.egg-info
+      - /code/modules/weko-notifications/weko_notifications.egg-info
     user: invenio
     links:
       - postgresql
@@ -270,6 +271,11 @@ services:
       - /code/modules/weko-sitemap/weko_sitemap.egg-info
       - /code/modules/invenio-iiif/invenio_iiif.egg-info
       - /code/modules/weko-swordserver/weko_swordserver.egg-info
+      - /code/modules/weko-inbox-sender/weko_inbox_sender.egg-info
+      - /code/modules/weko-inbox-consumer/weko_inbox_consumer.egg-info
+      - /code/modules/weko-signpostingserver/weko_signpostingserver.egg-info
+      - /code/modules/weko-signpostingclient/weko_signpostingclient.egg-info
+      - /code/modules/weko-notifications/weko_notifications.egg-info
     user: invenio
     links:
       - postgresql
@@ -394,18 +400,29 @@ services:
 
   inbox:
     restart: "always"
-    build: ./coar-notify-inbox
+    build:
+      context: ./inbox
+      dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8080:8080"
     environment:
-      - NOTIFY_LDN_INBOX_DB_PATH=/opt/data/ldn_inbox.sqlite
-      - NOTIFY_LDN_INBOX_HOST=127.0.0.1
-      - NOTIFY_LDN_INBOX_DEBUG=true
-      - NOTIFY_LDN_INBOX_PORT=8000
+      - MONGO_DB_URI=mongodb://inbox:ibpass123@mongo:27017
+      - ON_RECEIVE_NOTIFICATION_WEBHOOK_URL=
+      - ALLOWED_ADMIN_ORIGINS=["*"]
+      - ALLOWED_ORIGINS=["*"]
+    links:
+      - mongo
+
+  mongo:
+    restart: "always"
+    image: mongo:7.0.14
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=inbox
+      - MONGO_INITDB_ROOT_PASSWORD=ibpass123
+    ports:
+      - "27017:27017"
     volumes:
-      - type: bind
-        source: ./coar-notify-inbox
-        target: /go/src/app
+      - mongo_data:/data/db
 
 #  kibana:
 #    build:
@@ -429,6 +446,7 @@ volumes:
   conf_data:
   pgsql-data:
   es-data:
+  mongo_data:
 #  letsencrypt_etc:
 #  letsencrypt_html:
 
