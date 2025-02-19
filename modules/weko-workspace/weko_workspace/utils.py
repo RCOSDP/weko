@@ -28,11 +28,12 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 from typing import List, NoReturn, Optional, Tuple, Union
 import traceback
-
 import redis
+import requests
+
 from redis import sentinel
 from celery.task.control import inspect
-from flask import current_app, request, session,jsonify
+from flask import current_app, request, session, jsonify
 from flask_babelex import gettext as _
 from flask_security import current_user
 from invenio_accounts.models import Role, User, userrole
@@ -44,8 +45,11 @@ from invenio_mail.admin import MailSettingView
 from invenio_mail.models import MailConfig
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
-from invenio_pidstore.models import PersistentIdentifier, \
-    PIDDoesNotExistError, PIDStatus
+from invenio_pidstore.models import (
+    PersistentIdentifier,
+    PIDDoesNotExistError,
+    PIDStatus,
+)
 from invenio_pidstore.resolver import Resolver
 from invenio_records.models import RecordMetadata
 from invenio_records_files.models import RecordsBuckets
@@ -57,15 +61,21 @@ from weko_admin.models import Identifier, SiteInfo
 
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
-from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
-    ItemTypes, Mapping
+from weko_records.api import (
+    FeedbackMailList,
+    ItemsMetadata,
+    ItemTypeNames,
+    ItemTypes,
+    Mapping,
+)
 from weko_records.models import ItemType
 from weko_records.serializers.utils import get_full_mapping, get_item_type_name
 from weko_records_ui.models import FilePermission
 from weko_redis import RedisConnection
-from weko_user_profiles.config import \
-    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
-    WEKO_USERPROFILES_POSITION_LIST
+from weko_user_profiles.config import (
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST,
+    WEKO_USERPROFILES_POSITION_LIST,
+)
 from weko_user_profiles.utils import get_user_profile_info
 from werkzeug.utils import import_string
 from weko_deposit.pidstore import get_record_without_version
@@ -74,75 +84,117 @@ from weko_deposit.pidstore import get_record_without_version
 from weko_user_profiles.models import UserProfile
 from weko_admin.utils import StatisticMail
 
+from .models import *
 
-# TODO 2.1.2.1 デフォルト絞込み条件取得処理
+
 def get_workspace_filterCon():
-    default_con = {
-        "name":"guan.shuang",
-    }
+    """Get default conditions of the current login user.
+
+    Arguments:
+        --
+
+    Returns:
+        default_con -- default conditions json
+    """
+    # print("======workspace def get_workspace_filterCon(): ======")
 
     user_id = current_user.id
     # print("user_id " + str(user_id))
 
-    # モデルクラスからデータを取得。
+    default_con = (
+        WorkspaceDefaultConditions.query.filter_by(user_id=current_user.id)
+        .with_entities(WorkspaceDefaultConditions.default_con)
+        .scalar()
+    )
 
+    # print(default_con)
 
     return default_con
 
+
 # TODO 2.1.2.2 ESからアイテム一覧取得処理
-def get_es_itemlist(jsonCondition):
+def get_es_itemlist(jsonCondition:json):
 
-    fake_response = {
-        "took": 5,
-        "timed_out": False,
-        "_shards": {
-            "total": 5,
-            "successful": 5,
-            "skipped": 0,
-            "failed": 0
-        },
-        "hits": {
-            "total": {
-                "value": 2,
-                "relation": "eq"
-            },
-            "max_score": 1.0,
-            "hits": [
-                {
-                    "_index": "your_index_name",
-                    "_type": "_doc",
-                    "_id": "90e81f37-8aa6-4bcd-abac-91d1df25fc45",
-                    "_score": 1.0,
-                    "_source": {
-                        "title": "First Document",
-                        "content": "This is the content of the first document.",
-                        "author": "John Doe",
-                        "date": "2023-10-01"
-                    }
-                },
-            ]
-        }
-    }
-    return json.dumps(fake_response, indent=4)
+    # fake_response = {
+    #     "took": 5,
+    #     "timed_out": False,
+    #     "_shards": {"total": 5, "successful": 5, "skipped": 0, "failed": 0},
+    #     "hits": {
+    #         "total": {"value": 2, "relation": "eq"},
+    #         "max_score": 1.0,
+    #         "hits": [
+    #             {
+    #                 "_index": "your_index_name",
+    #                 "_type": "_doc",
+    #                 "_id": "90e81f37-8aa6-4bcd-abac-91d1df25fc45",
+    #                 "_score": 1.0,
+    #                 "_source": {
+    #                     "title": "First Document",
+    #                     "content": "This is the content of the first document.",
+    #                     "author": "John Doe",
+    #                     "date": "2023-10-01",
+    #                 },
+    #             },
+    #         ],
+    #     },
+    # }
+    # print("======workspace def get_es_itemlist(jsonCondition:json): ======")
+    # print(f"jsonCondition : {jsonCondition}")
+
+    # invenio_api_path = "/api/records/?search_type=0&q=&page=1&size=20&sort=controlnumber&timestamp=1739758780268
+    # invenio_api_path = "/api/records/"
+    invenio_api_path = "/api/worksapce/search"
+    invenio_api_url = request.host_url.rstrip("/") + invenio_api_path
+    headers = {"Accept": "application/json"}
+    response = requests.get(invenio_api_url, headers=headers)
+    records_data = response.json()
+    print("=======records_data start=======")
+    # print(invenio_api_url)
+    print(records_data)
+    print("=======records_data end=======")
+
+    return records_data
 
 
-# TODO 2.1.2.3 お気に入り既読未読ステータス取得処理
-def get_workspace_status_management(recid:int):
-    isFavoritedSts = False
-    isRead = True
+def get_workspace_status_management(recid: str):
+    """Get the favorite status and read status of the item.
+
+    Arguments:
+        recid {string} -- recid of item
+
+    Returns:
+        [tuple] -- the favorite status and read status
+        tuple[0] -- the favorite status
+        tuple[1] -- the read status
+    """
+     
+    # print("======workspace def get_workspace_status_management(): ======")
 
     user_id = current_user.id
+    # print(f"user_id: {user_id}")
+
+    result = (
+        WorkspaceStatusManagement.query.filter_by(user_id=user_id, recid=recid)
+        .with_entities(
+            WorkspaceStatusManagement.is_favorited, WorkspaceStatusManagement.is_read
+        )
+        .first()
+    )
+
+    # if result:
+    #     is_favorited, is_read = result
+    #     print(f"Is Favorited: {is_favorited}, Is Read: {is_read}")
+    # else:
+    #     print("No matching record found.")
+
+    return result
 
 
-    stsRes = (isFavoritedSts,isRead)
-    return stsRes
-
-
-def get_accessCnt_downloadCnt (item_id:str):
+def get_accessCnt_downloadCnt(recid: str):
     """Get access count and download count of item.
 
     Arguments:
-        item_id {string} -- recid of item
+        recid {string} -- recid of item
 
     Returns:
         [tuple] -- access count and download count
@@ -151,23 +203,28 @@ def get_accessCnt_downloadCnt (item_id:str):
 
     """
     # print("======workspace def get_access_cnt(recid:int): ======")
-    
-    uuid = PersistentIdentifier.get(current_app.config['WEKO_WORKSPACE_PID_TYPE'],item_id).object_uuid
+
+    uuid = PersistentIdentifier.get(
+        current_app.config["WEKO_WORKSPACE_PID_TYPE"], recid
+    ).object_uuid
+
     time = None
 
-    result = StatisticMail.get_item_information(uuid,time,"")
+    result = StatisticMail.get_item_information(uuid, time, "")
 
     accessCnt = int(float(result["detail_view"]))
 
     downloadCnt = int(sum(float(value) for value in result["file_download"].values()))
 
-    return (accessCnt,downloadCnt)
+    # print((accessCnt,downloadCnt))
+    return (accessCnt, downloadCnt)
+
 
 # TODO 2.1.2.5 アイテムステータス取得処理
-def get_item_status(recid:int):
+def get_item_status(recid: int):
 
-    itemSts = ""
-
+    # テストデータ
+    itemSts = "Unlinked-testdata"
 
     return itemSts
 
@@ -187,20 +244,18 @@ def get_userNm_affiliation():
 
     # print("======workspace def get_userNm_affiliation(): ======")
     # userNm = "guan.shuang"
-    affiliation= "ivis"
-    
+    affiliation = "ivis-testdata"
+
     """Get user name"""
     userNm = (
-    UserProfile.query
-        .filter_by(user_id=current_user.id)
+        UserProfile.query.filter_by(user_id=current_user.id)
         .with_entities(UserProfile.username)
         .scalar()
     )
 
     userNm = current_user.email if userNm is None else userNm
-    
-    
+
     """Get user affiliation information"""
     # TODO 外部サービスを参照する必要。取得先確認待ち。
 
-    return (userNm,affiliation)
+    return (userNm, affiliation)
