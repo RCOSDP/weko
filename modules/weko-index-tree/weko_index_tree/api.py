@@ -1780,7 +1780,7 @@ class Indexes(object):
             delete_oaiset_setting.delay(id_list)
 
     @classmethod
-    def get_public_indexes_list(cls, target_date=datetime.now(timezone.utc)):
+    def get_public_indexes_list(cls, target_date=None):
         """Get list id of public indexes at target date.
 
         Args:
@@ -1790,6 +1790,8 @@ class Indexes(object):
         Returns:
             list: public index id list
         """
+        if not target_date:
+            target_date=datetime.now(timezone.utc)
         recursive_t = db.session.query(
             Index.parent.label("pid"),
             Index.id.label("cid")
