@@ -91,7 +91,7 @@ class Handle(object):
             current_app.logger.error(e)
             return None
 
-    def delete_handle(self, hde):
+    def delete_handle(self, hdl):
         """Delete a handle."""
         current_app.logger.debug("hdl:{0}".format(hdl))
         try:
