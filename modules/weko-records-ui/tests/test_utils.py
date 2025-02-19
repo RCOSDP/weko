@@ -27,6 +27,7 @@ from weko_records_ui.utils import (
     get_billing_file_download_permission,
     get_list_licence,
     restore,
+    delete_version,
     soft_delete,
     is_billing_item,
     get_groups_price,
@@ -61,7 +62,7 @@ from flask_security.utils import login_user
 from invenio_accounts.testutils import login_user_via_session
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from mock import patch
-from weko_deposit.api import WekoRecord
+from weko_deposit.api import WekoRecord, WekoDeposit
 from weko_records_ui.models import FileOnetimeDownload, FileSecretDownload
 from weko_records.api import ItemTypes,Mapping
 from werkzeug.exceptions import NotFound
@@ -216,6 +217,20 @@ def test_get_min_price_billing_file_download(users):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_billing_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_is_billing_item(app,itemtypes):
     assert is_billing_item(1)==False
+
+
+# def delete_version(recid):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_delete_version -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_delete_version(app, records, users):
+    indexer, results = records
+    record = results[0]["record"]
+    recid = results[0]["recid"]
+
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        delete_version(record.pid.pid_value + '.1')
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid', pid_value=record.pid.pid_value + '.1').first()
+        assert pid.status == PIDStatus.DELETED
 
 # def soft_delete(recid):
 #     def get_cache_data(key: str):

@@ -69,6 +69,7 @@ from weko_user_profiles.config import \
 from weko_user_profiles.utils import get_user_profile_info
 from werkzeug.utils import import_string
 from weko_deposit.pidstore import get_record_without_version
+from weko_schema_ui.models import PublishStatus
 
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, \
@@ -1888,13 +1889,20 @@ def handle_finish_workflow(deposit, current_pid, recid):
             weko_record = WekoRecord.get_record_by_pid(new_deposit.pid.pid_value)
             if weko_record:
                 weko_record.update_item_link(current_pid.pid_value)
-            updated_item.publish(deposit)
-            updated_item.publish(ver_attaching_deposit)
+            updated_item.publish(deposit, PublishStatus.PUBLIC.value)
+            updated_item.publish(ver_attaching_deposit, PublishStatus.PUBLIC.value)
         else:
             # update to record without version ID when editing
             if pid_without_ver:
+                _doi = PersistentIdentifier.query.filter_by(
+                    pid_type='doi',
+                    object_uuid=pid_without_ver.object_uuid,
+                    status=PIDStatus.REGISTERED
+                ).one_or_none()
                 _record = WekoDeposit.get_record(
                     pid_without_ver.object_uuid)
+                _publish_status = _record.get('publish_status', PublishStatus.PUBLIC.value) \
+                    if _doi is None else PublishStatus.PUBLIC.value
                 _deposit = WekoDeposit(_record, _record.model)
                 _deposit['path'] = deposit.get('path', [])
 
@@ -1919,7 +1927,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                         merge_data_to_record_without_version(current_pid, True)
                     maintain_deposit.publish()
                     new_parent_record.commit()
-                    updated_item.publish(new_parent_record)
+                    updated_item.publish(new_parent_record, _publish_status)
                     # update item link info of main record
                     weko_record = WekoRecord.get_record_by_pid(
                         maintain_record.pid.pid_value)
@@ -1937,7 +1945,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                         merge_data_to_record_without_version(current_pid)
                     draft_deposit.publish()
                     new_draft_record.commit()
-                    updated_item.publish(new_draft_record)
+                    updated_item.publish(new_draft_record, PublishStatus.NEW.value)
                     # update item link info of draft record
                     weko_record = WekoRecord.get_record_by_pid(
                         draft_deposit.pid.pid_value)
@@ -1950,7 +1958,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                 if weko_record:
                     weko_record.update_item_link(current_pid.pid_value)
                 parent_record.commit()
-                updated_item.publish(parent_record)
+                updated_item.publish(parent_record, _publish_status)
                 if ".0" in current_pid.pid_value and last_ver:
                     item_id = last_ver.object_uuid
                 else:

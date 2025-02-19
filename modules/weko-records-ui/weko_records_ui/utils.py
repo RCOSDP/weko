@@ -332,6 +332,8 @@ def delete_version(recid):
     latest_version = get_latest_version(id_without_version)
     latest_pid = PersistentIdentifier.query.filter_by(
         pid_type='recid', pid_value=latest_version).first()
+    latest_record = WekoDeposit.get_record(latest_pid.object_uuid)
+    _publish_status = latest_record.get('publish_status', PublishStatus.PUBLIC.value)
     # update parent item
     if is_latest_version:
         pid_without_ver = PersistentIdentifier.query.filter_by(
@@ -352,7 +354,7 @@ def delete_version(recid):
         parent_deposit["relation_version_is_last"] = True
         parent_deposit.publish()
         new_parent_record.commit()
-        updated_item.publish(new_parent_record)
+        updated_item.publish(new_parent_record, _publish_status)
         weko_record = WekoRecord.get_record_by_pid(
             pid_without_ver.pid_value)
         if weko_record:
@@ -377,7 +379,7 @@ def delete_version(recid):
         draft_deposit["relation_version_is_last"] = True
         draft_deposit.publish()
         new_draft_record.commit()
-        updated_item.publish(new_draft_record)
+        updated_item.publish(new_draft_record, _publish_status)
         # update item link info of draft record
         weko_record = WekoRecord.get_record_by_pid(
             draft_deposit.pid.pid_value)
