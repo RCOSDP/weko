@@ -45,7 +45,9 @@ from .errors import CommunitiesError, InclusionRequestExistsError, \
     InclusionRequestObsoleteError
 from .signals import inclusion_request_created
 from .utils import save_and_validate_logo
-
+from sqlalchemy.dialects import postgresql
+from sqlalchemy_utils.types import JSONType
+from sqlalchemy import cast, String
 
 class InclusionRequest(db.Model, Timestamp):
     """Association table for Community and Record models.
@@ -221,6 +223,28 @@ class Community(db.Model, Timestamp):
     deleted_at = db.Column(db.DateTime, nullable=True, default=None)
     """Time at which the community was soft-deleted."""
 
+    thumbnail_path = db.Column(db.Text, nullable=True, default='')
+    """thumbnail_path."""
+
+    login_menu_enabled = db.Column(db.Boolean, nullable=False, default='false')
+    """login_menu enabled or Disabled."""
+
+    catalog_json = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=[],
+        nullable=True
+    )
+    """catalog."""
+
     # root_node_id = db.Column(db.Text, nullable=False, default='')
 
     root_node_id = db.Column(
@@ -278,6 +302,29 @@ class Community(db.Model, Timestamp):
             db.session.add(obj)
         return obj
 
+    @classmethod
+    def create(cls, id, id_role, id_user, root_node_id, title, description, page, curation_policy, ranking, fixed_points, login_menu_enabled, thumbnail_path, catalog_json, **data):
+        """Get a community."""
+        with db.session.begin_nested():
+            obj = cls(
+                id=id,
+                id_role=id_role,
+                id_user=id_user,
+                root_node_id=root_node_id,
+                title=title,
+                description=description,
+                page=page,
+                curation_policy=curation_policy,
+                ranking=ranking,
+                fixed_points=fixed_points,
+                login_menu_enabled=login_menu_enabled,
+                thumbnail_path=thumbnail_path,
+                catalog_json=catalog_json,
+                **data
+            )
+            db.session.add(obj)
+        return obj
+
     def save_logo(self, stream, filename):
         """Get a community."""
         logo_ext = save_and_validate_logo(stream, filename, self.id)
@@ -306,6 +353,15 @@ class Community(db.Model, Timestamp):
         return query.order_by(db.asc(Community.title))
 
     @classmethod
+    def get_by_root_node_id(cls, root_node_id, with_deleted=False):
+        """Get communities by root_node_id."""
+        q = cls.query.filter_by(root_node_id=root_node_id)
+        if not with_deleted:
+            q = q.filter(cls.deleted_at.is_(None))
+
+        return q.order_by(db.asc(Community.title)).all()
+
+    @classmethod
     def filter_communities(cls, p, so, with_deleted=False):
         """Search for communities.
 
@@ -326,6 +382,7 @@ class Community(db.Model, Timestamp):
                 cls.id.ilike('%' + p + '%'),
                 cls.title.ilike('%' + p + '%'),
                 cls.description.ilike('%' + p + '%'),
+                cast(cls.catalog_json, String).ilike('%' + p + '%'),
             ))
 
         if so in current_app.config['COMMUNITIES_SORTING_OPTIONS']:

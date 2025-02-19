@@ -239,6 +239,7 @@ def get_user_role_ids():
 
     return role_ids
 
+
 def get_repository_id_by_item_id(item_id):
     """Get repository_id by item_id."""
     from weko_index_tree.models import Index
@@ -256,3 +257,34 @@ def get_repository_id_by_item_id(item_id):
         if not index.parent:
             break
     return repository_id
+
+def delete_empty(data):
+    if isinstance(data, dict):
+        result = {}
+        flg = False
+        if len(data) == 0:
+            return flg, result
+        else:
+            for k, v in data.items():
+                not_empty, dd = delete_empty(v)
+                if not_empty:
+                    flg = True
+                    result[k] = dd
+            return flg, result
+    elif isinstance(data, list):
+        result = []
+        flg = False
+        if len(data) == 0:
+            return flg, None
+        else:
+            for d in data:
+                not_empty, dd = delete_empty(d)
+                if not_empty:
+                    flg = True
+                    result.append(dd)
+            return flg, result
+    else:
+        if data:
+            return True, data
+        else:
+            return False, None

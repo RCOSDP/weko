@@ -23,6 +23,24 @@
     }
   },
   {
+    "key": "abstract",
+    "type": "text",
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "abstract",
+      "ja": "概要"
+    }
+  },
+  {
+    "key": "code_issnl",
+    "type": "text",
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "ISSN-L",
+      "ja": "ISSN-L"
+    }
+  },
+  {
     "key": "print_identifier",
     "type": "text",
     "condition": "model.is_output",
