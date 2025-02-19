@@ -306,14 +306,25 @@ def get_unit_stats_report(target_id):
     return result
 
 
-def get_user_report_data():
+def get_user_report_data(repo_id=None):
     """Get user report data from db and modify."""
+    from invenio_communities.models import Community
     role_counts = []
     try:
-        role_counts = db.session.query(Role.name,
-                                       func.count(userrole.c.role_id)) \
-            .outerjoin(userrole) \
-            .group_by(Role.id).all()
+        if repo_id != 'Root Index':
+            repository = Community.get(repo_id)
+            user_ids_with_role = db.session.query(userrole.c.user_id) \
+                .filter(userrole.c.role_id == repository.group_id).subquery()
+            role_counts = db.session.query(Role.name,
+                                        func.count(userrole.c.role_id)) \
+                    .outerjoin(userrole) \
+                    .filter(userrole.c.user_id.in_(user_ids_with_role)) \
+                    .group_by(Role.id).all()
+        else:
+            role_counts = db.session.query(Role.name,
+                                        func.count(userrole.c.role_id)) \
+                    .outerjoin(userrole) \
+                    .group_by(Role.id).all()
     except Exception as e:
         current_app.logger.error('Could not retrieve user report data: ')
         current_app.logger.error(e)
@@ -567,14 +578,21 @@ class StatisticMail:
         return previous_month.strftime("%Y-%m")
 
     @classmethod
-    def send_mail_to_all(cls, list_mail_data=None, stats_date=None):
+    def send_mail_to_all(cls):
         """Send mail to all setting email."""
+        repo_ids = [setting.repository_id for setting in FeedbackMailSetting.query.all()]
+        for repo in repo_ids:
+            cls.send_mail_to_one(repo=repo)
+
+    @classmethod
+    def send_mail_to_one(cls, list_mail_data=None, stats_date=None, repo=None):
+        """Send mail to setting email."""
         from weko_records.api import FeedbackMailList
         from weko_workflow.utils import get_site_info_name
 
         # Load setting:
         system_default_language = get_system_default_language()
-        setting = FeedbackMail.get_feed_back_email_setting()
+        setting = FeedbackMail.get_feed_back_email_setting(repo_id=repo)
         if not setting.get('is_sending_feedback') and not stats_date:
             return
         banned_mail = cls.get_banned_mail(setting.get('data'))
@@ -588,15 +606,16 @@ class StatisticMail:
         total_mail = 0
         try:
             if not list_mail_data:
-                list_mail_data = FeedbackMailList.get_feedback_mail_list()
+                list_mail_data = FeedbackMailList.get_feedback_mail_list(repo)
                 if not list_mail_data:
                     return
 
             # Get site name.
             site_en, site_ja = get_site_info_name()
             # Set default site name.
-            site_name = current_app.config[
-                'WEKO_ADMIN_FEEDBACK_MAIL_DEFAULT_SUBJECT']
+            site_name = current_app.config.get(
+                'WEKO_ADMIN_FEEDBACK_MAIL_DEFAULT_SUBJECT',
+                config.WEKO_ADMIN_FEEDBACK_MAIL_DEFAULT_SUBJECT)
             if system_default_language == 'ja' and site_ja:
                 site_name = site_ja
             elif system_default_language == 'en' and site_en:
@@ -651,7 +670,8 @@ class StatisticMail:
             end_time,
             stats_date,
             total_mail,
-            failed_mail
+            failed_mail,
+            repository_id=repo
         )
 
     @classmethod
@@ -1071,7 +1091,7 @@ class FeedbackMail:
         return result
 
     @classmethod
-    def get_feed_back_email_setting(cls):
+    def get_feed_back_email_setting(cls, repo_id=None):
         """Get list feedback email setting.
 
         Returns:
@@ -1084,7 +1104,7 @@ class FeedbackMail:
             'root_url': '',
             'error': ''
         }
-        setting = FeedbackMailSetting.get_all_feedback_email_setting()
+        setting = FeedbackMailSetting.get_feedback_email_setting_by_repo(repo_id)
         if len(setting) == 0:
             return result
         list_author_id = setting[0].account_author.split(',')
@@ -1112,8 +1132,8 @@ class FeedbackMail:
         return result
 
     @classmethod
-    def update_feedback_email_setting(cls, data,
-                                      is_sending_feedback, root_url):
+    def update_feedback_email_setting(cls, data, is_sending_feedback,
+                                      root_url, repo_id=None):
         """Update feedback email setting.
 
         Arguments:
@@ -1129,8 +1149,13 @@ class FeedbackMail:
             'error': ''
         }
         update_result = False
+
+        if not repo_id:
+            result['error'] = "Repository ID is required."
+            return result
+        
         if not data and not is_sending_feedback:
-            update_result = FeedbackMailSetting.delete()
+            update_result = FeedbackMailSetting.delete_by_repo(repo_id)
             return cls.handle_update_message(
                 result,
                 update_result
@@ -1139,20 +1164,22 @@ class FeedbackMail:
         if error_message:
             result['error'] = error_message
             return result
-        current_setting = FeedbackMailSetting.get_all_feedback_email_setting()
+        current_setting = FeedbackMailSetting.get_feedback_email_setting_by_repo(repo_id)
         if len(current_setting) == 0:
             update_result = FeedbackMailSetting.create(
                 cls.convert_feedback_email_data_to_string(data),
                 cls.get_list_manual_email(data),
                 is_sending_feedback,
-                root_url
+                root_url,
+                repo_id
             )
         else:
             update_result = FeedbackMailSetting.update(
                 cls.convert_feedback_email_data_to_string(data),
                 cls.get_list_manual_email(data),
                 is_sending_feedback,
-                root_url
+                root_url,
+                repo_id
             )
         return cls.handle_update_message(
             result,
@@ -1255,11 +1282,12 @@ class FeedbackMail:
         return error_message
 
     @classmethod
-    def load_feedback_mail_history(cls, page_num):
+    def load_feedback_mail_history(cls, page_num, repo_id=None):
         """Load all history of send mail.
 
         Arguments:
             page_num {integer} -- The page number
+            repo_id {string} -- The repository id
 
         Raises:
             ValueError: Parameter error
@@ -1276,7 +1304,7 @@ class FeedbackMail:
             'error': ''
         }
         try:
-            data = FeedbackMailHistory.get_all_history()
+            data = FeedbackMailHistory.get_all_history(repo_id=repo_id)
             list_history = list()
             page_num_end = \
                 page_num * config.WEKO_ADMIN_NUMBER_OF_SEND_MAIL_HISTORY
@@ -1454,7 +1482,7 @@ class FeedbackMail:
         if len(list_failed_mail) == 0:
             return None
 
-        list_mail_data = FeedbackMailList.get_feedback_mail_list()
+        list_mail_data = FeedbackMailList.get_feedback_mail_list(repo_id=history_data.repository_id)
         if not list_mail_data:
             return None
 
@@ -1464,6 +1492,7 @@ class FeedbackMail:
                 resend_mail_data[k] = v
         result['data'] = resend_mail_data
         result['stats_date'] = stats_time
+        result['repository_id'] = history_data.repository_id
         return result
 
     @classmethod
