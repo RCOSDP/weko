@@ -3,6 +3,7 @@ $(document).ready(function () {
   $('#myModal').modal({
     show: false
   })
+  $('.form-group.has-error').hide();
 
   if (!String.prototype.endsWith) {
     String.prototype.endsWith = function (search, this_len) {
@@ -710,7 +711,11 @@ $(document).ready(function () {
           }else{
             sub_itemtype_key.itemtype_key = $(elm).find('select[name="sub_itemtype_list"]').val();
           }
-          sub_itemtype_key.itemlink_key = $(elm).find('.sub_itemtype_link input[type="text"]').val();
+          if (idx === $(element).find('.sub_child_itemtype_list').length - 1) {
+            sub_itemtype_key.itemlink_key = '';
+          } else {
+            sub_itemtype_key.itemlink_key = ',';
+          }
           sub_temp_itemtype.sub_itemtypes.push(sub_itemtype_key);
         });
       } else {
