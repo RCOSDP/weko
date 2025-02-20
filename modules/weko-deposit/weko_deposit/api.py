@@ -2013,12 +2013,12 @@ class WekoRecord(Record):
                     title_key = title.get("@value")
                     language_key = title.get("@attributes", {}).get("xml:lang")
                     for h in hide_list:
-                        if parent_key in h and language_key in h:
+                        if h.startswith(parent_key) and h.endswith(language_key):
                             language_key = None
-                        if parent_key in h and title_key in h:
+                        if h.startswith(parent_key) and h.endswith(title_key):
                             title_key = None
                             parent_key = None
-                    if parent_key and title_key and language_key:
+                    if parent_key and title_key:
                         break
         return parent_key, title_key, language_key
 
