@@ -13,15 +13,15 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '1b352b00f1ed'
-down_revision = '2d9884d0e3fa'
+down_revision = 'd2d56dc5e385'
 branch_labels = ()
 depends_on = None
 
 
 def upgrade():
     """Upgrade database."""
-    op.add_column('communities_community', sa.Column('content_policy', sa.Text(), nullable=False))
-    op.add_column('communities_community', sa.Column('group_id', sa.Integer(), nullable=False))
+    op.add_column('communities_community', sa.Column('content_policy', sa.Text(), nullable=True))
+    op.add_column('communities_community', sa.Column('group_id', sa.Integer(), nullable=True))
     op.create_foreign_key(op.f('fk_communities_community_group_id_accounts_role'), 'communities_community', 'accounts_role', ['group_id'], ['id'])
 
 
