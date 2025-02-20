@@ -34,10 +34,13 @@ from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm.attributes import flag_modified
 from weko_authors.models import Authors, AuthorsPrefixSettings, AuthorsAffiliationSettings
 from weko_records.api import ItemsMetadata
+from weko_records.models import FeedbackMailList
 from weko_schema_ui.models import PublishStatus
 from weko_workflow.utils import delete_cache_data, update_cache_data
+from weko_workflow.models import ActionFeedbackMail, Activity, ActivityStatusPolicy
 
 from .api import WekoDeposit
 
@@ -418,6 +421,7 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
         if update_gather_flg:
             process_counter[ORIGIN_LABEL] = get_origin_data(origin_pkid_list)
             update_db_es_data(origin_pkid_list, origin_id_list)
+            update_feedback_mail_data(target, origin_pkid_list)
             delete_cache_data("update_items_by_authorInfo_{}".format(user_id))
             update_cache_data(
                 "update_items_status_{}".format(user_id),
@@ -481,6 +485,38 @@ def update_db_es_data(origin_pkid_list, origin_id_list):
                     id=h.get("_id"),
                     body=body
                 )
+    except Exception as ex:
+        current_app.logger.debug(ex)
+        db.session.rollback()
+
+
+def update_feedback_mail_data(target, origin_pkid_list):
+    try:
+        # update DB of FeedbackMailList
+        with db.session.begin_nested():
+            feedback_mail_datas = FeedbackMailList.query.filter(
+                FeedbackMailList.account_author.in_(origin_pkid_list)).all()
+            for fdata in feedback_mail_datas:
+                fdata.account_author = target.get('pk_id')
+                db.session.merge(fdata)
+            action_feedback_mails = ActionFeedbackMail.query \
+                    .outerjoin(Activity,
+                               ActionFeedbackMail.activity_id==Activity.activity_id) \
+                    .filter(Activity.activity_status.in_(
+                        [ActivityStatusPolicy.ACTIVITY_BEGIN,
+                         ActivityStatusPolicy.ACTIVITY_MAKING])) \
+                    .all()
+            for adata in action_feedback_mails:
+                for j, fdata in enumerate(adata.feedback_maillist):
+                    if str(fdata.get("author_id")) in origin_pkid_list:
+                        adata.feedback_maillist[j]["author_id"] = target.get('pk_id')
+                        if len(target.get("emailInfo", [])) > 0 and \
+                                target.get("emailInfo")[0].get("email"):
+                            adata.feedback_maillist[j]["email"] = \
+                                target.get("emailInfo")[0].get("email")
+                flag_modified(adata, 'feedback_maillist')
+                db.session.merge(adata)
+        db.session.commit()
     except Exception as ex:
         current_app.logger.debug(ex)
         db.session.rollback()
