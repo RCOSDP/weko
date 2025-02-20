@@ -108,7 +108,7 @@ td.fitwidth {
   display: flex;
   flex-wrap: wrap;
   margin: auto;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 0 5px;
 }
 
