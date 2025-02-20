@@ -254,13 +254,13 @@ class Community(db.Model, Timestamp):
     )
     """Id of Root Node"""
     
-    content_policy = db.Column(db.Text, nullable=False, default='')
+    content_policy = db.Column(db.Text, nullable=True, default='')
     """Community content policy."""
     
     group_id = db.Column(
         db.Integer,
         db.ForeignKey(Role.id),
-        nullable=False
+        nullable=True
     )
     """Group of the community."""
 
