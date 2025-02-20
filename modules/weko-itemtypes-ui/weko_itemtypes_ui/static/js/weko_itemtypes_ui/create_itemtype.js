@@ -18,6 +18,7 @@ $(document).ready(function () {
     edit_notes: {}         // Map of notes for each attribute, keep seperate
   };
   properties_obj = {}     // 作成したメタデータ項目タイプ
+  AddedFilePropItemIds = [];
   propertyOptions = '';
   textPropertyOptions = '';
   page_json_editor = {}   //   一時的editorオブジェクトの保存
@@ -189,6 +190,10 @@ $(document).ready(function () {
     if($('#itemtype_name').val() == "") {
       $('#itemtype_name_warning').removeClass('hide');
       $('#itemtype_name').focus();
+      return;
+    }
+    if (AddedFilePropItemIds.length > 1) {
+      alert("Can't save because multiple 'File' properties exist.");
       return;
     }
     $('#itemtype_name_warning').addClass('hide');
@@ -936,6 +941,10 @@ $(document).ready(function () {
     // Dynamic additional click event
     // メタ項目の削除関数をダイナミックに登録する
     $('#tbody_itemtype').on('click', 'tr td #btn_del_'+row_id, function(){
+      var index = AddedFilePropItemIds.indexOf(row_id)
+      if (index > -1) {
+        AddedFilePropItemIds.splice(index, 1);
+      }
       page_global.table_row.splice($.inArray(row_id,page_global.table_row),1);
       $('#tr_' + row_id).remove();
       initSortedBtn();
@@ -1058,26 +1067,37 @@ $(document).ready(function () {
       let product = properties_obj[$(this).val().substr(4)].schema;
       let product_forms = properties_obj[$(this).val().substr(4)].forms;
       isFile = properties_obj[$(this).val().substr(4)].is_file;
-      for(key in product.properties) {
-        if(isFile || product.properties[key]["isHide"] ==true){
-          product.properties[key]["showListDisable"] = true
-          product.properties[key]["specifyNLDisable"] = true
-          product.properties[key]["nonDisplayDisable"] = true
-        }
-        if(isFile){
-          product.properties[key]["hideDisable"] = true
-        }
+      if (isFile && !AddedFilePropItemIds.includes(meta_id)){
+        AddedFilePropItemIds.push(meta_id);
       }
-      $('#chk_prev_' + meta_id + '_1').removeClass('disabled');
-      checkboxMetaId.attr('disabled', isFile);
-      checkboxMetaId.prop("checked", isFile);
-      checkboxNLId.attr('disabled', isFile);
-      checkboxNLId.attr('isFile', isFile);
-      if (isFile) {
-        checkboxNLId.prop('checked', false);
+      if (isFile && AddedFilePropItemIds.length > 1) {
+        render_empty('schema_'+meta_id);
+        alert("Can't add 'File' property because it already exists.");
+      } else {
+        for(key in product.properties) {
+          if(isFile || product.properties[key]["isHide"] ==true){
+            product.properties[key]["showListDisable"] = true
+            product.properties[key]["specifyNLDisable"] = true
+            product.properties[key]["nonDisplayDisable"] = true
+          }
+          if(isFile){
+            product.properties[key]["hideDisable"] = true
+          }
+        }
+        $('#chk_prev_' + meta_id + '_1').removeClass('disabled');
+        checkboxMetaId.attr('disabled', isFile);
+        checkboxMetaId.prop("checked", isFile);
+        checkboxNLId.attr('disabled', isFile);
+        checkboxNLId.attr('isFile', isFile);
+        if (isFile) {
+          checkboxNLId.prop('checked', false);
+        }
+        if (!isFile && AddedFilePropItemIds.includes(meta_id)) {
+          AddedFilePropItemIds.splice(AddedFilePropItemIds.indexOf(meta_id), 1);
+        }
+        setDefaultI18n(product.properties, product_forms);
+        render_object('schema_'+meta_id, product);
       }
-      setDefaultI18n(product.properties, product_forms);
-      render_object('schema_'+meta_id, product);
     } else if('checkboxes' == $(this).val() || 'radios' == $(this).val()
             || 'select' == $(this).val()){
       checkboxMetaId.prop("checked", isFile);
@@ -1417,6 +1437,9 @@ $(document).ready(function () {
             newLineCheckbox.attr('disabled', true);
             newLineCheckbox.prop('checked', false);
             newLineCheckbox.attr('isFile', true);
+            if (!AddedFilePropItemIds.includes(row_id)){
+              AddedFilePropItemIds.push(row_id);
+            }
           }
         } else if('checkboxes' == data.meta_list[row_id].input_type || 'radios' == data.meta_list[row_id].input_type
                 || 'select' == data.meta_list[row_id].input_type){
