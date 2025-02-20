@@ -33,7 +33,8 @@ else:
     # Create the data for setting to form data
     data = {}
     for param in fastcgi_params:
-        data[param] = os.environ.get(param)
+        if os.environ.get(param):
+            data[param] = os.environ.get(param)
 
     headers = {
         'HTTP_WEKOID': os.environ.get('HTTP_WEKOID'),
