@@ -27,10 +27,13 @@ import io
 import sys
 import tempfile
 import traceback
+from time import sleep
 from copy import deepcopy
 from functools import reduce
 from operator import getitem
 from sys import stdout
+from sqlalchemy.exc import SQLAlchemyError
+from redis.exceptions import RedisError
 
 from flask import current_app
 from flask_babelex import gettext as _
@@ -141,41 +144,90 @@ def save_export_url(start_time, end_time, file_uri):
     current_cache.set(WEKO_AUTHORS_EXPORT_CACHE_URL_KEY, data, timeout=0)
     return data
 
-
+def handle_exception(ex, attempt, retrys, interval):
+    """Handle exceptions during the export process."""
+    current_app.logger.error(ex)
+    # 最後のリトライの場合は例外をraise
+    if attempt == retrys - 1:
+        return 0
+    current_app.logger.info(f"Connection failed, retrying in {interval} seconds...")
+    sleep(interval)
+    
 def export_authors():
     """Export all authors."""
     file_uri = None
+    print("export_authors")
+    retrys = current_app.config["WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY"]
+    interval = current_app.config["WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL"]
+    size =  current_app.config.get("WEKO_AUTHORS_EXPORT_BATCH_SIZE", 1000)
+    interval = current_app.config["WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL"]
+    mappings = []
+    schemes = {}
+    records_count = 0
+    temp_file_path = ""
+    # ある程度の処理をまとめてリトライ処理
+    for attempt in range(retrys):
+        try:
+            print("fist retry", attempt)
+            # マッピングを取得
+            mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING"])
+            # マッピング上の複数が可能となる項目の最大値を取得
+            mappings = WekoAuthors.mapping_max_item(mappings)
+
+            # 著者識別子の対応を取得
+            schemes = WekoAuthors.get_identifier_scheme_info()
+            
+            # 著者の数を取得（削除、統合された著者は除く）
+            records_count = WekoAuthors.get_records_count(False, False)
+            
+            # 一時ファイルのパスを取得
+            temp_file_path=current_cache.get(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_KEY"]).get("folder_path","")
+            break
+        except SQLAlchemyError as ex:
+            handle_exception(ex, attempt, retrys, interval)
+        except RedisError as ex:
+            handle_exception(ex, attempt, retrys, interval)
+        except TimeoutError as ex:
+            handle_exception(ex, attempt, retrys, interval)
+    
     try:
-        mappings = deepcopy(WEKO_AUTHORS_FILE_MAPPING)
-        authors = WekoAuthors.get_all(with_deleted=False, with_gather=False)
-        schemes = WekoAuthors.get_identifier_scheme_info()
-        row_header, row_label_en, row_label_jp, row_data = \
-            WekoAuthors.prepare_export_data(mappings, authors, schemes)
+        # 1000ずつ著者を取得し、データを書き込む
+        for i in range(0,records_count-1, size):
+            row_header = []
+            row_label_en = []
+            row_label_jp = []
+            row_data = []
 
-        # write file data to a stream
-        file_io = io.StringIO()
-        if current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower() == 'csv':
-            writer = csv.writer(file_io, delimiter=',',
-                                quotechar='"', quoting=csv.QUOTE_MINIMAL,
-                                lineterminator='\n')
-        else:
-            writer = csv.writer(file_io, delimiter='\t',
-                                quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        writer.writerows([row_header, row_label_en, row_label_jp, *row_data])
-        reader = io.BufferedReader(io.BytesIO(
-            file_io.getvalue().encode("utf-8-sig")))
-
-        # save data into location
-        cache_url = get_export_url()
-        if not cache_url:
-            file = FileInstance.create()
-            file.set_contents(
-                reader, default_location=Location.get_default().uri)
-        else:
-            file = FileInstance.get_by_uri(cache_url['file_uri'])
-            file.writable = True
-            file.set_contents(reader)
-
+            # 著者情報取得のリトライ処理
+            for attempt in range(retrys):
+                try:
+                    # 著者情報をstartからWEKO_EXPORT_BATCH_SIZE分取得
+                    authors = WekoAuthors.get_by_range(i, size, False, False)
+                    row_header, row_label_en, row_label_jp, row_data =\
+                        WekoAuthors.prepare_export_data(mappings, authors, schemes)
+                    break
+                except SQLAlchemyError as ex:
+                    handle_exception(ex, attempt, retrys, interval)
+                except TimeoutError as ex:
+                    handle_exception(ex, attempt, retrys, interval)
+                except RedisError as ex:
+                    handle_exception(ex, attempt, retrys, interval)
+            # 一時ファイルに書き込み
+            write_to_tempfile(i, mappings, schemes, row_header, row_label_en, row_label_jp, row_data)
+            
+        # 完成した一時ファイルをファイルインスタンスに保存
+        with open(temp_file_path, 'rb') as f:
+            reader = io.BufferedReader(f)
+            # save data into location
+            cache_url = get_export_url()
+            if not cache_url:
+                file = FileInstance.create()
+                file.set_contents(
+                    reader, default_location=Location.get_default().uri)
+            else:
+                file = FileInstance.get_by_uri(cache_url['file_uri'])
+                file.writable = True
+                file.set_contents(reader)
         file_uri = file.uri if file else None
         db.session.commit()
     except Exception as ex:
@@ -185,6 +237,23 @@ def export_authors():
 
     return file_uri
 
+
+def write_to_tempfile(start, mappings, schemes, row_header, row_label_en, row_label_jp, row_data):
+    # 一時ファイルのパスを取得
+    temp_file_path=current_cache.get(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_KEY"]).get("folder_path","")
+
+    # ファイルを開いてデータを書き込む
+    try:
+        with open(temp_file_path, 'a', newline='', encoding='utf-8-sig') as file:
+            writer = csv.writer(file, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            # 1行目のみヘッダー、ラベルを書き込む
+            if start == 0:
+                writer.writerow(row_header)
+                writer.writerow(row_label_en)
+                writer.writerow(row_label_jp)
+            writer.writerows(row_data)
+    except Exception as ex:
+        current_app.logger.error(ex)
 
 def check_import_data(file_name: str, file_content: str):
     """Validation importing tsv/csv file.

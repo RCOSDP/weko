@@ -19,7 +19,10 @@
 # MA 02111-1307, USA.
 
 """WEKO3 authors tasks."""
-from datetime import datetime
+import os
+import glob
+import shutil
+from datetime import datetime, timezone
 
 from celery import shared_task, states
 from celery.result import GroupResult
@@ -92,3 +95,29 @@ def check_is_import_available(group_task_id=None):
                 delete_cache_data(WEKO_AUTHORS_IMPORT_CACHE_KEY)
 
     return result
+
+@shared_task(ignore_result=True)
+def check_tmp_file_time_for_author():
+    """Check the storage time of the author temp file."""
+    path = '/var/tmp'
+    # 1日
+    ttl = 24* 60* 60 
+    
+    now = datetime.now(timezone.utc) 
+    # 著者エクスポートの一時ファイルの削除
+    for d in glob.glob(path + "/author_export/**"):
+        tLog = os.path.getmtime(d)
+        if (now - datetime.fromtimestamp(tLog, timezone.utc)).total_seconds() >= ttl:
+            try:
+                shutil.rmtree(path)
+            except OSError as e:
+                current_app.logger.error(e)
+                
+    # 著者インポートの一時ファイルの削除
+    for d in glob.glob(path + "/author_import/**"):
+        tLog = os.path.getmtime(d)
+        if (now - datetime.fromtimestamp(tLog, timezone.utc)).total_seconds() >= ttl:
+            try:
+                shutil.rmtree(path)
+            except OSError as e:
+                current_app.logger.error(e)

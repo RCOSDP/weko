@@ -27,6 +27,8 @@ from flask import current_app, json
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from sqlalchemy.sql.functions import func
+from sqlalchemy.exc import SQLAlchemyError
+from time import sleep
 
 from weko_authors.config import WEKO_AUTHORS_FILE_MAPPING
 
@@ -143,8 +145,45 @@ class WekoAuthors(object):
                 filters.append(Authors.gather_flg == 0)
             query = Authors.query.filter(*filters)
             query = query.order_by(Authors.id)
+            query.count()
 
             return query.all()
+
+    @classmethod
+    def get_by_range(cls,  start_point, sum, with_deleted=True, with_gather=True):
+        """Get authors by range."""
+        filters = []
+        try:
+            with db.session.no_autoflush:
+                if not with_deleted:
+                    filters.append(Authors.is_deleted.is_(False))
+                if not with_gather:
+                    filters.append(Authors.gather_flg == 0)
+                query = Authors.query.filter(*filters)
+                query = query.order_by(Authors.id)
+                query = query.offset(start_point).limit(sum)
+                return query.all()
+        except Exception as ex:
+            current_app.logger.error(ex)
+            raise ex
+        
+    @classmethod
+    def get_records_count(cls, with_deleted=True, with_gather=True):
+        """Get authors's count."""
+        filters = []
+        try:
+            with db.session.no_autoflush:
+                if not with_deleted:
+                    filters.append(Authors.is_deleted.is_(False))
+                if not with_gather:
+                    filters.append(Authors.gather_flg == 0)
+                query = Authors.query.filter(*filters)
+                query = query.order_by(Authors.id)
+                return query.count()
+        except Exception as ex:
+            current_app.logger.error(ex)
+            raise ex
+    
 
     @classmethod
     def get_author_for_validation(cls):
@@ -170,15 +209,68 @@ class WekoAuthors(object):
     def get_identifier_scheme_info(cls):
         """Get all Author Identifier Scheme informations."""
         result = {}
-        with db.session.no_autoflush:
-            schemes = AuthorsPrefixSettings.query.order_by(
-                AuthorsPrefixSettings.id).all()
-            if schemes:
-                for scheme in schemes:
-                    result[str(scheme.id)] = dict(
-                        scheme=scheme.scheme, url=scheme.url)
+        try:
+            with db.session.no_autoflush:
+                schemes = AuthorsPrefixSettings.query.order_by(
+                    AuthorsPrefixSettings.id).all()
+                if schemes:
+                    for scheme in schemes:
+                        result[str(scheme.id)] = dict(
+                            scheme=scheme.scheme, url=scheme.url)
+            return result
+        except Exception as ex:
+            current_app.logger.error(ex)
+            raise ex
 
-        return result
+    @classmethod
+    def mapping_max_item(cls, mappings, retrys=0):
+        """Mapping max item of multiple case."""
+        try: 
+            size = current_app.config["WEKO_AUTHORS_EXPORT_BATCH_SIZE"]
+            if not mappings:
+                mappings = deepcopy(WEKO_AUTHORS_FILE_MAPPING)
+            # 削除されておらず、統合されていない著者の合計を取得
+            records_count = cls.get_records_count(False, False)
+            
+            # AUTHOR_EXPORT_BATCH_SIZE分の数だけauthorを取得して、maxを計算する
+            for i in range(0,records_count-1, size):
+                authors = cls.get_by_range(i, size, False, False)
+                for mapping in mappings:
+                    if mapping.get('child'):
+                        if not authors:
+                            mapping['max'] = max(mapping.get('max', 1), 1)
+                        else:
+                            mapping['max'] = max(
+                                    mapping.get('max', 1),
+                                    max(
+                                    list(map(lambda x: len(x.json.get(mapping['json_id'], [])), authors))
+                                    )
+                                )
+                            if mapping['max'] == 0:
+                                mapping['max'] = 1
+            #WEKOIDの分を最大値から引く
+            for mapping in mappings:
+                if mapping['json_id'] == 'authorIdInfo':
+                    if mapping['max'] > 1:
+                        mapping['max'] -= 1
+        except SQLAlchemyError as ex:
+            current_app.logger.error(ex)
+            _num_retry = current_app.config["WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY"]
+            if retrys < _num_retry:
+                retrys += 1
+                current_app.logger.info("mapping_max_item retry count: {}".format(retrys))
+                db.session.rollback()
+                sleep(5)
+                result = cls.mapping_max_item(
+                    mappings=None, retrys=retrys
+                )
+                return result
+            else:
+                return False
+        except Exception as ex:
+            current_app.logger.error(ex)
+            raise ex
+        return mappings
 
     @classmethod
     def prepare_export_data(cls, mappings, authors, schemes):
@@ -198,18 +290,6 @@ class WekoAuthors(object):
         # calc max item of multiple case and prepare header, label
         for mapping in mappings:
             if mapping.get('child'):
-                if not authors:
-                    mapping['max'] = 1
-                else:
-                    mapping['max'] = max(
-                        list(map(lambda x: len(x.json.get(mapping['json_id'], [])), authors))
-                    )
-                    if mapping['max'] == 0:
-                        mapping['max'] = 1
-                if authors and mapping['json_id'] == 'authorIdInfo':
-                    if mapping['max'] > 1:
-                        mapping['max'] -= 1
-
                 for i in range(0, mapping['max']):
                     for child in mapping.get('child'):
                         row_header.append('{}[{}].{}'.format(
