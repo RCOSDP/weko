@@ -139,7 +139,7 @@ WEKO_SHIB_ATTR_IS_MEMBER_OF = False
 
 WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT = {
     "prefix":"jc",
-    "sysadm_group":"jc_role_sysadm",
+    "sysadm_group":"jc_roles_sysadm",
     "role_keyword":"roles",
     "role_mapping":{
         "repoadm":"Repository_Administrator",

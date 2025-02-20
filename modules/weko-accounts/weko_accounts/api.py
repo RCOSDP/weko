@@ -14,12 +14,12 @@ from flask import current_app, session
 from flask_babelex import gettext as _
 from flask_login import current_user, user_logged_in, user_logged_out
 from flask_security.utils import hash_password, verify_password
-from invenio_accounts.models import Role, User
+from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
 from weko_user_profiles.models import UserProfile
 from werkzeug.local import LocalProxy
 
-from .models import ShibbolethUser,Role
+from .models import ShibbolethUser
 
 _datastore = LocalProxy(lambda: current_app.extensions['security'].datastore)
 
@@ -276,83 +276,95 @@ class ShibUser(object):
         if not check_role:
             return error
 
-        # WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPSがTrueのときSHIB_ATTR_IS_MEMBER_OFの情報に合わせる
+        roles_add = self._get_roles_to_add()
+        if roles_add is None:
+            return "Error getting roles to add"
+
+        error = self._assign_roles_to_user(roles_add)
+        if error:
+            return error
+
+        return None
+
+    def _get_roles_to_add(self):
+        """
+        Get roles to add based on Shibboleth attributes.
+
+        Shibboleth属性に基づいて追加するロールを取得します。
+        具体的には、WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS設定がTrueの場合に、
+        WEKO_SHIB_ATTR_IS_MEMBER_OF属性またはWEKO_ACCOUNTS_IDP_ENTITY_ID属性に基づいて
+        追加するロールを決定します。
+
+        :return: Set of roles to add
+        """
+        roles_add = set()
+
         if current_app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS']:
             try:
-                shib_attr_is_member_of = self.shib_attr.get('SHIB_ATTR_IS_MEMBER_OF', [])
+                # Shibboleth属性からWEKO_SHIB_ATTR_IS_MEMBER_OFを取得
+                shib_attr_is_member_of = self.shib_attr.get('WEKO_SHIB_ATTR_IS_MEMBER_OF', [])
                 if shib_attr_is_member_of:
-                    # SHIB_ATTR_IS_MEMBER_OFの情報を取得
+                    # WEKO_SHIB_ATTR_IS_MEMBER_OFの情報を取得
                     member_of_list = shib_attr_is_member_of.split(';')
-                    print("SHIB_ATTR_IS_MEMBER_OF:", member_of_list)
+                    print("WEKO_SHIB_ATTR_IS_MEMBER_OF:", member_of_list)
 
-                    # accounts_roleテーブルの情報を取得
-                    existing_roles = {role.name for role in Role.query.all()}
-                    print("Existing roles in accounts_role table:", existing_roles)
-
-                    # 差異があった場合に更新
-                    if set(member_of_list) != existing_roles:
-                        try:
-                            with db.session.begin_nested():
-                                # 設定辞書を取得
-                                config = current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT']
-                                prefix = config['prefix']
-                                role_mapping = config['role_mapping']
-
-                                # 既存のロールを更新または追加
-                                for role_name in member_of_list:
-                                    # ロール名を変換
-                                    mapped_role_name = role_mapping.get(role_name[len(prefix) + 1:], role_name)
-                                    role = Role.query.filter_by(name=mapped_role_name).first()
-                                    if role:
-                                        role.description = ""  # 必要に応じて説明を更新
-                                    else:
-                                        db.session.add(Role(name=mapped_role_name, description=""))
-
-                                # 不要なロールを削除
-                                for role_name in existing_roles:
-                                    if role_name not in member_of_list:
-                                        role_to_remove = Role.query.filter_by(name=role_name).one()
-                                        db.session.delete(role_to_remove)
-
-                                db.session.commit()
-                        except Exception as ex:
-                            current_app.logger.error(ex)
-                            db.session.rollback()
-                            return str(ex)
+                    # 現在のユーザーのロールを取得
+                    current_user_roles = [role.name for role in self.user.roles]
+                    # 現在のロールに含まれていないロールを追加する
+                    roles_add = set(member_of_list) - set(current_user_roles)
                 else:
-                    # TODO: IDPのEntityIDを取得し、設定値の辞書からそのEntityIDに対応するロールを取得し、そのロールを割り当てる
-                    try:
-                        # IDPのEntityIDを取得
-                        idp_entity_id = self.shib_attr.get('WEKO_ACCOUNTS_IDP_ENTITY_ID')
-                        if not idp_entity_id:
-                            raise KeyError('WEKO_ACCOUNTS_IDP_ENTITY_ID is missing in shib_attr')
+                    # IDPのEntityIDを取得
+                    idp_entity_id = self.shib_attr.get('WEKO_ACCOUNTS_IDP_ENTITY_ID')
+                    if not idp_entity_id:
+                        raise KeyError('WEKO_ACCOUNTS_IDP_ENTITY_ID is missing in shib_attr')
 
-                        # 設定値の辞書からそのEntityIDに対応するロールを取得
-                        default_roles = current_app.config['WEKO_ACCOUNTS_GAKUNIN_DEFAULT_GROUP_MAPPING'].get(idp_entity_id, [])
-                        if not default_roles:
-                            raise KeyError(f'No roles found for IDP Entity ID: {idp_entity_id}')
+                    # 設定値の辞書からそのEntityIDに対応するロールを取得
+                    mapping_roles = current_app.config['WEKO_ACCOUNTS_GAKUNIN_DEFAULT_GROUP_MAPPING'].get(idp_entity_id, [])
+                    if not mapping_roles:
+                        raise KeyError(f'No roles found for IDP Entity ID: {idp_entity_id}')
 
-                        # 取得したロールを割り当てる
-                        with db.session.begin_nested():
-                            for role_name in default_roles:
-                                role = Role.query.filter_by(name=role_name).first()
-                                if role:
-                                    role.description = ""  # 必要に応じて説明を更新
-                                else:
-                                    db.session.add(Role(name=role_name, description=""))
-                            db.session.commit()
-                    except KeyError as ke:
-                        current_app.logger.error(f"Missing key in shib_attr: {ke}")
-                        return str(ke)
-                    except Exception as ex:
-                        current_app.logger.error(f"Unexpected error: {ex}")
-                        return str(ex)
+                    # 現在のユーザーのロール
+                    current_user_roles = [role.name for role in self.user.roles]
+                    # 現在のロールに含まれていないロールを格納
+                    roles_add = set(mapping_roles) - set(current_user_roles)
             except KeyError as ke:
+                # キーエラー
                 current_app.logger.error(f"Missing key in shib_attr: {ke}")
-                return str(ke)
+                return None
             except Exception as ex:
+                # その他の例外
                 current_app.logger.error(f"Unexpected error: {ex}")
-                return str(ex)
+            return None
+
+        return roles_add
+
+    def _assign_roles_to_user(self, roles_add):
+        try:
+            # WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT設定を取得
+            config = current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT']
+            prefix = config['prefix']
+            role_mapping = config['role_mapping']
+
+            with db.session.begin_nested():
+                # roles_addに含まれる各ロール名について処理を行う
+                for role_name in roles_add:
+                    # ロール名が指定されたプレフィックスで始まるか確認
+                    if role_name.startswith(prefix):
+                        # プレフィックスを除いた部分を使用してロール名をマッピング
+                        mapped_role_name = role_mapping.get(role_name[len(prefix) + 1:], role_name)
+                        # マッピングされたロール名をデータベースでロールを確認
+                        role = Role.query.filter_by(name=mapped_role_name).first()
+                        # ロールが存在し、かつユーザーにまだそのロールが割り当てられていない場合
+                        if role and role not in self.user.roles:
+                            # ユーザーにロールを追加
+                            _datastore.add_role_to_user(self.user, role)
+                            # Shibbolethユーザーのロールリストに追加
+                            self.shib_user.shib_roles.append(role)
+                db.session.commit()
+        except Exception as ex:
+            current_app.logger.error(f"Error assigning roles: {ex}")
+            db.session.rollback()
+            return str(ex)
 
     # ! NEED RELATION SHIB_ATTR
     # check_license, error = self.valid_site_license()
