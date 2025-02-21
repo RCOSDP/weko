@@ -35,6 +35,7 @@ let isRegenerate = false;
 let isClickMainContent = false;
 
 const PageBodyGrid = function () {
+    this.intervalId;
     this.init = function () {
         let options = {
             width: 12,
@@ -264,11 +265,15 @@ const PageBodyGrid = function () {
     };
 
     this.buildAccessCounter = function (widgetId, created_date, languageDescription) {
+        let precedingMessage = languageDescription.preceding_message ? languageDescription.preceding_message + " " : "";
+        let followingMessage = languageDescription.following_message ? " " + languageDescription.following_message : "";
+        let otherMessage = languageDescription.other_message ? languageDescription.other_message : "";
+        let countStartDate = languageDescription.count_start_date ? languageDescription.count_start_date : created_date;
         let data = this.getAccessTopPageValue();
         let result = 0;
         // Convert to display-able number
-        if (data && data[widgetId] && data[widgetId][created_date]) {
-          let widget = data[widgetId][created_date];
+        if (data && data[widgetId] && data[widgetId][countStartDate]) {
+          let widget = data[widgetId][countStartDate];
             let initNum = widget.access_counter ? Number(widget.access_counter) : 0;
             result = widget.all.count ? Number(widget.all.count) : 0;
             if (typeof(initNum) == 'number') {
@@ -276,13 +281,10 @@ const PageBodyGrid = function () {
             }
         }
 
-        let precedingMessage = languageDescription.preceding_message ? languageDescription.preceding_message + " " : "";
-        let followingMessage = languageDescription.following_message ? " " + languageDescription.following_message : "";
-        let otherMessage = languageDescription.other_message ? languageDescription.other_message : "";
-
         return '<div>'
                 + ' <div class="counter-container">'
-                +       precedingMessage + '<span data-widget-id="' + widgetId + '" data-created-date="' + created_date
+                +       precedingMessage
+                + '<span data-widget-id="' + widgetId + '" data-created-date="' + created_date + '"data-count-start-date="'+ countStartDate
                 + '" class = "text-access-counter">' + result + '</span>' + followingMessage
                 + ' </div>'
                 + ' <div>' + otherMessage + '</div>'
@@ -434,7 +436,11 @@ const PageBodyGrid = function () {
             }
             content = this.buildAccessCounter(widgetId, node.created_date, languageDescription);
             let _this = this
-            setInterval(function() { return _this.setAccessCounterValue(); }, INTERVAL_TIME);
+            if (!this.intervalId) {
+                this.intervalId = setInterval(function() {
+                    return _this.setAccessCounterValue(widgetId);
+                }, INTERVAL_TIME);
+            }
         } else if (node.type === NEW_ARRIVALS) {
             let innerID = 'new_arrivals' + '_' + index;
             id = 'id="' + innerID + '"';
@@ -484,9 +490,9 @@ const PageBodyGrid = function () {
         let accessCounter = 0;
         $(".text-access-counter").each(function () {
             let widgetId = $(this).data("widgetId");
-            let createdDate = $(this).data("createdDate");
-            if (data && data[widgetId] && data[widgetId][createdDate]) {
-                var widget = data[widgetId][createdDate];
+            let countStartDate = $(this).data("countStartDate") ? $(this).data("countStartDate") : $(this).data("createdDate");
+            if (data && data[widgetId] && data[widgetId][countStartDate]) {
+                var widget = data[widgetId][countStartDate];
                 let result = widget.access_counter ? Number(widget.access_counter) : 0;
                 accessCounter = result + (widget.all.count ? Number(widget.all.count) : 0);
             }
@@ -505,12 +511,18 @@ const PageBodyGrid = function () {
             current_language = "en";
         }
         var currentTime = new Date().getTime();
+        var current_path=location.pathname
+        var url = (current_path === "/" || current_path.indexOf("/c/") !==-1) ? "/main" : current_path;
+        var _this = this
         $.ajax({
-            url: '/api/admin/access_counter_record/' + repository_id + '/' + current_language, 
+            url: '/api/admin/access_counter_record/' + repository_id + url + '/' + current_language, 
             method: 'GET',
             async: false,
             success: function(response) {
                 data = response;
+            },
+            error: function() {
+                clearInterval(_this.intervalId);
             }
         });
         return data;
