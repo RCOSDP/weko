@@ -273,7 +273,7 @@ class WekoAuthors(object):
         return mappings
 
     @classmethod
-    def prepare_export_data(cls, mappings, authors, schemes):
+    def prepare_export_data(cls, mappings, authors, schemes, start, size):
         """Prepare export data of all authors."""
         row_header = []
         row_label_en = []
@@ -281,9 +281,9 @@ class WekoAuthors(object):
         row_data = []
 
         if not mappings:
-            mappings = deepcopy(WEKO_AUTHORS_FILE_MAPPING)
+            mappings = WekoAuthors.mapping_max_item(deepcopy(WEKO_AUTHORS_FILE_MAPPING))
         if not authors:
-            authors = cls.get_all(with_deleted=False, with_gather=False)
+            authors = cls.get_by_range(start, size, False, False)
         if not schemes:
             schemes = cls.get_identifier_scheme_info()
         

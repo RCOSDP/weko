@@ -58,18 +58,21 @@ WEKO_AUTHORS_ADMIN_EXPORT_TEMPLATE = 'weko_authors/admin/author_export.html'
 WEKO_AUTHORS_EXPORT_ENTRYPOINTS = {
     'export': '/admin/authors/export/export',
     'cancel': '/admin/authors/export/cancel',
-    'check_status': '/admin/authors/export/check_status'
+    'check_status': '/admin/authors/export/check_status',
+    'stop': '/admin/authors/export/stop',
+    'resume': '/admin/authors/export/resume'
 }
 
 WEKO_AUTHORS_EXPORT_FILE_NAME = 'Creator_export_all'
 WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY = 'weko_authors_export_status'
 WEKO_AUTHORS_EXPORT_CACHE_URL_KEY = 'weko_authors_exported_url'
-WEKO_AUTHORS_EXPORT_CACHE_KEY = 'weko_author_export_cache_key'
+WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY = 'weko_authors_export_temp_file_path_key'
+WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY = "weko_authors_export_stop_point"
+WEKO_AUTHORS_EXPORT_CACHE_STOP_FLG_KEY = "weko_authors_export_stop_flg"
 WEKO_AUTHORS_EXPORT_TMP_PREFIX = 'authors_export_'
 WEKO_AUTHORS_EXPORT_BATCH_SIZE = 1000
 WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY = 5
 WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL = 5
-
 
 WEKO_AUTHORS_FILE_MAPPING = [
     {
