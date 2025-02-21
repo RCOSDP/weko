@@ -9,7 +9,9 @@
 """Harvest records from an OAI-PMH repository."""
 
 import os
+import re
 import xmltodict
+from copy import deepcopy
 from datetime import date
 from functools import partial
 
@@ -1177,7 +1179,7 @@ class JsonMapper(BaseMapper):
                 if self.itemtype_name == item:
                     self.itemtype = BaseMapper.itemtype_map.get(item)
 
-    def _create_item_map(self):
+    def _create_item_map(self, detail=False):
         """ Create Mapping information from ItemType.
 
             This mapping information consists of the following.
@@ -1200,10 +1202,10 @@ class JsonMapper(BaseMapper):
 
         item_map = {}
         for prop_k, prop_v in self.itemtype.schema["properties"].items():
-            self._apply_property(item_map, "", "", prop_k, prop_v)
+            self._apply_property(item_map, "", "", prop_k, prop_v, detail)
         return item_map
 
-    def _apply_property(self, item_map, key, value, prop_k, prop_v):
+    def _apply_property(self, item_map, key, value, prop_k, prop_v, detail):
         """
             This process is part of “_create_item_map” and is not
             intended for any other use.
@@ -1213,13 +1215,30 @@ class JsonMapper(BaseMapper):
             value = value + "." + prop_k if value else prop_k
 
         if prop_v["type"] == "object":
+            item_map.update({key: value}) if detail else None
             for child_k, child_v in prop_v["properties"].items():
-                self._apply_property(item_map, key, value, child_k, child_v)
+                self._apply_property(
+                    item_map, key, value, child_k, child_v, detail)
         elif prop_v["type"] == "array":
+            item_map.update({key: value}) if detail else None
             self._apply_property(
-                item_map, key, value, "items", prop_v["items"])
+                item_map, key, value, "items", prop_v["items"], detail)
         else:
             item_map[key] = value
+
+    def _get_property_type(self, path):
+        property_type = ""
+        properties = self.itemtype.schema.get("properties")
+        for p in path.split("."):
+            if properties[p].get("type") == "object":
+                property_type = "object"
+                properties = properties[p].get("properties")
+            elif properties[p].get("type") == "array":
+                property_type = "array"
+                properties = properties[p].get("items").get("properties")
+            else:
+                property_type = properties[p].get("type")
+        return property_type
 
 
 class JsonLdMapper(JsonMapper):
@@ -1229,23 +1248,110 @@ class JsonLdMapper(JsonMapper):
         self.json_mapping = json_mapping
         super().__init__(None, itemtype_id)
 
-    def map_to_itemtype(self, json_ld):
-        """Map to item type."""
-        metadata = JsonLdMapper.process_json_ld(json_ld)
-        item_map = self._create_item_map()
-        mapped_metadata = {
+    def to_item_metadata(self, json_ld):
+        """Map to item type metadata.
 
+        Map json-ld to item type metadata.
+        RO-Crate and SWORD BagIt format are supported.
+
+        Args:
+            json_ld (dict): metadata with json-ld format.
+        Returns:
+            dict: mapped metadata.
+        """
+        metadata, format = JsonLdMapper.process_json_ld(json_ld)
+        item_map = self._create_item_map(detail=True)
+        # make map of json-ld key to itemtype metadata key
+        properties_mapping = {
+            ld_key: item_map.get(prop_name)
+                for prop_name, ld_key in self.json_mapping.items()
+                if prop_name in item_map
         }
 
+        index = []
+        grant = []
+        publish_status = metadata.pop("wk:publishStatus", "private")
+        edit_mode = metadata.pop("wk:editMode", "Keep")
+        fulltext_searchable = []
+        mapped_metadata = {}
+        need_map = {}
+
+        def _pick_metadata(
+            parent:dict, meta_key, meta_path, meta_props,
+            prop_path, prop_props
+        ):
+            # meta_key="dc:type.@id", meta_path="dc:type.@id, meta_props=["dc:type", "@id"]
+            # prop_path=item_30001_resource_type11.resourceuri, prop_props=["item_30001_resource_type11","resourceuri"]
+            if len(prop_props) == 0 or len(meta_props) == 0:
+                raise Exception()
+            if len(meta_props) == 1 and len(prop_props) == 1:
+                meta_value = metadata.get(meta_key)
+                if self._get_property_type(prop_path) == "array":
+                    # TODO: value must be in {"interim", value}
+                    pass
+                parent.update({prop_path: meta_value})
+                return
+            if len(meta_props) == len(prop_props):
+                parent_prop_key = prop_path.split("."+prop_props[1])[0]
+                if self._get_property_type(parent_prop_key) == "object":
+                    sub_prop_object = parent.get(prop_props[0], {})
+                    _pick_metadata(
+                        sub_prop_object, meta_key, meta_path, meta_props[1:],
+                        prop_path, prop_props[1:]
+                    )
+                    parent.update({prop_props[0]: sub_prop_object})
+
+                    pass
+                elif self._get_property_type(parent_prop_key) == "array":
+                    pass
+                return
+            if len(meta_props) > len(prop_props):
+                return
+            if len(meta_props) < len(prop_props):
+                return
+
+        for meta_key in deepcopy(metadata):
+            meta_path = re.sub(r"\[\d+\]", "", meta_key)
+            if "wk:index" in meta_path:
+                index.append(int(metadata.pop(meta_key)))
+            elif "wk:fulltextSearchable" in meta_path:
+                flag = metadata.pop(meta_key)
+                if flag:
+                    fulltext_searchable.append(
+                        int(meta_key.replace("hasPart[", "").split("]")[0])
+                    )
+            elif "wk:grant" in meta_path:
+                # TODO: implement grant mapping
+                pass
+            elif meta_path not in properties_mapping:
+                continue
+            else:
+                need_map[meta_key] = metadata[meta_key]
+                meta_props = meta_key.split(".")
+                prop_path = properties_mapping[meta_path]
+                prop_props = prop_path.split(".")
+                # meta_key="dc:type.@id", meta_path="dc:type.@id", meta_props=["dc:type","@id"],
+                # prop_path=item_30001_resource_type11.resourceuri, prop_props=["item_30001_resource_type11","resourceuri"]
+                _pick_metadata(
+                    mapped_metadata, meta_key, meta_path, meta_props,
+                    prop_path, prop_props
+                )
+
+        mapped_metadata["path"] = index
+        mapped_metadata["pubulish_status"] = publish_status
+        mapped_metadata["edit_mode"] = edit_mode
         # result = {
-        #     "pubdate": self.json_id.get("datePublished"),
+        #     "pubdate": "2021-10-15",
         #     "publish_status": "private",
-        #     "path": self.json_id.get("wk:index"),
-        #     "item_1617186331708": {},
-        #     "item_1617258105262": {},
+        #     "path": [1623632832836],
+        #     "item_1617186331708": {...},
+        #     "item_1617258105262": {...},
         #     ...
         # }
-        return mapped_metadata
+        return mapped_metadata, format
+
+    def to_rocrate(self):
+        pass
 
     @staticmethod
     def process_json_ld(json_ld):
