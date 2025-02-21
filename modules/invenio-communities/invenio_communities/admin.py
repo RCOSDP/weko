@@ -487,13 +487,9 @@ class CommunityModelView(ModelView):
 
     def on_model_delete(self, model):
         if model.cnri:
-            weko_handle = Handle()
+            from .tasks import delete_handle
             hdl = model.cnri.split(WEKO_SERVER_CNRI_HOST_LINK)[-1]
-            handle = weko_handle.delete_handle(hdl)
-            if handle:
-                current_app.logger.info(model.id + ' handle deleted successfully.')
-            else:
-                raise Exception("handle delete failed. Community delete Cancelled.")
+            delete_handle.delay(hdl)
 
         if model.thumbnail_path:
             currentfile = os.path.join(
