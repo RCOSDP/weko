@@ -1149,7 +1149,9 @@ def db_register(app, db, db_records, users, action_data, item_type):
             'action_feedback_mail1':activity_item4_feedbackmail,
             'action_feedback_mail2':activity_item5_feedbackmail,
             'action_feedback_mail3':activity_item6_feedbackmail,
-            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item7,activity_item8,activity_guest]}
+            'activities':[activity,activity_item1,activity_item2,activity_item3,activity_item7,activity_item8,activity_guest],
+            'activity_actions':[activity_action,activity_action1_item1,activity_action2_item1,activity_action3_item1],
+    }
 
 @pytest.fixture()
 def workflow(app, db, item_type, action_data, users):

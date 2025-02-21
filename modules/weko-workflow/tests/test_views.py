@@ -4067,6 +4067,34 @@ def test_check_authority_action(app,db,users,db_register,db_records):
             result = check_authority_action(activity_id=activity.activity_id, action_id=3, contain_login_item_application=False, action_order=2)
             assert result == 1
 
+        with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
+            current_app.config["WEKO_WORKFLOW_ENABLE_CONTRIBUTOR"]=True
+
+            # cur_user != activity_login_user and cur_user != activity.shared_user_id
+            result = check_authority_action(activity_id=activity.activity_id, action_id=3, contain_login_item_application=False, action_order=2)
+            assert result == 1
+
+            # cur_user != action_handler
+            result = check_authority_action(activity_id=activity.activity_id, action_id=3, contain_login_item_application=True, action_order=2)
+            assert result == 1
+
+            # action_handler == -1 and cur_user == activity.shared_user_id
+            activity_action = db_register["activity_actions"][2]
+            activity_action.action_handler = -1
+            activity.shared_user_id = users[0]["id"]
+            db.session.merge(activity_action)
+            db.session.merge(activity)
+            db.session.commit()
+            result = check_authority_action(activity_id=activity.activity_id, action_id=3, contain_login_item_application=True, action_order=2)
+            assert result == 1
+
+            # action_handler != -1 and cur_user == activity.shared_user_id
+            activity_action.action_handler = 100
+            db.session.merge(activity_action)
+            db.session.commit()
+            result = check_authority_action(activity_id=activity.activity_id, action_id=3, contain_login_item_application=True, action_order=2)
+            assert result == 0
+
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_withdraw_confirm_nologin -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_withdraw_confirm_nologin(client,db_register2):
