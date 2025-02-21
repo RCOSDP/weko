@@ -79,7 +79,7 @@ def instance_path():
     path = tempfile.mkdtemp()
     yield path
     shutil.rmtree(path)
-    
+
 @pytest.fixture()
 def base_app(instance_path, request):
     """Flask application fixture."""
@@ -140,8 +140,8 @@ def base_app(instance_path, request):
 def app(base_app):
     with base_app.app_context():
         yield base_app
-        
-        
+
+
 @pytest.yield_fixture()
 def db(app):
     """Database fixture."""
@@ -266,7 +266,7 @@ def users(app, db):
         ds.add_role_to_user(originalroleuser, originalrole)
         ds.add_role_to_user(originalroleuser2, originalrole)
         ds.add_role_to_user(originalroleuser2, repoadmin_role)
-        
+
 
     return [
         {"email": contributor.email, "id": contributor.id, "obj": contributor},
@@ -384,7 +384,7 @@ def create_record(db, record_data, item_data):
         db.session.add(rel)
         parent=None
         doi = None
-        
+
         if '.' in record_data["recid"]:
             parent = PersistentIdentifier.get("recid",int(float(record_data["recid"])))
             recid_p = PIDRelation.get_child_relations(parent).one_or_none()
@@ -406,7 +406,7 @@ def create_record(db, record_data, item_data):
         deposit = WekoDeposit(record, record.model)
 
         #deposit.commit()
-        
+
     return recid, depid, record, item, parent, doi, deposit
 
 @pytest.fixture()
@@ -416,11 +416,11 @@ def db_records(app,db,mocker):
     record_datas = list()
     with open("tests/data/test_record/record_metadata.json") as f:
         record_datas = json.load(f)
-    
+
     item_datas = list()
     with open("tests/data/test_record/item_metadata.json") as f:
         item_datas = json.load(f)
-        
+
     recid, depid, record, item, parent, doi, deposit = create_record(db,record_datas[0],item_datas[0])
-        
+
     return recid, depid, record, item, parent, doi, deposit

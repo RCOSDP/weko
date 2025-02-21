@@ -82,14 +82,14 @@ test_patterns =[
      "execute_result01_02_03.json"
      ),
     ({"size":1,"page":2,"q":"1557820086539","Access":"open access"},
-     "facet.json", 
+     "facet.json",
      {"next":"?page=3&q=1557820086539&size=1","prev":"?page=1&q=1557820086539&size=1","self":"?page=2&q=1557820086539&size=1"},
      [[mock_path(**path2),mock_path(**path1)]], # path not in agp
      "rd_result01_02_03.json",
      "execute_result01_02_03.json")
     ]
 @pytest.mark.parametrize("params, facet_file, links, paths, rd_file, execute", test_patterns)
-def test_IndexSearchResource_get(client_rest, users, item_type, record, facet_search_setting, index, mock_es_execute, 
+def test_IndexSearchResource_get(client_rest, users, item_type, record, facet_search_setting, index, mock_es_execute,
                                  params, facet_file, links, paths, rd_file, execute):
     sname = current_app.config["SERVER_NAME"]
     facet = json_data("tests/data/search/"+facet_file)
@@ -115,7 +115,7 @@ def test_IndexSearchResource_get_Exception(client_rest, db, users, item_type, db
     #with db.session.begin_nested():
     #    db.session.add_all(indexes)
     #db.session.commit()
-    
+
     def dummy_response(data):
         if isinstance(data, str):
             data = json_data(data)
@@ -194,7 +194,7 @@ def test_IndexSearchResource_get(app,i18n_app, users, client_request_args):
     return_data_2.name = "test"
 
     with patch("invenio_pidstore.current_pidstore.fetchers", return_value=1):
-    
+
         def search_class():
             search_class_data = MagicMock()
 
@@ -252,7 +252,7 @@ def test_IndexSearchResource_get(app,i18n_app, users, client_request_args):
 
         def make_response(pid_fetcher, search_result, links, item_links_factory):
             return (pid_fetcher, search_result, links, item_links_factory)
-        
+
 
         ctx = {
             "pid_fetcher": "",
@@ -265,8 +265,8 @@ def test_IndexSearchResource_get(app,i18n_app, users, client_request_args):
 
         test = IndexSearchResource(
             ctx=ctx,
-            search_serializers=None, 
-            record_serializers=None, 
+            search_serializers=None,
+            record_serializers=None,
             default_media_type=None
         )
 

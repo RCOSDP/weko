@@ -1,6 +1,6 @@
 from flask_login.utils import login_user
 
-from weko_workflow.api import Flow, WorkActivity
+from weko_workflow.api import Flow, WorkActivity, GetCommunity
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_Flow_action -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_Flow_action(app, client, users, db, action_data):
@@ -134,3 +134,9 @@ def test_WorkActivity_get_corresponding_usage_activities(app, db_register):
     usage_application_list, output_report_list = activity.get_corresponding_usage_activities(1)
     assert usage_application_list == {'activity_data_type': {}, 'activity_ids': []}
     assert output_report_list == {'activity_data_type': {}, 'activity_ids': []}
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_GetCommunity_get_community_by_root_node_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_GetCommunity_get_community_by_root_node_id(db):
+    communities = GetCommunity.get_community_by_root_node_id(1738541618993)
+    assert communities is not None
+
