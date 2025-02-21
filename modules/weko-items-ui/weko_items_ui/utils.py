@@ -42,7 +42,7 @@ from flask import abort, current_app, flash, redirect, request, send_file, \
     url_for,jsonify
 from flask_babelex import gettext as _
 from flask_login import current_user
-from invenio_accounts.models import Role, userrole
+from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
@@ -51,7 +51,6 @@ from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records.api import RecordBase
-from invenio_accounts.models import User
 from invenio_search import RecordsSearch
 from invenio_stats.utils import QueryRankingHelper, QuerySearchReportHelper
 from invenio_stats.views import QueryRecordViewCount as _QueryRecordViewCount
@@ -156,21 +155,12 @@ def get_user_info_by_username(username):
         user = UserProfile.get_by_username(username)
         user_id = user.user_id
 
-        metadata = MetaData()
-        metadata.reflect(bind=db.engine)
-        table_name = 'accounts_user'
-
-        user_table = Table(table_name, metadata)
-        record = db.session.query(user_table)
-
-        data = record.all()
-
-        for item in data:
-            if item[0] == user_id:
-                result['username'] = username
-                result['user_id'] = user_id
-                result['email'] = item[1]
-                return result
+        data = User.query.filter(User.id == user_id).first()
+        if data:
+            result['username'] = username
+            result['user_id'] = user_id
+            result['email'] = data.email
+            return result
         return None
     except Exception as e:
         result['error'] = str(e)
@@ -201,19 +191,9 @@ def validate_user(username, email):
         user = UserProfile.get_by_username(username)
         user_id = 0
 
-        metadata = MetaData()
-        metadata.reflect(bind=db.engine)
-        table_name = 'accounts_user'
-
-        user_table = Table(table_name, metadata)
-        record = db.session.query(user_table)
-
-        data = record.all()
-
-        for item in data:
-            if item[1] == email:
-                user_id = item[0]
-                break
+        data = User.query.filter(User.email == email).first()
+        if data:
+            user_id = data.id
 
         if user.user_id == user_id:
             user_info = dict()
@@ -243,24 +223,16 @@ def get_user_info_by_email(email):
     """
     result = dict()
     try:
-        metadata = MetaData()
-        metadata.reflect(bind=db.engine)
-        table_name = 'accounts_user'
-
-        user_table = Table(table_name, metadata)
-        record = db.session.query(user_table)
-
-        data = record.all()
-        for item in data:
-            if item[1] == email:
-                user = UserProfile.get_by_userid(item[0])
-                if user is None:
-                    result['username'] = ""
-                else:
-                    result['username'] = user.get_username
-                result['user_id'] = item[0]
-                result['email'] = email
-                return result
+        data = User.query.filter(User.email == email).first()
+        if data:
+            user = UserProfile.get_by_userid(data.id)
+            if user is None:
+                result['username'] = ""
+            else:
+                result['username'] = user.get_username
+            result['user_id'] = data.id
+            result['email'] = email
+            return result
         return None
     except Exception as e:
         result['error'] = str(e)
@@ -288,19 +260,9 @@ def get_user_information(user_id):
         result['username'] = user_info.get_username
         result['fullname'] = user_info.fullname
 
-    metadata = MetaData()
-    metadata.reflect(bind=db.engine)
-    table_name = 'accounts_user'
-
-    user_table = Table(table_name, metadata)
-    record = db.session.query(user_table)
-
-    data = record.all()
-
-    for item in data:
-        if item[0] == user_id:
-            result['email'] = item[1]
-            return result
+    data = User.query.filter(User.id == user_id).first()
+    if data:
+        result['email'] = data.email
 
     return result
 

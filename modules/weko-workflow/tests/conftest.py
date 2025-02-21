@@ -700,14 +700,14 @@ def users(app, db):
             ActionRoles(action='files-rest-object-delete-version', role=repoadmin_role),
             ActionRoles(action='files-rest-object-read', role=repoadmin_role),
             ActionRoles(action='search-access', role=repoadmin_role),
-            ActionRoles(action='detail-page-acces', role=repoadmin_role),
+            ActionRoles(action='detail-page-access', role=repoadmin_role),
             ActionRoles(action='download-original-pdf-access', role=repoadmin_role),
             ActionRoles(action='author-access', role=repoadmin_role),
             ActionRoles(action='items-autofill', role=repoadmin_role),
             ActionRoles(action='stats-api-access', role=repoadmin_role),
             ActionRoles(action='read-style-action', role=repoadmin_role),
             ActionRoles(action='update-style-action', role=repoadmin_role),
-            ActionRoles(action='detail-page-acces', role=repoadmin_role),
+            ActionRoles(action='detail-page-access', role=repoadmin_role),
 
             ActionRoles(action='admin-access', role=comadmin_role),
             ActionRoles(action='index-tree-access', role=comadmin_role),
@@ -718,12 +718,12 @@ def users(app, db):
             ActionRoles(action='files-rest-object-delete-version', role=comadmin_role),
             ActionRoles(action='files-rest-object-read', role=comadmin_role),
             ActionRoles(action='search-access', role=comadmin_role),
-            ActionRoles(action='detail-page-acces', role=comadmin_role),
+            ActionRoles(action='detail-page-access', role=comadmin_role),
             ActionRoles(action='download-original-pdf-access', role=comadmin_role),
             ActionRoles(action='author-access', role=comadmin_role),
             ActionRoles(action='items-autofill', role=comadmin_role),
-            ActionRoles(action='detail-page-acces', role=comadmin_role),
-            ActionRoles(action='detail-page-acces', role=comadmin_role),
+            ActionRoles(action='detail-page-access', role=comadmin_role),
+            ActionRoles(action='detail-page-access', role=comadmin_role),
 
             ActionRoles(action='item-access', role=contributor_role),
             ActionRoles(action='files-rest-bucket-update', role=contributor_role),
@@ -731,20 +731,20 @@ def users(app, db):
             ActionRoles(action='files-rest-object-delete-version', role=contributor_role),
             ActionRoles(action='files-rest-object-read', role=contributor_role),
             ActionRoles(action='search-access', role=contributor_role),
-            ActionRoles(action='detail-page-acces', role=contributor_role),
+            ActionRoles(action='detail-page-access', role=contributor_role),
             ActionRoles(action='download-original-pdf-access', role=contributor_role),
             ActionRoles(action='author-access', role=contributor_role),
             ActionRoles(action='items-autofill', role=contributor_role),
-            ActionRoles(action='detail-page-acces', role=contributor_role),
-            ActionRoles(action='detail-page-acces', role=contributor_role),
+            ActionRoles(action='detail-page-access', role=contributor_role),
+            ActionRoles(action='detail-page-access', role=contributor_role),
         ]
         db.session.add_all(action_roles)
     db.session.commit()
     index = Index()
     db.session.add(index)
     db.session.commit()
-    comm = Community.create(community_id="comm01", role_id=sysadmin_role.id,
-                            id_user=sysadmin.id, title="test community",
+    comm = Community.create(community_id="comm01", role_id=comadmin_role.id,
+                            id_user=comadmin.id, title="test community",
                             description=("this is test community"),
                             root_node_id=index.id)
     db.session.commit()
