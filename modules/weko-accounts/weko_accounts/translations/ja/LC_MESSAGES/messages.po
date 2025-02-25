@@ -105,47 +105,47 @@ msgstr "Shibbolethを有効にする"
 msgid "Deny shibboleth user"
 msgstr "Shibbolethを無効にする"
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:66
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:71
 msgid "Default Role"
 msgstr "既定のロール"
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:68
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:73
 msgid "Gakunin IdP"
 msgstr "学認IdP"
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:71
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:76
 msgid "Outside Orthros"
 msgstr "機関外のOrthros"
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:74
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:79
 msgid "Others IdP"
 msgstr "上記以外のIdP"
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:79
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:84
 msgid "Attribute Mapping"
 msgstr "属性マッピング"
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:81
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:86
 msgid "shib_eppn"
 msgstr ""
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:84
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:89
 msgid "shib_role_authority_name"
 msgstr ""
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:87
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:92
 msgid "shib_mail"
 msgstr ""
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:90
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:95
 msgid "shib_user_name"
 msgstr ""
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:95
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:100
 msgid "Block User"
 msgstr "ブロックユーザー"
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:68
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:120
 msgid "Save"
 msgstr "保存"
 

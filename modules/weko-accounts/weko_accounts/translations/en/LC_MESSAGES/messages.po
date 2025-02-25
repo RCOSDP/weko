@@ -105,48 +105,48 @@ msgstr "Enable Shibboleth Authentication"
 msgid "Deny shibboleth user"
 msgstr "Disable Shibboleth Authentication"
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:66
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:71
 msgid "Default Role"
 msgstr ""
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:68
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:73
 msgid "Gakunin IdP"
 msgstr ""
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:71
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:76
 msgid "Outside Orthros"
 msgstr ""
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:74
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:79
 msgid "Others IdP"
 msgstr ""
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:79
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:84
 msgid "Attribute Mapping"
 msgstr ""
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:81
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:86
 msgid "shib_eppn"
 msgstr ""
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:84
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:89
 msgid "shib_role_authority_name"
 msgstr ""
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:87
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:92
 msgid "shib_mail"
 msgstr ""
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:90
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:95
 msgid "shib_user_name"
 msgstr ""
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:95
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:100
 msgid "Block User"
 msgstr ""
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:68
-msgid "Update"
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:120
+msgid "Save"
 msgstr ""
 
 #~ msgid "%(module_name)s"
