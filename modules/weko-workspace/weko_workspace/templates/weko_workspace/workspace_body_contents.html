@@ -392,15 +392,20 @@
                           <td style="width: auto;">
                             <strong><a href="{{ request.host_url }}records/{{ workspaceitem.recid }}">{{
                                 workspaceitem.title }}</a></strong><br><br>
-                            <span>{{ workspaceitem.authorlist | join(', ') }}</span><br><br>
-                            <span>{{ workspaceitem.magazineName }}／{{ workspaceitem.conferenceName
-                              }}</span><span>&nbsp;&nbsp;</span>
+                            
+                            {% if workspaceitem.authorlist is not none and workspaceitem.authorlist|length > 0 %}
+                              <span>{{ workspaceitem.authorlist | join(', ') }}</span><br><br>
+                            {% endif %}
+
+                            <span>{{ workspaceitem.magazineName }}／{{ workspaceitem.conferenceName}}</span><span>&nbsp;&nbsp;</span>
                             <span>{{ workspaceitem.volume }}（{{ workspaceitem.issue }}）</span><span>&nbsp;&nbsp;</span>
-                            </span>{{ workspaceitem.funderName }} | {{ workspaceitem.awardTitle
-                            }}</span><span>&nbsp;&nbsp;</span>
+                            </span>{{ workspaceitem.funderName }} | {{ workspaceitem.awardTitle }}</span><span>&nbsp;&nbsp;</span>
                             <br><br>
                             <span>{{ workspaceitem.publicationDate }}</span><span>&nbsp;&nbsp;</span>
 
+                            {% if workspaceitem.relation|length > 0 %}
+                              <span><a href="javascript:void(0)" id="relatedButton1"><strong>関連</strong></a></span><span>  </span>
+                            {% endif %}
 
                             {% if workspaceitem.fileSts %}
                             <span>本文ファイル ({{ workspaceitem.fileCnt }})： 公開（{{ workspaceitem.publicCnt }}）、エンバーゴ（{{
@@ -409,14 +414,19 @@
                             {% else %}
                             <span>本文ファイル (0)</span><span>&nbsp;&nbsp;</span>
                             {% endif %}
-
                             <br><br>
+
+                            <div id="relatedInfo" style="display: none;">
+                              {% for relatedItem in workspaceitem.relation %}
+                                <span>{{ relatedItem.relationType }}&nbsp;&nbsp;{{ relatedItem.relationTitle }}、<a>{{ relatedItem.relationUrl }}</a></span><br>
+                              {% endfor %}
+                            </div>
+
                           </td>
 
                           <td style="text-align: center; vertical-align: top;">
 
                             <span><a href="{{workspaceitem.doi}}">DOI</a></span><br><br>
-
 
                             <span><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
                                 class="bi bi-eye-fill" viewBox="0 0 16 16">
@@ -454,7 +464,6 @@
                                   d="M16 12.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0m-5.5 0a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 0-1h-3a.5.5 0 0 0-.5.5" />
                               </svg>
                               {% endif %}
-
 
                             </span><br><br>
                           </td>

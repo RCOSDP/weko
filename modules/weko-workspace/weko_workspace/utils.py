@@ -150,7 +150,7 @@ def get_es_itemlist(jsonCondition:json):
     records_data = response.json()
     print("=======records_data start=======")
     # print(invenio_api_url)
-    print(records_data)
+    # print(records_data)
     print("=======records_data end=======")
 
     return records_data
