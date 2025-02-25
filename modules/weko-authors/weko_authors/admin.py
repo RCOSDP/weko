@@ -40,7 +40,7 @@ from .config import WEKO_AUTHORS_EXPORT_FILE_NAME, \
 from .permissions import author_permission
 from .tasks import check_is_import_available, export_all, import_author
 from .utils import check_import_data, delete_export_status, \
-    get_export_status, get_export_url, set_export_status
+    get_export_status, get_export_url, set_export_status, delete_export_url
 
 
 class AuthorManagementView(BaseView):
@@ -126,6 +126,10 @@ class ExportView(BaseView):
     @expose('/check_status', methods=['GET'])
     def check_status(self):
         """Api check export status."""
+        
+        # stop_pointを確認
+        stop_point= current_cache.get(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"])
+        
         status = get_export_status()
         if not status:
             status = get_export_url()
@@ -135,11 +139,13 @@ class ExportView(BaseView):
                     or task.state == states.REVOKED:
                 delete_export_status()
                 status = get_export_url()
-                if not task.result:
+                if not task.result and not stop_point:
                     status['error'] = 'export_fail'
             else:
                 status['file_uri'] = get_export_url().get('file_uri', '')
 
+        if stop_point:
+            status['stop_point'] = stop_point
         # set download_link
         status['download_link'] = url_for(
             'authors/export.download', _external=True)
@@ -165,20 +171,18 @@ class ExportView(BaseView):
     @expose('/export', methods=['POST'])
     def export(self):
         """Process export authors."""
-        # if current_cache.get(Wcurrent_app.config["WEKO_AUTHORS_EXPORT_CACHE_KEY"]):
-        #     if current_cache.get(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_KEY"]).get('folder_path'):
-        #         return jsonify({
-        #         'code': 400
-        #         })
+        #実行時に以前のexport_urlを削除
+        delete_export_url()
         temp_folder_path ='/var/tmp/author_export'
         os.makedirs(temp_folder_path, exist_ok=True)
         prefix = current_app.config["WEKO_AUTHORS_EXPORT_TMP_PREFIX"] + datetime.datetime.now().strftime("%Y%m%d%H%M")
         
         with tempfile.NamedTemporaryFile(dir=temp_folder_path, prefix=prefix, suffix='.tsv', mode='w+', delete=False) as temp_file:
             temp_file_path = temp_file.name
-        print(temp_file_path)
-        update_cache_data(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_KEY"],
-            {"folder_path":temp_file_path},
+        
+        # redisに一時ファイルのパスを保存
+        update_cache_data(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"],
+            temp_file_path,
             60*60*24
         )
         task = export_all.delay()
@@ -195,6 +199,9 @@ class ExportView(BaseView):
         result = {'status': 'fail'}
         try:
             status = get_export_status()
+            # stop_pointがあるなら削除
+            if current_cache.get(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]):
+                current_cache.delete(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"])
             if status and status.get('task_id'):
                 revoke(status.get('task_id'), terminate=True)
                 delete_export_status()
@@ -205,25 +212,33 @@ class ExportView(BaseView):
             'code': 200,
             'data': result
         })
-        
-    # @author_permission.require(http_exception=403)
-    # @expose('/stop', methods=['POST'])
-    # def stop(self):
-    #     """Stop export progress."""
-    #     result = {'status': 'fail'}
-    #     try:
-    #         status = get_export_status()
-    #         if status and status.get('task_id'):
-    #             update_cache_data(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_KEY"],
-    #                 {"stop":True},
-    #                 0)
-    #     except Exception as ex:
-    #         current_app.logger.error(ex)
-    #     return jsonify({
-    #         'code': 200,
-    #         'data': result
-    #     })
 
+
+    # 再開用メソッド
+    @author_permission.require(http_exception=403)
+    @expose('/resume', methods=['POST'])
+    def resume(self):
+        """Resume export progress."""
+        print("ersume")
+
+        delete_export_url()
+        temp_folder_path ='/var/tmp/author_export'
+        os.makedirs(temp_folder_path, exist_ok=True)
+        prefix = current_app.config["WEKO_AUTHORS_EXPORT_TMP_PREFIX"] + datetime.datetime.now().strftime("%Y%m%d%H%M")
+        
+        with tempfile.NamedTemporaryFile(dir=temp_folder_path, prefix=prefix, suffix='.tsv', mode='w+', delete=False) as temp_file:
+            temp_file_path = temp_file.name
+        print(temp_file_path)
+        update_cache_data(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"],
+            temp_file_path,
+            60*60*24
+        )
+        task = export_all.delay()
+        set_export_status(task_id=task.id)
+        return jsonify({
+            'code': 200,
+            'data': {'task_id': task.id}
+        })
 
 class ImportView(BaseView):
     """Weko import authors admin view."""

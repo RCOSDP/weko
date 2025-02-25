@@ -22,6 +22,7 @@
 
 import base64
 import csv
+import os
 import chardet
 import io
 import sys
@@ -42,6 +43,8 @@ from invenio_db import db
 from invenio_files_rest.models import FileInstance, Location
 from invenio_indexer.api import RecordIndexer
 
+from weko_workflow.utils import update_cache_data
+
 from weko_authors.contrib.validation import validate_by_extend_validator, \
     validate_external_author_identifier, validate_map, validate_required
 
@@ -49,7 +52,6 @@ from .api import WekoAuthors
 from .config import WEKO_AUTHORS_FILE_MAPPING, \
     WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY, WEKO_AUTHORS_EXPORT_CACHE_URL_KEY
 from .models import AuthorsPrefixSettings, AuthorsAffiliationSettings
-
 
 def get_author_prefix_obj(scheme):
     """Check item Scheme exist in DB."""
@@ -144,23 +146,35 @@ def save_export_url(start_time, end_time, file_uri):
     current_cache.set(WEKO_AUTHORS_EXPORT_CACHE_URL_KEY, data, timeout=0)
     return data
 
-def handle_exception(ex, attempt, retrys, interval):
+def delete_export_url():
+    """Delete exported url."""
+    current_cache.delete(WEKO_AUTHORS_EXPORT_CACHE_URL_KEY)
+
+def handle_exception(ex, attempt, retrys, interval, stop_point=0):
     """Handle exceptions during the export process."""
     current_app.logger.error(ex)
     # 最後のリトライの場合は例外をraise
     if attempt == retrys - 1:
-        return 0
+        current_app.logger.info(f"Connection failed, Stop export.")
+        if stop_point != 0:
+            update_cache_data(
+                current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"],
+                stop_point,
+                60*60*24
+                )
+        raise ex
     current_app.logger.info(f"Connection failed, retrying in {interval} seconds...")
     sleep(interval)
     
 def export_authors():
     """Export all authors."""
     file_uri = None
-    print("export_authors")
     retrys = current_app.config["WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY"]
     interval = current_app.config["WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL"]
     size =  current_app.config.get("WEKO_AUTHORS_EXPORT_BATCH_SIZE", 1000)
     interval = current_app.config["WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL"]
+    stop_point = current_cache.get(\
+        current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"])
     mappings = []
     schemes = {}
     records_count = 0
@@ -168,7 +182,6 @@ def export_authors():
     # ある程度の処理をまとめてリトライ処理
     for attempt in range(retrys):
         try:
-            print("fist retry", attempt)
             # マッピングを取得
             mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING"])
             # マッピング上の複数が可能となる項目の最大値を取得
@@ -181,7 +194,8 @@ def export_authors():
             records_count = WekoAuthors.get_records_count(False, False)
             
             # 一時ファイルのパスを取得
-            temp_file_path=current_cache.get(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_KEY"]).get("folder_path","")
+            temp_file_path=current_cache.get(\
+                current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"])
             break
         except SQLAlchemyError as ex:
             handle_exception(ex, attempt, retrys, interval)
@@ -189,10 +203,16 @@ def export_authors():
             handle_exception(ex, attempt, retrys, interval)
         except TimeoutError as ex:
             handle_exception(ex, attempt, retrys, interval)
-    
+
     try:
+        # stop_pointがあればstart_pointに代入
+        start_point = stop_point if stop_point else 0
+        # 読み込み後削除
+        current_cache.delete(\
+            current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"])
         # 1000ずつ著者を取得し、データを書き込む
-        for i in range(0,records_count-1, size):
+        for i in range(start_point, records_count-1, size):
+            current_app.logger.info("Export authors start_point：",start_point)
             row_header = []
             row_label_en = []
             row_label_jp = []
@@ -200,18 +220,20 @@ def export_authors():
 
             # 著者情報取得のリトライ処理
             for attempt in range(retrys):
+                current_app.logger.info("Export authors retry count：", attempt)
                 try:
                     # 著者情報をstartからWEKO_EXPORT_BATCH_SIZE分取得
                     authors = WekoAuthors.get_by_range(i, size, False, False)
                     row_header, row_label_en, row_label_jp, row_data =\
-                        WekoAuthors.prepare_export_data(mappings, authors, schemes)
+                        WekoAuthors.prepare_export_data(mappings, authors, schemes, i, size)
                     break
                 except SQLAlchemyError as ex:
-                    handle_exception(ex, attempt, retrys, interval)
-                except TimeoutError as ex:
-                    handle_exception(ex, attempt, retrys, interval)
+                    handle_exception(ex, attempt, retrys, interval, stop_point=i)
                 except RedisError as ex:
-                    handle_exception(ex, attempt, retrys, interval)
+                    handle_exception(ex, attempt, retrys, interval, stop_point=i)
+                except TimeoutError as ex:
+                    handle_exception(ex, attempt, retrys, interval, stop_point=i)
+                    
             # 一時ファイルに書き込み
             write_to_tempfile(i, mappings, schemes, row_header, row_label_en, row_label_jp, row_data)
             
@@ -229,6 +251,8 @@ def export_authors():
                 file.writable = True
                 file.set_contents(reader)
         file_uri = file.uri if file else None
+        # 完了時一時ファイルを削除
+        os.remove(temp_file_path)
         db.session.commit()
     except Exception as ex:
         db.session.rollback()
@@ -240,7 +264,8 @@ def export_authors():
 
 def write_to_tempfile(start, mappings, schemes, row_header, row_label_en, row_label_jp, row_data):
     # 一時ファイルのパスを取得
-    temp_file_path=current_cache.get(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_KEY"]).get("folder_path","")
+    temp_file_path=current_cache.get( \
+        current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"])
 
     # ファイルを開いてデータを書き込む
     try:

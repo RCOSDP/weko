@@ -21,7 +21,6 @@
 """WEKO3 authors tasks."""
 import os
 import glob
-import shutil
 from datetime import datetime, timezone
 
 from celery import shared_task, states
@@ -102,22 +101,34 @@ def check_tmp_file_time_for_author():
     path = '/var/tmp'
     # 1日
     ttl = 24* 60* 60 
+    author_export_temp_dirc_path = path + "/author_export"
+    author_import_temp_dirc_path = path + "/author_import"
+    author_export_temp_file_path = path + "/author_export/**"
+    author_import_temp_file_path = path + "/author_import/**"
     
     now = datetime.now(timezone.utc) 
     # 著者エクスポートの一時ファイルの削除
-    for d in glob.glob(path + "/author_export/**"):
+    for d in glob.glob(author_export_temp_file_path):
         tLog = os.path.getmtime(d)
         if (now - datetime.fromtimestamp(tLog, timezone.utc)).total_seconds() >= ttl:
             try:
-                shutil.rmtree(path)
+                os.remove(d)
             except OSError as e:
                 current_app.logger.error(e)
+    # ディレクトリが空かどうかを確認し、空の場合はディレクトリを削除
+    if os.path.exists(author_export_temp_dirc_path) and \
+        not os.listdir(author_export_temp_file_path):
+        os.rmdir(author_export_temp_file_path)
                 
     # 著者インポートの一時ファイルの削除
-    for d in glob.glob(path + "/author_import/**"):
+    for d in glob.glob(author_import_temp_file_path):
         tLog = os.path.getmtime(d)
         if (now - datetime.fromtimestamp(tLog, timezone.utc)).total_seconds() >= ttl:
             try:
-                shutil.rmtree(path)
+                os.remove(path)
             except OSError as e:
                 current_app.logger.error(e)
+    # ディレクトリが空かどうかを確認し、空の場合はディレクトリを削除
+    if os.path.exists(author_import_temp_dirc_path) and \
+        not os.listdir(author_import_temp_file_path):
+        os.rmdir(author_import_temp_file_path)

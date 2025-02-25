@@ -207,6 +207,12 @@ msgstr ""
 #~ msgid "Cancel"
 #~ msgstr ""
 
+#~ msgid "Resume"
+#~ msgstr ""
+
+#~ msgid "Author DB"
+#~ msgstr ""
+
 #~ msgid "Are you sure you want to cancel process of exporting all creator?"
 #~ msgstr ""
 
