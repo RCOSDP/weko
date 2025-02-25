@@ -115,43 +115,24 @@ def get_workspace_filterCon():
 # TODO 2.1.2.2 ESからアイテム一覧取得処理
 def get_es_itemlist(jsonCondition:json):
 
-    # fake_response = {
-    #     "took": 5,
-    #     "timed_out": False,
-    #     "_shards": {"total": 5, "successful": 5, "skipped": 0, "failed": 0},
-    #     "hits": {
-    #         "total": {"value": 2, "relation": "eq"},
-    #         "max_score": 1.0,
-    #         "hits": [
-    #             {
-    #                 "_index": "your_index_name",
-    #                 "_type": "_doc",
-    #                 "_id": "90e81f37-8aa6-4bcd-abac-91d1df25fc45",
-    #                 "_score": 1.0,
-    #                 "_source": {
-    #                     "title": "First Document",
-    #                     "content": "This is the content of the first document.",
-    #                     "author": "John Doe",
-    #                     "date": "2023-10-01",
-    #                 },
-    #             },
-    #         ],
-    #     },
-    # }
     # print("======workspace def get_es_itemlist(jsonCondition:json): ======")
     # print(f"jsonCondition : {jsonCondition}")
 
-    # invenio_api_path = "/api/records/?search_type=0&q=&page=1&size=20&sort=controlnumber&timestamp=1739758780268
-    # invenio_api_path = "/api/records/"
-    invenio_api_path = "/api/worksapce/search"
+    # invenio_api_path = "/api/worksapce/search"
+    # invenio_api_path = "/api/worksapce/search?search_type=0&q=&page=1&size=20&sort=controlnumber&timestamp=1739758780268"
+    # invenio_api_path = "/api/worksapce/search?search_type=0&q=&page=1&size=20&sort=controlnumber"
+    # invenio_api_path = "/api/worksapce/search?search_type=0&q=&page=1&size=2&sort=controlnumber"
+    # invenio_api_path = "/api/worksapce/search?q=&page=1&size=20&sort=controlnumber"
+    invenio_api_path = "/api/worksapce/search?page=1&size=50&sort=-controlnumber"
+    # invenio_api_path = "/api/worksapce/search?page=1&size=20&sort=title"
     invenio_api_url = request.host_url.rstrip("/") + invenio_api_path
     headers = {"Accept": "application/json"}
     response = requests.get(invenio_api_url, headers=headers)
     records_data = response.json()
-    print("=======records_data start=======")
+    # print("=======records_data start=======")
     # print(invenio_api_url)
     # print(records_data)
-    print("=======records_data end=======")
+    # print("=======records_data end=======")
 
     return records_data
 

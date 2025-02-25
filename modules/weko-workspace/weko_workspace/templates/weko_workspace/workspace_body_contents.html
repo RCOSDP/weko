@@ -73,9 +73,9 @@
   }
 </style>
 
-<div id="invenio-search">
-  <div id="search_res" ng-controller="searchResCtrl">
-    <div class="panel panel-default" ng-if="typeIndexList() != 'root'">
+<div id="search">
+  <div id="search_res" >
+    <div class="panel panel-default" >
       <div role="navigation" style="display: flex; flex-direction: column; width: 300px;">
         <input type="button" class="" id="btn_todo1" value="{{_('アイテム出力')}}"
           style="margin-bottom: 10px; width: 50%; text-align: left;" />
@@ -85,7 +85,7 @@
       </div>
 
       <div id="search-result-body" class="panel-body">
-        <div id="index_item_list" ng-if="vm.invenioSearchResults.hits.total">
+        <div id="index_item_list" >
           <div class="form-inline flow-root">
             <div class="pull-left">
               <div class="form-group">
@@ -133,7 +133,7 @@
             <div style="clear: both;"></div>
             <div id="content" style="display: none;">
               <div class="row row-4">
-                <div ng-init="initData('{{detail_condition}}')" class="panel panel-default">
+                <div class="panel panel-default">
                   <div class="panel-body">
                     <!-- 保存・リセット結果メッセージ -->
                     <div id="savaResult-success" class="alert alert-success">
@@ -147,7 +147,7 @@
 
                     <!-- 絞込み条件 -->
                     <div class="container testimonial-group">
-                      <div ng-repeat=" sub_data in condition_data track by $index" class="row row-4">
+                      <div class="row row-4">
                         <table>
                           <tr>
                             <th>リソースタイプ</th>
@@ -310,7 +310,7 @@
 
                     <!-- 絞込みボタン、クリアボタン、保存ボタン、リセットボタン -->
                     <div class="col-xs-1 col-xs-offset-3">
-                      <button id="detail-search-btn" type="button" class="btn btn-primary" ng-click="detail_search()"
+                      <button id="detail-search-btn" type="button" class="btn btn-primary"
                         onclick="location.reload();" style="float:right;">
                         <span class="glyphicon glyphicon-search"></span>
                         {{_('絞込')}}&nbsp
@@ -318,21 +318,21 @@
                     </div>
                     <div class="col-xs-1">
                       <button id="clear-search-btn" type="button" class="btn btn-default"
-                        ng-click="detail_search_clear()" onclick="location.reload();">
+                         onclick="location.reload();">
                         <span class="glyphicon glyphicon-remove"></span>
                         {{_('クリア')}}&nbsp
                       </button>
                     </div>
                     <div class="col-xs-1">
                       <button id="clear-search-btn" type="button" class="btn btn-primary"
-                        ng-click="detail_search_clear()" onclick="location.reload();" style="float:right;">
+                         onclick="location.reload();" style="float:right;">
                         <span class="glyphicon glyphicon-save"></span>
                         {{_('保存')}}&nbsp
                       </button>
                     </div>
                     <div class="col-xs-1">
                       <button id="clear-search-btn" type="button" class="btn btn-default"
-                        ng-click="detail_search_clear()" onclick="location.reload();">
+                         onclick="location.reload();">
                         <span class="glyphicon glyphicon-remove"></span>
                         {{_('リセット')}}&nbsp
                       </button>
@@ -345,7 +345,7 @@
             <div class="panel-group m-top-5">
               <div class="row row-10">
                 <div class="col-xs-12 col-md-12">
-                  <div class="panel panel-default panel-default-2" ng-repeat="">
+                  <div class="panel panel-default panel-default-2" >
                     <div class="panel-body" style="display: flex; flex-direction: column; align-items: left;">
                       <div id="groupYear" style="display: block;">
                         <h3>2025</h3>
@@ -354,7 +354,7 @@
                         {% for workspaceitem in workspaceItemList %}
                         <tr>
                           <td style="text-align: center; vertical-align: top;">
-                            <a href="javascript:void(0)" class="" data-item-id="">
+                            <a href="{{url_for('weko_workspace.update_workspace_status_management')}}" class="" data-item-id="">
                               {% if workspaceitem.favoriteSts %}
                               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
                                 class="bi bi-star-fill" viewBox="0 0 16 16">
@@ -391,7 +391,7 @@
 
                           <td style="width: auto;">
                             <strong><a href="{{ request.host_url }}records/{{ workspaceitem.recid }}">{{
-                                workspaceitem.title }}</a></strong><br><br>
+                                workspaceitem.title }} -- recid : {{ workspaceitem.recid}}</a></strong><br><br>
                             
                             {% if workspaceitem.authorlist is not none and workspaceitem.authorlist|length > 0 %}
                               <span>{{ workspaceitem.authorlist | join(', ') }}</span><br><br>
@@ -402,9 +402,9 @@
                             </span>{{ workspaceitem.funderName }} | {{ workspaceitem.awardTitle }}</span><span>&nbsp;&nbsp;</span>
                             <br><br>
                             <span>{{ workspaceitem.publicationDate }}</span><span>&nbsp;&nbsp;</span>
-
+                            
                             {% if workspaceitem.relation|length > 0 %}
-                              <span><a href="javascript:void(0)" id="relatedButton1"><strong>関連</strong></a></span><span>  </span>
+                              <span><a href="javascript:void(0)" class="relatedButton"><strong>関連</strong></a></span><span>  </span>
                             {% endif %}
 
                             {% if workspaceitem.fileSts %}
@@ -416,7 +416,7 @@
                             {% endif %}
                             <br><br>
 
-                            <div id="relatedInfo" style="display: none;">
+                            <div class="relatedInfo" style="display: none;">
                               {% for relatedItem in workspaceitem.relation %}
                                 <span>{{ relatedItem.relationType }}&nbsp;&nbsp;{{ relatedItem.relationTitle }}、<a>{{ relatedItem.relationUrl }}</a></span><br>
                               {% endfor %}
@@ -481,95 +481,6 @@
                           </td>
                         </tr>
                         {% endfor %}
-
-                        <!-- ==================================22222222222222222====================================================== -->
-                        <tr>
-                          <td style="text-align: center; vertical-align: top;">
-                            <a href="javascript:void(0)" class="" data-item-id="">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                                class="bi bi-star" viewBox="0 0 16 16">
-                                <path
-                                  d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.56.56 0 0 0-.163-.505L1.71 6.745l4.052-.576a.53.53 0 0 0 .393-.288L8 2.223l1.847 3.658a.53.53 0 0 0 .393.288l4.052.575-2.906 2.77a.56.56 0 0 0-.163.506l.694 3.957-3.686-1.894a.5.5 0 0 0-.461 0z" />
-                              </svg></a><br><br>
-
-                            <a href="javascript:void(0)" class="" data-item-id="">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                                class="bi bi-book-fill" viewBox="0 0 16 16">
-                                <path
-                                  d="M8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783" />
-                              </svg></a><br><br>
-
-                            <input type="checkbox" value="" /><br><br>
-                          </td>
-
-                          <td style="width: auto;">
-                            <strong><a
-                                href="">アイテムタイトルアイテムタイトル002アイテムタイトル002アイテムタイトル002アイテムタイトル002アイテムタイトル002アイテムタイトル002</a></strong><br><br>
-                            <span>tarou4, tarou5, tarou6</span><br><br>
-                            <span>雑誌アイテムタイトル002／会議名アイテムタイトル002...see more</span><span>&nbsp;&nbsp;</span>
-                            <span>00（00）</span><span>&nbsp;&nbsp;</span>
-                            </span>国立研究開発法人科学技術振興機構（JST） | 実践としての変革(Transformation)...see
-                            more</span><span>&nbsp;&nbsp;</span>
-                            <br><br>
-                            <span>20250114</span><span>&nbsp;&nbsp;</span>
-                            <span><a href="javascript:void(0)"
-                                id="relatedButton1"><strong>関連</strong></a></span><span>&nbsp;&nbsp;</span>
-                            <span>本文ファイル (10)： 公開（3）、エンバーゴ（5）、 制限公開（2）</span><span>&nbsp;&nbsp;</span>
-                            <br><br>
-                            <div id="relatedInfo" style="display: none;">
-                              <span>関連情報タイプ１&nbsp;&nbsp;関連情報タイトル１関連情報タイトル１関連情報タイトル１、<a>URL</a></span><br>
-                              <span>関連情報タイプ２&nbsp;&nbsp;関連情報タイトル２関連情報タイトル２関連情報タイトル２関連情報タイトル２、<a>URL</a></span><br>
-                              <span>関連情報タイプ３&nbsp;&nbsp;関連情報タイトル３関連情報タイトル３関連情報タイトル３関連情報タイトル３関連情報タイトル３、<a>URL</a></span><br>
-                              <span>関連情報タイプ４&nbsp;&nbsp;関連情報タイトル４関連情報タイトル４関連情報タイトル４関連情報タイトル４関連情報タイトル４、<a>URL</a></span><br>
-                              <span>関連情報タイプ５&nbsp;&nbsp;関連情報タイトル５関連情報タイトル５関連情報タイトル５関連情報タイトル５関連情報タイトル５、<a>URL</a></span><br>
-                            </div>
-                          </td>
-
-                          <td style="text-align: center; vertical-align: top;">
-                            <span><a href="javascript:void(0)">DOI</a></span><br><br>
-                            <span><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                                class="bi bi-eye-fill" viewBox="0 0 16 16">
-                                <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0" />
-                                <path
-                                  d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7" />
-                              </svg>1000
-                            </span><br><br>
-                            <span>
-                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                                class="bi bi-file-earmark" viewBox="0 0 16 16">
-                                <path
-                                  d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z" />
-                              </svg>500
-                            </span><br><br>
-                          </td>
-
-                          <td style="text-align: center; vertical-align: top;">
-                            <span style="border: 1px solid #000; padding: 5px; border-radius: 4px;">book</span><br><br>
-                            <span>OA済み
-                            </span><br><br>
-                            <span>
-                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                                class="bi bi-envelope-dash" viewBox="0 0 16 16">
-                                <path
-                                  d="M2 2a2 2 0 0 0-2 2v8.01A2 2 0 0 0 2 14h5.5a.5.5 0 0 0 0-1H2a1 1 0 0 1-.966-.741l5.64-3.471L8 9.583l7-4.2V8.5a.5.5 0 0 0 1 0V4a2 2 0 0 0-2-2zm3.708 6.208L1 11.105V5.383zM1 4.217V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v.217l-7 4.2z" />
-                                <path
-                                  d="M16 12.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0m-5.5 0a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 0-1h-3a.5.5 0 0 0-.5.5" />
-                              </svg>
-                            </span><br><br>
-                          </td>
-
-                          <td style="text-align: center; vertical-align: top;">
-                            <a href="javascript:void(0)" class="edit-item" data-item-id="">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor"
-                                class="bi bi-pencil-square" viewBox="0 0 16 16">
-                                <path
-                                  d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
-                                <path fill-rule="evenodd"
-                                  d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
-                              </svg>
-                            </a>
-                          </td>
-                        </tr>
                       </table>
                     </div>
                   </div>
@@ -599,39 +510,34 @@
             </div>
           </div>
         </div>
-
       </div>
     </div>
   </div>
 
   <!-- 関連リンク表示・非表示 -->
-  <script>
-    const button = document.getElementById('relatedButton1');
-    const content = document.getElementById('relatedInfo');
-    button.addEventListener('click', function () {
-      if (content.classList.contains('expanded')) {
-        content.classList.remove('expanded');
-        content.style.display = 'none';
-      } else {
-        content.classList.add('expanded');
-        content.style.display = 'block';
-      }
+  <!-- <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      console.log('DOM loaded');
+      const buttons = document.querySelectorAll('.relatedButton');
+      console.log('Found buttons:', buttons.length);
+      buttons.forEach(button => {
+        button.addEventListener('click', function () {
+          console.log('Button clicked:', this);
+          const content = this.closest('td').querySelector('.relatedInfo');
+          console.log('Found content:', content);
+          if (content) {
+            if (content.classList.contains('expanded')) {
+              content.classList.remove('expanded');
+              content.style.display = 'none';
+            } else {
+              content.classList.add('expanded');
+              content.style.display = 'block';
+            }
+          }
+        });
+      });
     });
-  </script>
-
-  <script>
-    const button3 = document.getElementById('relatedButton2');
-    const content3 = document.getElementById('relatedInfo2');
-    button3.addEventListener('click', function () {
-      if (content3.classList.contains('expanded')) {
-        content3.classList.remove('expanded');
-        content3.style.display = 'none';
-      } else {
-        content3.classList.add('expanded');
-        content3.style.display = 'block';
-      }
-    });
-  </script>
+  </script> -->
 
   <!-- 絞込み条件表示・非表示 -->
   <script>
