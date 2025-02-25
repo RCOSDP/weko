@@ -1,5 +1,18 @@
 $(document).ready(function () {
   var fileDownloadURL = '/admin/report/stats_file_output';
+  $('#repository_select').change(function () {
+    var selectedRepo = $(this).val();
+    var currentUrl = new URL(window.location.href);
+    
+    if (selectedRepo) {
+      currentUrl.searchParams.set('repo_id', selectedRepo);
+    } else {
+      currentUrl.searchParams.delete('repo_id');
+    }
+
+    window.location.href = currentUrl.toString();
+  });
+
   $('#downloadReport').on('click', function () {
     var year = $("#report_year_select").val();
     var month = $("#report_month_select").val();
@@ -52,6 +65,9 @@ $(document).ready(function () {
         type: 'GET',
         async: false,
         contentType: 'application/json',
+        data: {
+            repository_id:$('#repository_select').val()
+        },
         success: function (results) {
           statsReports[type] = results;
           setStatsReportSubmit(statsReports);
@@ -88,6 +104,15 @@ $(document).ready(function () {
         invalidEmails.push(element.value);
       }
       localStorage.setItem('invalidEmails', JSON.stringify(invalidEmails));
+
+      // add repository select
+      let repositorySelect = $('#repository_select').val();
+      $('<input>').attr({
+        type: 'hidden',
+        name: 'repository_select',
+        value: repositorySelect
+      }).appendTo('#email_form');
+
       $('#email_form').submit();
   });
 
@@ -111,6 +136,9 @@ function ajaxGetFile(endpoint) {
     type: 'GET',
     async: false,
     contentType: 'application/json',
+    data: {
+        repository_id:$('#repository_select').val()
+    },
     success: function (results) {
       result = results;
     },

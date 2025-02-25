@@ -406,10 +406,12 @@ class QueryItemRegReport(WekoQuery):
         page_index = 0
         try:
             page_index = int(request.args.get('p', 1)) - 1
+            repository_id = request.args.get('repo')
         except Exception as e:
             current_app.logger.debug(e)
 
         kwargs['page_index'] = page_index
+        kwargs['repository_id'] = repository_id
         return self.make_response(QueryItemRegReportHelper.get(**kwargs))
 
 
@@ -421,6 +423,9 @@ class QueryRecordViewReport(WekoQuery):
     @stats_api_access_required
     def get(self, **kwargs):
         """Get record view report."""
+        repository_id = request.args.get('repository_id')
+        if repository_id:
+            kwargs['repository_id'] = repository_id
         result = QueryRecordViewReportHelper.get(**kwargs)
         return self.make_response(result)
 
@@ -436,6 +441,9 @@ class QueryRecordViewPerIndexReport(WekoQuery):
 
         Nested aggregations are currently unsupported so manually aggregating.
         """
+        repository_id = request.args.get('repository_id')
+        if repository_id:
+            kwargs['repository_id'] = repository_id
         result = QueryRecordViewPerIndexReportHelper.get(**kwargs)
         return self.make_response(result)
 
@@ -453,6 +461,9 @@ class QueryFileReports(WekoQuery):
     @stats_api_access_required
     def get(self, **kwargs):
         """Get file reports."""
+        repository_id = request.args.get('repository_id')
+        if repository_id:
+            kwargs['repository_id'] = repository_id
         result = QueryFileReportsHelper.get(**kwargs)
         return self.make_response(result)
 
@@ -464,6 +475,9 @@ class QueryCommonReports(WekoQuery):
 
     def get(self, **kwargs):
         """Get file reports."""
+        repository_id = request.args.get('repository_id')
+        if repository_id:
+            kwargs['repository_id'] = repository_id
         result = QueryCommonReportsHelper.get(**kwargs)
         return self.make_response(result)
 
@@ -534,6 +548,9 @@ class QuerySearchReport(ContentNegotiatedMethodView):
     @stats_api_access_required
     def get(self, **kwargs):
         """Get number of searches per keyword."""
+        repository_id = request.args.get('repository_id')
+        if repository_id:
+            kwargs['repository_id'] = repository_id
         result = QuerySearchReportHelper.get(**kwargs)
         return self.make_response(result)
 

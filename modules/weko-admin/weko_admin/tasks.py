@@ -113,30 +113,31 @@ def is_reindex_running():
     return False
 
 @shared_task(ignore_results=True)
-def send_all_reports(report_type=None, year=None, month=None):
+def send_all_reports(report_type=None, year=None, month=None, repository_id=None):
     """Query elasticsearch for each type of stats report."""
     # By default get the current month and year
     now = datetime.now()
     month = month or now.month
     year = year or now.year
+    repository_id = repository_id or 'Root Index'
     all_results = {
         'file_download': QueryFileReportsHelper.get(
-            year=year, month=month, event='file_download'),
+            year=year, month=month, event='file_download', repository_id=repository_id),
         'file_preview': QueryFileReportsHelper.get(
-            year=year, month=month, event='file_preview'),
+            year=year, month=month, event='file_preview', repository_id=repository_id),
         'index_access': QueryRecordViewPerIndexReportHelper.get(
-            year=year, month=month),
+            year=year, month=month, repository_id=repository_id),
         'detail_view': QueryRecordViewReportHelper.get(
-            year=year, month=month),
+            year=year, month=month, repository_id=repository_id),
         'file_using_per_user': QueryFileReportsHelper.get(
-            year=year, month=month, event='file_using_per_user'),
+            year=year, month=month, event='file_using_per_user', repository_id=repository_id),
         'top_page_access': QueryCommonReportsHelper.get(
             year=year, month=month, event='top_page_access'),
         'search_count': QuerySearchReportHelper.get(
-            year=year, month=month),
-        'user_roles': get_user_report_data(),
+            year=year, month=month, repository_id=repository_id),
+        'user_roles': get_user_report_data(repo_id=repository_id),
         'site_access': QueryCommonReportsHelper.get(
-            year=year, month=month, event='site_access')
+            year=year, month=month, event='site_access', repository_id=repository_id),
     }
     with current_app.app_context():
         # Allow for this to be used to get specific emails as well
@@ -150,7 +151,7 @@ def send_all_reports(report_type=None, year=None, month=None):
         zip_name = 'logReport_' + zip_date + '.zip'
         zip_stream = package_reports(reports, year, month)
 
-        recepients = StatisticsEmail.get_all_emails()
+        recepients = StatisticsEmail.get_emails_by_repo(repository_id=repository_id)
         attachments = [Attachment(zip_name,
                                   'application/x-zip-compressed',
                                   zip_stream.getvalue())]
@@ -172,11 +173,12 @@ def check_send_all_reports():
     """Check Redis periodically for when to run a task."""
     with current_app.app_context():
         # Schedule set in the view
-        schedule = AdminSettings.get(name='report_email_schedule_settings',
+        schedules = AdminSettings.get(name='report_email_schedule_settings',
                                      dict_to_object=False)
-        schedule = schedule if schedule else None
-        if schedule and _due_to_run(schedule):
-            send_all_reports.delay()
+        schedules = schedules if schedules else None
+        for repository_id, schedule in schedules.items():
+            if schedule and _due_to_run(schedule):
+                send_all_reports.delay(repository_id=repository_id)
 
 
 @shared_task(ignore_results=True)
