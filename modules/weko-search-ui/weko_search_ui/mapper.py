@@ -1268,12 +1268,10 @@ class JsonLdMapper(JsonMapper):
                 if prop_name in item_map
         }
 
-        index = []
-        grant = []
-        publish_status = metadata.pop("wk:publishStatus", "private")
-        edit_mode = metadata.pop("wk:editMode", "Keep")
-        fulltext_searchable = []
         mapped_metadata = {}
+        mapped_metadata.setdefault("publish_status", "private")
+        mapped_metadata.setdefault("edit_mode", "Keep")
+        fulltext_searchable = []
         need_map = {}
 
         def _pick_metadata(
@@ -1282,18 +1280,39 @@ class JsonLdMapper(JsonMapper):
         ):
             # meta_key="dc:type.@id", meta_path="dc:type.@id, meta_props=["dc:type", "@id"]
             # prop_path=item_30001_resource_type11.resourceuri, prop_props=["item_30001_resource_type11","resourceuri"]
-            if len(prop_props) == 0 or len(meta_props) == 0:
+            if len(prop_props) == 0:
                 raise Exception()
-            if len(meta_props) == 1 and len(prop_props) == 1:
+            if len(prop_props) == 1:
                 meta_value = metadata.get(meta_key)
                 if self._get_property_type(prop_path) == "array":
                     # TODO: value must be in {"interim", value}
                     pass
-                parent.update({prop_path: meta_value})
+                parent.update({prop_props[0]: meta_value})
                 return
-            if len(meta_props) == len(prop_props):
-                parent_prop_key = prop_path.split("."+prop_props[1])[0]
+
+            parent_prop_key = re.split(rf"\.{prop_props[1]}(?=\.|$)", prop_path)[0]
+            m_index = re.search(r"\[(\d+)\]", meta_props[0])
+            index = int(m_index.group(1)) if m_index is not None else None
+            if not parent_prop_key in properties_mapping.values():
+                # TODO: the corresponding layers are different.
+                # prop_path must be forwarded to the sublayer.
                 if self._get_property_type(parent_prop_key) == "object":
+                    pass
+                elif self._get_property_type(parent_prop_key) == "array":
+                    sub_prop_array = parent.get(prop_props[0], [])
+                    index = 0 if index is None else index
+                    if len(sub_prop_array) <= index:
+                        sub_prop_array.extend([{} for _ in range(index - len(sub_prop_array) + 1)])
+                    sub_sub_object = {}
+                    _pick_metadata(
+                        sub_sub_object, meta_key, meta_path, meta_props,
+                        prop_path, prop_props[1:]
+                    )
+                    sub_prop_array[index].update(sub_sub_object)
+                    parent.update({prop_props[0]: sub_prop_array})
+                return
+            if self._get_property_type(parent_prop_key) == "object":
+                print(f"{parent_prop_key} is object")
                     sub_prop_object = parent.get(prop_props[0], {})
                     _pick_metadata(
                         sub_prop_object, meta_key, meta_path, meta_props[1:],
@@ -1303,23 +1322,33 @@ class JsonLdMapper(JsonMapper):
 
                     pass
                 elif self._get_property_type(parent_prop_key) == "array":
-                    pass
-                return
-            if len(meta_props) > len(prop_props):
-                return
-            if len(meta_props) < len(prop_props):
+                sub_prop_array = parent.get(prop_props[0], [])
+                index = 0 if index is None else index
+                if len(sub_prop_array) <= index:
+                    sub_prop_array.extend([{} for _ in range(index - len(sub_prop_array) + 1)])
+                _pick_metadata(
+                    sub_prop_array[index], meta_key, meta_path, meta_props[1:],
+                    prop_path, prop_props[1:]
+                )
+                parent.update({prop_props[0]: sub_prop_array})
                 return
 
         for meta_key in deepcopy(metadata):
             meta_path = re.sub(r"\[\d+\]", "", meta_key)
             if "wk:index" in meta_path:
-                index.append(int(metadata.pop(meta_key)))
+                path = mapped_metadata.get("path", [])
+                path.append(int(metadata.pop(meta_key)))
+                mapped_metadata["path"] = path
             elif "wk:fulltextSearchable" in meta_path:
                 flag = metadata.pop(meta_key)
                 if flag:
                     fulltext_searchable.append(
                         int(meta_key.replace("hasPart[", "").split("]")[0])
                     )
+            elif "wk:publishStatus" in meta_path:
+                mapped_metadata["publish_status"] = metadata.pop(meta_key)
+            elif "wk:editMode" in meta_path:
+                mapped_metadata["edit_mode"] = metadata.pop(meta_key)
             elif "wk:grant" in meta_path:
                 # TODO: implement grant mapping
                 pass
@@ -1337,9 +1366,6 @@ class JsonLdMapper(JsonMapper):
                     prop_path, prop_props
                 )
 
-        mapped_metadata["path"] = index
-        mapped_metadata["pubulish_status"] = publish_status
-        mapped_metadata["edit_mode"] = edit_mode
         # result = {
         #     "pubdate": "2021-10-15",
         #     "publish_status": "private",

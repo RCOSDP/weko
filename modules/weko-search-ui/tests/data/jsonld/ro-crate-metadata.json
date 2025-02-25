@@ -81,7 +81,7 @@
       "wk:publishStatus": "public",
       "wk:editMode": "Keep",
       "dc:type": {
-        "@id": "http://purl.org/coar/resource_types/c_0640"
+        "@id": "http://purl.org/coar/resource_type/c_6501"
       },
       "wk:grant": [
         {
@@ -130,9 +130,9 @@
       "language": "en"
     },
     {
-      "@id": "http://purl.org/coar/resource_types/c_0640",
+      "@id": "http://purl.org/coar/resource_type/c_6501",
       "@type": "Concept",
-      "name": "journal"
+      "name": "journal article"
     },
     {
       "@id": "_:Project_1",
@@ -228,7 +228,7 @@
       "@id": "data/sample.rst",
       "@type": "File",
       "name": "sample.rst",
-      "contentSize": "333",
+      "contentSize": "333 B",
       "dateCreated": {
         "@id": "_:date_1"
       },
@@ -244,7 +244,7 @@
       "@id": "data/data.csv",
       "@type": "File",
       "name": "data.csv",
-      "contentSize": "1234",
+      "contentSize": "1234 B",
       "dateCreated": {
         "@id": "_:date_2"
       },
@@ -260,13 +260,13 @@
     {
       "@id": "_:date_1",
       "@type": "PropertyValue",
-      "name": "dateCreated",
+      "name": "Created",
       "value": "2021-10-15"
     },
     {
       "@id": "_:date_2",
       "@type": "PropertyValue",
-      "name": "dateCreated",
+      "name": "Created",
       "value": "2021-10-15"
     },
     {
