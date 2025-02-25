@@ -3360,8 +3360,28 @@ def export_all(root_url, user_id, data, timezone):
             current_app.logger.error(ex)
         return item_types
 
-    def _get_export_data(export_path, item_types, retrys, fromid="", toid="", retry_info={}):
+    def _get_index_id_list(user_id):
+        """Get index id list."""
+        from invenio_accounts.models import User
+        from invenio_communities.models import Community
+        from weko_index_tree.api import Indexes
+
+        if not user_id:
+            return None
+        user = User.query.get(user_id)
+        if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in user.roles):
+            return None
+        else:
+            index_id_list = []
+            repositories = Community.get_repositories_by_user(user)
+            for repository in repositories:
+                index = Indexes.get_child_list_recursive(repository.root_node_id)
+                index_id_list.extend(index)
+        return index_id_list
+
+    def _get_export_data(export_path, item_types, retrys, fromid="", toid="", retry_info={}, user_id=None):
         try:
+            index_id_list = _get_index_id_list(user_id)
             for it in item_types.copy():
                 item_type_id = it[0]
                 item_type_name = it[1]
@@ -3439,7 +3459,8 @@ def export_all(root_url, user_id, data, timezone):
 
                 record_ids = [(recid.pid_value, recid.object_uuid)
                     for recid in recids if 'publish_status' in recid.json
-                    and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]]
+                    and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]
+                    and any(index in recid.json['path'] for index in  index_id_list)]
 
                 if len(record_ids) == 0:
                     item_types.remove(it)
@@ -3520,7 +3541,7 @@ def export_all(root_url, user_id, data, timezone):
                 db.session.rollback()
                 sleep(5)
                 result = _get_export_data(
-                    export_path, item_types, retrys, fromid, toid, retry_info
+                    export_path, item_types, retrys, fromid, toid, retry_info, user_id=user_id
                 )
                 return result
             else:
@@ -3561,7 +3582,7 @@ def export_all(root_url, user_id, data, timezone):
 
         result = None
         if not fromid or not toid or (fromid and toid and int(fromid) <= int(toid)):
-            result = _get_export_data(export_path, item_types, 0, fromid, toid)
+            result = _get_export_data(export_path, item_types, 0, fromid, toid, user_id=user_id)
 
             if result:
                 # Create bag

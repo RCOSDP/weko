@@ -8,6 +8,13 @@ $(document).ready(function () {
 
   // Confirm schedule change
   $('#confirm_schedule_button').on('click', function () {
+    let repositorySelect = $('#repository_select').val();
+    $('<input>').attr({
+        type: 'hidden',
+        name: 'repository_select',
+        value: repositorySelect
+    }).appendTo('#email_sched_form');
+
     $('#email_sched_form').submit();
   });
 
