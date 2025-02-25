@@ -1272,7 +1272,7 @@ class JsonLdMapper(JsonMapper):
         mapped_metadata.setdefault("publish_status", "private")
         mapped_metadata.setdefault("edit_mode", "Keep")
         fulltext_searchable = []
-        need_map = {}
+        missing_metadata = {}
 
         def _pick_metadata(
             parent:dict, meta_key, meta_path, meta_props,
@@ -1333,29 +1333,34 @@ class JsonLdMapper(JsonMapper):
                 parent.update({prop_props[0]: sub_prop_array})
                 return
 
-        for meta_key in deepcopy(metadata):
+        for meta_key in metadata:
             meta_path = re.sub(r"\[\d+\]", "", meta_key)
             if "wk:index" in meta_path:
                 path = mapped_metadata.get("path", [])
-                path.append(int(metadata.pop(meta_key)))
+                path.append(int(metadata.get(meta_key)))
                 mapped_metadata["path"] = path
-            elif "wk:fulltextSearchable" in meta_path:
-                flag = metadata.pop(meta_key)
-                if flag:
+            elif "wk:fullTextSearchable" in meta_path:
+                flag = metadata.get(meta_key)
+                if not flag:
                     fulltext_searchable.append(
                         int(meta_key.replace("hasPart[", "").split("]")[0])
                     )
             elif "wk:publishStatus" in meta_path:
-                mapped_metadata["publish_status"] = metadata.pop(meta_key)
+                mapped_metadata["publish_status"] = metadata.get(meta_key)
             elif "wk:editMode" in meta_path:
-                mapped_metadata["edit_mode"] = metadata.pop(meta_key)
+                mapped_metadata["edit_mode"] = metadata.get(meta_key)
+            elif "wk:feedbackMail" in meta_path:
+                # TODO: implement feedback mail mapping
+                feedback_mail_list = metadata.get("feedback_mail_list", [])
+                feedback_mail_list.append(metadata.get(meta_key))
+                mapped_metadata["feedback_mail_list"] = feedback_mail_list
+                pass
             elif "wk:grant" in meta_path:
                 # TODO: implement grant mapping
                 pass
             elif meta_path not in properties_mapping:
-                continue
+                missing_metadata[meta_key] = metadata[meta_key]
             else:
-                need_map[meta_key] = metadata[meta_key]
                 meta_props = meta_key.split(".")
                 prop_path = properties_mapping[meta_path]
                 prop_props = prop_path.split(".")

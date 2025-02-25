@@ -4714,6 +4714,7 @@ class TestJsonLdMapper:
             assert item_metadata["item_30001_file22"][1]["filesize"][0]["value"] == "1234 B"
             assert item_metadata["item_30001_creator2"][0]["creatorNames"][0]["creatorName"] == "John Doe"
             assert item_metadata["item_30001_creator2"][0]["creatorAffiliations"][0]["affiliationNames"][0]["affiliationName"] == "University of Manchester"
+            assert item_metadata["feedback_mail_list"] == ["wekosoftware@nii.ac.jp"]
 
             list_record = []
             list_record.append({
