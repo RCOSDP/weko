@@ -19,6 +19,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
+#: weko_accounts/admin.py:46
+msgid "language"
+msgstr "ja"
+
 #: weko_accounts/admin.py:56
 msgid "Shibboleth flag was updated."
 msgstr "Shibboleth設定を更新しました"
@@ -101,6 +105,46 @@ msgstr "Shibbolethを有効にする"
 msgid "Deny shibboleth user"
 msgstr "Shibbolethを無効にする"
 
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:66
+msgid "Default Role"
+msgstr "既定のロール"
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:68
+msgid "Gakunin IdP"
+msgstr "学認IdP"
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:71
+msgid "Outside Orthros"
+msgstr "機関外のOrthros"
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:74
+msgid "Others IdP"
+msgstr "上記以外のIdP"
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:79
+msgid "Attribute Mapping"
+msgstr "属性マッピング"
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:81
+msgid "shib_eppn"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:84
+msgid "shib_role_authority_name"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:87
+msgid "shib_mail"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:90
+msgid "shib_user_name"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:95
+msgid "Block User"
+msgstr "ブロックユーザー"
+
 #: weko_accounts/templates/weko_accounts/setting/shibuser.html:68
 msgid "Save"
 msgstr "保存"
@@ -114,7 +158,7 @@ msgid "Invalid attribute."
 msgstr "属性値が不正です。"
 
 #: weko_accounts/api.py:223
-msgid "Invalid attribute."
+msgid "Failed to login."
 msgstr "ログインに失敗しました。"
 
 #: weko_accounts/templates/weko_accounts/login_shibuser_pattern_1.html
