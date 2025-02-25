@@ -272,6 +272,8 @@ class ShibUser(object):
         :return:
 
         """
+        #ログインユーザーのロールをクリアする
+        self.user.roles.clear()
         check_role, error = self.assign_user_role()
         if not check_role:
             return error
@@ -306,12 +308,9 @@ class ShibUser(object):
                 if shib_attr_is_member_of:
                     # WEKO_SHIB_ATTR_IS_MEMBER_OFの情報を取得
                     member_of_list = shib_attr_is_member_of.split(';')
-                    print("WEKO_SHIB_ATTR_IS_MEMBER_OF:", member_of_list)
 
                     # 現在のユーザーのロールを取得
                     current_user_roles = [role.name for role in self.user.roles]
-                    # 現在のロールに含まれていないロールを追加する
-                    roles_add = set(member_of_list) - set(current_user_roles)
                 else:
                     # IDPのEntityIDを取得
                     idp_entity_id = self.shib_attr.get('WEKO_ACCOUNTS_IDP_ENTITY_ID')
@@ -325,18 +324,16 @@ class ShibUser(object):
 
                     # 現在のユーザーのロール
                     current_user_roles = [role.name for role in self.user.roles]
-                    # 現在のロールに含まれていないロールを格納
-                    roles_add = set(mapping_roles) - set(current_user_roles)
             except KeyError as ke:
                 # キーエラー
                 current_app.logger.error(f"Missing key in shib_attr: {ke}")
-                return None
+                return []
             except Exception as ex:
                 # その他の例外
                 current_app.logger.error(f"Unexpected error: {ex}")
-            return None
+            return []
 
-        return roles_add
+        return current_user_roles
 
     def _assign_roles_to_user(self, roles_add):
         try:

@@ -26,7 +26,7 @@ WEKO_ACCOUNTS_LOGGER_ENABLED = True
 WEKO_ACCOUNTS_BASE_TEMPLATE = 'weko_accounts/base.html'
 """Default base template for the demo page."""
 
-WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED = True
+WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED = False
 """Enable Shibboleth user login system."""
 
 WEKO_ACCOUNTS_SHIB_CACHE_PREFIX = 'Shib-Session-'
@@ -133,9 +133,9 @@ WEKO_ACCOUNTS_GAKUNIN_DEFAULT_GROUP_MAPPING = {}
 #        "jc_role_sysadm", "jc_role_repoadm", "jc_role_comadm"],
 #}
 
-WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS = True
+WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS = False
 
-WEKO_SHIB_ATTR_IS_MEMBER_OF = False
+WEKO_ACCOUNTS_GAKUNIN_GROUP_SUFFIX = "_gakunin_groups"
 
 WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT = {
     "prefix":"jc",
