@@ -199,9 +199,14 @@ class ExportView(BaseView):
         result = {'status': 'fail'}
         try:
             status = get_export_status()
-            # stop_pointがあるなら削除
+            # stop_pointがあるならstop_pointとtemp_file_pathを削除
             if current_cache.get(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]):
                 current_cache.delete(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"])
+                temp_file_path=current_cache.get(\
+                    current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"])
+                if temp_file_path:
+                    os.remove(temp_file_path)                    
+                    current_cache.delete(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"])
             if status and status.get('task_id'):
                 revoke(status.get('task_id'), terminate=True)
                 delete_export_status()

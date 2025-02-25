@@ -179,32 +179,33 @@ def export_authors():
     schemes = {}
     records_count = 0
     temp_file_path = ""
-    # ある程度の処理をまとめてリトライ処理
-    for attempt in range(retrys):
-        try:
-            # マッピングを取得
-            mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING"])
-            # マッピング上の複数が可能となる項目の最大値を取得
-            mappings = WekoAuthors.mapping_max_item(mappings)
-
-            # 著者識別子の対応を取得
-            schemes = WekoAuthors.get_identifier_scheme_info()
-            
-            # 著者の数を取得（削除、統合された著者は除く）
-            records_count = WekoAuthors.get_records_count(False, False)
-            
-            # 一時ファイルのパスを取得
-            temp_file_path=current_cache.get(\
-                current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"])
-            break
-        except SQLAlchemyError as ex:
-            handle_exception(ex, attempt, retrys, interval)
-        except RedisError as ex:
-            handle_exception(ex, attempt, retrys, interval)
-        except TimeoutError as ex:
-            handle_exception(ex, attempt, retrys, interval)
 
     try:
+        # ある程度の処理をまとめてリトライ処理
+        for attempt in range(retrys):
+            try:
+                # マッピングを取得
+                mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING"])
+                # マッピング上の複数が可能となる項目の最大値を取得
+                mappings = WekoAuthors.mapping_max_item(mappings)
+
+                # 著者識別子の対応を取得
+                schemes = WekoAuthors.get_identifier_scheme_info()
+                
+                # 著者の数を取得（削除、統合された著者は除く）
+                records_count = WekoAuthors.get_records_count(False, False)
+                
+                # 一時ファイルのパスを取得
+                temp_file_path=current_cache.get(\
+                    current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"])
+                break
+            except SQLAlchemyError as ex:
+                handle_exception(ex, attempt, retrys, interval)
+            except RedisError as ex:
+                handle_exception(ex, attempt, retrys, interval)
+            except TimeoutError as ex:
+                handle_exception(ex, attempt, retrys, interval)
+                
         # stop_pointがあればstart_pointに代入
         start_point = stop_point if stop_point else 0
         # 読み込み後削除
@@ -256,6 +257,8 @@ def export_authors():
         db.session.commit()
     except Exception as ex:
         db.session.rollback()
+        if not current_cache.get(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]):
+            os.remove(temp_file_path)
         current_app.logger.error(ex)
         traceback.print_exc(file=stdout)
 
