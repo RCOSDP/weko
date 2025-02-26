@@ -7,11 +7,11 @@
 
 """Module of weko-notifications."""
 
-# TODO: This is an example file. Remove it if your package does not use any
-# extra configuration variables.
+WEKO_NOTIFICATIONS = True
+"""Enable or disable module extensions."""
 
-weko_notifications_DEFAULT_VALUE = 'foobar'
-"""Default value for the application."""
-
-weko_notifications_BASE_TEMPLATE = 'weko_notifications/base.html'
+WEKO_NOTIFICATIONS_TEMPLATE = "weko_notifications/settings/notification.html"
 """Default base template for the demo page."""
+
+WEKO_NOTIFICATIONS_INBOX_URL = "http://inbox:8080"
+"""URL of the inbox."""
