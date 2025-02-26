@@ -130,19 +130,18 @@ WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE = {
 } 
 """Orthros (Outsite) Default role."""
 
-WEKO_ACCOUNTS_OTHERS_ROLE = {
+WEKO_ACCOUNTS_EXTRA_ROLE = {
   "defaultRole": 'None', # ロール無
   "organizationName": []  
 } 
-
-"""Others Default role."""
+"""Extra Default role."""
 
 WEKO_ACCOUNTS_SHIB_ROLE_RELATION = {
     '管理者': 'System Administrator',
     '学認IdP': WEKO_ACCOUNTS_GAKUNIN_ROLE['defaultRole'],
     '機関内のOrthros': WEKO_ACCOUNTS_ORTHROS_INSIDE_ROLE['defaultRole'],
     '機関外のOrthros': WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE['defaultRole'],
-    'その他': WEKO_ACCOUNTS_OTHERS_ROLE['defaultRole']
+    'その他': WEKO_ACCOUNTS_EXTRA_ROLE['defaultRole']
 }
 """Role relation."""
 
