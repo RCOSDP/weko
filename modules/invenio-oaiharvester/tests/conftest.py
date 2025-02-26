@@ -69,6 +69,7 @@ from weko_theme import WekoTheme
 from weko_deposit import WekoDeposit
 from weko_records import WekoRecords
 from weko_records.api import ItemsMetadata 
+from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER
 
 
 from invenio_oaiharvester import InvenioOAIHarvester
@@ -121,7 +122,8 @@ def base_app(instance_path):
         },
         DEPOSIT_DEFAULT_JSONSCHEMA='deposits/deposit-v1.0.0.json',
         WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME='jpcoar_v1_mapping',
-        WEKO_SCHEMA_DDI_SCHEMA_NAME='ddi_mapping'
+        WEKO_SCHEMA_DDI_SCHEMA_NAME='ddi_mapping',
+        WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER,
     )
     FlaskCeleryExt(app_)
     InvenioAccounts(app_)
