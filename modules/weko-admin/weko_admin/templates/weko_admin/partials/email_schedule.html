@@ -43,7 +43,7 @@
         <div class="col-xs-1 col-md-1 col-lg-2">
           <select class="form-control {{'' if current_schedule['frequency'] == 'monthly' else 'hidden'}}"
             id="email_sched_details_monthly" name="monthly_details">
-            {%- for x in range(1, 31) %}
+            {%- for x in range(1, 32) %}
               {%- set day = '%02d' % x %}
               {%- set day_str = x | string %}
               {%- set is_monthly = (current_schedule['frequency'] == 'monthly') %}

@@ -67,7 +67,7 @@ is free software; you can redistribute it
         <div class="col-xs-2">
           <select class="form-control {{'' if current_schedule['frequency'] == 'monthly' else 'hidden'}}"
             id="_sched_details_monthly" name="monthly_details">
-            {%- for x in range(1, 31) %}
+            {%- for x in range(1, 32) %}
               {%- set day = '%02d' % x %}
               {%- set day_str = x | string %}
               {%- set is_monthly = (current_schedule['frequency'] == 'monthly') %}
