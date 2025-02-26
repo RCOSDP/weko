@@ -353,8 +353,9 @@ class HeadlessActivity(WorkActivity):
 
         return pid.pid_value
 
-    def _upload_files(self, files=[]):
+    def _upload_files(self, files=None):
         """upload files."""
+        files = files or []
         bucket = Bucket.query.get(self._deposit["_buckets"]["deposit"])
         files_info = []
 
@@ -466,8 +467,9 @@ class HeadlessActivity(WorkActivity):
             current_app.logger.error(f"failed to set comment: {result.json.get('msg')}")
             raise WekoWorkflowException(result.json.get("msg"))
 
-    def item_link(self, link_data=[]):
+    def item_link(self, link_data=None):
         """Action for Item Link."""
+        link_data = link_data or []
         self._user_lock()
         locked_value = self._activity_lock()
 
@@ -581,11 +583,11 @@ class HeadlessActivity(WorkActivity):
 
         return message
 
-    def _user_unlock(self, data={}):
+    def _user_unlock(self, data=None):
         """User unlock."""
         if self._lock_skip:
             return
-
+        data = data or {"is_opened": False , "is_force" : False}
         return delete_user_lock_activity_cache(self.activity_id, data)
 
     def _activity_lock(self):
