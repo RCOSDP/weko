@@ -42,6 +42,7 @@ from sqlalchemy.sql.expression import case, func, literal_column, and_
 from weko_groups.api import Group
 from weko_redis.redis import RedisConnection
 from weko_handle.api import Handle
+from b2handle.clientcredentials import PIDClientCredentials
 
 from .models import Index
 from .utils import cached_index_tree_json, check_doi_in_index, \
@@ -61,6 +62,10 @@ class Indexes(object):
         :param indexes: the index information.
         :returns: The :class:`Index` instance lists or None.
         """
+        
+        # delay import
+        from weko_workflow.config import WEKO_SERVER_CNRI_HOST_LINK
+
         def _add_index(data):
             with db.session.begin_nested():
                 index = Index(**data)
@@ -113,7 +118,7 @@ class Indexes(object):
 
                 if handle is None:
                     raise Exception("Handle registration failed")
-                data["cnri"] = handle
+                data["cnri"] = WEKO_SERVER_CNRI_HOST_LINK + handle
                 data["index_url"] = index_url
 
             if int(pid) == 0:
@@ -269,7 +274,7 @@ class Indexes(object):
                     Index.parent == index_id)
                 obj_list = query.all()
                 updated = datetime.now(timezone.utc)
-                dct = query.update(
+                query.update(
                     {
                         Index.parent: slf.parent,
                         Index.owner_user_id: current_user.get_id(),
@@ -313,7 +318,7 @@ class Indexes(object):
                     while e <= len(p_lst):
                         s = e
                         e = e + batch
-                        dct = db.session.query(Index). \
+                        db.session.query(Index). \
                             filter(Index.id.in_(p_lst[s:e])). \
                             update(
                                 {
@@ -1950,9 +1955,13 @@ class Indexes(object):
         :param indexid: index id.
         :return: cnri, index_url
         """
+        index_url = request.url.split('/admin/')[0] + '/index/' + str(indexid)
+        credential = PIDClientCredentials.load_from_JSON(
+            current_app.config.get('WEKO_HANDLE_CREDS_JSON_PATH')
+        )
+        
+        hdl = credential.get_prefix() + '/index/' + str(model.id)
         weko_handle = Handle()
-        index_url = request.url.split('/workflow/')[0] \
-                    + '/index/' + str(indexid)
 
-        handle = weko_handle.register_handle(location=index_url)
+        handle = weko_handle.register_handle(location=index_url, hdl=hdl)
         return handle, index_url
