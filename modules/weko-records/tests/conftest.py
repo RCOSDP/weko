@@ -290,7 +290,7 @@ def users(app, db):
     comm = Community.create(community_id="comm01", role_id=sysadmin_role.id,
                             id_user=sysadmin.id, title="test community",
                             description=("this is test community"),
-                            root_node_id=index.id)
+                            root_node_id=index.id, group_id=comadmin_role.id)
     db.session.commit()
     return [
         {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin},
