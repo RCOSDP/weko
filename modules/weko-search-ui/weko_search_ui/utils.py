@@ -869,10 +869,12 @@ def handle_validate_item_import(list_record, schema) -> list:
     for record in list_record:
         errors = record.get("errors") or []
         record_id = record.get("id")
-        if record_id and (
-            not represents_int(record_id) or re.search(r"([０-９])", record_id)
-        ):
-            errors.append(_("Please specify item ID by half-width number."))
+        if record_id:
+            if not represents_int(record_id) or re.search(r"([０-９])", record_id):
+                record["id"] = ""
+                errors.append(_("Please specify item ID by half-width number."))
+            else:
+                record["id"] = str(int(record_id))
         if record.get("metadata"):
             if v2:
                 a = v2.iter_errors(record.get("metadata"))
@@ -1742,7 +1744,11 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
         """
         temp_res = []
         index_info = None
-        index_info = Indexes.get_path_list([index_id])
+        try:
+            index_info = Indexes.get_path_list([str(int(index_id))])
+        except Exception as ex:
+            current_app.logger.error(ex)
+            db.session.rollback()
 
         msg_not_exist = _("The specified {} does not exist in system.")
         if index_info and len(index_info) == 1:
@@ -1981,7 +1987,12 @@ def handle_check_doi_indexes(list_record):
         if doi_ra and publish_status == WEKO_IMPORT_PUBLISH_STATUS[1]:
             errors.append(_("You cannot keep an item private because it has a DOI."))
         # Check restrict DOI with Indexes:
-        index_ids = [str(idx) for idx in item["metadata"].get("path", [])]
+        index_ids = []
+        try:
+            index_ids = [str(int(idx)) for idx in item["metadata"].get("path", [])]
+        except Exception as ex:
+            current_app.logger.error(ex)
+            db.session.rollback()
         if doi_ra and check_restrict_doi_with_indexes(index_ids):
             if not item.get("status") or item.get("status") == "new":
                 errors.append(err_msg_register_doi)
@@ -2931,7 +2942,11 @@ def handle_fill_system_item(list_record):
             item_doi_prefix = item_doi
         
         item_doi_ra = item.get("doi_ra","")
-        item_id = item.get('id',"")
+        item_id = ""
+        try:
+            item_id = int(item.get('id'))
+        except Exception as ex:
+            current_app.logger.error(ex)
         checked_registerd_doi_ra = False
         existed_doi = False
         
