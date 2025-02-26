@@ -56,7 +56,6 @@ def _(x):
 class CommunityModelView(ModelView):
     """ModelView for the Community."""
 
-    can_create = True
     can_edit = True
     can_delete = True
     can_view_details = True
@@ -510,6 +509,13 @@ class CommunityModelView(ModelView):
             'maxlength': 100,
         }
     }
+    
+    @property
+    def can_create(self):
+        """Check permission for creating."""
+        role_ids = get_user_role_ids()
+        return  min(role_ids) <= \
+                current_app.config['COMMUNITIES_LIMITED_ROLE_ACCESS_PERMIT']
 
     def role_query_cond(self, role_ids):
         """Query conditions by role_id and user_id."""

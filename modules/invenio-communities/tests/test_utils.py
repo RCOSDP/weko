@@ -35,10 +35,12 @@ from invenio_records.api import Record
 from invenio_files_rest.models import Location, Bucket, ObjectVersion
 
 from invenio_files_rest.errors import FilesException
+from sqlalchemy.orm.exc import NoResultFound
+from weko_index_tree.models import Index
 
-from invenio_communities.models import InclusionRequest
+from invenio_communities.models import InclusionRequest, Community
 from invenio_communities.utils import render_template_to_string,Pagination,save_and_validate_logo,\
-    initialize_communities_bucket,format_request_email_templ,send_community_request_email,get_user_role_ids
+    initialize_communities_bucket,format_request_email_templ,send_community_request_email,get_user_role_ids,get_repository_id_by_item_id
 
 # .tox/c1/bin/pytest --cov=invenio_communities tests/test_utils.py::test_Pagination -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
 def test_Pagination():
@@ -211,3 +213,54 @@ def test_email_formatting(app, db, communities, users):
         sent_msg = outbox[0]
         assert sent_msg.recipients == [user.email]
         assert comm1.title in sent_msg.body
+
+
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_utils.py::test_get_repository_id_by_item_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
+def test_get_repository_id_by_item_id(app, db, users, mocker):
+    """Test get_repository_id_by_item_id."""
+    index1 = Index(id=1, parent=0, position=0)
+    index2 = Index(id=2, parent=1, position=0)
+    index3 = Index(id=3, parent=0, position=1)
+    db.session.add(index1)
+    db.session.add(index2)
+    db.session.add(index3)
+    db.session.commit()
+    comm1 = Community.create(community_id='comm1', role_id=1,
+                            id_user=users[2]["obj"].id, title='Title1',
+                            description='Description1',
+                            root_node_id=index1.id,
+                            group_id=1)
+    db.session.commit()
+    
+    # Setup mock data
+    record_data = {1: {"path": [1]}, 2: {"path": [2]}, 3: {"path": [3]},}
+
+    index_data = {1: index1, 2: index2, 3: index3,}
+
+    def mock_get_record(item_id):
+        result = record_data.get(item_id, None)
+        if result is None:
+            raise NoResultFound
+        return result
+
+    def mock_get_index_by_id(index_id):
+        return index_data.get(index_id, None)
+
+    mocker.patch('invenio_records.api.Record.get_record', side_effect=mock_get_record)
+    mocker.patch('weko_index_tree.models.Index.get_index_by_id', side_effect=mock_get_index_by_id)
+
+    # repository_id can be retrieved
+    repository_id = get_repository_id_by_item_id(1)
+    assert repository_id == comm1.id
+
+    # 
+    repository_id = get_repository_id_by_item_id(2)
+    assert repository_id == comm1.id
+
+    # repository_id cannot be retrieved
+    repository_id = get_repository_id_by_item_id(3)
+    assert repository_id is None
+
+    # item_id does not exist
+    with pytest.raises(NoResultFound):
+        repository_id = get_repository_id_by_item_id(999)

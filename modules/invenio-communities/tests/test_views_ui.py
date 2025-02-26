@@ -42,7 +42,8 @@ def test_permission_required(app,db,users,mocker):
     comm0 = Community.create(community_id='comm1', role_id=3,
                              id_user=1, title='Title1',
                              description='Description1',
-                             root_node_id=1)
+                             root_node_id=1,
+                             group_id=1)
     db.session.commit()
     
     with app.test_client() as client:
@@ -77,7 +78,8 @@ def test_mycommunities_ctx(app,db,users):
     comm0 = Community.create(community_id='comm1', role_id=2,
                              id_user=2, title='Title1',
                              description='Description1',
-                             root_node_id=1)
+                             root_node_id=1,
+                             group_id=1)
     db.session.commit()
     with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
         result = app.jinja_env.filters["mycommunities_ctx"]()
@@ -143,6 +145,23 @@ def test_view(client,app,db,communities,mocker):
     assert kwargs["display_facet_search"] == False
     assert kwargs["display_index_tree"] == True
 
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py::test_content_policy -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
+def test_content_policy(client, app, db, communities, mocker):
+    comm = communities[0]
+    mock_render = mocker.patch("invenio_communities.views.ui.render_template",return_value=make_response())
+    
+    # valid community
+    url = url_for("invenio_communities.content_policy", community_id=comm.id)
+    response = client.get(url)
+    assert response.status_code == 200
+    args, kwargs = mock_render.call_args
+    assert args[0] == "invenio_communities/content_policy.html"
+    assert kwargs["community"].id == comm.id
+    
+    # invalid community
+    url = url_for("invenio_communities.content_policy", community_id="invalid_id")
+    response = client.get(url)
+    assert response.status_code == 404
 
 # # def detail(community):
 # # def search(community):
@@ -157,7 +176,8 @@ def test_generic_item(app,db,users,mocker):
     community = Community.create(community_id='comm1', role_id=2,
                              id_user=2, title='Title1',
                              description='Description1',
-                             root_node_id=1)
+                             root_node_id=1,
+                             group_id=1)
     db.session.commit()
     with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
         mock_render = mocker.patch("invenio_communities.views.ui.render_template",return_value=make_response())
@@ -184,7 +204,8 @@ def test_community_list(client,app,db,users,mocker):
     community = Community.create(community_id='comm1', role_id=2,
                              id_user=2, title='Title1',
                              description='Description1',
-                             root_node_id=1)
+                             root_node_id=1,
+                             group_id=1)
     db.session.commit()
     app.config.update(
         WEKO_THEME_DEFAULT_COMMUNITY="Root Index"

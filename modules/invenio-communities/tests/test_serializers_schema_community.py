@@ -12,7 +12,8 @@ def test_CommunitySchemaV1(app,db, users):
     comm1 = Community.create(community_id='comm1', role_id=1,
                              id_user=users[2]["obj"].id, title='Title1',
                              description='Description1',
-                             root_node_id=index.id)
+                             root_node_id=index.id,
+                             group_id=1)
     db.session.commit()
     context = {
         "total":10,
@@ -29,11 +30,13 @@ def test_CommunitySchemaV1(app,db, users):
                              id_user=users[2]["obj"].id, title='Title2',
                              description='Description2',
                              root_node_id=1,
-                             logo_ext="png")
+                             group_id=1,
+                             logo_ext="png",)
     comm3 = Community.create(community_id='comm3', role_id=1,
                              id_user=users[2]["obj"].id, title='Title3',
                              description='Description3',
                              root_node_id=1,
+                             group_id=1,
                              logo_ext="jpg")
     db.session.commit()
 

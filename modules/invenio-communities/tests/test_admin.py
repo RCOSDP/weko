@@ -27,7 +27,8 @@ def setup_view_community(app,db,users):
         id_role=1,root_node_id=11,
         title="Test comm",
         description="this is test comm",
-        id_user=1
+        id_user=1,
+        group_id=1
     )
     db.session.add(comm)
     db.session.commit()
@@ -83,7 +84,7 @@ class TestCommunityModelView():
             
             # role_idss is true
             result = view.role_query_cond([1,2])
-            assert str(result) == "communities_community.id_role IN (:id_role_1, :id_role_2) OR communities_community.id_user = :id_user_1"
+            assert str(result) == "communities_community.group_id IN (:group_id_1, :group_id_2)"
     
     # def get_query(self): 
     # .tox/c1/bin/pytest --cov=invenio_communities tests/test_admin.py::TestCommunityModelView::test_get_query -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
@@ -135,6 +136,7 @@ class TestCommunityModelView():
                 "id": "111",
                 "owner": 1,
                 "index": 11,
+                "group": 1,
                 "title": "Test comm after",
                 "description": "this is description of community1."
             }
@@ -147,6 +149,7 @@ class TestCommunityModelView():
                 "id": "-1",
                 "owner": 1,
                 "index": 11,
+                "group": 1,
                 "title": "Test comm after",
                 "description": "this is description of community1."
             }
@@ -159,6 +162,7 @@ class TestCommunityModelView():
                 "id": "a-1^^^",
                 "owner": 1,
                 "index": 11,
+                "group": 1,
                 "title": "Test comm after",
                 "description": "this is description of community1."
             }
@@ -171,6 +175,7 @@ class TestCommunityModelView():
                 "id": "a-123456789",
                 "owner": 1,
                 "index": 11,
+                "group": 1,
                 "title": "Test comm after",
                 "description": "this is description of community1."
             }

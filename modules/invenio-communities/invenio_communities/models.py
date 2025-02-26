@@ -226,7 +226,7 @@ class Community(db.Model, Timestamp):
     thumbnail_path = db.Column(db.Text, nullable=True, default='')
     """thumbnail_path."""
 
-    login_menu_enabled = db.Column(db.Boolean, nullable=False, default='false')
+    login_menu_enabled = db.Column(db.Boolean, nullable=False, default=False)
     """login_menu enabled or Disabled."""
 
     catalog_json = db.Column(
@@ -487,6 +487,11 @@ class Community(db.Model, Timestamp):
             self.deleted_at = None
 
     def to_dict(self):
+        """Convert the Community object to a dictionary.
+        
+        Returns:
+            dict: Dictionary representation of the Community object.
+        """
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}
 
     @property
