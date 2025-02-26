@@ -89,4 +89,12 @@ def set_session_info(app, response, **extra):
 
 
 def get_user_ids_by_role(role_id):
+    """Get user IDs by role ID.
+
+    Args:
+        role_id (int): The ID of the role.
+
+    Returns:
+        list: A list of user IDs associated with the given role.
+    """
     return [str(user.id) for user in User.query.join(userrole).join(Role).filter(Role.id == role_id).all()]
