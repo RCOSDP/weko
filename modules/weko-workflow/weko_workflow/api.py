@@ -438,7 +438,7 @@ class WorkFlow(object):
                     _workflow.open_restricted = workflow.get('open_restricted')
                     _workflow.location_id = workflow.get('location_id')
                     _workflow.is_gakuninrdm = workflow.get('is_gakuninrdm')
-                    _workflow.repository_id = workflow.get('repository_id')
+                    _workflow.repository_id = workflow.get('repository_id') if workflow.get('repository_id') else _workflow.repository_id
                     db.session.merge(_workflow)
             db.session.commit()
             return _workflow
