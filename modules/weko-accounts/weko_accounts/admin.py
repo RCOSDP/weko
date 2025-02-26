@@ -76,12 +76,24 @@ class ShibSettingView(BaseView):
                 # Process forms
                 form = request.form.get('submit', None)
                 new_shib_flg = request.form.get('shibbolethRadios', '0')
+                new_block_user_list = request.form.get('block-eppn-option-list', '0')
 
                 if form == 'shib_form':
                     if shib_flg != new_shib_flg:
                         shib_flg = new_shib_flg
                         _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] = (shib_flg == '1')
                         flash(_('Shibboleth flag was updated.'), category='success')
+
+                    # ブロックユーザーの更新    
+                    if block_user_list != json.loads(new_block_user_list):
+                        new_eppn_list = json.loads(new_block_user_list)
+                        new_eppn_list.sort()
+                        updateSettings = {'blocked_ePPNs': new_eppn_list}
+                        AdminSettings.update('blocked_user_settings', updateSettings)
+                        flash(
+                            _('Blocked user list was updated.'),
+                            category='success')
+                        block_user_list = str(new_eppn_list).replace('"', '\\"')
                         
             return self.render(
                 current_app.config['WEKO_ACCOUNTS_SET_SHIB_TEMPLATE'],

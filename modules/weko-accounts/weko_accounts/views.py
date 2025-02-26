@@ -26,6 +26,7 @@ Blueprint.
 
 import json
 import sys
+import re
 from urllib.parse import quote_plus
 
 import redis
@@ -41,6 +42,7 @@ from simplekv.memory.redisstore import RedisStore
 from weko_redis.redis import RedisConnection
 from werkzeug.local import LocalProxy
 from invenio_db import db
+from weko_admin.models import AdminSettings, db
 
 from .api import ShibUser
 from .utils import generate_random_str, parse_attributes
@@ -297,6 +299,24 @@ def shib_sp_login():
             flash(_("Missing SHIB_ATTRs!"), category='error')
             return _redirect_method()
 
+        # Check if shib_eppn is not included in the blocked user list
+        if AdminSettings.query.filter_by(name='blocked_user_settings').first():
+            block_user_settings = AdminSettings.get('blocked_user_settings')
+            block_user_list = block_user_settings.__dict__.get('blocked_ePPNs', [])
+            shib_eppn = shib_attr.get('shib_eppn')
+
+            # Convert wildcards to regular expressions
+            def _wildcard_to_regex(pattern):
+                regex_pattern = pattern.replace("*", ".*")
+                return re.compile(f"^{regex_pattern}$")
+            
+            blocked = any(_wildcard_to_regex(pattarn).match(shib_eppn) for pattarn in block_user_list)
+        
+            if blocked:
+                flash(_("Failed to login."), category='error')
+                return _redirect_method()
+
+        # Redis connection
         redis_connection = RedisConnection()
         datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         ttl_sec = int(current_app.config[
@@ -312,6 +332,7 @@ def shib_sp_login():
         rst = shib_user.get_relation_info()
 
         next_url = 'weko_accounts.shib_auto_login'
+
         if not rst:
             # Relation is not existed, cache shibboleth info to redis.
             next_url = 'weko_accounts.shib_login'

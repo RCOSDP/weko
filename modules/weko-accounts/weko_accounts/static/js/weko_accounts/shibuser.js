@@ -124,3 +124,43 @@ function updateBlockUserList() {
   blockUserEPPNList.push(...optionValues);
   $("#block-eppn-option-list").val(JSON.stringify(blockUserEPPNList));
 }
+
+// ブロックユーザーのePPNを追加
+function addBlockUser() {
+  const select = $("#block-user-lists");
+  const newBlockePPN = $("#block_eppn").val();
+
+  if (newBlockePPN) {
+    const optionValues = select
+      .find("option")
+      .map((_, option) => $(option).val())
+      .get();
+
+    if (optionValues.includes(newBlockePPN)) {
+      const message =
+        setLanguage === "ja"
+          ? "すでに登録済みのePPNです"
+          : "This ePPN is already registered.";
+      alert(message);
+      return;
+    }
+    const option = $("<option>", {
+      text: newBlockePPN,
+      value: newBlockePPN,
+    });
+    select.append(option);
+    $("#block_eppn").val("");
+
+    updateBlockUserList();
+  }
+}
+
+// ブロックユーザーのePPNを削除
+function deleteBlockUser() {
+  const selectBox = $("#block-user-lists");
+  const selectedOption = selectBox.find("option:selected");
+  if (selectedOption.length) {
+    selectedOption.remove();
+  }
+  updateBlockUserList();
+}

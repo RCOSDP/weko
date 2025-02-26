@@ -23,9 +23,13 @@ msgstr ""
 msgid "language"
 msgstr "en"
 
-#: weko_accounts/admin.py:56
+#: weko_accounts/admin.py:
 msgid "Shibboleth flag was updated."
 msgstr "Updated Shibboleth settings"
+
+#: weko_accounts/admin.py:
+msgid "Blocked user list was updated."
+msgstr "Updated User Login Block settings"
 
 #: weko_accounts/admin.py:69
 msgid "Setting"
