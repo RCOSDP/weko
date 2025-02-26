@@ -334,17 +334,16 @@ class ReportView(BaseView):
 
         repo_id = request.args.get('repo_id')
         if repo_id:
-            if repo_id not in [r["id"] for r in repositories]:
-                return abort(403)
+            if repo_id not in [r.get("id") for r in repositories]:
+                abort(403)
         else:
-            repo_id = repositories[0]["id"]
-
+            repo_id = repositories[0]["id"] if repositories else None
+        
         try:
             indexes = Indexes.get_public_indexes_list()
-            if repo_id != "Root Index":
+            if repo_id and repo_id != "Root Index":
                 repository = Community.query.get(repo_id)
                 community_indexes = Indexes.get_child_list_recursive(repository.root_node_id)
-                print()
                 indexes = list(set(indexes) & set(community_indexes))
 
             indexes_query = []
@@ -424,7 +423,7 @@ class ReportView(BaseView):
                 }
             }
 
-            if repo_id != "Root Index":
+            if repo_id and repo_id != "Root Index":
                 aggs_query["query"]["bool"]["should"] = {"terms": {"path": community_indexes}}
                 aggs_query["query"]["bool"]["minimum_should_match"] = 1
             
@@ -927,12 +926,15 @@ class SiteLicenseSendMailSettingsView(BaseView):
 
     @expose('/', methods=['GET', 'POST'])
     def index(self):
+        repository_id = None
         if request.method == 'POST':
             data = request.get_json()
             settings = AdminSettings.get('site_license_mail_settings', False)
-            settings[data['repository_id']] = {'auto_send_flag': data['auto_send_flag']}
+            new_settings = settings.copy()
+            repository_id = data['repository_id']
+            new_settings[repository_id]={'auto_send_flag': data['auto_send_flag']}
             AdminSettings.update('site_license_mail_settings',
-                                 settings)
+                                 new_settings)
             for name in data['checked_list']:
                 sitelicense = SiteLicenseInfo.query.filter_by(
                     organization_name=name).first()
@@ -946,22 +948,26 @@ class SiteLicenseSendMailSettingsView(BaseView):
 
         if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles):
             repositories = [{"id": "Root Index"}] + Community.query.all()
-            repository_id = "Root Index"
-            sitelicenses = SiteLicenseInfo.query.filter_by(repository_id="Root Index").order_by(
-                        SiteLicenseInfo.organization_id).all()
+            if repository_id is None:
+                repository_id = "Root Index"
         else:
             repositories = Community.get_repositories_by_user(current_user)
-            repository_id = repositories[0].id if repositories else None
-            sitelicenses = SiteLicenseInfo.query.filter_by(repository_id=repository_id).order_by(
-                        SiteLicenseInfo.organization_id).all()
-        settings = AdminSettings.get('site_license_mail_settings', False).get(repository_id)
+            if repository_id is None:
+                repository_id = repositories[0].id if repositories else None
+        
+        sitelicenses = SiteLicenseInfo.query.filter_by(repository_id=repository_id).order_by(
+                    SiteLicenseInfo.organization_id).all()
+        settings = AdminSettings.get('site_license_mail_settings', False)
+        setting = settings[repository_id] if settings else {}
+        auto_send = setting.get("auto_send_flag", False) if setting else False
+        
         now = datetime.utcnow()
         last_month = (now.replace(day=1) - timedelta(days=1)).replace(day=1)
 
         return self.render(
             current_app.config['WEKO_ADMIN_SITE_LICENSE_SEND_MAIL_TEMPLATE'],
             sitelicenses=sitelicenses,
-            auto_send=settings["auto_send_flag"],
+            auto_send=auto_send,
             now=now,
             last_month=last_month,
             repositories=repositories

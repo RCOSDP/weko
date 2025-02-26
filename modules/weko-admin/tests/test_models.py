@@ -490,13 +490,13 @@ class TestStaticsEmail:
 #    def insert_email_address(cls, email_address):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestStaticsEmail::test_insert_email_address -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_insert_email_address(self, db):
-        StatisticsEmail.insert_email_address("test.address@test.org")
+        StatisticsEmail.insert_email_address("test.address@test.org", "Root Index")
         result = StatisticsEmail.query.filter_by(id=1).one()
         assert result.email_address == "test.address@test.org"
         
         with patch("weko_admin.models.db.session.commit",side_effect=BaseException("test_error")):
             with pytest.raises(BaseException):
-                StatisticsEmail.insert_email_address("test.address@test.org")
+                StatisticsEmail.insert_email_address("test.address@test.org", "Root Index")
         
 #    def get_all_emails(cls):
 
@@ -610,7 +610,8 @@ class TestFeedbackMailSetting:
             account_author="1,2",
             manual_mail={"email":["test.manual1@test.org","test.manual2@test.org"]},
             is_sending_feedback=True,
-            root_url="http://test_server"
+            root_url="http://test_server",
+            repo_id="Root Index"
         )
         assert result == True
         res = FeedbackMailSetting.query.filter_by(id=1).one()
@@ -622,7 +623,8 @@ class TestFeedbackMailSetting:
                 account_author="1,2",
                 manual_mail={"email":["test.manual1@test.org","test.manual2@test.org"]},
                 is_sending_feedback=True,
-                root_url="http://test_server"
+                root_url="http://test_server",
+                repo_id="Root Index"
             )
             assert result == False
             
@@ -639,6 +641,17 @@ class TestFeedbackMailSetting:
             result = FeedbackMailSetting.get_all_feedback_email_setting()
             assert result == []
 
+#   def get_feedback_email_setting_by_repo(cls, repo_id):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestFeedbackMailSetting::test_get_feedback_email_setting_by_repo -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_get_feedback_email_setting_by_repo(self, feedback_mail_settings):
+        result = FeedbackMailSetting.get_feedback_email_setting_by_repo("Root Index")
+        assert result[0].manual_mail=={"email":["test.manual1@test.org","test.manual2@test.org"]}
+        
+        with patch("flask_sqlalchemy._QueryProperty.__get__") as mock_query:
+            mock_query.return_value.filter_by.return_value.\
+                all.side_effect = Exception("test_error")
+            result = FeedbackMailSetting.get_feedback_email_setting_by_repo("Root Index")
+            assert result == []
 
 #    def update(cls, account_author,
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestFeedbackMailSetting::test_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -647,7 +660,8 @@ class TestFeedbackMailSetting:
             account_author="1",
             manual_mail={"email":[]},
             is_sending_feedback=False,
-            root_url="http://test_server2"
+            root_url="http://test_server2",
+            repo_id="Root Index"
         )
         assert result == True
         res = FeedbackMailSetting.query.filter_by(id=1).one()
@@ -660,7 +674,8 @@ class TestFeedbackMailSetting:
                 account_author="1",
                 manual_mail={"email":[]},
                 is_sending_feedback=False,
-                root_url="http://test_server2"
+                root_url="http://test_server2",
+                repo_id="Root Index"
             )
             assert result == False
         
@@ -677,6 +692,13 @@ class TestFeedbackMailSetting:
             result = FeedbackMailSetting.delete()
             assert result == False
 
+#   def delete_by_repo(cls, repo_id):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestFeedbackMailSetting::test_delete_by_repo -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_delete_by_repo(self, feedback_mail_settings):
+        result = FeedbackMailSetting.delete_by_repo("Root Index")
+        assert result == True
+        res = FeedbackMailSetting.query.filter_by(id=1).one_or_none()
+        assert res is None
 
 #class AdminSettings(db.Model):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestAdminSettings -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -891,6 +913,25 @@ class TestFeedbackMailHistory:
         assert result == 3
         
 #    def get_all_history(cls):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestFeedbackMailHistory::test_get_all_history -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_get_all_history(self, db):
+        FeedbackMailHistory.create(
+            session=db.session,
+            id=1,
+            start_time=datetime(2022,10,1,1,2,3,45678),
+            end_time=datetime(2022,10,1,2,3,4,56789),
+            stats_time="2022-10",
+            count=2,
+            error=0,
+            parent_id=1,
+            is_latest=True
+        )
+        
+        result = FeedbackMailHistory.get_all_history()
+        assert result[0].stats_time == "2022-10"
+        
+        result = FeedbackMailHistory.get_all_history(repo_id="Root Index")
+        assert result[0].stats_time == "2022-10"        
 
 #    def create(cls,
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestFeedbackMailHistory::test_create -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
