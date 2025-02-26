@@ -118,7 +118,7 @@ msgid "Outside Orthros"
 msgstr ""
 
 #: weko_accounts/templates/weko_accounts/setting/shibuser.html:79
-msgid "Others IdP"
+msgid "Extra IdP"
 msgstr ""
 
 #: weko_accounts/templates/weko_accounts/setting/shibuser.html:84

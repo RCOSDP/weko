@@ -40,7 +40,7 @@ class ShibSettingView(BaseView):
     def index(self):
         """Index."""
         try:
-            shib_flg = '0'
+            shib_flg = '0' if not current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] else '1'
             role_list = current_app.config['WEKO_ACCOUNTS_ROLE_LIST']
             attr_list = current_app.config['WEKO_ACCOUNTS_ATTRIBUTE_LIST']
             set_language = _('language')
@@ -57,23 +57,20 @@ class ShibSettingView(BaseView):
             block_user_settings = AdminSettings.get('blocked_user_settings')
             block_user_list = block_user_settings.__dict__['blocked_ePPNs']
 
-            if current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']:
-                shib_flg = '1'
-
             # デフォルトロール
-            if current_app.config['WEKO_ACCOUNTS_GAKUNIN_ROLE']:
-                gakunin_role = current_app.config['WEKO_ACCOUNTS_GAKUNIN_ROLE']['defaultRole']
-            if current_app.config['WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE']:
-                orthros_role = current_app.config['WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE']['defaultRole']
-            if current_app.config['WEKO_ACCOUNTS_OTHERS_ROLE']:
-                others_role = current_app.config['WEKO_ACCOUNTS_OTHERS_ROLE']['defaultRole']
+            roles = {
+                'gakunin_role': current_app.config.get('WEKO_ACCOUNTS_GAKUNIN_ROLE', {}).get('defaultRole', '0'),
+                'orthros_role': current_app.config.get('WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE', {}).get('defaultRole', '0'),
+                'extra_role': current_app.config.get('WEKO_ACCOUNTS_EXTRA_ROLE', {}).get('defaultRole', '0')
+            }
 
             # 属性マッピング
-            if current_app.config['WEKO_ACCOUNTS_ATTRIBUTE_MAP']: 
-                weko_eppn_value = current_app.config['WEKO_ACCOUNTS_ATTRIBUTE_MAP']['shib_eppn']
-                weko_role_authority_name_value = current_app.config['WEKO_ACCOUNTS_ATTRIBUTE_MAP']['shib_role_authority_name']
-                weko_mail_value = current_app.config['WEKO_ACCOUNTS_ATTRIBUTE_MAP']['shib_mail']
-                weko_user_name_value = current_app.config['WEKO_ACCOUNTS_ATTRIBUTE_MAP']['shib_user_name']
+            attributes = {
+                'weko_eppn_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_eppn', '0'),
+                'weko_role_authority_name_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_role_authority_name', '0'),
+                'weko_mail_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_mail', '0'),
+                'weko_user_name_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_user_name', '0')
+            }
 
             if request.method == 'POST':
                 # Process forms
@@ -83,20 +80,14 @@ class ShibSettingView(BaseView):
                 if form == 'shib_form':
                     if shib_flg != new_shib_flg:
                         shib_flg = new_shib_flg
-                        shib_flg = request.form.get('shibbolethRadios', '0')
-                        if shib_flg == '1':
-                            _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] = True
-                        else:
-                            _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] = False
-                        flash(
-                            _('Shibboleth flag was updated.'),
-                            category='success')
-
+                        _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] = (shib_flg == '1')
+                        flash(_('Shibboleth flag was updated.'), category='success')
+                        
             return self.render(
                 current_app.config['WEKO_ACCOUNTS_SET_SHIB_TEMPLATE'],
-                shib_flg=shib_flg, set_language=set_language, role_list=role_list, attr_list=attr_list, block_user_list=block_user_list, gakunin_role=gakunin_role, orthros_role=orthros_role, others_role=others_role, \
-                weko_eppn_value=weko_eppn_value, weko_role_authority_name_value=weko_role_authority_name_value, \
-                weko_mail_value=weko_mail_value, weko_user_name_value=weko_user_name_value, )
+                shib_flg=shib_flg, set_language=set_language, role_list=role_list, attr_list=attr_list, block_user_list=block_user_list, gakunin_role=roles['gakunin_role'], orthros_role=roles['orthros_role'], extra_role=roles['extra_role'], \
+                weko_eppn_value=attributes['weko_eppn_value'], weko_role_authority_name_value=attributes['weko_role_authority_name_value'], \
+                weko_mail_value=attributes['weko_mail_value'], weko_user_name_value=attributes['weko_user_name_value'], )
         except BaseException:
             current_app.logger.error(
                 'Unexpected error: {}'.format(sys.exc_info()))
