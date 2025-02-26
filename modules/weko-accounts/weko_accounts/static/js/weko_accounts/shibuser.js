@@ -27,8 +27,7 @@ function createDefaultRoleSettingArea() {
         roleElement.index,
         "role-lists",
         roleValue,
-        defaultRoleList,
-        setLanguage
+        defaultRoleList
       )
     );
   });
@@ -80,10 +79,9 @@ function createBlockUserSettingArea() {
  * @param {string} kinds リストの種類
  * @param {string} value 選択中の値
  * @param {Array} defaultList 選択肢作成に使用するデフォルトリスト
- * @param {string} setLanguage 言語設定 ja|en
  * @returns
  */
-function createSelectList(id, kinds, value, defaultList, setLanguage = null) {
+function createSelectList(id, kinds, value, defaultList) {
   const select = $("<select>", {
     id: `${kinds}${id}`,
     name: `${kinds}${id}`,
