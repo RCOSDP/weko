@@ -874,7 +874,7 @@ def handle_validate_item_import(list_record, schema) -> list:
                 record["id"] = ""
                 errors.append(_("Please specify item ID by half-width number."))
             else:
-                record["id"] = int(record_id)
+                record["id"] = str(int(record_id))
         if record.get("metadata"):
             if v2:
                 a = v2.iter_errors(record.get("metadata"))
