@@ -1,16 +1,16 @@
+const setLanguage = $("#shib_form").data("value");
+
 $(document).ready(function () {
   // 各設定欄を生成
-  const setLanguage = $("#shib_form").data("value");
-  createDefaultRoleSettingArea(setLanguage);
-  createAttrMapSettingArea(null);
-  createBlockUserSettingArea(null);
+  createDefaultRoleSettingArea();
+  createAttrMapSettingArea();
+  createBlockUserSettingArea();
 });
 
 /**
  * 既定のロール設定欄を生成
- * @param {string} setLanguage 言語設定 ja|en
  */
-function createDefaultRoleSettingArea(setLanguage) {
+function createDefaultRoleSettingArea() {
   const defaultRoleList = $("#default-role-list").data("value");
 
   const roleElements = [
