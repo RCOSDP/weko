@@ -85,9 +85,7 @@ class ShibSettingView(BaseView):
                         
             return self.render(
                 current_app.config['WEKO_ACCOUNTS_SET_SHIB_TEMPLATE'],
-                shib_flg=shib_flg, set_language=set_language, role_list=role_list, attr_list=attr_list, block_user_list=block_user_list, gakunin_role=roles['gakunin_role'], orthros_role=roles['orthros_role'], extra_role=roles['extra_role'], \
-                weko_eppn_value=attributes['weko_eppn_value'], weko_role_authority_name_value=attributes['weko_role_authority_name_value'], \
-                weko_mail_value=attributes['weko_mail_value'], weko_user_name_value=attributes['weko_user_name_value'], )
+                shib_flg=shib_flg, set_language=set_language, role_list=role_list, attr_list=attr_list, block_user_list=block_user_list, **roles, **attributes )
         except BaseException:
             current_app.logger.error(
                 'Unexpected error: {}'.format(sys.exc_info()))
