@@ -281,7 +281,8 @@ def base_app(instance_path, mock_gethostbyaddr):
         STATS_QUERIES=STATS_QUERIES,
         STATS_EVENTS=stats_events,
         STATS_AGGREGATIONS=STATS_AGGREGATIONS,
-        INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"})
+        INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
+        OAISERVER_ES_MAX_CLAUSE_COUNT = 3
     ))
     FlaskCeleryExt(app_)
     InvenioAccess(app_)
@@ -398,6 +399,7 @@ def role_users(app, db):
             ActionRoles(action="download-original-pdf-access", role=comadmin_role),
             ActionRoles(action="author-access", role=comadmin_role),
             ActionRoles(action="items-autofill", role=comadmin_role),
+            ActionRoles(action="stats-api-access", role=comadmin_role),
             ActionRoles(action="detail-page-acces", role=comadmin_role),
             ActionRoles(action="detail-page-acces", role=comadmin_role),
             ActionRoles(action="item-access", role=contributor_role),

@@ -406,12 +406,13 @@ class QueryItemRegReport(WekoQuery):
         page_index = 0
         try:
             page_index = int(request.args.get('p', 1)) - 1
-            repository_id = request.args.get('repo')
         except Exception as e:
             current_app.logger.debug(e)
 
+        repository_id = request.args.get('repo')
+        if repository_id:
+            kwargs['repository_id'] = repository_id
         kwargs['page_index'] = page_index
-        kwargs['repository_id'] = repository_id
         return self.make_response(QueryItemRegReportHelper.get(**kwargs))
 
 

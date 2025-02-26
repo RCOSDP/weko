@@ -339,9 +339,9 @@ class QueryFileReportsHelper(object):
         month = kwargs.get('month')
         repository_id = kwargs.get('repository_id')
         
-        if repository_id != 'Root Index':
+        if repository_id and repository_id != 'Root Index':
             repository = Community.query.get(repository_id)
-            index_list = get_descendant_index_names(repository.root_node_id)
+            index_list = get_descendant_index_names(repository.root_node_id) if repository else []
 
         try:
             query_month = str(year) + '-' + str(month).zfill(2)
@@ -355,7 +355,7 @@ class QueryFileReportsHelper(object):
                       query_month + '-' + str(lastday).zfill(2)
                       + 'T23:59:59',
                       'accessrole': 'open_access'}
-            if repository_id != 'Root Index':
+            if repository_id and repository_id != 'Root Index':
                 all_params['index_list'] = index_list
                 params['index_list'] = index_list
             else:
@@ -416,7 +416,7 @@ class QueryFileReportsHelper(object):
                       + 'T23:59:59'}
             if repository_id and repository_id != 'Root Index':
                 repository = Community.query.get(repository_id)
-                user_ids = get_user_ids_by_role(repository.group_id)
+                user_ids = get_user_ids_by_role(repository.group_id) if repository_id else []
                 params['user_ids'] = user_ids
             else:
                 params['user_ids'] = None
@@ -782,9 +782,9 @@ class QueryRecordViewPerIndexReportHelper(object):
             start_date = query_month + '-01'
             end_date = query_month + '-' + str(lastday).zfill(2) + 'T23:59:59'
             index_list = None
-            if repository_id != 'Root Index':
+            if repository_id and repository_id != 'Root Index':
                 repository = Community.query.get(repository_id)
-                index_list = get_descendant_index_names(repository.root_node_id)
+                index_list = get_descendant_index_names(repository.root_node_id) if repository else []
             result = {'date': query_month, 'all': [], 'total': 0}
             first_search = True
             after_key = None
@@ -917,7 +917,7 @@ class QueryRecordViewReportHelper(object):
             repository_id = kwargs.get('repository_id')
             if repository_id and repository_id != 'Root Index':
                 repository = Community.query.get(repository_id)
-                index_list = get_descendant_index_names(repository.root_node_id)
+                index_list = get_descendant_index_names(repository.root_node_id) if repository else []
                 params['agg_filter'] = {'record_index_names': index_list}
             all_query_cfg = current_stats.queries['get-record-view-report']
             all_query = all_query_cfg.query_class(**all_query_cfg.query_config)
@@ -989,8 +989,8 @@ class QueryItemRegReportHelper(object):
         repository_id = kwargs.get('repository_id')
         if repository_id and repository_id != 'Root Index':
             repository = Community.query.get(repository_id)
-            index_list = get_descendant_index_names(repository.root_node_id)
-            item_ids = get_item_ids_in_index(repository.root_node_id)
+            index_list = get_descendant_index_names(repository.root_node_id) if repository else []
+            item_ids = get_item_ids_in_index(repository.root_node_id) if repository else []
 
         result = []
         if empty_date_flg or end_date >= start_date:
