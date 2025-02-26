@@ -294,7 +294,8 @@ ${INVENIO_WEB_INSTANCE} access \
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "stats-api-access" \
-       role "${INVENIO_ROLE_REPOSITORY}"
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}" \
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "read-style-action" \
