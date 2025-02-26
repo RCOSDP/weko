@@ -239,11 +239,12 @@ def test_indexes_delete(app, db, users, test_indices):
         assert Index.query.filter_by(id=11).first().is_deleted == True
 
         with patch("weko_index_tree.tasks.delete_oaiset_setting", return_value=True):
-            res = Indexes.delete(20, False)
-            assert res==0
-            res = Indexes.delete(22, False)
-            assert res==[22]
-            assert Index.query.filter_by(id=22).first().is_deleted == True
+            with patch("weko_index_tree.tasks.delete_index_handle", return_value=True):
+                res = Indexes.delete(20, False)
+                assert res==0
+                res = Indexes.delete(22, False)
+                assert res==[22]
+                assert Index.query.filter_by(id=22).first().is_deleted == True
 
 
 # class Indexes(object):
