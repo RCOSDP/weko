@@ -714,8 +714,8 @@ def create_charge(user_id, item_id, price, title, file_url):
     content_id = _get_content_id_for_charge(item_id)
     recid = PersistentIdentifier.get('recid', item_id)
     rec_json = RecordMetadata.query.filter_by(id=recid.object_uuid).first().json
-    path = rec_json.get("path")
-    paths = Indexes.get_path_name(path)
+    rec_path = rec_json.get("path")
+    paths = Indexes.get_path_name(rec_path)
     indexes_list=[]
     for path in paths:
         indexes_list.append(path.name.replace('-/-', ',') if path.name else path.name_en.replace('-/-', ','))
