@@ -12,6 +12,7 @@ from flask_security import login_user
 from flask_security.utils import login_user
 from invenio_accounts.models import Role, User
 from invenio_accounts.testutils import create_test_user, login_user_via_session
+from invenio_pidstore.models import PersistentIdentifier
 from mock import patch
 
 from weko_records.models import ItemType, ItemTypeName
@@ -913,7 +914,7 @@ def test_check_charge(db_admin_settings, users, id, result):
         (8, True),
     ],
 )
-def test_create_charge(db_admin_settings, users, id, result):
+def test_create_charge(db,db_admin_settings, users, id, result,records):
 
     trade_id = 1
     res = mock.Mock(spec=Response)

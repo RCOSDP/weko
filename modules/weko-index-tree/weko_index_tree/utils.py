@@ -1092,9 +1092,10 @@ def save_index_trees_to_redis(tree):
 
     """
     redis = __get_redis_store()
+    ttl = current_app.config.get('WEKO_INDEX_TREE_BROWSING_TREE_CACHE_TTL', 10)
     try:
         v = orjson.dumps(tree, default=default_isoformat_str)
-        redis.put("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language,v)
+        redis.put("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language,v,ttl)
     except ConnectionError:
         current_app.logger.error("Fail save index_tree to redis")
 
@@ -1129,9 +1130,10 @@ def save_filtered_index_trees_to_redis_guest(tree, pid):
     redis = __get_redis_store()
     user_id = "-99"
     key = "index_tree_by_role_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language + "_" + str(user_id) + "_" + str(pid)
+    ttl = current_app.config.get('WEKO_INDEX_TREE_BROWSING_TREE_CACHE_TTL', 10)
     try:
         v = orjson.dumps(tree, default=default_isoformat_str)
-        redis.put(key,v)
+        redis.put(key,v,ttl)
     except ConnectionError:
         current_app.logger.error("Fail save index_tree to redis")
 
