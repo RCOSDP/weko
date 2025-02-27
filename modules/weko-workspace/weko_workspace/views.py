@@ -288,9 +288,9 @@ def get_workspace_itemlist():
                 workspaceItem["fileSts"] = False
                 workspaceItem["fileCnt"] = 0
 
-        workspaceItem["publicCnt"] = publicCnt
-        workspaceItem["embargoedCnt"] = embargoedCnt
-        workspaceItem["restrictedPublicationCnt"] = restrictedPublicationCnt
+        workspaceItem["publicCnt"] = publicCnt if 'publicCnt' in locals() else 0
+        workspaceItem["embargoedCnt"] = embargoedCnt if 'embargoedCnt' in locals() else 0
+        workspaceItem["restrictedPublicationCnt"] = restrictedPublicationCnt if 'restrictedPublicationCnt' in locals() else 0
         # print("publicCnt : " + str(workspaceItem["publicCnt"]))
         # print("embargoedCnt : " + str(workspaceItem["embargoedCnt"]))
         # print("restrictedPublicationCnt : " + str(workspaceItem["restrictedPublicationCnt"]))

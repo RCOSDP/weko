@@ -101,35 +101,36 @@
                 </a>
               </div>
             </div>
+
             <div class="pull-right">
               <div class="form-group">
-                <a href="javascript:void(0)" class="btn btn-primary" id="">
+                <a href="javascript:void(0)" class="btn btn-primary" id="groupYearicon">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                    class="bi bi-diagram-3" viewBox="0 0 16 16"">
+                    class="bi bi-diagram-3" viewBox="0 0 16 16">
                     <path fill-rule=" evenodd"
                     d="M6 3.5A1.5 1.5 0 0 1 7.5 2h1A1.5 1.5 0 0 1 10 3.5v1A1.5 1.5 0 0 1 8.5 6v1H14a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0v-1A.5.5 0 0 1 2 7h5.5V6A1.5 1.5 0 0 1 6 4.5zM8.5 5a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5zM0 11.5A1.5 1.5 0 0 1 1.5 10h1A1.5 1.5 0 0 1 4 11.5v1A1.5 1.5 0 0 1 2.5 14h-1A1.5 1.5 0 0 1 0 12.5zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm4.5.5A1.5 1.5 0 0 1 7.5 10h1a1.5 1.5 0 0 1 1.5 1.5v1A1.5 1.5 0 0 1 8.5 14h-1A1.5 1.5 0 0 1 6 12.5zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm4.5.5a1.5 1.5 0 0 1 1.5-1.5h1a1.5 1.5 0 0 1 1.5 1.5v1a1.5 1.5 0 0 1-1.5 1.5h-1a1.5 1.5 0 0 1-1.5-1.5zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z" />
                   </svg>
                 </a>
                 <a id="toggleButton" class="btn btn-primary" data-toggle="dropdown" href="javascript:void(0)"
                   aria-expanded="false">{{_('絞込み表示')}}<strong class="caret"></strong></a>
+
                 <select class="form-control" id="sort_item">
                   <option value="1" selected="selected">{{_('出版年月')}}</option>
                   <option value="2">{{_('タイトル')}}</option>
                   <option value="3">{{_('アクセス数')}}</option>
-                  <option value="3">{{_('ダウンロード数')}}</option>
+                  <option value="4">{{_('ダウンロード数')}}</option>
                 </select>
-                <select class="form-control">
+                <select class="form-control" id="sort_order">
                   <option value="1">asc</option>
                   <option value="2">desc</option>
                 </select>
-                <select class="form-control">
-                  <option value="1">20</option>
-                  <option value="2">50</option>
-                  <option value="3">100</option>
+                <select class="form-control" id="items_per_page">
+                  <option value="2">2</option>
+                  <option value="5">5</option>
+                  <option value="10">10</option>
                 </select>
               </div>
             </div>
-
             <div style="clear: both;"></div>
             <div id="content" style="display: none;">
               <div class="row row-4">
@@ -360,37 +361,30 @@
                               data-item-recid="{{ workspaceitem.recid }}" 
                               data-favorite-sts="{{ workspaceitem.favoriteSts | tojson }}">
                             </div>
-                            <br><br>
-
+                            <br>
                             <div 
                               class="read-mount-point"
                               data-type="2"  
                               data-item-recid="{{ workspaceitem.recid }}" 
                               data-read-sts="{{ workspaceitem.readSts | tojson }}">
                             </div>
-                            <br><br>
-
+                            <br>
                             <input type="checkbox" value="" /><br><br>
                           </td>
-
                           <td style="width: auto;">
                             <strong><a href="{{ request.host_url }}records/{{ workspaceitem.recid }}">{{
                                 workspaceitem.title }} -- recid : {{ workspaceitem.recid}}</a></strong><br><br>
-                            
                             {% if workspaceitem.authorlist is not none and workspaceitem.authorlist|length > 0 %}
                               <span>{{ workspaceitem.authorlist | join(', ') }}</span><br><br>
                             {% endif %}
-
                             <span>{{ workspaceitem.magazineName }}／{{ workspaceitem.conferenceName}}</span><span>&nbsp;&nbsp;</span>
                             <span>{{ workspaceitem.volume }}（{{ workspaceitem.issue }}）</span><span>&nbsp;&nbsp;</span>
                             </span>{{ workspaceitem.funderName }} | {{ workspaceitem.awardTitle }}</span><span>&nbsp;&nbsp;</span>
                             <br><br>
                             <span>{{ workspaceitem.publicationDate }}</span><span>&nbsp;&nbsp;</span>
-                            
                             {% if workspaceitem.relation|length > 0 %}
                               <span><a href="javascript:void(0)" class="relatedButton"><strong>関連</strong></a></span><span>  </span>
                             {% endif %}
-
                             {% if workspaceitem.fileSts %}
                             <span>本文ファイル ({{ workspaceitem.fileCnt }})： 公開（{{ workspaceitem.publicCnt }}）、エンバーゴ（{{
                               workspaceitem.embargoedCnt }}）、 制限公開（{{ workspaceitem.restrictedPublicationCnt
@@ -398,20 +392,15 @@
                             {% else %}
                             <span>本文ファイル (0)</span><span>&nbsp;&nbsp;</span>
                             {% endif %}
-                            <br><br>
-
+                            <br>
                             <div class="relatedInfo" style="display: none;">
                               {% for relatedItem in workspaceitem.relation %}
                                 <span>{{ relatedItem.relationType }}&nbsp;&nbsp;{{ relatedItem.relationTitle }}、<a>{{ relatedItem.relationUrl }}</a></span><br>
                               {% endfor %}
                             </div>
-
                           </td>
-
                           <td style="text-align: center; vertical-align: top;">
-
                             <span><a href="{{workspaceitem.doi}}">DOI</a></span><br><br>
-
                             <span><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
                                 class="bi bi-eye-fill" viewBox="0 0 16 16">
                                 <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0" />
@@ -427,7 +416,6 @@
                               </svg>{{workspaceitem.downloadCnt}}
                             </span>
                           </td>
-
                           <td style="text-align: center; vertical-align: top;">
                             <span
                               style="border: 1px solid #000; padding: 5px; border-radius: 4px;">{{workspaceitem.resourceType}}</span><br><br>
@@ -448,10 +436,8 @@
                                   d="M16 12.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0m-5.5 0a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 0-1h-3a.5.5 0 0 0-.5.5" />
                               </svg>
                               {% endif %}
-
                             </span><br><br>
                           </td>
-
                           <td style="text-align: center; vertical-align: top;">
                             <a href="javascript:void(0)" class="edit-item" data-item-id="">
                               <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor"
@@ -472,23 +458,6 @@
               </div>
               <div class="text-center">
                 <ul class="pagination">
-                  <li>
-                    <a href="javascript:void(0)" class="get-pages" data-pages="">&lt;</a>
-                  </li>
-
-                  <li>
-                    <a href="javascript:void(0)" class="get-pages" data-pages="">1</a>
-                  </li>
-                  <li>
-                    <a href="javascript:void(0)" class="get-pages" data-pages="">2</a>
-                  </li>
-                  <li>
-                    <a href="javascript:void(0)" class="get-pages" data-pages="">3</a>
-                  </li>
-
-                  <li>
-                    <a href="javascript:void(0)" class="get-pages" data-pages="">&gt;</a>
-                  </li>
                 </ul>
               </div>
             </div>
