@@ -98,5 +98,5 @@ WEKO_INDEX_TREE_BROWSING_TREE_CACHE_TTL = 10
 Except for guest role user.
 """
 
-WEKO_INDEX_PUBLIC_DEFAULT_TIMEZONE = 'Asia/Tokyo'
+WEKO_INDEX_TREE_PUBLIC_DEFAULT_TIMEZONE = 'Asia/Tokyo'
 """Default time zone for index publication date."""

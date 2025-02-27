@@ -43,7 +43,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import case, func, literal_column
 from weko_groups.api import Group
 from weko_redis.redis import RedisConnection
-from .config import WEKO_INDEX_PUBLIC_DEFAULT_TIMEZONE
+
 from .models import Index
 from .utils import cached_index_tree_json, check_doi_in_index, \
     check_restrict_doi_with_indexes, filter_index_list_by_role, \
@@ -1792,8 +1792,8 @@ class Indexes(object):
             list: public index id list
         """
         if not target_date:
-            default_timezone = current_app.config.get("WEKO_INDEX_PUBLIC_DEFAULT_TIMEZONE",WEKO_INDEX_PUBLIC_DEFAULT_TIMEZONE)
-            target_date=datetime.now(pytz.timezone(default_timezone))
+            default_timezone = current_app.config["WEKO_INDEX_TREE_PUBLIC_DEFAULT_TIMEZONE"]
+            target_date=datetime.now(pytz.timezone(default_timezone)).strftime("%Y-%m-%d %H:%M:%S")
         recursive_t = db.session.query(
             Index.parent.label("pid"),
             Index.id.label("cid")
