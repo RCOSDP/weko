@@ -101,10 +101,10 @@ def check_tmp_file_time_for_author():
     path = '/var/tmp'
     # 1日
     ttl = 24* 60* 60 
-    author_export_temp_dirc_path = path + "/author_export"
-    author_import_temp_dirc_path = path + "/author_import"
-    author_export_temp_file_path = path + "/author_export/**"
-    author_import_temp_file_path = path + "/author_import/**"
+    author_export_temp_dirc_path = path + "/authors_export"
+    author_import_temp_dirc_path = path + "/authors_import"
+    author_export_temp_file_path = path + "/authors_export/**"
+    author_import_temp_file_path = path + "/authors_import/**"
     
     now = datetime.now(timezone.utc) 
     # 著者エクスポートの一時ファイルの削除

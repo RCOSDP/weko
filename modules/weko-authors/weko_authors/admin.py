@@ -23,10 +23,10 @@
 from __future__ import absolute_import, print_function
 
 import os
-import json, tempfile, datetime
+import json, tempfile, datetime, base64
 from celery import group, states
 from celery.task.control import revoke
-from flask import abort, current_app, request, session
+from flask import abort, current_app, request, session, send_file
 from flask.helpers import url_for
 from flask.json import jsonify
 from flask_admin import BaseView, expose
@@ -40,7 +40,7 @@ from .config import WEKO_AUTHORS_EXPORT_FILE_NAME, \
 from .permissions import author_permission
 from .tasks import check_is_import_available, export_all, import_author
 from .utils import check_import_data, delete_export_status, \
-    get_export_status, get_export_url, set_export_status, delete_export_url
+    get_export_status, get_export_url, set_export_status, delete_export_url, band_check_file
 
 
 class AuthorManagementView(BaseView):
@@ -173,7 +173,7 @@ class ExportView(BaseView):
         """Process export authors."""
         #実行時に以前のexport_urlを削除
         delete_export_url()
-        temp_folder_path ='/var/tmp/author_export'
+        temp_folder_path ='/var/tmp/authors_export'
         os.makedirs(temp_folder_path, exist_ok=True)
         prefix = current_app.config["WEKO_AUTHORS_EXPORT_TMP_PREFIX"] + datetime.datetime.now().strftime("%Y%m%d%H%M")
         
@@ -224,16 +224,14 @@ class ExportView(BaseView):
     @expose('/resume', methods=['POST'])
     def resume(self):
         """Resume export progress."""
-        print("ersume")
 
         delete_export_url()
-        temp_folder_path ='/var/tmp/author_export'
+        temp_folder_path ='/var/tmp/authors_export'
         os.makedirs(temp_folder_path, exist_ok=True)
         prefix = current_app.config["WEKO_AUTHORS_EXPORT_TMP_PREFIX"] + datetime.datetime.now().strftime("%Y%m%d%H%M")
         
         with tempfile.NamedTemporaryFile(dir=temp_folder_path, prefix=prefix, suffix='.tsv', mode='w+', delete=False) as temp_file:
             temp_file_path = temp_file.name
-        print(temp_file_path)
         update_cache_data(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"],
             temp_file_path,
             60*60*24
@@ -263,27 +261,73 @@ class ImportView(BaseView):
             'group_task_id', type=str, default=None)
 
         return jsonify(check_is_import_available(group_task_id))
-
+    
     @author_permission.require(http_exception=403)
     @expose('/check_import_file', methods=['POST'])
     def check_import_file(self):
         """Validate author import."""
-        error = None
+        error = None  
         list_import_data = []
-
+        temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
+        os.makedirs(temp_folder_path, exist_ok=True)
+        prefix = current_app.config["WEKO_AUTHORS_IMPORT_TMP_PREFIX"] + datetime.datetime.now().strftime("%Y%m%d%H%M")
         json_data = request.get_json()
         if json_data:
-            result = check_import_data(
-                json_data.get('file_name'),
-                json_data.get('file').split(",")[-1]
+            file_suffix = json_data.get('file_name').split('.')[-1].lower()
+            with tempfile.NamedTemporaryFile(dir=temp_folder_path, prefix=prefix, suffix='.'+file_suffix, mode='wb', delete=False) as temp_file:
+                temp_file_path = temp_file.name
+                temp_file.write(base64.b64decode(str(json_data.get('file').split(",")[-1])))
+                temp_file.flush()
+            
+            update_cache_data(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"],
+                temp_file_path,
+                60*60*24
             )
+            result = check_import_data(os.path.basename(temp_file_path))
             error = result.get('error')
             list_import_data = result.get('list_import_data')
+            counts = result.get("counts")
+            max_page = result.get("max_page")
 
         return jsonify(
             code=1,
             error=error,
-            list_import_data=list_import_data)
+            list_import_data=list_import_data,
+            counts=counts,
+            max_page=max_page)
+
+    @author_permission.require(http_exception=403)
+    @expose('/check_pagination', methods=['POST'])
+    def check_pagination(self) -> jsonify:
+        """pagination checkfile"""
+        data = request.get_json() or {}
+        page_number = data.get("page_number")
+        temp_file_path = current_cache.get(\
+                current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"])
+        temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
+        
+        # checkファイルパスの作成
+        base_file_name = os.path.splitext(os.path.basename(temp_file_path))[0]
+        check_file_name = f"{base_file_name}-check"
+        part_check_file_name = f"{check_file_name}-part{page_number}"
+        check_file_part1_path = os.path.join(temp_folder_path, part_check_file_name)
+        
+        with open(check_file_part1_path, "r", encoding="utf-8-sig") as check_part_file:
+            result = json.load(check_part_file)
+        return jsonify(result)
+
+    @author_permission.require(http_exception=403)
+    @expose('/check_file_download', methods=['POST'])
+    def check_file_download(self):
+        """インポートチェック画面でダウンロード処理"""
+        max_page = request.get_json().get("max_page")
+        
+        try:
+            check_file_path = band_check_file(max_page)                    
+            return send_file(check_file_path, as_attachment=True)
+        except Exception as e:
+            current_app.logger.error(e)
+            return jsonify(e)
 
     @author_permission.require(http_exception=403)
     @expose('/import', methods=['POST'])

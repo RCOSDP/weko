@@ -28,6 +28,9 @@ import io
 import sys
 import tempfile
 import traceback
+import json
+import math
+import datetime
 from time import sleep
 from copy import deepcopy
 from functools import reduce
@@ -283,7 +286,7 @@ def write_to_tempfile(start, mappings, schemes, row_header, row_label_en, row_la
     except Exception as ex:
         current_app.logger.error(ex)
 
-def check_import_data(file_name: str, file_content: str):
+def check_import_data(file_name: str):
     """Validation importing tsv/csv file.
 
     :argument
@@ -292,21 +295,53 @@ def check_import_data(file_name: str, file_content: str):
     :return
         return       -- check information.
     """
-    tmp_prefix = current_app.config['WEKO_AUTHORS_IMPORT_TMP_PREFIX']
-    temp_file = tempfile.NamedTemporaryFile(prefix=tmp_prefix)
     result = {}
-
+    temp_file_path = current_cache.get(\
+        current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"])
     try:
-        temp_file.write(base64.b64decode(file_content))
-        temp_file.flush()
-
         flat_mapping_all, flat_mapping_ids = flatten_authors_mapping(
             WEKO_AUTHORS_FILE_MAPPING)
         file_format = file_name.split('.')[-1].lower()
-        file_data = unpackage_and_check_import_file(
-            file_format, file_name, temp_file.name, flat_mapping_ids)
-        result['list_import_data'] = validate_import_data(
-            file_format, file_data, flat_mapping_ids, flat_mapping_all)
+        max_part_num = unpackage_and_check_import_file(
+            file_format, file_name, temp_file_path, flat_mapping_ids)
+        list_import_id=[]
+        temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
+        base_file_name = os.path.splitext(os.path.basename(temp_file_path))[0]
+        check_file_name = f"{base_file_name}-check"
+        num_total = 0
+        num_new = 0
+        num_update = 0
+        num_delete = 0
+        num_error = 0
+        for i in range(1, max_part_num+1):
+            part_file_name = f'{base_file_name}-part{i}'
+            part_file_path = os.path.join(temp_folder_path, part_file_name)
+            with open(part_file_path, "r", encoding="utf-8-sig") as pf:
+                data = json.load(pf)
+                result_part = validate_import_data(
+                    file_format, data, flat_mapping_ids, flat_mapping_all, list_import_id)
+                num_total += len(result_part)
+                num_new += len([item for item in result_part\
+                    if item['status'] == 'new' and not item.get('errors')])
+                num_update += len([item for item in result_part\
+                    if item['status'] == 'update' and not item.get('errors')])
+                num_delete += len([item for item in result_part\
+                    if item['status'] == 'deleted' and not item.get('errors')])
+                num_error += len([item for item in result_part\
+                    if item.get('errors')])
+            write_tmp_part_file(i, result_part, check_file_name)
+        part1_check_file_name = f"{check_file_name}-part1"
+        check_file_part1_path = os.path.join(temp_folder_path, part1_check_file_name)
+        with open(check_file_part1_path, "r", encoding="utf-8-sig") as check_part1:
+            result['list_import_data'] = json.load(check_part1)
+        result["max_page"] = max_part_num
+        result["counts"]={}
+        result["counts"]["num_total"] = num_total
+        result["counts"]["num_new"] = num_new
+        result["counts"]["num_update"] = num_update
+        result["counts"]["num_delete"] = num_delete
+        result["counts"]["num_error"] = num_error
+        
     except Exception as ex:
         error = _('Internal server error')
         if isinstance(ex, UnicodeDecodeError):
@@ -340,13 +375,13 @@ def getEncode(filepath):
     return enc.get('encoding', 'utf-8-sig')
 
 
-def unpackage_and_check_import_file(file_format, file_name, temp_file, mapping_ids):
+def unpackage_and_check_import_file(file_format, file_name, temp_file_path, mapping_ids):
     """Unpackage and check format of import file.
 
     Args:
         file_format (str): File format.
         file_name (str): File uploaded name.
-        temp_file (str): Temp file path.
+        temp_file_path (str): Temp file path.
         mapping_ids (list): List only mapping ids.
 
     Returns:
@@ -357,15 +392,18 @@ def unpackage_and_check_import_file(file_format, file_name, temp_file, mapping_i
         handle_check_duplication_item_id, parse_to_json_form
     header = []
     file_data = []
-    current_app.logger.debug("temp_file:{}".format(temp_file))
-    enc = getEncode(temp_file)
-    with open(temp_file, 'r', newline="", encoding=enc) as file:
+    current_app.logger.debug("temp_file_path:{}".format(temp_file_path))
+    enc = getEncode(temp_file_path)
+    json_size=current_app.config.get("WEKO_AUTHORS_IMPORT_BATCH_SIZE")
+    with open(temp_file_path, 'r', newline="", encoding=enc) as file:
         if file_format == 'csv':
             file_reader = csv.reader(file, dialect='excel', delimiter=',')
         else:
             file_reader = csv.reader(file, dialect='excel', delimiter='\t')
+        count = 0
         try:
             for num, data_row in enumerate(file_reader, start=1):
+                count += 1
                 if num == 1:
                     header = data_row
                     header[0] = header[0].replace('#', '', 1)
@@ -406,8 +444,13 @@ def unpackage_and_check_import_file(file_format, file_name, temp_file, mapping_i
                         })
 
                     file_data.append(dict(**data_parse_metadata))
-
-            if not file_data:
+                    if (num - 3)% json_size == 0:
+                        write_tmp_part_file(math.ceil((num-3)/json_size), file_data, temp_file_path)
+                        file_data = []
+            if len(file_data) != 0:
+                write_tmp_part_file(math.ceil((count-3)/json_size), file_data, temp_file_path)
+                
+            elif not file_data and (count-3) % json_size != 0:
                 raise Exception({
                     'error_msg': _('There is no data to import.')
                 })
@@ -419,10 +462,23 @@ def unpackage_and_check_import_file(file_format, file_name, temp_file, mapping_i
         except Exception as ex:
             raise ex
 
-    return file_data
+    return math.ceil((count-3)/json_size)
 
+def write_tmp_part_file(part_num, file_data, temp_file_path):
+    """
+    Args:
+        part_num(int): count of list
+        file_data(list): Author data from tsv/csv.
+        temp_file_path(str): path of basefile 
+    """
+    temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
+    base_name = os.path.splitext(os.path.basename(temp_file_path))[0]
+    part_file_name = f"{base_name}-part{part_num}"
+    part_file_path = os.path.join(temp_folder_path, part_file_name)
+    with open(part_file_path, 'w', encoding='utf-8-sig') as part_file:
+        json.dump(file_data, part_file)
 
-def validate_import_data(file_format, file_data, mapping_ids, mapping):
+def validate_import_data(file_format, file_data, mapping_ids, mapping, list_import_id):
     """Validate import data.
 
     Args:
@@ -437,7 +493,6 @@ def validate_import_data(file_format, file_data, mapping_ids, mapping):
         authors_prefix = {
             prefix.scheme: prefix.id for prefix in authors_prefix}
 
-    list_import_id = []
     existed_authors_id, existed_external_authors_id = \
         WekoAuthors.get_author_for_validation()
     for item in file_data:
@@ -520,6 +575,64 @@ def validate_import_data(file_format, file_data, mapping_ids, mapping):
 
     return file_data
 
+def get_check_result(entry):
+    errors = entry.get("errors", [])
+    status = entry.get("status", "")
+    
+    if errors:
+        return "Error: " + " ".join(errors)
+    else:
+        if status == "new":
+            return _('Register')
+        elif status == "update":
+            return _('Update')
+        elif status == "deleted":
+            return _('Delete')
+        else:
+            return status
+
+def band_check_file(max_page):
+    """
+    チェック結果が分割されているのでそれらをくっつけます。
+    """
+    temp_file_path = current_cache.get(\
+    current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"])
+    
+    # checkファイルパスの作成
+    base_file_name = os.path.splitext(os.path.basename(temp_file_path))[0]
+    check_file_name = f"{base_file_name}-check"
+
+    temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
+    check_file_download_name = "{}_{}.{}".format(
+        "check_import",
+        datetime.datetime.now().strftime("%Y%m%d%H%M"),
+        "tsv"
+    )
+    check_file_path = os.path.join(temp_folder_path, check_file_download_name)
+    try:
+        with open(check_file_path, 'w', newline='', encoding='utf-8') as file:
+            writer = csv.writer(file, delimiter='\t')
+            writer.writerow(["No.", "WEKO ID", "full_name", "MailAddress", "Check Result"])
+            for i in range(1, max_page+1):
+                part_check_file_name = f"{check_file_name}-part{i}"
+                check_file_part1_path = os.path.join(temp_folder_path, part_check_file_name)
+                with open(check_file_part1_path, "r", encoding="utf-8-sig") as check_part_file:
+                    data = json.load(check_part_file)
+                batch_size = current_app.config.get("WEKO_AUTHORS_IMPORT_BATCH_SIZE")
+                for index, entry in enumerate(data, start=(i-1)*batch_size+1):
+                    pk_id = entry.get("pk_id", "")
+                    author_name_info = entry.get("authorNameInfo", [{}])[0]
+                    family_name = author_name_info.get("familyName", "")
+                    first_name = author_name_info.get("firstName", "")
+                    full_name = f"{family_name},{first_name}"
+                    email_info = entry.get("emailInfo", [{}])[0]
+                    email = email_info.get("email", "")
+                    check_result = get_check_result(entry)
+
+                    writer.writerow([index, pk_id, full_name, email, check_result])
+    except Exception as ex:
+        raise ex
+    return check_file_path
 
 def get_values_by_mapping(keys, data, parent_key=None):
     """Get values folow by mapping."""

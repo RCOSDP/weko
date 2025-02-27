@@ -199,16 +199,23 @@ WEKO_AUTHORS_FILE_MAPPING = [
 WEKO_AUTHORS_ADMIN_IMPORT_TEMPLATE = 'weko_authors/admin/author_import.html'
 """Template for the import page."""
 
-WEKO_AUTHORS_IMPORT_TMP_PREFIX = 'weko_authors_import_'
+WEKO_AUTHORS_IMPORT_TMP_PREFIX = 'authors_import_'
+WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH = '/var/tmp/authors_import'
 
 WEKO_AUTHORS_IMPORT_ENTRYPOINTS = {
     'is_import_available': '/admin/authors/import/is_import_available',
     'check_import_file': '/admin/authors/import/check_import_file',
     'import': '/admin/authors/import/import',
-    'check_import_status': '/admin/authors/import/check_import_status'
+    'check_import_status': '/admin/authors/import/check_import_status',
+    'check_pagination':'/admin/authors/import/check_pagination',
+    'check_file_download':'/admin/authors/import/check_file_download'
 }
 
 WEKO_AUTHORS_IMPORT_CACHE_KEY = 'author_import_cache'
+WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY = 'authors_import_user_file_key'
+WEKO_AUTHORS_IMPORT_BATCH_SIZE = 100
+WEKO_AUTHORS_BULK_IMPORT_MAX_RETRY = 5
+WEKO_AUTHORS_BULK_IMPORT_RETRY_INTERVAL = 5
 
 WEKO_AUTHORS_NUM_OF_PAGE = 25
 """Default number of author search results that display in one page."""
