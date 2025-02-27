@@ -33,10 +33,12 @@ from invenio_access import Permission, action_factory
 from invenio_accounts.models import User, Role
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
+from invenio_records.models import RecordMetadata
 from weko_accounts.models import ShibbolethUser
 from weko_admin.models import AdminSettings
 from weko_groups.api import Group, Membership, MembershipState
 from weko_index_tree.utils import check_index_permissions, get_user_roles
+from weko_index_tree.api import Indexes
 from weko_records.api import ItemTypes
 from weko_records.models import ItemBilling
 from weko_workflow.api import WorkActivity
@@ -710,6 +712,14 @@ def create_charge(user_id, item_id, price, title, file_url):
     charge_pass = repository_charge_settings.password
     sys_id = repository_charge_settings.sys_id
     content_id = _get_content_id_for_charge(item_id)
+    recid = PersistentIdentifier.get('recid', item_id)
+    rec_json = RecordMetadata.query.filter_by(id=recid.object_uuid).first().json
+    path = rec_json.get("path")
+    paths = Indexes.get_path_name(path)
+    indexes_list=[]
+    for path in paths:
+        indexes_list.append(path.name.replace('-/-', ',') if path.name else path.name_en.replace('-/-', ','))
+    indexes='|'.join(indexes_list)
 
     url = f'{charge_protocol}://{charge_user}:{charge_pass}@{charge_fqdn}/charge/create'
     params = {
@@ -719,7 +729,7 @@ def create_charge(user_id, item_id, price, title, file_url):
         'price': price,                             # 請求額(税込)
         'title': title,                             # 課金対象コンテンツのタイトル(明細に表示される)
         'uri': file_url,                            # コンテンツ再表示用URL
-        # 'memo': '',                               # (未使用) 請求書の明細の補足欄に表示される
+        'memo': indexes,                            #  請求書の明細の補足欄に表示されるインデックス階層
     }
 
     # プロキシ設定
