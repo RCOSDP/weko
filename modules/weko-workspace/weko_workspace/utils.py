@@ -240,3 +240,67 @@ def get_userNm_affiliation():
     # TODO 外部サービスを参照する必要。取得先確認待ち。
 
     return (userNm, affiliation)
+
+
+def insert_workspace_status(user_id, recid, is_favorited=False, is_read=False):
+    """Insert the favorite status and read status of the item.
+    
+    Args:
+        user_id (_type_): _description_
+        recid (_type_): _description_
+        is_favorited (bool, optional): _description_. Defaults to False.
+        is_read (bool, optional): _description_. Defaults to False.
+
+    Raises:
+        e: _description_
+
+    Returns:
+        _type_: _description_
+    """
+    new_status = WorkspaceStatusManagement(
+        user_id=user_id,
+        recid=recid,
+        is_favorited=is_favorited,
+        is_read=is_read,
+        created=datetime.utcnow(),
+        updated=datetime.utcnow()
+    )
+    db.session.add(new_status)
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        raise e
+    return new_status
+
+def update_workspace_status(user_id, recid, is_favorited=None, is_read=None):
+    """Update the favorite status and read status of the item.
+
+    Args:
+        user_id (_type_): _description_
+        recid (_type_): _description_
+        is_favorited (_type_, optional): _description_. Defaults to None.
+        is_read (_type_, optional): _description_. Defaults to None.
+
+    Raises:
+        e: _description_
+
+    Returns:
+        _type_: _description_
+    """
+    status = WorkspaceStatusManagement.query.filter_by(user_id=user_id, recid=recid).first()
+    if status:
+        if is_favorited is not None:
+            status.is_favorited = is_favorited
+        if is_read is not None:
+            status.is_read = is_read
+        status.updated = datetime.utcnow()
+
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            raise e
+        return status
+    else:
+        return None

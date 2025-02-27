@@ -34,6 +34,9 @@
 
     {%- block js %}
     <script src="static/js/weko_workspace.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     {%- endblock js %}
 
     <head>
@@ -43,7 +46,10 @@
     </head>
     <body>
       {% include 'weko_theme/header.html' %}
+
       {% include 'weko_workspace/workspace_body_contents.html' %}
+      <script type="text/babel" src="static/js/updateStatus.js"></script>
+
       {% include 'weko_theme/footer.html' %}
     </body>
   </html>

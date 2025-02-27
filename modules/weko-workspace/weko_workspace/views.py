@@ -52,6 +52,7 @@ from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 
 from .utils import *
+from .models import *
 
 workspace_blueprint = Blueprint(
     "weko_workspace",
@@ -61,12 +62,11 @@ workspace_blueprint = Blueprint(
     url_prefix="/workspace",
 )
 
-
 # 2.1. アイテム一覧情報取得API
-@workspace_blueprint.route("/")
+@workspace_blueprint.route("/get_workspace_itemlist", methods=['GET'])
 @login_required
 def get_workspace_itemlist():
-    print("==========guan.shuang workspace start=========")
+    print("==========guan.shuang get_workspace_itemlist start=========")
 
     # 変数初期化
     # 　JSON条件
@@ -316,15 +316,53 @@ def get_workspace_itemlist():
     )
 
 
-# 2.2. お気に入り既読未読ステータス更新API
-@workspace_blueprint.route("/updateStatus")
+@workspace_blueprint.route("/updateStatus", methods=['POST'])
 @login_required
-# def update_workspace_status_management(statusTyp):
 def update_workspace_status_management():
     print("==========guan.shuang update_workspace_status_management start=========")
-    # print("statusTyp : " + str(statusTyp))
-    
-    return "sdfsdf"
+    data = request.get_json()
+
+    user_id = current_user.id
+
+    item_recid = data.get('itemRecid')  # 使用 itemRecid
+    # print("item_recid : " + str(item_recid))
+
+    favorite_sts = data.get('favoriteSts')
+    # print("favorite_sts : " + str(favorite_sts))
+
+    read_sts = data.get('readSts')
+    # print("read_sts : " + str(read_sts))
+
+    type = data.get('type')
+    # print("type : " + str(type))
+
+    result = get_workspace_status_management(item_recid)
+    print("result : " + str(result))
+
+    if not result:
+        insert_workspace_status(
+            user_id=user_id,
+            recid=item_recid,
+            is_favorited=data.get('favoriteSts', False) if type == '1' else False,
+            is_read=data.get('readSts', False) if type == '2' else False
+        )
+    else:
+        if type == '1':
+            update_workspace_status(
+                user_id=user_id,
+                recid=item_recid,
+                is_favorited=data.get('favoriteSts')
+            )
+        elif type == '2':
+            update_workspace_status(
+                user_id=user_id,
+                recid=item_recid,
+                is_read=data.get('readSts')
+            )
+        else:
+            return jsonify({'success': False, 'message': 'Invalid type'}), 400
+
+    return jsonify({'success': True})
 
 
 # 2.1. デフォルト絞込み条件更新API
