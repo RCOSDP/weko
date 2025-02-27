@@ -28,6 +28,7 @@ import re
 import shutil
 import sys
 import pytz
+import bagit
 import tempfile
 import traceback
 import uuid
@@ -3710,7 +3711,7 @@ def get_export_status():
     Return:     True:   Otthers
                False:  Success / Failed / Revoked
     """
-    from weko_search_ui.tasks import delete_exported_task, process_export_task
+    from weko_search_ui.tasks import delete_exported_task
 
     cache_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
         name=WEKO_SEARCH_UI_BULK_EXPORT_TASK,
@@ -3775,9 +3776,29 @@ def get_export_status():
                 finish_time = write_file_data["finish_time"]
                 if status_cond and write_file_status == 'SUCCESS':
                     export_path = write_file_data['export_path']
-                    process_export_task.apply_async(
-                        args=(export_path, file_msg, cache_uri, run_msg, _expired_time, cache_key)
-                    )
+                    if not os.path.isdir(os.path.join(export_path, 'data')):
+                        bagit.make_bag(export_path)
+                        shutil.make_archive(export_path, "zip", export_path)
+                        with open(export_path + ".zip", "rb") as file:
+                            src = FileInstance.create()
+                            src.set_contents(file, default_location=Location.get_default().uri)
+                        db.session.commit()
+                        download_uri = src.uri
+                        _timezone = WEKO_SEARCH_DEFAULT_TIMEZONE
+                        finish_time = datetime.now(pytz.timezone(_timezone)).strftime('%Y/%m/%d %H:%M:%S')
+                        write_file_data = json.loads(get_redis_cache(file_msg))
+                        write_file_data["finish_time"] = finish_time
+                        reset_redis_cache(file_msg, json.dumps(write_file_data))
+                        reset_redis_cache(cache_uri, download_uri)
+                        reset_redis_cache(run_msg, "")
+                        delete_exported_task.apply_async(
+                            args=(
+                                download_uri,
+                                cache_uri,
+                                cache_key
+                            ),
+                            countdown=int(_expired_time) * 60,
+                        )
     except Exception as ex:
         current_app.logger.error(ex)
         export_status = False

@@ -24,9 +24,6 @@ import os
 import pickle
 import shutil
 from datetime import datetime, timedelta
-import pytz
-
-import bagit
 
 from celery import shared_task
 from celery.result import AsyncResult
@@ -36,11 +33,6 @@ from weko_admin.api import TempDirInfo
 from weko_admin.utils import get_redis_cache, reset_redis_cache
 from weko_redis.redis import RedisConnection
 from invenio_db import db
-from invenio_files_rest.models import FileInstance, Location
-
-from .config import (
-    WEKO_SEARCH_DEFAULT_TIMEZONE,
-)
 
 from .utils import (
     check_import_items,
@@ -168,32 +160,6 @@ def write_files_task(export_path, pickle_file_name , user_id):
         _update_redis_status(json_data, import_datas['name'], 'canceled')
     os.remove(pickle_file_name)
 
-
-@shared_task
-def process_export_task(export_path, file_msg, cache_uri, run_msg, _expired_time, cache_key):
-    if not os.path.isdir(os.path.join(export_path, 'data')):
-        bagit.make_bag(export_path)
-        shutil.make_archive(export_path, "zip", export_path)
-        with open(export_path + ".zip", "rb") as file:
-            src = FileInstance.create()
-            src.set_contents(file, default_location=Location.get_default().uri)
-        db.session.commit()
-        download_uri = src.uri
-        _timezone = WEKO_SEARCH_DEFAULT_TIMEZONE
-        finish_time = datetime.now(pytz.timezone(_timezone)).strftime('%Y/%m/%d %H:%M:%S')
-        write_file_data = json.loads(get_redis_cache(file_msg))
-        write_file_data["finish_time"] = finish_time
-        reset_redis_cache(file_msg, json.dumps(write_file_data))
-        reset_redis_cache(cache_uri, download_uri)
-        reset_redis_cache(run_msg, "")
-        delete_exported_task.apply_async(
-            args=(
-                download_uri,
-                cache_uri,
-                cache_key
-            ),
-            countdown=int(_expired_time) * 60,
-        )
 
 @shared_task
 def delete_exported_task(uri, cache_key, task_key):
