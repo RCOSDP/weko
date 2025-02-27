@@ -57,9 +57,11 @@ def link_error_handler(request, exc, traceback):
 
 
 @shared_task(ignore_results=True)
-def update_sitemap(start_time=datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S'),
+def update_sitemap(start_time=None,
                    user_data={'user_id': 'System'}):
     """Update sitemap cache."""
+    if not start_time:
+        start_time=datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
     site_url = current_app.config['THEME_SITEURL']
     with current_app.test_request_context(site_url):
         current_app.logger.info(

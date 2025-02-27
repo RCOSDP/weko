@@ -20,11 +20,12 @@
 
 """API for weko-index-tree."""
 
+import pytz
 import pickle
 import os
 import orjson
 from copy import deepcopy
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 from functools import partial
 from socketserver import DatagramRequestHandler
 
@@ -1780,7 +1781,7 @@ class Indexes(object):
             delete_oaiset_setting.delay(id_list)
 
     @classmethod
-    def get_public_indexes_list(cls, target_date=datetime.now(timezone.utc)):
+    def get_public_indexes_list(cls, target_date=None):
         """Get list id of public indexes at target date.
 
         Args:
@@ -1790,6 +1791,9 @@ class Indexes(object):
         Returns:
             list: public index id list
         """
+        if not target_date:
+            default_timezone = current_app.config["WEKO_INDEX_TREE_PUBLIC_DEFAULT_TIMEZONE"]
+            target_date=datetime.now(pytz.timezone(default_timezone)).strftime("%Y-%m-%d %H:%M:%S")
         recursive_t = db.session.query(
             Index.parent.label("pid"),
             Index.id.label("cid")
