@@ -299,41 +299,32 @@ class ShibUser(object):
 
         :return: Set of roles to add
         """
-        roles_add = set()
+        add_roles = []
 
         if current_app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS']:
             try:
                 # Shibboleth属性からWEKO_SHIB_ATTR_IS_MEMBER_OFを取得
                 shib_attr_is_member_of = self.shib_attr.get('WEKO_SHIB_ATTR_IS_MEMBER_OF', [])
-                if shib_attr_is_member_of:
-                    # WEKO_SHIB_ATTR_IS_MEMBER_OFの情報を取得
-                    member_of_list = shib_attr_is_member_of.split(';')
+                # WEKO_SHIB_ATTR_IS_MEMBER_OFが文字列の場合はセミコロンで分割
+                if isinstance(shib_attr_is_member_of, str):
+                    add_roles = shib_attr_is_member_of.split(';')
+                # WEKO_SHIB_ATTR_IS_MEMBER_OFがリストの場合はそのまま使用
+                elif isinstance(shib_attr_is_member_of, list):
+                    add_roles = shib_attr_is_member_of
 
-                    # 現在のユーザーのロールを取得
-                    current_user_roles = [role.name for role in self.user.roles]
-                else:
-                    # IDPのEntityIDを取得
+                if not shib_attr_is_member_of:
                     idp_entity_id = self.shib_attr.get('WEKO_ACCOUNTS_IDP_ENTITY_ID')
                     if not idp_entity_id:
                         raise KeyError('WEKO_ACCOUNTS_IDP_ENTITY_ID is missing in shib_attr')
 
-                    # 設定値の辞書からそのEntityIDに対応するロールを取得
-                    mapping_roles = current_app.config['WEKO_ACCOUNTS_GAKUNIN_DEFAULT_GROUP_MAPPING'].get(idp_entity_id, [])
-                    if not mapping_roles:
+                    add_roles = current_app.config['WEKO_ACCOUNTS_GAKUNIN_DEFAULT_GROUP_MAPPING'].get(idp_entity_id, [])
+                    if not add_roles:
                         raise KeyError(f'No roles found for IDP Entity ID: {idp_entity_id}')
-
-                    # 現在のユーザーのロール
-                    current_user_roles = [role.name for role in self.user.roles]
-            except KeyError as ke:
-                # キーエラー
-                current_app.logger.error(f"Missing key in shib_attr: {ke}")
-                return []
             except Exception as ex:
-                # その他の例外
                 current_app.logger.error(f"Unexpected error: {ex}")
-            return []
+                return []
 
-        return current_user_roles
+        return add_roles
 
     def _assign_roles_to_user(self, roles_add):
         try:
@@ -347,8 +338,10 @@ class ShibUser(object):
                 for role_name in roles_add:
                     # ロール名が指定されたプレフィックスで始まるか確認
                     if role_name.startswith(prefix):
+                        # プレフィックスを除外した値を取得
+                        role_name_without_prefix = role_name[len(prefix) + 1:]
                         # プレフィックスを除いた部分を使用してロール名をマッピング
-                        mapped_role_name = role_mapping.get(role_name[len(prefix) + 1:], role_name)
+                        mapped_role_name = role_mapping.get(role_name_without_prefix, role_name)
                         # マッピングされたロール名をデータベースでロールを確認
                         role = Role.query.filter_by(name=mapped_role_name).first()
                         # ロールが存在し、かつユーザーにまだそのロールが割り当てられていない場合

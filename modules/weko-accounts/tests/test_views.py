@@ -1,15 +1,20 @@
 
 import pytest
-
-from flask import url_for,request,make_response,current_app
+import json
+import redis
+from invenio_accounts.models import Role
+from flask import url_for,request,make_response,current_app,Flask
 from flask_login.utils import login_user,logout_user
 from flask_menu import current_menu
-from mock import patch
+from mock import patch,MagicMock
 from weko_accounts.api import ShibUser
 from weko_accounts.views import (
     _has_admin_access,
     init_menu,
-    _redirect_method
+    _redirect_method,
+    shib_sp_login,
+    update_roles,
+    handle_shib_bind_gakunin_map_groups
 )
 def set_session(client,data):
     with client.session_transaction() as session:
@@ -257,12 +262,169 @@ def test_shib_login(client,redis_connect,users,mocker):
     with patch("weko_accounts.views.flash",side_effect=BaseException("test_error")):
         res = client.get(url_base)
         assert res.status_code == 400
+
 #def shib_sp_login():
-# .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_shib_sp_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_update_roles -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+
+def test_update_roles(app, db,mocker):
+    with app.app_context():
+        # テストデータの準備
+        map_group_list = ['group1', 'group2']
+        existing_roles = {'group1', 'group3'}
+
+        # 既存のロールを追加
+        for role_name in existing_roles:
+            role = Role(name=role_name, description="description")
+            db.session.add(role)
+        db.session.commit()
+
+        # update_rolesの呼び出し
+        update_roles(map_group_list, existing_roles)
+
+        # 結果の検証
+        roles = Role.query.all()
+        role_names = [role.name for role in roles]
+        assert 'group1' in role_names
+        assert 'group2' in role_names
+        assert 'group3' not in role_names
+
+#.tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_handle_shib_bind_gakunin_map_group_test2 -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+#mock_request_form.getを直接モックするパターン
+def test_handle_shib_bind_gakunin_map_group_test2(app, client, mocker):
+    with app.app_context():
+        # モックの設定
+        app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = 'test_entity_id'
+
+        mock_redis_connection = mocker.patch('weko_accounts.views.RedisConnection')
+        mock_datastore = MagicMock()
+        mock_redis_connection.return_value.connection.return_value = mock_datastore
+
+        # map_groups が存在する場合のテスト
+        mock_datastore.get = MagicMock(return_value=json.dumps(['group1', 'group2']))
+
+        mock_role_query = mocker.patch('weko_accounts.views.Role.query')
+        mock_role_query.all = MagicMock(return_value=[
+            Role(name='group1', description=''),
+            Role(name='group3', description='')
+        ])
+
+        mock_update_roles = mocker.patch('weko_accounts.views.update_roles')
+
+        # フォームデータを送信
+        with client.post("/", data={'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'test_entity_id'}):
+            # 関数の呼び出し
+            response = handle_shib_bind_gakunin_map_groups()
+
+            # 結果の検証
+            assert request.form.get('WEKO_ACCOUNTS_IDP_ENTITY_ID') == 'test_entity_id'
+            mock_redis_connection.return_value.connection.assert_called_with(db=app.config['CACHE_REDIS_DB'], kv=True)
+            mock_datastore.get.assert_called_with('shib:test_entity_id')
+            mock_role_query.all.assert_called_once()
+            mock_update_roles.assert_called_with(['group1', 'group2'], {'group1', 'group3'})
+
+            assert response is None
+
+            mock_role_query.all.reset_mock()
+            mock_update_roles.reset_mock()
+
+            # map_groups が存在しない場合のテスト
+            mock_datastore.get.return_value = None
+
+            # 関数の呼び出し
+            response = handle_shib_bind_gakunin_map_groups()
+
+            # 結果の検証
+            assert request.form.get('WEKO_ACCOUNTS_IDP_ENTITY_ID') == 'test_entity_id'
+            mock_redis_connection.return_value.connection.assert_called_with(db=app.config['CACHE_REDIS_DB'], kv=True)
+            mock_datastore.get.assert_called_with('shib:test_entity_id')
+            mock_role_query.all.assert_not_called()
+            mock_update_roles.assert_not_called()
+
+            assert response is None
+
+            mock_role_query.all.reset_mock()
+            mock_update_roles.reset_mock()
+
+            # map_group_list と existing_roles が一致する場合のテスト
+            mock_datastore.get.return_value = json.dumps(['group1', 'group2'])
+            mock_role_query.all.return_value = [
+                Role(name='group1', description=''),
+                Role(name='group2', description='')
+            ]
+
+            # 関数の呼び出し
+            response = handle_shib_bind_gakunin_map_groups()
+
+            # 結果の検証
+            assert request.form.get('WEKO_ACCOUNTS_IDP_ENTITY_ID') == 'test_entity_id'
+            mock_redis_connection.return_value.connection.assert_called_with(db=app.config['CACHE_REDIS_DB'], kv=True)
+            mock_datastore.get.assert_called_with('shib:test_entity_id')
+            mock_role_query.all.assert_called_once()
+            mock_update_roles.assert_not_called()
+
+            assert response is None
+            mock_role_query.all.reset_mock()
+            mock_update_roles.reset_mock()
+
+            # map_group_list と existing_roles が一致しない場合のテスト
+            mock_datastore.get.return_value = json.dumps(['group1', 'group3'])
+            mock_role_query.all.return_value = [
+                Role(name='group1', description=''),
+                Role(name='group2', description='')
+            ]
+
+            # 関数の呼び出し
+            response = handle_shib_bind_gakunin_map_groups()
+
+            # 結果の検証
+            assert request.form.get('WEKO_ACCOUNTS_IDP_ENTITY_ID') == 'test_entity_id'
+            mock_redis_connection.return_value.connection.assert_called_with(db=app.config['CACHE_REDIS_DB'], kv=True)
+            mock_datastore.get.assert_called_with('shib:test_entity_id')
+            mock_role_query.all.assert_called_once()
+            mock_update_roles.assert_called_with(['group1', 'group3'], {'group1', 'group2'})
+
+            assert response is None
+
+#.tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_handle_shib_bind_gakunin_map_groups_errors -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_handle_shib_bind_gakunin_map_groups_errors(app, client, mocker):
+    with app.app_context():
+        # モックの設定
+        mock_redis_connection = mocker.patch('weko_accounts.views.RedisConnection')
+        mock_datastore = MagicMock()
+        mock_redis_connection.return_value.connection.return_value = mock_datastore
+
+        mock_logger = mocker.patch('flask.current_app.logger.error')
+
+        # redis.ConnectionErrorのテスト
+        mock_datastore.get.side_effect = redis.ConnectionError('test_redis_error')
+        with client.post("/", data={'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'test_entity_id'}):
+            response = handle_shib_bind_gakunin_map_groups()
+
+        mock_logger.assert_called_with("Redis connection error: test_redis_error")
+        assert response == ('test_redis_error', 500)
+
+        # その他の例外のテスト
+        mock_datastore.get.side_effect = Exception('test_exception')
+        with client.post("/", data={'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'test_entity_id'}):
+            response = handle_shib_bind_gakunin_map_groups()
+
+        mock_logger.assert_called_with("Unexpected error: test_exception")
+        assert response == ('test_exception', 500)
+
+        # KeyErrorのテスト
+        mock_datastore.get.side_effect = KeyError('test_key_error')
+        with client.post("/", data={'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'test_entity_id'}):
+            response = handle_shib_bind_gakunin_map_groups()
+
+        mock_logger.assert_called_with("Missing key in request headers: 'test_key_error'")
+        assert response == ("'test_key_error'", 400)
+
+#def shib_sp_login():
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_shib_sp_login -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_shib_sp_login(client, redis_connect,mocker):
     mocker.patch("weko_accounts.views.RedisConnection.connection",return_value=redis_connect)
     url = url_for("weko_accounts.shib_sp_login")
-    
+
     # not shib_session_id
     mock_flash = mocker.patch("weko_accounts.views.flash")
     mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
@@ -287,6 +449,26 @@ def test_shib_sp_login(client, redis_connect,mocker):
         "SHIB_ATTR_SESSION_ID":"1111",
         "SHIB_ATTR_EPPN":"test_eppn"
     }
+
+    # WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPSがTrueの場合のテスト
+    current_app.config.update(
+        WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS=True
+    )
+    mock_handle_shib_bind_gakunin_map_groups = mocker.patch("weko_accounts.views.handle_shib_bind_gakunin_map_groups", return_value=None)
+    client.post(url, data=form)
+    mock_handle_shib_bind_gakunin_map_groups.assert_called_once()
+
+    # handle_shib_bind_gakunin_map_groupsがエラーレスポンスを返す場合のテスト
+    mock_handle_shib_bind_gakunin_map_groups = mocker.patch("weko_accounts.views.handle_shib_bind_gakunin_map_groups", return_value=("error", 400))
+    res = client.post(url, data=form)
+    assert res.status_code == 400
+    assert res.data == b"error"
+
+    # WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPSがFalseの場合のテスト
+    current_app.config.update(
+        WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS=False
+    )
+
     # shib_user.get_relation_info is None
     with patch("weko_accounts.views.ShibUser.get_relation_info",return_value=None):
         res = client.post(url,data=form)
