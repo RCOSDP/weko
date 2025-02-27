@@ -75,7 +75,7 @@
         <div class="col-sm-offset-2">
           <label class="col-sm-2 control-label" for="txt_itemtype">{{_('Item Type')}}</label>
           <div class="col-sm-8">
-            <select class="form-control" id="txt_itemtype">
+            <select class="form-control" id="txt_itemtype" {%- if not change_itemtype_flag %} disabled {%- endif %}>
             {%- if itemtype_list %}
               {%- for itemtype in itemtype_list if itemtype %}
               <option value="{{itemtype.item_type.0.id}}" {%- if workflow.itemtype_id == itemtype.item_type.0.id %} selected {%- endif %}>{{itemtype.name}}</option>

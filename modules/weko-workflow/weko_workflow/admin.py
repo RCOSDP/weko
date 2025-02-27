@@ -37,7 +37,7 @@ from weko_records.models import ItemTypeProperty
 
 from .api import Action, Flow, WorkActivity, WorkFlow
 from .config import WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS
-from .models import WorkflowRole
+from .models import WorkflowRole, ActivityStatusPolicy
 from .utils import recursive_get_specified_properties
 
 
@@ -311,6 +311,7 @@ class WorkFlowSettingView(BaseView):
 
         :return:
         """
+        change_itemtype_flag = True
         if WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS:
             itemtype_list = ItemTypes.get_latest()
         else:
@@ -347,6 +348,7 @@ class WorkFlowSettingView(BaseView):
                 hide_label=hide_label,
                 display_hide_label=display_hide,
                 is_sysadmin=is_sysadmin,
+                change_itemtype_flag=change_itemtype_flag,
             )
 
         """Update the workflow info"""
@@ -365,6 +367,13 @@ class WorkFlowSettingView(BaseView):
         if workflows.open_restricted and not is_sysadmin:
             abort(403)
 
+        activity = WorkActivity()
+        activitys = activity.get_activity_by_workflow_id(workflows.id)
+        if activitys:
+            activitys = [i for i in activitys if i.activity_status != ActivityStatusPolicy.ACTIVITY_CANCEL]
+            if len(activitys) > 0:
+                change_itemtype_flag = False
+
         return self.render(
             'weko_workflow/admin/workflow_detail.html',
             workflow=workflows,
@@ -377,7 +386,8 @@ class WorkFlowSettingView(BaseView):
             display_label=display_label,
             hide_label=hide_label,
             display_hide_label=display_hide,
-            is_sysadmin=is_sysadmin
+            is_sysadmin=is_sysadmin,
+            change_itemtype_flag=change_itemtype_flag,
         )
 
     @expose('/<string:workflow_id>', methods=['POST', 'PUT'])
