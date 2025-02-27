@@ -310,7 +310,7 @@ def shib_sp_login():
                 regex_pattern = pattern.replace("*", ".*")
                 return re.compile(f"^{regex_pattern}$")
             
-            blocked = any(_wildcard_to_regex(pattarn).match(shib_eppn) for pattarn in block_user_list)
+            blocked = any(_wildcard_to_regex(pattern).match(shib_eppn) or pattern == shib_eppn for pattern in block_user_list)
         
             if blocked:
                 flash(_("Failed to login."), category='error')
