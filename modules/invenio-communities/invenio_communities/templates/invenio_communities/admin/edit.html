@@ -53,6 +53,7 @@
   {% block edit_form %}
     {% call lib.form_tag(None) %}
       {{ lib.render_form_fields([form.id]) }}
+      {{ lib.render_form_fields([form.cnri]) }}
       {{ lib.render_form_fields([form.owner]) }}
       {{ lib.render_form_fields([form.index]) }}
       {{ lib.render_form_fields([form.title]) }}
@@ -119,6 +120,7 @@
     <script>
       $(document).ready(function(){
           $("#id").prop('readonly', true)
+          $("#cnri").prop('readonly', true)
           $("#thumbnail").prop('accept', "image/png, image/jpeg, image/jpg,")
       });
     </script>
@@ -127,6 +129,7 @@
       $(document).ready(function(){
           $("#id").prop('placeholder', 'Please select ID')
           $("#id").prop('maxlength', 100)
+          $("#cnri").prop('readonly', true)
           $("#thumbnail").prop('accept', "image/png, image/jpeg, image/jpg,")
       });
     </script>

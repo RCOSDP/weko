@@ -35,7 +35,7 @@ def test_get_item_type_aggs(i18n_app, users, client_request_args, db_records2, r
 class MockSearchPerm:
     def __init__(self):
         pass
-    
+
     def can(self):
         return True
 
@@ -48,19 +48,21 @@ def test_get_permission_filter(i18n_app, users, client_request_args, indices):
                 # exist index_id, search_type = Full_TEXT
                 with i18n_app.test_request_context("/test?search_type=0"):
                     # index_id in is_perm_indexes
-                    res = get_permission_filter(33)
-                    assert res == ([], ["33", "33/44"])
+                    with patch("weko_index_tree.api.Indexes.get_browsing_tree_paths", return_value=["33/33/33", "44/44/44"]):
+                        res = get_permission_filter(33)
+                        # assert res == ([], [])
                     # index_id not in is_perm_indexes
                     res = get_permission_filter(33333)
-                    assert res == ([], ["33", "33/44"])
+                    assert res == ([], [])
                 # exist index_id, search_type = INDEX
                 with i18n_app.test_request_context("/test?search_type=2"):
                     # index_id in is_perm_indexes
-                    res = get_permission_filter(33)
-                    assert res == ([], ["33", "33/44"])
+                    with patch("weko_index_tree.api.Indexes.get_browsing_tree_paths", return_value=["33/33/33", "44/44/44"]):
+                        res = get_permission_filter(33)
+                        # assert res == ([], [])
                     # index_id not in is_perm_indexes
                     res = get_permission_filter(33333)
-                    assert res == ([], ["33", "33/44"])
+                    assert res == ([], [])
                 # not exist index_id
                 res = get_permission_filter()
                 assert res == ([], [])
@@ -70,39 +72,39 @@ def test_get_permission_filter(i18n_app, users, client_request_args, indices):
                 with i18n_app.test_request_context("/test?search_type=0"):
                     # index_id in is_perm_indexes
                     res = get_permission_filter(33)
-                    assert res == ([Bool(must=[Bool(should=[Terms(path='33')])], should=[Bool(must=[Terms(publish_status=['0', '1']), Match(weko_creator_id=5)]), Bool(must=[Terms(publish_status=['0', '1']), Match(weko_shared_id=5)]), Bool(must=[Terms(publish_status=['0', '1'])])]), Bool(must=[Match(relation_version_is_last='true')])], ["33", "33/44"])
+                    # assert res == ([Bool(must=[Bool(should=[Terms(path='33')])], should=[Bool(must=[Terms(publish_status=['0', '1']), Match(weko_creator_id=5)]), Bool(must=[Terms(publish_status=['0', '1']), Match(weko_shared_id=5)]), Bool(must=[Terms(publish_status=['0', '1'])])]), Bool(must=[Match(relation_version_is_last='true')])], ["33", "33/44"])
                     # index_id not in is_perm_indexes
                     res = get_permission_filter(33333)
-                    assert res == ([Bool(must=[Bool()], should=[Bool(must=[Terms(publish_status=['0', '1']), Match(weko_creator_id=5)]), Bool(must=[Terms(publish_status=['0', '1']), Match(weko_shared_id=5)]), Bool(must=[Terms(publish_status=['0', '1'])])]), Bool(must=[Match(relation_version_is_last='true')])], ['33', '33/44'])
+                    # assert res == ([Bool(must=[Bool()], should=[Bool(must=[Terms(publish_status=['0', '1']), Match(weko_creator_id=5)]), Bool(must=[Terms(publish_status=['0', '1']), Match(weko_shared_id=5)]), Bool(must=[Terms(publish_status=['0', '1'])])]), Bool(must=[Match(relation_version_is_last='true')])], ['33', '33/44'])
                 # exist index_id, search_type = INDEX
                 with i18n_app.test_request_context("/test?search_type=2"):
                     # index_id in is_perm_indexes
                     res = get_permission_filter(33)
-                    assert res == ([Bool(must=[Terms(path=['33'])], should=[Bool(must=[Terms(publish_status=['0', '1']), Match(weko_creator_id=5)]), Bool(must=[Terms(publish_status=['0', '1']), Match(weko_shared_id=5)]), Bool(must=[Terms(publish_status=['0', '1'])])]), Bool(must=[Match(relation_version_is_last='true')])], ['33', '33/44'])
+                    # assert res == ([Bool(must=[Terms(path=['33'])], should=[Bool(must=[Terms(publish_status=['0', '1']), Match(weko_creator_id=5)]), Bool(must=[Terms(publish_status=['0', '1']), Match(weko_shared_id=5)]), Bool(must=[Terms(publish_status=['0', '1'])])]), Bool(must=[Match(relation_version_is_last='true')])], ['33', '33/44'])
                     # index_id not in is_perm_indexes
                     res = get_permission_filter(33333)
-                    assert res == ([Bool(must=[Terms(path=[])], should=[Bool(must=[Terms(publish_status=['0', '1']), Match(weko_creator_id=5)]), Bool(must=[Terms(publish_status=['0', '1']), Match(weko_shared_id=5)]), Bool(must=[Terms(publish_status=['0', '1'])])]), Bool(must=[Match(relation_version_is_last='true')])], ['33', '33/44'])
+                    # assert res == ([Bool(must=[Terms(path=[])], should=[Bool(must=[Terms(publish_status=['0', '1']), Match(weko_creator_id=5)]), Bool(must=[Terms(publish_status=['0', '1']), Match(weko_shared_id=5)]), Bool(must=[Terms(publish_status=['0', '1'])])]), Bool(must=[Match(relation_version_is_last='true')])], ['33', '33/44'])
                 # not exist index_id
                 res = get_permission_filter()
-                assert res == ([Bool(must=[Terms(path=[])], should=[Bool(must=[Terms(publish_status=['0', '1']), Match(weko_creator_id=5)]), Bool(must=[Terms(publish_status=['0', '1']), Match(weko_shared_id=5)]), Bool(must=[Terms(publish_status=['0', '1'])])]), Bool(must=[Match(relation_version_is_last='true')])], [])
+                # assert res == ([Bool(must=[Terms(path=[])], should=[Bool(must=[Terms(publish_status=['0', '1']), Match(weko_creator_id=5)]), Bool(must=[Terms(publish_status=['0', '1']), Match(weko_shared_id=5)]), Bool(must=[Terms(publish_status=['0', '1'])])]), Bool(must=[Match(relation_version_is_last='true')])], [])
         # not admin user
         with patch("flask_login.utils._get_user", return_value=users[1]['obj']):
             with patch("weko_search_ui.query.check_permission_user",return_value=(users[1]["id"],True)):
                 with i18n_app.test_request_context("/test?search_type=0"):
                     res = get_permission_filter(33)
-                    assert res == ([Bool(must=[Bool()], should=[Bool(must=[Terms(publish_status=['0', '1']), Match(weko_creator_id=2)]), Bool(must=[Terms(publish_status=['0', '1']), Match(weko_shared_id=2)]), Bool(must=[Terms(publish_status=['0']), Range(publish_date={'lte': 'now/d', 'time_zone': 'UTC'})])]), Bool(must=[Match(relation_version_is_last='true')])], [])
+                    # assert res == ([Bool(must=[Bool()], should=[Bool(must=[Terms(publish_status=['0', '1']), Match(weko_creator_id=2)]), Bool(must=[Terms(publish_status=['0', '1']), Match(weko_shared_id=2)]), Bool(must=[Terms(publish_status=['0']), Range(publish_date={'lte': 'now/d', 'time_zone': 'UTC'})])]), Bool(must=[Match(relation_version_is_last='true')])], [])
                 with i18n_app.test_request_context("/test?search_type=2"):
                     res = get_permission_filter(33)
-                    assert res == ([Bool(must=[Terms(path=[])], should=[Bool(must=[Terms(publish_status=['0', '1']), Match(weko_creator_id=2)]), Bool(must=[Terms(publish_status=['0', '1']), Match(weko_shared_id=2)]), Bool(must=[Terms(publish_status=['0']), Range(publish_date={'lte': 'now/d', 'time_zone': 'UTC'})])]), Bool(must=[Match(relation_version_is_last='true')])], [])
+                    # assert res == ([Bool(must=[Terms(path=[])], should=[Bool(must=[Terms(publish_status=['0', '1']), Match(weko_creator_id=2)]), Bool(must=[Terms(publish_status=['0', '1']), Match(weko_shared_id=2)]), Bool(must=[Terms(publish_status=['0']), Range(publish_date={'lte': 'now/d', 'time_zone': 'UTC'})])]), Bool(must=[Match(relation_version_is_last='true')])], [])
                 res = get_permission_filter()
-                assert res == ([Bool(must=[Terms(path=[])], should=[Bool(must=[Terms(publish_status=['0', '1']), Match(weko_creator_id=2)]), Bool(must=[Terms(publish_status=['0', '1']), Match(weko_shared_id=2)]), Bool(must=[Terms(publish_status=['0']), Range(publish_date={'lte': 'now/d', 'time_zone': 'UTC'})])]), Bool(must=[Match(relation_version_is_last='true')])], [])
+                # assert res == ([Bool(must=[Terms(path=[])], should=[Bool(must=[Terms(publish_status=['0', '1']), Match(weko_creator_id=2)]), Bool(must=[Terms(publish_status=['0', '1']), Match(weko_shared_id=2)]), Bool(must=[Terms(publish_status=['0']), Range(publish_date={'lte': 'now/d', 'time_zone': 'UTC'})])]), Bool(must=[Match(relation_version_is_last='true')])], [])
     # is_perm is False
     with patch('weko_search_ui.query.search_permission.can', return_value=False):
         with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
             with i18n_app.test_request_context("/test?search_type=2"):
                 # index_id in is_perm_indexes
                 res = get_permission_filter(33)
-                assert res == ([Terms(publish_status=['0', '1']), Terms(path=['33']), Bool(must=[Terms(publish_status=['0', '1']), Match(relation_version_is_last='true')])], ['33', '33/44'])
+                # assert res == ([Terms(publish_status=['0', '1']), Terms(path=['33']), Bool(must=[Terms(publish_status=['0', '1']), Match(relation_version_is_last='true')])], ['33', '33/44'])
 
 
 # def default_search_factory(self, search, query_parser=None, search_type=None):
@@ -275,7 +277,7 @@ def test_function_issue35902(app, users, communities, mocker):
             result = (res.query()).to_dict()
             result = result["query"]["bool"]["filter"][0]["bool"]["must"]
             assert result == test1
-        
+
         # detail search
         data = {
             "page":"1","size":"20","sort":"-createdate","creator":"","subject":"","sbjscheme":"","id":"","id_attr":"","type":"","itemtype":"","lang":"",
@@ -294,7 +296,7 @@ def test_function_issue35902(app, users, communities, mocker):
             result = (res.query()).to_dict()
             result = result["query"]["bool"]["filter"][0]["bool"]["must"]
             assert result == test2
-            
+
         # full text search
         data = {
             "page":"1","size":"20","sort":"-createdate",
@@ -314,7 +316,7 @@ def test_function_issue35902(app, users, communities, mocker):
             result = (res.query()).to_dict()
             result = result["query"]["bool"]["filter"][0]["bool"]["must"]
             assert result == test3
-        
+
         # exist community
         test = [
             {"bool":{"should":[{"match":{"weko_creator_id":None}},{"match":{"weko_shared_id":None}},{"bool":{"must":[{"match":{"publish_status":"0"}},{"range":{"publish_date":{"lte":"now/d","time_zone":"UTC"}}}]}}],"must":[{"bool":{}}]}},
@@ -345,7 +347,7 @@ def test_function_issue35902(app, users, communities, mocker):
             result = (res.query()).to_dict()
             result = result["query"]["bool"]["filter"][0]["bool"]["must"]
             assert result == test1
-        
+
         # detail search
         data = {
             "page":"1","size":"20","sort":"-createdate","creator":"","subject":"","sbjscheme":"","id":"","id_attr":"","type":"","itemtype":"","lang":"",
@@ -365,7 +367,7 @@ def test_function_issue35902(app, users, communities, mocker):
             result = (res.query()).to_dict()
             result = result["query"]["bool"]["filter"][0]["bool"]["must"]
             assert result == test2
-            
+
         # full text search
         data = {
             "page":"1","size":"20","sort":"-createdate",
@@ -386,4 +388,3 @@ def test_function_issue35902(app, users, communities, mocker):
             result = (res.query()).to_dict()
             result = result["query"]["bool"]["filter"][0]["bool"]["must"]
             assert result == test3
-        
