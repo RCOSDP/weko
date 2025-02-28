@@ -163,6 +163,9 @@ class ExportView(BaseView):
     @expose('/export', methods=['POST'])
     def export(self):
         """Process export authors."""
+        data = request.get_json()
+        print(data.get("isTarget",""))
+        
         task = export_all.delay()
         set_export_status(task_id=task.id)
         return jsonify({

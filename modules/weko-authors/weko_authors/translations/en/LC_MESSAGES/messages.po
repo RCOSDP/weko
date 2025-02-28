@@ -189,13 +189,16 @@ msgstr ""
 #~ msgid "Author_On_1_Page"
 #~ msgstr "On 1 Page:"
 
-#~ msgid "Export all creator"
+#~ msgid "Export target"
+#~ msgstr ""
+
+#~ msgid "Export all"
 #~ msgstr ""
 
 #~ msgid "Download URL"
 #~ msgstr ""
 
-#~ msgid "Are you sure you want to export all creator?"
+#~ msgid "Are you sure you want to export all?"
 #~ msgstr ""
 
 #~ msgid "Confirm"
