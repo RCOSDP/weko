@@ -94,18 +94,20 @@ def delete_index_handle(id_list):
         while e <= len(id_list):
             s = e
             e = e + batch
+
+            # Target deleted records
             cnri_list = db.session.query(Index.cnri).filter(
-                Index.id.in_(id_list[s:e])).all()
+                Index.id.in_(id_list[s:e]),
+                Index.is_deleted.is_(True)
+            ).all()
 
             # call weko_handle::delete_handle() 
             for cnri in cnri_list:
-                if cnri:
+                if cnri is not None:
                     handle = weko_handle.delete_handle(hdl=cnri)
                     if handle is None:
                         current_app.logger.debug('Delete Failed')
-                        raise Exception(
-                            
-                        )
+                        raise Exception('Delete Failed')
 
     except Exception as ex:
         current_app.logger.debug(ex)

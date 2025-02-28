@@ -112,7 +112,7 @@ class Indexes(object):
             data["browsing_group"] = group_list
             data["contribute_group"] = group_list
 
-            """register handle is ALLOW"""
+            """register handle if ALLOW"""
             if current_app.config.get("WEKO_HANDLE_ALLOW_REGISTER_CNRI"):
                 handle, index_url = cls.get_handle_index_url(cid)
 
@@ -1959,8 +1959,7 @@ class Indexes(object):
         credential = PIDClientCredentials.load_from_JSON(
             current_app.config.get('WEKO_HANDLE_CREDS_JSON_PATH')
         )
-        
-        hdl = credential.get_prefix() + '/index/' + str(model.id)
+        hdl = credential.get_prefix() + '/index/' + str(indexid)
         weko_handle = Handle()
 
         handle = weko_handle.register_handle(location=index_url, hdl=hdl)

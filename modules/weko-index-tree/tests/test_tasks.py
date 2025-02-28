@@ -8,8 +8,10 @@ from flask import current_app
 from invenio_db import db
 from invenio_oaiserver.models import OAISet
 from invenio_accounts.testutils import login_user_via_session
+from mock import patch
 
-from weko_index_tree.tasks import update_oaiset_setting, delete_oaiset_setting
+from weko_index_tree.tasks import update_oaiset_setting, delete_oaiset_setting, \
+                                    delete_index_handle
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
 
@@ -142,3 +144,37 @@ def test_delete_oaiset_setting(i18n_app, indices, db_oaischema, without_oaiset_s
     delete_oaiset_setting({})
     res = OAISet.query.all()
     assert len(res)==1
+
+# def delete_index_handle(id_list):
+def test_delete_index_handle(i18n_app, indices, db):
+    try:
+        test_index_one = Index(
+            id=999,
+            cnri='cnri_999',
+            parent=0,
+            position=999,
+            is_deleted=True
+        )
+
+        test_index_two = Index(
+            id=1000,
+            cnri='cnri_1000',
+            parent=0,
+            position=1000,
+            is_deleted=True
+        )
+
+        db.session.add(test_index_one)
+        db.session.add(test_index_two)
+
+        with patch("weko_handle.api.Handle.delete_handle", return_value='1234567890/1'):
+            delete_index_handle([999, 1000])
+
+        with patch("weko_handle.api.Handle.delete_handle", return_value='1234567890/1'):
+            delete_index_handle([10000])
+            
+        with patch("weko_handle.api.Handle.delete_handle", return_value=None):
+            delete_index_handle([999, 1000])
+
+    except Exception as ex:
+        current_app.logger.debug(ex)
