@@ -40,7 +40,8 @@ from .config import WEKO_AUTHORS_EXPORT_FILE_NAME, \
 from .permissions import author_permission
 from .tasks import check_is_import_available, export_all, import_author
 from .utils import check_import_data, delete_export_status, \
-    get_export_status, get_export_url, set_export_status, delete_export_url, band_check_file
+    get_export_status, get_export_url, set_export_status, delete_export_url,\
+    band_check_file, band_check_file_for_user
 
 
 class AuthorManagementView(BaseView):
@@ -181,9 +182,10 @@ class ExportView(BaseView):
             temp_file_path = temp_file.name
         
         # redisに一時ファイルのパスを保存
-        update_cache_data(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"],
+        update_cache_data(
+            current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"],
             temp_file_path,
-            60*60*24
+            current_app.config["WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD"]
         )
         task = export_all.delay()
         set_export_status(task_id=task.id)
@@ -234,7 +236,7 @@ class ExportView(BaseView):
             temp_file_path = temp_file.name
         update_cache_data(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"],
             temp_file_path,
-            60*60*24
+            current_app.config["WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD"]
         )
         task = export_all.delay()
         set_export_status(task_id=task.id)
@@ -281,14 +283,18 @@ class ImportView(BaseView):
             
             update_cache_data(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"],
                 temp_file_path,
-                60*60*24
+                current_app.config["WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD"]
             )
             result = check_import_data(os.path.basename(temp_file_path))
             error = result.get('error')
             list_import_data = result.get('list_import_data')
             counts = result.get("counts")
             max_page = result.get("max_page")
-
+            band_file_path = band_check_file(max_page)
+            update_cache_data(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_FILE_PATH_KEY"],
+                band_file_path,
+                current_app.config["WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD"]
+            )
         return jsonify(
             code=1,
             error=error,
@@ -320,11 +326,13 @@ class ImportView(BaseView):
     @expose('/check_file_download', methods=['POST'])
     def check_file_download(self):
         """インポートチェック画面でダウンロード処理"""
-        max_page = request.get_json().get("max_page")
-        
+        band_file_path = current_cache.get(\
+            current_app.config["WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_USER_FILE_PATH_KEY"])
+        if not band_file_path:        
+            max_page = request.get_json().get("max_page")
+            band_file_path = band_check_file_for_user(max_page)                    
         try:
-            check_file_path = band_check_file(max_page)                    
-            return send_file(check_file_path, as_attachment=True)
+            return send_file(band_file_path, as_attachment=True)
         except Exception as e:
             current_app.logger.error(e)
             return jsonify(e)
@@ -334,7 +342,14 @@ class ImportView(BaseView):
     def import_authors(self) -> jsonify:
         """Import author into System."""
         data = request.get_json() or {}
-        
+        max_page = data.get("max_page")
+        check_file_path = current_cache.get(\
+            current_app.config["WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_FILE_PATH_KEY"])
+        if not check_file_path:
+            check_file_path = band_check_file(max_page)
+        with open(check_file_path, "r", encoding="utf-8-sig") as check_file:
+            band_check_json = json.load(check_file)
+            
         # check import feature is available before import
         result_check = check_is_import_available(data.get('group_task_id'))
         if not result_check['is_available']:

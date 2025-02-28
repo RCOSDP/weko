@@ -163,7 +163,7 @@ def handle_exception(ex, attempt, retrys, interval, stop_point=0):
             update_cache_data(
                 current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"],
                 stop_point,
-                60*60*24
+                current_app.config["WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD"]
                 )
         raise ex
     current_app.logger.info(f"Connection failed, retrying in {interval} seconds...")
@@ -575,25 +575,52 @@ def validate_import_data(file_format, file_data, mapping_ids, mapping, list_impo
 
     return file_data
 
-def get_check_result(entry):
-    errors = entry.get("errors", [])
-    status = entry.get("status", "")
-    
-    if errors:
-        return "Error: " + " ".join(errors)
-    else:
-        if status == "new":
-            return _('Register')
-        elif status == "update":
-            return _('Update')
-        elif status == "deleted":
-            return _('Delete')
-        else:
-            return status
 
 def band_check_file(max_page):
     """
-    チェック結果が分割されているのでそれらをくっつけます。
+    分割されているチェック結果をインポート用に編集した後くっつけます。
+    """
+    temp_file_path = current_cache.get(\
+    current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"])
+    
+    # checkファイルパスの作成
+    base_file_name = os.path.splitext(os.path.basename(temp_file_path))[0]
+    check_file_name = f"{base_file_name}-check"
+
+    temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
+    band_check_file_name = "{}_{}.{}".format(
+        "check_import_author",
+        datetime.datetime.now().strftime("%Y%m%d%H%M"),
+        "json"
+    )
+    band_check_file_path = os.path.join(temp_folder_path, band_check_file_name)
+    try:
+        with open(band_check_file_path, 'w', newline='', encoding='utf-8') as file:
+            file.write('[')  # JSON配列の開始
+            first = True
+            for i in range(1, max_page+1):
+                part_check_file_name = f"{check_file_name}-part{i}"
+                check_file_part_path = os.path.join(temp_folder_path, part_check_file_name)
+                with open(check_file_part_path, "r", encoding="utf-8-sig") as check_part_file:
+                    data = json.load(check_part_file)
+                # batch_size = current_app.config.get("WEKO_AUTHORS_IMPORT_BATCH_SIZE")
+                    for item in data:
+                        check_result = False if item.get("errors", []) else True
+                        if check_result:
+                            if not first:
+                                file.write(",")
+                            item.pop("warnings", None)
+                            item.pop("is_deleted", None)
+                            json.dump(item, file)
+                            first = False
+            file.write("]")
+    except Exception as ex:
+        raise ex
+    return band_check_file_path
+
+def band_check_file_for_user(max_page):
+    """
+    分割されているチェック結果をユーザー用に編集した後くっつけます。
     """
     temp_file_path = current_cache.get(\
     current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"])
@@ -604,7 +631,7 @@ def band_check_file(max_page):
 
     temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
     check_file_download_name = "{}_{}.{}".format(
-        "check_import",
+        "import_author_check_result",
         datetime.datetime.now().strftime("%Y%m%d%H%M"),
         "tsv"
     )
@@ -615,8 +642,8 @@ def band_check_file(max_page):
             writer.writerow(["No.", "WEKO ID", "full_name", "MailAddress", "Check Result"])
             for i in range(1, max_page+1):
                 part_check_file_name = f"{check_file_name}-part{i}"
-                check_file_part1_path = os.path.join(temp_folder_path, part_check_file_name)
-                with open(check_file_part1_path, "r", encoding="utf-8-sig") as check_part_file:
+                check_file_part_path = os.path.join(temp_folder_path, part_check_file_name)
+                with open(check_file_part_path, "r", encoding="utf-8-sig") as check_part_file:
                     data = json.load(check_part_file)
                 batch_size = current_app.config.get("WEKO_AUTHORS_IMPORT_BATCH_SIZE")
                 for index, entry in enumerate(data, start=(i-1)*batch_size+1):
@@ -632,7 +659,30 @@ def band_check_file(max_page):
                     writer.writerow([index, pk_id, full_name, email, check_result])
     except Exception as ex:
         raise ex
+    
+    update_cache_data(
+        current_app.config["WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_USER_FILE_PATH_KEY"],
+        check_file_path,
+        current_app.config["WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD"]
+        )
     return check_file_path
+
+def get_check_result(entry):
+    """jsonのstatus,errorsをチェックし、それに合ったラベルを返します。"""
+    errors = entry.get("errors", [])
+    status = entry.get("status", "")
+    
+    if errors:
+        return "Error: " + " ".join(errors)
+    else:
+        if status == "new":
+            return _('Register')
+        elif status == "update":
+            return _('Update')
+        elif status == "deleted":
+            return _('Delete')
+        else:
+            return status
 
 def get_values_by_mapping(keys, data, parent_key=None):
     """Get values folow by mapping."""
