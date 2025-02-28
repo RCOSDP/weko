@@ -14,7 +14,7 @@ from weko_accounts.views import (
     _redirect_method,
     shib_sp_login,
     update_roles,
-    handle_shib_bind_gakunin_map_groups
+    sync_shib_gakunin_map_groups
 )
 def set_session(client,data):
     with client.session_transaction() as session:
@@ -313,7 +313,7 @@ def test_handle_shib_bind_gakunin_map_group_test2(app, client, mocker):
         # フォームデータを送信
         with client.post("/", data={'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'test_entity_id'}):
             # 関数の呼び出し
-            response = handle_shib_bind_gakunin_map_groups()
+            response = sync_shib_gakunin_map_groups()
 
             # 結果の検証
             assert request.form.get('WEKO_ACCOUNTS_IDP_ENTITY_ID') == 'test_entity_id'
@@ -331,7 +331,7 @@ def test_handle_shib_bind_gakunin_map_group_test2(app, client, mocker):
             mock_datastore.get.return_value = None
 
             # 関数の呼び出し
-            response = handle_shib_bind_gakunin_map_groups()
+            response = sync_shib_gakunin_map_groups()
 
             # 結果の検証
             assert request.form.get('WEKO_ACCOUNTS_IDP_ENTITY_ID') == 'test_entity_id'
@@ -353,7 +353,7 @@ def test_handle_shib_bind_gakunin_map_group_test2(app, client, mocker):
             ]
 
             # 関数の呼び出し
-            response = handle_shib_bind_gakunin_map_groups()
+            response = sync_shib_gakunin_map_groups()
 
             # 結果の検証
             assert request.form.get('WEKO_ACCOUNTS_IDP_ENTITY_ID') == 'test_entity_id'
@@ -374,7 +374,7 @@ def test_handle_shib_bind_gakunin_map_group_test2(app, client, mocker):
             ]
 
             # 関数の呼び出し
-            response = handle_shib_bind_gakunin_map_groups()
+            response = sync_shib_gakunin_map_groups()
 
             # 結果の検証
             assert request.form.get('WEKO_ACCOUNTS_IDP_ENTITY_ID') == 'test_entity_id'
@@ -398,7 +398,7 @@ def test_handle_shib_bind_gakunin_map_groups_errors(app, client, mocker):
         # redis.ConnectionErrorのテスト
         mock_datastore.get.side_effect = redis.ConnectionError('test_redis_error')
         with client.post("/", data={'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'test_entity_id'}):
-            response = handle_shib_bind_gakunin_map_groups()
+            response = sync_shib_gakunin_map_groups()
 
         mock_logger.assert_called_with("Redis connection error: test_redis_error")
         assert response == ('test_redis_error', 500)
@@ -406,7 +406,7 @@ def test_handle_shib_bind_gakunin_map_groups_errors(app, client, mocker):
         # その他の例外のテスト
         mock_datastore.get.side_effect = Exception('test_exception')
         with client.post("/", data={'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'test_entity_id'}):
-            response = handle_shib_bind_gakunin_map_groups()
+            response = sync_shib_gakunin_map_groups()
 
         mock_logger.assert_called_with("Unexpected error: test_exception")
         assert response == ('test_exception', 500)
@@ -414,7 +414,7 @@ def test_handle_shib_bind_gakunin_map_groups_errors(app, client, mocker):
         # KeyErrorのテスト
         mock_datastore.get.side_effect = KeyError('test_key_error')
         with client.post("/", data={'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'test_entity_id'}):
-            response = handle_shib_bind_gakunin_map_groups()
+            response = sync_shib_gakunin_map_groups()
 
         mock_logger.assert_called_with("Missing key in request headers: 'test_key_error'")
         assert response == ("'test_key_error'", 400)

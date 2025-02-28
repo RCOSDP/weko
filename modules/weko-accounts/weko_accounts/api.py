@@ -8,14 +8,19 @@
 
 """Shibboleth User API."""
 
+import re
 from datetime import datetime
+from urllib.parse import urlparse
 
-from flask import current_app, session
+import redis
+from flask import current_app, request, session
 from flask_babelex import gettext as _
 from flask_login import current_user, user_logged_in, user_logged_out
 from flask_security.utils import hash_password, verify_password
-from invenio_accounts.models import Role, User, userrole
+
+from invenio_accounts.models import Role, User
 from invenio_db import db
+from weko_redis.redis import RedisConnection
 from weko_user_profiles.models import UserProfile
 from werkzeug.local import LocalProxy
 
@@ -278,13 +283,12 @@ class ShibUser(object):
         if not check_role:
             return error
 
-        roles_add = self._get_roles_to_add()
-        if roles_add is None:
-            return "Error getting roles to add"
-
-        error = self._assign_roles_to_user(roles_add)
-        if error:
-            return error
+        try:
+            if current_app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS']:
+                roles_add = self._get_roles_to_add()
+                self._assign_roles_to_user(roles_add)
+        except Exception as ex:
+            return str(ex)
 
         return None
 
@@ -299,69 +303,79 @@ class ShibUser(object):
 
         :return: Set of roles to add
         """
-        add_roles = []
+        shib_attr_is_member_of = []
 
         if current_app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS']:
             try:
-                # Shibboleth属性からWEKO_SHIB_ATTR_IS_MEMBER_OFを取得
-                shib_attr_is_member_of = self.shib_attr.get('WEKO_SHIB_ATTR_IS_MEMBER_OF', [])
-                # WEKO_SHIB_ATTR_IS_MEMBER_OFが文字列の場合はセミコロンで分割
-                if isinstance(shib_attr_is_member_of, str):
-                    add_roles = shib_attr_is_member_of.split(';')
-                # WEKO_SHIB_ATTR_IS_MEMBER_OFがリストの場合はそのまま使用
-                elif isinstance(shib_attr_is_member_of, list):
-                    add_roles = shib_attr_is_member_of
+                # get shibboleth attributes (isMemberOf)
+                shib_attr_is_member_of = self.shib_attr.get('isMemberOf', [])
 
+                # check isMemberOf is a list
+                if not isinstance(shib_attr_is_member_of, list):
+                    raise ValueError('isMemberOf is not a list')
+
+                # check isMemberOf is empty
                 if not shib_attr_is_member_of:
-                    idp_entity_id = self.shib_attr.get('WEKO_ACCOUNTS_IDP_ENTITY_ID')
+                    idp_entity_id = current_app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID']
                     if not idp_entity_id:
-                        raise KeyError('WEKO_ACCOUNTS_IDP_ENTITY_ID is missing in shib_attr')
+                        raise KeyError('WEKO_ACCOUNTS_IDP_ENTITY_ID is missing in config')
 
-                    add_roles = current_app.config['WEKO_ACCOUNTS_GAKUNIN_DEFAULT_GROUP_MAPPING'].get(idp_entity_id, [])
-                    if not add_roles:
-                        raise KeyError(f'No roles found for IDP Entity ID: {idp_entity_id}')
+                    shib_attr_is_member_of = current_app.config['WEKO_ACCOUNTS_GAKUNIN_DEFAULT_GROUP_MAPPING'].get(idp_entity_id, [])
             except Exception as ex:
                 current_app.logger.error(f"Unexpected error: {ex}")
-                return []
+                raise ex
 
-        return add_roles
+        return shib_attr_is_member_of
 
-    def _assign_roles_to_user(self, roles_add):
+    def _assign_roles_to_user(self, map_group_names):
         try:
             # WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT設定を取得
             config = current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT']
             prefix = config['prefix']
+            role_keyword = config['role_keyword']
             role_mapping = config['role_mapping']
 
             with db.session.begin_nested():
-                # roles_addに含まれる各ロール名について処理を行う
-                for role_name in roles_add:
+                for map_group_name in map_group_names:
                     # ロール名が指定されたプレフィックスで始まるか確認
-                    if role_name.startswith(prefix):
-                        # プレフィックスを除外した値を取得
-                        role_name_without_prefix = role_name[len(prefix) + 1:]
-                        # プレフィックスを除いた部分を使用してロール名をマッピング
-                        mapped_role_name = role_mapping.get(role_name_without_prefix, role_name)
-                        # マッピングされたロール名をデータベースでロールを確認
-                        role = Role.query.filter_by(name=mapped_role_name).first()
-                        # ロールが存在し、かつユーザーにまだそのロールが割り当てられていない場合
+                    pattern = prefix + r'_[A-Za-z_]_' + role_keyword + r'_[A-Za-z_]+'
+                    if re.match(pattern, map_group_name):
+                        # The map_group_name matches the pattern
+                        suffix = map_group_name.split(role_keyword + "_")[-1]
+                        weko_role_name = role_mapping.get(suffix)
+                        if weko_role_name:
+                            role = Role.query.filter_by(name=weko_role_name).one_or_none()
+                            if role and role not in self.user.roles:
+                                _datastore.add_role_to_user(self.user, role)
+                                self.shib_user.shib_roles.append(role)
+                    elif map_group_name == config["sysadm_group"]:
+                        # システム管理者のロールを追加
+                        sysadm_name = current_app.config['WEKO_ADMIN_PERMISSION_ROLE_SYSTEM']
+                        role = Role.query.filter_by(name=sysadm_name).one()
                         if role and role not in self.user.roles:
-                            # ユーザーにロールを追加
                             _datastore.add_role_to_user(self.user, role)
-                            # Shibbolethユーザーのロールリストに追加
                             self.shib_user.shib_roles.append(role)
+
+                    # マッピングされたロール名をデータベースでロールを確認
+                    role = Role.query.filter_by(name=map_group_name).one_or_none()
+                    # ロールが存在し、かつユーザーにまだそのロールが割り当てられていない場合
+                    if role and role not in self.user.roles:
+                        # ユーザーにロールを追加
+                        _datastore.add_role_to_user(self.user, role)
+                        # Shibbolethユーザーのロールリストに追加
+                        self.shib_user.shib_roles.append(role)
+
                 db.session.commit()
         except Exception as ex:
             current_app.logger.error(f"Error assigning roles: {ex}")
             db.session.rollback()
-            return str(ex)
+            raise ex
 
     # ! NEED RELATION SHIB_ATTR
     # check_license, error = self.valid_site_license()
     # if not check_license:
     #     return error
 
-        return None
 
     @classmethod
     def shib_user_logout(cls):
@@ -379,3 +393,58 @@ def get_user_info_by_role_name(role_name):
     """Get user info by role name."""
     role = Role.query.filter_by(name=role_name).first()
     return User.query.filter(User.roles.contains(role)).all()
+
+
+def sync_shib_gakunin_map_groups():
+    """Handle SHIB_BIND_GAKUNIN_MAP_GROUPS logic."""
+    try:
+        # Entity ID → Redisのキーに変換
+        idp_entity_id = request.form.get('WEKO_ACCOUNTS_IDP_ENTITY_ID')
+        if not idp_entity_id:
+            raise KeyError('WEKO_ACCOUNTS_IDP_ENTITY_ID is missing in config')
+
+        parsed_url = urlparse(idp_entity_id)
+        fqdn = parsed_url.netloc.split(":")[0].replace('.', '_').replace('-', '_')
+        suffix = current_app.config.get('WEKO_ACCOUNTS_GAKUNIN_GROUP_SUFFIX', '')
+
+        # create Redis key
+        redis_key = fqdn + suffix
+        datastore = RedisConnection().connection(db=current_app.config['CACHE_REDIS_DB'], kv=True)
+        map_group_list = set(datastore.lrange(redis_key, 0, -1))
+
+        # get roles
+        roles = Role.query.all()
+        role_names = set({role.name for role in Role.query.all()})
+
+        if map_group_list != role_names:
+            update_roles(map_group_list, roles)
+    except KeyError as ke:
+        current_app.logger.error(f"Missing key in request headers: {ke}")
+        raise ke
+    except redis.ConnectionError as rce:
+        current_app.logger.error(f"Redis connection error: {rce}")
+        raise rce
+    except Exception as ex:
+        current_app.logger.error(f"Unexpected error: {ex}")
+        raise ex
+
+
+def update_roles(map_group_list, roles):
+    """Update roles based on map group list."""
+    role_names = set({role.name for role in roles})
+
+    with db.session.begin_nested():
+        # add new roles
+        for map_group_name in map_group_list:
+            if not map_group_name and map_group_name in role_names:
+                continue
+            db.session.add(Role(name=map_group_name, description=""))
+
+        # delete roles that are not in map_group_list
+        for role_name in role_names:
+            if role_name in map_group_list:
+                continue
+            role_to_remove = Role.query.filter_by(name=role_name).one()
+            db.session.delete(role_to_remove)
+
+    db.session.commit()

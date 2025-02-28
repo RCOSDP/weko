@@ -28,8 +28,6 @@ import json
 import sys
 from urllib.parse import quote_plus
 
-import redis
-from redis import sentinel
 from flask import Blueprint, abort, current_app, flash, redirect, \
     render_template, request, session, url_for
 from flask_babelex import gettext as _
@@ -37,14 +35,13 @@ from flask_login import current_user
 from flask_menu import current_menu
 from flask_security import url_for_security
 from invenio_admin.proxies import current_admin
-from simplekv.memory.redisstore import RedisStore
 from weko_redis.redis import RedisConnection
 from werkzeug.local import LocalProxy
 from invenio_db import db
 
-from .api import ShibUser
+from .api import ShibUser, sync_shib_gakunin_map_groups
 from .utils import generate_random_str, parse_attributes
-from invenio_accounts.models import Role
+
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -272,59 +269,6 @@ def shib_login():
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     return abort(400)
 
-def update_roles(map_group_list, existing_roles):
-    """Update roles based on map group list."""
-    config = current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT']
-    prefix = config['prefix']
-    role_mapping = config['role_mapping']
-
-    with db.session.begin_nested():
-        # 既存のロールを更新または追加
-        for role_name in map_group_list:
-            # ロール名を変換
-            mapped_role_name = role_mapping.get(role_name[len(prefix) + 1:], role_name)
-            role = Role.query.filter_by(name=mapped_role_name).first()
-            if role:
-                role.description = ""  # 必要に応じて説明を更新
-            else:
-                db.session.add(Role(name=mapped_role_name, description=""))
-
-        # 不要なロールを削除
-        for role_name in existing_roles:
-            if role_name not in map_group_list:
-                role_to_remove = Role.query.filter_by(name=role_name).one()
-                db.session.delete(role_to_remove)
-
-    db.session.commit()
-
-def handle_shib_bind_gakunin_map_groups():
-    """Handle SHIB_BIND_GAKUNIN_MAP_GROUPS logic."""
-    try:
-        # Entity ID → Redisのキーに変換
-        idp_entity_id = request.form.get('WEKO_ACCOUNTS_IDP_ENTITY_ID')
-        redis_key = f"shib:{idp_entity_id}"  #TODO 暫定結合で決める事になるかもしれない
-
-        redis_connection = RedisConnection()
-        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv=True)
-        map_groups = datastore.get(redis_key)
-
-        if map_groups:
-            map_group_list = json.loads(map_groups)
-
-            # ロールを取得して、mAPグループ名リストと比較、差異があったらRedisに合わせる
-            existing_roles = {role.name for role in Role.query.all()}
-
-            if set(map_group_list) != existing_roles:
-                update_roles(map_group_list, existing_roles)
-    except KeyError as ke:
-        current_app.logger.error(f"Missing key in request headers: {ke}")
-        return str(ke), 400
-    except redis.ConnectionError as rce:
-        current_app.logger.error(f"Redis connection error: {rce}")
-        return str(rce), 500
-    except Exception as ex:
-        current_app.logger.error(f"Unexpected error: {ex}")
-        return str(ex), 500
 
 @blueprint.route('/shib/login', methods=['POST'])
 def shib_sp_login():
@@ -336,13 +280,12 @@ def shib_sp_login():
     _shib_username_config = current_app.config[
         'WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN']
     next = request.args.get('next', '/')
-    # WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPSがTrueのときの処理
-    if current_app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS']:
-        response = handle_shib_bind_gakunin_map_groups()
-        if response:
-            return response
 
     try:
+        # WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPSがTrueのときの処理
+        if current_app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS']:
+            sync_shib_gakunin_map_groups()
+
         shib_session_id = request.form.get('SHIB_ATTR_SESSION_ID', None)
         if not shib_session_id and not _shib_enable:
             flash(_("Missing SHIB_ATTR_SESSION_ID!"), category='error')
