@@ -32,7 +32,6 @@ from weko_admin.models import AdminSettings, db
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
-
 class ShibSettingView(BaseView):
     """ShibSettingView."""
 
@@ -60,7 +59,7 @@ class ShibSettingView(BaseView):
             # デフォルトロール
             roles = {
                 'gakunin_role': current_app.config.get('WEKO_ACCOUNTS_GAKUNIN_ROLE', {}).get('defaultRole', '0'),
-                'orthros_role': current_app.config.get('WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE', {}).get('defaultRole', '0'),
+                'orthros_outside_role': current_app.config.get('WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE', {}).get('defaultRole', '0'),
                 'extra_role': current_app.config.get('WEKO_ACCOUNTS_EXTRA_ROLE', {}).get('defaultRole', '0')
             }
 
@@ -76,13 +75,20 @@ class ShibSettingView(BaseView):
                 # Process forms
                 form = request.form.get('submit', None)
                 new_shib_flg = request.form.get('shibbolethRadios', '0')
+                new_roles = {key: request.form.get(f'role-lists{i}', '0') for i, key in enumerate(roles)}
 
                 if form == 'shib_form':
                     if shib_flg != new_shib_flg:
                         shib_flg = new_shib_flg
                         _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] = (shib_flg == '1')
                         flash(_('Shibboleth flag was updated.'), category='success')
-                        
+                    
+                    for key in roles:
+                        if roles[key] != new_roles[key]:
+                            roles[key] = new_roles[key]
+                            _app.config[f'WEKO_ACCOUNTS_{key.upper()}']['defaultRole'] = new_roles[key]
+                            flash(_(f'{key.replace("_", " ").title()} was updated.'), category='success')
+
             return self.render(
                 current_app.config['WEKO_ACCOUNTS_SET_SHIB_TEMPLATE'],
                 shib_flg=shib_flg, set_language=set_language, role_list=role_list, attr_list=attr_list, block_user_list=block_user_list, **roles, **attributes )

@@ -23,9 +23,21 @@ msgstr ""
 msgid "language"
 msgstr "en"
 
-#: weko_accounts/admin.py:56
+#: weko_accounts/admin.py:
 msgid "Shibboleth flag was updated."
 msgstr "Updated Shibboleth settings"
+
+#: weko_accounts/admin.py:
+msgid "Gakunin Role was updated."
+msgstr ""
+
+#: weko_accounts/admin.py:
+msgid "Orthros Outside Role was updated."
+msgstr "Orthros Role was updated."
+
+#: weko_accounts/admin.py:
+msgid "Extra Role was updated."
+msgstr ""
 
 #: weko_accounts/admin.py:69
 msgid "Setting"
