@@ -469,7 +469,8 @@ WEKO_SYS_USER = "System Administrator"
 
 WEKO_REPO_USER = "Repository Administrator"
 
-WEKO_FLOW_DEFINE = {"flow_name": "Registration Flow"}
+WEKO_FLOW_DEFINE = {"flow_name": "Registration Flow",
+                    "repository_id": "Root Index",}
 
 WEKO_FLOW_DEFINE_LIST_ACTION = [
     {

@@ -39,10 +39,13 @@ from invenio_db import db
 from sqlalchemy import func, or_
 from weko_index_tree.models import Index
 from wtforms.validators import ValidationError
-from wtforms import FileField, RadioField
+from wtforms import FileField, RadioField, StringField
 from wtforms.utils import unset_value
 from invenio_i18n.ext import current_i18n
 from weko_gridlayout.services import WidgetDesignPageServices
+from weko_handle.api import Handle
+from weko_workflow.config import WEKO_SERVER_CNRI_HOST_LINK
+from b2handle.clientcredentials import PIDClientCredentials
 
 from .models import Community, FeaturedCommunity, InclusionRequest
 from .utils import get_user_role_ids, delete_empty
@@ -58,10 +61,10 @@ class CommunityModelView(ModelView):
 
     can_create = True
     can_edit = True
-    can_delete = False
+    can_delete = True
     can_view_details = True
     column_display_all_relations = True
-    form_columns = ('id', 'owner', 'index', 'title', 'description', 'page',
+    form_columns = ('id', 'cnri', 'owner', 'index', 'group', 'title', 'description', 'page',
                     'curation_policy', 'ranking', 'fixed_points', 'thumbnail','login_menu_enabled')
 
     column_list = (
@@ -158,10 +161,11 @@ class CommunityModelView(ModelView):
                 else:
                     model.catalog_json = None
                 model.id_user = current_user.get_id()
+                model.cnri = None
 
                 comm = Community.create(
-                    id=model.id,
-                    id_role=model.id_role,
+                    community_id=model.id,
+                    role_id=model.id_role,
                     id_user=model.id_user,
                     root_node_id=model.root_node_id,
                     title=model.title,
@@ -173,8 +177,25 @@ class CommunityModelView(ModelView):
                     login_menu_enabled=model.login_menu_enabled,
                     thumbnail_path=model.thumbnail_path,
                     catalog_json=model.catalog_json,
+                    cnri=model.cnri
                 )
                 db.session.commit()
+
+                # get CNRI handle
+                if current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CNRI'):
+                    weko_handle = Handle()
+                    url = request.url.split('/admin/')[0] + '/c/' + str(model.id)
+                    credential = PIDClientCredentials.load_from_JSON(
+                        current_app.config.get('WEKO_HANDLE_CREDS_JSON_PATH'))
+                    hdl = credential.get_prefix() + '/c/' + str(model.id)
+                    handle = weko_handle.register_handle(location=url, hdl=hdl)
+                    if handle:
+                        model_for_handle = self.get_one(model.id)
+                        model_for_handle.cnri = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
+                        db.session.commit()
+                    else:
+                        current_app.logger.info('Cannot connect Handle server!')
+
                 data = [
                     {
                         "is_edit": False,
@@ -213,7 +234,7 @@ class CommunityModelView(ModelView):
                 for page in data:
                     addPageResult = WidgetDesignPageServices.add_or_update_page(page)
                     if addPageResult['result'] == False:
-                        current_app.logger.error(page['url'] + "のページの追加に失敗しました。")
+                        current_app.logger.error(page['url'] + " page add failed.")
                         pageaddFlag = False
 
                 if pageaddFlag == False:
@@ -248,6 +269,7 @@ class CommunityModelView(ModelView):
 
         form=super(CommunityModelView, self).edit_form(id)
         form.id.data = model.id or ''
+        form.cnri.data = model.cnri or ''
         form.title.data = model.title or ''
         form.owner.data = model.owner or ''
         form.index.data = model.index or ''
@@ -296,7 +318,7 @@ class CommunityModelView(ModelView):
                         directory,
                         model.id + '_' + fp.filename)
                     file_uri = '/data/' + 'c/' + model.id  + '_' +  fp.filename
-                    if model.thumbnail_path != '':
+                    if model.thumbnail_path:
                         currentfile = os.path.join(
                             current_app.instance_path,
                             current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'],
@@ -304,9 +326,9 @@ class CommunityModelView(ModelView):
                             model.thumbnail_path[8:])
                         try:
                             os.remove(currentfile)
-                            print(f"{currentfile} を削除しました。")
+                            current_app.logger.info(f"{currentfile} deleted.")
                         except Exception as e:
-                            current_app.logger.error(f"ファイルの削除中にエラーが発生しました: {e}")
+                            current_app.logger.error(f"file delete failed.: {e}")
                     fp.save(filename)
                     model.thumbnail_path = file_uri
 
@@ -317,6 +339,19 @@ class CommunityModelView(ModelView):
                 else:
                     model.catalog_json = None
 
+                # get CNRI handle
+                if current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CNRI') and not model.cnri:
+                    weko_handle = Handle()
+                    credential = PIDClientCredentials.load_from_JSON(
+                        current_app.config.get('WEKO_HANDLE_CREDS_JSON_PATH'))
+                    url = request.url.split('/admin/')[0] + '/c/' + str(id)
+                    hdl = credential.get_prefix() + '/c/' + str(id)
+                    handle = weko_handle.register_handle(location=url, hdl=hdl)
+                    if handle:
+                        model.cnri = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
+                    else:
+                        current_app.logger.info('Cannot connect Handle server!')
+
                 db.session.commit()
                 return redirect(url_for('.index_view'))
             except Exception as e:
@@ -324,7 +359,7 @@ class CommunityModelView(ModelView):
                 return jsonify({"error": str(e)}), 400
 
         else:
-
+            # request method GET
             record = {}
             if model.catalog_json is not None:
                 record['parentkey'] = model.catalog_json
@@ -450,6 +485,24 @@ class CommunityModelView(ModelView):
             abort(500)
         return jsonify(schema_form)
 
+    def on_model_delete(self, model):
+        if model.cnri:
+            from .tasks import delete_handle
+            hdl = model.cnri.split(WEKO_SERVER_CNRI_HOST_LINK)[-1]
+            delete_handle.delay(hdl)
+
+        if model.thumbnail_path:
+            currentfile = os.path.join(
+                current_app.instance_path,
+                current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'],
+                'c',
+                model.thumbnail_path[8:])
+            try:
+                os.remove(currentfile)
+                current_app.logger.info(f"{currentfile} deleted.")
+            except Exception as e:
+                current_app.logger.error(f"file delete failed.: {e}")
+
     def on_model_change(self, form, model, is_created):
         """Perform some actions before a model is created or updated.
 
@@ -499,6 +552,7 @@ class CommunityModelView(ModelView):
         },
     }
     form_extra_fields = {
+        'cnri': StringField(),
         'thumbnail': FileField(description='ファイルタイプ: JPG ,JPEG, PNG'),
         'login_menu_enabled': RadioField('login_menu_enabled', choices=[('False', 'Disabled'), ('True', 'Enabled')] ),
     }
@@ -513,10 +567,7 @@ class CommunityModelView(ModelView):
     def role_query_cond(self, role_ids):
         """Query conditions by role_id and user_id."""
         if role_ids:
-            return or_(
-                Community.id_role.in_(role_ids),
-                Community.id_user == current_user.id
-            )
+            return Community.group_id.in_(role_ids)
 
     def get_query(self):
         """Return a query for the model type.

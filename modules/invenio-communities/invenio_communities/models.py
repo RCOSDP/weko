@@ -226,7 +226,7 @@ class Community(db.Model, Timestamp):
     thumbnail_path = db.Column(db.Text, nullable=True, default='')
     """thumbnail_path."""
 
-    login_menu_enabled = db.Column(db.Boolean, nullable=False, default='false')
+    login_menu_enabled = db.Column(db.Boolean, nullable=False, default=False)
     """login_menu enabled or Disabled."""
 
     catalog_json = db.Column(
@@ -245,6 +245,9 @@ class Community(db.Model, Timestamp):
     )
     """catalog."""
 
+    cnri = db.Column(db.Text, nullable=True, default=None)
+    """thumbnail_path."""
+
     # root_node_id = db.Column(db.Text, nullable=False, default='')
 
     root_node_id = db.Column(
@@ -252,8 +255,17 @@ class Community(db.Model, Timestamp):
         db.ForeignKey(Index.id),
         nullable=False
     )
-
     """Id of Root Node"""
+    
+    content_policy = db.Column(db.Text, nullable=True, default='')
+    """Community content policy."""
+    
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey(Role.id),
+        nullable=True
+    )
+    """Group of the community."""
 
     #
     # Relationships
@@ -272,6 +284,9 @@ class Community(db.Model, Timestamp):
                             backref='index',
                             foreign_keys=[root_node_id])
     """Relation to the owner (Index) of the community."""
+    
+    group = db.relationship(Role, backref='group',
+                            foreign_keys=[group_id])
 
     def __repr__(self):
         """String representation of the community object."""
@@ -285,29 +300,6 @@ class Community(db.Model, Timestamp):
                 id=community_id,
                 id_role=role_id,
                 root_node_id=root_node_id,
-                **data
-            )
-            db.session.add(obj)
-        return obj
-
-    @classmethod
-    def create(cls, id, id_role, id_user, root_node_id, title, description, page, curation_policy, ranking, fixed_points, login_menu_enabled, thumbnail_path, catalog_json, **data):
-        """Get a community."""
-        with db.session.begin_nested():
-            obj = cls(
-                id=id,
-                id_role=id_role,
-                id_user=id_user,
-                root_node_id=root_node_id,
-                title=title,
-                description=description,
-                page=page,
-                curation_policy=curation_policy,
-                ranking=ranking,
-                fixed_points=fixed_points,
-                login_menu_enabled=login_menu_enabled,
-                thumbnail_path=thumbnail_path,
-                catalog_json=catalog_json,
                 **data
             )
             db.session.add(obj)
@@ -379,6 +371,12 @@ class Community(db.Model, Timestamp):
         else:
             query = query.order_by(db.desc(cls.ranking))
         return query
+    
+    @classmethod
+    def get_repositories_by_user(cls, user):
+        """Get repository ids for user."""
+        role_ids = [role.id for role in user.roles]
+        return Community.query.filter(Community.group_id.in_(role_ids)).all()
 
     def add_record(self, record):
         """Add a record to the community.
@@ -467,6 +465,9 @@ class Community(db.Model, Timestamp):
             raise CommunitiesError(community=self)
         else:
             self.deleted_at = None
+
+    def to_dict(self):
+        return {column.name: getattr(self, column.name) for column in self.__table__.columns}
 
     @property
     def is_deleted(self):

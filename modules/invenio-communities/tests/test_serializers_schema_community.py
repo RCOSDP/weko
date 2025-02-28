@@ -8,7 +8,7 @@ def test_CommunitySchemaV1(app,db, users):
     index = Index()
     db.session.add(index)
     db.session.commit()
-    
+
     comm1 = Community.create(community_id='comm1', role_id=1,
                              id_user=users[2]["obj"].id, title='Title1',
                              description='Description1',
@@ -23,8 +23,8 @@ def test_CommunitySchemaV1(app,db, users):
         result =schema.dump(comm1)
         assert result.data["title"] == "Title1"
         assert result.data["logo_url"] == None
-    
-    
+
+
     comm2 = Community.create(community_id='comm2', role_id=1,
                              id_user=users[2]["obj"].id, title='Title2',
                              description='Description2',
@@ -45,7 +45,7 @@ def test_CommunitySchemaV1(app,db, users):
         "urlkwargs":{}
     }
     with app.test_request_context():
-        
+
         schema = CommunitySchemaV1(context=context)
         result =schema.dump(comms,many=True)
         result = result.data
@@ -55,7 +55,7 @@ def test_CommunitySchemaV1(app,db, users):
         assert result["hits"]["total"] == 2
         assert "links" in result
         assert result["links"] == {"self":"http://test_server/api/communities/?page=1","next":"http://test_server/api/communities/?page=2"}
-    
+
     # page not in context
     context = {
         "total":2,

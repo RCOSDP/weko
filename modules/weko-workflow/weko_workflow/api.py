@@ -30,6 +30,7 @@ from datetime import date,datetime, timedelta
 from flask import abort, current_app, request, session, url_for
 from flask_login import current_user
 from invenio_accounts.models import Role, User, userrole
+from invenio_communities.models import Community
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from sqlalchemy import and_, asc, desc, func, or_
@@ -71,6 +72,10 @@ class Flow(object):
             if not flow_name:
                 raise ValueError('Flow name cannot be empty.')
 
+            repository_id = flow.get('repository_id')
+            if not repository_id:
+                raise ValueError('Repository cannot be empty.')
+
             with db.session.no_autoflush:
                 cur_names = map(
                     lambda flow: flow.flow_name,
@@ -79,14 +84,21 @@ class Flow(object):
                 if flow_name in cur_names:
                     raise ValueError('Flow name is already in use.')
 
+                if repository_id != "Root Index":
+                    repository = Community.query.filter_by(id=repository_id).one_or_none()
+                    if not repository:
+                        raise ValueError('Repository is not found.')
+
                 action_start = _Action.query.filter_by(
                     action_endpoint='begin_action').one_or_none()
                 action_end = _Action.query.filter_by(
                     action_endpoint='end_action').one_or_none()
+
             _flow = _Flow(
                 flow_id=uuid.uuid4(),
                 flow_name=flow_name,
-                flow_user=current_user.get_id()
+                flow_user=current_user.get_id(),
+                repository_id=repository_id,
             )
             _flowaction_start = _FlowAction(
                 flow_id=_flow.flow_id,
@@ -123,6 +135,10 @@ class Flow(object):
             if not flow_name:
                 raise ValueError('Flow name cannot be empty.')
 
+            repository_id = flow.get('repository_id')
+            if not repository_id:
+                raise ValueError('Repository cannot be empty.')
+
             with db.session.begin_nested():
                 # Get all names but the one being updated
                 cur_names = map(
@@ -132,12 +148,18 @@ class Flow(object):
                 )
                 if flow_name in cur_names:
                     raise ValueError('Flow name is already in use.')
+                
+                if repository_id != "Root Index":
+                    repository = Community.query.filter_by(id=repository_id).one_or_none()
+                    if not repository:
+                        raise ValueError('Repository is not found.')
 
                 _flow = _Flow.query.filter_by(
                     flow_id=flow_id).one_or_none()
                 if _flow:
                     _flow.flow_name = flow_name
-                    _flow.flow_user = current_user.get_id()
+                    _flow.flow_user = current_user.get_id(),
+                    _flow.repository_id = repository_id
                     db.session.merge(_flow)
             db.session.commit()
             return _flow
@@ -152,8 +174,13 @@ class Flow(object):
         :return:
         """
         with db.session.no_autoflush:
-            query = _Flow.query.filter_by(
-                is_deleted=False).order_by(asc(_Flow.flow_id))
+            query = _Flow.query.filter_by(is_deleted=False)
+            if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles):
+                query = query.order_by(asc(_Flow.flow_id))
+            else:
+                role_ids = [role.id for role in current_user.roles]
+                repository_ids = [community.id for community in Community.query.filter(Community.group_id.in_(role_ids)).all()]
+                query = query.filter(_Flow.repository_id.in_(repository_ids)).order_by(asc(_Flow.flow_id))
             return query.all()
 
     def get_flow_detail(self, flow_id):
@@ -411,6 +438,7 @@ class WorkFlow(object):
                     _workflow.open_restricted = workflow.get('open_restricted')
                     _workflow.location_id = workflow.get('location_id')
                     _workflow.is_gakuninrdm = workflow.get('is_gakuninrdm')
+                    _workflow.repository_id = workflow.get('repository_id')
                     db.session.merge(_workflow)
             db.session.commit()
             return _workflow
@@ -419,14 +447,21 @@ class WorkFlow(object):
             current_app.logger.exception(str(ex))
             return None
 
-    def get_workflow_list(self):
+    def get_workflow_list(self, user=None):
         """Get workflow list info.
 
         :return:
         """
         with db.session.no_autoflush:
-            query = _WorkFlow.query.filter_by(
-                is_deleted=False).order_by(asc(_WorkFlow.flows_id))
+            query = _WorkFlow.query.filter_by(is_deleted=False)
+            if not user:
+                return query.order_by(asc(_WorkFlow.flows_id)).all()
+            if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in user.roles):
+                query = query.order_by(asc(_WorkFlow.flows_id))
+            else:
+                role_ids = [role.id for role in user.roles]
+                repository_ids = [community.id for community in Community.query.filter(Community.group_id.in_(role_ids)).all()]
+                query = query.filter(_WorkFlow.repository_id.in_(repository_ids)).order_by(asc(_WorkFlow.flows_id))
             return query.all()
 
     def get_workflow_detail(self, workflow_id):
