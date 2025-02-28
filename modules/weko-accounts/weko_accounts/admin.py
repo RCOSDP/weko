@@ -66,22 +66,29 @@ class ShibSettingView(BaseView):
 
             # 属性マッピング
             attributes = {
-                'weko_eppn_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_eppn', '0'),
-                'weko_role_authority_name_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_role_authority_name', '0'),
-                'weko_mail_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_mail', '0'),
-                'weko_user_name_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_user_name', '0')
+                'shib_eppn_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_eppn', '0'),
+                'shib_role_authority_name_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_role_authority_name', '0'),
+                'shib_mail_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_mail', '0'),
+                'shib_user_name_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_user_name', '0')
             }
 
             if request.method == 'POST':
                 # Process forms
                 form = request.form.get('submit', None)
                 new_shib_flg = request.form.get('shibbolethRadios', '0')
+                new_attributes = {key: request.form.get(f'attr-lists{i}', '0') for i, key in enumerate(attributes)}
 
                 if form == 'shib_form':
                     if shib_flg != new_shib_flg:
                         shib_flg = new_shib_flg
                         _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] = (shib_flg == '1')
                         flash(_('Shibboleth flag was updated.'), category='success')
+
+                    for key in attributes:
+                        if attributes[key] != new_attributes[key]:
+                            attributes[key] = new_attributes[key]
+                            current_app.config['WEKO_ACCOUNTS_ATTRIBUTE_MAP'][key.replace('_value', '')] = new_attributes[key]
+                            flash(_(f'{key.replace("_", " ").title()} mapping was updated.'), category='success')
                         
             return self.render(
                 current_app.config['WEKO_ACCOUNTS_SET_SHIB_TEMPLATE'],
