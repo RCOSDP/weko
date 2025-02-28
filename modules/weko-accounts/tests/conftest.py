@@ -79,6 +79,13 @@ def base_app(instance_path):
         CACHE_REDIS_HOST="redis",
         CACHE_TYPE="redis",
         REDIS_PORT='6379',
+        WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP = {
+            'eppn': (False, 'shib_eppn'),
+            'HTTP_WEKOSOCIETYAFFILIATION': (False, 'shib_role_authority_name'),
+            'mail': (False, 'shib_mail'),
+            'HTTP_WEKOID': (False, 'shib_user_name'),
+        },
+        WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL='{}secure/login.py',
     )
     Babel(app_)
     InvenioI18N(app_)
