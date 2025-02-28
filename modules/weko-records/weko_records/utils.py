@@ -1520,10 +1520,25 @@ async def sort_meta_data_by_options(
         date = None
         hide_item_metadata(src, settings, item_type_data)
         # Set value and parent option
+        pattern_description = r'(item_\d+)_description(\d+)$'
+        show_description = False
+        pattern_file = r'(item_\d+)_file(\d+)$'
+        show_file = False
+        pattern_relation = r'(item_\d+)_relation(\d+)$'
+        show_reference = False
         for lst in solst:
             key = lst[0]
             val = src.get(key)
             option = meta_options.get(key, {}).get("option")
+
+            # Set show Tab area
+            if re.match(pattern_description, key) and option:
+                show_description = not option.get("hidden") and option.get("showlist")
+            if re.match(pattern_file, key) and option:
+                show_file = not option.get("hidden") and option.get("showlist")
+            if re.match(pattern_relation, key) and option:
+                show_reference = not option.get("hidden") and option.get("showlist")
+
             if not val or not option:
                 continue
             mlt = val.get("attribute_value_mlt", [])
@@ -1635,6 +1650,9 @@ async def sort_meta_data_by_options(
             record_hit["_source"]["_date"] = date
         if creator_info:
             record_hit["_source"]["_creator_info"] = creator_info
+        record_hit["_source"]["_show_description"] = show_description
+        record_hit["_source"]["_show_file"] = show_file
+        record_hit["_source"]["_show_reference"] = show_reference
     except Exception:
         current_app.logger.exception(
             "Record serialization failed {}.".format(

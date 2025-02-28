@@ -9,7 +9,7 @@
 
 from alembic import op
 import sqlalchemy as sa
-
+from sqlalchemy.dialects.postgresql import JSONB
 
 # revision identifiers, used by Alembic.
 revision = 'd2d56dc5e385'
@@ -22,7 +22,8 @@ def upgrade():
     """Upgrade database."""
     op.add_column('communities_community', sa.Column('thumbnail_path', sa.Text(), nullable=True))
     op.add_column('communities_community', sa.Column('login_menu_enabled', sa.Boolean(), nullable=False, server_default=sa.sql.expression.false()))
-    op.add_column('communities_community', sa.Column('catalog_json', sa.JSON(), nullable=True))
+    op.add_column('communities_community', sa.Column('catalog_json', JSONB, nullable=True))
+    op.add_column('communities_community', sa.Column('cnri', sa.Text(), nullable=True))
 
 
 def downgrade():
@@ -30,3 +31,4 @@ def downgrade():
     op.drop_column('communities_community', 'thumbnail_path')
     op.drop_column('communities_community', 'login_menu_enabled')
     op.drop_column('communities_community', 'catalog_json')
+    op.drop_column('communities_community', 'cnri')

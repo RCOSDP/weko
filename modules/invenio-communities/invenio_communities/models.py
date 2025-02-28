@@ -245,6 +245,9 @@ class Community(db.Model, Timestamp):
     )
     """catalog."""
 
+    cnri = db.Column(db.Text, nullable=True, default=None)
+    """thumbnail_path."""
+
     # root_node_id = db.Column(db.Text, nullable=False, default='')
 
     root_node_id = db.Column(
@@ -297,29 +300,6 @@ class Community(db.Model, Timestamp):
                 id=community_id,
                 id_role=role_id,
                 root_node_id=root_node_id,
-                **data
-            )
-            db.session.add(obj)
-        return obj
-
-    @classmethod
-    def create(cls, id, id_role, id_user, root_node_id, title, description, page, curation_policy, ranking, fixed_points, login_menu_enabled, thumbnail_path, catalog_json, **data):
-        """Get a community."""
-        with db.session.begin_nested():
-            obj = cls(
-                id=id,
-                id_role=id_role,
-                id_user=id_user,
-                root_node_id=root_node_id,
-                title=title,
-                description=description,
-                page=page,
-                curation_policy=curation_policy,
-                ranking=ranking,
-                fixed_points=fixed_points,
-                login_menu_enabled=login_menu_enabled,
-                thumbnail_path=thumbnail_path,
-                catalog_json=catalog_json,
                 **data
             )
             db.session.add(obj)

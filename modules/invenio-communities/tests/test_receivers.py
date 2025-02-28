@@ -18,12 +18,12 @@ def test_inject_provisional_community(app,db,db_records,communities):
     increq = InclusionRequest(id_community="comm1",id_record=db_records[2].id,id_user=1)
     db.session.add(increq)
     db.session.commit()
-    
+
     # index is not start with "record-"
     data = {}
     inject_provisional_community(None,data,db_records[2],"not-records-test")
     assert data == {}
-    
+
     # index is start with "record-"
     data = {}
     inject_provisional_community(None,data,db_records[2])
@@ -53,7 +53,7 @@ def test_destroy_oaipmh_set(app,db):
     # exist oaiset
     destroy_oaipmh_set(None,None,comm1)
     assert OAISet.query.filter_by(spec="user-comm1").one_or_none() == None
-    
+
     # not exist oaiset
     with pytest.raises(Exception) as e:
         destroy_oaipmh_set(None,None,comm1)
