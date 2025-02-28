@@ -119,18 +119,14 @@ def test_indexes_create(app, db, users, test_indices):
                     'parent': 104,
                     'value': 'Create index test10',
                 })
-            print("assert 10")
             assert res==True
 
-            app.config['WEKO_HANDLE_ALLOW_REGISTER_CNRI'] = True
-            app.config['WEKO_HANDLE_CREDS_JSON_PATH'] = '/code/modules/resources/handle_creds.json'
             with patch("weko_handle.api.Handle.register_handle", return_value= None):
                 res = Indexes.create(2, {
                     'id': 1045,
                     'parent': 105,
                     'value': 'Create index test11',
                 })
-            print("assert 11")
             assert res==False
 
 
