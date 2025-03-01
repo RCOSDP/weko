@@ -4655,25 +4655,54 @@ class TestJsonLdMapper:
         app.config.update({"WEKO_SWORDSERVER_METADATA_FILE_ROCRATE": "ro-crate-metadata.json"})
 
         json_ld = json_data("data/jsonld/ro-crate-metadata.json")
-        processed_metadata, format = JsonLdMapper.process_json_ld(json_ld)
+        processed_metadatas, format = JsonLdMapper.process_json_ld(json_ld)
+        metadata =  processed_metadatas[0]
 
         assert format == "ro-crate"
-        assert processed_metadata["@id"] == "./"
-        assert processed_metadata["name"] == "The Sample Dataset for WEKO"
-        assert processed_metadata["description"] == "This is a sample dataset for WEKO in order to demonstrate the RO-Crate metadata."
-        assert processed_metadata["datePublished"] == "2021-10-15"
-        assert processed_metadata["dc:title[0].value"] == "The Sample Dataset for WEKO"
-        assert processed_metadata["dc:title[0].language"] == "en"
-        assert processed_metadata["dc:title[1].value"] == "WEKO用サンプルデータセット"
-        assert processed_metadata["dc:title[1].language"] == "ja"
-        assert processed_metadata["dc:type.@id"] == "http://purl.org/coar/resource_type/c_6501"
-        assert processed_metadata["dc:type.name"] == "journal article"
-        assert processed_metadata["creator[0].affiliation.name"] == "University of Manchester"
-        assert processed_metadata["hasPart[0].@id"] == "data/sample.rst"
-        assert processed_metadata["hasPart[0].name"] == "sample.rst"
-        assert processed_metadata["hasPolicy[0].permission[0].duty[0].assignee"] == "http://example.org/rightsholder"
-        assert processed_metadata["wk:saveAsIs"] == False
-        assert not any("@type" in key for key in processed_metadata.keys())
+        assert metadata["@id"] == "./"
+        assert metadata["name"] == "The Sample Dataset for WEKO"
+        assert metadata["description"] == "This is a sample dataset for WEKO in order to demonstrate the RO-Crate metadata."
+        assert metadata["datePublished"] == "2021-10-15"
+        assert metadata["dc:title[0].value"] == "The Sample Dataset for WEKO"
+        assert metadata["dc:title[0].language"] == "en"
+        assert metadata["dc:title[1].value"] == "WEKO用サンプルデータセット"
+        assert metadata["dc:title[1].language"] == "ja"
+        assert metadata["dc:type.@id"] == "http://purl.org/coar/resource_type/c_6501"
+        assert metadata["dc:type.name"] == "journal article"
+        assert metadata["creator[0].affiliation.name"] == "University of Manchester"
+        assert metadata["hasPart[0].@id"] == "data/sample.rst"
+        assert metadata["hasPart[0].name"] == "sample.rst"
+        assert metadata["hasPolicy[0].permission[0].duty[0].assignee"] == "http://example.org/rightsholder"
+        assert metadata["wk:saveAsIs"] == False
+        assert not any("@type" in key for key in metadata.keys())
+
+        json_ld = json_data("data/jsonld/ro-crate-metadata2.json")
+        processed_metadatas, format = JsonLdMapper.process_json_ld(json_ld)
+        thesis =  processed_metadatas[0]
+        evidence = processed_metadatas[1]
+
+        assert format == "ro-crate"
+        assert thesis.id == "_:JournalPaper1"
+        assert thesis.link_data[0]["item_id"] == "_:EvidenceData1"
+        assert thesis.link_data[0]["sele_id"] == "isSupplementedBy"
+        assert thesis.link_data[1]["item_id"] == "https://example.repo.nii.ac.jp/records/123456789"
+        assert thesis.link_data[1]["sele_id"] == "isSupplementedBy"
+        assert thesis["@id"] == "_:JournalPaper1"
+        assert thesis["dc:title[0].value"] == "The Sample Dataset for WEKO"
+        assert thesis["dc:title[1].value"] == "WEKO用サンプルデータセット"
+        assert thesis["hasPart[0].wk:fullTextSearchable"] == True
+        assert thesis["dc:type.@id"] == "http://purl.org/coar/resource_type/c_6501"
+
+        assert evidence.id == "_:EvidenceData1"
+        assert evidence["@id"] == "_:EvidenceData1"
+        assert evidence["dc:title[0].value"] == "The Sample Dataset for WEKO, evidence part"
+        assert evidence["dc:title[1].value"] == "WEKO用サンプルデータセットのエビデンス部分"
+        assert evidence["hasPart[0].wk:fullTextSearchable"] == False
+        assert evidence["dc:type.@id"] == "http://purl.org/coar/resource_type/c_1843"
+
+        with pytest.raises(ValueError) as ex:
+            processed_metadatas, format = JsonLdMapper.process_json_ld({})
+        ex.match('Invalid json-ld format: "@context" is invalid.')
 
     # def to_item_metadata(self, json_ld):
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_to_item_metadata -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
@@ -4692,9 +4721,10 @@ class TestJsonLdMapper:
 
             mapper = JsonLdMapper(item_type2.model.id, json_mapping)
 
-            item_metadata, format = mapper.to_item_metadata(json_ld)
+            item_metadatas, format = mapper.to_item_metadata(json_ld)
 
-            print(f"item_metadata: {item_metadata}")
+            print(f"item_metadata: {item_metadatas}")
+            item_metadata = item_metadatas[0]
             assert format == "ro-crate"
             assert item_metadata["pubdate"] == "2021-10-15"
             assert item_metadata["path"] == [1623632832836]

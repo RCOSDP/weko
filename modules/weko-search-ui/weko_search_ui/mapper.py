@@ -1193,11 +1193,11 @@ class JsonMapper(BaseMapper):
                 item_map: Mapping information about ItemType.
 
             Examples:
-                For example, in the case of “Title of BioSample of ItemType”,
+                For example, in the case of “Title of Default ItemType”,
                 it would be as follows.
 
-                KEY: title.Title
-                VALUE: item_1723710826523.subitem_1551255647225
+                KEY: Title.タイトル
+                VALUE: item_30001_title0.subitem_title
         """
 
         item_map = {}
@@ -1240,6 +1240,12 @@ class JsonMapper(BaseMapper):
                 property_type = properties[p].get("type")
         return property_type
 
+    class _InformedMetadata(dict):
+        """Meatadata with identifier."""
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.id = None
+            self.link_data = []
 
 class JsonLdMapper(JsonMapper):
     """JsonLdMapper."""
@@ -1257,18 +1263,26 @@ class JsonLdMapper(JsonMapper):
         Args:
             json_ld (dict): metadata with json-ld format.
         Returns:
-            dict: mapped metadata.
+            list[dict]: list of mapped metadata.
         """
-        metadata, format = JsonLdMapper.process_json_ld(json_ld)
+        metadatas, format = JsonLdMapper.process_json_ld(json_ld)
+        list_items = [ self._map_json_ld(metadata) for metadata in metadatas ]
+
+        return list_items, format
+
+    def _map_json_ld(self, metadata):
+        """Map json-ld to item type metadata."""
         item_map = self._create_item_map(detail=True)
-        # make map of json-ld key to itemtype metadata key
         properties_mapping = {
+            # make map of json-ld key to itemtype metadata key
             ld_key: item_map.get(prop_name)
                 for prop_name, ld_key in self.json_mapping.items()
                 if prop_name in item_map
         }
 
-        mapped_metadata = {}
+        mapped_metadata = JsonMapper._InformedMetadata()
+        mapped_metadata.id = metadata.id
+        mapped_metadata.linl_data = metadata.link_data
         mapped_metadata.setdefault("publish_status", "private")
         mapped_metadata.setdefault("edit_mode", "Keep")
         fulltext_searchable = []
@@ -1313,15 +1327,18 @@ class JsonLdMapper(JsonMapper):
                 return
             if self._get_property_type(parent_prop_key) == "object":
                 print(f"{parent_prop_key} is object")
-                    sub_prop_object = parent.get(prop_props[0], {})
-                    _pick_metadata(
-                        sub_prop_object, meta_key, meta_path, meta_props[1:],
-                        prop_path, prop_props[1:]
-                    )
-                    parent.update({prop_props[0]: sub_prop_object})
+                sub_prop_object = parent.get(prop_props[0], {})
+                if index is not None:
+                    # TODO: pick first object
+                    return
+                _pick_metadata(
+                    sub_prop_object, meta_key, meta_path, meta_props[1:],
+                    prop_path, prop_props[1:]
+                )
+                parent.update({prop_props[0]: sub_prop_object})
 
-                    pass
-                elif self._get_property_type(parent_prop_key) == "array":
+                pass
+            elif self._get_property_type(parent_prop_key) == "array":
                 sub_prop_array = parent.get(prop_props[0], [])
                 index = 0 if index is None else index
                 if len(sub_prop_array) <= index:
@@ -1331,7 +1348,7 @@ class JsonLdMapper(JsonMapper):
                     prop_path, prop_props[1:]
                 )
                 parent.update({prop_props[0]: sub_prop_array})
-                return
+            return
 
         for meta_key in metadata:
             meta_path = re.sub(r"\[\d+\]", "", meta_key)
@@ -1379,7 +1396,7 @@ class JsonLdMapper(JsonMapper):
         #     "item_1617258105262": {...},
         #     ...
         # }
-        return mapped_metadata, format
+        return mapped_metadata
 
     def to_rocrate(self):
         pass
@@ -1388,52 +1405,92 @@ class JsonLdMapper(JsonMapper):
     def process_json_ld(json_ld):
         """Process json-ld.
 
-        Make metadata json-ld data flat.
-        Pick up metadata from @graph and resolve links
+        Deconstructing json-ld metadata values ​​one by one
         to be able to use in mapping to WEKO item type.
+        If json-ld is in RO-Crate format, resolve links and
+        pick up metadata from @graph and resolve links.
 
         Note:
             SWORDBagIt metadata format is not supported yet.
 
         Args:
-            json_ld (dict): Json-ld data.
+            json_ld (dict): Json-ld in SWORD BagIt or RO-Crate format.
 
         Returns:
-            dict: Processed json data.
+            list[dict]: Processed json data list.
+
+        Raises:
+            ValueError: Invalid json-ld format.
+
+        Examples:
+
+            >>> json_ld = {
+            ...   "@context": "https://w3id.org/ro/crate/1.1/context",
+            ...   "@graph": [
+            ...     {
+            ...       "@id": "./",
+            ...       "dc:title": {
+            ...         "value": "Title"
+            ...         "language": "en"
+            ...       },
+            ...       "dc:creator": [
+            ...         {
+            ...           "@id": "https://orcid.org/0000-0002-1825-0097"
+            ...         },
+            ...         {
+            ...           "@id": "https://orcid.org/0000-0002-1825-0098"
+            ...         }
+            ...       ]
+            ...     }
+            ...   ]
+            ... }
+            >>> JsonLdMapper.process_json_ld(json_ld)
+            [
+              {
+                "dc.title.value": "Title",
+                "dc.title.language": "en",
+                "dc.creator[0].@id": "https://orcid.org/0000-0002-1825-0097",
+                "dc.creator[1].@id": "https://orcid.org/0000-0002-1825-0098"
+              }
+            ]
         """
-        metadata = {}
+        extracted = {}
         context = json_ld.get("@context", "")
         format = ""
-        # check if the json-ld context is valid
+        # Check if the json-ld context is valid
         if "https://swordapp.github.io/swordv3/swordv3.jsonld" in context:
             # TODO: support SWORD json-ld format
             format = "sword-bagit"
-            pass
+            extracted = json_ld
         elif (
             "https://w3id.org/ro/crate/1.1/context" in context
                 or isinstance(context, dict)
                 and "https://w3id.org/ro/crate/1.1/context" in context.values()
             ):
-            # check structure of RO-Crate json-ld
+            # Check structure of RO-Crate json-ld
             format = "ro-crate"
             if "@graph" not in json_ld or not isinstance(json_ld.get("@graph"), list):
                 raise ValueError('Invalid json-ld format: "@graph" is not found.')
-            # transform list which contains @id to dict in @graph
+            # Convert the list containing @id in @graph to a dict
             for v in json_ld.get("@graph"):
                 if isinstance(v, dict) and "@id" in v:
-                    metadata.update({v["@id"]: v})
+                    extracted.update({v["@id"]: v})
                 else:
-                    raise ValueError('Invalid json-ld format: Objects without "@id" are directly under "@graph"')
+                    raise ValueError(
+                        'Invalid json-ld format: Objects without "@id" '
+                        'are directly under "@graph"'
+                    )
         else:
-            raise ValueError('Invalid json-ld format: "@context" is not found.')
-        if metadata is None:
+            raise ValueError('Invalid json-ld format: "@context" is invalid.')
+        if not extracted:
             raise ValueError("Invalid json-ld format: Metadata is not found.")
 
 
         def _resolve_link(parent, key, value):
+            """Resolve links in json-ld metadata and restore hierarchy."""
             if isinstance(value, dict):
-                if len(value) == 1 and "@id" in value and value["@id"] in metadata:
-                    parent[key] = metadata[value["@id"]]
+                if len(value) == 1 and "@id" in value and value["@id"] in extracted:
+                    parent[key] = extracted[value["@id"]]
                 else:
                     for k, v in value.items():
                         _resolve_link(value, k, v)
@@ -1442,39 +1499,52 @@ class JsonLdMapper(JsonMapper):
                     _resolve_link(value, i, v)
 
         # Restore metadata to tree structure by tracing "@id" in linked data
-        for key, value in metadata.items():
-            _resolve_link(metadata, key, value)
+        for key, value in extracted.items():
+            _resolve_link(extracted, key, value)
 
-        processed_metadata = {}
-
-        def _parse_metadata(parent, key, value):
+        def _deconstruct_metadata(metadata, parent, key, value):
+            """Deconstruct json-ld metadata values."""
             if "@type" in key:
                 return
             if isinstance(value, dict):
                 for k, v in value.items():
                     key_name = key if parent == "" else f"{parent}.{key}"
-                    _parse_metadata(key_name, k, v)
+                    _deconstruct_metadata(metadata, key_name, k, v)
             elif isinstance(value, list):
                 for i, d in enumerate(value):
                     key_name = f"{key}[{i}]" if parent == "" else f"{parent}.{key}[{i}]"
                     if isinstance(d, dict):
                         for k, v in d.items():
-                            _parse_metadata(key_name, k, v)
+                            _deconstruct_metadata(metadata, key_name, k, v)
                     else:
-                        processed_metadata[key_name] = d
+                        metadata[key_name] = d
             else:
                 key_name = key if parent == "" else f"{parent}.{key}"
-                processed_metadata[key_name] = value
+                metadata[key_name] = value
 
-        # Get the root of the metadata tree structure
-        root = metadata.get(
-            current_app.config["WEKO_SWORDSERVER_METADATA_FILE_ROCRATE"]
-            ).get("about").get("@id")
-        if not root in metadata:
-            msg = "Invalid json-ld format: Root object is not found."
-            raise ValueError(msg)
+        list_extracted = []
+        if format == "ro-crate":
+            extracted = extracted.get(
+                current_app.config["WEKO_SWORDSERVER_METADATA_FILE_ROCRATE"]
+            ).get("about")
+            if extracted.get("wk:is_splited", False) and "hasPart" in extracted:
+                # get each metadata part in "hasPart"
+                list_extracted = [ part for part in extracted.get("hasPart") ]
+            else:
+                list_extracted = [ extracted ]
+        else:
+            list_extracted = [ extracted ]
 
-        for key, value in metadata.get(root).items():
-            _parse_metadata("", key, value)
+        processed_metadatas = []
+        for extracted in list_extracted:
+            metadata = JsonMapper._InformedMetadata()
+            for key, value in extracted.items():
+                _deconstruct_metadata(metadata, "", key, value)
+            metadata.id = extracted["@id"]
+            metadata.link_data = [
+                {"item_id": link.get("identifier"), "sele_id" : link.get("value")}
+                    for link in extracted.get("wk:itemLinks", [])
+            ]
+            processed_metadatas.append(metadata)
 
-        return processed_metadata, format
+        return processed_metadatas, format
