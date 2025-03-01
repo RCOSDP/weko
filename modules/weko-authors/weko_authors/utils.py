@@ -27,10 +27,13 @@ import io
 import sys
 import tempfile
 import traceback
+from time import sleep
 from copy import deepcopy
 from functools import reduce
 from operator import getitem
 from sys import stdout
+from sqlalchemy.exc import SQLAlchemyError
+from redis.exceptions import RedisError
 
 from flask import current_app
 from flask_babelex import gettext as _
@@ -141,6 +144,14 @@ def save_export_url(start_time, end_time, file_uri):
     current_cache.set(WEKO_AUTHORS_EXPORT_CACHE_URL_KEY, data, timeout=0)
     return data
 
+def handle_exception(ex, attempt, retrys, interval):
+    """Handle exceptions during the export process."""
+    current_app.logger.error(ex)
+    # 最後のリトライの場合は例外をraise
+    if attempt == retrys - 1:
+        return 0
+    current_app.logger.info(f"Connection failed, retrying in {interval} seconds...")
+    sleep(interval)
 
 def export_authors():
     """Export all authors."""
@@ -182,9 +193,78 @@ def export_authors():
         db.session.rollback()
         current_app.logger.error(ex)
         traceback.print_exc(file=stdout)
-
+    current_cache.set(
+        current_app.config.get("WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY"),
+        "author_db",
+        timeout=0
+    )
+    
     return file_uri
 
+def export_prefix(target):
+    file_uri = None
+    retrys = current_app.config["WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY"]
+    interval = current_app.config["WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL"]
+    target_db_name = "author_prefix_settings" if target == "id_prefix" else "author_affiliation_settings"
+    row_first = [f"#{target_db_name}author_prefix_settings"]
+    row_header = ["#scheme", "name", "url", "is_deleted"]
+    row_label_en = ["#Scheme", "Name", "URL", "Delete Flag"]
+    row_label_jp = ["#スキーム", "名前", "URL", "削除フラグ"]
+
+    for attempt in range(retrys):
+        try:
+            if target == "id_prefix":
+                prefix = WekoAuthors.get_id_prefix_all()
+            elif target == "affiliation_id":
+                prefix = WekoAuthors.get_affiliation_id_all()
+            row_data = WekoAuthors.prepare_export_prefix(target, prefix)
+            # write file data to a stream
+            file_io = io.StringIO()
+            if current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower() == 'csv':
+                writer = csv.writer(file_io, delimiter=',',
+                                    quotechar='"', quoting=csv.QUOTE_MINIMAL,
+                                    lineterminator='\n')
+            else:
+                writer = csv.writer(file_io, delimiter='\t',
+                                    quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            writer.writerows([row_first, row_header, row_label_en, row_label_jp, *row_data])
+            reader = io.BufferedReader(io.BytesIO(
+                file_io.getvalue().encode("utf-8-sig")))
+
+            # save data into location
+            cache_url = get_export_url()
+            if not cache_url:
+                file = FileInstance.create()
+                file.set_contents(
+                    reader, default_location=Location.get_default().uri)
+            else:
+                file = FileInstance.get_by_uri(cache_url['file_uri'])
+                file.writable = True
+                file.set_contents(reader)
+            file_uri = file.uri if file else None
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            handle_exception(ex, attempt, retrys, interval)
+        except RedisError as ex:
+            handle_exception(ex, attempt, retrys, interval)
+        except TimeoutError as ex:
+            handle_exception(ex, attempt, retrys, interval)
+    current_cache.set(
+        current_app.config.get("WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY"),
+        target,
+        timeout=0
+    )
+    return file_uri
+
+def check_file_name(export_target):
+    file_base_name = ""
+    if export_target == "author_db":
+        file_base_name = current_app.config.get('WEKO_AUTHORS_EXPORT_FILE_NAME')
+    elif export_target == "id_prefix":
+        file_base_name = current_app.config.get('WEKO_AUTHORS_ID_PREFIX_EXPORT_FILE_NAME')
+    elif export_target == "affiliation_id":
+        file_base_name = current_app.config.get('WEKO_AUTHORS_AFFILIATION_EXPORT_FILE_NAME')
+    return file_base_name
 
 def check_import_data(file_name: str, file_content: str):
     """Validation importing tsv/csv file.

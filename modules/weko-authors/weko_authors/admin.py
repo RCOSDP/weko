@@ -31,6 +31,7 @@ from flask.json import jsonify
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_files_rest.models import FileInstance
+from invenio_cache import current_cache
 from weko_workflow.utils import update_cache_data
 
 from .config import WEKO_AUTHORS_EXPORT_FILE_NAME, \
@@ -38,7 +39,7 @@ from .config import WEKO_AUTHORS_EXPORT_FILE_NAME, \
 from .permissions import author_permission
 from .tasks import check_is_import_available, export_all, import_author
 from .utils import check_import_data, delete_export_status, \
-    get_export_status, get_export_url, set_export_status
+    get_export_status, get_export_url, set_export_status, check_file_name
 
 
 class AuthorManagementView(BaseView):
@@ -107,8 +108,10 @@ class ExportView(BaseView):
         data = get_export_url()
         if data.get('file_uri'):
             file_instance = FileInstance.get_by_uri(data.get('file_uri'))
+            export_target = current_cache.get(current_app.config['WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY'])
+            base_file_name = check_file_name(export_target)
             file_name = "{}_{}.{}".format(
-                WEKO_AUTHORS_EXPORT_FILE_NAME,
+                base_file_name,
                 file_instance.updated.strftime("%Y%m%d%H%M"),
                 current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
             )
@@ -144,8 +147,11 @@ class ExportView(BaseView):
         status['filename'] = ''
         file_instance = FileInstance.get_by_uri(status.get('file_uri', ''))
         if file_instance:
+            # export_targetによってfilenameを変更
+            export_target = current_cache.get(current_app.config['WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY'])
+            base_file_name = check_file_name(export_target)
             status['filename'] = "{}_{}.{}".format(
-                WEKO_AUTHORS_EXPORT_FILE_NAME,
+                base_file_name,
                 file_instance.updated.strftime("%Y%m%d%H%M"),
                 current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
             )
@@ -164,9 +170,8 @@ class ExportView(BaseView):
     def export(self):
         """Process export authors."""
         data = request.get_json()
-        print(data.get("isTarget",""))
-        
-        task = export_all.delay()
+        export_target = data.get("isTarget","")
+        task = export_all.delay(export_target)
         set_export_status(task_id=task.id)
         return jsonify({
             'code': 200,

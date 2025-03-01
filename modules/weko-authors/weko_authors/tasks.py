@@ -30,16 +30,20 @@ from weko_workflow.utils import delete_cache_data, get_cache_data
 from weko_authors.config import WEKO_AUTHORS_IMPORT_CACHE_KEY
 
 from .utils import export_authors, import_author_to_system, save_export_url, \
-    set_export_status
+    set_export_status, export_prefix
 
 
 @shared_task
-def export_all():
+def export_all(export_target):
     """Export all creator."""
     try:
         start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         set_export_status(start_time=start_time)
-        file_uri = export_authors()
+        file_uri = None
+        if export_target == "author_db":
+            file_uri = export_authors()
+        elif export_target == "id_prefix" or export_target == "affiliation_id":
+            file_uri = export_prefix(export_target)
         if file_uri:
             end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             save_export_url(start_time, end_time, file_uri)

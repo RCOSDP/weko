@@ -181,6 +181,28 @@ class WekoAuthors(object):
         return result
 
     @classmethod
+    def get_id_prefix_all(cls):
+        """Get all id_prefix."""
+        filters = []
+        with db.session.no_autoflush:
+            query = AuthorsPrefixSettings.query
+            query = query.order_by(AuthorsPrefixSettings.id)
+
+            return query.all()
+        
+    @classmethod
+    def get_affiliation_id_all(cls):
+        """Get all affiliation_id."""
+        filters = []
+        with db.session.no_autoflush:
+            query = AuthorsAffiliationSettings.query
+            query = query.order_by(AuthorsAffiliationSettings.id)
+
+            return query.all()
+
+
+
+    @classmethod
     def prepare_export_data(cls, mappings, authors, schemes):
         """Prepare export data of all authors."""
         row_header = []
@@ -275,3 +297,17 @@ class WekoAuthors(object):
             row_data.append(row)
 
         return row_header, row_label_en, row_label_jp, row_data
+
+    @classmethod
+    def prepare_export_prefix(cls, target_prefix, prefixes):
+        """Prepare export data of id_prefix, affiliation_id."""
+        row_data = []
+
+        for prefix in prefixes:
+            # 著者識別子のプレフィックスはWEKOのものは除外
+            if target_prefix == "id_prefix" and prefix.scheme == "WEKO":
+                continue
+            row = [prefix.scheme, prefix.name, prefix.url]
+            row_data.append(row)
+
+        return row_data
