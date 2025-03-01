@@ -206,7 +206,7 @@ def export_prefix(target):
     retrys = current_app.config["WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY"]
     interval = current_app.config["WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL"]
     target_db_name = "author_prefix_settings" if target == "id_prefix" else "author_affiliation_settings"
-    row_first = [f"#{target_db_name}author_prefix_settings"]
+    row_first = [f"#{target_db_name}"]
     row_header = ["#scheme", "name", "url", "is_deleted"]
     row_label_en = ["#Scheme", "Name", "URL", "Delete Flag"]
     row_label_jp = ["#スキーム", "名前", "URL", "削除フラグ"]
