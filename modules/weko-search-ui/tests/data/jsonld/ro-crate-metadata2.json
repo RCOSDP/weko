@@ -356,7 +356,7 @@
         "@id": "https://example.repo.nii.ac.jp/records/123456789/files/sample.rst"
       },
       "version": "1.0",
-      "wk:fullTextSearchable": true,
+      "wk:textExtraction": true,
       "wk:accessMode": "open_access"
     },
     {
@@ -372,7 +372,7 @@
         "@id": "https://example.repo.nii.ac.jp/records/123456789/files/data.csv"
       },
       "version": "1.0",
-      "wk:fullTextSearchable": false,
+      "wk:textExtraction": false,
       "wk:accessMode": "open_date",
       "datePublished": "2024-11-22"
     },

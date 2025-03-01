@@ -4659,6 +4659,8 @@ class TestJsonLdMapper:
         metadata =  processed_metadatas[0]
 
         assert format == "ro-crate"
+        assert metadata.non_extract == ["data/data.csv"]
+        assert metadata.save_as_is == False
         assert metadata["@id"] == "./"
         assert metadata["name"] == "The Sample Dataset for WEKO"
         assert metadata["description"] == "This is a sample dataset for WEKO in order to demonstrate the RO-Crate metadata."
@@ -4673,7 +4675,6 @@ class TestJsonLdMapper:
         assert metadata["hasPart[0].@id"] == "data/sample.rst"
         assert metadata["hasPart[0].name"] == "sample.rst"
         assert metadata["hasPolicy[0].permission[0].duty[0].assignee"] == "http://example.org/rightsholder"
-        assert metadata["wk:saveAsIs"] == False
         assert not any("@type" in key for key in metadata.keys())
 
         json_ld = json_data("data/jsonld/ro-crate-metadata2.json")
@@ -4690,14 +4691,17 @@ class TestJsonLdMapper:
         assert thesis["@id"] == "_:JournalPaper1"
         assert thesis["dc:title[0].value"] == "The Sample Dataset for WEKO"
         assert thesis["dc:title[1].value"] == "WEKO用サンプルデータセット"
-        assert thesis["hasPart[0].wk:fullTextSearchable"] == True
+        assert thesis["hasPart[0].wk:textExtraction"] == True
         assert thesis["dc:type.@id"] == "http://purl.org/coar/resource_type/c_6501"
 
         assert evidence.id == "_:EvidenceData1"
+        assert evidence.link_data[0]["item_id"] == "_:JournalPaper1"
+        assert evidence.link_data[0]["sele_id"] == "isSupplementTo"
+        assert evidence.non_extract == ["data/data.csv"]
         assert evidence["@id"] == "_:EvidenceData1"
         assert evidence["dc:title[0].value"] == "The Sample Dataset for WEKO, evidence part"
         assert evidence["dc:title[1].value"] == "WEKO用サンプルデータセットのエビデンス部分"
-        assert evidence["hasPart[0].wk:fullTextSearchable"] == False
+        assert evidence["hasPart[0].wk:textExtraction"] == False
         assert evidence["dc:type.@id"] == "http://purl.org/coar/resource_type/c_1843"
 
         with pytest.raises(ValueError) as ex:
@@ -4726,6 +4730,8 @@ class TestJsonLdMapper:
             print(f"item_metadata: {item_metadatas}")
             item_metadata = item_metadatas[0]
             assert format == "ro-crate"
+            assert item_metadata.non_extract == ["data/data.csv"]
+            assert item_metadata.save_as_is == False
             assert item_metadata["pubdate"] == "2021-10-15"
             assert item_metadata["path"] == [1623632832836]
             assert item_metadata["publish_status"] == "public"

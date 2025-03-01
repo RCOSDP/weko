@@ -1246,6 +1246,8 @@ class JsonMapper(BaseMapper):
             super().__init__(*args, **kwargs)
             self.id = None
             self.link_data = []
+            self.non_extract = []
+            self.save_as_is = False
 
 class JsonLdMapper(JsonMapper):
     """JsonLdMapper."""
@@ -1283,13 +1285,14 @@ class JsonLdMapper(JsonMapper):
         mapped_metadata = JsonMapper._InformedMetadata()
         mapped_metadata.id = metadata.id
         mapped_metadata.linl_data = metadata.link_data
+        mapped_metadata.non_extract = metadata.non_extract
+        mapped_metadata.save_as_is = metadata.save_as_is
         mapped_metadata.setdefault("publish_status", "private")
         mapped_metadata.setdefault("edit_mode", "Keep")
-        fulltext_searchable = []
         missing_metadata = {}
 
         def _pick_metadata(
-            parent:dict, meta_key, meta_path, meta_props,
+            parent, meta_key, meta_path, meta_props,
             prop_path, prop_props
         ):
             # meta_key="dc:type.@id", meta_path="dc:type.@id, meta_props=["dc:type", "@id"]
@@ -1356,12 +1359,6 @@ class JsonLdMapper(JsonMapper):
                 path = mapped_metadata.get("path", [])
                 path.append(int(metadata.get(meta_key)))
                 mapped_metadata["path"] = path
-            elif "wk:fullTextSearchable" in meta_path:
-                flag = metadata.get(meta_key)
-                if not flag:
-                    fulltext_searchable.append(
-                        int(meta_key.replace("hasPart[", "").split("]")[0])
-                    )
             elif "wk:publishStatus" in meta_path:
                 mapped_metadata["publish_status"] = metadata.get(meta_key)
             elif "wk:editMode" in meta_path:
@@ -1545,6 +1542,11 @@ class JsonLdMapper(JsonMapper):
                 {"item_id": link.get("identifier"), "sele_id" : link.get("value")}
                     for link in extracted.get("wk:itemLinks", [])
             ]
+            metadata.non_extract = [
+                file["@id"] for file in extracted.get("hasPart", [])
+                    if not file.get("wk:textExtraction", True)
+            ]
+            metadata.save_as_is = extracted.get("wk:saveAsIs", False)
             processed_metadatas.append(metadata)
 
         return processed_metadatas, format
