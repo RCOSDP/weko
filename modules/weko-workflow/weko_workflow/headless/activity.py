@@ -38,6 +38,7 @@ from ..utils import (
     check_authority_by_admin,
     delete_lock_activity_cache,
     delete_user_lock_activity_cache,
+    get_identifier_setting,
     update_cache_data
 )
 from ..views import (
@@ -488,18 +489,24 @@ class HeadlessActivity(WorkActivity):
             current_app.logger.error(f"failed in Item Link: {result.json.get('msg')}")
             raise WekoWorkflowException(result.json.get("msg"))
 
-    def identifier_grant(self, grant_data):
+    def identifier_grant(self, grant_data=None):
         """Action for Identifier Grant."""
         self._user_lock()
         locked_value = self._activity_lock()
 
         grant_data = grant_data or {}
-        """ FIXME: get prefix from weko_admin.models.Identifier into '##' """
+        identifier_setting = get_identifier_setting(self.community or "Root Index")
+        text_empty = "<Empty>"
+
         grant_data.setdefault("identifier_grant", "0")
-        grant_data.setdefault("identifier_grant_jalc_doi_suffix", f"https://doi.org/{'##'}/{self.recid}")
-        grant_data.setdefault("identifier_grant_jalc_cr_doi_suffix", f"https://doi.org/{'##'}/{self.recid}")
-        grant_data.setdefault("identifier_grant_jalc_dc_doi_suffix", f"https://doi.org/{'##'}/{self.recid}")
-        grant_data.setdefault("identifier_grant_ndl_jalc_doi_suffix", f"https://doi.org/{'##'}/{self.recid}")
+        grant_data.setdefault("identifier_grant_jalc_doi_suffix",
+            f"https://doi.org/{identifier_setting.jalc_doi or text_empty}/{self.recid}")
+        grant_data.setdefault("identifier_grant_jalc_cr_doi_suffix",
+            f"https://doi.org/{identifier_setting.jalc_crossref_doi or text_empty}/{self.recid}")
+        grant_data.setdefault("identifier_grant_jalc_dc_doi_suffix",
+            f"https://doi.org/{identifier_setting.jalc_datacite_doi or text_empty}/{self.recid}")
+        grant_data.setdefault("identifier_grant_ndl_jalc_doi_suffix",
+            f"https://doi.org/{identifier_setting.ndl_jalc_doi or text_empty}/{self.recid}")
 
         try:
             # If not enough metadata, return to item registration and
