@@ -335,6 +335,9 @@ msgstr ""
 #~ msgid "There is duplicated data in the TSV file."
 #~ msgstr ""
 
+#~ msgid "The selected target table and the import file format are different."
+#~ msgstr ""
+
 #~ msgid ""
 #~ "The specified author has been deleted."
 #~ " Update author information with tsv "

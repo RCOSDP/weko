@@ -50,6 +50,10 @@
   <input id="select_file" type="hidden" value="{{ _('Select File') }}" />
   <input id="selected_file_name" type="hidden" value="{{ _('Selected file name') }}" />
   <input id="next" type="hidden" value="{{ _('Next') }}" />
+  <input id="import_target" type="hidden" value="{{_('Import target')}}" />
+  <input id="author_db_label" type="hidden" value="{{_('Author DB')}}" />
+  <input id="id_prefix_label" type="hidden" value="{{_('ID Prefix')}}" />
+  <input id="affiliation_id_label" type="hidden" value="{{_('Affiliation ID')}}" />
 
   <!-- import -->
   <input id="summary" type="hidden" value="{{ _('Summary') }}" />
@@ -78,6 +82,7 @@
   <input id="deleted" type="hidden" value="{{ _('Delete') }}" />
 
   <!-- error -->
+  <input id="different_format_file_for_target" type="hidden" value="{{ _('The selected target table and the import file format are different.') }}" />
   <input id="import_fail_error" type="hidden" value="{{ _('Failed to import.') }}" />
   <input id="delete_author_link" type="hidden" value="{{ _('The author is linked to items and cannot be deleted.') }}" />
   <input id="internal_server_error" type="hidden" value="{{ _('Internal server error') }}" />

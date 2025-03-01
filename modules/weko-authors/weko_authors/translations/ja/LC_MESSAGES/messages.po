@@ -256,6 +256,9 @@ msgstr ""
 #~ msgid "Select"
 #~ msgstr "選択"
 
+#~ msgid "Import target"
+#~ msgstr "インポート対象"
+
 #~ msgid "Result"
 #~ msgstr "結果"
 
@@ -364,6 +367,9 @@ msgstr ""
 
 #~ msgid "There is duplicated data in the {} file."
 #~ msgstr "{}ファイルの中に重複するデータがあります。"
+
+#~ msgid "The selected target table and the import file format are different."
+#~ msgstr "選択された登録対象テーブルとインポートファイルの形式が違います。"
 
 #~ msgid ""
 #~ "The specified author has been deleted."
