@@ -38,7 +38,7 @@ from .config import WEKO_AUTHORS_EXPORT_FILE_NAME, \
     WEKO_AUTHORS_IMPORT_CACHE_KEY
 from .permissions import author_permission
 from .tasks import check_is_import_available, export_all, import_author
-from .utils import check_import_data, delete_export_status, \
+from .utils import check_import_data, check_import_data_for_prefix, delete_export_status, \
     get_export_status, get_export_url, set_export_status, check_file_name
 
 
@@ -222,16 +222,24 @@ class ImportView(BaseView):
         """Validate author import."""
         error = None
         list_import_data = []
-
         json_data = request.get_json()
         if json_data:
-            result = check_import_data(
-                json_data.get('file_name'),
-                json_data.get('file').split(",")[-1]
-            )
-            error = result.get('error')
-            list_import_data = result.get('list_import_data')
-
+            target = json_data.get('target')
+            if target == 'author_db':
+                result = check_import_data(
+                    json_data.get('file_name'),
+                    json_data.get('file').split(",")[-1]
+                )
+                error = result.get('error')
+                list_import_data = result.get('list_import_data')
+            elif target == 'id_prefix' or target == 'affiliation_id':
+                result = check_import_data_for_prefix(
+                    target,
+                    json_data.get('file_name'),
+                    json_data.get('file').split(",")[-1]
+                )
+                print(result)
+        print(list_import_data)
         return jsonify(
             code=1,
             error=error,

@@ -304,7 +304,34 @@ def check_import_data(file_name: str, file_content: str):
 
     return result
 
+def check_import_data_for_prefix(target, file_name: str, file_content: str):
+    tmp_prefix = current_app.config['WEKO_AUTHORS_IMPORT_TMP_PREFIX']
+    temp_file = tempfile.NamedTemporaryFile(prefix=tmp_prefix)
+    result = {}
+    print("check_import_data_for_prefix")
+    try:
+        temp_file.write(base64.b64decode(file_content))
+        temp_file.flush()
 
+        file_format = file_name.split('.')[-1].lower()
+        file_data = unpackage_and_check_import_file_for_prefix(
+            file_format, file_name, temp_file.name)
+        print(file_data)
+        # result['list_import_data'] = validate_import_data_for_prefix(
+        #     file_format, file_data, target)
+    except Exception as ex:
+        error = _('Internal server error')
+        if isinstance(ex, UnicodeDecodeError):
+            error = ex.reason
+        elif ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                and ex.args[0].get('error_msg'):
+            error = ex.args[0].get('error_msg')
+        result['error'] = error
+        current_app.logger.error('-' * 60)
+        traceback.print_exc(file=sys.stdout)
+        current_app.logger.error('-' * 60)
+
+    return result
 def getEncode(filepath):
     """
     getEncode [summary]
@@ -503,6 +530,103 @@ def validate_import_data(file_format, file_data, mapping_ids, mapping):
 
     return file_data
 
+
+def unpackage_and_check_import_file_for_prefix(file_format, file_name, temp_file):
+    from weko_search_ui.utils import handle_check_consistence_with_mapping, \
+        handle_check_duplication_item_id, parse_to_json_form
+    header = []
+    file_data = []
+    current_app.logger.debug("temp_file:{}".format(temp_file))
+    prefix_mapping_key = current_app.config['WEKO_AUTHORS_FILE_MAPPING_FOR_PREFIX']
+    enc = getEncode(temp_file)
+    with open(temp_file, 'r', newline="", encoding=enc) as file:
+        if file_format == 'csv':
+            file_reader = csv.reader(file, dialect='excel', delimiter=',')
+        else:
+            file_reader = csv.reader(file, dialect='excel', delimiter='\t')
+        try:
+            for num, data_row in enumerate(file_reader, start=1):
+                if num ==2:
+                    header = data_row
+                    header[0] = header[0].replace('#', '', 1)
+                    duplication_ids = \
+                        handle_check_duplication_item_id(header)
+                    if duplication_ids:
+                        msg = _(
+                            'The following metadata keys are duplicated.'
+                            '<br/>{}')
+                        raise Exception({
+                            'error_msg':
+                                msg.format('<br/>'.join(duplication_ids))
+                        })
+                    not_consistent_list = \
+                        handle_check_consistence_with_mapping_for_prefix(
+                            prefix_mapping_key, header)
+                    if not_consistent_list:
+                        msg = _('Specified item does not consistency '
+                                'with DB item.<br/>{}')
+                        raise Exception({
+                            'error_msg': msg.format(
+                                '<br/>'.join(not_consistent_list))
+                        })
+                elif num in [3, 4] and data_row[0].startswith('#'):
+                    continue
+                elif num > 4:
+                    pass
+                    tmp_data ={}
+                    try:
+                        for num, data in enumerate(data_row, start=0):
+                            tmp_data[header[num]] = data
+                        print(tmp_data)
+                    except Exception({
+                            'error_msg': _('Cannot read {} file correctly.').format(file_format.upper())
+                        }) as ex:
+                        raise ex
+                    file_data.append(tmp_data)
+        except UnicodeDecodeError as ex:
+            ex.reason = _('{} could not be read. Make sure the file'
+                          + ' format is {} and that the file is'
+                          + ' UTF-8 encoded.').format(file_name, file_format.upper())
+            raise ex
+        except Exception as ex:
+            raise ex
+    return file_data
+            
+
+def handle_check_consistence_with_mapping_for_prefix(keys, header):
+    """Check consistence with mapping."""
+    not_consistent_list = []
+    for item in header:
+        if item not in keys:
+            not_consistent_list.append(item)
+    return not_consistent_list
+
+def validate_import_data_for_prefix(file_format, file_data, target):
+    """
+    tsvからのデータを以下の観点でチェックする。
+    ・キーschemeが空かどうか
+    ・キーnameが空かどうか
+    ・urlがURLの記述でない
+    ・作成か更新か削除か
+        ・schemeが既に存在する場合、更新
+        ・存在しないschemeの場合、作成
+        ・is_deletedがDの場合、削除
+    ・targetがid_prefixの時、schemeにWEKOが入力がされているか
+    ・schemeで同じ値が二回出てきているか
+    ・削除の際に、そのschemeが存在するかどうか
+    ・削除の際に、その指定されたschemeが使用されているかどうか
+
+    Args:
+        file_format (_type_): _description_
+        file_data (_type_): _description_
+        target (_type_): _description_
+    """
+    if target == "id_prefix":
+        existed_prefix = WekoAuthors.get_id_prefix_all()
+    elif target == "affiliation_id":
+        existed_prefix = WekoAuthors.get_affiliation_id_all()
+
+    list_import_scheme = []
 
 def get_values_by_mapping(keys, data, parent_key=None):
     """Get values folow by mapping."""

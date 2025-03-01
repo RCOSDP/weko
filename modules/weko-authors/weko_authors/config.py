@@ -195,6 +195,8 @@ WEKO_AUTHORS_FILE_MAPPING = [
     }
 ]
 
+WEKO_AUTHORS_FILE_MAPPING_FOR_PREFIX =["scheme", "name", "url", "is_deleted"]
+
 WEKO_AUTHORS_ADMIN_IMPORT_TEMPLATE = 'weko_authors/admin/author_import.html'
 """Template for the import page."""
 
