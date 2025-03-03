@@ -4,22 +4,24 @@ document.addEventListener('DOMContentLoaded', function () {
   const sortItemSelect = document.getElementById('sort_item');
   const sortOrderSelect = document.getElementById('sort_order');
   const itemsPerPageSelect = document.getElementById('items_per_page');
-  const table = document.querySelector('.table.table-striped.table-bordered');
-  const tableBody = table.querySelector('tbody') || document.createElement('tbody');
+  const groupYearButton = document.getElementById('groupYearicon');
+  const itemListContainer = document.getElementById('itemListContainer');
   const pagination = document.querySelector('.pagination');
 
-  if (!sortItemSelect || !sortOrderSelect || !itemsPerPageSelect || !pagination) {
+  if (!sortItemSelect || !sortOrderSelect || !itemsPerPageSelect || !groupYearButton || !itemListContainer || !pagination) {
     console.error('必要な要素が見つかりません');
     return;
   }
 
   let currentPage = 1;
-  let itemsPerPage = parseInt(itemsPerPageSelect.value) || 20;
+  let itemsPerPage = parseInt(itemsPerPageSelect.value) || 2;
+  let isGroupedByYear = false;
 
-  // workspaceItemListが空の場合、既存のテーブルからデータを抽出
+  // 初期データの抽出
   let items = workspaceItemList;
   if (items.length === 0) {
-    items = Array.from(tableBody.querySelectorAll('tr')).map(row => {
+    const table = itemListContainer.querySelector('.table');
+    items = Array.from(table.querySelectorAll('tr')).map(row => {
       const titleLink = row.querySelector('td:nth-child(2) strong a');
       const authorSpan = row.querySelector('td:nth-child(2) span:nth-child(2)');
       const metaSpan = row.querySelector('td:nth-child(2) span:nth-child(3)');
@@ -48,12 +50,11 @@ document.addEventListener('DOMContentLoaded', function () {
         itemStatus: statusSpan ? statusSpan.textContent : '',
         favoriteSts: favoriteMount ? JSON.parse(favoriteMount.dataset.favoriteSts) : false,
         readSts: readMount ? JSON.parse(readMount.dataset.readSts) : false,
-        relation: [] // relationフィールドがない場合に備えて空配列を設定（必要に応じて調整）
+        relation: []
       };
     });
   }
 
-  // FavoriteButton Reactコンポーネント
   const FavoriteButton = ({ itemRecid, initialFavoriteSts, type }) => {
     const [isFavorite, setIsFavorite] = React.useState(initialFavoriteSts);
     const handleFavoriteToggle = async () => {
@@ -86,7 +87,6 @@ document.addEventListener('DOMContentLoaded', function () {
     );
   };
 
-  // ReadButton Reactコンポーネント
   const ReadButton = ({ itemRecid, initialReadSts, type }) => {
     const [isRead, setIsRead] = React.useState(initialReadSts);
     const handleReadToggle = async () => {
@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function () {
     );
   };
 
-  // ボタンをマウントする関数
+  // ボタンのマウント
   function mountButtons() {
     document.querySelectorAll('.favorite-mount-point').forEach(mountPoint => {
       const itemRecid = mountPoint.dataset.itemRecid;
@@ -142,42 +142,29 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // 関連ボタンの展開機能を追加
+  // 関連ボタンのバインド
   function bindRelatedButtons() {
     const buttons = document.querySelectorAll('.relatedButton');
     buttons.forEach(button => {
       button.addEventListener('click', function () {
         const content = this.closest('td').querySelector('.relatedInfo');
         if (content) {
-          if (content.classList.contains('expanded')) {
-            content.classList.remove('expanded');
-            content.style.display = 'none';
-          } else {
-            content.classList.add('expanded');
-            content.style.display = 'block';
-          }
+          content.style.display = content.style.display === 'block' ? 'none' : 'block';
         }
       });
     });
   }
 
-  // テーブルをレンダリングする関数
-  function renderTable(items) {
-    tableBody.innerHTML = '';
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = Math.min(startIndex + itemsPerPage, items.length);
-    const currentItems = items.slice(startIndex, endIndex);
+  // 単一アイテムのHTML生成
+  function generateItemRow(item) {
+    const relatedInfoHtml = item.relation && item.relation.length > 0
+      ? `<div class="relatedInfo" style="display: none;">${item.relation.map(relatedItem => 
+          `<span>${relatedItem.relationType} ${relatedItem.relationTitle}、<a href="${relatedItem.relationUrl}">${relatedItem.relationUrl}</a></span><br>`
+        ).join('')}</div>`
+      : '';
 
-    currentItems.forEach(item => {
-      const row = document.createElement('tr');
-      // relation データがアイテムに存在する場合、関連情報を動的に生成
-      const relatedInfoHtml = item.relation && item.relation.length > 0
-        ? `<div class="relatedInfo" style="display: none;">${item.relation.map(relatedItem => 
-            `<span>${relatedItem.relationType} ${relatedItem.relationTitle}、<a href="${relatedItem.relationUrl}">${relatedItem.relationUrl}</a></span><br>`
-          ).join('')}</div>`
-        : '';
-
-      row.innerHTML = `
+    return `
+      <tr>
         <td style="text-align: center; vertical-align: top;">
           <div class="favorite-mount-point" data-type="1" data-item-recid="${item.recid}" data-favorite-sts='${JSON.stringify(item.favoriteSts)}'></div><br>
           <div class="read-mount-point" data-type="2" data-item-recid="${item.recid}" data-read-sts='${JSON.stringify(item.readSts)}'></div><br>
@@ -232,17 +219,74 @@ document.addEventListener('DOMContentLoaded', function () {
             </svg>
           </a>
         </td>
-      `;
-      tableBody.appendChild(row);
+      </tr>
+    `;
+  }
+
+  // 年ごとのグループ表示
+  function renderGroupedByYear(items) {
+    itemListContainer.innerHTML = '';
+    const groupedItems = {};
+
+    // 年ごとにグループ化
+    items.forEach(item => {
+      const year = new Date(item.publicationDate).getFullYear();
+      if (!groupedItems[year]) groupedItems[year] = [];
+      groupedItems[year].push(item);
     });
 
-    // ページング後にボタンを再マウント
+    // 年を降順でソート
+    const sortedYears = Object.keys(groupedItems).sort((a, b) => b - a);
+
+    // ページング：年数に基づく
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, sortedYears.length);
+    const currentYears = sortedYears.slice(startIndex, endIndex);
+
+    // 現在のページの年とそのすべてのアイテムを表示
+    currentYears.forEach(year => {
+      const yearGroup = document.createElement('div');
+      yearGroup.className = 'year-group';
+      yearGroup.innerHTML = `<h3>${year}</h3>`;
+      const table = document.createElement('table');
+      table.className = 'table table-striped table-bordered';
+      table.style.tableLayout = 'auto';
+      const tbody = document.createElement('tbody');
+      groupedItems[year].forEach(item => {
+        tbody.innerHTML += generateItemRow(item);
+      });
+      table.appendChild(tbody);
+      yearGroup.appendChild(table);
+      itemListContainer.appendChild(yearGroup);
+    });
+
     mountButtons();
-    // 関連ボタンのイベントをバインド
     bindRelatedButtons();
   }
 
-  // アイテムをソートする関数
+  // 通常のテーブル表示
+  function renderTable(items) {
+    itemListContainer.innerHTML = '';
+    const table = document.createElement('table');
+    table.className = 'table table-striped table-bordered';
+    table.style.tableLayout = 'auto';
+    const tbody = document.createElement('tbody');
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, items.length);
+    const currentItems = items.slice(startIndex, endIndex);
+
+    currentItems.forEach(item => {
+      tbody.innerHTML += generateItemRow(item);
+    });
+
+    table.appendChild(tbody);
+    itemListContainer.appendChild(table);
+    mountButtons();
+    bindRelatedButtons();
+  }
+
+  // ソート機能
   function sortItems(items, field, order) {
     return items.sort((a, b) => {
       let fieldA, fieldB;
@@ -270,9 +314,9 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // ページングを更新する関数
-  function updatePagination(totalItems) {
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
+  // ページングの更新
+  function updatePagination(totalCount) {
+    const totalPages = Math.ceil(totalCount / itemsPerPage);
     pagination.innerHTML = `
       <li><a href="javascript:void(0)" class="get-pages" data-page="${currentPage - 1}"><</a></li>
     `;
@@ -296,26 +340,49 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // 表示を更新する関数
+  // 表示の更新
   function updateDisplay() {
     const sortedItems = sortItems([...items], sortItemSelect.value, sortOrderSelect.value);
-    renderTable(sortedItems);
-    updatePagination(items.length);
+    if (isGroupedByYear) {
+      renderGroupedByYear(sortedItems);
+      const groupedItems = {};
+      sortedItems.forEach(item => {
+        const year = new Date(item.publicationDate).getFullYear();
+        if (!groupedItems[year]) groupedItems[year] = [];
+        groupedItems[year].push(item);
+      });
+      updatePagination(Object.keys(groupedItems).length); // 年数に基づくページング
+    } else {
+      renderTable(sortedItems);
+      updatePagination(items.length); // アイテム数に基づくページング
+    }
   }
 
-  sortItemSelect.addEventListener('change', updateDisplay);
-  sortOrderSelect.addEventListener('change', updateDisplay);
-  itemsPerPageSelect.addEventListener('change', function () {
-    itemsPerPage = parseInt(this.value);
+  // グループボタンのクリックイベント：ページング選択を非活性化
+  groupYearButton.addEventListener('click', function () {
+    isGroupedByYear = !isGroupedByYear;
     currentPage = 1;
+    // 分グループ表示時にページ数を非活性化、解除時に活性化
+    itemsPerPageSelect.disabled = isGroupedByYear;
     updateDisplay();
   });
 
-  // 初期レンダリング
+  // イベントリスナー
+  sortItemSelect.addEventListener('change', updateDisplay);
+  sortOrderSelect.addEventListener('change', updateDisplay);
+  itemsPerPageSelect.addEventListener('change', function () {
+    if (!this.disabled) { // 非活性化されていない場合のみ変更を許可
+      itemsPerPage = parseInt(this.value);
+      currentPage = 1;
+      updateDisplay();
+    }
+  });
+
+  // 初期表示
   if (items.length > 0) {
     updateDisplay();
   } else {
-    mountButtons(); // サーバー側レンダリングの初期コンテンツを使用する場合、ボタンをマウント
-    bindRelatedButtons(); // 初期表示に関連ボタンのイベントをバインド
+    mountButtons();
+    bindRelatedButtons();
   }
 });

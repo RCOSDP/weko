@@ -98,9 +98,6 @@ def get_workspace_filterCon():
     """
     # print("======workspace def get_workspace_filterCon(): ======")
 
-    user_id = current_user.id
-    # print("user_id " + str(user_id))
-
     default_con = (
         WorkspaceDefaultConditions.query.filter_by(user_id=current_user.id)
         .with_entities(WorkspaceDefaultConditions.default_con)
@@ -112,19 +109,18 @@ def get_workspace_filterCon():
     return default_con
 
 
-# TODO 2.1.2.2 ESからアイテム一覧取得処理
+# 2.1.2.2 ESからアイテム一覧取得処理
 def get_es_itemlist(jsonCondition:json):
+    """Get the item list from Elasticsearch.
+
+    Args:
+        jsonCondition (json): _description_
+    """
 
     # print("======workspace def get_es_itemlist(jsonCondition:json): ======")
     # print(f"jsonCondition : {jsonCondition}")
 
-    # invenio_api_path = "/api/worksapce/search"
-    # invenio_api_path = "/api/worksapce/search?search_type=0&q=&page=1&size=20&sort=controlnumber&timestamp=1739758780268"
-    # invenio_api_path = "/api/worksapce/search?search_type=0&q=&page=1&size=20&sort=controlnumber"
-    # invenio_api_path = "/api/worksapce/search?search_type=0&q=&page=1&size=2&sort=controlnumber"
-    # invenio_api_path = "/api/worksapce/search?q=&page=1&size=20&sort=controlnumber"
-    invenio_api_path = "/api/worksapce/search?page=1&size=50&sort=-controlnumber"
-    # invenio_api_path = "/api/worksapce/search?page=1&size=20&sort=title"
+    invenio_api_path = "/api/worksapce/search"
     invenio_api_url = request.host_url.rstrip("/") + invenio_api_path
     headers = {"Accept": "application/json"}
     response = requests.get(invenio_api_url, headers=headers)
@@ -161,12 +157,6 @@ def get_workspace_status_management(recid: str):
         )
         .first()
     )
-
-    # if result:
-    #     is_favorited, is_read = result
-    #     print(f"Is Favorited: {is_favorited}, Is Read: {is_read}")
-    # else:
-    #     print("No matching record found.")
 
     return result
 
@@ -241,7 +231,7 @@ def get_userNm_affiliation():
 
     return (userNm, affiliation)
 
-
+# お気に入り既読未読ステータス情報登録
 def insert_workspace_status(user_id, recid, is_favorited=False, is_read=False):
     """Insert the favorite status and read status of the item.
     
@@ -273,6 +263,7 @@ def insert_workspace_status(user_id, recid, is_favorited=False, is_read=False):
         raise e
     return new_status
 
+# お気に入り既読未読ステータス情報更新
 def update_workspace_status(user_id, recid, is_favorited=None, is_read=None):
     """Update the favorite status and read status of the item.
 
