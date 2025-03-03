@@ -210,7 +210,7 @@ msgstr ""
 #~ msgid "Cancel"
 #~ msgstr ""
 
-#~ msgid "Are you sure you want to cancel process of exporting all creator?"
+#~ msgid "Are you sure you want to cancel process of exporting all?"
 #~ msgstr ""
 
 #~ msgid "Failed to cancel export."
@@ -345,3 +345,23 @@ msgstr ""
 #~ " it is."
 #~ msgstr ""
 
+#~ msgid "The selected target table and the import file format are different."
+#~ msgstr ""
+
+#~ msgid "Scheme is required item."
+#~ msgstr ""
+
+#~ msgid "Name is required item."
+#~ msgstr ""
+
+#~ msgid "url is not URL format."
+#~ msgstr ""
+
+#~ msgid "Specified identifier does not exist."
+#~ msgstr ""
+
+#~ msgid "The scheme WEKO cannot be used."
+#~ msgstr ""
+
+#~ msgid "The specified scheme is used in the author ID."
+#~ msgstr ""

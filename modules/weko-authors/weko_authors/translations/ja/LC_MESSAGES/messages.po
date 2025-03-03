@@ -229,7 +229,7 @@ msgstr ""
 #~ msgstr "ダウンロードURL"
 
 #~ msgid "Are you sure you want to export all?"
-#~ msgstr "著者DBの全件エクスポートを実行してよいですか？"
+#~ msgstr "全件エクスポートを実行してよいですか？"
 
 #~ msgid "Confirm"
 #~ msgstr "確認"
@@ -241,7 +241,7 @@ msgstr ""
 #~ msgstr "キャンセル"
 
 #~ msgid "Are you sure you want to cancel process of exporting all?"
-#~ msgstr "著者DBの全件エクスポートの処理をキャンセルしてよいですか？"
+#~ msgstr "全件エクスポートの処理をキャンセルしてよいですか？"
 
 #~ msgid "Failed to cancel export."
 #~ msgstr "エクスポートのキャンセルに失敗しました。"
@@ -378,3 +378,23 @@ msgstr ""
 #~ " it is."
 #~ msgstr "指定された著者は削除済です。{}の内容で著者情報を更新しますが、著者は削除されたままです。"
 
+#~ msgid "The selected target table and the import file format are different."
+#~ msgstr "選択された登録対象テーブルとインポートファイルの形式が違います。"
+
+#~ msgid "Scheme is required item."
+#~ msgstr "schemeを設定してください。"
+
+#~ msgid "Name is required item."
+#~ msgstr "nameを設定してください。"
+
+#~ msgid "url is not URL format."
+#~ msgstr "urlをURLの形式にしてください。"
+
+#~ msgid "Specified identifier does not exist."
+#~ msgstr "指定された識別子が存在していません。"
+
+#~ msgid "The scheme WEKO cannot be used."
+#~ msgstr "著者識別子WEKOは編集できません。"
+
+#~ msgid "The specified scheme is used in the author ID."
+#~ msgstr "著者DBで使用されているため、指定された識別子は削除できません。"
