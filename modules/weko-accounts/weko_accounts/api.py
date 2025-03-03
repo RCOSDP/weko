@@ -436,7 +436,7 @@ def update_roles(map_group_list, roles):
     with db.session.begin_nested():
         # add new roles
         for map_group_name in map_group_list:
-            if not map_group_name and map_group_name in role_names:
+            if not map_group_name or map_group_name in role_names:
                 continue
             db.session.add(Role(name=map_group_name, description=""))
 
