@@ -372,7 +372,7 @@
                             <input type="checkbox" value="" /><br><br>
                           </td>
                           <td style="width: auto;">
-                            <strong><a href="{{ request.host_url }}records/{{ workspaceitem.recid }}">{{
+                            <strong><a href="records/{{ workspaceitem.recid }}">{{
                                 workspaceitem.title }} -- recid : {{ workspaceitem.recid}}</a></strong><br><br>
                             {% if workspaceitem.authorlist is not none and workspaceitem.authorlist|length > 0 %}
                               <span>{{ workspaceitem.authorlist | join(', ') }}</span><br><br>

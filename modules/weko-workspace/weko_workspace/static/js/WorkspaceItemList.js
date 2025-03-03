@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', function () {
           <input type="checkbox" value="" /><br><br>
         </td>
         <td style="width: auto;">
-          <strong><a href="${window.location.host}/records/${item.recid}">${item.title} -- recid: ${item.recid}</a></strong><br><br>
+          <strong><a href="/records/${item.recid}">${item.title} -- recid: ${item.recid}</a></strong><br><br>
           ${item.authorlist && item.authorlist.length > 0 ? `<span>${item.authorlist.join(', ')}</span><br><br>` : ''}
           <span>${item.magazineName}／${item.conferenceName}</span><span> </span>
           <span>${item.volume}（${item.issue}）</span><span> </span>
