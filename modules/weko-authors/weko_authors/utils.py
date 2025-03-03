@@ -305,6 +305,13 @@ def check_import_data(file_name: str, file_content: str):
     return result
 
 def check_import_data_for_prefix(target, file_name: str, file_content: str):
+    """id_prefixかaffiliation_idのインポート用 tsv/csvファイルをバリデーションチェックする.
+    :argument
+        file_name -- file name.
+        file_content -- content file's name.
+    :return
+        return       -- check information.
+    """
     tmp_prefix = current_app.config['WEKO_AUTHORS_IMPORT_TMP_PREFIX']
     temp_file = tempfile.NamedTemporaryFile(prefix=tmp_prefix)
     result = {}
@@ -316,9 +323,7 @@ def check_import_data_for_prefix(target, file_name: str, file_content: str):
         file_format = file_name.split('.')[-1].lower()
         file_data = unpackage_and_check_import_file_for_prefix(
             file_format, file_name, temp_file.name)
-        print(file_data)
-        # result['list_import_data'] = validate_import_data_for_prefix(
-        #     file_format, file_data, target)
+        result['list_import_data'] = validate_import_data_for_prefix(file_data, target)
     except Exception as ex:
         error = _('Internal server error')
         if isinstance(ex, UnicodeDecodeError):
@@ -332,6 +337,7 @@ def check_import_data_for_prefix(target, file_name: str, file_content: str):
         current_app.logger.error('-' * 60)
 
     return result
+
 def getEncode(filepath):
     """
     getEncode [summary]
@@ -601,7 +607,7 @@ def handle_check_consistence_with_mapping_for_prefix(keys, header):
             not_consistent_list.append(item)
     return not_consistent_list
 
-def validate_import_data_for_prefix(file_format, file_data, target):
+def validate_import_data_for_prefix(file_data, target):
     """
     tsvからのデータを以下の観点でチェックする。
     ・キーschemeが空かどうか
@@ -617,16 +623,65 @@ def validate_import_data_for_prefix(file_format, file_data, target):
     ・削除の際に、その指定されたschemeが使用されているかどうか
 
     Args:
-        file_format (_type_): _description_
-        file_data (_type_): _description_
-        target (_type_): _description_
+        file_data (json): unpackage_and_check_import_file_for_prefixの戻り値
+        target (str): id_prefix or affiliation_id
     """
     if target == "id_prefix":
-        existed_prefix = WekoAuthors.get_id_prefix_all()
+        existed_prefix = WekoAuthors.get_scheme_of_id_prefix()
+        used_scheme, id_type_and_scheme = WekoAuthors.get_used_scheme_of_id_prefix()
     elif target == "affiliation_id":
-        existed_prefix = WekoAuthors.get_affiliation_id_all()
+        existed_prefix = WekoAuthors.get_scheme_of_affiliaiton_id()
+        used_scheme, id_type_and_scheme = WekoAuthors.get_used_scheme_of_affiliation_id()
 
     list_import_scheme = []
+    
+    for item in file_data:
+        errors = []
+        scheme = item.get('scheme', "")
+        name = item.get('name', "")
+        url = item.get('url', "")
+        is_deleted = item.get('is_deleted')
+        # キーschemeが空かどうか
+        if not scheme:
+            errors.append(_("Scheme is required item."))
+        # targetがid_prefixの時、schemeにWEKOが入力がされているか
+        if target == "id_prefix" and scheme == "WEKO":
+            errors.append(_("The scheme WEKO cannot be used."))
+        # キーnameが空かどうか
+        if not name:
+            errors.append(_("Name is required item."))
+        # urlがあるとき、urlがURLの記述でない
+        if url and not url.startswith("http"):
+            errors.append(_("URL is not URL format."))
+        if is_deleted == "D":
+            if scheme not in existed_prefix:
+                errors.append(_("The specified scheme does not exist."))
+            else:
+                # schemeが著者DBで使用されている場合、削除しない
+                if scheme in used_scheme:
+                    errors.append(_("The specified scheme is used in the author ID."))
+                id = [k for k, v in id_type_and_scheme.items() if v == scheme]
+                item['id'] = id[0]
+                item['status'] = 'deleted'
+        else:
+            # existed_prefixに含まれていれば更新、ないなら作成
+            if scheme in existed_prefix:
+                id = [k for k, v in id_type_and_scheme.items() if v == scheme]
+                item['id'] = id[0]
+                item['status'] = 'update'
+            else:
+                item['status'] = 'new'
+        
+        # schemeで同じ値が二回出てきているか
+        if scheme in list_import_scheme:
+            errors.append(_("The specified scheme is duplicated."))
+        else: 
+            list_import_scheme.append(scheme)
+        if errors:
+            item['errors'] = item['errors'] + errors \
+                if item.get('errors') else errors
+    return file_data
+        
 
 def get_values_by_mapping(keys, data, parent_key=None):
     """Get values folow by mapping."""
@@ -815,3 +870,75 @@ def get_count_item_link(pk_id):
             and result_itemCnt['hits']['total'] > 0:
         count = result_itemCnt['hits']['total']
     return count
+
+def import_id_prefix_to_system(id_prefix):
+    """
+    tsv/csvからのid_prefixをDBにインポートする.
+    Args:
+        id_prefix (object): id_prefix metadata from tsv/csv.
+    """
+    if id_prefix:
+        try:
+            status = id_prefix['status']
+            del id_prefix['status']
+            if not id_prefix.get('url'):
+                id_prefix['url'] = ""
+            check = get_author_prefix_obj(id_prefix['scheme'])
+            if status == 'new':
+                if check is None:
+                    AuthorsPrefixSettings.create(**id_prefix)
+            elif status == 'update':
+                if check is None or check.id == id_prefix['id']:
+                    AuthorsPrefixSettings.update(**id_prefix)
+            elif status == 'deleted':
+                used_external_id_prefix,_ = WekoAuthors.get_used_scheme_of_id_prefix()
+                if id_prefix["scheme"] in used_external_id_prefix:
+                    raise Exception({'error_id': 'delete_author_link'})
+                else:
+                    if check is None or check.id == id_prefix['id']:
+                        AuthorsPrefixSettings.delete(id_prefix['id'])
+            else:
+                raise Exception({'error_id': 'status_error'})
+            db.session.commit()
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(
+                f'Id prefix: {id_prefix["scheme"]} import error.')
+            traceback.print_exc(file=sys.stdout)
+            raise ex
+
+def import_affiliation_id_to_system(affiliation_id):
+    """
+    tsv/csvからのaffiliation_idをDBにインポートする.
+    Args:
+        affiliation_id (object): affiliation_id metadata from tsv/csv.
+    """
+    if affiliation_id:
+        try:
+            status = affiliation_id['status']
+            del affiliation_id['status']
+            if not affiliation_id.get('url'):
+                affiliation_id['url'] = ""
+            check = get_author_prefix_obj(affiliation_id['scheme'])
+            if status == 'new':
+                if check is None:
+                    AuthorsAffiliationSettings.create(**affiliation_id)
+            elif status == 'update':
+                if check is None or check.id == affiliation_id['id']:
+                    AuthorsAffiliationSettings.update(**affiliation_id)
+            elif status == 'deleted':
+                used_external_id_prefix,_ = WekoAuthors.get_used_scheme_of_affiliation_id()
+                if affiliation_id["scheme"] in used_external_id_prefix:
+                    raise Exception({'error_id': 'delete_author_link'})
+                else:
+                    if check is None or check.id == affiliation_id['id']:
+                        AuthorsAffiliationSettings.delete(affiliation_id['id'])
+            else:
+                raise Exception({'error_id': 'status_error'})
+            db.session.commit()
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(
+                f'Affiliation Id: {affiliation_id["scheme"]} import error.')
+            traceback.print_exc(file=sys.stdout)
+            raise ex

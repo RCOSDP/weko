@@ -30,7 +30,7 @@ from weko_workflow.utils import delete_cache_data, get_cache_data
 from weko_authors.config import WEKO_AUTHORS_IMPORT_CACHE_KEY
 
 from .utils import export_authors, import_author_to_system, save_export_url, \
-    set_export_status, export_prefix
+    set_export_status, export_prefix, import_id_prefix_to_system, import_affiliation_id_to_system
 
 
 @shared_task
@@ -71,6 +71,41 @@ def import_author(author):
     result['end_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return result
 
+@shared_task
+def import_id_prefix(prefix):
+    """Import ID Prefix."""
+    result = {'start_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+    try:
+        import_id_prefix_to_system(prefix)
+        result['status'] = states.SUCCESS
+    except Exception as ex:
+        current_app.logger.error(ex)
+        result['status'] = states.FAILURE
+        if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                and ex.args[0].get('error_id'):
+            error_msg = ex.args[0].get('error_id')
+            result['error_id'] = error_msg
+
+    result['end_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return result
+
+@shared_task
+def import_affiliation_id(affiliation_id):
+    """Import Affiliation ID."""
+    result = {'start_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+    try:
+        import_affiliation_id_to_system(affiliation_id)
+        result['status'] = states.SUCCESS
+    except Exception as ex:
+        current_app.logger.error(ex)
+        result['status'] = states.FAILURE
+        if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                and ex.args[0].get('error_id'):
+            error_msg = ex.args[0].get('error_id')
+            result['error_id'] = error_msg
+
+    result['end_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return result
 
 def check_is_import_available(group_task_id=None):
     """Is import available."""
