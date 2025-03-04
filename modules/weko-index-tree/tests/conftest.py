@@ -160,7 +160,7 @@ def base_app(instance_path):
         INDEX_IMG='indextree/36466818-image.jpg',
         INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
         SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/postgres'),
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SEARCH_ELASTIC_HOSTS=os.environ.get(
@@ -430,6 +430,11 @@ def base_app(instance_path):
                 item_tree_route='/tree/<string:pid_value>',
                 index_move_route='/tree/move/<int:index_id>',
                 default_media_type='application/json',
+                api_get_all_index_jp_en='/<string:version>/tree',
+                api_get_index_tree='/<string:version>/tree/<int:index_id>',
+                api_create_index='/<string:version>/tree/index/',
+                api_update_index='/<string:version>/tree/index/<int:index_id>',
+                api_delete_index='/<string:version>/tree/index/<int:index_id>',
                 create_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
                 read_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
                 update_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
@@ -822,6 +827,81 @@ def test_indices(app, db):
         db.session.add(base_index(100, 0, 3, is_deleted=True))
         db.session.add(base_index(101, 100, 0, coverpage_state=True, is_deleted=True))
     db.session.commit()
+    
+@pytest.fixture
+def indices_for_api(app, db):
+    with db.session.begin_nested():
+        sample_index = Index(
+            id=1623632832836,
+            parent=0,
+            position=0,
+            index_name="サンプルインデックス",
+            index_name_english="Sample Index",
+            browsing_role="3,-98,-99",
+            contribute_role="1,2,3,4,-98",
+            public_state=False,
+            harvest_public_state=False,
+            owner_user_id=1,
+            created=datetime(2021, 6, 14, 1, 7, 10, 647996),
+            updated=datetime(2024, 6, 12, 12, 21, 26, 526676)
+        )
+
+        parent_index = Index(
+            id=1740974499997,
+            parent=0,
+            position=1,
+            index_name="親インデックス",
+            index_name_english="parent index",
+            browsing_role="3,4,-98,-99",
+            contribute_role="3,4,-98,-99",
+            public_state=True,
+            harvest_public_state=True,
+            owner_user_id=1,
+            created=datetime(2025, 3, 3, 4, 1, 40, 933902),
+            updated=datetime(2025, 3, 3, 4, 2, 30, 157607)
+        )
+
+        child_index_1 = Index(
+            id=1740974554289,
+            parent=1740974499997,
+            position=0,
+            index_name="子インデックス 1",
+            index_name_english="child index 1",
+            browsing_role="3,4,-98,-99",
+            contribute_role="3,4,-98,-99",
+            public_state=False,
+            harvest_public_state=True,
+            owner_user_id=1,
+            created=datetime(2025, 3, 3, 4, 2, 35, 229217),
+            updated=datetime(2025, 3, 3, 4, 3, 6, 841368)
+        )
+
+        child_index_2 = Index(
+            id=1740974612379,
+            parent=1740974499997,
+            position=1,
+            index_name="子インデックス 2",
+            index_name_english="child index 2",
+            browsing_role="3,4,-98,-99",
+            contribute_role="3,4,-98,-99",
+            public_state=True,
+            harvest_public_state=True,
+            owner_user_id=1,
+            created=datetime(2025, 3, 3, 4, 3, 33, 316001),
+            updated=datetime(2025, 3, 3, 4, 3, 58, 104842)
+        )
+
+        db.session.add(sample_index)
+        db.session.add(parent_index)
+        db.session.add(child_index_1)
+        db.session.add(child_index_2)
+
+    return {
+        'sample_index': sample_index,
+        'parent_index': parent_index,
+        'child_index_1': child_index_1,
+        'child_index_2': child_index_2
+    }
 
 @pytest.yield_fixture
 def without_oaiset_signals(app):
@@ -1444,6 +1524,44 @@ def create_token_user_1(client_api, client, users):
     db_.session.commit()
     return token_
 
+@pytest.fixture()
+def create_token_user_noroleuser(client_api, client, users):
+    """Create token."""
+    with db_.session.begin_nested():
+        token_ = Token(
+            client=client,
+            user=next((user for user in users if user["id"] == 9), None)['obj'],
+            token_type='bearer',
+            access_token='dev_access_create_token_user_noroleuser',
+            # refresh_token='',
+            expires=datetime.now() + timedelta(hours=10),
+            is_personal=True,
+            is_internal=False,
+            _scopes="index:read",
+        )
+        db_.session.add(token_)
+    db_.session.commit()
+    return token_
+
+@pytest.fixture()
+def create_token_user_sysadmin(client_api, client, users):
+    """Create token."""
+    print(next((user for user in users if user["id"] == 5), None)['obj'])
+    with db_.session.begin_nested():
+        token_ = Token(
+            client=client,
+            user=next((user for user in users if user["id"] == 5), None)['obj'],
+            token_type='bearer',
+            access_token='dev_access_create_token_user_sysadmin',
+            # refresh_token='',
+            expires=datetime.now() + timedelta(hours=10),
+            is_personal=True,
+            is_internal=False,
+            _scopes="index:update index:delete index:read index:create",
+        )
+        db_.session.add(token_)
+    db_.session.commit()
+    return token_
 
 @pytest.fixture()
 def json_headers():
@@ -1459,6 +1577,22 @@ def auth_headers(client_api, json_headers, create_token_user_1):
     It uses the token associated with the first user.
     """
     return fill_oauth2_headers(json_headers, create_token_user_1)
+
+@pytest.fixture()
+def auth_headers_noroleuser(client_api, json_headers, create_token_user_noroleuser):
+    """Authentication headers (with a valid oauth2 token).
+
+    It uses the token associated with the first user.
+    """
+    return fill_oauth2_headers(json_headers, create_token_user_noroleuser)
+
+@pytest.fixture()
+def auth_headers_sysadmin(client_api, json_headers, create_token_user_sysadmin):
+    """Authentication headers (with a valid oauth2 token).
+
+    It uses the token associated with the first user.
+    """
+    return fill_oauth2_headers(json_headers, create_token_user_sysadmin)
 
 @pytest.fixture()
 def admin_lang_setting(db):
