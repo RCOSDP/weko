@@ -76,7 +76,7 @@ def _is_crawler(user_info):
        
             if current_app.config['WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST']:
                 bot_regex_str = connection.get(restricted_agent_list.list_url)
-                if bot_regex_str == "":
+                if bot_regex_str == None or len(bot_regex_str)==0:
                     current_app.logger.info("Crawler List is expired : " + str(restricted_agent_list.list_url))
                     empty_list = True
             else:
@@ -107,9 +107,10 @@ def _is_crawler(user_info):
                 restrict_list = set(crawler_list)
                 
         if current_app.config['WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST']:
+            bot_regex_str = str(bot_regex_str)
             if bot_regex_str and (
-                re.search(bot_regex_str, user_info['user_agent'].lower()) or
-                re.search(bot_regex_str, user_info['ip_address'].lower())
+                re.search(bot_regex_str, user_info['user_agent']) or
+                re.search(bot_regex_str, user_info['ip_address'])
             ):
                 return True
         else:
