@@ -305,7 +305,7 @@ def test_shib_sp_login(client, redis_connect,mocker):
     mock_redirect_method = mocker.patch("weko_accounts.views._redirect_method", return_value=make_response())
     res = client.post(url, data=form)
     mock_redirect_method.assert_called_once()
-    assert res.status_code == 200  # リダイレクトが発生することを確認
+    assert res.status_code == 200  # _redirect_methodが呼び出されることを確認
 
     # WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPSがFalseの場合のテスト
     current_app.config.update(
