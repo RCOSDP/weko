@@ -610,7 +610,7 @@ class TestIndexManagementAPI:
     # │   ├── child Index 2 [1740974612379]
     
     # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexManagementAPI::test_get_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace
-    def test_get_v1(self, app, client_rest, auth_headers_noroleuser, auth_headers_sysadmin, indices_for_api):
+    def test_get_v1(self, app, client_rest, auth_headers_noroleuser, auth_headers_sysadmin, auth_headers_sysadmin_without_scope, indices_for_api):
         """
         インデックス管理API-インデクス取得
         - 全インデックス取得: ユーザー権限に応じた取得可否を確認
@@ -629,6 +629,7 @@ class TestIndexManagementAPI:
         # 特定のインデックス取得テスト（異なる権限によるアクセス確認）
         self.run_get_specific_index(app, client_rest, 1740974499997, auth_headers_noroleuser, 200)  # 一般ユーザー（public_state=True）
         self.run_get_specific_index(app, client_rest, 1740974554289, auth_headers_noroleuser, 403)  # 一般ユーザー（public_state=False）
+        self.run_get_specific_index(app, client_rest, 1740974554289, auth_headers_sysadmin_without_scope, 403)  # 一般ユーザー（public_state=False）
         self.run_get_specific_index(app, client_rest, 1740974499997, auth_headers_sysadmin, 200)  # 管理者（全取得可能）
         self.run_get_specific_index(app, client_rest, 9999999999999, auth_headers_sysadmin, 404)  # 存在しないID
 
@@ -703,7 +704,7 @@ class TestIndexManagementAPI:
     
     
     # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexManagementAPI::test_post_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace -p no:warnings
-    def test_post_v1(self, app, client_rest, auth_headers_sysadmin, auth_headers_noroleuser):
+    def test_post_v1(self, app, client_rest, auth_headers_sysadmin, auth_headers_noroleuser, auth_headers_sysadmin_without_scope):
         """
         インデックス管理API-インデックス登録
         - 正常系: インデックスの作成が成功するか確認
@@ -724,6 +725,7 @@ class TestIndexManagementAPI:
             
             # 権限のないユーザーが403エラーを受け取るか
             self.run_create_index_forbidden(app, client_rest, auth_headers_noroleuser)
+            self.run_create_index_forbidden(app, client_rest, auth_headers_sysadmin_without_scope)
             
             # DBエラー発生時に500エラーが返るか
             self.run_create_index_server_error(app, client_rest, auth_headers_sysadmin)
@@ -813,7 +815,7 @@ class TestIndexManagementAPI:
             assert response.status_code == 500, "DBエラー発生時のリクエストが500にならなかった"
             
     # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexManagementAPI::test_put_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace -p no:warnings     
-    def test_put_v1(self, app, client_rest, auth_headers_sysadmin, auth_headers_noroleuser, indices_for_api):
+    def test_put_v1(self, app, client_rest, auth_headers_sysadmin, auth_headers_noroleuser,auth_headers_sysadmin_without_scope, indices_for_api):
         """
         インデックス管理API - インデックス更新
         - 正常系: インデックスの更新が成功するか確認
@@ -834,6 +836,7 @@ class TestIndexManagementAPI:
 
             # 権限のないユーザーが403エラーを受け取るか
             self.run_update_index_forbidden(app, client_rest, auth_headers_noroleuser)
+            self.run_update_index_forbidden(app, client_rest, auth_headers_sysadmin_without_scope)
 
             # 存在しないインデックスIDで404エラー
             self.run_update_index_not_found(app, client_rest, auth_headers_sysadmin)
@@ -931,7 +934,7 @@ class TestIndexManagementAPI:
             assert response.status_code == 500, "DBエラー発生時のリクエストが500にならなかった"
     
     # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexManagementAPI::test_delete_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace -p no:warnings     
-    def test_delete_v1(self, app, client_rest, auth_headers_sysadmin, auth_headers_noroleuser, indices_for_api):
+    def test_delete_v1(self, app, client_rest, auth_headers_sysadmin, auth_headers_noroleuser, auth_headers_sysadmin_without_scope, indices_for_api):
         """
         インデックス管理API - インデックス削除
         - 正常系: インデックスの削除が成功するか確認
@@ -950,6 +953,7 @@ class TestIndexManagementAPI:
 
             # 権限のないユーザーが403エラーを受け取るか
             self.run_delete_index_forbidden(app, client_rest, auth_headers_noroleuser)
+            self.run_delete_index_forbidden(app, client_rest, auth_headers_sysadmin_without_scope)
 
             # 存在しないインデックスIDで404エラー
             self.run_delete_index_not_found(app, client_rest, auth_headers_sysadmin)

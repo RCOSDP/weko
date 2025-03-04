@@ -1563,6 +1563,27 @@ def create_token_user_sysadmin(client_api, client, users):
     db_.session.commit()
     return token_
 
+
+@pytest.fixture()
+def create_token_user_sysadmin_without_scope(client_api, client, users):
+    """Create token."""
+    print(next((user for user in users if user["id"] == 5), None)['obj'])
+    with db_.session.begin_nested():
+        token_ = Token(
+            client=client,
+            user=next((user for user in users if user["id"] == 5), None)['obj'],
+            token_type='bearer',
+            access_token='dev_access_create_token_user_sysadmin_without_scope',
+            # refresh_token='',
+            expires=datetime.now() + timedelta(hours=10),
+            is_personal=True,
+            is_internal=False,
+            _scopes="",
+        )
+        db_.session.add(token_)
+    db_.session.commit()
+    return token_
+
 @pytest.fixture()
 def json_headers():
     """JSON headers."""
@@ -1585,6 +1606,14 @@ def auth_headers_noroleuser(client_api, json_headers, create_token_user_noroleus
     It uses the token associated with the first user.
     """
     return fill_oauth2_headers(json_headers, create_token_user_noroleuser)
+
+@pytest.fixture()
+def auth_headers_sysadmin_without_scope(client_api, json_headers, create_token_user_sysadmin_without_scope):
+    """Authentication headers (with a valid oauth2 token).
+
+    It uses the token associated with the first user.
+    """
+    return fill_oauth2_headers(json_headers, create_token_user_sysadmin_without_scope)
 
 @pytest.fixture()
 def auth_headers_sysadmin(client_api, json_headers, create_token_user_sysadmin):
