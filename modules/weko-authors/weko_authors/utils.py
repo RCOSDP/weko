@@ -243,17 +243,18 @@ def export_prefix(target):
                 file.set_contents(reader)
             file_uri = file.uri if file else None
             db.session.commit()
+            current_cache.set(
+                current_app.config.get("WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY"),
+                target,
+                timeout=0
+            )
+            break
         except SQLAlchemyError as ex:
             handle_exception(ex, attempt, retrys, interval)
         except RedisError as ex:
             handle_exception(ex, attempt, retrys, interval)
         except TimeoutError as ex:
             handle_exception(ex, attempt, retrys, interval)
-    current_cache.set(
-        current_app.config.get("WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY"),
-        target,
-        timeout=0
-    )
     return file_uri
 
 def check_file_name(export_target):
@@ -878,28 +879,36 @@ def import_id_prefix_to_system(id_prefix):
         id_prefix (object): id_prefix metadata from tsv/csv.
     """
     if id_prefix:
+        retrys = current_app.config["WEKO_AUTHORS_BULK_IMPORT_MAX_RETRY"]
+        interval = current_app.config["WEKO_AUTHORS_BULK_IMPORT_RETRY_INTERVAL"]
         try:
-            status = id_prefix['status']
-            del id_prefix['status']
-            if not id_prefix.get('url'):
-                id_prefix['url'] = ""
-            check = get_author_prefix_obj(id_prefix['scheme'])
-            if status == 'new':
-                if check is None:
-                    AuthorsPrefixSettings.create(**id_prefix)
-            elif status == 'update':
-                if check is None or check.id == id_prefix['id']:
-                    AuthorsPrefixSettings.update(**id_prefix)
-            elif status == 'deleted':
-                used_external_id_prefix,_ = WekoAuthors.get_used_scheme_of_id_prefix()
-                if id_prefix["scheme"] in used_external_id_prefix:
-                    raise Exception({'error_id': 'delete_author_link'})
-                else:
-                    if check is None or check.id == id_prefix['id']:
-                        AuthorsPrefixSettings.delete(id_prefix['id'])
-            else:
-                raise Exception({'error_id': 'status_error'})
-            db.session.commit()
+            status = id_prefix.pop('status')
+            for attempt in range(5):
+                try:
+                    if not id_prefix.get('url'):
+                        id_prefix['url'] = ""
+                    check = get_author_prefix_obj(id_prefix['scheme'])
+                    if status == 'new':
+                        if check is None:
+                            AuthorsPrefixSettings.create(**id_prefix)
+                    elif status == 'update':
+                        if check is None or check.id == id_prefix['id']:
+                            AuthorsPrefixSettings.update(**id_prefix)
+                    elif status == 'deleted':
+                        used_external_id_prefix,_ = WekoAuthors.get_used_scheme_of_id_prefix()
+                        if id_prefix["scheme"] in used_external_id_prefix:
+                            raise Exception({'error_id': 'delete_author_link'})
+                        else:
+                            if check is None or check.id == id_prefix['id']:
+                                AuthorsPrefixSettings.delete(id_prefix['id'])
+                    else:
+                        raise Exception({'error_id': 'status_error'})
+                    db.session.commit()
+                    break
+                except SQLAlchemyError as ex:
+                    handle_exception(ex, attempt, retrys, interval)
+                except TimeoutError as ex:
+                    handle_exception(ex, attempt, retrys, interval)
         except Exception as ex:
             db.session.rollback()
             current_app.logger.error(
@@ -914,28 +923,36 @@ def import_affiliation_id_to_system(affiliation_id):
         affiliation_id (object): affiliation_id metadata from tsv/csv.
     """
     if affiliation_id:
+        retrys = current_app.config["WEKO_AUTHORS_BULK_IMPORT_MAX_RETRY"]
+        interval = current_app.config["WEKO_AUTHORS_BULK_IMPORT_RETRY_INTERVAL"]
         try:
-            status = affiliation_id['status']
-            del affiliation_id['status']
-            if not affiliation_id.get('url'):
-                affiliation_id['url'] = ""
-            check = get_author_prefix_obj(affiliation_id['scheme'])
-            if status == 'new':
-                if check is None:
-                    AuthorsAffiliationSettings.create(**affiliation_id)
-            elif status == 'update':
-                if check is None or check.id == affiliation_id['id']:
-                    AuthorsAffiliationSettings.update(**affiliation_id)
-            elif status == 'deleted':
-                used_external_id_prefix,_ = WekoAuthors.get_used_scheme_of_affiliation_id()
-                if affiliation_id["scheme"] in used_external_id_prefix:
-                    raise Exception({'error_id': 'delete_author_link'})
-                else:
-                    if check is None or check.id == affiliation_id['id']:
-                        AuthorsAffiliationSettings.delete(affiliation_id['id'])
-            else:
-                raise Exception({'error_id': 'status_error'})
-            db.session.commit()
+            status = affiliation_id.pop('status')
+            for attempt in range(5):
+                try:
+                    if not affiliation_id.get('url'):
+                        affiliation_id['url'] = ""
+                    check = get_author_prefix_obj(affiliation_id['scheme'])
+                    if status == 'new':
+                        if check is None:
+                            AuthorsAffiliationSettings.create(**affiliation_id)
+                    elif status == 'update':
+                        if check is None or check.id == affiliation_id['id']:
+                            AuthorsAffiliationSettings.update(**affiliation_id)
+                    elif status == 'deleted':
+                        used_external_id_prefix,_ = WekoAuthors.get_used_scheme_of_affiliation_id()
+                        if affiliation_id["scheme"] in used_external_id_prefix:
+                            raise Exception({'error_id': 'delete_author_link'})
+                        else:
+                            if check is None or check.id == affiliation_id['id']:
+                                AuthorsAffiliationSettings.delete(affiliation_id['id'])
+                    else:
+                        raise Exception({'error_id': 'status_error'})
+                    db.session.commit()
+                    break
+                except SQLAlchemyError as ex:
+                    handle_exception(ex, attempt, retrys, interval)
+                except TimeoutError as ex:
+                    handle_exception(ex, attempt, retrys, interval)
         except Exception as ex:
             db.session.rollback()
             current_app.logger.error(
