@@ -39,28 +39,17 @@ class ShibSettingView(BaseView):
     def index(self):
         """Index."""
         try:
-            shib_flg = '0' if not current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] else '1'
+            shib_flg = '0' if not AdminSettings.get('shib_login_enable').__dict__['shib_flg'] else '1'
             role_list = current_app.config['WEKO_ACCOUNTS_ROLE_LIST']
             attr_list = current_app.config['WEKO_ACCOUNTS_ATTRIBUTE_LIST']
             set_language = _('language')
 
-            # 'blocked_user_settings' が存在しない場合、新しいレコードを追加
-            if AdminSettings.query.filter_by(name='blocked_user_settings').first() is None:
-                new_setting = AdminSettings(
-                    id=6,
-                    name="blocked_user_settings",
-                    settings={"blocked_ePPNs": []}
-                )
-                db.session.add(new_setting)
-                db.session.commit()
-            block_user_settings = AdminSettings.get('blocked_user_settings')
-            block_user_list = block_user_settings.__dict__['blocked_ePPNs']
-
             # デフォルトロール
+            default_roles = AdminSettings.get('default_role_settings')
             roles = {
-                'gakunin_role': current_app.config.get('WEKO_ACCOUNTS_GAKUNIN_ROLE', {}).get('defaultRole', '0'),
-                'orthros_outside_role': current_app.config.get('WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE', {}).get('defaultRole', '0'),
-                'extra_role': current_app.config.get('WEKO_ACCOUNTS_EXTRA_ROLE', {}).get('defaultRole', '0')
+                'gakunin_role': default_roles.__dict__['gakunin_role'],
+                'orthros_outside_role': default_roles.__dict__['orthros_outside_role'],
+                'extra_role': default_roles.__dict__['extra_role']
             }
 
             # 属性マッピング
@@ -71,6 +60,11 @@ class ShibSettingView(BaseView):
                 'weko_user_name_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_user_name', '0')
             }
 
+            # ブロックユーザー
+            block_user_settings = AdminSettings.get('blocked_user_settings')
+            block_user_list = block_user_settings.__dict__['blocked_ePPNs']
+
+
             if request.method == 'POST':
                 # Process forms
                 form = request.form.get('submit', None)
@@ -80,23 +74,32 @@ class ShibSettingView(BaseView):
                 if form == 'shib_form':
                     if shib_flg != new_shib_flg:
                         shib_flg = new_shib_flg
-                        _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] = (shib_flg == '1')
+                        AdminSettings.update('shib_login_enable', {"shib_flg": (shib_flg == '1')})
+                        
                         flash(_('Shibboleth flag was updated.'), category='success')
                     
                     for key in roles:
                         if roles[key] != new_roles[key]:
                             roles[key] = new_roles[key]
-                            _app.config[f'WEKO_ACCOUNTS_{key.upper()}']['defaultRole'] = new_roles[key]
                             flash(_(f'{key.replace("_", " ").title()} was updated.'), category='success')
+                        AdminSettings.update('default_role_settings', roles)
+            
+            self.get_latest_current_app()
 
             return self.render(
                 current_app.config['WEKO_ACCOUNTS_SET_SHIB_TEMPLATE'],
                 shib_flg=shib_flg, set_language=set_language, role_list=role_list, attr_list=attr_list, block_user_list=block_user_list, **roles, **attributes )
+        
         except BaseException:
             current_app.logger.error(
                 'Unexpected error: {}'.format(sys.exc_info()))
         return abort(400)
-
+    
+    def get_latest_current_app(self):
+        _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] = AdminSettings.get('shib_login_enable').__dict__['shib_flg']
+        _app.config['WEKO_ACCOUNTS_GAKUNIN_ROLE']['defaultRole'] = AdminSettings.get('default_role_settings').__dict__['gakunin_role']
+        _app.config['WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE']['defaultRole'] = AdminSettings.get('default_role_settings').__dict__['orthros_outside_role']
+        _app.config['WEKO_ACCOUNTS_EXTRA_ROLE']['defaultRole'] = AdminSettings.get('default_role_settings').__dict__['extra_role']
 
 shib_adminview = {
     'view_class': ShibSettingView,

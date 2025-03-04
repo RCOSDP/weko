@@ -128,7 +128,7 @@ WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE = {
   'defaultRole': 'Community Administrator',
   'organizationName': []  
 } 
-"""Orthros (Outsite) Default role."""
+"""Orthros (Outside) Default role."""
 
 WEKO_ACCOUNTS_EXTRA_ROLE = {
   'defaultRole': 'None', # ロール無
