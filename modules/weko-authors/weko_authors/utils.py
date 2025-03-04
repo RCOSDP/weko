@@ -931,7 +931,7 @@ def import_affiliation_id_to_system(affiliation_id):
                 try:
                     if not affiliation_id.get('url'):
                         affiliation_id['url'] = ""
-                    check = get_author_prefix_obj(affiliation_id['scheme'])
+                    check = get_author_affiliation_obj(affiliation_id['scheme'])
                     if status == 'new':
                         if check is None:
                             AuthorsAffiliationSettings.create(**affiliation_id)
