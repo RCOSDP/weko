@@ -20,39 +20,23 @@
 
 """Blueprint for weko-workspace."""
 
-import json
-import os
-import re
-import shutil
-import sys
-import traceback
-import requests
 import copy
 
-from collections import OrderedDict
 from datetime import datetime
-from functools import wraps
-from typing import List
 
 from flask import (
-    Response,
     Blueprint,
-    abort,
     current_app,
-    has_request_context,
     jsonify,
-    make_response,
     render_template,
     request,
-    session,
-    url_for,
-    send_file,
 )
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 
 from .utils import *
 from .models import *
+from .defaultfilters import merge_default_filters
 
 workspace_blueprint = Blueprint(
     "weko_workspace",
@@ -62,32 +46,28 @@ workspace_blueprint = Blueprint(
     url_prefix="/workspace",
 )
 
+
 # 2.1. アイテム一覧情報取得API
-@workspace_blueprint.route("/get_workspace_itemlist", methods=['GET'])
+@workspace_blueprint.route("/get_workspace_itemlist", methods=["GET", "POST"])
 @login_required
 def get_workspace_itemlist():
-    print("==========guan.shuang get_workspace_itemlist start=========")
 
     # 変数初期化
-    # 　JSON条件
-    # jsonCondition = {"name": "Alice", "age": 25, "is_student": False}
     workspaceItemList = []
+    funderNameList = []
+    awardTitleList = []
 
     # 1,デフォルト絞込み条件取得処理
-    # reqeustからのパラメータを確認する。
-    # パラメータなし、1,デフォルト絞込み条件取得処理へ。
-    # パラメータあり、1,デフォルト絞込み条件取得処理をスキップ。
-    if request.args:
-        jsonCondition = request.args.to_dict()
-    else:
+    jsonCondition, isnotNone = (request.get_json() if request.method == "POST" else None), True
+
+    if jsonCondition is None:
         # 1,デフォルト絞込み条件取得処理
-        jsonCondition = get_workspace_filterCon()
+        jsonCondition, isnotNone = get_workspace_filterCon()
 
     # 2,ESからアイテム一覧取得処理
-    records_data = get_es_itemlist(jsonCondition)
+    records_data = get_es_itemlist()
     # →ループ処理
     for hit in records_data["hits"]["hits"]:
-
         workspaceItem = copy.deepcopy(current_app.config["WEKO_WORKSPACE_ITEM"])
 
         # "recid": None,  # レコードID
@@ -100,14 +80,23 @@ def get_workspace_itemlist():
         # print("title : " + workspaceItem["title"])
 
         # "favoriteSts": None,  # お気に入りステータス状況
-        workspaceItem["favoriteSts"] = get_workspace_status_management(recid)[0] if get_workspace_status_management(recid) else False
+        workspaceItem["favoriteSts"] = (
+            get_workspace_status_management(recid)[0]
+            if get_workspace_status_management(recid)
+            else False
+        )
         # print("favoriteSts : " + str(workspaceItem["favoriteSts"]))
 
         # "readSts": None,  # 既読未読ステータス状況
-        workspaceItem["readSts"] = get_workspace_status_management(recid)[1] if get_workspace_status_management(recid) else False
+        workspaceItem["readSts"] = (
+            get_workspace_status_management(recid)[1]
+            if get_workspace_status_management(recid)
+            else False
+        )
         # print("readSts : " + str(workspaceItem["readSts"]))
 
         # TODO "peerReviewSts": None,  # 査読チェック状況
+        workspaceItem["peerReviewSts"] = True
 
         # "doi": None,  # DOIリンク
         identifiers = hit["metadata"].get("identifier", [])
@@ -122,7 +111,12 @@ def get_workspace_itemlist():
         # print(f"resourceType : {hit['metadata'].get('type', [])[0]}")
 
         #  "authorlist": None,   著者リスト[著者名]
-        workspaceItem["authorlist"] = hit["metadata"]["creator"]["creatorName"] if "creator" in hit["metadata"] and hit["metadata"]["creator"]["creatorName"] else None
+        workspaceItem["authorlist"] = (
+            hit["metadata"]["creator"]["creatorName"]
+            if "creator" in hit["metadata"]
+            and hit["metadata"]["creator"]["creatorName"]
+            else None
+        )
         if workspaceItem["authorlist"] is not None:
             workspaceItem["authorlist"].append("作成者02")
             workspaceItem["authorlist"].append("作成者03")
@@ -145,7 +139,11 @@ def get_workspace_itemlist():
         # print(f"publicationDate : " + workspaceItem["publicationDate"])
 
         # "magazineName": None,  # 雑誌名
-        workspaceItem["magazineName"] = hit["metadata"]["sourceTitle"][0] if "sourceTitle" in hit["metadata"] else None
+        workspaceItem["magazineName"] = (
+            hit["metadata"]["sourceTitle"][0]
+            if "sourceTitle" in hit["metadata"]
+            else None
+        )
         # print("magazineName : "  + str(workspaceItem["magazineName"]))
 
         # "conferenceName": None,  # 会議名
@@ -177,6 +175,9 @@ def get_workspace_itemlist():
         fundingReference = hit["metadata"].get("fundingReference", [])
         if fundingReference and fundingReference["funderName"]:
             workspaceItem["funderName"] = fundingReference["funderName"][0]
+
+            # デフォルト条件の設定
+            funderNameList.extend(fundingReference["funderName"])
         else:
             workspaceItem["funderName"] = None
 
@@ -185,6 +186,9 @@ def get_workspace_itemlist():
         # "awardTitle": None,  # 資金別情報課題名
         if fundingReference and fundingReference["awardTitle"]:
             workspaceItem["awardTitle"] = fundingReference["awardTitle"][0]
+
+            # デフォルト条件の設定
+            awardTitleList.extend(fundingReference["awardTitle"])
         else:
             workspaceItem["awardTitle"] = None
 
@@ -199,31 +203,44 @@ def get_workspace_itemlist():
         # print("fbEmailSts : " + str(workspaceItem["fbEmailSts"]))
 
         # "connectionToPaperSts": None,  # 論文への関連チェック状況
+        workspaceItem["connectionToPaperSts"] = True if workspaceItem["resourceType"] in current_app.config["WEKO_WORKSPACE_ARTICLE_TYPES"] else None
+
         # "connectionToDatasetSts": None,  # 根拠データへの関連チェック状況
+        workspaceItem["connectionToDatasetSts"] = True if workspaceItem["resourceType"] in current_app.config["WEKO_WORKSPACE_DATASET_TYPES"] else None
 
         # "relation": None,  # 関連情報リスト
         relations = []
-        relationLen = len(hit["metadata"]["relation"]["relatedTitle"]) if "relation" in hit["metadata"] else None
+        relationLen = (
+            len(hit["metadata"]["relation"]["relatedTitle"])
+            if "relation" in hit["metadata"]
+            else None
+        )
         # print("relationLen : " + str(relationLen))
 
         if "relation" in hit["metadata"]:
             for i in range(relationLen):
                 # "relationType": None,  # 関連情報タイプ
-                workspaceItem["relationType"] = hit["metadata"].get("relation", [])["@attributes"]["relationType"][i][0]
+                workspaceItem["relationType"] = hit["metadata"].get("relation", [])[
+                    "@attributes"
+                ]["relationType"][i][0]
                 # print("relationType : " + hit["metadata"].get("relation", [])["@attributes"]["relationType"][i][0])
 
                 # # "relationTitle": None,  # 関連情報タイトル
-                workspaceItem["relationTitle"] = hit["metadata"].get("relation", [])["relatedTitle"][i]
+                workspaceItem["relationTitle"] = hit["metadata"].get("relation", [])[
+                    "relatedTitle"
+                ][i]
                 # print("relationTitle : " + hit["metadata"].get("relation", [])["relatedTitle"][i])
 
                 # # "relationUrl": None,  # 関連情報URLやDOI
-                workspaceItem["relationUrl"] = hit["metadata"].get("relation", [])["relatedIdentifier"][i]["value"]
+                workspaceItem["relationUrl"] = hit["metadata"].get("relation", [])[
+                    "relatedIdentifier"
+                ][i]["value"]
                 # print("relationUrl : "+ hit["metadata"].get("relation", [])["relatedIdentifier"][i]["value"])
 
                 relation = {
                     "relationType": workspaceItem["relationType"],
                     "relationTitle": workspaceItem["relationTitle"],
-                    "relationUrl": workspaceItem["relationUrl"],    
+                    "relationUrl": workspaceItem["relationUrl"],
                 }
                 relations.append(relation)
 
@@ -232,14 +249,22 @@ def get_workspace_itemlist():
 
         # file情報
         # print("file : ")
-        fileObjNm = "item_" + hit["metadata"]["_item_metadata"]["item_type_id"] + "_file"
-        fileObjNm = [key for key in hit["metadata"]["_item_metadata"].keys() if key.startswith(fileObjNm)]
+        fileObjNm = (
+            "item_" + hit["metadata"]["_item_metadata"]["item_type_id"] + "_file"
+        )
+        fileObjNm = [
+            key
+            for key in hit["metadata"]["_item_metadata"].keys()
+            if key.startswith(fileObjNm)
+        ]
 
         if fileObjNm is not None and len(fileObjNm) > 0:
             file = fileObjNm[0]
 
             fileList = []
-            fileList = hit["metadata"].get("_item_metadata", [])[file]["attribute_value_mlt"]
+            fileList = hit["metadata"].get("_item_metadata", [])[file][
+                "attribute_value_mlt"
+            ]
 
             publicCnt = 0
             embargoedCnt = 0
@@ -288,13 +313,17 @@ def get_workspace_itemlist():
                 workspaceItem["fileSts"] = False
                 workspaceItem["fileCnt"] = 0
 
-        workspaceItem["publicCnt"] = publicCnt if 'publicCnt' in locals() else 0
-        workspaceItem["embargoedCnt"] = embargoedCnt if 'embargoedCnt' in locals() else 0
-        workspaceItem["restrictedPublicationCnt"] = restrictedPublicationCnt if 'restrictedPublicationCnt' in locals() else 0
+        workspaceItem["publicCnt"] = publicCnt if "publicCnt" in locals() else 0
+        workspaceItem["embargoedCnt"] = (
+            embargoedCnt if "embargoedCnt" in locals() else 0
+        )
+        workspaceItem["restrictedPublicationCnt"] = (
+            restrictedPublicationCnt if "restrictedPublicationCnt" in locals() else 0
+        )
         # print("publicCnt : " + str(workspaceItem["publicCnt"]))
         # print("embargoedCnt : " + str(workspaceItem["embargoedCnt"]))
         # print("restrictedPublicationCnt : " + str(workspaceItem["restrictedPublicationCnt"]))
-
+        
         if str(workspaceItem):
             workspaceItemList.append(workspaceItem)
         # print("------------------------------------")
@@ -303,37 +332,74 @@ def get_workspace_itemlist():
     userInfo = get_userNm_affiliation()
     # print(userInfo[0])
     # print(userInfo[1])
+    
+    # デフォルト絞込み条件より、workspaceItemListを洗い出す
+    if isnotNone:
+        defaultconditions = merge_default_filters(jsonCondition)
+        print("jsonCondition : " + str(jsonCondition))
+        # print("======================db table/post defaultconditions : " + str(defaultconditions))
 
-    print("========workspaceItem end ========")
+        # フィルタリングマッピング
+        filter_mapping = {
+            'favorite': 'favoriteSts',
+            'peer_review': 'peerReviewSts',
+            'file_present': 'fileSts',
+            'resource_type': 'resourceType',
+            'related_to_data': 'connectionToDatasetSts',
+            'related_to_paper': 'connectionToPaperSts'
+        }
+
+        # フィルタリング処理
+        filtered_items = [
+            item for item in workspaceItemList
+            if all(
+                item.get(filter_mapping[key]) == jsonCondition[key]
+                if key != 'resource_type'
+                else item.get(filter_mapping[key]) in jsonCondition[key]
+                for key in filter_mapping
+                if key in jsonCondition and
+                key not in ['award_title', 'funder_name'] and
+                jsonCondition.get(key) is not None and
+                jsonCondition.get(key) != []
+            )
+        ]
+        workspaceItemList = filtered_items
+        # print("after filter workspaceItemList : " + str(workspaceItemList))
+
+    else:
+        defaultconditions = jsonCondition
+        # print("====================== default defaultconditions : " + str(defaultconditions))
+
+    defaultconditions["funder_name"]["options"] = list(dict.fromkeys(funderNameList))
+    defaultconditions["award_title"]["options"] = list(dict.fromkeys(awardTitleList))
 
     print("==========guan.shuang workspace end=========")
-
     return render_template(
         current_app.config["WEKO_WORKSPACE_BASE_TEMPLATE"],
         username=userInfo[0],
         affiliation=userInfo[1],
         workspaceItemList=workspaceItemList,
+        defaultconditions=defaultconditions,
     )
 
 
-@workspace_blueprint.route("/updateStatus", methods=['POST'])
+@workspace_blueprint.route("/updateStatus", methods=["POST"])
 @login_required
 def update_workspace_status_management():
-    print("==========guan.shuang update_workspace_status_management start=========")
+    """アイテムのステータスを更新する。
+
+    Returns:
+        _type_: _description_
+    """
+    # print("==========guan.shuang update_workspace_status_management start=========")
     data = request.get_json()
 
     user_id = current_user.id
 
-    item_recid = data.get('itemRecid')  # 使用 itemRecid
+    item_recid = data.get("itemRecid")  # 使用 itemRecid
     # print("item_recid : " + str(item_recid))
 
-    favorite_sts = data.get('favoriteSts')
-    # print("favorite_sts : " + str(favorite_sts))
-
-    read_sts = data.get('readSts')
-    # print("read_sts : " + str(read_sts))
-
-    type = data.get('type')
+    type = data.get("type")
     # print("type : " + str(type))
 
     result = get_workspace_status_management(item_recid)
@@ -343,30 +409,116 @@ def update_workspace_status_management():
         insert_workspace_status(
             user_id=user_id,
             recid=item_recid,
-            is_favorited=data.get('favoriteSts', False) if type == '1' else False,
-            is_read=data.get('readSts', False) if type == '2' else False
+            is_favorited=data.get("favoriteSts", False) if type == "1" else False,
+            is_read=data.get("readSts", False) if type == "2" else False,
         )
     else:
-        if type == '1':
+        if type == "1":
             update_workspace_status(
-                user_id=user_id,
-                recid=item_recid,
-                is_favorited=data.get('favoriteSts')
+                user_id=user_id, recid=item_recid, is_favorited=data.get("favoriteSts")
             )
-        elif type == '2':
+        elif type == "2":
             update_workspace_status(
-                user_id=user_id,
-                recid=item_recid,
-                is_read=data.get('readSts')
+                user_id=user_id, recid=item_recid, is_read=data.get("readSts")
             )
         else:
-            return jsonify({'success': False, 'message': 'Invalid type'}), 400
+            return jsonify({"success": False, "message": "Invalid type"}), 400
 
-    return jsonify({'success': True})
+    return jsonify({"success": True})
 
 
-# 2.1. デフォルト絞込み条件更新API
-@workspace_blueprint.route("/updateDefaultConditon")
+@workspace_blueprint.route("/save_filters", methods=["POST"])
 @login_required
-def update_workspace_default_conditon(buttonTyp, default_con):
-    return None
+def save_filters():
+    """
+    デフォルト絞込み条件を保存する。
+
+    Returns:
+        JSON: 保存結果に基づいてステータスとメッセージを返します。
+    """
+    data = request.get_json()
+    user_id = current_user.id
+
+    try:
+        record = WorkspaceDefaultConditions.query.filter_by(user_id=user_id).first()
+        if record:
+            record.default_con = data
+            record.updated = datetime.utcnow()
+        else:
+            record = WorkspaceDefaultConditions(
+                user_id=user_id,
+                default_con=data,
+                created=datetime.utcnow(),
+                updated=datetime.utcnow(),
+            )
+            db.session.add(record)
+        db.session.commit()
+        return (
+            jsonify(
+                {
+                    "status": "success",
+                    "message": "Successfully saved default conditions.",
+                }
+            ),
+            200,
+        )
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        error_message = (
+            f"Failed to save default conditions due to database error: {str(e)}"
+        )
+        return jsonify({"status": "error", "message": error_message}), 500
+    except Exception as e:
+        error_message = f"Unexpected error occurred: {str(e)}"
+        return jsonify({"status": "error", "message": error_message}), 500
+
+
+@workspace_blueprint.route("/reset_filters", methods=["DELETE"])
+@login_required
+def reset_filters():
+    """
+    現在のユーザーのworkspace_default_conditionsデータを削除します。
+
+    Returns:
+        JSON: 削除結果に基づいてステータスとメッセージを返します。
+    """
+
+    # print("Resetting filters================リセット============================:")
+
+    user_id = current_user.id
+    try:
+        record = WorkspaceDefaultConditions.query.filter_by(user_id=user_id).first()
+
+        if record:
+            db.session.delete(record)
+            db.session.commit()
+            return (
+                jsonify(
+                    {
+                        "status": "success",
+                        "message": "Successfully reset default conditions.",
+                    }
+                ),
+                200,
+            )
+        else:
+            return (
+                jsonify(
+                    {
+                        "status": "success",
+                        "message": "No default conditions found to reset.",
+                    }
+                ),
+                200,
+            )
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        error_message = (
+            f"Failed to reset default conditions due to database error: {str(e)}"
+        )
+        return jsonify({"status": "error", "message": error_message}), 500
+    except Exception as e:
+        error_message = f"Unexpected error occurred: {str(e)}"
+        return jsonify({"status": "error", "message": error_message}), 500

@@ -65,6 +65,41 @@ WEKO_WORKSPACE_ITEM = {
 }
 """Default item template for the worksapce item list page."""
 
+# Article カテゴリの定義
+WEKO_WORKSPACE_ARTICLE_TYPES = [
+    "conference paper",
+    "data paper",
+    "departmental bulletin paper",
+    "editorial",
+    "journal",
+    "journal article",
+    "newspaper",
+    "review article",
+    "other periodical",
+    "software paper",
+    "article"
+]
+"""Article カテゴリの定義"""
+
+# Dataset カテゴリの定義
+WEKO_WORKSPACE_DATASET_TYPES = [
+    "aggregated data",
+    "clinical trial data",
+    "compiled data",
+    "dataset",
+    "encoded data",
+    "experimental data",
+    "genomic data",
+    "geospatial data",
+    "laboratory notebook",
+    "measurement and test data",
+    "observational data",
+    "recorded data",
+    "simulation data",
+    "survey data"
+]
+"""Dataset カテゴリの定義"""
+
 
 
 # Error message variable definition

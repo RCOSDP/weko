@@ -85,6 +85,7 @@ from weko_user_profiles.models import UserProfile
 from weko_admin.utils import StatisticMail
 
 from .models import *
+from .defaultfilters import DEFAULT_FILTERS
 
 
 def get_workspace_filterCon():
@@ -98,38 +99,62 @@ def get_workspace_filterCon():
     """
     # print("======workspace def get_workspace_filterCon(): ======")
 
-    default_con = (
-        WorkspaceDefaultConditions.query.filter_by(user_id=current_user.id)
-        .with_entities(WorkspaceDefaultConditions.default_con)
-        .scalar()
-    )
+    try:
+        isnotNone = True
+        default_con = (
+            WorkspaceDefaultConditions.query.filter_by(user_id=current_user.id)
+            .with_entities(WorkspaceDefaultConditions.default_con)
+            .scalar()
+        )
+        if default_con is None:
+            # current_app.logger.warning(f"No default conditions found for user {current_user.id}, using DEFAULT_FILTERS.")
+            print(
+                f"============================== No default conditions found for user {current_user.id}, using DEFAULT_FILTERS."
+            )
+            default_con = DEFAULT_FILTERS
+            isnotNone = False
+
+    except SQLAlchemyError as e:
+        # current_app.logger.error(f"Database error while fetching default conditions for user {current_user.id}: {e}")
+        print(
+            f"============================== Database error while fetching default conditions for user {current_user.id}: {e}"
+        )
+        default_con = DEFAULT_FILTERS
+        isnotNone = False
+    except Exception as e:
+        # current_app.logger.error(f"Unexpected error while fetching default conditions for user {current_user.id}: {e}")
+        print(
+            f"============================== Unexpected error while fetching default conditions for user {current_user.id}: {e}"
+        )
+        default_con = DEFAULT_FILTERS
+        isnotNone = False
 
     # print(default_con)
 
-    return default_con
+    return default_con, isnotNone
 
 
 # 2.1.2.2 ESからアイテム一覧取得処理
-def get_es_itemlist(jsonCondition:json):
+def get_es_itemlist():
     """Get the item list from Elasticsearch.
 
     Args:
-        jsonCondition (json): _description_
+        ----
     """
 
-    # print("======workspace def get_es_itemlist(jsonCondition:json): ======")
-    # print(f"jsonCondition : {jsonCondition}")
+    # print("======workspace def get_es_itemlist(): ======")
 
     invenio_api_path = "/api/worksapce/search"
-    invenio_api_url = request.host_url.rstrip("/") + invenio_api_path
     headers = {"Accept": "application/json"}
-    response = requests.get(invenio_api_url, headers=headers)
+
+    response = requests.get(request.host_url.rstrip("/") + invenio_api_path, headers=headers)
+    size = response.json()["hits"]["total"]
+    
+    response = requests.get(request.host_url.rstrip("/") + invenio_api_path + "?size="+str(size), headers=headers)
     records_data = response.json()
     # print("=======records_data start=======")
-    # print(invenio_api_url)
     # print(records_data)
     # print("=======records_data end=======")
-
     return records_data
 
 
@@ -144,14 +169,11 @@ def get_workspace_status_management(recid: str):
         tuple[0] -- the favorite status
         tuple[1] -- the read status
     """
-     
+
     # print("======workspace def get_workspace_status_management(): ======")
 
-    user_id = current_user.id
-    # print(f"user_id: {user_id}")
-
     result = (
-        WorkspaceStatusManagement.query.filter_by(user_id=user_id, recid=recid)
+        WorkspaceStatusManagement.query.filter_by(user_id=current_user.id, recid=recid)
         .with_entities(
             WorkspaceStatusManagement.is_favorited, WorkspaceStatusManagement.is_read
         )
@@ -231,10 +253,11 @@ def get_userNm_affiliation():
 
     return (userNm, affiliation)
 
+
 # お気に入り既読未読ステータス情報登録
 def insert_workspace_status(user_id, recid, is_favorited=False, is_read=False):
     """Insert the favorite status and read status of the item.
-    
+
     Args:
         user_id (_type_): _description_
         recid (_type_): _description_
@@ -253,7 +276,7 @@ def insert_workspace_status(user_id, recid, is_favorited=False, is_read=False):
         is_favorited=is_favorited,
         is_read=is_read,
         created=datetime.utcnow(),
-        updated=datetime.utcnow()
+        updated=datetime.utcnow(),
     )
     db.session.add(new_status)
     try:
@@ -262,6 +285,7 @@ def insert_workspace_status(user_id, recid, is_favorited=False, is_read=False):
         db.session.rollback()
         raise e
     return new_status
+
 
 # お気に入り既読未読ステータス情報更新
 def update_workspace_status(user_id, recid, is_favorited=None, is_read=None):
@@ -279,7 +303,9 @@ def update_workspace_status(user_id, recid, is_favorited=None, is_read=None):
     Returns:
         _type_: _description_
     """
-    status = WorkspaceStatusManagement.query.filter_by(user_id=user_id, recid=recid).first()
+    status = WorkspaceStatusManagement.query.filter_by(
+        user_id=user_id, recid=recid
+    ).first()
     if status:
         if is_favorited is not None:
             status.is_favorited = is_favorited
