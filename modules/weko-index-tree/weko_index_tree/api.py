@@ -685,6 +685,30 @@ class Indexes(object):
         return obj
 
     @classmethod
+    def filter_roles(cls, roles):
+        """特定の条件に基づいてロールをフィルタリングします。
+
+        Args:
+            roles (list): フィルタリング対象のロールのリスト。
+
+        Returns:
+            tuple: 2つのリストを含むタプル。
+                - filtered_roles: 特定の条件を満たすロールのリスト。
+                - excluded_roles: 特定の条件を満たさないロールのリスト。
+        """
+        filtered_roles = []
+        excluded_roles = []
+
+        for role in roles:
+            # ロール名が設定されたキーワードに含まれていない、かつロール名が「Contributor」、「Community_Administrator」、「Repository_Administrator」、「System_Administrator」のいずれでもないことを確認します。
+            if not current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT']['role_keyword'].values() and \
+                    role["name"] not in ["Contributor", "Community_Administrator", "Repository_Administrator", "System_Administrator"]:
+                filtered_roles.append(role)
+            else:
+                excluded_roles.append(role)
+
+        return filtered_roles, excluded_roles
+
     def get_index_with_role(cls, index_id):
         """Get Index with role."""
         def _get_allow_deny(allow, role, browse_flag=False):
@@ -716,14 +740,18 @@ class Indexes(object):
         index = dict(cls.get_index(index_id))
 
         role = cls.get_account_role()
+        filtered_roles, excluded_roles = cls.filter_roles(role)
+
+        # browsing_role の処理に excluded_roles を使用
         allow = index["browsing_role"].split(',') \
             if len(index["browsing_role"]) else []
-        allow, deny = _get_allow_deny(allow, pickle.loads(pickle.dumps(role, -1)), True)
+        allow, deny = _get_allow_deny(allow, pickle.loads(pickle.dumps(excluded_roles, -1)), True)
         index["browsing_role"] = dict(allow=allow, deny=deny)
 
+        # contribute_role の処理に excluded_roles を使用
         allow = index["contribute_role"].split(',') \
             if len(index["contribute_role"]) else []
-        allow, deny = _get_allow_deny(allow, role)
+        allow, deny = _get_allow_deny(allow, excluded_roles)
         index["contribute_role"] = dict(allow=allow, deny=deny)
 
         if index["public_date"]:
@@ -741,6 +769,20 @@ class Indexes(object):
             if len(index["contribute_group"]) else []
         allow_group, deny_group = _get_group_allow_deny(allow_group_id,
                                                         pickle.loads(pickle.dumps(group_list, -1)))
+        index["contribute_group"] = dict(allow=allow_group, deny=deny_group)
+
+        # browsing_group の処理に filtered_roles を使用
+        allow_group_id = index["browsing_group"].split(',') \
+            if len(index["browsing_group"]) else []
+        allow_group, deny_group = _get_group_allow_deny(allow_group_id,
+                                                        pickle.loads(pickle.dumps(filtered_roles, -1)))
+        index["browsing_group"] = dict(allow=allow_group, deny=deny_group)
+
+        # contribute_group の処理に filtered_roles を使用
+        allow_group_id = index["contribute_group"].split(',') \
+            if len(index["contribute_group"]) else []
+        allow_group, deny_group = _get_group_allow_deny(allow_group_id,
+                                                        pickle.loads(pickle.dumps(filtered_roles, -1)))
         index["contribute_group"] = dict(allow=allow_group, deny=deny_group)
 
         return index
