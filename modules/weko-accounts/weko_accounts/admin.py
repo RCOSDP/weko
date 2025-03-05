@@ -54,10 +54,10 @@ class ShibSettingView(BaseView):
 
             # 属性マッピング
             attributes = {
-                'weko_eppn_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_eppn', '0'),
-                'weko_role_authority_name_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_role_authority_name', '0'),
-                'weko_mail_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_mail', '0'),
-                'weko_user_name_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_user_name', '0')
+                'weko_eppn': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_eppn', '0'),
+                'weko_role_authority_name': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_role_authority_name', '0'),
+                'weko_mail': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_mail', '0'),
+                'weko_user_name': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_user_name', '0')
             }
 
             # ブロックユーザー

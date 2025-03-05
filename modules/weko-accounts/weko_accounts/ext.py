@@ -64,9 +64,6 @@ class WekoAccounts(object):
 
         :param app: The flask application.
         """
-        # Create Shibboleth Admin database table
-        self.create_shib_admin_data_base_table(app)
-
         # Use theme's base template if theme is installed
         if 'BASE_TEMPLATE' in app.config:
             app.config.setdefault(
@@ -121,42 +118,6 @@ class WekoAccounts(object):
         from .utils import limiter
         limiter.init_app(app)
 
-    def create_shib_admin_data_base_table(self, app):
-        """
-        Create Shibboleth Admin database table.
-        
-        :param app: The flask application.
-        """
-        with app.app_context():
-            if AdminSettings.query.filter_by(name='blocked_user_settings').first() is None:
-                new_setting = AdminSettings(
-                    id=6,
-                    name="blocked_user_settings",
-                    settings={"blocked_ePPNs": []}
-                )
-                db.session.add(new_setting)
-                db.session.commit()
-
-            if AdminSettings.query.filter_by(name='shib_login_enable').first() is None:
-                new_setting = AdminSettings(
-                    id=7,
-                    name="shib_login_enable",
-                    settings={"shib_flg": app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']}
-                )
-                db.session.add(new_setting)
-                db.session.commit()
-            
-            if AdminSettings.query.filter_by(name='default_role_settings').first() is None:
-                new_setting = AdminSettings(
-                    id=8,
-                    name="default_role_settings",
-                    settings={
-                        "gakunin_role": app.config['WEKO_ACCOUNTS_GAKUNIN_ROLE']['defaultRole'],
-                        "orthros_outside_role": app.config['WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE']['defaultRole'],
-                        "extra_role": app.config['WEKO_ACCOUNTS_EXTRA_ROLE']['defaultRole']}
-                )
-                db.session.add(new_setting)
-                db.session.commit()
 
 class WekoAccountsREST(object):
     """Weko accounts Rest Obj."""
