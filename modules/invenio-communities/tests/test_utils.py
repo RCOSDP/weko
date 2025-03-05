@@ -35,10 +35,12 @@ from invenio_records.api import Record
 from invenio_files_rest.models import Location, Bucket, ObjectVersion
 
 from invenio_files_rest.errors import FilesException
+from sqlalchemy.orm.exc import NoResultFound
+from weko_index_tree.models import Index
 
-from invenio_communities.models import InclusionRequest
+from invenio_communities.models import InclusionRequest, Community
 from invenio_communities.utils import render_template_to_string,Pagination,save_and_validate_logo,\
-    initialize_communities_bucket,format_request_email_templ,send_community_request_email,get_user_role_ids,delete_empty
+    initialize_communities_bucket,format_request_email_templ,send_community_request_email,get_user_role_ids,delete_empty,get_repository_id_by_item_id
 
 # .tox/c1/bin/pytest --cov=invenio_communities tests/test_utils.py::test_Pagination -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
 def test_Pagination():
@@ -226,3 +228,69 @@ def test_delete_empty():
     data=None
     flg, result = delete_empty(data)
     assert (flg == False and result == None)
+
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_utils.py::test_delete_empty -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
+def test_delete_empty():
+    data = {'metainfo': {'parentkey': [{'catalog_access_rights': [{'catalog_access_right_access_rights': 'embargoed access', 'catalog_access_right_rdf_resource': 'rdef3'}], 'catalog_contributors': [{'contributor_names': [{'contributor_name': '提供機関名', 'contributor_name_language': 'en'}], 'contributor_type': 'HostingInstitution'}], 'catalog_identifiers': [{'catalog_identifier': 'iden1', 'catalog_identifier_type': 'DOI'}], 'catalog_license': {'catalog_license_language': 'ja-Kana', 'catalog_license_rdf_resource': 'ed', 'catalog_license_type': 'file'}, 'catalog_licenses': [{'catalog_license': 'lic1'}], 'catalog_rights': [{'catalog_right': 'ac1', 'catalog_right_language': 'ja', 'catalog_right_rdf_resource': 'rdf'}], 'catalog_subjects': [{'catalog_subject': 'sub1', 'catalog_subject_language': 'ja', 'catalog_subject_scheme': 'BSH', 'catalog_subject_uri': 'suburl1'}]}]}}
+    flg, result = delete_empty(data)
+    assert (flg == True and result == {'metainfo': {'parentkey': [{"catalog_rights": [{"catalog_right": "ac1", "catalog_right_language": "ja", "catalog_right_rdf_resource": "rdf"}], "catalog_license": {"catalog_license_type": "file", "catalog_license_language": "ja-Kana", "catalog_license_rdf_resource": "ed"}, "catalog_licenses": [{"catalog_license": "lic1"}], "catalog_subjects": [{"catalog_subject": "sub1", "catalog_subject_uri": "suburl1", "catalog_subject_scheme": "BSH", "catalog_subject_language": "ja"}], "catalog_identifiers": [{"catalog_identifier": "iden1", "catalog_identifier_type": "DOI"}], "catalog_contributors": [{"contributor_type": "HostingInstitution", "contributor_names": [{"contributor_name": "提供機関名", "contributor_name_language": "en"}]}], "catalog_access_rights": [{"catalog_access_right_rdf_resource": "rdef3", "catalog_access_right_access_rights": "embargoed access"}]}]}})
+    data = {'metainfo': {'parentkey': [{'catalog_contributors': [{'contributor_names': [{'contributor_name': '提供機関名', 'contributor_name_language': 'ja'}], 'contributor_type': 'HostingInstitution'}], 'catalog_identifiers': [{}], 'catalog_subjects': [{}], 'catalog_licenses': [{}], 'catalog_rights': [{}], 'catalog_access_rights': [{}]}]}}
+    flg, result = delete_empty(data)
+    assert (flg == True and result == {'metainfo': {'parentkey': [{"catalog_contributors": [{"contributor_type": "HostingInstitution", "contributor_names": [{"contributor_name": "提供機関名", "contributor_name_language": "ja"}]}]}]}})
+    data=[]
+    flg, result = delete_empty(data)
+    assert (flg == False and result == None)
+    data=None
+    flg, result = delete_empty(data)
+    assert (flg == False and result == None)
+
+
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_utils.py::test_get_repository_id_by_item_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
+def test_get_repository_id_by_item_id(app, db, users, mocker):
+    """Test get_repository_id_by_item_id."""
+    index1 = Index(id=1, parent=0, position=0)
+    index2 = Index(id=2, parent=1, position=0)
+    index3 = Index(id=3, parent=0, position=1)
+    db.session.add(index1)
+    db.session.add(index2)
+    db.session.add(index3)
+    db.session.commit()
+    comm1 = Community.create(community_id='comm1', role_id=1,
+                            id_user=users[2]["obj"].id, title='Title1',
+                            description='Description1',
+                            root_node_id=index1.id,
+                            group_id=1)
+    db.session.commit()
+    
+    # Setup mock data
+    record_data = {1: {"path": [1]}, 2: {"path": [2]}, 3: {"path": [3]},}
+
+    index_data = {1: index1, 2: index2, 3: index3,}
+
+    def mock_get_record(item_id):
+        result = record_data.get(item_id, None)
+        if result is None:
+            raise NoResultFound
+        return result
+
+    def mock_get_index_by_id(index_id):
+        return index_data.get(index_id, None)
+
+    mocker.patch('invenio_records.api.Record.get_record', side_effect=mock_get_record)
+    mocker.patch('weko_index_tree.models.Index.get_index_by_id', side_effect=mock_get_index_by_id)
+
+    # repository_id can be retrieved
+    repository_id = get_repository_id_by_item_id(1)
+    assert repository_id == comm1.id
+
+    # 
+    repository_id = get_repository_id_by_item_id(2)
+    assert repository_id == comm1.id
+
+    # repository_id cannot be retrieved
+    repository_id = get_repository_id_by_item_id(3)
+    assert repository_id is None
+
+    # item_id does not exist
+    with pytest.raises(NoResultFound):
+        repository_id = get_repository_id_by_item_id(999)

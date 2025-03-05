@@ -2278,16 +2278,17 @@ def test_handle_check_duplication_item_id(i18n_app):
 
 
 # def export_all(root_url, user_id, data): *** not yet done
-def test_export_all(db_activity, i18n_app, users, item_type, db_records2):
+def test_export_all(db_activity, i18n_app, users, db_records2):
     root_url = "/"
     user_id = users[3]["obj"].id
     data = {"item_type_id": "1", "item_id_range": "1"}
     data2 = {"item_type_id": "-1", "item_id_range": "1-9"}
     data3 = {"item_type_id": -1, "item_id_range": "1"}
+    time_zone = "Asia/Tokyo"
 
-    assert not export_all(root_url, user_id, data)
-    assert not export_all(root_url, user_id, data2)
-    assert not export_all(root_url, user_id, data3)
+    assert export_all(root_url, user_id, data, time_zone)
+    assert export_all(root_url, user_id, data2, time_zone)
+    assert export_all(root_url, user_id, data3, time_zone)
 
 
 # def delete_exported(uri, cache_key):

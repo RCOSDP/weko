@@ -2095,67 +2095,94 @@ class SiteLicense(RecordBase):
                         SiteLicenseInfo.organization_id).all()
                 else:
                     repositories = Community.get_repositories_by_user(user)
-                    repository_id = repositories[0].id
-                    sl_obj = SiteLicenseInfo.query.filter_by(repository_id=repository_id).order_by(
+                    repository_ids = [repository.id for repository in repositories]
+                    sl_obj = SiteLicenseInfo.query.filter(SiteLicenseInfo.repository_id.in_(repository_ids)).order_by(
                         SiteLicenseInfo.organization_id).all()
             return [cls(dict(obj)) for obj in sl_obj]
-
+    
     @classmethod
     def update(cls, obj):
         """Update method."""
-        def get_addr(lst, id_):
-            if lst and isinstance(lst, list):
-                sld = []
-                for j in range(len(lst)):
-                    sl = SiteLicenseIpAddress(
-                        organization_id=id_,
-                        organization_no=j + 1,
-                        start_ip_address='.'.join(
-                            lst[j].get('start_ip_address')),
-                        finish_ip_address='.'.join(
-                            lst[j].get('finish_ip_address'))
-                    )
-                    sld.append(sl)
-                return sld
-        from flask_login import current_user
-        from invenio_communities.models import Community
+        def get_repository_ids():
+            """Get repository ID based on user's roles."""
+            from flask_login import current_user
+            from invenio_communities.models import Community
+            if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles):
+                return ["Root Index"]
+            repositories = Community.get_repositories_by_user(current_user)
+            if repositories:
+                return [repository.id for repository in repositories]
+            raise Exception("No repository found for the user")
+    
+        def get_existing_entries(repository_ids):
+            """Get existing site license entries for the repository."""
+            if "Root Index" in repository_ids:
+                return {info.organization_name: info for info in SiteLicenseInfo.query.all()}
+            return {info.organization_name: info for info in SiteLicenseInfo.query.filter(SiteLicenseInfo.repository_id.in_(repository_ids)).all()}
+    
+        def get_addr(lst, organization_id):
+            """Convert address list to SiteLicenseIpAddress instances."""
+            if not lst or not isinstance(lst, list):
+                return []
+            
+            return [
+                SiteLicenseIpAddress(
+                    organization_id=organization_id,
+                    organization_no=j + 1,
+                    start_ip_address='.'.join(item.get('start_ip_address')),
+                    finish_ip_address='.'.join(item.get('finish_ip_address'))
+                )
+                for j, item in enumerate(lst)
+            ]
         # update has_site_license field on item type name tbl
         ItemTypeNames.update(obj.get('item_type'))
+        repository_ids = get_repository_ids()
+        
         site_license = obj.get('site_license')
-        if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles):
-            repository_id = "Root Index"
-        else:
-            repositories = Community.get_repositories_by_user(current_user)
-            repository_id = repositories[0].id
-        if isinstance(site_license, list):
-            # delete all rows first
-            if repository_id == "Root Index":
-                SiteLicenseIpAddress.query.delete()
-                SiteLicenseInfo.query.delete()
-            else:   
-                site_license_info_ids = [info.organization_id for info in SiteLicenseInfo.query.filter_by(repository_id=repository_id).all()]
-                SiteLicenseIpAddress.query.filter(SiteLicenseIpAddress.organization_id.in_(site_license_info_ids)).delete(synchronize_session=False)
-                SiteLicenseInfo.query.filter_by(repository_id=repository_id).delete()
+        if not isinstance(site_license, list):
+            return
+        
+        existing_entries = get_existing_entries(repository_ids)
+        new_entries = {}
+        
+        for lst in site_license:
+            org_name = lst.get('organization_name')
+            receive_mail_flag = lst.get('receive_mail_flag', 'F') if lst.get('mail_address') else 'F'
             
-            # add new rows
-            if site_license:
-                sif = []
-                for i in range(len(site_license)):
-                    lst = site_license[i]
-                    if lst.get('mail_address'):
-                        receive_mail_flag = lst.get('receive_mail_flag')
-                    else:
-                        receive_mail_flag = 'F'
-                    slif = SiteLicenseInfo(
-                        organization_name=lst.get('organization_name'),
-                        receive_mail_flag=receive_mail_flag,
-                        mail_address=lst.get('mail_address'),
-                        domain_name=lst.get('domain_name'),
-                        repository_id=lst.get('repository_id', repository_id))
-                    slif.addresses = get_addr(lst.get('addresses'), slif.organization_id)
-                    sif.append(slif)
-                # add new rows
-                db.session.add_all(sif)
+            if org_name in existing_entries:
+                # Update existing entry
+                slif = existing_entries[org_name]
+                slif.receive_mail_flag = receive_mail_flag
+                slif.mail_address = lst.get('mail_address')
+                slif.domain_name = lst.get('domain_name')
+                
+                # Update addresses
+                for addr in slif.addresses:
+                    db.session.delete(addr)
+                new_addresses = get_addr(lst.get('addresses'), slif.organization_id)
+                slif.addresses = new_addresses    
+
+                new_entries[org_name] = slif
+            else:
+                # Create new entry
+                slif = SiteLicenseInfo(
+                    organization_name=org_name,
+                    receive_mail_flag=receive_mail_flag,
+                    mail_address=lst.get('mail_address'),
+                    domain_name=lst.get('domain_name'),
+                    repository_id=lst.get('repository_id') if lst.get('repository_id') else repository_ids[0]
+                )
+                slif.addresses = get_addr(lst.get('addresses'), slif.organization_id)
+                new_entries[org_name] = slif
+                db.session.add(slif)
+
+        # Remove obsolete entries
+        obsolete_entries = set(existing_entries.keys()) - set(new_entries.keys())
+        for org_name in obsolete_entries:
+            target = existing_entries[org_name]
+            for addr in target.addresses:
+                db.session.delete(addr)
+            db.session.delete(target)
 
 
 class RevisionsIterator(object):

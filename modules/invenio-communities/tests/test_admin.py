@@ -37,7 +37,8 @@ def setup_view_community(app,db,users):
         page=0, ranking=0, curation_policy='',fixed_points=0, thumbnail_path='',catalog_json=[], login_menu_enabled=False, cnri="http://hdl.handle.net/1234567890/1",
         title="Test comm",
         description="this is test comm",
-        id_user=1
+        id_user=1,
+        group_id=1
     )
     db.session.add(comm)
     comm2 = Community(
@@ -115,9 +116,9 @@ class TestCommunityModelView():
 
             # role_idss is true
             result = view.role_query_cond([1,2])
-            assert str(result) == "communities_community.id_role IN (:id_role_1, :id_role_2) OR communities_community.id_user = :id_user_1"
-
-    # def get_query(self):
+            assert str(result) == "communities_community.group_id IN (:group_id_1, :group_id_2)"
+    
+    # def get_query(self): 
     # .tox/c1/bin/pytest --cov=invenio_communities tests/test_admin.py::TestCommunityModelView::test_get_query -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
     def test_get_query(self,setup_view_community,users):
         _, _, _, user, view = setup_view_community
@@ -129,7 +130,7 @@ class TestCommunityModelView():
         # min(role_ids) > 2
         with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
             result = view.get_query()
-            assert "WHERE communities_community.id_role IN (?) OR communities_community.id_user = ?" in str(result)
+            assert "WHERE communities_community.group_id IN " in str(result)
 
     # def get_count_query(self):
     # .tox/c1/bin/pytest --cov=invenio_communities tests/test_admin.py::TestCommunityModelView::test_get_count_query -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
@@ -143,7 +144,7 @@ class TestCommunityModelView():
         # min(role_ids) > 2
         with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
             result = view.get_count_query()
-            assert "WHERE communities_community.id_role IN (?) OR communities_community.id_user = ?" in str(result)
+            assert "WHERE communities_community.group_id IN " in str(result)
 
     # def edit_form(self, obj):
     # .tox/c1/bin/pytest --cov=invenio_communities tests/test_admin.py::TestCommunityModelView::test_create -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
@@ -170,6 +171,7 @@ class TestCommunityModelView():
                 "id": "111",
                 "owner": 1,
                 "index": 11,
+                "group": 1,
                 "title": "Test comm after",
                 "description": "this is description of community1.",
                 "page":"",
@@ -188,6 +190,7 @@ class TestCommunityModelView():
                 "id": "-1",
                 "owner": 1,
                 "index": 11,
+                "group": 1,
                 "title": "Test comm after",
                 "description": "this is description of community1.",
                 "page":"",
@@ -206,6 +209,7 @@ class TestCommunityModelView():
                 "id": "a-1^^^",
                 "owner": 1,
                 "index": 11,
+                "group": 1,
                 "title": "Test comm after",
                 "description": "this is description of community1.",
                 "page":"",
@@ -227,6 +231,7 @@ class TestCommunityModelView():
                 "id": "a-123456789",
                 "owner": 1,
                 "index": 11,
+                "group": 1,
                 "title": "Test comm after",
                 "description": "this is description of community1.",
                 "page":"",

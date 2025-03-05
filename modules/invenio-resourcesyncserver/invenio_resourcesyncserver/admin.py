@@ -50,7 +50,7 @@ class AdminResourceListView(BaseView):
         :param
         :return: The rendered template.
         """
-        list_resource = ResourceListHandler.get_list_resource()
+        list_resource = ResourceListHandler.get_list_resource(user=current_user)
         result = list(map(lambda item: item.to_dict(), list_resource))
         return jsonify(result)
 

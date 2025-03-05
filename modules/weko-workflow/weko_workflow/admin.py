@@ -421,6 +421,8 @@ class WorkFlowSettingView(BaseView):
                 form_workflow.update(
                     flows_id=uuid.uuid4()
                 )
+                if form_workflow['repository_id'] == None:
+                    form_workflow.pop('repository_id')
                 workflow.create_workflow(form_workflow)
                 workflow_detail = workflow.get_workflow_by_flows_id(
                     form_workflow.get('flows_id'))

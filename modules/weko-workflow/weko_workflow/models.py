@@ -677,7 +677,7 @@ class WorkFlow(db.Model, TimestampMixin):
     is_gakuninrdm = db.Column(db.Boolean(name='is_gakuninrdm'), nullable=False, default=False)
     """GakuninRDM flag."""
     
-    repository_id = db.Column(db.String(100), nullable=False)
+    repository_id = db.Column(db.String(100), nullable=False, default="Root Index")
     """the repository id of workflow."""
 
 

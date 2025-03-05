@@ -253,9 +253,10 @@ def get_repository_id_by_item_id(item_id):
         if com:
             repository_id = com.id
             break
-        index = Index.get_index_by_id(index.parent)
         if not index.parent:
             break
+        index = Index.get_index_by_id(index.parent)
+        
     return repository_id
 
 def delete_empty(data):

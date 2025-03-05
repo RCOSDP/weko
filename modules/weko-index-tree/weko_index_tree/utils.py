@@ -1096,8 +1096,9 @@ def get_item_ids_in_index(index_id):
     records = get_all_records_in_index(index_id)
     result = []
     for record in records:
-        item_id = record.get('_source', {}).get('control_number', 0)
-        result.append(item_id)
+        item_id = record.get('_source', {}).get('control_number')
+        if item_id:
+            result.append(item_id)
     return result
 
 def get_all_records_in_index(index_id):

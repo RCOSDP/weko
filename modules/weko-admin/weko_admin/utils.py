@@ -1327,6 +1327,7 @@ class FeedbackMail:
                 new_data['success'] = int(
                     data[index].count) - int(data[index].error)
                 new_data['is_latest'] = data[index].is_latest
+                new_data['repo'] = data[index].repository_id
                 list_history.append(new_data)
             result['data'] = list_history
             result['total_page'] = cls.get_total_page(

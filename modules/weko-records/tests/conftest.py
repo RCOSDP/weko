@@ -291,7 +291,7 @@ def users(app, db):
                             page=0, ranking=0, curation_policy='',fixed_points=0, thumbnail_path='',catalog_json=[], login_menu_enabled=False,
                             id_user=sysadmin.id, title="test community",
                             description=("this is test community"),
-                            root_node_id=index.id)
+                            root_node_id=index.id, group_id=comadmin_role.id)
     db.session.commit()
     return [
         {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin},

@@ -38,7 +38,15 @@ def test_index_AdminResourceListView(i18n_app):
 
 #     def get_list(self):
 def test_get_list_AdminResourceListView(i18n_app):
-    assert test_1.get_list()
+    mock_data = MagicMock()
+    mock_data.to_dict.return_value = {"key": "value"}
+    with  patch("invenio_resourcesyncserver.api.ResourceListHandler.get_list_resource", return_value=[mock_data]) as mock_get_list_resource:
+        result = test_1.get_list()
+        assert result.status_code == 200
+        result_json = result.get_json()
+        assert len(result_json) == 1
+        assert result_json[0] == {"key": "value"}
+        mock_get_list_resource.assert_called_once_with(user=current_user)
 
 #     def create(self):
 def test_create_AdminResourceListView(i18n_app):
@@ -93,11 +101,15 @@ def test_index_AdminChangeListView(i18n_app):
 #     def get_list(self):
 def test_get_list_AdminChangeListView(i18n_app, db):
     data = MagicMock()
-    data.index = MagicMock()
-    data.index.index_name_english = "test"
+    data.to_dict.return_value = {"key": "value"}
 
-    with patch("invenio_resourcesyncserver.api.ChangeListHandler.get_all", return_value=[data]):
-        assert test_2.get_list()
+    with patch("invenio_resourcesyncserver.api.ChangeListHandler.get_all", return_value=[data]) as mock_get_all:
+        result = test_2.get_list()
+        assert result.status_code == 200
+        result_json = result.get_json()
+        assert len(result_json) == 1
+        assert result_json[0] == {"key": "value"}
+        mock_get_all.assert_called_once_with(user=current_user)
 
 #     def get_change_list(self, repo_id):
 def test_get_change_list_AdminChangeListView(i18n_app, db):

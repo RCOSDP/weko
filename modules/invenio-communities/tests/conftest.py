@@ -172,6 +172,7 @@ def users(app, db):
         generaluser = create_test_user(email="generaluser@test.org")
         originalroleuser = create_test_user(email="originalroleuser@test.org")
         originalroleuser2 = create_test_user(email="originalroleuser2@test.org")
+        subrepoadmin = create_test_user(email="subrepoadmin@test.org")
     else:
         user = User.query.filter_by(email="user@test.org").first()
         contributor = User.query.filter_by(email="contributor@test.org").first()
@@ -181,6 +182,7 @@ def users(app, db):
         generaluser = User.query.filter_by(email="generaluser@test.org")
         originalroleuser = create_test_user(email="originalroleuser@test.org")
         originalroleuser2 = create_test_user(email="originalroleuser2@test.org")
+        subrepoadmin = User.query.filter_by(email="subrepoadmin@test.org").first()
 
     role_count = Role.query.filter_by(name="System Administrator").count()
     if role_count != 1:
@@ -190,6 +192,7 @@ def users(app, db):
         comadmin_role = ds.create_role(name="Community Administrator")
         general_role = ds.create_role(name="General")
         originalrole = ds.create_role(name="Original Role")
+        group_role = ds.create_role(name="Group Role")
     else:
         sysadmin_role = Role.query.filter_by(name="System Administrator").first()
         repoadmin_role = Role.query.filter_by(name="Repository Administrator").first()
@@ -197,6 +200,7 @@ def users(app, db):
         comadmin_role = Role.query.filter_by(name="Community Administrator").first()
         general_role = Role.query.filter_by(name="General").first()
         originalrole = Role.query.filter_by(name="Original Role").first()
+        group_role = Role.query.filter_by(name="Group Role").first()
 
 
 
@@ -266,6 +270,9 @@ def users(app, db):
         ds.add_role_to_user(originalroleuser, originalrole)
         ds.add_role_to_user(originalroleuser2, originalrole)
         ds.add_role_to_user(originalroleuser2, repoadmin_role)
+        ds.add_role_to_user(subrepoadmin, group_role)
+        ds.add_role_to_user(subrepoadmin, comadmin_role)
+        
 
 
     return [
@@ -285,6 +292,7 @@ def users(app, db):
             "obj": originalroleuser2,
         },
         {"email": user.email, "id": user.id, "obj": user},
+        {"email": subrepoadmin.email, "id": subrepoadmin.id, "obj": subrepoadmin},
     ]
 
 
@@ -315,13 +323,16 @@ def communities(app, db, users):
     comm0 = Community.create(community_id='comm1', role_id=r.id,
                              id_user=user1.id, title='Title1',
                              description='Description1',
-                             root_node_id=index.id)
+                             root_node_id=index.id,
+                             group_id=1)
     comm1 = Community.create(community_id='comm2', role_id=r.id,
                              id_user=user1.id, title='A',
-                             root_node_id=index.id)
+                             root_node_id=index.id,
+                             group_id=1)
     comm2 = Community.create(community_id='oth3', role_id=r.id,
                              id_user=user1.id,
-                             root_node_id=index.id)
+                             root_node_id=index.id,
+                             group_id=1)
     return comm0, comm1, comm2
 
 @pytest.fixture
@@ -354,17 +365,20 @@ def communities_for_filtering(app, db, user):
                              id_user=user1.id, title='Test1',
                              description=('Beautiful is better than ugly. '
                                           'Explicit is better than implicit.'),
-                             root_node_id=index.id)
+                             root_node_id=index.id,
+                             group_id=1)
     comm1 = Community.create(community_id='comm2', role_id=r.id,
                              id_user=user1.id, title='Testing case 2',
                              description=('Flat is better than nested. '
                                           'Sparse is better than dense.'),
-                             root_node_id=index.id)
+                             root_node_id=index.id,
+                             group_id=1)
     comm2 = Community.create(community_id='oth3', role_id=r.id,
                              id_user=user1.id, title='A word about testing',
                              description=('Errors should never pass silently. '
                                           'Unless explicitly silenced.'),
-                             root_node_id=index.id)
+                             root_node_id=index.id,
+                             group_id=1)
     return comm0, comm1, comm2
 
 @pytest.yield_fixture()

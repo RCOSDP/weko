@@ -175,7 +175,7 @@ def check_send_all_reports():
         # Schedule set in the view
         schedules = AdminSettings.get(name='report_email_schedule_settings',
                                      dict_to_object=False)
-        schedules = schedules if schedules else None
+        schedules = schedules if schedules else {}
         for repository_id, schedule in schedules.items():
             if schedule and _due_to_run(schedule):
                 send_all_reports.delay(repository_id=repository_id)
@@ -203,22 +203,23 @@ def _due_to_run(schedule):
 @shared_task(ignore_results=True)
 def check_send_site_access_report():
     """Check send site access report."""
-    settings = AdminSettings.get('site_license_mail_settings')
-    if settings and settings.auto_send_flag:
-        agg_month = \
-            current_app.config.get('WEKO_ADMIN_DEFAULT_AGGREGATION_MONTH', 1)
-        # Previous months
-        end_date = datetime.utcnow().replace(day=1) - timedelta(days=1)
-        count = 1
-        start_date = end_date.replace(day=1)
-        while count < agg_month:
-            start_date = (start_date - timedelta(days=1)).replace(day=1)
-            count = count + 1
-        end_month = end_date.strftime('%Y-%m')
-        start_month = start_date.strftime('%Y-%m')
-        # send mail api
-        manual_send_site_license_mail(start_month=start_month,
-                                      end_month=end_month)
+    settings = AdminSettings.get('site_license_mail_settings',dict_to_object=False)
+    for repository_id, setting in settings.items():
+        if setting and setting.get("auto_send_flag"):
+            agg_month = \
+                current_app.config.get('WEKO_ADMIN_DEFAULT_AGGREGATION_MONTH', 1)
+            # Previous months
+            end_date = datetime.utcnow().replace(day=1) - timedelta(days=1)
+            count = 1
+            start_date = end_date.replace(day=1)
+            while count < agg_month:
+                start_date = (start_date - timedelta(days=1)).replace(day=1)
+                count = count + 1
+            end_month = end_date.strftime('%Y-%m')
+            start_month = start_date.strftime('%Y-%m')
+            # send mail api
+            manual_send_site_license_mail(start_month=start_month,
+                                        end_month=end_month, repo_id=repository_id)
 
 
 @shared_task(ignore_results=True)

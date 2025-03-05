@@ -208,6 +208,30 @@ class TestCommunity:
         assert "communities_community.deleted_at IS NULL" not in str(result)
 
 #     def filter_communities(cls, p, so, with_deleted=False):
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_models.py::TestCommunity::test_get_repositories_by_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
+    def test_get_repositories_by_user(self, db, communities, users):
+        user = users[0]["obj"]
+        comm = communities[0]
+
+        # matching group_id
+        comm.group_id = user.roles[0].id
+        db.session.commit()
+        result = Community.get_repositories_by_user(user)
+        assert len(result) == 1
+        assert result[0].id == comm.id
+        
+        # non matching group_id
+        comm.group_id = user.roles[0].id + 1  
+        db.session.commit()
+        result = Community.get_repositories_by_user(user)
+        assert len(result) == 0
+        
+        # user has no roles
+        user.roles = []
+        db.session.commit()
+        result = Community.get_repositories_by_user(user)
+        assert len(result) == 0
+
 #     def add_record(self, record):
 # .tox/c1/bin/pytest --cov=invenio_communities tests/test_models.py::TestCommunity::test_add_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
     def test_add_record(self, app, db, db_records,communities,mocker):
@@ -267,6 +291,19 @@ class TestCommunity:
 #     def reject_record(self, record):
 #     def delete(self):
 #     def undelete(self):
+
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_models.py::TestCommunity::test_to_dict -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
+    def test_to_dict(self,communities):
+        comm = communities[0]
+        result = comm.to_dict()
+        assert result["id"] == comm.id
+        assert result["id_role"] == comm.id_role
+        assert result["id_user"] == comm.id_user
+        assert result["title"] == comm.title
+        assert result["description"] == comm.description
+        assert result["root_node_id"] == comm.root_node_id
+        assert result["group_id"] == comm.group_id
+
 #     def is_deleted(self):
 #     def logo_url(self):
 #     def community_url(self):

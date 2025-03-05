@@ -467,6 +467,11 @@ class Community(db.Model, Timestamp):
             self.deleted_at = None
 
     def to_dict(self):
+        """Convert the Community object to a dictionary.
+        
+        Returns:
+            dict: Dictionary representation of the Community object.
+        """
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}
 
     @property

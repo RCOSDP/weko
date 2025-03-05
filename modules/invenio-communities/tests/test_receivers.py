@@ -45,7 +45,8 @@ def test_destroy_oaipmh_set(app,db):
     comm1 = Community.create(community_id='comm1', role_id=1,
                          id_user=user1.id, title='Title1',
                          description='Description1',
-                         root_node_id=1)
+                         root_node_id=1,
+                         group_id=1)
 
     db.session.commit()
 

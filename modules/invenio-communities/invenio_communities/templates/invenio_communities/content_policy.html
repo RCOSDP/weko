@@ -60,12 +60,17 @@
     {% endblock page_body %}
 
     {%- block page_body_main %}
-      <div class="content-policy">
-        <h1>Content Policy</h1>
-        <div>
-          {% for line in community.content_policy.split('\n') %}
-            <p>{{ line }}</p>
-          {% endfor %}
-        </div>
+    <div class="content-policy container py-5">
+      <div class="text-left mb-4">
+        <h1 class="display-4">コンテンツポリシー</h1>
+        <hr class="w-50 mx-auto">
       </div>
-    {%- endblock page_body_main %}
+      <div class="policy-content">
+        {% if community.content_policy %}
+          {% for line in community.content_policy.split('\n') %}
+            <p class="mb-3">{{ line|e }}</p>
+          {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+  {%- endblock page_body_main %}

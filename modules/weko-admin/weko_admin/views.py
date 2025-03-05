@@ -363,10 +363,6 @@ def get_email_author():
 
 
 @blueprint_api.route('/get_repository_list', methods=['GET'])
-@login_required
-@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
-                 WEKO_ADMIN_PERMISSION_ROLE_REPO,
-                 WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
 def get_repository_list():
     """API to get the list of repositories.
 
@@ -532,7 +528,8 @@ def resend_failed_mail():
                      methods=['POST'])
 @login_required
 @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
-                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO,
+                 WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
 def manual_send_site_license_mail(start_month, end_month, repo_id=None):
     """Send site license mail by manual."""
     if not repo_id:
@@ -578,9 +575,11 @@ def get_site_license_send_mail_settings():
     
     sitelicenses = SiteLicenseInfo.query.filter_by(repository_id=repo_id).order_by(
         SiteLicenseInfo.organization_id).all()
-    settings = AdminSettings.get('site_license_mail_settings', False).get(repo_id)
-    if not settings:
-        settings = {'auto_send_flag': False}
+    settings = AdminSettings.get('site_license_mail_settings', dict_to_object=False)
+    if settings:    
+        setting = settings.get(repo_id)
+    else:
+        setting = {'auto_send_flag': False}
     
     sitelicenses_data = [
         {
@@ -594,7 +593,7 @@ def get_site_license_send_mail_settings():
         
     return jsonify({    
         'sitelicenses': sitelicenses_data,
-        'auto_send': settings["auto_send_flag"],
+        'auto_send': setting["auto_send_flag"],
     })
 
 
