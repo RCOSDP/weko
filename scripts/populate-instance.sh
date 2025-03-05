@@ -441,12 +441,13 @@ ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
        "{'blocked_ePPNs': []}"
 ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
        7 "shib_login_enable" \
-       "{'shib_flg': current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']}"
+       "{'shib_flg': False}"
 ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
        8 "default_role_settings" \
-       "{'gakunin_role': current_app.config['WEKO_ACCOUNTS_GAKUNIN_ROLE']['defaultRole'],
-       'orthros_outside_role': current_app.config['WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE']['defaultRole'],
-       'extra_role': current_app.config['WEKO_ACCOUNTS_EXTRA_ROLE']['defaultRole']}"
+       "{'gakunin_role': '', 'orthros_outside_role': '', 'extra_role': ''}"
+${INVENIO_WEB_INSTANCE} admin_settings create_settings \
+       9 "attribute_mapping" \
+       "{'shib_eppn': '', 'shib_role_authority_name': '', 'shib_mail': '', 'shib_user_name': ''}"
 # create-admin-settings-end
 
 # create-default-authors-prefix-settings-begin
