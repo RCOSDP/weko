@@ -41,6 +41,8 @@ from invenio_db import db
 from sqlalchemy.exc import SQLAlchemyError
 from weko_admin.models import AdminLangSettings
 from weko_accounts.utils import roles_required
+from werkzeug.exceptions import BadRequest
+import time
 
 from .api import Indexes
 from .errors import IndexAddedRESTError, IndexNotFoundRESTError, \
@@ -831,7 +833,7 @@ class GetParentIndex(ContentNegotiatedMethodView):
 class IndexManagementAPI(ContentNegotiatedMethodView):
     """Get Index Tree API."""
 
-    view_name = '{0}_get_index_tree'
+    view_name = '{0}_index_management_api'
 
     def __init__(self, ctx, record_serializers=None, default_media_type=None, **kwargs):
         """Constructor."""
@@ -853,7 +855,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
     @roles_required([], allow_anonymous=True)
     @limiter.limit('')
     def get(self, **kwargs):
-        """Get tree json."""
+        """Get index tree."""
         version = kwargs.get('version')
         func_name = f'get_{version}'
         if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
@@ -866,7 +868,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
     @require_oauth_scopes(create_index_scope.id)
     @limiter.limit('')
     def post(self, **kwargs):
-        """Get tree json."""
+        """Create a new index tree node."""
         version = kwargs.get('version')
         func_name = f'post_{version}'
         if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
@@ -879,7 +881,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
     @require_oauth_scopes(update_index_scope.id)
     @limiter.limit('')
     def put(self, **kwargs):
-        """Get tree json."""
+        """Update an existing index tree node."""
         version = kwargs.get('version')
         func_name = f'put_{version}'
         if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
@@ -892,7 +894,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
     @require_oauth_scopes(delete_index_scope.id)
     @limiter.limit('')
     def delete(self, **kwargs):
-        """Get tree json."""
+        """Delete an existing index tree node."""
         version = kwargs.get('version')
         func_name = f'delete_{version}'
         if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
@@ -902,7 +904,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
 
 
     def get_v1(self, **kwargs):
-        """Get index tree v2."""
+        """Get index tree."""
         try:
             pid = kwargs.get('index_id')
 
@@ -940,8 +942,6 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                 
                 tree = self.record_class.get_index_tree(pid, lang="en")
                 reset_tree(tree=tree)
-                if len(tree) == 0:
-                    raise PermissionError()
                 result_tree_en = dict(
                     index=tree[0]
                 )
@@ -1001,13 +1001,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
     def merge_index_trees(self, tree_ja, tree_en):
         """Merge Japanese and English index trees."""
         def merge_nodes(node_ja, node_en):
-            if not node_ja:
-                return node_en
-            if not node_en:
-                return node_ja
-
             merged_node = node_ja.copy()
-            
             merged_node.update({
                 "index_name": merged_node.get("value", ""),
                 "index_name_english": node_en.get("value", ""),
@@ -1029,11 +1023,11 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
     
     def post_v1(self, **kwargs):
         """Create a new index tree node."""
-        import time
         try:
-            request_data = request.get_json()
-            if not request_data:
-                request_data = {}
+            try:
+                request_data = request.get_json()
+            except BadRequest:
+                request_data = {} 
 
             raw_index_data = request_data.get("index",{})
            

@@ -599,6 +599,8 @@ def test_get_parent_index_tree_error(client_rest, users, communities, test_indic
 from flask_oauthlib.provider import OAuth2Provider
 from invenio_oauth2server.views.server import login_oauth2_user
 from weko_index_tree.api import Indexes
+from weko_index_tree.errors import PermissionError
+from invenio_rest.errors import SameContentException
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexManagementAPI -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace -p no:warnings
 
 class TestIndexManagementAPI:
@@ -609,7 +611,7 @@ class TestIndexManagementAPI:
     # │   ├── child Index 1 [1740974554289]
     # │   ├── child Index 2 [1740974612379]
     
-    # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexManagementAPI::test_get_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace
+    # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexManagementAPI::test_get_v1 -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace -p no:warnings
     def test_get_v1(self, app, client_rest, auth_headers_noroleuser, auth_headers_sysadmin, auth_headers_sysadmin_without_scope, indices_for_api):
         """
         インデックス管理API-インデクス取得
@@ -624,22 +626,52 @@ class TestIndexManagementAPI:
 
         # 全インデックス取得テスト（ユーザー権限に応じた取得可否を確認）
         self.run_get_all_indices(app, client_rest, auth_headers_noroleuser, 200, expected_indices=[0, 1740974499997 ,1740974612379])
-        self.run_get_all_indices(app, client_rest, auth_headers_sysadmin, 200, expected_indices=[0, 1623632832836, 1740974499997, 1740974554289, 1740974612379])
+        self.run_get_all_indices(app, client_rest, auth_headers_sysadmin, 200, expected_indices=[0, 1623632832836, 1740974499997, 1740974554289, 1740974612379, 1740974612380])
 
         # 特定のインデックス取得テスト（異なる権限によるアクセス確認）
         self.run_get_specific_index(app, client_rest, 1740974499997, auth_headers_noroleuser, 200)  # 一般ユーザー（public_state=True）
         self.run_get_specific_index(app, client_rest, 1740974554289, auth_headers_noroleuser, 403)  # 一般ユーザー（public_state=False）
-        self.run_get_specific_index(app, client_rest, 1740974554289, auth_headers_sysadmin_without_scope, 403)  # 一般ユーザー（public_state=False）
+        self.run_get_specific_index(app, client_rest, 1740974554289, auth_headers_sysadmin_without_scope, 403)  # 管理者、scopeなしtoken（public_state=False）
         self.run_get_specific_index(app, client_rest, 1740974499997, auth_headers_sysadmin, 200)  # 管理者（全取得可能）
         self.run_get_specific_index(app, client_rest, 9999999999999, auth_headers_sysadmin, 404)  # 存在しないID
 
         # インデックスツリー取得テスト（親インデックスを指定し、子インデックスを取得できるか確認）
         self.run_get_index_tree(app, client_rest, 1740974499997, auth_headers_noroleuser, [1740974499997, 1740974612379])  # 一般ユーザー
-        self.run_get_index_tree(app, client_rest, 1740974499997, auth_headers_sysadmin, [1740974499997, 1740974554289, 1740974612379])  # 管理者
+        self.run_get_index_tree(app, client_rest, 1740974499997, auth_headers_sysadmin, [1740974499997, 1740974554289, 1740974612379, 1740974612380])  # 管理者
 
         # 認証なしでのアクセス試行テスト（Unauthorized(401)を確認）
         self.run_get_index_unauthorized(app, client_rest)
+        
+        # VersionNotFoundRESTError
+        url = "v2/tree"
+        response = client_rest.get(url, headers=auth_headers_sysadmin)
+        assert response.status_code == 400
+        
+        # エラー
+        with patch("weko_index_tree.api.Indexes.get_all_indexes", side_effect=PermissionError):
+            with patch("weko_index_tree.api.Indexes.get_index", side_effect=PermissionError):
+                url = "v1/tree"
+                response = client_rest.get(url, headers=auth_headers_sysadmin)
+                assert response.status_code == 403
+                
+        with patch("weko_index_tree.api.Indexes.get_all_indexes", side_effect=SQLAlchemyError):
+            with patch("weko_index_tree.api.Indexes.get_index", side_effect=SQLAlchemyError):
+                url = "v1/tree"
+                response = client_rest.get(url, headers=auth_headers_sysadmin)
+                assert response.status_code == 500
 
+        with patch("weko_index_tree.api.Indexes.get_all_indexes", side_effect=Exception):
+            with patch("weko_index_tree.api.Indexes.get_index", side_effect=Exception):
+                url = "v1/tree"
+                response = client_rest.get(url, headers=auth_headers_sysadmin)
+                assert response.status_code == 500
+        
+        url = "v1/tree"
+        headers = {"If-None-Match": "true"}
+        headers.update(auth_headers_sysadmin)
+        response = client_rest.get(url, headers=headers)
+        assert response.status_code == 200
+        
     def run_get_all_indices(self, app, client_rest, user_role, expected_status, expected_indices):
         """
         全インデックス取得APIのテスト
@@ -729,6 +761,42 @@ class TestIndexManagementAPI:
             
             # DBエラー発生時に500エラーが返るか
             self.run_create_index_server_error(app, client_rest, auth_headers_sysadmin)
+            
+            # VersionNotFoundRESTError
+            url = "v2/tree/index/"
+            response = client_rest.post(url, headers=auth_headers_sysadmin, json={})
+            assert response.status_code == 400
+            
+            url = "v1/tree/index/"
+            response = client_rest.post(url, headers=auth_headers_sysadmin, json=None)
+            assert response.status_code == 200
+            
+            # エラー
+            with patch("weko_index_tree.api.Indexes.create", return_value=None):
+                url = "v1/tree/index/"
+                response = client_rest.post(url, headers=auth_headers_sysadmin, json=None)
+                assert response.status_code == 500
+                
+            with patch("weko_index_tree.api.Indexes.update", return_value=None):
+                url = "v1/tree/index/"
+                response = client_rest.post(url, headers=auth_headers_sysadmin, json=None)
+                assert response.status_code == 500
+                
+            with patch("weko_index_tree.api.Indexes.create", side_effect=PermissionError):
+                url = "v1/tree/index/"
+                response = client_rest.post(url, headers=auth_headers_sysadmin, json={})
+                assert response.status_code == 403
+                
+                # DBエラーを発生させるために `Indexes.get_all_indexes` をモック
+            with patch("weko_index_tree.api.Indexes.create", side_effect=SQLAlchemyError):
+                url = "v1/tree/index/"
+                response = client_rest.post(url, headers=auth_headers_sysadmin, json={})
+                assert response.status_code == 500
+                    
+            with patch("weko_index_tree.api.Indexes.create", side_effect=Exception):
+                url = "v1/tree/index/"
+                response = client_rest.post(url, headers=auth_headers_sysadmin, json={})
+                assert response.status_code == 500
 
     def run_create_index_success(self, app, client_rest, auth_headers):
         """
@@ -809,8 +877,7 @@ class TestIndexManagementAPI:
         }
 
         # DBエラーを発生させるために `record_class.create` をモック
-        with patch("weko_index_tree.api.Indexes.create") as mock_create:
-            mock_create.side_effect = SQLAlchemyError()  # DBエラーを発生させる
+        with patch("weko_index_tree.api.Indexes.create", side_effect=SQLAlchemyError):
             response = client_rest.post(url, headers=auth_headers, json=payload)
             assert response.status_code == 500, "DBエラー発生時のリクエストが500にならなかった"
             
@@ -846,6 +913,38 @@ class TestIndexManagementAPI:
 
             # DBエラー発生時に500エラー
             self.run_update_index_server_error(app, client_rest, auth_headers_sysadmin)
+
+            
+            # VersionNotFoundRESTError
+            url = "v2/tree/index/9999999999999"
+            response = client_rest.put(url, headers=auth_headers_sysadmin, json={})
+            assert response.status_code == 400
+            
+            url = "v1/tree/index/1740974499997"
+            response = client_rest.put(url, headers=auth_headers_sysadmin, json={"index":""})
+            assert response.status_code == 400
+            
+            payload = {
+                "index": {
+                    "index_name": "更新テストインデックス",
+                    "index_name_english": "Updated Test Index",
+                    "index_link_name": "更新リンク",
+                    "index_link_name_english": "Updated Link"
+                }
+            }
+            url = "v1/tree/index/1740974499997"
+            
+            with patch("weko_index_tree.api.Indexes.update", return_value=None):
+                response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload)
+                assert response.status_code == 500
+                
+            with patch("weko_index_tree.api.Indexes.get_index", side_effect=PermissionError):
+                response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload)
+                assert response.status_code == 403
+                    
+            with patch("weko_index_tree.api.Indexes.get_index", side_effect=Exception):
+                response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload)
+                assert response.status_code == 500
 
     def run_update_index_success(self, app, client_rest, auth_headers):
         """
@@ -960,6 +1059,25 @@ class TestIndexManagementAPI:
 
             # DBエラー発生時に500エラー
             self.run_delete_index_server_error(app, client_rest, auth_headers_sysadmin)
+            
+            # VersionNotFoundRESTError
+            url = "v2/tree/index/9999999999999"
+            response = client_rest.delete(url, headers=auth_headers_sysadmin)
+            assert response.status_code == 400
+            
+            url = "v1/tree/index/1740974612379"
+            
+            with patch("weko_index_tree.api.Indexes.delete", return_value=None):
+                response = client_rest.delete(url, headers=auth_headers_sysadmin)
+                assert response.status_code == 500
+                
+            with patch("weko_index_tree.api.Indexes.delete", side_effect=PermissionError):
+                response = client_rest.delete(url, headers=auth_headers_sysadmin)
+                assert response.status_code == 403
+                    
+            with patch("weko_index_tree.api.Indexes.delete", side_effect=Exception):
+                response = client_rest.delete(url, headers=auth_headers_sysadmin)
+                assert response.status_code == 500
 
     def run_delete_index_success(self, app, client_rest, auth_headers):
         """

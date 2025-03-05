@@ -890,11 +890,27 @@ def indices_for_api(app, db):
             created=datetime(2025, 3, 3, 4, 3, 33, 316001),
             updated=datetime(2025, 3, 3, 4, 3, 58, 104842)
         )
+        
+        child_index_3 = Index(
+            id=1740974612380,
+            parent=1740974612379,
+            position=1,
+            index_name="子インデックス 3",
+            index_name_english="child index 3",
+            browsing_role="3,4,-98,-99",
+            contribute_role="3,4,-98,-99",
+            public_state=False,
+            harvest_public_state=True,
+            owner_user_id=1,
+            created=datetime(2025, 3, 3, 4, 3, 33, 316001),
+            updated=datetime(2025, 3, 3, 4, 3, 58, 104842)
+        )
 
         db.session.add(sample_index)
         db.session.add(parent_index)
         db.session.add(child_index_1)
         db.session.add(child_index_2)
+        db.session.add(child_index_3)
 
     return {
         'sample_index': sample_index,
