@@ -53,11 +53,12 @@ class ShibSettingView(BaseView):
             }
 
             # 属性マッピング
+            attribute_mappings = AdminSettings.get('attribute_mapping')
             attributes = {
-                'weko_eppn': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_eppn', '0'),
-                'weko_role_authority_name': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_role_authority_name', '0'),
-                'weko_mail': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_mail', '0'),
-                'weko_user_name': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_user_name', '0')
+                'shib_eppn': attribute_mappings.__dict__['shib_eppn'],
+                'shib_role_authority_name': attribute_mappings.__dict__['shib_role_authority_name'],
+                'shib_mail': attribute_mappings.__dict__['shib_mail'],
+                'shib_user_name': attribute_mappings.__dict__['shib_user_name']
             }
 
             # ブロックユーザー
@@ -100,6 +101,7 @@ class ShibSettingView(BaseView):
         _app.config['WEKO_ACCOUNTS_GAKUNIN_ROLE']['defaultRole'] = AdminSettings.get('default_role_settings').__dict__['gakunin_role']
         _app.config['WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE']['defaultRole'] = AdminSettings.get('default_role_settings').__dict__['orthros_outside_role']
         _app.config['WEKO_ACCOUNTS_EXTRA_ROLE']['defaultRole'] = AdminSettings.get('default_role_settings').__dict__['extra_role']
+        _app.config['WEKO_ACCOUNTS_ATTRIBUTE_MAP'] = AdminSettings.get('attribute_mapping').__dict__
 
 shib_adminview = {
     'view_class': ShibSettingView,
