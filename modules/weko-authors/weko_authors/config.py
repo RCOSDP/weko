@@ -208,14 +208,17 @@ WEKO_AUTHORS_IMPORT_ENTRYPOINTS = {
     'import': '/admin/authors/import/import',
     'check_import_status': '/admin/authors/import/check_import_status',
     'check_pagination':'/admin/authors/import/check_pagination',
-    'check_file_download':'/admin/authors/import/check_file_download'
+    'check_file_download':'/admin/authors/import/check_file_download',
+    'result_download':'/admin/authors/import/result_download',
 }
 
 WEKO_AUTHORS_IMPORT_CACHE_KEY = 'author_import_cache'
 WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY = 'authors_import_user_file_key'
 WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_USER_FILE_PATH_KEY = "authors_import_band_check_user_file_path"
 WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_FILE_PATH_KEY = "authors_import_band_check_file_path"
-WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY = "authors_import_result_file_path"
+WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY = "authors_import_result_file_of_over_path"
+WEKO_AUTHORS_IMPORT_CACHE_RESULT_FILE_PATH_KEY = "authors_import_result_file_path"
+WEKO_AUTHORS_IMPORT_CACHE_OVER_MAX_TASK_KEY = "authors_import_over_max_task"
 WEKO_AUTHORS_IMPORT_BATCH_SIZE = 100
 WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYS = 1000
 WEKO_AUTHORS_BULK_IMPORT_MAX_RETRY = 5

@@ -587,48 +587,6 @@ def validate_import_data(file_format, file_data, mapping_ids, mapping, list_impo
     return file_data
 
 
-def band_check_file(max_page):
-    """
-    分割されているチェック結果をインポート用に編集した後くっつけます。
-    """
-    temp_file_path = current_cache.get(\
-    current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"])
-    
-    # checkファイルパスの作成
-    base_file_name = os.path.splitext(os.path.basename(temp_file_path))[0]
-    check_file_name = f"{base_file_name}-check"
-
-    temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
-    band_check_file_name = "{}_{}.{}".format(
-        "check_import_author",
-        datetime.datetime.now().strftime("%Y%m%d%H%M"),
-        "json"
-    )
-    band_check_file_path = os.path.join(temp_folder_path, band_check_file_name)
-    try:
-        with open(band_check_file_path, 'w', newline='', encoding='utf-8') as file:
-            file.write('[')  # JSON配列の開始
-            first = True
-            for i in range(1, max_page+1):
-                part_check_file_name = f"{check_file_name}-part{i}"
-                check_file_part_path = os.path.join(temp_folder_path, part_check_file_name)
-                with open(check_file_part_path, "r", encoding="utf-8-sig") as check_part_file:
-                    data = json.load(check_part_file)
-                # batch_size = current_app.config.get("WEKO_AUTHORS_IMPORT_BATCH_SIZE")
-                    for item in data:
-                        check_result = False if item.get("errors", []) else True
-                        if check_result:
-                            if not first:
-                                file.write(",")
-                            item.pop("warnings", None)
-                            item.pop("is_deleted", None)
-                            json.dump(item, file)
-                            first = False
-            file.write("]")
-    except Exception as ex:
-        raise ex
-    return band_check_file_path
-
 def band_check_file_for_user(max_page):
     """
     分割されているチェック結果をユーザー用に編集した後くっつけます。
@@ -822,7 +780,6 @@ def prepare_import_data(max_page_for_import_tab):
     Prepare import data.
     
     """
-    print("prepare_import_data")
     
     # checkファイルパスの作成
     check_file_name = get_check_base_name()
@@ -906,6 +863,54 @@ def import_author_to_system(author):
             traceback.print_exc(file=sys.stdout)
             raise ex
 
+def create_result_file_for_user(json):
+    """
+    ユーザー用の結果ファイルを作成します。
+    フロントに表示されている分とバックエンドで管理されている部分を別々に持ってきて合体させます。
+    args:
+        json: フロントに表示される著者データ
+    """
+    temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
+    result_over_max_file_path = current_cache.get(\
+            current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY"])
+    result_file_name = "{}_{}.{}".format(
+        "import_author_result",
+        datetime.datetime.now().strftime("%Y%m%d%H%M"),
+        "tsv"
+    )
+    result_file_path = os.path.join(temp_folder_path, result_file_name)
+    
+    if not result_over_max_file_path:
+        return None
+    try :
+        with open(result_file_path, "w", encoding="utf-8") as result_file:
+            writer = csv.writer(result_file, delimiter='\t')
+            # write header
+            writer.writerow(["No.", "Start Date", "End Date", "WEKO ID", "full_name", "Status"])
+            # まずフロントから送られてきたjsonを書き込む
+            for data in json:
+                number = data.get("No.", "")
+                start_date = data.get("Start Date", "")
+                end_date = data.get("End Date", "")
+                weko_id = data.get("WEKO ID", "")
+                full_name = data.get("full_name", "")
+                status = data.get("Status", "")
+                writer.writerow([number, start_date, end_date, weko_id, full_name, status])
+            count = len(json) + 1
+            with open(result_over_max_file_path, "r", encoding="utf-8") as file:
+                file_reader = csv.reader(file, dialect='excel', delimiter='\t')
+                for row in file_reader:
+                    row[0] = count
+                    writer.writerow(row)
+                    count += 1
+    except Exception as e:
+        current_app.logger.error(e)
+    update_cache_data(
+        current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_FILE_PATH_KEY"],
+        result_file_path,
+        current_app.config["WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD"]
+        )
+    return result_file_path
 
 def get_count_item_link(pk_id):
     """Get count of item link of author."""

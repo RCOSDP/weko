@@ -21,19 +21,22 @@
 """WEKO3 authors tasks."""
 import os
 import glob
+import gc, json, csv
 from datetime import datetime, timezone
 from time import sleep
 
-from celery import shared_task, states
+from celery import shared_task, states, group
 from celery.result import GroupResult
 from celery.task.control import inspect
 from flask import current_app
-from weko_workflow.utils import delete_cache_data, get_cache_data
+from flask_babelex import lazy_gettext as _
+from invenio_cache import current_cache
+from weko_workflow.utils import delete_cache_data, get_cache_data, update_cache_data
 
 from weko_authors.config import WEKO_AUTHORS_IMPORT_CACHE_KEY
 
 from .utils import export_authors, import_author_to_system, save_export_url, \
-    set_export_status
+    set_export_status, get_check_base_name
 
 
 @shared_task
@@ -83,25 +86,45 @@ def import_author_over_max(reached_point, item_count, task_ids ,max_part):
         count: インポートする著者データの数.
         task_ids: 先に行っているmax_diplay分のタスクID.
     """
-    from .utils import get_check_base_name
-    from invenio_cache import current_cache
-    import gc, json
-    from weko_workflow.utils import update_cache_data
-    max_display = current_app.config.get("WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYS")
-    
-    # 最初はmax_displayの500で割った秒数だけ待つ
-    sleep(max_display//500)
     
     # task_idsの全てのtaskが終了するまで待つ
     check_task_end(task_ids)
     del task_ids
     gc.collect()
+    
+    current_app.logger.info('import_author_over_max is start')
+    result = {'start_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+    try:
+        import_authors_from_temp_files(reached_point, max_part)
+        result['status'] = states.SUCCESS
+    except Exception as ex:
+        current_app.logger.error(ex)
+        result['status'] = states.FAILURE
+        if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                and ex.args[0].get('error_id'):
+            error_msg = ex.args[0].get('error_id')
+            result['error_id'] = error_msg
 
+    result['end_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    current_app.logger.info('import_author_over_max is end')
+    return result
+    
+    
+def import_authors_from_temp_files(reached_point, max_part):
+    """
+    一時ファイルから著者データを読み込み、インポートする処理を行います。
+    Args:
+        reached_point: 一時ファイルにおいてmax_displayに達した位置 
+                part_numberが一時ファイルのpart数で、countが一時ファイルの再開位置
+                データ例:{"part_number": 101, "count": 3}
+        max_part: インポートする最大のpart数
+    """
+    
     # 結果ファイルのDL用に一時ファイルを作成
     temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
     result_file_download_name = "{}_{}.{}".format(
-        "import_author_result",
-        datetime.datetime.now().strftime("%Y%m%d%H%M"),
+        "import_author_result_for_over_max",
+        datetime.now().strftime("%Y%m%d%H%M"),
         "tsv"
     )
     
@@ -112,14 +135,14 @@ def import_author_over_max(reached_point, item_count, task_ids ,max_part):
         result_file_path,
         current_app.config["WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD"]
     )
-    current_cache.get(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY"])
+    
     # すべてのtaskが終了したら、max_display以降のtaskを実行
     # part_numberから始めて、max_partまでのpartをインポートする。
     authors = []
     for i in range(reached_point.get("part_number"), max_part+1):
         part_check_file_name = f"{check_file_name}-part{i}"
         check_file_part_path = os.path.join(temp_folder_path, part_check_file_name)
-
+        
         #一時ファイルからインポートできるファイルを取得
         with open(check_file_part_path, "r", encoding="utf-8-sig") as check_part_file:
             data = json.load(check_part_file)
@@ -132,23 +155,24 @@ def import_author_over_max(reached_point, item_count, task_ids ,max_part):
                     item.pop("warnings", None)
                     item.pop("is_deleted", None)
                     authors.append(item)
-                    
         # authorsが長さWEKO_AUTHORS_IMPORT_BATCH_SIZEを超えた時点でインポート
         if len(authors) >= current_app.config.get("WEKO_AUTHORS_IMPORT_BATCH_SIZE"):
             import_authors_for_over_max(authors)
             authors = []
+        
+        # 一時ファイルの削除
+        try:
+            os.remove(check_file_part_path)
+            current_app.logger.debug(f"Deleted: {check_file_part_path}")
+        except Exception as e:
+            current_app.logger.error(f"Error deleting {check_file_part_path}: {e}")
     # authorsが残っている場合
     if authors:
         import_authors_for_over_max(authors)
-        
-    # 一時ファイルの削除
-    
-    
-    
+        authors = []
+        gc.collect()
     
 def import_authors_for_over_max(authors):
-    import gc
-    from celery import group
     group_tasks = []
     tasks = []
     task_ids = []
@@ -174,6 +198,7 @@ def import_authors_for_over_max(authors):
             'task_id': task.task_id,
             'weko_id': authors[idx].get('pk_id'),
             'full_name': full_name_info,
+            'type': authors[idx].get('status'),
             'status': 'PENDING'
         })
         task_ids.append(task.task_id)
@@ -202,21 +227,80 @@ def import_authors_for_over_max(authors):
             "end_date": end_date,
             "weko_id": _task['weko_id'],
             "full_name": _task['full_name'],
+            "type": _task['type'],
             "status": status,
             "error_id": error_id
         })
+        # 完了した時点でtaskを削除
         task.forget()
     del tasks
-    # TODO インポート結果を一時ファイルに書き込む処理
-    # write_temp_file(result)
+    write_result_temp_file(result)
     # TODO インポート結果をサマリーに追加する処理
+    update_summary(result)
     authors = []
     gc.collect()
 
+def write_result_temp_file(result):
+    """
+        引数resultからtaskの結果を取得し、一時ファイルに書き込む
+    args:
+        result: taskの結果とweko_idとfull_nameをまとめたもの
+            例：[{
+            "start_date": start_date,
+            "end_date": end_date,
+            "weko_id": 1,
+            "full_name": "kimura,shinji",
+            "type": "new",
+            "status": SUCCESS,
+            "error_id": "delete_author_link"
+            }, ...]
+            
+    """
+    result_file_path = current_cache.get(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY"])
+    try:
+        with open(result_file_path, "a", newline="", encoding="utf-8") as file:
+            writer = csv.writer(file, delimiter='\t')
+            for res in result:
+                start_date = res.get("start_date", "")
+                end_date = res.get("end_date", "")
+                weko_id = res.get("weko_id", "")
+                full_name = res.get("full_name", "")
+                type = res.get("type", "")
+                status = res.get("status", "")
+                error_id = res.get("error_id", "")
+                
+                msg = prepare_display_status(status, type, error_id)
+                writer.writerow(["", start_date, end_date, weko_id, full_name, msg])
+                
+                
+    except Exception as e:
+        current_app.logger.error(e)
+        raise e
+
+def update_summary(result):
+    return 0
+
+def prepare_display_status(status, type, error_id):
+    msg = ""
+    if status == states.SUCCESS:
+        msg = prepare_success_msg(type)
+    elif status == states.FAILURE:
+        msg = _('Error') + ": " + \
+            (_('The author is linked to items and cannot be deleted.') \
+            if error_id == "delete_author_link" else _('Failed to import.'))
+    return msg
+
+def prepare_success_msg(type):
+    switcher = {
+        'new': _('Register Success'),
+        'update': _('Update Success'),
+        'deleted': _('Delete Success')
+    }
+    return switcher.get(type, '')
 
 # 3秒ごとにtask_idsを確認し、全てのtaskが終了したらループを抜ける
 def check_task_end(task_ids):
-    max_display = current_app.config.get("WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYS")
+    length = len(task_ids)
     while True:
         count = 0
         for task_id in task_ids:
@@ -227,7 +311,7 @@ def check_task_end(task_ids):
                 end_date = None
             if end_date:
                 count += 1
-        if count == max_display:
+        if count == length:
             break
         else:
             sleep(3)

@@ -41,7 +41,7 @@ from .permissions import author_permission
 from .tasks import check_is_import_available, export_all, import_author, import_author_over_max
 from .utils import check_import_data, delete_export_status, \
     get_export_status, get_export_url, set_export_status, delete_export_url,\
-    band_check_file, band_check_file_for_user, prepare_import_data
+     band_check_file_for_user, prepare_import_data, create_result_file_for_user
 
 
 class AuthorManagementView(BaseView):
@@ -344,10 +344,34 @@ class ImportView(BaseView):
         result_check = check_is_import_available(data.get('group_task_id'))
         if not result_check['is_available']:
             return jsonify(result_check)
+        
+        # 既にある結果一時ファイルの削除
+        result_over_max_file_path = current_cache.get(\
+                current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY"])
+        result_file_path = current_cache.get(\
+                current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_FILE_PATH_KEY"])
+
+        if result_over_max_file_path:
+            try:
+                current_cache.delete(\
+                    current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY"])
+                os.remove(result_over_max_file_path)
+                current_app.logger.debug(f"Deleted: {result_over_max_file_path}")
+            except Exception as e:
+                current_app.logger.error(f"Error deleting {result_over_max_file_path}: {e}")
+        if result_file_path:
+            try:
+                current_cache.delete(\
+                    current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_FILE_PATH_KEY"])
+                os.remove(result_file_path)
+                current_app.logger.debug(f"Deleted: {result_file_path}")
+            except Exception as e:
+                current_app.logger.error(f"Error deleting {result_file_path}: {e}")
+
         max_page_for_import_tab = data.get("max_page")
+        
+        # フロントの最大表示数分だけrecordsを確保
         records, reached_point, count = prepare_import_data(max_page_for_import_tab)
-        print("after_prepare_import_data")
-        print(len(records), reached_point, count)
         tasks = []
         task_ids =[]
         
@@ -366,10 +390,12 @@ class ImportView(BaseView):
             })
             task_ids.append(task.task_id)
             
+        # WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYSを超えた分を別のタスクで処理
         if count > current_app.config.get("WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYS"):
-            print("count > WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYS")
-            import_author_over_max.delay(reached_point, count ,task_ids, max_page_for_import_tab)
-        
+            task = import_author_over_max.delay(reached_point, count ,task_ids, max_page_for_import_tab)
+            update_cache_data(\
+                current_app.config.get("WEKO_AUTHORS_IMPORT_CACHE_OVER_MAX_TASK_KEY")
+                , task.id, 0)
         response_data = {
             'group_task_id': import_task.id,
             "tasks": tasks
@@ -392,6 +418,7 @@ class ImportView(BaseView):
     @expose('/check_import_status', methods=['POST'])
     def check_import_status(self):
         """Is import available."""
+        result_task={}
         result = []
         data = request.get_json() or {}
         if data and data.get('tasks'):
@@ -414,11 +441,42 @@ class ImportView(BaseView):
                     "status": status,
                     "error_id": error_id
                 })
+        over_max_task = current_cache.get(\
+            current_app.config.get("WEKO_AUTHORS_IMPORT_CACHE_OVER_MAX_TASK_KEY")
+        )
+        if over_max_task:
+            task = import_author_over_max.AsyncResult(over_max_task)
+            status = states.PENDING
+            error_id = None
+            if task.result and task.result.get('status'):
+                status = task.result.get('status')
+                error_id = task.result.get('error_id')
+            result_task["over_max"]={
+                "task_id": over_max_task,
+                "status": status,
+                "error_id": error_id
+            }
+        result_task["tasks"] = result
+        return jsonify(result_task)
 
-        # task.forget()
-        return jsonify(result)
-
-
+    @author_permission.require(http_exception=403)
+    @expose('/result_download', methods=['POST'])
+    def result_file_download(self):
+        """インポートチェック画面でダウンロード処理"""
+        json = request.get_json().get("json")
+        result_file_path = current_cache.get(\
+            current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_FILE_PATH_KEY"])
+        if not result_file_path:
+            result_file_path = create_result_file_for_user(json)
+        if not result_file_path:
+            return jsonify({"Result": "Dont need to create result file"})
+        try:
+            return send_file(result_file_path, as_attachment=True)
+        except Exception as e:
+            current_app.logger.error(e)
+            return jsonify(e)
+        
+    
 authors_list_adminview = {
     'view_class': AuthorManagementView,
     'kwargs': {
