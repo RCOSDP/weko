@@ -43,6 +43,8 @@
     <!--<script src="https://unpkg.com/axios/dist/axios.min.js"></script>-->
 
     <script src="{{ url_for('static', filename='js/weko_items_ui/item.autofill.js') }}" type="text/babel"></script>
+    <script src="{{ url_for('static', filename='js/weko_items_ui/oa_policy.js') }}"></script>
+
     {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
     {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
     {% assets "weko_items_ui_feedback_maillist_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
@@ -277,6 +279,31 @@
                     form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
                     template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
                   </invenio-records-form>
+                  <!-- Thae Start -->
+                <div class="panel-body panel-body2">
+                  <div class="Input">
+                    <br>
+                    <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_username">
+                      <label for="policy">OAポリシー情報 </label>
+                    </div>
+                    <div class="col-xs-8 col-sm-8 col-md-9 col-lg-8">
+                      <div class="url">
+                        <button type="button" class="btn btn-primary" id="oapolicyurl">
+                          OAポリシー取得
+                        </button>
+                        <span class="ml-2">
+                          <!-- ポリシーURLを表示 -->
+                          <a id="oaPolicyUrl" href="#" target="_blank" style="display: none;">
+                            <span id="oaPolicyText"></span>
+                          </a>
+                        </span>
+                        <!-- エラーメッセージを赤字で表示 -->
+                        <span class="ml-2 text-danger" id="oaPolicyError"></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Thae End -->
                   {%- block feedback_mail_list %}
                     <div id="react"></div>
                     <input id="component-search-email-name" type="hidden" value="{{_('Feedback Mail Destination')}}" />
