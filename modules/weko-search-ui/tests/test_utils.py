@@ -11,6 +11,7 @@ import pytest
 from flask import current_app, make_response, request
 from flask_babelex import Babel
 from flask_login import current_user
+from werkzeug.exceptions import BadRequest
 from invenio_i18n.babel import set_locale
 from invenio_records.api import Record
 from mock import MagicMock, Mock, patch
@@ -251,6 +252,12 @@ def test_get_journal_info(i18n_app, indices, client_request_args, mocker):
         # Will result in an error for coverage of the except part
         assert get_journal_info(33)
         mock_abort.assert_called_with(500)
+
+    with patch(
+        "weko_indextree_journal.api.Journals.get_journal_by_index_id",
+        return_value=None,
+    ):
+        assert get_journal_info(33) == None
 
 
 # def get_feedback_mail_list(): *** not yet done
@@ -2454,6 +2461,27 @@ def test_check_index_access_permissions(i18n_app, client_request_args, users):
 
         # Test is successful if there are no errors
         assert True
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_index_access_permissions_issue_50659 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search_ui/.tox/c1/tmp
+def test_check_index_access_permissions_issue_50659(i18n_app, client_request_args, users):
+    @check_index_access_permissions
+    def test_function():
+        return True
+
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        with patch("flask.request.args", new_callable=lambda: {"search_type": "2", "q": "0"}):
+            assert test_function() == True
+
+        # args not have q
+        with patch("flask.request.args", new_callable=lambda: {"search_type": "2"}):
+            with pytest.raises(BadRequest):
+                test_function()
+
+        # q is not digit
+        with patch("flask.request.args", new_callable=lambda: {"search_type": "2", "q": "test"}):
+            with pytest.raises(BadRequest):
+                test_function()
 
 
 # def handle_check_file_metadata(list_record, data_path):
