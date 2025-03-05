@@ -40,22 +40,11 @@ class ShibSettingView(BaseView):
     def index(self):
         """Index."""
         try:
-            shib_flg = '0' if not current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] else '1'
+
+            shib_flg = '0' if not AdminSettings.get('shib_login_enable').__dict__['shib_flg'] else '1'
             role_list = current_app.config['WEKO_ACCOUNTS_ROLE_LIST']
             attr_list = current_app.config['WEKO_ACCOUNTS_ATTRIBUTE_LIST']
             set_language = _('language')
-
-            # 'blocked_user_settings' が存在しない場合、新しいレコードを追加
-            if AdminSettings.query.filter_by(name='blocked_user_settings').first() is None:
-                new_setting = AdminSettings(
-                    id=6,
-                    name="blocked_user_settings",
-                    settings={"blocked_ePPNs": []}
-                )
-                db.session.add(new_setting)
-                db.session.commit()
-            block_user_settings = AdminSettings.get('blocked_user_settings')
-            block_user_list = block_user_settings.__dict__['blocked_ePPNs']
 
             # デフォルトロール
             roles = {
@@ -65,12 +54,16 @@ class ShibSettingView(BaseView):
             }
 
             # 属性マッピング
+            attribute_mappings = AdminSettings.get('attribute_mapping')
             attributes = {
-                'shib_eppn_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_eppn', '0'),
-                'shib_role_authority_name_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_role_authority_name', '0'),
-                'shib_mail_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_mail', '0'),
-                'shib_user_name_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_user_name', '0')
+                'shib_eppn': attribute_mappings.__dict__['shib_eppn'],
+                'shib_role_authority_name': attribute_mappings.__dict__['shib_role_authority_name'],
+                'shib_mail': attribute_mappings.__dict__['shib_mail'],
+                'shib_user_name': attribute_mappings.__dict__['shib_user_name']
             }
+
+            block_user_settings = AdminSettings.get('blocked_user_settings')
+            block_user_list = block_user_settings.__dict__['blocked_ePPNs']
 
             if request.method == 'POST':
                 # Process forms
@@ -81,14 +74,16 @@ class ShibSettingView(BaseView):
                 if form == 'shib_form':
                     if shib_flg != new_shib_flg:
                         shib_flg = new_shib_flg
-                        _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] = (shib_flg == '1')
+                        AdminSettings.update('shib_login_enable', {"shib_flg": (shib_flg == '1')})
                         flash(_('Shibboleth flag was updated.'), category='success')
 
                     for key in attributes:
                         if attributes[key] != new_attributes[key]:
                             attributes[key] = new_attributes[key]
-                            current_app.config['WEKO_ACCOUNTS_ATTRIBUTE_MAP'][key.replace('_value', '')] = new_attributes[key]
                             flash(_(f'{key.replace("_", " ").title()} mapping was updated.'), category='success')
+                        AdminSettings.update('attribute_mapping', attributes)
+
+            self.get_latest_current_app()
                         
             return self.render(
                 current_app.config['WEKO_ACCOUNTS_SET_SHIB_TEMPLATE'],
@@ -97,6 +92,10 @@ class ShibSettingView(BaseView):
             current_app.logger.error(
                 'Unexpected error: {}'.format(sys.exc_info()))
         return abort(400)
+    
+    def get_latest_current_app(self):
+            _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] = AdminSettings.get('shib_login_enable').__dict__['shib_flg']
+            _app.config['WEKO_ACCOUNTS_ATTRIBUTE_MAP'] = AdminSettings.get('attribute_mapping').__dict__
 
 
 shib_adminview = {

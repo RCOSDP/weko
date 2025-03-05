@@ -41,6 +41,7 @@ from simplekv.memory.redisstore import RedisStore
 from weko_redis.redis import RedisConnection
 from werkzeug.local import LocalProxy
 from invenio_db import db
+from weko_admin.models import AdminSettings, db
 
 from .api import ShibUser
 from .utils import generate_random_str, parse_attributes
@@ -73,6 +74,67 @@ def init_menu():
         _('%(icon)s Administration', icon='<i class="fa fa-cogs fa-fw"></i>'),
         visible_when=_has_admin_access,
         order=100)
+    
+    _adjust_shib_admin_DB()
+
+def _adjust_shib_admin_DB():
+    """
+    Create or Update Shibboleth Admin database table.
+    """
+    with _app.app_context():
+        if AdminSettings.query.filter_by(name='blocked_user_settings').first() is None:
+            new_setting = AdminSettings(
+                id=6,
+                name="blocked_user_settings",
+                settings={"blocked_ePPNs": []}
+            )
+            db.session.add(new_setting)
+            db.session.commit()
+
+        if AdminSettings.query.filter_by(name='shib_login_enable').first() is None:
+            new_setting = AdminSettings(
+                id=7,
+                name="shib_login_enable",
+                settings={"shib_flg": _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']}
+            )
+            db.session.add(new_setting)
+            db.session.commit()
+        else:
+            setting = AdminSettings.query.filter_by(name='shib_login_enable').first()
+            setting.settings = {"shib_flg": _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']}
+            db.session.commit()
+        
+        if AdminSettings.query.filter_by(name='default_role_settings').first() is None:
+            new_setting = AdminSettings(
+                id=8,
+                name="default_role_settings",
+                settings={
+                    "gakunin_role": _app.config['WEKO_ACCOUNTS_GAKUNIN_ROLE']['defaultRole'],
+                    "orthros_outside_role": _app.config['WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE']['defaultRole'],
+                    "extra_role": _app.config['WEKO_ACCOUNTS_EXTRA_ROLE']['defaultRole']}
+            )
+            db.session.add(new_setting)
+            db.session.commit()
+        else:
+            setting = AdminSettings.query.filter_by(name='default_role_settings').first()
+            setting.settings = {
+                "gakunin_role": _app.config['WEKO_ACCOUNTS_GAKUNIN_ROLE']['defaultRole'],
+                "orthros_outside_role": _app.config['WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE']['defaultRole'],
+                "extra_role": _app.config['WEKO_ACCOUNTS_EXTRA_ROLE']['defaultRole']}
+            db.session.commit()
+
+        if AdminSettings.query.filter_by(name='attribute_mapping').first() is None:
+            new_setting = AdminSettings(
+                id=9,
+                name="attribute_mapping",
+                settings=_app.config['WEKO_ACCOUNTS_ATTRIBUTE_MAP']
+            )
+            db.session.add(new_setting)
+            db.session.commit()
+        else:
+            setting = AdminSettings.query.filter_by(name='attribute_mapping').first()
+            setting.settings = _app.config['WEKO_ACCOUNTS_ATTRIBUTE_MAP']
+            db.session.commit()
 
 
 def _redirect_method(has_next=False):
