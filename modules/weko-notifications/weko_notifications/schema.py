@@ -33,14 +33,10 @@ def validate_urn_uuid(value):
 
 def validate_rfc3339(value):
     try:
-        try:
-            datetime.fromisoformat(value)
-        except AttributeError:
-            if value.endswith('Z'):
-                value = value[:-1] + '+00:00'
-            if len(value) > 6 and value[-3] == ':':
-                value = value[:-3] + value[-2:]
-            datetime.strptime(value, '%Y-%m-%dT%H:%M:%S%z')
+        value = value.replace("Z", "+00:00")
+        if len(value) > 6 and value[-3] == ':':
+            value = value[:-3] + value[-2:]
+        datetime.strptime(value, '%Y-%m-%dT%H:%M:%S%z')
     except ValueError:
         raise ValidationError("Invalid RFC3339 format")
 

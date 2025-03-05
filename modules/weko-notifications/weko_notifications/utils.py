@@ -19,7 +19,4 @@ def rfc3339(timezone=None):
             The timezone to use. Defaults to "Asia/Tokyo".
     """
     tz = pytz.timezone(timezone or "Asia/Tokyo")
-    now = datetime.now(tz).replace(microsecond=0).isoformat()
-    if now.endswith('+00:00'):
-        now = now[:-6] + 'Z'
-    return now
+    return datetime.now(tz).isoformat(timespec="seconds").replace("+00:00", "Z")

@@ -124,6 +124,18 @@ def test_notification_schema_validation(mocker):
         "context": {"id": "112", "ietf:cite-as": "cite-as", "type": "Context"},
         "inReplyTo": "reply_to"
     }
+    valid_data2 = {
+        "id": "urn:uuid:ab65a169-5b3b-474f-b0cf-db77e145e952",
+        "updated": "2025-01-23T04:57:18Z",
+        "@context": ["https://www.w3.org/ns/activitystreams", "https://purl.org/coar/notify"],
+        "type": ["Announce", "coar-notify:EndorsementAction"],
+        "origin": {"id": "123", "inbox": "inbox_url", "type": "Inbox"},
+        "target": {"id": "456", "inbox": "inbox_url", "type": "Inbox"},
+        "object": {"id": "789", "object": "doc", "type": "Document", "ietf:cite-as": "cite-as", "url": {"id": "101", "mediaType": "application/pdf", "type": "URL"}},
+        "actor": {"id": "111", "type": "Person", "name": "John Doe"},
+        "context": {"id": "112", "ietf:cite-as": "cite-as", "type": "Context"},
+        "inReplyTo": "reply_to"
+    }
     invalid_data = {
         "id": "123",
         "updated": "2025-01-01 00:00:00",
@@ -151,6 +163,11 @@ def test_notification_schema_validation(mocker):
     assert result["actor"] == valid_data["actor"]
     assert result["context"] == valid_data["context"]
     assert result["inReplyTo"] == valid_data["inReplyTo"]
+
+    # Valid data should pass
+    result = schema.load(valid_data2).data
+    assert result["id"] == valid_data2["id"]
+    assert result["updated"] == valid_data2["updated"]
 
     # Invalid data should raise ValidationError
     with pytest.raises(ValidationError) as ex:
