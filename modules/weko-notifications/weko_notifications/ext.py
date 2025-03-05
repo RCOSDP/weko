@@ -18,11 +18,11 @@ class WekoNotifications(object):
     """WEKO-Notifications extension."""
 
     def __init__(self, app=None):
-        """Extension initialization."""
-        # TODO: This is an example of translation string with comment. Please
-        # remove it.
-        # NOTE: This is a note to a translator.
-        _('A translation string')
+        """Extension initialization.
+
+        Args:
+            app (flask.Flask | None): Flask application instance.
+        """
         if app:
             self.init_app(app)
 
