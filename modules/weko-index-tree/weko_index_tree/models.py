@@ -186,6 +186,13 @@ class Index(db.Model, Timestamp):
     online_issn = db.Column(db.Text, nullable=True, default='')
     """Online ISSN of the index."""
 
+
+    cnri = db.Column(db.Text, nullable=True)
+    """cnri of the index."""
+
+    index_url = db.Column(db.Text, nullable=True)
+    """index_url Group of the index."""
+
     is_deleted = db.Column(
         db.Boolean(name='is_deleted'),
         nullable=False,

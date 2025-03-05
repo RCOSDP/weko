@@ -28,7 +28,7 @@ from functools import partial
 from socketserver import DatagramRequestHandler
 
 from redis.exceptions import RedisError
-from flask import current_app, json
+from flask import current_app, json, request
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role
@@ -41,6 +41,8 @@ from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import case, func, literal_column, and_
 from weko_groups.api import Group
 from weko_redis.redis import RedisConnection
+from weko_handle.api import Handle
+from b2handle.clientcredentials import PIDClientCredentials
 
 from .models import Index
 from .utils import cached_index_tree_json, check_doi_in_index, \
@@ -60,6 +62,10 @@ class Indexes(object):
         :param indexes: the index information.
         :returns: The :class:`Index` instance lists or None.
         """
+        
+        # delay import
+        from weko_workflow.config import WEKO_SERVER_CNRI_HOST_LINK
+
         def _add_index(data):
             with db.session.begin_nested():
                 index = Index(**data)
@@ -94,7 +100,7 @@ class Indexes(object):
 
             data["coverpage_state"] = False
             data["recursive_coverpage_check"] = False
-            
+
             group_list = ''
             groups = Group.query.all()
             for group in groups:
@@ -106,7 +112,15 @@ class Indexes(object):
             data["browsing_group"] = group_list
             data["contribute_group"] = group_list
 
-            
+            """register handle if ALLOW"""
+            if current_app.config.get("WEKO_HANDLE_ALLOW_REGISTER_CNRI"):
+                handle, index_url = cls.get_handle_index_url(cid)
+
+                if handle is None:
+                    raise Exception("Handle registration failed")
+                data["cnri"] = WEKO_SERVER_CNRI_HOST_LINK + handle
+                data["index_url"] = index_url
+
             if int(pid) == 0:
                 pid_info = cls.get_root_index_count()
                 data["position"] = 0 if not pid_info else \
@@ -260,7 +274,7 @@ class Indexes(object):
                     Index.parent == index_id)
                 obj_list = query.all()
                 updated = datetime.now(timezone.utc)
-                dct = query.update(
+                query.update(
                     {
                         Index.parent: slf.parent,
                         Index.owner_user_id: current_user.get_id(),
@@ -304,7 +318,7 @@ class Indexes(object):
                     while e <= len(p_lst):
                         s = e
                         e = e + batch
-                        dct = db.session.query(Index). \
+                        db.session.query(Index). \
                             filter(Index.id.in_(p_lst[s:e])). \
                             update(
                                 {
@@ -315,6 +329,7 @@ class Indexes(object):
                             )
                 cls.delete_set_info('delete', index_id, p_lst)
                 return p_lst
+
         return 0
 
     @classmethod
@@ -1880,8 +1895,9 @@ class Indexes(object):
         if action == 'move':  # move items to parent index
             pass
         else:  # delete all index
-            from .tasks import delete_oaiset_setting
+            from .tasks import delete_oaiset_setting, delete_index_handle
             delete_oaiset_setting.delay(id_list)
+            delete_index_handle.delay(id_list)
 
     @classmethod
     def get_public_indexes_list(cls, with_deleted=False):
@@ -1931,3 +1947,20 @@ class Indexes(object):
             for idx in indexes:
                 ids.append(str(idx[0]))
         return ids
+
+    @classmethod
+    def get_handle_index_url(cls, indexid):
+        """register Handle and get index_url
+
+        :param indexid: index id.
+        :return: cnri, index_url
+        """
+        index_url = request.url.split('/admin/')[0] + '/index/' + str(indexid)
+        credential = PIDClientCredentials.load_from_JSON(
+            current_app.config.get('WEKO_HANDLE_CREDS_JSON_PATH')
+        )
+        hdl = credential.get_prefix() + '/index/' + str(indexid)
+        weko_handle = Handle()
+
+        handle = weko_handle.register_handle(location=index_url, hdl=hdl)
+        return handle, index_url
