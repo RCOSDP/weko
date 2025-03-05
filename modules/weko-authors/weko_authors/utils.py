@@ -239,7 +239,7 @@ def export_authors():
                     handle_exception(ex, attempt, retrys, interval, stop_point=i)
                     
             # 一時ファイルに書き込み
-            write_to_tempfile(i, mappings, schemes, row_header, row_label_en, row_label_jp, row_data)
+            write_to_tempfile(i, row_header, row_label_en, row_label_jp, row_data)
             
         # 完成した一時ファイルをファイルインスタンスに保存
         with open(temp_file_path, 'rb') as f:
@@ -268,7 +268,8 @@ def export_authors():
     return file_uri
 
 
-def write_to_tempfile(start, mappings, schemes, row_header, row_label_en, row_label_jp, row_data):
+def write_to_tempfile(start, row_header, row_label_en, row_label_jp, row_data):
+    
     # 一時ファイルのパスを取得
     temp_file_path=current_cache.get( \
         current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"])
@@ -330,6 +331,11 @@ def check_import_data(file_name: str):
                 num_error += len([item for item in result_part\
                     if item.get('errors')])
             write_tmp_part_file(i, result_part, check_file_name)
+            try:
+                os.remove(part_file_path)
+                current_app.logger.info(f"Deleted: {part_file_path}")
+            except Exception as e:
+                current_app.logger.error(f"Error deleting {part_file_path}: {e}")
         part1_check_file_name = f"{check_file_name}-part1"
         check_file_part1_path = os.path.join(temp_folder_path, part1_check_file_name)
         with open(check_file_part1_path, "r", encoding="utf-8-sig") as check_part1:
@@ -353,6 +359,11 @@ def check_import_data(file_name: str):
         current_app.logger.error('-' * 60)
         traceback.print_exc(file=sys.stdout)
         current_app.logger.error('-' * 60)
+    try:
+        os.remove(temp_file_path)
+        current_app.logger.debug(f"Deleted: {temp_file_path}")
+    except Exception as e:
+        current_app.logger.error(f"Error deleting {temp_file_path}: {e}")
 
     return result
 
@@ -465,7 +476,7 @@ def unpackage_and_check_import_file(file_format, file_name, temp_file_path, mapp
     return math.ceil((count-3)/json_size)
 
 def write_tmp_part_file(part_num, file_data, temp_file_path):
-    """
+    """Write data to temp file for Import.
     Args:
         part_num(int): count of list
         file_data(list): Author data from tsv/csv.
@@ -622,13 +633,9 @@ def band_check_file_for_user(max_page):
     """
     分割されているチェック結果をユーザー用に編集した後くっつけます。
     """
-    temp_file_path = current_cache.get(\
-    current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"])
     
     # checkファイルパスの作成
-    base_file_name = os.path.splitext(os.path.basename(temp_file_path))[0]
-    check_file_name = f"{base_file_name}-check"
-
+    check_file_name = get_check_base_name()
     temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
     check_file_download_name = "{}_{}.{}".format(
         "import_author_check_result",
@@ -648,15 +655,21 @@ def band_check_file_for_user(max_page):
                 batch_size = current_app.config.get("WEKO_AUTHORS_IMPORT_BATCH_SIZE")
                 for index, entry in enumerate(data, start=(i-1)*batch_size+1):
                     pk_id = entry.get("pk_id", "")
-                    author_name_info = entry.get("authorNameInfo", [{}])[0]
-                    family_name = author_name_info.get("familyName", "")
-                    first_name = author_name_info.get("firstName", "")
-                    full_name = f"{family_name},{first_name}"
+                    full_name_info =""
+                    for author_name_info in entry.get("authorNameInfo", [{}]):
+                        family_name = author_name_info.get("familyName", "")
+                        first_name = author_name_info.get("firstName", "")
+                        full_name = f"{family_name},{first_name}"
+                        if len(full_name)!=1:
+                            if len(full_name_info)==0:
+                                full_name_info += full_name
+                            else:
+                                full_name_info += f"\n{full_name}"
                     email_info = entry.get("emailInfo", [{}])[0]
                     email = email_info.get("email", "")
                     check_result = get_check_result(entry)
 
-                    writer.writerow([index, pk_id, full_name, email, check_result])
+                    writer.writerow([index, pk_id, full_name_info, email, check_result])
     except Exception as ex:
         raise ex
     
@@ -804,7 +817,48 @@ def flatten_authors_mapping(mapping, parent_key=None):
             result_keys.append(current_key)
     return result_all, result_keys
 
+def prepare_import_data(max_page_for_import_tab):
+    """
+    Prepare import data.
+    
+    """
+    print("prepare_import_data")
+    
+    # checkファイルパスの作成
+    check_file_name = get_check_base_name()
+    
+    max_display = current_app.config.get("WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYS")
+    temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
 
+    # フロント表示用の著者データ
+    authors = []
+    # インポートが実行される総数用の変数
+    count = 0
+    # フロントに表示される著者データの最大数に達したポイントを記録
+    reached_point = {}
+    for i in range(1, max_page_for_import_tab+1):
+        part_check_file_name = f"{check_file_name}-part{i}"
+        check_file_part_path = os.path.join(temp_folder_path, part_check_file_name)
+        with open(check_file_part_path, "r", encoding="utf-8-sig") as check_part_file:
+            data = json.load(check_part_file)
+            # jsonの中で何番目のデータかをカウント
+            count_for_json = 0
+            for item in data:
+                check_result = False if item.get("errors", []) else True
+                if check_result:
+                    if count < max_display:
+                        item.pop("warnings", None)
+                        item.pop("is_deleted", None)
+                        authors.append(item)
+                    elif count == max_display:
+                        reached_point["part_number"] = i
+                        reached_point["count"] = count_for_json
+                    else:
+                        pass
+                    count += 1
+                count_for_json += 1
+    return authors, reached_point, count
+                    
 def import_author_to_system(author):
     """Import author to DB and ES.
 
@@ -871,3 +925,9 @@ def get_count_item_link(pk_id):
             and result_itemCnt['hits']['total'] > 0:
         count = result_itemCnt['hits']['total']
     return count
+
+def get_check_base_name():
+    temp_file_path = current_cache.get(\
+        current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"])
+    base_file_name = os.path.splitext(os.path.basename(temp_file_path))[0]
+    return f"{base_file_name}-check"

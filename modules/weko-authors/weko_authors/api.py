@@ -335,7 +335,7 @@ class WekoAuthors(object):
                             else:
                                 val = data[i].get(child['json_id'])
                                 if child['json_id'] == 'idType':
-                                    scheme = schemes.get(val)
+                                    scheme = schemes.get(str(val))
                                     row.append(
                                         scheme['scheme'] if scheme else val)
                                 else:

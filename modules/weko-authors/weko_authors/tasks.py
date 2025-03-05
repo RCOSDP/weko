@@ -22,6 +22,7 @@
 import os
 import glob
 from datetime import datetime, timezone
+from time import sleep
 
 from celery import shared_task, states
 from celery.result import GroupResult
@@ -69,6 +70,168 @@ def import_author(author):
     result['end_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return result
 
+@shared_task
+def import_author_over_max(reached_point, item_count, task_ids ,max_part):
+    """
+    WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYSを超えた著者をインポートする場合の処理です。
+    先に行っているインポートタスクが終了次第、reached_pointから一時ファイルを用いて
+    著者インポートを開始します。
+    Args:
+        reached_point: 一時ファイルにおいてmax_displayに達した位置 
+                part_numberが一時ファイルのpart数で、countが一時ファイルの再開位置
+                データ例:{"part_number": 101, "count": 3}
+        count: インポートする著者データの数.
+        task_ids: 先に行っているmax_diplay分のタスクID.
+    """
+    from .utils import get_check_base_name
+    from invenio_cache import current_cache
+    import gc, json
+    from weko_workflow.utils import update_cache_data
+    max_display = current_app.config.get("WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYS")
+    
+    # 最初はmax_displayの500で割った秒数だけ待つ
+    sleep(max_display//500)
+    
+    # task_idsの全てのtaskが終了するまで待つ
+    check_task_end(task_ids)
+    del task_ids
+    gc.collect()
+
+    # 結果ファイルのDL用に一時ファイルを作成
+    temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
+    result_file_download_name = "{}_{}.{}".format(
+        "import_author_result",
+        datetime.datetime.now().strftime("%Y%m%d%H%M"),
+        "tsv"
+    )
+    
+    result_file_path = os.path.join(temp_folder_path, result_file_download_name)
+    check_file_name = get_check_base_name()
+    update_cache_data(
+        current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY"],
+        result_file_path,
+        current_app.config["WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD"]
+    )
+    current_cache.get(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY"])
+    # すべてのtaskが終了したら、max_display以降のtaskを実行
+    # part_numberから始めて、max_partまでのpartをインポートする。
+    authors = []
+    for i in range(reached_point.get("part_number"), max_part+1):
+        part_check_file_name = f"{check_file_name}-part{i}"
+        check_file_part_path = os.path.join(temp_folder_path, part_check_file_name)
+
+        #一時ファイルからインポートできるファイルを取得
+        with open(check_file_part_path, "r", encoding="utf-8-sig") as check_part_file:
+            data = json.load(check_part_file)
+            for index, item in enumerate(data):
+                # max_display以降のところまで飛ばす
+                if i == reached_point.get("part_number") and index < reached_point.get("count"):
+                    continue
+                check_result = False if item.get("errors", []) else True
+                if check_result:
+                    item.pop("warnings", None)
+                    item.pop("is_deleted", None)
+                    authors.append(item)
+                    
+        # authorsが長さWEKO_AUTHORS_IMPORT_BATCH_SIZEを超えた時点でインポート
+        if len(authors) >= current_app.config.get("WEKO_AUTHORS_IMPORT_BATCH_SIZE"):
+            import_authors_for_over_max(authors)
+            authors = []
+    # authorsが残っている場合
+    if authors:
+        import_authors_for_over_max(authors)
+        
+    # 一時ファイルの削除
+    
+    
+    
+    
+def import_authors_for_over_max(authors):
+    import gc
+    from celery import group
+    group_tasks = []
+    tasks = []
+    task_ids = []
+    for author in authors:
+        group_tasks.append(import_author.s(author))
+
+    # group_tasksを実行
+    import_task = group(group_tasks).apply_async()
+    import_task.save()
+    for idx, task in enumerate(import_task.children):                
+        full_name_info =""
+        # フルネーム生成
+        for author_name_info in authors[idx].get("authorNameInfo", [{}]):
+            family_name = author_name_info.get("familyName", "")
+            first_name = author_name_info.get("firstName", "")
+            full_name = f"{family_name},{first_name}"
+            if len(full_name)!=1:
+                if len(full_name_info)==0:
+                    full_name_info += full_name
+                else:
+                    full_name_info += f"\n{full_name}"
+        tasks.append({
+            'task_id': task.task_id,
+            'weko_id': authors[idx].get('pk_id'),
+            'full_name': full_name_info,
+            'status': 'PENDING'
+        })
+        task_ids.append(task.task_id)
+        
+    # task_idsの全てのtaskが終了するまで待つ
+    check_task_end(task_ids)
+    del task_ids
+    gc.collect()
+    
+    count = 0
+    result = []
+    for _task in tasks:
+        task = import_author.AsyncResult(_task['task_id'])
+        start_date = ""
+        end_date = ""
+        if task.result:
+            start_date = task.result.get('start_date', '')
+            end_date = task.result.get('end_date', '')
+        status = states.PENDING
+        error_id = None
+        if task.result and task.result.get('status'):
+            status = task.result.get('status')
+            error_id = task.result.get('error_id')
+        result.append({
+            "start_date": start_date,
+            "end_date": end_date,
+            "weko_id": _task['weko_id'],
+            "full_name": _task['full_name'],
+            "status": status,
+            "error_id": error_id
+        })
+        task.forget()
+    del tasks
+    # TODO インポート結果を一時ファイルに書き込む処理
+    # write_temp_file(result)
+    # TODO インポート結果をサマリーに追加する処理
+    authors = []
+    gc.collect()
+
+
+# 3秒ごとにtask_idsを確認し、全てのtaskが終了したらループを抜ける
+def check_task_end(task_ids):
+    max_display = current_app.config.get("WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYS")
+    while True:
+        count = 0
+        for task_id in task_ids:
+            task = import_author.AsyncResult(task_id)
+            if task.result:
+                end_date = task.result.get('end_date')
+            else:
+                end_date = None
+            if end_date:
+                count += 1
+        if count == max_display:
+            break
+        else:
+            sleep(3)
+    return 0
 
 def check_is_import_available(group_task_id=None):
     """Is import available."""

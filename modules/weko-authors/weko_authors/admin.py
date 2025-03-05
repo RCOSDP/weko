@@ -38,10 +38,10 @@ from weko_workflow.utils import update_cache_data
 from .config import WEKO_AUTHORS_EXPORT_FILE_NAME, \
     WEKO_AUTHORS_IMPORT_CACHE_KEY
 from .permissions import author_permission
-from .tasks import check_is_import_available, export_all, import_author
+from .tasks import check_is_import_available, export_all, import_author, import_author_over_max
 from .utils import check_import_data, delete_export_status, \
     get_export_status, get_export_url, set_export_status, delete_export_url,\
-    band_check_file, band_check_file_for_user
+    band_check_file, band_check_file_for_user, prepare_import_data
 
 
 class AuthorManagementView(BaseView):
@@ -290,11 +290,9 @@ class ImportView(BaseView):
             list_import_data = result.get('list_import_data')
             counts = result.get("counts")
             max_page = result.get("max_page")
-            band_file_path = band_check_file(max_page)
-            update_cache_data(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_FILE_PATH_KEY"],
-                band_file_path,
-                current_app.config["WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD"]
-            )
+            current_cache.delete(\
+            current_app.config["WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_USER_FILE_PATH_KEY"])
+                    
         return jsonify(
             code=1,
             error=error,
@@ -303,11 +301,10 @@ class ImportView(BaseView):
             max_page=max_page)
 
     @author_permission.require(http_exception=403)
-    @expose('/check_pagination', methods=['POST'])
+    @expose('/check_pagination', methods=['GET'])
     def check_pagination(self) -> jsonify:
         """pagination checkfile"""
-        data = request.get_json() or {}
-        page_number = data.get("page_number")
+        page_number = request.args.get("page_number")
         temp_file_path = current_cache.get(\
                 current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"])
         temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
@@ -342,22 +339,17 @@ class ImportView(BaseView):
     def import_authors(self) -> jsonify:
         """Import author into System."""
         data = request.get_json() or {}
-        max_page = data.get("max_page")
-        check_file_path = current_cache.get(\
-            current_app.config["WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_FILE_PATH_KEY"])
-        if not check_file_path:
-            check_file_path = band_check_file(max_page)
-        with open(check_file_path, "r", encoding="utf-8-sig") as check_file:
-            band_check_json = json.load(check_file)
-            
+        
         # check import feature is available before import
         result_check = check_is_import_available(data.get('group_task_id'))
         if not result_check['is_available']:
             return jsonify(result_check)
-
+        max_page_for_import_tab = data.get("max_page")
+        records, reached_point, count = prepare_import_data(max_page_for_import_tab)
+        print("after_prepare_import_data")
+        print(len(records), reached_point, count)
         tasks = []
-        records = [item for item in data.get(
-            'records', []) if not item.get('errors')]
+        task_ids =[]
         
         group_tasks = []
         for author in records:
@@ -372,7 +364,12 @@ class ImportView(BaseView):
                 'record_id': records[idx].get('pk_id'),
                 'status': 'PENDING'
             })
-
+            task_ids.append(task.task_id)
+            
+        if count > current_app.config.get("WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYS"):
+            print("count > WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYS")
+            import_author_over_max.delay(reached_point, count ,task_ids, max_page_for_import_tab)
+        
         response_data = {
             'group_task_id': import_task.id,
             "tasks": tasks
@@ -382,10 +379,12 @@ class ImportView(BaseView):
             {**response_data, **{'records': records}},
             0
         )
-
+        
         response_object = {
             "status": "success",
-            "data": {**response_data}
+            "count": count,
+            "data": {**response_data},
+            "records":records
         }
 
         return jsonify(response_object)
@@ -416,6 +415,7 @@ class ImportView(BaseView):
                     "error_id": error_id
                 })
 
+        # task.forget()
         return jsonify(result)
 
 
