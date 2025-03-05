@@ -35,6 +35,7 @@ from flask.globals import current_app
 from flask_admin.contrib.sqla import ModelView
 from flask_admin import expose
 from flask_login import current_user
+from invenio_accounts.models import Role
 from invenio_db import db
 from sqlalchemy import func, or_
 from weko_index_tree.models import Index
@@ -46,6 +47,7 @@ from weko_gridlayout.services import WidgetDesignPageServices
 from weko_handle.api import Handle
 from weko_workflow.config import WEKO_SERVER_CNRI_HOST_LINK
 from b2handle.clientcredentials import PIDClientCredentials
+from wtforms.ext.sqlalchemy.fields import QuerySelectField
 
 from .models import Community, FeaturedCommunity, InclusionRequest
 from .utils import get_user_role_ids, delete_empty
@@ -64,7 +66,7 @@ class CommunityModelView(ModelView):
     can_view_details = True
     column_display_all_relations = True
     form_columns = ('id', 'cnri', 'owner', 'index', 'group', 'title', 'description', 'page',
-                    'curation_policy', 'ranking', 'fixed_points', 'thumbnail','login_menu_enabled')
+                    'curation_policy', 'ranking', 'fixed_points','content_policy', 'thumbnail','login_menu_enabled')
 
     column_list = (
         'id',
@@ -120,12 +122,14 @@ class CommunityModelView(ModelView):
                 model.id = form_data['id']
                 model.id_role = form_data['owner']
                 model.root_node_id = form_data['index']
+                model.group_id = form_data['group']
                 model.title = form_data['title']
                 model.description = form_data['description']
                 model.page = form_data['page']
                 model.curation_policy = form_data['curation_policy']
                 model.ranking = form_data['ranking']
                 model.fixed_points = form_data['fixed_points']
+                model.content_policy = form_data['content_policy']
                 if form_data['login_menu_enabled'] == 'True':
                     model.login_menu_enabled = True
                 else:
@@ -167,12 +171,14 @@ class CommunityModelView(ModelView):
                     role_id=model.id_role,
                     id_user=model.id_user,
                     root_node_id=model.root_node_id,
+                    group_id=model.group_id,
                     title=model.title,
                     description=model.description,
                     page=model.page,
                     curation_policy=model.curation_policy,
                     ranking=model.ranking,
                     fixed_points=model.fixed_points,
+                    content_policy=model.content_policy,
                     login_menu_enabled=model.login_menu_enabled,
                     thumbnail_path=model.thumbnail_path,
                     catalog_json=model.catalog_json,
@@ -272,11 +278,13 @@ class CommunityModelView(ModelView):
         form.title.data = model.title or ''
         form.owner.data = model.owner or ''
         form.index.data = model.index or ''
+        form.group.data = model.group or ''
         form.description.data = model.description or ''
         form.page.data = model.page or ''
         form.curation_policy.data = model.curation_policy or ''
         form.ranking.data = model.ranking or '0'
         form.fixed_points.data = model.fixed_points or '0'
+        form.content_policy.data = model.content_policy or ''
         if model.login_menu_enabled:
             form.login_menu_enabled.data = 'True'
         else:
@@ -287,12 +295,14 @@ class CommunityModelView(ModelView):
             try:
                 model.id_role = form_data['owner']
                 model.root_node_id = form_data['index']
+                model.group_id = form_data['group']
                 model.title = form_data['title']
                 model.description = form_data['description']
                 model.page = form_data['page']
                 model.curation_policy = form_data['curation_policy']
                 model.ranking = form_data['ranking']
                 model.fixed_points = form_data['fixed_points']
+                model.content_policy = form_data['content_policy']
                 if form_data['login_menu_enabled'] == 'True':
                     model.login_menu_enabled = True
                 else:
@@ -549,6 +559,10 @@ class CommunityModelView(ModelView):
         'id': {
             'validators': [_validate_input_id]
         },
+        'group': {
+            'allow_blank': False,
+            'query_factory': lambda: db.session.query(Role).filter(Role.name.like("%_groups_%")).all(),
+    }
     }
     form_extra_fields = {
         'cnri': StringField(),
