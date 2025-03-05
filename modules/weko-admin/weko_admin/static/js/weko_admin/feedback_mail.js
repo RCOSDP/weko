@@ -67,7 +67,7 @@ class ComponentRepositorySelect extends React.Component {
     render() {
         return (
             <div className="form-group">
-                <label className="control-label col-xs-2">リポジトリ</label>
+                <span className="control-label col-xs-2">リポジトリ</span>
                 <div className="col-xs-10">
                     <select className="form-control" value={this.state.selectedRepo} onChange={this.handleChange}>
                         <option value="">選択してください</option>
@@ -1044,6 +1044,7 @@ const ComponentLogsTable = function(props){
       return (
         <tr key={rowData.id}>
           <td>{(currentIndex * recordsPerPage) + index + 1}</td>
+          <td>{rowData.repo}</td>
           <td>{rowData.start_time}</td>
           <td>{rowData.end_time}</td>
           <td>{rowData.count}</td>
@@ -1068,6 +1069,7 @@ const ComponentLogsTable = function(props){
         <thead>
           <tr>
             <th className = "width-small">#</th>
+            <th className = "width-medium">リポジトリ</th>
             <th className = "width-long">{START_TIME_LABEL}</th>
             <th className = "width-long">{END_TIME_LABEL}</th>
             <th className = "width-medium">{COUNTS_LABEL}</th>
