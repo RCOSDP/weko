@@ -600,7 +600,6 @@ from flask_oauthlib.provider import OAuth2Provider
 from invenio_oauth2server.views.server import login_oauth2_user
 from weko_index_tree.api import Indexes
 from weko_index_tree.errors import PermissionError
-from invenio_rest.errors import SameContentException
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexManagementAPI -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace -p no:warnings
 
 class TestIndexManagementAPI:
