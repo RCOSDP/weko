@@ -233,7 +233,8 @@ def iframe_save_model():
                 if key.startswith('either_valid_'):
                     del data['metainfo'][key]
 
-        activity_session = session['activity_info']
+        # activity_session = session['activity_info']
+        activity_session = session.get('activity_info',{})
         activity_id = activity_session.get('activity_id', None)
         if activity_id:
             sanitize_input_data(data)
@@ -628,7 +629,8 @@ def default_view_method(pid, record, template=None):
     files = to_files_js(record)
     record = record.item_metadata
     endpoints = {}
-    activity_session = session['activity_info']
+    # activity_session = session['activity_info']
+    activity_session = session.get('activity_info',{})
     activity_id = activity_session.get('activity_id', None)
     if activity_id:
         activity = WorkActivity()

@@ -21,12 +21,14 @@
 """Pytest configuration."""
 import os
 import shutil
+import subprocess
 import tempfile
 import json
 import uuid
 from os.path import join
 from datetime import date, datetime, timedelta
 
+from invenio_search_ui.ext import InvenioSearchUI
 import pytest
 from mock import Mock, patch
 from flask import Flask
@@ -80,6 +82,7 @@ from invenio_records_rest.utils import PIDConverter
 from invenio_records.models import RecordMetadata
 from invenio_deposit.api import Deposit
 from invenio_communities.models import Community
+from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
 from invenio_search import current_search_client, current_search
 from invenio_queues.proxies import current_queues
 from invenio_files_rest.permissions import bucket_listmultiparts_all, \
@@ -90,7 +93,10 @@ from invenio_files_rest.permissions import bucket_listmultiparts_all, \
 from invenio_files_rest.models import Bucket
 from invenio_db.utils import drop_alembic_version_table
 from invenio_records_rest.config import RECORDS_REST_SORT_OPTIONS
+from invenio_theme import InvenioTheme
 
+from weko_admin.ext import WekoAdmin
+from weko_items_ui.ext import WekoItemsUI
 from weko_schema_ui.models import OAIServerSchema
 from weko_index_tree.api import Indexes
 from weko_records import WekoRecords
@@ -100,6 +106,8 @@ from weko_records.models import ItemTypeName, ItemType
 from weko_records_ui.models import PDFCoverPageSettings
 from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, WEKO_PERMISSION_ROLE_COMMUNITY, EMAIL_DISPLAY_FLG
 from weko_groups import WekoGroups
+from weko_gridlayout.views import blueprint as weko_gridlayout_blueprint
+from weko_theme.ext import WekoTheme
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
 from weko_index_tree.models import Index
@@ -117,7 +125,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import event
 
 
-@pytest.yield_fixture()
+@pytest.yield_fixture(scope='session')
 def instance_path():
     """Temporary instance path."""
     path = tempfile.mkdtemp()
@@ -125,7 +133,7 @@ def instance_path():
     shutil.rmtree(path)
 
 
-@pytest.fixture()
+@pytest.fixture(scope='session')
 def base_app(instance_path):
     """Flask application fixture."""
     app_ = Flask('testapp', instance_path=instance_path, static_folder=join(instance_path, "static"),)
@@ -141,7 +149,7 @@ def base_app(instance_path):
             'S': 'Standard',
             'A': 'Archive',
         },
-        CACHE_REDIS_URL='redis://redis:6379/0',
+        CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
         WEKO_INDEX_TREE_STATE_PREFIX="index_tree_expand_state",
@@ -424,6 +432,9 @@ def base_app(instance_path):
             tid=dict(
                 record_class='weko_index_tree.api:Indexes',
                 index_route='/tree/index/<int:index_id>',
+                get_index_tree='/<string:version>/tree/index/<int:index_id>',
+                get_index_root_tree='/<string:version>/tree/index',
+                get_parent_index_tree='/<string:version>/tree/index/<int:index_id>/parent',
                 tree_route='/tree',
                 item_tree_route='/tree/<string:pid_value>',
                 index_move_route='/tree/move/<int:index_id>',
@@ -445,7 +456,7 @@ def base_app(instance_path):
     app_.url_map.converters['pid'] = PIDConverter
 
     FlaskCeleryExt(app_)
-    Menu(app_)
+    # Menu(app_)
     Babel(app_)
     InvenioDB(app_)
     InvenioAccounts(app_)
@@ -463,17 +474,39 @@ def base_app(instance_path):
     InvenioStats(app_)
     InvenioAdmin(app_)
     InvenioPIDStore(app_)
+    InvenioSearchUI(app_)
+    InvenioTheme(app_)
     WekoSearchUI(app_)
     WekoWorkflow(app_)
     WekoGroups(app_)
-    
+    WekoAdmin(app_)
+    WekoItemsUI(app_)
+    WekoTheme(app_)
+
+    # InvenioCommunities(app_)
+    app_.register_blueprint(invenio_communities_blueprint)
+    # WekoGridLayout(app_)
+    app_.register_blueprint(weko_gridlayout_blueprint)
+
     current_assets = LocalProxy(lambda: app_.extensions["invenio-assets"])
     current_assets.collect.collect()
+
+    # install node_modules
+    current_path = os.getcwd()
+    os.chdir(instance_path+'/static')
+    assert subprocess.call('npm install bootstrap-sass@3.3.5 font-awesome@4.4.0 angular@1.4.9 angular-gettext angular-loading-bar@0.9.0 bootstrap-datepicker@1.7.1 almond@0.3.1 jquery@1.9.1 d3@3.5.17 invenio-search-js@1.3.1', shell=True) == 0
+    os.chdir(current_path)
+
+    scss_dir = join(instance_path, app_.config['WEKO_THEME_INSTANCE_DATA_DIR'])
+    os.makedirs(scss_dir, exist_ok=True)
+    scss_file = join(scss_dir, '_variables.scss')
+    with open(scss_file, "w") as f:
+            f.write("$body-bg: #ffff;\n$panel-bg: #ffff;\n$footer-default-bg: #0d5f89;\n$navbar-default-bg: #0d5f89;\n$panel-default-border: #dddddd;\n$input-bg-transparent: rgba(255, 255, 255, 0);")
 
     return app_
 
 
-@pytest.yield_fixture()
+@pytest.yield_fixture(scope='session')
 def app(base_app):
     """Flask application fixture."""
     with base_app.app_context():
@@ -492,7 +525,7 @@ def db(app):
     drop_alembic_version_table()
 
 
-@pytest.yield_fixture()
+@pytest.yield_fixture(scope='session')
 def i18n_app(app):
     with app.test_request_context(
         headers=[('Accept-Language','ja')]):

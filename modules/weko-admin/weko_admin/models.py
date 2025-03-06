@@ -1557,7 +1557,7 @@ class FeedbackMailHistory(db.Model):
             session.commit()
         except BaseException as ex:
             session.rollback()
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
 
     @classmethod
     def update_lastest_status(cls, id, status):
@@ -1682,7 +1682,7 @@ class FeedbackMailFailed(db.Model):
             session.commit()
         except BaseException as ex:
             session.rollback()
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
 
 
 class Identifier(db.Model):

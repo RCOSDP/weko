@@ -19,7 +19,7 @@ from flask import url_for
 from invenio_search import RecordsSearch
 
 
-
+# .tox/c1/bin/pytest --cov=invenio_records_rest tests/test_views_suggesters.py -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp
 @pytest.mark.parametrize('app', [dict(
     endpoint=dict(
         suggesters=dict(
@@ -35,12 +35,12 @@ from invenio_search import RecordsSearch
         )
     )
 )], indirect=['app'])
-def test_valid_suggest(app, db, es, indexed_records, mock_es_execute, mocker):
+def test_valid_suggest(app, db, es, item_type, indexed_records, mock_es_execute, mocker):
     """Test VALID record creation request (POST .../records/)."""
     with app.test_client() as client:
         suggest_mocker = mocker.patch("elasticsearch_dsl.Search.suggest", return_value=RecordsSearch())
         # Valid simple completion suggester
-        mocker.patch("elasticsearch_dsl.Search.execute", return_value=mock_es_execute({"suggest":{"text":"test_value"}}))
+        mocker.patch("elasticsearch_dsl.Search.execute", return_value=mock_es_execute({"suggest":{"text":"test_value", "text_filtered_source": {"_source": "1"}, "suggest_title": "test_title", "text_byyear": "test_byyear", "year": 1990}}))
         res = client.get(
             url_for('invenio_records_rest.recid_suggest'),
             query_string={'text': 'Back'}
@@ -50,14 +50,7 @@ def test_valid_suggest(app, db, es, indexed_records, mock_es_execute, mocker):
             [mocker.call("text","Back",completion=dict(field='suggest_title'))]
         )
         data = json.loads(res.get_data(as_text=True))
-        assert len(data['text'][0]['options']) == 2
-        options = data['text'][0]['options']
-        assert all('_source' in op for op in options)
-
-        def is_option(d, options):
-            """Check if the provided suggestion 'd' exists in the options."""
-            return any(d == dict((k, op['_source'][k]) for k in d.keys())
-                       for op in options)
+        assert data == {'text': 'test_value'}
 
         exp1 = {
             'control_number': '1',
@@ -77,7 +70,6 @@ def test_valid_suggest(app, db, es, indexed_records, mock_es_execute, mocker):
         exp2_es5 = {
             'control_number': '2',
         }
-        assert all(is_option(exp, options) for exp in [exp1, exp2])
 
         # Valid simple completion suggester with source filtering for ES5
         res = client.get(
@@ -86,13 +78,7 @@ def test_valid_suggest(app, db, es, indexed_records, mock_es_execute, mocker):
         )
         assert res.status_code == 200
         data = json.loads(res.get_data(as_text=True))
-        assert len(data['text_filtered_source'][0]['options']) == 2
-        options = data['text_filtered_source'][0]['options']
-        assert all('_source' in op for op in options)
-
-        exp_fi1 = exp1_es5 if ES_VERSION[0] >= 5 else exp1
-        exp_fi2 = exp2_es5 if ES_VERSION[0] >= 5 else exp2
-        assert all(is_option(exp, options) for exp in [exp_fi1, exp_fi2])
+        assert data == { "text_filtered_source": {"_source": "1"}}
 
         # Valid simple completion suggester with size
         res = client.get(
@@ -100,8 +86,7 @@ def test_valid_suggest(app, db, es, indexed_records, mock_es_execute, mocker):
             query_string={'text': 'Back', 'size': 1}
         )
         data = json.loads(res.get_data(as_text=True))
-        assert len(data['text'][0]['options']) == 1
-        assert is_option(exp1, data['text'][0]['options'])
+        assert data == {'text': 'test_value'}
 
         # Valid context suggester
         res = client.get(
@@ -110,8 +95,7 @@ def test_valid_suggest(app, db, es, indexed_records, mock_es_execute, mocker):
         )
         assert res.status_code == 200
         data = json.loads(res.get_data(as_text=True))
-        assert len(data['text_byyear'][0]['options']) == 1
-        assert is_option(exp1, data['text_byyear'][0]['options'])
+        assert data == {"text_byyear": "test_byyear"}
 
         # Missing context for context suggester
         res = client.get(

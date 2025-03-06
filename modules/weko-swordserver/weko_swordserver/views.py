@@ -26,6 +26,9 @@ from weko_search_ui.utils import check_import_items, import_items_to_system
 from werkzeug.http import parse_options_header
 from invenio_db import db
 
+from invenio_oaiserver.api import OaiIdentify
+from weko_workflow.utils import get_site_info_name
+
 from .decorators import *
 from .errors import *
 
@@ -85,12 +88,19 @@ def get_service_document():
     """
     Set raw data to ServiceDocument
     """
+    repositoryName, site_name_ja = get_site_info_name()
+    if repositoryName is None or len(repositoryName) == 0:
+        identify = OaiIdentify.get_all()
+        repositoryName = current_app.config['THEME_SITENAME']
+        if identify is not None:
+            repositoryName = identify.repositoryName
+
     raw_data = {
         "@context": constants.JSON_LD_CONTEXT,
         "@type": constants.DocumentType.ServiceDocument,
         "@id": request.url,
         "root": request.url,
-        "dc:title": current_app.config['THEME_SITENAME'],
+        "dc:title": repositoryName,
         "version": current_app.config['WEKO_SWORDSERVER_SWORD_VERSION'],
         "accept": current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT'],
         "digest": current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_DIGEST'],
@@ -193,7 +203,7 @@ def post_service_document():
         if check_result.get('error'):
             errorType = ErrorType.ServerError
             check_result_msg = check_result.get('error')
-        elif item.get('errors'):
+        elif item and item.get('errors'):
             errorType = ErrorType.ContentMalformed
             check_result_msg = ', '.join(item.get('errors'))
         else:

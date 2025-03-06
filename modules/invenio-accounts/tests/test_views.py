@@ -126,25 +126,28 @@ def test_view_list_sessions(app, app_i18n):
                 user_id=user2_id).all()) == 0
 
 
+# .tox/c1/bin/pytest --cov=invenio_accounts tests/test_views.py::test_login_remember_me_disabled -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
 def test_login_remember_me_disabled(app, users):
     """Test login remember me is disabled."""
     email = users[0]['email']
     password = users[0]['password']
-    _security.login_form = LoginForm
-    with app.test_client() as client:
-        res = client.post(
-            url_for_security('login'),
-            data={'email': email, 'password': password, 'remember': True},
-            environ_base={'REMOTE_ADDR': '127.0.0.1'})
-        # check the remember_me cookie is not there
-        name = '{0}='.format(COOKIE_NAME)
-        assert all([
-            name not in val for val in res.headers.values()])
-        # check the session cookie is still there
-        assert any([
-            'session=' in val for val in res.headers.values()])
+    with app.test_request_context():
+        _security.login_form = LoginForm
+        with app.test_client() as client:
+            res = client.post(
+                url_for_security('login'),
+                data={'email': email, 'password': password, 'remember': True},
+                environ_base={'REMOTE_ADDR': '127.0.0.1'})
+            # check the remember_me cookie is not there
+            name = '{0}='.format(COOKIE_NAME)
+            assert all([
+                name not in val for val in res.headers.values()])
+            # check the session cookie is still there
+            assert any([
+                'session=' in val for val in res.headers.values()])
 
 
+# .tox/c1/bin/pytest --cov=invenio_accounts tests/test_views.py::test_login_from_headers_disabled -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
 def test_login_from_headers_disabled(app, users):
     """Test login from headers is disabled."""
     app.login_manager.request_callback = None
@@ -152,14 +155,15 @@ def test_login_from_headers_disabled(app, users):
     basic_fmt = 'Basic {0}'
     decoded = bytes.decode(base64.b64encode(str.encode(str(email))))
     headers = [('Authorization', basic_fmt.format(decoded))]
-    with app.test_client() as client:
-        res = client.get(
-            url_for('invenio_accounts.security'),
-            headers=headers,
-            environ_base={'REMOTE_ADDR': '127.0.0.1'})
-        # check redirect to login
-        assert res.status_code == 302
-        assert '<a href="/login/' in res.data.decode('utf-8')
+    with app.test_request_context():
+        with app.test_client() as client:
+            res = client.get(
+                url_for('invenio_accounts.security'),
+                headers=headers,
+                environ_base={'REMOTE_ADDR': '127.0.0.1'})
+            # check redirect to login
+            assert res.status_code == 302
+            assert '<a href="/login/' in res.data.decode('utf-8')
 
 
 def test_flask_login_disabled_function_exist():
@@ -171,32 +175,36 @@ def test_flask_login_disabled_function_exist():
     assert hasattr(LoginManager, '_load_from_request')
 
 
+# .tox/c1/bin/pytest --cov=invenio_accounts tests/test_views.py::test_flask_login_load_from_header_works_as_expected -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
 def test_flask_login_load_from_header_works_as_expected(app, users):
     """Test flask login load from header exists."""
     def load_user(*args, **kwargs):
         app.login_manager.reload_user()
     app.login_manager.request_callback = None
     headers = [('Authorization', 'Basic 123')]
-    with app.test_client() as client, \
-            mock.patch.object(LoginManager, '_load_from_header',
-                              side_effect=load_user) as mock_h:
-        client.get(
-            url_for('invenio_accounts.security'),
-            headers=headers,
-            environ_base={'REMOTE_ADDR': '127.0.0.1'})
-        # check the patch is called
-        assert mock_h.called is True
+    with app.test_request_context():
+        with app.test_client() as client, \
+                mock.patch.object(LoginManager, '_load_from_header',
+                                  side_effect=load_user) as mock_h:
+            client.get(
+                url_for('invenio_accounts.security'),
+                headers=headers,
+                environ_base={'REMOTE_ADDR': '127.0.0.1'})
+            # check the patch is called
+            assert mock_h.called is True
 
 
+# .tox/c1/bin/pytest --cov=invenio_accounts tests/test_views.py::test_flask_login_load_from_request_works_as_expected -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
 def test_flask_login_load_from_request_works_as_expected(app, users):
     """Test flask login load from request exists."""
     def load_user(*args, **kwargs):
         app.login_manager.reload_user()
-    with app.test_client() as client, \
-            mock.patch.object(LoginManager, '_load_from_request',
-                              side_effect=load_user) as mock_h:
-        client.get(
-            url_for('invenio_accounts.security'),
-            environ_base={'REMOTE_ADDR': '127.0.0.1'})
-        # check the patch is called
-        assert mock_h.called is True
+    with app.test_request_context():
+        with app.test_client() as client, \
+                mock.patch.object(LoginManager, '_load_from_request',
+                                  side_effect=load_user) as mock_h:
+            client.get(
+                url_for('invenio_accounts.security'),
+                environ_base={'REMOTE_ADDR': '127.0.0.1'})
+            # check the patch is called
+            assert mock_h.called is True

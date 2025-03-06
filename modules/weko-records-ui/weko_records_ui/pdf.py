@@ -39,7 +39,7 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from PyPDF2 import PdfFileReader, PdfFileWriter
 from weko_deposit.api import WekoRecord
 from weko_items_autofill.utils import get_workflow_journal
-from weko_records.api import ItemsMetadata
+from weko_records.api import ItemsMetadata, ItemTypes
 from weko_records.serializers.feed import WekoFeedGenerator
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import get_value_by_selected_lang
@@ -177,11 +177,20 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     pid_object = get_pid_object(pid.pid_value)
     item_metadata_json = ItemsMetadata.get_record(pid_object.object_uuid)
     wekoRecord = WekoRecord.get_record_by_pid(pid.pid_value)
-    item_type = ItemsMetadata.get_by_object_id(pid_object.object_uuid)
-    item_type_id = item_type.item_type_id
-    meta_options, type_mapping = get_options_and_order_list(item_type_id)
-    hide_list = get_hide_list_by_schema_form(item_type_id)
-    item_map = get_mapping(item_type_id, "jpcoar_mapping")
+    item_type_metadata = ItemsMetadata.get_by_object_id(pid_object.object_uuid)
+    item_type_id = item_type_metadata.item_type_id
+
+    item_type = ItemTypes.get_by_id(item_type_id)
+    hide_list = []
+    if item_type:
+        meta_options = get_options_and_order_list(
+            item_type_id,
+            item_type_data=ItemTypes(item_type.schema, model=item_type),
+            mapping_flag=False)
+        hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+    else:
+        meta_options = get_options_and_order_list(item_type_id, mapping_flag=False)
+    item_map = get_mapping(item_type_id, 'jpcoar_mapping', item_type=item_type)
 
     try:
         with open(lang_file_path) as json_datafile:

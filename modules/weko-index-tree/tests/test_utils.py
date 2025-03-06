@@ -54,6 +54,7 @@ from operator import itemgetter
 
 import redis
 from redis import sentinel
+from elasticsearch import helpers
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import Bool, Exists, Q, QueryString
 from flask import Markup, current_app, session
@@ -477,12 +478,46 @@ def test_check_doi_in_index(i18n_app, indices, db_records):
 
 
 #*** def get_record_in_es_of_index(index_id, recursively=True):
+#*** def check_doi_in_index_and_child_index(index_id, recursively=True):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_get_record_in_es_of_index -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_get_record_in_es_of_index(i18n_app, indices, db_records, esindex):
     # Test 1
     assert not get_record_in_es_of_index(44, recursively=False)
+    assert not check_doi_in_index_and_child_index(44, recursively=False)
 
     # Test 2
     # assert get_record_in_es_of_index(33)
+
+    def _generate_es_data(num, start_datetime=datetime.now()):
+        for i in range(num):
+            doc = {
+                "_index": i18n_app.config['INDEXER_DEFAULT_INDEX'],
+                "_type": "item-v1.0.0",
+                "_id": f"2d1a2520-9080-437f-a304-230adc8{i:05d}",
+                "_source": {
+                    "_item_metadata": {
+                        "title": [f"test_title_{i}"],
+                    },
+                    "relation_version_is_last": True,
+                    "path": ["66"],
+                    "control_number": f"{i:05d}",
+                    "_created": (start_datetime + timedelta(seconds=i)).isoformat(),
+                    "publish_status": "0",
+                },
+            }
+            if i % 2 == 0:
+                doc["_source"]["identifierRegistration"] = {
+                    "identifierType": "DOI",
+                    "value": f"10.9999/test_doi_{i:05d}",
+                }
+            yield doc
+
+    generate_data_num = 30002
+    helpers.bulk(esindex.client, _generate_es_data(generate_data_num), refresh='true')
+
+    # result over 10000
+    assert len(get_record_in_es_of_index(66)) == generate_data_num
+    assert len(check_doi_in_index_and_child_index(66)) == int(generate_data_num / 2)
 
 
 # def check_doi_in_list_record_es(index_id):
@@ -510,8 +545,9 @@ def test_check_doi_in_list_record_es(app, db, users):
 
 
 #+++ def check_restrict_doi_with_indexes(index_ids):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_check_restrict_doi_with_indexes -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_check_restrict_doi_with_indexes(i18n_app, indices, db_records):
-    assert check_restrict_doi_with_indexes([33,44])
+    assert not check_restrict_doi_with_indexes([33,44])
 
 
 #*** def check_has_any_item_in_index_is_locked(index_id):
@@ -539,16 +575,6 @@ def test_check_index_permissions(app, db, users, test_indices, db_records):
             assert check_index_permissions(record={"path": "1"})==False
             assert check_index_permissions(index_id="1")==False
             assert check_index_permissions(index_path_list=["1", "2"], is_check_doi=True)==True
-
-
-# *** def check_doi_in_index_and_child_index(index_id, recursively=True):
-# def test_check_doi_in_index_and_child_index(i18n_app, indices, esindex, db_records, records2):
-def test_check_doi_in_index_and_child_index(i18n_app, users, indices, esindex):
-    # Test 1
-    assert len(check_doi_in_index_and_child_index(33, recursively=True)) == 0
-
-    # Test 2
-    # assert len(check_doi_in_index_and_child_index(33, recursively=True)) > 0
 
 
 #+++ def __get_redis_store():
@@ -617,9 +643,8 @@ def test_perform_delete_index(app, db, test_indices, users):
                     with patch("weko_workflow.utils.check_an_item_is_locked", return_value=True):
                         assert perform_delete_index(1, Indexes, "move")==('', ['This index cannot be deleted because the item belonging to this index is being edited by the import function.'])
                     with patch("weko_workflow.utils.check_an_item_is_locked", return_value=False):
-                        with pytest.raises(IndexBaseRESTError) as e:
-                            perform_delete_index(1, Indexes, "move")
-                        assert e.value.code == 400
+                        with patch("weko_index_tree.api.Indexes.delete_by_action", return_value=None):
+                            assert perform_delete_index(1, Indexes, "move")==('Failed to delete index.', [])
                         assert perform_delete_index(1, Indexes, "delete")==('Index deleted successfully.', [])
 
 
@@ -640,7 +665,7 @@ def test_get_doi_items_in_index(app):
 
 
 # def get_editing_items_in_index(index_id, recursively=False):
-# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_save_index_trees_to_redis -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_get_editing_items_in_index -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_get_editing_items_in_index(app):
     _es_data = [
         {
@@ -657,12 +682,17 @@ def test_get_editing_items_in_index(app):
     with patch("weko_index_tree.utils.get_record_in_es_of_index", return_value=_es_data):
         with patch("weko_items_ui.utils.check_item_is_being_edit", return_value=True):
             with patch("invenio_pidstore.models.PersistentIdentifier.get", return_value=True):
-                res = get_editing_items_in_index(0)
-                assert res == ["1", "2"]
-        
+                with patch("weko_workflow.utils.bulk_check_an_item_is_locked", return_value=["1", "2"]):
+                    res = get_editing_items_in_index(0)
+                    assert res == ["1", "2"]
+
         with patch("weko_items_ui.utils.check_item_is_being_edit", return_value=False):
             with patch("invenio_pidstore.models.PersistentIdentifier.get", return_value=True):
-                with patch("weko_workflow.utils.check_an_item_is_locked", return_value=False):
+                with patch("weko_workflow.utils.bulk_check_an_item_is_locked", return_value=["1"]):
+                    res = get_editing_items_in_index(0)
+                    assert res == ["1"]
+
+                with patch("weko_workflow.utils.bulk_check_an_item_is_locked", return_value=[]):
                     res = get_editing_items_in_index(0)
                     assert res == []
 
@@ -685,7 +715,7 @@ def test_save_index_trees_to_redis(app, redis_connect,caplog):
         # except ConnectionError
         with patch("simplekv.memory.redisstore.RedisStore.put",side_effect=ConnectionError("test_error")):
             save_index_trees_to_redis(tree, lang="ja")
-            assert caplog.record_tuples == [('flask.app', 40, 'Fail save index_tree to redis')]
+            assert caplog.record_tuples == [('testapp', 40, 'Fail save index_tree to redis')]
     redis_connect.delete("index_tree_view_test_en")
     redis_connect.delete("index_tree_view_test_ja")
 

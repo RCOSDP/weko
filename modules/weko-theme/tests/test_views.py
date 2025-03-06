@@ -17,6 +17,7 @@ from weko_theme.views import (
 )
 
 # def index():
+# .tox/c1/bin/pytest --cov=weko_theme tests/test_views.py::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-theme/.tox/c1/tmp
 def test_index(i18n_app, users):
     WekoTheme(i18n_app)
 
@@ -26,6 +27,7 @@ def test_index(i18n_app, users):
 
 
 # def edit():
+# .tox/c1/bin/pytest --cov=weko_theme tests/test_views.py::test_edit -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-theme/.tox/c1/tmp
 def test_edit(i18n_app, users):
     site_info = MagicMock()
     site_info.favicon = "favicon,favicon"

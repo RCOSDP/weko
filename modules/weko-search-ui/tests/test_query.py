@@ -20,8 +20,7 @@ from weko_search_ui.query import (
     item_path_search_factory,
     check_permission_user,
     opensearch_factory,
-    item_search_factory,
-    feedback_email_search_factory
+    item_search_factory
 )
 
 # def get_item_type_aggs(search_index):
@@ -237,14 +236,6 @@ def test_item_search_factory(i18n_app, users, indices):
             list_index_id=[33])
         assert res
 
-
-# def feedback_email_search_factory(self, search):
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_query.py::test_feedback_email_search_factory -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_feedback_email_search_factory(i18n_app, users, indices):
-    search = RecordsSearch()
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        res = feedback_email_search_factory(self=None, search=search)
-        assert res
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_query.py::test_function_issue35902 -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_function_issue35902(app, users, communities, mocker):

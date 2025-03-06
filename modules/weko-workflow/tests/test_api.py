@@ -1,6 +1,7 @@
 from flask_login.utils import login_user
 
-from weko_workflow.api import Flow, WorkActivity
+from weko_workflow.api import Flow, WorkActivity, UpdateItem
+from weko_schema_ui.models import PublishStatus
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_Flow_action -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_Flow_action(app, client, users, db, action_data):
@@ -105,7 +106,7 @@ def test_WorkActivity_get_activity_index_search(app, db_register):
     with app.test_request_context():
         activity_detail, item, steps, action_id, cur_step, \
             temporary_comment, approval_record, step_item_login_url,\
-            histories, res_check, pid, community_id, ctx = activity.get_activity_index_search(1)
+            histories, res_check, pid, community_id, ctx = activity.get_activity_index_search('1')
         assert activity_detail.id == 1
         assert activity_detail.action_id == 1
         assert activity_detail.title == 'test'
@@ -119,7 +120,13 @@ def test_WorkActivity_get_activity_index_search(app, db_register):
 def test_WorkActivity_upt_activity_detail(app, db_register, db_records):
     activity = WorkActivity()
     db_activity = activity.upt_activity_detail(db_records[2][2].id)
-    assert db_activity == None
+    assert db_activity.id == 4
+    assert db_activity.action_id == 2
+    assert db_activity.title == 'test item1'
+    assert db_activity.activity_id == '2'
+    assert db_activity.flow_id == 1
+    assert db_activity.workflow_id == 1
+    assert db_activity.action_order == 1
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_get_corresponding_usage_activities -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -128,3 +135,12 @@ def test_WorkActivity_get_corresponding_usage_activities(app, db_register):
     usage_application_list, output_report_list = activity.get_corresponding_usage_activities(1)
     assert usage_application_list == {'activity_data_type': {}, 'activity_ids': []}
     assert output_report_list == {'activity_data_type': {}, 'activity_ids': []}
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_UpdateItem_publish -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_UpdateItem_publish(app, db_records):
+    updated_item = UpdateItem()
+    dep = db_records[0][6]
+    updated_item.publish(dep, PublishStatus.PRIVATE.value)
+    assert dep.get('publish_status') == PublishStatus.PRIVATE.value
+    updated_item.publish(dep, PublishStatus.PUBLIC.value)
+    assert dep.get('publish_status') == PublishStatus.PUBLIC.value
