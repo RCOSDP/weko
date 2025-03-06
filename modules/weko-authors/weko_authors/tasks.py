@@ -147,7 +147,7 @@ def import_authors_from_temp_files(reached_point, max_part):
     update_cache_data(
         current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY"],
         result_file_path,
-        current_app.config["WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD"]
+        current_app.config["WEKO_AUTHORS_CACHE_TTL"]
     )
     
     # すべてのtaskが終了したら、max_display以降のtaskを実行
@@ -313,7 +313,7 @@ def update_summary(success_count, failure_count):
         update_cache_data(
             current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"],
             summary,
-            current_app.config["WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD"]
+            current_app.config["WEKO_AUTHORS_CACHE_TTL"]
         )
     else:
         summary = {
@@ -323,7 +323,7 @@ def update_summary(success_count, failure_count):
         update_cache_data(
             current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"],
             summary,
-            current_app.config["WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD"]
+            current_app.config["WEKO_AUTHORS_CACHE_TTL"]
         )
     return 0
 

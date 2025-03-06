@@ -163,7 +163,7 @@ def handle_exception(ex, attempt, retrys, interval, stop_point=0):
             update_cache_data(
                 current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"],
                 stop_point,
-                current_app.config["WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD"]
+                current_app.config["WEKO_AUTHORS_CACHE_TTL"]
                 )
         raise ex
     current_app.logger.info(f"Connection failed, retrying in {interval} seconds...")
@@ -633,7 +633,7 @@ def band_check_file_for_user(max_page):
     update_cache_data(
         current_app.config["WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_USER_FILE_PATH_KEY"],
         check_file_path,
-        current_app.config["WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD"]
+        current_app.config["WEKO_AUTHORS_CACHE_TTL"]
         )
     return check_file_path
 
@@ -907,7 +907,7 @@ def create_result_file_for_user(json):
     update_cache_data(
         current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_FILE_PATH_KEY"],
         result_file_path,
-        current_app.config["WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD"]
+        current_app.config["WEKO_AUTHORS_CACHE_TTL"]
         )
     return result_file_path
 

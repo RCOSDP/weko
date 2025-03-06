@@ -185,7 +185,7 @@ class ExportView(BaseView):
         update_cache_data(
             current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"],
             temp_file_path,
-            current_app.config["WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD"]
+            current_app.config["WEKO_AUTHORS_CACHE_TTL"]
         )
         task = export_all.delay()
         set_export_status(task_id=task.id)
@@ -236,7 +236,7 @@ class ExportView(BaseView):
             temp_file_path = temp_file.name
         update_cache_data(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"],
             temp_file_path,
-            current_app.config["WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD"]
+            current_app.config["WEKO_AUTHORS_CACHE_TTL"]
         )
         task = export_all.delay()
         set_export_status(task_id=task.id)
@@ -283,16 +283,25 @@ class ImportView(BaseView):
             
             update_cache_data(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"],
                 temp_file_path,
-                current_app.config["WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD"]
+                current_app.config["WEKO_AUTHORS_CACHE_TTL"]
             )
             result = check_import_data(os.path.basename(temp_file_path))
             error = result.get('error')
             list_import_data = result.get('list_import_data')
             counts = result.get("counts")
             max_page = result.get("max_page")
-            current_cache.delete(\
-            current_app.config["WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_USER_FILE_PATH_KEY"])
-                    
+            
+            # インポートタブのチェック結果一時ファイルがあれば削除
+            band_file_path = current_cache.get(\
+                current_app.config["WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_USER_FILE_PATH_KEY"])
+            if band_file_path:
+                try:
+                    current_cache.delete(\
+                        current_app.config["WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_USER_FILE_PATH_KEY"])
+                    os.remove(band_file_path)
+                    current_app.logger.debug(f"Deleted: {band_file_path}")
+                except Exception as e:
+                    current_app.logger.error(f"Error deleting {band_file_path}: {e}")
         return jsonify(
             code=1,
             error=error,
@@ -401,8 +410,10 @@ class ImportView(BaseView):
         if count > current_app.config.get("WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYS"):
             task = import_author_over_max.delay(reached_point, count ,task_ids, max_page_for_import_tab)
             update_cache_data(\
-                current_app.config.get("WEKO_AUTHORS_IMPORT_CACHE_OVER_MAX_TASK_KEY")
-                , task.id, 0)
+                current_app.config.get("WEKO_AUTHORS_IMPORT_CACHE_OVER_MAX_TASK_KEY"),
+                task.id, 
+                current_app.config.get("WEKO_AUTHORS_CACHE_TTL")
+                )
         response_data = {
             'group_task_id': import_task.id,
             "tasks": tasks
