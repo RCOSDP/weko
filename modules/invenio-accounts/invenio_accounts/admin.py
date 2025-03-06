@@ -15,6 +15,8 @@ from flask_admin.actions import action
 from flask_admin.babel import lazy_gettext
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.contrib.sqla.ajax import QueryAjaxModelLoader
+from flask_admin.contrib.sqla.fields import QuerySelectMultipleField
+from flask_admin.form import Select2Widget
 from flask_admin.form.fields import DateTimeField
 from flask_admin.model.fields import AjaxSelectMultipleField
 from flask_babelex import gettext as _
@@ -26,7 +28,8 @@ from invenio_db import db
 from passlib import pwd
 from sqlalchemy import func
 from werkzeug.local import LocalProxy
-from wtforms.fields import BooleanField
+from collections import OrderedDict
+from wtforms.fields import BooleanField, SelectMultipleField
 from wtforms.validators import DataRequired
 
 from weko_workflow.models import WorkFlow, WorkflowRole
@@ -54,7 +57,7 @@ class UserView(ModelView):
         column_details_list = \
         list_all
 
-    form_columns = ('email', 'password', 'active', 'roles', 'notification')
+    form_columns = ('email', 'password', 'active', 'notification')
 
     form_args = dict(
         email=dict(label='Email', validators=[DataRequired()]),
@@ -81,12 +84,42 @@ class UserView(ModelView):
         'last_login_ip': _('Last Login IP')
     }
 
+    def scaffold_form(self):
+        form_class = super(UserView, self).scaffold_form()
+        form_class.roles = QuerySelectMultipleField(
+            'Roles',
+            query_factory=lambda: Role.query.filter(~Role.name.like('%_groups_%')).all(),
+            get_label='name',
+            widget=Select2Widget(multiple=True)
+        )
+        form_class.groups = QuerySelectMultipleField(
+            'Groups',
+            query_factory=lambda: Role.query.filter(Role.name.like('%_groups_%')).all(),
+            get_label='name',
+            widget=Select2Widget(multiple=True)
+        )
+        return form_class
+    
+    def on_form_prefill(self, form, id):
+        custom_order = ['email', 'password', 'active', 'roles','groups', 'notification']
+        ordered_fields = OrderedDict()
+        for field_name in custom_order:
+            ordered_fields[field_name] = form._fields[field_name]
+        form._fields = ordered_fields
+        
+        obj = self.get_one(id)
+        form.roles.data = [role for role in obj.roles if '_groups_' not in role.name]
+        form.groups.data = [role for role in obj.roles if '_groups_' in role.name]
+    
     def on_model_change(self, form, User, is_created):
         """Hash password when saving."""
         if form.password.data is not None:
             pwd_ctx = current_app.extensions['security'].pwd_context
             if pwd_ctx.identify(form.password.data) is None:
                 User.password = hash_password(form.password.data)
+
+        roles = form.roles.data + form.groups.data
+        User.roles = roles
 
     def after_model_change(self, form, User, is_created):
         """Send password instructions if desired."""

@@ -17,7 +17,7 @@ from werkzeug.local import LocalProxy
 
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.cli import users_create
-from invenio_accounts.models import SessionActivity, User
+from invenio_accounts.models import SessionActivity, User, Role
 from invenio_accounts.testutils import create_test_user, login_user_via_view
 from invenio_accounts.admin import SessionActivityView, UserView
 
@@ -260,3 +260,19 @@ def test_userview_get_count_query(app, users):
                     query = view.get_count_query()
                     assert query is not None
                     assert query.scalar() == 0
+
+# .tox/c1/bin/pytest --cov=invenio_accounts tests/test_admin.py::test_userview_on_form_prefill -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
+def test_userview_on_form_prefill(app, users):
+    """Test on_form_prefill for super role user."""
+    view = UserView(User, db.session)
+    form = view.create_form()
+    user = users[2]['obj']
+    user.roles = [
+        Role(name='role1'),
+        Role(name='role2_groups_1')
+    ]
+    view.get_one = MagicMock(return_value=user)
+    view.on_form_prefill(form, user.id)
+    assert form.data['active'] is False
+    assert form.roles.data == [user.roles[0]]
+    assert form.groups.data == [user.roles[1]]
