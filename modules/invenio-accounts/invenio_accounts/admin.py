@@ -98,15 +98,26 @@ class UserView(ModelView):
             get_label='name',
             widget=Select2Widget(multiple=True)
         )
+        
         return form_class
     
-    def on_form_prefill(self, form, id):
+    def _order_fields(self, form):
         custom_order = ['email', 'password', 'active', 'roles','groups', 'notification']
         ordered_fields = OrderedDict()
         for field_name in custom_order:
             ordered_fields[field_name] = form._fields[field_name]
         form._fields = ordered_fields
-        
+        return form
+    
+    def create_form(self, obj=None):
+        form = super(UserView, self).create_form(obj)
+        return self._order_fields(form)
+    
+    def edit_form(self, obj=None):
+        form = super(UserView, self).edit_form(obj)
+        return self._order_fields(form)
+
+    def on_form_prefill(self, form, id):
         obj = self.get_one(id)
         form.roles.data = [role for role in obj.roles if '_groups_' not in role.name]
         form.groups.data = [role for role in obj.roles if '_groups_' in role.name]

@@ -276,3 +276,10 @@ def test_userview_on_form_prefill(app, users):
     assert form.data['active'] is False
     assert form.roles.data == [user.roles[0]]
     assert form.groups.data == [user.roles[1]]
+
+# .tox/c1/bin/pytest --cov=invenio_accounts tests/test_admin.py::test_userview_edit_form -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
+def test_userview_edit_form(app, users):
+    """Test edit_form for super role user."""
+    view = UserView(User, db.session)
+    form = view.edit_form()
+    assert form.data['active'] is False
