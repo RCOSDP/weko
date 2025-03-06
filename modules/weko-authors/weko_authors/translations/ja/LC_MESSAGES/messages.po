@@ -310,6 +310,15 @@ msgstr ""
 #~ msgid "To Do"
 #~ msgstr "To Do"
 
+#~ msgid "Success"
+#~ msgstr "成功"
+
+#~ msgid "Failure"
+#~ msgstr "失敗"
+
+#~ msgid "Pending"
+#~ msgstr "処理待ち"
+
 #~ msgid "Error"
 #~ msgstr "エラー"
 

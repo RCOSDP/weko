@@ -33,10 +33,13 @@ from flask_babelex import lazy_gettext as _
 from invenio_cache import current_cache
 from weko_workflow.utils import delete_cache_data, get_cache_data, update_cache_data
 
+from sqlalchemy.exc import SQLAlchemyError
+from elasticsearch import ElasticsearchException
+
 from weko_authors.config import WEKO_AUTHORS_IMPORT_CACHE_KEY
 
 from .utils import export_authors, import_author_to_system, save_export_url, \
-    set_export_status, get_check_base_name
+    set_export_status, get_check_base_name, handle_exception
 
 
 @shared_task
@@ -59,9 +62,20 @@ def export_all():
 def import_author(author):
     """Import Author."""
     result = {'start_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+    retrys = current_app.config["WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY"]
+    interval = current_app.config["WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL"]
     try:
-        import_author_to_system(author)
-        result['status'] = states.SUCCESS
+        # コネクションエラー時にリトライ処理を行う
+        for attempt in range(retrys):
+            try:
+                import_author_to_system(author)
+                result['status'] = states.SUCCESS
+            except SQLAlchemyError as ex:
+                handle_exception(ex, attempt, retrys, interval)
+            except ElasticsearchException as ex:
+                handle_exception(ex, attempt, retrys, interval)
+            except TimeoutError as ex:
+                handle_exception(ex, attempt, retrys, interval)
     except Exception as ex:
         current_app.logger.error(ex)
         result['status'] = states.FAILURE
@@ -139,22 +153,23 @@ def import_authors_from_temp_files(reached_point, max_part):
     # すべてのtaskが終了したら、max_display以降のtaskを実行
     # part_numberから始めて、max_partまでのpartをインポートする。
     authors = []
-    for i in range(reached_point.get("part_number"), max_part+1):
+    for i in range(1, max_part+1):
         part_check_file_name = f"{check_file_name}-part{i}"
         check_file_part_path = os.path.join(temp_folder_path, part_check_file_name)
-        
-        #一時ファイルからインポートできるファイルを取得
-        with open(check_file_part_path, "r", encoding="utf-8-sig") as check_part_file:
-            data = json.load(check_part_file)
-            for index, item in enumerate(data):
-                # max_display以降のところまで飛ばす
-                if i == reached_point.get("part_number") and index < reached_point.get("count"):
-                    continue
-                check_result = False if item.get("errors", []) else True
-                if check_result:
-                    item.pop("warnings", None)
-                    item.pop("is_deleted", None)
-                    authors.append(item)
+        # iがreached_pointのpart_number以上の時にauthorsを追加
+        if i >= reached_point.get("part_number"):   
+            #一時ファイルからインポートできるファイルを取得
+            with open(check_file_part_path, "r", encoding="utf-8-sig") as check_part_file:
+                data = json.load(check_part_file)
+                for index, item in enumerate(data):
+                    # max_display以降のところまで飛ばす
+                    if i == reached_point.get("part_number") and index < reached_point.get("count"):
+                        continue
+                    check_result = False if item.get("errors", []) else True
+                    if check_result:
+                        item.pop("warnings", None)
+                        item.pop("is_deleted", None)
+                        authors.append(item)
         # authorsが長さWEKO_AUTHORS_IMPORT_BATCH_SIZEを超えた時点でインポート
         if len(authors) >= current_app.config.get("WEKO_AUTHORS_IMPORT_BATCH_SIZE"):
             import_authors_for_over_max(authors)
@@ -208,7 +223,8 @@ def import_authors_for_over_max(authors):
     del task_ids
     gc.collect()
     
-    count = 0
+    success_count = 0
+    failure_count = 0
     result = []
     for _task in tasks:
         task = import_author.AsyncResult(_task['task_id'])
@@ -222,6 +238,10 @@ def import_authors_for_over_max(authors):
         if task.result and task.result.get('status'):
             status = task.result.get('status')
             error_id = task.result.get('error_id')
+            if status == states.SUCCESS:
+                success_count += 1
+            elif status == states.FAILURE:
+                failure_count += 1
         result.append({
             "start_date": start_date,
             "end_date": end_date,
@@ -236,8 +256,10 @@ def import_authors_for_over_max(authors):
     del tasks
     write_result_temp_file(result)
     # TODO インポート結果をサマリーに追加する処理
-    update_summary(result)
-    authors = []
+    update_summary(success_count, failure_count)
+    
+    del authors
+    del result    
     gc.collect()
 
 def write_result_temp_file(result):
@@ -277,7 +299,32 @@ def write_result_temp_file(result):
         current_app.logger.error(e)
         raise e
 
-def update_summary(result):
+def update_summary(success_count, failure_count):
+    """
+        インポート結果をサマリーに追加する処理
+    args:
+        success_count: 成功したインポート数
+        failure_count: 失敗したインポート数
+    """
+    summary = get_cache_data(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"])
+    if summary:
+        summary["success_count"] += success_count
+        summary["failure_count"] += failure_count
+        update_cache_data(
+            current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"],
+            summary,
+            current_app.config["WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD"]
+        )
+    else:
+        summary = {
+            "success_count": success_count,
+            "failure_count": failure_count
+        }
+        update_cache_data(
+            current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"],
+            summary,
+            current_app.config["WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD"]
+        )
     return 0
 
 def prepare_display_status(status, type, error_id):

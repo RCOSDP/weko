@@ -175,7 +175,6 @@ def export_authors():
     retrys = current_app.config["WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY"]
     interval = current_app.config["WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL"]
     size =  current_app.config.get("WEKO_AUTHORS_EXPORT_BATCH_SIZE", 1000)
-    interval = current_app.config["WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL"]
     stop_point = current_cache.get(\
         current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"])
     mappings = []

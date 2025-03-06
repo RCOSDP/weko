@@ -292,6 +292,16 @@ msgstr ""
 #~ msgid "Error"
 #~ msgstr ""
 
+#~ msgid "Success"
+#~ msgstr ""
+
+#~ msgid "Failure"
+#~ msgstr ""
+
+#~ msgid "Pending"
+#~ msgstr ""
+
+
 #~ msgid "Warning"
 #~ msgstr ""
 

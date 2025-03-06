@@ -368,6 +368,13 @@ class ImportView(BaseView):
             except Exception as e:
                 current_app.logger.error(f"Error deleting {result_file_path}: {e}")
 
+        # 前回のimport結果サマリーを削除
+        result_summary = current_cache.get(\
+            current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"])
+        if result_summary:
+            current_cache.delete(\
+                current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"])
+
         max_page_for_import_tab = data.get("max_page")
         
         # フロントの最大表示数分だけrecordsを確保
@@ -421,6 +428,8 @@ class ImportView(BaseView):
         result_task={}
         result = []
         data = request.get_json() or {}
+        success_count = 0
+        failure_count = 0
         if data and data.get('tasks'):
             for task_id in data.get('tasks'):
                 task = import_author.AsyncResult(task_id)
@@ -434,6 +443,10 @@ class ImportView(BaseView):
                 if task.result and task.result.get('status'):
                     status = task.result.get('status')
                     error_id = task.result.get('error_id')
+                    if status == states.SUCCESS:
+                        success_count += 1
+                    elif status == states.FAILURE:
+                        failure_count += 1
                 result.append({
                     "task_id": task_id,
                     "start_date": start_date,
@@ -456,6 +469,15 @@ class ImportView(BaseView):
                 "status": status,
                 "error_id": error_id
             }
+        summary = current_cache.get(\
+            current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"])
+        if summary:
+            success_count += summary["success_count"]
+            failure_count += summary["failure_count"]
+        result_task["summary"] = {
+            "success_count": success_count,
+            "failure_count": failure_count
+        }
         result_task["tasks"] = result
         return jsonify(result_task)
 
