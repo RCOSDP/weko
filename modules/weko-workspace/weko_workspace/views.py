@@ -403,7 +403,7 @@ def update_workspace_status_management():
     # print("type : " + str(type))
 
     result = get_workspace_status_management(item_recid)
-    print("result : " + str(result))
+    # print("result : " + str(result))
 
     if not result:
         insert_workspace_status(

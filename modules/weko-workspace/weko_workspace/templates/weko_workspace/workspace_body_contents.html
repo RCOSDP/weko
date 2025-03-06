@@ -26,7 +26,6 @@
         <div id="search-container"></div>
         <span><strong>{{username}} | {{affiliation}}</strong></span>
       </div>
-
       <div id="search-result-body" class="panel-body">
         <div id="index_item_list">
           <div class="form-inline flow-root">
@@ -34,10 +33,7 @@
               <div class="form-group">
                 <input type="checkbox" value="すべてチェック" />
                 <a href="javascript:void(0)" class="btn btn-primary">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-folder-plus" viewBox="0 0 16 16">
-                    <path d="m.5 3 .04.87a2 2 0 0 0-.342 1.311l.637 7A2 2 0 0 0 2.826 14H9v-1H2.826a1 1 0 0 1-.995-.91l-.637-7A1 1 0 0 1 2.19 4h11.62a1 1 0 0 1 .996 1.09L14.54 8h1.005l.256-2.819A2 2 0 0 0 13.81 3H9.828a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 6.172 1H2.5a2 2 0 0 0-2 2m5.672-1a1 1 0 0 1 .707.293L7.586 3H2.19q-.362.002-.683.12L1.5 2.98a1 1 0 0 1 1-.98z" />
-                    <path d="M13.5 9a.5.5 0 0 1 .5.5V11h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V12h-1.5a.5.5 0 0 1 0-1H13V9.5a.5.5 0 0 1 .5-.5" />
-                  </svg>
+                  <i class="bi bi-folder-plus" style="font-size: 20px;"></i>
                 </a>
               </div>
             </div>
@@ -45,9 +41,7 @@
             <div class="pull-right">
               <div class="form-group">
                 <a href="javascript:void(0)" class="btn btn-primary" id="groupYearicon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-diagram-3" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd" d="M6 3.5A1.5 1.5 0 0 1 7.5 2h1A1.5 1.5 0 0 1 10 3.5v1A1.5 1.5 0 0 1 8.5 6v1H14a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0v-1A.5.5 0 0 1 2 7h5.5V6A1.5 1.5 0 0 1 6 4.5zM8.5 5a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5zM0 11.5A1.5 1.5 0 0 1 1.5 10h1A1.5 1.5 0 0 1 4 11.5v1A1.5 1.5 0 0 1 2.5 14h-1A1.5 1.5 0 0 1 0 12.5zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm4.5.5A1.5 1.5 0 0 1 7.5 10h1a1.5 1.5 0 0 1 1.5 1.5v1A1.5 1.5 0 0 1 8.5 14h-1A1.5 1.5 0 0 1 6 12.5zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm4.5.5a1.5 1.5 0 0 1 1.5-1.5h1a1.5 1.5 0 0 1 1.5 1.5v1a1.5 1.5 0 0 1-1.5 1.5h-1a1.5 1.5 0 0 1-1.5-1.5zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z" />
-                  </svg>
+                  <i class="bi bi-diagram-3" style="font-size: 20px;" ></i>
                 </a>
                 <a id="toggleButton" class="btn btn-primary" data-toggle="dropdown" href="javascript:void(0)" aria-expanded="false">{{_('絞込み表示')}}<strong class="caret"></strong></a>
                 <select class="form-control" id="sort_item">
@@ -68,20 +62,13 @@
               </div>
             </div>
             <div style="clear: both;"></div>
-
-            <!-- 修正：絞込み表示の内容をReactで動的にレンダリング -->
             <div id="filter-content" style="display: none;">
               <div class="row row-4">
                 <div class="panel panel-default">
                   <div class="panel-body">
-                    <!-- 保存・リセット結果メッセージ（デフォルト非表示） -->
                     <div id="savaResult-success" class="alert alert-success" style="display: none;"></div>
                     <div id="savaResult-fail" class="alert alert-danger" style="display: none;"></div>
-
-                    <!-- Reactでフィルタ条件をレンダリングするためのコンテナ -->
                     <div id="filter-container" class="container testimonial-group"></div>
-
-                    <!-- ボタンをbutton-groupでラップ -->
                     <div class="button-group">
                       <button id="detail-search-btn" type="button" class="btn btn-primary">
                         <span class="glyphicon glyphicon-search"></span>
@@ -104,8 +91,6 @@
                 </div>
               </div>
             </div>
-
-            <!-- 一覧表示の内容 -->
             <div id="list-content" style="display: block;">
               <div class="panel-group m-top-5">
                 <div class="row row-10">
@@ -113,80 +98,6 @@
                     <div class="panel panel-default panel-default-2">
                       <div class="panel-body" style="display: flex; flex-direction: column; align-items: left;">
                         <div id="itemListContainer">
-                          <table class="table table-striped table-bordered" style="table-layout: auto;">
-                            {% for workspaceitem in workspaceItemList %}
-                            <tr>
-                              <td style="text-align: center; vertical-align: top;">
-                                <div class="favorite-mount-point" data-type="1" data-item-recid="{{ workspaceitem.recid }}"
-                                  data-favorite-sts="{{ workspaceitem.favoriteSts | tojson }}"></div>
-                                <br>
-                                <div class="read-mount-point" data-type="2" data-item-recid="{{ workspaceitem.recid }}"
-                                  data-read-sts="{{ workspaceitem.readSts | tojson }}"></div>
-                                <br>
-                                <input type="checkbox" value="" /><br><br>
-                              </td>
-                              <td style="width: auto;">
-                                <strong><a href="/records/{{ workspaceitem.recid }}">{{ workspaceitem.title }}</a></strong><br><br>
-                                {% if workspaceitem.authorlist is not none and workspaceitem.authorlist|length > 0 %}
-                                <span>{{ workspaceitem.authorlist | join(', ') }}</span><br><br>
-                                {% endif %}
-                                <span>{{ workspaceitem.magazineName }}／{{ workspaceitem.conferenceName}}</span><span> </span>
-                                <span>{{ workspaceitem.volume }}（{{ workspaceitem.issue }}）</span><span> </span>
-                                <span>{{ workspaceitem.funderName }} | {{ workspaceitem.awardTitle }}</span><span> </span>
-                                <br><br>
-                                <span>{{ workspaceitem.publicationDate }}</span><span> </span>
-                                {% if workspaceitem.relation|length > 0 %}
-                                <span><a href="javascript:void(0)" class="relatedButton"><strong>関連</strong></a></span><span> </span>
-                                {% endif %}
-                                {% if workspaceitem.fileSts %}
-                                <span>本文ファイル ({{ workspaceitem.fileCnt }})： 公開（{{ workspaceitem.publicCnt }}）、エンバーゴ（{{ workspaceitem.embargoedCnt }}）、 制限公開（{{ workspaceitem.restrictedPublicationCnt }}）</span><span> </span>
-                                {% else %}
-                                <span>本文ファイル (0)</span><span> </span>
-                                {% endif %}
-                                <br>
-                                <div class="relatedInfo" style="display: none;">
-                                  {% for relatedItem in workspaceitem.relation %}
-                                  <span>{{ relatedItem.relationType }} {{ relatedItem.relationTitle }}、<a>{{ relatedItem.relationUrl }}</a></span><br>
-                                  {% endfor %}
-                                </div>
-                              </td>
-                              <td style="text-align: center; vertical-align: top;">
-                                <span><a href="{{workspaceitem.doi}}">DOI</a></span><br><br>
-                                <span><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-eye-fill" viewBox="0 0 16 16">
-                                    <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0" />
-                                    <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7" />
-                                  </svg>{{workspaceitem.accessCnt}}</span><br><br>
-                                <span><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-file-earmark" viewBox="0 0 16 16">
-                                    <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z" />
-                                  </svg>{{workspaceitem.downloadCnt}}</span>
-                              </td>
-                              <td style="text-align: center; vertical-align: top;">
-                                <span style="border: 1px solid #000; padding: 5px; border-radius: 4px;">{{workspaceitem.resourceType}}</span><br><br>
-                                <span>{{workspaceitem.itemStatus}}</span><br><br>
-                                <span>
-                                  {% if workspaceitem.fbEmailSts %}
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-envelope" viewBox="0 0 16 16">
-                                    <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1zm13 2.383-4.708 2.825L15 11.105zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741M1 11.105l4.708-2.897L1 5.383z" />
-                                  </svg>
-                                  {% else %}
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-envelope-dash" viewBox="0 0 16 16">
-                                    <path d="M2 2a2 2 0 0 0-2 2v8.01A2 2 0 0 0 2 14h5.5a.5.5 0 0 0 0-1H2a1 1 0 0 1-.966-.741l5.64-3.471L8 9.583l7-4.2V8.5a.5.5 0 0 0 1 0V4a2 2 0 0 0-2-2zm3.708 6.208L1 11.105V5.383zM1 4.217V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v.217l-7 4.2z" />
-                                    <path d="M16 12.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0m-5.5 0a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 0-1h-3a.5.5 0 0 0-.5.5" />
-                                  </svg>
-                                  {% endif %}
-                                </span><br><br>
-                              </td>
-                              <td style="text-align: center; vertical-align: top;">
-                                <a href="javascript:void(0)" class="edit-item" data-item-id="">
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
-                                    <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
-                                    <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
-                                  </svg>
-                                </a>
-                              </td>
-                            </tr>
-                            {% endfor %}
-                          </table>
                         </div>
                       </div>
                     </div>

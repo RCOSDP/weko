@@ -149,6 +149,7 @@ def get_es_itemlist():
 
     response = requests.get(request.host_url.rstrip("/") + invenio_api_path, headers=headers)
     size = response.json()["hits"]["total"]
+    print("======workspace def get_es_itemlist(): size ======" + str(size))
     
     response = requests.get(request.host_url.rstrip("/") + invenio_api_path + "?size="+str(size), headers=headers)
     records_data = response.json()
