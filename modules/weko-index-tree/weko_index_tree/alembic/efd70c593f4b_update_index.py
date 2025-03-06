@@ -5,24 +5,25 @@
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
-"""Create weko_index_tree branch."""
+"""update index"""
 
 from alembic import op
 import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'd10eb013f434'
-down_revision = None
-branch_labels = ('invenio_foo',)
+revision = 'efd70c593f4b'
+down_revision = 'b21aaf04d802'
+branch_labels = ()
 depends_on = None
 
 
 def upgrade():
     """Upgrade database."""
-    pass
-
+    op.add_column('index', sa.Column('index_url', sa.Text(), nullable=True))
+    op.add_column('index', sa.Column('cnri', sa.Text(), nullable=True))
 
 def downgrade():
     """Downgrade database."""
-    pass
+    op.drop_column('index', 'index_url')
+    op.drop_column('index', 'cnri')
