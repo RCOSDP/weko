@@ -384,6 +384,28 @@ def getEncode(filepath):
     enc = chardet.detect(b)
     return enc.get('encoding', 'utf-8-sig')
 
+def clean_deep(data):
+    """
+    dataをクリーニングします。
+    例えば{'fullname': 'Jane Doe',
+        'warnings': None, 
+        'email': {"test":"","test2":"test2"},
+        'test': [{"test":""},{"test2":"test2"}]}
+    のようなデータを
+    {'fullname': 'Jane Doe', 'email': {"test2":"test2"},
+    'test': [{"test2":"test2"}]}に変換します。
+    args:
+        data: data to clean
+    return:
+        data: cleaned data
+    """
+    if isinstance(data, dict):
+        return {k: clean_deep(v) for k, v in data.items() if v is not None and v != ''}
+    elif isinstance(data, list):
+        cleaned_list = [clean_deep(v) for v in data if v is not None and v != '']
+        return [item for item in cleaned_list if item != {}]
+    else:
+        return data
 
 def unpackage_and_check_import_file(file_format, file_name, temp_file_path, mapping_ids):
     """Unpackage and check format of import file.
@@ -443,10 +465,10 @@ def unpackage_and_check_import_file(file_format, file_name, temp_file_path, mapp
                 elif num in [2, 3] and data_row[0].startswith('#'):
                     continue
                 elif num > 3:
-                    data_parse_metadata = parse_to_json_form(
+                    data_parse_metadata = clean_deep(parse_to_json_form(
                         zip(header, data_row),
                         include_empty=True
-                    )
+                    ))
 
                     if not data_parse_metadata:
                         raise Exception({
@@ -815,7 +837,7 @@ def prepare_import_data(max_page_for_import_tab):
                 count_for_json += 1
     return authors, reached_point, count
                     
-def import_author_to_system(author):
+def import_author_to_system(author, status):
     """Import author to DB and ES.
 
     Args:
@@ -823,9 +845,6 @@ def import_author_to_system(author):
     """
     if author:
         try:
-            status = author['status']
-            del author['status']
-
             author["is_deleted"] = True if author.get("is_deleted") else False
             if not author.get('authorIdInfo'):
                 author["authorIdInfo"] = []

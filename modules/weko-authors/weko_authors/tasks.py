@@ -64,12 +64,15 @@ def import_author(author):
     result = {'start_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
     retrys = current_app.config["WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY"]
     interval = current_app.config["WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL"]
+    status = author['status']
+    del author['status']
     try:
         # コネクションエラー時にリトライ処理を行う
         for attempt in range(retrys):
             try:
-                import_author_to_system(author)
+                import_author_to_system(author, status)
                 result['status'] = states.SUCCESS
+                break
             except SQLAlchemyError as ex:
                 handle_exception(ex, attempt, retrys, interval)
             except ElasticsearchException as ex:
