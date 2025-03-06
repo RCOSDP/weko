@@ -102,6 +102,49 @@ def check_email_existed(email: str):
             'author_id': ''
         }
 
+def check_weko_id_is_exists(weko_id):
+    """
+    weko_idが既に存在するかチェック
+    ※weko_idはauthorIdInfo.Idtypeが1であるAuthorIdの値のことです。
+    
+    args:
+        weko_id: weko_id
+    return:
+        True: weko_idが存在する
+        False: weko_idが存在しない
+    """
+    # 同じweko_idが存在するかチェック
+    query = {
+        "_source": ["authorIdInfo"],  # authorIdInfoフィールドのみを取得
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "term": {
+                            "authorIdInfo.authorId": weko_id
+                        }
+                    }
+                ]
+            }
+        }
+    }
+
+    # 検索
+    indexer = RecordIndexer()
+    result = indexer.client.search(
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        body=query
+    )
+    
+    # 同じweko_idが存在する場合はエラー
+    for res in result['hits']['hits']:
+        author_id_info_from_es = res['_source']['authorIdInfo']
+        for info in author_id_info_from_es:
+            if info.get('idType') == '1':
+                author_id = info.get('authorId')
+                if author_id == weko_id:
+                    return True
+    return False
 
 def get_export_status():
     """Get export status from cache."""

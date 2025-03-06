@@ -33,7 +33,8 @@ from weko_schema_ui.models import PublishStatus
 from .config import WEKO_AUTHORS_IMPORT_KEY
 from .models import Authors, AuthorsAffiliationSettings, AuthorsPrefixSettings
 from .permissions import author_permission
-from .utils import get_author_prefix_obj, get_author_affiliation_obj, get_count_item_link
+from .utils import get_author_prefix_obj, get_author_affiliation_obj, get_count_item_link,\
+    check_weko_id_is_exists
 
 blueprint = Blueprint(
     'weko_authors',
@@ -64,15 +65,26 @@ def create():
     new_id = Authors.get_sequence(session)
 
     data = request.get_json()
+    
+    # weko_idを取得し、存在するかを確認する。
+    author_id_info = data["authorIdInfo"]
+    for i in author_id_info:
+        if i.get('idType') == '1':
+            weko_id = i.get('authorId')
+    
+    try:
+        result = check_weko_id_is_exists(weko_id)
+    except Exception as ex:
+        current_app.logger.error(ex)
+        session.rollback()
+        return jsonify(msg=_('Failed')), 500
+    # 存在するならエラーを返す
+    if result == True:
+        return jsonify(msg=_('The author is already registered.')), 500
+    
     data["gather_flg"] = 0
     data["is_deleted"] = "false"
     data["pk_id"] = str(new_id)
-    data["authorIdInfo"].insert(0,
-                                {
-                                    "idType": "1",
-                                    "authorId": str(new_id),
-                                    "authorIdShowFlg": "true"
-                                })
     es_data = json.loads(json.dumps(data))
     es_id = str(uuid.uuid4())
     data['id'] = es_id
@@ -112,7 +124,19 @@ def update_author():
 
     user_id = current_user.get_id()
     data = request.get_json()
+    
+    # weko_idを取得し、存在するかを確認する。
+    author_id_info = data["authorIdInfo"]
+    for i in author_id_info:
+        if i.get('idType') == '1':
+            weko_id = i.get('authorId')
+    
     try:
+        result = check_weko_id_is_exists(weko_id)
+        # 存在するならエラーを返す
+        if result == True:
+            return jsonify(msg=_('The author is already registered.')), 500
+    
         with db.session.begin_nested():
             author_data = Authors.query.filter_by(
                 id=json.loads(json.dumps(data))["pk_id"]).one()
@@ -309,6 +333,43 @@ def getById():
     )
     return json.dumps(result)
 
+@blueprint_api.route("/get_max_weko_id", methods=['GET'])
+@login_required
+def get_max_weko_id():
+    """Get max weko id."""
+    print("get_max_weko_id")
+    query = {
+        "_source": ["authorIdInfo"],  # authorIdInfoフィールドのみを取得
+        "query": {
+            "match_all": {}
+        },
+        "size": 1000  # スクロールごとに取得するドキュメント数
+    }
+
+    indexer = RecordIndexer()
+    result = indexer.client.search(
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        body=query,
+        scroll='2m'  # スクロールの有効期限
+    )
+
+    max_author_id = 0
+    scroll_id = result['_scroll_id']
+
+    while len(result['hits']['hits']) > 0:
+        for hit in result['hits']['hits']:
+            author_id_info = hit['_source'].get('authorIdInfo', [])
+            for info in author_id_info:
+                if info.get('idType') == '1':
+                    author_id = int(info.get('authorId'))
+                    if author_id > max_author_id:
+                        max_author_id = author_id
+        result = indexer.client.scroll(
+            scroll_id=scroll_id,
+            scroll='2m'
+        )
+
+    return jsonify(max_author_id=max_author_id)
 
 @blueprint_api.route("/input", methods=['POST'])
 @login_required
