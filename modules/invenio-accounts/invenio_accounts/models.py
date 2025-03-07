@@ -98,6 +98,11 @@ class User(db.Model, UserMixin):
         """Representation."""
         return 'User <id={0.id}, email={0.email}>'.format(self)
 
+    @classmethod
+    def get_email_by_id(cls, id) -> list:
+        """Get client_id, name by user_id. """
+        query = db.session.query(cls).with_entities(cls.email).filter(cls.id == id)
+        return query.first()
 
 class SessionActivity(db.Model, Timestamp):
     """User Session Activity model.

@@ -629,8 +629,19 @@ msgid "Admin menu_Setting_Shibboleth"
 msgstr "Shibboleth"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
-msgid "Admin menu_Setting_SWORD API"
+msgid "Admin menu_SWORD API"
 msgstr "SWORD API"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_SWORD API_TSV/XML"
+msgstr "TSV/XML"
+
+msgid "Admin menu_SWORD API_JSON-LD"
+msgstr "JSON-LD"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Item Types_JSON-LD Mapping"
+msgstr "JSON-LD Mapping"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Others"

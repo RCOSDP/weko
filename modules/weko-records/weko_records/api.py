@@ -157,7 +157,7 @@ class RecordBase(dict):
             raises a :class:`jsonschema.exceptions.ValidationError`.
         """
         if '$schema' in self and self['$schema'] is not None:
-            kwargs['cls'] = kwargs.pop('validator', None)   
+            kwargs['cls'] = kwargs.pop('validator', None)
             _records_state.validate(self, self['$schema'], **kwargs)
 
     def replace_refs(self):
@@ -219,6 +219,12 @@ class ItemTypeNames(RecordBase):
             if not with_deleted:
                 query = query.filter_by(is_active=True)  # noqa
             return query.one_or_none()
+
+    @classmethod
+    def get_name_and_id_all(cls) -> list:
+        """get name and id all."""
+        query = db.session.query(ItemTypeName).with_entities(ItemTypeName.name, ItemTypeName.id)
+        return query.all()
 
     def delete(self, force=False):
         """Delete an item type name.
@@ -805,7 +811,7 @@ class ItemTypes(RecordBase):
             # flag_modified(self.model, 'schema')
             # flag_modified(self.model, 'form')
             # flag_modified(self.model, 'render')
-            
+
             db.session.merge(self.model)
 
         after_record_update.send(
@@ -930,7 +936,7 @@ class ItemTypes(RecordBase):
         result = {"msg":"Update ItemType({})".format(itemtype_id),"code":0}
         item_type = ItemTypes.get_by_id(itemtype_id)
         data = pickle.loads(pickle.dumps(item_type.render, -1))
-        
+
         pat1 = re.compile(r'cus_(\d+)')
         for idx, i in enumerate(data['table_row_map']['form']):
             if isinstance(i,dict) and 'key' in i:
@@ -957,8 +963,8 @@ class ItemTypes(RecordBase):
                                     data['table_row_map']['schema']['properties'][_prop_id].pop('properties')
                                 if 'format' in data['table_row_map']['schema']['properties'][_prop_id]:
                                     data['table_row_map']['schema']['properties'][_prop_id].pop('format')
-                                
-                                tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))                            
+
+                                tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))
                                 _forms = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.forms, -1))).replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_forms, -1))
                                 cls.update_attribute_options(tmp_data, data['table_row_map']['form'][idx], renew_value)
@@ -971,24 +977,24 @@ class ItemTypes(RecordBase):
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_form, -1))
                                 cls.update_attribute_options(tmp_data, data['table_row_map']['form'][idx], renew_value)
                                 cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'][_prop_id],data['table_row_map']['schema']['properties'][_prop_id])
-                                                                               
+
         from weko_itemtypes_ui.utils import fix_json_schema,update_required_schema_not_exist_in_form, update_text_and_textarea
-        
+
         table_row_map = data.get('table_row_map')
         json_schema = fix_json_schema(table_row_map.get('schema'))
-        
+
         json_form = table_row_map.get('form')
         json_schema = update_required_schema_not_exist_in_form(
             json_schema, json_form)
-        
+
         if itemtype_id != 0:
             json_schema, json_form = update_text_and_textarea(
                 itemtype_id, json_schema, json_form)
-        
+
         if 'schemaeditor' in data:
             if 'schema' in data['schemaeditor']:
                 data['schemaeditor']['schema'] = json_schema
-        
+
         # item_type_mapping = (
         #             ItemTypeMapping.query.filter(ItemTypeMapping.item_type_id == itemtype_id)
         #             .order_by(desc(ItemTypeMapping.created))
@@ -999,7 +1005,7 @@ class ItemTypes(RecordBase):
         # current_app.logger.error("Update ItemType({})".format(itemtype_id))
         # current_app.logger.error("Update data({})".format(data))
         # current_app.logger.error("Update json_schema({})".format(json_schema))
-        
+
         # print(data)
 
         record = cls.update(id_=itemtype_id,
@@ -1015,14 +1021,14 @@ class ItemTypes(RecordBase):
                 flag_modified(mapping.model, 'mapping')
                 db.session.add(mapping.model)
                 result['msg'] = "Fix ItemType({}) mapping".format(itemtype_id)
-                result['code'] = 0  
-        
+                result['code'] = 0
+
         ItemTypeEditHistory.create_or_update(
             item_type_id=record.model.id,
             user_id=1,
             notes=data.get('edit_notes', {})
         )
-            
+
         return result
 
     @classmethod
@@ -1055,12 +1061,12 @@ class ItemTypes(RecordBase):
         managed_key_list = current_app.config.get("WEKO_RECORDS_MANAGED_KEYS")
         if isinstance(old_value, list):
            for i in old_value:
-               cls.update_attribute_options(i, new_value, renew_value)     
-        elif isinstance(old_value, dict): 
+               cls.update_attribute_options(i, new_value, renew_value)
+        elif isinstance(old_value, dict):
             if "key" in old_value:
                 key = old_value["key"]
                 new_item = cls.getItemByItemsKey(new_value,key)
-                if new_item is not None:    
+                if new_item is not None:
                     isHide = False
                     isShowList = False
                     isNonDisplay = False
@@ -1070,7 +1076,7 @@ class ItemTypes(RecordBase):
                     title_i18n_temp = None
                     titleMap = None
                     title = None
-                    
+
                     if "title" in old_value:
                         title = old_value["title"]
                     if "isHide" in old_value:
@@ -1090,7 +1096,7 @@ class ItemTypes(RecordBase):
                         title_i18n_temp = old_value["title_i18n_temp"]
                     if ("titleMap" in old_value and key.split(".")[-1] not in managed_key_list) or ("titleMap" in old_value and renew_value not in ["ALL", "VAL"]) :
                         titleMap = old_value["titleMap"]
-                    
+
                     new_item["isHide"] = isHide
                     new_item["isShowList"] = isShowList
                     new_item["isNonDisplay"] = isNonDisplay
@@ -1126,8 +1132,8 @@ class ItemTypes(RecordBase):
                         if ret is not None:
                             return ret
         return None
- 
-            
+
+
 
 class ItemTypeEditHistory(object):
     """Define API for Itemtype Property creation and manipulation."""
@@ -1517,7 +1523,7 @@ class ItemTypeProps(RecordBase):
                 query = ItemTypeProperty.query.filter_by(delflg=False)
 
             return query.all()
-        
+
     @property
     def revisions(self):
         """Get revisions iterator."""

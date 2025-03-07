@@ -204,6 +204,10 @@ WEKO_THEME_ADMIN_MENU = [
             {
                 'name': 'RO-Crate mapping',
                 'order': 5
+            },
+            {
+                'name': 'JSON-LD Mapping',
+                'order': 6
             }
         ]
     },
@@ -364,12 +368,8 @@ WEKO_THEME_ADMIN_MENU = [
                 'order': 20
             },
             {
-                'name': 'SWORD API',
-                'order': 21
-            },
-            {
                 'name': 'Others',
-                'order': 22
+                'order': 21
             }
         ]
     },
@@ -486,7 +486,7 @@ WEKO_THEME_ADMIN_MENU = [
 ]
 
 
-WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER = False 
+WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER = False
 """インデックスツリー設定"""
 
 DISPLAY_LOGIN = True
