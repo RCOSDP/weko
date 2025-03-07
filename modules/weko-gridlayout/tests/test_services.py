@@ -29,6 +29,7 @@ def test_get_widget_by_id(i18n_app, widget_item):
 
 
 #     def save_command(cls, data):
+# .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_services.py::test_save_command -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_save_command(i18n_app, users):
     data = {
         "data": {
@@ -60,6 +61,13 @@ def test_save_command(i18n_app, users):
 
                     data["flag_edit"] = False
                     assert WidgetItemServices.save_command(data)
+
+                    # no data
+                    assert WidgetItemServices.save_command({})['message'] == 'No data saved!'
+
+                    # no "data" key
+                    assert WidgetItemServices.save_command({"test": "test"})['message'] == 'No data saved!'
+
 
 #     def __edit_widget(cls, data, ):
 

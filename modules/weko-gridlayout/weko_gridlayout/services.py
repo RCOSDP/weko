@@ -76,7 +76,7 @@ class WidgetItemServices:
             'message': '',
             'success': False
         }
-        if not data:
+        if not data or not data.get('data'):
             result['message'] = 'No data saved!'
             return result
         widget_data = data.get('data')
