@@ -180,7 +180,8 @@ class TestCommunityModelView():
                 "fixed_points":0,
                 "login_menu_enabled":False,
                 "catalog_data": "{\"metainfo\":{\"parentkey\":[{\"catalog_contributors\":[{\"contributor_names\":[{\"contributor_name\":\"提供機関名\",\"contributor_name_language\":\"ja\"}],\"contributor_type\":\"HostingInstitution\"}],\"catalog_identifiers\":[{}],\"catalog_subjects\":[{}],\"catalog_licenses\":[{}],\"catalog_rights\":[{}],\"catalog_access_rights\":[{}]}]}}",
-                "thumbnail": object()
+                "thumbnail": object(),
+                "content_policy":""
             }
             res = client.post(url,data=data)
             assert res.status_code == 400
@@ -199,7 +200,8 @@ class TestCommunityModelView():
                 "fixed_points":0,
                 "login_menu_enabled":False,
                 "catalog_data": "{\"metainfo\":{\"parentkey\":[{\"catalog_contributors\":[{\"contributor_names\":[{\"contributor_name\":\"提供機関名\",\"contributor_name_language\":\"ja\"}],\"contributor_type\":\"HostingInstitution\"}],\"catalog_identifiers\":[{}],\"catalog_subjects\":[{}],\"catalog_licenses\":[{}],\"catalog_rights\":[{}],\"catalog_access_rights\":[{}]}]}}",
-                "thumbnail": object()
+                "thumbnail": object(),
+                "content_policy":""
             }
             res = client.post(url,data=data)
             assert res.status_code == 400
@@ -218,7 +220,8 @@ class TestCommunityModelView():
                 "fixed_points":0,
                 "login_menu_enabled":False,
                 "catalog_data": "{\"metainfo\":{\"parentkey\":[{\"catalog_contributors\":[{\"contributor_names\":[{\"contributor_name\":\"提供機関名\",\"contributor_name_language\":\"ja\"}],\"contributor_type\":\"HostingInstitution\"}],\"catalog_identifiers\":[{}],\"catalog_subjects\":[{}],\"catalog_licenses\":[{}],\"catalog_rights\":[{}],\"catalog_access_rights\":[{}]}]}}",
-                "thumbnail": object()
+                "thumbnail": object(),
+                "content_policy":""
             }
             res = client.post(url,data=data)
             assert res.status_code == 400
@@ -240,7 +243,8 @@ class TestCommunityModelView():
                 "fixed_points":0,
                 "login_menu_enabled":True,
                 "catalog_data": "{\"metainfo\":{\"parentkey\":[{\"catalog_contributors\":[{\"contributor_names\":[{\"contributor_name\":\"提供機関名\",\"contributor_name_language\":\"ja\"}],\"contributor_type\":\"HostingInstitution\"}],\"catalog_identifiers\":[{}],\"catalog_subjects\":[{}],\"catalog_licenses\":[{}],\"catalog_rights\":[{}],\"catalog_access_rights\":[{}]}]}}",
-                "thumbnail": file1
+                "thumbnail": file1,
+                "content_policy":""
             }
             res = client.post(url,data=data)
             assert res.status_code == 302
@@ -257,6 +261,7 @@ class TestCommunityModelView():
                 "id": "file2",
                 "owner": 1,
                 "index": 11,
+                "group": 1,
                 "title": "Test comm after",
                 "description": "this is description of community1.",
                 "page":"",
@@ -265,7 +270,8 @@ class TestCommunityModelView():
                 "fixed_points":0,
                 "login_menu_enabled":False,
                 "catalog_data": "{\"metainfo\":{}}",
-                "thumbnail": file2
+                "thumbnail": file2,
+                "content_policy":""
             }
             res = client.post(url,data=data)
             assert res.status_code == 302
@@ -278,6 +284,7 @@ class TestCommunityModelView():
                 "id": "file3",
                 "owner": 1,
                 "index": 11,
+                "group": 1,
                 "title": "Test comm after",
                 "description": "this is description of community1.",
                 "page":"",
@@ -286,7 +293,8 @@ class TestCommunityModelView():
                 "fixed_points":0,
                 "login_menu_enabled":False,
                 "catalog_data": "{\"metainfo\":{}}",
-                "thumbnail": file3
+                "thumbnail": file3,
+                "content_policy":""
             }
             res = client.post(url,data=data)
             assert res.status_code == 400
@@ -299,6 +307,7 @@ class TestCommunityModelView():
                 "id": "file4",
                 "owner": 1,
                 "index": 11,
+                "group": 1,
                 "title": "Test comm after",
                 "description": "this is description of community1.",
                 "page":"",
@@ -307,7 +316,8 @@ class TestCommunityModelView():
                 "fixed_points":0,
                 "login_menu_enabled":False,
                 "catalog_data": "{\"metainfo\":{}}",
-                "thumbnail": file4
+                "thumbnail": file4,
+                "content_policy":""
             }
             with patch("weko_gridlayout.services.WidgetDesignPageServices.add_or_update_page", return_value={'result': False, 'error': 'error'}):
                 res = client.post(url,data=data)
@@ -321,6 +331,7 @@ class TestCommunityModelView():
                 "id": "file5",
                 "owner": 1,
                 "index": 11,
+                "group": 1,
                 "title": "Test comm after",
                 "description": "this is description of community1.",
                 "page":"",
@@ -329,7 +340,8 @@ class TestCommunityModelView():
                 "fixed_points":0,
                 "login_menu_enabled":True,
                 "catalog_data": "{\"metainfo\":{\"parentkey\":[{\"catalog_contributors\":[{\"contributor_names\":[{\"contributor_name\":\"提供機関名\",\"contributor_name_language\":\"ja\"}],\"contributor_type\":\"HostingInstitution\"}],\"catalog_identifiers\":[{}],\"catalog_subjects\":[{}],\"catalog_licenses\":[{}],\"catalog_rights\":[{}],\"catalog_access_rights\":[{}]}]}}",
-                "thumbnail": file5
+                "thumbnail": file5,
+                "content_policy":""
             }
             app.config['WEKO_HANDLE_ALLOW_REGISTER_CNRI'] = True
             with patch("weko_handle.api.Handle.register_handle", return_value='1234567890/1'):
@@ -346,6 +358,7 @@ class TestCommunityModelView():
                 "id": "file6",
                 "owner": 1,
                 "index": 11,
+                "group": 1,
                 "title": "Test comm after",
                 "description": "this is description of community1.",
                 "page":"",
@@ -354,7 +367,8 @@ class TestCommunityModelView():
                 "fixed_points":0,
                 "login_menu_enabled":True,
                 "catalog_data": "{\"metainfo\":{\"parentkey\":[{\"catalog_contributors\":[{\"contributor_names\":[{\"contributor_name\":\"提供機関名\",\"contributor_name_language\":\"ja\"}],\"contributor_type\":\"HostingInstitution\"}],\"catalog_identifiers\":[{}],\"catalog_subjects\":[{}],\"catalog_licenses\":[{}],\"catalog_rights\":[{}],\"catalog_access_rights\":[{}]}]}}",
-                "thumbnail": file6
+                "thumbnail": file6,
+                "content_policy":""
             }
             app.config['WEKO_HANDLE_ALLOW_REGISTER_CNRI'] = True
             with patch("weko_handle.api.Handle.register_handle", return_value=None):
@@ -403,7 +417,8 @@ class TestCommunityModelView():
                 "fixed_points":0,
                 "login_menu_enabled":True,
                 "catalog_data": "{\"metainfo\":{\"parentkey\":[{\"catalog_contributors\":[{\"contributor_names\":[{\"contributor_name\":\"提供機関名\",\"contributor_name_language\":\"ja\"}],\"contributor_type\":\"HostingInstitution\"}],\"catalog_identifiers\":[{}],\"catalog_subjects\":[{}],\"catalog_licenses\":[{}],\"catalog_rights\":[{}],\"catalog_access_rights\":[{}]}]}}",
-                "thumbnail": file1
+                "thumbnail": file1,
+                "content_policy":""
             }
             res = client.post(url,data=data)
             assert res.status_code == 302
@@ -428,7 +443,8 @@ class TestCommunityModelView():
                 "fixed_points":0,
                 "login_menu_enabled":True,
                 "catalog_data": "{\"metainfo\":{\"parentkey\":[{\"catalog_contributors\":[{\"contributor_names\":[{\"contributor_name\":\"提供機関名\",\"contributor_name_language\":\"ja\"}],\"contributor_type\":\"HostingInstitution\"}],\"catalog_identifiers\":[{}],\"catalog_subjects\":[{}],\"catalog_licenses\":[{}],\"catalog_rights\":[{}],\"catalog_access_rights\":[{}]}]}}",
-                "thumbnail": file6
+                "thumbnail": file6,
+                "content_policy":""
             }
             with patch("invenio_communities.admin.os.remove", side_effect=Exception()):
                 res = client.post(url,data=data)
@@ -450,7 +466,8 @@ class TestCommunityModelView():
                 "fixed_points":0,
                 "login_menu_enabled":True,
                 "catalog_data": "{\"metainfo\":{\"parentkey\":[{\"catalog_contributors\":[{\"contributor_names\":[{\"contributor_name\":\"提供機関名\",\"contributor_name_language\":\"ja\"}],\"contributor_type\":\"HostingInstitution\"}],\"catalog_identifiers\":[{}],\"catalog_subjects\":[{}],\"catalog_licenses\":[{}],\"catalog_rights\":[{}],\"catalog_access_rights\":[{}]}]}}",
-                "thumbnail": file7
+                "thumbnail": file7,
+                "content_policy":""
             }
             app.config['WEKO_HANDLE_ALLOW_REGISTER_CNRI'] = True
             with patch("weko_handle.api.Handle.register_handle", return_value=None):
@@ -475,7 +492,8 @@ class TestCommunityModelView():
                 "fixed_points":0,
                 "login_menu_enabled":True,
                 "catalog_data": "{\"metainfo\":{\"parentkey\":[{\"catalog_contributors\":[{\"contributor_names\":[{\"contributor_name\":\"提供機関名\",\"contributor_name_language\":\"ja\"}],\"contributor_type\":\"HostingInstitution\"}],\"catalog_identifiers\":[{}],\"catalog_subjects\":[{}],\"catalog_licenses\":[{}],\"catalog_rights\":[{}],\"catalog_access_rights\":[{}]}]}}",
-                "thumbnail": file8
+                "thumbnail": file8,
+                "content_policy":""
             }
             app.config['WEKO_HANDLE_ALLOW_REGISTER_CNRI'] = True
             with patch("weko_handle.api.Handle.register_handle", return_value='1234567890/1'):
@@ -500,7 +518,8 @@ class TestCommunityModelView():
                 "fixed_points":0,
                 "login_menu_enabled":True,
                 "catalog_data": "{\"metainfo\":{\"parentkey\":[{\"catalog_contributors\":[{\"contributor_names\":[{\"contributor_name\":\"提供機関名\",\"contributor_name_language\":\"ja\"}],\"contributor_type\":\"HostingInstitution\"}],\"catalog_identifiers\":[{}],\"catalog_subjects\":[{}],\"catalog_licenses\":[{}],\"catalog_rights\":[{}],\"catalog_access_rights\":[{}]}]}}",
-                "thumbnail": file9
+                "thumbnail": file9,
+                "content_policy":""
             }
             app.config['WEKO_HANDLE_ALLOW_REGISTER_CNRI'] = True
             with patch("weko_handle.api.Handle.register_handle", return_value='1234567890/2'):
@@ -526,7 +545,8 @@ class TestCommunityModelView():
                 "fixed_points":0,
                 "login_menu_enabled":False,
                 "catalog_data": "{\"metainfo\":{\"parentkey\":[{\"catalog_contributors\":[{\"contributor_names\":[{\"contributor_name\":\"提供機関名\",\"contributor_name_language\":\"ja\"}],\"contributor_type\":\"HostingInstitution\"}],\"catalog_identifiers\":[{}],\"catalog_subjects\":[{}],\"catalog_licenses\":[{}],\"catalog_rights\":[{}],\"catalog_access_rights\":[{}]}]}}",
-                "thumbnail": file2
+                "thumbnail": file2,
+                "content_policy":""
             }
             res = client.post(url,data=data)
             assert res.status_code == 400
@@ -547,7 +567,8 @@ class TestCommunityModelView():
                 "fixed_points":0,
                 "login_menu_enabled":False,
                 "catalog_data": "{\"metainfo\":{}}",
-                "thumbnail": file3
+                "thumbnail": file3,
+                "content_policy":""
             }
             res = client.post(url,data=data)
             assert res.status_code == 302
@@ -568,7 +589,8 @@ class TestCommunityModelView():
                 "fixed_points":0,
                 "login_menu_enabled":False,
                 "catalog_data": "{\"metainfo\":{}}",
-                "thumbnail": file4
+                "thumbnail": file4,
+                "content_policy":""
             }
             res = client.post(url,data=data)
             assert res.status_code == 302
@@ -590,7 +612,8 @@ class TestCommunityModelView():
                 "fixed_points":0,
                 "login_menu_enabled":False,
                 "catalog_data": "{\"metainfo\":{}}",
-                "thumbnail": file5
+                "thumbnail": file5,
+                "content_policy":""
             }
             res = client.post(url_none,data=data)
             assert res.status_code == 404
@@ -623,7 +646,8 @@ class TestCommunityModelView():
                 "fixed_points":0,
                 "login_menu_enabled":True,
                 "catalog_data": "{\"metainfo\":{\"parentkey\":[{\"catalog_contributors\":[{\"contributor_names\":[{\"contributor_name\":\"提供機関名\",\"contributor_name_language\":\"ja\"}],\"contributor_type\":\"HostingInstitution\"}],\"catalog_identifiers\":[{}],\"catalog_subjects\":[{}],\"catalog_licenses\":[{}],\"catalog_rights\":[{}],\"catalog_access_rights\":[{}]}]}}",
-                "thumbnail": file1
+                "thumbnail": file1,
+                "content_policy":""
             }
             res = client.post(url,data=data)
             assert res.status_code == 302
