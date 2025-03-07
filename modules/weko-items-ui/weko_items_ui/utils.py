@@ -61,6 +61,7 @@ from invenio_stats import config
 from jsonschema import SchemaError, ValidationError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
+from weko_authors.api import WekoAuthors
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
@@ -3119,6 +3120,52 @@ def get_data_authors_affiliation_settings():
         current_app.logger.error(e)
         return None
 
+def get_weko_link(metadata):
+    """
+    メタデータからweko_idを取得し、weko_idに対応するpk_idと一緒に
+    weko_linkを作成します。
+    args
+        metadata: dict 
+        例：{
+                "metainfo": {
+                    "item_30002_creator2": [
+                        {
+                            "nameIdentifiers": [
+                                {
+                                    "nameIdentifier": "8",
+                                    "nameIdentifierScheme": "WEKO",
+                                    "nameIdentifierURI": ""
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "files": [],
+                "endpoints": {
+                    "initialization": "/api/deposits/items"
+                }
+            }
+    return
+        weko_link: dict
+        例：{"2": "10002"}
+    """
+    weko_link = {}
+    weko_id_list=[]
+    for x in metadata["metainfo"].values():
+        if isinstance(x, list):
+            for y in x:
+                for key, value in y.items():
+                    if key == "nameIdentifiers":
+                        for z in value:
+                            if z.get("nameIdentifierScheme","") == "WEKO":
+                                if z.get("nameIdentifier","") not in weko_id_list:
+                                    weko_id_list.append(z.get("nameIdentifier"))
+    weko_link = {}
+    for weko_id in weko_id_list:
+        pk_id = WekoAuthors.get_pk_id_by_weko_id(weko_id)
+        if int(pk_id) > 0:
+            weko_link[pk_id] = weko_id
+    return weko_link
 
 def hide_meta_data_for_role(record):
     """
