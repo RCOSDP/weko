@@ -122,7 +122,6 @@ class CommunityModelView(ModelView):
                 model.id = form_data['id']
                 model.id_role = form_data['owner']
                 model.root_node_id = form_data['index']
-                model.group_id = form_data['group']
                 model.title = form_data['title']
                 model.description = form_data['description']
                 model.page = form_data['page']
@@ -134,6 +133,8 @@ class CommunityModelView(ModelView):
                     model.login_menu_enabled = True
                 else:
                     model.login_menu_enabled = False
+                if form_data.get('group') != "__None":
+                    model.group_id = form_data.get('group')
                 the_result = {
                     "FILE_PATTERN": "Thumbnail file only 'jpeg', 'jpg', 'png' format.",
                 }
@@ -295,7 +296,6 @@ class CommunityModelView(ModelView):
             try:
                 model.id_role = form_data['owner']
                 model.root_node_id = form_data['index']
-                model.group_id = form_data['group']
                 model.title = form_data['title']
                 model.description = form_data['description']
                 model.page = form_data['page']
@@ -307,6 +307,8 @@ class CommunityModelView(ModelView):
                     model.login_menu_enabled = True
                 else:
                     model.login_menu_enabled = False
+                if form_data.get('group') != "__None":
+                    model.group_id = form_data.get('group')
                 the_result = {
                     "FILE_PATTERN": "Thumbnail file only 'jpeg', 'jpg', 'png' format.",
                 }
