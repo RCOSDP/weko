@@ -73,11 +73,9 @@ def get_workspace_itemlist():
         # "recid": None,  # レコードID
         recid = hit["id"]
         workspaceItem["recid"] = str(recid)
-        # print(f"recid : {recid}")
 
         # "title": None,  # タイトル
         workspaceItem["title"] = hit["metadata"].get("title", [])[0]
-        # print("title : " + workspaceItem["title"])
 
         # "favoriteSts": None,  # お気に入りステータス状況
         workspaceItem["favoriteSts"] = (
@@ -85,7 +83,6 @@ def get_workspace_itemlist():
             if get_workspace_status_management(recid)
             else False
         )
-        # print("favoriteSts : " + str(workspaceItem["favoriteSts"]))
 
         # "readSts": None,  # 既読未読ステータス状況
         workspaceItem["readSts"] = (
@@ -93,7 +90,6 @@ def get_workspace_itemlist():
             if get_workspace_status_management(recid)
             else False
         )
-        # print("readSts : " + str(workspaceItem["readSts"]))
 
         # TODO "peerReviewSts": None,  # 査読チェック状況
         workspaceItem["peerReviewSts"] = True
@@ -104,11 +100,9 @@ def get_workspace_itemlist():
             workspaceItem["doi"] = identifiers[0].get("value", "")
         else:
             workspaceItem["doi"] = ""
-        # print(f"workspaceItem[doi] : {workspaceItem['doi']}")
 
         # "resourceType": None,  # リソースタイプ
         workspaceItem["resourceType"] = hit["metadata"].get("type", [])[0]
-        # print(f"resourceType : {hit['metadata'].get('type', [])[0]}")
 
         #  "authorlist": None,   著者リスト[著者名]
         workspaceItem["authorlist"] = (
@@ -120,23 +114,18 @@ def get_workspace_itemlist():
         if workspaceItem["authorlist"] is not None:
             workspaceItem["authorlist"].append("作成者02")
             workspaceItem["authorlist"].append("作成者03")
-        # print("authorlist : " + str(workspaceItem["authorlist"]))
 
         # "accessCnt": None,  # アクセス数
         workspaceItem["accessCnt"] = get_accessCnt_downloadCnt(recid)[0]
-        # print("accessCnt : " + str(workspaceItem["accessCnt"]))
 
         # "downloadCnt": None,  # ダウンロード数
         workspaceItem["downloadCnt"] = get_accessCnt_downloadCnt(recid)[1]
-        # print("downloadCnt : " + str(workspaceItem["downloadCnt"]))
 
         # "itemStatus": None,  # アイテムステータス
         workspaceItem["itemStatus"] = get_item_status(recid)
-        # print("itemStatus : " + str(workspaceItem["itemStatus"]))
 
         # "publicationDate": None,  # 出版年月日
         workspaceItem["publicationDate"] = hit["metadata"]["publish_date"]
-        # print(f"publicationDate : " + workspaceItem["publicationDate"])
 
         # "magazineName": None,  # 雑誌名
         workspaceItem["magazineName"] = (
@@ -144,7 +133,6 @@ def get_workspace_itemlist():
             if "sourceTitle" in hit["metadata"]
             else None
         )
-        # print("magazineName : "  + str(workspaceItem["magazineName"]))
 
         # "conferenceName": None,  # 会議名
         conference = hit["metadata"].get("conference", [])
@@ -153,7 +141,6 @@ def get_workspace_itemlist():
         else:
             workspaceItem["conferenceName"] = None
 
-        # print("conferenceName : " + str(workspaceItem["conferenceName"]))
 
         # "volume": None,  # 巻
         workspaceItem["volume"] = (
@@ -161,7 +148,6 @@ def get_workspace_itemlist():
             if hit["metadata"].get("volume", [])
             else None
         )
-        # print("volume : " + str(workspaceItem["volume"]))
 
         # "issue": None,  # 号
         workspaceItem["issue"] = (
@@ -169,7 +155,6 @@ def get_workspace_itemlist():
             if hit["metadata"].get("issue", [])
             else None
         )
-        # print("issue : " + str(workspaceItem["issue"]))
 
         # "funderName": None,  # 資金別情報機関名
         fundingReference = hit["metadata"].get("fundingReference", [])
@@ -181,8 +166,6 @@ def get_workspace_itemlist():
         else:
             workspaceItem["funderName"] = None
 
-        # print("funderName : " + str(workspaceItem["funderName"]))
-
         # "awardTitle": None,  # 資金別情報課題名
         if fundingReference and fundingReference["awardTitle"]:
             workspaceItem["awardTitle"] = fundingReference["awardTitle"][0]
@@ -192,7 +175,6 @@ def get_workspace_itemlist():
         else:
             workspaceItem["awardTitle"] = None
 
-        # print("awardTitle : " + str(workspaceItem["awardTitle"]))
 
         # TODO "fbEmailSts": None,  # フィードバックメールステータス
         # ①ログインユーザーのメールアドレスは2.1.2.2の
@@ -200,7 +182,6 @@ def get_workspace_itemlist():
         # ②2.1.2.2の取得結果のアイテムID(_id)でfeedback_mail_listテーブルのmail_list項目を取得して、
         # ログインユーザーのメールアドレスは該当リストに存在すればtrueを設定する。逆にfalse。
         workspaceItem["fbEmailSts"] = False if current_user.email else False
-        # print("fbEmailSts : " + str(workspaceItem["fbEmailSts"]))
 
         # "connectionToPaperSts": None,  # 論文への関連チェック状況
         workspaceItem["connectionToPaperSts"] = True if workspaceItem["resourceType"] in current_app.config["WEKO_WORKSPACE_ARTICLE_TYPES"] else None
@@ -215,7 +196,6 @@ def get_workspace_itemlist():
             if "relation" in hit["metadata"]
             else None
         )
-        # print("relationLen : " + str(relationLen))
 
         if "relation" in hit["metadata"]:
             for i in range(relationLen):
@@ -223,19 +203,16 @@ def get_workspace_itemlist():
                 workspaceItem["relationType"] = hit["metadata"].get("relation", [])[
                     "@attributes"
                 ]["relationType"][i][0]
-                # print("relationType : " + hit["metadata"].get("relation", [])["@attributes"]["relationType"][i][0])
 
                 # # "relationTitle": None,  # 関連情報タイトル
                 workspaceItem["relationTitle"] = hit["metadata"].get("relation", [])[
                     "relatedTitle"
                 ][i]
-                # print("relationTitle : " + hit["metadata"].get("relation", [])["relatedTitle"][i])
 
                 # # "relationUrl": None,  # 関連情報URLやDOI
                 workspaceItem["relationUrl"] = hit["metadata"].get("relation", [])[
                     "relatedIdentifier"
                 ][i]["value"]
-                # print("relationUrl : "+ hit["metadata"].get("relation", [])["relatedIdentifier"][i]["value"])
 
                 relation = {
                     "relationType": workspaceItem["relationType"],
@@ -245,10 +222,8 @@ def get_workspace_itemlist():
                 relations.append(relation)
 
         workspaceItem["relation"] = relations
-        # print("relation : " + str(workspaceItem["relation"]))
 
         # file情報
-        # print("file : ")
         fileObjNm = (
             "item_" + hit["metadata"]["_item_metadata"]["item_type_id"] + "_file"
         )
@@ -274,11 +249,9 @@ def get_workspace_itemlist():
             if fileCnt > 0:
                 # "fileSts": None,  # 本文ファイル有無ステータス
                 workspaceItem["fileSts"] = True
-                # print("fileSts : " + str(workspaceItem["fileSts"]))
 
                 # "fileCnt": None,  # 本文ファイル数
                 workspaceItem["fileCnt"] = fileCnt
-                # print("fileCnt : " + str(workspaceItem["fileCnt"]))
 
                 accessrole_date_list = [
                     {
@@ -288,12 +261,8 @@ def get_workspace_itemlist():
                     for item in fileList
                     if "accessrole" in item and "date" in item
                 ]
-                # print("accessrole_date_list : ")
-                # print(accessrole_date_list)
 
                 for accessrole_date in accessrole_date_list:
-                    # print("accessrole : " + accessrole_date["accessrole"])
-                    # print("dateValue : " + accessrole_date["dateValue"])
 
                     # "publicSts": None,  # 公開ファイル有無ステータス
                     # "publicCnt": None,  # 公開ファイル数
@@ -320,24 +289,16 @@ def get_workspace_itemlist():
         workspaceItem["restrictedPublicationCnt"] = (
             restrictedPublicationCnt if "restrictedPublicationCnt" in locals() else 0
         )
-        # print("publicCnt : " + str(workspaceItem["publicCnt"]))
-        # print("embargoedCnt : " + str(workspaceItem["embargoedCnt"]))
-        # print("restrictedPublicationCnt : " + str(workspaceItem["restrictedPublicationCnt"]))
         
         if str(workspaceItem):
             workspaceItemList.append(workspaceItem)
-        # print("------------------------------------")
 
     # 7,ユーザー名と所属情報取得処理
     userInfo = get_userNm_affiliation()
-    # print(userInfo[0])
-    # print(userInfo[1])
     
     # デフォルト絞込み条件より、workspaceItemListを洗い出す
     if isnotNone:
         defaultconditions = merge_default_filters(jsonCondition)
-        print("jsonCondition : " + str(jsonCondition))
-        # print("======================db table/post defaultconditions : " + str(defaultconditions))
 
         # フィルタリングマッピング
         filter_mapping = {
@@ -364,16 +325,13 @@ def get_workspace_itemlist():
             )
         ]
         workspaceItemList = filtered_items
-        # print("after filter workspaceItemList : " + str(workspaceItemList))
 
     else:
         defaultconditions = jsonCondition
-        # print("====================== default defaultconditions : " + str(defaultconditions))
 
     defaultconditions["funder_name"]["options"] = list(dict.fromkeys(funderNameList))
     defaultconditions["award_title"]["options"] = list(dict.fromkeys(awardTitleList))
 
-    print("==========guan.shuang workspace end=========")
     return render_template(
         current_app.config["WEKO_WORKSPACE_BASE_TEMPLATE"],
         username=userInfo[0],
@@ -391,19 +349,15 @@ def update_workspace_status_management():
     Returns:
         _type_: _description_
     """
-    # print("==========guan.shuang update_workspace_status_management start=========")
     data = request.get_json()
 
     user_id = current_user.id
 
     item_recid = data.get("itemRecid")  # 使用 itemRecid
-    # print("item_recid : " + str(item_recid))
 
     type = data.get("type")
-    # print("type : " + str(type))
 
     result = get_workspace_status_management(item_recid)
-    # print("result : " + str(result))
 
     if not result:
         insert_workspace_status(
@@ -483,8 +437,6 @@ def reset_filters():
     Returns:
         JSON: 削除結果に基づいてステータスとメッセージを返します。
     """
-
-    # print("Resetting filters================リセット============================:")
 
     user_id = current_user.id
     try:

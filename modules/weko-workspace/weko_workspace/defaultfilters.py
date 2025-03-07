@@ -1,4 +1,3 @@
-# defaultfilters.py
 
 # すべてのフィルタ条件のJSONテンプレートを定義
 DEFAULT_FILTERS = {
@@ -121,20 +120,21 @@ DEFAULT_FILTERS = {
 
 
 def get_default_filters():
-    """デフォルトのフィルタ条件テンプレートを返す"""
+    """Return the default filter condition template"""
     return DEFAULT_FILTERS
 
 
 def merge_default_filters(default_con):
     """
-    workspace_default_conditions テーブル内の default_con を DEFAULT_FILTERS とマージする。
+    Merge the default_con from the workspace_default_conditions table with DEFAULT_FILTERS.
 
     Args:
-        default_con (dict): データベースから取得した default_con JSON データ。
+        default_con (dict): JSON data of default_con retrieved from the database.
 
     Returns:
-        dict: マージ後の JSON テンプレート、DEFAULT_FILTERS と同じ形式。
+        dict: Merged JSON template in the same format as DEFAULT_FILTERS.
     """
+
     # DEFAULT_FILTERS を深コピーし、元のテンプレートを変更しない
     merged_filters = {key: dict(value) for key, value in DEFAULT_FILTERS.items()}
 

@@ -29,43 +29,42 @@ WEKO_WORKSPACE_PID_TYPE = 'recid'
 """Get object_uuid."""
 
 WEKO_WORKSPACE_ITEM = {
-    "recid": None,  # レコードID
-    "title": None,  # タイトル
-    "favoriteSts": None,  # お気に入りステータス状況
-    "readSts": None,  # 既読未読ステータス状況
-    "peerReviewSts": None,  # 査読チェック状況
-    "doi": None,  # DOIリンク
-    "resourceType": None,  # リソースタイプ
-    "authorlist": None,  # 著者リスト[著者名]
-    "accessCnt": None,  # アクセス数
-    "downloadCnt": None,  # ダウンロード数
-    "itemStatus": None,  # アイテムステータス
-    "publicationDate": None,  # 出版年月日
-    "magazineName": None,  # 雑誌名
-    "conferenceName": None,  # 会議名
-    "volume": None,  # 巻
-    "issue": None,  # 号
-    "funderName": None,  # 資金別情報機関名
-    "awardTitle": None,  # 資金別情報課題名
-    "fbEmailSts": None,  # フィードバックメールステータス
-    "relation": None,  # 関連情報リスト
-    "relationType": None,  # 関連情報タイプ
-    "relationTitle": None,  # 関連情報タイトル
-    "relationUrl": None,  # 関連情報URLやDOI
-    "connectionToPaperSts": None,  # 論文への関連チェック状況
-    "connectionToDatasetSts": None,  # 根拠データへの関連チェック状況
-    "fileSts": None,  # 本文ファイル有無ステータス
-    "fileCnt": None,  # 本文ファイル数
-    "publicSts": None,  # 公開ファイル有無ステータス
-    "publicCnt": None,  # 公開ファイル数
-    "embargoedSts": None,  # エンバーゴ有無ステータス
-    "embargoedCnt": None,  # エンバーゴ有数
-    "restrictedPublicationSts": None,  # 制限公開有無ステータス
-    "restrictedPublicationCnt": None,  # 制限公開ファイル数
+    "recid": None,  
+    "title": None,  
+    "favoriteSts": None,  
+    "readSts": None,  
+    "peerReviewSts": None,  
+    "doi": None,  
+    "resourceType": None,  
+    "authorlist": None,  
+    "accessCnt": None,  
+    "downloadCnt": None,  
+    "itemStatus": None,  
+    "publicationDate": None,  
+    "magazineName": None,  
+    "conferenceName": None,  
+    "volume": None,  
+    "issue": None,  
+    "funderName": None,  
+    "awardTitle": None,  
+    "fbEmailSts": None,  
+    "relation": None,  
+    "relationType": None,  
+    "relationTitle": None,  
+    "relationUrl": None,  
+    "connectionToPaperSts": None,  
+    "connectionToDatasetSts": None,  
+    "fileSts": None,  
+    "fileCnt": None,  
+    "publicSts": None,  
+    "publicCnt": None,  
+    "embargoedSts": None,  
+    "embargoedCnt": None,  
+    "restrictedPublicationSts": None,  
+    "restrictedPublicationCnt": None,  
 }
-"""Default item template for the worksapce item list page."""
+"""Default item template for the workspace item list page."""
 
-# Article カテゴリの定義
 WEKO_WORKSPACE_ARTICLE_TYPES = [
     "conference paper",
     "data paper",
@@ -79,9 +78,8 @@ WEKO_WORKSPACE_ARTICLE_TYPES = [
     "software paper",
     "article"
 ]
-"""Article カテゴリの定義"""
+"""Definition of Article categories"""
 
-# Dataset カテゴリの定義
 WEKO_WORKSPACE_DATASET_TYPES = [
     "aggregated data",
     "clinical trial data",
@@ -98,20 +96,13 @@ WEKO_WORKSPACE_DATASET_TYPES = [
     "simulation data",
     "survey data"
 ]
-"""Dataset カテゴリの定義"""
-
-
+"""Definition of Dataset categories"""
 
 # Error message variable definition
 
-
-
 # Others
 
-
-
 # ============================================================================================
-
 
 WEKO_WORKFLOW_BASE_TEMPLATE = 'weko_workflow/base.html'
 """Default base template for the demo page."""

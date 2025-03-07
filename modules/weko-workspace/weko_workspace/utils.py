@@ -97,7 +97,6 @@ def get_workspace_filterCon():
     Returns:
         default_con -- default conditions json
     """
-    # print("======workspace def get_workspace_filterCon(): ======")
 
     try:
         isnotNone = True
@@ -107,29 +106,15 @@ def get_workspace_filterCon():
             .scalar()
         )
         if default_con is None:
-            # current_app.logger.warning(f"No default conditions found for user {current_user.id}, using DEFAULT_FILTERS.")
-            print(
-                f"============================== No default conditions found for user {current_user.id}, using DEFAULT_FILTERS."
-            )
             default_con = DEFAULT_FILTERS
             isnotNone = False
 
     except SQLAlchemyError as e:
-        # current_app.logger.error(f"Database error while fetching default conditions for user {current_user.id}: {e}")
-        print(
-            f"============================== Database error while fetching default conditions for user {current_user.id}: {e}"
-        )
         default_con = DEFAULT_FILTERS
         isnotNone = False
     except Exception as e:
-        # current_app.logger.error(f"Unexpected error while fetching default conditions for user {current_user.id}: {e}")
-        print(
-            f"============================== Unexpected error while fetching default conditions for user {current_user.id}: {e}"
-        )
         default_con = DEFAULT_FILTERS
         isnotNone = False
-
-    # print(default_con)
 
     return default_con, isnotNone
 
@@ -142,20 +127,14 @@ def get_es_itemlist():
         ----
     """
 
-    # print("======workspace def get_es_itemlist(): ======")
-
     invenio_api_path = "/api/worksapce/search"
     headers = {"Accept": "application/json"}
 
     response = requests.get(request.host_url.rstrip("/") + invenio_api_path, headers=headers)
     size = response.json()["hits"]["total"]
-    print("======workspace def get_es_itemlist(): size ======" + str(size))
     
     response = requests.get(request.host_url.rstrip("/") + invenio_api_path + "?size="+str(size), headers=headers)
     records_data = response.json()
-    # print("=======records_data start=======")
-    # print(records_data)
-    # print("=======records_data end=======")
     return records_data
 
 
@@ -170,8 +149,6 @@ def get_workspace_status_management(recid: str):
         tuple[0] -- the favorite status
         tuple[1] -- the read status
     """
-
-    # print("======workspace def get_workspace_status_management(): ======")
 
     result = (
         WorkspaceStatusManagement.query.filter_by(user_id=current_user.id, recid=recid)
@@ -196,7 +173,6 @@ def get_accessCnt_downloadCnt(recid: str):
         tuple[1] -- download count
 
     """
-    # print("======workspace def get_access_cnt(recid:int): ======")
 
     uuid = PersistentIdentifier.get(
         current_app.config["WEKO_WORKSPACE_PID_TYPE"], recid
@@ -210,7 +186,6 @@ def get_accessCnt_downloadCnt(recid: str):
 
     downloadCnt = int(sum(float(value) for value in result["file_download"].values()))
 
-    # print((accessCnt,downloadCnt))
     return (accessCnt, downloadCnt)
 
 
@@ -236,8 +211,6 @@ def get_userNm_affiliation():
 
     """
 
-    # print("======workspace def get_userNm_affiliation(): ======")
-    # userNm = "guan.shuang"
     affiliation = "ivis-testdata"
 
     """Get user name"""
@@ -260,16 +233,16 @@ def insert_workspace_status(user_id, recid, is_favorited=False, is_read=False):
     """Insert the favorite status and read status of the item.
 
     Args:
-        user_id (_type_): _description_
-        recid (_type_): _description_
-        is_favorited (bool, optional): _description_. Defaults to False.
-        is_read (bool, optional): _description_. Defaults to False.
+        user_id (str): user id
+        recid (str): _description_
+        is_favorited (bool, optional): favorited status. Defaults to False.
+        is_read (bool, optional): read status. Defaults to False.
 
     Raises:
-        e: _description_
+        e: rollback
 
     Returns:
-        _type_: _description_
+        touple: new_status
     """
     new_status = WorkspaceStatusManagement(
         user_id=user_id,
@@ -293,16 +266,16 @@ def update_workspace_status(user_id, recid, is_favorited=None, is_read=None):
     """Update the favorite status and read status of the item.
 
     Args:
-        user_id (_type_): _description_
-        recid (_type_): _description_
-        is_favorited (_type_, optional): _description_. Defaults to None.
-        is_read (_type_, optional): _description_. Defaults to None.
+        user_id (str): user id
+        recid (str): _description_
+        is_favorited (bool, optional): favorited status. Defaults to False.
+        is_read (bool, optional): read status. Defaults to False.
 
     Raises:
-        e: _description_
+        e: rollback
 
     Returns:
-        _type_: _description_
+        touple: new_status
     """
     status = WorkspaceStatusManagement.query.filter_by(
         user_id=user_id, recid=recid
