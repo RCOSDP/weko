@@ -24,6 +24,7 @@ from copy import deepcopy
 import uuid
 
 from flask import current_app, json
+from flask_security import current_user
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from sqlalchemy.sql.functions import func
@@ -46,14 +47,6 @@ class WekoAuthors(object):
         new_id = Authors.get_sequence(session)
         data["pk_id"] = str(new_id)
         data["gather_flg"] = 0
-        data["authorIdInfo"].insert(
-            0,
-            {
-                "idType": "1",
-                "authorId": str(new_id),
-                "authorIdShowFlg": "true"
-            }
-        )
 
         es_id = str(uuid.uuid4())
         es_data = json.loads(json.dumps(data))
@@ -131,6 +124,10 @@ class WekoAuthors(object):
             raise ex
         else:
             update_es_data(es_data, es_id)
+        from weko_deposit.tasks import update_items_by_authorInfo
+        user_id = current_user.get_id()
+        update_items_by_authorInfo.delay(
+            user_id, data, [author_id], [data["id"]])
 
     @classmethod
     def get_all(cls, with_deleted=True, with_gather=True):
@@ -165,6 +162,44 @@ class WekoAuthors(object):
                     existed_external_authors_id[idType] = author_ids
 
         return existed_authors_id, existed_external_authors_id
+
+    @classmethod
+    def get_pk_id_by_weko_id(cls, weko_id):
+        """
+        Get author by weko_id.
+        """
+        query = {
+            "_source": ["pk_id", "authorIdInfo"],  # authorIdInfoフィールドのみを取得
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "term": {
+                                "authorIdInfo.authorId": weko_id
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+
+        # 検索
+        indexer = RecordIndexer()
+        result = indexer.client.search(
+            index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+            body=query
+        )
+    
+        for res in result['hits']['hits']:
+            author_id_info_from_es = res['_source']['authorIdInfo']
+            for info in author_id_info_from_es:
+                if info.get('idType') == '1':
+                    author_id = info.get('authorId')
+                    if author_id == weko_id:
+                        pk_id = res['_source']['pk_id']
+                        return pk_id
+        return -1
+
 
     @classmethod
     def get_identifier_scheme_info(cls):

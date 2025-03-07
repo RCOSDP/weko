@@ -27,12 +27,14 @@ import io
 import sys
 import tempfile
 import traceback
+import re
+import copy 
 from copy import deepcopy
 from functools import reduce
 from operator import getitem
 from sys import stdout
 
-from flask import current_app
+from flask import current_app, jsonify
 from flask_babelex import gettext as _
 from invenio_cache import current_cache
 from invenio_db import db
@@ -45,7 +47,7 @@ from weko_authors.contrib.validation import validate_by_extend_validator, \
 from .api import WekoAuthors
 from .config import WEKO_AUTHORS_FILE_MAPPING, \
     WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY, WEKO_AUTHORS_EXPORT_CACHE_URL_KEY
-from .models import AuthorsPrefixSettings, AuthorsAffiliationSettings
+from .models import AuthorsPrefixSettings, AuthorsAffiliationSettings, Authors
 
 
 def get_author_prefix_obj(scheme):
@@ -101,10 +103,28 @@ def check_email_existed(email: str):
             'email': email,
             'author_id': ''
         }
+        
+def validate_weko_id(weko_id, pk_id = None):
+    """Validate WEKO ID."""
+    if not bool(re.fullmatch(r'[0-9]+', weko_id)):
+        return False, "not half digit"
+    # jsonify(msg=_('The author ID must be the half digit.')), 500
+    
+    try:
+        result = check_weko_id_is_exists(weko_id, pk_id)
+    except Exception as ex:
+        current_app.logger.error(ex)
+        raise ex
+    # 存在するならエラーを返す
+    if result == True:
+        return False, "already exists"
+    # jsonify(msg=_('The value is already in use as WEKO ID.')), 500
+    return True, None
 
-def check_weko_id_is_exists(weko_id):
+def check_weko_id_is_exists(weko_id, author_id = None):
     """
     weko_idが既に存在するかチェック
+    author_idが同じ場合はスキップする
     ※weko_idはauthorIdInfo.Idtypeが1であるAuthorIdの値のことです。
     
     args:
@@ -115,7 +135,7 @@ def check_weko_id_is_exists(weko_id):
     """
     # 同じweko_idが存在するかチェック
     query = {
-        "_source": ["authorIdInfo"],  # authorIdInfoフィールドのみを取得
+        "_source": ["pk_id", "authorIdInfo"],  # authorIdInfoフィールドのみを取得
         "query": {
             "bool": {
                 "must": [
@@ -138,6 +158,9 @@ def check_weko_id_is_exists(weko_id):
     
     # 同じweko_idが存在する場合はエラー
     for res in result['hits']['hits']:
+        # 同じauthor_idの場合はスキップ
+        if author_id and author_id == res['_source']['pk_id']:
+            continue
         author_id_info_from_es = res['_source']['authorIdInfo']
         for info in author_id_info_from_es:
             if info.get('idType') == '1':
@@ -145,6 +168,24 @@ def check_weko_id_is_exists(weko_id):
                 if author_id == weko_id:
                     return True
     return False
+
+
+def check_period_date(data):
+    """Check period date."""
+    if data.get("affiliationInfo"):
+        for affiliation in data.get("affiliationInfo"):
+            if affiliation.get("affiliationPeriodInfo"):
+                for periodinfo in affiliation.get("affiliationPeriodInfo"):
+                    if periodinfo.get("periodStart") or periodinfo.get("periodEnd"):
+                        if periodinfo.get("periodStart"):
+                            date_str = periodinfo.get("periodStart")
+                            if not bool(re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}', date_str)):
+                                return False
+                        if periodinfo.get("periodEnd"):
+                            date_str = periodinfo.get("periodEnd")
+                            if not bool(re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}', date_str)):
+                                return False
+    return True
 
 def get_export_status():
     """Get export status from cache."""
@@ -654,3 +695,41 @@ def get_count_item_link(pk_id):
             and result_itemCnt['hits']['total'] > 0:
         count = result_itemCnt['hits']['total']
     return count
+
+def update_data_for_weko_link(data, weko_link):
+    """
+        authorsテーブルを元にweko_linkを更新し、
+        違いがある場合は、dataをauthorsテーブルのweko_idを元に更新します。
+        args:
+            data: dict メタデータ
+            weko_link: list weko_link
+        
+    """
+    old_weko_link = weko_link
+    weko_link = copy.deepcopy(old_weko_link)
+    # weko_linkを新しくする。
+    for pk_id in weko_link.keys():
+        author = Authors.get_author_by_id(pk_id)
+        if author:
+            # weko_idを取得する。
+            author_id_info = author["authorIdInfo"]
+            for i in author_id_info:
+                # idTypeが1の場合、weko_idを取得し、weko_linkを更新する。
+                if i.get('idType') == '1':
+                    weko_link[pk_id] = i.get('authorId')
+                    break
+    # weko_linkが変更された場合、メタデータを更新する。
+    if weko_link != old_weko_link:
+        for x_key, x_value in data.items():
+            if isinstance(x_value, list):
+                for y_index, y in enumerate(x_value, start=0):
+                    if isinstance(y, str):
+                        continue
+                    for y_key, y_value in y.items():
+                        if y_key == "nameIdentifiers":
+                            for z_index, z in enumerate(y_value, start=0):
+                                if z.get("nameIdentifierScheme","") == "WEKO":
+                                    if z.get("nameIdentifier") in old_weko_link.values():
+                                        # weko_linkから値がweko_idと一致するpk_idを取得する。
+                                        pk_id = [k for k, v in old_weko_link.items() if v == z.get("nameIdentifier")][0]
+                                        data[x_key][y_index][y_key][z_index]["nameIdentifier"] = weko_link.get(pk_id)

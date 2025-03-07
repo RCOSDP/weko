@@ -32,9 +32,10 @@ from weko_schema_ui.models import PublishStatus
 
 from .config import WEKO_AUTHORS_IMPORT_KEY
 from .models import Authors, AuthorsAffiliationSettings, AuthorsPrefixSettings
+from .api import WekoAuthors
 from .permissions import author_permission
 from .utils import get_author_prefix_obj, get_author_affiliation_obj, get_count_item_link,\
-    check_weko_id_is_exists
+    validate_weko_id, check_period_date
 
 blueprint = Blueprint(
     'weko_authors',
@@ -61,53 +62,39 @@ def create():
     if request.headers['Content-Type'] != 'application/json':
         return jsonify(msg=_('Header Error'))
 
-    session = db.session
-    new_id = Authors.get_sequence(session)
-
     data = request.get_json()
     
-    # weko_idを取得し、存在するかを確認する。
+    # weko_idを取得する。
     author_id_info = data["authorIdInfo"]
     for i in author_id_info:
         if i.get('idType') == '1':
             weko_id = i.get('authorId')
+    if not weko_id:
+        return jsonify(msg=_('Please set WEKO ID.')), 500
     
+    #weko_idのバリーデーションチェック
     try:
-        result = check_weko_id_is_exists(weko_id)
+        result_weko_id_check = validate_weko_id(weko_id)
+        if result_weko_id_check[0] == False and result_weko_id_check[1] == "not half digit":
+            # weko_idが半角数字でない場合はエラーを返す
+            return jsonify(msg=_('Please set the WEKOID in the half digit.')), 500
+        elif result_weko_id_check[0] == False and result_weko_id_check[1] == "already exists":
+            # weko_idが既に存在する場合はエラーを返す
+            return jsonify(msg=_('The value is already in use as WEKO ID.')), 500
     except Exception as ex:
         current_app.logger.error(ex)
-        session.rollback()
         return jsonify(msg=_('Failed')), 500
-    # 存在するならエラーを返す
-    if result == True:
-        return jsonify(msg=_('The author is already registered.')), 500
+
     
-    data["gather_flg"] = 0
-    data["is_deleted"] = "false"
-    data["pk_id"] = str(new_id)
-    es_data = json.loads(json.dumps(data))
-    es_id = str(uuid.uuid4())
-    data['id'] = es_id
-
-    author_data = dict()
-
-    author_data["id"] = new_id
-    author_data["json"] = data
+    #periodのバリーデーションチェック
+    result_period_check = check_period_date(data)
+    if result_period_check == False:
+        # period
+        return jsonify(msg=_('Please set the affiliation start date and end date in the format yyyy-MM-dd.')), 500
+    
     try:
-        with session.begin_nested():
-            author = Authors(**author_data)
-            session.add(author)
-        indexer = RecordIndexer()
-        
-        session.commit()
-        indexer.client.index(
-            index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-            doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
-            id=es_id,
-            body=es_data,
-        )
+        WekoAuthors.create(data)
     except Exception as ex:
-        session.rollback()
         current_app.logger.error(ex)
         return jsonify(msg=_('Failed')), 500
     return jsonify(msg=_('Success'))
@@ -122,43 +109,39 @@ def update_author():
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg=_('Header Error'))
 
-    user_id = current_user.get_id()
     data = request.get_json()
     
-    # weko_idを取得し、存在するかを確認する。
+    # weko_idを取得する。
     author_id_info = data["authorIdInfo"]
     for i in author_id_info:
         if i.get('idType') == '1':
             weko_id = i.get('authorId')
+    if not weko_id:
+        return jsonify(msg=_('Please set WEKO ID.')), 500
+    pk_id = data["pk_id"]
     
     try:
-        result = check_weko_id_is_exists(weko_id)
-        # 存在するならエラーを返す
-        if result == True:
-            return jsonify(msg=_('The author is already registered.')), 500
-    
-        with db.session.begin_nested():
-            author_data = Authors.query.filter_by(
-                id=json.loads(json.dumps(data))["pk_id"]).one()
-            author_data.json = data
-            db.session.merge(author_data)
-        db.session.commit()
+        #weko_idのバリーデーションチェック
+        print(weko_id, pk_id)
+        result_weko_id_check = validate_weko_id(weko_id, pk_id)
+
+        if result_weko_id_check[0] == False and result_weko_id_check[1] == "not half digit":
+            # weko_idが半角数字でない場合はエラーを返す
+            return jsonify(msg=_('Please set the WEKOID in the half digit.')), 500
+        elif result_weko_id_check[0] == False and result_weko_id_check[1] == "already exists":
+            # weko_idが既に存在する場合はエラーを返す
+            return jsonify(msg=_('The value is already in use as WEKO ID.')), 500
         
-        indexer = RecordIndexer()
-        body = {'doc': data}
-        indexer.client.update(
-            index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-            doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
-            id=json.loads(json.dumps(data))["id"],
-            body=body
-        )
-        from weko_deposit.tasks import update_items_by_authorInfo
+        #periodのバリーデーションチェック
+        result_period_check = check_period_date(data)
+
+        if result_period_check == False:
+            return jsonify(msg=_('Please set the affiliation start date and end date in the format yyyy-MM-dd.')), 500
         
-        update_items_by_authorInfo.delay(
-            user_id,data, [json.loads(json.dumps(data))["pk_id"]], [json.loads(json.dumps(data))["id"]])
+        
+        WekoAuthors.update(pk_id, data)
 
     except Exception as ex:
-        db.session.rollback()
         current_app.logger.error(ex)
         return jsonify(msg=_('Failed')), 500
 
@@ -280,10 +263,11 @@ def get():
     item_cnt_list = []
     for es_hit in result['hits']['hits']:
         author_id_info = es_hit['_source']['authorIdInfo']
-        if author_id_info:
+        pk_id = es_hit['_source']['pk_id']
+        if pk_id and author_id_info:
             author_id = author_id_info[0]['authorId']
             temp_str = json.dumps(query_item).replace(
-                "@author_id", author_id)
+                "@author_id", pk_id)
             result_itemCnt = indexer.client.search(
                 index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
                 body=json.loads(temp_str)
@@ -292,7 +276,7 @@ def get():
                     and result_itemCnt['hits'] \
                     and result_itemCnt['hits']['total']:
                 item_cnt_list.append(
-                    {'key': author_id,
+                    {'key': pk_id,
                      'doc_count': result_itemCnt['hits']['total']})
 
     result['item_cnt'] = {'aggregations':
@@ -337,7 +321,6 @@ def getById():
 @login_required
 def get_max_weko_id():
     """Get max weko id."""
-    print("get_max_weko_id")
     query = {
         "_source": ["authorIdInfo"],  # authorIdInfoフィールドのみを取得
         "query": {
