@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const groupYearButton = document.getElementById('groupYearicon');
   const itemListContainer = document.getElementById('itemListContainer');
   const pagination = document.querySelector('.pagination');
+  const checkAll = document.getElementById('check_all'); //  すべてチェック
   const placeholder = document.getElementById('placeholder').value;
   const showNoResultsMsg = document.getElementById('showNoResultsMsg').value;
   const remindMsg = document.getElementById('remindMsg').value;
@@ -79,7 +80,57 @@ document.addEventListener('DOMContentLoaded', function () {
   let itemsPerPage = parseInt(itemsPerPageSelect.value) || 20;
   let isGroupedByYear = false;
   let items = [...workspaceItemList]; // 一覧データのコピー
+  // 選択状態を保持するためのオブジェクト
+  let checkedItems = new Set();
+  // すべてチェックの処理
+  function handleCheckAll() {
+    const itemCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+    itemCheckboxes.forEach(checkbox => {
+      checkbox.checked = checkAll.checked;
+      const recid = checkbox.closest('tr')?.querySelector('td:nth-child(2) strong a')?.href.split('/').pop();
+      if (recid) {
+        if (checkAll.checked) {
+          checkedItems.add(recid);
+        } else {
+          checkedItems.delete(recid);
+        }
+      }
+    });
+  }
 
+  checkAll.addEventListener('change', handleCheckAll);
+
+  // 個別チェックボックスの処理
+  function handleItemCheckboxChange() {
+    const recid = this.closest('tr')?.querySelector('td:nth-child(2) strong a')?.href.split('/').pop();
+    if (recid) {
+      if (this.checked) {
+        checkedItems.add(recid);
+      } else {
+        checkedItems.delete(recid);
+      }
+    }
+    updateCheckAllStatus();
+  }
+
+  // すべてチェックボックスの状態を更新
+  function updateCheckAllStatus() {
+    const itemCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+    checkAll.checked = itemCheckboxes.length > 0 && [...itemCheckboxes].every(cb => cb.checked);
+  }
+
+  // ページ変更時にチェックボックスの状態を復元
+  function restoreCheckedItems() {
+    const itemCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+    itemCheckboxes.forEach(checkbox => {
+      const recid = checkbox.closest('tr')?.querySelector('td:nth-child(2) strong a')?.href.split('/').pop();
+      if (recid && checkedItems.has(recid)) {
+        checkbox.checked = true;
+      }
+      checkbox.addEventListener('change', handleItemCheckboxChange);
+    });
+    updateCheckAllStatus();
+  }
   // SearchBar コンポーネント
   const SearchBar = ({ items, onFilter }) => {
     const [query, setQuery] = React.useState('');
@@ -454,9 +505,9 @@ document.addEventListener('DOMContentLoaded', function () {
     return React.createElement(
       'a',
       { href: '#', onClick: (e) => { e.preventDefault(); handleFavoriteToggle(); } },
-      React.createElement('i', { 
-        className: isFavorite ? 'bi bi-star-fill' : 'bi bi-star', 
-        style: { fontSize: '20px' } 
+      React.createElement('i', {
+        className: isFavorite ? 'bi bi-star-fill' : 'bi bi-star',
+        style: { fontSize: '20px' }
       })
     );
   };
@@ -485,9 +536,9 @@ document.addEventListener('DOMContentLoaded', function () {
     return React.createElement(
       'a',
       { href: '#', onClick: (e) => { e.preventDefault(); handleReadToggle(); } },
-      React.createElement('i', { 
-        className: isRead ? 'bi bi-book-fill' : 'bi bi-book', 
-        style: { fontSize: '20px' } 
+      React.createElement('i', {
+        className: isRead ? 'bi bi-book-fill' : 'bi bi-book',
+        style: { fontSize: '20px' }
       })
     );
   };
@@ -598,7 +649,7 @@ document.addEventListener('DOMContentLoaded', function () {
         <td style="text-align: center; vertical-align: top;">
           <div class="favorite-mount-point" data-type="1" data-item-recid="${item.recid}" data-favorite-sts='${JSON.stringify(item.favoriteSts)}'></div><br>
           <div class="read-mount-point" data-type="2" data-item-recid="${item.recid}" data-read-sts='${JSON.stringify(item.readSts)}'></div><br>
-          <input type="checkbox" value="" /><br><br>
+          <input type="checkbox" value="item-checkbox" /><br><br>
         </td>
         <td style="width: auto;">
           <strong><a href="/records/${item.recid}">${item.title}</a></strong><br><br>
@@ -608,8 +659,8 @@ document.addEventListener('DOMContentLoaded', function () {
           <span>${item.funderName || ''} | ${item.awardTitle || ''}</span><span> </span><br><br>
           <span>${item.publicationDate}</span><span> </span>
           ${item.relation && item.relation.length > 0 ? `<span><a href="javascript:void(0)" class="relatedButton"><strong>${relation}</strong></a></span><span> </span>` : ''}
-          ${item.fileSts 
-            ? `<span>${documentfile} (${item.fileCnt || 0})： ${published}（${item.publicCnt || 0}）、${embargo}（${item.embargoedCnt || 0}）、 ${restricted}（${item.restrictedPublicationCnt || 0}）</span>` 
+          ${item.fileSts
+            ? `<span>${documentfile} (${item.fileCnt || 0})： ${published}（${item.publicCnt || 0}）、${embargo}（${item.embargoedCnt || 0}）、 ${restricted}（${item.restrictedPublicationCnt || 0}）</span>`
             : `<span>${documentfile} (0)</span>`}<span> </span><br>
           ${relatedInfoHtml}
         </td>
@@ -626,8 +677,8 @@ document.addEventListener('DOMContentLoaded', function () {
           <span style="border: 1px solid #000; padding: 5px; border-radius: '4px'">${item.resourceType}</span><br><br>
           <span>${item.itemStatus}</span><br><br>
           <span>
-            ${item.fbEmailSts 
-              ? `<i class="bi bi-envelope" style="font-size: 20px;"></i>` 
+            ${item.fbEmailSts
+              ? `<i class="bi bi-envelope" style="font-size: 20px;"></i>`
               : `<i class="bi bi-envelope-dash" style="font-size: 20px;"></i>`}
           </span><br><br>
         </td>

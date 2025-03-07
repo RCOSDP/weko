@@ -1,22 +1,22 @@
 {#
-  # This file is part of WEKO3.
-  # Copyright (C) 2017 National Institute of Informatics.
-  #
-  # WEKO3 is free software; you can redistribute it
-  # and/or modify it under the terms of the GNU General Public License as
-  # published by the Free Software Foundation; either version 2 of the
-  # License, or (at your option) any later version.
-  #
-  # WEKO3 is distributed in the hope that it will be
-  # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-  # General Public License for more details.
-  #
-  # You should have received a copy of the GNU General Public License
-  # along with WEKO3; if not, write to the
-  # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-  # MA 02111-1307, USA.
-  #}
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
 
 <div id="search" class="workspace-body-contents">
   <div id="search_res">
@@ -34,7 +34,7 @@
           <div class="form-inline flow-root">
             <div class="pull-left">
               <div class="form-group">
-                <input type="checkbox" value="すべてチェック" />
+                <input type="checkbox" id="check_all">
                 <a href="javascript:void(0)" class="btn btn-primary">
                   <i class="bi bi-folder-plus" style="font-size: 20px;"></i>
                 </a>
@@ -43,7 +43,7 @@
             <div class="pull-right">
               <div class="form-group">
                 <a href="javascript:void(0)" class="btn btn-primary" id="groupYearicon">
-                  <i class="bi bi-diagram-3" style="font-size: 20px;" ></i>
+                  <i class="bi bi-diagram-3" style="font-size: 20px;"></i>
                 </a>
                 <a id="toggleButton" class="btn btn-primary" data-toggle="dropdown" href="javascript:void(0)" aria-expanded="false">{{_('Filter Display')}}<strong class="caret"></strong></a>
                 <select class="form-control" id="sort_item">
@@ -102,6 +102,12 @@
                     <div class="panel panel-default panel-default-2">
                       <div class="panel-body" style="display: flex; flex-direction: column; align-items: left;">
                         <div id="itemListContainer">
+                          {% for item in items %}
+                          <div class="item">
+                            <input type="checkbox" class="item-checkbox" value="{{ item.id }}">
+                            <span>{{ item.title }}</span>
+                          </div>
+                          {% endfor %}
                         </div>
                         <input type="hidden" id="relation" value="{{_('Relation')}}" />
                         <input type="hidden" id="documentfile" value="{{_('Document file')}}" />
@@ -122,3 +128,16 @@
       </div>
     </div>
   </div>
+  <script>
+    // すべてチェックの処理
+    document.addEventListener('DOMContentLoaded', function () {
+      const checkAll = document.getElementById('check_all');
+      const itemCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+
+      checkAll.addEventListener('change', function () {
+        itemCheckboxes.forEach(checkbox => {
+          checkbox.checked = checkAll.checked;
+        });
+      });
+    });
+  </script>
