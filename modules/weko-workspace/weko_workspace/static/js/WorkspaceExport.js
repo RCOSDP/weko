@@ -96,7 +96,7 @@ function showExportModal() {
                 ">
             <button id="export_selected" class="btn btn-primary">選択アイテム出力</button>
             <button id="export_all" class="btn btn-danger">全て出力)</button>
-            <button id="export_cancel" class="btn btn-secondary">キャンセル'</button>
+            <button id="export_cancel" class="btn btn-secondary">キャンセル</button>
         </div>
         <button id="close_modal" style="
             position: absolute;
@@ -150,7 +150,7 @@ function handleExportButtonClick(selectedOnly = false) {
 
     // チェックボックスが1つも選択されていない場合、エラーメッセージを表示
     if (selectedIds.length === 0) {
-      showErrorMessage("{{_(エラー: 選択されたアイテムがありません。チェックボックスを選択してください。}}");
+      showErrorMessage("エラー: 選択されたアイテムがありません。チェックボックスを選択してください。");
       return;
     }
   }
