@@ -25,7 +25,7 @@ from weko_user_profiles.models import UserProfile
 from werkzeug.local import LocalProxy
 
 from .models import ShibbolethUser
-from weko_index.models import Index
+from weko_index_tree.models import Index
 
 _datastore = LocalProxy(lambda: current_app.extensions['security'].datastore)
 
@@ -447,14 +447,14 @@ def update_roles(map_group_list, roles):
             if current_app.config.get('WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION', False):
                 index = Index.query.filter_by(id=new_role.id).one_or_none()
                 if index:
-                    index.update_browsing_role(new_role.id)
+                    update_browsing_role(new_role.id)
                     db.session.add(index)
 
             # WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSIONがTrueの場合、Indexクラスのcontribute_roleに追加
             if current_app.config.get('WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSION', False):
                 index = Index.query.filter_by(id=new_role.id).one_or_none()
                 if index:
-                    index.update_contribute_role(new_role.id)
+                    update_contribute_role(new_role.id)
                     db.session.add(index)
 
 
@@ -469,14 +469,14 @@ def update_roles(map_group_list, roles):
             if current_app.config.get('WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION', False):
                 index = Index.query.filter_by(id=role_to_remove.id).one_or_none()
                 if index:
-                    index.remove_browsing_role(role_to_remove.id)
+                    remove_browsing_role(index,role_to_remove.id)
                     db.session.add(index)
 
             # WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSIONがTrueの場合、Indexクラスのcontribute_roleから削除
             if current_app.config.get('WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSION', False):
                 index = Index.query.filter_by(id=role_to_remove.id).one_or_none()
                 if index:
-                    index.remove_contribute_role(role_to_remove.id)
+                    remove_contribute_role(index,role_to_remove.id)
                     db.session.add(index)
 
     db.session.commit()
