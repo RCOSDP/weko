@@ -48,7 +48,7 @@ workspace_blueprint = Blueprint(
 
 
 # 2.1. アイテム一覧情報取得API
-@workspace_blueprint.route("/get_workspace_itemlist", methods=["GET", "POST"])
+@workspace_blueprint.route("/", methods=["GET", "POST"])
 @login_required
 def get_workspace_itemlist():
 

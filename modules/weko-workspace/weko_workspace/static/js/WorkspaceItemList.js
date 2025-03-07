@@ -340,7 +340,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const handleFilter = async (e) => {
         e.preventDefault();
         const jsonTemplate = generateJsonTemplate();
-        await refreshPage('/workspace/get_workspace_itemlist', 'POST', jsonTemplate);
+        await refreshPage('/workspace', 'POST', jsonTemplate);
         closeFilter();
       };
 
@@ -351,11 +351,11 @@ document.addEventListener('DOMContentLoaded', function () {
           const data = await fetchJsonResponse('/workspace/save_filters', 'POST', jsonTemplate);
           alert(data.message || 'デフォルト条件を保存しました。');
           closeFilter();
-          await refreshPage('/workspace/get_workspace_itemlist', 'GET');
+          await refreshPage('/workspace', 'GET');
         } catch (error) {
           alert(error.message || '保存に失敗しました');
           closeFilter();
-          await refreshPage('/workspace/get_workspace_itemlist', 'GET');
+          await refreshPage('/workspace', 'GET');
           console.error('保存エラー:', error);
         }
       };
@@ -367,11 +367,11 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = await fetchJsonResponse('/workspace/reset_filters', 'DELETE');
             alert(data.message || 'デフォルト条件をリセットしました。');
             closeFilter();
-            await refreshPage('/workspace/get_workspace_itemlist', 'GET');
+            await refreshPage('/workspace', 'GET');
           } catch (error) {
             alert(error.message || 'リセットに失敗しました');
             closeFilter();
-            await refreshPage('/workspace/get_workspace_itemlist', 'GET');
+            await refreshPage('/workspace', 'GET');
             console.error('リセットエラー:', error);
           }
         } else {
