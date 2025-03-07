@@ -2465,30 +2465,30 @@ def export_items(post_data):
 
     :return: JSON, BIBTEX
     """
-    current_app.logger.debug("post_data:{}".format(post_data))
-    include_contents = True if \
-        post_data.get('export_file_contents_radio') == 'True' else False
-    export_format = post_data['export_format_radio']
-    record_ids = json.loads(post_data['record_ids'])
-    invalid_record_ids = json.loads(post_data['invalid_record_ids'])
-    if isinstance(invalid_record_ids,dict) or isinstance(invalid_record_ids,list):
-        invalid_record_ids = [int(i) for i in invalid_record_ids]
-    else:
-        invalid_record_ids = [invalid_record_ids]
-    # Remove all invalid records
-    record_ids = set(record_ids) - set(invalid_record_ids)
-    record_metadata = json.loads(post_data['record_metadata'])
-    if len(record_ids) > _get_max_export_items():
-        return abort(400)
-    elif len(record_ids) == 0:
-        return '',204
-
-    result = {'items': []}
-    temp_path = tempfile.TemporaryDirectory(
-        prefix=current_app.config['WEKO_ITEMS_UI_EXPORT_TMP_PREFIX'])
-    item_types_data = {}
-
     try:
+        current_app.logger.debug("post_data:{}".format(post_data))
+        include_contents = True if \
+            post_data.get('export_file_contents_radio') == 'True' else False
+        export_format = post_data['export_format_radio']
+        record_ids = json.loads(post_data['record_ids'])
+        invalid_record_ids = json.loads(post_data['invalid_record_ids'])
+        if isinstance(invalid_record_ids,dict) or isinstance(invalid_record_ids,list):
+            invalid_record_ids = [int(i) for i in invalid_record_ids]
+        else:
+            invalid_record_ids = [invalid_record_ids]
+        # Remove all invalid records
+        record_ids = set(record_ids) - set(invalid_record_ids)
+        record_metadata = json.loads(post_data['record_metadata'])
+        if len(record_ids) > _get_max_export_items():
+            return abort(400)
+        elif len(record_ids) == 0:
+            return '',204
+
+        result = {'items': []}
+        temp_path = tempfile.TemporaryDirectory(
+            prefix=current_app.config['WEKO_ITEMS_UI_EXPORT_TMP_PREFIX'])
+        item_types_data = {}
+
         # Set export folder
         export_path = temp_path.name + '/' + \
             datetime.utcnow().strftime("%Y%m%d%H%M%S")
@@ -2536,10 +2536,11 @@ def export_items(post_data):
         # zip filename: export_{uuid}-{%Y%m%d%H%M%S}
         zip_path = tempfile.gettempdir()+"/"+export_path.split("/")[-2]+"-"+export_path.split("/")[-1]
         shutil.make_archive(zip_path, 'zip', export_path)
+    except (json.JSONDecodeError, KeyError, TypeError, ValueError):
+        current_app.logger.error(traceback.print_exc())
+        return abort(400)
     except Exception:
-        current_app.logger.error('-' * 60)
-        traceback.print_exc(file=sys.stdout)
-        current_app.logger.error('-' * 60)
+        current_app.logger.error(traceback.print_exc())
         flash(_('Error occurred during item export.'), 'error')
         return redirect(url_for('weko_items_ui.export'))
     resp = send_file(
