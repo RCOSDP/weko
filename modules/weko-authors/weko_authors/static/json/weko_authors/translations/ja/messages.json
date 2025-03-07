@@ -103,6 +103,22 @@
         null,
         "所属機関名を追加"
     ],
+    "Author_Affiliation_Period": [
+        null,
+        "所属期間"
+    ],
+    "Author_Affiliation_Period_Start": [
+        null,
+        "開始日"
+    ],
+    "Author_Affiliation_Period_End": [
+        null,
+        "終了日"
+    ],
+    "Author_Add_Affiliation_Period": [
+        null,
+        "所属期間を追加"
+    ],
     "Author_Affiliation": [
         null,
         "所属情報"
