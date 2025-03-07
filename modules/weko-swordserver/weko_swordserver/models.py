@@ -12,7 +12,6 @@ from invenio_db import db
 from invenio_oauth2server.models import Client
 from weko_records.models import ItemType, Timestamp
 from weko_workflow.models import WorkFlow
-from flask import current_app
 
 """Models of weko-swordserver."""
 
@@ -86,15 +85,6 @@ class SwordItemTypeMappingModel(db.Model, Timestamp):
         'version_id_col': version_id
     }
 
-
-    @classmethod
-    def get_id_all(cls, with_deleted=False ) -> list:
-        """Get all id, name, item_type_id."""
-        query = db.session.query(cls)
-        if not with_deleted:
-            query = query.with_entities(cls.id, cls.name, cls.item_type_id).filter(cls.is_deleted == False)
-
-        return query.order_by(cls.id).all()
 
 class SwordClientModel(db.Model, Timestamp):
     """SwordClient Model
@@ -195,32 +185,3 @@ class SwordClientModel(db.Model, Timestamp):
             registration_type = "Workflow"
 
         return registration_type
-
-    @classmethod
-    def get_client_id_all(cls) -> list:
-        """Get client_id all. """
-        query = db.session.query(cls).with_entities(cls.client_id)
-        return query.all()
-
-    @classmethod
-    def create(cls, client_id, registration_type_id, mapping_id, workflow_id, active, meta_data_api):
-        """Create a new SwordClient."""
-        try:
-            with db.session.begin_nested():
-                sword_client = cls(
-                    client_id=client_id,
-                    registration_type_id=registration_type_id,
-                    mapping_id=mapping_id,
-                    workflow_id=workflow_id,
-                    active=active,
-                    meta_data_api=meta_data_api
-                )
-
-                db.session.add(sword_client)
-            db.session.commit()
-        except BaseException as ex:
-            db.session.rollback()
-            current_app.logger.error(ex)
-            print(ex)
-            raise
-        return sword_client

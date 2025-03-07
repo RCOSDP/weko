@@ -142,12 +142,22 @@ class SwordItemTypeMapping():
             return None
         return obj
 
+    @classmethod
+    def get_id_all(cls, with_deleted=False ) -> list:
+        """Get all id, name, item_type_id."""
+        model = SwordItemTypeMappingModel
+        query = model.query
+        if not with_deleted:
+            query = query.with_entities(model.id, model.name, model.item_type_id).filter(model.is_deleted == False)
+
+        return query.order_by(model.id).all()
+
 
 class SwordClient():
 
     @classmethod
     def register(cls, client_id, registration_type_id,
-                        mapping_id, workflow_id=None):
+                        mapping_id, active, meta_data_api, workflow_id=None):
         """Register client.
 
         Make ralaion between client, mapping, and workflow.
@@ -182,7 +192,9 @@ class SwordClient():
             client_id=client_id,
             registration_type_id=registration_type_id,
             mapping_id=mapping_id,
-            workflow_id=workflow_id
+            workflow_id=workflow_id,
+            active=active,
+            meta_data_api=meta_data_api
         )
 
         try:
@@ -283,3 +295,10 @@ class SwordClient():
         """
         obj = SwordClientModel.query.filter_by(client_id=client_id).one_or_none()
         return obj
+
+    @classmethod
+    def get_client_id_all(cls) -> list:
+        """Get client_id all. """
+        model = SwordClientModel
+        query = model.query.with_entities(model.client_id)
+        return query.all()

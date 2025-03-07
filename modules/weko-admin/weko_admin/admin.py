@@ -53,16 +53,13 @@ from weko_records.models import SiteLicenseInfo
 from weko_records_ui.utils import check_items_settings
 from weko_schema_ui.models import PublishStatus
 from weko_swordserver.models import SwordClientModel, SwordItemTypeMappingModel
-from weko_swordserver.api import SwordItemTypeMapping
+from weko_swordserver.api import SwordItemTypeMapping, SwordClient
 from weko_workflow.api import WorkFlow, WorkActivity
 from wtforms.fields import StringField
 from wtforms.validators import ValidationError
 from weko_items_autofill.config import WEKO_ITEMS_AUTOFILL_API_LIST
 from invenio_oauth2server.models import Client
-from weko_records.models import ItemTypeMapping
-from weko_items_ui.utils import get_user_information
 from invenio_accounts.models import User
-from markupsafe import Markup
 
 from .config import WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR, \
     WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR, WEKO_ADMIN_SWORD_API_JSONLD_TEMPLATE, \
@@ -1635,7 +1632,7 @@ class SwordAPIJsonldSettingsView(ModelView):
             # GET client
             result = Client.get_client_id_by_user_id(current_user.get_id())
             tmp_client_list = [{'name': client.name, 'client_id': client.client_id} for client in result]
-            result = SwordClientModel.get_client_id_all()
+            result = SwordClient.get_client_id_all()
             sword_clients_client_id_list = [{'client_id': client.client_id} for client in result]
             client_list = [client for client in tmp_client_list if client['client_id'] not in [sword_client['client_id'] for sword_client in sword_clients_client_id_list]]
 
@@ -1657,7 +1654,7 @@ class SwordAPIJsonldSettingsView(ModelView):
             exclude_admin_workflow(workflows)
 
             # Get mapping
-            result = SwordItemTypeMappingModel.get_id_all()
+            result = SwordItemTypeMapping.get_id_all()
             sword_item_type_mappings = [{'id': mapping.id, 'name': mapping.name, 'item_type_id': mapping.item_type_id} for mapping in result]
 
             # Get ItemTypeNames
@@ -1698,7 +1695,7 @@ class SwordAPIJsonldSettingsView(ModelView):
                     model.active = False
                 model.meta_data_api = request.json.get('Meta_data_API_selected')
 
-                sword_client = SwordClientModel.create(
+                sword_client = SwordClient.register(
                     client_id=model.client_id,
                     registration_type_id=model.registration_type_id,
                     mapping_id=model.mapping_id,
@@ -1724,7 +1721,7 @@ class SwordAPIJsonldSettingsView(ModelView):
             # GET client
             result = Client.get_client_id_all()
             tmp_client_list = [{'name': client.name, 'client_id': client.client_id} for client in result]
-            result = SwordClientModel.get_client_id_all()
+            result = SwordClient.get_client_id_all()
             sword_clients_client_id_list = [{'client_id': client.client_id} for client in result]
             client_list = [client for client in tmp_client_list if client['client_id'] not in [sword_client['client_id'] for sword_client in sword_clients_client_id_list]]
 
@@ -1753,7 +1750,7 @@ class SwordAPIJsonldSettingsView(ModelView):
                     exist_Waiting_approval_workflow = True
 
             # Get mapping
-            result = SwordItemTypeMappingModel.get_id_all()
+            result = SwordItemTypeMapping.get_id_all()
             sword_item_type_mappings = [{'id': mapping.id, 'name': mapping.name, 'item_type_id': mapping.item_type_id} for mapping in result]
 
             current_model = model
