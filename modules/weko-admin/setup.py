@@ -105,8 +105,7 @@ setup(
             'admin_settings = weko_admin.cli:admin_settings',
             'authors_prefix = weko_admin.cli:authors_prefix',
             'authors_affiliation = weko_admin.cli:authors_affiliation',
-            'facet_search_setting = weko_admin.cli:facet_search_setting',
-            'shib_admin_setting = weko_admin.cli:shib_admin_setting'
+            'facet_search_setting = weko_admin.cli:facet_search_setting'
         ],
         'invenio_celery.tasks': [
             'weko_admin = weko_admin.tasks',
