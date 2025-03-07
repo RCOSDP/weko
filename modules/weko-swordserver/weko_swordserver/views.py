@@ -247,7 +247,7 @@ def post_service_document():
                 )
 
         check_result = check_bagit_import_items(file, packaging)
-        register_format = check_result.get("register_format")
+        register_type = check_result.get("register_type")
 
     else:
         check_result, file_format = check_import_items(file, False)
@@ -296,7 +296,7 @@ def post_service_document():
             "workflow_id": check_result.get("workflow_id"),
     }
     response = {}
-    if file_format == "TSV/CSV" or file_format == "JSON" and register_format == "Direct":
+    if file_format == "TSV/CSV" or file_format == "JSON" and register_type == "Direct":
         item["root_path"] = data_path+"/data"
         import_result = import_items_to_system(item, request_info=request_info)
         if not import_result.get("success"):
@@ -306,7 +306,7 @@ def post_service_document():
             raise WekoSwordserverException("Error in import_items_to_system: {0}".format(import_result.get("error_id")), ErrorType.ServerError)
         recid = import_result.get("recid")
         response = jsonify(_get_status_document(recid))
-    elif file_format == "XML" or file_format == "JSON" and register_format == "Workflow":
+    elif file_format == "XML" or file_format == "JSON" and register_type == "Workflow":
         required_scopes = set([activity_scope.id])
         token_scopes = set(request.oauth.access_token.scopes)
         if not required_scopes.issubset(token_scopes):

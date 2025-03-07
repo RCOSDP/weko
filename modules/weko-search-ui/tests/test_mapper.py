@@ -4649,13 +4649,13 @@ class TestJsonMapper:
 # def JsonLdMapper:
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 class TestJsonLdMapper:
-    # def process_json_ld(json_ld):
-    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_process_json_ld -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-    def test_process_json_ld(self, app):
+    # def deconstruct_json_ld(json_ld):
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test__deconstruct_json_ld -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test__deconstruct_json_ld(self, app):
         app.config.update({"WEKO_SWORDSERVER_METADATA_FILE_ROCRATE": "ro-crate-metadata.json"})
 
         json_ld = json_data("data/jsonld/ro-crate-metadata.json")
-        processed_metadatas, format = JsonLdMapper.process_json_ld(json_ld)
+        processed_metadatas, format = JsonLdMapper._deconstruct_json_ld(json_ld)
         metadata =  processed_metadatas[0]
 
         assert format == "ro-crate"
@@ -4678,7 +4678,7 @@ class TestJsonLdMapper:
         assert not any("@type" in key for key in metadata.keys())
 
         json_ld = json_data("data/jsonld/ro-crate-metadata2.json")
-        processed_metadatas, format = JsonLdMapper.process_json_ld(json_ld)
+        processed_metadatas, format = JsonLdMapper._deconstruct_json_ld(json_ld)
         thesis =  processed_metadatas[0]
         evidence = processed_metadatas[1]
 
@@ -4705,7 +4705,7 @@ class TestJsonLdMapper:
         assert evidence["dc:type.@id"] == "http://purl.org/coar/resource_type/c_1843"
 
         with pytest.raises(ValueError) as ex:
-            processed_metadatas, format = JsonLdMapper.process_json_ld({})
+            processed_metadatas, format = JsonLdMapper._deconstruct_json_ld({})
         ex.match('Invalid json-ld format: "@context" is invalid.')
 
     # def to_item_metadata(self, json_ld):
@@ -4722,9 +4722,7 @@ class TestJsonLdMapper:
         json_ld = json_data("data/jsonld/ro-crate-metadata.json")
 
         with app.test_request_context():
-
             mapper = JsonLdMapper(item_type2.model.id, json_mapping)
-
             item_metadatas, format = mapper.to_item_metadata(json_ld)
 
             print(f"item_metadata: {item_metadatas}")
@@ -4764,3 +4762,45 @@ class TestJsonLdMapper:
             list_record = handle_validate_item_import(list_record, schema)
 
             assert list_record[0].get("errors") is None
+
+        json_ld = json_data("data/jsonld/ro-crate-metadata2.json")
+
+        with app.test_request_context():
+            mapper = JsonLdMapper(item_type2.model.id, json_mapping)
+            item_metadatas, format = mapper.to_item_metadata(json_ld)
+
+            assert format == "ro-crate"
+            assert len(item_metadatas) == 2
+            thesis = item_metadatas[0]
+            evidence = item_metadatas[1]
+
+            assert thesis.id == "_:JournalPaper1"
+            assert thesis.link_data[0]["item_id"] == "_:EvidenceData1"
+            assert thesis.link_data[0]["sele_id"] == "isSupplementedBy"
+            assert thesis["pubdate"] == "2021-10-15"
+            assert thesis["path"] == [1623632832836]
+            assert thesis["item_30001_title0"][0]["subitem_title"] == "The Sample Dataset for WEKO"
+            assert thesis["item_30001_title0"][1]["subitem_title"] == "WEKO用サンプルデータセット"
+
+            assert evidence.id == "_:EvidenceData1"
+            assert evidence.link_data[0]["item_id"] == "_:JournalPaper1"
+            assert evidence.link_data[0]["sele_id"] == "isSupplementTo"
+            assert evidence.non_extract == ["data/data.csv"]
+            assert evidence["pubdate"] == "2021-10-15"
+            assert evidence["path"] == [1623632832836]
+            assert evidence["item_30001_title0"][0]["subitem_title"] == "The Sample Dataset for WEKO, evidence part"
+            assert evidence["item_30001_title0"][1]["subitem_title"] == "WEKO用サンプルデータセットのエビデンス部分"
+
+            list_record = [
+                {
+                    "$schema": f"/items/jsonschema/{item_type2.model.id}",
+                    "metadata": item_metadata,
+                    "item_type_name": item_type2.model.item_type_name.name,
+                    "item_type_id": item_type2.model.id,
+                    "publish_status": item_metadata.get("publish_status"),
+                } for item_metadata in item_metadatas
+            ]
+            list_record = handle_validate_item_import(list_record, schema)
+
+            assert list_record[0].get("errors") is None
+            assert list_record[1].get("errors") is None

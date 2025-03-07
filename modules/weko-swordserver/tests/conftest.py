@@ -896,7 +896,7 @@ def sword_mapping(db, item_type):
     for i in range(1, 4):
         obj = SwordItemTypeMappingModel(
             name=f"test{i}",
-            mapping=json_data("data/item_type/sword_mapping_2.json"),
+            mapping=json_data("data/jsonld/ro-crate_mapping.json"),
             item_type_id=item_type[1]["item_type"].id,
             is_deleted=False
         )

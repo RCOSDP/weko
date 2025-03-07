@@ -24,7 +24,7 @@ class WekoSwordMapper(JsonMapper):
         self.itemtype = itemtype
         self.itemtype_name = itemtype.item_type_name.name
         self.json_map = json_map
-        self.all_properties, _ = JsonLdMapper.process_json_ld(json_ld)
+        self.all_properties, _ = JsonLdMapper._deconstruct_json_ld(json_ld)
 
     def map(self):
         """Maping JSON-LD;self.json Metadata into item_type format."""

@@ -31,6 +31,7 @@ from weko_accounts.models import ShibbolethUser
 from weko_admin.models import AdminSettings
 from weko_deposit.api import WekoDeposit
 from weko_deposit.serializer import file_uploaded_owner
+from weko_search_ui.mapper import JsonLdMapper
 from weko_search_ui.utils import (
     check_tsv_import_items,
     check_xml_import_items,
@@ -294,7 +295,7 @@ def create_file_info(bucket, file_path, size_limit, content_length):
         "filename": obj.basename,
     }
 
-def check_bagit_import_items(file, packaging):
+def check_bagit_import_items(file, packaging, is_change_identifier=False):
     """Check bagit import items.
 
     Check that the actual file contents match the recorded hashes stored
@@ -308,24 +309,24 @@ def check_bagit_import_items(file, packaging):
         dict: Result of mapping to item type
         str: Registration type "Direct" or "Workflow"
 
-        example when register_format is "Direct":
+        example when register_type is "Direct":
             check_result = {
                 "data_path": "/tmp/xxxxx",
                 "list_record": [
                     # metadata
                 ]
-                "register_format": "Direct",
+                "register_type": "Direct",
                 "item_type_id": 1,
             }
 
 
-        example when register_format is "Workflow":
+        example when register_type is "Workflow":
             check_result = {
                 "data_path": "/tmp/xxxxx",
                 "list_record": [
                     # metadata
                 ]
-                "register_format": "Workflow",
+                "register_type": "Workflow",
                 "workflow_id": 1,
                 "item_type_id": 2,
             }
@@ -393,9 +394,9 @@ def check_bagit_import_items(file, packaging):
             )
 
         # Check workflow and item type
-        register_format = sword_client.registration_type
+        register_type = sword_client.registration_type
         workflow = None
-        if register_format == "Workflow":
+        if register_type == "Workflow":
             workflow = WorkFlows().get_workflow_by_id(sword_client.workflow_id)
             if workflow is None or workflow.is_deleted:
                 current_app.logger.error(f"Workflow not found for sword client.")
@@ -415,7 +416,7 @@ def check_bagit_import_items(file, packaging):
                 )
 
         check_result.update({
-            "register_format": register_format,
+            "register_type": register_type,
             "workflow_id": sword_client.workflow_id
         })
 
@@ -434,25 +435,25 @@ def check_bagit_import_items(file, packaging):
         with open(f"{data_path}/{json_name}", "r") as f:
             json_ld = json.load(f)
 
-        processed_json = process_json(json_ld)
-        # FIXME: if workflow registration, check if the indextree is valid
-        index_tree_id = processed_json.get("record").get("header").get("indextree")
-        if (
-            register_format == "Workflow"
-                and workflow.index_tree_id is not None
-                and index_tree_id != workflow.index_tree_id
-        ):
-            processed_json.get("record").get("header").update(
-                {"indextree": workflow.index_tree_id}
-            )
-            current_app.logger.info(
-                f"Index is not matched with the workflow. "
-                f"Replace the index tree id to {workflow.index_tree_id}."
-            )
+        mapper = JsonLdMapper(item_type.id, mapping)
+        item_metadatas, _ = mapper.to_item_metadata(json_ld)
+        list_record = [
+                {
+                    "$schema": f"/items/jsonschema/{item_type.id}",
+                    "metadata": item_metadata,
+                    "item_type_name": item_type.item_type_name.name,
+                    "item_type_id": item_type.id,
+                    "publish_status": item_metadata.get("publish_status"),
+                } for item_metadata in item_metadatas
+            ]
+        handle_index_tree_much_with_workflow(list_record, workflow)
+        handle_file_save_as_is(file, data_path, filename)
 
-        list_record = generate_metadata_from_json(
-            processed_json, json_ld, mapping, item_type
-        )
+        handle_set_change_identifier_flag(list_record, is_change_identifier)
+        handle_fill_system_item(list_record)
+
+        list_record = handle_validate_item_import(list_record, item_type.schema)
+
         list_record = handle_check_exist_record(list_record)
         handle_item_title(list_record)
         list_record = handle_check_date(list_record)
@@ -480,7 +481,7 @@ def check_bagit_import_items(file, packaging):
                 file.save(os.path.join(data_path, "data", filename))
             files_list.append(f"data/{filename}")
 
-        handle_files_info(list_record, files_list, data_path, filename)
+        # handle_files_info(list_record, files_list, data_path, filename)
 
         # add on-behalf-of user id to metadata
         if shared_id is not None:
@@ -573,6 +574,22 @@ def generate_metadata_from_json(json, json_ld, mapping, item_type, is_change_ide
     )
 
     return list_record
+
+def handle_index_tree_much_with_workflow(list_record, workflow):
+    """Handle index tree id much with workflow."""
+    if workflow is None or workflow.index_tree_id is None:
+        return
+    
+    for record in list_record:
+        record.get("metadata").update({"path": [workflow.index_tree_id]})
+        current_app.logger.info(
+            f"Index is not matched with the workflow. "
+            f"Replace the index tree id to {workflow.index_tree_id}."
+        )
+
+def handle_file_save_as_is(file, data_path, filename):
+    # TODO: implement
+    pass
 
 def handle_files_info(list_record, files_list, data_path, filename):
     """ Handle files_info in metadata.

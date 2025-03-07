@@ -1267,13 +1267,20 @@ class JsonLdMapper(JsonMapper):
         Returns:
             list[dict]: list of mapped metadata.
         """
-        metadatas, format = JsonLdMapper.process_json_ld(json_ld)
-        list_items = [ self._map_json_ld(metadata) for metadata in metadatas ]
+        metadatas, format = JsonLdMapper._deconstruct_json_ld(json_ld)
+        list_items = [ self._map_to_item(metadata) for metadata in metadatas ]
 
         return list_items, format
 
-    def _map_json_ld(self, metadata):
-        """Map json-ld to item type metadata."""
+    def _map_to_item(self, metadata):
+        """Map json-ld to item type metadata.
+
+        Args:
+            metadata (_InformedMetadata):
+                metadata with deconstructed json-ld format.
+        Returns:
+            dict: mapped metadata.
+        """
         item_map = self._create_item_map(detail=True)
         properties_mapping = {
             # make map of json-ld key to itemtype metadata key
@@ -1284,7 +1291,7 @@ class JsonLdMapper(JsonMapper):
 
         mapped_metadata = JsonMapper._InformedMetadata()
         mapped_metadata.id = metadata.id
-        mapped_metadata.linl_data = metadata.link_data
+        mapped_metadata.link_data = metadata.link_data
         mapped_metadata.non_extract = metadata.non_extract
         mapped_metadata.save_as_is = metadata.save_as_is
         mapped_metadata.setdefault("publish_status", "private")
@@ -1329,7 +1336,6 @@ class JsonLdMapper(JsonMapper):
                     parent.update({prop_props[0]: sub_prop_array})
                 return
             if self._get_property_type(parent_prop_key) == "object":
-                print(f"{parent_prop_key} is object")
                 sub_prop_object = parent.get(prop_props[0], {})
                 if index is not None:
                     # TODO: pick first object
@@ -1395,11 +1401,8 @@ class JsonLdMapper(JsonMapper):
         # }
         return mapped_metadata
 
-    def to_rocrate(self):
-        pass
-
     @staticmethod
-    def process_json_ld(json_ld):
+    def _deconstruct_json_ld(json_ld):
         """Process json-ld.
 
         Deconstructing json-ld metadata values ​​one by one
@@ -1466,17 +1469,16 @@ class JsonLdMapper(JsonMapper):
             ):
             # Check structure of RO-Crate json-ld
             format = "ro-crate"
-            if "@graph" not in json_ld or not isinstance(json_ld.get("@graph"), list):
+            if "@graph" not in json_ld or not isinstance(json_ld["@graph"], list):
                 raise ValueError('Invalid json-ld format: "@graph" is not found.')
             # Convert the list containing @id in @graph to a dict
-            for v in json_ld.get("@graph"):
-                if isinstance(v, dict) and "@id" in v:
-                    extracted.update({v["@id"]: v})
-                else:
-                    raise ValueError(
-                        'Invalid json-ld format: Objects without "@id" '
-                        'are directly under "@graph"'
-                    )
+            try:
+                extracted = {v["@id"]: v for v in json_ld["@graph"]}
+            except KeyError as ex:
+                raise ValueError(
+                    'Invalid json-ld format: Objects without "@id" '
+                    'are directly under "@graph"'
+                ) from ex
         else:
             raise ValueError('Invalid json-ld format: "@context" is invalid.')
         if not extracted:
@@ -1550,3 +1552,11 @@ class JsonLdMapper(JsonMapper):
             processed_metadatas.append(metadata)
 
         return processed_metadatas, format
+
+    def to_rocrate_metadata(self, metadata):
+        """Map to RO-Crate format."""
+        from rocrate.rocrate import ROCrate
+        rocrate = ROCrate()
+
+        rocrate_metadata = rocrate.metadata.generate()
+        return rocrate_metadata
