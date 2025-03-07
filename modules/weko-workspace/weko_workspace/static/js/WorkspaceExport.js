@@ -1,13 +1,22 @@
 document.addEventListener('DOMContentLoaded', function () {
+<<<<<<< HEAD
   // アイテム出力ボタンの取得
   const exportButton = document.getElementById('btn_export');
   if (exportButton) {
     exportButton.addEventListener('click', function () {
       showExportModal(); // エクスポート用モーダルを表示
+=======
+  // 🔹 アイテム出力ボタンの取得
+  const exportButton = document.getElementById('btn_export');
+  if (exportButton) {
+    exportButton.addEventListener('click', function () {
+      showExportModal(); // モーダル表示
+>>>>>>> 814495440 (アイテム出力処理_途中コミット)
     });
   } else {
     console.error("アイテム出力ボタン (#btn_export) が見つかりません。");
   }
+<<<<<<< HEAD
 
   // チェックされたアイテムのIDを取得する関数
   function getSelectedItems() {
@@ -15,13 +24,26 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // 「選択アイテム出力」ボタンのクリックイベント
+=======
+  document.addEventListener('DOMContentLoaded', function () {
+    // 🔹 選択されたアイテムのみを取得する関数
+    function getSelectedItems() {
+      return Array.from(document.querySelectorAll('.item-checkbox:checked')).map(cb => cb.value);
+    }
+  });
+  // 🔹 「選択アイテム出力」ボタンのクリックイベント
+>>>>>>> 814495440 (アイテム出力処理_途中コミット)
   const exportSelectedButton = document.getElementById('export_selected');
   if (exportSelectedButton) {
     exportSelectedButton.addEventListener('click', () => {
       const selectedIds = getSelectedItems();
 
       if (selectedIds.length === 0) {
+<<<<<<< HEAD
         showErrorMessage("エラー: 選択されたアイテムがありません。チェックボックスを選択してください。");
+=======
+        showErrorMessage("エラー: 選択されたアイテムがありません。");
+>>>>>>> 814495440 (アイテム出力処理_途中コミット)
         return;
       }
 
@@ -43,7 +65,11 @@ function showErrorMessage(message) {
   errorBox.id = "exportErrorMessage";
   errorBox.innerHTML = `
     <div style="
+<<<<<<< HEAD
         background : #f8d7da;
+=======
+        background: #f8d7da;
+>>>>>>> 814495440 (アイテム出力処理_途中コミット)
         color: #721c24;
         padding: 10px;
         border: 1px solid #f5c6cb;
@@ -95,8 +121,13 @@ function showExportModal() {
                 gap: 10px;
                 ">
             <button id="export_selected" class="btn btn-primary">選択アイテム出力</button>
+<<<<<<< HEAD
             <button id="export_all" class="btn btn-danger">全て出力</button>
             <button id="export_cancel" class="btn btn-secondary">キャンセル</button>
+=======
+            <button id="export_all" class="btn btn-danger">全て出力)</button>
+            <button id="export_cancel" class="btn btn-secondary">キャンセル'</button>
+>>>>>>> 814495440 (アイテム出力処理_途中コミット)
         </div>
         <button id="close_modal" style="
             position: absolute;
@@ -150,7 +181,11 @@ function handleExportButtonClick(selectedOnly = false) {
 
     // チェックボックスが1つも選択されていない場合、エラーメッセージを表示
     if (selectedIds.length === 0) {
+<<<<<<< HEAD
       showErrorMessage("エラー: 選択されたアイテムがありません。チェックボックスを選択してください。");
+=======
+      showErrorMessage("{{_(エラー: 選択されたアイテムがありません。チェックボックスを選択してください。}}");
+>>>>>>> 814495440 (アイテム出力処理_途中コミット)
       return;
     }
   }
@@ -159,7 +194,11 @@ function handleExportButtonClick(selectedOnly = false) {
 
   // アイテムが取得できなかった場合
   if (!items.length) {
+<<<<<<< HEAD
     showErrorMessage("(出力に失敗しました");
+=======
+    showErrorMessage("{{_(出力に失敗しました}}");
+>>>>>>> 814495440 (アイテム出力処理_途中コミット)
     return;
   }
 
@@ -172,6 +211,7 @@ function getItemsFromWorkspace() {
 }
 
 
+<<<<<<< HEAD
 function getExportHeadersFromDOM() {
   const ths = document.querySelectorAll('#itemListContainer thead th');
   return Array.from(ths).map(th => th.innerText.trim());
@@ -182,6 +222,20 @@ function exportItemListToTSV(items, selectedOnly, selectedIds) {
 
   // DOMからヘッダーを取得
   const headers = getExportHeadersFromDOM();
+=======
+// 🔹 TSV を作成してダウンロード
+function exportItemListToTSV(items, selectedOnly, selectedIds) {
+  const filename = `itemlist_export_${new Date().toISOString().replace(/[-T:.Z]/g, "").slice(0, 14)}.tsv`;
+
+  // 🔹 指定されたヘッダー
+  const headers = [
+    "No", "お気に入りステータス", "既読未読ステータス", "査読チェック状況", "タイトル", "DOIリンク", "リソースタイプ", "著者名", "アクセス数",
+    "アイテムステータス", "雑誌名", "会議名", "巻", "号", "資金別情報機関名", "資金別情報課題名",
+    "ダウンロード数", "フィードバックメールステータス", "出版年月日", "関連情報タイプ", "関連情報タイトル", "関連情報URLやDOI",
+    "論文への関連チェック状況", "根拠データへの関連チェック状況", "本文ファイル数", "公開ファイル数", "エンバーゴ数", "制限公開ファイル数"
+  ];
+
+>>>>>>> 814495440 (アイテム出力処理_途中コミット)
   const tsvRows = [headers.join('\t')];
 
   items.forEach((item, index) => {
