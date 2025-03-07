@@ -8,12 +8,12 @@ document.addEventListener('DOMContentLoaded', function () {
   } else {
     console.error("アイテム出力ボタン (#btn_export) が見つかりません。");
   }
-  document.addEventListener('DOMContentLoaded', function () {
-    // 🔹 選択されたアイテムのみを取得する関数
-    function getSelectedItems() {
-      return Array.from(document.querySelectorAll('.item-checkbox:checked')).map(cb => cb.value);
-    }
-  });
+
+  // 🔹 選択されたアイテムのみを取得する関数（外側に移動）
+  function getSelectedItems() {
+    return Array.from(document.querySelectorAll('.item-checkbox:checked')).map(cb => cb.value);
+  }
+
   // 🔹 「選択アイテム出力」ボタンのクリックイベント
   const exportSelectedButton = document.getElementById('export_selected');
   if (exportSelectedButton) {
@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const selectedIds = getSelectedItems();
 
       if (selectedIds.length === 0) {
-        showErrorMessage("エラー: 選択されたアイテムがありません。");
+        showErrorMessage("エラー: 選択されたアイテムがありません。チェックボックスを選択してください。");
         return;
       }
 
@@ -95,7 +95,7 @@ function showExportModal() {
                 gap: 10px;
                 ">
             <button id="export_selected" class="btn btn-primary">選択アイテム出力</button>
-            <button id="export_all" class="btn btn-danger">全て出力)</button>
+            <button id="export_all" class="btn btn-danger">全て出力</button>
             <button id="export_cancel" class="btn btn-secondary">キャンセル</button>
         </div>
         <button id="close_modal" style="
@@ -159,7 +159,7 @@ function handleExportButtonClick(selectedOnly = false) {
 
   // アイテムが取得できなかった場合
   if (!items.length) {
-    showErrorMessage("{{_(出力に失敗しました}}");
+    showErrorMessage("(出力に失敗しました");
     return;
   }
 
@@ -172,18 +172,16 @@ function getItemsFromWorkspace() {
 }
 
 
+function getExportHeadersFromDOM() {
+  const ths = document.querySelectorAll('#itemListContainer thead th');
+  return Array.from(ths).map(th => th.innerText.trim());
+}
 // 🔹 TSV を作成してダウンロード
 function exportItemListToTSV(items, selectedOnly, selectedIds) {
   const filename = `itemlist_export_${new Date().toISOString().replace(/[-T:.Z]/g, "").slice(0, 14)}.tsv`;
 
-  // 🔹 指定されたヘッダー
-  const headers = [
-    "No", "お気に入りステータス", "既読未読ステータス", "査読チェック状況", "タイトル", "DOIリンク", "リソースタイプ", "著者名", "アクセス数",
-    "アイテムステータス", "雑誌名", "会議名", "巻", "号", "資金別情報機関名", "資金別情報課題名",
-    "ダウンロード数", "フィードバックメールステータス", "出版年月日", "関連情報タイプ", "関連情報タイトル", "関連情報URLやDOI",
-    "論文への関連チェック状況", "根拠データへの関連チェック状況", "本文ファイル数", "公開ファイル数", "エンバーゴ数", "制限公開ファイル数"
-  ];
-
+  // 🔹 DOMからヘッダーを取得
+  const headers = getExportHeadersFromDOM();
   const tsvRows = [headers.join('\t')];
 
   items.forEach((item, index) => {
