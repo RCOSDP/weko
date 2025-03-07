@@ -491,6 +491,8 @@ class ItemImportView(BaseView):
         """Get status of import process."""
         data = request.get_json()
         result = []
+        success_count = 0
+        fail_count = 0
         if data and data.get("tasks"):
             status = "done"
             for task_item in data.get("tasks"):
@@ -526,9 +528,25 @@ class ItemImportView(BaseView):
                     if not (task.successful() or task.failed()) or status == "doing"
                     else "done"
                 )
-            response_object = {"status": status, "result": result}
+                if task and isinstance(task.result, dict) \
+                        and task.result.get("success"):
+                    success_count += 1
+                if task and isinstance(task.result, dict) \
+                        and "error_id" in task.result:
+                    fail_count += 1
+            response_object = {
+                "status": status,
+                "result": result,
+                "success_count": success_count,
+                "fail_count": fail_count
+            }
         else:
-            response_object = {"status": "error", "result": result}
+            response_object = {
+                "status": "error",
+                "result": result,
+                "success_count": success_count,
+                "fail_count": fail_count
+            }
         return jsonify(response_object)
 
     @expose("/export_import", methods=["POST"])
