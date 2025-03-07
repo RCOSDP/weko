@@ -178,7 +178,7 @@ def roles_required(roles, allow_anonymous=False):
                     return func(*args, **kwargs)
                 abort(401)
             else:
-                if not roles or None in roles or allow_anonymous:
+                if allow_anonymous:
                     return func(*args, **kwargs)
                 can = False
                 for role in current_user.roles:
