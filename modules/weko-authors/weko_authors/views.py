@@ -108,9 +108,9 @@ def update_author():
     if request.headers['Content-Type'] != 'application/json':
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg=_('Header Error'))
-
-    data = request.get_json()
-    
+    req = request.get_json()
+    data = req["author"]
+    force_change_flag = request.get_json()["forceChangeFlag"]
     # weko_idを取得する。
     author_id_info = data["authorIdInfo"]
     for i in author_id_info:
@@ -139,7 +139,7 @@ def update_author():
         elif result_period_check[0] == False and result_period_check[1] == "start is after end":
             return jsonify(msg=_('The end date must be after the start date.')), 500
 
-        WekoAuthors.update(pk_id, data)
+        WekoAuthors.update(pk_id, data, force_change_flag)
 
     except Exception as ex:
         current_app.logger.error(ex)

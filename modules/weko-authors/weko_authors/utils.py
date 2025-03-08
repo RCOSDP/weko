@@ -198,7 +198,7 @@ def check_period_date(data):
                             period_end = datetime.strptime(periodinfo.get("periodEnd"), "%Y-%m-%d")
                             if period_start > period_end:
                                 return False, "start is after end"
-    return True
+    return True, None
 
 def get_export_status():
     """Get export status from cache."""

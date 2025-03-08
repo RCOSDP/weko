@@ -52,7 +52,7 @@ ORIGIN_LABEL = "origin"
 TITLE_LIST = ["record_id", "author_ids", "message"]
 
 @shared_task(ignore_result=True)
-def update_items_by_authorInfo( user_id, target, origin_pkid_list=[], origin_id_list=[], update_gather_flg=False):
+def update_items_by_authorInfo( user_id, target, origin_pkid_list=[], origin_id_list=[], update_gather_flg=False, force_change=False):
     """Update item by authorInfo."""
     current_app.logger.debug('item update task is running.')
     process_counter = {
@@ -97,24 +97,7 @@ def update_items_by_authorInfo( user_id, target, origin_pkid_list=[], origin_id_
             affiliation_names = []
             affiliations = []
 
-            for name in target.get('authorNameInfo', []):
-                if not bool(name.get('nameShowFlg', "true")):
-                    continue
-                family_names.append({
-                    key_map['fname_key']: name.get('familyName', ''),
-                    key_map['fname_lang_key']: name.get('language', '')
-                })
-                given_names.append({
-                    key_map['gname_key']: name.get('firstName', ''),
-                    key_map['gname_lang_key']: name.get('language', '')
-                })
-                full_names.append({
-                    key_map['name_key']: "{}, {}".format(
-                        name.get('familyName', ''),
-                        name.get('firstName', '')),
-                    key_map['name_lang_key']: name.get('language', '')
-                })
-
+            # 著者識別子情報
             for id in target.get('authorIdInfo', []):
                 if not bool(id.get('authorIdShowFlg', "true")):
                     continue
@@ -135,12 +118,8 @@ def update_items_by_authorInfo( user_id, target, origin_pkid_list=[], origin_id_
 
                     if prefix_info['scheme'] == 'WEKO':
                         target_id = id.get('authorId', '')
-
-            for email in target.get('emailInfo', []):
-                mails.append({
-                    key_map['mail_key']: email.get('email', '')
-                })
-
+            
+            # 所属識別子情報
             for affiliation in target.get('affiliationInfo', []):
                 for identifier in affiliation.get('identifierInfo', []):
                     if not bool(identifier.get('identifierShowFlg', 'true')):
@@ -159,6 +138,46 @@ def update_items_by_authorInfo( user_id, target, origin_pkid_list=[], origin_id_
                                 url = affiliation_id_info['url']
                             id_info.update({key_map['affiliation_id_uri_key']: url})
                         affiliation_identifiers.append(id_info)
+            # 強制変更フラグがオフならば、ここで処理を終了する。
+            # 識別子の情報のみアップデートする。
+            if not force_change:
+                affiliations.append({
+                    key_map['affiliation_ids_key']: affiliation_identifiers})
+                if identifiers:
+                    meta.update({
+                        key_map['ids_key']: identifiers
+                    })
+                if affiliations:
+                    meta.update({
+                        key_map['affiliations_key']: affiliations
+                    })
+                return target_id, meta
+            
+            for name in target.get('authorNameInfo', []):
+                if not bool(name.get('nameShowFlg', "true")):
+                    continue
+                family_names.append({
+                    key_map['fname_key']: name.get('familyName', ''),
+                    key_map['fname_lang_key']: name.get('language', '')
+                })
+                given_names.append({
+                    key_map['gname_key']: name.get('firstName', ''),
+                    key_map['gname_lang_key']: name.get('language', '')
+                })
+                full_names.append({
+                    key_map['name_key']: "{}, {}".format(
+                        name.get('familyName', ''),
+                        name.get('firstName', '')),
+                    key_map['name_lang_key']: name.get('language', '')
+                })
+
+
+            for email in target.get('emailInfo', []):
+                mails.append({
+                    key_map['mail_key']: email.get('email', '')
+                })
+
+
 
                 for name in affiliation.get('affiliationNameInfo', []):
                     if not bool(name.get('affiliationNameShowFlg', 'true')):
@@ -341,8 +360,8 @@ def update_items_by_authorInfo( user_id, target, origin_pkid_list=[], origin_id_
                     break
                 except Exception as e:
                     current_app.logger.error("Failed to update record to ES. method:process_bulk_queue err:{}".format(e))
-                    current_app.logger.error("retrys:{} sleep{}".format(count, sleep_time))
-                    if sleep_time*2 >= max_back_off_time:
+                    current_app.logger.error("retrys:{} sleep:{}s records_ids:{}".format(count, sleep_time, record_ids))
+                    if sleep_time > max_back_off_time:
                         raise e
                     sleep(sleep_time)
                     count += 1

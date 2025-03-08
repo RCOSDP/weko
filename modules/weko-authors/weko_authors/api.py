@@ -66,7 +66,7 @@ class WekoAuthors(object):
             )
 
     @classmethod
-    def update(cls, author_id, data):
+    def update(cls, author_id, data, force_change=False):
         """Update author."""
         def update_es_data(data, es_id):
             """Update author data in ES."""
@@ -127,7 +127,7 @@ class WekoAuthors(object):
         from weko_deposit.tasks import update_items_by_authorInfo
         user_id = current_user.get_id()
         update_items_by_authorInfo.delay(
-            user_id, data, [author_id], [data["id"]])
+            user_id, data, [author_id], [data["id"]], force_change=force_change)
 
     @classmethod
     def get_all(cls, with_deleted=True, with_gather=True):
