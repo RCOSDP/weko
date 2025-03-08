@@ -60,7 +60,7 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
         Activity.item_id == pid.object_uuid,
         Activity.temp_data != null()
     ).first()
-    if activity:
+    if activity and activity.temp_data:
         temp_data = json.loads(activity.temp_data)
         if "weko_link" in temp_data and temp_data["weko_link"] != {}:
             update_data_for_weko_link(data, temp_data["weko_link"])

@@ -27,6 +27,7 @@ from io import StringIO
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from flask import current_app
+import copy
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -51,7 +52,7 @@ ORIGIN_LABEL = "origin"
 TITLE_LIST = ["record_id", "author_ids", "message"]
 
 @shared_task(ignore_result=True)
-def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_list=[], update_gather_flg=False):
+def update_items_by_authorInfo( user_id, target, origin_pkid_list=[], origin_id_list=[], update_gather_flg=False):
     """Update item by authorInfo."""
     current_app.logger.debug('item update task is running.')
     process_counter = {
@@ -205,6 +206,19 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
             dep = WekoDeposit.get_record(pid.object_uuid)
             author_link = set()
             author_data = {}
+            current_weko_link = dep.get("weko_link", {})
+            weko_link = copy.deepcopy(current_weko_link)
+            
+            # targetを用いてweko_linkを新しくする。
+            if target:
+                # weko_idを取得する。
+                target_pk_id = target["pk_id"]
+                author_id_info = target["authorIdInfo"]
+                for i in author_id_info:
+                    # idTypeが1の場合、weko_idを取得し、weko_linkを更新する。
+                    if i.get('idType') == '1':
+                        weko_link[target_pk_id] = i.get('authorId')
+                        break
             for k, v in dep.items():
                 if isinstance(v, dict) \
                     and v.get('attribute_value_mlt') \
@@ -226,41 +240,48 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
                             change_flag = False
                             for id in data.get('nameIdentifiers', []):
                                 if id.get('nameIdentifierScheme', '') == 'WEKO':
-                                    author_link.add(id['nameIdentifier'])
-                                    if id['nameIdentifier'] in origin_pkid_list:
-                                        origin_id = id['nameIdentifier']
-                                        change_flag = True
-                                        record_ids.append(pid.object_uuid)
-                                        break
+
+                                    # author_link.add(id['nameIdentifier'])
+                                    # 1.current_weko_linkの値にdataのweko_idが含まれているかを確認する。
+                                    # 2.weko_idが含まれている場合、current_weko_linkでそのweko_id対応するpk_idを取得する。
+                                    pk_ids = [k for k, v in current_weko_link.items() if v == id.get("nameIdentifier")]
+                                    current_app.logger.error(pk_ids)
+                                    if pk_ids:
+                                        pk_id = pk_ids[0]
+                                        author_link.add(pk_id)
+                                        # 3.origin_pkid_listにpk_idが含まれているかを確認する。
+                                        if pk_id in origin_pkid_list:
+                                            # 4.含まれている場合change_flagをTrueにする。
+                                            change_flag = True
+                                            record_ids.append(pid.object_uuid)
+                                            break
                                 else:
                                     continue
                             if change_flag:
                                 target_id, new_meta = _change_to_meta(
                                     target, author_prefix, affiliation_id, key_map[prop_type])
+                                # targetは著者DBの情報
                                 dep[k]['attribute_value_mlt'][index].update(
                                     new_meta)
                                 author_data.update(
                                     {k: dep[k]['attribute_value_mlt']})
-                                if origin_id != target_id:
-                                    temp_list.append(origin_id)
-                                    author_link.remove(origin_id)
-                                    author_link.add(target_id)
 
             dep['author_link'] = list(author_link)
+            dep["weko_link"] = weko_link
             dep.update_item_by_task()
             obj = ItemsMetadata.get_record(pid.object_uuid)
             obj.update(author_data)
             obj.commit()
             process_counter[SUCCESS_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": ""})
-            return pid.object_uuid, author_link
+            return pid.object_uuid, author_link, weko_link
         except PIDDoesNotExistError as pid_error:
             current_app.logger.error("PID {} does not exist.".format(item_id))
             process_counter[FAIL_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": "PID {} does not exist.".format(item_id)})
-            return None, set()
+            return None, set(), {}
         except Exception as ex:
             current_app.logger.error(ex)
             process_counter[FAIL_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": str(ex)})
-            return None, set()
+            return None, set(), {}
 
     def _process(data_size, data_from):
         res = False
@@ -270,8 +291,8 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
                     "must": [
                         {
                             "query_string": {
-                                "query": "publish_status: {} AND relation_version_is_last:true".format(
-                                    PublishStatus.PUBLIC.value)
+                                "query": "(publish_status: {} OR publish_status:{} OR publish_status:{}) AND (relation_version_is_last:true OR relation_version_is_last:null)".format(
+                                    PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value, PublishStatus.NEW.value)
                             }
                         }, {
                             "terms": {
@@ -294,27 +315,57 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
         update_es_authorinfo = []
         for item in search['hits']['hits']:
             item_id = item['_source']['control_number']
-            object_uuid, author_link = _update_author_data(item_id, record_ids)
+            object_uuid, author_link, weko_link = _update_author_data(item_id, record_ids)
             if object_uuid:
                 update_es_authorinfo.append({
-                    'id': object_uuid, 'author_link': list(author_link)})
+                    'id': object_uuid, 'author_link': list(author_link), 'weko_link': weko_link
+                })
         db.session.commit()
         # update record to ES
+        max_back_off_time = current_app.config['WEKO_DEPOSIT_MAX_BACK_OFF_TIME']
         if record_ids:
-            sleep(20)
-            query = (x[0] for x in PersistentIdentifier.query.filter(
-                PersistentIdentifier.object_uuid.in_(record_ids)
-            ).values(
-                PersistentIdentifier.object_uuid
-            ))
-            RecordIndexer().bulk_index(query)
-            RecordIndexer().process_bulk_queue(
-                es_bulk_kwargs={'raise_on_error': True})
+            # sleep(20)
+            current_app.logger.error("Start updated records to ES. record_ids:{}".format(record_ids))
+            sleep_time = 2
+            count = 1
+            while sleep_time <= max_back_off_time:
+                try: 
+                    query = (x[0] for x in PersistentIdentifier.query.filter(
+                        PersistentIdentifier.object_uuid.in_(record_ids)
+                    ).values(
+                        PersistentIdentifier.object_uuid
+                    ))
+                    RecordIndexer().bulk_index(query)
+                    RecordIndexer().process_bulk_queue(
+                        es_bulk_kwargs={'raise_on_error': True})
+                    break
+                except Exception as e:
+                    current_app.logger.error("Failed to update record to ES. method:process_bulk_queue err:{}".format(e))
+                    current_app.logger.error("retrys:{} sleep{}".format(count, sleep_time))
+                    if sleep_time*2 >= max_back_off_time:
+                        raise e
+                    sleep(sleep_time)
+                    count += 1
+                    sleep_time *= 2
+            current_app.logger.debug("Updated records to ES. record_ids:{}".format(record_ids))
         if update_es_authorinfo:
-            sleep(20)
             for d in update_es_authorinfo:
-                dep = WekoDeposit.get_record(d['id'])
-                dep.update_author_link(d['author_link'])
+                sleep_time = 2
+                count = 1
+                while sleep_time <= max_back_off_time:
+                    try:
+                        dep = WekoDeposit.get_record(d['id'])
+                        dep.update_author_link_and_weko_link(d['author_link'], d["weko_link"])
+                        break
+                    except Exception as e:
+                        current_app.logger.error("Failed to update record to ES. method:update_author_link_and_weko_link err:{}".format(e))
+                        current_app.logger.error("retrys:{} sleep{}".format(count, sleep_time))
+                        if sleep_time*2 >= max_back_off_time:
+                            raise e
+                        sleep(sleep_time)
+                        count += 1
+                        sleep_time *= 2
+                current_app.logger.debug("Updated records to ES. record_ids:{}".format(d['id']))
 
         data_total = search['hits']['total']
         if data_total > data_size + data_from:
