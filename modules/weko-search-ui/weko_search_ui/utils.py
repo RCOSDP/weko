@@ -4159,12 +4159,12 @@ def handle_check_authors_prefix(list_record):
     settings = AuthorsPrefixSettings.query.all()
     allowed_scheme = [setting.prefix for setting in settings]
 
-    for record in list_record:
+    for item in list_record:
         errors = []
         keys = set()
         # find all keys that have "nameIdentifiers" in their values
         # may be nested in a list
-        for k, v in record["metadata"]:
+        for k, v in item["metadata"]:
             if isinstance(v, dict):
                 if "nameIdentifiers" in v:
                     keys |= {k}
@@ -4175,18 +4175,20 @@ def handle_check_authors_prefix(list_record):
             f'"{scheme}" is not one of {allowed_scheme} in {key}'
             for key in keys
             for author in (
-                record["metadata"].get(key, [{}])
-                if isinstance(record["metadata"][key], list)
-                else [record["metadata"].get(key, {})]
+                # author most likely be a list or a single object
+                item["metadata"].get(key, [{}])
+                if isinstance(item["metadata"][key], list)
+                else [item["metadata"].get(key, {})]
             )
             for id in author.get("nameIdentifiers", [{}])
             for scheme in [id.get("nameIdentifierScheme")]
             if scheme not in allowed_scheme
         ]
 
-        record["errors"] = (
-            record["errors"] + errors if record.get("errors") else errors
-        )
+        if errors:
+            item["errors"] = (
+                item["errors"] + errors if "errors" in item else errors
+            )
 
 
 def handle_check_authors_affiliation(list_record):
@@ -4202,12 +4204,12 @@ def handle_check_authors_affiliation(list_record):
     settings = AuthorsAffiliationSettings.query.all()
     allowed_scheme = [setting.scheme for setting in settings]
 
-    for record in list_record:
+    for item in list_record:
         errors = []
         creator_keys = set()
         contributor_keys = set()
         # find all keys that have "affiliationNameIdentifiers"
-        for k, v in record["metadata"]:
+        for k, v in item["metadata"]:
             if isinstance(v, dict):
                 if "creatorAffiliations" in v:
                     creator_keys |= {k}
@@ -4225,9 +4227,10 @@ def handle_check_authors_affiliation(list_record):
             f'"{scheme}" is not one of {allowed_scheme} in {key}'
             for key in creator_keys
             for creator in (
-                record["metadata"].get(key, [{}])
-                if isinstance(record["metadata"][key], list)
-                else [record["metadata"].get(key, {})]
+                # creator most likely be a list or a single object
+                item["metadata"].get(key, [{}])
+                if isinstance(item["metadata"][key], list)
+                else [item["metadata"].get(key, {})]
             )
             for affiliation in creator.get("creatorAffiliations", [{}])
             for id in affiliation.get("affiliationNameIdentifiers", [{}])
@@ -4238,9 +4241,10 @@ def handle_check_authors_affiliation(list_record):
             f'"{scheme}" is not one of {allowed_scheme} in {key}'
             for key in contributor_keys
             for contributor in (
-                record["metadata"].get(key, [{}])
-                if isinstance(record["metadata"][key], list)
-                else [record["metadata"].get(key, {})]
+                # contributor most likely be a list or a single object
+                item["metadata"].get(key, [{}])
+                if isinstance(item["metadata"][key], list)
+                else [item["metadata"].get(key, {})]
             )
             for affiliation in contributor.get("contributorAffiliations", [{}])
             for id in affiliation.get("affiliationNameIdentifiers", [{}])
@@ -4248,9 +4252,10 @@ def handle_check_authors_affiliation(list_record):
             if scheme not in allowed_scheme
         ]
 
-        record["errors"] = (
-            record["errors"] + errors if record.get("errors") else errors
-        )
+        if errors:
+            item["errors"] = (
+                item["errors"] + errors if "errors" in item else errors
+            )
 
 
 def get_key_by_property(record, item_map, item_property):
