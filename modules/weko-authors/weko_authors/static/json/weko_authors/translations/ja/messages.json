@@ -119,6 +119,10 @@
         null,
         "所属期間を追加"
     ],
+    "Author_Force_Change_Flag":[
+        null,
+        "強制変更フラグ"
+    ],
     "Author_Affiliation": [
         null,
         "所属情報"

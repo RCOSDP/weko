@@ -119,6 +119,10 @@
         null,
         "Add Affiliation Period"
     ],
+    "Author_Force_Change_Flag":[
+        null,
+        "Force Change Flag"
+    ],
     "Author_Affiliation": [
         null,
         "Affiliation"
