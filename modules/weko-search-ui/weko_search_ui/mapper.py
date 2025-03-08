@@ -1325,22 +1325,21 @@ class JsonLdMapper(JsonMapper):
             }
 
         def _set_metadata(
-            parent, meta_key, meta_path, meta_props,
-            prop_path, prop_props
+            parent, META_KEY, meta_props, PROP_PATH, prop_props
         ):
             # meta_key="dc:type.@id", meta_path="dc:type.@id, meta_props=["dc:type", "@id"]
             # prop_path=item_30001_resource_type11.resourceuri, prop_props=["item_30001_resource_type11","resourceuri"]
             if len(prop_props) == 0:
                 raise Exception()
             if len(prop_props) == 1:
-                meta_value = metadata.get(meta_key)
-                if self._get_property_type(prop_path) == "array":
+                meta_value = metadata.get(META_KEY)
+                if self._get_property_type(PROP_PATH) == "array":
                     # TODO: value must be in {"interim", value}
                     pass
                 parent.update({prop_props[0]: meta_value})
                 return
 
-            parent_prop_key = re.split(rf"\.{prop_props[1]}(?=\.|$)", prop_path)[0]
+            parent_prop_key = re.split(rf"\.{prop_props[1]}(?=\.|$)", PROP_PATH)[0]
             m_index = re.search(r"\[(\d+)\]", meta_props[0])
             index = int(m_index.group(1)) if m_index is not None else None
             if not parent_prop_key in properties_mapping.values():
@@ -1357,8 +1356,8 @@ class JsonLdMapper(JsonMapper):
                         } for _ in range(index - len(sub_prop_array) + 1)])
                     sub_sub_object = {}
                     _set_metadata(
-                        sub_sub_object, meta_key, meta_path, meta_props,
-                        prop_path, prop_props[1:]
+                        sub_sub_object, META_KEY, meta_props,
+                        PROP_PATH, prop_props[1:]
                     )
                     sub_prop_array[index].update(sub_sub_object)
                     parent.update({prop_props[0]: sub_prop_array})
@@ -1371,8 +1370,8 @@ class JsonLdMapper(JsonMapper):
                     # TODO: pick first object
                     return
                 _set_metadata(
-                    sub_prop_object, meta_key, meta_path, meta_props[1:],
-                    prop_path, prop_props[1:]
+                    sub_prop_object, META_KEY, meta_props[1:],
+                    PROP_PATH, prop_props[1:]
                 )
                 parent.update({prop_props[0]: sub_prop_object})
 
@@ -1385,8 +1384,8 @@ class JsonLdMapper(JsonMapper):
                         # TODO: FIXED VALUE
                     } for _ in range(index - len(sub_prop_array) + 1)])
                 _set_metadata(
-                    sub_prop_array[index], meta_key, meta_path, meta_props[1:],
-                    prop_path, prop_props[1:]
+                    sub_prop_array[index], META_KEY, meta_props[1:],
+                    PROP_PATH, prop_props[1:]
                 )
                 parent.update({prop_props[0]: sub_prop_array})
             return
@@ -1421,7 +1420,7 @@ class JsonLdMapper(JsonMapper):
                 # meta_key="dc:type.@id", meta_path="dc:type.@id", meta_props=["dc:type","@id"],
                 # prop_path=item_30001_resource_type11.resourceuri, prop_props=["item_30001_resource_type11","resourceuri"]
                 _set_metadata(
-                    mapped_metadata, meta_key, meta_path, meta_props,
+                    mapped_metadata, meta_key, meta_props,
                     prop_path, prop_props
                 )
 
@@ -1610,6 +1609,16 @@ class JsonLdMapper(JsonMapper):
         Returns:
             dict: metadata with RO-Crate format.
         """
+        item_map = self._create_item_map(detail=True)
+            # e.g. { "Title.タイトル": "item_30001_title0.subitem_title" }
+        properties_mapping = {
+            # make map of json-ld key to itemtype metadata key
+            # e.g. { "item_30001_title0.subitem_title": "dc:title.value" }
+            item_map.get(prop_name): ld_key
+                for prop_name, ld_key in self.json_mapping.items()
+                if prop_name in item_map
+        }
+
         rocrate = ROCrate()
 
         entity_factory = lambda typename: type(typename, (ContextEntity,), {
@@ -1619,15 +1628,37 @@ class JsonLdMapper(JsonMapper):
             }
         })
 
-        def add_entity(parent, key, at_id, at_type, entity):
-            property = entity_factory(at_type)(rocrate, at_id, entity)
-            parent[key] = property
-            return rocrate.add(property)
+        def add_entity(parent, key, at_id, at_type, data=None, **kwargs):
+            params = kwargs or data or {}
+            entity = entity_factory(at_type)(rocrate, at_id, params)
+            parent[key] = entity
+            return rocrate.add(entity)
+
+        def add_list_entity(parent, key, list_at_id, at_type, list_data=None):
+            list_data = list_data or [{} for _ in list_at_id]
+            entities = [
+                entity_factory(at_type)(rocrate, at_id, params)
+                for at_id, params in zip(list_at_id, list_data)
+            ]
+            parent[key] = entities
+            return [rocrate.add(entity) for entity in entities]
+
+        def append_entity(parent, key, at_id, at_type, data=None):
+            params = data or {}
+            entity = entity_factory(at_type)(rocrate, at_id, params)
+            origin = parent[key]
+            origin.append(entity)
+            parent[key] = origin
+            return rocrate.add(entity)
+
+        def add_property(parent, key, value):
+            parent[key] = value
+            return parent
 
         deconstructed = self._deconstruct_dict(metadata)
 
         # TODO: implement mapping to RO-Crate format
-        for key, value in deconstructed.items():
+        for meta_key in deconstructed:
             pass
 
         rocrate.root_dataset["wk:index"] = metadata.get("path", [])
