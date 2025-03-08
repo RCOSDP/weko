@@ -244,10 +244,12 @@ def export_authors():
     file_uri = None
     try:
         mappings = deepcopy(WEKO_AUTHORS_FILE_MAPPING)
+        affiliation_mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"])
         authors = WekoAuthors.get_all(with_deleted=False, with_gather=False)
         schemes = WekoAuthors.get_identifier_scheme_info()
+        aff_schemes = WekoAuthors.get_affiliation_identifier_scheme_info()
         row_header, row_label_en, row_label_jp, row_data = \
-            WekoAuthors.prepare_export_data(mappings, authors, schemes)
+            WekoAuthors.prepare_export_data(mappings, affiliation_mappings, authors, schemes, aff_schemes)
 
         # write file data to a stream
         file_io = io.StringIO()

@@ -214,22 +214,39 @@ class WekoAuthors(object):
                         scheme=scheme.scheme, url=scheme.url)
 
         return result
+    
+    @classmethod
+    def get_affiliation_identifier_scheme_info(cls):
+        result = {}
+        with db.session.no_autoflush:
+            schemes = AuthorsAffiliationSettings.query.order_by(
+                AuthorsAffiliationSettings.id).all()
+            if schemes:
+                for scheme in schemes:
+                    result[str(scheme.id)] = dict(
+                        scheme=scheme.scheme, url=scheme.url)
+
+        return result
 
     @classmethod
-    def prepare_export_data(cls, mappings, authors, schemes):
+    def prepare_export_data(cls, mappings, affiliation_mappings, authors, schemes, aff_schemes):
         """Prepare export data of all authors."""
         row_header = []
         row_label_en = []
         row_label_jp = []
-        row_data = []
-
+        row_data = []        
+        affiliation_mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"])
+        
         if not mappings:
             mappings = deepcopy(WEKO_AUTHORS_FILE_MAPPING)
+        if not affiliation_mappings:
+            affiliation_mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"])
         if not authors:
             authors = cls.get_all(with_deleted=False, with_gather=False)
         if not schemes:
             schemes = cls.get_identifier_scheme_info()
-        
+        if not aff_schemes:
+            aff_schemes = cls.get_affiliation_identifier_scheme_info()
         # calc max item of multiple case and prepare header, label
         for mapping in mappings:
             if mapping.get('child'):
@@ -257,6 +274,46 @@ class WekoAuthors(object):
                 row_header.append(mapping['json_id'])
                 row_label_en.append(mapping['label_en'])
                 row_label_jp.append(mapping['label_jp'])
+        
+        affiliation_mappings["max"] = []
+        mapping_max = affiliation_mappings["max"]
+        # 著者DBの所属情報の最大値をそれぞれとる
+        for author in authors:
+            json_data = author.json
+            # affiliation_mappings配下に以下を作る。
+            # affiliationInfoの列数だけこれが作られるものとする。
+            # max:[
+            #       {
+            #         "identifierInfo" : affiliationInfo[i]identifierInfoの長さ,
+            #         "affiliationNameInfo" : affiliationInfo[i]affiliationNameInfoの長さ,
+            #         "affiliationPeriodInfo" : affiliationInfo[i]affiliationPeriodInfoの長さ
+            #       },
+            #     ]
+            for index, affiliation in enumerate(json_data[affiliation_mappings["json_id"]]):
+                if len(mapping_max) < index+1 :
+                    mapping_max.append({
+                        "identifierInfo" : 1,
+                        "affiliationNameInfo" : 1,
+                        "affiliationPeriodInfo" : 1,
+                        })
+                for child in affiliation_mappings["child"]:
+                    child_length = len(affiliation.get(child["json_id"], []))
+                    if child_length > mapping_max[index][child["json_id"]]:
+                        mapping_max[index][child["json_id"]] = child_length
+        # tsv用に修正
+        for index, m_max in enumerate(mapping_max):
+            for child in affiliation_mappings.get('child'):
+                child_json_id = child["json_id"]
+                for c in child["child"]:
+                    for i in range(m_max[child_json_id]):
+                        # for child in mapping.get:
+                        row_header.append('{}[{}].{}[{}].{}'.format(
+                            affiliation_mappings["json_id"], index, child_json_id, i, c['json_id']))
+                        row_label_en.append(
+                            '{}[{}][{}]'.format(c['label_en'], index, i))
+                        row_label_jp.append(
+                            '{}[{}][{}]'.format(c['label_jp'], index, i))
+                        
         row_header[0] = '#' + row_header[0]
         row_label_en[0] = '#' + row_label_en[0]
         row_label_jp[0] = '#' + row_label_jp[0]
@@ -267,7 +324,7 @@ class WekoAuthors(object):
             row = []
             for mapping in mappings:
                 if mapping.get('child'):
-                    data = json_data.get(mapping['json_id'])
+                    data = json_data.get(mapping['json_id'], [])
                     idx_start = 0
                     idx_size = mapping['max']
                     # ignore WEKO id
@@ -304,8 +361,50 @@ class WekoAuthors(object):
                                 None
                             )
                         )
+                    elif mapping["json_id"] == "weko_id":
+                        id_info = json_data["authorIdInfo"][0]
+                        if id_info["idType"] == "1": 
+                            row.append(id_info["authorId"])
+                        else:
+                            row.append(None)
                     else:
                         row.append(json_data.get(mapping['json_id']))
+
+            # 各affilitionInfo
+            aff_data = json_data.get(affiliation_mappings['json_id'], [])
+            affiliation_idx_start = 0
+            affiliation_idx_size = len(mapping_max)
+            # affilaitionのマックスだけ繰り返す
+            for i in range(affiliation_idx_start, affiliation_idx_size):
+                for child in affiliation_mappings.get('child'):
+                    aff_child_idx_start = 0
+                    aff_child_idx_size = mapping_max[i][child["json_id"]]
+                    for j in range(aff_child_idx_start, aff_child_idx_size):
+                        for c in child.get("child"):
+                            if i >= len(aff_data):
+                                row.append(None)
+                                continue
+                            aff_d = aff_data[i].get(child["json_id"], [])
+                            if j >= len(aff_d):
+                                row.append(None)
+                                continue
+                            if "mask" in c:
+                                row.append(
+                                    c['mask'].get(
+                                        str(aff_d[j].get(
+                                            c["json_id"])).lower(),
+                                        None
+                                    )
+                                )
+                            else:
+                                val = aff_d[j].get(c["json_id"])
+                                if c["json_id"] == "affiliationIdType":
+                                    aff_scheme = aff_schemes.get(val)
+                                    row.append(
+                                        aff_scheme["scheme"] if aff_scheme else val
+                                    )
+                                else:
+                                    row.append(val)
 
             row_data.append(row)
 
