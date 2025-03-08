@@ -32,7 +32,7 @@ from flask import abort, current_app, request, url_for
 from lxml import etree
 from lxml.builder import ElementMaker
 from simplekv.memory.redisstore import RedisStore
-from weko_records.api import ItemLink, Mapping
+from weko_records.api import ItemLink, Mapping, ItemTypes
 from weko_redis import RedisConnection
 from xmlschema.validators import XsdAnyAttribute, XsdAnyElement, \
     XsdAtomicBuiltin, XsdAtomicRestriction, XsdEnumerationFacet, XsdGroup, \
@@ -248,9 +248,11 @@ class SchemaTree:
         self._location = ''
         self._target_namespace = ''
         schemas = WekoSchema.get_all()
+        self._item_type = None
         if self._record and self._item_type_id:
             self._ignore_list_all, self._ignore_list = \
                 self.get_ignore_item_from_option()
+            self._item_type = ItemTypes.get_by_id(self._item_type_id)
         if isinstance(schemas, list):
             for schema in schemas:
                 if isinstance(schema, OAIServerSchema) and self._schema_name == schema.schema_name:
@@ -977,7 +979,7 @@ class SchemaTree:
                     'RESOURCE_TYPE_URI'][new_type]
 
         def replace_nameIdentifierScheme_for_jpcoar_v1(atr_vm_item):
-            if 'nameIdentifiers' in atr_vm_item:
+            if 'nameIdentifiers' in atr_vm_item and atr_vm_item['nameIdentifiers'] is not None:
                 for idx,val in enumerate(atr_vm_item['nameIdentifiers']):
                     if 'nameIdentifierScheme' in val and val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V1_NAMEIDSCHEME_REPLACE']:
                         new_type = current_app.config[
@@ -985,7 +987,7 @@ class SchemaTree:
                         val['nameIdentifierScheme'] = new_type
 
         def replace_nameIdentifierScheme_for_jpcoar_v2(atr_vm_item):
-            if 'nameIdentifiers' in atr_vm_item:
+            if 'nameIdentifiers' in atr_vm_item and atr_vm_item['nameIdentifiers'] is not None:
                 for idx,val in enumerate(atr_vm_item['nameIdentifiers']):
                     if 'nameIdentifierScheme' in val and val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE']:
                         new_type = current_app.config[
@@ -995,6 +997,7 @@ class SchemaTree:
                 
 
         vlst = []
+             
         for key_item_parent, value_item_parent in sorted(self._record.items()):
             if isinstance(value_item_parent, dict):
                 # Dict
@@ -1013,15 +1016,6 @@ class SchemaTree:
                 atr_vm = value_item_parent.get('attribute_value_mlt',[])
                 # attr of name
                 atr_name = value_item_parent.get('attribute_name')
-
-                # current_app.logger.debug("mpdic:{0}".format(mpdic))
-                # mpdic:{'date': {'@value': '=hogehoge', '@attributes': {'dateType': '=hoge'}}}
-                # current_app.logger.debug("atr_v:{0}".format(atr_v))
-                # atr_v:2021-12-01
-                # current_app.logger.debug("atr_vm:{0}".format(atr_vm))
-                # atr_vm:None
-                # current_app.logger.debug("atr_name:{0}".format(atr_name))
-                # atr_name:PubDate
 
                 if atr_v:
                     if isinstance(atr_v, list):
@@ -1050,12 +1044,13 @@ class SchemaTree:
                             if vlst_child and vlst_child[0]:
                                 vlst.extend(vlst_child)
                     else:
-                        from weko_records.models import ItemType
-                        item_type = ItemType.query.filter_by(id=self._item_type_id).one_or_none()
                         # current_app.logger.error(item_type.schema["properties"][key_item_parent])
                         atr_name = ""
-                        if "title" in item_type.schema.get("properties", {}).get(key_item_parent, {}):
-                            atr_name = item_type.schema["properties"][key_item_parent]["title"]
+                        if self._item_type and self._item_type.schema:
+                            if "properties" in self._item_type.schema:
+                                if key_item_parent in self._item_type.schema.get("properties"):
+                                    if "title" in  self._item_type.schema.get("properties").get(key_item_parent):
+                                        atr_name = self._item_type.schema["properties"][key_item_parent]["title"]
                         vlst_child = get_mapping_value(mpdic, {},
                                                            key_item_parent,
                                                            atr_name)

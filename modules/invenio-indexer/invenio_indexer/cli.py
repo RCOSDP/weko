@@ -23,6 +23,7 @@ from invenio_search import current_search_client
 from invenio_search.cli import index
 from sqlalchemy.dialects import postgresql
 
+from weko_records.models import ItemMetadata
 
 from .api import RecordIndexer
 from .tasks import process_bulk_queue
@@ -100,36 +101,50 @@ def run(delayed, concurrency, version_type=None, queue=None,
 @click.option('--include-delete', is_flag=True, default=False)
 @click.option('--skip-exists', is_flag=True, default=False)
 @click.option('--size',type=int,default=6000)
+@click.option('--item-type-id',type=int,default=None)
+@click.option('-f','--file', type=str, default=None)
 @with_appcontext
-def reindex(pid_type, include_delete,skip_exists,size):
+def reindex(pid_type, include_delete,skip_exists,size,item_type_id,file):
     """Reindex all records.
 
     :param pid_type: Pid type.
     """
     click.secho('Sending records to indexing queue ...', fg='green')
 
-    if include_delete:
-        query = PersistentIdentifier.query.filter_by(
-            object_type='rec'
-        ).filter(
-            PersistentIdentifier.status.in_(
-                [PIDStatus.REGISTERED, PIDStatus.DELETED]
-            )
-        )
+    _values = []
+    if file:
+        with open(file) as f:
+            for line in f:
+                try:
+                    _values.append(uuid.UUID(line.strip()))
+                except ValueError:
+                    click.secho('Invalid UUID: {}'.format(line.strip()),fg='red')
     else:
-        query = PersistentIdentifier.query.filter_by(
-            object_type='rec', status=PIDStatus.REGISTERED
+        if include_delete:
+            query = PersistentIdentifier.query.filter_by(
+                object_type='rec'
+            ).filter(
+                PersistentIdentifier.status.in_(
+                    [PIDStatus.REGISTERED, PIDStatus.DELETED]
+                )
+            )
+        else:
+            query = PersistentIdentifier.query.filter_by(
+                object_type='rec', status=PIDStatus.REGISTERED
+            )
+        query = query.filter(RecordMetadata.id==PersistentIdentifier.object_uuid)
+        query = query.filter(
+            PersistentIdentifier.pid_type.in_(pid_type)
         )
-    query = query.filter(RecordMetadata.id==PersistentIdentifier.object_uuid)
-    query = query.filter(
-        PersistentIdentifier.pid_type.in_(pid_type)
-    )
-    current_app.logger.debug(query.statement.compile(dialect=postgresql.dialect(),compile_kwargs={"literal_binds": True}))
-    values = query.values(
-        PersistentIdentifier.object_uuid
-    )
-    _values = (str(x[0]) for x in values)
-    # cnt = sum(1 for _ in list(_values))
+        if item_type_id is not None:
+            query = query.filter(ItemMetadata.id==PersistentIdentifier.object_uuid)
+            query = query.filter(ItemMetadata.item_type_id==item_type_id)
+        current_app.logger.debug(query.statement.compile(dialect=postgresql.dialect(),compile_kwargs={"literal_binds": True}))
+        values = query.values(
+            PersistentIdentifier.object_uuid
+        )
+        _values = (str(x[0]) for x in values)
+        # cnt = sum(1 for _ in list(_values))
     if skip_exists:
         index=current_app.config["SEARCH_INDEX_PREFIX"]+"weko-item-v1.0.0"
         query = {"query": {"bool": {"must":{"exists":{"field":"itemtype"}}}},"_source":["itemtype"],"sort" : [{"_id":"asc"}],"size":size}
@@ -155,9 +170,12 @@ def reindex(pid_type, include_delete,skip_exists,size):
         _values = (x for x in diff)
         # cnt = sum(1 for _ in diff)
 
+    print("type: {}".format(type(_values)))
+    print("values: {}".format(_values)) 
     _values, _values2 = itertools.tee(_values)
     cnt = sum(1 for _ in _values2)
     click.secho('Queueing {} records..'.format(cnt),fg='green')
+    print("type: {}".format(type(_values)))
     RecordIndexer().bulk_index(_values)
     click.secho('Execute "run" command to process the queue!',
                 fg='yellow')

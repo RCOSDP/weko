@@ -269,7 +269,8 @@ require([
     let post_data = {
       commond: $('#input-comment').val(),
       action_version: act_ver,
-      community: community_id
+      community: community_id,
+      temporary_save: 0,
     };
     $.ajax({
       url: uri_apo,

@@ -12,14 +12,32 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 ### Security
 
-## [v1.0.7a] - planning
+## [v1.0.7b] [v1.0.8b] [v1.0.9b] 2025-01-06 
+### Changed
+- Improved data compatibility with migrated institutions. 
+- Added the function to specify an itemtype ID as a target for reindexing. 
+### Fixed  
+- Reduced the increasing number of database queries.  
+
+## [v1.0.7a2] - 2024-12-27  
+### Changed
+- Enabled the edit of metadata fields, including author identifier URLs and author affiliation identifier URLs.
+### Fixed
+- Fixed a bug in the data correction tool (`itemtype_fix_form_title.py`) for resolving inconsistencies between render and form.  
+- Fixed an issue where importing items would fail if "Allow Multiple" was not checked for the item title.  
+- Fixed a bug causing errors when importing items with thumbnails.  
+- Resolved an issue where the item details screen could not be displayed if the creator identifier was set to "hide."  
+
+## [v1.0.7a] - 2024-10-29
 ### Changed
 - Added a feature that allows users to forcibly unlock activity locks.
 ### Fixed
 - Fixed an issue where comments on the first index would overwrite comments on indexes at the same level.
+- Fixed an issue where the item details screen and the item type editing screen could not be displayed due to data errors in the item type mapping.
 - Fixed an issue where the lock function was not working when the workflow was opened in multiple tabs.
 - Corrected an issue with the validation check for dissertations where the StartPage field was included erroneously.
 - Fixed an URL encoding issue of Shibboleth redirection.
+- Fixed issues with the item type correction tool and added a tool to revert states to a previous version.
 
 ## [v1.0.9] - 2024-10-03
 ### Fixed
@@ -115,3 +133,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v1.0.8] https://github.com/RCOSDP/weko/compare/v1.0.7...v1.0.8
 [v1.0.7] https://github.com/RCOSDP/weko/compare/v0.9.6...v1.0.7
 [v1.0.7a] https://github.com/RCOSDP/weko/compare/v1.0.7...v1.0.7a
+[v1.0.7a2] https://github.com/RCOSDP/weko/compare/v1.0.7a...v1.0.7a2
