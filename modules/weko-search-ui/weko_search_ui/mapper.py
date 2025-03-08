@@ -11,9 +11,10 @@
 import os
 import re
 import xmltodict
-from copy import deepcopy
 from datetime import date
 from functools import partial
+from rocrate.rocrate import ROCrate
+from rocrate.model.contextentity import ContextEntity
 
 from flask import current_app
 
@@ -1165,6 +1166,13 @@ class JsonMapper(BaseMapper):
 
     """
     def __init__(self, json, itemtype_id=None, itemtype_name=None):
+        """Initilize JsonMapper.
+
+        Args:
+            json (dict): metadata with json format.
+            itemtype_id (int, optional): item type id. Defaults to None.
+            itemtype_name (str, optional): item type name. Defaults to None.
+        """
         self.json = json
         if itemtype_id is not None:
             self.itemtype = ItemTypes.get_by_id(itemtype_id)
@@ -1245,14 +1253,25 @@ class JsonMapper(BaseMapper):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.id = None
+            """Identifier of the metadata."""
             self.link_data = []
+            """Link data.<br>
+            e.g. [{"item_id": 123, "sele_id": "isSupplementedBy"}]
+            """
             self.non_extract = []
+            """Non-extract file list for elastic search."""
             self.save_as_is = False
+            """Flag to save BagIt as is."""
 
 class JsonLdMapper(JsonMapper):
     """JsonLdMapper."""
     def __init__(self, itemtype_id, json_mapping):
-        """Init."""
+        """Initilize JsonLdMapper.
+
+        Args:
+            itemtype_id (int): item type id.
+            json_mapping (dict): mapping between json-ld and item type metadata.
+        """
         self.json_mapping = json_mapping
         super().__init__(None, itemtype_id)
 
@@ -1267,7 +1286,7 @@ class JsonLdMapper(JsonMapper):
         Returns:
             list[dict]: list of mapped metadata.
         """
-        metadatas, format = JsonLdMapper._deconstruct_json_ld(json_ld)
+        metadatas, format = self._deconstruct_json_ld(json_ld)
         list_items = [ self._map_to_item(metadata) for metadata in metadatas ]
 
         return list_items, format
@@ -1282,14 +1301,16 @@ class JsonLdMapper(JsonMapper):
             dict: mapped metadata.
         """
         item_map = self._create_item_map(detail=True)
+            # e.g. { "Title.タイトル": "item_30001_title0.subitem_title" }
         properties_mapping = {
             # make map of json-ld key to itemtype metadata key
+            # e.g. { "dc:title.value": "item_30001_title0.subitem_title" }
             ld_key: item_map.get(prop_name)
                 for prop_name, ld_key in self.json_mapping.items()
                 if prop_name in item_map
         }
 
-        mapped_metadata = JsonMapper._InformedMetadata()
+        mapped_metadata = self._InformedMetadata()
         mapped_metadata.id = metadata.id
         mapped_metadata.link_data = metadata.link_data
         mapped_metadata.non_extract = metadata.non_extract
@@ -1298,7 +1319,12 @@ class JsonLdMapper(JsonMapper):
         mapped_metadata.setdefault("edit_mode", "Keep")
         missing_metadata = {}
 
-        def _pick_metadata(
+        def _empty_metadata():
+            return {
+                # TODO: FIXED VALUE
+            }
+
+        def _set_metadata(
             parent, meta_key, meta_path, meta_props,
             prop_path, prop_props
         ):
@@ -1326,9 +1352,11 @@ class JsonLdMapper(JsonMapper):
                     sub_prop_array = parent.get(prop_props[0], [])
                     index = 0 if index is None else index
                     if len(sub_prop_array) <= index:
-                        sub_prop_array.extend([{} for _ in range(index - len(sub_prop_array) + 1)])
+                        sub_prop_array.extend([{
+                            # TODO: FIXED VALUE
+                        } for _ in range(index - len(sub_prop_array) + 1)])
                     sub_sub_object = {}
-                    _pick_metadata(
+                    _set_metadata(
                         sub_sub_object, meta_key, meta_path, meta_props,
                         prop_path, prop_props[1:]
                     )
@@ -1336,11 +1364,13 @@ class JsonLdMapper(JsonMapper):
                     parent.update({prop_props[0]: sub_prop_array})
                 return
             if self._get_property_type(parent_prop_key) == "object":
-                sub_prop_object = parent.get(prop_props[0], {})
+                sub_prop_object = parent.get(prop_props[0], {
+                    # TODO: FIXED VALUE
+                })
                 if index is not None:
                     # TODO: pick first object
                     return
-                _pick_metadata(
+                _set_metadata(
                     sub_prop_object, meta_key, meta_path, meta_props[1:],
                     prop_path, prop_props[1:]
                 )
@@ -1351,8 +1381,10 @@ class JsonLdMapper(JsonMapper):
                 sub_prop_array = parent.get(prop_props[0], [])
                 index = 0 if index is None else index
                 if len(sub_prop_array) <= index:
-                    sub_prop_array.extend([{} for _ in range(index - len(sub_prop_array) + 1)])
-                _pick_metadata(
+                    sub_prop_array.extend([{
+                        # TODO: FIXED VALUE
+                    } for _ in range(index - len(sub_prop_array) + 1)])
+                _set_metadata(
                     sub_prop_array[index], meta_key, meta_path, meta_props[1:],
                     prop_path, prop_props[1:]
                 )
@@ -1370,11 +1402,13 @@ class JsonLdMapper(JsonMapper):
             elif "wk:editMode" in meta_path:
                 mapped_metadata["edit_mode"] = metadata.get(meta_key)
             elif "wk:feedbackMail" in meta_path:
-                # TODO: implement feedback mail mapping
+                # TODO: implement handling author_id
                 feedback_mail_list = metadata.get("feedback_mail_list", [])
-                feedback_mail_list.append(metadata.get(meta_key))
+                feedback_mail_list.append({
+                    "mail": metadata.get(meta_key), "author_id": ""}
+                )
                 mapped_metadata["feedback_mail_list"] = feedback_mail_list
-                pass
+            # TODO: implement request mail list
             elif "wk:grant" in meta_path:
                 # TODO: implement grant mapping
                 pass
@@ -1386,11 +1420,20 @@ class JsonLdMapper(JsonMapper):
                 prop_props = prop_path.split(".")
                 # meta_key="dc:type.@id", meta_path="dc:type.@id", meta_props=["dc:type","@id"],
                 # prop_path=item_30001_resource_type11.resourceuri, prop_props=["item_30001_resource_type11","resourceuri"]
-                _pick_metadata(
+                _set_metadata(
                     mapped_metadata, meta_key, meta_path, meta_props,
                     prop_path, prop_props
                 )
 
+        files_info = []
+        for v in item_map.values():
+            if v.endswith(".filename"):
+                files_key = v.split(".")[0]
+                files_info.append({
+                    "key": files_key,
+                    "items": mapped_metadata.get(files_key, [])
+                })
+        mapped_metadata["files_info"] = files_info
         # result = {
         #     "pubdate": "2021-10-15",
         #     "publish_status": "private",
@@ -1401,9 +1444,9 @@ class JsonLdMapper(JsonMapper):
         # }
         return mapped_metadata
 
-    @staticmethod
-    def _deconstruct_json_ld(json_ld):
-        """Process json-ld.
+    @classmethod
+    def _deconstruct_json_ld(cls, json_ld):
+        """Deconstruct json-ld.
 
         Deconstructing json-ld metadata values ​​one by one
         to be able to use in mapping to WEKO item type.
@@ -1417,7 +1460,7 @@ class JsonLdMapper(JsonMapper):
             json_ld (dict): Json-ld in SWORD BagIt or RO-Crate format.
 
         Returns:
-            list[dict]: Processed json data list.
+            list[dict]: Deconstructed json data list.
 
         Raises:
             ValueError: Invalid json-ld format.
@@ -1484,7 +1527,6 @@ class JsonLdMapper(JsonMapper):
         if not extracted:
             raise ValueError("Invalid json-ld format: Metadata is not found.")
 
-
         def _resolve_link(parent, key, value):
             """Resolve links in json-ld metadata and restore hierarchy."""
             if isinstance(value, dict):
@@ -1501,44 +1543,22 @@ class JsonLdMapper(JsonMapper):
         for key, value in extracted.items():
             _resolve_link(extracted, key, value)
 
-        def _deconstruct_metadata(metadata, parent, key, value):
-            """Deconstruct json-ld metadata values."""
-            if "@type" in key:
-                return
-            if isinstance(value, dict):
-                for k, v in value.items():
-                    key_name = key if parent == "" else f"{parent}.{key}"
-                    _deconstruct_metadata(metadata, key_name, k, v)
-            elif isinstance(value, list):
-                for i, d in enumerate(value):
-                    key_name = f"{key}[{i}]" if parent == "" else f"{parent}.{key}[{i}]"
-                    if isinstance(d, dict):
-                        for k, v in d.items():
-                            _deconstruct_metadata(metadata, key_name, k, v)
-                    else:
-                        metadata[key_name] = d
-            else:
-                key_name = key if parent == "" else f"{parent}.{key}"
-                metadata[key_name] = value
-
         list_extracted = []
         if format == "ro-crate":
             extracted = extracted.get(
                 current_app.config["WEKO_SWORDSERVER_METADATA_FILE_ROCRATE"]
             ).get("about")
             if extracted.get("wk:is_splited", False) and "hasPart" in extracted:
-                # get each metadata part in "hasPart"
+                # each metadata part must be in "hasPart"
                 list_extracted = [ part for part in extracted.get("hasPart") ]
             else:
                 list_extracted = [ extracted ]
         else:
             list_extracted = [ extracted ]
 
-        processed_metadatas = []
+        list_deconstructed = []
         for extracted in list_extracted:
-            metadata = JsonMapper._InformedMetadata()
-            for key, value in extracted.items():
-                _deconstruct_metadata(metadata, "", key, value)
+            metadata = cls._deconstruct_dict(extracted, cls._InformedMetadata())
             metadata.id = extracted["@id"]
             metadata.link_data = [
                 {"item_id": link.get("identifier"), "sele_id" : link.get("value")}
@@ -1549,14 +1569,67 @@ class JsonLdMapper(JsonMapper):
                     if not file.get("wk:textExtraction", True)
             ]
             metadata.save_as_is = extracted.get("wk:saveAsIs", False)
-            processed_metadatas.append(metadata)
+            list_deconstructed.append(metadata)
 
-        return processed_metadatas, format
+        return list_deconstructed, format
+
+    @classmethod
+    def _deconstruct_dict(cls, dict_data, return_data=None):
+        """Deconstruct dictioanry data."""
+
+        def _deconstructer(metadata, parent, key, value):
+            if "@type" in key:
+                return
+            if isinstance(value, dict):
+                for k, v in value.items():
+                    key_name = key if parent == "" else f"{parent}.{key}"
+                    _deconstructer(metadata, key_name, k, v)
+            elif isinstance(value, list):
+                for i, d in enumerate(value):
+                    key_name = f"{key}[{i}]" if parent == "" else f"{parent}.{key}[{i}]"
+                    if isinstance(d, dict):
+                        for k, v in d.items():
+                            _deconstructer(metadata, key_name, k, v)
+                    else:
+                        metadata[key_name] = d
+            else:
+                key_name = key if parent == "" else f"{parent}.{key}"
+                metadata[key_name] = value
+
+        return_data = {} if return_data is None else return_data
+        for key, value in dict_data.items():
+            _deconstructer(return_data, "", key, value)
+
+        return return_data
 
     def to_rocrate_metadata(self, metadata):
-        """Map to RO-Crate format."""
-        from rocrate.rocrate import ROCrate
+        """Map to RO-Crate format.
+
+        Args:
+            metadata (dict): metadata with item type format.
+        Returns:
+            dict: metadata with RO-Crate format.
+        """
         rocrate = ROCrate()
 
-        rocrate_metadata = rocrate.metadata.generate()
-        return rocrate_metadata
+        entity_factory = lambda typename: type(typename, (ContextEntity,), {
+            "_empty": lambda self: {
+                "@id": self.id,
+                "@type": typename
+            }
+        })
+
+        def add_entity(parent, key, at_id, at_type, entity):
+            property = entity_factory(at_type)(rocrate, at_id, entity)
+            parent[key] = property
+            return rocrate.add(property)
+
+        deconstructed = self._deconstruct_dict(metadata)
+
+        # TODO: implement mapping to RO-Crate format
+        for key, value in deconstructed.items():
+            pass
+
+        rocrate.root_dataset["wk:index"] = metadata.get("path", [])
+
+        return rocrate.metadata.generate()

@@ -438,14 +438,14 @@ def check_bagit_import_items(file, packaging, is_change_identifier=False):
         mapper = JsonLdMapper(item_type.id, mapping)
         item_metadatas, _ = mapper.to_item_metadata(json_ld)
         list_record = [
-                {
-                    "$schema": f"/items/jsonschema/{item_type.id}",
-                    "metadata": item_metadata,
-                    "item_type_name": item_type.item_type_name.name,
-                    "item_type_id": item_type.id,
-                    "publish_status": item_metadata.get("publish_status"),
-                } for item_metadata in item_metadatas
-            ]
+            {
+                "$schema": f"/items/jsonschema/{item_type.id}",
+                "metadata": item_metadata,
+                "item_type_name": item_type.item_type_name.name,
+                "item_type_id": item_type.id,
+                "publish_status": item_metadata.get("publish_status"),
+            } for item_metadata in item_metadatas
+        ]
         handle_index_tree_much_with_workflow(list_record, workflow)
         handle_file_save_as_is(file, data_path, filename)
 
@@ -579,7 +579,7 @@ def handle_index_tree_much_with_workflow(list_record, workflow):
     """Handle index tree id much with workflow."""
     if workflow is None or workflow.index_tree_id is None:
         return
-    
+
     for record in list_record:
         record.get("metadata").update({"path": [workflow.index_tree_id]})
         current_app.logger.info(

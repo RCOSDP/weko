@@ -499,762 +499,805 @@ def test_create_file_info(app, bucket, users, admin_xml_settings):
 
 # def check_bagit_import_items(file, packaging):
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_registration.py::test_check_bagit_import_items -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-@pytest.mark.skip(reason="fix later")
-def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_client,make_crate,mocker,workflow):
-    # sucsess case for publish_status is "public". It is required to scope "deposit:actions".
-    client_id = tokens[0]["client"].client_id
+def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_client,make_crate,make_crate2,mocker,workflow):
+    client_direct = tokens[0]["client"].client_id
+    client_workflow = tokens[1]["client"].client_id
 
-    # mock_request = mocker.patch("weko_swordserver.registration.request")
+    packaging = "http://purl.org/net/sword/3.0/package/SimpleZip"
+
+    # sucsess for direct. It is required to scope "deposit:write".
+    zip, _ = make_crate()
+    storage = FileStorage(filename="payload.zip",stream=zip)
+
+    # publish_status is "public". It is required to scope "deposit:actions".
     with patch("weko_swordserver.registration.request") as mock_request:
         mock_oauth = MagicMock()
-        mock_oauth.client.client_id = client_id
+        mock_oauth.client.client_id = client_direct
         mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
         mock_request.oauth = mock_oauth
-
-        mapped_json = json_data("data/item_type/mapped_json_2.json")
-
-        zip, _ = make_crate()
-        storage = FileStorage(filename="payload.zip",stream=zip)
-        packaging = "http://purl.org/net/sword/3.0/package/SimpleZip"
 
         with app.test_request_context():
-            result = check_bagit_import_items(storage,packaging)
+            result = check_bagit_import_items(storage, packaging)
 
     assert result.get("data_path").startswith("/var/tmp/weko_import_")
-    assert result.get("register_format") == "Direct"
+    assert result.get("register_type") == "Direct"
     assert result.get("item_type_id") == 2
     assert result.get("error") is None
+    assert result.get("list_record")[0].get("errors") is None
+    assert result.get("list_record")[0].get("metadata").id == "./"
 
 
-    # case # 01 : normal case(workflow)
-    client_id = tokens[0]["client"].client_id
-    user_email = users[2]["email"]
-    sword__mapping = sword_mapping[0]["sword_mapping"]
-    sword__client = sword_client[1]["sword_client"]
-
-    file_name = "mockfile.zip"
-    packaging = [
-        "http://purl.org/net/sword/3.0/package/SimpleZip",
-        "http://purl.org/net/sword/3.0/package/SWORDBagIt",
-    ]
-    headers = {
-        "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
-        "Content-Disposition": f"attachment;filename={file_name}",
-        "Packaging": packaging[0],
-        "On-Behalf-Of": user_email,
-    }
-
-    with patch("weko_swordserver.registration.request") as mock_request:
-        mock_oauth = MagicMock()
-        mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
-        mock_request.oauth = mock_oauth
-
-        mapped_json = json_data("data/item_type/mapped_json_2.json")
-        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
-
-            zip, _ = make_crate()
-            file = FileStorage(filename=file_name, stream=zip)
-
-            with app.test_request_context(headers=headers):
-                with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword__client, sword__mapping)):
-                    res = check_bagit_import_items(file, packaging[0])
-                    assert not hasattr(res, "error")
-                    assert res["list_record"][0]["errors"] is None
-
-        # not match indextree, metadata and setting
-        processed_json = json_data("data/item_type/processed_json_2.json")
-        processed_json.get("record").get("header").update({"indextree": 1234567891011})
-        mocker.patch("weko_swordserver.registration.process_json", return_value=processed_json)
-        mapped_json = json_data("data/item_type/mapped_json_2.json")
-        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
-
-            zip, _ = make_crate()
-            file = FileStorage(filename=file_name, stream=zip)
-
-            with app.test_request_context(headers=headers):
-                with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword__client, sword__mapping)):
-                    res = check_bagit_import_items(file, packaging[0])
-                    assert not hasattr(res, "error")
-                    assert res["list_record"][0]["errors"] is None
-                    assert res["list_record"][0]["metadata"]["path"] == [1623632832836]
-
-    # case # 02 : other error(workflow)
-    client_id = tokens[0]["client"].client_id
-    user_email = users[2]["email"]
-    sword__mapping = sword_mapping[0]["sword_mapping"]
-    sword__client = sword_client[1]["sword_client"]
-
-    file_name = "mockfile.zip"
-    packaging = [
-        "http://purl.org/net/sword/3.0/package/SimpleZip",
-        "http://purl.org/net/sword/3.0/package/SWORDBagIt",
-    ]
-    headers = {
-        "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
-        "Content-Disposition": f"attachment;filename={file_name}",
-        "Packaging": packaging[0],
-        "On-Behalf-Of": user_email,
-    }
-
-    with patch("weko_swordserver.registration.request") as mock_request:
-        mock_oauth = MagicMock()
-        mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
-        mock_request.oauth = mock_oauth
-
-        mapped_json = json_data("data/item_type/mapped_json_2.json")
-        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
-
-            zip, _ = make_crate()
-            file = FileStorage(filename=file_name, stream=zip)
-
-            with app.test_request_context(headers=headers):
-                with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword__client, sword__mapping)):
-                    with patch("weko_swordserver.registration.handle_files_info", side_effect=Exception("Test error message.")) as mock_handle_files_info:
-                        res = check_bagit_import_items(file, packaging[0])
-                        assert res["error"] == "Test error message."
-                        mock_handle_files_info.assert_called_once()
-
-
-    # case # 03 : mapping error(workflow)
-    client_id = tokens[0]["client"].client_id
-    user_email = users[2]["email"]
-    sword__mapping = sword_mapping[0]["sword_mapping"]
-    sword__client = sword_client[1]["sword_client"]
-
-    file_name = "mockfile.zip"
-    packaging = [
-        "http://purl.org/net/sword/3.0/package/SimpleZip",
-        "http://purl.org/net/sword/3.0/package/SWORDBagIt",
-    ]
-    headers = {
-        "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
-        "Content-Disposition": f"attachment;filename={file_name}",
-        "Packaging": packaging[0],
-        "On-Behalf-Of": user_email,
-    }
-
-    with patch("weko_swordserver.registration.request") as mock_request:
-        mock_oauth = MagicMock()
-        mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
-        mock_request.oauth = mock_oauth
-
-        mapped_json = json_data("data/item_type/mapped_json_2.json")
-        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
-
-            zip, _ = make_crate()
-            file = FileStorage(filename=file_name, stream=zip)
-
-            with app.test_request_context(headers=headers):
-                with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword__client, sword__mapping)):
-                    def mock_handle(*args, **kwargs):
-                        list_record = args[0]
-                        list_record[0]["id"] = "１"
-                        modified_args = (list_record,) + args[1:]
-                        return handle_validate_item_import(*modified_args, **kwargs)
-                    with patch("weko_swordserver.registration.handle_validate_item_import", side_effect=mock_handle) as mock_handle_validate_item_import:
-                        res = check_bagit_import_items(file, packaging[0])
-                        errors = res["list_record"][0]["errors"]
-                        assert 'Please specify item ID by half-width number.' in errors
-                        assert 'Specified URI and system URI do not match.' in errors
-                        mock_handle_validate_item_import.assert_called_once()
-
-
-    # case # 04 : json.load error(workflow)
-    client_id = tokens[0]["client"].client_id
-    user_email = users[2]["email"]
-    sword__mapping = sword_mapping[0]["sword_mapping"]
-    sword__client = sword_client[1]["sword_client"]
-
-    file_name = "mockfile.zip"
-    packaging = [
-        "http://purl.org/net/sword/3.0/package/SimpleZip",
-        "http://purl.org/net/sword/3.0/package/SWORDBagIt",
-    ]
-    headers = {
-        "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
-        "Content-Disposition": f"attachment;filename={file_name}",
-        "Packaging": packaging[0],
-        "On-Behalf-Of": user_email,
-    }
-
-    with patch("weko_swordserver.registration.request") as mock_request:
-        mock_oauth = MagicMock()
-        mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
-        mock_request.oauth = mock_oauth
-
-        zip, _ = make_crate()
-        file = FileStorage(filename=file_name, stream=zip)
-
-        with app.test_request_context(headers=headers):
-            with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword__client, sword__mapping)):
-                with patch("weko_swordserver.registration.json.load", side_effect=UnicodeDecodeError("utf-8",b"test",0,1,"mock UnicodeDecodeError")) as mock_json_load:
-                    res = check_bagit_import_items(file, packaging[0])
-                    assert res["error"] == "mock UnicodeDecodeError"
-                    mock_json_load.assert_called_once()
-
-
-    # case # 05 : item type not found(workflow)
-    client_id = tokens[0]["client"].client_id
-    user_email = users[2]["email"]
-    sword__mapping = sword_mapping[0]["sword_mapping"]
-    sword__client = sword_client[1]["sword_client"]
-
-    file_name = "mockfile.zip"
-    packaging = [
-        "http://purl.org/net/sword/3.0/package/SimpleZip",
-        "http://purl.org/net/sword/3.0/package/SWORDBagIt",
-    ]
-    headers = {
-        "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
-        "Content-Disposition": f"attachment;filename={file_name}",
-        "Packaging": packaging[0],
-        "On-Behalf-Of": user_email,
-    }
-
-    with patch("weko_swordserver.registration.request") as mock_request:
-        mock_oauth = MagicMock()
-        mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
-        mock_request.oauth = mock_oauth
-
-        zip, _ = make_crate()
-        file = FileStorage(filename=file_name, stream=zip)
-
-        with app.test_request_context(headers=headers):
-            with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword__client, sword__mapping)):
-                with patch("weko_swordserver.registration.ItemTypes.get_by_id", return_value=None) as mock_get_by_id:
-                    res = check_bagit_import_items(file, packaging[0])
-                    assert res["error"] == "Item type not found for registration your item."
-                    mock_get_by_id.assert_called_once()
-
-
-    # case # 06 : item type and workflow do not match(workflow)
-    client_id = tokens[0]["client"].client_id
-    user_email = users[2]["email"]
-    sword__mapping = sword_mapping[0]["sword_mapping"]
-    sword__mapping.item_type_id = 1
-    sword__client = sword_client[1]["sword_client"]
-    workflow_ = workflow[0]["workflow"]
-    original_itemtype_id = workflow_.itemtype_id
-    workflow_.itemtype_id = 1
-    db.session.commit()
-
-    file_name = "mockfile.zip"
-    packaging = [
-        "http://purl.org/net/sword/3.0/package/SimpleZip",
-        "http://purl.org/net/sword/3.0/package/SWORDBagIt",
-    ]
-    headers = {
-        "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
-        "Content-Disposition": f"attachment;filename={file_name}",
-        "Packaging": packaging[0],
-        "On-Behalf-Of": user_email,
-    }
-
-    with patch("weko_swordserver.registration.request") as mock_request:
-        mock_oauth = MagicMock()
-        mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
-        mock_request.oauth = mock_oauth
-
-        zip, _ = make_crate()
-        file = FileStorage(filename=file_name, stream=zip)
-
-        with app.test_request_context(headers=headers):
-            with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword__client, sword__mapping)) as mock_get_record_by_client_id:
-                res = check_bagit_import_items(file, packaging[0])
-                assert res["error"] == "Item type and workflow do not match."
-                mock_get_record_by_client_id.assert_called_once()
-    workflow_.itemtype_id = original_itemtype_id
-    db.session.commit()
-
-
-    # case # 07 : workflow not found(workflow)
-    client_id = tokens[0]["client"].client_id
-    user_email = users[2]["email"]
-    sword__mapping = sword_mapping[0]["sword_mapping"]
-    sword__client = sword_client[1]["sword_client"]
-
-    file_name = "mockfile.zip"
-    packaging = [
-        "http://purl.org/net/sword/3.0/package/SimpleZip",
-        "http://purl.org/net/sword/3.0/package/SWORDBagIt",
-    ]
-    headers = {
-        "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
-        "Content-Disposition": f"attachment;filename={file_name}",
-        "Packaging": packaging[0],
-        "On-Behalf-Of": user_email,
-    }
-
-    with patch("weko_swordserver.registration.request") as mock_request:
-        mock_oauth = MagicMock()
-        mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
-        mock_request.oauth = mock_oauth
-
-        zip, _ = make_crate()
-        file = FileStorage(filename=file_name, stream=zip)
-
-        with app.test_request_context(headers=headers):
-            with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword__client, sword__mapping)):
-                with patch("weko_workflow.api.WorkFlow.get_workflow_by_id", return_value=None) as mock_get_workflow_by_id:
-                    res = check_bagit_import_items(file, packaging[0])
-                    assert res["error"] == "Workflow not found for registration your item."
-                    mock_get_workflow_by_id.assert_called_once()
-
-
-    # case # 08 : normal case(direct)
-    client_id = tokens[0]["client"].client_id
-    user_email = users[2]["email"]
-    sword__mapping = sword_mapping[0]["sword_mapping"]
-    sword__client = sword_client[0]["sword_client"]
-
-    file_name = "mockfile.zip"
-    packaging = [
-        "http://purl.org/net/sword/3.0/package/SimpleZip",
-        "http://purl.org/net/sword/3.0/package/SWORDBagIt",
-    ]
-    headers = {
-        "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
-        "Content-Disposition": f"attachment;filename={file_name}",
-        "Packaging": packaging[0],
-        "On-Behalf-Of": user_email,
-    }
-
-    with patch("weko_swordserver.registration.request") as mock_request:
-        mock_oauth = MagicMock()
-        mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
-        mock_request.oauth = mock_oauth
-
-        mapped_json = json_data("data/item_type/mapped_json_2.json")
-        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
-
-            zip, _ = make_crate()
-            file = FileStorage(filename=file_name, stream=zip)
-
-            with app.test_request_context(headers=headers):
-                res = check_bagit_import_items(file, packaging[0])
-                assert not hasattr(res, "error")
-                assert res["list_record"][0]["errors"] is None
-
-
-    # case # 08-1 : normal case(direct)
-    client_id = tokens[2]["client"].client_id
-    user_email = users[2]["email"]
-    sword__mapping = sword_mapping[0]["sword_mapping"]
-    sword__client = sword_client[0]["sword_client"]
-
-    file_name = "mockfile.zip"
-    packaging = [
-        "http://purl.org/net/sword/3.0/package/SimpleZip",
-        "http://purl.org/net/sword/3.0/package/SWORDBagIt",
-    ]
-    headers = {
-        "Authorization": "Bearer {}".format(tokens[2]["token"].access_token),
-        "Content-Disposition": f"attachment;filename={file_name}",
-        "Packaging": packaging[0],
-        "On-Behalf-Of": user_email,
-    }
-
-    with patch("weko_swordserver.registration.request") as mock_request:
-        mock_oauth = MagicMock()
-        mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[2]["scope"].split(" ")
-        mock_request.oauth = mock_oauth
-        mock_request.headers = headers
-
-        mapped_json = json_data("data/item_type/mapped_json_2.json")
-        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
-
-            zip, _ = make_crate()
-            file = FileStorage(filename=file_name, stream=zip)
-
-            with app.test_request_context(headers=headers):
-                res = check_bagit_import_items(file, packaging[0])
-                assert res["error"].startswith("403 Forbidden:")
-
-
-    # case # 08-2 : normal case(direct)
-    client_id = tokens[0]["client"].client_id
-    user_email = users[2]["email"]
-    sword__mapping = sword_mapping[0]["sword_mapping"]
-    sword__client = sword_client[0]["sword_client"]
-
-    file_name = "mockfile.zip"
-    packaging = [
-        "http://purl.org/net/sword/3.0/package/SimpleZip",
-        "http://purl.org/net/sword/3.0/package/SWORDBagIt",
-    ]
-    headers = {
-        "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
-        "Content-Disposition": f"attachment;filename={file_name}",
-        "Packaging": packaging[0],
-        "On-Behalf-Of": user_email,
-    }
-
-    with patch("weko_swordserver.registration.request") as mock_request:
-        mock_oauth = MagicMock()
-        mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
-        mock_request.oauth = mock_oauth
-        mock_request.headers = headers
-
-        mapped_json = json_data("data/item_type/mapped_json_2.json")
-        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
-
-            zip, _ = make_crate()
-            file = FileStorage(filename=file_name, stream=zip)
-
-            with app.test_request_context(headers=headers):
-                with patch.dict("flask.current_app.config", {"WEKO_SWORDSERVER_DEPOSIT_DATASET": True}):
-                    res = check_bagit_import_items(file, packaging[0])
-                    assert not hasattr(res, "error")
-                    assert res["list_record"][0]["errors"] is None
-
-
-    # case # 08-3 : normal case(direct)
-    # isinstance
-    file__name = "payload.zip"
+    # sucsess for workflow. It is required to scope "deposit:write" and "user:activity"
     zip, _ = make_crate()
-    storage = FileStorage(filename=file__name,stream=zip)
-    data__path, files__list = unpack_zip(storage)
+    storage = FileStorage(filename="payload.zip",stream=zip)
 
     with patch("weko_swordserver.registration.request") as mock_request:
         mock_oauth = MagicMock()
-        mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
+        mock_oauth.client.client_id = client_workflow
+        mock_oauth.access_token.scopes = tokens[1]["scope"].split(" ")
         mock_request.oauth = mock_oauth
-        mock_request.headers = headers
 
-        mapped__json = json_data("data/item_type/mapped_json_2.json")
-        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json):
-            with app.test_request_context(headers=headers):
-                with patch.dict("flask.current_app.config", {"WEKO_SWORDSERVER_DEPOSIT_DATASET": True}):
-                    with patch("weko_swordserver.registration.unpack_zip") as mock_unpack_zip:
-                        mock_unpack_zip.return_value = data__path, files__list
-                        with patch("shutil.copy", side_effect=Exception({"error_msg":"test_error"})):
-                            res = check_bagit_import_items(f"{data__path}/{file_name}", packaging[0])
-                            assert res["error"] == "test_error"
+        with app.test_request_context():
+            result = check_bagit_import_items(storage, packaging)
+
+    assert result.get("data_path").startswith("/var/tmp/weko_import_")
+    assert result.get("register_type") == "Workflow"
+    assert result.get("item_type_id") == 2
+    assert result.get("error") is None
+    assert result.get("list_record")[0].get("errors") is None
 
 
-    # case # 09 : other error(direct)
-    client_id = tokens[0]["client"].client_id
-    user_email = users[2]["email"]
-    sword__mapping = sword_mapping[0]["sword_mapping"]
-    sword__client = sword_client[0]["sword_client"]
-
-    file_name = "mockfile.zip"
-    packaging = [
-        "http://purl.org/net/sword/3.0/package/SimpleZip",
-        "http://purl.org/net/sword/3.0/package/SWORDBagIt",
-    ]
-    headers = {
-        "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
-        "Content-Disposition": f"attachment;filename={file_name}",
-        "Packaging": packaging[0],
-        "On-Behalf-Of": user_email,
-    }
+    # sucsess for split items.
+    zip, _ = make_crate2()
+    storage = FileStorage(filename="payload.zip",stream=zip)
 
     with patch("weko_swordserver.registration.request") as mock_request:
         mock_oauth = MagicMock()
-        mock_oauth.client.client_id = client_id
+        mock_oauth.client.client_id = client_direct
         mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
         mock_request.oauth = mock_oauth
 
-        mapped_json = json_data("data/item_type/mapped_json_2.json")
-        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+        with app.test_request_context():
+            result = check_bagit_import_items(storage, packaging)
 
-            zip, _ = make_crate()
-            file = FileStorage(filename=file_name, stream=zip)
+    assert result.get("data_path").startswith("/var/tmp/weko_import_")
+    assert result.get("register_type") == "Direct"
+    assert result.get("item_type_id") == 2
+    assert result.get("error") is None
+    assert result.get("list_record")[0].get("errors") is None
+    assert result.get("list_record")[0].get("metadata").id == "_:JournalPaper1"
+    assert result.get("list_record")[1].get("errors") is None
+    assert result.get("list_record")[1].get("metadata").id == "_:EvidenceData1"
 
-            with app.test_request_context(headers=headers):
-                with patch("weko_swordserver.registration.handle_files_info", side_effect=Exception("Test error message.")) as mock_handle_files_info:
-                    res = check_bagit_import_items(file, packaging[0])
-                    assert res["error"] == "Test error message."
-                    mock_handle_files_info.assert_called_once()
+#     # case # 01 : normal case(workflow)
+#     client_id = tokens[0]["client"].client_id
+#     user_email = users[2]["email"]
+#     sword__mapping = sword_mapping[0]["sword_mapping"]
+#     sword__client = sword_client[1]["sword_client"]
 
+#     file_name = "mockfile.zip"
+#     packaging = [
+#         "http://purl.org/net/sword/3.0/package/SimpleZip",
+#         "http://purl.org/net/sword/3.0/package/SWORDBagIt",
+#     ]
+#     headers = {
+#         "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
+#         "Content-Disposition": f"attachment;filename={file_name}",
+#         "Packaging": packaging[0],
+#         "On-Behalf-Of": user_email,
+#     }
 
-    # case # 10 : mapping error(direct)
-    client_id = tokens[0]["client"].client_id
-    user_email = users[2]["email"]
-    sword__mapping = sword_mapping[0]["sword_mapping"]
-    sword__client = sword_client[0]["sword_client"]
+#     with patch("weko_swordserver.registration.request") as mock_request:
+#         mock_oauth = MagicMock()
+#         mock_oauth.client.client_id = client_id
+#         mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
+#         mock_request.oauth = mock_oauth
 
-    file_name = "mockfile.zip"
-    packaging = [
-        "http://purl.org/net/sword/3.0/package/SimpleZip",
-        "http://purl.org/net/sword/3.0/package/SWORDBagIt",
-    ]
-    headers = {
-        "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
-        "Content-Disposition": f"attachment;filename={file_name}",
-        "Packaging": packaging[0],
-        "On-Behalf-Of": user_email,
-    }
+#         mapped_json = json_data("data/item_type/mapped_json_2.json")
+#         with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
 
-    with patch("weko_swordserver.registration.request") as mock_request:
-        mock_oauth = MagicMock()
-        mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
-        mock_request.oauth = mock_oauth
+#             zip, _ = make_crate()
+#             file = FileStorage(filename=file_name, stream=zip)
 
-        mapped_json = json_data("data/item_type/mapped_json_2.json")
-        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+#             with app.test_request_context(headers=headers):
+#                 with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword__client, sword__mapping)):
+#                     res = check_bagit_import_items(file, packaging[0])
+#                     assert not hasattr(res, "error")
+#                     assert res["list_record"][0]["errors"] is None
 
-            zip, _ = make_crate()
-            file = FileStorage(filename=file_name, stream=zip)
+#         # not match indextree, metadata and setting
+#         processed_json = json_data("data/item_type/processed_json_2.json")
+#         processed_json.get("record").get("header").update({"indextree": 1234567891011})
+#         mocker.patch("weko_swordserver.registration.process_json", return_value=processed_json)
+#         mapped_json = json_data("data/item_type/mapped_json_2.json")
+#         with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
 
-            with app.test_request_context(headers=headers):
-                def mock_handle(*args, **kwargs):
-                    list_record = args[0]
-                    list_record[0]["id"] = "１"
-                    modified_args = (list_record,) + args[1:]
-                    return handle_validate_item_import(*modified_args, **kwargs)
-                with patch("weko_swordserver.registration.handle_validate_item_import", side_effect=mock_handle) as mock_handle_validate_item_import:
-                    res = check_bagit_import_items(file, packaging[0])
-                    errors = res["list_record"][0]["errors"]
-                    assert 'Please specify item ID by half-width number.' in errors
-                    assert 'Specified URI and system URI do not match.' in errors
-                    mock_handle_validate_item_import.assert_called_once()
+#             zip, _ = make_crate()
+#             file = FileStorage(filename=file_name, stream=zip)
 
+#             with app.test_request_context(headers=headers):
+#                 with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword__client, sword__mapping)):
+#                     res = check_bagit_import_items(file, packaging[0])
+#                     assert not hasattr(res, "error")
+#                     assert res["list_record"][0]["errors"] is None
+#                     assert res["list_record"][0]["metadata"]["path"] == [1623632832836]
 
-    # case # 11 : json.load error(direct)
-    client_id = tokens[0]["client"].client_id
-    user_email = users[2]["email"]
-    sword__mapping = sword_mapping[0]["sword_mapping"]
-    sword__client = sword_client[0]["sword_client"]
+#     # case # 02 : other error(workflow)
+#     client_id = tokens[0]["client"].client_id
+#     user_email = users[2]["email"]
+#     sword__mapping = sword_mapping[0]["sword_mapping"]
+#     sword__client = sword_client[1]["sword_client"]
 
-    file_name = "mockfile.zip"
-    packaging = [
-        "http://purl.org/net/sword/3.0/package/SimpleZip",
-        "http://purl.org/net/sword/3.0/package/SWORDBagIt",
-    ]
-    headers = {
-        "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
-        "Content-Disposition": f"attachment;filename={file_name}",
-        "Packaging": packaging[0],
-        "On-Behalf-Of": user_email,
-    }
+#     file_name = "mockfile.zip"
+#     packaging = [
+#         "http://purl.org/net/sword/3.0/package/SimpleZip",
+#         "http://purl.org/net/sword/3.0/package/SWORDBagIt",
+#     ]
+#     headers = {
+#         "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
+#         "Content-Disposition": f"attachment;filename={file_name}",
+#         "Packaging": packaging[0],
+#         "On-Behalf-Of": user_email,
+#     }
 
-    with patch("weko_swordserver.registration.request") as mock_request:
-        mock_oauth = MagicMock()
-        mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
-        mock_request.oauth = mock_oauth
+#     with patch("weko_swordserver.registration.request") as mock_request:
+#         mock_oauth = MagicMock()
+#         mock_oauth.client.client_id = client_id
+#         mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
+#         mock_request.oauth = mock_oauth
 
-        zip, _ = make_crate()
-        file = FileStorage(filename=file_name, stream=zip)
+#         mapped_json = json_data("data/item_type/mapped_json_2.json")
+#         with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
 
-        with app.test_request_context(headers=headers):
-            with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword__client, sword__mapping)):
-                with patch("weko_swordserver.registration.json.load", side_effect=UnicodeDecodeError) as mock_json_load:
-                    res = check_bagit_import_items(file, packaging[0])
-                    assert res["error"] == "function takes exactly 5 arguments (0 given)"
-                    mock_json_load.assert_called_once()
+#             zip, _ = make_crate()
+#             file = FileStorage(filename=file_name, stream=zip)
 
-
-    # case # 12 : item type not found(direct)
-    client_id = tokens[0]["client"].client_id
-    user_email = users[2]["email"]
-    sword__mapping = sword_mapping[0]["sword_mapping"]
-    sword__client = sword_client[0]["sword_client"]
-
-    file_name = "mockfile.zip"
-    packaging = [
-        "http://purl.org/net/sword/3.0/package/SimpleZip",
-        "http://purl.org/net/sword/3.0/package/SWORDBagIt",
-    ]
-    headers = {
-        "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
-        "Content-Disposition": f"attachment;filename={file_name}",
-        "Packaging": packaging[0],
-        "On-Behalf-Of": user_email,
-    }
-
-    with patch("weko_swordserver.registration.request") as mock_request:
-        mock_oauth = MagicMock()
-        mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
-        mock_request.oauth = mock_oauth
-
-        zip, _ = make_crate()
-        file = FileStorage(filename=file_name, stream=zip)
-
-        with app.test_request_context(headers=headers):
-            with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword__client, sword__mapping)):
-                with patch("weko_swordserver.registration.ItemTypes.get_by_id", return_value=None) as mock_get_by_id:
-                    res = check_bagit_import_items(file, packaging[0])
-                    assert res["error"] == "Item type not found for registration your item."
-                    mock_get_by_id.assert_called_once()
+#             with app.test_request_context(headers=headers):
+#                 with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword__client, sword__mapping)):
+#                     with patch("weko_swordserver.registration.handle_files_info", side_effect=Exception("Test error message.")) as mock_handle_files_info:
+#                         res = check_bagit_import_items(file, packaging[0])
+#                         assert res["error"] == "Test error message."
+#                         mock_handle_files_info.assert_called_once()
 
 
-    # case # 13 : no mapping
-    client_id = tokens[0]["client"].client_id
-    user_email = users[2]["email"]
+#     # case # 03 : mapping error(workflow)
+#     client_id = tokens[0]["client"].client_id
+#     user_email = users[2]["email"]
+#     sword__mapping = sword_mapping[0]["sword_mapping"]
+#     sword__client = sword_client[1]["sword_client"]
 
-    file_name = "mockfile.zip"
-    packaging = [
-        "http://purl.org/net/sword/3.0/package/SimpleZip",
-        "http://purl.org/net/sword/3.0/package/SWORDBagIt",
-    ]
-    headers = {
-        "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
-        "Content-Disposition": f"attachment;filename={file_name}",
-        "Packaging": packaging[0],
-        "On-Behalf-Of": user_email,
-    }
+#     file_name = "mockfile.zip"
+#     packaging = [
+#         "http://purl.org/net/sword/3.0/package/SimpleZip",
+#         "http://purl.org/net/sword/3.0/package/SWORDBagIt",
+#     ]
+#     headers = {
+#         "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
+#         "Content-Disposition": f"attachment;filename={file_name}",
+#         "Packaging": packaging[0],
+#         "On-Behalf-Of": user_email,
+#     }
 
-    with patch("weko_swordserver.registration.request") as mock_request:
-        mock_oauth = MagicMock()
-        mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
-        mock_request.oauth = mock_oauth
+#     with patch("weko_swordserver.registration.request") as mock_request:
+#         mock_oauth = MagicMock()
+#         mock_oauth.client.client_id = client_id
+#         mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
+#         mock_request.oauth = mock_oauth
 
-        zip, _ = make_crate()
-        file = FileStorage(filename=file_name, stream=zip)
+#         mapped_json = json_data("data/item_type/mapped_json_2.json")
+#         with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
 
-        with app.test_request_context(headers=headers):
-            with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword_client, None)) as mock_get_record_by_client_id:
-                res = check_bagit_import_items(file, packaging[0])
-                assert res["error"] == "Metadata mapping not defined for registration your item."
-                mock_get_record_by_client_id.assert_called_once()
+#             zip, _ = make_crate()
+#             file = FileStorage(filename=file_name, stream=zip)
 
-    # case # 14 : bagit error
-    file_name = "mockfile.zip"
-    packaging = [
-        "http://purl.org/net/sword/3.0/package/SimpleZip",
-        "http://purl.org/net/sword/3.0/package/SWORDBagIt",
-    ]
-    data_path = "test_data_path"
-    zip, _ = make_crate()
-    file = FileStorage(filename=file_name, stream=zip)
-    user_email = users[0]["email"]
-    headers = {
-        "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
-        "Content-Disposition": f"attachment;filename={file_name}",
-        "Packaging": packaging[0],
-        "On-Behalf-Of": user_email,
-    }
-    with app.test_request_context(headers=headers):
-        with patch("weko_swordserver.registration.unpack_zip") as mock_unpack_zip:
-            mock_unpack_zip.return_value = data_path, []
-            with patch("bagit.Bag", side_effect=bagit.BagValidationError("mock bagit.BagValidationError")) as mock_bag:
-                res = check_bagit_import_items(file, packaging[0])
-                assert res["error"] == "mock bagit.BagValidationError"
-                mock_bag.assert_called_once()
+#             with app.test_request_context(headers=headers):
+#                 with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword__client, sword__mapping)):
+#                     def mock_handle(*args, **kwargs):
+#                         list_record = args[0]
+#                         list_record[0]["id"] = "１"
+#                         modified_args = (list_record,) + args[1:]
+#                         return handle_validate_item_import(*modified_args, **kwargs)
+#                     with patch("weko_swordserver.registration.handle_validate_item_import", side_effect=mock_handle) as mock_handle_validate_item_import:
+#                         res = check_bagit_import_items(file, packaging[0])
+#                         errors = res["list_record"][0]["errors"]
+#                         assert 'Please specify item ID by half-width number.' in errors
+#                         assert 'Specified URI and system URI do not match.' in errors
+#                         mock_handle_validate_item_import.assert_called_once()
 
 
-    # case # 15 : BadZipFile
-    file_name = "mockfile.zip"
-    packaging = [
-        "http://purl.org/net/sword/3.0/package/SimpleZip",
-        "http://purl.org/net/sword/3.0/package/SWORDBagIt",
-    ]
-    zip, _ = make_crate()
-    file = f"test_file/{file_name}"
-    user_email = users[0]["email"]
-    headers = {
-        "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
-        "Content-Disposition": f"attachment;filename={file_name}",
-        "Packaging": packaging[0],
-        "On-Behalf-Of": user_email,
-    }
-    with app.test_request_context(headers=headers):
-        with patch("weko_swordserver.registration.unpack_zip", side_effect=BadZipFile) as mock_unpack_zip:
-            res = check_bagit_import_items(file, packaging[0])
-            assert res == {
-                "error": f"The format of the specified file {file_name} dose not "
-                + "support import. Please specify a zip file."
-            }
-            mock_unpack_zip.assert_called_once()
+#     # case # 04 : json.load error(workflow)
+#     client_id = tokens[0]["client"].client_id
+#     user_email = users[2]["email"]
+#     sword__mapping = sword_mapping[0]["sword_mapping"]
+#     sword__client = sword_client[1]["sword_client"]
+
+#     file_name = "mockfile.zip"
+#     packaging = [
+#         "http://purl.org/net/sword/3.0/package/SimpleZip",
+#         "http://purl.org/net/sword/3.0/package/SWORDBagIt",
+#     ]
+#     headers = {
+#         "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
+#         "Content-Disposition": f"attachment;filename={file_name}",
+#         "Packaging": packaging[0],
+#         "On-Behalf-Of": user_email,
+#     }
+
+#     with patch("weko_swordserver.registration.request") as mock_request:
+#         mock_oauth = MagicMock()
+#         mock_oauth.client.client_id = client_id
+#         mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
+#         mock_request.oauth = mock_oauth
+
+#         zip, _ = make_crate()
+#         file = FileStorage(filename=file_name, stream=zip)
+
+#         with app.test_request_context(headers=headers):
+#             with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword__client, sword__mapping)):
+#                 with patch("weko_swordserver.registration.json.load", side_effect=UnicodeDecodeError("utf-8",b"test",0,1,"mock UnicodeDecodeError")) as mock_json_load:
+#                     res = check_bagit_import_items(file, packaging[0])
+#                     assert res["error"] == "mock UnicodeDecodeError"
+#                     mock_json_load.assert_called_once()
 
 
-    # case # 16 : other error
-    # Mock User.query.filter_by
-    file_name = "mockfile.zip"
-    packaging = [
-        "http://purl.org/net/sword/3.0/package/SimpleZip",
-        "http://purl.org/net/sword/3.0/package/SWORDBagIt",
-    ]
-    zip, _ = make_crate()
-    file = FileStorage(filename=file_name, stream=zip)
-    user_email = users[0]["email"]
-    headers = {
-        "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
-        "Content-Disposition": f"attachment;filename={file_name}",
-        "Packaging": packaging[0],
-        "On-Behalf-Of": user_email,
-    }
-    with app.test_request_context(headers=headers):
-        with patch("weko_swordserver.registration.User.query", new_callable=MagicMock) as mock_user_query:
-            mock_filter_by = MagicMock()
-            mock_filter_by.one_or_none.side_effect = SQLAlchemyError
-            mock_user_query.filter_by.return_value = mock_filter_by
-            with pytest.raises(WekoSwordserverException) as e:
-                check_bagit_import_items(file, packaging[0])
-                mock_user_query.filter_by.assert_called_once_with(email=user_email)
-            assert e.value.errorType == ErrorType.ServerError
-            assert e.value.message == "An error occurred while searching user by On-Behalf-Of."
+#     # case # 05 : item type not found(workflow)
+#     client_id = tokens[0]["client"].client_id
+#     user_email = users[2]["email"]
+#     sword__mapping = sword_mapping[0]["sword_mapping"]
+#     sword__client = sword_client[1]["sword_client"]
 
-    # Mock Token.query.filter_by
-    access_token = tokens[0]["token"].access_token
-    headers["On-Behalf-Of"] = access_token
-    with app.test_request_context(headers=headers):
-        with patch("weko_swordserver.registration.Token.query", new_callable=MagicMock) as mock_token_query:
-            mock_filter_by = MagicMock()
-            mock_filter_by.one_or_none.side_effect = SQLAlchemyError
-            mock_token_query.filter_by.return_value = mock_filter_by
-            with pytest.raises(WekoSwordserverException) as e:
-                check_bagit_import_items(file, packaging[0])
-                mock_token_query.filter_by.assert_called_once_with(access_token=access_token)
-            assert e.value.errorType == ErrorType.ServerError
-            assert e.value.message == "An error occurred while searching user by On-Behalf-Of."
+#     file_name = "mockfile.zip"
+#     packaging = [
+#         "http://purl.org/net/sword/3.0/package/SimpleZip",
+#         "http://purl.org/net/sword/3.0/package/SWORDBagIt",
+#     ]
+#     headers = {
+#         "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
+#         "Content-Disposition": f"attachment;filename={file_name}",
+#         "Packaging": packaging[0],
+#         "On-Behalf-Of": user_email,
+#     }
 
-    # Mock ShibbolethUser.query.filter_by
-    shib_eppn = "test_shib_eppn"
-    headers = {
-        "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
-        "Content-Disposition": f"attachment;filename={file_name}",
-        "Packaging": packaging[0],
-        "On-Behalf-Of": shib_eppn,
-    }
-    with app.test_request_context(headers=headers):
-        with patch("weko_swordserver.registration.ShibbolethUser.query", new_callable=MagicMock) as mock_shib_query:
-            mock_filter_by = MagicMock()
-            mock_filter_by.one_or_none.side_effect = SQLAlchemyError
-            mock_shib_query.filter_by.return_value = mock_filter_by
-            with pytest.raises(WekoSwordserverException) as e:
-                check_bagit_import_items(file, packaging[0])
-                mock_shib_query.filter_by.assert_called_once_with(shib_eppn=shib_eppn)
-            assert e.value.errorType == ErrorType.ServerError
-            assert e.value.message == "An error occurred while searching user by On-Behalf-Of."
+#     with patch("weko_swordserver.registration.request") as mock_request:
+#         mock_oauth = MagicMock()
+#         mock_oauth.client.client_id = client_id
+#         mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
+#         mock_request.oauth = mock_oauth
 
-    # Mock no query.filter_by
-    shib_eppn = "test_shib_eppn"
-    headers = {
-        "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
-        "Content-Disposition": f"attachment;filename={file_name}",
-        "Packaging": packaging[0],
-        "On-Behalf-Of": shib_eppn,
-    }
-    with patch("weko_swordserver.registration.request") as mock_request:
-        mock_oauth = MagicMock()
-        mock_oauth.client.client_id = client_id
-        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
-        mock_request.oauth = mock_oauth
-        mock_request.headers = headers
-        mapped_json = json_data("data/item_type/mapped_json_2.json")
-        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
-            with app.test_request_context(headers=headers):
-                res = check_bagit_import_items(file, packaging[0])
-                assert not hasattr(res, "error")
-                assert res["list_record"][0]["errors"] is None
+#         zip, _ = make_crate()
+#         file = FileStorage(filename=file_name, stream=zip)
+
+#         with app.test_request_context(headers=headers):
+#             with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword__client, sword__mapping)):
+#                 with patch("weko_swordserver.registration.ItemTypes.get_by_id", return_value=None) as mock_get_by_id:
+#                     res = check_bagit_import_items(file, packaging[0])
+#                     assert res["error"] == "Item type not found for registration your item."
+#                     mock_get_by_id.assert_called_once()
+
+
+#     # case # 06 : item type and workflow do not match(workflow)
+#     client_id = tokens[0]["client"].client_id
+#     user_email = users[2]["email"]
+#     sword__mapping = sword_mapping[0]["sword_mapping"]
+#     sword__mapping.item_type_id = 1
+#     sword__client = sword_client[1]["sword_client"]
+#     workflow_ = workflow[0]["workflow"]
+#     original_itemtype_id = workflow_.itemtype_id
+#     workflow_.itemtype_id = 1
+#     db.session.commit()
+
+#     file_name = "mockfile.zip"
+#     packaging = [
+#         "http://purl.org/net/sword/3.0/package/SimpleZip",
+#         "http://purl.org/net/sword/3.0/package/SWORDBagIt",
+#     ]
+#     headers = {
+#         "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
+#         "Content-Disposition": f"attachment;filename={file_name}",
+#         "Packaging": packaging[0],
+#         "On-Behalf-Of": user_email,
+#     }
+
+#     with patch("weko_swordserver.registration.request") as mock_request:
+#         mock_oauth = MagicMock()
+#         mock_oauth.client.client_id = client_id
+#         mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
+#         mock_request.oauth = mock_oauth
+
+#         zip, _ = make_crate()
+#         file = FileStorage(filename=file_name, stream=zip)
+
+#         with app.test_request_context(headers=headers):
+#             with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword__client, sword__mapping)) as mock_get_record_by_client_id:
+#                 res = check_bagit_import_items(file, packaging[0])
+#                 assert res["error"] == "Item type and workflow do not match."
+#                 mock_get_record_by_client_id.assert_called_once()
+#     workflow_.itemtype_id = original_itemtype_id
+#     db.session.commit()
+
+
+#     # case # 07 : workflow not found(workflow)
+#     client_id = tokens[0]["client"].client_id
+#     user_email = users[2]["email"]
+#     sword__mapping = sword_mapping[0]["sword_mapping"]
+#     sword__client = sword_client[1]["sword_client"]
+
+#     file_name = "mockfile.zip"
+#     packaging = [
+#         "http://purl.org/net/sword/3.0/package/SimpleZip",
+#         "http://purl.org/net/sword/3.0/package/SWORDBagIt",
+#     ]
+#     headers = {
+#         "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
+#         "Content-Disposition": f"attachment;filename={file_name}",
+#         "Packaging": packaging[0],
+#         "On-Behalf-Of": user_email,
+#     }
+
+#     with patch("weko_swordserver.registration.request") as mock_request:
+#         mock_oauth = MagicMock()
+#         mock_oauth.client.client_id = client_id
+#         mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
+#         mock_request.oauth = mock_oauth
+
+#         zip, _ = make_crate()
+#         file = FileStorage(filename=file_name, stream=zip)
+
+#         with app.test_request_context(headers=headers):
+#             with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword__client, sword__mapping)):
+#                 with patch("weko_workflow.api.WorkFlow.get_workflow_by_id", return_value=None) as mock_get_workflow_by_id:
+#                     res = check_bagit_import_items(file, packaging[0])
+#                     assert res["error"] == "Workflow not found for registration your item."
+#                     mock_get_workflow_by_id.assert_called_once()
+
+
+#     # case # 08 : normal case(direct)
+#     client_id = tokens[0]["client"].client_id
+#     user_email = users[2]["email"]
+#     sword__mapping = sword_mapping[0]["sword_mapping"]
+#     sword__client = sword_client[0]["sword_client"]
+
+#     file_name = "mockfile.zip"
+#     packaging = [
+#         "http://purl.org/net/sword/3.0/package/SimpleZip",
+#         "http://purl.org/net/sword/3.0/package/SWORDBagIt",
+#     ]
+#     headers = {
+#         "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
+#         "Content-Disposition": f"attachment;filename={file_name}",
+#         "Packaging": packaging[0],
+#         "On-Behalf-Of": user_email,
+#     }
+
+#     with patch("weko_swordserver.registration.request") as mock_request:
+#         mock_oauth = MagicMock()
+#         mock_oauth.client.client_id = client_id
+#         mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
+#         mock_request.oauth = mock_oauth
+
+#         mapped_json = json_data("data/item_type/mapped_json_2.json")
+#         with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+
+#             zip, _ = make_crate()
+#             file = FileStorage(filename=file_name, stream=zip)
+
+#             with app.test_request_context(headers=headers):
+#                 res = check_bagit_import_items(file, packaging[0])
+#                 assert not hasattr(res, "error")
+#                 assert res["list_record"][0]["errors"] is None
+
+
+#     # case # 08-1 : normal case(direct)
+#     client_id = tokens[2]["client"].client_id
+#     user_email = users[2]["email"]
+#     sword__mapping = sword_mapping[0]["sword_mapping"]
+#     sword__client = sword_client[0]["sword_client"]
+
+#     file_name = "mockfile.zip"
+#     packaging = [
+#         "http://purl.org/net/sword/3.0/package/SimpleZip",
+#         "http://purl.org/net/sword/3.0/package/SWORDBagIt",
+#     ]
+#     headers = {
+#         "Authorization": "Bearer {}".format(tokens[2]["token"].access_token),
+#         "Content-Disposition": f"attachment;filename={file_name}",
+#         "Packaging": packaging[0],
+#         "On-Behalf-Of": user_email,
+#     }
+
+#     with patch("weko_swordserver.registration.request") as mock_request:
+#         mock_oauth = MagicMock()
+#         mock_oauth.client.client_id = client_id
+#         mock_oauth.access_token.scopes = tokens[2]["scope"].split(" ")
+#         mock_request.oauth = mock_oauth
+#         mock_request.headers = headers
+
+#         mapped_json = json_data("data/item_type/mapped_json_2.json")
+#         with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+
+#             zip, _ = make_crate()
+#             file = FileStorage(filename=file_name, stream=zip)
+
+#             with app.test_request_context(headers=headers):
+#                 res = check_bagit_import_items(file, packaging[0])
+#                 assert res["error"].startswith("403 Forbidden:")
+
+
+#     # case # 08-2 : normal case(direct)
+#     client_id = tokens[0]["client"].client_id
+#     user_email = users[2]["email"]
+#     sword__mapping = sword_mapping[0]["sword_mapping"]
+#     sword__client = sword_client[0]["sword_client"]
+
+#     file_name = "mockfile.zip"
+#     packaging = [
+#         "http://purl.org/net/sword/3.0/package/SimpleZip",
+#         "http://purl.org/net/sword/3.0/package/SWORDBagIt",
+#     ]
+#     headers = {
+#         "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
+#         "Content-Disposition": f"attachment;filename={file_name}",
+#         "Packaging": packaging[0],
+#         "On-Behalf-Of": user_email,
+#     }
+
+#     with patch("weko_swordserver.registration.request") as mock_request:
+#         mock_oauth = MagicMock()
+#         mock_oauth.client.client_id = client_id
+#         mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
+#         mock_request.oauth = mock_oauth
+#         mock_request.headers = headers
+
+#         mapped_json = json_data("data/item_type/mapped_json_2.json")
+#         with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+
+#             zip, _ = make_crate()
+#             file = FileStorage(filename=file_name, stream=zip)
+
+#             with app.test_request_context(headers=headers):
+#                 with patch.dict("flask.current_app.config", {"WEKO_SWORDSERVER_DEPOSIT_DATASET": True}):
+#                     res = check_bagit_import_items(file, packaging[0])
+#                     assert not hasattr(res, "error")
+#                     assert res["list_record"][0]["errors"] is None
+
+
+#     # case # 08-3 : normal case(direct)
+#     # isinstance
+#     file__name = "payload.zip"
+#     zip, _ = make_crate()
+#     storage = FileStorage(filename=file__name,stream=zip)
+#     data__path, files__list = unpack_zip(storage)
+
+#     with patch("weko_swordserver.registration.request") as mock_request:
+#         mock_oauth = MagicMock()
+#         mock_oauth.client.client_id = client_id
+#         mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
+#         mock_request.oauth = mock_oauth
+#         mock_request.headers = headers
+
+#         mapped__json = json_data("data/item_type/mapped_json_2.json")
+#         with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json):
+#             with app.test_request_context(headers=headers):
+#                 with patch.dict("flask.current_app.config", {"WEKO_SWORDSERVER_DEPOSIT_DATASET": True}):
+#                     with patch("weko_swordserver.registration.unpack_zip") as mock_unpack_zip:
+#                         mock_unpack_zip.return_value = data__path, files__list
+#                         with patch("shutil.copy", side_effect=Exception({"error_msg":"test_error"})):
+#                             res = check_bagit_import_items(f"{data__path}/{file_name}", packaging[0])
+#                             assert res["error"] == "test_error"
+
+
+#     # case # 09 : other error(direct)
+#     client_id = tokens[0]["client"].client_id
+#     user_email = users[2]["email"]
+#     sword__mapping = sword_mapping[0]["sword_mapping"]
+#     sword__client = sword_client[0]["sword_client"]
+
+#     file_name = "mockfile.zip"
+#     packaging = [
+#         "http://purl.org/net/sword/3.0/package/SimpleZip",
+#         "http://purl.org/net/sword/3.0/package/SWORDBagIt",
+#     ]
+#     headers = {
+#         "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
+#         "Content-Disposition": f"attachment;filename={file_name}",
+#         "Packaging": packaging[0],
+#         "On-Behalf-Of": user_email,
+#     }
+
+#     with patch("weko_swordserver.registration.request") as mock_request:
+#         mock_oauth = MagicMock()
+#         mock_oauth.client.client_id = client_id
+#         mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
+#         mock_request.oauth = mock_oauth
+
+#         mapped_json = json_data("data/item_type/mapped_json_2.json")
+#         with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+
+#             zip, _ = make_crate()
+#             file = FileStorage(filename=file_name, stream=zip)
+
+#             with app.test_request_context(headers=headers):
+#                 with patch("weko_swordserver.registration.handle_files_info", side_effect=Exception("Test error message.")) as mock_handle_files_info:
+#                     res = check_bagit_import_items(file, packaging[0])
+#                     assert res["error"] == "Test error message."
+#                     mock_handle_files_info.assert_called_once()
+
+
+#     # case # 10 : mapping error(direct)
+#     client_id = tokens[0]["client"].client_id
+#     user_email = users[2]["email"]
+#     sword__mapping = sword_mapping[0]["sword_mapping"]
+#     sword__client = sword_client[0]["sword_client"]
+
+#     file_name = "mockfile.zip"
+#     packaging = [
+#         "http://purl.org/net/sword/3.0/package/SimpleZip",
+#         "http://purl.org/net/sword/3.0/package/SWORDBagIt",
+#     ]
+#     headers = {
+#         "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
+#         "Content-Disposition": f"attachment;filename={file_name}",
+#         "Packaging": packaging[0],
+#         "On-Behalf-Of": user_email,
+#     }
+
+#     with patch("weko_swordserver.registration.request") as mock_request:
+#         mock_oauth = MagicMock()
+#         mock_oauth.client.client_id = client_id
+#         mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
+#         mock_request.oauth = mock_oauth
+
+#         mapped_json = json_data("data/item_type/mapped_json_2.json")
+#         with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+
+#             zip, _ = make_crate()
+#             file = FileStorage(filename=file_name, stream=zip)
+
+#             with app.test_request_context(headers=headers):
+#                 def mock_handle(*args, **kwargs):
+#                     list_record = args[0]
+#                     list_record[0]["id"] = "１"
+#                     modified_args = (list_record,) + args[1:]
+#                     return handle_validate_item_import(*modified_args, **kwargs)
+#                 with patch("weko_swordserver.registration.handle_validate_item_import", side_effect=mock_handle) as mock_handle_validate_item_import:
+#                     res = check_bagit_import_items(file, packaging[0])
+#                     errors = res["list_record"][0]["errors"]
+#                     assert 'Please specify item ID by half-width number.' in errors
+#                     assert 'Specified URI and system URI do not match.' in errors
+#                     mock_handle_validate_item_import.assert_called_once()
+
+
+#     # case # 11 : json.load error(direct)
+#     client_id = tokens[0]["client"].client_id
+#     user_email = users[2]["email"]
+#     sword__mapping = sword_mapping[0]["sword_mapping"]
+#     sword__client = sword_client[0]["sword_client"]
+
+#     file_name = "mockfile.zip"
+#     packaging = [
+#         "http://purl.org/net/sword/3.0/package/SimpleZip",
+#         "http://purl.org/net/sword/3.0/package/SWORDBagIt",
+#     ]
+#     headers = {
+#         "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
+#         "Content-Disposition": f"attachment;filename={file_name}",
+#         "Packaging": packaging[0],
+#         "On-Behalf-Of": user_email,
+#     }
+
+#     with patch("weko_swordserver.registration.request") as mock_request:
+#         mock_oauth = MagicMock()
+#         mock_oauth.client.client_id = client_id
+#         mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
+#         mock_request.oauth = mock_oauth
+
+#         zip, _ = make_crate()
+#         file = FileStorage(filename=file_name, stream=zip)
+
+#         with app.test_request_context(headers=headers):
+#             with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword__client, sword__mapping)):
+#                 with patch("weko_swordserver.registration.json.load", side_effect=UnicodeDecodeError) as mock_json_load:
+#                     res = check_bagit_import_items(file, packaging[0])
+#                     assert res["error"] == "function takes exactly 5 arguments (0 given)"
+#                     mock_json_load.assert_called_once()
+
+
+#     # case # 12 : item type not found(direct)
+#     client_id = tokens[0]["client"].client_id
+#     user_email = users[2]["email"]
+#     sword__mapping = sword_mapping[0]["sword_mapping"]
+#     sword__client = sword_client[0]["sword_client"]
+
+#     file_name = "mockfile.zip"
+#     packaging = [
+#         "http://purl.org/net/sword/3.0/package/SimpleZip",
+#         "http://purl.org/net/sword/3.0/package/SWORDBagIt",
+#     ]
+#     headers = {
+#         "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
+#         "Content-Disposition": f"attachment;filename={file_name}",
+#         "Packaging": packaging[0],
+#         "On-Behalf-Of": user_email,
+#     }
+
+#     with patch("weko_swordserver.registration.request") as mock_request:
+#         mock_oauth = MagicMock()
+#         mock_oauth.client.client_id = client_id
+#         mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
+#         mock_request.oauth = mock_oauth
+
+#         zip, _ = make_crate()
+#         file = FileStorage(filename=file_name, stream=zip)
+
+#         with app.test_request_context(headers=headers):
+#             with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword__client, sword__mapping)):
+#                 with patch("weko_swordserver.registration.ItemTypes.get_by_id", return_value=None) as mock_get_by_id:
+#                     res = check_bagit_import_items(file, packaging[0])
+#                     assert res["error"] == "Item type not found for registration your item."
+#                     mock_get_by_id.assert_called_once()
+
+
+#     # case # 13 : no mapping
+#     client_id = tokens[0]["client"].client_id
+#     user_email = users[2]["email"]
+
+#     file_name = "mockfile.zip"
+#     packaging = [
+#         "http://purl.org/net/sword/3.0/package/SimpleZip",
+#         "http://purl.org/net/sword/3.0/package/SWORDBagIt",
+#     ]
+#     headers = {
+#         "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
+#         "Content-Disposition": f"attachment;filename={file_name}",
+#         "Packaging": packaging[0],
+#         "On-Behalf-Of": user_email,
+#     }
+
+#     with patch("weko_swordserver.registration.request") as mock_request:
+#         mock_oauth = MagicMock()
+#         mock_oauth.client.client_id = client_id
+#         mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
+#         mock_request.oauth = mock_oauth
+
+#         zip, _ = make_crate()
+#         file = FileStorage(filename=file_name, stream=zip)
+
+#         with app.test_request_context(headers=headers):
+#             with patch("weko_swordserver.registration.get_record_by_client_id", return_value=(sword_client, None)) as mock_get_record_by_client_id:
+#                 res = check_bagit_import_items(file, packaging[0])
+#                 assert res["error"] == "Metadata mapping not defined for registration your item."
+#                 mock_get_record_by_client_id.assert_called_once()
+
+#     # case # 14 : bagit error
+#     file_name = "mockfile.zip"
+#     packaging = [
+#         "http://purl.org/net/sword/3.0/package/SimpleZip",
+#         "http://purl.org/net/sword/3.0/package/SWORDBagIt",
+#     ]
+#     data_path = "test_data_path"
+#     zip, _ = make_crate()
+#     file = FileStorage(filename=file_name, stream=zip)
+#     user_email = users[0]["email"]
+#     headers = {
+#         "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
+#         "Content-Disposition": f"attachment;filename={file_name}",
+#         "Packaging": packaging[0],
+#         "On-Behalf-Of": user_email,
+#     }
+#     with app.test_request_context(headers=headers):
+#         with patch("weko_swordserver.registration.unpack_zip") as mock_unpack_zip:
+#             mock_unpack_zip.return_value = data_path, []
+#             with patch("bagit.Bag", side_effect=bagit.BagValidationError("mock bagit.BagValidationError")) as mock_bag:
+#                 res = check_bagit_import_items(file, packaging[0])
+#                 assert res["error"] == "mock bagit.BagValidationError"
+#                 mock_bag.assert_called_once()
+
+
+#     # case # 15 : BadZipFile
+#     file_name = "mockfile.zip"
+#     packaging = [
+#         "http://purl.org/net/sword/3.0/package/SimpleZip",
+#         "http://purl.org/net/sword/3.0/package/SWORDBagIt",
+#     ]
+#     zip, _ = make_crate()
+#     file = f"test_file/{file_name}"
+#     user_email = users[0]["email"]
+#     headers = {
+#         "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
+#         "Content-Disposition": f"attachment;filename={file_name}",
+#         "Packaging": packaging[0],
+#         "On-Behalf-Of": user_email,
+#     }
+#     with app.test_request_context(headers=headers):
+#         with patch("weko_swordserver.registration.unpack_zip", side_effect=BadZipFile) as mock_unpack_zip:
+#             res = check_bagit_import_items(file, packaging[0])
+#             assert res == {
+#                 "error": f"The format of the specified file {file_name} dose not "
+#                 + "support import. Please specify a zip file."
+#             }
+#             mock_unpack_zip.assert_called_once()
+
+
+#     # case # 16 : other error
+#     # Mock User.query.filter_by
+#     file_name = "mockfile.zip"
+#     packaging = [
+#         "http://purl.org/net/sword/3.0/package/SimpleZip",
+#         "http://purl.org/net/sword/3.0/package/SWORDBagIt",
+#     ]
+#     zip, _ = make_crate()
+#     file = FileStorage(filename=file_name, stream=zip)
+#     user_email = users[0]["email"]
+#     headers = {
+#         "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
+#         "Content-Disposition": f"attachment;filename={file_name}",
+#         "Packaging": packaging[0],
+#         "On-Behalf-Of": user_email,
+#     }
+#     with app.test_request_context(headers=headers):
+#         with patch("weko_swordserver.registration.User.query", new_callable=MagicMock) as mock_user_query:
+#             mock_filter_by = MagicMock()
+#             mock_filter_by.one_or_none.side_effect = SQLAlchemyError
+#             mock_user_query.filter_by.return_value = mock_filter_by
+#             with pytest.raises(WekoSwordserverException) as e:
+#                 check_bagit_import_items(file, packaging[0])
+#                 mock_user_query.filter_by.assert_called_once_with(email=user_email)
+#             assert e.value.errorType == ErrorType.ServerError
+#             assert e.value.message == "An error occurred while searching user by On-Behalf-Of."
+
+#     # Mock Token.query.filter_by
+#     access_token = tokens[0]["token"].access_token
+#     headers["On-Behalf-Of"] = access_token
+#     with app.test_request_context(headers=headers):
+#         with patch("weko_swordserver.registration.Token.query", new_callable=MagicMock) as mock_token_query:
+#             mock_filter_by = MagicMock()
+#             mock_filter_by.one_or_none.side_effect = SQLAlchemyError
+#             mock_token_query.filter_by.return_value = mock_filter_by
+#             with pytest.raises(WekoSwordserverException) as e:
+#                 check_bagit_import_items(file, packaging[0])
+#                 mock_token_query.filter_by.assert_called_once_with(access_token=access_token)
+#             assert e.value.errorType == ErrorType.ServerError
+#             assert e.value.message == "An error occurred while searching user by On-Behalf-Of."
+
+#     # Mock ShibbolethUser.query.filter_by
+#     shib_eppn = "test_shib_eppn"
+#     headers = {
+#         "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
+#         "Content-Disposition": f"attachment;filename={file_name}",
+#         "Packaging": packaging[0],
+#         "On-Behalf-Of": shib_eppn,
+#     }
+#     with app.test_request_context(headers=headers):
+#         with patch("weko_swordserver.registration.ShibbolethUser.query", new_callable=MagicMock) as mock_shib_query:
+#             mock_filter_by = MagicMock()
+#             mock_filter_by.one_or_none.side_effect = SQLAlchemyError
+#             mock_shib_query.filter_by.return_value = mock_filter_by
+#             with pytest.raises(WekoSwordserverException) as e:
+#                 check_bagit_import_items(file, packaging[0])
+#                 mock_shib_query.filter_by.assert_called_once_with(shib_eppn=shib_eppn)
+#             assert e.value.errorType == ErrorType.ServerError
+#             assert e.value.message == "An error occurred while searching user by On-Behalf-Of."
+
+#     # Mock no query.filter_by
+#     shib_eppn = "test_shib_eppn"
+#     headers = {
+#         "Authorization": "Bearer {}".format(tokens[0]["token"].access_token),
+#         "Content-Disposition": f"attachment;filename={file_name}",
+#         "Packaging": packaging[0],
+#         "On-Behalf-Of": shib_eppn,
+#     }
+#     with patch("weko_swordserver.registration.request") as mock_request:
+#         mock_oauth = MagicMock()
+#         mock_oauth.client.client_id = client_id
+#         mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
+#         mock_request.oauth = mock_oauth
+#         mock_request.headers = headers
+#         mapped_json = json_data("data/item_type/mapped_json_2.json")
+#         with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
+#             with app.test_request_context(headers=headers):
+#                 res = check_bagit_import_items(file, packaging[0])
+#                 assert not hasattr(res, "error")
+#                 assert res["list_record"][0]["errors"] is None
 
 
 

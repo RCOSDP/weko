@@ -4649,65 +4649,6 @@ class TestJsonMapper:
 # def JsonLdMapper:
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 class TestJsonLdMapper:
-    # def deconstruct_json_ld(json_ld):
-    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test__deconstruct_json_ld -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-    def test__deconstruct_json_ld(self, app):
-        app.config.update({"WEKO_SWORDSERVER_METADATA_FILE_ROCRATE": "ro-crate-metadata.json"})
-
-        json_ld = json_data("data/jsonld/ro-crate-metadata.json")
-        processed_metadatas, format = JsonLdMapper._deconstruct_json_ld(json_ld)
-        metadata =  processed_metadatas[0]
-
-        assert format == "ro-crate"
-        assert metadata.non_extract == ["data/data.csv"]
-        assert metadata.save_as_is == False
-        assert metadata["@id"] == "./"
-        assert metadata["name"] == "The Sample Dataset for WEKO"
-        assert metadata["description"] == "This is a sample dataset for WEKO in order to demonstrate the RO-Crate metadata."
-        assert metadata["datePublished"] == "2021-10-15"
-        assert metadata["dc:title[0].value"] == "The Sample Dataset for WEKO"
-        assert metadata["dc:title[0].language"] == "en"
-        assert metadata["dc:title[1].value"] == "WEKO用サンプルデータセット"
-        assert metadata["dc:title[1].language"] == "ja"
-        assert metadata["dc:type.@id"] == "http://purl.org/coar/resource_type/c_6501"
-        assert metadata["dc:type.name"] == "journal article"
-        assert metadata["creator[0].affiliation.name"] == "University of Manchester"
-        assert metadata["hasPart[0].@id"] == "data/sample.rst"
-        assert metadata["hasPart[0].name"] == "sample.rst"
-        assert metadata["hasPolicy[0].permission[0].duty[0].assignee"] == "http://example.org/rightsholder"
-        assert not any("@type" in key for key in metadata.keys())
-
-        json_ld = json_data("data/jsonld/ro-crate-metadata2.json")
-        processed_metadatas, format = JsonLdMapper._deconstruct_json_ld(json_ld)
-        thesis =  processed_metadatas[0]
-        evidence = processed_metadatas[1]
-
-        assert format == "ro-crate"
-        assert thesis.id == "_:JournalPaper1"
-        assert thesis.link_data[0]["item_id"] == "_:EvidenceData1"
-        assert thesis.link_data[0]["sele_id"] == "isSupplementedBy"
-        assert thesis.link_data[1]["item_id"] == "https://example.repo.nii.ac.jp/records/123456789"
-        assert thesis.link_data[1]["sele_id"] == "isSupplementedBy"
-        assert thesis["@id"] == "_:JournalPaper1"
-        assert thesis["dc:title[0].value"] == "The Sample Dataset for WEKO"
-        assert thesis["dc:title[1].value"] == "WEKO用サンプルデータセット"
-        assert thesis["hasPart[0].wk:textExtraction"] == True
-        assert thesis["dc:type.@id"] == "http://purl.org/coar/resource_type/c_6501"
-
-        assert evidence.id == "_:EvidenceData1"
-        assert evidence.link_data[0]["item_id"] == "_:JournalPaper1"
-        assert evidence.link_data[0]["sele_id"] == "isSupplementTo"
-        assert evidence.non_extract == ["data/data.csv"]
-        assert evidence["@id"] == "_:EvidenceData1"
-        assert evidence["dc:title[0].value"] == "The Sample Dataset for WEKO, evidence part"
-        assert evidence["dc:title[1].value"] == "WEKO用サンプルデータセットのエビデンス部分"
-        assert evidence["hasPart[0].wk:textExtraction"] == False
-        assert evidence["dc:type.@id"] == "http://purl.org/coar/resource_type/c_1843"
-
-        with pytest.raises(ValueError) as ex:
-            processed_metadatas, format = JsonLdMapper._deconstruct_json_ld({})
-        ex.match('Invalid json-ld format: "@context" is invalid.')
-
     # def to_item_metadata(self, json_ld):
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_to_item_metadata -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_to_item_metadata(self, app, db, item_type2, item_type_mapping2):
@@ -4717,7 +4658,6 @@ class TestJsonLdMapper:
         mapping = json_data("data/jsonld/item_type_mapping.json")
         item_type_mapping2.model.mapping = mapping
         db.session.commit()
-        print("")
         json_mapping = json_data("data/jsonld/ro-crate_mapping.json")
         json_ld = json_data("data/jsonld/ro-crate-metadata.json")
 
@@ -4725,7 +4665,6 @@ class TestJsonLdMapper:
             mapper = JsonLdMapper(item_type2.model.id, json_mapping)
             item_metadatas, format = mapper.to_item_metadata(json_ld)
 
-            print(f"item_metadata: {item_metadatas}")
             item_metadata = item_metadatas[0]
             assert format == "ro-crate"
             assert item_metadata.non_extract == ["data/data.csv"]
@@ -4748,7 +4687,10 @@ class TestJsonLdMapper:
             assert item_metadata["item_30001_file22"][1]["filesize"][0]["value"] == "1234 B"
             assert item_metadata["item_30001_creator2"][0]["creatorNames"][0]["creatorName"] == "John Doe"
             assert item_metadata["item_30001_creator2"][0]["creatorAffiliations"][0]["affiliationNames"][0]["affiliationName"] == "University of Manchester"
-            assert item_metadata["feedback_mail_list"] == ["wekosoftware@nii.ac.jp"]
+            assert item_metadata["feedback_mail_list"] == [{"mail": "wekosoftware@nii.ac.jp", "author_id": ""}]
+            assert item_metadata["files_info"][0]["key"] == "item_30001_file22"
+            assert item_metadata["files_info"][0]["items"][0]["filename"] == "sample.rst"
+            assert item_metadata["files_info"][0]["items"][1]["filename"] == "data.csv"
 
             list_record = []
             list_record.append({
@@ -4781,6 +4723,8 @@ class TestJsonLdMapper:
             assert thesis["path"] == [1623632832836]
             assert thesis["item_30001_title0"][0]["subitem_title"] == "The Sample Dataset for WEKO"
             assert thesis["item_30001_title0"][1]["subitem_title"] == "WEKO用サンプルデータセット"
+            assert thesis["files_info"][0]["key"] == "item_30001_file22"
+            assert thesis["files_info"][0]["items"][0]["filename"] == "sample.rst"
 
             assert evidence.id == "_:EvidenceData1"
             assert evidence.link_data[0]["item_id"] == "_:JournalPaper1"
@@ -4790,6 +4734,8 @@ class TestJsonLdMapper:
             assert evidence["path"] == [1623632832836]
             assert evidence["item_30001_title0"][0]["subitem_title"] == "The Sample Dataset for WEKO, evidence part"
             assert evidence["item_30001_title0"][1]["subitem_title"] == "WEKO用サンプルデータセットのエビデンス部分"
+            assert evidence["files_info"][0]["key"] == "item_30001_file22"
+            assert evidence["files_info"][0]["items"][0]["filename"] == "data.csv"
 
             list_record = [
                 {
@@ -4804,3 +4750,62 @@ class TestJsonLdMapper:
 
             assert list_record[0].get("errors") is None
             assert list_record[1].get("errors") is None
+
+    # def deconstruct_json_ld(json_ld):
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test__deconstruct_json_ld -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test__deconstruct_json_ld(self, app):
+        app.config.update({"WEKO_SWORDSERVER_METADATA_FILE_ROCRATE": "ro-crate-metadata.json"})
+
+        json_ld = json_data("data/jsonld/ro-crate-metadata.json")
+        deconstructed_metadata, format = JsonLdMapper._deconstruct_json_ld(json_ld)
+        metadata =  deconstructed_metadata[0]
+
+        assert format == "ro-crate"
+        assert metadata.non_extract == ["data/data.csv"]
+        assert metadata.save_as_is == False
+        assert metadata["@id"] == "./"
+        assert metadata["name"] == "The Sample Dataset for WEKO"
+        assert metadata["description"] == "This is a sample dataset for WEKO in order to demonstrate the RO-Crate metadata."
+        assert metadata["datePublished"] == "2021-10-15"
+        assert metadata["dc:title[0].value"] == "The Sample Dataset for WEKO"
+        assert metadata["dc:title[0].language"] == "en"
+        assert metadata["dc:title[1].value"] == "WEKO用サンプルデータセット"
+        assert metadata["dc:title[1].language"] == "ja"
+        assert metadata["dc:type.@id"] == "http://purl.org/coar/resource_type/c_6501"
+        assert metadata["dc:type.name"] == "journal article"
+        assert metadata["creator[0].affiliation.name"] == "University of Manchester"
+        assert metadata["hasPart[0].@id"] == "data/sample.rst"
+        assert metadata["hasPart[0].name"] == "sample.rst"
+        assert metadata["hasPolicy[0].permission[0].duty[0].assignee"] == "http://example.org/rightsholder"
+        assert not any("@type" in key for key in metadata.keys())
+
+        json_ld = json_data("data/jsonld/ro-crate-metadata2.json")
+        deconstructed_metadata, format = JsonLdMapper._deconstruct_json_ld(json_ld)
+        thesis =  deconstructed_metadata[0]
+        evidence = deconstructed_metadata[1]
+
+        assert format == "ro-crate"
+        assert thesis.id == "_:JournalPaper1"
+        assert thesis.link_data[0]["item_id"] == "_:EvidenceData1"
+        assert thesis.link_data[0]["sele_id"] == "isSupplementedBy"
+        assert thesis.link_data[1]["item_id"] == "https://example.repo.nii.ac.jp/records/123456789"
+        assert thesis.link_data[1]["sele_id"] == "isSupplementedBy"
+        assert thesis["@id"] == "_:JournalPaper1"
+        assert thesis["dc:title[0].value"] == "The Sample Dataset for WEKO"
+        assert thesis["dc:title[1].value"] == "WEKO用サンプルデータセット"
+        assert thesis["hasPart[0].wk:textExtraction"] == True
+        assert thesis["dc:type.@id"] == "http://purl.org/coar/resource_type/c_6501"
+
+        assert evidence.id == "_:EvidenceData1"
+        assert evidence.link_data[0]["item_id"] == "_:JournalPaper1"
+        assert evidence.link_data[0]["sele_id"] == "isSupplementTo"
+        assert evidence.non_extract == ["data/data.csv"]
+        assert evidence["@id"] == "_:EvidenceData1"
+        assert evidence["dc:title[0].value"] == "The Sample Dataset for WEKO, evidence part"
+        assert evidence["dc:title[1].value"] == "WEKO用サンプルデータセットのエビデンス部分"
+        assert evidence["hasPart[0].wk:textExtraction"] == False
+        assert evidence["dc:type.@id"] == "http://purl.org/coar/resource_type/c_1843"
+
+        with pytest.raises(ValueError) as ex:
+            deconstructed_metadata, format = JsonLdMapper._deconstruct_json_ld({})
+        ex.match('Invalid json-ld format: "@context" is invalid.')
