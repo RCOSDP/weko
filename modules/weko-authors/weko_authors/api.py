@@ -304,8 +304,8 @@ class WekoAuthors(object):
         for index, m_max in enumerate(mapping_max):
             for child in affiliation_mappings.get('child'):
                 child_json_id = child["json_id"]
-                for c in child["child"]:
-                    for i in range(m_max[child_json_id]):
+                for i in range(m_max[child_json_id]):
+                    for c in child["child"]:
                         # for child in mapping.get:
                         row_header.append('{}[{}].{}[{}].{}'.format(
                             affiliation_mappings["json_id"], index, child_json_id, i, c['json_id']))
