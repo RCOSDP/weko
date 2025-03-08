@@ -171,7 +171,15 @@ def check_weko_id_is_exists(weko_id, author_id = None):
 
 
 def check_period_date(data):
-    """Check period date."""
+    """
+        dataのperiodを確認します。
+        args:
+            data: dict, 著者DBのjsonカラムのデータ
+        return:
+            True or False: 期間が正しいかどうか
+            String: エラーの種別
+    """
+    from datetime import datetime
     if data.get("affiliationInfo"):
         for affiliation in data.get("affiliationInfo"):
             if affiliation.get("affiliationPeriodInfo"):
@@ -180,11 +188,16 @@ def check_period_date(data):
                         if periodinfo.get("periodStart"):
                             date_str = periodinfo.get("periodStart")
                             if not bool(re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}', date_str)):
-                                return False
+                                return False, "not date format"
                         if periodinfo.get("periodEnd"):
                             date_str = periodinfo.get("periodEnd")
                             if not bool(re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}', date_str)):
-                                return False
+                                return False, "not date format"
+                        if periodinfo.get("periodStart") and periodinfo.get("periodEnd"):
+                            period_start = datetime.strptime(periodinfo.get("periodStart"), "%Y-%m-%d")
+                            period_end = datetime.strptime(periodinfo.get("periodEnd"), "%Y-%m-%d")
+                            if period_start > period_end:
+                                return False, "start is after end"
     return True
 
 def get_export_status():
@@ -701,7 +714,7 @@ def update_data_for_weko_link(data, weko_link):
         authorsテーブルを元にweko_linkを更新し、
         違いがある場合は、dataをauthorsテーブルのweko_idを元に更新します。
         args:
-            data: dict メタデータ
+            data: dict メタデータ、特にworkflowactivityのtemp_dataカラムのもの
             weko_link: list weko_link
         
     """
