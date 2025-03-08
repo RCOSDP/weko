@@ -943,7 +943,8 @@ def test_handle_check_doi_indexes(i18n_app, es_item_file_pipeline, es_records):
 
 
 # def handle_check_doi_ra(list_record):
-def test_handle_check_doi_ra(i18n_app, es_item_file_pipeline, es_records):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_doi_ra -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_doi_ra(i18n_app, db,es_item_file_pipeline, es_records,identifier):
     # list_record = [es_records['results'][0]['item']]
     item = MagicMock()
 
@@ -956,7 +957,54 @@ def test_handle_check_doi_ra(i18n_app, es_item_file_pipeline, es_records):
         with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value="1"):
             # Doesn't return any value
             assert not handle_check_doi_ra([item])
-
+    
+    def create_record_with_doi(recid, doi_type, doi_value=""):
+        """create item with doi"""
+        from tests.helpers import create_record
+        doi_prefix = identifier["Root Index"].get(doi_type,"")
+        if not doi_value:
+            doi_value = "{prefix}/{suffix}".format(
+                prefix=doi_prefix,
+                suffix="{:010}".format(recid)
+            )
+        record_tmp = {"_oai": {"id": "oai:weko3.example.org:{:08}".format(recid), "sets": ["1"]}, "path": ["1"], "owner": "1", "recid": str(recid), "title": [f"record_with_doi: {recid}"], "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-08-20"}, "_buckets": {"deposit": "3e99cfca-098b-42ed-b8a0-20ddd09b3e02"}, "_deposit": {"id": str(recid), "pid": {"type": "depid", "value": str(recid), "revision_id": 0}, "owner": "1", "owners": [1], "status": "draft", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}}, "item_title": f"record_with_doi: {recid}", "author_link": [], "item_type_id": "1", "publish_date": "2022-08-20", "publish_status": "0", "weko_shared_id": -1, "item_1617186331708": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647225": f"record_with_doi: {recid}", "subitem_1551255648112": "ja"}]}, "item_1617258105262": {"attribute_name": "Resource Type", "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}]}, "item_1617186819068":{"attribute_name":"","attribute_value_mlt":[{"subitem_identifier_reg_text":doi_value,"subitem_identifier_reg_type":doi_type}]},"relation_version_is_last": True}
+        item_tmp = {"id": str(recid), "pid": {"type": "depid", "value": str(recid), "revision_id": 0}, "lang": "ja", "owner": "1", "title": f"record_with_doi: {recid}", "owners": [1], "status": "published", "$schema": "/items/jsonschema/1", "pubdate": "2022-08-20", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}, "shared_user_id": -1, "item_1617186331708": [{"subitem_1551255647225": f"record_with_doi: {recid}", "subitem_1551255648112": "ja"}], "item_1617258105262": {"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"},"item_1617186819068":[{"subitem_identifier_reg_text":doi_value,"subitem_identifier_reg_type":doi_type}]}
+        _,pid_recid,_,_,_,_ = create_record(record_tmp, item_tmp)
+        doi = PersistentIdentifier.query.filter_by(pid_type="doi",pid_value="https://doi.org/10.xyz/{:010}".format(recid)).one_or_none()
+        doi_url = f"https://doi.org/{doi_value}"
+        if doi:
+            doi.pid_value = doi_url
+            db.session.merge(doi)
+        else:
+            doi = PersistentIdentifier.create("doi",doi_url,object_type="rec",object_uuid=pid_recid.object_uuid,status=PIDStatus.REGISTERED)
+            db.session.add(doi)
+        db.session.commit()
+    
+    create_record_with_doi(10, "JaLC") # JaLC DOI
+    create_record_with_doi(11, "Crossref") # Crossref
+    create_record_with_doi(12, "DataCite") # DataCite
+    create_record_with_doi(13, "NDL JaLC") # NDL JaLC
+    create_record_with_doi(14, "JaLC","xyz.jalc/0000000014") # JaLC, NDL JaLC prefix
+    
+    item = [
+        {"errors":[],"doi":"xyz.jalc/0000000010"}, # exist doi, not exist doi_ra
+        {"errors":[],"doi":"xyz.jalc/0000000010", "doi_ra":"wrong doi"},# wrong doi_ra
+        {"errors":[],"id":"10","doi":"xyz.jalc/000000010", "doi_ra":"JaLC","is_change_identifier":False,"status":"keep"}, # exist doi, exist doi_ra
+        {"errors":[],"id":"10","doi":"xyz.crossref/000000010", "doi_ra":"Crossref","is_change_identifier":False,"status":"keep"}, # exist doi, exist doi_ra
+        {"errors":[],"id":"14","doi":"xyz.ndl/0000000014", "doi_ra":"NDL LaLC","is_change_identifier":False,"status":"keep"}, # exist doi, exist doi_ra
+    ]
+    
+    test = [
+        {"errors":["Please specify DOI_RA."],"doi":"xyz.jalc/0000000010"}, # exist doi, not exist doi_ra
+        {"errors":["DOI_RA should be set by on of JaLC, Crossref, DataCite, NDL JaLC"],"doi":"xyz.jalc/0000000010", "doi_ra":"wrong doi"},# wrong doi_ra
+        {"errors":["Specified DOI_RA is different from existing DOI_RA"],"id":"10","doi":"xyz.jalc/000000010", "doi_ra":"JaLC","is_change_identifier":False,"status":"keep"}, # exist doi, exist doi_ra
+        {"errors":[],"id":"10","doi":"xyz.crossref/000000010", "doi_ra":"Crossref","is_change_identifier":False,"status":"keep"}, # exist doi, exist doi_ra
+        {"errors":[],"id":"14","doi":"xyz.ndl/0000000014", "doi_ra":"NDL LaLC","is_change_identifier":False,"status":"keep"}, # exist doi, exist doi_ra
+    ]
+    with patch("weko_search_ui.utils.handle_doi_required_check",return_value=False):
+        handle_check_doi_ra(item)
+        assert item == test
+    
 
 # def handle_check_doi(list_record):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
@@ -1263,6 +1311,7 @@ def test_register_item_doi(i18n_app, db_activity, identifier, mocker):
                 assert args[2] == test_data
     
     # is_change_identifier is False, doi_ra is NDL, doi_duplicated is True
+    mock_without_version.pid_doi = None
     item = {
         "id":"7",
         "is_change_identifier":False,
