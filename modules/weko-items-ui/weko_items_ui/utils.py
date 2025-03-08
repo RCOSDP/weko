@@ -75,7 +75,7 @@ from weko_redis.redis import RedisConnection
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
-    get_root_item_option, get_sub_item_option
+    get_root_item_option, get_sub_item_option, get_identifier_setting
 from weko_schema_ui.models import PublishStatus
 from weko_user_profiles import UserProfile
 from weko_workflow.api import WorkActivity
@@ -2221,6 +2221,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
         doi_value, doi_type = identifier.get_idt_registration_data()
         doi_type_str = doi_type[0] if doi_type and doi_type[0] else ''
         doi_str = doi_value[0] if doi_value and doi_value[0] else ''
+        identifier_setting = get_identifier_setting("Root Index")
         if doi_type_str and doi_str:
             doi_domain = ''
             if doi_type_str == WEKO_IMPORT_DOI_TYPE[0]:
@@ -2233,6 +2234,9 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
                 doi_domain = IDENTIFIER_GRANT_LIST[4][2]
             if doi_domain and doi_str.startswith(doi_domain):
                 doi_str = doi_str.replace(doi_domain + '/', '', 1)
+            if doi_type_str == WEKO_IMPORT_DOI_TYPE[0] and \
+                    doi_str.startswith(identifier_setting.ndl_jalc_doi + "/"):
+                doi_type_str = WEKO_IMPORT_DOI_TYPE[3]
         records.attr_output[recid].extend([
             doi_type_str,
             doi_str
@@ -4234,6 +4238,7 @@ def make_stats_file_with_permission(item_type_id, recids,
         doi_value, doi_type = identifier.get_idt_registration_data()
         doi_type_str = doi_type[0] if doi_type and doi_type[0] else ''
         doi_str = doi_value[0] if doi_value and doi_value[0] else ''
+        identifier_setting = get_identifier_setting("Root Index")
         if doi_type_str and doi_str:
             doi_domain = ''
             if doi_type_str == WEKO_IMPORT_DOI_TYPE[0]:
@@ -4246,6 +4251,9 @@ def make_stats_file_with_permission(item_type_id, recids,
                 doi_domain = IDENTIFIER_GRANT_LIST[4][2]
             if doi_domain and doi_str.startswith(doi_domain):
                 doi_str = doi_str.replace(doi_domain + '/', '', 1)
+            if doi_type_str == WEKO_IMPORT_DOI_TYPE[0] and \
+                    doi_str.startswith(identifier_setting.ndl_jalc_doi + "/"):
+                doi_type_str = WEKO_IMPORT_DOI_TYPE[3]
         records.attr_output[recid].extend([
             doi_type_str,
             doi_str
