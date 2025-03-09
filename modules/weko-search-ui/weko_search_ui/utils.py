@@ -4164,12 +4164,14 @@ def handle_check_authors_prefix(list_record):
         keys = set()
         # find all keys that have "nameIdentifiers" in their values
         # may be nested in a list
-        for k, v in item["metadata"]:
+        for k, v in item["metadata"].items():
             if isinstance(v, dict):
                 if "nameIdentifiers" in v:
                     keys |= {k}
-            else:
-                keys |= {k for i in v if "nameIdentifiers" in i}
+            elif isinstance(v, list):
+                keys |= {
+                    k for i in v if isinstance(i, dict) and "nameIdentifiers" in i
+                }
 
         errors += [
             f'"{scheme}" is not one of {allowed_scheme} in {key}'
@@ -4182,12 +4184,12 @@ def handle_check_authors_prefix(list_record):
             )
             for id in author.get("nameIdentifiers", [{}])
             for scheme in [id.get("nameIdentifierScheme")]
-            if scheme not in allowed_scheme
+            if scheme is not None and scheme not in allowed_scheme
         ]
 
         if errors:
             item["errors"] = (
-                item["errors"] + errors if "errors" in item else errors
+                item["errors"] + errors if item.get("errors") else errors
             )
 
 
@@ -4209,18 +4211,20 @@ def handle_check_authors_affiliation(list_record):
         creator_keys = set()
         contributor_keys = set()
         # find all keys that have "affiliationNameIdentifiers"
-        for k, v in item["metadata"]:
+        for k, v in item["metadata"].items():
             if isinstance(v, dict):
                 if "creatorAffiliations" in v:
                     creator_keys |= {k}
                 if "contributorAffiliations" in v:
                     contributor_keys |= {k}
-            else:
+            elif isinstance(v, list):
                 creator_keys |= {
-                    k for i in v if "creatorAffiliations" in i
+                    k for i in v
+                    if isinstance(i, dict) and "creatorAffiliations" in i
                 }
                 contributor_keys |= {
-                    k for i in v if "contributorAffiliations" in i
+                    k for i in v
+                    if isinstance(i, dict) and "contributorAffiliations" in i
                 }
 
         errors += [
@@ -4235,7 +4239,7 @@ def handle_check_authors_affiliation(list_record):
             for affiliation in creator.get("creatorAffiliations", [{}])
             for id in affiliation.get("affiliationNameIdentifiers", [{}])
             for scheme in [id.get("affiliationNameIdentifierScheme")]
-            if scheme not in allowed_scheme
+            if scheme is not None and scheme not in allowed_scheme
         ]
         errors += [
             f'"{scheme}" is not one of {allowed_scheme} in {key}'
@@ -4249,12 +4253,12 @@ def handle_check_authors_affiliation(list_record):
             for affiliation in contributor.get("contributorAffiliations", [{}])
             for id in affiliation.get("affiliationNameIdentifiers", [{}])
             for scheme in [id.get("affiliationNameIdentifierScheme")]
-            if scheme not in allowed_scheme
+            if scheme is not None and scheme not in allowed_scheme
         ]
 
         if errors:
             item["errors"] = (
-                item["errors"] + errors if "errors" in item else errors
+                item["errors"] + errors if item.get("errors") else errors
             )
 
 
