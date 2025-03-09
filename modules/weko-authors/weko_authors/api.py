@@ -154,7 +154,7 @@ class WekoAuthors(object):
             metadata = author.json
             for authorIdInfo in metadata.get('authorIdInfo', {}):
                 idType = authorIdInfo.get('idType')
-                if idType and idType != '1':
+                if idType:
                     author_ids = existed_external_authors_id.get(idType, {})
                     weko_ids = author_ids.get(authorIdInfo.get('authorId'), [])
                     weko_ids.append(str(author.id))
@@ -200,6 +200,27 @@ class WekoAuthors(object):
                         return pk_id
         return -1
 
+    @classmethod
+    def get_weko_id_by_pk_id(cls, pk_id):
+        """pk_idからweko_idを取得します。
+
+        Args:
+            pk_id (str): pk_id
+
+        Returns:
+            weko_id :str 
+        """
+        try:
+            with db.session.begin_nested():
+                author = Authors.query.filter_by(id=pk_id).one()
+                json = author.json
+                for author_id_info in json["authorIdInfo"]:
+                    if author_id_info["idType"] == "1":
+                        weko_id = author_id_info["authorId"]
+                        break
+            return weko_id
+        except Exception as ex:
+            raise ex
 
     @classmethod
     def get_identifier_scheme_info(cls):

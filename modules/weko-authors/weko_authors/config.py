@@ -75,11 +75,10 @@ WEKO_AUTHORS_FILE_MAPPING = [
         "json_id": "weko_id",
         "label_en": "WEKO ID",
         "label_jp": "WEKO ID",
-        "validation": {
-            "required": {
-                "if": [
-                    "always"
-                ]
+        'validation': {
+            'validator': {
+                'class_name': 'weko_authors.contrib.validation',
+                'func_name': 'validate_digits_for_wekoid'
             }
         }
     },
@@ -200,126 +199,130 @@ WEKO_AUTHORS_FILE_MAPPING = [
     }
 ]
 
-WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION = {
-    "json_id": "affiliationInfo",
-    "child": [
-        {
-            "json_id": "identifierInfo",
-            "child": [
-                {
-                    "json_id": "affiliationIdType",
-                    "label_en": "Affiliation Identifier Scheme",
-                    "label_jp": "外部所属機関ID 識別子",
-                    "validation": {
-                        "validator": {
-                            "class_name": "weko_authors.contrib.validation",
-                            "func_name": "validate_affiliation_identifier_scheme"
-                        },
-                        "required": {
-                            "if": [
-                                "affiliationId"
-                            ]
+WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION ={
+        "json_id": "affiliationInfo",
+        "child": [
+            {
+                "json_id": "identifierInfo",
+                "child": [
+                    {
+                        "json_id": "affiliationIdType",
+                        "label_en": "Affiliation Identifier Scheme",
+                        "label_jp": "外部所属機関ID 識別子",
+                        "validation": {
+                            "validator": {
+                                "class_name": "weko_authors.contrib.validation",
+                                "func_name": "validate_affiliation_identifier_scheme"
+                            },
+                            "required": {
+                                "if": [
+                                    "affiliationId"
+                                ]
+                            }
                         }
-                    }
-                },
-                {
-                    "json_id": "affiliationId",
-                    "label_en": "Affiliation Identifier",
-                    "label_jp": "外部所属機関ID",
-                    "validation": {
-                        "required": {
-                            "if": [
-                                "affiliationIdType"
-                            ]
-                        }
-                    }
-                },
-                {
-                    "json_id": "identifierShowFlg",
-                    "label_en": "Affiliation Identifier Display",
-                    "label_jp": "外部所属機関ID 表示／非表示",
-                    "mask": {
-                        "true": "Y",
-                        "false": "N"
-                    }
-                }
-            ]
-        },
-        {
-            "json_id": "affiliationNameInfo",
-            "child": [
-                {
-                    "json_id": "affiliationName",
-                    "label_en": "Affiliation Name",
-                    "label_jp": "外部所属機関名"
-                },
-                {
-                    "json_id": "affiliationNameLang",
-                    "label_en": "Language",
-                    "label_jp": "言語",
-                    "validation": {
-                        "map": [
-                            "ja",
-                            "ja-Kana",
-                            "en",
-                            "fr",
-                            "it",
-                            "de",
-                            "es",
-                            "zh-cn",
-                            "zh-tw",
-                            "ru",
-                            "la",
-                            "ms",
-                            "eo",
-                            "ar",
-                            "el",
-                            "ko"
-                        ]
-                    }
-                },
-                {
-                    "json_id": "affiliationNameShowFlg",
-                    "label_en": "Affiliation Name Display",
-                    "label_jp": "外部所属機関名・言語 表示／非表示",
-                    "mask": {
-                        "true": "Y",
-                        "false": "N"
                     },
-                    "validation": {
-                        "map": [
-                            "Y",
-                            "N"
-                        ]
+                    {
+                        "json_id": "affiliationId",
+                        "label_en": "Affiliation Identifier",
+                        "label_jp": "外部所属機関ID",
+                        "validation": {
+                            "required": {
+                                "if": [
+                                    "affiliationIdType"
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "json_id": "identifierShowFlg",
+                        "label_en": "Affiliation Identifier Display",
+                        "label_jp": "外部所属機関ID 表示／非表示",
+                        "mask": {
+                            "true": "Y",
+                            "false": "N"
+                        }
                     }
-                }
-            ]
-        },
-        {
-            "json_id": "affiliationPeriodInfo",
-            "child": [
-                {
-                    "json_id": "periodStart",
-                    "label_en": "Affiliation Period Start",
-                    "label_jp": "外部所属機関 所属期間 開始日",
-                    "validator": {
-                        "class_name": "weko_authors.contrib.validation",
-                        "func_name": "validate_affiliation_period_start"
+                ]
+            },
+            {
+                "json_id": "affiliationNameInfo",
+                "child": [
+                    {
+                        "json_id": "affiliationName",
+                        "label_en": "Affiliation Name",
+                        "label_jp": "外部所属機関名"
+                    },
+                    {
+                        "json_id": "affiliationNameLang",
+                        "label_en": "Language",
+                        "label_jp": "言語",
+                        "validation": {
+                            "map": [
+                                "ja",
+                                "ja-Kana",
+                                "en",
+                                "fr",
+                                "it",
+                                "de",
+                                "es",
+                                "zh-cn",
+                                "zh-tw",
+                                "ru",
+                                "la",
+                                "ms",
+                                "eo",
+                                "ar",
+                                "el",
+                                "ko"
+                            ]
+                        }
+                    },
+                    {
+                        "json_id": "affiliationNameShowFlg",
+                        "label_en": "Affiliation Name Display",
+                        "label_jp": "外部所属機関名・言語 表示／非表示",
+                        "mask": {
+                            "true": "Y",
+                            "false": "N"
+                        },
+                        "validation": {
+                            "map": [
+                                "Y",
+                                "N"
+                            ]
+                        }
                     }
-                },
-                {
-                    "json_id": "periodEnd",
-                    "label_en": "Affiliation Period End",
-                    "label_jp": "外部所属機関 所属期間 終了日",
-                    "validator": {
-                        "class_name": "weko_authors.contrib.validation",
-                        "func_name": "validate_affiliation_period_end"
+                ]
+            },
+            {
+                "json_id": "affiliationPeriodInfo",
+                "child": [
+                    {
+                        "json_id": "periodStart",
+                        "label_en": "Affiliation Period Start",
+                        "label_jp": "外部所属機関 所属期間 開始日",
+                        "validation": {
+                            "validator": {
+                                "class_name": "weko_authors.contrib.validation",
+                                "func_name": "validate_affiliation_period_start"
+                            }
+                        }
+                    },
+                    {
+                        "json_id": "periodEnd",
+                        "label_en": "Affiliation Period End",
+                        "label_jp": "外部所属機関 所属期間 終了日",
+                        "validation": {
+                            "validator": {
+                                "class_name": "weko_authors.contrib.validation",
+                                "func_name": "validate_affiliation_period_end"
+                            }
+                        }
                     }
-                }
-            ]
-        }
-    ]
-}
+                ]
+            }
+        ]
+    }
 
 
 WEKO_AUTHORS_ADMIN_IMPORT_TEMPLATE = 'weko_authors/admin/author_import.html'

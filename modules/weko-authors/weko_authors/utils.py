@@ -42,7 +42,8 @@ from invenio_files_rest.models import FileInstance, Location
 from invenio_indexer.api import RecordIndexer
 
 from weko_authors.contrib.validation import validate_by_extend_validator, \
-    validate_external_author_identifier, validate_map, validate_required
+    validate_external_author_identifier, validate_map, validate_required, \
+        check_weko_id_is_exits_for_import
 
 from .api import WekoAuthors
 from .config import WEKO_AUTHORS_FILE_MAPPING, \
@@ -301,12 +302,15 @@ def check_import_data(file_name: str, file_content: str):
     try:
         temp_file.write(base64.b64decode(file_content))
         temp_file.flush()
-
+        affiliation_mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"])
+        mapping = deepcopy(WEKO_AUTHORS_FILE_MAPPING)
+        mapping.append(affiliation_mappings)
         flat_mapping_all, flat_mapping_ids = flatten_authors_mapping(
-            WEKO_AUTHORS_FILE_MAPPING)
+            mapping)
         file_format = file_name.split('.')[-1].lower()
         file_data = unpackage_and_check_import_file(
             file_format, file_name, temp_file.name, flat_mapping_ids)
+        
         result['list_import_data'] = validate_import_data(
             file_format, file_data, flat_mapping_ids, flat_mapping_all)
     except Exception as ex:
@@ -446,11 +450,18 @@ def validate_import_data(file_format, file_data, mapping_ids, mapping):
         errors = []
         warnings = []
 
-        weko_id = item.get('pk_id')
+        pk_id = item.get('pk_id')
+        weko_id = item.get("weko_id")
+        current_weko_id = WekoAuthors.get_weko_id_by_pk_id(pk_id)
+        item["current_weko_id"] = current_weko_id
+        errors_msg = check_weko_id_is_exits_for_import(pk_id, weko_id, existed_external_authors_id) 
+        if errors_msg:
+            errors.extend(errors_msg)
+    
         # check duplication WEKO ID
-        if weko_id and weko_id not in list_import_id:
-            list_import_id.append(weko_id)
-        elif weko_id:
+        if pk_id and pk_id not in list_import_id:
+            list_import_id.append(pk_id)
+        elif pk_id:
             errors.append(_('There is duplicated data in the {} file.').format(file_format))
 
         # set status
@@ -492,7 +503,7 @@ def validate_import_data(file_format, file_data, mapping_ids, mapping):
             # check by extend validator
             if validation.get('validator'):
                 errors_msg = validate_by_extend_validator(
-                    values, validation.get('validator'))
+                    item, values, validation.get('validator'))
                 if errors_msg:
                     errors.extend(errors_msg)
 
