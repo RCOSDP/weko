@@ -66,6 +66,7 @@ def create():
     
     # weko_idを取得する。
     author_id_info = data["authorIdInfo"]
+    weko_id = None
     for i in author_id_info:
         if i.get('idType') == '1':
             weko_id = i.get('authorId')
