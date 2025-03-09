@@ -88,9 +88,10 @@ def create():
     
     #periodのバリーデーションチェック
     result_period_check = check_period_date(data)
-    if result_period_check == False:
-        # period
+    if result_period_check[0] == False and result_period_check[1] == "not date format":
         return jsonify(msg=_('Please set the affiliation start date and end date in the format yyyy-MM-dd.')), 500
+    elif result_period_check[0] == False and result_period_check[1] == "start is after end":
+        return jsonify(msg=_('The end date must be after the start date.')), 500
     
     try:
         WekoAuthors.create(data)
