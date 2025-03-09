@@ -125,7 +125,11 @@ class WekoAuthors(object):
         else:
             update_es_data(es_data, es_id)
         from weko_deposit.tasks import update_items_by_authorInfo
-        user_id = current_user.get_id()
+        if not current_user:
+            user_id = None
+        else:
+            user_id = current_user.get_id()
+        
         update_items_by_authorInfo.delay(
             user_id, data, [author_id], [data["id"]], force_change=force_change)
 
@@ -212,7 +216,9 @@ class WekoAuthors(object):
         """
         try:
             with db.session.begin_nested():
-                author = Authors.query.filter_by(id=pk_id).one()
+                author = Authors.query.filter_by(id=pk_id).one_or_none()
+                if not author:
+                    return None
                 json = author.json
                 for author_id_info in json["authorIdInfo"]:
                     if author_id_info["idType"] == "1":

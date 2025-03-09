@@ -264,7 +264,6 @@ def update_items_by_authorInfo( user_id, target, origin_pkid_list=[], origin_id_
                                     # 1.current_weko_linkの値にdataのweko_idが含まれているかを確認する。
                                     # 2.weko_idが含まれている場合、current_weko_linkでそのweko_id対応するpk_idを取得する。
                                     pk_ids = [k for k, v in current_weko_link.items() if v == id.get("nameIdentifier")]
-                                    current_app.logger.error(pk_ids)
                                     if pk_ids:
                                         pk_id = pk_ids[0]
                                         author_link.add(pk_id)
@@ -344,7 +343,7 @@ def update_items_by_authorInfo( user_id, target, origin_pkid_list=[], origin_id_
         max_back_off_time = current_app.config['WEKO_DEPOSIT_MAX_BACK_OFF_TIME']
         if record_ids:
             # sleep(20)
-            current_app.logger.error("Start updated records to ES. record_ids:{}".format(record_ids))
+            current_app.logger.debug("Start updated records to ES. record_ids:{}".format(record_ids))
             sleep_time = 2
             count = 1
             while sleep_time <= max_back_off_time:

@@ -263,9 +263,7 @@ def check_weko_id_is_exits_for_import(pk_id, weko_id, existed_external_authors_i
     """
     errors = []
     err_msg = _("Specified WEKO ID already exist.")
-    
-    exists_id = existed_external_authors_id["1"][weko_id]
-    print(exists_id, pk_id)
+    exists_id = existed_external_authors_id["1"].get(weko_id)
     if exists_id and not (pk_id in exists_id) :
         errors.append(err_msg)
     return errors

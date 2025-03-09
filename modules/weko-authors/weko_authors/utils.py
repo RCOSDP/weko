@@ -438,10 +438,14 @@ def validate_import_data(file_format, file_data, mapping_ids, mapping):
         mapping (list): List mapping.
     """
     authors_prefix = {}
+    affilaition_id_prefix = {}
     with db.session.no_autoflush:
         authors_prefix = AuthorsPrefixSettings.query.all()
         authors_prefix = {
             prefix.scheme: prefix.id for prefix in authors_prefix}
+        affilaition_id_prefix = AuthorsAffiliationSettings.query.all()
+        affilaition_id_prefix = {
+            prefix.scheme: prefix.id for prefix in affilaition_id_prefix}
 
     list_import_id = []
     existed_authors_id, existed_external_authors_id = \
@@ -523,6 +527,8 @@ def validate_import_data(file_format, file_data, mapping_ids, mapping):
                     item, values, existed_external_authors_id)
                 if warning:
                     warnings.append(warning)
+            if _key == "affiliationInfo[0].identifierInfo[0].affiliationIdType":
+                convert_scheme_to_id(item, values, affilaition_id_prefix)
 
         if errors:
             item['errors'] = item['errors'] + errors \
@@ -602,7 +608,7 @@ def convert_scheme_to_id(item, values, authors_prefix):
         if value['value']:
             reduce_keys = value['reduce_keys']
             reduce(getitem, reduce_keys[:-1], item)[reduce_keys[-1]] = \
-                authors_prefix.get(value['value'], None)
+                str(authors_prefix.get(value['value'], None))
 
 
 def set_record_status(file_format, list_existed_author_id, item, errors, warnings):
@@ -689,7 +695,7 @@ def import_author_to_system(author):
                     0,
                     {
                         "idType": "1",
-                        "authorId": author['pk_id'],
+                        "authorId": author['weko_id'],
                         "authorIdShowFlg": "true"
                     }
                 )
