@@ -239,14 +239,14 @@ class ImportView(BaseView):
         result_check = check_is_import_available(data.get('group_task_id'))
         if not result_check['is_available']:
             return jsonify(result_check)
-
+        force_change_mode = data.get("force_change_mode", False)
         tasks = []
         records = [item for item in data.get(
             'records', []) if not item.get('errors')]
         
         group_tasks = []
         for author in records:
-            group_tasks.append(import_author.s(author))
+            group_tasks.append(import_author.s(author, force_change_mode))
 
         # handle import tasks
         import_task = group(group_tasks).apply_async()

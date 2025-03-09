@@ -339,3 +339,26 @@ msgstr ""
 #~ " it is."
 #~ msgstr ""
 
+#~ msgid "Force Change Mode"
+#~ msgstr ""
+
+#~ msgid "Disclaimer:"
+#~ msgstr ""
+
+#~ msgid "- When using this function, all metadata using author information is forcibly changed to match the author DB when updating."
+#~ msgstr ""
+
+#~ msgid "- If not used, only the author and affiliation identifiers are changed when updating."
+#~ msgstr ""
+
+#~ msgid "- Before starting this operation, you need fully understand the contents and metadata using AuthorDB at your institution."
+#~ msgstr ""
+
+#~ msgid "- Use this function on your own responsibility."
+#~ msgstr ""
+
+#~ msgid "- National Institute of Informatics (NII) does not take any responsibility for damages caused by using this function."
+#~ msgstr ""
+
+#~ msgid "I agree to the terms of use."
+#~ msgstr ""

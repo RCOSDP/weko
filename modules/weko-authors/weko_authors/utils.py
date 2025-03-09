@@ -661,7 +661,7 @@ def flatten_authors_mapping(mapping, parent_key=None):
     return result_all, result_keys
 
 
-def import_author_to_system(author):
+def import_author_to_system(author, force_change_mode):
     """Import author to DB and ES.
 
     Args:
@@ -670,7 +670,11 @@ def import_author_to_system(author):
     if author:
         try:
             status = author['status']
+            weko_id = author['weko_id']
             del author['status']
+            del author["weko_id"]
+            del author["current_weko_id"]
+            check_weko_id = check_weko_id_is_exists(weko_id, author.get('pk_id'))
 
             author["is_deleted"] = True if author.get("is_deleted") else False
             if not author.get('authorIdInfo'):
@@ -685,21 +689,25 @@ def import_author_to_system(author):
                     nameInfo["fullName"] = fullName
 
             if status == 'new':
+                if not check_weko_id:
+                    raise Exception({'error_id': "WekoID is duplicated"})
                 WekoAuthors.create(author)
             else:
                 if status == 'deleted' \
                         and get_count_item_link(author['pk_id']) > 0:
                     raise Exception({'error_id': 'delete_author_link'})
-
+                
+                if not check_weko_id:
+                    raise Exception({'error_id': "WekoID is duplicated"})
                 author["authorIdInfo"].insert(
                     0,
                     {
                         "idType": "1",
-                        "authorId": author['weko_id'],
+                        "authorId": weko_id,
                         "authorIdShowFlg": "true"
                     }
                 )
-                WekoAuthors.update(author['pk_id'], author)
+                WekoAuthors.update(author['pk_id'], author, force_change_mode)
             db.session.commit()
         except Exception as ex:
             db.session.rollback()

@@ -360,3 +360,26 @@ msgstr ""
 #~ " it is."
 #~ msgstr "指定された著者は削除済です。{}の内容で著者情報を更新しますが、著者は削除されたままです。"
 
+#~ msgid "Force Change Mode"
+#~ msgstr "強制変更モード"
+
+#~ msgid "Disclaimer:"
+#~ msgstr "免責事項："
+
+#~ msgid "- When using this function, all metadata using author information is forcibly changed to match the author DB when updating."
+#~ msgstr "・本機能を使用する場合、更新時に著者情報を使ったメタデータを著者DBに合わせて強制的に全て変更します。"
+
+#~ msgid "- If not used, only the author and affiliation identifiers are changed when updating."
+#~ msgstr "・使用しない場合、更新時に著者識別子、機関識別子のみ変更します。"
+
+#~ msgid "- Before starting this operation, you need fully understand the contents and metadata using AuthorDB at your institution."
+#~ msgstr "・本機能は内容及び自機関で登録されている著者情報を使ったメタデータについて十分に理解した上で作業を行なってください。"
+
+#~ msgid "- Use this function on your own responsibility."
+#~ msgstr "・本機能の利用は、自機関の責任で行なってください。"
+
+#~ msgid "- National Institute of Informatics (NII) does not take any responsibility for damages caused by using this function."
+#~ msgstr "・本機能の利用により負った損害などについては、国立情報学研究所は一切の責任を追いません。"
+
+#~ msgid "I agree to the terms of use."
+#~ msgstr "利用規約に同意します。"

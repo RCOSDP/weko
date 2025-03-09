@@ -50,11 +50,11 @@ def export_all():
 
 
 @shared_task
-def import_author(author):
+def import_author(author, force_change_mode):
     """Import Author."""
     result = {'start_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
     try:
-        import_author_to_system(author)
+        import_author_to_system(author, force_change_mode)
         result['status'] = states.SUCCESS
     except Exception as ex:
         current_app.logger.error(ex)
