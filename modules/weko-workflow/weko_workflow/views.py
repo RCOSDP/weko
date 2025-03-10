@@ -182,7 +182,6 @@ def index():
         return abort(403)
 
     activity = WorkActivity()
-    print("request.args",request.args)
     conditions = filter_all_condition(request.args)
     ctx = {'community': None}
     community_id = ""
@@ -261,31 +260,19 @@ def index():
 
     # Get Approver Info
     for activitie in activities:
-        print("activitie.action_id",activitie.action_id)
-        print("activitie.email",activitie.email)
-        print("activitie.action",activitie.action)
-        print("activitie.action_status",activitie.action_status)
         activitie.approver = []
         activitie.approver_email = []
         steps = activity.get_activity_steps(activitie.activity_id)
         for step in steps:
             if step['ActionName'] == 'Approval':
-                print("ええええええ")
-                print(step)
-                print(step['Author'])
                 approver = User.query.filter_by(email=step['Author']).one_or_none()
                 if approver is not None:
                     approver_id = approver.id
-                    print("approver_id",approver_id)
                     approver_profile = UserProfile.get_by_userid(approver_id)
-                    print("approver_profile",approver_profile)
-                    print(hasattr(approver_profile, 'display_name'))
-                    print(hasattr(approver_profile, 'displayname'))
-                    print(hasattr(approver_profile, '_displayname'))
                     if hasattr(approver_profile, '_displayname') and approver_profile._displayname:
-                        print("approver_profile.display_name",approver_profile._displayname)
                         activitie.approver.append(approver_profile._displayname)
                     else:
+                        # If the Author has not registered his/her name, use his/her email address. 
                         activitie.approver.append(step['Author'])
                 else:
                     activitie.approver.append(step['Author'])
