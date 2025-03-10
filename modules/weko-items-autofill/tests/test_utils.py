@@ -236,7 +236,7 @@ def test_get_title_pubdate_path(app, itemtypes):
     }
 
     # not reached break
-    all_false_mapping = {"test1": {}, "test2": {}}
+    all_false_mapping = {"test1": {}, "test2": {}, "test3":""}
     with patch(
         "weko_items_autofill.utils.Mapping.get_record", return_value=all_false_mapping
     ):
