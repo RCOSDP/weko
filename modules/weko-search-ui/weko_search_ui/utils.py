@@ -3132,6 +3132,7 @@ def get_thumbnail_key(item_type_id=0):
             if not isinstance(item, dict):
                 continue
             if item.get("properties") and item["properties"].get("subitem_thumbnail"):
+                return key
 
 
 def handle_check_thumbnail_file_type(thumbnail_paths):
