@@ -99,9 +99,10 @@ def get_item_id(item_type_id):
     item_type_mapping = Mapping.get_record(item_type_id)
     try:
         for k, v in item_type_mapping.items():
-            jpcoar = v.get("jpcoar_mapping")
-            if isinstance(jpcoar, dict):
-                _get_jpcoar_mapping(results, jpcoar)
+            if isinstance(v, dict):
+                jpcoar = v.get("jpcoar_mapping")
+                if isinstance(jpcoar, dict):
+                    _get_jpcoar_mapping(results, jpcoar)
     except Exception as e:
         current_app.logger.debug(e)
         results['error'] = str(e)
@@ -148,11 +149,12 @@ def get_title_pubdate_path(item_type_id):
     item_type_mapping = Mapping.get_record(item_type_id)
     title = dict()
     for k, v in sorted(item_type_mapping.items()):
-        jpcoar = v.get("jpcoar_mapping")
-        if isinstance(jpcoar, dict) and 'title' in jpcoar.keys():
-            _get_title_data(jpcoar, k, title)
-            if title:
-                break
+        if isinstance(v, dict):
+            jpcoar = v.get("jpcoar_mapping")
+            if isinstance(jpcoar, dict) and 'title' in jpcoar.keys():
+                _get_title_data(jpcoar, k, title)
+                if title:
+                    break
     result['title'] = title
     return result
 

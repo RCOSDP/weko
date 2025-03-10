@@ -589,7 +589,7 @@ def db(app):
     yield db_
     db_.session.remove()
     db_.drop_all()
-    # drop_database(str(db_.engine.url))
+    drop_database(str(db_.engine.url))
 
 
 @pytest.yield_fixture()

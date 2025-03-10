@@ -99,6 +99,10 @@
                         <video controls>
                           <source src="{{file_preview_url}}" type="{{file.mimetype}}">
                         </video>
+                      {%- elif 'text/csv' in file.mimetype -%}
+                        <iframe class="preview-iframe" id="preview-iframe" width="100%" height="400"
+                          src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.filename or file.key, allow_aggs=allow_aggs_preview) }}">
+                        </iframe>
                       {%- elif 'text' in file.mimetype -%}
                         <object data="{{file_preview_url}}" type="{{file.mimetype}}"></object>
                       {%- else -%}

@@ -53,7 +53,7 @@ from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
-from weko_records.api import ItemLink, Mapping
+from weko_records.api import ItemLink, Mapping, ItemTypes
 from weko_records.serializers import citeproc_v1
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import custom_record_medata_for_export, \
@@ -387,11 +387,16 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
                     'item_values': rights_values
                 }
 
+    item_type_id = record.get('item_type_id', -1)
+    item_type = ItemTypes.get_by_id(item_type_id)
     # Check file permision if request is File Information page.
     file_order = int(request.args.get("file_order", -1))
     if filename:
         check_file = None
-        _files = record.get_file_data()
+        if item_type:
+            _files = record.get_file_data(item_type)
+        else:
+            _files = record.get_file_data()
         if not _files:
             abort(404)
 
@@ -407,7 +412,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
             check_file = find_filenames[0]
 
         # Check file contents permission
-        if not file_permission_factory(record, fjson=check_file).can():
+        if not file_permission_factory(record, fjson=check_file, item_type=item_type).can():
             if not current_user.is_authenticated:
                 return _redirect_method(has_next=True)
             abort(403)
@@ -505,10 +510,16 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     title_name = ''
     rights_values = {}
     accessRight = ''
-    meta_options, item_type_mapping = get_options_and_order_list(
-        record.get('item_type_id'))
-    hide_list = get_hide_list_by_schema_form(record.get('item_type_id'))
-    item_map = get_mapping(record.get('item_type_id'), 'jpcoar_mapping')
+    hide_list = []
+    if item_type:
+        meta_options = get_options_and_order_list(
+            item_type_id,
+            item_type_data=ItemTypes(item_type.schema, model=item_type),
+            mapping_flag=False)
+        hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+    else:
+        meta_options = get_options_and_order_list(item_type_id, mapping_flag=False)
+    item_map = get_mapping(item_type_id, 'jpcoar_mapping', item_type=item_type)
 
     # get title info
     title_value_key = 'title.@value'
@@ -635,23 +646,23 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         files_thumbnail = ObjectVersion.get_by_bucket(
             record.files.bucket.id, asc_sort=True).\
             filter_by(is_thumbnail=True).all()
-    is_display_file_preview, files = get_file_info_list(record)
+    is_display_file_preview, files = get_file_info_list(record, item_type=item_type)
     # Flag: can edit record
     can_edit = True if pid == get_record_without_version(pid) else False
 
     open_day_display_flg = current_app.config.get('OPEN_DATE_DISPLAY_FLG')
     # Hide email of creator in pdf cover page
-    if record.get('item_type_id'):
-        item_type_id = record['item_type_id']
-    is_show_email = is_show_email_of_creator(item_type_id)
+    is_show_email = is_show_email_of_creator(item_type_id, item_type=item_type)
     if not is_show_email:
         # list_hidden = get_ignore_item(record['item_type_id'])
         # record = hide_by_itemtype(record, list_hidden)
-        record = hide_by_email(record)
+        record = hide_by_email(record, item_type=item_type)
     
     # Remove hide item
     from weko_items_ui.utils import get_ignore_item
-    list_hidden = get_ignore_item(record['item_type_id'])
+    list_hidden = []
+    if item_type:
+        list_hidden = get_ignore_item(item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
     record = hide_by_itemtype(record, list_hidden)
 
     # Get Facet search setting.
@@ -964,13 +975,16 @@ def citation(record, pid, style=None, ln=None):
 def soft_delete(recid):
     """Soft delete item."""
     try:
-        if not has_update_version_role(current_user):
+        _id = recid
+        if recid.startswith('del_ver_'):
+            _id = _id.replace('del_ver_', '')
+        record = WekoRecord.get_record_by_pid(_id)
+        if not check_created_id(record):
             abort(403)
         if recid.startswith('del_ver_'):
-            recid = recid.replace('del_ver_', '')
-            delete_version(recid)
+            delete_version(_id)
         else:
-            soft_delete_imp(recid)
+            soft_delete_imp(_id)
         db.session.commit()
         return make_response('PID: ' + str(recid) + ' DELETED', 200)
     except Exception as ex:
@@ -991,7 +1005,8 @@ def soft_delete(recid):
 def restore(recid):
     """Restore item."""
     try:
-        if not has_update_version_role(current_user):
+        record = WekoRecord.get_record_by_pid(recid)
+        if not check_created_id(record):
             abort(403)
         restore_imp(recid)
         return make_response('PID: ' + str(recid) + ' RESTORED', 200)

@@ -135,6 +135,8 @@ from weko_workflow.utils import (
     grant_access_rights_to_all_open_restricted_files,
     delete_lock_activity_cache,
     delete_user_lock_activity_cache,
+    check_an_item_is_locked,
+    bulk_check_an_item_is_locked,
 )
 from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
 from weko_workflow.models import Activity
@@ -186,27 +188,38 @@ def test_saving_doi_pidstore(db_records,item_type,mocker):#c
         "identifier_grant_jalc_dc_doi_link":"https://doi.org/3000/0000000001",
         "identifier_grant_ndl_jalc_doi_link":"https://doi.org/4000/0000000001"
     }
+    # jalc doi, tmp save
     mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
     result = saving_doi_pidstore(item_id,pid_without_ver,data,1,True)
     assert result == True
     mock_update.assert_has_calls([mocker.call("1000/0000000001","JaLC")])
     
+    # jalc crossref doi
     mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
     result = saving_doi_pidstore(item_id,pid_without_ver,data,2,False)
     assert result == True
     mock_update.assert_has_calls([mocker.call("2000/0000000001","Crossref")])
     
+    # jalc datacite doi
     with patch("weko_workflow.utils.IdentifierHandle.register_pidstore",return_value=True):
         mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
         result = saving_doi_pidstore(item_id,pid_without_ver,data,3,False)
         assert result == True
         mock_update.assert_has_calls([mocker.call("3000/0000000001","DataCite"),mocker.call("3000/0000000001","DataCite")])
     
+    with patch("weko_workflow.utils.IdentifierHandle.register_pidstore",return_value=False):
+        mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
+        result = saving_doi_pidstore(item_id,pid_without_ver,data,4,False)
+        mock_update.assert_has_calls([mocker.call("4000/0000000001","JaLC")])
+        assert result == True
+
+    # ndl jalc doi, raise exception
     with patch("weko_workflow.utils.IdentifierHandle.register_pidstore",side_effect=Exception):
         mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
         result = saving_doi_pidstore(item_id,pid_without_ver,data,4,False)
         assert result == False
 
+    # other doi
     mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
     result = saving_doi_pidstore(uuid.uuid4(),pid_without_ver,data,"wrong",False)
     assert result == False
@@ -342,7 +355,7 @@ def test_item_metadata_validation(db_records,item_type):
     with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
         side_effect=[("item_1617258105262.resourcetype", ['thesis']),(None,["report"])]):
         result = item_metadata_validation(None,"5",without_ver_id=without_ver.object_uuid,record=record,file_path="test_file_path")
-        assert result == 'Cannot register selected DOI for current Item Type of this item.'
+        assert result['other'] == 'Cannot register selected DOI for current Item Type of this item.'
 
 
 #* THIS IS FOR JPCOAR2.0 DOI VALIDATION TEST
@@ -397,6 +410,8 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
             if result_1_check_item_1 in result_1.get(result_1_key):
                 result_1_check_list_2.append(result_1_check_item_1)
     assert len(result_1_check_list_2) == 1
+    # issue 45809
+    assert not "jpcoar:pageStart" in result_1.get("either_key")
 
     #* 別表2-3 JaLC DOI
     recid2, depid2, record2, item2, parent2, doi2, deposit2 = db_records_for_doi_validation_test[2]
@@ -510,7 +525,7 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
         for result_6_key in result_6_keys:
             if result_6_check_item_1 in result_6.get(result_6_key):
                 result_6_check_list_2.append(result_6_check_item_1)
-    assert len(result_6_check_list_2) == 3
+    assert len(set(result_6_check_list_2)) == 3
 
     #* 別表3-2 Crossref DOI
     recid7, depid7, record7, item7, parent7, doi7, deposit7 = db_records_for_doi_validation_test[7]
@@ -1008,11 +1023,48 @@ def test_get_cache_data(client):
     current_cache.set(key, value)
     result = get_cache_data(key)
     assert result == value
+
+
 # def check_an_item_is_locked(item_id=None):
+# def bulk_check_an_item_is_locked(item_ids=[]):
 #     def check(workers):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_check_an_item_is_locked():
-    pass
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_check_an_item_is_locked -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_check_an_item_is_locked(app):
+    with app.app_context():
+        with patch("weko_workflow.utils.inspect") as mock_inspect:
+            mock_inspect_instance = mock_inspect.return_value
+            # inspect(timeout=_timeout).ping()
+            mock_inspect_instance.ping.return_value = True
+            # inspect(timeout=_timeout).active()
+            mock_inspect_instance.active.return_value = {
+                'worker1': [
+                    {'name': 'weko_search_ui.tasks.import_item', 'args': [{'id': '1'}]},
+                    {'name': 'weko_search_ui.tasks.import_item', 'args': [{'id': '2'}]},
+                ],
+                'worker2': [
+                    {'name': 'weko_search_ui.tasks.import_item', 'args': [{'id': '3'}, {'id': '99'}]},
+                ],
+            }
+            # inspect(timeout=_timeout).reserved()
+            mock_inspect_instance.reserved.return_value = {
+                'worker3': [
+                    {'name': 'weko_search_ui.tasks.import_item', 'args': [{'id': '4'}]},
+                    {'name': 'weko_search_ui.tasks.test_task', 'args': [{'id': '5'}]},
+                ],
+            }
+
+            item_ids = list(range(1,5))
+            result = []
+            for i in item_ids:
+                if check_an_item_is_locked(str(i)):
+                    result.append(str(i))
+
+            assert bulk_check_an_item_is_locked(item_ids) == result == ["1","2","3","4"]
+
+            assert check_an_item_is_locked() == False
+            assert bulk_check_an_item_is_locked() == []
+
+
 # def get_account_info(user_id):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_accoutn_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_accoutn_info(users):
@@ -3232,7 +3284,8 @@ def test_delete_user_lock_activity_cache(client,users):
     user = users[2]
     login_user(user["obj"])
     data = {
-        "is_opened": False
+        "is_opened": False,
+        "is_force": False,
     }
     activity_id = "A-22240219-00001"
     cache_key = "workflow_userlock_activity_{}".format(user["id"])
@@ -3240,12 +3293,22 @@ def test_delete_user_lock_activity_cache(client,users):
     # cur_locked_val is empty
     result = delete_user_lock_activity_cache(activity_id, data)
     assert result == "Not unlock"
-    
-    
     # cur_locked_val is not empty, is_opened is False
     current_cache.set(cache_key, activity_id)
     result = delete_user_lock_activity_cache(activity_id, data)
     assert result == "User Unlock Success"
     assert current_cache.get(cache_key) == None
-    
+
+    # cur_locked_val is not empty, is_opened is True, is_force is False
+    current_cache.set(cache_key, activity_id)
+    data["is_opened"] = True
+    result = delete_user_lock_activity_cache(activity_id, data)
+    assert result == "Not unlock"
+
+    # cur_locked_val is not empty, is_opened is True, is_force is True
+    data["is_force"] = True
+    result = delete_user_lock_activity_cache(activity_id, data)
+    assert result == "User Unlock Success"
+    assert current_cache.get(cache_key) == None
+
     current_cache.delete(cache_key)

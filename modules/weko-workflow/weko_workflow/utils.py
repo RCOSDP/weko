@@ -69,6 +69,7 @@ from weko_user_profiles.config import \
 from weko_user_profiles.utils import get_user_profile_info
 from werkzeug.utils import import_string
 from weko_deposit.pidstore import get_record_without_version
+from weko_schema_ui.models import PublishStatus
 
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, \
@@ -184,7 +185,7 @@ def saving_doi_pidstore(item_id,
         ndljalcdoi_dc_tail = (ndljalcdoi_dc_link.split('//')[1]).split('/')
         identifier_val = ndljalcdoi_dc_link
         doi_register_val = '/'.join(ndljalcdoi_dc_tail[1:])
-        doi_register_typ = 'NDL JaLC'
+        doi_register_typ = 'JaLC'
     else:
         current_app.logger.error(_('Identifier datas are empty!'))
         return False
@@ -315,7 +316,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     """
     
     ddi_item_type_name = 'DDI'
-    journalarticle_type = ['other', 'conference paper',
+    journalarticle_type = ['conference paper',
                            'data paper', 'departmental bulletin paper',
                            'editorial', 'journal','journal article',
                            'review article', 'article','newspaper', 'software paper', 'periodical']
@@ -471,7 +472,6 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
-                'pageStart',
                 # 'fileURI',
             ]
             # いずれか必須が動いていない
@@ -1889,13 +1889,20 @@ def handle_finish_workflow(deposit, current_pid, recid):
             weko_record = WekoRecord.get_record_by_pid(new_deposit.pid.pid_value)
             if weko_record:
                 weko_record.update_item_link(current_pid.pid_value)
-            updated_item.publish(deposit)
-            updated_item.publish(ver_attaching_deposit)
+            updated_item.publish(deposit, PublishStatus.PUBLIC.value)
+            updated_item.publish(ver_attaching_deposit, PublishStatus.PUBLIC.value)
         else:
             # update to record without version ID when editing
             if pid_without_ver:
+                _doi = PersistentIdentifier.query.filter_by(
+                    pid_type='doi',
+                    object_uuid=pid_without_ver.object_uuid,
+                    status=PIDStatus.REGISTERED
+                ).one_or_none()
                 _record = WekoDeposit.get_record(
                     pid_without_ver.object_uuid)
+                _publish_status = _record.get('publish_status', PublishStatus.PUBLIC.value) \
+                    if _doi is None else PublishStatus.PUBLIC.value
                 _deposit = WekoDeposit(_record, _record.model)
                 _deposit['path'] = deposit.get('path', [])
 
@@ -1920,7 +1927,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                         merge_data_to_record_without_version(current_pid, True)
                     maintain_deposit.publish()
                     new_parent_record.commit()
-                    updated_item.publish(new_parent_record)
+                    updated_item.publish(new_parent_record, _publish_status)
                     # update item link info of main record
                     weko_record = WekoRecord.get_record_by_pid(
                         maintain_record.pid.pid_value)
@@ -1938,7 +1945,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                         merge_data_to_record_without_version(current_pid)
                     draft_deposit.publish()
                     new_draft_record.commit()
-                    updated_item.publish(new_draft_record)
+                    updated_item.publish(new_draft_record, PublishStatus.NEW.value)
                     # update item link info of draft record
                     weko_record = WekoRecord.get_record_by_pid(
                         draft_deposit.pid.pid_value)
@@ -1951,7 +1958,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                 if weko_record:
                     weko_record.update_item_link(current_pid.pid_value)
                 parent_record.commit()
-                updated_item.publish(parent_record)
+                updated_item.publish(parent_record, _publish_status)
                 if ".0" in current_pid.pid_value and last_ver:
                     item_id = last_ver.object_uuid
                 else:
@@ -2021,6 +2028,30 @@ def check_an_item_is_locked(item_id=None):
 
     return check(inspect(timeout=_timeout).active()) or \
         check(inspect(timeout=_timeout).reserved())
+
+
+def bulk_check_an_item_is_locked(item_ids=[]):
+    """Check bulk if an item is locked.
+
+    :param item_ids: Item id list.
+
+    :return list: Locked item id list.
+    """
+    _timeout = current_app.config.get("CELERY_GET_STATUS_TIMEOUT", 3.0)
+    if not item_ids or not inspect(timeout=_timeout).ping():
+        return []
+
+    item_ids = [str(item_id) for item_id in item_ids]
+    result = []
+    for state in ['active', 'reserved']:
+        workers = getattr(inspect(timeout=_timeout), state)()
+        for worker in workers:
+            for task in workers[worker]:
+                if task['name'] == 'weko_search_ui.tasks.import_item' \
+                        and task['args'][0].get('id') in item_ids:
+                    result.append(task['args'][0].get('id'))
+
+    return result
 
 
 def get_account_info(user_id):
@@ -4485,7 +4516,7 @@ def delete_user_lock_activity_cache(activity_id, data):
     cur_locked_val = str(get_cache_data(cache_key)) or str()
     msg = _("Not unlock")
 
-    if cur_locked_val and not data["is_opened"] or (cur_locked_val == activity_id):
+    if cur_locked_val and not data["is_opened"] or (cur_locked_val == activity_id and data['is_force']):
         delete_cache_data(cache_key)
         msg = "User Unlock Success"
     return msg
