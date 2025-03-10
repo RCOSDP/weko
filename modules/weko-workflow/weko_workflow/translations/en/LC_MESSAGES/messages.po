@@ -55,6 +55,10 @@ msgstr "Workflow List"
 msgid "Flow List"
 msgstr ""
 
+#: weko_workflow/admin.py:603
+msgid "Activity"
+msgstr ""
+
 #: weko_workflow/api.py:998 weko_workflow/views.py:171
 msgid "End"
 msgstr ""

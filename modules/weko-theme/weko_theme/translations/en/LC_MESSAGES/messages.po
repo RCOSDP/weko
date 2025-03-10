@@ -867,6 +867,10 @@ msgid "Admin menu_Setting_Items"
 msgstr "Items"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Activity"
+msgstr "Activity"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Index Link"
 msgstr "Index Link"
 
