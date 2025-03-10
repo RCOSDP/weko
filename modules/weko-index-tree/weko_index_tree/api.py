@@ -722,6 +722,9 @@ class Indexes(object):
                 - filtered_roles: 特定の条件を満たすロールのリスト。
                 - excluded_roles: 特定の条件を満たさないロールのリスト。
         """
+        if not isinstance(roles, list):
+            raise TypeError("roles must be a list")
+
         roles_gakunin_map_group = []
         other_roles = []
 
@@ -729,7 +732,7 @@ class Indexes(object):
         role_keyword = current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT']['role_keyword']
         default_weko_role_names = current_app.config['WEKO_PERMISSION_ROLE_USER'] + ['Authenticated User', 'Guest']
         for role in roles:
-            # ロール名が設定されたキーワードに含まれていない、かつロール名が設定されたプレフィックスに含まれていない、かつロール名が「Contributor」、「Community Administrator」、「Repository Administrator」、「System Administrator」のいずれでもないことを確認します。
+            # ロール名が設定されたキーワードに含まれていない、かつロール名が設定されたプレフィックスに含まれていない、かつロール名が'WEKO_PERMISSION_ROLE_USER','Authenticated User','Guest'のいずれでもないことを確認します。
             if not (role["name"].startswith(gakunin_map_prefix) and role_keyword in role["name"]) and \
                     role["name"] not in default_weko_role_names:
                 roles_gakunin_map_group.append({'id': role['id'], 'name': role['name']})
@@ -743,7 +746,7 @@ class Indexes(object):
         def _get_allow_deny(allow, role, browse_flag=False):
             alw = []
             deny = []
-            if isinstance(role, list):
+            if role:
                 while role:
                     tmp = role.pop(0)
                     if tmp["name"] not in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
@@ -808,8 +811,7 @@ class Indexes(object):
             index["public_date"] = index["public_date"].strftime('%Y%m%d')
 
         group_list = Group.query.all()
-#browsing_groupとcontribute_groupの値を取得して、browsing_groupとcontribute_groupの辞書の値を保持します。
-        # browsing_groupの値を取得して、辞書の値を保持します。。
+        #browsing_groupとcontribute_groupの値を取得して、browsing_groupとcontribute_groupの辞書の値を保持します。
         allow_browsing_group_ids = index["browsing_group"].split(',') \
             if len(index["browsing_group"]) else []
         allow_browsing_groups, deny_browsing_groups = _get_group_allow_deny(allow_browsing_group_ids,

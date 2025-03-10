@@ -11,6 +11,8 @@ from weko_accounts.models import ShibbolethUser
 from weko_accounts.api import ShibUser,get_user_info_by_role_name,sync_shib_gakunin_map_groups,update_roles
 from invenio_db import db as db_
 from invenio_accounts import InvenioAccounts
+from weko_accounts.api import ShibUser,get_user_info_by_role_name,sync_shib_gakunin_map_groups,update_roles,update_browsing_role,remove_browsing_role,update_contribute_role,remove_contribute_role
+from weko_index_tree.models import Index
 
 #class ShibUser(object):
 class TestShibUser:
@@ -670,3 +672,230 @@ def test_update_roles_add_new_roles(app, db, mocker):
         assert 'group3' in role_names  # 新しいロールが追加されていることを確認
         assert 'group4' not in role_names  # 既存のロールが削除されていることを確認
         assert '' not in role_names  # 空のロールが追加されていないことを確認
+
+#.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_update_roles_with_permissions -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_update_roles_with_permissions(app, db, mocker):
+    with app.app_context():
+        # テストデータの準備
+        map_group_list = ['group1', 'group2', 'group3', '']
+        existing_role_names = {'group1', 'group4'}
+
+        # 既存のロールを追加
+        existing_roles = []
+        for role_name in existing_role_names:
+            role = Role(name=role_name, description="description")
+            db.session.add(role)
+            existing_roles.append(role)
+        db.session.commit()
+
+        # Indexインスタンスを追加
+        index1 = Index(id=1, parent=0, position=1, index_name='group1', index_name_english='Group 1 English')
+        index2 = Index(id=2, parent=0, position=2, index_name='group2', index_name_english='Group 2 English')
+        index3 = Index(id=3, parent=0, position=3, index_name='group3', index_name_english='Group 3 English')
+        db.session.add(index1)
+        db.session.add(index2)
+        db.session.add(index3)
+        db.session.commit()
+
+        # 設定をモック
+        app.config['WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION'] = True
+        app.config['WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSION'] = True
+
+        # APIモジュールのメソッドをモック
+        mock_update_browsing_role = mocker.patch('weko_accounts.api.update_browsing_role')
+        mock_remove_browsing_role = mocker.patch('weko_accounts.api.remove_browsing_role')
+        mock_update_contribute_role = mocker.patch('weko_accounts.api.update_contribute_role')
+        mock_remove_contribute_role = mocker.patch('weko_accounts.api.remove_contribute_role')
+
+        # update_rolesの呼び出し
+        update_roles(map_group_list, existing_roles)
+
+        # APIモジュールのメソッドが呼び出されたことを確認
+        assert mock_update_browsing_role.call_count == 1
+        assert mock_remove_browsing_role.call_count == 1
+        assert mock_update_contribute_role.call_count == 1
+        assert mock_remove_contribute_role.call_count == 1
+
+def test_update_roles_with_permissions_false(app, db, mocker):
+    with app.app_context():
+        # テストデータの準備
+        map_group_list = ['group1', 'group2', 'group3', '']
+        existing_role_names = {'group1', 'group4'}
+
+        # 既存のロールを追加
+        existing_roles = []
+        for role_name in existing_role_names:
+            role = Role(name=role_name, description="description")
+            db.session.add(role)
+            existing_roles.append(role)
+        db.session.commit()
+
+        # Indexインスタンスを追加
+        index1 = Index(id=1, parent=0, position=1, index_name='group1', index_name_english='Group 1 English')
+        index2 = Index(id=2, parent=0, position=2, index_name='group2', index_name_english='Group 2 English')
+        index3 = Index(id=3, parent=0, position=3, index_name='group3', index_name_english='Group 3 English')
+        db.session.add(index1)
+        db.session.add(index2)
+        db.session.add(index3)
+        db.session.commit()
+
+        # 設定をモック
+        app.config['WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION'] = False
+        app.config['WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSION'] = False
+
+        # APIモジュールのメソッドをモック
+        mock_update_browsing_role = mocker.patch('weko_accounts.api.update_browsing_role')
+        mock_remove_browsing_role = mocker.patch('weko_accounts.api.remove_browsing_role')
+        mock_update_contribute_role = mocker.patch('weko_accounts.api.update_contribute_role')
+        mock_remove_contribute_role = mocker.patch('weko_accounts.api.remove_contribute_role')
+
+        # update_rolesの呼び出し
+        update_roles(map_group_list, existing_roles)
+
+        # APIモジュールのメソッドが呼び出されたことを確認
+        assert mock_update_browsing_role.call_count == 0
+        assert mock_remove_browsing_role.call_count == 0
+        assert mock_update_contribute_role.call_count == 0
+        assert mock_remove_contribute_role.call_count == 0
+
+#.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_update_roles_with_permissions_index_none -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_update_roles_with_permissions_index_none(app, db, mocker):
+    with app.app_context():
+        # テストデータの準備
+        map_group_list = ['group1', 'group2', 'group3', '']
+        existing_role_names = {'group1', 'group4'}
+
+        # 既存のロールを追加
+        existing_roles = []
+        for role_name in existing_role_names:
+            role = Role(name=role_name, description="description")
+            db.session.add(role)
+            existing_roles.append(role)
+        db.session.commit()
+
+        # Indexインスタンスを設定しない
+
+        # 設定をモック
+        app.config['WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION'] = True
+        app.config['WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSION'] = True
+
+        # APIモジュールのメソッドをモック
+        mock_update_browsing_role = mocker.patch('weko_accounts.api.update_browsing_role')
+        mock_remove_browsing_role = mocker.patch('weko_accounts.api.remove_browsing_role')
+        mock_update_contribute_role = mocker.patch('weko_accounts.api.update_contribute_role')
+        mock_remove_contribute_role = mocker.patch('weko_accounts.api.remove_contribute_role')
+
+        # update_rolesの呼び出し
+        update_roles(map_group_list, existing_roles)
+
+        # APIモジュールのメソッドが呼び出されたことを確認
+        assert mock_update_browsing_role.call_count == 0
+        assert mock_remove_browsing_role.call_count == 0
+        assert mock_update_contribute_role.call_count == 0
+        assert mock_remove_contribute_role.call_count == 0
+#.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_update_and_remove_browsing_role -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_update_and_remove_browsing_role(app, db):
+    with app.app_context():
+        # テスト用のIndexインスタンスを作成
+        index = Index(
+            id=1,
+            index_name='Test Index',
+            index_name_english='Test Index English'
+        )
+        db.session.add(index)
+        db.session.commit()
+
+        # 初期状態では browsing_role は None
+        assert index.browsing_role is None
+
+        # browsing_role が None の場合に remove_browsing_role を呼び出す
+        remove_browsing_role(index, 1)
+        db.session.commit()
+        assert index.browsing_role is None  # 変更がないことを確認
+
+        # ロールID 1 を追加
+        update_browsing_role(index, 1)
+        db.session.commit()
+        assert index.browsing_role == '1'
+
+        # 存在しないロールID 3 を削除しようとする
+        remove_browsing_role(index, 3)
+        db.session.commit()
+        assert index.browsing_role == '1'  # 変更がないことを確認
+
+        # ロールID 2 を追加
+        update_browsing_role(index, 2)
+        db.session.commit()
+        assert set(index.browsing_role.split(',')) == {'1', '2'}
+
+        # 既存のロールID 1 を再度追加しても重複しない
+        update_browsing_role(index, 1)
+        db.session.commit()
+        assert set(index.browsing_role.split(',')) == {'1', '2'}
+
+        # ロールID 1 を削除
+        remove_browsing_role(index, 1)
+        db.session.commit()
+        assert index.browsing_role == '2'
+
+        # ロールID 2 を削除
+        remove_browsing_role(index, 2)
+        db.session.commit()
+        assert index.browsing_role == ''
+
+        # クリーンアップ
+        db.session.delete(index)
+        db.session.commit()
+#.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_update_and_remove_contribute_role -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_update_and_remove_contribute_role(app, db):
+    with app.app_context():
+        # テスト用のIndexインスタンスを作成
+        index = Index(
+            id=1,
+            index_name='Test Index',
+            index_name_english='Test Index English'
+        )
+        db.session.add(index)
+        db.session.commit()
+
+        # 初期状態では browsing_role は None
+        assert index.contribute_role is None
+
+        # browsing_role が None の場合に remove_browsing_role を呼び出す
+        remove_contribute_role(index, 1)
+        db.session.commit()
+        assert index.contribute_role is None  # 変更がないことを確認
+
+        # ロールID 1 を追加
+        update_contribute_role(index, 1)
+        db.session.commit()
+        assert index.contribute_role == '1'
+
+        # 存在しないロールID 3 を削除しようとする
+        remove_contribute_role(index, 3)
+        db.session.commit()
+        assert index.contribute_role == '1'  # 変更がないことを確認
+
+        # ロールID 2 を追加
+        update_contribute_role(index, 2)
+        db.session.commit()
+        assert set(index.contribute_role.split(',')) == {'1', '2'}  # 順序を考慮しない
+
+        # 既存のロールID 1 を再度追加しても重複しない
+        update_contribute_role(index, 1)
+        db.session.commit()
+        assert set(index.contribute_role.split(',')) == {'1', '2'}  # 順序を考慮しない
+
+        # ロールID 1 を削除
+        remove_contribute_role(index, 1)
+        db.session.commit()
+        assert index.contribute_role == '2'
+
+        # ロールID 2 を削除
+        remove_contribute_role(index, 2)
+        db.session.commit()
+        assert index.contribute_role == ''
+
+        # クリーンアップ
+        db.session.delete(index)
+        db.session.commit()
