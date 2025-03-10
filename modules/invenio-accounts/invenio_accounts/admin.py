@@ -86,13 +86,13 @@ class UserView(ModelView):
 
     def scaffold_form(self):
         form_class = super(UserView, self).scaffold_form()
-        form_class.roles = QuerySelectMultipleField(
+        form_class.role = QuerySelectMultipleField(
             'Roles',
             query_factory=lambda: Role.query.filter(~Role.name.like('%_groups_%')).all(),
             get_label='name',
             widget=Select2Widget(multiple=True)
         )
-        form_class.groups = QuerySelectMultipleField(
+        form_class.group = QuerySelectMultipleField(
             'Groups',
             query_factory=lambda: Role.query.filter(Role.name.like('%_groups_%')).all(),
             get_label='name',
@@ -102,7 +102,7 @@ class UserView(ModelView):
         return form_class
     
     def _order_fields(self, form):
-        custom_order = ['email', 'password', 'active', 'roles','groups', 'notification']
+        custom_order = ['email', 'password', 'active', 'role', 'group', 'notification']
         ordered_fields = OrderedDict()
         for field_name in custom_order:
             ordered_fields[field_name] = form._fields[field_name]
@@ -119,8 +119,8 @@ class UserView(ModelView):
 
     def on_form_prefill(self, form, id):
         obj = self.get_one(id)
-        form.roles.data = [role for role in obj.roles if '_groups_' not in role.name]
-        form.groups.data = [role for role in obj.roles if '_groups_' in role.name]
+        form.role.data = [role for role in obj.roles if '_groups_' not in role.name]
+        form.group.data = [role for role in obj.roles if '_groups_' in role.name]
     
     def on_model_change(self, form, User, is_created):
         """Hash password when saving."""
@@ -129,7 +129,7 @@ class UserView(ModelView):
             if pwd_ctx.identify(form.password.data) is None:
                 User.password = hash_password(form.password.data)
 
-        roles = form.roles.data + form.groups.data
+        roles = form.role.data + form.group.data
         User.roles = roles
 
     def after_model_change(self, form, User, is_created):
