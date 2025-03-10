@@ -57,7 +57,8 @@ from .mapper import WekoSwordMapper
 from .utils import (
     get_record_by_client_id,
     unpack_zip,
-    process_json
+    process_json,
+    get_priority
 )
 
 
@@ -123,7 +124,7 @@ def import_items_to_activity(item, data_path, request_info):
             in files_info[0].get("items", {})
     ]
     comment = metadata.get("comment")
-    link_data = item.get("link_data")
+    link_data = item['metadata'].link_data
     grant_data = item.get("grant_data")
 
     try:
@@ -431,10 +432,8 @@ def check_bagit_import_items(file, packaging, is_change_identifier=False):
 
         # TODO: validate mapping
         mapping = sword_mapping.mapping
-
         with open(f"{data_path}/{json_name}", "r") as f:
             json_ld = json.load(f)
-
         mapper = JsonLdMapper(item_type.id, mapping)
         item_metadatas, _ = mapper.to_item_metadata(json_ld)
         list_record = [
@@ -446,6 +445,8 @@ def check_bagit_import_items(file, packaging, is_change_identifier=False):
                     "publish_status": item_metadata.get("publish_status"),
                 } for item_metadata in item_metadatas
             ]
+        list_record.sort(key=lambda x: get_priority(x['metadata'].link_data))
+
         handle_index_tree_much_with_workflow(list_record, workflow)
         handle_file_save_as_is(file, data_path, filename)
 
@@ -460,7 +461,6 @@ def check_bagit_import_items(file, packaging, is_change_identifier=False):
         handle_check_id(list_record)
         handle_check_and_prepare_index_tree(list_record, True, [])
         handle_check_and_prepare_publish_status(list_record)
-
         # check if the user has scopes to publish
         required_scopes = set([actions_scope.id])
         token_scopes = set(request.oauth.access_token.scopes)
@@ -579,7 +579,7 @@ def handle_index_tree_much_with_workflow(list_record, workflow):
     """Handle index tree id much with workflow."""
     if workflow is None or workflow.index_tree_id is None:
         return
-    
+
     for record in list_record:
         record.get("metadata").update({"path": [workflow.index_tree_id]})
         current_app.logger.info(

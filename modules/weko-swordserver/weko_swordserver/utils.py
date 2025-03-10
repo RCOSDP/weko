@@ -144,10 +144,8 @@ def get_record_by_client_id(client_id):
             value in the tuple will be None.
     """
     sword_client = SwordClient.get_client_by_id(client_id)
-
     mapping_id = sword_client.mapping_id if sword_client is not None else None
     sword_mapping = SwordItemTypeMapping.get_mapping_by_id(mapping_id)
-
     return sword_client, sword_mapping
 
 
@@ -229,3 +227,93 @@ def process_json(json_ld):
     }
 
     return json
+
+def get_priority(link_data):
+    sele_ids = [link['sele_id'] for link in link_data]
+    item_ids = [link['item_id'] for link in link_data]
+
+    # Check if all sele_id are 'isSupplementTo'
+    all_isSupplementTo = all(sele_id == 'isSupplementTo' for sele_id in sele_ids)
+
+    # Check if all item_id are not numbers
+    all_item_ids_not_numbers = all(not item_id.isdigit() for item_id in item_ids)
+
+    # Check if there is any item_id that is not a number
+    has_item_ids_not_numbers = any(not item_id.isdigit() for item_id in item_ids)
+
+    # Check if there is any 'isSupplementTo' with item_id that is not a number
+    has_isSupplementTo_with_not_number = any(
+        link['sele_id'] == 'isSupplementTo' and not link['item_id'].isdigit()
+        for link in link_data
+    )
+
+    # Check if all item_id of 'isSupplementTo' are numbers
+    all_isSupplementTo_item_ids_are_numbers = all(
+        link['item_id'].isdigit() for link in link_data
+        if link['sele_id'] == 'isSupplementTo'
+    )
+
+    # Check if all sele_id are 'isSupplementedBy'
+    all_isSupplementedBy = all(sele_id == 'isSupplementedBy' for sele_id in sele_ids)
+
+    if all_isSupplementTo and all_item_ids_not_numbers:
+        return 1  # Highest priority
+    elif all_isSupplementTo and has_item_ids_not_numbers:
+        return 2  # Second priority
+    elif has_isSupplementTo_with_not_number:
+        return 3  # Third priority
+    elif all_isSupplementTo and all_isSupplementTo_item_ids_are_numbers:
+        return 4  # Fourth priority
+    elif all_isSupplementedBy:
+        return 5  # Lowest priority
+    else:
+        return 6  # Other cases (if any)
+
+
+def update_item_ids(list_record, new_id):
+    """
+    Iterate through list_record, check and update item_id.
+
+    :param list_record: A list containing multiple ITEMs.
+    :param new_id: The new ID used to overwrite item_id.
+    :return: The updated list_record.
+    """
+    if not isinstance(list_record, list):
+        raise ValueError("list_record must be a list.")
+
+    # Iterate through each ITEM in list_record
+    for item in list_record:
+        if not isinstance(item, dict):
+            continue
+
+        # Get the current ITEM's identifier
+        current_identifier = item['metadata'].id
+        if not current_identifier:
+            continue  # Skip if identifier is missing
+
+        # Iterate through other ITEMs' metadata.link_data
+        for other_item in list_record:
+            if not isinstance(other_item, dict):
+                continue
+
+            # Get the other ITEM's metadata.link_data
+            metadata = other_item['metadata']
+            link_data = metadata.link_data
+            if not isinstance(link_data, list):
+                continue
+
+            # Iterate through link_data to check if any item_id matches the current identifier
+            for link_item in link_data:
+                if not isinstance(link_item, dict):
+                    continue
+
+                item_id = link_item.get("item_id")
+                sele_id = link_item.get("sele_id")
+                if item_id == current_identifier and sele_id =="isSupplementedBy":
+                    # If a match is found, overwrite item_id with new_id
+                    link_item["item_id"] = new_id
+                    current_app.logger.info(
+                        f"Updated item_id {item_id} to {new_id} in ITEM {other_item.get('identifier')}"
+                    )
+
+    return list_record
