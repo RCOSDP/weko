@@ -44,7 +44,9 @@ from weko_search_ui.utils import (
     handle_fill_system_item,
     handle_item_title,
     handle_set_change_identifier_flag,
-    handle_validate_item_import
+    handle_validate_item_import,
+    handle_check_authors_prefix,
+    handle_check_authors_affiliation
 )
 from weko_workflow.api import WorkActivity, WorkFlow as WorkFlows
 from weko_workflow.models import ActionStatusPolicy, WorkFlow
@@ -471,6 +473,9 @@ def check_bagit_import_items(file, packaging, is_change_identifier=False):
             abort(403)
 
         handle_check_file_metadata(list_record, data_path)
+        
+        handle_check_authors_prefix(list_record)
+        handle_check_authors_affiliation(list_record)
 
         # add zip file to temporary dictionary
         if current_app.config.get("WEKO_SWORDSERVER_DEPOSIT_DATASET"):
