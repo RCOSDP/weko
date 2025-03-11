@@ -1268,9 +1268,11 @@ def get_authors_affiliation_settings():
     if author_affiliation_settings is not None:
         results = []
         for affiliation in author_affiliation_settings:
+            name = affiliation.name
             scheme = affiliation.scheme
             url = affiliation.url
             result = dict(
+                name=name,
                 scheme=scheme,
                 url=url
             )
