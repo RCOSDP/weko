@@ -294,3 +294,38 @@ def update_workspace_status(user_id, recid, is_favorited=None, is_read=None):
         return status
     else:
         return None
+
+
+def extract_metadata_info(item_metadata):
+    """
+    Extract filelist and peer_reviewed information from _item_metadata.
+
+    Args:
+        item_metadata (dict): The _item_metadata content from JSON.
+
+    Returns:
+        tuple: (filelist, peer_reviewed)
+            - filelist (list): List of filenames, returns empty list if no files.
+            - peer_reviewed (bool): True if "Peer reviewed", False otherwise or if not present.
+    """
+    filelist = []
+    peer_reviewed = False
+
+    # filelistを抽出
+    for key, value in item_metadata.items():
+        if isinstance(value, dict) and value.get("attribute_type") == "file":
+            # attribute_typeが "file" の内容を見つける
+            filelist = value.get("attribute_value_mlt", [])
+            break  # 見つけたらループを終了
+
+    # peer_reviewedを抽出
+    for key, value in item_metadata.items():
+        if isinstance(value, dict) and "attribute_value_mlt" in value:
+            for item in value["attribute_value_mlt"]:
+                if "subitem_peer_reviewed" in item:
+                    peer_reviewed_value = item["subitem_peer_reviewed"]
+                    peer_reviewed = peer_reviewed_value == "Peer reviewed"
+                    break  # 見つけたら内側のループを終了
+            if peer_reviewed:  # peer_reviewedが見つかった場合、外側のループを終了
+                break
+    return filelist, peer_reviewed

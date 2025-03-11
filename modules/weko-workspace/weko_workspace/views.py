@@ -35,6 +35,7 @@ from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from weko_records.api import FeedbackMailList
 
+
 from .utils import *
 from .models import *
 from .defaultfilters import merge_default_filters
@@ -52,6 +53,11 @@ workspace_blueprint = Blueprint(
 @workspace_blueprint.route("/", methods=["GET", "POST"])
 @login_required
 def get_workspace_itemlist():
+    """ Get the list of items in the workspace.
+
+    Returns:
+        HTML: Returns the workspace item list page.
+    """
 
     # 変数初期化
     workspaceItemList = []
@@ -70,6 +76,10 @@ def get_workspace_itemlist():
     # →ループ処理
     for hit in records_data["hits"]["hits"]:
         workspaceItem = copy.deepcopy(current_app.config["WEKO_WORKSPACE_ITEM"])
+        
+        # ファイルリストと査読状況を取得
+        item_metadata = hit["metadata"]["_item_metadata"]
+        filelist, peer_reviewed = extract_metadata_info(item_metadata)
 
         # "recid": None,  # レコードID
         recid = hit["id"]
@@ -93,20 +103,7 @@ def get_workspace_itemlist():
         )
 
         # "peerReviewSts": None,  # 査読チェック状況
-        workspaceItem["peerReviewSts"] = False
-        peerReviewObj = (
-            "item_" + hit["metadata"]["_item_metadata"]["item_type_id"] + "_version_type"
-        )
-        peerReviewObj = [
-            key
-            for key in hit["metadata"]["_item_metadata"].keys()
-            if key.startswith(peerReviewObj)
-        ]
-        if peerReviewObj is not None and len(peerReviewObj) > 0:
-            peerReviewSts = hit["metadata"].get("_item_metadata", []).get("item_30002_version_type15", {}).get("attribute_value_mlt", [{}])[0].get("subitem_peer_reviewed", "")
-            
-            if peerReviewSts is not None and len(peerReviewSts) > 0 and peerReviewSts == "Peer reviewed":
-                workspaceItem["peerReviewSts"] = True
+        workspaceItem["peerReviewSts"] = peer_reviewed
 
         # "doi": None,  # DOIリンク
         identifiers = hit["metadata"].get("identifier", [])
@@ -186,15 +183,8 @@ def get_workspace_itemlist():
         else:
             workspaceItem["awardTitle"] = None
 
-
         # "fbEmailSts": None,  # フィードバックメールステータス
-        workspaceItem["fbEmailSts"] = False
-        
-        feedbackMailList = FeedbackMailList.get_feedback_mail_list()
-        for record in feedbackMailList:
-            if record.mail_list and current_user.email in record.mail_list.get("emails", []):
-                workspaceItem["fbEmailSts"] = True
-                break
+        workspaceItem["fbEmailSts"] = True if current_user.email  in list(FeedbackMailList.get_feedback_mail_list().keys()) else False
 
         # "connectionToPaperSts": None,  # 論文への関連チェック状況
         workspaceItem["connectionToPaperSts"] = True if workspaceItem["resourceType"] in current_app.config["WEKO_WORKSPACE_ARTICLE_TYPES"] else None
@@ -237,63 +227,45 @@ def get_workspace_itemlist():
         workspaceItem["relation"] = relations
 
         # file情報
-        fileObjNm = (
-            "item_" + hit["metadata"]["_item_metadata"]["item_type_id"] + "_file"
-        )
-        fileObjNm = [
-            key
-            for key in hit["metadata"]["_item_metadata"].keys()
-            if key.startswith(fileObjNm)
-        ]
+        publicCnt = 0
+        embargoedCnt = 0
+        restrictedPublicationCnt = 0
 
-        if fileObjNm is not None and len(fileObjNm) > 0:
-            file = fileObjNm[0]
+        if filelist is not None and len(filelist) > 0:
+            # "fileSts": None,  # 本文ファイル有無ステータス
+            workspaceItem["fileSts"] = True
 
-            fileList = []
-            fileList = hit["metadata"].get("_item_metadata", [])[file][
-                "attribute_value_mlt"
+            # "fileCnt": None,  # 本文ファイル数
+            workspaceItem["fileCnt"] = len(filelist)
+
+            accessrole_date_list = [
+                {
+                    "accessrole": item["accessrole"],
+                    "dateValue": item["date"][0]["dateValue"],
+                }
+                for item in filelist
+                if "accessrole" in item and "date" in item
             ]
 
-            publicCnt = 0
-            embargoedCnt = 0
-            restrictedPublicationCnt = 0
+            for accessrole_date in accessrole_date_list:
 
-            fileCnt = len(fileList)
-            if fileCnt > 0:
-                # "fileSts": None,  # 本文ファイル有無ステータス
-                workspaceItem["fileSts"] = True
+                # "publicSts": None,  # 公開ファイル有無ステータス
+                # "publicCnt": None,  # 公開ファイル数
+                if accessrole_date["dateValue"] <= hit["metadata"]["publish_date"]:
+                    publicCnt += 1
 
-                # "fileCnt": None,  # 本文ファイル数
-                workspaceItem["fileCnt"] = fileCnt
+                # "embargoedSts": None,  # エンバーゴ有無ステータス
+                # "embargoedCnt": None,  # エンバーゴ有数
+                if accessrole_date["dateValue"] > datetime.now().strftime("%Y%m%d"):
+                    embargoedCnt += 1
 
-                accessrole_date_list = [
-                    {
-                        "accessrole": item["accessrole"],
-                        "dateValue": item["date"][0]["dateValue"],
-                    }
-                    for item in fileList
-                    if "accessrole" in item and "date" in item
-                ]
-
-                for accessrole_date in accessrole_date_list:
-
-                    # "publicSts": None,  # 公開ファイル有無ステータス
-                    # "publicCnt": None,  # 公開ファイル数
-                    if accessrole_date["dateValue"] <= hit["metadata"]["publish_date"]:
-                        publicCnt += 1
-
-                    # "embargoedSts": None,  # エンバーゴ有無ステータス
-                    # "embargoedCnt": None,  # エンバーゴ有数
-                    if accessrole_date["dateValue"] > datetime.now().strftime("%Y%m%d"):
-                        embargoedCnt += 1
-
-                    # "restrictedPublicationSts": None,  # 制限公開有無ステータス
-                    # "restrictedPublicationCnt": None,  # 制限公開ファイル数
-                    if accessrole_date["accessrole"] == "open_access":
-                        restrictedPublicationCnt += 1
-            else:
-                workspaceItem["fileSts"] = False
-                workspaceItem["fileCnt"] = 0
+                # "restrictedPublicationSts": None,  # 制限公開有無ステータス
+                # "restrictedPublicationCnt": None,  # 制限公開ファイル数
+                if accessrole_date["accessrole"] == "open_access":
+                    restrictedPublicationCnt += 1
+        else:
+            workspaceItem["fileSts"] = False
+            workspaceItem["fileCnt"] = 0
 
         workspaceItem["publicCnt"] = publicCnt if "publicCnt" in locals() else 0
         workspaceItem["embargoedCnt"] = (
@@ -360,10 +332,11 @@ def get_workspace_itemlist():
 @workspace_blueprint.route("/updateStatus", methods=["POST"])
 @login_required
 def update_workspace_status_management():
-    """アイテムのステータスを更新する。
+    """
+    Update the status of an item.
 
     Returns:
-        _type_: _description_
+        JSON: Returns status and message based on the result of the status update.
     """
     data = request.get_json()
 
@@ -401,10 +374,10 @@ def update_workspace_status_management():
 @login_required
 def save_filters():
     """
-    デフォルト絞込み条件を保存する。
+    Save the default filter conditions.
 
     Returns:
-        JSON: 保存結果に基づいてステータスとメッセージを返します。
+        JSON: Returns status and message based on the save result.
     """
     data = request.get_json()
     user_id = current_user.id
@@ -448,10 +421,10 @@ def save_filters():
 @login_required
 def reset_filters():
     """
-    現在のユーザーのworkspace_default_conditionsデータを削除します。
+    Delete the workspace_default_conditions data of the current user.
 
     Returns:
-        JSON: 削除結果に基づいてステータスとメッセージを返します。
+        JSON: Returns status and message based on the deletion result.
     """
 
     user_id = current_user.id

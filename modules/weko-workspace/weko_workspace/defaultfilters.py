@@ -84,7 +84,7 @@ DEFAULT_FILTERS = {
     "peer_review": {
         "label": "査読",
         "options": ["あり", "なし"],
-        "default": ["あり"],  # 単一選択フィールド、デフォルトは未選択で null を使用
+        "default": [],  # 単一選択フィールド、デフォルトは未選択で null を使用
     },
     "related_to_paper": {
         "label": "論文への関連",
