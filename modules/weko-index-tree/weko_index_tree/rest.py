@@ -51,16 +51,13 @@ from .errors import IndexAddedRESTError, IndexNotFoundRESTError, \
 from .models import Index
 from .scopes import create_index_scope,read_index_scope,update_index_scope,delete_index_scope
 from .utils import check_doi_in_index, check_index_permissions, \
-    is_index_locked, perform_delete_index, save_index_trees_to_redis, reset_tree, \
-    create_limiter
+    is_index_locked, perform_delete_index, save_index_trees_to_redis, reset_tree
+from weko_accounts.utils import limiter
 WEKO_ADMIN_PERMISSION_ROLE_SYSTEM = "System Administrator"
 WEKO_ADMIN_PERMISSION_ROLE_REPO = "Repository Administrator"
 WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY = "Community Administrator"
 
 JST = timezone(timedelta(hours=+9), 'JST')
-
-limiter = create_limiter()
-
 
 def need_record_permission(factory_name):
     """Decorator checking that the user has the required permissions on record.
