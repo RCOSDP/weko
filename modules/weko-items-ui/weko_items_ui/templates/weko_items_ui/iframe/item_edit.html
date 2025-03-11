@@ -47,6 +47,8 @@
 <!--<script src="https://unpkg.com/axios/dist/axios.min.js"></script>-->
 
 <script src="{{ url_for('static', filename='js/weko_items_ui/item.autofill.js') }}" type="text/babel"></script>
+<script src="{{ url_for('static', filename='js/weko_items_ui/oapolicy.js') }}"></script>
+
 {% assets "invenio_deposit_dependencies_js" %}
 <script src="{{ ASSET_URL }}"></script>{% endassets %}
 {% assets "weko_admin_react_bootstrap_js" %}
@@ -281,27 +283,29 @@
                 <div class="panel-body panel-body2">
                   <div class="Input">
                     <br>
-                    <!-- OAポリシーURL取得 -->
-                    <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_username">
-                      <label for="policy">OAポリシー情報 </label>
-                    </div>
-                    <div class="col-xs-8 col-sm-8 col-md-9 col-lg-8">
-                      <div class="url">
-                        <button type="button" class="btn btn-primary" id="oapolicyurl">
-                          OAポリシー取得
-                        </button>
-                        <span class="ml-2">
-                          <!-- ポリシーURLを表示 -->
-                          <a id="oaPolicyUrl" href="#" target="_blank" style="display: none;">
-                            <span id="oaPolicyText"></span>
-                          </a>
-                        </span>
-                        <!-- エラーメッセージを赤字で表示 -->
-                        <span class="ml-2 text-danger" id="oaPolicyError"></span>
+                    <!-- OA Policyリンク取得 -->
+                    <div class="panel-body panel-body2">
+                      <div class="Input">
+                        <br>
+                        <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3">
+                          <label for="policy">{{ _('oa_policy_label') }}</label>
+                        </div>
+                        <div class="col-xs-8 col-sm-8 col-md-9 col-lg-8">
+                          <div class="url">
+                            <button type="button" class="btn btn-primary" id="oapolicyurl">
+                              {{ _('oa_policy_export') }}
+                            </button>
+                            <span class="ml-2">
+                              <a id="oaPolicyUrl" href="#" target="_blank" style="display: none;">
+                                <span id="{{ _(oaPolicyText)}}"></span>
+                              </a>
+                            </span>
+                            <span class="ml-2 text-danger" id="{{ _(oaPolicyError)}}"
+                              style="display: inline-block; min-width: 200px;"></span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
                 {%- block feedback_mail_list %}
                 <div id="react"></div>
                 <input id="component-search-email-name" type="hidden" value="{{_('Feedback Mail Destination')}}" />

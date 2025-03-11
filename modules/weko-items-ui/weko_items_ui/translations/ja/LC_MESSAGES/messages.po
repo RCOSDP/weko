@@ -386,6 +386,36 @@ msgstr "画像ファイル（gif, jpg, jpe, jpeg, png, bmp）以外のファイ�
 msgid "is too long."
 msgstr "の数が上限数を超えています。"
 
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:294
+msgid "oa_policy_label"
+msgstr "OA ポリシー情報"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:294
+msgid "oa_policy_export"
+msgstr "OA ポリシー取得"
+
+#: weko-items-ui/weko_items_ui/static/js/weko_items_ui/oapolicy.js:21
+msgid "error_missing_input"
+msgstr "ISSN、eISSN、または雑誌名を入力してください。"
+
+#~ msgid "error_no_policy_found"
+#~ msgstr "一致するポリシー情報が見つかりませんでした。"
+
+#~ msgid "error_api_auth"
+#~ msgstr "認証エラーが発生しました。"
+
+#~ msgid "error_api_generic"
+#~ msgstr "不明なエラーが発生しました。"
+
+#~ msgid "error_api_400"
+#~ msgstr "パラメータが不正です。"
+
+#~ msgid "error_api_404"
+#~ msgstr "一致するポリシー情報が見つかりませんでした。"
+
+#~ msgid "error_api_500"
+#~ msgstr "サーバー内部エラーが発生しました。"
+
 #: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:88
 msgid "Flow"
 msgstr "フロー"

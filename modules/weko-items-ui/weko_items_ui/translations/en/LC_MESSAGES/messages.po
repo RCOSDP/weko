@@ -386,6 +386,36 @@ msgstr ""
 msgid "is too long."
 msgstr ""
 
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:289
+msgid "oa_policy_label"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:294
+msgid "oa_policy_export"
+msgstr ""
+
+#:weko-items-ui/weko_items_ui/static/js/weko_items_ui/oapolicy.js:21
+msgid "error_missing_input"
+msgstr "Please enter ISSN, eISSN, or journal title."
+
+#~ msgid "error_no_policy_found"
+#~ msgstr "No matching policy information found."
+
+#~ msgid "error_api_auth"
+#~ msgstr "Authentication error occurred."
+
+#~ msgid "error_api_generic"
+#~ msgstr "An unknown error occurred."
+
+#~ msgid "error_api_400"
+#~ msgstr "Invalid parameters."
+
+#~ msgid "error_api_404"
+#~ msgstr "No matching policy information found."
+
+#~ msgid "error_api_500"
+#~ msgstr "Internal server error."
+
 #: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:88
 msgid "Flow"
 msgstr ""
