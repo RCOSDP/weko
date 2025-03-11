@@ -229,6 +229,42 @@ class WekoAuthors(object):
             raise ex
 
     @classmethod
+    def get_used_scheme_of_id_prefix(cls):
+        """get used scheme of id prefix."""
+        id_prefixes = cls.get_id_prefix_all()
+        idtype_and_scheme ={}
+        if id_prefixes:
+            for id_prefix in id_prefixes:
+                idtype_and_scheme[id_prefix.id] = id_prefix.scheme
+        used_external_id_prefix = []
+        for author in cls.get_all():
+            metadata = author.json
+            for authorIdInfo in metadata.get('authorIdInfo', {}):
+                idType = authorIdInfo.get('idType')
+                if idType and idType != '1' \
+                    and idtype_and_scheme.get(int(idType)) not in used_external_id_prefix:
+                    used_external_id_prefix.append(idtype_and_scheme.get(int(idType)))
+        return used_external_id_prefix, idtype_and_scheme
+    
+    @classmethod
+    def get_used_scheme_of_affiliation_id(cls):
+        """get used scheme of affiliation id."""
+        affiliaiton_ids = cls.get_affiliation_id_all()
+        idtype_and_scheme ={}
+        if affiliaiton_ids:
+            for affiliaiton_id in affiliaiton_ids:
+                idtype_and_scheme[affiliaiton_id.id] = affiliaiton_id.scheme
+        used_external_id = []
+        for author in cls.get_all():
+            metadata = author.json
+            for affiliationInfo in metadata.get('affiliationInfo', {}):
+                idType = affiliationInfo.get('idType')
+                if idType \
+                    and idtype_and_scheme.get(int(idType)) not in used_external_id:
+                    used_external_id.append(idtype_and_scheme.get(int(idType)))
+        return used_external_id, idtype_and_scheme
+    
+    @classmethod
     def get_identifier_scheme_info(cls):
         """Get all Author Identifier Scheme informations."""
         result = {}
@@ -242,6 +278,46 @@ class WekoAuthors(object):
 
         return result
     
+    @classmethod
+    def get_id_prefix_all(cls):
+        """Get all id_prefix."""
+        with db.session.no_autoflush:
+            query = AuthorsPrefixSettings.query
+            query = query.order_by(AuthorsPrefixSettings.id)
+
+            return query.all()
+        
+    @classmethod
+    def get_scheme_of_id_prefix(cls):
+        """Get all _id_prefix scheme."""
+        result = []
+        id_prefixes = cls.get_id_prefix_all()
+        if id_prefixes:
+            for id_prefix in id_prefixes:
+                result.append(id_prefix.scheme)
+        return result
+        
+    @classmethod
+    def get_affiliation_id_all(cls):
+        """Get all affiliation_id."""
+        with db.session.no_autoflush:
+            query = AuthorsAffiliationSettings.query
+            query = query.order_by(AuthorsAffiliationSettings.id)
+
+            return query.all()
+        
+    @classmethod
+    def get_scheme_of_affiliaiton_id(cls):
+        """Get all affiliation_id scheme."""
+        result = []
+        affiliaiton_ids = cls.get_affiliation_id_all()
+        if affiliaiton_ids:
+            for affiliation_id in affiliaiton_ids:
+                result.append(affiliation_id.scheme)
+        return result
+
+
+
     @classmethod
     def get_affiliation_identifier_scheme_info(cls):
         result = {}
@@ -436,3 +512,17 @@ class WekoAuthors(object):
             row_data.append(row)
 
         return row_header, row_label_en, row_label_jp, row_data
+
+    @classmethod
+    def prepare_export_prefix(cls, target_prefix, prefixes):
+        """Prepare export data of id_prefix, affiliation_id."""
+        row_data = []
+
+        for prefix in prefixes:
+            # 著者識別子のプレフィックスはWEKOのものは除外
+            if target_prefix == "id_prefix" and prefix.scheme == "WEKO":
+                continue
+            row = [prefix.scheme, prefix.name, prefix.url]
+            row_data.append(row)
+
+        return row_data

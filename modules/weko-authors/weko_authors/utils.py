@@ -27,12 +27,15 @@ import io
 import sys
 import tempfile
 import traceback
+from time import sleep
 import re
 import copy 
 from copy import deepcopy
 from functools import reduce
 from operator import getitem
 from sys import stdout
+from sqlalchemy.exc import SQLAlchemyError
+from redis.exceptions import RedisError
 
 from flask import current_app, jsonify
 from flask_babelex import gettext as _
@@ -239,6 +242,14 @@ def save_export_url(start_time, end_time, file_uri):
     current_cache.set(WEKO_AUTHORS_EXPORT_CACHE_URL_KEY, data, timeout=0)
     return data
 
+def handle_exception(ex, attempt, retrys, interval):
+    """Handle exceptions during the export process."""
+    current_app.logger.error(ex)
+    # 最後のリトライの場合は例外をraise
+    if attempt == retrys - 1:
+        return 0
+    current_app.logger.info(f"Connection failed, retrying in {interval} seconds...")
+    sleep(interval)
 
 def export_authors():
     """Export all authors."""
@@ -282,9 +293,79 @@ def export_authors():
         db.session.rollback()
         current_app.logger.error(ex)
         traceback.print_exc(file=stdout)
-
+    current_cache.set(
+        current_app.config.get("WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY"),
+        "author_db",
+        timeout=0
+    )
+    
     return file_uri
 
+def export_prefix(target):
+    file_uri = None
+    retrys = current_app.config["WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY"]
+    interval = current_app.config["WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL"]
+    target_db_name = "author_prefix_settings" if target == "id_prefix" else "author_affiliation_settings"
+    row_first = [f"#{target_db_name}"]
+    row_header = ["#scheme", "name", "url", "is_deleted"]
+    row_label_en = ["#Scheme", "Name", "URL", "Delete Flag"]
+    row_label_jp = ["#スキーム", "名前", "URL", "削除フラグ"]
+
+    for attempt in range(retrys):
+        try:
+            if target == "id_prefix":
+                prefix = WekoAuthors.get_id_prefix_all()
+            elif target == "affiliation_id":
+                prefix = WekoAuthors.get_affiliation_id_all()
+            row_data = WekoAuthors.prepare_export_prefix(target, prefix)
+            # write file data to a stream
+            file_io = io.StringIO()
+            if current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower() == 'csv':
+                writer = csv.writer(file_io, delimiter=',',
+                                    quotechar='"', quoting=csv.QUOTE_MINIMAL,
+                                    lineterminator='\n')
+            else:
+                writer = csv.writer(file_io, delimiter='\t',
+                                    quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            writer.writerows([row_first, row_header, row_label_en, row_label_jp, *row_data])
+            reader = io.BufferedReader(io.BytesIO(
+                file_io.getvalue().encode("utf-8-sig")))
+
+            # save data into location
+            cache_url = get_export_url()
+            if not cache_url:
+                file = FileInstance.create()
+                file.set_contents(
+                    reader, default_location=Location.get_default().uri)
+            else:
+                file = FileInstance.get_by_uri(cache_url['file_uri'])
+                file.writable = True
+                file.set_contents(reader)
+            file_uri = file.uri if file else None
+            db.session.commit()
+            current_cache.set(
+                current_app.config.get("WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY"),
+                target,
+                timeout=0
+            )
+            break
+        except SQLAlchemyError as ex:
+            handle_exception(ex, attempt, retrys, interval)
+        except RedisError as ex:
+            handle_exception(ex, attempt, retrys, interval)
+        except TimeoutError as ex:
+            handle_exception(ex, attempt, retrys, interval)
+    return file_uri
+
+def check_file_name(export_target):
+    file_base_name = ""
+    if export_target == "author_db":
+        file_base_name = current_app.config.get('WEKO_AUTHORS_EXPORT_FILE_NAME')
+    elif export_target == "id_prefix":
+        file_base_name = current_app.config.get('WEKO_AUTHORS_ID_PREFIX_EXPORT_FILE_NAME')
+    elif export_target == "affiliation_id":
+        file_base_name = current_app.config.get('WEKO_AUTHORS_AFFILIATION_EXPORT_FILE_NAME')
+    return file_base_name
 
 def check_import_data(file_name: str, file_content: str):
     """Validation importing tsv/csv file.
@@ -327,6 +408,39 @@ def check_import_data(file_name: str, file_content: str):
 
     return result
 
+def check_import_data_for_prefix(target, file_name: str, file_content: str):
+    """id_prefixかaffiliation_idのインポート用 tsv/csvファイルをバリデーションチェックする.
+    :argument
+        file_name -- file name.
+        file_content -- content file's name.
+    :return
+        return       -- check information.
+    """
+    tmp_prefix = current_app.config['WEKO_AUTHORS_IMPORT_TMP_PREFIX']
+    temp_file = tempfile.NamedTemporaryFile(prefix=tmp_prefix)
+    result = {}
+    print("check_import_data_for_prefix")
+    try:
+        temp_file.write(base64.b64decode(file_content))
+        temp_file.flush()
+
+        file_format = file_name.split('.')[-1].lower()
+        file_data = unpackage_and_check_import_file_for_prefix(
+            file_format, file_name, temp_file.name)
+        result['list_import_data'] = validate_import_data_for_prefix(file_data, target)
+    except Exception as ex:
+        error = _('Internal server error')
+        if isinstance(ex, UnicodeDecodeError):
+            error = ex.reason
+        elif ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                and ex.args[0].get('error_msg'):
+            error = ex.args[0].get('error_msg')
+        result['error'] = error
+        current_app.logger.error('-' * 60)
+        traceback.print_exc(file=sys.stdout)
+        current_app.logger.error('-' * 60)
+
+    return result
 
 def getEncode(filepath):
     """
@@ -540,6 +654,152 @@ def validate_import_data(file_format, file_data, mapping_ids, mapping):
     return file_data
 
 
+def unpackage_and_check_import_file_for_prefix(file_format, file_name, temp_file):
+    from weko_search_ui.utils import handle_check_consistence_with_mapping, \
+        handle_check_duplication_item_id, parse_to_json_form
+    header = []
+    file_data = []
+    current_app.logger.debug("temp_file:{}".format(temp_file))
+    prefix_mapping_key = current_app.config['WEKO_AUTHORS_FILE_MAPPING_FOR_PREFIX']
+    enc = getEncode(temp_file)
+    with open(temp_file, 'r', newline="", encoding=enc) as file:
+        if file_format == 'csv':
+            file_reader = csv.reader(file, dialect='excel', delimiter=',')
+        else:
+            file_reader = csv.reader(file, dialect='excel', delimiter='\t')
+        try:
+            for num, data_row in enumerate(file_reader, start=1):
+                if num ==2:
+                    header = data_row
+                    header[0] = header[0].replace('#', '', 1)
+                    duplication_ids = \
+                        handle_check_duplication_item_id(header)
+                    if duplication_ids:
+                        msg = _(
+                            'The following metadata keys are duplicated.'
+                            '<br/>{}')
+                        raise Exception({
+                            'error_msg':
+                                msg.format('<br/>'.join(duplication_ids))
+                        })
+                    not_consistent_list = \
+                        handle_check_consistence_with_mapping_for_prefix(
+                            prefix_mapping_key, header)
+                    if not_consistent_list:
+                        msg = _('Specified item does not consistency '
+                                'with DB item.<br/>{}')
+                        raise Exception({
+                            'error_msg': msg.format(
+                                '<br/>'.join(not_consistent_list))
+                        })
+                elif num in [3, 4] and data_row[0].startswith('#'):
+                    continue
+                elif num > 4:
+                    pass
+                    tmp_data ={}
+                    try:
+                        for num, data in enumerate(data_row, start=0):
+                            tmp_data[header[num]] = data
+                        print(tmp_data)
+                    except Exception({
+                            'error_msg': _('Cannot read {} file correctly.').format(file_format.upper())
+                        }) as ex:
+                        raise ex
+                    file_data.append(tmp_data)
+        except UnicodeDecodeError as ex:
+            ex.reason = _('{} could not be read. Make sure the file'
+                          + ' format is {} and that the file is'
+                          + ' UTF-8 encoded.').format(file_name, file_format.upper())
+            raise ex
+        except Exception as ex:
+            raise ex
+    return file_data
+            
+
+def handle_check_consistence_with_mapping_for_prefix(keys, header):
+    """Check consistence with mapping."""
+    not_consistent_list = []
+    for item in header:
+        if item not in keys:
+            not_consistent_list.append(item)
+    return not_consistent_list
+
+def validate_import_data_for_prefix(file_data, target):
+    """
+    tsvからのデータを以下の観点でチェックする。
+    ・キーschemeが空かどうか
+    ・キーnameが空かどうか
+    ・urlがURLの記述でない
+    ・作成か更新か削除か
+        ・schemeが既に存在する場合、更新
+        ・存在しないschemeの場合、作成
+        ・is_deletedがDの場合、削除
+    ・targetがid_prefixの時、schemeにWEKOが入力がされているか
+    ・schemeで同じ値が二回出てきているか
+    ・削除の際に、そのschemeが存在するかどうか
+    ・削除の際に、その指定されたschemeが使用されているかどうか
+
+    Args:
+        file_data (json): unpackage_and_check_import_file_for_prefixの戻り値
+        target (str): id_prefix or affiliation_id
+    """
+    if target == "id_prefix":
+        existed_prefix = WekoAuthors.get_scheme_of_id_prefix()
+        used_scheme, id_type_and_scheme = WekoAuthors.get_used_scheme_of_id_prefix()
+    elif target == "affiliation_id":
+        existed_prefix = WekoAuthors.get_scheme_of_affiliaiton_id()
+        used_scheme, id_type_and_scheme = WekoAuthors.get_used_scheme_of_affiliation_id()
+
+    list_import_scheme = []
+    
+    for item in file_data:
+        errors = []
+        scheme = item.get('scheme', "")
+        name = item.get('name', "")
+        url = item.get('url', "")
+        is_deleted = item.get('is_deleted')
+        # キーschemeが空かどうか
+        if not scheme:
+            errors.append(_("Scheme is required item."))
+        # targetがid_prefixの時、schemeにWEKOが入力がされているか
+        if target == "id_prefix" and scheme == "WEKO":
+            errors.append(_("The scheme WEKO cannot be used."))
+        # キーnameが空かどうか
+        if not name:
+            errors.append(_("Name is required item."))
+        # urlがあるとき、urlがURLの記述でない
+        if url and not url.startswith("http"):
+            errors.append(_("URL is not URL format."))
+        if is_deleted == "D":
+            if scheme not in existed_prefix:
+                errors.append(_("The specified scheme does not exist."))
+            else:
+                # schemeが著者DBで使用されている場合、削除しない
+                if scheme in used_scheme:
+                    errors.append(_("The specified scheme is used in the author ID."))
+                id = [k for k, v in id_type_and_scheme.items() if v == scheme]
+                item['id'] = id[0]
+                item['status'] = 'deleted'
+        else:
+            # existed_prefixに含まれていれば更新、ないなら作成
+            if scheme in existed_prefix:
+                id = [k for k, v in id_type_and_scheme.items() if v == scheme]
+                item['id'] = id[0]
+                item['status'] = 'update'
+            else:
+                item['status'] = 'new'
+        
+        # schemeで同じ値が二回出てきているか
+        if scheme in list_import_scheme:
+            errors.append(_("The specified scheme is duplicated."))
+        else: 
+            list_import_scheme.append(scheme)
+        if errors:
+            item['errors'] = item['errors'] + errors \
+                if item.get('errors') else errors
+    return file_data
+        
+
 def get_values_by_mapping(keys, data, parent_key=None):
     """Get values folow by mapping."""
     result = []
@@ -735,6 +995,182 @@ def get_count_item_link(pk_id):
             and result_itemCnt['hits']['total'] > 0:
         count = result_itemCnt['hits']['total']
     return count
+
+def import_id_prefix_to_system(id_prefix):
+    """
+    tsv/csvからのid_prefixをDBにインポートする.
+    Args:
+        id_prefix (object): id_prefix metadata from tsv/csv.
+    """
+    if id_prefix:
+        retrys = current_app.config["WEKO_AUTHORS_BULK_IMPORT_MAX_RETRY"]
+        interval = current_app.config["WEKO_AUTHORS_BULK_IMPORT_RETRY_INTERVAL"]
+        try:
+            status = id_prefix.pop('status')
+            for attempt in range(5):
+                try:
+                    if not id_prefix.get('url'):
+                        id_prefix['url'] = ""
+                    check = get_author_prefix_obj(id_prefix['scheme'])
+                    if status == 'new':
+                        if check is None:
+                            AuthorsPrefixSettings.create(**id_prefix)
+                    elif status == 'update':
+                        if check is None or check.id == id_prefix['id']:
+                            AuthorsPrefixSettings.update(**id_prefix)
+                    elif status == 'deleted':
+                        used_external_id_prefix,_ = WekoAuthors.get_used_scheme_of_id_prefix()
+                        if id_prefix["scheme"] in used_external_id_prefix:
+                            raise Exception({'error_id': 'delete_author_link'})
+                        else:
+                            if check is None or check.id == id_prefix['id']:
+                                AuthorsPrefixSettings.delete(id_prefix['id'])
+                    else:
+                        raise Exception({'error_id': 'status_error'})
+                    db.session.commit()
+                    break
+                except SQLAlchemyError as ex:
+                    handle_exception(ex, attempt, retrys, interval)
+                except TimeoutError as ex:
+                    handle_exception(ex, attempt, retrys, interval)
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(
+                f'Id prefix: {id_prefix["scheme"]} import error.')
+            traceback.print_exc(file=sys.stdout)
+            raise ex
+
+def import_affiliation_id_to_system(affiliation_id):
+    """
+    tsv/csvからのaffiliation_idをDBにインポートする.
+    Args:
+        affiliation_id (object): affiliation_id metadata from tsv/csv.
+    """
+    if affiliation_id:
+        retrys = current_app.config["WEKO_AUTHORS_BULK_IMPORT_MAX_RETRY"]
+        interval = current_app.config["WEKO_AUTHORS_BULK_IMPORT_RETRY_INTERVAL"]
+        try:
+            status = affiliation_id.pop('status')
+            for attempt in range(5):
+                try:
+                    if not affiliation_id.get('url'):
+                        affiliation_id['url'] = ""
+                    check = get_author_affiliation_obj(affiliation_id['scheme'])
+                    if status == 'new':
+                        if check is None:
+                            AuthorsAffiliationSettings.create(**affiliation_id)
+                    elif status == 'update':
+                        if check is None or check.id == affiliation_id['id']:
+                            AuthorsAffiliationSettings.update(**affiliation_id)
+                    elif status == 'deleted':
+                        used_external_id_prefix,_ = WekoAuthors.get_used_scheme_of_affiliation_id()
+                        if affiliation_id["scheme"] in used_external_id_prefix:
+                            raise Exception({'error_id': 'delete_author_link'})
+                        else:
+                            if check is None or check.id == affiliation_id['id']:
+                                AuthorsAffiliationSettings.delete(affiliation_id['id'])
+                    else:
+                        raise Exception({'error_id': 'status_error'})
+                    db.session.commit()
+                    break
+                except SQLAlchemyError as ex:
+                    handle_exception(ex, attempt, retrys, interval)
+                except TimeoutError as ex:
+                    handle_exception(ex, attempt, retrys, interval)
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(
+                f'Affiliation Id: {affiliation_id["scheme"]} import error.')
+            traceback.print_exc(file=sys.stdout)
+            raise ex
+
+def import_id_prefix_to_system(id_prefix):
+    """
+    tsv/csvからのid_prefixをDBにインポートする.
+    Args:
+        id_prefix (object): id_prefix metadata from tsv/csv.
+    """
+    if id_prefix:
+        retrys = current_app.config["WEKO_AUTHORS_BULK_IMPORT_MAX_RETRY"]
+        interval = current_app.config["WEKO_AUTHORS_BULK_IMPORT_RETRY_INTERVAL"]
+        try:
+            status = id_prefix.pop('status')
+            for attempt in range(5):
+                try:
+                    if not id_prefix.get('url'):
+                        id_prefix['url'] = ""
+                    check = get_author_prefix_obj(id_prefix['scheme'])
+                    if status == 'new':
+                        if check is None:
+                            AuthorsPrefixSettings.create(**id_prefix)
+                    elif status == 'update':
+                        if check is None or check.id == id_prefix['id']:
+                            AuthorsPrefixSettings.update(**id_prefix)
+                    elif status == 'deleted':
+                        used_external_id_prefix,_ = WekoAuthors.get_used_scheme_of_id_prefix()
+                        if id_prefix["scheme"] in used_external_id_prefix:
+                            raise Exception({'error_id': 'delete_author_link'})
+                        else:
+                            if check is None or check.id == id_prefix['id']:
+                                AuthorsPrefixSettings.delete(id_prefix['id'])
+                    else:
+                        raise Exception({'error_id': 'status_error'})
+                    db.session.commit()
+                    break
+                except SQLAlchemyError as ex:
+                    handle_exception(ex, attempt, retrys, interval)
+                except TimeoutError as ex:
+                    handle_exception(ex, attempt, retrys, interval)
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(
+                f'Id prefix: {id_prefix["scheme"]} import error.')
+            traceback.print_exc(file=sys.stdout)
+            raise ex
+
+def import_affiliation_id_to_system(affiliation_id):
+    """
+    tsv/csvからのaffiliation_idをDBにインポートする.
+    Args:
+        affiliation_id (object): affiliation_id metadata from tsv/csv.
+    """
+    if affiliation_id:
+        retrys = current_app.config["WEKO_AUTHORS_BULK_IMPORT_MAX_RETRY"]
+        interval = current_app.config["WEKO_AUTHORS_BULK_IMPORT_RETRY_INTERVAL"]
+        try:
+            status = affiliation_id.pop('status')
+            for attempt in range(5):
+                try:
+                    if not affiliation_id.get('url'):
+                        affiliation_id['url'] = ""
+                    check = get_author_affiliation_obj(affiliation_id['scheme'])
+                    if status == 'new':
+                        if check is None:
+                            AuthorsAffiliationSettings.create(**affiliation_id)
+                    elif status == 'update':
+                        if check is None or check.id == affiliation_id['id']:
+                            AuthorsAffiliationSettings.update(**affiliation_id)
+                    elif status == 'deleted':
+                        used_external_id_prefix,_ = WekoAuthors.get_used_scheme_of_affiliation_id()
+                        if affiliation_id["scheme"] in used_external_id_prefix:
+                            raise Exception({'error_id': 'delete_author_link'})
+                        else:
+                            if check is None or check.id == affiliation_id['id']:
+                                AuthorsAffiliationSettings.delete(affiliation_id['id'])
+                    else:
+                        raise Exception({'error_id': 'status_error'})
+                    db.session.commit()
+                    break
+                except SQLAlchemyError as ex:
+                    handle_exception(ex, attempt, retrys, interval)
+                except TimeoutError as ex:
+                    handle_exception(ex, attempt, retrys, interval)
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(
+                f'Affiliation Id: {affiliation_id["scheme"]} import error.')
+            traceback.print_exc(file=sys.stdout)
+            raise ex
 
 def update_data_for_weko_link(data, weko_link):
     """

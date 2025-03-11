@@ -31,14 +31,15 @@ from flask.json import jsonify
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_files_rest.models import FileInstance
+from invenio_cache import current_cache
 from weko_workflow.utils import update_cache_data
 
 from .config import WEKO_AUTHORS_EXPORT_FILE_NAME, \
     WEKO_AUTHORS_IMPORT_CACHE_KEY
 from .permissions import author_permission
-from .tasks import check_is_import_available, export_all, import_author
-from .utils import check_import_data, delete_export_status, \
-    get_export_status, get_export_url, set_export_status
+from .tasks import check_is_import_available, export_all, import_author, import_id_prefix, import_affiliation_id
+from .utils import check_import_data, check_import_data_for_prefix, delete_export_status, \
+    get_export_status, get_export_url, set_export_status, check_file_name
 
 
 class AuthorManagementView(BaseView):
@@ -107,8 +108,10 @@ class ExportView(BaseView):
         data = get_export_url()
         if data.get('file_uri'):
             file_instance = FileInstance.get_by_uri(data.get('file_uri'))
+            export_target = current_cache.get(current_app.config['WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY'])
+            base_file_name = check_file_name(export_target)
             file_name = "{}_{}.{}".format(
-                WEKO_AUTHORS_EXPORT_FILE_NAME,
+                base_file_name,
                 file_instance.updated.strftime("%Y%m%d%H%M"),
                 current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
             )
@@ -144,8 +147,11 @@ class ExportView(BaseView):
         status['filename'] = ''
         file_instance = FileInstance.get_by_uri(status.get('file_uri', ''))
         if file_instance:
+            # export_targetによってfilenameを変更
+            export_target = current_cache.get(current_app.config['WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY'])
+            base_file_name = check_file_name(export_target)
             status['filename'] = "{}_{}.{}".format(
-                WEKO_AUTHORS_EXPORT_FILE_NAME,
+                base_file_name,
                 file_instance.updated.strftime("%Y%m%d%H%M"),
                 current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
             )
@@ -163,7 +169,9 @@ class ExportView(BaseView):
     @expose('/export', methods=['POST'])
     def export(self):
         """Process export authors."""
-        task = export_all.delay()
+        data = request.get_json()
+        export_target = data.get("isTarget","")
+        task = export_all.delay(export_target)
         set_export_status(task_id=task.id)
         return jsonify({
             'code': 200,
@@ -214,16 +222,23 @@ class ImportView(BaseView):
         """Validate author import."""
         error = None
         list_import_data = []
-
         json_data = request.get_json()
         if json_data:
-            result = check_import_data(
-                json_data.get('file_name'),
-                json_data.get('file').split(",")[-1]
-            )
-            error = result.get('error')
-            list_import_data = result.get('list_import_data')
-
+            target = json_data.get('target')
+            if target == 'author_db':
+                result = check_import_data(
+                    json_data.get('file_name'),
+                    json_data.get('file').split(",")[-1]
+                )
+                error = result.get('error')
+                list_import_data = result.get('list_import_data')
+            elif target == 'id_prefix' or target == 'affiliation_id':
+                result = check_import_data_for_prefix(
+                    target,
+                    json_data.get('file_name'),
+                    json_data.get('file').split(",")[-1]
+                )
+                list_import_data = result.get('list_import_data')
         return jsonify(
             code=1,
             error=error,
@@ -232,9 +247,10 @@ class ImportView(BaseView):
     @author_permission.require(http_exception=403)
     @expose('/import', methods=['POST'])
     def import_authors(self) -> jsonify:
-        """Import author into System."""
+        """Import author or other info into System."""
         data = request.get_json() or {}
-        
+        print(data)
+        is_target = data.get("isTarget","")
         # check import feature is available before import
         result_check = check_is_import_available(data.get('group_task_id'))
         if not result_check['is_available']:
@@ -245,20 +261,39 @@ class ImportView(BaseView):
             'records', []) if not item.get('errors')]
         
         group_tasks = []
-        for author in records:
-            group_tasks.append(import_author.s(author, force_change_mode))
+        if is_target == "author_db":
+            for author in records:
+                group_tasks.append(import_author.s(author, force_change_mode))
+        elif is_target == "id_prefix":
+            for id_prefix in records:
+                group_tasks.append(import_id_prefix.s(id_prefix))
+        elif is_target == "affiliation_id":
+            for affiliation_id in records:
+                group_tasks.append(import_affiliation_id.s(affiliation_id))
+        else:
+            return jsonify({'status': 'fail', 'message': 'Invalid target'})
 
         # handle import tasks
         import_task = group(group_tasks).apply_async()
         import_task.save()
-        for idx, task in enumerate(import_task.children):
-            tasks.append({
-                'task_id': task.task_id,
-                'record_id': records[idx].get('pk_id'),
-                'previous_weko_id': records[idx].get('current_weko_id'),
-                'new_weko_id': records[idx].get('weko_id'),
-                'status': 'PENDING'
-            })
+        
+        if is_target == "author_db":
+            for idx, task in enumerate(import_task.children):
+                tasks.append({
+                    'task_id': task.task_id,
+                    'record_id': records[idx].get('pk_id'),
+                    'previous_weko_id': records[idx].get('current_weko_id'),
+                    'new_weko_id': records[idx].get('weko_id'),
+                    'status': 'PENDING'
+                })
+        elif is_target == "id_prefix" or is_target == "affiliation_id":
+            for idx, task in enumerate(import_task.children):
+                tasks.append({
+                    'task_id': task.task_id,
+                    'scheme': records[idx].get('scheme'),
+                    'name': records[idx].get('name'),
+                    'status': 'PENDING'
+                })
 
         response_data = {
             'group_task_id': import_task.id,
@@ -282,11 +317,20 @@ class ImportView(BaseView):
         """Is import available."""
         result = []
         data = request.get_json() or {}
+        target = data.get("isTarget","")
         if data and data.get('tasks'):
             for task_id in data.get('tasks'):
-                task = import_author.AsyncResult(task_id)
-                start_date = task.result['start_date'] if task.result else ''
-                end_date = task.result['end_date'] if task.result else ''
+                if target == "author_db":
+                    task = import_author.AsyncResult(task_id)
+                elif target == "id_prefix":
+                    task = import_id_prefix.AsyncResult(task_id)
+                elif target == "affiliation_id":
+                    task = import_affiliation_id.AsyncResult(task_id)
+                start_date = ""
+                end_date = ""
+                if task.result:
+                    start_date = task.result.get('start_date', '')
+                    end_date = task.result.get('end_date', '')
                 status = states.PENDING
                 error_id = None
                 if task.result and task.result.get('status'):
