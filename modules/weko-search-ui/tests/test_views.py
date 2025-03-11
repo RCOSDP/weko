@@ -154,4 +154,16 @@ def test_gettitlefacet(i18n_app, users, client, facet_search_setting):
 # def get_last_item_id():
 def test_get_last_item_id(i18n_app, users, db_activity):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        assert get_last_item_id()
+        res, _ = get_last_item_id()
+        data = json.loads(res.data)
+        assert data["data"]["last_id"]
+
+@patch("invenio_communities.models.Community")
+@patch("invenio_indexer.api.RecordIndexer")
+def test_get_last_item_id_comadmin(mock_record_indexer, mock_community, i18n_app, users):
+    mock_record_indexer.return_value.client.search.return_value = {"hits": {"hits": [{"sort": ["456"]}]}}
+    mock_community.get_repositories_by_user.return_value = []
+    with patch("flask_login.utils._get_user", return_value=users[4]['obj']):
+        res, _ = get_last_item_id()
+        data = json.loads(res.data)
+        assert data["data"]["last_id"]

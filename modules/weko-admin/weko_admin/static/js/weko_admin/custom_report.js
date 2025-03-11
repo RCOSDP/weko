@@ -377,6 +377,7 @@ class ComponentCombobox extends React.Component {
     let target = document.getElementById("target").value;
     let unit = document.getElementById("unit").value;
     let unitText = document.getElementById("unit").options[document.getElementById("unit").selectedIndex].text
+    let repository = document.getElementById("repository_select").value;
     this.props.getTableHidden(true);
     if (target == 0) {
       var modalcontent = "Target Report is required!";
@@ -400,7 +401,7 @@ class ComponentCombobox extends React.Component {
         end_date: endDate || '0',
         unit: unit
       };
-      let request_url = '/api/stats/'+ target + '/' + requestParam['start_date'].replace(/\//g, '-') + '/' + requestParam['end_date'].replace(/\//g, '-') + '/' + unitText + '?p=1';
+      let request_url = '/api/stats/'+ target + '/' + requestParam['start_date'].replace(/\//g, '-') + '/' + requestParam['end_date'].replace(/\//g, '-') + '/' + unitText + '?p=1&repo=' + repository;
       fetch(request_url)
         .then(res => res.json())
         .then((result) => {

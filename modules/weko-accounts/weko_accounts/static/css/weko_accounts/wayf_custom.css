@@ -188,3 +188,26 @@ label#wayf_remember_checkbox_label {
 input[type="radio"] {
     margin: 0 4px;
 }
+
+.text-divider {
+  display: flex;
+  align-items: center;
+  margin-top: 5rem;
+  margin-bottom: 5rem;
+  padding-left: 40px;
+  padding-right: 40px;
+}
+.text-divider::before,
+.text-divider::after {
+  content: '';
+  height: 1px;
+  background-color: #a3a3a3;
+  flex-grow: 1;
+}
+.text-divider::before {
+  margin-right: 1rem;
+}
+.text-divider::after {
+  margin-left: 1rem;
+}
+

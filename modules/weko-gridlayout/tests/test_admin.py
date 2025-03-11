@@ -12,6 +12,7 @@ from mock import patch, MagicMock
 from flask import url_for
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.model.base import ViewArgs
+from invenio_accounts.testutils import login_user_via_session
 
 from weko_gridlayout.utils import get_register_language
 from weko_gridlayout.admin import WidgetSettingView, WidgetDesign
@@ -341,12 +342,37 @@ def test_action_delete_WidgetSettingView(i18n_app, view_instance):
     except:
         pass
 
+# WidgetSettingView.get_query
+def test_get_query_WidgetSettingView(i18n_app, view_instance, users, db_register):
+    # super role user
+    with patch("flask_login.utils._get_user", return_value=users[2]['obj']):
+        query = view_instance.get_query()
+        assert query.count() == WidgetItem.query.count()
+    
+    # comadmin role user
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        with patch("weko_gridlayout.admin.Community.get_repositories_by_user", return_value=[MagicMock(id="Root Index")]):
+            query = view_instance.get_query()
+            assert query.count() == WidgetItem.query.count()
+        with patch("weko_gridlayout.admin.Community.get_repositories_by_user", return_value=[]):
+            query = view_instance.get_query()
+            assert query.count() == 0
 
 # WidgetSettingView.get_count_query
-def test_get_count_query_WidgetSettingView(i18n_app, view_instance):
+def test_get_count_query_WidgetSettingView(i18n_app, view_instance, users, db_register):
+    # super role user
+    with patch("flask_login.utils._get_user", return_value=users[2]['obj']):
+        query = view_instance.get_count_query()
+        assert query.scalar() == WidgetItem.query.count()
     
-    assert view_instance.get_count_query()
-
+    # comadmin role user
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        with patch("weko_gridlayout.admin.Community.get_repositories_by_user", return_value=[MagicMock(id="Root Index")]):
+            query = view_instance.get_count_query()
+            assert query.scalar() == WidgetItem.query.count()
+        with patch("weko_gridlayout.admin.Community.get_repositories_by_user", return_value=[]):
+            query = view_instance.get_count_query()
+            assert query.scalar() == 0
 
 # WidgetSettingView.delete_model
 def test_delete_model_WidgetSettingView(i18n_app, view_instance, widget_items, db):

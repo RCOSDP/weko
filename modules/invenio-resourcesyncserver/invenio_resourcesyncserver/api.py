@@ -29,6 +29,7 @@ import traceback
 from datetime import timedelta
 
 from flask import current_app, request, send_file
+from invenio_communities.models import Community
 from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier
@@ -246,7 +247,7 @@ class ResourceListHandler(object):
             return
 
     @classmethod
-    def get_list_resource(cls, type_result='obj'):
+    def get_list_resource(cls, type_result='obj', user=None):
         """
         Update the index detail info.
 
@@ -254,7 +255,21 @@ class ResourceListHandler(object):
         """
         try:
             with db.session.begin_nested():
-                list_result = db.session.query(ResourceListIndexes).all()
+                if not user:
+                    list_result = db.session.query(ResourceListIndexes).all()
+                else:
+                    is_super = any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in user.roles)
+                    if is_super:
+                        list_result = db.session.query(ResourceListIndexes).all()
+                    else:
+                        index_list = []
+                        repositories = Community.get_repositories_by_user(user)
+                        for repository in repositories:
+                            index = Indexes.get_child_list_recursive(repository.root_node_id)
+                            index_list.extend(index)
+                        list_result = db.session.query(ResourceListIndexes).filter(
+                            ResourceListIndexes.repository_id.in_(index_list)).all()
+
                 if type_result == 'obj':
                     new_list = []
                     for resource in list_result:
@@ -1071,7 +1086,7 @@ class ChangeListHandler(object):
             return None
 
     @classmethod
-    def get_all(cls):
+    def get_all(cls, user=None):
         """
         Get change list.
 
@@ -1079,7 +1094,21 @@ class ChangeListHandler(object):
         """
         try:
             with db.session.begin_nested():
-                result = db.session.query(ChangeListIndexes).all()
+                if not user:
+                    result = db.session.query(ChangeListIndexes).all()
+                else:
+                    is_super = any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in user.roles)
+                    if is_super:
+                        result = db.session.query(ChangeListIndexes).all()
+                    else:
+                        index_list = []
+                        repositories = Community.get_repositories_by_user(user)
+                        for repository in repositories:
+                            index = Indexes.get_child_list_recursive(repository.root_node_id)
+                            index_list.extend(index)
+                        result = db.session.query(ChangeListIndexes).filter(
+                            ChangeListIndexes.repository_id.in_(index_list)).all()
+
                 if result:
                     parse_result = [
                         cls.convert_modal_to_obj(r) for r in result

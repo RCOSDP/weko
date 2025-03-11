@@ -32,6 +32,55 @@ const GET_SEND_MAIL_HISTORY_URL = "/api/admin/get_send_mail_history";
 const RESEND_FAILED_MAIL_URL = "/api/admin/resend_failed_mail";
 const GET_FEEDBACK_MAIL_URL = "/api/admin/get_feedback_mail";
 const SEARCH_EMAIL_URL = "/api/admin/search_email";
+const GET_REPOSITORY_LIST_URL = "/api/admin/get_repository_list";
+
+class ComponentRepositorySelect extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            repositories: [],
+            selectedRepo: ""
+        };
+        this.handleChange = this.handleChange.bind(this);
+    }
+
+    componentDidMount() {
+        // リポジトリ一覧を取得
+        fetch(GET_REPOSITORY_LIST_URL)
+            .then(res => res.json())
+            .then(result => {
+                if (result.success) {
+                    this.setState({ repositories: result.repositories });
+                }
+            })
+            .catch(error => console.error(error));
+    }
+
+    handleChange(event) {
+        const selectedRepo = event.target.value;
+        this.setState({ selectedRepo });
+
+        // 親コンポーネントにリポジトリ変更を通知
+        this.props.bindingValueOfComponent("selectedRepo", selectedRepo);
+    }
+
+    render() {
+        return (
+            <div className="form-group">
+                <span className="control-label col-xs-2">リポジトリ</span>
+                <div className="col-xs-10">
+                    <select className="form-control" value={this.state.selectedRepo} onChange={this.handleChange}>
+                        <option value="">選択してください</option>
+                        {this.state.repositories && this.state.repositories.map(repo => (
+                            <option key={repo.id} value={repo.id}>{repo.id}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+        );
+    }
+}
+
 
 class ComponentFeedbackMail extends React.Component {
     constructor(props) {
@@ -898,9 +947,11 @@ class ComponentButtonLayout extends React.Component {
 
     saveCommand(event) {
       let is_sending_feedback = this.props.flagSend;
+      let selectedRepo = this.props.selectedRepo;
       let request_param = {
         "data": this.props.listEmail,
-        "is_sending_feedback": is_sending_feedback
+        "is_sending_feedback": is_sending_feedback,
+        "repo_id": selectedRepo
       }
       let requestInit = {
         method: "POST",
@@ -941,8 +992,8 @@ class ComponentButtonLayout extends React.Component {
 }
 
 const ComponentLogsTable = function(props){
-  const [data, setData] = useState([]);
-  const [numOfPage, setNumOfPage] = useState(1);
+  const [data, setData] = useState(props.logsData || []);
+  const [numOfPage, setNumOfPage] = useState(props.numOfPage || 1);
   const [currentIndex, setIndex] = useState(0);
   const [recordsPerPage, setRecordsPerPage] = useState(10);
 
@@ -952,8 +1003,9 @@ const ComponentLogsTable = function(props){
   }
 
   useEffect(() => {
-    handleLoadLogsTable();
-  }, []);
+    setData(props.logsData);
+    setNumOfPage(props.numOfPage);
+  }, [props.logsData, props.numOfPage]);
 
   useEffect(() => {
     if (props.bindResendMail) {
@@ -992,6 +1044,7 @@ const ComponentLogsTable = function(props){
       return (
         <tr key={rowData.id}>
           <td>{(currentIndex * recordsPerPage) + index + 1}</td>
+          <td>{rowData.repo}</td>
           <td>{rowData.start_time}</td>
           <td>{rowData.end_time}</td>
           <td>{rowData.count}</td>
@@ -1016,6 +1069,7 @@ const ComponentLogsTable = function(props){
         <thead>
           <tr>
             <th className = "width-small">#</th>
+            <th className = "width-medium">リポジトリ</th>
             <th className = "width-long">{START_TIME_LABEL}</th>
             <th className = "width-long">{END_TIME_LABEL}</th>
             <th className = "width-medium">{COUNTS_LABEL}</th>
@@ -1042,7 +1096,10 @@ class MainLayout extends React.Component {
           listEmail: [],
           flagSend: false,
           mailId: "",
-          resendMail: false
+          resendMail: false,
+          selectedRepo: "",
+          logsData: [],
+          numOfPage: 1,
         }
         this.bindingValueOfComponent = this.bindingValueOfComponent.bind(this);
         this.addEmailToList = this.addEmailToList.bind(this);
@@ -1050,6 +1107,13 @@ class MainLayout extends React.Component {
     }
     bindingValueOfComponent (key, value) {
       switch (key) {
+        case "selectedRepo":
+            this.setState({ selectedRepo: value }, () => {
+                // 選択したリポジトリの ID を使って他の API を更新
+                this.loadFeedbackMails();
+                this.loadSendLogs();
+            });
+            break;
         case "showModalSearch":
           this.setState({showModalSearch: value});
           break;
@@ -1093,10 +1157,47 @@ class MainLayout extends React.Component {
       }
       this.setState({listEmail: listEmail});
     }
+    loadFeedbackMails() {
+      if (!this.state.selectedRepo) return;
+
+      fetch(GET_FEEDBACK_MAIL_URL, {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ repo_id: this.state.selectedRepo })
+      })
+      .then(res => res.json())
+      .then(result => {
+        let mailData = result.data || [];
+        let sendData = result.is_sending_feedback || false;
+        this.setState({ listEmail: mailData, flagSend: sendData });
+      })
+      .catch(error => console.error(error));
+    }
+    loadSendLogs() {
+      if (!this.state.selectedRepo) return;
+    
+      let url = `${GET_SEND_MAIL_HISTORY_URL}?repo_id=${this.state.selectedRepo}`;
+      fetch(url, {
+        method: 'GET',
+        headers: { "Content-Type": "application/json" },
+      })
+      .then(res => res.json())
+      .then(result => {
+        if (result.error) {
+          alert(result.error);
+            return;
+            }
+          this.setState({ numOfPage: result.total_page, logsData: result.data });
+      })
+      .catch(error => console.error(error));
+    }
     render() {
         return (
             <div>
                 <div id="alerts"></div>
+                <div className="row">
+                    <ComponentRepositorySelect bindingValueOfComponent={this.bindingValueOfComponent}/>
+                 </div>
                 <div className="row">
                   <ComponentFeedbackMail flagSend = {this.state.flagSend} bindingValueOfComponent = {this.bindingValueOfComponent}/>
                 </div>
@@ -1104,10 +1205,10 @@ class MainLayout extends React.Component {
                   <ComponentExclusionTarget bindingValueOfComponent = {this.bindingValueOfComponent} removeEmailFromList = {this.removeEmailFromList} listEmail={this.state.listEmail} addEmailToList= {this.addEmailToList}/>
                 </div>
                 <div className="row">
-                  <ComponentButtonLayout listEmail = {this.state.listEmail} flagSend={this.state.flagSend}/>
+                  <ComponentButtonLayout listEmail = {this.state.listEmail} flagSend={this.state.flagSend} selectedRepo={this.state.selectedRepo}/>
                 </div>
                 <div className = "row">
-                  <ComponentLogsTable bindingValueOfComponent = {this.bindingValueOfComponent} bindResendMail = {this.state.resendMail}/>
+                  <ComponentLogsTable bindingValueOfComponent = {this.bindingValueOfComponent} bindResendMail = {this.state.resendMail} logsData={this.state.logsData} numOfPage={this.state.numOfPage}/>
                 </div>
                 <div className="row">
                   <ModalSearchComponent showModalSearch = {this.state.showModalSearch} bindingValueOfComponent = {this.bindingValueOfComponent} addEmailToList={this.addEmailToList}/>
