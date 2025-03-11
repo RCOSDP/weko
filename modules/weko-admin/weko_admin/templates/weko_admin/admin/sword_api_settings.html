@@ -56,56 +56,53 @@
 {{ sword_api_tabs_selector(page_type) }}
 
 <div style="padding-top: 20px; padding-left: 20px;">
-  <form method="POST" id="data_format_form" name="data_format_form" action={{url_for('swordapi.data_format')}}>
-    {{ form.csrf_token }}
-    <div class="row form-group">
-      <div class="col-sm-2 text-left">
-          <label>{{_('Active')}}</label>
-      </div>
-      <div class="col-sm-6">
-        <input type="checkbox" id="active" name="active" {{active_value}} />
-      </div>
+  <div class="row form-group">
+    <div class="col-sm-2 text-left">
+        <label>{{_('Active')}}</label>
     </div>
+    <div class="col-sm-6">
+      <input type="checkbox" id="active" name="active" {{active_value}} />
+    </div>
+  </div>
 
-    <div class="row form-group">
-      <div class="col-sm-2 text-left">
-          <label>{{_('Registration Type')}}</label>
-      </div>
-      <div class="col-sm-4" style="display: flex; justify-content: space-between;">
-        <label for="Direct"><input type="radio" name="registration_type" value="Direct" onchange="changeRegistrationType(value)"/>
-        Direct</label>
-        <label for="Workflow"><input type="radio" name="registration_type" value="Workflow" onchange="changeRegistrationType(value)"/>
-        Workflow</label>
-      </div>
+  <div class="row form-group">
+    <div class="col-sm-2 text-left">
+        <label>{{_('Registration Type')}}</label>
     </div>
+    <div class="col-sm-4" style="display: flex; justify-content: space-between;">
+      <label for="Direct"><input type="radio" name="registration_type" value="Direct" onchange="changeRegistrationType(value)"/>
+      Direct</label>
+      <label for="Workflow"><input type="radio" name="registration_type" value="Workflow" onchange="changeRegistrationType(value)"/>
+      Workflow</label>
+    </div>
+  </div>
 
-    <div class="form-group" id="workflow_div">
-      <div class="row">
-        <div class="col-sm-2 text-left">
-          <label for="workflow_list">{{_('WorkFlow')}}</label>
-        </div>
-        <div class="col-sm-8">
-        <select class="form-control" name="workflow" id="workflow" disabled>
-          <option selected hidden value=""></option>
-          {%- for workflow in workflows -%}
-          <option  value="{{ workflow.id }}">{{ workflow.flows_name }}</option>
-          {%- endfor -%}
-        </select>
-        </div>
+  <div class="form-group" id="workflow_div">
+    <div class="row">
+      <div class="col-sm-2 text-left">
+        <label for="workflow_list">{{_('WorkFlow')}}</label>
       </div>
-      <div class="row">
-        <div class="col-sm-2"></div>
-        <div class="col-sm-8">{{_('WorkFlow Cautionary Note')}}</div>
+      <div class="col-sm-8">
+      <select class="form-control" name="workflow" id="workflow" disabled>
+        <option selected hidden value=""></option>
+        {%- for workflow in workflows -%}
+        <option  value="{{ workflow.id }}">{{ workflow.flows_name }}</option>
+        {%- endfor -%}
+      </select>
       </div>
     </div>
-    <div class="row form-group">
-      <div className="pull-right" style="margin-right: 15px;">
-          <button type="button" name="submit" class="btn btn-primary pull-right" value={{page_type}} onclick="saveDataFormat(value)">
-              <span class="glyphicon glyphicon-save"></span>&nbsp
-              {{_('Save')}}
-          </button>
-      </div>
+    <div class="row">
+      <div class="col-sm-2"></div>
+      <div class="col-sm-8">{{_('WorkFlow Cautionary Note')}}</div>
     </div>
-  </form>
+  </div>
+  <div class="row form-group">
+    <div className="pull-right" style="margin-right: 15px;">
+        <button type="button" name="submit" class="btn btn-primary pull-right" value={{page_type}} onclick="saveDataFormat(value)">
+            <span class="glyphicon glyphicon-save"></span>&nbsp
+            {{_('Save')}}
+        </button>
+    </div>
+  </div>
 </div>
 {%- endblock body %}
