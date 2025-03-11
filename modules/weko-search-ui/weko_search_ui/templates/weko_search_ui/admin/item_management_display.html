@@ -20,7 +20,7 @@
 
 {%- extends admin_base_template %}
 
-{%- from "invenio_communities/macros.html" import community_header %}
+{%- from "invenio_communities/macros.html" import community_header with context  %}
 
 {%- block css %}
   {{ super() }}

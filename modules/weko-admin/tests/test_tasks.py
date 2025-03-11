@@ -58,10 +58,17 @@ def test_check_send_all_reports(app, admin_settings, mocker):
     check_send_all_reports()
     mock_send.assert_not_called()
     
-    AdminSettings.update("report_email_schedule_settings", {"details":"","enabled":True,"frequency":"daily"})
+    AdminSettings.update("report_email_schedule_settings", {"Root Index": {"details":"","enabled":True,"frequency":"daily"}})
     mock_send = mocker.patch("weko_admin.tasks.send_all_reports.delay")
     check_send_all_reports()
     mock_send.assert_called()
+    args, kwargs = mock_send.call_args
+    assert kwargs["repository_id"] == "Root Index"
+    
+    AdminSettings.update("report_email_schedule_settings", {"Root Index": {"details":"","enabled":False,"frequency":"daily"}})
+    mock_send = mocker.patch("weko_admin.tasks.send_all_reports.delay")
+    check_send_all_reports()
+    mock_send.assert_not_called()
     
 
 # def send_feedback_mail():
@@ -91,7 +98,7 @@ def test_check_send_site_access_report(client, admin_settings, mocker):
     check_send_site_access_report()
     
     # site_license_mail_setting.auto_send_flag is True
-    AdminSettings.update("site_license_mail_settings", {"auto_send_flag": True})
+    AdminSettings.update("site_license_mail_settings", {"Root Index": {"auto_send_flag": True}})
     mock_send = mocker.patch("weko_admin.tasks.manual_send_site_license_mail")
     check_send_site_access_report()
     mock_send.assert_called()

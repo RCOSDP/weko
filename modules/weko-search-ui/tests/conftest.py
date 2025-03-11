@@ -159,7 +159,7 @@ from weko_theme.config import THEME_BODY_TEMPLATE, WEKO_THEME_ADMIN_ITEM_MANAGEM
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import Action, ActionStatus, ActionStatusPolicy, Activity, FlowAction, FlowDefine, WorkFlow
 from weko_search_ui import WekoSearchREST, WekoSearchUI
-from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX, WEKO_SEARCH_TYPE_DICT, WEKO_SEARCH_UI_BASE_TEMPLATE, WEKO_SEARCH_KEYWORDS_DICT
+from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX, WEKO_SEARCH_TYPE_DICT, WEKO_SEARCH_UI_BASE_TEMPLATE, WEKO_SEARCH_KEYWORDS_DICT, CHILD_INDEX_THUMBNAIL_WIDTH, CHILD_INDEX_THUMBNAIL_HEIGHT
 from weko_search_ui.rest import create_blueprint
 from weko_search_ui.views import blueprint_api
 
@@ -322,6 +322,8 @@ def base_app(instance_path, search_class, request):
         FILES_REST_OBJECT_KEY_MAX_LEN=255,
         # SEARCH_UI_SEARCH_INDEX=SEARCH_UI_SEARCH_INDEX,
         SEARCH_UI_SEARCH_INDEX="test-weko",
+        CHILD_INDEX_THUMBNAIL_WIDTH = CHILD_INDEX_THUMBNAIL_WIDTH,
+        CHILD_INDEX_THUMBNAIL_HEIGHT = CHILD_INDEX_THUMBNAIL_HEIGHT,
         # SEARCH_ELASTIC_HOSTS=os.environ.get("INVENIO_ELASTICSEARCH_HOST"),
         SEARCH_INDEX_PREFIX="{}-".format("test"),
         SEARCH_CLIENT_CONFIG=dict(timeout=120, max_retries=10),
@@ -1642,6 +1644,7 @@ def communities(app, db, user, indices):
     comm0 = Community.create(
         community_id="comm1",
         role_id=r.id,
+        page=0, ranking=0, curation_policy='',fixed_points=0, thumbnail_path='',catalog_json=[], login_menu_enabled=False,
         id_user=user1.id,
         title="Title1",
         description="Description1",
@@ -1958,7 +1961,7 @@ def db_itemtype(app, db, make_itemtype):
         "render": "tests/data/itemtype_render.json",
         "mapping":"tests/data/itemtype_mapping.json"
     }
-    
+
     return make_itemtype(itemtype_id, itemtype_data)
 
 
@@ -2686,7 +2689,7 @@ def doi_records(app, db, identifier, indextree, location, db_itemtype, db_oaisch
         results.append(
             make_record(db, indexer, i, filepath, filename, mimetype, "xyz.ndl")
         )
-        
+
         i = 5
         filename = "helloworld.pdf"
         mimetype = "application/pdf"
@@ -3962,7 +3965,7 @@ def make_itemtype(app,db):
             version_id=1,
             is_deleted=False,
         )
-        
+
         if "mapping" in datas:
             item_type_mapping = dict()
             with open(datas["mapping"], "r") as f:
@@ -3973,11 +3976,11 @@ def make_itemtype(app,db):
         with db.session.begin_nested():
             db.session.add(item_type_name)
             db.session.add(item_type)
-            
+
         db.session.commit()
         result["item_type_name"] = item_type_name
         result["item_type"] = item_type
-        
+
         return result
     return factory
 

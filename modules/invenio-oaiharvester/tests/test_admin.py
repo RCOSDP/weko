@@ -14,11 +14,12 @@ from mock import patch
 from datetime import datetime
 from flask import url_for, make_response
 from flask_admin import Admin, menu
+from invenio_communities.models import Community
 from invenio_db import db
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
 
-from invenio_oaiharvester.admin import harvest_admin_view,run_stats,control_btns
+from invenio_oaiharvester.admin import harvest_admin_view,run_stats,control_btns, index_query
 from invenio_oaiharvester.models import HarvestSettings,HarvestLogs
 
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_admin.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
@@ -412,3 +413,149 @@ class TestHarvestSettingView:
             assert setting.schedule_enable == True
             assert setting.schedule_frequency == "monthly"
             assert setting.schedule_details == 2
+
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_admin.py::TestHarvestSettingView::test_get_query -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+    def test_get_query(self,app,db,users,mocker):
+        copy_adminview = copy.deepcopy(harvest_admin_view)
+        model = copy_adminview.pop('model')
+        view = copy_adminview.pop('modelview')
+        view = view(model, db.session, **copy_adminview)
+        
+        index = Index()
+        db.session.add(index)
+        db.session.commit()
+        setting = HarvestSettings(
+            id=1,
+            repository_name="test_repo1",
+            base_url="http://test1.org/",
+            metadata_prefix="test_prefix",
+            index_id=index.id,
+            task_id="test_task"
+        )
+        db.session.add(setting)
+        db.session.commit()
+        
+        # super role user
+        user = users[0]["obj"]
+        mocker.patch("flask_login.utils._get_user",return_value=user)
+        query = view.get_query()
+        assert query.count() == 1
+        assert query.first() == setting
+        
+        # community role user with repository
+        user = users[2]["obj"]
+        repository = Community(root_node_id=index.id)
+        mocker.patch("flask_login.utils._get_user",return_value=user)
+        mocker.patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[repository])
+        mocker.patch("weko_index_tree.api.Indexes.get_child_list_recursive", return_value=[index.id])
+        query = view.get_query()
+        assert query.count() == 1
+        assert query.first() == setting
+        
+        # community role user with no repository
+        mocker.patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[])
+        query = view.get_query()
+        assert query.count() == 0
+        
+        # community role user with repository but no index
+        mocker.patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[repository])
+        mocker.patch("weko_index_tree.api.Indexes.get_child_list_recursive", return_value=[])
+        query = view.get_query()
+        assert query.count() == 0
+    
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_admin.py::TestHarvestSettingView::test_get_count_query -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+    def test_get_count_query(self,app,db,users,mocker):
+        copy_adminview = copy.deepcopy(harvest_admin_view)
+        model = copy_adminview.pop('model')
+        view = copy_adminview.pop('modelview')
+        view = view(model, db.session, **copy_adminview)
+        
+        index = Index()
+        db.session.add(index)
+        db.session.commit()
+        setting = HarvestSettings(
+            id=1,
+            repository_name="test_repo1",
+            base_url="http://test1.org/",
+            metadata_prefix="test_prefix",
+            index_id=index.id,
+            task_id="test_task"
+        )
+        db.session.add(setting)
+        db.session.commit()
+        
+        # super role user
+        user = users[0]["obj"]
+        mocker.patch("flask_login.utils._get_user",return_value=user)
+        query = view.get_count_query()
+        assert query.scalar() == 1
+        
+        # community role user with repository
+        user = users[2]["obj"]
+        repository = Community(root_node_id=index.id)
+        mocker.patch("flask_login.utils._get_user",return_value=user)
+        mocker.patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[repository])
+        mocker.patch("weko_index_tree.api.Indexes.get_child_list_recursive", return_value=[index.id])
+        query = view.get_count_query()
+        assert query.scalar() == 1
+        
+        # community role user with no repository
+        mocker.patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[])
+        query = view.get_count_query()
+        assert query.scalar() == 0
+        
+        # community role user with repository but no index
+        mocker.patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[repository])
+        mocker.patch("weko_index_tree.api.Indexes.get_child_list_recursive", return_value=[])
+        query = view.get_count_query()
+        assert query.scalar() == 0
+
+
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_admin.py::test_index_query -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+def test_index_query(app, db, users, mocker):
+    with app.app_context():
+        index1 = Index(id=1, position=1)
+        index2 = Index(id=2, position=2)
+        db.session.add(index1)
+        db.session.add(index2)
+        db.session.commit()
+        
+        # super role user
+        user = users[0]["obj"]
+        mocker.patch("flask_login.utils._get_user",return_value=user)
+        result = index_query()
+        assert len(result) == 2
+        assert index1 in result
+        assert index2 in result
+        
+        # community role user with repository
+        repository = Community(root_node_id=index1.id)
+        user = users[2]["obj"]
+        mocker.patch("flask_login.utils._get_user",return_value=user)
+        mocker.patch("invenio_communities.models.Community.get_repositories_by_user",return_value=[repository])
+        mocker.patch("weko_index_tree.api.Indexes.get_child_list_recursive", return_value=[index1.id])
+        result = index_query()
+        assert len(result) == 1
+        assert index1 in result
+        
+        # community role user with no repository
+        mocker.patch("invenio_communities.models.Community.get_repositories_by_user",return_value=[])
+        result = index_query()
+        assert len(result) == 0
+
+        
+        # community role user with repository but no index
+        mocker.patch("invenio_communities.models.Community.get_repositories_by_user",return_value=[repository])
+        mocker.patch("weko_index_tree.api.Indexes.get_child_list_recursive", return_value=[])
+        result = index_query()
+        assert len(result) == 0
+        
+        # get_repositories_by_user raise exception
+        mocker.patch("invenio_communities.models.Community.get_repositories_by_user",side_effect=Exception)
+        with pytest.raises(Exception):
+            result = index_query()
+        
+        # get_child_list_recursive raise exception
+        mocker.patch("weko_index_tree.api.Indexes.get_child_list_recursive",side_effect=Exception)
+        with pytest.raises(Exception):
+            result = index_query()

@@ -1,4 +1,4 @@
-  {#
+{#
   # This file is part of WEKO3.
   # Copyright (C) 2017 National Institute of Informatics.
   #
@@ -18,7 +18,7 @@
   # MA 02111-1307, USA.
   #}
 
-  <div class="panel-group-tmp" id="body_index">
+  <div class="panel-group-tmp" id="body_index" class="index-content">
     {% if index_link_enabled  %}
     <div class="panel panel-default">
     {% else %}
@@ -51,7 +51,7 @@
           {%- else %}
             {%- set param = '&q=0' -%}
           {%- endif %}
-          <h3 class="panel-title"><a href="/search?page=1&size=20&search_type=2{{param}}">{{_('Index Tree')}}</a></h3>
+          <h3 class="panel-title"><span class="toggle" onclick="toggleContent(this);" style="cursor: pointer;">▼ </span><a id="index-main-link" href="/search?page=1&size=20&search_type=2{{param}}">{{_('Index Tree')}}</a></h3>
       </div>
       <div id="index-height" name="index-height" hidden>{{ height }}</div>
       <div class="panel-body index-body" id="index-background" style="overflow: auto;">
@@ -60,3 +60,43 @@
     </div>
     </div>
   </div>
+
+  <script>
+    function toggleContent(element) {
+      indexBox = document.querySelectorAll('.col-sm-3.col-md-3.col-lg-3');
+      boxContent = document.querySelectorAll('.tree');
+      mainBox = document.querySelectorAll('.col-sm-9.col-md-9.col-lg-9');
+      mainLink = document.getElementById('index-main-link');
+      indexBackground = document.getElementById('index-background');
+      displayWidht = window.innerWidth;
+      console.log(displayWidht);
+      if (indexBox[0].style.width == '50px') {
+        boxContent[0].style.display = 'block';
+        if (displayWidht > 768) {
+          if (mainBox.length != 0) {
+            mainBox[0].style.width = '75%'
+          }
+          indexBox[0].style.width = '25%';
+        } else {
+          if (mainBox.length != 0) {
+            mainBox[0].style.width = null;
+          }
+          indexBox[0].style.width = null;
+        }
+        mainLink.style.display = 'inline';
+        indexBackground.style.overflow = 'auto';
+        element.innerHTML = "▼ " + element.innerHTML.slice(2);
+      } else {
+        indexBox[0].style.width = '50px';
+        if (displayWidht > 768) {
+          if (mainBox.length != 0) {
+            mainBox[0].style.width = (displayWidht - 50) / 100 * 95 + 'px'; ;
+          }
+        }
+        boxContent[0].style.display = 'none';
+        mainLink.style.display = 'none';
+        indexBackground.style.overflow = 'hidden';
+        element.innerHTML = "▶ " + element.innerHTML.slice(2);
+      }
+    }
+  </script>

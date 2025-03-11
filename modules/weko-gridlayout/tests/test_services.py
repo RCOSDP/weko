@@ -238,10 +238,31 @@ def test_unlock_widget(i18n_app):
 
 ### class WidgetDesignServices:
 #     def get_repository_list(cls):
-def test_get_repository_list(i18n_app, communities):
-    assert WidgetDesignServices.get_repository_list()
+def test_get_repository_list(i18n_app, db, communities, users):
+    comm = communities
+    # super role user
+    with patch("flask_login.utils._get_user", return_value=users[2]['obj']):
+        result = WidgetDesignServices.get_repository_list()
+        assert len(result['repositories']) == 2
+        assert result['repositories'][0]['id'] == 'Root Index'
+        assert result['repositories'][1]['id'] == comm.id
+    
+    # comadmin role user
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        result = WidgetDesignServices.get_repository_list()
+        assert len(result['repositories']) == 0
+
+        comm.group_id = users[3]['obj'].roles[0].id
+        db.session.commit()
+        result = WidgetDesignServices.get_repository_list()
+        assert len(result['repositories']) == 1
+        assert result['repositories'][0]['id'] == comm.id
+
 def test_get_repository_list_2(i18n_app):
-    assert WidgetDesignServices.get_repository_list()
+    result = WidgetDesignServices.get_repository_list()
+    assert len(result['repositories']) == 1
+    assert result['repositories'][0]['id'] == 'Root Index'
+
 
 
 #     def get_widget_list(cls, repository_id, default_language):
