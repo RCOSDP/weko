@@ -3599,7 +3599,7 @@ def export_all(root_url, user_id, data, timezone):
         from weko_index_tree.api import Indexes
 
         if not user_id:
-            return None
+            return []
         user = User.query.get(user_id)
         if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in user.roles):
             return None
@@ -3688,8 +3688,13 @@ def export_all(root_url, user_id, data, timezone):
                 if len(recids) == 0:
                     item_types.remove(it)
                     continue
-
-                record_ids = [(recid.pid_value, recid.object_uuid)
+                
+                if index_id_list is None:
+                    record_ids = [(recid.pid_value, recid.object_uuid)
+                    for recid in recids if 'publish_status' in recid.json
+                    and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]]
+                else:
+                    record_ids = [(recid.pid_value, recid.object_uuid)
                     for recid in recids if 'publish_status' in recid.json
                     and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]
                     and any(index in recid.json['path'] for index in  index_id_list)]
