@@ -329,8 +329,10 @@ def get_max_weko_id():
             "bool": {
                 "must": [
                     {"match_all": {}},
-                    {"term": {"is_deleted": {"value": "false"}}},
-                    {"term": {"gather_flg": {"value": "false"}}}
+                    {"term": {"gather_flg": {"value": 0}}}
+                ],
+                "must_not": [
+                    {"term": {"is_deleted": True}}
                 ]
             }
         },
