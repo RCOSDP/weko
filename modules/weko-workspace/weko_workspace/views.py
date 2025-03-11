@@ -33,6 +33,7 @@ from flask import (
 )
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
+from weko_records.api import FeedbackMailList
 
 from .utils import *
 from .models import *
@@ -91,8 +92,21 @@ def get_workspace_itemlist():
             else False
         )
 
-        # TODO "peerReviewSts": None,  # 査読チェック状況
-        workspaceItem["peerReviewSts"] = True
+        # "peerReviewSts": None,  # 査読チェック状況
+        workspaceItem["peerReviewSts"] = False
+        peerReviewObj = (
+            "item_" + hit["metadata"]["_item_metadata"]["item_type_id"] + "_version_type"
+        )
+        peerReviewObj = [
+            key
+            for key in hit["metadata"]["_item_metadata"].keys()
+            if key.startswith(peerReviewObj)
+        ]
+        if peerReviewObj is not None and len(peerReviewObj) > 0:
+            peerReviewSts = hit["metadata"].get("_item_metadata", []).get("item_30002_version_type15", {}).get("attribute_value_mlt", [{}])[0].get("subitem_peer_reviewed", "")
+            
+            if peerReviewSts is not None and len(peerReviewSts) > 0 and peerReviewSts == "Peer reviewed":
+                workspaceItem["peerReviewSts"] = True
 
         # "doi": None,  # DOIリンク
         identifiers = hit["metadata"].get("identifier", [])
@@ -111,9 +125,6 @@ def get_workspace_itemlist():
             and hit["metadata"]["creator"]["creatorName"]
             else None
         )
-        if workspaceItem["authorlist"] is not None:
-            workspaceItem["authorlist"].append("作成者02")
-            workspaceItem["authorlist"].append("作成者03")
 
         # "accessCnt": None,  # アクセス数
         workspaceItem["accessCnt"] = get_accessCnt_downloadCnt(recid)[0]
@@ -176,12 +187,14 @@ def get_workspace_itemlist():
             workspaceItem["awardTitle"] = None
 
 
-        # TODO "fbEmailSts": None,  # フィードバックメールステータス
-        # ①ログインユーザーのメールアドレスは2.1.2.2の
-        # 取得結果の著者リストに存在すればtrueを設定する。逆にfalse。
-        # ②2.1.2.2の取得結果のアイテムID(_id)でfeedback_mail_listテーブルのmail_list項目を取得して、
-        # ログインユーザーのメールアドレスは該当リストに存在すればtrueを設定する。逆にfalse。
-        workspaceItem["fbEmailSts"] = False if current_user.email else False
+        # "fbEmailSts": None,  # フィードバックメールステータス
+        workspaceItem["fbEmailSts"] = False
+        
+        FeedbackMailList = FeedbackMailList.query.all()
+        for record in FeedbackMailList:
+            if record.mail_list and current_user.email in record.mail_list.get("emails", []):
+                workspaceItem["fbEmailSts"] = True
+                break
 
         # "connectionToPaperSts": None,  # 論文への関連チェック状況
         workspaceItem["connectionToPaperSts"] = True if workspaceItem["resourceType"] in current_app.config["WEKO_WORKSPACE_ARTICLE_TYPES"] else None
@@ -295,6 +308,9 @@ def get_workspace_itemlist():
 
     # 7,ユーザー名と所属情報取得処理
     userInfo = get_userNm_affiliation()
+
+    if userInfo[0] in workspaceItem["authorlist"]:
+        workspaceItem["fbEmailSts"] = True
     
     # デフォルト絞込み条件より、workspaceItemListを洗い出す
     if isnotNone:

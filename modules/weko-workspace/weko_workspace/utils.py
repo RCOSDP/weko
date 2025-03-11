@@ -211,8 +211,6 @@ def get_userNm_affiliation():
 
     """
 
-    affiliation = "ivis-testdata"
-
     """Get user name"""
     userNm = (
         UserProfile.query.filter_by(user_id=current_user.id)
@@ -224,6 +222,7 @@ def get_userNm_affiliation():
 
     """Get user affiliation information"""
     # TODO 外部サービスを参照する必要。取得先確認待ち。
+    affiliation = "ivis-testdata"
 
     return (userNm, affiliation)
 

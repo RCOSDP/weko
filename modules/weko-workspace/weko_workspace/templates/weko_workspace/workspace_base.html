@@ -39,9 +39,9 @@
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 
-  <script>
-    window.workspaceItemList = {{ workspaceItemList | tojson }};
-    window.defaultconditions = {{ defaultconditions | tojson }};
+  <script type="text/javascript">
+    window.workspaceItemList = {{ workspaceItemList | tojson | safe }};
+    window.defaultconditions = {{ defaultconditions | tojson | safe }};
   </script>
 
   <script type="text/javascript" src="static/js/WorkspaceItemList.js"></script>
