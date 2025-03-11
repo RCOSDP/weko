@@ -213,6 +213,15 @@ msgstr ""
 #~ msgid "Are you sure you want to cancel process of exporting all?"
 #~ msgstr ""
 
+#~ msgid "Resume"
+#~ msgstr ""
+
+#~ msgid "Author DB"
+#~ msgstr ""
+
+#~ msgid "Are you sure you want to cancel process of exporting all creator?"
+#~ msgstr ""
+
 #~ msgid "Failed to cancel export."
 #~ msgstr ""
 
@@ -288,6 +297,16 @@ msgstr ""
 
 #~ msgid "Error"
 #~ msgstr ""
+
+#~ msgid "Success"
+#~ msgstr ""
+
+#~ msgid "Failure"
+#~ msgstr ""
+
+#~ msgid "Pending"
+#~ msgstr ""
+
 
 #~ msgid "Warning"
 #~ msgstr ""

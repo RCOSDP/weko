@@ -28,6 +28,8 @@ from flask_security import current_user
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from sqlalchemy.sql.functions import func
+from sqlalchemy.exc import SQLAlchemyError
+from time import sleep
 
 from weko_authors.config import WEKO_AUTHORS_FILE_MAPPING
 
@@ -144,8 +146,45 @@ class WekoAuthors(object):
                 filters.append(Authors.gather_flg == 0)
             query = Authors.query.filter(*filters)
             query = query.order_by(Authors.id)
+            query.count()
 
             return query.all()
+
+    @classmethod
+    def get_by_range(cls,  start_point, sum, with_deleted=True, with_gather=True):
+        """Get authors by range."""
+        filters = []
+        try:
+            with db.session.no_autoflush:
+                if not with_deleted:
+                    filters.append(Authors.is_deleted.is_(False))
+                if not with_gather:
+                    filters.append(Authors.gather_flg == 0)
+                query = Authors.query.filter(*filters)
+                query = query.order_by(Authors.id)
+                query = query.offset(start_point).limit(sum)
+                return query.all()
+        except Exception as ex:
+            current_app.logger.error(ex)
+            raise ex
+        
+    @classmethod
+    def get_records_count(cls, with_deleted=True, with_gather=True):
+        """Get authors's count."""
+        filters = []
+        try:
+            with db.session.no_autoflush:
+                if not with_deleted:
+                    filters.append(Authors.is_deleted.is_(False))
+                if not with_gather:
+                    filters.append(Authors.gather_flg == 0)
+                query = Authors.query.filter(*filters)
+                query = query.order_by(Authors.id)
+                return query.count()
+        except Exception as ex:
+            current_app.logger.error(ex)
+            raise ex
+    
 
     @classmethod
     def get_author_for_validation(cls):
@@ -264,19 +303,7 @@ class WekoAuthors(object):
                     used_external_id.append(idtype_and_scheme.get(int(idType)))
         return used_external_id, idtype_and_scheme
     
-    @classmethod
-    def get_identifier_scheme_info(cls):
-        """Get all Author Identifier Scheme informations."""
-        result = {}
-        with db.session.no_autoflush:
-            schemes = AuthorsPrefixSettings.query.order_by(
-                AuthorsPrefixSettings.id).all()
-            if schemes:
-                for scheme in schemes:
-                    result[str(scheme.id)] = dict(
-                        scheme=scheme.scheme, url=scheme.url)
 
-        return result
     
     @classmethod
     def get_id_prefix_all(cls):
@@ -296,7 +323,20 @@ class WekoAuthors(object):
             for id_prefix in id_prefixes:
                 result.append(id_prefix.scheme)
         return result
-        
+    
+    @classmethod
+    def get_identifier_scheme_info(cls):
+        """Get all Author Identifier Scheme informations."""
+        result = {}
+        with db.session.no_autoflush:
+            schemes = AuthorsPrefixSettings.query.order_by(
+                AuthorsPrefixSettings.id).all()
+            if schemes:
+                for scheme in schemes:
+                    result[str(scheme.id)] = dict(
+                        scheme=scheme.scheme, url=scheme.url)
+        return result
+    
     @classmethod
     def get_affiliation_id_all(cls):
         """Get all affiliation_id."""
@@ -316,8 +356,6 @@ class WekoAuthors(object):
                 result.append(affiliation_id.scheme)
         return result
 
-
-
     @classmethod
     def get_affiliation_identifier_scheme_info(cls):
         result = {}
@@ -328,11 +366,93 @@ class WekoAuthors(object):
                 for scheme in schemes:
                     result[str(scheme.id)] = dict(
                         scheme=scheme.scheme, url=scheme.url)
-
         return result
 
     @classmethod
-    def prepare_export_data(cls, mappings, affiliation_mappings, authors, schemes, aff_schemes):
+    def mapping_max_item(cls, mappings, affiliation_mappings, retrys=0):
+        """Mapping max item of multiple case."""
+        try: 
+            size = current_app.config["WEKO_AUTHORS_EXPORT_BATCH_SIZE"]
+            if not mappings:
+                mappings = deepcopy(WEKO_AUTHORS_FILE_MAPPING)
+            if not affiliation_mappings:
+                affiliation_mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"])
+            # 削除されておらず、統合されていない著者の合計を取得
+            affiliation_mappings["max"] = []
+            records_count = cls.get_records_count(False, False)
+            
+            # AUTHOR_EXPORT_BATCH_SIZE分の数だけauthorを取得して、maxを計算する
+            for i in range(0,records_count-1, size):
+                authors = cls.get_by_range(i, size, False, False)
+                # 通常のマッピングの処理
+                for mapping in mappings:
+                    if mapping.get('child'):
+                        if not authors:
+                            mapping['max'] = max(mapping.get('max', 1), 1)
+                        else:
+                            mapping['max'] = max(
+                                    mapping.get('max', 1),
+                                    max(
+                                    list(map(lambda x: len(x.json.get(mapping['json_id'], [])), authors))
+                                    )
+                                )
+                            if mapping['max'] == 0:
+                                mapping['max'] = 1
+                
+                # 所属情報のマッピングの処理
+                mapping_max = affiliation_mappings["max"]
+                # 著者DBの所属情報の最大値をそれぞれとる
+                for author in authors:
+                    json_data = author.json
+                    # affiliation_mappings配下に以下を作る。
+                    # affiliationInfoの列数だけこれが作られるものとする。
+                    # max:[
+                    #       {
+                    #         "identifierInfo" : affiliationInfo[i]identifierInfoの長さ,
+                    #         "affiliationNameInfo" : affiliationInfo[i]affiliationNameInfoの長さ,
+                    #         "affiliationPeriodInfo" : affiliationInfo[i]affiliationPeriodInfoの長さ
+                    #       },
+                    #     ]
+                    for index, affiliation in enumerate(json_data[affiliation_mappings["json_id"]]):
+                        if len(mapping_max) < index+1 :
+                            mapping_max.append({
+                                "identifierInfo" : 1,
+                                "affiliationNameInfo" : 1,
+                                "affiliationPeriodInfo" : 1,
+                                })
+                        for child in affiliation_mappings["child"]:
+                            child_length = len(affiliation.get(child["json_id"], []))
+                            if child_length > mapping_max[index][child["json_id"]]:
+                                mapping_max[index][child["json_id"]] = child_length
+                    #WEKOIDの分を最大値から引く
+                    for mapping in mappings:
+                        if mapping['json_id'] == 'authorIdInfo':
+                            if mapping['max'] > 1:
+                                mapping['max'] -= 1
+                        
+
+        except SQLAlchemyError as ex:
+            current_app.logger.error(ex)
+            _num_retry = current_app.config["WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY"]
+            sleep_time = current_app.config["WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL"]
+            if retrys < _num_retry:
+                retrys += 1
+                current_app.logger.info("mapping_max_item retry count: {}".format(retrys))
+                db.session.rollback()
+                sleep(sleep_time)
+                result = cls.mapping_max_item(
+                    mappings=None, affiliation_mappings=None, retrys=retrys
+                )
+                return result
+            else:
+                return False
+        except Exception as ex:
+            current_app.logger.error(ex)
+            raise ex
+        return mappings, affiliation_mappings
+
+    @classmethod
+    def prepare_export_data(cls, mappings, affiliation_mappings, authors, schemes, aff_schemes, start, size):
         """Prepare export data of all authors."""
         row_header = []
         row_label_en = []
@@ -340,12 +460,10 @@ class WekoAuthors(object):
         row_data = []        
         affiliation_mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"])
         
-        if not mappings:
-            mappings = deepcopy(WEKO_AUTHORS_FILE_MAPPING)
-        if not affiliation_mappings:
-            affiliation_mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"])
+        if not mappings or not affiliation_mappings:
+            mappings, affiliation_mappings = WekoAuthors.mapping_max_item(deepcopy(WEKO_AUTHORS_FILE_MAPPING))
         if not authors:
-            authors = cls.get_all(with_deleted=False, with_gather=False)
+            authors = cls.get_by_range(start, size, False, False)
         if not schemes:
             schemes = cls.get_identifier_scheme_info()
         if not aff_schemes:
@@ -353,18 +471,6 @@ class WekoAuthors(object):
         # calc max item of multiple case and prepare header, label
         for mapping in mappings:
             if mapping.get('child'):
-                if not authors:
-                    mapping['max'] = 1
-                else:
-                    mapping['max'] = max(
-                        list(map(lambda x: len(x.json.get(mapping['json_id'], [])), authors))
-                    )
-                    if mapping['max'] == 0:
-                        mapping['max'] = 1
-                if authors and mapping['json_id'] == 'authorIdInfo':
-                    if mapping['max'] > 1:
-                        mapping['max'] -= 1
-
                 for i in range(0, mapping['max']):
                     for child in mapping.get('child'):
                         row_header.append('{}[{}].{}'.format(
@@ -377,34 +483,11 @@ class WekoAuthors(object):
                 row_header.append(mapping['json_id'])
                 row_label_en.append(mapping['label_en'])
                 row_label_jp.append(mapping['label_jp'])
-        
-        affiliation_mappings["max"] = []
-        mapping_max = affiliation_mappings["max"]
-        # 著者DBの所属情報の最大値をそれぞれとる
-        for author in authors:
-            json_data = author.json
-            # affiliation_mappings配下に以下を作る。
-            # affiliationInfoの列数だけこれが作られるものとする。
-            # max:[
-            #       {
-            #         "identifierInfo" : affiliationInfo[i]identifierInfoの長さ,
-            #         "affiliationNameInfo" : affiliationInfo[i]affiliationNameInfoの長さ,
-            #         "affiliationPeriodInfo" : affiliationInfo[i]affiliationPeriodInfoの長さ
-            #       },
-            #     ]
-            for index, affiliation in enumerate(json_data[affiliation_mappings["json_id"]]):
-                if len(mapping_max) < index+1 :
-                    mapping_max.append({
-                        "identifierInfo" : 1,
-                        "affiliationNameInfo" : 1,
-                        "affiliationPeriodInfo" : 1,
-                        })
-                for child in affiliation_mappings["child"]:
-                    child_length = len(affiliation.get(child["json_id"], []))
-                    if child_length > mapping_max[index][child["json_id"]]:
-                        mapping_max[index][child["json_id"]] = child_length
+                
+        # 所属情報のマッピングの処理
+        aff_mapping_max = affiliation_mappings["max"]
         # tsv用に修正
-        for index, m_max in enumerate(mapping_max):
+        for index, m_max in enumerate(aff_mapping_max):
             for child in affiliation_mappings.get('child'):
                 child_json_id = child["json_id"]
                 for i in range(m_max[child_json_id]):
@@ -450,7 +533,7 @@ class WekoAuthors(object):
                             else:
                                 val = data[i].get(child['json_id'])
                                 if child['json_id'] == 'idType':
-                                    scheme = schemes.get(val)
+                                    scheme = schemes.get(str(val))
                                     row.append(
                                         scheme['scheme'] if scheme else val)
                                 else:
@@ -476,12 +559,12 @@ class WekoAuthors(object):
             # 各affilitionInfo
             aff_data = json_data.get(affiliation_mappings['json_id'], [])
             affiliation_idx_start = 0
-            affiliation_idx_size = len(mapping_max)
+            affiliation_idx_size = len(aff_mapping_max)
             # affilaitionのマックスだけ繰り返す
             for i in range(affiliation_idx_start, affiliation_idx_size):
                 for child in affiliation_mappings.get('child'):
                     aff_child_idx_start = 0
-                    aff_child_idx_size = mapping_max[i][child["json_id"]]
+                    aff_child_idx_size = aff_mapping_max[i][child["json_id"]]
                     for j in range(aff_child_idx_start, aff_child_idx_size):
                         for c in child.get("child"):
                             if i >= len(aff_data):

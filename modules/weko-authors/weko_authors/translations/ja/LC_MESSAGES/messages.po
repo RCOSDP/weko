@@ -243,6 +243,15 @@ msgstr ""
 #~ msgid "Are you sure you want to cancel process of exporting all?"
 #~ msgstr "全件エクスポートの処理をキャンセルしてよいですか？"
 
+#~ msgid "Resume"
+#~ msgstr "再開"
+
+#~ msgid "Author DB"
+#~ msgstr "著者DB"
+
+#~ msgid "Are you sure you want to cancel process of exporting all creator?"
+#~ msgstr "著者DBの全件エクスポートの処理をキャンセルしてよいですか？"
+
 #~ msgid "Failed to cancel export."
 #~ msgstr "エクスポートのキャンセルに失敗しました。"
 
@@ -318,6 +327,15 @@ msgstr ""
 
 #~ msgid "To Do"
 #~ msgstr "To Do"
+
+#~ msgid "Success"
+#~ msgstr "成功"
+
+#~ msgid "Failure"
+#~ msgstr "失敗"
+
+#~ msgid "Pending"
+#~ msgstr "処理待ち"
 
 #~ msgid "Error"
 #~ msgstr "エラー"
