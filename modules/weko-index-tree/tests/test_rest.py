@@ -8,12 +8,30 @@ from mock import patch, MagicMock
 from invenio_accounts.testutils import login_user_via_session
 from redis.exceptions import RedisError
 from sqlalchemy.exc import SQLAlchemyError
+from redis.exceptions import RedisError
+from sqlalchemy.exc import SQLAlchemyError
 
 from weko_admin.models import AdminLangSettings
 from weko_index_tree.rest import (
     need_record_permission,
     create_blueprint
 )
+
+user_tree_action = [
+    (0, 403),
+    (1, 403),
+    (2, 202),
+    (3, 202),
+    (4, 202),
+    (5, 403),
+    (6, 403),
+]
+
+user_tree_action2 = [
+    (2, 201),
+    (3, 201),
+    (4, 201),
+]
 
 user_tree_action = [
     (0, 403),
@@ -40,6 +58,37 @@ user_results_index = [
     (5, 403),
     (6, 403),
 ]
+
+user_create_results1 = [
+    (0, 403),
+    (1, 403),
+    (2, 400),
+    (3, 400),
+    (4, 400),
+    (5, 403),
+    (6, 403),
+]
+
+user_create_results2 = [
+    (0, 403),
+    (1, 403),
+    (2, 201),
+    (3, 201),
+    (4, 201),
+    (5, 403),
+    (6, 403),
+]
+
+user_results_tree = [
+    (0, 403),
+    (1, 403),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
+]
+
 
 user_create_results1 = [
     (0, 403),

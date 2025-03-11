@@ -23,8 +23,6 @@
 import pickle
 
 from invenio_records_rest.config import RECORDS_REST_ENDPOINTS
-from invenio_records_rest.facets import terms_filter
-from invenio_records_rest.utils import allow_all
 from invenio_search import RecordsSearch
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 
@@ -236,6 +234,8 @@ WEKO_SEARCH_REST_ENDPOINTS = dict(
             "application/json": ("weko_records.serializers" ":json_v1_search"),
         },
         index_route="/index/",
+        search_api_route="/<string:version>/records",
+        search_result_list_route="/<string:version>/records/list",
         links_factory_imp="weko_search_ui.links:default_links_factory",
         default_media_type="application/json",
         max_result_window=10000,
@@ -547,6 +547,7 @@ WEKO_EXPORT_TEMPLATE_BASIC_ID = [
     ".pos_index[0]",
     ".publish_status",
     ".feedback_mail[0]",
+    ".request_mail[0]",
     ".cnri",
     ".doi_ra",
     ".doi",
@@ -559,6 +560,7 @@ WEKO_EXPORT_TEMPLATE_BASIC_NAME = [
     ".POS_INDEX[0]",
     ".PUBLISH_STATUS",
     ".FEEDBACK_MAIL[0]",
+    ".REQUEST_MAIL[0]",
     ".CNRI",
     ".DOI_RA",
     ".DOI",
@@ -570,6 +572,7 @@ WEKO_EXPORT_TEMPLATE_BASIC_OPTION = [
     "Allow Multiple",
     "Allow Multiple",
     "Required",
+    "Allow Multiple",
     "Allow Multiple",
     "",
     "",
@@ -741,3 +744,7 @@ CHILD_INDEX_THUMBNAIL_WIDTH = 100
 
 CHILD_INDEX_THUMBNAIL_HEIGHT = 100
 """ child index thumbnail height in result index serch"""
+
+WEKO_SEARCH_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
+
+WEKO_SEARCH_UI_RESULT_TMP_PREFIX = 'weko_search_result_list_'

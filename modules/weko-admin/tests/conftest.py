@@ -148,7 +148,7 @@ def base_app(instance_path, cache_config,request ,search_class):
         GOOGLE_TRACKING_ID_USER="test_google_tracking_id",
         ADDTHIS_USER_ID="test_addthis_user_id",
         I18N_LANGUAGES=[("ja","Japanese"), ("en","English")],
-        CACHE_REDIS_URL='redis://redis:6379/0',
+        CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
         REDIS_PORT='6379',
@@ -761,6 +761,7 @@ def admin_settings(db):
     settings.append(AdminSettings(id=7,name="display_stats_settings",settings={"display_stats":False}))
     settings.append(AdminSettings(id=8,name='convert_pdf_settings',settings={"path":"/tmp/file","pdf_ttl":1800}))
     settings.append(AdminSettings(id=9,name="elastic_reindex_settings",settings={"has_errored": False}))
+    settings.append(AdminSettings(id=10,name="sword_api_setting",settings={ "default_format": "TSV","data_format":{ "TSV":{"register_format": "Direct"},"XML":{"workflow": '31001',  "register_format": "Workflow"}}}))
     db.session.add_all(settings)
     db.session.commit()
     return settings

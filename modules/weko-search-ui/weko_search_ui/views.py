@@ -35,16 +35,11 @@ from invenio_i18n.ext import current_i18n
 from sqlalchemy.sql.expression import func
 from weko_admin.models import AdminSettings
 from weko_admin.utils import get_search_setting
-from weko_gridlayout.utils import (
-    get_widget_design_page_with_main,
-    main_design_has_main_widget,
-)
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
 from weko_records.api import ItemLink, FeedbackMailList
 from weko_records_ui.ipaddr import check_site_license_permission
-from weko_theme.utils import get_design_layout
 from weko_workflow.utils import (
     get_allow_multi_thumbnail,
     get_record_by_root_ver,
@@ -105,6 +100,7 @@ def search():
             community_id = comm.id
 
     # Get the design for widget rendering
+    from weko_theme.utils import get_design_layout
     page, render_widgets = get_design_layout(
         community_id or current_app.config["WEKO_THEME_DEFAULT_COMMUNITY"]
     )

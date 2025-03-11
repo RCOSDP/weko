@@ -200,6 +200,10 @@ WEKO_THEME_ADMIN_MENU = [
             {
                 'name': 'Properties',
                 'order': 4
+            },
+            {
+                'name': 'RO-Crate mapping',
+                'order': 5
             }
         ]
     },
@@ -360,8 +364,12 @@ WEKO_THEME_ADMIN_MENU = [
                 'order': 20
             },
             {
-                'name': 'Others',
+                'name': 'SWORD API',
                 'order': 21
+            },
+            {
+                'name': 'Others',
+                'order': 22
             }
         ]
     },

@@ -72,7 +72,6 @@ from .tasks import (
 )
 from .utils import (
     cancel_export_all,
-    check_import_items,
     check_sub_item_is_system,
     create_flow_define,
     delete_records,

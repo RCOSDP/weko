@@ -1359,6 +1359,10 @@ msgstr ""
 msgid "Favicon"
 msgstr ""
 
+#: weko_admin/admin.py:1359
+msgid "The selected Workflow has been deleted. Please recheck and input."
+msgstr ""
+
 #: weko_admin/templates/weko_admin/admin/site_info.html:41
 msgid "CopyRight"
 msgstr ""

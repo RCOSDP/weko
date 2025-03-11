@@ -46,6 +46,7 @@
     {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
     {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
     {% assets "weko_items_ui_feedback_maillist_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+    {% assets "weko_items_ui_request_maillist_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
     {{ super() }}
     {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
     {%- if need_thumbnail %}
@@ -279,7 +280,10 @@
                   </invenio-records-form>
                   {%- block feedback_mail_list %}
                     <div id="react"></div>
+                    <div id="request-maillist"></div>
                     <input id="component-search-email-name" type="hidden" value="{{_('Feedback Mail Destination')}}" />
+                    <input id="enable-request-email-checkbox-label" type="hidden" value="{{_('Display Request Mail Button')}}" />
+                    <input id="request-email-list-label" type="hidden" value="{{_('Request Mail Destination')}}" />
                     <input id="open-modal-search-button-name" type="hidden" value="{{_('From author DB')}}" />
                     <input id="delete-button-name" type="hidden" value="{{_('Delete')}}" />
                     <input id="input-text-placeholder" type="hidden" value="{{_('Input text')}}" />
@@ -328,13 +332,13 @@
                         {%- endif %}
                         <button ng-disabled="recordsVM.invenioRecordsLoading"
                                 class="btn btn-primary save-button"
-                                ng-click="saveActivityData('{{item_save_uri}}',{{action_id}},'{{enable_contributor}}','{{enable_feedback_maillist}}', true, false);">
+                                ng-click="saveActivityData('{{item_save_uri}}',{{action_id}},'{{enable_contributor}}','{{enable_feedback_maillist}}', '{{enable_request_maillist}}', true, false);">
                               <span class="glyphicon glyphicon-saved"></span>&nbsp
                               {{_('Save')}}
                         </button>
                         <button ng-disabled="recordsVM.invenioRecordsLoading"
                                 class="btn btn-info next-button"
-                                ng-click="updateDataJson('{{activity_id}}',{{steps}},'{{item_save_uri}}',{{action_id}},'{{is_auto_set_index_action}}','{{enable_contributor}}','{{enable_feedback_maillist}}')"> {{_('Next')}}&nbsp
+                                ng-click="updateDataJson('{{activity_id}}',{{steps}},'{{item_save_uri}}',{{action_id}},'{{is_auto_set_index_action}}','{{enable_contributor}}','{{enable_feedback_maillist}}', '{{enable_request_maillist}}')"> {{_('Next')}}&nbsp
                         <span class="glyphicon glyphicon-chevron-right"></span>
                         </button>
                       </div>
@@ -448,6 +452,7 @@
           <input type="hidden" id="list_license_data" name="list_license_data" value='{{ list_license_data }}'>
           <input type="hidden" id="application_item_type" name="application_item_type" value='{{application_item_type}}'>
           <input type="hidden" id="enable_feedback_maillist" name="enable_feedback_maillist" value='{{enable_feedback_maillist}}'>
+          <input type="hidden" id="enable_request_maillist" name="enable_request_maillist" value='{{enable_request_maillist}}'/>
           {% set position_err_msg = "Position is being inputted (Only input when selecting 'Others')" %}
           <input type="hidden" id="err_input_other_position" name="err_input_other_position" value='{{_(position_err_msg)}}'>
           <input type="hidden" id="err_position_not_provided" name="err_position_not_provided" value='{{_("Position not provided.")}}'>
@@ -524,4 +529,3 @@
     </div><!-- /.modal-dialog -->
   </div><!-- /.modal -->
   {%- endblock page_body %}
-

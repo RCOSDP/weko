@@ -35,6 +35,12 @@ style_mapping = Bundle(
     output="gen/mapping_ui.%(version)s.css"
 )
 
+style_rocrate_mapping = Bundle(
+    'css/weko_itemtypes_ui/rocrate_mapping.less',
+    filters='cleancss',
+    output='gen/rocrate_mapping_ui.%(version)s.css'
+)
+
 js_dependencies_schema_editor = NpmBundle(
     'node_modules/react/dist/react.js',
     'node_modules/react-dom/dist/react-dom.js',
@@ -71,4 +77,10 @@ js_mapping = Bundle(
     'js/weko_itemtypes_ui/create_mapping.js',
     filters='jsmin',
     output="gen/itemtypes_ui_mapping.js"
+)
+
+js_rocrate_mapping = Bundle(
+    'js/weko_itemtypes_ui/create_rocrate_mapping.js',
+    filters='jsmin',
+    output='gen/itemtypes_ui_rocrate_mapping.js'
 )

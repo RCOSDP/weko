@@ -17,12 +17,14 @@ import pytest
 from flask import Flask, current_app
 from invenio_db import InvenioDB
 from invenio_db import db as db_
+from invenio_db.utils import drop_alembic_version_table
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.models import Location
 from moto import mock_s3
 from sqlalchemy_utils.functions import create_database, database_exists
 
 from invenio_s3 import InvenioS3, S3FSFileStorage
+
 
 
 @pytest.fixture(scope='module')
@@ -56,6 +58,45 @@ def create_app():
 
     return factory
 
+@pytest.fixture(scope='module')
+def base_app():
+    """Flask application fixture."""
+    app = Flask('testapp')
+    
+    app.config.update(
+    FILES_REST_STORAGE_FACTORY='invenio_s3:s3_storage_factory',
+    S3_ENDPOINT_URL=None,
+    S3_ACCCESS_KEY_ID= '',
+    S3_SECRECT_ACCESS_KEY = '',
+    SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI',
+                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+    SQLALCHEMY_TRACK_MODIFICATIONS = True,
+    TESTING = True
+    )
+
+    InvenioDB(app)
+    InvenioFilesREST(app)
+    InvenioS3(app)
+
+    return app
+
+@pytest.yield_fixture(scope='module')
+def app(base_app):
+    """Flask application fixture."""
+    with base_app.app_context():
+        yield base_app
+
+
+@pytest.yield_fixture(scope='module')
+def database(app):
+    """Get setup database."""
+    if not database_exists(str(db_.engine.url)):
+        create_database(str(db_.engine.url))
+    db_.create_all()
+    yield db_
+    db_.session.remove()
+    db_.drop_all()
+    drop_alembic_version_table()
 
 @pytest.fixture(scope='module')
 def location_path():

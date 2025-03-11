@@ -23,9 +23,19 @@ import random
 import string
 from functools import wraps
 
-from flask import abort, current_app, request, session
+from flask import abort, current_app, request, session, Flask
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_login import current_user
 from flask_login.config import EXEMPT_METHODS
+
+from .config import WEKO_API_LIMIT_RATE_DEFAULT
+
+limiter = Limiter(
+    app=None,
+    key_func=lambda: f"{request.endpoint}_{get_remote_addr()}",
+    default_limits=WEKO_API_LIMIT_RATE_DEFAULT
+)
 
 
 def get_remote_addr():
@@ -41,7 +51,7 @@ def get_remote_addr():
 
     # current_app.logger.debug('{0} {1} {2}: {3}'.format(
     #     __file__, 'get_remote_addr()', 'request.headers', request.headers))
-    
+
     address = None
     if "WEKO_ACCOUNTS_REAL_IP" not in current_app.config or current_app.config["WEKO_ACCOUNTS_REAL_IP"] == None:
         address = request.headers.get('X-Real-IP', None)
@@ -57,7 +67,7 @@ def get_remote_addr():
         address = request.headers.get('X-Forwarded-For', None)
         if address is not None:
             _tmp = address.encode('utf-8').split(b',')
-            address = _tmp[0].strip().decode()            
+            address = _tmp[0].strip().decode()
     elif current_app.config["WEKO_ACCOUNTS_REAL_IP"] == "x_forwarded_for_rev":
         address = request.headers.get('X-Forwarded-For', None)
         if address is not None:
@@ -178,3 +188,8 @@ def roles_required(roles):
             return func(*args, **kwargs)
         return decorated_view
     return decorator
+
+
+def create_limiter():
+    from .config import WEKO_ACCOUNTS_API_LIMIT_RATE_DEFAULT
+    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_ACCOUNTS_API_LIMIT_RATE_DEFAULT)

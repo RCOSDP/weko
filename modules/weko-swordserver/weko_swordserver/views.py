@@ -9,28 +9,45 @@
 
 from __future__ import absolute_import, print_function
 
-from datetime import datetime, timedelta
+import os
 import shutil
+import traceback
+from datetime import datetime, timedelta
 
-import sword3common
-from flask import Blueprint, current_app, jsonify, request, url_for
+from flask import Blueprint, current_app, jsonify, request, url_for, abort
 from flask_login import current_user
+from flask_limiter.errors import RateLimitExceeded
+from sword3common import (
+    ServiceDocument, StatusDocument, constants, Error as sword3commonError
+)
+from sword3common.lib.seamless import SeamlessException
+from werkzeug.http import parse_options_header
+
+from invenio_db import db
 from invenio_deposit.scopes import write_scope
+from invenio_oaiserver.api import OaiIdentify
+from invenio_oauth2server.decorators import require_oauth_scopes
 from invenio_oauth2server.ext import verify_oauth_token_and_set_current_user
 from invenio_oauth2server.provider import oauth2
-from sword3common import ServiceDocument, StatusDocument, constants
-from sword3common.lib.seamless import SeamlessException
+
+from weko_accounts.utils import roles_required
 from weko_admin.api import TempDirInfo
 from weko_records_ui.utils import get_record_permalink, soft_delete
-from weko_search_ui.utils import check_import_items, import_items_to_system
-from werkzeug.http import parse_options_header
-from invenio_db import db
-
-from invenio_oaiserver.api import OaiIdentify
+from weko_search_ui.utils import import_items_to_system
 from weko_workflow.utils import get_site_info_name
+from weko_workflow.scopes import activity_scope
 
-from .decorators import *
-from .errors import *
+from .config import WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE
+from .decorators import check_on_behalf_of, check_package_contents
+from .errors import ErrorType, WekoSwordserverException
+from .registration import (
+    check_bagit_import_items,
+    check_import_items,
+    create_activity_from_jpcoar,
+    import_items_to_activity
+)
+from .utils import check_import_file_format, is_valid_file_hash
+from weko_accounts.utils import limiter
 
 
 class SwordState:
@@ -43,34 +60,36 @@ class SwordState:
 
 
 blueprint = Blueprint(
-    'weko_swordserver',
+    "weko_swordserver",
     __name__,
-    template_folder='templates',
-    static_folder='static',
-    url_prefix='/sword',
+    template_folder="templates",
+    static_folder="static",
+    url_prefix="/sword",
 )
 blueprint.before_request(verify_oauth_token_and_set_current_user)
 
-@blueprint.route("/service-document", methods=['GET'])
+
+@blueprint.route("/service-document", methods=["GET"])
 @oauth2.require_oauth()
+@limiter.limit("")
 @check_on_behalf_of()
 def get_service_document():
     """
     Request from the server a list of the Service-URLs that the client can deposit to.
     A Service-URL allows the server to support multiple different deposit conditions - each URL may have its own set of rules/workflows behind it;
-    for example, Service-URLs may be subject-specific, organisational-specific, or process-specific.
+    for example, Service-URLs may be subject-specific, organizational-specific, or process-specific.
     It is up to the client to determine which is the suitable URL for its deposit, based on the information provided by the server.
     The list of Service-URLs may vary depending on the authentication credentials supplied by the client.
 
     This request can be made against a root Service-URL, which will describe the capabilities of the entire server,
     for information about the full list of Service-URLs, or can be made against an individual Service-URL for information just about that service.
     """
-    
+
     """
     Server Requirements
         * If Authorization (and optionally On-Behalf-Of) headers are provided, MUST authenticate the request
     """
-    
+
     """
     Response Requirements
         * If Authorization (and optionally On-Behalf-Of) headers are provided, MUST only list Service-URLs in the Service Document for which a deposit request would be permitted
@@ -84,14 +103,14 @@ def get_service_document():
         * If the server does not allow this method in this context at this time, MAY respond with a 405 (MethodNotAllowed)
         * If the server does not support On-Behalf-Of deposit and the On-Behalf-Of header has been provided, MAY respond with a 412 (OnBehalfOfNotAllowed)
     """
-    
+
     """
     Set raw data to ServiceDocument
     """
     repositoryName, site_name_ja = get_site_info_name()
     if repositoryName is None or len(repositoryName) == 0:
         identify = OaiIdentify.get_all()
-        repositoryName = current_app.config['THEME_SITENAME']
+        repositoryName = current_app.config["THEME_SITENAME"]
         if identify is not None:
             repositoryName = identify.repositoryName
 
@@ -101,34 +120,37 @@ def get_service_document():
         "@id": request.url,
         "root": request.url,
         "dc:title": repositoryName,
-        "version": current_app.config['WEKO_SWORDSERVER_SWORD_VERSION'],
-        "accept": current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT'],
-        "digest": current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_DIGEST'],
-        "acceptArchiveFormat": current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT'],
-        "acceptDeposits": current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_DEPOSITS'],
-        "acceptMetadata": current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_METADATA'],
-        "acceptPackaging": current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_PACKAGING'],
-        "authentication": current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_AUTHENTICATION'],
-        "byReferenceDeposit": current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_BY_REFERENCE_DEPOSIT'],
-        "collectionPolicy": current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_COLLECTION_POLICY'],
-        "dcterms:abstract": current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_ABSTRACT'],
-        "maxAssembledSize": current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_ASSEMBLED_SIZE'],
-        "maxByReferenceSize": current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_BY_REFERENCE_SIZE'],
-        "maxSegments": current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_SEGMENTS'],
-        "maxUploadSize": current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE'],
-        "onBehalfOf": current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_ON_BEHALF_OF'],
-        "services": current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_SERVICES'],
-        "staging": current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_STAGING'],
-        "stagingMaxIdle": current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_STAGING_MAX_IDLE'],
-        "treatment": current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_TREATMENT'],
+        "version": current_app.config["WEKO_SWORDSERVER_SWORD_VERSION"],
+        "accept": current_app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT"],
+        "digest": current_app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_DIGEST"],
+        "acceptArchiveFormat": current_app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT"],
+        "acceptDeposits": current_app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_DEPOSITS"],
+        "acceptMetadata": current_app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_METADATA"],
+        "acceptPackaging": current_app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_PACKAGING"],
+        "authentication": current_app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_AUTHENTICATION"],
+        "byReferenceDeposit": current_app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_BY_REFERENCE_DEPOSIT"],
+        "collectionPolicy": current_app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_COLLECTION_POLICY"],
+        "dcterms:abstract": current_app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_ABSTRACT"],
+        "maxAssembledSize": current_app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_ASSEMBLED_SIZE"],
+        "maxByReferenceSize": current_app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_BY_REFERENCE_SIZE"],
+        "maxSegments": current_app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_SEGMENTS"],
+        "maxUploadSize": current_app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE"],
+        "onBehalfOf": current_app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_ON_BEHALF_OF"],
+        "services": current_app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_SERVICES"],
+        "staging": current_app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_STAGING"],
+        "stagingMaxIdle": current_app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_STAGING_MAX_IDLE"],
+        "treatment": current_app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_TREATMENT"],
     }
     serviceDocument = ServiceDocument(raw=raw_data)
 
     return jsonify(serviceDocument.data)
 
 
-@blueprint.route("/service-document", methods=['POST'])
-@oauth2.require_oauth(write_scope.id)
+@blueprint.route("/service-document", methods=["POST"])
+@oauth2.require_oauth()
+@limiter.limit("")
+@require_oauth_scopes(write_scope.id)
+@roles_required(WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE)
 @check_on_behalf_of()
 @check_package_contents()
 def post_service_document():
@@ -154,7 +176,7 @@ def post_service_document():
     """
     Response Requirements
         * MUST include ETag header if implementing concurrency control
-        * MUST include one or more File-URLs for the deposited content in the Status document. The behaviour of these File-URLs may vary depending on the type of content deposited (e.g. ByReference and Segmented Uploads do not need to be immediately retrievable)
+        * MUST include one or more File-URLs for the deposited content in the Status document. The behavior of these File-URLs may vary depending on the type of content deposited (e.g. ByReference and Segmented Uploads do not need to be immediately retrievable)
         * MUST respond with a Location header, containing the Object-URL
         * MUST respond with a valid Status Document or a suitable error response
         * Status Document MUST be available on GET to the Object-URL in the Location header immediately (irrespective of whether this is a 201 or 202 response)
@@ -174,51 +196,94 @@ def post_service_document():
         * If the server does not accept packages in the format identified in the Packaging header, MUST respond with a 415 (PackagingFormatNotAcceptable)
         * If the Packaging header does not match the format found in the body content, SHOULD return 415 (FormatHeaderMismatch). Note that the server may not be able to inspect the package during the request-response, so MAY NOT return this response.
     """
-    
+
     """
     Check content-disposition
         Request format:
             Content-Disposition	attachment; filename=[filename]
     """
     content_disposition, content_disposition_options = parse_options_header(
-            request.headers.get("Content-Disposition") or ""
+        request.headers.get("Content-Disposition") or ""
+    )
+
+    filename = content_disposition_options.get("filename")
+    if (content_disposition != "attachment"
+            or filename is None):
+        current_app.logger.error("Cannot get filename by Content-Disposition.")
+        raise WekoSwordserverException(
+            "Cannot get filename by Content-Disposition.",
+            ErrorType.BadRequest
         )
-    if content_disposition != "attachment" or not content_disposition_options.get('filename'):
-        raise WekoSwordserverException("Cannot get filename by Content-Disposition.", ErrorType.BadRequest)
-    filename = content_disposition_options.get('filename')
 
     # Check import item
     file = None
-    for key, value in request.files.items():
+    for _, value in request.files.items():
         if value.filename == filename:
             file = value
     if file is None:
-        raise WekoSwordserverException("Not found {0} in request body.".format(filename), ErrorType.BadRequest)
+        current_app.logger.error(f"Not found {filename} in request body.")
+        raise WekoSwordserverException(
+            f"Not found {filename} in request body.", ErrorType.BadRequest
+        )
 
-    check_result = check_import_items(file, False)
-    item = check_result.get('list_record')[0] if check_result.get('list_record') else None
-    if check_result.get('error') or not item or item.get('errors'):
-        errorType = None
-        check_result_msg = ''
-        if check_result.get('error'):
-            errorType = ErrorType.ServerError
-            check_result_msg = check_result.get('error')
-        elif item and item.get('errors'):
-            errorType = ErrorType.ContentMalformed
-            check_result_msg = ', '.join(item.get('errors'))
-        else:
-            errorType = ErrorType.ContentMalformed
-            check_result_msg = 'item_missing'
-        raise WekoSwordserverException('Error in check_import_items: {0}'.format(check_result_msg), errorType)
-    if item.get('status') != 'new':
-        raise WekoSwordserverException('This item is already registered: {0]'.format(item.get('item_title')), ErrorType.BadRequest)
+    # check packaging, "SimpleZip" or "SWORDBagIt"
+    packaging = request.headers.get("Packaging")
+    file_format = check_import_file_format(file, packaging)
 
+    if file_format == "JSON":
+        digest = request.headers.get("Digest")
+        if current_app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"]:
+            if (
+                digest is None
+                or not digest.startswith("SHA-256=")
+                or not is_valid_file_hash(digest.split("SHA-256=")[-1], file)
+            ):
+                current_app.logger.error(
+                    "Request body and digest verification failed."
+                )
+                raise WekoSwordserverException(
+                    "Request body and digest verification failed.",
+                    ErrorType.DigestMismatch
+                )
+
+        check_result = check_bagit_import_items(file, packaging)
+        register_format = check_result.get("register_format")
+
+    else:
+        check_result, file_format = check_import_items(file, False)
     data_path = check_result.get("data_path","")
     expire = datetime.now() + timedelta(days=1)
     TempDirInfo().set(data_path, {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")})
-    item["root_path"] = data_path+"/data"
-    
-    # import item
+
+    item = (
+        check_result.get("list_record")[0]
+            if "list_record" in check_result else None
+    )
+    if check_result.get("error") or not item or item.get("errors"):
+        errorType = None
+        check_result_msg = ""
+        if check_result.get("error"):
+            errorType = ErrorType.ServerError
+            check_result_msg = check_result.get("error")
+        elif item and item.get("errors"):
+            errorType = ErrorType.ContentMalformed
+            check_result_msg = ", ".join(item.get("errors"))
+        else:
+            errorType = ErrorType.ContentMalformed
+            check_result_msg = "item_missing"
+        current_app.logger.error(
+            f"Error in check_import_items: {check_result_msg}"
+        )
+        raise WekoSwordserverException(
+            f"Error in check_import_items: {check_result_msg}", errorType)
+    if item.get("status") != "new":
+        current_app.logger.error(
+            f"This item is already registered: {item.get('item_title')}"
+        )
+        raise WekoSwordserverException("This item is already registered: {0}".format(item.get("item_title")), ErrorType.BadRequest)
+
+    item["root_path"] = os.path.join(data_path, "data")
+
     owner = -1
     if current_user.is_authenticated:
         owner = current_user.id
@@ -227,21 +292,51 @@ def post_service_document():
             "referrer": request.referrer,
             "hostname": request.host,
             "user_id": owner,
-            "action": "IMPORT"
+            "action": "IMPORT",
+            "workflow_id": check_result.get("workflow_id"),
     }
-    import_result = import_items_to_system(item, request_info=request_info)
-    if not import_result.get('success'):
-        raise WekoSwordserverException('Error in import_items_to_system: {0}'.format(item.get('error_id')), ErrorType.ServerError)
-    
-    shutil.rmtree(data_path)
-    TempDirInfo().delete(data_path)
-    
-    recid = import_result.get('recid')
+    response = {}
+    if file_format == "TSV/CSV" or file_format == "JSON" and register_format == "Direct":
+        item["root_path"] = data_path+"/data"
+        import_result = import_items_to_system(item, request_info=request_info)
+        if not import_result.get("success"):
+            current_app.logger.error(
+                f"Error in import_items_to_system: {item.get('error_id')}"
+            )
+            raise WekoSwordserverException("Error in import_items_to_system: {0}".format(import_result.get("error_id")), ErrorType.ServerError)
+        recid = import_result.get("recid")
+        response = jsonify(_get_status_document(recid))
+    elif file_format == "XML" or file_format == "JSON" and register_format == "Workflow":
+        required_scopes = set([activity_scope.id])
+        token_scopes = set(request.oauth.access_token.scopes)
+        if not required_scopes.issubset(token_scopes):
+            abort(403)
+        try:
+            # activity, recid = create_activity_from_jpcoar(check_result, data_path)
+            url, recid, aution = import_items_to_activity(item, data_path, request_info=request_info)
+            activity_id = url.split("/")[-1]
+        except:
+            traceback.print_exc()
+            raise WekoSwordserverException("An error occurred while import to activity", ErrorType.ServerError)
+        response = jsonify(_get_status_workflow_document(activity_id, recid))
+    else:
+        if os.path.exists(data_path):
+            shutil.rmtree(data_path)
+            TempDirInfo().delete(data_path)
+        raise WekoSwordserverException("Invalid register format has been set for admin setting", ErrorType.ServerError)
+    # FIXME: finaly block
+    if os.path.exists(data_path):
+        shutil.rmtree(data_path)
+        TempDirInfo().delete(data_path)
 
-    return jsonify(_get_status_document(recid))
+    current_app.logger.info(
+        f"item imported by sword from {request.oauth.client.name} (recid={recid})"
+    )
 
 
-@blueprint.route("/deposit/<recid>", methods=['GET'])
+    return response
+
+@blueprint.route("/deposit/<recid>", methods=["GET"])
 @oauth2.require_oauth()
 @check_on_behalf_of()
 def get_status_document(recid):
@@ -282,28 +377,29 @@ def _get_status_document(recid):
     # Get record
     from invenio_pidstore.resolver import Resolver
     from werkzeug.utils import import_string
-    record_class = import_string('weko_deposit.api:WekoRecord')
+    record_class = import_string("weko_deposit.api:WekoRecord")
     try:
-        resolver = Resolver(pid_type='recid', object_type='rec',
+        resolver = Resolver(pid_type="recid", object_type="rec",
                         getter=record_class.get_record)
         pid, record = resolver.resolve(recid)
     except Exception:
         raise WekoSwordserverException("Item not found. (recid={})".format(recid), ErrorType.NotFound)
 
     # Get record uri
-    record_uri = '{}records/{}'.format(request.url_root, recid)
+    record_uri = "{}records/{}".format(request.url_root, recid)
     permalink = get_record_permalink(record)
-    if not permalink and \
-        record.get('system_identifier_doi') and \
-        record.get('system_identifier_doi').get(
-            'attribute_value_mlt')[0]:
-        permalink = record['system_identifier_doi'][
-            'attribute_value_mlt'][0][
-            'subitem_systemidt_identifier']
-    
+    if (
+        not permalink
+        and record.get("system_identifier_doi")
+        and record.get("system_identifier_doi").get("attribute_value_mlt")[0]
+    ):
+        permalink = record["system_identifier_doi"][
+            "attribute_value_mlt"][0][
+            "subitem_systemidt_identifier"]
+
     """
     Set raw data to StatusDocument
-    
+
     The following fields are set by sword3common
         # "@context"
         # "@type"
@@ -311,16 +407,16 @@ def _get_status_document(recid):
     raw_data = {
         "@context": constants.JSON_LD_CONTEXT,
         "@type": constants.DocumentType.Status[0],
-        "@id" : url_for('weko_swordserver.get_status_document', recid=recid, _external=True),
+        "@id" : url_for("weko_swordserver.get_status_document", recid=recid, _external=True),
         "actions" : {
-            "getMetadata" : False,      # Not implimented
-            "getFiles" : False,         # Not implimented
-            "appendMetadata" : False,   # Not implimented
-            "appendFiles" : False,      # Not implimented
-            "replaceMetadata" : False,  # Not implimented
-            "replaceFiles" : False,     # Not implimented
-            "deleteMetadata" : False,   # Not implimented
-            "deleteFiles" : False,      # Not implimented
+            "getMetadata" : False,      # Not implemented
+            "getFiles" : False,         # Not implemented
+            "appendMetadata" : False,   # Not implemented
+            "appendFiles" : False,      # Not implemented
+            "replaceMetadata" : False,  # Not implemented
+            "replaceFiles" : False,     # Not implemented
+            "deleteMetadata" : False,   # Not implemented
+            "deleteFiles" : False,      # Not implemented
             "deleteObject" : True,
         },
         "eTag" : str(record.revision_id),
@@ -332,7 +428,7 @@ def _get_status_document(recid):
             # "@id" : "",
             # "eTag" : ""
         },
-        "service" : url_for('weko_swordserver.get_service_document'),
+        "service" : url_for("weko_swordserver.get_service_document"),
         "state" : [
             {
                 "@id" : SwordState.ingested,
@@ -348,7 +444,7 @@ def _get_status_document(recid):
         ]
     }
     if permalink:
-        raw_data['links'].append({
+        raw_data["links"].append({
                 "@id" : permalink,
                 "rel" : ["alternate"],
                 "contentType" : "text/html"
@@ -358,12 +454,76 @@ def _get_status_document(recid):
 
     return statusDocument.data
 
-@blueprint.route("/deposit/<recid>", methods=['DELETE'])
+def _get_status_workflow_document(activity_id, recid):
+    """
+    :param recid: Record Identifier.
+    :returns: A :class:`sword3common.StatusDocument` instance.
+    """
+
+    """
+    Set raw data to StatusDocument
+
+    The following fields are set by sword3common
+        # "@context"
+        # "@type"
+    """
+    if not activity_id:
+        raise WekoSwordserverException("Activity created, but not found.", ErrorType.NotFound)
+
+    # Get record uri
+    record_url = ""
+    if recid:
+        record_url = url_for("weko_swordserver.get_status_document", recid=recid, _external=True)
+
+    raw_data = {
+        "@id": record_url,
+        "@context": constants.JSON_LD_CONTEXT,
+        "@type": constants.DocumentType.ServiceDocument,
+        "actions" : {
+            "getMetadata" : False,      # Not implimented
+            "getFiles" : False,         # Not implimented
+            "appendMetadata" : False,   # Not implimented
+            "appendFiles" : False,      # Not implimented
+            "replaceMetadata" : False,  # Not implimented
+            "replaceFiles" : False,     # Not implimented
+            "deleteMetadata" : False,   # Not implimented
+            "deleteFiles" : False,      # Not implimented
+            "deleteObject" : True,
+        },
+        "fileSet" : {
+            # "@id" : "",
+            # "eTag" : ""
+        },
+        "metadata" : {
+            # "@id" : "",
+            # "eTag" : ""
+        },
+        "service" : url_for("weko_swordserver.get_service_document", _external=False),
+        "state" : [
+            {
+                "@id" : SwordState.inWorkflow,
+                "description" : ""
+            }
+        ],
+        "links" : [
+            {
+                "@id" : url_for("weko_workflow.display_activity", activity_id=activity_id, _external=True),
+                "rel" : ["alternate"],
+                "contentType" : "text/html"
+            },
+        ]
+    }
+
+    statusDocument = StatusDocument(raw=raw_data)
+
+    return statusDocument.data
+
+@blueprint.route("/deposit/<recid>", methods=["DELETE"])
 @oauth2.require_oauth()
 @check_on_behalf_of()
 def delete_item(recid):
     """ Delete the Object in its entirety from the server, along with all Metadata and Files. """
-    
+
     """
     Server Requirements
         * If Authorization (and optionally On-Behalf-Of) headers are provided, MUST authenticate the request
@@ -384,18 +544,17 @@ def delete_item(recid):
         * If the server does not support On-Behalf-Of deposit and the On-Behalf-Of header has been provided, MAY respond with a 412 (OnBehalfOfNotAllowed)
     """
     try:
-        # delete item 
+        # delete item
         soft_delete(recid)
         current_app.logger.debug("item deleted by sword (recid={})".format(recid))
         db.session.commit()
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(e)
-    return ('', 204)
+    return ("", 204)
 
 def _create_error_document(type, error):
-    
-    class Error(sword3common.Error):
+    class Error(sword3commonError):
         # fix to timestamp coerce function not defined
         __SEAMLESS_STRUCT__ = {
             "fields": {
@@ -432,6 +591,11 @@ def handle_forbidden(ex):
     current_app.logger.error(msg)
     return jsonify(_create_error_document(ErrorType.Forbidden.type, msg)), ErrorType.Forbidden.code
 
+@blueprint.errorhandler(RateLimitExceeded)
+def handle_ratelimit(ex):
+    current_app.logger.error(ex)
+    return jsonify(_create_error_document(ErrorType.TooManyRequests.type, "Too many requests.")), ErrorType.TooManyRequests.code
+
 @blueprint.errorhandler(SeamlessException)
 def handle_seamless_exception(ex):
     current_app.logger.error(ex.message)
@@ -444,7 +608,6 @@ def handle_exception(ex):
 
 @blueprint.errorhandler(WekoSwordserverException)
 def handle_weko_swordserver_exception(ex):
-    current_app.logger.error(ex.message)
     return jsonify(_create_error_document(ex.errorType.type, ex.message)), ex.errorType.code
 
 @blueprint.teardown_request

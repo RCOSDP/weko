@@ -112,6 +112,10 @@ msgstr "プロパティ"
 msgid "Mapping"
 msgstr "マッピング"
 
+#: weko_itemtypes_ui/admin.py:793
+msgid "RO-Crate Mapping"
+msgstr "RO-Crate マッピング"
+
 #: weko_itemtypes_ui/config.py:48
 msgid "Text Field"
 msgstr "テキストフィールド"
@@ -515,3 +519,58 @@ msgstr "アイテムタイプ"
 #~ msgid "Input fixed Value"
 #~ msgstr "固定値を入力してください"
 
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Layer"
+msgstr "階層"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Number of layers"
+msgstr "階層数"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Tree structure"
+msgstr "ツリー構造"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Specify language"
+msgstr "言語を指定する"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Specify list index"
+msgstr "リストの番号を指定する"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Value"
+msgstr "値"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Node name"
+msgstr "ノード名"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Layer name is blank."
+msgstr "階層名が空白です"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Node name is blank."
+msgstr "ノード名が空白です"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "RO-Crate property is blank."
+msgstr "RO-Crateプロパティ名が空白です"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Item property is blank."
+msgstr "アイテムプロパティ名が空白です"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Item property index is blank."
+msgstr "アイテムプロパティのインデックスが空白です"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Static value is blank."
+msgstr "固定値が空白です"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Would you like to cancel your changes?"
+msgstr "変更を破棄しますか？"

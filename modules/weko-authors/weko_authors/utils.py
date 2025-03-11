@@ -616,3 +616,23 @@ def get_count_item_link(pk_id):
             and result_itemCnt['hits']['total'] > 0:
         count = result_itemCnt['hits']['total']
     return count
+
+
+def count_authors():
+    """Count authors from Elasticsearch."""
+    should = [
+        {'bool': {'must': [{'term': {'is_deleted': {'value': 'false'}}}]}},
+        {'bool': {'must_not': {'exists': {'field': 'is_deleted'}}}}
+    ]
+    match = [{'term': {'gather_flg': 0}}, {'bool': {'should': should}}]
+
+    query = {'bool': {'must': match}}
+
+    indexer = RecordIndexer()
+    result = indexer.client.count(
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+        body={'query': query}
+    )
+
+    return result

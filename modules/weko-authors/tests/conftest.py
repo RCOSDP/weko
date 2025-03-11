@@ -1,22 +1,10 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of WEKO3.
+# This file is part of Invenio.
 # Copyright (C) 2017 National Institute of Informatics.
 #
-# WEKO3 is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# WEKO3 is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with WEKO3; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 """Pytest configuration."""
 import os,sys
@@ -49,6 +37,7 @@ from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.models import Location, FileInstance
 from invenio_indexer import InvenioIndexer
 from invenio_search import InvenioSearch,RecordsSearch
+from weko_authors.config import WEKO_AUTHORS_REST_ENDPOINTS
 from weko_search_ui import WekoSearchUI
 from weko_index_tree.models import Index
 
@@ -159,7 +148,7 @@ def base_app(request, instance_path,search_class):
         CELERY_CACHE_BACKEND="memory",
         CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
         CELERY_RESULT_BACKEND="cache",
-        CACHE_REDIS_URL='redis://redis:6379/0',
+        CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
         SEARCH_ELASTIC_HOSTS=os.environ.get("INVENIO_ELASTICSEARCH_HOST"),
@@ -195,6 +184,69 @@ def app(base_app):
     """Flask application fixture."""
     with base_app.app_context():
         yield base_app
+
+
+@pytest.fixture()
+def base_app2(instance_path,search_class):
+    """Flask application fixture for ES."""
+    app_ = Flask('testapp', instance_path=instance_path)
+    app_.config.update(
+        SECRET_KEY='SECRET_KEY',
+        TESTING=True,
+        SERVER_NAME='app2',
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+           'SQLALCHEMY_DATABASE_URI',
+           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #    'SQLALCHEMY_DATABASE_URI',
+        #    'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        SQLALCHEMY_TRACK_MODIFICATIONS=True,
+        INDEX_IMG='indextree/36466818-image.jpg',
+        INDEXER_DEFAULT_INDEX="{}-authors-author-v1.0.0".format(
+            'test'
+        ),
+        SEARCH_UI_SEARCH_INDEX='test-weko',
+        WEKO_AUTHORS_ES_INDEX_NAME='test-authors',
+        WEKO_AUTHORS_AFFILIATION_IDENTIFIER_ITEM_OTHER=4,
+        WEKO_AUTHORS_LIST_SCHEME_AFFILIATION=[
+            'ISNI', 'GRID', 'Ringgold', 'kakenhi', 'Other'],
+        CELERY_ALWAYS_EAGER=True,
+        CELERY_CACHE_BACKEND="memory",
+        CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
+        CELERY_RESULT_BACKEND="cache",
+        CACHE_REDIS_URL='redis://redis:6379/0',
+        CACHE_REDIS_DB='0',
+        CACHE_REDIS_HOST="redis",
+        SEARCH_ELASTIC_HOSTS=os.environ.get("SEARCH_ELASTIC_HOSTS", "elasticsearch"),
+    )
+    Babel(app_)
+    InvenioDB(app_)
+    InvenioCache(app_)
+    InvenioAccounts(app_)
+    InvenioAccess(app_)
+    InvenioAdmin(app_)
+    InvenioAssets(app_)
+    InvenioIndexer(app_)
+    InvenioFilesREST(app_)
+
+    search = InvenioSearch(app_)
+    search.register_mappings(search_class.Meta.index, 'mock_module.mapping')
+    WekoTheme(app_)
+    WekoAuthors(app_)
+    WekoSearchUI(app_)
+
+    # app_.register_blueprint(blueprint)
+    app_.register_blueprint(blueprint_api, url_prefix='/api/authors')
+    return app_
+
+
+@pytest.yield_fixture()
+def app2(base_app2):
+    """Flask application fixture."""
+    with base_app2.app_context():
+        yield base_app2
 
 
 @pytest.yield_fixture()
@@ -476,3 +528,23 @@ def file_instance(db):
     )
     db.session.add(file)
     db.session.commit()
+
+
+@pytest.fixture()
+def esindex(app2):
+    from invenio_search import current_search_client as client
+    index_name = app2.config["INDEXER_DEFAULT_INDEX"]
+    alias_name = "test-author-alias"
+
+    with open("tests/data/mappings/author-v1.0.0.json","r") as f:
+        mapping = json.load(f)
+
+    with app2.test_request_context():
+        client.indices.create(index=index_name, body=mapping, ignore=[400])
+        client.indices.put_alias(index=index_name, name=alias_name)
+
+    yield client
+
+    with app2.test_request_context():
+        client.indices.delete_alias(index=index_name, name=alias_name)
+        client.indices.delete(index=index_name, ignore=[400, 404])

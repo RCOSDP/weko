@@ -108,3 +108,18 @@ WEKO_ACCOUNTS_REAL_IP = None # X-Real-IP > X-Forwarded-For[0] > remote_addr
 # WEKO_ACCOUNTS_REAL_IP = "x_forwarded_for" # X-Forwarded-For[first] > remote_addr
 # WEKO_ACCOUNTS_REAL_IP = "x_forwarded_for_rev" # X-Forwarded-For[last] > remote_addr
 
+WEKO_ACCOUNTS_REST_ENDPOINTS = {
+    'login': {
+        'route': '/<string:version>/login',
+        'default_media_type': 'application/json',
+    },
+    'logout': {
+        'route': '/<string:version>/logout',
+        'default_media_type': 'application/json',
+    },
+}
+
+WEKO_ACCOUNTS_API_LIMIT_RATE_DEFAULT = ['100 per minute']
+
+WEKO_API_LIMIT_RATE_DEFAULT = ["100 per minute"]
+"""Default rate limit per endpoint for one user in the WEKO API."""

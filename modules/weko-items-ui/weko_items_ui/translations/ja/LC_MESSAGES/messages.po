@@ -610,3 +610,8 @@ msgstr "インポート"
 #~ " it."
 #~ msgstr "該当アイテムの参照権限がないため流用できません。"
 
+msgid "Request Mail Destination"
+msgstr "リクエストメール送信先"
+
+msgid "Display Request Mail Button"
+msgstr "リクエストボタンを表示"

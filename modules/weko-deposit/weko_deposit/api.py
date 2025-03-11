@@ -1327,11 +1327,13 @@ class WekoDeposit(Deposit):
             return title, lang
             
         pid = PersistentIdentifier.query.filter_by(pid_type="recid", pid_value=self.get("recid")).one_or_none()
+        current_app.logger.info(f"pid: {pid.pid_value}")
+        current_app.logger.info(f"pid: {pid.object_uuid}")
         if pid:
             item_id = pid.object_uuid
             from weko_workflow.api import WorkActivity
             activity = WorkActivity().get_workflow_activity_by_item_id(item_id)
-
+            current_app.logger.info(f"activity: {activity.activity_id}")
             if activity:
                 itemtype_id = activity.workflow.itemtype_id
                 schema = "/items/jsonschema/{}".format(itemtype_id)
@@ -1441,7 +1443,7 @@ class WekoDeposit(Deposit):
             raise
         except BaseException:
             import traceback
-            current_app.logger.error(traceback.format_exc())
+            traceback.format_exc()
             abort(500, 'MAPPING_ERROR')
 
         # Save Index Path on ES

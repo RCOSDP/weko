@@ -12,7 +12,7 @@ from invenio_pidstore.models import PersistentIdentifier
 from weko_admin.models import BillingPermission
 from weko_records.models import ItemMetadata, ItemTypeProperty
 from weko_records.api import Mapping
-#from weko_records_ui.models import RocrateMapping
+from weko_records_ui.models import RocrateMapping
 from weko_workflow.models import WorkFlow, FlowDefine
 
 from tests.helpers import login
@@ -728,101 +728,101 @@ class TestItemTypeMappingView:
         assert json.loads(res.data) == {}
 
 
-#class TestItemTypeRocrateMappingView:
+class TestItemTypeRocrateMappingView:
     # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeRocrateMappingView::test_index_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
-#    @pytest.mark.parametrize('index, is_admin', [
-#        (0, True),
-#        (1, True),
-#        (2, False),
-#        (3, False),
-#        (4, False),
-#        (5, False),
-#        (7, False)
-#    ])
-#    def test_index_acl(self, client, admin_view, users, index, is_admin):
-#        login_user_via_session(client, email=users[index]['email'])
-#        url = url_for('itemtypesrocratemapping.index')
-#        res = client.get(url)
-#        assert_statuscode_with_role(res, is_admin)
+    @pytest.mark.parametrize('index, is_admin', [
+        (0, True),
+        (1, True),
+        (2, False),
+        (3, False),
+        (4, False),
+        (5, False),
+        (7, False)
+    ])
+    def test_index_acl(self, client, admin_view, users, index, is_admin):
+        login_user_via_session(client, email=users[index]['email'])
+        url = url_for('itemtypesrocratemapping.index')
+        res = client.get(url)
+        assert_statuscode_with_role(res, is_admin)
 
     # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeRocrateMappingView::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
-#    def test_index(self, client, admin_view, item_type, users, mocker):
-#        login_user_via_session(client=client, email=users[0]['email'])
+    def test_index(self, client, admin_view, item_type, users, mocker):
+        login_user_via_session(client=client, email=users[0]['email'])
 
         # item_type_id is none : redirect first item type
-#        url = url_for('itemtypesrocratemapping.index')
-#        res = client.get(url)
-#        assert res.status_code == 302
-#        assert res.headers['Location'] == 'http://test_server/admin/itemtypes/rocrate_mapping/1'
+        url = url_for('itemtypesrocratemapping.index')
+        res = client.get(url)
+        assert res.status_code == 302
+        assert res.headers['Location'] == url + str(item_type[0].get('item_type').id)
 
         # item_type_id is not exist : redirect first item type
-#        url100 = url_for('itemtypesrocratemapping.index', item_type_id=100)
-#        res = client.get(url100)
-#        assert res.status_code == 302
-#        assert res.headers['Location'] == 'http://test_server/admin/itemtypes/rocrate_mapping/1'
+        url100 = url_for('itemtypesrocratemapping.index', item_type_id=100)
+        res = client.get(url100)
+        assert res.status_code == 302
+        assert res.headers['Location'] == url + str(item_type[0].get('item_type').id)
 
         # item_type_id is normal : 200
-#        url1 = url_for('itemtypesrocratemapping.index', item_type_id=1)
-#        res = client.get(url1)
-#        assert res.status_code == 200
+        url1 = url_for('itemtypesrocratemapping.index', item_type_id=1)
+        res = client.get(url1)
+        assert res.status_code == 200
 
         # Item type table has no record : render error screen
- #       with patch('weko_records.api.ItemTypes.get_latest', return_value=[]):
- #           mock_render = mocker.patch('weko_itemtypes_ui.admin.ItemTypeRocrateMappingView.render', return_value=make_response())
- #           url1 = url_for('itemtypesrocratemapping.index', item_type_id=1)
- #           res = client.get(url1)
- #           assert res.status_code == 200
- #           assert mock_render.call_args[0][0] == current_app.config['WEKO_ITEMTYPES_UI_ADMIN_ERROR_TEMPLATE']
+        with patch('weko_records.api.ItemTypes.get_latest', return_value=[]):
+            mock_render = mocker.patch('weko_itemtypes_ui.admin.ItemTypeRocrateMappingView.render', return_value=make_response())
+            url1 = url_for('itemtypesrocratemapping.index', item_type_id=1)
+            res = client.get(url1)
+            assert res.status_code == 200
+            assert mock_render.call_args[0][0] == current_app.config['WEKO_ITEMTYPES_UI_ADMIN_ERROR_TEMPLATE']
 
         # Unexpected error : 500
- #       with patch('weko_records.api.ItemTypes.get_latest', side_effect=Exception('Unexpected error')):
- #           url1 = url_for('itemtypesrocratemapping.index', item_type_id=1)
- #           res = client.get(url1)
- #           assert res.status_code == 500
+        with patch('weko_records.api.ItemTypes.get_latest', side_effect=Exception('Unexpected error')):
+            url1 = url_for('itemtypesrocratemapping.index', item_type_id=1)
+            res = client.get(url1)
+            assert res.status_code == 500
 
     # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeRocrateMappingView::test_register_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
-#    @pytest.mark.parametrize('index, is_admin', [
-#        (0, True),
-#        (1, True),
-#        (2, False),
-#        (3, False),
-#        (4, False),
-#        (5, False),
-#        (7, False)
-#    ])
-#    def test_register_acl(self, client, admin_view, users, index, is_admin):
-#        login_user_via_session(client, email=users[index]['email'])
-#        url = url_for('itemtypesrocratemapping.register')
-#        data = {}
-#        res = client.post(url, json=data)
-#        assert_statuscode_with_role(res, is_admin)
+    @pytest.mark.parametrize('index, is_admin', [
+        (0, True),
+        (1, True),
+        (2, False),
+        (3, False),
+        (4, False),
+        (5, False),
+        (7, False)
+    ])
+    def test_register_acl(self, client, admin_view, users, index, is_admin):
+        login_user_via_session(client, email=users[index]['email'])
+        url = url_for('itemtypesrocratemapping.register')
+        data = {}
+        res = client.post(url, json=data)
+        assert_statuscode_with_role(res, is_admin)
 
     # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeRocrateMappingView::test_register -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
-#    def test_register(self, client, admin_view, users, rocrate_mapping):
-#        login_user_via_session(client, email=users[0]['email'])
-#        url = url_for('itemtypesrocratemapping.register')
+    def test_register(self, client, admin_view, users, rocrate_mapping):
+        login_user_via_session(client, email=users[0]['email'])
+        url = url_for('itemtypesrocratemapping.register')
 
         # Create mapping
-#        data = {'item_type_id': 1, 'mapping': {'key1': 'new_value1'}}
-#        res = client.post(url, json=data)
-#        assert res.status_code == 200
-#        record = RocrateMapping.query.filter_by(item_type_id=1).one_or_none()
-#        assert record.mapping.get('key1') == 'new_value1'
+        data = {'item_type_id': 1, 'mapping': {'key1': 'new_value1'}}
+        res = client.post(url, json=data)
+        assert res.status_code == 200
+        record = RocrateMapping.query.filter_by(item_type_id=1).one_or_none()
+        assert record.mapping.get('key1') == 'new_value1'
 
         # Update mapping
-#        data = {'item_type_id': 2, 'mapping': {'key2': 'new_value2'}}
-#        res = client.post(url, json=data)
-#        assert res.status_code == 200
-#        record = RocrateMapping.query.filter_by(item_type_id=2).one_or_none()
-#        assert record.mapping.get('key2') == 'new_value2'
+        data = {'item_type_id': 2, 'mapping': {'key2': 'new_value2'}}
+        res = client.post(url, json=data)
+        assert res.status_code == 200
+        record = RocrateMapping.query.filter_by(item_type_id=2).one_or_none()
+        assert record.mapping.get('key2') == 'new_value2'
 
         # Content type is not json : 400
-#        data = 'text'
-#        headers = {'Content-Type': 'text/plain'}
-#        res = client.post(url, data=data, headers=headers)
-#        assert res.status_code == 400
+        data = 'text'
+        headers = {'Content-Type': 'text/plain'}
+        res = client.post(url, data=data, headers=headers)
+        assert res.status_code == 400
 
         # Failed to register db : 500
-#        data = {}
-#        res = client.post(url, json=data)
-#        assert res.status_code == 500
+        data = {}
+        res = client.post(url, json=data)
+        assert res.status_code == 500
