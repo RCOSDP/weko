@@ -31,7 +31,7 @@ from celery.task.control import inspect
 from flask import current_app
 from flask_babelex import lazy_gettext as _
 from invenio_cache import current_cache
-from weko_workflow.utils import delete_cache_data, get_cache_data, update_cache_data
+from weko_workflow.utils import delete_cache_data, get_cache_data
 
 from sqlalchemy.exc import SQLAlchemyError
 from elasticsearch import ElasticsearchException
@@ -40,7 +40,7 @@ from weko_authors.config import WEKO_AUTHORS_IMPORT_CACHE_KEY
 
 from .utils import export_authors, import_author_to_system, save_export_url, \
     set_export_status, export_prefix, import_id_prefix_to_system, import_affiliation_id_to_system, \
-    get_check_base_name, handle_exception
+    get_check_base_name, handle_exception, update_cache_data
 
 @shared_task
 def export_all(export_target):

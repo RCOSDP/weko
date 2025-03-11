@@ -33,7 +33,6 @@ from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_files_rest.models import FileInstance
 from invenio_cache import current_cache
-from weko_workflow.utils import update_cache_data
 
 from .config import WEKO_AUTHORS_EXPORT_FILE_NAME, \
     WEKO_AUTHORS_IMPORT_CACHE_KEY
@@ -41,7 +40,7 @@ from .permissions import author_permission
 from .tasks import check_is_import_available, export_all, import_author, import_id_prefix, import_affiliation_id, import_author_over_max
 from .utils import check_import_data, check_import_data_for_prefix, delete_export_status, \
     get_export_status, get_export_url, set_export_status, check_file_name, delete_export_url,\
-    band_check_file_for_user, prepare_import_data, create_result_file_for_user
+    band_check_file_for_user, prepare_import_data, create_result_file_for_user, update_cache_data
 
 
 class AuthorManagementView(BaseView):

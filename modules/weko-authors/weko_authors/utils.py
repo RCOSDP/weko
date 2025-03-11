@@ -48,8 +48,6 @@ from invenio_db import db
 from invenio_files_rest.models import FileInstance, Location
 from invenio_indexer.api import RecordIndexer
 
-from weko_workflow.utils import update_cache_data
-
 from weko_authors.contrib.validation import validate_by_extend_validator, \
     validate_external_author_identifier, validate_map, validate_required, \
         check_weko_id_is_exits_for_import
@@ -58,6 +56,18 @@ from .api import WekoAuthors
 from .config import WEKO_AUTHORS_FILE_MAPPING, \
     WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY, WEKO_AUTHORS_EXPORT_CACHE_URL_KEY
 from .models import AuthorsPrefixSettings, AuthorsAffiliationSettings, Authors
+
+def update_cache_data(key: str, value: str, timeout=None):
+    """Create or Update cache data.
+
+    :param key: Cache key.
+    :param value: Cache value.
+    :param timeout: Cache expired.
+    """
+    if timeout is not None:
+        current_cache.set(key, value, timeout=timeout)
+    else:
+        current_cache.set(key, value)
 
 def get_author_prefix_obj(scheme):
     """Check item Scheme exist in DB."""
