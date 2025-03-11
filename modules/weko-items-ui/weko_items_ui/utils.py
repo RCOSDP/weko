@@ -3204,7 +3204,7 @@ def get_mapping_name_item_type_by_key(key, item_type_mapping):
     for mapping_key in item_type_mapping:
         if mapping_key == key:
             property_data = item_type_mapping.get(mapping_key)
-            if isinstance(property_data.get('jpcoar_mapping'), dict):
+            if isinstance(property_data, dict) and isinstance(property_data.get('jpcoar_mapping'), dict):
                 for name in property_data.get('jpcoar_mapping'):
                     return name
     return key
