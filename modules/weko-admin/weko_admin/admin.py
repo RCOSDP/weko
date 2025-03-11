@@ -1394,12 +1394,12 @@ class SwordAPISettingsView(BaseView):
             default_sword_api = {"data_format":
                                 {page_tsvcsv:
                                 {
-                                    "active": True,
+                                    "active": 'True',
                                     "registration_type": "Direct",
                                 },
                                 page_xml:
                                 {
-                                    "active": True,
+                                    "active": 'True',
                                     "registration_type": "Workflow",
                                     "workflow": "-1"
                                 }
@@ -1426,12 +1426,12 @@ class SwordAPISettingsView(BaseView):
                 settings = {"data_format":
                             {page_tsvcsv:
                             {
-                            "active": True,
+                            "active": 'True',
                             "registration_type": tsvcsv_registration_type,
                             },
                             page_xml:
                             {
-                            "active": True,
+                            "active": 'True',
                             "registration_type": xml_registration_type,
                             "workflow": xml_workflow
                             }
@@ -1464,7 +1464,7 @@ class SwordAPISettingsView(BaseView):
                     active_value = ''
                 registration_type_value = settings.data_format[page_xml]['registration_type']
                 workflow_value = settings.data_format[page_xml]['workflow']
-            elif page_type == page_tsvcsv:
+            else:
                 if settings.data_format[page_tsvcsv]['active'] == 'True':
                     active_value = 'checked'
                 else:
@@ -1524,41 +1524,6 @@ class SwordAPISettingsView(BaseView):
             AdminSettings.update('sword_api_setting',
                                     settings.__dict__)
             return jsonify(success=True),200
-
-
-    @expose('/default_format', methods=['POST'])
-    def default_format(self):
-        """Default Format."""
-        try:
-            settings = AdminSettings.get('sword_api_setting')
-            default_format_setting = request.json.get('default_format')
-            settings.default_format = default_format_setting
-            AdminSettings.update('sword_api_setting',
-                        settings.__dict__)
-            return jsonify(success=True),200
-        except Exception as e:
-            current_app.logger.error(
-                'ERROR Default Form Settings: {}'.format(e))
-            return jsonify(success=False),400
-
-    @expose('/data_format', methods=['POST'])
-    def data_format(self):
-        """Data Format Settings."""
-        try:
-            settings = AdminSettings.get('sword_api_setting')
-            data_format_setting = request.json.get('data_format')
-            if data_format_setting == "XML":
-                workflow_setting = request.json.get('workflow')
-                settings.data_format = {"TSV": {"register_format": "Direct"}, "XML": {"workflow": workflow_setting, "register_format": "Workflow"}}
-            else:
-                settings.data_format["TSV"]["register_format"] = "Direct"
-            AdminSettings.update('sword_api_setting',
-                                    settings.__dict__)
-            return jsonify(success=True),200
-        except Exception as e:
-            current_app.logger.error(
-                'ERROR Default Form Settings: {}'.format(e))
-            return jsonify(success=False),400
 
 class SwordAPIJsonldSettingsView(ModelView):
     """Pidstore Identifier admin view."""
@@ -1745,7 +1710,7 @@ class SwordAPIJsonldSettingsView(ModelView):
             # GET activity Waiting approval workflow
             exist_Waiting_approval_workflow = False
             if model.workflow_id is not None:
-                count = WorkActivity.count_waiting_approval_by_workflow_id(model.workflow_id)
+                count = WorkActivity.count_waiting_approval_by_workflow_id(WorkActivity,model.workflow_id)
                 if count > 0:
                     exist_Waiting_approval_workflow = True
 
@@ -1919,7 +1884,7 @@ class SwordAPIJsonldMappingView(ModelView):
             workflows = WorkFlow.get_workflow_by_itemtype_id(WorkFlow, item_type_id=model.item_type_id)
             workflow_ids = [workflow.id for workflow in workflows]
             for workflow_id in workflow_ids:
-                count = WorkActivity.count_waiting_approval_by_workflow_id(workflow_id)
+                count = WorkActivity.count_waiting_approval_by_workflow_id(WorkActivity, workflow_id)
                 if count > 0:
                     exist_Waiting_approval_workflow = True
 

@@ -2555,7 +2555,7 @@ class WorkActivity(object):
 
         return activities_number
 
-    def count_waiting_approval_by_workflow_id(workflow_id):
+    def count_waiting_approval_by_workflow_id(self, workflow_id):
         """Count activity waiting approval workflow.
         Returns:
             [int]: The number of activity waiting approval workflow.
