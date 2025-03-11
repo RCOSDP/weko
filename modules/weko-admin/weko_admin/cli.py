@@ -22,6 +22,7 @@
 import ast
 
 import click
+import json
 from flask.cli import with_appcontext
 from weko_authors.models import AuthorsPrefixSettings, AuthorsAffiliationSettings
 
@@ -208,7 +209,6 @@ def create_settings(id, name, settings):
     except Exception as ex:
         click.secho(str(ex))
 
-# invenio admin_settings mapping_update --shib_eppn eppn_value --shib_mail mail_value
 @admin_settings.command('mapping_update')
 @click.option('--shib_eppn', type=str, default=None)
 @click.option('--shib_role_authority_name', type=str, default=None)
@@ -218,11 +218,14 @@ def create_settings(id, name, settings):
 def update_attribute_mapping(shib_eppn, shib_role_authority_name, shib_mail, shib_user_name):
     """Update Attribute Mapping between Shibboleth and WEKO3."""
     attribute_mappings = AdminSettings.get('attribute_mapping', dict_to_object=False)
+    if isinstance(attribute_mappings, str):
+        attribute_mappings = json.loads(attribute_mappings)
+
     attributes = {
-        'shib_eppn': attribute_mappings.get('shib_eppn'),
-        'shib_role_authority_name': attribute_mappings.get('shib_role_authority_name'),
-        'shib_mail': attribute_mappings.get('shib_mail'),
-        'shib_user_name': attribute_mappings.get('shib_user_name')
+        'shib_eppn': attribute_mappings.get('shib_eppn', ''),
+        'shib_role_authority_name': attribute_mappings.get('shib_role_authority_name', ''),
+        'shib_mail': attribute_mappings.get('shib_mail', ''),
+        'shib_user_name': attribute_mappings.get('shib_user_name', '')
     }
 
     try:
