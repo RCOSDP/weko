@@ -10,6 +10,18 @@
 import pytz
 from datetime import datetime
 
+from flask import current_app
+
+def inbox_url(_external=False):
+    """Return the inbox URL."""
+    address = (
+        current_app.config["THEME_SITEURL"]
+        if _external
+        else current_app.config["WEKO_NOTIFICATIONS_INBOX_ADDRESS"]
+    )
+
+    return address + current_app.config["WEKO_NOTIFICATIONS_INBOX_ENDPOINT"]
+
 
 def rfc3339(timezone=None):
     """Return the current time in RFC3339 format.

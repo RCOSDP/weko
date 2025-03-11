@@ -16,12 +16,18 @@ from .utils import rfc3339
 
 def validate_string_or_list(value):
     if isinstance(value, str):
-        return True
+        return
     elif isinstance(value, list):
         if not all(isinstance(x, str) for x in value):
             raise ValidationError("List elements must be strings.")
-        return True
+        return
     raise ValidationError("Must be a string or list of strings.")
+
+def validate_activity_type(value):
+    from .notifications import ActivityType
+    if value not in (activity.value for activity in ActivityType):
+        raise ValidationError("Invalid activity type.")
+    return
 
 def validate_urn_uuid(value):
     if not value.startswith("urn:uuid:"):
@@ -106,7 +112,10 @@ class NotificationSchema(Schema):
     )
     """Context of the notification. alias of '@context'."""
 
-    type =fields.Field(required=True, validate=validate_string_or_list)
+    activity_type = fields.Field(
+        required=True, validate=validate_activity_type,
+        attribute="type", load_from="type"
+    )
     """Type of the notification."""
     origin = fields.Nested(InboxResource, required=True)
     """Origin entity of the notification."""

@@ -9,7 +9,8 @@ import pytest
 from unittest.mock import patch
 from marshmallow import ValidationError
 
-from weko_notifications.schema import ActorResource, InboxResource, UrlObject, DocumentObject, ContextObject, NotificationSchema, validate_string_or_list
+from weko_notifications.notifications import ActivityType
+from weko_notifications.schema import ActorResource, InboxResource, UrlObject, DocumentObject, ContextObject, NotificationSchema, validate_string_or_list, validate_activity_type
 
 # .tox/c1/bin/pytest --cov=weko_notifications tests/test_schema.py -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
 
@@ -17,12 +18,21 @@ from weko_notifications.schema import ActorResource, InboxResource, UrlObject, D
 # def validate_string_or_list(value):
 # .tox/c1/bin/pytest --cov=weko_notifications tests/test_schema.py::test_validate_string_or_list -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
 def test_validate_string_or_list():
-    assert validate_string_or_list("string") == True
-    assert validate_string_or_list(["string1", "string2"]) == True
+    assert validate_string_or_list("string") is None
+    assert validate_string_or_list(["string1", "string2"]) is None
     with pytest.raises(ValidationError):
         validate_string_or_list(123)
     with pytest.raises(ValidationError):
         validate_string_or_list([123, "string2"])
+
+# def validate_activity_type(value):
+# .tox/c1/bin/pytest --cov=weko_notifications tests/test_schema.py::test_validate_activity_type -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
+def test_validate_activity_type():
+    assert validate_activity_type(ActivityType.ANNOUNCE.value) is None
+    with pytest.raises(ValidationError):
+        validate_activity_type("invalid")
+    with pytest.raises(ValidationError):
+        validate_activity_type(["invalid", "invalid"])
 
 # class ActorResource(Schema):
 # .tox/c1/bin/pytest --cov=weko_notifications tests/test_schema.py::test_actor_resource_validation -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
@@ -113,17 +123,8 @@ def test_context_object_validation():
 
 # class NotificationSchema(Schema):
 # .tox/c1/bin/pytest --cov=weko_notifications tests/test_schema.py::test_notification_schema_validation -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
-def test_notification_schema_validation(mocker):
-    valid_data = {
-        "@context": ["https://www.w3.org/ns/activitystreams", "https://purl.org/coar/notify"],
-        "type": ["Announce", "coar-notify:EndorsementAction"],
-        "origin": {"id": "123", "inbox": "inbox_url", "type": "Inbox"},
-        "target": {"id": "456", "inbox": "inbox_url", "type": "Inbox"},
-        "object": {"id": "789", "object": "doc", "type": "Document", "ietf:cite-as": "cite-as", "url": {"id": "101", "mediaType": "application/pdf", "type": "URL"}},
-        "actor": {"id": "111", "type": "Person", "name": "John Doe"},
-        "context": {"id": "112", "ietf:cite-as": "cite-as", "type": "Context"},
-        "inReplyTo": "reply_to"
-    }
+def test_notification_schema_validation(json_notifications):
+    valid_data = json_notifications["after_approval"]
     valid_data2 = {
         "id": "urn:uuid:ab65a169-5b3b-474f-b0cf-db77e145e952",
         "updated": "2025-01-23T04:57:18Z",

@@ -13,5 +13,14 @@ WEKO_NOTIFICATIONS = True
 WEKO_NOTIFICATIONS_TEMPLATE = "weko_notifications/settings/notification.html"
 """Default base template for the demo page."""
 
-WEKO_NOTIFICATIONS_INBOX_URL = "http://inbox:8080"
-"""URL of the inbox."""
+WEKO_NOTIFICATIONS_INBOX_ADDRESS = "http://inbox:8080"
+"""Address of the inbox."""
+
+WEKO_NOTIFICATIONS_INBOX_ENDPOINT = "/inbox"
+"""Endpoint of the inbox."""
+
+COAR_NOTIFY_CONTEXT = [
+    "https://www.w3.org/ns/activitystreams",
+    "https://coar-notify.net"
+]
+"""COAR-Notify context."""
