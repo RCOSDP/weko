@@ -178,7 +178,6 @@ class ExportView(BaseView):
         """Process export authors."""
         data = request.get_json()
         export_target = data.get("isTarget","")
-        task = export_all.delay(export_target)
         #実行時に以前のexport_urlを削除
         delete_export_url()
         if export_target == "author_db":
@@ -378,6 +377,8 @@ class ImportView(BaseView):
         tasks = []
         records = [item for item in data.get(
             'records', []) if not item.get('errors')]
+        group_tasks = []
+        count=0
         
         if is_target == "id_prefix":
             for id_prefix in records:
@@ -420,10 +421,8 @@ class ImportView(BaseView):
             
             # フロントの最大表示数分だけrecordsを確保
             records, reached_point, count = prepare_import_data(max_page_for_import_tab)
-            tasks = []
             task_ids =[]
             
-            group_tasks = []
             for author in records:
                 group_tasks.append(import_author.s(author, force_change_mode))
         else:
@@ -549,6 +548,8 @@ class ImportView(BaseView):
                 "failure_count": failure_count
             }
             result_task["tasks"] = result
+        else:
+            result_task = result
         return jsonify(result_task)
 
     @author_permission.require(http_exception=403)

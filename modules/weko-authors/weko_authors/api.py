@@ -459,8 +459,7 @@ class WekoAuthors(object):
         row_header = []
         row_label_en = []
         row_label_jp = []
-        row_data = []        
-        affiliation_mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"])
+        row_data = []
         
         if not mappings or not affiliation_mappings:
             mappings, affiliation_mappings = WekoAuthors.mapping_max_item(deepcopy(WEKO_AUTHORS_FILE_MAPPING))

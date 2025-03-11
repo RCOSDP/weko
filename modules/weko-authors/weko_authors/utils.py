@@ -140,7 +140,7 @@ def validate_weko_id(weko_id, pk_id = None):
     # jsonify(msg=_('The value is already in use as WEKO ID.')), 500
     return True, None
 
-def check_weko_id_is_exists(weko_id, author_id = None):
+def check_weko_id_is_exists(weko_id, pk_id = None):
     """
     weko_idが既に存在するかチェック
     author_idが同じ場合はスキップする
@@ -182,7 +182,7 @@ def check_weko_id_is_exists(weko_id, author_id = None):
     # 同じweko_idが存在する場合はエラー
     for res in result['hits']['hits']:
         # 同じauthor_idの場合はスキップ
-        if author_id and author_id == res['_source']['pk_id']:
+        if pk_id and pk_id == res['_source']['pk_id']:
             continue
         author_id_info_from_es = res['_source']['authorIdInfo']
         for info in author_id_info_from_es:
@@ -333,7 +333,7 @@ def export_authors():
             current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"])
         # 1000ずつ著者を取得し、データを書き込む
         for i in range(start_point, records_count-1, size):
-            current_app.logger.info("Export authors start_point：",start_point)
+            current_app.logger.info(f"Export authors start_point：{start_point}")
             row_header = []
             row_label_en = []
             row_label_jp = []
@@ -341,7 +341,7 @@ def export_authors():
 
             # 著者情報取得のリトライ処理
             for attempt in range(retrys):
-                current_app.logger.info("Export authors retry count：", attempt)
+                current_app.logger.info(f"Export authors retry count：{attempt}")
                 try:
                     # 著者情報をstartからWEKO_EXPORT_BATCH_SIZE分取得
                     authors = WekoAuthors.get_by_range(i, size, False, False)
@@ -354,10 +354,8 @@ def export_authors():
                     handle_exception(ex, attempt, retrys, interval, stop_point=i)
                 except TimeoutError as ex:
                     handle_exception(ex, attempt, retrys, interval, stop_point=i)
-                    
             # 一時ファイルに書き込み
             write_to_tempfile(i, row_header, row_label_en, row_label_jp, row_data)
-            
         # 完成した一時ファイルをファイルインスタンスに保存
         with open(temp_file_path, 'rb') as f:
             reader = io.BufferedReader(f)
@@ -1242,7 +1240,7 @@ def import_author_to_system(author, status, weko_id, force_change_mode):
                     nameInfo["fullName"] = fullName
 
             if status == 'new':
-                if not check_weko_id:
+                if check_weko_id:
                     raise Exception({'error_id': "WekoID is duplicated"})
                 WekoAuthors.create(author)
             else:
@@ -1250,7 +1248,7 @@ def import_author_to_system(author, status, weko_id, force_change_mode):
                         and get_count_item_link(author['pk_id']) > 0:
                     raise Exception({'error_id': 'delete_author_link'})
                 
-                if not check_weko_id:
+                if check_weko_id:
                     raise Exception({'error_id': "WekoID is duplicated"})
                 author["authorIdInfo"].insert(
                     0,
