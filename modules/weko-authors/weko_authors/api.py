@@ -192,9 +192,11 @@ class WekoAuthors(object):
         existed_authors_id = {}
         existed_external_authors_id = {}
         for author in cls.get_all():
-            existed_authors_id[str(author.id)] = not author.is_deleted \
-                and author.gather_flg == 0
+            not_deleted_and_gather = not author.is_deleted and author.gather_flg == 0
+            existed_authors_id[str(author.id)] = not_deleted_and_gather
             metadata = author.json
+            if not not_deleted_and_gather:
+                continue
             for authorIdInfo in metadata.get('authorIdInfo', {}):
                 idType = authorIdInfo.get('idType')
                 if idType:
