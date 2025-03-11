@@ -326,7 +326,13 @@ def get_max_weko_id():
     query = {
         "_source": ["authorIdInfo"],  # authorIdInfoフィールドのみを取得
         "query": {
-            "match_all": {}
+            "bool": {
+                "must": [
+                    {"match_all": {}},
+                    {"term": {"is_deleted": {"value": "false"}}},
+                    {"term": {"gather_flg": {"value": "false"}}}
+                ]
+            }
         },
         "size": 1000  # スクロールごとに取得するドキュメント数
     }

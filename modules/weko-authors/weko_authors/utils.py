@@ -162,7 +162,9 @@ def check_weko_id_is_exists(weko_id, author_id = None):
                         "term": {
                             "authorIdInfo.authorId": weko_id
                         }
-                    }
+                    },
+                    {"term": {"is_deleted": {"value": "false"}}},
+                    {"term": {"gather_flg": {"value": "false"}}}
                 ]
             }
         }
