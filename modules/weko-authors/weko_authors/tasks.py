@@ -256,7 +256,9 @@ def import_authors_for_over_max(authors):
                     full_name_info += f"\n{full_name}"
         tasks.append({
             'task_id': task.task_id,
-            'weko_id': authors[idx].get('pk_id'),
+            'record_id': authors[idx].get('pk_id'),
+            'previous_weko_id': authors[idx].get('current_weko_id'),
+            'new_weko_id': authors[idx].get('weko_id'),
             'full_name': full_name_info,
             'type': authors[idx].get('status'),
             'status': 'PENDING'
@@ -290,7 +292,8 @@ def import_authors_for_over_max(authors):
         result.append({
             "start_date": start_date,
             "end_date": end_date,
-            "weko_id": _task['weko_id'],
+            'previous_weko_id': _task.get('current_weko_id'),
+            'new_weko_id': _task.get('weko_id'),
             "full_name": _task['full_name'],
             "type": _task['type'],
             "status": status,
@@ -300,7 +303,7 @@ def import_authors_for_over_max(authors):
         task.forget()
     del tasks
     write_result_temp_file(result)
-    # TODO インポート結果をサマリーに追加する処理
+    # インポート結果をサマリーに追加する処理
     update_summary(success_count, failure_count)
     
     del authors
@@ -330,14 +333,15 @@ def write_result_temp_file(result):
             for res in result:
                 start_date = res.get("start_date", "")
                 end_date = res.get("end_date", "")
-                weko_id = res.get("weko_id", "")
+                prev_weko_id= res.get('current_weko_id', "")
+                new_weko_id= res.get('weko_id', "")
                 full_name = res.get("full_name", "")
                 type = res.get("type", "")
                 status = res.get("status", "")
                 error_id = res.get("error_id", "")
                 
                 msg = prepare_display_status(status, type, error_id)
-                writer.writerow(["", start_date, end_date, weko_id, full_name, msg])
+                writer.writerow(["", start_date, end_date, prev_weko_id, new_weko_id, full_name, msg])
                 
                 
     except Exception as e:

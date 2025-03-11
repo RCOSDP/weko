@@ -1005,7 +1005,7 @@ def band_check_file_for_user(max_page):
     try:
         with open(check_file_path, 'w', newline='', encoding='utf-8') as file:
             writer = csv.writer(file, delimiter='\t')
-            writer.writerow(["No.", "WEKO ID", "full_name", "MailAddress", "Check Result"])
+            writer.writerow(["No.", "Current WEKO ID", "New WEKO ID", "full_name", "MailAddress", "Check Result"])
             for i in range(1, max_page+1):
                 part_check_file_name = f"{check_file_name}-part{i}"
                 check_file_part_path = os.path.join(temp_folder_path, part_check_file_name)
@@ -1024,11 +1024,16 @@ def band_check_file_for_user(max_page):
                                 full_name_info += full_name
                             else:
                                 full_name_info += f"\n{full_name}"
-                    email_info = entry.get("emailInfo", [{}])[0]
-                    email = email_info.get("email", "")
+                                
+                    current_weko_id = entry.get("current_weko_id", "")
+                    new_weko_id = entry.get("weko_id", "")
+                    email = ""
+                    if entry.get("emailInfo", [{}]):
+                        email_info = entry.get("emailInfo", [{}])[0]
+                        email = email_info.get("email", "")
                     check_result = get_check_result(entry)
 
-                    writer.writerow([index, pk_id, full_name_info, email, check_result])
+                    writer.writerow([index, current_weko_id, new_weko_id, full_name_info, email, check_result])
     except Exception as ex:
         raise ex
     
@@ -1290,16 +1295,17 @@ def create_result_file_for_user(json):
         with open(result_file_path, "w", encoding="utf-8") as result_file:
             writer = csv.writer(result_file, delimiter='\t')
             # write header
-            writer.writerow(["No.", "Start Date", "End Date", "WEKO ID", "full_name", "Status"])
+            writer.writerow(["No.", "Start Date", "End Date", "Previous WEKO ID", "New WEKO ID", "full_name", "Status"])
             # まずフロントから送られてきたjsonを書き込む
             for data in json:
                 number = data.get("No.", "")
                 start_date = data.get("Start Date", "")
                 end_date = data.get("End Date", "")
-                weko_id = data.get("WEKO ID", "")
+                prev_weko_id = data.get("Previous WEKO ID", "")
+                new_weko_id = data.get("New WEKO ID", "")
                 full_name = data.get("full_name", "")
                 status = data.get("Status", "")
-                writer.writerow([number, start_date, end_date, weko_id, full_name, status])
+                writer.writerow([number, start_date, end_date, prev_weko_id, new_weko_id, full_name, status])
             count = len(json) + 1
             with open(result_over_max_file_path, "r", encoding="utf-8") as file:
                 file_reader = csv.reader(file, dialect='excel', delimiter='\t')
