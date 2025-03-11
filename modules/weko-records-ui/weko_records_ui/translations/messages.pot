@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-records-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-02-10 15:07+0900\n"
+"POT-Creation-Date: 2025-02-25 09:09+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,12 +18,12 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: tests/test_utils.py:541 weko_records_ui/fd.py:468 weko_records_ui/fd.py:546
+#: tests/test_utils.py:542 weko_records_ui/fd.py:468 weko_records_ui/fd.py:546
 #: weko_records_ui/utils.py:1109
 msgid "Unexpected error occurred."
 msgstr ""
 
-#: tests/test_utils.py:545 weko_records_ui/utils.py:1111
+#: tests/test_utils.py:546 weko_records_ui/utils.py:1111
 msgid "Failed to send mail."
 msgstr ""
 
@@ -164,49 +164,49 @@ msgstr ""
 msgid "Free Input"
 msgstr ""
 
-#: weko_records_ui/utils.py:2080
+#: weko_records_ui/utils.py:2103
 msgid "The provided token is invalid."
 msgstr ""
 
-#: weko_records_ui/utils.py:2084
+#: weko_records_ui/utils.py:2107
 msgid "This feature is currently disabled."
 msgstr ""
 
-#: weko_records_ui/utils.py:2089
+#: weko_records_ui/utils.py:2112
 msgid "This file is currently not available for this feature."
 msgstr ""
 
-#: weko_records_ui/utils.py:2094
+#: weko_records_ui/utils.py:2117
 msgid "This URL has been deactivated."
 msgstr ""
 
-#: weko_records_ui/utils.py:2096
+#: weko_records_ui/utils.py:2119
 msgid "The download limit has been exceeded."
 msgstr ""
 
-#: weko_records_ui/utils.py:2099
+#: weko_records_ui/utils.py:2122
 msgid "The expiration date for download has been exceeded."
 msgstr ""
 
-#: weko_records_ui/views.py:769
+#: weko_records_ui/views.py:806
 msgid "Secret URL generated successfully"
 msgstr ""
 
-#: weko_records_ui/views.py:774
+#: weko_records_ui/views.py:811
 msgid ", please check your email inbox"
 msgstr ""
 
-#: weko_records_ui/views.py:776
+#: weko_records_ui/views.py:813
 msgid ""
 ", but there was an error while sending the email. To use the URL, please "
 "refresh the page and copy it from the issued URL list"
 msgstr ""
 
-#: weko_records_ui/views.py:779
+#: weko_records_ui/views.py:816
 msgid "."
 msgstr ""
 
-#: weko_records_ui/views.py:1008
+#: weko_records_ui/views.py:1045
 msgid "PDF cover page settings have been updated."
 msgstr ""
 
@@ -291,6 +291,8 @@ msgid "License"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:67
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:240
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:287
 msgid "Action"
 msgstr ""
 
@@ -305,6 +307,7 @@ msgid "Original"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:143
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:233
 msgid "Secret URL"
 msgstr ""
 
@@ -312,56 +315,142 @@ msgstr ""
 msgid "Plagarism Check"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:266
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:289
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:186
+msgid "Link Name"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:188
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:193
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:199
+msgid "Item has not been filled in."
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:191
+msgid "URL Expiry Date"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:194
+msgid "Max Expiry Date"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:197
+msgid "Download Limit"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:200
+msgid "Max Download Count"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:204
+msgid "Create Secret URL"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:207
+msgid "Send Email"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:236
+msgid "Label Name"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:237
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:284
+msgid "Create Date"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:238
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:285
+msgid "Expiration Date"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:239
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:286
+msgid "Download Count"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:255
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:302
+msgid "Delete"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:260
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:307
+msgid "Copy"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:268
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:315
+msgid "massage_del_check"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:269
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:316
+msgid "massage_del_success"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:270
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:317
+msgid "massage_copy_success"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:280
+msgid "Onetime URL"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:283
+msgid "User Name"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:323
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:346
 msgid "Version"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/box/stats.html:5
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:267
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:324
 msgid "Stats"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:275
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:295
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:332
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:352
 msgid "Show"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:276
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:295
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:333
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:352
 msgid "Hide"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:290
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:347
 msgid "Date Modified"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:291
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:348
 msgid "Object File Name"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:292
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:349
 msgid "File Size"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:293
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:350
 msgid "File Hash Value"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:294
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:351
 msgid "Contributor Name"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:316
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:373
 msgid "Downloads"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:324
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:381
 msgid "Plays"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/box/stats.html:29
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:334
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:391
 msgid "See details"
 msgstr ""
 
