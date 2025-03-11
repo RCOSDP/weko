@@ -143,7 +143,7 @@ class SwordItemTypeMapping():
         return obj
 
     @classmethod
-    def get_id_all(cls, with_deleted=False ) -> list:
+    def get_id_all(cls, with_deleted=False ):
         """Get all id, name, item_type_id."""
         model = SwordItemTypeMappingModel
         query = model.query
@@ -297,7 +297,7 @@ class SwordClient():
         return obj
 
     @classmethod
-    def get_client_id_all(cls) -> list:
+    def get_client_id_all(cls):
         """Get client_id all. """
         model = SwordClientModel
         query = model.query.with_entities(model.client_id)

@@ -99,7 +99,7 @@ class User(db.Model, UserMixin):
         return 'User <id={0.id}, email={0.email}>'.format(self)
 
     @classmethod
-    def get_email_by_id(cls, id) -> list:
+    def get_email_by_id(cls, id):
         """Get client_id, name by user_id. """
         query = db.session.query(cls).with_entities(cls.email).filter(cls.id == id)
         return query.first()

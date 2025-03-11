@@ -285,13 +285,13 @@ class Client(db.Model):
         return no_users
 
     @classmethod
-    def get_client_id_by_user_id(cls, user_id) -> list:
+    def get_client_id_by_user_id(cls, user_id):
         """Get client_id, name by user_id. """
         query = db.session.query(cls).with_entities(cls.client_id, cls.name).filter(cls.user_id == user_id)
         return query.all()
 
     @classmethod
-    def get_client_id_all(cls) -> list:
+    def get_client_id_all(cls):
         """Get client_id all. """
         query = db.session.query(cls).with_entities(cls.client_id, cls.name)
         return query.all()

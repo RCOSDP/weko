@@ -221,7 +221,7 @@ class ItemTypeNames(RecordBase):
             return query.one_or_none()
 
     @classmethod
-    def get_name_and_id_all(cls) -> list:
+    def get_name_and_id_all(cls):
         """get name and id all."""
         query = db.session.query(ItemTypeName).with_entities(ItemTypeName.name, ItemTypeName.id)
         return query.all()
