@@ -190,8 +190,8 @@ def get_workspace_itemlist():
         # "fbEmailSts": None,  # フィードバックメールステータス
         workspaceItem["fbEmailSts"] = False
         
-        FeedbackMailList = FeedbackMailList.query.all()
-        for record in FeedbackMailList:
+        feedbackMailList = FeedbackMailList.get_feedback_mail_list()
+        for record in feedbackMailList:
             if record.mail_list and current_user.email in record.mail_list.get("emails", []):
                 workspaceItem["fbEmailSts"] = True
                 break
