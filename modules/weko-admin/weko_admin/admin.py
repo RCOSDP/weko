@@ -959,7 +959,7 @@ class SiteLicenseSendMailSettingsView(BaseView):
         sitelicenses = SiteLicenseInfo.query.filter_by(repository_id=repository_id).order_by(
                     SiteLicenseInfo.organization_id).all()
         settings = AdminSettings.get('site_license_mail_settings', False)
-        setting = settings[repository_id] if settings else {}
+        setting = settings.get(repository_id) if settings else {}
         auto_send = setting.get("auto_send_flag", False) if setting else False
         
         now = datetime.utcnow()
