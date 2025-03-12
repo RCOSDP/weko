@@ -283,29 +283,41 @@
                 <div class="panel-body panel-body2">
                   <div class="Input">
                     <br>
-                    <!-- OA Policyリンク取得 -->
-                    <div class="panel-body panel-body2">
-                      <div class="Input">
-                        <br>
-                        <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3">
-                          <label for="policy">{{ _('oa_policy_label') }}</label>
-                        </div>
-                        <div class="col-xs-8 col-sm-8 col-md-9 col-lg-8">
-                          <div class="url">
-                            <button type="button" class="btn btn-primary" id="oapolicyurl">
-                              {{ _('oa_policy_export') }}
-                            </button>
-                            <span class="ml-2">
-                              <a id="oaPolicyUrl" href="#" target="_blank" style="display: none;">
-                                <span id="{{ _(oaPolicyText)}}"></span>
-                              </a>
-                            </span>
-                            <span class="ml-2 text-danger" id="{{ _(oaPolicyError)}}"
-                              style="display: inline-block; min-width: 200px;"></span>
-                          </div>
-                        </div>
-                      </div>
+                    <!-- OA Policy リンク取得 -->
+                <div class="form-group row">
+                  <!-- ラベル -->
+                  <label for="policy" class="col-sm-3 col-form-label text-right">
+                    {{ _('oa_policy_label') }}
+                  </label>
+
+                  <!-- ボタン + URL + エラーメッセージ -->
+                  <div class="col-sm-9">
+                    <div class="input-group">
+                      <!-- Policy 取得ボタン -->
+                      <button type="button" class="btn btn-primary" id="oapolicyurl">
+                        {{ _('oa_policy_export') }}
+                      </button>
+
+                      <!-- URL 表示 -->
+                      <a id="oaPolicyUrl" href="#" target="_blank" class="ml-2 d-none">
+                        <span id="oaPolicyText"></span>
+                      </a>
+
+                      <!-- エラーメッセージ -->
+                      <span id="oaPolicyError" class="text-danger ml-2" aria-live="polite"></span>
                     </div>
+
+                    <!-- エラーメッセージ（翻訳適用） -->
+                    <input type="hidden" id="error_missing_input" value="{{ _('Please enter ISSN, eISSN, or journal title') }}">
+                    <input type="hidden" id="error_no_policy_found" value="{{ _('No Policy Information found') }}">
+                    <input type="hidden" id="error_api_auth" value="{{ _('Authentication error occurred') }}">
+                    <input type="hidden" id="error_api_generic" value="{{ _('An unknown error occurred') }}">
+                    <input type="hidden" id="error_api_400" value="{{ _('Invalid parameters') }}">
+                    <input type="hidden" id="error_api_404" value="{{ _('No matching policy') }}">
+                    <input type="hidden" id="error_api_500" value="{{ _('Internal server error') }}">
+                  </div>
+                </div>
+
                 {%- block feedback_mail_list %}
                 <div id="react"></div>
                 <input id="component-search-email-name" type="hidden" value="{{_('Feedback Mail Destination')}}" />

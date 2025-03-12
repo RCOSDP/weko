@@ -394,26 +394,27 @@ msgstr "OA ポリシー情報"
 msgid "oa_policy_export"
 msgstr "OA ポリシー取得"
 
-#: weko-items-ui/weko_items_ui/static/js/weko_items_ui/oapolicy.js:21
-msgid "error_missing_input"
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:298
+msgid "Please enter ISSN, eISSN, or journal title"
 msgstr "ISSN、eISSN、または雑誌名を入力してください。"
 
-#~ msgid "error_no_policy_found"
-#~ msgstr "一致するポリシー情報が見つかりませんでした。"
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:298
+msgid "No Policy Information found"
+msgstr "一致するポリシー情報が見つかりませんでした。"
 
-#~ msgid "error_api_auth"
+#~ msgid "Authentication error occurred"
 #~ msgstr "認証エラーが発生しました。"
 
-#~ msgid "error_api_generic"
+#~ msgid "An unknown error occurred"
 #~ msgstr "不明なエラーが発生しました。"
 
-#~ msgid "error_api_400"
+#~ msgid "Invalid parameters"
 #~ msgstr "パラメータが不正です。"
 
-#~ msgid "error_api_404"
+#~ msgid "No matching policy"
 #~ msgstr "一致するポリシー情報が見つかりませんでした。"
 
-#~ msgid "error_api_500"
+#~ msgid "Internal server error"
 #~ msgstr "サーバー内部エラーが発生しました。"
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:88

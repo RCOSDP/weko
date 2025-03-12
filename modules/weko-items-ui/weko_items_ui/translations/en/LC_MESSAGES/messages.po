@@ -388,33 +388,33 @@ msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:289
 msgid "oa_policy_label"
-msgstr ""
+msgstr "OA Policy information"
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:294
 msgid "oa_policy_export"
+msgstr "OA Policy"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:298
+msgid "Please enter ISSN, eISSN, or journal title"
 msgstr ""
 
-#:weko-items-ui/weko_items_ui/static/js/weko_items_ui/oapolicy.js:21
-msgid "error_missing_input"
-msgstr "Please enter ISSN, eISSN, or journal title."
+#~ msgid "No Policy Information found"
+#~ msgstr ""
 
-#~ msgid "error_no_policy_found"
-#~ msgstr "No matching policy information found."
+#~ msgid "Authentication error occurred"
+#~ msgstr ""
 
-#~ msgid "error_api_auth"
-#~ msgstr "Authentication error occurred."
+#~ msgid "An unknown error occurred"
+#~ msgstr ""
 
-#~ msgid "error_api_generic"
-#~ msgstr "An unknown error occurred."
+#~ msgid "Invalid parameters"
+#~ msgstr ""
 
-#~ msgid "error_api_400"
-#~ msgstr "Invalid parameters."
+#~ msgid "No matching policy"
+#~ msgstr ""
 
-#~ msgid "error_api_404"
-#~ msgstr "No matching policy information found."
-
-#~ msgid "error_api_500"
-#~ msgstr "Internal server error."
+#~ msgid "Internal server error"
+#~ msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:88
 msgid "Flow"
