@@ -1,7 +1,9 @@
 
 import pytest
-
-from flask import url_for,request,make_response,current_app
+import json
+import redis
+from invenio_accounts.models import Role
+from flask import url_for,request,make_response,current_app,Flask
 from flask_login.utils import login_user,logout_user
 from flask_menu import current_menu
 from mock import patch
@@ -11,7 +13,8 @@ from weko_accounts.models import ShibbolethUser
 from weko_accounts.views import (
     _has_admin_access,
     init_menu,
-    _redirect_method
+    _redirect_method,
+    shib_sp_login,
 )
 def set_session(client,data):
     with client.session_transaction() as session:
@@ -259,12 +262,13 @@ def test_shib_login(client,redis_connect,users,mocker):
     with patch("weko_accounts.views.flash",side_effect=BaseException("test_error")):
         res = client.get(url_base)
         assert res.status_code == 400
+
 #def shib_sp_login():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_shib_sp_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_shib_sp_login(client, redis_connect,mocker, db, users):
     mocker.patch("weko_accounts.views.RedisConnection.connection",return_value=redis_connect)
     url = url_for("weko_accounts.shib_sp_login")
-    
+
     # not shib_session_id
     with patch("weko_accounts.views.redirect",return_value=make_response()) as mock_redirect:
         mock_flash = mocker.patch("weko_accounts.views.flash")
@@ -289,6 +293,30 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
         "SHIB_ATTR_SESSION_ID":"1111",
         "SHIB_ATTR_EPPN":"test_eppn"
     }
+
+    # WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPSがTrueの場合のテスト
+    current_app.config.update(
+        WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS=True
+    )
+    mock_sync_shib_gakunin_map_groups = mocker.patch("weko_accounts.views.sync_shib_gakunin_map_groups", return_value=None)
+    client.post(url, data=form)
+    mock_sync_shib_gakunin_map_groups.assert_called_once()
+
+    # sync_shib_gakunin_map_groupsが例外をスローする場合のテスト
+    mock_sync_shib_gakunin_map_groups = mocker.patch("weko_accounts.views.sync_shib_gakunin_map_groups", side_effect=Exception("test_exception"))
+    mock_redirect_method = mocker.patch("weko_accounts.views._redirect_method", return_value=make_response())
+    res = client.post(url, data=form)
+    mock_redirect_method.assert_called_once()
+    assert res.status_code == 200  # _redirect_methodが呼び出されることを確認
+
+    # WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPSがFalseの場合のテスト
+    current_app.config.update(
+        WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS=False
+    )
+    mock_sync_shib_gakunin_map_groups.reset_mock()
+    res = client.post(url, data=form)
+    mock_sync_shib_gakunin_map_groups.assert_not_called()
+
     # shib_user.get_relation_info is None
     with patch("weko_accounts.views.ShibUser.get_relation_info",return_value=None)\
         and patch("weko_accounts.views.redirect",return_value=make_response()):
