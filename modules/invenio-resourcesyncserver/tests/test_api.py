@@ -8,6 +8,7 @@ from mock import patch, MagicMock, Mock
 from flask import current_app, make_response, request
 from flask_login import current_user
 from flask_babelex import Babel
+from invenio_communities.models import Community
 
 from invenio_resourcesyncserver.api import ResourceListHandler, ChangeListHandler
 from invenio_resourcesyncserver.models import ChangeListIndexes, ResourceListIndexes
@@ -128,14 +129,55 @@ def test_get_resource_ResourceListHandler(i18n_app, db):
     assert not test.get_resource("a")
     
     
+# .tox/c1/bin/pytest --cov=invenio_resourcesyncserver tests/test_api.py::test_get_list_resource_ResourceListHandler -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncserver/.tox/c1/tmp
 #     def get_list_resource(cls, type_result='obj'):
-def test_get_list_resource_ResourceListHandler(i18n_app, db):
+def test_get_list_resource_ResourceListHandler(i18n_app, db, users):
     test = sample_ResourceListHandler()
     sample = sample_ResourceListIndexes()
     db.session.add(sample)
     db.session.commit()
 
-    assert test.get_list_resource()
+    # no type_result
+    result = test.get_list_resource(type_result=None)
+    assert len(result)
+    assert isinstance(result[0], ResourceListIndexes)
+    assert result[0].id == 1
+    
+    # no user
+    result = test.get_list_resource()
+    assert len(result) == 1
+    assert isinstance(result[0], ResourceListHandler)
+    assert result[0].id == 1
+    
+    # super role user
+    user = users[3]["obj"]
+    result = test.get_list_resource(user=user)
+    assert len(result) == 1
+    assert isinstance(result[0], ResourceListHandler)
+    assert result[0].id == 1
+    
+    # comadmin role user with repository
+    user = users[4]["obj"]
+    mock_repo = Community(root_node_id=1)
+    with patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[mock_repo]):
+        with patch("weko_index_tree.api.Indexes.get_child_list_recursive", return_value=[sample.repository_id]):
+            result = test.get_list_resource(user=user)
+            assert len(result) == 1
+            assert isinstance(result[0], ResourceListHandler)
+            assert result[0].id == 1
+    
+    # comadmin role user with no repository
+    with patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[]):
+        result = test.get_list_resource(user=user)
+        assert len(result) == 0
+    
+    # comadmin role user with repository but no index
+    user = users[4]["obj"]
+    with patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[mock_repo]):
+        with patch("weko_index_tree.api.Indexes.get_child_list_recursive", return_value=[]):
+            result = test.get_list_resource(user=user)
+            assert len(result) == 0
+
 # def test_get_list_resource_2_ResourceListHandler(i18n_app):
 #     test = sample_ResourceListHandler()
 
@@ -566,7 +608,7 @@ def test_get_change_list_ChangeListHandler(i18n_app, db):
 
 #     def get_all(cls):
 #     def convert_modal_to_obj(cls, model=ChangeListIndexes()):
-def test_get_all_ChangeListHandler(i18n_app, db):
+def test_get_all_ChangeListHandler(i18n_app, db, users):
     test_str = sample_ChangeListHandler("str")
 
     from invenio_resourcesyncserver.models import ChangeListIndexes
@@ -581,12 +623,44 @@ def test_get_all_ChangeListHandler(i18n_app, db):
         publish_date=datetime.datetime.now()
     )
 
+    # no data
     assert not test_str.get_all()
 
     db.session.add(test)
     db.session.commit()
 
-    assert test_str.get_all()
+    # without user
+    result = test_str.get_all()
+    assert len(result) == 1
+    assert result[0].id == test.id
+    
+    # super role user
+    user = users[3]["obj"]
+    result = test_str.get_all(user=user)
+    assert len(result) == 1
+    assert isinstance(result[0], ChangeListHandler)
+    assert result[0].id == test.id
+    
+    # comadmin role user with repository
+    user = users[4]["obj"]
+    mock_repo = Community(root_node_id=1)
+    with patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[mock_repo]):
+        with patch("weko_index_tree.api.Indexes.get_child_list_recursive", return_value=[test.repository_id]):
+            result = test_str.get_all(user=user)
+            assert len(result) == 1
+            assert isinstance(result[0], ChangeListHandler)
+            assert result[0].id == test.id
+    
+    # comadmin role user with no repository
+    with patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[]):
+        result = test_str.get_all(user=user)
+        assert len(result) == 0
+    
+    # comadmin role user with repository but no index
+    with patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[mock_repo]):
+        with patch("weko_index_tree.api.Indexes.get_child_list_recursive", return_value=[]):
+            result = test_str.get_all(user=user)
+            assert len(result) == 0
 
 
 #     def get_change_list_by_repo_id(cls, repo_id, type_result='obj'):

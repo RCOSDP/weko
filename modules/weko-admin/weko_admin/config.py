@@ -1113,7 +1113,24 @@ WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
     'indexjournal',
     'report',
     'itemexportsettings',
-    'items/import'
+    'items/import',
+    'items/bulk/update',
+    'items/bulk/delete',
+    'items/bulk-export',
+    'authors',
+    'authors/export',
+    'authors/import',
+    'feedbackmail',
+    'sitelicensesendmail',
+    'flowsetting',
+    'workflowsetting',
+    'community',
+    'user',
+    'resource_list',
+    'change_list',
+    'resync',
+    'sitelicensesettings',
+    'oaiset',
 ]
 """Classes Community Administrator can access."""
 
