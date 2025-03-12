@@ -129,7 +129,7 @@ RECORDS_REST_ENDPOINTS["recid"]["record_serializers"] = {
 
 # Workspace endpoint
 RECORDS_REST_ENDPOINTS["worksapce"] = pickle.loads(pickle.dumps(RECORDS_REST_ENDPOINTS["recid"], -1))
-RECORDS_REST_ENDPOINTS["worksapce"]["list_route"] = "/worksapce/search"
+RECORDS_REST_ENDPOINTS["worksapce"]["list_route"] = "/workspace/search"
 RECORDS_REST_ENDPOINTS["worksapce"]["search_serializers"] = {
     "application/json": ("weko_records.serializers:opensearch_v1_search"),
 }

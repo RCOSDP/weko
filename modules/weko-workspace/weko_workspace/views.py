@@ -342,7 +342,7 @@ def update_workspace_status_management():
 
     user_id = current_user.id
 
-    item_recid = data.get("itemRecid")  # 使用 itemRecid
+    item_recid = data.get("itemRecid")
 
     type = data.get("type")
 

@@ -115,7 +115,6 @@ def get_workspace_filterCon():
     except Exception as e:
         default_con = DEFAULT_FILTERS
         isnotNone = False
-
     return default_con, isnotNone
 
 
@@ -123,19 +122,29 @@ def get_workspace_filterCon():
 def get_es_itemlist():
     """Get the item list from Elasticsearch.
 
-    Args:
-        ----
+    Returns:
+        dict: Elasticsearch records data if successful.
+        None: If an error occurs during requests or JSON parsing.
     """
-
-    invenio_api_path = "/api/worksapce/search"
+    invenio_api_path = "/api/workspace/search"
     headers = {"Accept": "application/json"}
+    base_url = request.host_url.rstrip("/")
 
-    response = requests.get(request.host_url.rstrip("/") + invenio_api_path, headers=headers)
-    size = response.json()["hits"]["total"]
-    
-    response = requests.get(request.host_url.rstrip("/") + invenio_api_path + "?size="+str(size), headers=headers)
-    records_data = response.json()
-    return records_data
+    try:
+        response = requests.get(base_url + invenio_api_path, headers=headers)
+        response.raise_for_status() 
+        size = response.json()["hits"]["total"]
+
+        response = requests.get(base_url + invenio_api_path + "?size=" + str(size), headers=headers)
+        response.raise_for_status()
+        records_data = response.json()
+        return records_data
+    except requests.exceptions.RequestException as e:
+        return None
+    except json.JSONDecodeError as e:
+        return None
+    except KeyError as e:
+        return None
 
 
 def get_workspace_status_management(recid: str):
@@ -145,20 +154,22 @@ def get_workspace_status_management(recid: str):
         recid {string} -- recid of item
 
     Returns:
-        [tuple] -- the favorite status and read status
+        tuple: (is_favorited, is_read) if successful, None if no record or on error
         tuple[0] -- the favorite status
         tuple[1] -- the read status
     """
-
-    result = (
-        WorkspaceStatusManagement.query.filter_by(user_id=current_user.id, recid=recid)
-        .with_entities(
-            WorkspaceStatusManagement.is_favorited, WorkspaceStatusManagement.is_read
+    try:
+        result = (
+            WorkspaceStatusManagement.query.filter_by(user_id=current_user.id, recid=recid)
+            .with_entities(
+                WorkspaceStatusManagement.is_favorited,
+                WorkspaceStatusManagement.is_read
+            )
+            .first()
         )
-        .first()
-    )
-
-    return result
+        return result
+    except SQLAlchemyError:
+        return None
 
 
 def get_accessCnt_downloadCnt(recid: str):
@@ -168,25 +179,25 @@ def get_accessCnt_downloadCnt(recid: str):
         recid {string} -- recid of item
 
     Returns:
-        [tuple] -- access count and download count
+        tuple: (access_count, download_count) if successful, (0, 0) if an error occurs
         tuple[0] -- access count
         tuple[1] -- download count
-
     """
+    try:
+        uuid = PersistentIdentifier.get(
+            current_app.config["WEKO_WORKSPACE_PID_TYPE"], recid
+        ).object_uuid
 
-    uuid = PersistentIdentifier.get(
-        current_app.config["WEKO_WORKSPACE_PID_TYPE"], recid
-    ).object_uuid
+        time = None
+        result = StatisticMail.get_item_information(uuid, time, "")
 
-    time = None
+        accessCnt = int(float(result["detail_view"]))
+        downloadCnt = int(sum(float(value) for value in result["file_download"].values()))
 
-    result = StatisticMail.get_item_information(uuid, time, "")
+        return (accessCnt, downloadCnt)
 
-    accessCnt = int(float(result["detail_view"]))
-
-    downloadCnt = int(sum(float(value) for value in result["file_download"].values()))
-
-    return (accessCnt, downloadCnt)
+    except Exception:
+        return (0, 0)
 
 
 # TODO 2.1.2.5 アイテムステータス取得処理
@@ -233,7 +244,7 @@ def insert_workspace_status(user_id, recid, is_favorited=False, is_read=False):
 
     Args:
         user_id (str): user id
-        recid (str): _description_
+        recid (str): recid
         is_favorited (bool, optional): favorited status. Defaults to False.
         is_read (bool, optional): read status. Defaults to False.
 
