@@ -22,8 +22,6 @@ depends_on = 'invenio_accounts'
 
 def upgrade():
     """Upgrade database."""
-    bind = op.get_bind()
-    session = Session(bind=bind)
 
     # Recreate 'file_onetime_download' table
     op.drop_table('file_onetime_download')
@@ -109,8 +107,6 @@ def upgrade():
 
 def downgrade():
     """Downgrade database."""
-    bind = op.get_bind()
-    session = Session(bind=bind)
 
     op.drop_table('file_url_download_log')
     op.execute("DROP TYPE IF EXISTS urltype;")
