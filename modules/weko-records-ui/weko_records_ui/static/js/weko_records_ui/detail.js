@@ -499,7 +499,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // 確認メッセージを取得
 const deleteConfirmationMessage = $('#delete-confirmation-message').data('message');
 const deleteSuccssesMessage = $('#delete-success-message').data('message');
-const copyMassage = $('#copy-message').data('message');
+const copyMessage = $('#copy-message').data('message');
 
 $(document).ready(function() {
   // 共通のAJAXリクエスト関数
@@ -548,7 +548,7 @@ $(document).ready(function() {
     event.preventDefault();
     const $button = $(this);
     const url = $button.attr('url');
-    handleAjaxRequest($button, url, 'GET', "Success!", true, copyMassage);
+    handleAjaxRequest($button, url, 'GET', "Success!", true, copyMessage);
   });
 
   // ワンタイムURLの削除
@@ -568,7 +568,7 @@ $(document).ready(function() {
     event.preventDefault();
     const $button = $(this);
     const url = $button.attr('url');
-    handleAjaxRequest($button, url, 'GET', "Success!", true, copyMassage);
+    handleAjaxRequest($button, url, 'GET', "Success!", true, copyMessage);
   });
 });
 

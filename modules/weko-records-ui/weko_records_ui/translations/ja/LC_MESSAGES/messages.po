@@ -381,17 +381,17 @@ msgstr "コピー"
 
 #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:268
 #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:315
-msgid "massage_del_check"
+msgid "message_del_check"
 msgstr "このURLを削除すると、利用できなくなります。本当に削除しますか？"
 
 #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:269
 #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:316
-msgid "massage_del_success"
+msgid "message_del_success"
 msgstr "URLが削除されました"
 
 #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:270
 #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:317
-msgid "massage_copy_success"
+msgid "message_copy_success"
 msgstr "URLがクリップボードにコピーされました"
 
 #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:280
