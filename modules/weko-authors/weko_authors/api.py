@@ -211,18 +211,18 @@ class WekoAuthors(object):
     @classmethod
     def get_pk_id_by_weko_id(cls, weko_id):
         """
-        Get author by weko_id.
+        Get pk_id by weko_id.
         """
         query = {
-            "_source": ["pk_id", "authorIdInfo"],  # authorIdInfoフィールドのみを取得
+            "_source": ["pk_id", "authorIdInfo"],
             "query": {
                 "bool": {
                     "must": [
-                        {
-                            "term": {
-                                "authorIdInfo.authorId": weko_id
-                            }
-                        }
+                        {"term": {"authorIdInfo.authorId": weko_id}},
+                        {"term": {"gather_flg": {"value": 0}}}
+                    ],
+                    "must_not": [
+                        {"term": {"is_deleted": True}}
                     ]
                 }
             }

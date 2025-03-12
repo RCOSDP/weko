@@ -246,7 +246,7 @@ class ExportView(BaseView):
             temp_file_path,
             current_app.config["WEKO_AUTHORS_CACHE_TTL"]
         )
-        task = export_all.delay()
+        task = export_all.delay("author_db")
         set_export_status(task_id=task.id)
         return jsonify({
             'code': 200,
