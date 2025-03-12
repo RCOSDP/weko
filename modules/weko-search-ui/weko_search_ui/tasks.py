@@ -19,6 +19,7 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
+import gc
 import json
 import os
 import pickle
@@ -133,37 +134,41 @@ def write_files_task(export_path, pickle_file_name , user_id):
         user_id=user_id
     )
 
-    def _update_redis_status(json_data, file_name, status):
+    def _update_redis_status(json_data, file_name, status,item_type_id):
         "Update status in redis cache."
         part_name = os.path.splitext(file_name)[1]
         part_index = part_name.find('part')
         part_number = part_name[part_index + 4:] if part_index != -1 else 1
-        json_data['write_file_status'][str(part_number)] = status
+        json_data['write_file_status'][item_type_id + '.' + str(part_number)] = status
         reset_redis_cache(_file_create_key, json.dumps(json_data))
+        del part_name, part_index, part_number
 
     with open(pickle_file_name, 'rb') as f:
         import_datas = pickle.load(f)
     json_data = json.loads(get_redis_cache(_file_create_key))
     if not json_data['cancel_flg']:
-        _update_redis_status(json_data, import_datas['name'], 'started')
+        _update_redis_status(json_data, import_datas['name'], 'started',import_datas['item_type_id'])
         with open(pickle_file_name, 'rb') as f:
             import_datas = pickle.load(f)
         result = write_files(import_datas, export_path, user_id, 0)
         json_data = json.loads(get_redis_cache(_file_create_key))
         if result:
-            _update_redis_status(json_data, import_datas['name'], 'finished')
+            _update_redis_status(json_data, import_datas['name'], 'finished',import_datas['item_type_id'])
         else:
             reset_redis_cache(_msg_key, "Export failed.")
             json_data['cancel_flg'] = True
-            _update_redis_status(json_data, import_datas['name'], 'error')
+            _update_redis_status(json_data, import_datas['name'], 'error',import_datas['item_type_id'])
     else:
-        _update_redis_status(json_data, import_datas['name'], 'canceled')
+        _update_redis_status(json_data, import_datas['name'], 'canceled',import_datas['item_type_id'])
+    del import_datas,json_data
+    gc.collect()
     os.remove(pickle_file_name)
 
 
 @shared_task
-def delete_exported_task(uri, cache_key, task_key):
+def delete_exported_task(uri, cache_key, task_key, export_path):
     """Delete expired exported file."""
+    shutil.rmtree(export_path)
     redis_connection = RedisConnection()
     datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
     if datastore.redis.exists(cache_key):

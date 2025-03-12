@@ -693,9 +693,6 @@ WEKO_IMPORT_VALIDATE_MESSAGE = {
     "%r is a required property": "%rは必須項目です。",
 }
 
-WEKO_SEARCH_DEFAULT_TIMEZONE = "Asia/Tokyo"
-"""Bucketing should use a different time zone."""
-
 WEKO_SEARCH_UI_BULK_EXPORT_TASK = "KEY_EXPORT_ALL"
 """Template for the Admin Bulk Export page."""
 
