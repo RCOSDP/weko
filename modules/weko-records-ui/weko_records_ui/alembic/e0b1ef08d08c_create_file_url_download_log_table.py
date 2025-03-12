@@ -19,11 +19,57 @@ down_revision = '2750aa1ddc76'
 branch_labels = ()
 depends_on = 'invenio_accounts'
 
+
 def upgrade():
     """Upgrade database."""
     bind = op.get_bind()
     session = Session(bind=bind)
 
+    # Recreate 'file_onetime_download' table
+    op.drop_table('file_onetime_download')
+    op.create_table(
+        'file_onetime_download',
+        sa.Column('created', sa.TIMESTAMP(timezone=False), nullable=False),
+        sa.Column('updated', sa.TIMESTAMP(timezone=False), nullable=False),
+        sa.Column('id', sa.Integer(), primary_key=True, autoincrement=True),
+        sa.Column('approver_id', sa.Integer(), nullable=False),
+        sa.Column('record_id', sa.String(255), nullable=False),
+        sa.Column('file_name', sa.String(255), nullable=False),
+        sa.Column('expiration_date', sa.TIMESTAMP(timezone=False), nullable=False),
+        sa.Column('download_limit', sa.Integer(), nullable=False),
+        sa.Column('download_count', sa.Integer(), nullable=False, server_default=sa.text('0')),
+        sa.Column('user_mail', sa.String(255), nullable=False),
+        sa.Column('is_guest', sa.Boolean(), nullable=False),
+        sa.Column('is_deleted', sa.Boolean(), nullable=False, server_default=sa.text('FALSE')),
+        sa.Column('extra_info', sa.JSON(), nullable=False, server_default=sa.text("'{}'")),
+        sa.ForeignKeyConstraint(['approver_id'], ['accounts_user.id'], name='fk_file_onetime_download_approver_id'),
+        sa.CheckConstraint('created < expiration_date', name='check_expiration_date'),
+        sa.CheckConstraint('download_limit > 0', name='check_download_limit_positive'),
+        sa.CheckConstraint('download_count <= download_limit', name='check_download_count_limit')
+    )
+
+    # Recreate 'file_secret_download' table
+    op.drop_table('file_secret_download')
+    op.create_table(
+        'file_secret_download',
+        sa.Column('created', sa.TIMESTAMP(timezone=False), nullable=False),
+        sa.Column('updated', sa.TIMESTAMP(timezone=False), nullable=False),
+        sa.Column('id', sa.Integer(), primary_key=True, autoincrement=True),
+        sa.Column('creator_id', sa.Integer(), nullable=False),
+        sa.Column('record_id', sa.String(255), nullable=False),
+        sa.Column('file_name', sa.String(255), nullable=False),
+        sa.Column('label_name', sa.String(255), nullable=False),
+        sa.Column('expiration_date', sa.TIMESTAMP(timezone=False), nullable=False),
+        sa.Column('download_limit', sa.Integer(), nullable=False),
+        sa.Column('download_count', sa.Integer(), nullable=False, server_default=sa.text('0')),
+        sa.Column('is_deleted', sa.Boolean(), nullable=False, server_default=sa.text('FALSE')),
+        sa.ForeignKeyConstraint(['creator_id'], ['accounts_user.id'], name='fk_file_secret_download_creator_id'),
+        sa.CheckConstraint('created < expiration_date', name='check_expiration_date'),
+        sa.CheckConstraint('download_limit > 0', name='check_download_limit_positive'),
+        sa.CheckConstraint('download_count <= download_limit', name='check_download_count_limit')
+    )
+
+    # Add 'file_url_download_log' table
     op.create_table(
         'file_url_download_log',
         sa.Column('created', sa.TIMESTAMP(timezone=False), nullable=False),
@@ -61,80 +107,6 @@ def upgrade():
         )
     )
 
-    # Modify 'file_onetime_download' table
-    op.execute("TRUNCATE TABLE file_onetime_download RESTART IDENTITY CASCADE")
-    op.add_column('file_onetime_download', sa.Column('approver_id', sa.Integer(), nullable=False))
-    op.add_column('file_onetime_download', sa.Column('is_guest', sa.Boolean(), nullable=True))
-    session.execute("""
-                    UPDATE file_onetime_download f
-                    SET is_guest = NOT EXISTS (
-                        SELECT 1 FROM accounts_user a WHERE a.email = f.user_mail)
-                    """)
-    op.alter_column('file_onetime_download', 'is_guest', nullable=False)
-    op.add_column('file_onetime_download', sa.Column('is_deleted', sa.Boolean(), nullable=False, server_default=sa.text('FALSE')))
-    op.add_column('file_onetime_download', sa.Column('download_limit', sa.Integer(), nullable=True))
-    session.execute("""
-                    UPDATE file_onetime_download
-                    SET download_limit = download_count
-                    """)
-    session.execute("""
-                    UPDATE file_onetime_download
-                    SET download_count = 0
-                    """)
-    op.alter_column('file_onetime_download', 'download_limit', nullable=False)
-    op.add_column('file_onetime_download', sa.Column('new_expiration_date', sa.DateTime(), nullable=True))
-    session.execute("""
-                    UPDATE file_onetime_download
-                    SET new_expiration_date = created + INTERVAL '1 day' * expiration_date
-                    """)
-    op.drop_column('file_onetime_download', 'expiration_date')
-    op.alter_column('file_onetime_download', 'new_expiration_date', new_column_name='expiration_date')
-
-    # Add constraints to 'file_onetime_download' table
-    op.create_foreign_key('fk_file_onetime_download_approver_id', 'file_onetime_download', 'accounts_user', ['approver_id'], ['id'])
-    op.create_check_constraint('check_expiration_date', 'file_onetime_download', 'created < expiration_date')
-    op.create_check_constraint('check_download_limit_positive', 'file_onetime_download', 'download_limit > 0')
-    op.create_check_constraint('check_download_count_limit', 'file_onetime_download', 'download_count <= download_limit')
-
-    # Modify 'file_secret_download' table
-    op.add_column('file_secret_download', sa.Column('creator_id', sa.Integer(), nullable=True))
-    session.execute("""
-                    UPDATE file_secret_download f
-                    SET creator_id = (SELECT id FROM accounts_user WHERE email = f.user_mail)
-                    """)
-    op.alter_column('file_secret_download', 'creator_id', nullable=False)
-    op.drop_column('file_secret_download', 'user_mail')
-    op.add_column('file_secret_download', sa.Column('label_name', sa.String(255), nullable=True))
-    session.execute("""
-                    UPDATE file_secret_download
-                    SET label_name = TO_CHAR(created, 'YYYY-MM-DD') || '_' || file_name
-                    """)
-    op.alter_column('file_secret_download', 'label_name', nullable=False)
-    op.add_column('file_secret_download', sa.Column('is_deleted', sa.Boolean(), nullable=False, server_default=sa.text('FALSE')))
-    op.add_column('file_secret_download', sa.Column('download_limit', sa.Integer(), nullable=True))
-    session.execute("""
-                    UPDATE file_secret_download
-                    SET download_limit = download_count
-                    """)
-    session.execute("""
-                    UPDATE file_secret_download
-                    SET download_count = 0
-                    """)
-    op.alter_column('file_secret_download', 'download_limit', nullable=False)
-    op.add_column('file_secret_download', sa.Column('new_expiration_date', sa.DateTime(), nullable=True))
-    session.execute("""
-                    UPDATE file_secret_download
-                    SET new_expiration_date = created + INTERVAL '1 day' * expiration_date
-                    """)
-    op.drop_column('file_secret_download', 'expiration_date')
-    op.alter_column('file_secret_download', 'new_expiration_date', new_column_name='expiration_date')
-
-    # Add constraints to 'file_secret_download' table
-    op.create_foreign_key('fk_file_secret_download_creator_id', 'file_secret_download', 'accounts_user', ['creator_id'], ['id'])
-    op.create_check_constraint('check_expiration_date', 'file_secret_download', 'created < expiration_date')
-    op.create_check_constraint('check_download_limit_positive', 'file_secret_download', 'download_limit > 0')
-    op.create_check_constraint('check_download_count_limit', 'file_secret_download', 'download_count <= download_limit')
-
 def downgrade():
     """Downgrade database."""
     bind = op.get_bind()
@@ -143,57 +115,28 @@ def downgrade():
     op.drop_table('file_url_download_log')
     op.execute("DROP TYPE IF EXISTS urltype;")
     op.execute("DROP TYPE IF EXISTS accessstatus;")
-
-    # Remove constraints from 'file_onetime_download' table
-    op.drop_constraint('check_download_count_limit', 'file_onetime_download', type_='check')
-    op.drop_constraint('check_download_limit_positive', 'file_onetime_download', type_='check')
-    op.drop_constraint('check_expiration_date', 'file_onetime_download', type_='check')
-    op.drop_constraint('fk_file_onetime_download_approver_id', 'file_onetime_download', type_='foreignkey')
-
-    # Modify 'file_onetime_download' table
-    op.alter_column('file_onetime_download', 'expiration_date', new_column_name='new_expiration_date')
-    op.add_column('file_onetime_download', sa.Column('expiration_date', sa.Integer(), nullable=True))
-    session.execute("""
-                    UPDATE file_onetime_download
-                    SET expiration_date = EXTRACT(DAY FROM (new_expiration_date - created))
-                    """)
-    op.alter_column('file_onetime_download', 'expiration_date', nullable=False)
-    op.drop_column('file_onetime_download', 'new_expiration_date')
-    session.execute("""
-                    UPDATE file_onetime_download
-                    SET download_count = download_limit
-                    """)
-    op.drop_column('file_onetime_download', 'download_limit')
-    op.drop_column('file_onetime_download', 'is_deleted')
-    op.drop_column('file_onetime_download', 'is_guest')
-    op.drop_column('file_onetime_download', 'approver_id')
-
-    # Remove constraints from 'file_secret_download' table
-    op.drop_constraint('check_download_count_limit', 'file_secret_download', type_='check')
-    op.drop_constraint('check_download_limit_positive', 'file_secret_download', type_='check')
-    op.drop_constraint('check_expiration_date', 'file_secret_download', type_='check')
-    op.drop_constraint('fk_file_secret_download_creator_id', 'file_secret_download', type_='foreignkey')
-
-    # Modify 'file_secret_download' table
-    op.alter_column('file_secret_download', 'expiration_date', new_column_name='new_expiration_date')
-    op.add_column('file_secret_download', sa.Column('expiration_date', sa.Integer(), nullable=True))
-    session.execute("""
-                    UPDATE file_secret_download
-                    SET expiration_date = EXTRACT(DAY FROM (new_expiration_date - created))
-                    """)
-    op.alter_column('file_secret_download', 'expiration_date', nullable=False)
-    op.drop_column('file_secret_download', 'new_expiration_date')
-    session.execute("""
-                    UPDATE file_secret_download
-                    SET download_count = download_limit
-                    """)
-    op.drop_column('file_secret_download', 'download_limit')
-    op.drop_column('file_secret_download', 'is_deleted')
-    op.drop_column('file_secret_download', 'label_name')
-    op.add_column('file_secret_download', sa.Column('user_mail', sa.String(255), nullable=True))
-    session.execute("""
-                    UPDATE file_secret_download f
-                    SET user_mail = (SELECT email FROM accounts_user WHERE id = f.creator_id)
-                    """)
-    op.alter_column('file_secret_download', 'user_mail', nullable=False)
-    op.drop_column('file_secret_download', 'creator_id')
+    op.drop_table('file_onetime_download')
+    op.create_table(
+        'file_onetime_download',
+        sa.Column('created', sa.TIMESTAMP(timezone=False), nullable=False),
+        sa.Column('updated', sa.TIMESTAMP(timezone=False), nullable=False),
+        sa.Column('id', sa.Integer(), primary_key=True, autoincrement=True),
+        sa.Column('file_name', sa.String(255), nullable=False),
+        sa.Column('user_mail', sa.String(255), nullable=False),
+        sa.Column('record_id', sa.String(255), nullable=False),
+        sa.Column('download_count', sa.Integer(), nullable=False, server_default=sa.text('0')),
+        sa.Column('expiration_date', sa.Integer(), nullable=False, server_default=sa.text('0')),
+        sa.Column('extra_info', sa.JSON(), nullable=True, server_default=sa.text("'{}'")),
+    )
+    op.drop_table('file_secret_download')
+    op.create_table(
+        'file_secret_download',
+        sa.Column('created', sa.TIMESTAMP(timezone=False), nullable=False),
+        sa.Column('updated', sa.TIMESTAMP(timezone=False), nullable=False),
+        sa.Column('id', sa.Integer(), primary_key=True, autoincrement=True),
+        sa.Column('file_name', sa.String(255), nullable=False),
+        sa.Column('user_mail', sa.String(255), nullable=False),
+        sa.Column('record_id', sa.String(255), nullable=False),
+        sa.Column('download_count', sa.Integer(), nullable=False, server_default=sa.text('0')),
+        sa.Column('expiration_date', sa.Integer(), nullable=False, server_default=sa.text('0')),
+    )
