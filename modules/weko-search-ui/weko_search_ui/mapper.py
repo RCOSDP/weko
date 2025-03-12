@@ -1286,6 +1286,16 @@ class JsonLdMapper(JsonMapper):
         self.json_mapping = json_mapping
         super().__init__(None, itemtype_id)
 
+    def validate(self, json_mapping):
+        """Validate json-ld.
+
+        Args:
+            json_mapping (dict): mapping between json-ld and item type metadata.
+        Returns:
+            errors (list[str]): list of errors.
+        """
+        return []
+
     def to_item_metadata(self, json_ld):
         """Map to item type metadata.
 
@@ -1754,16 +1764,24 @@ class JsonLdMapper(JsonMapper):
             parent[key] = value
             return parent
 
-        deconstructed = self._deconstruct_dict(metadata)
+        import itertools
+        id_template = "_:{s}_{i}"
+        _sequential = (id_template.format(i=i, s="{s}") for i in itertools.count())
+        gen_id = lambda key: next(_sequential).format(s=key)
 
+        deconstructed = self._deconstruct_dict(metadata)
         # TODO: implement mapping to RO-Crate format
-        for META_KEY in deconstructed:
-            META_PATH = re.sub(r"\[\d+\]", "", META_KEY)
-            if "attribute_" not in META_KEY:
+        for record_key in deconstructed:
+            META_PATH = re.sub(r"\[\d+\]", "", record_key)
+            if "attribute_value" not in record_key:
                 continue
+            META_KEY = record_key.replace(".attribute_value_mlt", "").replace(".attribute_value", "")
+
             meta_props = META_KEY.split(".")
+            # PROP_PATH = properties_mapping[META_PATH] # attribute_value
+            # prop_props = PROP_PATH.split(".")
+            print(f"--- {META_KEY}: {deconstructed[record_key]}, {gen_id(meta_props[0])} ---")
             pass
 
         rocrate.root_dataset["wk:index"] = metadata.get("path", [])
-
         return rocrate
