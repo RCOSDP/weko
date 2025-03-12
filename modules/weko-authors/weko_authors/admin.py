@@ -182,7 +182,7 @@ class ExportView(BaseView):
         delete_export_url()
         if export_target == "author_db":
             # 一時ファイルの作成
-            temp_folder_path ='/var/tmp/authors_export'
+            temp_folder_path = current_app.config.get("WEKO_AUTHORS_EXPORT_TEMP_FOLDER_PATH")
             os.makedirs(temp_folder_path, exist_ok=True)
             prefix = current_app.config["WEKO_AUTHORS_EXPORT_TMP_PREFIX"] + datetime.datetime.now().strftime("%Y%m%d%H%M")
             
@@ -236,7 +236,7 @@ class ExportView(BaseView):
         """Resume export progress."""
 
         delete_export_url()
-        temp_folder_path ='/var/tmp/authors_export'
+        temp_folder_path = current_app.config.get("WEKO_AUTHORS_EXPORT_TEMP_FOLDER_PATH")
         os.makedirs(temp_folder_path, exist_ok=True)
         prefix = current_app.config["WEKO_AUTHORS_EXPORT_TMP_PREFIX"] + datetime.datetime.now().strftime("%Y%m%d%H%M")
         
@@ -555,7 +555,7 @@ class ImportView(BaseView):
     @author_permission.require(http_exception=403)
     @expose('/result_download', methods=['POST'])
     def result_file_download(self):
-        """インポートチェック画面でダウンロード処理"""
+        """インポート結果画面でダウンロード処理"""
         json = request.get_json().get("json")
         result_file_path = current_cache.get(\
             current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_FILE_PATH_KEY"])

@@ -133,7 +133,7 @@ def import_affiliation_id(affiliation_id):
     result['end_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return result
 
-def import_author_over_max(reached_point, item_count, task_ids ,max_part):
+def import_author_over_max(reached_point, task_ids ,max_part):
     """
     WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYSを超えた著者をインポートする場合の処理です。
     先に行っているインポートタスクが終了次第、reached_pointから一時ファイルを用いて
@@ -280,7 +280,6 @@ def import_authors_for_over_max(authors):
         if task.result:
             start_date = task.result.get('start_date', '')
             end_date = task.result.get('end_date', '')
-        status = states.PENDING
         error_id = None
         if task.result and task.result.get('status'):
             status = task.result.get('status')
@@ -289,6 +288,13 @@ def import_authors_for_over_max(authors):
                 success_count += 1
             elif status == states.FAILURE:
                 failure_count += 1
+        # ここにはいる_taskは時間がかかりすぎているもの,何かしらの問題が起きている。
+        else:
+            start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            end_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            status = states.FAILURE
+            failure_count += 1
+            error_id = _('TimeOut')
         result.append({
             "start_date": start_date,
             "end_date": end_date,
@@ -397,7 +403,8 @@ def prepare_success_msg(type):
 # 3秒ごとにtask_idsを確認し、全てのtaskが終了したらループを抜ける
 def check_task_end(task_ids):
     length = len(task_ids)
-    while True:
+    sleep_time = current_app.config.get("WEKO_AUTHORS_BULK_IMPORT_RETRY_INTERVAL")
+    for i in range(length):
         count = 0
         for task_id in task_ids:
             task = import_author.AsyncResult(task_id)
@@ -410,7 +417,7 @@ def check_task_end(task_ids):
         if count == length:
             break
         else:
-            sleep(3)
+            sleep(sleep_time)
     return 0
 
 def check_is_import_available(group_task_id=None):
@@ -441,13 +448,12 @@ def check_is_import_available(group_task_id=None):
 @shared_task(ignore_result=True)
 def check_tmp_file_time_for_author():
     """Check the storage time of the author temp file."""
-    path = '/var/tmp'
     # 1日
-    ttl = 24* 60* 60 
-    author_export_temp_dirc_path = path + "/authors_export"
-    author_import_temp_dirc_path = path + "/authors_import"
-    author_export_temp_file_path = path + "/authors_export/**"
-    author_import_temp_file_path = path + "/authors_import/**"
+    ttl = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD")
+    author_export_temp_dirc_path = current_app.config.get("WEKO_AUTHORS_EXPORT_TEMP_FOLDER_PATH")
+    author_import_temp_dirc_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
+    author_export_temp_file_path = os.path.join(author_export_temp_dirc_path, "**")
+    author_import_temp_file_path = os.path.join(author_import_temp_dirc_path, "**")
     
     now = datetime.now(timezone.utc) 
     # 著者エクスポートの一時ファイルの削除
@@ -468,7 +474,7 @@ def check_tmp_file_time_for_author():
         tLog = os.path.getmtime(d)
         if (now - datetime.fromtimestamp(tLog, timezone.utc)).total_seconds() >= ttl:
             try:
-                os.remove(path)
+                os.remove(d)
             except OSError as e:
                 current_app.logger.error(e)
     # ディレクトリが空かどうかを確認し、空の場合はディレクトリを削除

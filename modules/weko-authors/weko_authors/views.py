@@ -124,7 +124,6 @@ def update_author():
     
     try:
         #weko_idのバリーデーションチェック
-        print(weko_id, pk_id)
         result_weko_id_check = validate_weko_id(weko_id, pk_id)
 
         if result_weko_id_check[0] == False and result_weko_id_check[1] == "not half digit":
@@ -328,7 +327,6 @@ def get_max_weko_id():
         "query": {
             "bool": {
                 "must": [
-                    {"match_all": {}},
                     {"term": {"gather_flg": {"value": 0}}}
                 ],
                 "must_not": [

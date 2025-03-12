@@ -3185,15 +3185,18 @@ def get_weko_link(metadata):
     weko_link = {}
     weko_id_list=[]
     for x in metadata["metainfo"].values():
-        if isinstance(x, list):
-            for y in x:
-                if isinstance(y, dict):
-                    for key, value in y.items():
-                        if key == "nameIdentifiers":
-                            for z in value:
-                                if z.get("nameIdentifierScheme","") == "WEKO":
-                                    if z.get("nameIdentifier","") not in weko_id_list:
-                                        weko_id_list.append(z.get("nameIdentifier"))
+        if not isinstance(x, list):
+            continue
+        for y in x:
+            if not isinstance(y, dict):
+                continue
+            for key, value in y.items():
+                if not key == "nameIdentifiers":
+                    continue
+                for z in value:
+                    if z.get("nameIdentifierScheme","") == "WEKO":
+                        if z.get("nameIdentifier","") not in weko_id_list:
+                            weko_id_list.append(z.get("nameIdentifier"))
     weko_link = {}
     for weko_id in weko_id_list:
         pk_id = WekoAuthors.get_pk_id_by_weko_id(weko_id)

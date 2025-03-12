@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 """Configuration for weko-authors."""
-
+import os
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 from .rest import Authors
 
@@ -74,6 +74,7 @@ WEKO_AUTHORS_EXPORT_CACHE_KEY = 'weko_author_export_cache_key'
 WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY = 'weko_authors_export_temp_file_path_key'
 WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY = "weko_authors_export_stop_point"
 WEKO_AUTHORS_EXPORT_TMP_PREFIX = 'authors_export_'
+WEKO_AUTHORS_EXPORT_TEMP_FOLDER_PATH =  os.path.join(os.environ.get("TMPDIR"), "authors_export")
 WEKO_AUTHORS_EXPORT_BATCH_SIZE = 1000
 WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY = 5
 WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL = 5
@@ -110,7 +111,7 @@ WEKO_AUTHORS_FILE_MAPPING = [
                 'json_id': 'firstName'
             },
             {
-                'label_en': 'Langua ge',
+                'label_en': 'Language',
                 'label_jp': '言語',
                 'json_id': 'language',
                 'validation': {
@@ -344,7 +345,7 @@ WEKO_AUTHORS_ADMIN_IMPORT_TEMPLATE = 'weko_authors/admin/author_import.html'
 """Template for the import page."""
 
 WEKO_AUTHORS_IMPORT_TMP_PREFIX = 'authors_import_'
-WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH = '/var/tmp/authors_import'
+WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH = os.path.join(os.environ.get("TMPDIR"), "authors_import")
 
 WEKO_AUTHORS_IMPORT_ENTRYPOINTS = {
     'is_import_available': '/admin/authors/import/is_import_available',

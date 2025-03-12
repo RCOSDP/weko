@@ -266,7 +266,16 @@ def delete_export_url():
     current_cache.delete(WEKO_AUTHORS_EXPORT_CACHE_URL_KEY)
     
 def handle_exception(ex, attempt, retrys, interval, stop_point=0):
-    """Handle exceptions during the export process."""
+    """
+    エラーをログで流し、スリープとリトライ回数の管理を行います.
+    args:
+        ex(Exception): Exception object
+        attempt(int): Number of attempts
+        retrys(int): Number of retries
+        interval(int): Retry interval
+        stop_point(int): Stop point
+        
+    """
     current_app.logger.error(ex)
     # 最後のリトライの場合は例外をraise
     if attempt == retrys - 1:
@@ -295,25 +304,26 @@ def export_authors():
     temp_file_path = ""
 
     try:
-        mappings = deepcopy(WEKO_AUTHORS_FILE_MAPPING)
-        affiliation_mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"])
-
+        
     # ある程度の処理をまとめてリトライ処理
         for attempt in range(retrys):
             try:
                 # マッピングを取得
                 mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING"])
+                affiliation_mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"])
+
+                # 著者の数を取得（削除、統合された著者は除く）
+                records_count = WekoAuthors.get_records_count(False, False)
+                
                 # マッピング上の複数が可能となる項目の最大値を取得
-                mappings, affiliation_mappings = WekoAuthors.mapping_max_item(mappings, affiliation_mappings)
+                mappings, affiliation_mappings = \
+                    WekoAuthors.mapping_max_item(mappings, affiliation_mappings, records_count)
 
                 # 著者識別子の対応を取得
                 schemes = WekoAuthors.get_identifier_scheme_info()
                 
                 # 所属機関識別子の対応を取得
                 aff_schemes = WekoAuthors.get_affiliation_identifier_scheme_info()
-                
-                # 著者の数を取得（削除、統合された著者は除く）
-                records_count = WekoAuthors.get_records_count(False, False)
                 
                 # 一時ファイルのパスを取得
                 temp_file_path=current_cache.get(\
@@ -388,6 +398,13 @@ def export_authors():
     return file_uri
 
 def export_prefix(target):
+    """
+    id_prefixまたはaffiliation_idをエクスポートする
+    args:
+        target(str): エクスポート対象
+    return:
+        file_uri(str): ファイルURI
+    """
     file_uri = None
     retrys = current_app.config["WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY"]
     interval = current_app.config["WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL"]
@@ -444,6 +461,13 @@ def export_prefix(target):
     return file_uri
 
 def check_file_name(export_target):
+    """
+    ファイル名を取得する
+    args:
+        export_target(str): エクスポート対象
+    return:
+        file_base_name(str): ファイル名
+    """
     file_base_name = ""
     if export_target == "author_db":
         file_base_name = current_app.config.get('WEKO_AUTHORS_EXPORT_FILE_NAME')
@@ -454,7 +478,15 @@ def check_file_name(export_target):
     return file_base_name
 
 def write_to_tempfile(start, row_header, row_label_en, row_label_jp, row_data):
-    
+    """
+    一時ファイルにデータを書き込む
+    args:
+        start(int): データの開始位置
+        row_header(array): ヘッダー
+        row_label_en(array): ラベル(英語)
+        row_label_jp(array): ラベル(日本語)
+        row_data(array): データ
+    """
     # 一時ファイルのパスを取得
     temp_file_path=current_cache.get( \
         current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"])
@@ -476,8 +508,7 @@ def check_import_data(file_name: str):
     """Validation importing tsv/csv file.
 
     :argument
-        file_name -- file name.
-        file_content -- content file's name.
+        file_name(str) -- file name.
     :return
         return       -- check information.
     """
@@ -558,8 +589,8 @@ def check_import_data(file_name: str):
 def check_import_data_for_prefix(target, file_name: str, file_content: str):
     """id_prefixかaffiliation_idのインポート用 tsv/csvファイルをバリデーションチェックする.
     :argument
-        file_name -- file name.
-        file_content -- content file's name.
+        file_name(str) -- file name.
+        file_content(b64) -- content file.
     :return
         return       -- check information.
     """
@@ -617,9 +648,9 @@ def clean_deep(data):
     {'fullname': 'Jane Doe', 'email': {"test2":"test2"},
     'test': [{"test2":"test2"}]}に変換します。
     args:
-        data: data to clean
+        data (dict): data to clean
     return:
-        data: cleaned data
+        data (dict): cleaned data
     """
     if isinstance(data, dict):
         return {k: clean_deep(v) for k, v in data.items() if v is not None and v != ''}
@@ -698,13 +729,15 @@ def unpackage_and_check_import_file(file_format, file_name, temp_file_path, mapp
                         })
 
                     file_data.append(dict(**data_parse_metadata))
-                    if (num - 3)% json_size == 0:
+                    # file_dataがjson_sizeと同じになったら一時ファイルに書き込む
+                    if len(file_data) == json_size:
                         write_tmp_part_file(math.ceil((num-3)/json_size), file_data, temp_file_path)
                         file_data = []
+            # 書き込まれていないfile_dataを書き込む
             if len(file_data) != 0:
                 write_tmp_part_file(math.ceil((count-3)/json_size), file_data, temp_file_path)
-                
-            elif not file_data and (count-3) % json_size != 0:
+            # ファイルの行数が3行未満の場合エラー
+            elif not file_data and count <= 3:
                 raise Exception({
                     'error_msg': _('There is no data to import.')
                 })
@@ -740,6 +773,9 @@ def validate_import_data(file_format, file_data, mapping_ids, mapping, list_impo
         file_data (list): Author data from tsv/csv.
         mapping_ids (list): List only mapping ids.
         mapping (list): List mapping.
+        list_import_id (list): List import id.
+    return:
+        list: Author data after validation.
     """
     authors_prefix = {}
     affilaition_id_prefix = {}
@@ -844,8 +880,17 @@ def validate_import_data(file_format, file_data, mapping_ids, mapping, list_impo
 
 
 def unpackage_and_check_import_file_for_prefix(file_format, file_name, temp_file):
-    from weko_search_ui.utils import handle_check_consistence_with_mapping, \
-        handle_check_duplication_item_id, parse_to_json_form
+    """Unpackage and check format of import file for prefix.
+
+    Args:
+        file_format (str): File format.
+        file_name (str): File uploaded name.
+        temp_file (str): Temp file path.
+
+    Returns:
+        list: Tsv data.
+    """
+    from weko_search_ui.utils import handle_check_duplication_item_id
     header = []
     file_data = []
     current_app.logger.debug("temp_file:{}".format(temp_file))
@@ -1277,7 +1322,7 @@ def create_result_file_for_user(json):
     ユーザー用の結果ファイルを作成します。
     フロントに表示されている分とバックエンドで管理されている部分を別々に持ってきて合体させます。
     args:
-        json: フロントに表示される著者データ
+        json (dict): フロントに表示される著者データ
     """
     temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
     result_over_max_file_path = current_cache.get(\
@@ -1562,18 +1607,21 @@ def update_data_for_weko_link(data, weko_link):
     # weko_linkが変更された場合、メタデータを更新する。
     if weko_link != old_weko_link:
         for x_key, x_value in data.items():
-            if isinstance(x_value, list):
-                for y_index, y in enumerate(x_value, start=0):
-                    if isinstance(y, str):
+            if not isinstance(x_value, list):
+                continue
+            for y_index, y in enumerate(x_value, start=0):
+                if isinstance(y, str):
+                    continue
+                for y_key, y_value in y.items():
+                    if not y_key == "nameIdentifiers":
                         continue
-                    for y_key, y_value in y.items():
-                        if y_key == "nameIdentifiers":
-                            for z_index, z in enumerate(y_value, start=0):
-                                if z.get("nameIdentifierScheme","") == "WEKO":
-                                    if z.get("nameIdentifier") in old_weko_link.values():
-                                        # weko_linkから値がweko_idと一致するpk_idを取得する。
-                                        pk_id = [k for k, v in old_weko_link.items() if v == z.get("nameIdentifier")][0]
-                                        data[x_key][y_index][y_key][z_index]["nameIdentifier"] = weko_link.get(pk_id)
+                    for z_index, z in enumerate(y_value, start=0):
+                        if z.get("nameIdentifierScheme","") == "WEKO":
+                            if z.get("nameIdentifier") in old_weko_link.values():
+                                # weko_linkから値がweko_idと一致するpk_idを取得する。
+                                pk_id = [k for k, v in old_weko_link.items() if v == z.get("nameIdentifier")][0]
+                                data[x_key][y_index][y_key][z_index]["nameIdentifier"] = weko_link.get(pk_id)
+                                    
 def get_check_base_name():
     temp_file_path = current_cache.get(\
         current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"])

@@ -176,7 +176,7 @@ def validate_affiliation_period_start(item, values=[]):
         list: List errors message.
     """
     errors = []
-    err_msg_format = _("External Affiliation Period must be in the format: yyyyMMdd, blank. {}")
+    err_msg_format = _("External Affiliation Period must be in the format: yyyy-MM-dd, blank. {}")
     for val in values:
         date = val["value"]
         if date and not bool(re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}', date)):
@@ -198,7 +198,7 @@ def validate_affiliation_period_end(item, values=[]):
         list: List errors message.
     """
     errors = []
-    err_msg_format = _("External Affiliation Period must be in the format: yyyyMMdd, blank. {}")
+    err_msg_format = _("External Affiliation Period must be in the format: yyyy-MM-dd, blank. {}")
     err_msg = _("Period end must be after Period start.")
     for val in values:
         period_end = val["value"]

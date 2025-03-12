@@ -58,6 +58,7 @@ class WekoAuthors(object):
                 author = Authors(id=new_id, json=data)
                 session.add(author)
         except Exception as ex:
+            session.rollback()
             raise ex
         else:
             RecordIndexer().client.index(
@@ -123,6 +124,7 @@ class WekoAuthors(object):
                 author.json = data
                 db.session.merge(author)
         except Exception as ex:
+            db.session.rollback()
             raise ex
         else:
             update_es_data(es_data, es_id)
@@ -371,7 +373,7 @@ class WekoAuthors(object):
         return result
 
     @classmethod
-    def mapping_max_item(cls, mappings, affiliation_mappings, retrys=0):
+    def mapping_max_item(cls, mappings, affiliation_mappings, records_count, retrys=0):
         """Mapping max item of multiple case."""
         try: 
             size = current_app.config["WEKO_AUTHORS_EXPORT_BATCH_SIZE"]
@@ -379,9 +381,10 @@ class WekoAuthors(object):
                 mappings = deepcopy(WEKO_AUTHORS_FILE_MAPPING)
             if not affiliation_mappings:
                 affiliation_mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"])
+            if not records_count:
+                records_count = cls.get_records_count(False, False)
             # 削除されておらず、統合されていない著者の合計を取得
             affiliation_mappings["max"] = []
-            records_count = cls.get_records_count(False, False)
             
             # AUTHOR_EXPORT_BATCH_SIZE分の数だけauthorを取得して、maxを計算する
             for i in range(0,records_count-1, size):
@@ -426,12 +429,12 @@ class WekoAuthors(object):
                             child_length = len(affiliation.get(child["json_id"], []))
                             if child_length > mapping_max[index][child["json_id"]]:
                                 mapping_max[index][child["json_id"]] = child_length
-                    #WEKOIDの分を最大値から引く
-                    for mapping in mappings:
-                        if mapping['json_id'] == 'authorIdInfo':
-                            if mapping['max'] > 1:
-                                mapping['max'] -= 1
-                        
+            
+            # 最後にWEKOIDの分を最大値から引く
+            for mapping in mappings:
+                if mapping['json_id'] == 'authorIdInfo':
+                    if mapping['max'] > 1:
+                        mapping['max'] -= 1           
 
         except SQLAlchemyError as ex:
             current_app.logger.error(ex)
@@ -443,11 +446,12 @@ class WekoAuthors(object):
                 db.session.rollback()
                 sleep(sleep_time)
                 result = cls.mapping_max_item(
-                    mappings=None, affiliation_mappings=None, retrys=retrys
+                    mappings=None, affiliation_mappings=None, \
+                    records_count=records_count, retrys=retrys
                 )
                 return result
             else:
-                return False
+                raise ex
         except Exception as ex:
             current_app.logger.error(ex)
             raise ex
@@ -462,7 +466,11 @@ class WekoAuthors(object):
         row_data = []
         
         if not mappings or not affiliation_mappings:
-            mappings, affiliation_mappings = WekoAuthors.mapping_max_item(deepcopy(WEKO_AUTHORS_FILE_MAPPING))
+            mappings, affiliation_mappings = WekoAuthors.mapping_max_item(\
+                deepcopy(WEKO_AUTHORS_FILE_MAPPING),
+                deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"]),
+                WekoAuthors.get_records_count(False, False)
+                )
         if not authors:
             authors = cls.get_by_range(start, size, False, False)
         if not schemes:
