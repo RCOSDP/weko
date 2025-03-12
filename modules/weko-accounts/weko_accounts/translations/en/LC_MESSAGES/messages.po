@@ -28,20 +28,20 @@ msgid "Shibboleth flag was updated."
 msgstr "Updated Shibboleth settings"
 
 #: weko_accounts/admin.py:
-msgid "Shib Eppn Value mapping was updated."
-msgstr "Shibboleth Eppn Value mapping was updated."
+msgid "Shib Eppn mapping was updated."
+msgstr "Shibboleth Eppn mapping was updated."
 
 #: weko_accounts/admin.py:
-msgid "Shib Role Authority Name Value mapping was updated."
-msgstr "Shibboleth Role Authority Name Value mapping was updated."
+msgid "Shib Role Authority Name mapping was updated."
+msgstr "Shibboleth Role Authority Name mapping was updated."
 
 #: weko_accounts/admin.py:
-msgid "Shib Mail Value mapping was updated."
-msgstr "Shibboleth Mail Value mapping was updated."
+msgid "Shib Mail mapping was updated."
+msgstr "Shibboleth Mail mapping was updated."
 
 #: weko_accounts/admin.py:
-msgid "Shib User Name Value mapping was updated."
-msgstr "Shibboleth User Name Value mapping was updated."
+msgid "Shib User Name mapping was updated."
+msgstr "Shibboleth User Name mapping was updated."
 
 #: weko_accounts/admin.py:69
 msgid "Setting"
