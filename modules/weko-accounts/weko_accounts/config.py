@@ -123,3 +123,33 @@ WEKO_ACCOUNTS_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 
 WEKO_API_LIMIT_RATE_DEFAULT = ["100 per minute"]
 """Default rate limit per endpoint for one user in the WEKO API."""
+
+WEKO_ACCOUNTS_IDP_ENTITY_ID = ''
+"""IdP entity ID that institution owned."""
+
+WEKO_ACCOUNTS_GAKUNIN_DEFAULT_GROUP_MAPPING = {}
+# {
+#     "http://idp.example.org/idp/shibboleth": [
+#        "jc_role_sysadm", "jc_role_repoadm", "jc_role_comadm"],
+#}
+
+WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS = False
+
+WEKO_ACCOUNTS_GAKUNIN_GROUP_SUFFIX = "_gakunin_groups"
+
+WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT = {
+    "prefix":"jc",
+    "sysadm_group":"jc_roles_sysadm",
+    "role_keyword":"roles",
+    "role_mapping":{
+        "repoadm":"Repository_Administrator",
+        "comad":"Community_Administrator",
+        "contributor":"Contributor",
+    }
+}
+
+WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION =False
+"""閲覧権限のデフォルト権限を設定する"""
+
+WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSION = False
+"""投稿権限のデフォルト権限を設定する"""
