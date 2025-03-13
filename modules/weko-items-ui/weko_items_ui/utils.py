@@ -4125,6 +4125,8 @@ def make_stats_file_with_permission(item_type_id, recids,
                         key_list.append(new_key)
                         key_label.append(new_label)
                         if data and idx < len(data) and data[idx].get(key):
+                            if isinstance(data[idx][key], list):
+                                data[idx][key] = data[idx][key][0]
                             key_data.append(escape_newline(data[idx][key]))
                             # key_data.append(escape_str(data[idx][key]))
                         else:

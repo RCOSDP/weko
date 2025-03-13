@@ -1025,9 +1025,9 @@
 									},
 										React.createElement('option', {className: self.state.editor ? '' : 'hide', value: 'text'}, 'Text'),
 										React.createElement('option', {className: self.state.editor ? '' : 'hide', value: 'textarea'}, 'Textarea'),
-										React.createElement('option', {value: 'checkboxes'}, 'Checkboxes'),
-										React.createElement('option', {value: 'radios'}, 'Radios'),
-										React.createElement('option', {value: 'select'}, 'Select'),
+										React.createElement('option', {className: (value.format == 'radios' || value.format == 'select') ? 'hide' : '', value: 'checkboxes'}, 'Checkboxes'),
+										React.createElement('option', {className: value.format == 'checkboxes' ? 'hide' : '',value: 'radios'}, 'Radios'),
+										React.createElement('option', {className: value.format == 'checkboxes' ? 'hide' : '',value: 'select'}, 'Select'),
 										React.createElement('option', {className: self.state.editor ? '' : 'hide', value: 'datetime'}, 'Datetime'),
 										React.createElement('option', {className: self.state.editor ? '' : 'hide', value: 'array'}, 'List'),
 										React.createElement('option', {className: self.state.editor ? '' : 'hide', value: 'object'}, 'Object')
