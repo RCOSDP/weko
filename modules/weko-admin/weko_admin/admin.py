@@ -1884,18 +1884,18 @@ class SwordAPIJsonldMappingView(ModelView):
                     exist_Waiting_approval_workflow = True
 
             return self.render(
-                    self.edit_template,
-                    form=form,
-                    return_url = request.args.get('url'),
-                    current_page_type='edit',
-                    item_types=item_types,
-                    current_name=model.name,
-                    current_mapping=model.mapping,
-                    current_item_type_id=model.item_type_id,
-                    current_model_json=current_model_json,
-                    exist_Waiting_approval_workflow=exist_Waiting_approval_workflow,
-                    id=id,
-                    )
+                self.edit_template,
+                form=form,
+                return_url = request.args.get('url'),
+                current_page_type='edit',
+                item_types=item_types,
+                current_name=model.name,
+                current_mapping=model.mapping,
+                current_item_type_id=model.item_type_id,
+                current_model_json=current_model_json,
+                exist_Waiting_approval_workflow=exist_Waiting_approval_workflow,
+                id=id,
+                )
         else:
             # POST
             try:
