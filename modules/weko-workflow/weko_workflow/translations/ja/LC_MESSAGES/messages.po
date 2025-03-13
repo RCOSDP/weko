@@ -57,6 +57,10 @@ msgstr "ワークフロー一覧"
 msgid "Flow List"
 msgstr "フロー一覧"
 
+#: weko_workflow/admin.py:238
+msgid "WorkSpaceWorkFlow Setting"
+msgstr "ワークスペースワークフロー設定"
+
 #: weko_workflow/api.py:1130 weko_workflow/views.py:219
 msgid "End"
 msgstr "終了"

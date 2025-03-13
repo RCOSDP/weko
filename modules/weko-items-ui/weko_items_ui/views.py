@@ -314,6 +314,378 @@ def get_json_schema(item_type_id=0, activity_id=""):
             'Unexpected error: {}'.format(sys.exc_info()[0]))
     return abort(400)
 
+@blueprint.route('/schemaform_simple/<int:item_type_id>', methods=['GET'])
+@blueprint.route('/schemaform_simple/<int:item_type_id>/<string:activity_id>',
+                 methods=['GET'])
+@login_required_customize
+def get_schema_form_simple(item_type_id=0, activity_id=''):
+    """Get schema form.
+
+    :param item_type_id: Item type ID. (Default: 0)
+    :param activity_id: Activity ID.  (Default: Null)
+    :return: The json object.
+    """
+    try:
+        cur_lang = current_i18n.language
+        result = None
+        if item_type_id > 0:
+            result = ItemTypes.get_by_id(item_type_id)
+        if result is None:
+            return '["*"]'
+        schema_form = result.form
+        filemeta_form = schema_form[0]
+        if 'filemeta' == filemeta_form.get('key'):
+            group_list = Group.get_group_list()
+            filemeta_form_group = filemeta_form.get('items')[-1]
+            filemeta_form_group['type'] = 'select'
+            filemeta_form_group['titleMap'] = group_list
+
+        from .utils import recursive_form
+        recursive_form(schema_form)
+        # Check role for input(5 item type)
+        update_sub_items_by_user_role(item_type_id, schema_form)
+
+        # Hide form items
+        schema_form = hide_form_items(result, schema_form)
+
+        for elem in schema_form:
+            set_multi_language_name(elem, cur_lang)
+            if 'items' in elem:
+                items = elem['items']
+                for item in items:
+                    set_multi_language_name(item, cur_lang)
+
+        if 'default' != cur_lang:
+            for elem in schema_form:
+                translate_schema_form(elem, cur_lang)
+
+        if activity_id:
+            updated_schema_form = update_schema_form_by_activity_id(
+                schema_form,
+                activity_id)
+            if updated_schema_form:
+                schema_form = updated_schema_form
+
+        schema_form = [item for item in schema_form if not any('subitem_alternative_title' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('contributorType' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('subitem_apc' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('subitem_rights_language' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('rightHolderNames' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('subitem_subject_language' in subitem.get('key', '') for subitem in item.get('items', []))]
+
+        schema_form = [item for item in schema_form if not any('subitem_description_type' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('subitem_publisher' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('subitem_date_issued_datetime' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('subitem_language' in subitem.get('key', '') for subitem in item.get('items', []))]
+
+        schema_form = [item for item in schema_form if not any('subitem_identifier_reg_text' in subitem.get('key', '') for subitem in item.get('items', []))]
+
+        schema_form = [item for item in schema_form if not any('subitem_temporal_text' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('subitem_geolocation_point' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('subitem_source_identifier_type' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('subitem_source_title' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('subitem_volume' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('subitem_issue' in subitem.get('key', '') for subitem in item.get('items', []))]
+
+        schema_form = [item for item in schema_form if not any('subitem_number_of_pages' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('subitem_start_page' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('subitem_end_page' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('subitem_dissertationnumber' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('subitem_degreename_language' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('subitem_dategranted' in subitem.get('key', '') for subitem in item.get('items', []))]
+
+        schema_form = [item for item in schema_form if not any('subitem_degreegrantor_identifier' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('subitem_heading_banner_headline' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('holding_agent_names' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('subitem_dcterms_date' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('jpcoar_dataset_series' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('publisher_names' in subitem.get('key', '') for subitem in item.get('items', []))]
+
+        schema_form = [item for item in schema_form if not any('dcterms_extent' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('catalog_contributors' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('original_language' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('volume_title' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('edition' in subitem.get('key', '') for subitem in item.get('items', []))]
+        schema_form = [item for item in schema_form if not any('jpcoar_format' in subitem.get('key', '') for subitem in item.get('items', []))]
+        
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "bibliographicVolumeNumber" not in i.get("key", "")]
+                item["items"] = [i for i in item["items"] if "bibliographicIssueNumber" not in i.get("key", "")]
+                item["items"] = [i for i in item["items"] if "bibliographicPageStart" not in i.get("key", "")]
+                item["items"] = [i for i in item["items"] if "bibliographicPageEnd" not in i.get("key", "")]
+                item["items"] = [i for i in item["items"] if "bibliographicNumberOfPages" not in i.get("key", "")]
+                item["items"] = [i for i in item["items"] if "bibliographicIssueDates" not in i.get("key", "")]
+
+        schema_form = [
+            item for item in schema_form
+            if "subitem_funding_streams" not in item.get("key", "")
+        ]
+        for item in schema_form:
+            if "items" in item:
+                for i in item["items"]:
+                    if "items" in i:
+                        i["items"] = [sub_item for sub_item in i["items"] if "subitem_conference_name_language" not in sub_item.get("key", "")]
+
+        for item in schema_form:
+            if "items" in item:
+                for i in item["items"]:
+                    if "items" in i:
+                        i["items"] = [sub_item for sub_item in i["items"] if "subitem_funder_name_languag" not in sub_item.get("key", "")]
+                        
+                        if not i["items"]:
+                            del i["items"]
+                        for item in schema_form:
+                            if 'items' in item:
+                                for sub_item in item['items']:
+                                    if 'items' in sub_item:
+                                        for sub_sub_item in sub_item['items']:
+
+                                            if 'title_i18n' in sub_sub_item and "subitem_funder_name" in sub_sub_item.get("key", ""):
+                                                sub_sub_item['title_i18n']['ja'] = '資金名'
+                                                sub_sub_item['title'] = '資金名'
+        for item in schema_form:
+            if "items" in item:
+                for i in item["items"]:
+                    if "items" in i:
+                        i["items"] = [sub_item for sub_item in i["items"] if "bibliographic_titleLang" not in sub_item.get("key", "")]
+                        
+                        if not i["items"]:
+                            del i["items"]
+                        for item in schema_form:
+                            if 'items' in item:
+                                for sub_item in item['items']:
+                                    if 'items' in sub_item:
+                                        for sub_sub_item in sub_item['items']:
+
+                                            if 'title_i18n' in sub_sub_item and "bibliographic_title" in sub_sub_item.get("key", ""):
+                                                sub_sub_item['title_i18n']['ja'] = '雑誌名'
+                                                sub_sub_item['title'] = '雑誌名'
+        for item in schema_form:
+            if "items" in item:
+                for i in item["items"]:
+                    if "items" in i:
+                        i["items"] = [sub_item for sub_item in i["items"] if "creatorNameLang" not in sub_item.get("key", "")]
+                        i["items"] = [sub_item for sub_item in i["items"] if "creatorNameType" not in sub_item.get("key", "")]
+                        
+                        if not i["items"]:
+                            del i["items"]
+                        for item in schema_form:
+                            if 'items' in item:
+                                for sub_item in item['items']:
+                                    if 'items' in sub_item:
+                                        for sub_sub_item in sub_item['items']:
+
+                                            if 'title_i18n' in sub_sub_item and "creatorName" in sub_sub_item.get("key", ""):
+                                                sub_sub_item['title_i18n']['ja'] = '著作者'
+                                                sub_sub_item['title'] = '著作者'
+
+
+        schema_form = [item for item in schema_form if "subitem_identifier_type" not in item.get("key", "")]
+
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "subitem_identifier_type" not in i.get("key", "")]
+
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "subitem_funding_streams" not in i.get("key", "")]
+
+        schema_form = [item for item in schema_form if "subitem_award_numbers" not in item.get("key", "")]
+
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "subitem_award_numbers" not in i.get("key", "")]
+
+
+        schema_form = [item for item in schema_form if "subitem_award_title" not in item.get("key", "")]
+
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "subitem_award_title" not in i.get("key", "")]
+
+        schema_form = [item for item in schema_form if "subitem_conference_sequence" not in item.get("key", "")]
+
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "subitem_conference_sequence" not in i.get("key", "")]
+
+        schema_form = [item for item in schema_form if "subitem_conference_date" not in item.get("key", "")]
+
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "subitem_conference_date" not in i.get("key", "")]
+
+        schema_form = [item for item in schema_form if "subitem_conference_sponsors" not in item.get("key", "")]
+
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "subitem_conference_sponsors" not in i.get("key", "")]
+
+        schema_form = [item for item in schema_form if "subitem_conference_venues" not in item.get("key", "")]
+
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "subitem_conference_venues" not in i.get("key", "")]
+
+        schema_form = [item for item in schema_form if "subitem_conference_places" not in item.get("key", "")]
+
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "subitem_conference_places" not in i.get("key", "")]
+
+        schema_form = [item for item in schema_form if "subitem_conference_country" not in item.get("key", "")]
+
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "subitem_conference_country" not in i.get("key", "")]
+
+        for item in schema_form:
+            should_delete = False
+            for subitem in item.get('items', []):
+                if 'subitem_version' in subitem.get('key', '') and subitem.get('type') == 'text':
+                    should_delete = True
+                    break
+
+            if should_delete:
+                schema_form.remove(item)
+
+        schema_form = [item for item in schema_form if "creatorType" not in item.get("key", "")]
+
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "creatorType" not in i.get("key", "")]
+
+        schema_form = [item for item in schema_form if "familyNames" not in item.get("key", "")]
+
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "familyNames" not in i.get("key", "")]
+
+        schema_form = [item for item in schema_form if "givenNames" not in item.get("key", "")]
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "givenNames" not in i.get("key", "")]
+
+        schema_form = [item for item in schema_form if "creatorAffiliations" not in item.get("key", "")]
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "creatorAffiliations" not in i.get("key", "")]
+
+        schema_form = [item for item in schema_form if "creatorAlternatives" not in item.get("key", "")]
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "creatorAlternatives" not in i.get("key", "")]
+
+        schema_form = [item for item in schema_form if "authorInputButton" not in item.get("key", "")]
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "authorInputButton" not in i.get("key", "")]
+
+        schema_form = [item for item in schema_form if "creatorMails" not in item.get("key", "")]
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "creatorMails" not in i.get("key", "")]
+
+        schema_form = [item for item in schema_form if "nameIdentifiers" not in item.get("key", "")]
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "nameIdentifiers" not in i.get("key", "")]
+
+        schema_form = [item for item in schema_form if "filesize" not in item.get("key", "")]
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "filesize" not in i.get("key", "")]
+
+        schema_form = [item for item in schema_form if "fileDate" not in item.get("key", "")]
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "fileDate" not in i.get("key", "")]
+
+        schema_form = [item for item in schema_form if "displaytype" not in item.get("key", "")]
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "displaytype" not in i.get("key", "")]
+
+        schema_form = [item for item in schema_form if "licensetype" not in item.get("key", "")]
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "licensetype" not in i.get("key", "")]
+
+        schema_form = [item for item in schema_form if "accessrole" not in item.get("key", "")]
+        for item in schema_form:
+            if "items" in item:
+                item["items"] = [i for i in item["items"] if "accessrole" not in i.get("key", "")]
+
+
+        for item in schema_form[:]:
+
+            if item.get('key') == 'pubdate':
+                item['templateUrl'] = '/static/templates/weko_deposit/datepicker_simple.html'
+
+            if 'items' in item:
+                for subitem in item['items']:
+                    if 'key' in subitem and 'subitem_title_language' in subitem['key']:
+                        item['items'].remove(subitem)
+
+            if 'items' in item:
+                for subitem in item['items']:
+                    if 'key' in subitem and 'subitem_access_right_uri' in subitem['key']:
+                        item['items'].remove(subitem)
+
+            if 'items' in item:
+                for subitem in item['items']:
+                    if 'key' in subitem and 'resourceuri' in subitem['key']:
+                        item['items'].remove(subitem)
+
+            if 'items' in item:
+                for subitem in item['items']:
+                    if 'key' in subitem and 'subitem_version_resource' in subitem['key']:
+                        item['items'].remove(subitem)
+
+            if 'items' in item:
+                for subitem in item['items']:
+                    if 'key' in subitem and 'subitem_relation_type' in subitem['key']:
+                        item['items'].remove(subitem)
+                    if 'key' in subitem and 'subitem_relation_name' in subitem['key']:
+                        item['items'].remove(subitem)
+
+                        for item in item['items']:
+                            if 'items' in item:
+                                item['items'] = [subitem for subitem in item['items'] if 'subitem_relation_type_select' not in subitem['key']]
+
+            if 'items' in item:
+                for subitem in item['items']:
+                    # for subitem in subitem['items']:
+                    if 'key' in subitem and 'subitem_funder_identifiers' in subitem['key']:
+                        item['items'].remove(subitem)
+                    if 'key' in subitem and 'subitem_funding_stream_identifiers' in subitem['key']:
+                        item['items'].remove(subitem)
+
+                    if 'key' in subitem and 'subitem_award_numbers' in subitem['key']:
+                        item['items'].remove(subitem)
+
+        for item in schema_form:
+            if 'items' in item:
+                for sub_item in item['items']:
+                    if 'items' in sub_item:
+                        for sub_sub_item in sub_item['items']:
+                            if ".url.url" in sub_sub_item.get("key", ""):
+                                if 'key' in sub_item and ".url" in sub_item.get("key", ""):
+                                    item['items'].remove(sub_item)
+                                    break
+
+        for item in schema_form:
+            if 'items' in item:
+                item["items"] = [sub_item for sub_item in item["items"] if not (".format" in sub_item.get("key", "")and sub_item.get('type') == "text")]
+                item["items"] = [sub_item for sub_item in item["items"] if not (".version" in sub_item.get("key", "")and sub_item.get('type') == "text")]
+
+        return jsonify(schema_form)
+    except BaseException:
+        current_app.logger.error(
+            'Unexpected error: {}'.format(sys.exc_info()[0]))
+    return abort(400)
+
 
 @blueprint.route('/schemaform/<int:item_type_id>', methods=['GET'])
 @blueprint.route('/schemaform/<int:item_type_id>/<string:activity_id>',

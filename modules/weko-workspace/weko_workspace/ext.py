@@ -21,7 +21,7 @@
 """Flask extension for weko-workspace."""
 
 from . import config
-from .views import workspace_blueprint
+from .views import workspace_blueprint, blueprint_itemapi
 
 class WekoWorkspace(object):
     """weko-workspace extension."""
@@ -41,6 +41,7 @@ class WekoWorkspace(object):
         """
         self.init_config(app)
         app.register_blueprint(workspace_blueprint)
+        app.register_blueprint(blueprint_itemapi)
         app.extensions['weko-workspace'] = self
 
     def init_config(self, app):

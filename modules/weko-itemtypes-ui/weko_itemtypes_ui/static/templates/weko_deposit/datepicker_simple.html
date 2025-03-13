@@ -1,0 +1,94 @@
+<!-- If is root, add to panel. -->
+<div>
+  <fieldset ng-if="$index == None"
+    ng-disabled="form.readonly" class="schema-form-fieldset {{ form.htmlClass }}"
+    ng-init="collapsed = form.collapsed">
+    <div class="panel panel-default deposit-panel">
+      <div class="panel-body panel-body2" ng-hide="collapsed">
+        <div
+          class="form-group schema-form-datepicker {{form.htmlClass}}"
+          ng-class="{'has-error': hasError()}">
+          <label
+            class="control-label col-sm-3"
+            for="{{ form.key.slice(-1)[0] }}"
+            ng-class="{'sr-only': !showTitle(), 'field-required': form.required}"
+            ng-show="showTitle()">
+            <i ng-if="form.fa_cls" class="fa fa-fw {{ form.fa_cls }}"></i>&nbsp;{{ form.title }}
+          </label>
+          <div
+            class="col-sm-9"
+            ng-class="{'input-group': (form.fieldAddonLeft || form.fieldAddonRight)}">
+            <span
+              ng-if="form.fieldAddonLeft"
+              class="input-group-addon"
+              ng-bind-html="form.fieldAddonLeft"></span>
+            <input
+              type="text"
+              class="form-control {{form.fieldHtmlClass}}"
+              name="{{form.key.slice(-1)[0]}}"
+              schema-validate="form"
+              sf-changed="form"
+              onkeyup="CustomBSDatePicker.process(this)"
+              onblur="CustomBSDatePicker.process(this)"
+              ng-show="form.key"
+              ng-model="$$value$$"
+              data-date-format="{{form.format}}"
+              data-custom-format="{{form.customFormat}}"
+              data-date-type="string"
+              ng-disabled="form.readonly"
+              data-autoclose="true"
+              bs-datepicker/>
+            <span
+              class="input-group-addon"
+              ng-if="form.fieldAddonRight"
+              ng-bind-html="form.fieldAddonRight"></span>
+            <span class="help-block">{{ (hasError() && errorMessage(schemaError())) || form.description}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </fieldset>
+</div>
+<!-- If is not root, not add to panel. -->
+<div>
+  <div ng-if="$index != None"
+    class="form-group schema-form-datepicker {{form.htmlClass}}"
+    ng-class="{'has-error': hasError()}">
+    <label
+      class="control-label col-sm-3"
+      for="{{ form.key.slice(-1)[0] }}"
+      ng-class="{'sr-only': !showTitle(), 'field-required': form.required}"
+      ng-show="showTitle()">
+      <i ng-if="form.fa_cls" class="fa fa-fw {{ form.fa_cls }}"></i>&nbsp;{{ form.title }}
+    </label>
+    <div
+      class="col-sm-9"
+      ng-class="{'input-group': (form.fieldAddonLeft || form.fieldAddonRight)}">
+      <span
+        ng-if="form.fieldAddonLeft"
+        class="input-group-addon"
+        ng-bind-html="form.fieldAddonLeft"></span>
+      <input
+        type="text"
+        class="form-control {{form.fieldHtmlClass}}"
+        name="{{form.key.slice(-1)[0]}}"
+        schema-validate="form"
+        sf-changed="form"
+        onkeyup="CustomBSDatePicker.process(this)"
+        onblur="CustomBSDatePicker.process(this)"
+        ng-show="form.key"
+        ng-model="$$value$$"
+        data-date-format="{{form.format}}"
+        data-custom-format="{{form.customFormat}}"
+        data-date-type="string"
+        ng-disabled="form.readonly"
+        data-autoclose="true"
+        bs-datepicker/>
+      <span
+        class="input-group-addon"
+        ng-if="form.fieldAddonRight"
+        ng-bind-html="form.fieldAddonRight"></span>
+      <span class="help-block">{{ (hasError() && errorMessage(schemaError())) || form.description}}</span>
+    </div>
+  </div>
+</div>

@@ -42,6 +42,18 @@ msgstr ""
 msgid "Flow List"
 msgstr ""
 
+#: weko_workspace/admin.py:473
+msgid "WorkSpaceWorkFlow Setting"
+msgstr ""
+
+#: weko_workspace/item_register.html:38
+msgid "The item is successfully registered."
+msgstr ""
+
+#: weko_workspace/item_register.html:28
+msgid "At least one index should be selected."
+msgstr ""
+
 #: weko_workflow/api.py:2056 weko_workflow/utils.py:3062
 msgid "End"
 msgstr ""

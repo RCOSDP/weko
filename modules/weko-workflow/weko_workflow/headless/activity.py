@@ -402,6 +402,8 @@ class HeadlessActivity(WorkActivity):
                 size = os.path.getsize(file)
                 with open(file, "rb") as f:
                     file_info = upload(os.path.basename(file), f, size)
+            elif isinstance(file, dict):
+                file_info = files
             else:
                 """werkzeug.datastructures.FileStorage"""
                 file_info = upload(file.filename, file.stream, file.content_length)
