@@ -30,7 +30,7 @@ from weko_swordserver.registration import (
     create_activity_from_jpcoar,
     upload_jpcoar_contents,
     create_file_info,
-    check_bagit_import_items,
+    check_jsonld_import_items,
     generate_metadata_from_json,
     handle_files_info,
 )
@@ -498,8 +498,8 @@ def test_create_file_info(app, bucket, users, admin_xml_settings):
             assert 'updated' in actual
 
 # def check_bagit_import_items(file, packaging):
-# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_registration.py::test_check_bagit_import_items -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_client,make_crate,make_crate2,mocker,workflow):
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_registration.py::test_check_jsonld_import_items -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+def test_check_jsonld_import_items(app,db,index,users,tokens,sword_mapping,sword_client,make_crate,make_crate2,mocker,workflow):
     client_direct = tokens[0]["client"].client_id
     client_workflow = tokens[1]["client"].client_id
 
@@ -509,15 +509,8 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
     zip, _ = make_crate()
     storage = FileStorage(filename="payload.zip",stream=zip)
 
-    # publish_status is "public". It is required to scope "deposit:actions".
-    with patch("weko_swordserver.registration.request") as mock_request:
-        mock_oauth = MagicMock()
-        mock_oauth.client.client_id = client_direct
-        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
-        mock_request.oauth = mock_oauth
-
-        with app.test_request_context():
-            result = check_bagit_import_items(storage, packaging)
+    with app.test_request_context():     # for i18n get_current_locale().language
+        result = check_jsonld_import_items(storage, packaging, client_id=client_direct)
 
     assert result.get("data_path").startswith("/var/tmp/weko_import_")
     assert result.get("register_type") == "Direct"
@@ -531,14 +524,8 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
     zip, _ = make_crate()
     storage = FileStorage(filename="payload.zip",stream=zip)
 
-    with patch("weko_swordserver.registration.request") as mock_request:
-        mock_oauth = MagicMock()
-        mock_oauth.client.client_id = client_workflow
-        mock_oauth.access_token.scopes = tokens[1]["scope"].split(" ")
-        mock_request.oauth = mock_oauth
-
-        with app.test_request_context():
-            result = check_bagit_import_items(storage, packaging)
+    with app.test_request_context():
+        result = check_jsonld_import_items(storage, packaging, client_id=client_workflow)
 
     assert result.get("data_path").startswith("/var/tmp/weko_import_")
     assert result.get("register_type") == "Workflow"
@@ -551,14 +538,8 @@ def test_check_bagit_import_items(app,db,index,users,tokens,sword_mapping,sword_
     zip, _ = make_crate2()
     storage = FileStorage(filename="payload.zip",stream=zip)
 
-    with patch("weko_swordserver.registration.request") as mock_request:
-        mock_oauth = MagicMock()
-        mock_oauth.client.client_id = client_direct
-        mock_oauth.access_token.scopes = tokens[0]["scope"].split(" ")
-        mock_request.oauth = mock_oauth
-
-        with app.test_request_context():
-            result = check_bagit_import_items(storage, packaging)
+    with app.test_request_context():
+        result = check_jsonld_import_items(storage, packaging, client_id=client_direct)
 
     assert result.get("data_path").startswith("/var/tmp/weko_import_")
     assert result.get("register_type") == "Direct"

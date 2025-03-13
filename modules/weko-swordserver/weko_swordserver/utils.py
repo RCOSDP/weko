@@ -17,6 +17,11 @@ from hashlib import sha256
 from zipfile import ZipFile
 
 from flask import current_app
+from sqlalchemy.exc import SQLAlchemyError
+
+from invenio_accounts.models import User
+from invenio_oauth2server.models import Token
+from weko_accounts.models import ShibbolethUser
 
 from .api import SwordClient, SwordItemTypeMapping
 from .errors import WekoSwordserverException, ErrorType
@@ -65,6 +70,45 @@ def check_import_file_format(file, packaging):
 
     return file_format
 
+def get_shared_id_from_on_behalf_of(on_behalf_of):
+    """Get shared ID from on-behalf-of.
+
+    Get shared ID from on-behalf-of.
+    If on-behalf-of is not shared ID, return None.
+
+    Args:
+        on_behalf_of (str): On-behalf-of in request
+    Returns:
+        int: Shared ID
+    """
+    shared_id = -1
+    try:
+        # get weko user id from email
+        user = User.query.filter_by(email=on_behalf_of).one_or_none()
+        shared_id = user.id if user is not None else None
+        if shared_id is None:
+            # get weko user id from personal access token
+            token = (
+                Token.query
+                .filter_by(access_token=on_behalf_of).one_or_none()
+            )
+            shared_id = token.user_id if token is not None else None
+        if shared_id is None:
+            # get weko user id from shibboleth user eppn
+            shib_user = (
+                ShibbolethUser.query
+                .filter_by(shib_eppn=on_behalf_of).one_or_none()
+            )
+            shared_id = shib_user.weko_uid if shib_user is not None else None
+    except SQLAlchemyError as ex:
+        current_app.logger.error(
+            "Somthing went wrong while searching user by On-Behalf-Of.")
+        traceback.print_exc()
+        raise WekoSwordserverException(
+            "An error occurred while searching user by On-Behalf-Of.",
+            errorType=ErrorType.ServerError
+        ) from ex
+    return shared_id
 
 def unpack_zip(file):
     """Unpack zip file.
@@ -139,8 +183,10 @@ def get_record_by_client_id(client_id):
 
     Returns:
         tuple (SwordClientModel, SwordItemTypeMappingModel):
-            A tuple containing the SwordClient object and the SwordItemTypeMapping
-            object. If the client or mapping is not found, the corresponding
+            SwordClientModel: The SwordClient record associated with the client ID.
+            SwordItemTypeMappingModel: The SwordItemTypeMapping record associated with
+            the client ID.
+            If the client or mapping is not found, the corresponding
             value in the tuple will be None.
     """
     sword_client = SwordClient.get_client_by_id(client_id)

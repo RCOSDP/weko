@@ -76,19 +76,11 @@ from weko_search_ui import WekoSearchUI
 from weko_swordserver.models import SwordClientModel, SwordItemTypeMappingModel
 from weko_theme.ext import WekoTheme
 from weko_workflow import WekoWorkflow
-from weko_workflow.models import (
-    Action,
-    ActionStatus,
-    FlowAction,
-    FlowDefine,
-    WorkFlow,
-)
-
+from weko_workflow.models import Action, ActionStatus, FlowAction, FlowDefine, WorkFlow
 from weko_swordserver import WekoSWORDServer
 from weko_swordserver.views import blueprint as weko_swordserver_blueprint
 
-from tests.helpers import json_data, create_record
-from weko_workflow.models import Action, ActionStatus, FlowAction, FlowDefine, WorkFlow
+from .helpers import json_data, create_record
 
 @pytest.yield_fixture()
 def instance_path():

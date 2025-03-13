@@ -24,7 +24,7 @@ from sword3common.lib.seamless import SeamlessException
 from werkzeug.http import parse_options_header
 
 from invenio_db import db
-from invenio_deposit.scopes import write_scope
+from invenio_deposit.scopes import write_scope, actions_scope
 from invenio_oaiserver.api import OaiIdentify
 from invenio_oauth2server.decorators import require_oauth_scopes
 from invenio_oauth2server.ext import verify_oauth_token_and_set_current_user
@@ -41,12 +41,16 @@ from .config import WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE
 from .decorators import check_on_behalf_of, check_package_contents
 from .errors import ErrorType, WekoSwordserverException
 from .registration import (
-    check_bagit_import_items,
+    check_jsonld_import_items,
     check_import_items,
     create_activity_from_jpcoar,
     import_items_to_activity
 )
-from .utils import check_import_file_format, is_valid_file_hash
+from .utils import (
+    check_import_file_format,
+    is_valid_file_hash,
+    get_shared_id_from_on_behalf_of
+)
 from weko_accounts.utils import limiter
 
 
@@ -245,8 +249,9 @@ def post_service_document():
                     "Request body and digest verification failed.",
                     ErrorType.DigestMismatch
                 )
-
-        check_result = check_bagit_import_items(file, packaging)
+        client_id = request.oauth.client.client_id
+        shared_id = get_shared_id_from_on_behalf_of(request.headers.get("On-Behalf-Of"))
+        check_result = check_jsonld_import_items(file, packaging, shared_id, client_id)
         register_type = check_result.get("register_type")
 
     else:
@@ -259,6 +264,14 @@ def post_service_document():
         check_result.get("list_record")[0]
             if "list_record" in check_result else None
     )
+    # check if the user has scopes to publish
+    required_scopes = set([actions_scope.id])
+    token_scopes = set(request.oauth.access_token.scopes)
+    if (
+        item.get("publish_status") == "public"
+        and not required_scopes.issubset(token_scopes)
+    ):
+        abort(403)
     if check_result.get("error") or not item or item.get("errors"):
         errorType = None
         check_result_msg = ""
