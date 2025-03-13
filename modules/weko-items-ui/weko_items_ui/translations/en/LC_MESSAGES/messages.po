@@ -398,19 +398,20 @@ msgstr "OA Policy"
 msgid "Please enter ISSN, eISSN, or journal title"
 msgstr ""
 
-#~ msgid "No Policy Information found"
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:299
+msgid "No Policy Information found"
+msgstr ""
+
+#~ msgid "Invalid parameters"
 #~ msgstr ""
 
 #~ msgid "Authentication error occurred"
 #~ msgstr ""
 
-#~ msgid "An unknown error occurred"
-#~ msgstr ""
-
-#~ msgid "Invalid parameters"
-#~ msgstr ""
-
 #~ msgid "No matching policy"
+#~ msgstr ""
+
+#~ msgid "Request limit exceeded"
 #~ msgstr ""
 
 #~ msgid "Internal server error"

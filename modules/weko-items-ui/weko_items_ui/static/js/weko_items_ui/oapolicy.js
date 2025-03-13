@@ -77,14 +77,17 @@ $(document).ready(function () {
         let errorMessage;
         if (xhr.responseJSON?.error) {
           errorMessage = xhr.responseJSON.error;
+        } else if (xhr.status === 400) {
+          errorMessage = getErrorMessage("error_api_400");
+        } else if (xhr.status === 401) {
+          errorMessage = getErrorMessage("error_api_401");
         } else if (xhr.status === 404) {
           errorMessage = getErrorMessage("error_api_404");
+        } else if (xhr.status === 429) {
+          errorMessage = getErrorMessage("error_api_429");
         } else if (xhr.status === 500) {
           errorMessage = getErrorMessage("error_api_500");
-        } else {
-          errorMessage = getErrorMessage("error_api_generic");
         }
-
         showError(errorMessage);
       }
     });

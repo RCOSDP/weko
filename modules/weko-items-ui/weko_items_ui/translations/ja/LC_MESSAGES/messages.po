@@ -398,21 +398,21 @@ msgstr "OA ポリシー取得"
 msgid "Please enter ISSN, eISSN, or journal title"
 msgstr "ISSN、eISSN、または雑誌名を入力してください。"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:298
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:299
 msgid "No Policy Information found"
 msgstr "一致するポリシー情報が見つかりませんでした。"
-
-#~ msgid "Authentication error occurred"
-#~ msgstr "認証エラーが発生しました。"
-
-#~ msgid "An unknown error occurred"
-#~ msgstr "不明なエラーが発生しました。"
 
 #~ msgid "Invalid parameters"
 #~ msgstr "パラメータが不正です。"
 
+#~ msgid "Authentication error occurred"
+#~ msgstr "認証エラーが発生しました。"
+
 #~ msgid "No matching policy"
 #~ msgstr "一致するポリシー情報が見つかりませんでした。"
+
+#~ msgid "Request limit exceeded"
+#~ msgstr "リクエスト制限を超えました。"
 
 #~ msgid "Internal server error"
 #~ msgstr "サーバー内部エラーが発生しました。"
