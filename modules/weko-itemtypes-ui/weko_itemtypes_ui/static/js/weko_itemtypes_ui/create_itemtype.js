@@ -512,8 +512,12 @@ $(document).ready(function () {
         page_global.table_row_map.mapping[row_id] = mapping_value;
       }
 
-      if(tmp.option.required) {
+      if(tmp.option.required && page_global.table_row_map.schema.required.indexOf(row_id) === -1) {
         page_global.table_row_map.schema.required.push(row_id);
+      }
+      else if(!tmp.option.required && page_global.table_row_map.schema.required.indexOf(row_id) !== -1) {
+        let indexOfRowId = page_global.table_row_map.schema.required.indexOf(row_id)
+        page_global.table_row_map.schema.required.splice(indexOfRowId, 1)
       }
       if(tmp.input_type == 'text' || tmp.input_type == 'textarea') {
         if(tmp.option.multiple) {
