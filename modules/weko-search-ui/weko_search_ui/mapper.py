@@ -1272,7 +1272,15 @@ class JsonMapper(BaseMapper):
             self.non_extract = []
             """Non-extract file list for elastic search."""
             self.save_as_is = False
-            """Flag to save BagIt as is."""
+            """Flag to save BagIt as is. for SWORD deposit."""
+            self.cnri = ""
+            """CNRI for grant. .CNRI in tsv"""
+            self.doi_ra = ""
+            """DOI_RA for grant. .DOI_RA in tsv"""
+            self.doi = ""
+            """DOI for grant. .DOI in tsv"""
+            self.metadata_only = False
+            """Flag to save only metadata. for SWORD deposit."""
 
 class JsonLdMapper(JsonMapper):
     """JsonLdMapper."""
