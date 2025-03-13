@@ -513,7 +513,11 @@ function toObject(arr) {
           uri : 'contributorAffiliationURI'
         }
       ]
+<<<<<<< HEAD
       $scope.crossrefDataEmpty = false;
+=======
+      $scope.corssrefDataEmpty = false;
+>>>>>>> 0c87d0481 (アイテム登録)
       $scope.ciniiDataEmpty = false;
       $scope.jalcDataEmpty = false;
       $scope.datacitDataEmpty = false;
@@ -2605,21 +2609,34 @@ function toObject(arr) {
 
       }
 
+<<<<<<< HEAD
       $scope.checkBothDataEmpty = function (crossrefDataEmpty, ciniiDataEmpty, jalcDataEmpty, datacitDataEmpty) {
         if ($scope.crossrefDataEmpty && $scope.ciniiDataEmpty && $scope.jalcDataEmpty && $scope.datacitDataEmpty) {
+=======
+      $scope.checkBothDataEmpty = function (corssrefDataEmpty, ciniiDataEmpty, jalcDataEmpty, datacitDataEmpty) {
+        if ($scope.corssrefDataEmpty && $scope.ciniiDataEmpty && $scope.jalcDataEmpty && $scope.datacitDataEmpty) {
+>>>>>>> 0c87d0481 (アイテム登録)
           alert("No metadata was found that matches the DOI!");
         }
       }
 
       $scope.getItemMetadataAPI = function (param_crossApi,param_api) {
+<<<<<<< HEAD
         crossrefDataEmpty = this.setRecordDataFromCrossRefApi(param_crossApi);
+=======
+        corssrefDataEmpty = this.setRecordDataFromCrossRefApi(param_crossApi);
+>>>>>>> 0c87d0481 (アイテム登録)
         ciniiDataEmpty = this.setRecordDataFromCINIIApi(param_api);
 
         jalcDataEmpty = this.setRecordDataFromJalcApi(param_api);
 
         datacitDataEmpty = this.setRecordDataFromDataciteApi(param_api);
+<<<<<<< HEAD
         datacitDataEmpty = this.setRecordDataFromJamasApi(param_api);
         return crossrefDataEmpty,ciniiDataEmpty,jalcDataEmpty,datacitDataEmpty
+=======
+        return corssrefDataEmpty,ciniiDataEmpty,jalcDataEmpty,datacitDataEmpty
+>>>>>>> 0c87d0481 (アイテム登録)
 
     }
 
@@ -2663,6 +2680,7 @@ function toObject(arr) {
           return item;
         }
       }
+<<<<<<< HEAD
       
 
       $scope.setRecordDataFromJamasApi = function (param) {
@@ -2700,6 +2718,9 @@ function toObject(arr) {
         );
       }
       
+=======
+
+>>>>>>> 0c87d0481 (アイテム登録)
 
       $scope.setRecordDataFromCrossRefApi = function (param) {
         let request = {
@@ -2724,10 +2745,17 @@ function toObject(arr) {
               $("#metaDataSelectCrossRef").val(JSON.stringify(data.result))
             } else {
               $scope.enableAutofillButton();
+<<<<<<< HEAD
               $scope.crossrefDataEmpty = true;
               $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
             }
             $scope.checkBothDataEmpty($scope.crossrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
+=======
+              $scope.corssrefDataEmpty = true;
+              $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
+            }
+            $scope.checkBothDataEmpty($scope.corssrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
+>>>>>>> 0c87d0481 (アイテム登録)
           },
           function error(response) {
             $scope.enableAutofillButton();
@@ -2798,7 +2826,11 @@ function toObject(arr) {
               $scope.enableAutofillButton();
               $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
             }
+<<<<<<< HEAD
             $scope.checkBothDataEmpty($scope.crossrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
+=======
+            $scope.checkBothDataEmpty($scope.corssrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
+>>>>>>> 0c87d0481 (アイテム登録)
 
           },
           function error(response) {
@@ -2869,7 +2901,11 @@ function toObject(arr) {
               $scope.enableAutofillButton();
               $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
             }
+<<<<<<< HEAD
             $scope.checkBothDataEmpty($scope.crossrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
+=======
+            $scope.checkBothDataEmpty($scope.corssrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
+>>>>>>> 0c87d0481 (アイテム登録)
 
           },
           function error(response) {
@@ -2941,7 +2977,11 @@ function toObject(arr) {
               $scope.enableAutofillButton();
               $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
             }
+<<<<<<< HEAD
             $scope.checkBothDataEmpty($scope.crossrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
+=======
+            $scope.checkBothDataEmpty($scope.corssrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
+>>>>>>> 0c87d0481 (アイテム登録)
 
           },
           function error(response) {
@@ -3537,6 +3577,7 @@ function toObject(arr) {
 
       $scope.saveWorkspaceDataJson = function () {
         let indexlist = []; 
+<<<<<<< HEAD
         if ($("#selected_indexs .list-group-item").length) {
           $("#selected_indexs .list-group-item").each(function() {
               indexlist.push($(this).text().trim());
@@ -3545,6 +3586,17 @@ function toObject(arr) {
             $('#index_select_confirm_modal').fadeIn();
           }
         }
+=======
+        $("#selected_indexs .list-group-item").each(function() {
+            indexlist.push($(this).text().trim()); 
+        });
+        
+
+        if (indexlist.length === 0) {
+            $('#index_select_confirm_modal').fadeIn();
+        }
+        
+>>>>>>> 0c87d0481 (アイテム登録)
 
 
         let subitem_title = "";

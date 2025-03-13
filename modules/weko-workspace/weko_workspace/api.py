@@ -20,6 +20,7 @@
 
 """WEKO3 module docstring."""
 
+<<<<<<< HEAD
 import requests
 import urllib.parse
 from . import config
@@ -103,6 +104,12 @@ class JamasURL:
         except Exception as e:
             response['error'] = str(e)
         return response
+=======
+from .config import WEKO_WORKFLOW_REQUEST_TIMEOUT, WEKO_WORKFLOW_SYS_HTTP_PROXY, \
+    WEKO_WORKFLOW_SYS_HTTPS_PROXY, WEKO_WORKSPACE_CiNii_API_URL, \
+    WEKO_WORKSPACE_JALC_API_URL, WEKO_WORKSPACE_DATACITE_API_URL
+import requests
+>>>>>>> 0c87d0481 (アイテム登録)
 
 
 class CiNiiURL:
@@ -111,10 +118,17 @@ class CiNiiURL:
     ENDPOINT = 'doi='
     POST_FIX = '&format=json'
     # Set default value
+<<<<<<< HEAD
     _timeout = config.WEKO_WORKSPACE_REQUEST_TIMEOUT
     _proxy = {
         'http': config.WEKO_WORKSPACE_SYS_HTTP_PROXY,
         'https': config.WEKO_WORKSPACE_SYS_HTTPS_PROXY
+=======
+    _timeout = WEKO_WORKFLOW_REQUEST_TIMEOUT
+    _proxy = {
+        'http': WEKO_WORKFLOW_SYS_HTTP_PROXY,
+        'https': WEKO_WORKFLOW_SYS_HTTPS_PROXY
+>>>>>>> 0c87d0481 (アイテム登録)
     }
     def __init__(self, doi, timeout=None, http_proxy=None, https_proxy=None):
         """Init CiNiiURL API.
@@ -151,7 +165,11 @@ class CiNiiURL:
         """
         endpoint = self._create_endpoint()
 
+<<<<<<< HEAD
         url =  config.WEKO_WORKSPACE_CiNii_API_URL + '?' + endpoint
+=======
+        url =  WEKO_WORKSPACE_CiNii_API_URL + '?' + endpoint
+>>>>>>> 0c87d0481 (アイテム登録)
         return url
 
     @property
@@ -167,7 +185,11 @@ class CiNiiURL:
                             proxies=self._proxy)
 
     def get_data(self):
+<<<<<<< HEAD
         """This method retrieves the metadata from CiNii."""
+=======
+        """This method retrieves the metadata from CrossRef."""
+>>>>>>> 0c87d0481 (アイテム登録)
         response = {
             'response': '',
             'error': ''
@@ -184,10 +206,20 @@ class CiNiiURL:
 class JALCURL:
     """The Class retrieves the metadata from JALC."""
 
+<<<<<<< HEAD
     _timeout = config.WEKO_WORKSPACE_REQUEST_TIMEOUT
     _proxy = {
         'http': config.WEKO_WORKSPACE_SYS_HTTP_PROXY,
         'https': config.WEKO_WORKSPACE_SYS_HTTPS_PROXY
+=======
+    # ENDPOINT = 'doi='
+    # POST_FIX = '&format=json'
+    # Set default value
+    _timeout = WEKO_WORKFLOW_REQUEST_TIMEOUT
+    _proxy = {
+        'http': WEKO_WORKFLOW_SYS_HTTP_PROXY,
+        'https': WEKO_WORKFLOW_SYS_HTTPS_PROXY
+>>>>>>> 0c87d0481 (アイテム登録)
     }
     def __init__(self, doi, timeout=None, http_proxy=None, https_proxy=None):
         """Init JALCURL API.
@@ -223,7 +255,12 @@ class JALCURL:
         :return:
         """
         endpoint = self._create_endpoint()
+<<<<<<< HEAD
         url =  config.WEKO_WORKSPACE_JALC_API_URL + endpoint
+=======
+
+        url =  WEKO_WORKSPACE_JALC_API_URL + endpoint
+>>>>>>> 0c87d0481 (アイテム登録)
         return url
 
     @property
@@ -239,7 +276,11 @@ class JALCURL:
                             proxies=self._proxy)
 
     def get_data(self):
+<<<<<<< HEAD
         """This method retrieves the metadata from Jalc."""
+=======
+        """This method retrieves the metadata from CrossRef."""
+>>>>>>> 0c87d0481 (アイテム登録)
         response = {
             'response': '',
             'error': ''
@@ -253,6 +294,7 @@ class JALCURL:
         return response
 
 class DATACITEURL:
+<<<<<<< HEAD
     """The Class retrieves the metadata from Datacite."""
 
     _timeout = config.WEKO_WORKSPACE_REQUEST_TIMEOUT
@@ -262,6 +304,20 @@ class DATACITEURL:
     }
     def __init__(self, doi, timeout=None, http_proxy=None, https_proxy=None):
         """Init DataciteURL API.
+=======
+    """The Class retrieves the metadata from JALC."""
+
+    # ENDPOINT = 'doi='
+    # POST_FIX = '&format=json'
+    # Set default value
+    _timeout = WEKO_WORKFLOW_REQUEST_TIMEOUT
+    _proxy = {
+        'http': WEKO_WORKFLOW_SYS_HTTP_PROXY,
+        'https': WEKO_WORKFLOW_SYS_HTTPS_PROXY
+    }
+    def __init__(self, doi, timeout=None, http_proxy=None, https_proxy=None):
+        """Init JALCURL API.
+>>>>>>> 0c87d0481 (アイテム登録)
 
         :param doi:
         :param timeout:
@@ -295,7 +351,11 @@ class DATACITEURL:
         """
         endpoint = self._create_endpoint()
 
+<<<<<<< HEAD
         url =  config.WEKO_WORKSPACE_DATACITE_API_URL + endpoint
+=======
+        url =  WEKO_WORKSPACE_DATACITE_API_URL + endpoint
+>>>>>>> 0c87d0481 (アイテム登録)
         return url
 
     @property
@@ -311,7 +371,11 @@ class DATACITEURL:
                             proxies=self._proxy)
 
     def get_data(self):
+<<<<<<< HEAD
         """This method retrieves the metadata from Datacite."""
+=======
+        """This method retrieves the metadata from CrossRef."""
+>>>>>>> 0c87d0481 (アイテム登録)
         response = {
             'response': '',
             'error': ''

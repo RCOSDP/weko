@@ -33,22 +33,43 @@
   {%- endblock css %}
 
   {%- block javascript %}
+<<<<<<< HEAD
+=======
+
+>>>>>>> 0c87d0481 (アイテム登録)
   <script src="{{ url_for('static', filename='js/react/react.production.min.js') }}" crossorigin></script>
   <script src="{{ url_for('static', filename='js/react/react-dom.production.min.js') }}" crossorigin></script>
   <script src="{{ url_for('static', filename='js/babel-cores/browser.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/axios/axios.min.js') }}"></script>
 
     {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+<<<<<<< HEAD
+=======
+    <!-- <script src="{{ url_for('static', filename='js/weko_items_ui/item.autofill.js') }}" type="text/babel"></script> -->
+>>>>>>> 0c87d0481 (アイテム登録)
     {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
     {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
     {{ super() }}
     {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 
     <script src="{{ url_for('static', filename='js/weko_workspace/workspace_register.js') }}"></script>
+<<<<<<< HEAD
     <!-- {% assets "weko_items_authors_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %} -->
     {% assets "weko_items_ui_js_dependencies" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {%- endblock javascript %}
  
+=======
+    {% assets "weko_items_authors_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    <!-- {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}   -->
+    {% assets "weko_items_ui_js_dependencies" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+
+
+  {%- endblock javascript %}
+ 
+  <!-- <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.14/angular.min.js"></script>  -->
+
+
+>>>>>>> 0c87d0481 (アイテム登録)
   {%- block page_header %}
     {%-if not community %}
     {{ super() }}
@@ -145,7 +166,11 @@
                       <div class="row col-sm-12">
                         <div class="col-sm-12">
                           <div class="col-sm-11">
+<<<<<<< HEAD
                             <input type="text" id="doiInput" name="doiInput" placeholder="{{ _('Please enter the DOI.') }}" 
+=======
+                            <input type="text" id="doiInput" name="doiInput" placeholder="DOIを入力してください。" 
+>>>>>>> 0c87d0481 (アイテム登録)
                                    style="border: 2px solid #ccc; padding: 5px; width: 100%;" ng-model="doiInput">
                           </div>
                           <div class="col-sm-1">
@@ -274,6 +299,7 @@
                     </div>
                   </div>
                   {%- endif %}
+<<<<<<< HEAD
                   {%- if workflow_selected %}
                   {% else %}
                     <div class="panel panel-default" class="col-sm-12">
@@ -294,6 +320,25 @@
                     </div>
                   {% endif %}
 
+=======
+                  <div class="panel panel-default" class="col-sm-12">
+                    <div class="panel-heading" style="background-color: #dff0d8;">
+                      <h3 class="panel-title" style="color: #000000; font-weight: bold;">{{_('Index Tree')}}</h3>
+                    </div>
+                    <div class="panel-body">
+                      <div class="col-sm-12 col-md-12">
+                        <div class="row content-font">
+                            <div class="panel panel-default" style="margin-right: 10px;">
+                              <div class="panel-body panel-body">
+                                  <app-root-tree></app-root-tree>
+                              </div>
+                            </div>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+>>>>>>> 0c87d0481 (アイテム登録)
                 <div class="row row-4">
                   <div class="col-sm-12">
                     <div class="col-sm-offset-3 col-sm-6">
@@ -367,6 +412,11 @@
                     </div>
                   </div>
                 </div>
+<<<<<<< HEAD
+=======
+
+    
+>>>>>>> 0c87d0481 (アイテム登録)
               </div>&nbsp;
               </invenio-records>
             {%- if need_file %}
@@ -376,6 +426,7 @@
       </div>
     </div>
   </div>
+<<<<<<< HEAD
   <input type="hidden" id="validate_error" name="validate_error"
       value="{{_('The Required items is required. Please recheck and input.')}}">
   <input type="hidden" id="duplicate_files_error" name="duplicate_files_error"
@@ -404,10 +455,61 @@
             <button type="button" class="btn btn-danger" id="confirm_regist">
               OK
             </button>
+=======
+
+    {# Author search modal START #}
+    <div class="modal fade" tabindex="-1" role="dialog" id="app-author-search">
+      <div class="modal-dialog modal-xlg" role="document">
+        <div class="modal-content">
+          <div class="modal-body">
+            <app-author-search></app-author-search>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-info close-button"
+                    id="btnModalClose">
+              <span class="glyphicon glyphicon-remove"></span>
+              {{ _('Close') }}
+            </button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+    {# Author search modal END #}
+    <input type="hidden" id="validate_error" name="validate_error"
+        value="{{_('The Required items is required. Please recheck and input.')}}">
+    <input type="hidden" id="duplicate_files_error" name="duplicate_files_error"
+        value="{{_('The same file name cannot be registered.')}}">
+    <input type="hidden" id="autofill_item_type_id" name="autofill_item_type_id" value="{{id}}">
+    <input type="hidden" id="item_save_uri" name="item_save_uri" value='{{item_save_uri}}'>
+    <input type="hidden" id="item_save_frequency" name="item_save_frequency" value='{{config.WEKO_ITEMS_UI_SAVE_FREQUENCY}}'>
+    
+    <div role="dialog" tabindex="-1" class="fade in modal" id='regist_confirm_modal'>
+      <div class="modal-dialog row popup_notice">
+        <div class="modal-content" role="document">
+          <div class="modal-header">
+            <h4 class="modal-title">{{_('WEKO')}}</h4>
+          </div>
+          <div class="modal-body">
+            <div class="container-modal">
+              <div class="row">
+                <input id="regist_success" name="regist_success"
+                value="{{_('The item is successfully registered.')}}"
+                style="display: block; margin: 0 auto; border: none; text-align: center; width: 80%; padding: 10px;">
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <div class="col text-center">
+              <button type="button" class="btn btn-danger" id="confirm_regist">
+                OK
+              </button>
+            </div>
+>>>>>>> 0c87d0481 (アイテム登録)
           </div>
         </div>
       </div>
     </div>
+<<<<<<< HEAD
   </div>
     
   <div role="dialog" tabindex="-1" class="fade in modal" id='index_select_confirm_modal'>
@@ -430,10 +532,35 @@
             <button type="button" class="btn btn-danger" id="confirm_index" ng-click="itemCancel()">
               OK
             </button>
+=======
+    
+    <div role="dialog" tabindex="-1" class="fade in modal" id='index_select_confirm_modal'>
+      <div class="modal-dialog row popup_notice">
+        <div class="modal-content" role="document">
+          <div class="modal-header">
+            <h4 class="modal-title">{{_('WEKO')}}</h4>
+          </div>
+          <div class="modal-body">
+            <div class="container-modal">
+              <div class="row">
+                <input id="regist_success" name="regist_success"
+                value="{{_('At least one index should be selected.')}}"
+                style="display: block; margin: 0 auto; border: none; text-align: center; width: 80%; padding: 10px;">
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <div class="col text-center">
+              <button type="button" class="btn btn-danger" id="confirm_index" ng-click="itemCancel()">
+                OK
+              </button>
+            </div>
+>>>>>>> 0c87d0481 (アイテム登録)
           </div>
         </div>
       </div>
     </div>
+<<<<<<< HEAD
   </div>
     
   <script>
@@ -443,6 +570,16 @@
             element.remove();
         }
     };
+=======
+    
+    <script>
+      window.onload = function() {
+          var element = document.querySelector('.panel-footer');
+          if (element) {
+              element.remove();
+          }
+      };
+>>>>>>> 0c87d0481 (アイテム登録)
   </script>
   {%- endblock page_body_main %}
 
