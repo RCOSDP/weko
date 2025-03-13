@@ -935,6 +935,9 @@ def test_preview_able(app):
 # def get_uri():
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_uri -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_get_uri(app,client,db_sessionlifetime,records):
+    # 404を発生させるとwebassets.exceptions.FilterErrorが発生する対策
+    app.register_error_handler(404, None)
+
     url = url_for("weko_records_ui.get_uri",  _external=True)
     res = client.post(url,data=json.dumps({"uri":"https://localhost/record/1/files/001.jpg","pid_value":"1","accessrole":"1"}), content_type='application/json')
     assert res.status_code == 200
@@ -943,6 +946,14 @@ def test_get_uri(app,client,db_sessionlifetime,records):
     res = client.post(url,data=json.dumps({"uri":"https://localhost/001.jpg","pid_value":"1","accessrole":"1"}), content_type='application/json')
     assert res.status_code == 200
     assert json.loads(res.data)=={'status': True}
+
+    # Invalid request data
+    res = client.post("/get_uri")
+    assert res.status_code == 400
+
+    # Invalid pid_value
+    res = client.post(url,data=json.dumps({"uri":"https://localhost/001.jpg","pid_value":"test","accessrole":"1"}), content_type='application/json', follow_redirects=False)
+    assert res.status_code == 404
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method_fix35133 -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
