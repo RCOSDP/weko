@@ -360,7 +360,6 @@ class ESTermsQuery(ESQuery):
 
     def run(self, start_date=None, end_date=None, **kwargs):
         """Run the query."""
-        current_app.logger.info('ESTermsQuery_run_kwargs: {}'.format(kwargs))
         start_date = self.extract_date(start_date) if start_date else None
         end_date = self.extract_date(end_date) if end_date else None
         self.validate_arguments(start_date, end_date, **kwargs)
