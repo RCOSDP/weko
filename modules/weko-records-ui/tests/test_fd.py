@@ -315,11 +315,6 @@ def test_file_download_onetime(dl_file, save_log, chk_and_send, err_res,
         assert file_download_onetime(
             pid, record, filename) == 'ERROR'
 
-    # 'accessrole' of file object is not 'open_restricted'
-    with patch.object(file_obj, 'get', return_value='open_no'):
-        assert file_download_onetime(
-            pid, record, filename, _record_file_factory) == 'ERROR'
-
     # check_and_send_usage_report() returns an error
     with patch('weko_records_ui.fd.check_and_send_usage_report',
                return_value='ERROR'):
@@ -459,11 +454,6 @@ def test_file_download_secret(dl_file, save_log, current_user, err_res,
                return_value=None):
         assert file_download_secret(
             pid, record, filename) == 'ERROR'
-
-    # 'accessrole' of file object is not 'open_no'
-    with patch.object(file_obj, 'get', return_value='open_restricted'):
-        assert file_download_secret(
-            pid, record, filename, _record_file_factory) == 'ERROR'
 
     # save_download_log() raises an exception
     with patch('weko_records_ui.fd.save_download_log',

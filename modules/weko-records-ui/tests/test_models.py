@@ -270,6 +270,21 @@ class TestFileOnetimeDownload:
             mock_commit.assert_called_once()
         assert rec2.is_deleted is False
 
+    # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::TestFileOnetimeDownload::test_fetch_active_urls -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+    def test_fetch_active_urls(self, users):
+        recid = self.base_data['record_id']
+        filename = self.base_data['file_name']
+        assert FileOnetimeDownload.fetch_active_urls(recid, filename) == []
+        FileOnetimeDownload.create(**self.base_data)
+        assert len(FileOnetimeDownload.fetch_active_urls(recid, filename)) == 1
+        FileOnetimeDownload.create(**self.base_data)
+        assert len(FileOnetimeDownload.fetch_active_urls(recid, filename)) == 2
+        assert FileOnetimeDownload.fetch_active_urls(
+            recid, filename, ascending=True)[0].id == 1
+        assert FileOnetimeDownload.fetch_active_urls(
+            recid, filename, ascending=False)[0].id == 2
+
+
 class TestFileSecretDownload:
     expiration_date = datetime.now(timezone.utc) + timedelta(hours=24)
     no_tz = expiration_date.replace(tzinfo=None)
@@ -371,6 +386,20 @@ class TestFileSecretDownload:
                 rec2.delete_logically()
             mock_commit.assert_called_once()
         assert rec2.is_deleted is False
+
+    # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::TestFileSecretDownload::test_fetch_active_urls -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+    def test_fetch_active_urls(self, users):
+        recid = self.base_data['record_id']
+        filename = self.base_data['file_name']
+        assert FileSecretDownload.fetch_active_urls(recid, filename) == []
+        FileSecretDownload.create(**self.base_data)
+        assert len(FileSecretDownload.fetch_active_urls(recid, filename)) == 1
+        FileSecretDownload.create(**self.base_data)
+        assert len(FileSecretDownload.fetch_active_urls(recid, filename)) == 2
+        assert FileSecretDownload.fetch_active_urls(
+            recid, filename, ascending=True)[0].id == 1
+        assert FileSecretDownload.fetch_active_urls(
+            recid, filename, ascending=False)[0].id == 2
 
 
 # def find_downloadable_only(cls, **obj) -> list:

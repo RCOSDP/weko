@@ -928,7 +928,7 @@ def test_validate_secret_url_generation_request(mock_date, app):
           True),
         # When all fields are invalid
         ({'link_name'              : 123,
-          'expiration_date'        : 'mocked',
+          'expiration_date'        : 123,
           'download_limit'         : 0,
           'send_email'             : None,
           'timezone_offset_minutes': '0'},
@@ -948,6 +948,9 @@ def test_validate_secret_url_generation_request(mock_date, app):
         ({**base_case, 'link_name': '123'    }, True),
         ({**base_case, 'link_name': 123      }, False),
         ({**base_case, 'link_name': 'a' * 256}, False),
+        # For expiration_date
+        ({**base_case, 'expiration_date': '2025-01-00'}, True),
+        ({**base_case, 'expiration_date': 20250101}, False),
         # For download_limit
         ({**base_case, 'download_limit': 1    }, True),
         ({**base_case, 'download_limit': 0    }, False),
@@ -969,6 +972,10 @@ def test_validate_secret_url_generation_request(mock_date, app):
 
     for request_data, expected in test_cases:
         assert validate_secret_url_generation_request(request_data) is expected
+
+    # if validate_expiration_date is False
+    mock_date.return_value = False
+    assert validate_secret_url_generation_request(base_case) is False
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_expiration_date -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -992,6 +999,9 @@ def test_validate_expiration_date(app):
     with patch('weko_records_ui.utils.get_restricted_access') as mock_settings:
         mock_settings.return_value = {}
         assert validate_expiration_date(in_an_year, 0) is False
+
+    invalid_date = '2025-01-00'
+    assert validate_expiration_date(invalid_date, 0) is False
 
     assert validate_expiration_date(tomorrow, 0) is True
 
@@ -1440,6 +1450,7 @@ def test_save_download_log(request, secret_url, onetime_url):
 
     # When accessrole is open_no
     record.get_file_data.return_value = [
+        {'filename': 'other_file', 'accessrole': 'open_yes'},
         {'filename': file_name, 'accessrole': 'open_no'}
     ]
     open_no_dl = save_download_log(
