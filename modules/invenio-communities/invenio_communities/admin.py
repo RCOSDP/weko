@@ -110,7 +110,10 @@ class CommunityModelView(ModelView):
             m = re.match(the_patterns['ASCII_LETTER_PATTERN'], id)
             if m is None:
                 raise ValidationError(the_result['ASCII_LETTER_PATTERN'])
-
+        
+        if self.can_create is False:
+            abort(403)
+        
         form = self.create_form()
 
         if(request.method == 'POST'):
