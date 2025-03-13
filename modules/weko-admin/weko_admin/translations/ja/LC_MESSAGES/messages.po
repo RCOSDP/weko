@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-admin 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2021-07-29 21:12+0900\n"
+"POT-Creation-Date: 2025-02-25 09:34+0900\n"
 "PO-Revision-Date: 2018-01-19 19:54+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -18,160 +18,696 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_admin/admin.py:105
+#: tests/test_admin.py:1669 tests/test_admin.py:1675 tests/test_admin.py:1677
+#: tests/test_admin.py:1694 tests/test_admin.py:1702 tests/test_admin.py:1710
+#: tests/test_admin.py:1718 weko_admin/admin.py:134
+msgid "completed"
+msgstr "処理が完了しました。"
+
+#: tests/test_admin.py:1727 weko_admin/admin.py:127
+#: weko_admin/templates/weko_admin/admin/reindex_elasticsearch.html:43
+msgid "executing..."
+msgstr "実行中..."
+
+#: tests/test_admin.py:1737 weko_admin/admin.py:125
+#: weko_admin/templates/weko_admin/admin/reindex_elasticsearch.html:42
+msgid "haserror"
+msgstr "エラー発生中につき実行できません。"
+
+#: tests/test_views.py:97 tests/test_views.py:110 tests/test_views.py:124
+#: weko_admin/views.py:152
+msgid "15 mins"
+msgstr "15分"
+
+#: tests/test_views.py:97 tests/test_views.py:110 tests/test_views.py:124
+#: weko_admin/views.py:153
+msgid "30 mins"
+msgstr "30分"
+
+#: tests/test_views.py:97 tests/test_views.py:110 tests/test_views.py:124
+#: weko_admin/views.py:154
+msgid "45 mins"
+msgstr "45分"
+
+#: tests/test_views.py:97 tests/test_views.py:110 tests/test_views.py:124
+#: weko_admin/views.py:155
+msgid "60 mins"
+msgstr "1時間"
+
+#: tests/test_views.py:98 tests/test_views.py:111 tests/test_views.py:125
+#: weko_admin/views.py:156
+msgid "180 mins"
+msgstr "3時間"
+
+#: tests/test_views.py:98 tests/test_views.py:111 tests/test_views.py:125
+#: weko_admin/views.py:157
+msgid "360 mins"
+msgstr "6時間"
+
+#: tests/test_views.py:98 tests/test_views.py:111 tests/test_views.py:125
+#: weko_admin/views.py:158
+msgid "720 mins"
+msgstr "12時間"
+
+#: tests/test_views.py:98 tests/test_views.py:111 tests/test_views.py:125
+#: weko_admin/views.py:159
+msgid "1440 mins"
+msgstr "1日"
+
+#: weko_admin/admin.py:220
 msgid "deny access"
 msgstr "アクセス拒否"
 
-#: weko_admin/admin.py:124
+#: weko_admin/admin.py:239
 #, fuzzy
 msgid "Successfully update color."
 msgstr "スケジュールを変更しました"
 
-#: weko_admin/admin.py:310
+#: weko_admin/admin.py:438
 msgid "Monday"
 msgstr "月曜日"
 
-#: weko_admin/admin.py:310
+#: weko_admin/admin.py:438
 msgid "Tuesday"
 msgstr "火曜日"
 
-#: weko_admin/admin.py:310
+#: weko_admin/admin.py:438
 msgid "Wednesday"
 msgstr "水曜日"
 
-#: weko_admin/admin.py:311
+#: weko_admin/admin.py:439
 msgid "Thursday"
 msgstr "木曜日"
 
-#: weko_admin/admin.py:311
+#: weko_admin/admin.py:439
 msgid "Friday"
 msgstr "金曜日"
 
-#: weko_admin/admin.py:311
+#: weko_admin/admin.py:439
 msgid "Saturday"
 msgstr "土曜日"
 
-#: weko_admin/admin.py:312
+#: weko_admin/admin.py:440
 msgid "Sunday"
 msgstr "日曜日"
 
-#: weko_admin/admin.py:342 weko_admin/tasks.py:92
+#: weko_admin/admin.py:469 weko_admin/tasks.py:161
 msgid " Log report."
 msgstr "ログレポート"
 
-#: weko_admin/admin.py:353
+#: weko_admin/admin.py:480
 msgid "Successfully sent the reports to the recepients."
 msgstr "レポートを送信しました"
 
-#: weko_admin/admin.py:363
+#: weko_admin/admin.py:490
 msgid "Unexpected error occurred."
 msgstr "予期しないエラーが発生しました"
 
-#: weko_admin/admin.py:397
+#: weko_admin/admin.py:521
 msgid "Successfully Changed Schedule."
 msgstr "スケジュールを変更しました"
 
-#: weko_admin/admin.py:399
+#: weko_admin/admin.py:523
 msgid "Could Not Save Changes."
 msgstr "変更を保存できませんでした"
 
-#: weko_admin/admin.py:464 weko_admin/admin.py:572 weko_admin/admin.py:806
+#: weko_admin/admin.py:578 weko_admin/admin.py:604 weko_admin/admin.py:705
+#: weko_admin/admin.py:957
 msgid "Successfully Changed Settings."
 msgstr "設定を変更しました"
 
-#: weko_admin/admin.py:485 weko_admin/views.py:564
+#: weko_admin/admin.py:608 weko_admin/views.py:665
 msgid "Could not save data."
 msgstr "データを保存できませんでした"
 
-#: weko_admin/admin.py:496
-msgid "Could not get restricted data: "
+#: weko_admin/admin.py:619
+#, fuzzy, python-format
+msgid "Could not get restricted data: %s"
 msgstr "制限付きデータを取得できませんでした"
 
-#: weko_admin/admin.py:497
+#: weko_admin/admin.py:620
 msgid "Could not get restricted data."
 msgstr "制限付きデータを取得できませんでした"
 
-#: weko_admin/admin.py:576 weko_admin/admin.py:809 weko_admin/admin.py:812
+#: weko_admin/admin.py:709 weko_admin/admin.py:960 weko_admin/admin.py:963
 msgid "Failurely Changed Settings."
 msgstr "設定変更に失敗しました"
 
-#: weko_admin/admin.py:849
+#: weko_admin/admin.py:1000
 #, fuzzy
 msgid "Successfully Changed Settings"
 msgstr "設定を変更しました"
 
-#: weko_admin/admin.py:853
+#: weko_admin/admin.py:1004
 #, fuzzy
 msgid "Failed To Change Settings"
 msgstr "設定変更に失敗しました"
 
-#: weko_admin/admin.py:913
+#: weko_admin/admin.py:1066
 msgid "Prefix"
 msgstr ""
 
-#: weko_admin/admin.py:919
+#: weko_admin/admin.py:1072
 msgid "Suffix"
 msgstr ""
 
-#: weko_admin/admin.py:921
+#: weko_admin/admin.py:1074
 msgid "Enable/Disable"
 msgstr ""
 
-#: weko_admin/admin.py:931
+#: weko_admin/admin.py:1084
 msgid "Repository"
 msgstr ""
 
-#: weko_admin/admin.py:931
+#: weko_admin/admin.py:1084
 msgid "JaLC DOI"
 msgstr ""
 
-#: weko_admin/admin.py:932
+#: weko_admin/admin.py:1085
 msgid "JaLC CrossRef DOI"
 msgstr ""
 
-#: weko_admin/admin.py:933
+#: weko_admin/admin.py:1086
 msgid "JaLC DataCite DOI"
 msgstr ""
 
-#: weko_admin/admin.py:934
+#: weko_admin/admin.py:1087
 msgid "NDL JaLC DOI"
 msgstr ""
 
-#: weko_admin/admin.py:935
+#: weko_admin/admin.py:1088
 msgid "Semi-automatic Suffix"
 msgstr ""
 
-#: weko_admin/admin.py:952
+#: weko_admin/admin.py:1105
 msgid "Only allow half with 1-bytes character in input"
 msgstr ""
 
-#: weko_admin/admin.py:1017
+#: weko_admin/admin.py:1170
 msgid "Specified repository is already registered."
 msgstr "指定したリポジトリが既に登録されています。"
 
-#: weko_admin/admin.py:1137
+#: weko_admin/admin.py:1298
 msgid "ID"
 msgstr ""
 
-#: weko_admin/admin.py:1138
+#: weko_admin/admin.py:1299
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:50
 msgid "Item Name(EN)"
 msgstr "項目名（英）"
 
-#: weko_admin/admin.py:1139
+#: weko_admin/admin.py:1300
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:51
 msgid "Item Name(JP)"
 msgstr "項目名（日）"
 
-#: weko_admin/admin.py:1140
+#: weko_admin/admin.py:1301
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:52
 msgid "Mapping"
 msgstr "マッピング"
 
-#: weko_admin/admin.py:1141
+#: weko_admin/admin.py:1302
+msgid "UI"
+msgstr ""
+
+#: weko_admin/admin.py:1303
 #, fuzzy
 msgid "Active"
 msgstr "保存"
+
+#: weko_admin/admin.py:1372 weko_admin/admin.py:1399 weko_admin/admin.py:1408
+#: weko_admin/admin.py:1417 weko_admin/admin.py:1426 weko_admin/admin.py:1435
+#: weko_admin/admin.py:1444 weko_admin/admin.py:1453 weko_admin/admin.py:1471
+#: weko_admin/admin.py:1480 weko_admin/admin.py:1489 weko_admin/admin.py:1498
+#: weko_admin/admin.py:1506 weko_admin/admin.py:1514
+msgid "Setting"
+msgstr "設定"
+
+#: weko_admin/admin.py:1373
+msgid "Style"
+msgstr "様式"
+
+#: weko_admin/admin.py:1381 weko_admin/admin.py:1390 weko_admin/admin.py:1462
+msgid "Statistics"
+msgstr "統計"
+
+#: weko_admin/admin.py:1382
+msgid "Report"
+msgstr "レポート"
+
+#: weko_admin/admin.py:1391
+msgid "Feedback Mail"
+msgstr ""
+
+#: weko_admin/admin.py:1400
+msgid "Stats"
+msgstr "統計"
+
+#: weko_admin/admin.py:1409
+#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:45
+msgid "Log Analysis"
+msgstr "ログ分析"
+
+#: weko_admin/admin.py:1418
+#: weko_admin/templates/weko_admin/admin/site_info.html:50
+#, fuzzy
+msgid "Language"
+msgstr "言語"
+
+#: weko_admin/admin.py:1427
+msgid "WebAPI Account"
+msgstr ""
+
+#: weko_admin/admin.py:1436
+msgid "Ranking"
+msgstr "ランキング"
+
+#: weko_admin/admin.py:1445
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:61
+msgid "Search"
+msgstr "検索"
+
+#: weko_admin/admin.py:1454 weko_admin/admin.py:1463 weko_admin/config.py:168
+#: weko_admin/config.py:173
+msgid "Site License"
+msgstr "サイトライセンス"
+
+#: weko_admin/admin.py:1472
+#, fuzzy
+msgid "File Preview"
+msgstr "ファイルプレビュー"
+
+#: weko_admin/admin.py:1481
+#, fuzzy
+msgid "Item Export"
+msgstr "定型レポート"
+
+#: weko_admin/admin.py:1490
+msgid "Site Info"
+msgstr ""
+
+#: weko_admin/admin.py:1499
+#, fuzzy
+msgid "Restricted Access"
+msgstr "サイトアクセス"
+
+#: weko_admin/admin.py:1507
+msgid "Identifier"
+msgstr ""
+
+#: weko_admin/admin.py:1515
+#, fuzzy
+msgid "Faceted Search"
+msgstr "ファセット検索一覧"
+
+#: weko_admin/admin.py:1522
+msgid "Maintenance"
+msgstr "メンテナンス"
+
+#: weko_admin/admin.py:1523
+msgid "ElasticSearch Index"
+msgstr "インデックス再作成"
+
+#: weko_admin/api.py:127
+#, fuzzy
+msgid "statistics report"
+msgstr "統計設定"
+
+#: weko_admin/config.py:143
+msgid "No. Of File Downloads"
+msgstr "ファイルダウンロード数"
+
+#: weko_admin/config.py:144
+msgid "No. Of File Previews"
+msgstr "ファイルプレビュー数"
+
+#: weko_admin/config.py:145
+#, fuzzy
+msgid "No. Of Paid File Downloads"
+msgstr "ファイルダウンロード数"
+
+#: weko_admin/config.py:146
+#, fuzzy
+msgid "No. Of Paid File Previews"
+msgstr "ファイルプレビュー数"
+
+#: weko_admin/config.py:147
+msgid "Detail Views Per Index"
+msgstr "インデックス毎の詳細ビュー"
+
+#: weko_admin/config.py:148
+msgid "Detail Views Count"
+msgstr "詳細ビュー数"
+
+#: weko_admin/config.py:149
+msgid "Usage Count By User"
+msgstr "ユーザー別使用数"
+
+#: weko_admin/config.py:150
+msgid "Search Keyword Ranking"
+msgstr "検索キーワードランキング"
+
+#: weko_admin/config.py:151
+msgid "Number Of Access By Host"
+msgstr "ホスト別アクセス数"
+
+#: weko_admin/config.py:152
+msgid "User Affiliation Information"
+msgstr "ユーザー所属情報"
+
+#: weko_admin/config.py:153
+#: weko_admin/templates/weko_admin/email_templates/site_license_report.html:21
+msgid "Access Count By Site License"
+msgstr "サイトライセンス別アクセス数"
+
+#: weko_admin/config.py:158
+msgid "Open-Access No. Of File Downloads"
+msgstr "オープンアクセスファイルダウンロード数"
+
+#: weko_admin/config.py:159
+msgid "Open-Access No. Of File Previews"
+msgstr "オープンアクセスファイルプレビュー数"
+
+#: weko_admin/config.py:160
+msgid "Access Number Breakdown By Site License"
+msgstr "サイトライセンス別アクセス番号内訳"
+
+#: weko_admin/config.py:166 weko_admin/config.py:171
+msgid "File Name"
+msgstr "ファイル名"
+
+#: weko_admin/config.py:166 weko_admin/config.py:171 weko_admin/config.py:177
+msgid "Registered Index Name"
+msgstr "登録インデックス名"
+
+#: weko_admin/config.py:167
+#, fuzzy
+msgid "No. Of Times Downloaded"
+msgstr "ダウンロード/表示回数"
+
+#: weko_admin/config.py:167 weko_admin/config.py:172
+msgid "Non-Logged In User"
+msgstr "非ログインユーザー"
+
+#: weko_admin/config.py:168 weko_admin/config.py:173
+msgid "Logged In User"
+msgstr "ログインユーザー"
+
+#: weko_admin/config.py:168 weko_admin/config.py:173
+msgid "Admin"
+msgstr "管理者"
+
+#: weko_admin/config.py:169 weko_admin/config.py:174
+msgid "Registrar"
+msgstr "登録者"
+
+#: weko_admin/config.py:172
+#, fuzzy
+msgid "No. Of Times Viewed"
+msgstr "ファイルプレビュー数"
+
+#: weko_admin/config.py:175
+msgid "Index"
+msgstr "インデックス"
+
+#: weko_admin/config.py:175
+msgid "No. Of Views"
+msgstr "ビュー数"
+
+#: weko_admin/config.py:177
+msgid "Title"
+msgstr "タイトル"
+
+#: weko_admin/config.py:177
+msgid "View Count"
+msgstr "ビュー数"
+
+#: weko_admin/config.py:178
+msgid "Non-logged-in User"
+msgstr "非ログインユーザー"
+
+#: weko_admin/config.py:179
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:49
+msgid "Mail address"
+msgstr "メールアドレス"
+
+#: weko_admin/config.py:180
+msgid "Username"
+msgstr "ユーザー名"
+
+#: weko_admin/config.py:181
+msgid "File download count"
+msgstr "ファイルダウンロード数"
+
+#: weko_admin/config.py:182
+msgid "File playing count"
+msgstr "ファイル再生回数"
+
+#: weko_admin/config.py:183
+#: weko_admin/templates/weko_admin/admin/report.html:116
+msgid "Search Keyword"
+msgstr "検索キーワード"
+
+#: weko_admin/config.py:183 weko_admin/config.py:188
+#: weko_admin/templates/weko_admin/email_templates/site_license_report.html:25
+msgid "Number Of Searches"
+msgstr "検索数"
+
+#: weko_admin/config.py:184
+msgid "Host"
+msgstr "ホスト"
+
+#: weko_admin/config.py:184
+msgid "IP Address"
+msgstr "IPアドレス"
+
+#: weko_admin/config.py:185 weko_admin/config.py:187
+#: weko_admin/templates/weko_admin/email_templates/site_license_report.html:24
+msgid "WEKO Top Page Access Count"
+msgstr "WEKOトップページアクセス数"
+
+#: weko_admin/config.py:186
+msgid "Role"
+msgstr "ロール"
+
+#: weko_admin/config.py:186
+msgid "Number Of Users"
+msgstr "利用者数"
+
+#: weko_admin/config.py:188
+#: weko_admin/templates/weko_admin/email_templates/site_license_report.html:26
+msgid "Number Of Views"
+msgstr "ビュー数"
+
+#: weko_admin/config.py:189
+#: weko_admin/templates/weko_admin/email_templates/site_license_report.html:27
+msgid "Number Of File download"
+msgstr "ファイルダウンロード数"
+
+#: weko_admin/config.py:190
+#: weko_admin/templates/weko_admin/email_templates/site_license_report.html:28
+msgid "Number Of File Regeneration"
+msgstr "ファイル再生回数"
+
+#: weko_admin/config.py:195
+msgid "FileDownload_"
+msgstr "ファイルダウンロード"
+
+#: weko_admin/config.py:196
+msgid "FilePreview_"
+msgstr "ファイルプレビュー"
+
+#: weko_admin/config.py:197
+#, fuzzy
+msgid "PayFileDownload_"
+msgstr "ファイルダウンロード"
+
+#: weko_admin/config.py:198
+#, fuzzy
+msgid "PayFilePreview_"
+msgstr "ファイルプレビュー"
+
+#: weko_admin/config.py:199
+msgid "IndexAccess_"
+msgstr "索引アクセス"
+
+#: weko_admin/config.py:200
+msgid "DetailView_"
+msgstr "詳細ビュー"
+
+#: weko_admin/config.py:201
+msgid "FileUsingPerUser_"
+msgstr "ユーザー毎のファイル使用"
+
+#: weko_admin/config.py:202
+msgid "SearchCount_"
+msgstr "検索回数"
+
+#: weko_admin/config.py:203
+msgid "UserAffiliate_"
+msgstr "加入ユーザー"
+
+#: weko_admin/config.py:204
+msgid "SiteAccess_"
+msgstr "サイトアクセス"
+
+#: weko_admin/config.py:205
+msgid "TopPageAccess_"
+msgstr "トップページへのアクセス"
+
+#: weko_admin/ext.py:75
+msgid "A translation string"
+msgstr "翻訳文字列"
+
+#: weko_admin/utils.py:234
+msgid "Input type is invalid. Please check again."
+msgstr "入力タイプが無効です。再度確認してください"
+
+#: weko_admin/utils.py:237 weko_admin/views.py:326 weko_admin/views.py:331
+msgid "Account information is invalid. Please check again."
+msgstr "アカウント情報が無効です。再度確認してください"
+
+#: weko_admin/utils.py:328
+#, fuzzy
+msgid "Registered Users"
+msgstr "登録ユーザー"
+
+#: weko_admin/utils.py:372
+msgid "Aggregation Month"
+msgstr "月別集計"
+
+#: weko_admin/utils.py:389
+msgid "Total Detail Views"
+msgstr "詳細ビュー合計"
+
+#: weko_admin/utils.py:398
+msgid "Site license member"
+msgstr "サイトライセンスメンバー"
+
+#: weko_admin/utils.py:402
+msgid "Other than site license"
+msgstr "サイトライセンス外"
+
+#: weko_admin/utils.py:413
+#, fuzzy
+msgid "Institution Name"
+msgstr "機関名"
+
+#: weko_admin/utils.py:1219
+msgid "Cannot update Feedback email settings."
+msgstr ""
+
+#: weko_admin/utils.py:1246
+msgid "Author is duplicated."
+msgstr " 著者が重複しています。"
+
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:48
+#: weko_admin/utils.py:1253
+msgid "Duplicate Email Addresses."
+msgstr "メールアドレスが重複しています。"
+
+#: weko_admin/views.py:116
+#, python-format
+msgid "%(icon)s Session"
+msgstr "%(icon)s セッション"
+
+#: weko_admin/views.py:122
+msgid "Session"
+msgstr "セッション"
+
+#: weko_admin/views.py:147
+msgid "Session lifetime was updated."
+msgstr "セッションライフタイムは更新されました"
+
+#: weko_admin/views.py:319
+msgid "Header Error"
+msgstr "ヘッダエラー"
+
+#: weko_admin/views.py:660
+msgid "Restricted Access was successfully updated."
+msgstr "制限公開の設定を変更しました。"
+
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:54
+#: weko_admin/views.py:725 weko_admin/views.py:760
+msgid "Success"
+msgstr "成功"
+
+#: weko_admin/views.py:734
+msgid "Failed to update due to server error."
+msgstr "サーバーエラーのため、更新に失敗しました。"
+
+#: weko_admin/views.py:739
+msgid "Failed to create due to server error."
+msgstr "サーバーエラーのため、作成に失敗しました。"
+
+#: weko_admin/views.py:742
+msgid ""
+"The item name/mapping is already exists. Please input other faceted "
+"item/mapping."
+msgstr "既に存在する項目名・マッピングです。別のファセット項目名・マッピングを入力してください。"
+
+#: weko_admin/views.py:767 weko_admin/views.py:770
+msgid "Failed to delete due to server error."
+msgstr "サーバーエラーのため、削除に失敗しました。"
+
+#: weko_admin/templates/weko_admin/index.html:25
+msgid "Welcome to"
+msgstr "ようこそ"
+
+#: weko_admin/templates/weko_admin/admin/block_style.html:89
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:74
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:44
+#: weko_admin/templates/weko_admin/admin/file_preview_settings.html:62
+#: weko_admin/templates/weko_admin/admin/item_export_settings.html:94
+#: weko_admin/templates/weko_admin/admin/lang_settings.html:86
+#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:170
+#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:192
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:147
+#: weko_admin/templates/weko_admin/admin/report.html:224
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:60
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:442
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:479
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:582
+#: weko_admin/templates/weko_admin/admin/site_info.html:51
+#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:174
+#: weko_admin/templates/weko_admin/admin/site_license_settings.html:204
+#: weko_admin/templates/weko_admin/admin/stats_settings.html:71
+#: weko_admin/templates/weko_admin/admin/web_api_account.html:57
+#: weko_admin/templates/weko_admin/partials/email_schedule.html:88
+msgid "Save"
+msgstr "保存"
+
+#: weko_admin/templates/weko_admin/admin/block_style.html:93
+msgid "Color Setting"
+msgstr "カラー設定"
+
+#: weko_admin/templates/weko_admin/admin/block_style.html:99
+msgid "Background1"
+msgstr "背景1"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:53
+msgid "Custom Aggregations"
+msgstr "カスタム集計"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:54
+msgid "Aggregations List"
+msgstr "集計一覧"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:55
+msgid "Aggregation Mapping"
+msgstr "集計マッピング"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:56
+msgid "Aggregation Value"
+msgstr "集計値"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:57
+msgid "Display/Hide"
+msgstr "表示/非表示"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:58
+msgid "_Display"
+msgstr "表示"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:59
 msgid "UiType"
@@ -201,557 +737,68 @@ msgstr "表示件数は1以上99以下の整数値で入力する必要があり
 msgid "DisplayNumber Validation2"
 msgstr "CheckboxListを選択した場合は表示件数を入力する必要があります。"
 
-#: weko_admin/admin.py:1210 weko_admin/admin.py:1237 weko_admin/admin.py:1246
-#: weko_admin/admin.py:1255 weko_admin/admin.py:1264 weko_admin/admin.py:1273
-#: weko_admin/admin.py:1282 weko_admin/admin.py:1291 weko_admin/admin.py:1309
-#: weko_admin/admin.py:1318 weko_admin/admin.py:1327 weko_admin/admin.py:1336
-#: weko_admin/admin.py:1344 weko_admin/admin.py:1352
-msgid "Setting"
-msgstr "設定"
-
-#: weko_admin/admin.py:1211
-msgid "Style"
-msgstr "様式"
-
-#: weko_admin/admin.py:1219 weko_admin/admin.py:1228 weko_admin/admin.py:1300
-msgid "Statistics"
-msgstr "統計"
-
-#: weko_admin/admin.py:1220
-msgid "Report"
-msgstr "レポート"
-
-#: weko_admin/admin.py:1229
-msgid "Feedback Mail"
-msgstr ""
-
-#: weko_admin/admin.py:1238
-msgid "Stats"
-msgstr "統計"
-
-#: weko_admin/admin.py:1247
-#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:45
-msgid "Log Analysis"
-msgstr "ログ分析"
-
-#: weko_admin/admin.py:1256
-#: weko_admin/templates/weko_admin/admin/site_info.html:48
-#, fuzzy
-msgid "Language"
-msgstr "言語"
-
-#: weko_admin/admin.py:1265
-msgid "WebAPI Account"
-msgstr ""
-
-#: weko_admin/admin.py:1274
-msgid "Ranking"
-msgstr "ランキング"
-
-#: weko_admin/admin.py:1283
-#: weko_admin/templates/weko_admin/admin/feedback_mail.html:61
-msgid "Search"
-msgstr "検索"
-
-#: weko_admin/admin.py:1292 weko_admin/admin.py:1301 weko_admin/config.py:154
-#: weko_admin/config.py:159
-msgid "Site License"
-msgstr "サイトライセンス"
-
-#: weko_admin/admin.py:1310
-#, fuzzy
-msgid "File Preview"
-msgstr "ファイルプレビュー"
-
-#: weko_admin/admin.py:1319
-#, fuzzy
-msgid "Item Export"
-msgstr "定型レポート"
-
-#: weko_admin/admin.py:1328
-msgid "Site Info"
-msgstr ""
-
-#: weko_admin/admin.py:1337
-#, fuzzy
-msgid "Restricted Access"
-msgstr "サイトアクセス"
-
-#: weko_admin/admin.py:1345
-msgid "Identifier"
-msgstr ""
-
-#: weko_admin/admin.py:1353
-#, fuzzy
-msgid "Faceted Search"
-msgstr "ファセット検索一覧"
-
-#: weko_admin/api.py:82
-#, fuzzy
-msgid "statistics report"
-msgstr "統計設定"
-
-#: weko_admin/config.py:129
-msgid "No. Of File Downloads"
-msgstr "ファイルダウンロード数"
-
-#: weko_admin/config.py:130
-msgid "No. Of File Previews"
-msgstr "ファイルプレビュー数"
-
-#: weko_admin/config.py:131
-#, fuzzy
-msgid "No. Of Paid File Downloads"
-msgstr "ファイルダウンロード数"
-
-#: weko_admin/config.py:132
-#, fuzzy
-msgid "No. Of Paid File Previews"
-msgstr "ファイルプレビュー数"
-
-#: weko_admin/config.py:133
-msgid "Detail Views Per Index"
-msgstr "インデックス毎の詳細ビュー"
-
-#: weko_admin/config.py:134
-msgid "Detail Views Count"
-msgstr "詳細ビュー数"
-
-#: weko_admin/config.py:135
-msgid "Usage Count By User"
-msgstr "ユーザー別使用数"
-
-#: weko_admin/config.py:136
-msgid "Search Keyword Ranking"
-msgstr "検索キーワードランキング"
-
-#: weko_admin/config.py:137
-msgid "Number Of Access By Host"
-msgstr "ホスト別アクセス数"
-
-#: weko_admin/config.py:138
-msgid "User Affiliation Information"
-msgstr "ユーザー所属情報"
-
-#: weko_admin/config.py:139
-#: weko_admin/templates/weko_admin/email_templates/site_license_report.html:21
-msgid "Access Count By Site License"
-msgstr "サイトライセンス別アクセス数"
-
-#: weko_admin/config.py:144
-msgid "Open-Access No. Of File Downloads"
-msgstr "オープンアクセスファイルダウンロード数"
-
-#: weko_admin/config.py:145
-msgid "Open-Access No. Of File Previews"
-msgstr "オープンアクセスファイルプレビュー数"
-
-#: weko_admin/config.py:146
-msgid "Access Number Breakdown By Site License"
-msgstr "サイトライセンス別アクセス番号内訳"
-
-#: weko_admin/config.py:152 weko_admin/config.py:157
-msgid "File Name"
-msgstr "ファイル名"
-
-#: weko_admin/config.py:152 weko_admin/config.py:157 weko_admin/config.py:163
-msgid "Registered Index Name"
-msgstr "登録インデックス名"
-
-#: weko_admin/config.py:153
-#, fuzzy
-msgid "No. Of Times Downloaded"
-msgstr "ダウンロード/表示回数"
-
-#: weko_admin/config.py:153 weko_admin/config.py:158
-msgid "Non-Logged In User"
-msgstr "非ログインユーザー"
-
-#: weko_admin/config.py:154 weko_admin/config.py:159
-msgid "Logged In User"
-msgstr "ログインユーザー"
-
-#: weko_admin/config.py:154 weko_admin/config.py:159
-msgid "Admin"
-msgstr "管理者"
-
-#: weko_admin/config.py:155 weko_admin/config.py:160
-msgid "Registrar"
-msgstr "登録者"
-
-#: weko_admin/config.py:158
-#, fuzzy
-msgid "No. Of Times Viewed"
-msgstr "ファイルプレビュー数"
-
-#: weko_admin/config.py:161
-msgid "Index"
-msgstr "インデックス"
-
-#: weko_admin/config.py:161
-msgid "No. Of Views"
-msgstr "ビュー数"
-
-#: weko_admin/config.py:163
-msgid "Title"
-msgstr "タイトル"
-
-#: weko_admin/config.py:163
-msgid "View Count"
-msgstr "ビュー数"
-
-#: weko_admin/config.py:164
-msgid "Non-logged-in User"
-msgstr "非ログインユーザー"
-
-#: weko_admin/config.py:165
-#: weko_admin/templates/weko_admin/admin/feedback_mail.html:49
-msgid "Mail address"
-msgstr "メールアドレス"
-
-#: weko_admin/config.py:166
-msgid "Username"
-msgstr "ユーザー名"
-
-#: weko_admin/config.py:167
-msgid "File download count"
-msgstr "ファイルダウンロード数"
-
-#: weko_admin/config.py:168
-msgid "File playing count"
-msgstr "ファイル再生回数"
-
-#: weko_admin/config.py:169
-#: weko_admin/templates/weko_admin/admin/report.html:116
-msgid "Search Keyword"
-msgstr "検索キーワード"
-
-#: weko_admin/config.py:169 weko_admin/config.py:174
-#: weko_admin/templates/weko_admin/email_templates/site_license_report.html:25
-msgid "Number Of Searches"
-msgstr "検索数"
-
-#: weko_admin/config.py:170
-msgid "Host"
-msgstr "ホスト"
-
-#: weko_admin/config.py:170
-msgid "IP Address"
-msgstr "IPアドレス"
-
-#: weko_admin/config.py:171 weko_admin/config.py:173
-#: weko_admin/templates/weko_admin/email_templates/site_license_report.html:24
-msgid "WEKO Top Page Access Count"
-msgstr "WEKOトップページアクセス数"
-
-#: weko_admin/config.py:172
-msgid "Role"
-msgstr "ロール"
-
-#: weko_admin/config.py:172
-msgid "Number Of Users"
-msgstr "利用者数"
-
-#: weko_admin/config.py:174
-#: weko_admin/templates/weko_admin/email_templates/site_license_report.html:26
-msgid "Number Of Views"
-msgstr "ビュー数"
-
-#: weko_admin/config.py:175
-#: weko_admin/templates/weko_admin/email_templates/site_license_report.html:27
-msgid "Number Of File download"
-msgstr "ファイルダウンロード数"
-
-#: weko_admin/config.py:176
-#: weko_admin/templates/weko_admin/email_templates/site_license_report.html:28
-msgid "Number Of File Regeneration"
-msgstr "ファイル再生回数"
-
-#: weko_admin/config.py:181
-msgid "FileDownload_"
-msgstr "ファイルダウンロード"
-
-#: weko_admin/config.py:182
-msgid "FilePreview_"
-msgstr "ファイルプレビュー"
-
-#: weko_admin/config.py:183
-#, fuzzy
-msgid "PayFileDownload_"
-msgstr "ファイルダウンロード"
-
-#: weko_admin/config.py:184
-#, fuzzy
-msgid "PayFilePreview_"
-msgstr "ファイルプレビュー"
-
-#: weko_admin/config.py:185
-msgid "IndexAccess_"
-msgstr "索引アクセス"
-
-#: weko_admin/config.py:186
-msgid "DetailView_"
-msgstr "詳細ビュー"
-
-#: weko_admin/config.py:187
-msgid "FileUsingPerUser_"
-msgstr "ユーザー毎のファイル使用"
-
-#: weko_admin/config.py:188
-msgid "SearchCount_"
-msgstr "検索回数"
-
-#: weko_admin/config.py:189
-msgid "UserAffiliate_"
-msgstr "加入ユーザー"
-
-#: weko_admin/config.py:190
-msgid "SiteAccess_"
-msgstr "サイトアクセス"
-
-#: weko_admin/config.py:191
-msgid "TopPageAccess_"
-msgstr "トップページへのアクセス"
-
-#: weko_admin/ext.py:74
-msgid "A translation string"
-msgstr "翻訳文字列"
-
-#: weko_admin/utils.py:235
-msgid "Input type is invalid. Please check again."
-msgstr "入力タイプが無効です。再度確認してください"
-
-#: weko_admin/utils.py:238 weko_admin/views.py:284 weko_admin/views.py:289
-msgid "Account information is invalid. Please check again."
-msgstr "アカウント情報が無効です。再度確認してください"
-
-#: weko_admin/utils.py:331
-#, fuzzy
-msgid "Registered Users"
-msgstr "登録ユーザー"
-
-#: weko_admin/utils.py:373
-msgid "Aggregation Month"
-msgstr "月別集計"
-
-#: weko_admin/utils.py:388
-msgid "Total Detail Views"
-msgstr "詳細ビュー合計"
-
-#: weko_admin/utils.py:396
-msgid "Site license member"
-msgstr "サイトライセンスメンバー"
-
-#: weko_admin/utils.py:400
-msgid "Other than site license"
-msgstr "サイトライセンス外"
-
-#: weko_admin/utils.py:411
-#, fuzzy
-msgid "Institution Name"
-msgstr "機関名"
-
-#: weko_admin/utils.py:1198
-msgid "Cannot update Feedback email settings."
-msgstr ""
-
-#: weko_admin/utils.py:1225
-msgid "Author is duplicated."
-msgstr " 著者が重複しています。"
-
-#: weko_admin/templates/weko_admin/admin/feedback_mail.html:48
-#: weko_admin/utils.py:1232
-msgid "Duplicate Email Addresses."
-msgstr "メールアドレスが重複しています。"
-
-#: weko_admin/views.py:102
-#, python-format
-msgid "%(icon)s Session"
-msgstr "%(icon)s セッション"
-
-#: weko_admin/views.py:108
-msgid "Session"
-msgstr "セッション"
-
-#: weko_admin/views.py:132
-msgid "Session lifetime was updated."
-msgstr "セッションライフタイムは更新されました"
-
-#: weko_admin/views.py:137
-msgid "15 mins"
-msgstr "15分"
-
-#: weko_admin/views.py:138
-msgid "30 mins"
-msgstr "30分"
-
-#: weko_admin/views.py:139
-msgid "45 mins"
-msgstr "45分"
-
-#: weko_admin/views.py:140
-msgid "60 mins"
-msgstr "1時間"
-
-#: weko_admin/views.py:141
-msgid "180 mins"
-msgstr "3時間"
-
-#: weko_admin/views.py:142
-msgid "360 mins"
-msgstr "6時間"
-
-#: weko_admin/views.py:143
-msgid "720 mins"
-msgstr "12時間"
-
-#: weko_admin/views.py:144
-msgid "1440 mins"
-msgstr "1日"
-
-#: weko_admin/views.py:277
-msgid "Header Error"
-msgstr "ヘッダエラー"
-
-#: weko_admin/views.py:559
-msgid "Restricted Access was successfully updated."
-msgstr "制限公開の設定を変更しました。"
-
-#: weko_admin/templates/weko_admin/admin/feedback_mail.html:54
-#: weko_admin/views.py:618 weko_admin/views.py:651
-msgid "Success"
-msgstr "成功"
-
-#: weko_admin/views.py:627
-msgid "Failed to update due to server error."
-msgstr "サーバーエラーのため、更新に失敗しました。"
-
-#: weko_admin/views.py:632
-msgid "Failed to create due to server error."
-msgstr "サーバーエラーのため、作成に失敗しました。"
-
-#: weko_admin/views.py:635
-msgid ""
-"The item name/mapping is already exists. Please input other faceted "
-"item/mapping."
-msgstr "既に存在する項目名・マッピングです。別のファセット項目名・マッピングを入力してください。"
-
-#: weko_admin/views.py:658 weko_admin/views.py:661
-msgid "Failed to delete due to server error."
-msgstr "サーバーエラーのため、削除に失敗しました。"
-
-#: weko_admin/templates/weko_admin/index.html:25
-msgid "Welcome to"
-msgstr "ようこそ"
-
-#: weko_admin/templates/weko_admin/admin/block_style.html:87
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:67
-#: weko_admin/templates/weko_admin/admin/feedback_mail.html:44
-#: weko_admin/templates/weko_admin/admin/file_preview_settings.html:62
-#: weko_admin/templates/weko_admin/admin/item_export_settings.html:94
-#: weko_admin/templates/weko_admin/admin/lang_settings.html:86
-#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:169
-#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:191
-#: weko_admin/templates/weko_admin/admin/ranking_settings.html:145
-#: weko_admin/templates/weko_admin/admin/report.html:224
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:52
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html:422
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html:459
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html:562
-#: weko_admin/templates/weko_admin/admin/site_info.html:49
-#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:174
-#: weko_admin/templates/weko_admin/admin/site_license_settings.html:204
-#: weko_admin/templates/weko_admin/admin/stats_settings.html:71
-#: weko_admin/templates/weko_admin/admin/web_api_account.html:57
-#: weko_admin/templates/weko_admin/partials/email_schedule.html:88
-msgid "Save"
-msgstr "保存"
-
-#: weko_admin/templates/weko_admin/admin/block_style.html:91
-msgid "Color Setting"
-msgstr "カラー設定"
-
-#: weko_admin/templates/weko_admin/admin/block_style.html:97
-msgid "Background1"
-msgstr "背景1"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:53
-msgid "Custom Aggregations"
-msgstr "カスタム集計"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:54
-msgid "Aggregations List"
-msgstr "集計一覧"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:55
-msgid "Aggregation Mapping"
-msgstr "集計マッピング"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:56
-msgid "Aggregation Value"
-msgstr "集計値"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:57
-msgid "Display/Hide"
-msgstr "表示/非表示"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:58
-msgid "_Display"
-msgstr "表示"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:59
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:66
 msgid "_Hide"
 msgstr "非表示"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:61
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:68
 msgid "List"
 msgstr "一覧"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:62
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:69
 msgid "Create"
 msgstr "作成"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:63
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:70
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:230
 msgid "Edit"
 msgstr "編集"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:71
 #: weko_admin/templates/weko_admin/partials/email_schedule.html:23
 msgid "Details"
 msgstr "詳細"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:66
-#: weko_admin/templates/weko_admin/settings/lifetime.html:55
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:73
+#: weko_admin/templates/weko_admin/admin/reindex_elasticsearch.html:48
+#: weko_admin/templates/weko_admin/settings/lifetime.html:56
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:68
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:75
 #: weko_admin/templates/weko_admin/admin/feedback_mail.html:45
-#: weko_admin/templates/weko_admin/admin/ranking_settings.html:149
-#: weko_admin/templates/weko_admin/admin/site_info.html:57
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:151
+#: weko_admin/templates/weko_admin/admin/site_info.html:59
 #: weko_admin/templates/weko_admin/admin/site_license_settings.html:70
 msgid "Delete"
 msgstr "削除"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:69
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:64
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html:541
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:76
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:73
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:561
 msgid "Add"
 msgstr "追加"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:70
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:78
 msgid "Please input all required item."
 msgstr "必須項目は全て入力して下さい。"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:77
-#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:183
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:79
+msgid "Please select one aggregation mapping."
+msgstr "集計マッピングを１つ選択してください。"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:80
+msgid "Already exists."
+msgstr "既に存在しています。"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:87
+#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:184
 #: weko_admin/templates/weko_admin/admin/report.html:247
 #: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:197
 msgid "Confirmation"
 msgstr "確認"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:78
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:88
 msgid "Are you sure you want to delete it?"
 msgstr "削除してよろしいですか？"
 
@@ -822,9 +869,9 @@ msgid "Resend"
 msgstr "再送信"
 
 #: weko_admin/templates/weko_admin/admin/feedback_mail.html:59
-#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:195
+#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:196
 #: weko_admin/templates/weko_admin/admin/report.html:273
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:75
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:84
 msgid "Close"
 msgstr "閉じる"
 
@@ -863,7 +910,7 @@ msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/item_export_settings.html:59
 #: weko_admin/templates/weko_admin/admin/item_export_settings.html:78
-#: weko_admin/templates/weko_admin/admin/ranking_settings.html:47
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:48
 #: weko_admin/templates/weko_admin/admin/stats_settings.html:59
 #: weko_admin/templates/weko_admin/partials/email_schedule.html:75
 msgid "On"
@@ -871,7 +918,7 @@ msgstr "オン"
 
 #: weko_admin/templates/weko_admin/admin/item_export_settings.html:65
 #: weko_admin/templates/weko_admin/admin/item_export_settings.html:84
-#: weko_admin/templates/weko_admin/admin/ranking_settings.html:52
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:53
 #: weko_admin/templates/weko_admin/admin/stats_settings.html:64
 #: weko_admin/templates/weko_admin/partials/email_schedule.html:80
 msgid "Off"
@@ -889,69 +936,104 @@ msgstr "対象言語"
 msgid "Registered language"
 msgstr "登録言語"
 
-#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:56
+#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:57
 msgid "Addresses to Filter"
 msgstr "フィルタリングするアドレス"
 
-#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:64
+#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:65
 msgid "Enter the IP Addresses to Filter"
 msgstr "フィルタリングするIPアドレスの入力"
 
-#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:128
+#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:129
 msgid "Shared Crawler Lists"
 msgstr "共有クローラーリスト"
 
-#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:186
+#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:187
 msgid "Are you sure you want to block the given addresses?"
 msgstr "与えられたアドレスをブロックしてもよろしいですか？"
 
-#: weko_admin/templates/weko_admin/admin/ranking_settings.html:41
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:42
 msgid "Show/Hide Ranking"
 msgstr "ランキングの表示/非表示"
 
-#: weko_admin/templates/weko_admin/admin/ranking_settings.html:58
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:59
 msgid "Period To Judge As New Item"
 msgstr "新着アイテムとして判断する期間"
 
-#: weko_admin/templates/weko_admin/admin/ranking_settings.html:64
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:65
 msgid "Day (Range : 1~30)"
 msgstr "日（範囲：1-30）"
 
-#: weko_admin/templates/weko_admin/admin/ranking_settings.html:68
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:69
 msgid "Statistical Period"
 msgstr "統計期間"
 
-#: weko_admin/templates/weko_admin/admin/ranking_settings.html:73
-msgid "Day"
-msgstr "日"
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:74
+#, fuzzy
+msgid "Day　(Range : 1~3650)"
+msgstr "日（範囲：1-30）"
 
-#: weko_admin/templates/weko_admin/admin/ranking_settings.html:77
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:78
 msgid "Display Rank"
 msgstr "表示する順位"
 
-#: weko_admin/templates/weko_admin/admin/ranking_settings.html:85
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:83
+#, fuzzy
+msgid "(Range : 1~100)"
+msgstr "日（範囲：1-30）"
+
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:87
 msgid "Rankings"
 msgstr "ランキング"
 
-#: weko_admin/templates/weko_admin/admin/ranking_settings.html:91
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:93
 msgid "Most Viewed Items"
 msgstr "最も閲覧されたアイテム"
 
-#: weko_admin/templates/weko_admin/admin/ranking_settings.html:102
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:104
 msgid "Most Downloaded Items"
 msgstr "最もダウンロードされたアイテム"
 
-#: weko_admin/templates/weko_admin/admin/ranking_settings.html:113
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:115
 msgid "User Who Created The Most Items"
 msgstr "最もアイテムを作成したユーザー"
 
-#: weko_admin/templates/weko_admin/admin/ranking_settings.html:124
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:126
 msgid "Most Searched Keywords"
 msgstr "最も検索されたキーワード"
 
-#: weko_admin/templates/weko_admin/admin/ranking_settings.html:135
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:137
 msgid "New Items"
 msgstr "新着アイテム"
+
+#: weko_admin/templates/weko_admin/admin/reindex_elasticsearch.html:38
+msgid "reindex item_index"
+msgstr "アイテムインデックスの再作成"
+
+#: weko_admin/templates/weko_admin/admin/reindex_elasticsearch.html:39
+msgid "reindex item"
+msgstr "アイテムの再インデックス"
+
+#: weko_admin/templates/weko_admin/admin/reindex_elasticsearch.html:40
+msgid "execute"
+msgstr "実行"
+
+#: weko_admin/templates/weko_admin/admin/reindex_elasticsearch.html:41
+msgid "waiting..."
+msgstr "実行可能"
+
+#: weko_admin/templates/weko_admin/admin/reindex_elasticsearch.html:47
+#, fuzzy
+msgid "Execute"
+msgstr "実行"
+
+#: weko_admin/templates/weko_admin/admin/reindex_elasticsearch.html:49
+msgid "validationMsg1"
+msgstr "実行モードが選ばれていません。"
+
+#: weko_admin/templates/weko_admin/admin/reindex_elasticsearch.html:50
+msgid "confirmMessage"
+msgstr "本処理の実行にはかなりの時間がかかることが予想されます。インデックスの再作成処理を実行してよいですか？"
 
 #: weko_admin/templates/weko_admin/admin/report.html:54
 msgid "Number of items registered"
@@ -1074,7 +1156,7 @@ msgid "Are you sure you want to save changes?"
 msgstr "変更してもよろしいですか？"
 
 #: weko_admin/templates/weko_admin/admin/report.html:255
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:76
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:85
 msgid "Send Mail"
 msgstr "メール送信"
 
@@ -1095,110 +1177,116 @@ msgid "Expiration Date"
 msgstr "有効期限日数"
 
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:47
-msgid "Max Expiration Date"
-msgstr "有効期限日数上限"
-
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:488
 msgid "Max Download Limit"
 msgstr "ダウンロード回数上限"
 
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:48
+msgid "Max Expiration Date"
+msgstr "有効期限日数上限"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:49
+msgid "Expiration Date Initial Value"
+msgstr "ダウンロード回数初期値"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:50
+msgid "Download Limit Initial Value"
+msgstr "有効期限日数初期値"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:52
 msgid "Content File Download"
 msgstr "コンテンツファイルのダウンロード"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:51
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:59
 msgid "Unlimited"
 msgstr "無制限"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:53
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:61
 msgid "Usage Report Workflow Access"
 msgstr "利用報告ワークフローへのアクセス"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:55
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:63
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:65
 #, python-format
 msgid "Must set a positive integer and less than %(name1)s for %(name2)s."
 msgstr "%(name2)sは1以上の整数かつ%(name1)s以下の値を設定する必要があります。"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:57
-#, python-format
-msgid "Must set a positive integer and less than %(name1)s for %(name2)s."
-msgstr "%(name2)sは1以上の整数かつ%(name1)s以下の値を設定する必要があります。"
-
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:58
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:59
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:66
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:67
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:68
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:69
 #, python-format
 msgid "Please set %(name)s."
 msgstr "%(name)sを設定してください。"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:61
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html:444
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html:451
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:70
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:464
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:471
 msgid "English"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:62
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html:445
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html:452
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:71
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:465
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:472
 msgid "Japanese"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:63
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:72
 msgid "Terms and Conditions"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:65
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:74
 msgid "Please input the Terms and Conditions in English."
 msgstr "英語の利用規約を入力してください。"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:68
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:77
 msgid "Activity"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:69
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:78
 #, fuzzy
 msgid "Item"
 msgstr "タイトル"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:70
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:79
 msgid "WorkFlow"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:71
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:80
 #, fuzzy
 msgid "Status"
 msgstr "統計"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:72
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:81
 #, fuzzy
 msgid "User"
 msgstr "ユーザー"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:73
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:82
 msgid "Usage Report Reminder Email"
 msgstr "利用報告督促メール"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:74
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:83
 msgid "Confirm Usage Mail"
 msgstr "確認"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:77
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:86
 #, fuzzy
 msgid "Email is sent successfully."
 msgstr "サイト情報が正常に保存されました。"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:78
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:87
 msgid "Failed to send mail."
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:79
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:88
 msgid "action_doing"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:80
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:89
 msgid "Secret URL Download"
 msgstr "シークレットURLダウンロード"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:81
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:90
 msgid "SecretURL Enabled"
 msgstr "機能有効化"
 
@@ -1323,7 +1411,6 @@ msgstr "座標"
 msgid "Search item setting"
 msgstr "検索項目設定"
 
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:279
 msgid "Index Tree/Facet Display Setting"
 msgstr "インデックスツリー／ファセット表示設定"
@@ -1334,6 +1421,7 @@ msgstr "インデックスツリー"
 
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:295
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:336
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:356
 #, fuzzy
 msgid "Display"
 msgstr "表示"
@@ -1350,32 +1438,36 @@ msgstr ""
 msgid "Facet"
 msgstr "ファセット"
 
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html:356
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:349
+msgid "Community"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:376
 msgid "Main Screen Initial Display Setting"
 msgstr "初期表示設定"
 
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html:366
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:386
 msgid "Default Contents to Display"
 msgstr "初期表示画面設定"
 
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html:380
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:400
 msgid "Default Index to Display"
 msgstr "初期表示インデックス表示方法"
 
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html:397
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:417
 msgid "Initial Display Index"
 msgstr "初期表示インデックス"
 
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html:400
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:420
 msgid "An index which is not open in public cannot be selected"
 msgstr "非公開インデックス以下は選択できません"
 
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html:484
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:504
 msgid "Item Type List"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html:524
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html:531
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:544
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:551
 msgid "Enter Input Value"
 msgstr ""
 
@@ -1404,77 +1496,92 @@ msgid "Selected icon"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/site_info.html:45
-msgid "Select icon file"
+#, fuzzy
+msgid "Select File"
 msgstr "アイコンファイルの選択"
 
 #: weko_admin/templates/weko_admin/admin/site_info.html:46
+msgid "Select icon file"
+msgstr "アイコンファイルの選択"
+
+#: weko_admin/templates/weko_admin/admin/site_info.html:47
+msgid "Selected file name"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_info.html:48
 msgid "Add site name"
 msgstr "サイト名の追加"
 
-#: weko_admin/templates/weko_admin/admin/site_info.html:47
+#: weko_admin/templates/weko_admin/admin/site_info.html:49
 msgid "Site name is not set"
 msgstr "サイト名未設定"
 
-#: weko_admin/templates/weko_admin/admin/site_info.html:50
+#: weko_admin/templates/weko_admin/admin/site_info.html:52
 msgid "Must set at least 1 site name."
 msgstr "サイト名は少くとも１つ設定する必要があります。"
 
-#: weko_admin/templates/weko_admin/admin/site_info.html:51
+#: weko_admin/templates/weko_admin/admin/site_info.html:53
 msgid "Please input site information for empty field."
 msgstr "サイト情報を空のフィールドに入力してください。"
 
-#: weko_admin/templates/weko_admin/admin/site_info.html:52
+#: weko_admin/templates/weko_admin/admin/site_info.html:54
 msgid "The same language is set for many site names."
 msgstr "サイト名が重複しています"
 
-#: weko_admin/templates/weko_admin/admin/site_info.html:53
+#: weko_admin/templates/weko_admin/admin/site_info.html:55
 #, fuzzy
 msgid "Site name is required."
 msgstr "サイト名未設定"
 
-#: weko_admin/templates/weko_admin/admin/site_info.html:54
+#: weko_admin/templates/weko_admin/admin/site_info.html:56
 msgid "Error when get languages."
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/site_info.html:55
+#: weko_admin/templates/weko_admin/admin/site_info.html:57
 msgid "Error when get site infomation."
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/site_info.html:56
+#: weko_admin/templates/weko_admin/admin/site_info.html:58
 msgid "Language is deleted from Registered Language of system."
 msgstr "削除された言語は利用できません"
 
-#: weko_admin/templates/weko_admin/admin/site_info.html:58
+#: weko_admin/templates/weko_admin/admin/site_info.html:60
 msgid "Site info is saved successfully."
 msgstr "サイト情報が正常に保存されました。"
 
-#: weko_admin/templates/weko_admin/admin/site_info.html:59
+#: weko_admin/templates/weko_admin/admin/site_info.html:61
 msgid "Log in Instructions"
 msgstr "ログインの注意書き"
 
-#: weko_admin/templates/weko_admin/admin/site_info.html:60
+#: weko_admin/templates/weko_admin/admin/site_info.html:62
 msgid "Add Instructions"
 msgstr "注意書きの追加"
 
-#: weko_admin/templates/weko_admin/admin/site_info.html:61
+#: weko_admin/templates/weko_admin/admin/site_info.html:63
 msgid "The same language is set for many instructions."
 msgstr " 同一言語を複数の注意書きに設定されています。"
 
-#: weko_admin/templates/weko_admin/admin/site_info.html:62
+#: weko_admin/templates/weko_admin/admin/site_info.html:64
 msgid "Maximum length of instruction is 1000 characters. "
 msgstr "注意書きの字数上限は1000字です。"
 
-#: weko_admin/template/weko_admin/admin/site_info.html:64
+#: weko_admin/templates/weko_admin/admin/site_info.html:66
 msgid "Tracking ID"
 msgstr "トラッキングID"
 
-#: weko_admin/template/weko_admin/admin/site_info.html:65
+#: weko_admin/templates/weko_admin/admin/site_info.html:67
 msgid "AddThis ID"
 msgstr "AddThis ID"
 
-#: weko_admin/template/weko_admin/admin/site_info.html:66
+#: weko_admin/templates/weko_admin/admin/site_info.html:68
 msgid "OGP Image"
 msgstr "OGPイメージ"
+
+#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:37
+msgid ""
+"Please classify a check into the organization send a use of site license "
+"statistics email."
+msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:42
 #, fuzzy
@@ -1598,70 +1705,18 @@ msgstr "頻度"
 msgid "Life Time"
 msgstr "有効期間"
 
-#: weko_admin/templates/weko_admin/settings/lifetime.html:42
-#: weko_admin/templates/weko_admin/settings/lifetime.html:49
+#: weko_admin/templates/weko_admin/settings/lifetime.html:43
+#: weko_admin/templates/weko_admin/settings/lifetime.html:50
 msgid "Set lifetime for"
 msgstr "有効期間を設定"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html
-msgid "Please select one aggregation mapping."
-msgstr "集計マッピングを１つ選択してください。"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html
-msgid "Already exists."
-msgstr "既に存在しています。"
-
-#: weko_admin/templates/weko_admin/settings/lifetime.html:42
+#: weko_admin/templates/weko_admin/settings/lifetime.html:43
 msgid "Current"
 msgstr "現行"
 
-#: weko_admin/templates/weko_admin/settings/lifetime.html:58
+#: weko_admin/templates/weko_admin/settings/lifetime.html:59
 msgid "Update"
 msgstr "更新"
-
-#: weko_admin/admin/reindex_elasticsearch.html
-msgid "reindex item_index"
-msgstr "アイテムインデックスの再作成"
-
-#: weko_admin/admin/reindex_elasticsearch.html
-msgid "reindex item"
-msgstr "アイテムの再インデックス"
-
-#: weko_admin/admin/reindex_elasticsearch.html
-msgid "execute"
-msgstr "実行"
-
-#: weko_admin/admin/reindex_elasticsearch.html
-msgid "Maintenance"
-msgstr "メンテナンス"
-
-#: weko_admin/admin/reindex_elasticsearch.html
-msgid "ElasticSearch Index"
-msgstr "インデックス再作成"
-
-#: weko_admin/admin/reindex_elasticsearch.html
-msgid "waiting..."
-msgstr "実行可能"
-
-#: weko_admin/admin/reindex_elasticsearch.html
-msgid "executing..."
-msgstr "実行中..."
-
-#: weko_admin/admin/reindex_elasticsearch.html
-msgid "haserror"
-msgstr "エラー発生中につき実行できません。"
-
-#: weko_admin/admin/reindex_elasticsearch.html
-msgid "validationMsg1"
-msgstr "実行モードが選ばれていません。"
-
-#: weko_admin/admin/reindex_elasticsearch.html
-msgid "confirmMessage"
-msgstr "本処理の実行にはかなりの時間がかかることが予想されます。インデックスの再作成処理を実行してよいですか？"
-
-#: weko_admin/admin/reindex_elasticsearch.html
-msgid "completed"
-msgstr "処理が完了しました。"
 
 #~ msgid "Title_Asc"
 #~ msgstr "タイトル（昇順）"
@@ -1791,4 +1846,7 @@ msgstr "処理が完了しました。"
 
 #~ msgid "Facet Search List"
 #~ msgstr "ファセット検索一覧"
+
+#~ msgid "Day"
+#~ msgstr "日"
 
