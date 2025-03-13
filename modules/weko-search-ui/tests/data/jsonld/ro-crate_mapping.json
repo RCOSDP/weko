@@ -7,7 +7,7 @@
   "File.日付.日付": "hasPart.dateCreated.value",
   "File.日付.日付タイプ": "hasPart.dateCreated.name",
   "File.ファイル名": "hasPart.name",
-  "File.本文URL": "hasPart.identifier",
+  "File.本文URL": "hasPart.url",
   "File.本文URL.オブジェクトタイプ": "hasPart.url.value",
   "File.本文URL.ラベル": "hasPart.@id",
   "File.フォーマット": "hasPart.encodingFormat",
