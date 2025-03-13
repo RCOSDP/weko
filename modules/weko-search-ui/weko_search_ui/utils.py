@@ -90,6 +90,7 @@ from weko_index_tree.utils import (
     check_index_permissions,
     check_restrict_doi_with_indexes,
 )
+from weko_index_tree.config import WEKO_INDEX_TREE_PUBLIC_DEFAULT_TIMEZONE
 from weko_indextree_journal.api import Journals
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.models import ItemMetadata
@@ -3612,7 +3613,7 @@ def write_files(item_datas, export_path, user_id, retrys):
         name=_run_msg_config,
         user_id=user_id
     )
-    _timezone = current_app.config["STATS_WEKO_DEFAULT_TIMEZONE"]
+    _timezone = WEKO_INDEX_TREE_PUBLIC_DEFAULT_TIMEZONE
     _file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
 
     try:
