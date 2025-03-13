@@ -210,11 +210,15 @@ def check_period_date(data):
                     if periodinfo.get("periodStart") or periodinfo.get("periodEnd"):
                         if periodinfo.get("periodStart"):
                             date_str = periodinfo.get("periodStart")
-                            if not bool(re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}', date_str)):
+                            try:
+                                datetime.strptime(date_str, "%Y-%m-%d")
+                            except ValueError:
                                 return False, "not date format"
                         if periodinfo.get("periodEnd"):
                             date_str = periodinfo.get("periodEnd")
-                            if not bool(re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}', date_str)):
+                            try:
+                                datetime.strptime(date_str, "%Y-%m-%d")
+                            except ValueError:
                                 return False, "not date format"
                         if periodinfo.get("periodStart") and periodinfo.get("periodEnd"):
                             period_start = datetime.strptime(periodinfo.get("periodStart"), "%Y-%m-%d")

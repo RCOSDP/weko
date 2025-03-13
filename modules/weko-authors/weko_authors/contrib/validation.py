@@ -179,8 +179,11 @@ def validate_affiliation_period_start(item, values=[]):
     err_msg_format = _("External Affiliation Period must be in the format: yyyy-MM-dd, blank. {}")
     for val in values:
         date = val["value"]
-        if date and not bool(re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}', date)):
-            errors.append(err_msg_format.format(val['value']))
+        if date:
+            try:
+                datetime.strptime(date, "%Y-%m-%d")
+            except ValueError:
+                errors.append(err_msg_format.format(val['value']))
     return errors
 
 def validate_affiliation_period_end(item, values=[]):
@@ -203,15 +206,21 @@ def validate_affiliation_period_end(item, values=[]):
     for val in values:
         period_end = val["value"]
         if period_end:
-            if not bool(re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}', period_end)):
+            try:
+                datetime.strptime(period_end, "%Y-%m-%d")
+            except ValueError:
                 errors.append(err_msg_format.format(val['value']))
                 continue
             reduce_keys = val['reduce_keys']
             uplevel_data = reduce(getitem, reduce_keys[:-1], item)
             period_start = uplevel_data["periodStart"] 
-            if period_start and bool(re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}', period_start)):
-                period_start = datetime.strptime(period_start, "%Y-%m-%d")
-                period_end = datetime.strptime(period_end, "%Y-%m-%d")
+            if period_start:
+                try:
+                    period_start = datetime.strptime(period_start, "%Y-%m-%d")
+                    period_end = datetime.strptime(period_end, "%Y-%m-%d")
+                except ValueError:
+                    errors.append(err_msg_format.format(val['value']))
+                    continue
                 if period_start > period_end:
                     errors.append(err_msg)
     return errors
