@@ -386,37 +386,6 @@ msgstr ""
 msgid "is too long."
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:289
-msgid "oa_policy_label"
-msgstr "OA Policy information"
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:294
-msgid "oa_policy_export"
-msgstr "OA Policy"
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:298
-msgid "Please enter ISSN, eISSN, or journal title"
-msgstr ""
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:299
-msgid "No Policy Information found"
-msgstr ""
-
-#~ msgid "Invalid parameters"
-#~ msgstr ""
-
-#~ msgid "Authentication error occurred"
-#~ msgstr ""
-
-#~ msgid "No matching policy"
-#~ msgstr ""
-
-#~ msgid "Request limit exceeded"
-#~ msgstr ""
-
-#~ msgid "Internal server error"
-#~ msgstr ""
-
 #: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:88
 msgid "Flow"
 msgstr ""
@@ -637,3 +606,42 @@ msgstr ""
 #~ "you do not have permission to view"
 #~ " it."
 
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:290
+msgid "oa_policy_label"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:298
+msgid "oa_policy_export"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:311
+msgid "Please enter ISSN, eISSN, or journal title"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:312
+msgid "No Policy Information found"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:313
+msgid "Invalid parameters"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:314
+msgid "Authentication error occurred"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:315
+msgid "No matching policy"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:316
+msgid "Request limit exceeded"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:317
+msgid "Internal server error"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:318
+msgid "An unknown error occurred"
+msgstr ""

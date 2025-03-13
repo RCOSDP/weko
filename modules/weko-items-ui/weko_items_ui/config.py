@@ -21,6 +21,9 @@
 """Configuration for weko-items-ui."""
 from invenio_stats.queries import ESWekoRankingQuery
 
+WEKO_ITEMS_UI_OA_POLICY_API_URL = "/api/oa_policies"
+"""OA Policy Retrieve API"""
+
 WEKO_WORKFLOW_BASE_TEMPLATE = 'weko_workflow/base.html'
 """Default base template for the demo page."""
 

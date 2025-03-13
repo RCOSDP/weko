@@ -386,37 +386,6 @@ msgstr "画像ファイル（gif, jpg, jpe, jpeg, png, bmp）以外のファイ�
 msgid "is too long."
 msgstr "の数が上限数を超えています。"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:294
-msgid "oa_policy_label"
-msgstr "OA ポリシー情報"
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:294
-msgid "oa_policy_export"
-msgstr "OA ポリシー取得"
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:298
-msgid "Please enter ISSN, eISSN, or journal title"
-msgstr "ISSN、eISSN、または雑誌名を入力してください。"
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:299
-msgid "No Policy Information found"
-msgstr "一致するポリシー情報が見つかりませんでした。"
-
-#~ msgid "Invalid parameters"
-#~ msgstr "パラメータが不正です。"
-
-#~ msgid "Authentication error occurred"
-#~ msgstr "認証エラーが発生しました。"
-
-#~ msgid "No matching policy"
-#~ msgstr "一致するポリシー情報が見つかりませんでした。"
-
-#~ msgid "Request limit exceeded"
-#~ msgstr "リクエスト制限を超えました。"
-
-#~ msgid "Internal server error"
-#~ msgstr "サーバー内部エラーが発生しました。"
-
 #: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:88
 msgid "Flow"
 msgstr "フロー"
@@ -641,3 +610,42 @@ msgstr "インポート"
 #~ " it."
 #~ msgstr "該当アイテムの参照権限がないため流用できません。"
 
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:290
+msgid "oa_policy_label"
+msgstr "OA ポリシー情報"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:298
+msgid "oa_policy_export"
+msgstr "OA ポリシー取得"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:311
+msgid "Please enter ISSN, eISSN, or journal title"
+msgstr "ISSN、eISSN、または雑誌名を入力してください。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:312
+msgid "No Policy Information found"
+msgstr "一致するポリシー情報が見つかりませんでした。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:313
+msgid "Invalid parameters"
+msgstr "パラメータが不正です。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:314
+msgid "Authentication error occurred"
+msgstr "認証エラーが発生しました。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:315
+msgid "No matching policy"
+msgstr "一致するポリシー情報が見つかりませんでした。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:316
+msgid "Request limit exceeded"
+msgstr "リクエスト制限を超えました。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:317
+msgid "Internal server error"
+msgstr "サーバー内部エラーが発生しました。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:318
+msgid "An unknown error occurred"
+msgstr "不明なエラーが発生しました"

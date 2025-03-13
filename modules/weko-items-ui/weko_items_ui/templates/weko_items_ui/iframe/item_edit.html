@@ -1,127 +1,130 @@
 {#
-# This file is part of WEKO3.
-# Copyright (C) 2017 National Institute of Informatics.
-#
-# WEKO3 is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# WEKO3 is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with WEKO3; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#}
+  # This file is part of WEKO3.
+  # Copyright (C) 2017 National Institute of Informatics.
+  #
+  # WEKO3 is free software; you can redistribute it
+  # and/or modify it under the terms of the GNU General Public License as
+  # published by the Free Software Foundation; either version 2 of the
+  # License, or (at your option) any later version.
+  #
+  # WEKO3 is distributed in the hope that it will be
+  # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  # General Public License for more details.
+  #
+  # You should have received a copy of the GNU General Public License
+  # along with WEKO3; if not, write to the
+  # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+  # MA 02111-1307, USA.
+  #}
 
-{%- extends config.WEKO_ITEMS_UI_BASE_TEMPLATE %}
+  {%- extends config.WEKO_ITEMS_UI_BASE_TEMPLATE %}
 
-{%- block css %}
-{% assets "invenio_deposit_css" %}
-<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-{% assets "weko_items_authors_search_css" %}
-<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-{{ super() }}
-<link href="{{ url_for('static', filename='css/weko_items_ui/contributor.search.css') }}" rel="stylesheet">
-<link href="/static/css/weko_workflow/style.css" rel="stylesheet">
-{% assets "weko_items_ui_feedback_maillist_css" %}
-<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-{% assets "weko_records_ui_css" %}
-<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-{%- endblock css %}
+  {%- block css %}
+    {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+    {% assets "weko_items_authors_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+    {{ super() }}
+    <link href="{{ url_for('static', filename='css/weko_items_ui/contributor.search.css') }}" rel="stylesheet">
+    <link href="/static/css/weko_workflow/style.css" rel="stylesheet">
+    {% assets "weko_items_ui_feedback_maillist_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+    {% assets "weko_records_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {%- endblock css %}
 
-{%- block javascript %}
+  {%- block javascript %}
 
-<!--<script src="https://unpkg.com/react@16/umd/react.production.min.js" crossorigin></script>-->
-<!--script src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>-->
-<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>-->
-<script src="{{ url_for('static', filename='js/react/react.production.min.js') }}" crossorigin></script>
-<script src="{{ url_for('static', filename='js/react/react-dom.production.min.js') }}" crossorigin></script>
-<script src="{{ url_for('static', filename='js/babel-cores/browser.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/axios/axios.min.js') }}"></script>
+  <!--<script src="https://unpkg.com/react@16/umd/react.production.min.js" crossorigin></script>-->
+  <!--script src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>-->
+  <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>-->
+  <script src="{{ url_for('static', filename='js/react/react.production.min.js') }}" crossorigin></script>
+  <script src="{{ url_for('static', filename='js/react/react-dom.production.min.js') }}" crossorigin></script>
+  <script src="{{ url_for('static', filename='js/babel-cores/browser.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/axios/axios.min.js') }}"></script>
 
-<!--<script src="https://unpkg.com/axios/dist/axios.min.js"></script>-->
+    <!--<script src="https://unpkg.com/axios/dist/axios.min.js"></script>-->
 
-<script src="{{ url_for('static', filename='js/weko_items_ui/item.autofill.js') }}" type="text/babel"></script>
-<script src="{{ url_for('static', filename='js/weko_items_ui/oapolicy.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/weko_items_ui/item.autofill.js') }}" type="text/babel"></script>
+    <script src="{{ url_for('static', filename='js/weko_items_ui/oapolicy.js') }}"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+    {% assets "weko_items_ui_feedback_maillist_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+    {{ super() }}
+    {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {%- if need_thumbnail %}
+      {% assets "weko_items_ui_upload_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {% endif %}
+    {% assets "weko_items_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {% assets "weko_items_authors_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {%- endblock javascript %}
 
-{% assets "invenio_deposit_dependencies_js" %}
-<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{% assets "weko_admin_react_bootstrap_js" %}
-<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
-{% assets "weko_items_ui_feedback_maillist_js" %}
-<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
-{{ super() }}
-{% assets "invenio_deposit_js" %}
-<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{%- if need_thumbnail %}
-{% assets "weko_items_ui_upload_js" %}
-<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{% endif %}
-{% assets "weko_items_ui_js" %}
-<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{% assets "weko_items_authors_search_js" %}
-<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{%- endblock javascript %}
+  {%- block page_header %}
+  {%- endblock page_header %}
 
-{%- block page_header %}
-{%- endblock page_header %}
+  {%- block page_footer %}
+  {%- endblock page_footer %}
 
-{%- block page_footer %}
-{%- endblock page_footer %}
+  {%- block page_body %}
+  {% from "weko_theme/macros/modal_page.html" import all_modal %}
+  {{ all_modal() }}
+  <div id="alerts"></div>
+  <div class="container-fluid container-fluid2">
+    <div class="row row-4">
+      <div class="col-md-12">
+        {% if endpoints %}
+        <div class="hide" id="hide_endpoints">{{ endpoints|tojson }}</div>
+        {% else %}
+        <div class="hide" id="hide_endpoints"></div>
+        {% endif %}
 
-{%- block page_body %}
-{% from "weko_theme/macros/modal_page.html" import all_modal %}
-{{ all_modal() }}
-<div id="alerts"></div>
-<div class="container-fluid container-fluid2">
-  <div class="row row-4">
-    <div class="col-md-12">
-      {% if endpoints %}
-      <div class="hide" id="hide_endpoints">{{ endpoints|tojson }}</div>
-      {% else %}
-      <div class="hide" id="hide_endpoints"></div>
-      {% endif %}
-
-      <div id="weko-records">
-        <div id="loader_spinner" class="loader" ng-show="recordsVM.invenioRecordsLoading">
-          <div class="spinner-wheel"></div>
-        </div>
-        {%- if need_file or need_billing_file or need_thumbnail %}
-        <invenio-files-uploader method="PUT" endpoint="{{ config.DEPOSIT_FILES_API }}" {% if pid %}
-          initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}" {% else %}
-          initialization="{{ config.DEPOSIT_SEARCH_API }}" {% endif %} files='{{files|tojson}}'
-          extra-params='{"headers":{"Content-Type": "application/json"}}'>
+        <div id="weko-records">
+          <div id="loader_spinner" class="loader" ng-show="recordsVM.invenioRecordsLoading">
+            <div class="spinner-wheel"></div>
+          </div>
+          {%- if need_file or need_billing_file or need_thumbnail %}
+            <invenio-files-uploader
+              method="PUT"
+              endpoint="{{ config.DEPOSIT_FILES_API }}"
+              {% if pid %}
+                initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}"
+              {% else %}
+                initialization="{{ config.DEPOSIT_SEARCH_API }}"
+              {% endif %}
+              files='{{files|tojson}}'
+              extra-params='{"headers":{"Content-Type": "application/json"}}'
+            >
           {%- endif %}
-          <invenio-records {%- if pid %}
-            initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}"
-            files='{{files|tojson}}' {% else %} initialization="{{ config.DEPOSIT_SEARCH_API }}"
-            files='{{files|tojson}}' {% endif %} extra-params='{"headers":{"Content-Type": "application/json"}}'
-            form="{{ schemaform }}" record='{{ records | tojson }}' schema="{{ jsonschema }}">
-            <!-- No longer needed - Using a manual loader -->
-            <!-- <invenio-records-loading
+            <invenio-records
+              {%- if pid %}
+                initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}"
+                files='{{files|tojson}}'
+              {% else %}
+                initialization="{{ config.DEPOSIT_SEARCH_API }}"
+                files='{{files|tojson}}'
+              {% endif %}
+              extra-params='{"headers":{"Content-Type": "application/json"}}'
+              form="{{ schemaform }}"
+              record='{{ records | tojson }}'
+              schema="{{ jsonschema }}">
+              <!-- No longer needed - Using a manual loader -->
+              <!-- <invenio-records-loading
                 template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/loading.html') }}">
               </invenio-records-loading> -->
-            <invenio-records-alert
-              template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/alert.html') }}">
-            </invenio-records-alert>
-            <div class="row row-4" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-              <div class="col-sm-12">
-                <ul class="list-inline text-right">
-                  <!-- <li>
+              <invenio-records-alert
+                template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/alert.html') }}">
+              </invenio-records-alert>
+              <div class="row row-4" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                <div class="col-sm-12">
+                  <ul class="list-inline text-right">
+                      <!-- <li>
                            <button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-info" ng-click="updateDataJson()" style="width: 80px; height: 40px;font-size: 15px;">
                                   {{_('Next')}}
                                <span class="glyphicon glyphicon-chevron-right"></span>
                           </button>
                       </li> -->
-                  <input type="hidden" id="next-frame" value="iframe_tree">
-                  <input type="hidden" id="next-frame-upgrade" value="iframe_tree_upgrade">
-                  {%- if pid %}
-                  <!-- <li>
+                      <input type="hidden" id="next-frame" value="iframe_tree">
+                      <input type="hidden" id="next-frame-upgrade" value="iframe_tree_upgrade">
+                    {%- if pid %}
+                    <!-- <li>
                           <button ng-disabled="recordsVM.invenioRecordsLoading"
                           ng-hide="!recordsVM.invenioRecordsEndpoints.initialization"
                           class="btn btn-danger delete-button" ng-click="recordsVM.actionHandler(['self', 'DELETE'],'ret')">
@@ -129,442 +132,433 @@
                                   {{_('Delete')}}
                           </button>
                     </li> -->
-                  {%- endif %}
-                </ul>
-              </div>
-            </div>
-            {%- if need_thumbnail %}
-            <div ng-controller='UploadController' ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-              <div class="row row-4">
-                <div class="col-sm-12">
-                  <div class="panel panel-default">
-                    <div class="panel-heading">
-                      <h3 class="panel-title">{{_('Thumbnail')}}</h3>
-                    </div>
-                    <div class="panel-body panel-body2">
-                      <div class="row row-4">
-                        <div class="col-sm-12" id="app">
-                          <div class="well" ngf-drag-over-class="'dragover'" ngf-drop=""
-                            ngf-change="dragoverThumbnail($files)" ngf-max-size="20GB" ngf-multiple="true">
-                            <center>
-                              Drop files or folders here
-                            </center>
-                          </div>
-                          <p class="text-center legend"><strong>— {{_('OR')}} —</strong></p>
-                          <p class="text-center">
-                            <button class="btn btn-primary" ng-click="uploadThumbnail()">{{_('Click to
-                              select')}}</button>
-                          </p>
-                          <p class="text-center">{{_('Registerable file: 「gif, jpg, jpe, jpeg, png, bmp」')}}</p>
-                          <form name="uploadThumbnailForm" class="collapse" sf-schema="schema" sf-form="form"
-                            sf-model="model" data-files-thumbnail='{{ files_thumbnail | tojson }}'>
-                          </form>
-                          <hr />
-                          <input type="hidden" id="deposit-files-api" value="{{ config.DEPOSIT_FILES_API }}">
-                          <input type="hidden" id="allow-thumbnail-flg" value="{{ allow_multi_thumbnail }}">
-                          {%- include 'weko_items_ui/iframe/upload_thumbnail_list.html' %}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                    {%- endif %}
+                  </ul>
                 </div>
               </div>
-            </div>
-            {%- endif %}
-            <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-              {%- if is_show_autofill_metadata %}
-              <div class="row row-4">
-                <div class="col-sm-12">
-                  <p class="text-center">
-                    <button class="btn btn-success" ng-click="getItemMetadata()">
-                      <span class="glyphicon glyphicon-plus"></span>&nbsp
-                      {{_('Automatic Metadata Input')}}
-                    </button>
-                  </p>
-                </div>
-              </div>
-              {%- endif %}
-              <!--add by ryuu. start 20180410-->
-              <div ng-show="false" type="text" id="btn_id"></div>
-              <div ng-show="false" type="text" id="author_info"></div>
-              <div ng-show="false" type="text" id="array_flg"></div>
-              <div ng-show="false" type="text" id="array_index"></div>
-              <div ng-show="false" type="text" id="weko_id"></div>
-              <button ng-show="false" id="btn_setAuthorInfo" class="btn btn-default" type="button"
-                ng-click="setAuthorInfo()"></button>
-              <!--add by ryuu. end 20180410-->
-              {%- if enable_contributor %}
-              <div class="row row-4">
-                <div class="col-sm-12" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-                  <div class="panel panel-default">
-                    <div class="panel-heading">
-                      <h3 class="panel-title">Contributor</h3>
-                    </div>
-                    <div class="panel-body panel-body2">    
-                      <div class="row row-4" id="radio_form_share">
-                        <div class="radio">
-                          <label>
-                            <input type="radio" role="presentation" name="checkedSharePermiss" id="input"
-                              class="input_contributor" value="this_user" checked="checked"
-                              onchange="handleSharePermission(this.value)">This user</label>
-                          <br><label><input type="radio" role="presentation"
-                              onchange="handleSharePermission(this.value)" name="checkedSharePermiss" id="input"
-                              value="other_user" class="other_user_rad">Other user</label>
-                        </div>
+              {%- if need_thumbnail %}
+                <div ng-controller='UploadController' ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                <div class="row row-4">
+                  <div class="col-sm-12">
+                    <div class="panel panel-default">
+                      <div class="panel-heading">
+                        <h3 class="panel-title">{{_('Thumbnail')}}</h3>
                       </div>
-                      <div class="form_share_permission">     
-                        <div class="row row-4" id="pd_username">
-                          <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_username">
-                            <label for="share_username">Username </label>
-                          </div>
-                          <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
-                            <div class="autocomplete">
-                              <input id="share_username" autocomplete="off" type="text" name="share_username"
-                                placeholder="Username" class="form-control" onclick="get_search_data('username')">
-                              <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"
-                                id="id_spinners_username"></span>
-                            </div>
-                          </div>
-                        </div>
+                      <div class="panel-body panel-body2">
                         <div class="row row-4">
-                          <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_email">
-                            <label for="share_email">Email </label>
-                          </div>
-                          <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
-                            <div class="autocomplete">
-                              <input id="share_email" autocomplete="off" type="text" name="share_email"
-                                placeholder="Email" class="form-control" onclick="get_search_data('email')">
-                              <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"
-                                id="id_spinners_email"></span>
+                          <div class="col-sm-12" id="app">
+                            <div class="well" ngf-drag-over-class="'dragover'" ngf-drop="" ngf-change="dragoverThumbnail($files)"
+                              ngf-max-size="20GB" ngf-multiple="true">
+                              <center>
+                                Drop files or folders here
+                              </center>
                             </div>
+                            <p class="text-center legend"><strong>— {{_('OR')}} —</strong></p>
+                            <p class="text-center">
+                              <button class="btn btn-primary" ng-click="uploadThumbnail()">{{_('Click to select')}}</button>
+                            </p>
+                            <p class="text-center">{{_('Registerable file: 「gif, jpg, jpe, jpeg, png, bmp」')}}</p>
+                            <form name="uploadThumbnailForm" class="collapse"
+                              sf-schema="schema"
+                              sf-form="form"
+                              sf-model="model"
+                              data-files-thumbnail='{{ files_thumbnail | tojson }}'>
+                            </form>
+                            <hr />
+                            <input type="hidden" id="deposit-files-api" value="{{ config.DEPOSIT_FILES_API }}">
+                            <input type="hidden" id="allow-thumbnail-flg" value="{{ allow_multi_thumbnail }}">
+                            {%- include 'weko_items_ui/iframe/upload_thumbnail_list.html' %}
                           </div>
-                        </div>      
-                      </div>             
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {%- endif %}
-              <button ng-show="false" id="btn_setItemMetadata" class="btn btn-default" type="button"
-                ng-click="setItemMetadata()"></button>
-              <div ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-                {%- if need_file %}
-                <div id="file_upload" class="row row-4" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-                  <div class="col-sm-12">
-                    <invenio-files-error
-                      template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
-                    </invenio-files-error>
-                    <invenio-files-upload-zone
-                      template="{{ url_for('static', filename='templates/weko_items_ui/upload.html') }}">
-                    </invenio-files-upload-zone>
-                    <invenio-files-list
-                      template="{{ url_for('static', filename='templates/weko_items_ui/upload_file_list.html') }}"></invenio-files-list>
-                  </div>
-                </div>
-                {%- endif %}
-                {%- if need_billing_file %}
-                <div id="billing_file_upload" class="row row-4" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-                  <div class="col-sm-12">
-                    <invenio-files-error
-                      template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
-                    </invenio-files-error>
-                    <invenio-files-upload-zone
-                      template="{{ url_for('static', filename='templates/weko_items_ui/upload.html') }}">
-                    </invenio-files-upload-zone>
-                    <invenio-files-list
-                      template="{{ url_for('static', filename='templates/weko_items_ui/upload_file_list.html') }}"></invenio-files-list>
-                  </div>
-                </div>
-                {%- endif %}
-                <invenio-records-form form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
-                  form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
-                  template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
-                </invenio-records-form>
-                <div class="panel-body panel-body2">
-                  <div class="Input">
-                    <br>
-                    <!-- OA Policy リンク取得 -->
-                <div class="form-group row">
-                  <!-- ラベル -->
-                  <label for="policy" class="col-sm-3 col-form-label text-right">
-                    {{ _('oa_policy_label') }}
-                  </label>
-
-                  <!-- ボタン + URL + エラーメッセージ -->
-                  <div class="col-sm-9">
-                    <div class="input-group">
-                      <!-- Policy 取得ボタン -->
-                      <button type="button" class="btn btn-primary" id="oapolicyurl">
-                        {{ _('oa_policy_export') }}
-                      </button>
-
-                      <!-- URL 表示 -->
-                      <a id="oaPolicyUrl" href="#" target="_blank" class="ml-2 d-none">
-                        <span id="oaPolicyText"></span>
-                      </a>
-
-                      <!-- エラーメッセージ -->
-                      <span id="oaPolicyError" class="text-danger ml-2" aria-live="polite"></span>
-                    </div>
-
-                    <!-- エラーメッセージ（翻訳適用） -->
-                    <input type="hidden" id="error_missing_input" value="{{ _('Please enter ISSN, eISSN, or journal title') }}">
-                    <input type="hidden" id="error_no_policy_found" value="{{ _('No Policy Information found') }}">
-                    <input type="hidden" id="error_api_400" value="{{ _('Invalid parameters') }}">
-                    <input type="hidden" id="error_api_401" value="{{ _('Authentication error occurred') }}">
-                    <input type="hidden" id="error_api_404" value="{{ _('No matching policy') }}">
-                    <input type="hidden" id="error_api_429" value="{{ _('Request limit exceeded') }}">
-                    <input type="hidden" id="error_api_500" value="{{ _('Internal server error') }}">
-                  </div>
-                </div>
-
-                {%- block feedback_mail_list %}
-                <div id="react"></div>
-                <input id="component-search-email-name" type="hidden" value="{{_('Feedback Mail Destination')}}" />
-                <input id="open-modal-search-button-name" type="hidden" value="{{_('From author DB')}}" />
-                <input id="delete-button-name" type="hidden" value="{{_('Delete')}}" />
-                <input id="input-text-placeholder" type="hidden" value="{{_('Input text')}}" />
-                <input id="duplicate-error-message" type="hidden" value="{{_('Duplicate Email Addresses.')}}" />
-                <input id="invalid-email-format" type="hidden" value="{{_('Invalid email format.')}}" />
-                <input id="close-button-name" type="hidden" value="{{_('Close')}}" />
-                <input id="search-button-name" type="hidden" value="{{_('Search')}}" />
-                <input id="name-label" type="hidden" value="{{_('Name')}}" />
-                <input id="mail-address-label" type="hidden" value="{{_('Mail address')}}" />
-                <input id="import-button-name" type="hidden" value="{{_('Feedback Mail Import')}}" />
-                {%- endblock feedback_mail_list %}
-
-                {% if record|length %} <!-- Check Item Registration is edit mode then show version_management -->
-                {%- block radio_version_management %}
-                <div id="react-component-version">
-                  <div class="row row-4">
-                    <div class="form-group">
-                      <label id="component-version-label" class="control-label col-sm-3 text-right field-required">
-                        {{_('Version Management')}}
-                      </label>
-                      <div class="col-sm-9">
-                        <div class="col-sm-3">
-                          <input type="radio" name="radioVersionSelect" value="update" />
-                          {{_('Upgrade Version')}}
-                        </div>
-                        <div class="col-sm-3">
-                          <input type="radio" name="radioVersionSelect" value="keep" checked />
-                          {{_('Keep Version')}}
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-                {%- endblock radio_version_management %}
-                {% endif %}
-              </div>
-              <div class="row row-4">
-                <div class="col-sm-12">
-                  <div class="col-sm-offset-3 col-sm-6">
-                    <div class="list-inline text-center" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-                      {%- if pid %}
-                      <button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="true" class="btn btn-danger"
-                        ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">
-                        <span class="glyphicon glyphicon-trash"></span>&nbsp
-                        {{_('Delete')}}
-                      </button>
-                      {%- endif %}
-                      <button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-primary save-button"
-                        ng-click="saveActivityData('{{item_save_uri}}',{{action_id}},'{{enable_contributor}}','{{enable_feedback_maillist}}', true, false);">
-                        <span class="glyphicon glyphicon-saved"></span>&nbsp
-                        {{_('Save')}}
-                      </button>
-                      <button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-info next-button"
-                        ng-click="updateDataJson('{{activity_id}}',{{steps}},'{{item_save_uri}}',{{action_id}},'{{is_auto_set_index_action}}','{{enable_contributor}}','{{enable_feedback_maillist}}')">
-                        {{_('Next')}}&nbsp
-                        <span class="glyphicon glyphicon-chevron-right"></span>
-                      </button>
-                    </div>
+                </div>
+              {%- endif %}
+              <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                {%- if is_show_autofill_metadata %}
+                <div class="row row-4">
+                  <div class="col-sm-12">
+                  <p class="text-center">
+                    <button class="btn btn-success"
+                        ng-click="getItemMetadata()">
+                        <span class="glyphicon glyphicon-plus"></span>&nbsp
+                      {{_('Automatic Metadata Input')}}
+                  </button>
+                  </p>
                   </div>
-                  <div class="col-sm-3" style="padding-right: 10px;">
-                    <div class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-                      <button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-danger" id="btn_quit">
-                        <i class="fa fa-sign-out"></i>
-                        {{_('QuitQO')}}</button>&nbsp
+                </div>
+                {%- endif %}
+                <!--add by ryuu. start 20180410-->
+                <div ng-show="false" type="text" id="btn_id" ></div>
+                <div ng-show="false" type="text" id="author_info" ></div>
+                <div ng-show="false" type="text" id="array_flg" ></div>
+                <div ng-show="false" type="text" id="array_index" ></div>
+                <div ng-show="false" type="text" id="weko_id" ></div>
+                <button ng-show="false" id="btn_setAuthorInfo" class="btn btn-default" type="button" ng-click="setAuthorInfo()"></button>
+                <!--add by ryuu. end 20180410-->
+                {%- if enable_contributor %}
+                <div class="row row-4">
+                  <div class="col-sm-12" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                    <div class="panel panel-default" >
+                      <div class="panel-heading">
+                        <h3 class="panel-title">Contributor</h3>
+                      </div>
+                      <div class="panel-body panel-body2">    
+                          <div class="row row-4" id="radio_form_share">
+                            <div class="radio">
+                              <label>
+                                <input type="radio" role="presentation" name="checkedSharePermiss" id="input" class="input_contributor" value="this_user" checked="checked" onchange="handleSharePermission(this.value)">This user</label>
+                                <br><label><input type="radio" role="presentation" onchange="handleSharePermission(this.value)" name="checkedSharePermiss" id="input" value="other_user" class="other_user_rad">Other user</label>
+                            </div>
+                          </div>
+                          <div class="form_share_permission">     
+                            <div class="row row-4" id="pd_username">
+                              <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_username">
+                                <label for="share_username">Username </label>
+                              </div>
+                              <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
+                                <div class="autocomplete">
+                                    <input id="share_username" autocomplete="off" type="text" name="share_username" placeholder="Username" class="form-control"  onclick="get_search_data('username')">
+                                    <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" id="id_spinners_username"></span>
+                                  </div>
+                              </div>
+                            </div>
+                            <div class="row row-4">
+                              <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_email">
+                                <label for="share_email">Email </label>
+                              </div>
+                              <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
+                                <div class="autocomplete">
+                                    <input id="share_email" autocomplete="off" type="text" name="share_email" placeholder="Email" class="form-control" onclick="get_search_data('email')">
+                                    <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" id="id_spinners_email"></span>
+                                </div>
+                              </div>
+                            </div>      
+                          </div>             
+                        </div>
                     </div>
                   </div>
                 </div>
+                {%- endif %}
+                <button ng-show="false" id="btn_setItemMetadata" class="btn btn-default" type="button" ng-click="setItemMetadata()"></button>
+                <div ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                  {%- if need_file %}
+                  <div id="file_upload" class="row row-4" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                    <div class="col-sm-12">
+                      <invenio-files-error
+                        template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
+                      </invenio-files-error>
+                      <invenio-files-upload-zone
+                        template="{{ url_for('static', filename='templates/weko_items_ui/upload.html') }}">
+                      </invenio-files-upload-zone>
+                      <invenio-files-list
+                        template="{{ url_for('static', filename='templates/weko_items_ui/upload_file_list.html') }}"
+                      ></invenio-files-list>
+                    </div>
+                  </div>
+                  {%- endif %}
+                  {%- if need_billing_file %}
+                  <div id="billing_file_upload" class="row row-4" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                    <div class="col-sm-12">
+                      <invenio-files-error
+                        template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
+                      </invenio-files-error>
+                      <invenio-files-upload-zone
+                        template="{{ url_for('static', filename='templates/weko_items_ui/upload.html') }}">
+                      </invenio-files-upload-zone>
+                      <invenio-files-list
+                        template="{{ url_for('static', filename='templates/weko_items_ui/upload_file_list.html') }}"
+                      ></invenio-files-list>
+                    </div>
+                  </div>
+                  {%- endif %}
+                  <invenio-records-form
+                    form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
+                    form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
+                    template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
+                  </invenio-records-form>
+                  <!-- OA Policy リンク取得 -->
+                  <div class="form-group row">
+                    <!-- ラベル -->
+                    <label for="policy" class="col-sm-3 col-form-label text-right">
+                      {{ _('oa_policy_label') }}
+                    </label>
+
+                    <!-- ボタン + URL + エラーメッセージ -->
+                    <div class="col-sm-9">
+                      <div class="input-group" data-api-url="{{ api_url }}">
+                        <!-- Policy 取得ボタン -->
+                        <button type="button" class="btn btn-primary" id="oapolicyurl">
+                          {{ _('oa_policy_export') }}
+                        </button>
+
+                        <!-- URL 表示 -->
+                        <a id="oaPolicyUrl" href="#" target="_blank" class="ml-2 d-none">
+                          <span id="oaPolicyText"></span>
+                        </a>
+
+                        <!-- エラーメッセージ -->
+                        <span id="oaPolicyError" class="text-danger ml-2" aria-live="polite"></span>
+                      </div>
+
+                      <!-- エラーメッセージ（翻訳適用） -->
+                      <input type="hidden" id="error_missing_input" value="{{ _('Please enter ISSN, eISSN, or journal title') }}">
+                      <input type="hidden" id="error_no_policy_found" value="{{ _('No Policy Information found') }}">
+                      <input type="hidden" id="error_api_400" value="{{ _('Invalid parameters') }}">
+                      <input type="hidden" id="error_api_401" value="{{ _('Authentication error occurred') }}">
+                      <input type="hidden" id="error_api_404" value="{{ _('No matching policy') }}">
+                      <input type="hidden" id="error_api_429" value="{{ _('Request limit exceeded') }}">
+                      <input type="hidden" id="error_api_500" value="{{ _('Internal server error') }}">
+                      <input type="hidden" id="error_api_generic" value="{{ _('An unknown error occurred') }}">
+                    </div>
+                  </div>
+                  {%- block feedback_mail_list %}
+                    <div id="react"></div>
+                    <input id="component-search-email-name" type="hidden" value="{{_('Feedback Mail Destination')}}" />
+                    <input id="open-modal-search-button-name" type="hidden" value="{{_('From author DB')}}" />
+                    <input id="delete-button-name" type="hidden" value="{{_('Delete')}}" />
+                    <input id="input-text-placeholder" type="hidden" value="{{_('Input text')}}" />
+                    <input id="duplicate-error-message" type="hidden" value="{{_('Duplicate Email Addresses.')}}" />
+                    <input id="invalid-email-format" type="hidden" value="{{_('Invalid email format.')}}" />
+                    <input id="close-button-name" type="hidden" value="{{_('Close')}}" />
+                    <input id="search-button-name" type="hidden" value="{{_('Search')}}" />
+                    <input id="name-label" type="hidden" value="{{_('Name')}}" />
+                    <input id="mail-address-label" type="hidden" value="{{_('Mail address')}}" />
+                    <input id="import-button-name" type="hidden" value="{{_('Feedback Mail Import')}}" />
+                  {%- endblock feedback_mail_list %}
+
+                  {% if record|length %} <!-- Check Item Registration is edit mode then show version_management -->
+                    {%- block radio_version_management %}
+                    <div id="react-component-version">
+                      <div class="row row-4">
+                        <div class="form-group">
+                          <label id="component-version-label" class="control-label col-sm-3 text-right field-required">
+                            {{_('Version Management')}}
+                          </label>
+                          <div class="col-sm-9">
+                            <div class="col-sm-3">
+                              <input type="radio" name="radioVersionSelect" value="update" />
+                              {{_('Upgrade Version')}}
+                            </div>
+                            <div class="col-sm-3">
+                              <input type="radio" name="radioVersionSelect" value="keep" checked/>
+                              {{_('Keep Version')}}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {%- endblock radio_version_management %}
+                  {% endif %}
+                </div>
+                <div class="row row-4">
+                  <div class="col-sm-12">
+                    <div class="col-sm-offset-3 col-sm-6">
+                      <div class="list-inline text-center" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                        {%- if pid %}
+                        <button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="true" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">
+                              <span class="glyphicon glyphicon-trash"></span>&nbsp
+                              {{_('Delete')}}
+                            </button>
+                        {%- endif %}
+                        <button ng-disabled="recordsVM.invenioRecordsLoading"
+                                class="btn btn-primary save-button"
+                                ng-click="saveActivityData('{{item_save_uri}}',{{action_id}},'{{enable_contributor}}','{{enable_feedback_maillist}}', true, false);">
+                              <span class="glyphicon glyphicon-saved"></span>&nbsp
+                              {{_('Save')}}
+                        </button>
+                        <button ng-disabled="recordsVM.invenioRecordsLoading"
+                                class="btn btn-info next-button"
+                                ng-click="updateDataJson('{{activity_id}}',{{steps}},'{{item_save_uri}}',{{action_id}},'{{is_auto_set_index_action}}','{{enable_contributor}}','{{enable_feedback_maillist}}')"> {{_('Next')}}&nbsp
+                        <span class="glyphicon glyphicon-chevron-right"></span>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="col-sm-3" style="padding-right: 10px;">
+                      <div class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                          <button ng-disabled="recordsVM.invenioRecordsLoading"
+                                  class="btn btn-danger" id="btn_quit">
+                            <i class="fa fa-sign-out"></i>
+                            {{_('QuitQO')}}</button>&nbsp
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {% include "weko_workflow/modal_quit_confirmation.html" %}
               </div>
-              {% include "weko_workflow/modal_quit_confirmation.html" %}
-            </div>
-          </invenio-records>
-          {%- if need_file %}
-        </invenio-files-uploader>
-        {%- endif %}
+              </invenio-records>
+            {%- if need_file %}
+            </invenio-files-uploader>
+            {%- endif %}
+        </div>
       </div>
     </div>
   </div>
-</div>
-<div class="modal fade" tabindex="-1" role="dialog" id="myModal">
-  <div class="modal-dialog modal-xlg" role="document">
-    <div class="modal-content">
-      <div class="modal-body">
-        {%-if cur_step == 'item_login' %}
-        {%- with preview_carousel_id='main_preview_carousel' %}
-        {% include 'weko_workflow/record_after_update.html' %}
-        {%- endwith %}
-        {%-else %}
-        {% include 'weko_workflow/record_detail.html' %}
-        {%- endif %}
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-info close-button" data-dismiss="modal">
-          <span class="glyphicon glyphicon-remove"></span>
-          {{_('Close')}}
-        </button>
-      </div>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-{# Author search modal START #}
-<div class="modal fade" tabindex="-1" role="dialog" id="app-author-search">
-  <div class="modal-dialog modal-xlg" role="document">
-    <div class="modal-content">
-      <div class="modal-body">
-        <app-author-search></app-author-search>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-info close-button" id="btnModalClose">
-          <span class="glyphicon glyphicon-remove"></span>
-          {{ _('Close') }}
-        </button>
-      </div>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-{# Author search modal END #}
-<div class="modal fade" tabindex="-1" role="dialog" id="meta-search">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-body">
-        <div id="meta-search-body"></div>
-        <input type="hidden" id="item_title" name="item_title" value='{{itemTitle}}'>
-        {% set title = "" %}
-        {% if auto_fill_title %}
-        {% set title = auto_fill_title|tojson %}
-        {% endif %}
-        {% if out_put_report_title %}
-        {% set out_put_report = out_put_report_title|tojson %}
-        {% endif %}
-        {% set data_type = "" %}
-        {% if auto_fill_data_type %}
-        {% set data_type = auto_fill_data_type %}
-        {% endif %}
-        {% set endpoint_key = "" %}
-        {% if action_endpoint_key %}
-        {% set endpoint_key = action_endpoint_key|tojson %}
-        {% endif %}
-        {% set approval_email = "" %}
-        {% if approval_email_key %}
-        {% set approval_email = approval_email_key|tojson %}
-        {% endif %}
-        {% set user_profile_data = "" %}
-        {% if user_profile %}
-        {% set user_profile_data = user_profile|tojson %}
-        {% endif %}
-        {% set list_license_data = "" %}
-        {% if list_license %}
-        {% set list_license_data = list_license|tojson %}
-        {% endif %}
-        <input type="hidden" id="item_save_uri" name="item_save_uri" value='{{item_save_uri}}'>
-        <input type="hidden" id="item_save_frequency" name="item_save_frequency"
-          value='{{config.WEKO_ITEMS_UI_SAVE_FREQUENCY}}'>
-        <input type="hidden" id="auto_fill_title" name="auto_fill_title" value='{{title}}'>
-        <input type="hidden" id="data_type_title" name="data_type_title" value='{{data_type}}'>
-        <input type="hidden" id="out_put_report_title" name="out_put_report_title" value='{{out_put_report}}'>
-        <input type="hidden" id="is_hidden_pubdate" name="is_hidden_pubdate" value='{{is_hidden_pubdate}}'>
-        <input type="hidden" id="action_endpoint_key" name="action_endpoint_key" value='{{endpoint_key}}'>
-        <input type="hidden" id="approval_email_key" name="approval_email_key" value='{{approval_email}}'>
-        <input type="hidden" id="autofill_item_type_id" name="autofill_item_type_id" value="{{id}}">
-        <input type="hidden" id="autofill_error_id" name="autofill_item_type_id" value="{{_('Please select the ID.')}}">
-        <input type="hidden" id="autofill_error_input_value" name="autofill_item_type_id"
-          value="{{_('Please input value.')}}">
-        <input type="hidden" id="not_existed_index_tree_err" name="not_existed_index_tree_err"
-          value="{{_('Specified index does not exist')}}">
-        <input type="hidden" id="autofill_error_doi" name="autofill_item_type_id"
-          value="{{_('Specified ID does not exist.')}}">
-        <input type="hidden" id="user_info_data" name="user_info_data" value='{{ user_profile_data }}'>
-        <input type="hidden" id="list_license_data" name="list_license_data" value='{{ list_license_data }}'>
-        <input type="hidden" id="application_item_type" name="application_item_type" value='{{application_item_type}}'>
-        <input type="hidden" id="enable_feedback_maillist" name="enable_feedback_maillist"
-          value='{{enable_feedback_maillist}}'>
-        {% set position_err_msg = "Position is being inputted (Only input when selecting 'Others')" %}
-        <input type="hidden" id="err_input_other_position" name="err_input_other_position"
-          value='{{_(position_err_msg)}}'>
-        <input type="hidden" id="err_position_not_provided" name="err_position_not_provided"
-          value='{{_("Position not provided.")}}'>
-        <input type="hidden" id="autofill_header_name" name="autofill_header_name"
-          value="{{_('Automatic metadata input')}}">
-        <input type="hidden" id="autofill_select_meta" name="autofill_select_meta">
-        <input type="hidden" id="autofill_get_value" name="autofill_get_value" value="{{_('Get')}}">
-        <input type="hidden" id="validate_error" name="validate_error"
-          value="{{_('The following items is required. Please recheck and input.')}}">
-        <input type="hidden" id="duplicate_input_error" name="duplicate_input_error"
-          value="{{_('The following items cannot have same value. Please recheck and re-input.')}}">
-        <input type="hidden" id="ja_kana_error" name="ja_kana_error"
-          value="{{_('The following items that contains ja-Kana cannot be set without setting ja as well. Please recheck and re-input.')}}">
-        <input type="hidden" id="ja_latn_error" name="ja_latn_error"
-          value="{{_('The following items that contains ja-Latn cannot be set without setting ja as well. Please recheck and re-input.')}}">
-        <input type="hidden" id="date_format_error" name="date_format_error"
-          value="{{_('The following items contains an invalid date format. Please recheck and re-input.')}}">
-        <input type="hidden" id="validate_email_register" name="validate_email_register"
-          value="{{_('The following email address is not registered in the system. Please recheck and input.')}}">
-        <input type="hidden" id="validate_email_map" name="validate_email_map"
-          value="{{_('Can not found the email address of approval.')}}">
-        <input type="hidden" id="validate_email_required" name="validate_email_required"
-          value="{{_('Please input email address.')}}">
-        <input type="hidden" id="validate_maxitems_field" name="validate_maxitems_field"
-          value="{{_('The specified number has been exceeded. You can only select up to two fields.')}}">
-        <input type="hidden" id="duplicate_files_error" name="duplicate_files_error"
-          value="{{_('The same file name cannot be registered.')}}">
-        <input type="hidden" id="invalid_files_type" name="invalid_files_type"
-          value="{{_('Thumbnail file type error message')}}">
-        <input type="hidden" id="max_files_thumnbnail_error" name="max_files_thumnbnail_error"
-          value="{{_('is too long.')}}">
+  <div class="modal fade" tabindex="-1" role="dialog" id="myModal">
+    <div class="modal-dialog modal-xlg" role="document">
+      <div class="modal-content">
+        <div class="modal-body">
+          {%-if cur_step == 'item_login' %}
+            {%- with preview_carousel_id='main_preview_carousel' %}
+              {% include 'weko_workflow/record_after_update.html' %}
+            {%- endwith %}
+          {%-else %}
+            {% include 'weko_workflow/record_detail.html' %}
+          {%- endif %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-info close-button" data-dismiss="modal">
+            <span class="glyphicon glyphicon-remove"></span>
+            {{_('Close')}}
+          </button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
+    {# Author search modal START #}
+    <div class="modal fade" tabindex="-1" role="dialog" id="app-author-search">
+      <div class="modal-dialog modal-xlg" role="document">
+        <div class="modal-content">
+          <div class="modal-body">
+            <app-author-search></app-author-search>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-info close-button"
+                    id="btnModalClose">
+              <span class="glyphicon glyphicon-remove"></span>
+              {{ _('Close') }}
+            </button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+    {# Author search modal END #}
+  <div class="modal fade" tabindex="-1" role="dialog" id="meta-search">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-body">
+          <div id="meta-search-body"></div>
+          <input type="hidden" id="item_title" name="item_title" value='{{itemTitle}}'>
+          {% set title = "" %}
+          {% if auto_fill_title %}
+            {% set title = auto_fill_title|tojson %}
+          {% endif %}
+          {% if out_put_report_title %}
+            {% set out_put_report = out_put_report_title|tojson %}
+          {% endif %}
+          {% set data_type = "" %}
+          {% if auto_fill_data_type %}
+            {% set data_type = auto_fill_data_type %}
+          {% endif %}
+          {% set endpoint_key = "" %}
+          {% if action_endpoint_key %}
+            {% set endpoint_key = action_endpoint_key|tojson %}
+          {% endif %}
+          {% set approval_email = "" %}
+          {% if approval_email_key %}
+            {% set approval_email = approval_email_key|tojson %}
+          {% endif %}
+          {% set user_profile_data = "" %}
+          {% if user_profile %}
+            {% set user_profile_data = user_profile|tojson %}
+          {% endif %}
+          {% set list_license_data = "" %}
+          {% if list_license %}
+            {% set list_license_data = list_license|tojson %}
+          {% endif %}
+          <input type="hidden" id="item_save_uri" name="item_save_uri" value='{{item_save_uri}}'>
+          <input type="hidden" id="item_save_frequency" name="item_save_frequency" value='{{config.WEKO_ITEMS_UI_SAVE_FREQUENCY}}'>
+          <input type="hidden" id="auto_fill_title" name="auto_fill_title" value='{{title}}'>
+          <input type="hidden" id="data_type_title" name="data_type_title" value='{{data_type}}'>
+          <input type="hidden" id="out_put_report_title" name="out_put_report_title" value='{{out_put_report}}'>
+          <input type="hidden" id="is_hidden_pubdate" name="is_hidden_pubdate" value='{{is_hidden_pubdate}}'>
+          <input type="hidden" id="action_endpoint_key" name="action_endpoint_key" value='{{endpoint_key}}'>
+          <input type="hidden" id="approval_email_key" name="approval_email_key" value='{{approval_email}}'>
+          <input type="hidden" id="autofill_item_type_id" name="autofill_item_type_id" value="{{id}}">
+          <input type="hidden" id="autofill_error_id" name="autofill_item_type_id" value="{{_('Please select the ID.')}}">
+          <input type="hidden" id="autofill_error_input_value" name="autofill_item_type_id" value="{{_('Please input value.')}}">
+          <input type="hidden" id="not_existed_index_tree_err" name="not_existed_index_tree_err" value="{{_('Specified index does not exist')}}">
+          <input type="hidden" id="autofill_error_doi" name="autofill_item_type_id" value="{{_('Specified ID does not exist.')}}">
+          <input type="hidden" id="user_info_data" name="user_info_data" value='{{ user_profile_data }}'>
+          <input type="hidden" id="list_license_data" name="list_license_data" value='{{ list_license_data }}'>
+          <input type="hidden" id="application_item_type" name="application_item_type" value='{{application_item_type}}'>
+          <input type="hidden" id="enable_feedback_maillist" name="enable_feedback_maillist" value='{{enable_feedback_maillist}}'>
+          {% set position_err_msg = "Position is being inputted (Only input when selecting 'Others')" %}
+          <input type="hidden" id="err_input_other_position" name="err_input_other_position" value='{{_(position_err_msg)}}'>
+          <input type="hidden" id="err_position_not_provided" name="err_position_not_provided" value='{{_("Position not provided.")}}'>
+          <input type="hidden" id="autofill_header_name"
+          name="autofill_header_name" value="{{_('Automatic metadata input')}}">
+          <input type="hidden" id="autofill_select_meta"
+          name="autofill_select_meta">
+          <input type="hidden" id="autofill_get_value" name="autofill_get_value" value="{{_('Get')}}">
+          <input type="hidden" id="validate_error" name="validate_error"
+              value="{{_('The following items is required. Please recheck and input.')}}">
+          <input type="hidden" id="duplicate_input_error" name="duplicate_input_error"
+              value="{{_('The following items cannot have same value. Please recheck and re-input.')}}">
+          <input type="hidden" id="ja_kana_error" name="ja_kana_error"
+              value="{{_('The following items that contains ja-Kana cannot be set without setting ja as well. Please recheck and re-input.')}}">
+          <input type="hidden" id="ja_latn_error" name="ja_latn_error"
+              value="{{_('The following items that contains ja-Latn cannot be set without setting ja as well. Please recheck and re-input.')}}">
+          <input type="hidden" id="date_format_error" name="date_format_error"
+              value="{{_('The following items contains an invalid date format. Please recheck and re-input.')}}">
+          <input type="hidden" id="validate_email_register" name="validate_email_register"
+              value="{{_('The following email address is not registered in the system. Please recheck and input.')}}">
+          <input type="hidden" id="validate_email_map" name="validate_email_map"
+                 value="{{_('Can not found the email address of approval.')}}">
+          <input type="hidden" id="validate_email_required" name="validate_email_required"
+                 value="{{_('Please input email address.')}}">
+          <input type="hidden" id="validate_maxitems_field" name="validate_maxitems_field"
+              value="{{_('The specified number has been exceeded. You can only select up to two fields.')}}">
+          <input type="hidden" id="duplicate_files_error" name="duplicate_files_error"
+              value="{{_('The same file name cannot be registered.')}}">
+          <input type="hidden" id="invalid_files_type" name="invalid_files_type"
+              value="{{_('Thumbnail file type error message')}}">
+          <input type="hidden" id="max_files_thumnbnail_error" name="max_files_thumnbnail_error"
+              value="{{_('is too long.')}}">
 
-        <input type="hidden" id="item_registration_workflow" value="true">
+          <input type="hidden" id="item_registration_workflow" value="true">
 
-        <input type="hidden" id="auto_fill_usage_data_usage_type" name="auto_fill_usage_data_usage_type"
-          value='{{usage_type}}'>
-        <input type="hidden" id="auto_fill_subitem_restricted_access_dataset_usage"
-          name="auto_fill_subitem_restricted_access_dataset_usage" value='{{dataset_usage}}'>
-        <input type="hidden" id="auto_fill_subitem_restricted_access_name"
-          name="auto_fill_subitem_restricted_access_name" value='{{usage_data_name}}'>
-        <input type="hidden" id="auto_fill_subitem_restricted_access_mail_address"
-          name="auto_fill_subitem_restricted_access_mail_address" value='{{mail_address}}'>
-        <input type="hidden" id="auto_fill_subitem_restricted_access_university/institution"
-          name="auto_fill_subitem_restricted_access_university/institution" value='{{university_institution}}'>
-        <input type="hidden" id="auto_fill_subitem_restricted_access_affiliated_division/department"
-          name="auto_fill_subitem_restricted_access_affiliated_division/department"
-          value='{{affiliated_division_department}}'>
-        <input type="hidden" id="auto_fill_subitem_restricted_access_position"
-          name="auto_fill_subitem_restricted_access_position" value='{{position}}'>
-        <input type="hidden" id="auto_fill_subitem_restricted_access_position(others)"
-          name="auto_fill_subitem_restricted_access_position(others)" value='{{position_other}}'>
-        <input type="hidden" id="auto_fill_subitem_restricted_access_phone_number"
-          name="auto_fill_subitem_restricted_access_phone_number" value='{{phone_number}}'>
-        <input type="hidden" id="auto_fill_subitem_restricted_access_usage_report_id"
-          name="auto_fill_subitem_restricted_access_usage_report_id" value='{{usage_report_id}}'>
-        <input type="hidden" id="auto_fill_subitem_restricted_access_wf_issued_date"
-          name="auto_fill_subitem_restricted_access_wf_issued_date" value='{{wf_issued_date}}'>
-        <input type="hidden" id="auto_fill_subitem_restricted_access_application_date"
-          name="auto_fill_subitem_restricted_access_application_date" value=''>
-        <input type="hidden" id="auto_fill_subitem_restricted_access_approval_date"
-          name="auto_fill_subitem_restricted_access_approval_date" value=''>
-        <input type="hidden" id="auto_fill_subitem_restricted_access_item_title"
-          name="auto_fill_subitem_restricted_access_item_title" value='{{item_title}}'>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" id="meta-search-close" data-dismiss="modal">
-          <span class="glyphicon glyphicon-remove"></span>&nbsp
-          {{_('Close')}}
-        </button>
-      </div>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-{%- endblock page_body %}
+          <input type="hidden" id="auto_fill_usage_data_usage_type" name="auto_fill_usage_data_usage_type"
+            value='{{usage_type}}'>
+          <input type="hidden" id="auto_fill_subitem_restricted_access_dataset_usage"
+            name="auto_fill_subitem_restricted_access_dataset_usage" value='{{dataset_usage}}'>
+          <input type="hidden" id="auto_fill_subitem_restricted_access_name"
+            name="auto_fill_subitem_restricted_access_name" value='{{usage_data_name}}'>
+          <input type="hidden" id="auto_fill_subitem_restricted_access_mail_address"
+            name="auto_fill_subitem_restricted_access_mail_address" value='{{mail_address}}'>
+          <input type="hidden" id="auto_fill_subitem_restricted_access_university/institution"
+            name="auto_fill_subitem_restricted_access_university/institution"
+            value='{{university_institution}}'>
+          <input type="hidden" id="auto_fill_subitem_restricted_access_affiliated_division/department"
+            name="auto_fill_subitem_restricted_access_affiliated_division/department"
+            value='{{affiliated_division_department}}'>
+          <input type="hidden" id="auto_fill_subitem_restricted_access_position"
+            name="auto_fill_subitem_restricted_access_position" value='{{position}}'>
+          <input type="hidden" id="auto_fill_subitem_restricted_access_position(others)"
+            name="auto_fill_subitem_restricted_access_position(others)" value='{{position_other}}'>
+          <input type="hidden" id="auto_fill_subitem_restricted_access_phone_number"
+            name="auto_fill_subitem_restricted_access_phone_number" value='{{phone_number}}'>
+          <input type="hidden" id="auto_fill_subitem_restricted_access_usage_report_id"
+            name="auto_fill_subitem_restricted_access_usage_report_id" value='{{usage_report_id}}'>
+          <input type="hidden" id="auto_fill_subitem_restricted_access_wf_issued_date"
+            name="auto_fill_subitem_restricted_access_wf_issued_date" value='{{wf_issued_date}}'>
+          <input type="hidden" id="auto_fill_subitem_restricted_access_application_date"
+            name="auto_fill_subitem_restricted_access_application_date" value=''>
+          <input type="hidden" id="auto_fill_subitem_restricted_access_approval_date"
+            name="auto_fill_subitem_restricted_access_approval_date" value=''>
+          <input type="hidden" id="auto_fill_subitem_restricted_access_item_title"
+            name="auto_fill_subitem_restricted_access_item_title" value='{{item_title}}'>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" id="meta-search-close" data-dismiss="modal">
+                 <span class="glyphicon glyphicon-remove"></span>&nbsp
+                     {{_('Close')}}
+          </button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
+  {%- endblock page_body %}
+

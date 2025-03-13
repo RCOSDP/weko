@@ -43,7 +43,7 @@ from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from weko_accounts.utils import login_required_customize
-from weko_admin.models import AdminSettings, RankingSettings
+from weko_admin.models import AdminSettings, RankingSettings, ApiCertificate
 from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
 from weko_index_tree.utils import check_index_permissions, get_index_id, \
@@ -95,6 +95,52 @@ blueprint_api = Blueprint(
     url_prefix="/items",
 )
 
+blueprint = Blueprint(
+    'oapolicy',
+     __name__,
+     url_prefix="/api")
+
+@blueprint_api.route("/get-client-secret", methods=["GET"])
+def get_client_secret():
+    """Database から client_secret を取得し、JSON で返す。"""
+    certificate = ApiCertificate.query.first()
+
+    if certificate:
+        return jsonify({
+            "client_secret": certificate.client_secret
+        })
+    else:
+        return jsonify({"error": "Client secret not found"}), 404
+
+@blueprint_api.route("/oauth/token", methods=["POST"])
+def get_oauth_token():
+    """OAuth2 トークンを発行"""
+    data = request.json
+    client_id = data.get("client_id")
+    client_secret = data.get("client_secret")
+
+    # DB から `client_secret` を取得して照合
+    certificate = ApiCertificate.query.filter_by(client_id=client_id).first()
+
+    if not certificate or certificate.client_secret != client_secret:
+        return jsonify({"error": "invalid_client"}), 401
+
+    # 仮のトークン
+    access_token = "mocked_token_123456"
+    expires_in = 3600  # 1時間
+
+    return jsonify({
+        "access_token": access_token,
+        "token_type": "Bearer",
+        "expires_in": expires_in
+    })
+
+@blueprint.route("/item-edit")
+def item_edit():
+    """Item edit page with OA Policy API URL from config."""
+    oa_policy_api_url = current_app.config.get("WEKO_ITEMS_UI_OA_POLICY_API_URL", "/api/oa_policies")
+    return render_template("weko_items_ui/iframe/item_edit.html", api_url=oa_policy_api_url)
+
 @blueprint.route('/', methods=['GET'])
 @blueprint.route('/<int:item_type_id>', methods=['GET'])
 @login_required
@@ -120,10 +166,10 @@ def index(item_type_id=0):
             content:
                 text/html
           302:
-            description: 
+            description:
           403:
             description: no item_permission
-            
+
     """
     try:
         from weko_theme.utils import get_design_layout
@@ -144,7 +190,7 @@ def index(item_type_id=0):
         json_schema = '/items/jsonschema/{}'.format(item_type_id)
         schema_form = '/items/schemaform/{}'.format(item_type_id)
         need_file, need_billing_file = is_schema_include_key(item_type.schema)
-        
+
         return render_template(
             current_app.config.get('WEKO_ITEMS_UI_FORM_TEMPLATE',WEKO_ITEMS_UI_FORM_TEMPLATE),
             page=page,
@@ -473,7 +519,7 @@ def iframe_items_index(pid_value='0'):
             workflow = WorkFlow()
             workflow_detail = workflow.get_workflow_by_id(
                 cur_activity.workflow_id)
-            
+
             if workflow_detail and workflow_detail.index_tree_id:
                 index_id = get_index_id(cur_activity.activity_id)
                 update_index_tree_for_record(pid_value, index_id)
@@ -520,9 +566,9 @@ def iframe_items_index(pid_value='0'):
             # current_app.logger.debug("session['itemlogin_histories']: {}".format(session['itemlogin_histories']))
             # current_app.logger.debug("session['itemlogin_res_check']: {}".format(session['itemlogin_res_check']))
             # current_app.logger.debug("session['itemlogin_pid']: {}".format(session['itemlogin_pid']))
-            
+
             form = FlaskForm(request.form)
-            
+
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
                 page=page,
@@ -1026,7 +1072,7 @@ def ranking():
         upd_data.statistical_period = dafault_data['statistical_period']
         upd_data.display_rank = dafault_data['display_rank']
         upd_data.rankings = dafault_data['rankings']
-        RankingSettings.update(data=upd_data) 
+        RankingSettings.update(data=upd_data)
         settings = RankingSettings.get()
 
     # get statistical period
@@ -1039,7 +1085,7 @@ def ranking():
     page, render_widgets = get_design_layout(
         current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
 
-    
+
     rankings = get_ranking(settings)
 
     x = rankings.get('most_searched_keywords')
@@ -1171,7 +1217,7 @@ def validate():
         request_data.get('data')
     )
 
-        
+
     return jsonify(result)
 
 
@@ -1315,7 +1361,7 @@ def check_record_doi_indexes(pid_value='0'):
         _type_: _description_
     Rises:
         invenio_pidstore.errors.PIDDoesNotExistError
-    """    
+    """
     doi = int(request.args.get('doi', '0'))
     record = WekoRecord.get_record_by_pid(pid_value)
     if (record.pid_doi or doi > 0) and \

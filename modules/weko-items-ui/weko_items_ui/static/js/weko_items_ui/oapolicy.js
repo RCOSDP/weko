@@ -1,152 +1,199 @@
 /**
  * oapolicy.js
  * OAポリシー取得スクリプト
+ *
+ * API から OA ポリシー情報を取得し、結果を表示する
+ *
  */
+function getApiUrl() {
+  return $(".input-group").attr("data-api-url");
+}
 
-$(document).ready(function () {
-  const USE_API = false; // API を有効にする場合は true, Mock を使う場合は false
-  const API_URL = "/api/oa_policies"; // バックエンド API のエンドポイント
+/**
+ * OAポリシー取得ボタンのクリックイベント
+ * @event click
+ */
+$(document).on("click", "#oapolicyurl", function () {
+  console.log("OAポリシーボタンがクリックされました");
 
-  /**
-   * OAポリシー取得ボタンのクリックイベント
-   * @event click
-   */
-  $(document).on("click", "#oapolicyurl", function () {
-    console.log("OAポリシーボタンがクリックされました");
+  // ** 取得前に前のデータをリセット **
+  resetPolicyInfo();
 
-    // ** 取得前に前のデータをリセット **
-    resetPolicyInfo();
+  // 識別子タイプの取得
+  let identifierTypeElement = $("select[name*='subitem_source_identifier_type']");
+  let identifierType = identifierTypeElement.val()?.trim().replace(/^string:/, "") || "";
+  let identifierValue = $("#subitem_source_identifier").val()?.trim() || "";
 
-    let issn = $("#subitem_source_identifier").val()?.trim() || "";
-    let eissn = $("#subitem_source_identifier").val()?.trim() || "";
-    let title = $("#subitem_source_title").val()?.trim() || "";
+  // ISSN / EISSN の判別
+  let issn = identifierType === "ISSN" ? identifierValue : "";
+  let eissn = identifierType === "EISSN" ? identifierValue : "";
 
-    console.log("取得したパラメータ:", { issn, eissn, title });
+  // 雑誌名の取得
+  let title = $("#subitem_source_title").val()?.trim() || "";
 
-    if (!issn && !eissn && !title) {
-      showError("error_missing_input");
-      return;
-    }
-
-    $("#oaPolicyError").text("").hide();
-
-    if (USE_API) {
-      getOaPolicyApi(issn, eissn, title);
-    } else {
-      getOaPolicyMock(issn, eissn, title);
-    }
-  });
-
-  /**
-   * 以前の OA ポリシー情報をリセット
-   * @function resetPolicyInfo
-   */
-  function resetPolicyInfo() {
-    $("#oaPolicyText").text(""); // URL 表示をクリア
-    $("#oaPolicyUrl").attr("href", "").hide(); // リンクを非表示
-    $("#oaPolicyError").text("").hide(); // エラーメッセージをクリア
+  if (!issn && !eissn && !title) {
+    showError("error_missing_input");
+    return;
   }
 
-  /**
-   * API を使用して OA ポリシー情報を取得
-   * @function getOaPolicyApi
-   * @param {string} issn - ISSN番号
-   * @param {string} eissn - eISSN番号
-   * @param {string} title - 雑誌名
-   */
-  function getOaPolicyApi(issn, eissn, title) {
+  $("#oaPolicyError").text("").hide();
 
-    console.log(`[API] OAポリシー取得リクエスト送信: ${API_URL}?issn=${issn}&eissn=${eissn}&title=${title}&lang=${lang}`);
+  getOaPolicy(issn, eissn, title);
+});
 
+/**
+ * 以前の OA ポリシー情報をリセット
+ * @function resetPolicyInfo
+ */
+function resetPolicyInfo() {
+  $("#oaPolicyText, #oaPolicyError").text("");
+  $("#oaPolicyUrl").attr("href", "").addClass("d-none");
+}
+
+/**
+ * OAuth2 トークンを取得し、API リクエスト時に使用
+ */
+function getAccessToken() {
+  return new Promise((resolve, reject) => {
+    // `client_secret` を取得
     $.ajax({
-      url: `${API_URL}?issn=${issn}&eissn=${eissn}&title=${title}&lang=${lang}`,
+      url: "/api/get-client-secret",
       type: "GET",
       dataType: "json",
       success: function (data) {
-        if (data.url) {
-          console.log(`[API] OAポリシー取得成功: ${data.url}`);
-          showResult(data.url);
-        } else {
-          console.warn("[API] ポリシー情報なし");
-          showError("error_no_policy_found");
+        if (!data.client_secret || !data.client_id) {
+          console.warn("[WARN] クライアントシークレットまたは Client ID が見つかりません");
+          reject("Client secret or client_id not found");
+          return;
         }
+
+        let client_secret = data.client_secret;
+        let client_id = data.client_id;
+        console.log("[INFO] Client Secret 取得成功:", client_secret);
+
+        // `/api/oauth/token` へリクエストを送信して `access_token` を取得
+        $.ajax({
+          url: "/api/oauth/token",
+          type: "POST",
+          contentType: "application/json",
+          data: JSON.stringify({
+            grant_type: "client_credentials",
+            client_id: client_id,
+            client_secret: client_secret
+          }),
+          dataType: "json",
+          success: function (data) {
+            console.log("[OAuth2] トークン取得成功:", data.access_token);
+            resolve(data.access_token);  // 取得したトークンを返す
+          },
+          error: function (xhr) {
+            console.error("[ERROR] OAuth2 トークン取得エラー:", xhr);
+            reject(xhr);
+          }
+        });
       },
       error: function (xhr) {
-        console.error("[API] リクエストエラー:", xhr);
-
-        let errorMessage;
-        if (xhr.responseJSON?.error) {
-          errorMessage = xhr.responseJSON.error;
-        } else if (xhr.status === 400) {
-          errorMessage = getErrorMessage("error_api_400");
-        } else if (xhr.status === 401) {
-          errorMessage = getErrorMessage("error_api_401");
-        } else if (xhr.status === 404) {
-          errorMessage = getErrorMessage("error_api_404");
-        } else if (xhr.status === 429) {
-          errorMessage = getErrorMessage("error_api_429");
-        } else if (xhr.status === 500) {
-          errorMessage = getErrorMessage("error_api_500");
-        }
-        showError(errorMessage);
+        console.error("[ERROR] Client Secret 取得エラー:", xhr);
+        reject(xhr);
       }
     });
-  }
-
-  /**
-   * Mock データを使用して OA ポリシー情報を取得（テスト用）
-   * @function getOaPolicyMock
-   */
-  function getOaPolicyMock(issn, eissn, title) {
-    console.log("[MOCK] OAポリシー取得開始:", { issn, eissn, title });
-
-    setTimeout(function () {
-      if (issn === "12345678" || eissn === "23456789" || title.includes("Journal")) {
-        console.log("[MOCK] OAポリシー取得成功！");
-        showResult("https://www.springer.com/gp/open-access/publication-policies/copyright-transfer");
-      } else {
-        console.error("[MOCK] 一致するポリシー情報が見つかりませんでした。");
-        showError("error_no_policy_found");
-      }
-    }, 1000);
-  }
-
-  /**
-   * OA ポリシー URL を表示
-   * @function showResult
-   */
-  function showResult(url) {
-    console.log("OAポリシー URL 取得成功:", url);
-    $("#oaPolicyText").text(url);
-    $("#oaPolicyUrl").attr("href", url).show();
-    $("#oaPolicyError").text("");
-  }
-
-  /**
- * エラーメッセージを表示
- * @function showError
- * @param {string} messageId - エラーの識別キー
+  });
+}
+/**
+ * API を使用して OA ポリシー情報を取得
+ * @function getOaPolicy
+ * @param {string} issn - ISSN番号
+ * @param {string} eissn - eISSN番号
+ * @param {string} title - 雑誌名
  */
-  window.showError = function (messageId) {
-    let errorMessage = getErrorMessage(messageId);
+function getOaPolicy(issn, eissn, title) {
 
-    $("#oaPolicyError").text(errorMessage).css({
-      "display": "inline-block",
-      "color": "red",
-      "font-weight": "bold"
-    });
-  };
+  let apiUrl = getApiUrl();
 
-  /**
-   * HTML のエラーメッセージを取得
-   * @function getErrorMessage
-   * @param {string} messageId - エラーの識別キー
-   * @returns {string} 翻訳されたエラーメッセージ
-   */
-  window.getErrorMessage = function (messageId) {
-    let errorElement = document.getElementById(messageId);
-    let message = errorElement ? errorElement.value : "エラーが発生しました。";
+  if (!apiUrl) {
+    console.error("[ERROR] API URL が取得できません。config.py を確認してください。");
+    showError("error_api_generic");
+    return;
+  }
 
-    return message;
-  };
-});
+  getAccessToken()
+    .then(token => {
+      console.log(`[API] OAポリシー取得リクエスト送信: ${apiUrl}?issn=${issn}&eissn=${eissn}&title=${title}`);
+
+      $.ajax({
+        url: `${apiUrl}?issn=${issn}&eissn=${eissn}&title=${title}`,
+        type: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`  // `client_secret` をトークンとして使用
+        },
+        dataType: "json",
+        success: function (data) {
+          if (data.url) {
+            console.log(`[API] OAポリシー取得成功: ${data.url}`);
+            showResult(data.url);
+          } else {
+            console.warn("[API] ポリシー情報なし");
+            showError("error_no_policy_found");
+          }
+        },
+        error: function (xhr) {
+          console.error("[API] リクエストエラー:", xhr);
+
+          let errorMessage;
+          if (xhr.responseJSON?.error) {
+            errorMessage = xhr.responseJSON.error;
+          } else if (xhr.status === 400) {
+            errorMessage = getErrorMessage("error_api_400");
+          } else if (xhr.status === 401) {
+            errorMessage = getErrorMessage("error_api_401");
+          } else if (xhr.status === 404) {
+            errorMessage = getErrorMessage("error_api_404");
+          } else if (xhr.status === 429) {
+            errorMessage = getErrorMessage("error_api_429");
+          } else if (xhr.status === 500) {
+            errorMessage = getErrorMessage("error_api_500");
+          }
+          showError(errorMessage);
+        }
+      });
+    })
+}
+
+/**
+ * OA ポリシー URL を表示
+ * @function showResult
+ */
+function showResult(url) {
+  console.log("OAポリシー URL 取得成功:", url);
+  $("#oaPolicyText").text(url);
+  $("#oaPolicyUrl").attr("href", url).removeClass("d-none");
+  $("#oaPolicyError").text("");
+}
+
+/**
+* エラーメッセージを表示
+* @function showError
+* @param {string} messageId - エラーの識別キー
+*/
+window.showError = function (messageId) {
+  let errorMessage = getErrorMessage(messageId);
+
+  $("#oaPolicyError").text(errorMessage).css({
+    "display": "inline-block",
+    "color": "red",
+    "font-weight": "bold"
+  });
+};
+
+/**
+ * HTML のエラーメッセージを取得
+ * @function getErrorMessage
+ * @param {string} messageId - エラーの識別キー
+ * @returns {string} 翻訳されたエラーメッセージ
+ */
+window.getErrorMessage = function (messageId) {
+  let errorElement = document.getElementById(messageId);
+  let message = errorElement ? errorElement.value : "An unknown error occurred";
+
+  return message;
+};
