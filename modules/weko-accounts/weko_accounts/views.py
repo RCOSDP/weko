@@ -301,8 +301,10 @@ def shib_sp_login():
 
         # Check if shib_eppn is not included in the blocked user list
         if AdminSettings.query.filter_by(name='blocked_user_settings').first():
-            block_user_settings = AdminSettings.get('blocked_user_settings')
-            block_user_list = block_user_settings.__dict__.get('blocked_ePPNs', [])
+            block_user_settings = AdminSettings.get('blocked_user_settings', dict_to_object=False)
+            if isinstance(block_user_settings, str):
+                block_user_settings = json.loads(block_user_settings)
+            block_user_list = block_user_settings.get('blocked_ePPNs', [])
             shib_eppn = shib_attr.get('shib_eppn')
 
             # Convert wildcards to regular expressions
