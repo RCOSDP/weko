@@ -36,8 +36,8 @@ function componentDidMount() {
 }
 
 function isDeletedWorkflow(value){
-  var is_deleted = false;
-  var keys = Object.keys(deleted_workflows_name)
+  let is_deleted = false;
+  let keys = Object.keys(deleted_workflows_name)
   if(keys.includes(value)){
     is_deleted = true;
   }
@@ -80,63 +80,6 @@ function isEmpty(value){
     return false;
   }
 }
-
-// function handleDefaultSubmit() {
-//   const form ={
-//     'default_format': document.getElementById("default_select").value
-//   }
-//   closeError();
-//   fetch("/admin/swordapi/default_format" ,{method:'POST' ,headers:{'Content-Type':'application/json'} ,credentials:"include", body: JSON.stringify(form)})
-//   .then(res => {
-//     if(!res.ok){
-//       console.log(etext);
-//   }
-//     showMsg(Successfully_Changed , true);
-//   })
-//   .catch(error => {
-//     console.log(error);
-//     showMsg(Failed_Changed , false);
-//   });
-// }
-
-// function handleSubmit(event) {
-//   const dataMenu = document.getElementById("data_format");
-//   const registerMenu = document.getElementById("register_format");
-//   const workflowMenu = document.getElementById("workflow");
-//   closeError();
-
-//   //Validate
-//   // required check
-//   NGList = [];
-//   if(isEmpty(dataMenu.value)){
-//     NGList.push('Data Format');
-//   }
-//   if(NGList.length){
-//     return showMsg(item_required_alert + NGList , false);
-//   }
-//   if(workflowMenu.value === "deleted_workflow") {
-//     return showMsg(workflow_deleted_alert, false);
-//   }
-
-
-//   const form = {
-//     'data_format': document.getElementById("data_format").value
-//     ,'register_format':document.getElementById("register_format").value
-//     ,'workflow':document.getElementById("workflow").value
-//   }
-
-//   fetch("/admin/swordapi/data_format" ,{method:'POST' ,headers:{'Content-Type':'application/json'} ,credentials:"include", body: JSON.stringify(form)})
-//   .then(res => {
-//     if(!res.ok){
-//       console.log(etext);
-//   }
-//     showMsg(Successfully_Changed , true);
-//   })
-//   .catch(error => {
-//     console.log(error);
-//     showMsg(Failed_Changed , false);
-//   });
-// }
 
 function saveDataFormat(page_type) {
   const active = document.getElementById("active");

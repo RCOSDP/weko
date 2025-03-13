@@ -43,8 +43,8 @@ function isEmpty(value){
 
 $("#workflow").change(function(){
   // mapping set
-  var selectedOption = $(this).find('option:selected');
-  var select_item_type_id = selectedOption.data('itemtype');
+  const selectedOption = $(this).find('option:selected');
+  const select_item_type_id = selectedOption.data('itemtype');
   $("#mapping").children().remove();
   $('#mapping').append($('<option>').html("").val(""));
   for (let i = 0; i < sword_item_type_mappings.length; i++){
@@ -113,7 +113,7 @@ function saveDataFormat(type) {
   .then(res => {
     if(!res.ok){
       console.log(error);
-  }
+    }
     alert(Successfully_Changed);
     window.location.href = "/admin/jsonld-mapping/";
   })
@@ -135,7 +135,7 @@ function deleteData(){
   .then(res => {
     if(!res.ok){
       console.log(error);
-  }
+    }
     alert(Successfully_Changed);
     window.location.href = "/admin/jsonld-mapping/";
   })

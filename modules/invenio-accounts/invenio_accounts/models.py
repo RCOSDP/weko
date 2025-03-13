@@ -100,7 +100,7 @@ class User(db.Model, UserMixin):
 
     @classmethod
     def get_email_by_id(cls, id):
-        """Get client_id, name by user_id. """
+        """Get id, name by user_id. """
         query = db.session.query(cls).with_entities(cls.email).filter(cls.id == id)
         return query.first()
 

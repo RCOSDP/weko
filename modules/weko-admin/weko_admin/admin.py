@@ -1380,24 +1380,24 @@ class SwordAPISettingsView(BaseView):
 
     @expose('/', methods=['GET','POST'])
     def index(self):
-        page_tsvcsv = 'TSV/CSV'
-        page_xml = 'XML'
+        PAGE_TSVCSV = 'TSV/CSV'
+        PAGE_XML = 'XML'
         tab_value = request.args.get('tab')
         template = current_app.config['WEKO_ADMIN_SWORD_API_TEMPLATE']
         if tab_value == 'xml':
-            page_type = page_xml
+            page_type = PAGE_XML
         else:
-            page_type = page_tsvcsv
+            page_type = PAGE_TSVCSV
 
         if request.method == 'GET':
             # GET
             default_sword_api = {"data_format":
-                                {page_tsvcsv:
+                                {PAGE_TSVCSV:
                                 {
                                     "active": 'True',
                                     "registration_type": "Direct",
                                 },
-                                page_xml:
+                                PAGE_XML:
                                 {
                                     "active": 'True',
                                     "registration_type": "Workflow",
@@ -1424,12 +1424,12 @@ class SwordAPISettingsView(BaseView):
                 else:
                     xml_workflow = ''
                 settings = {"data_format":
-                            {page_tsvcsv:
+                            {PAGE_TSVCSV:
                             {
                             "active": 'True',
                             "registration_type": tsvcsv_registration_type,
                             },
-                            page_xml:
+                            PAGE_XML:
                             {
                             "active": 'True',
                             "registration_type": xml_registration_type,
@@ -1457,19 +1457,19 @@ class SwordAPISettingsView(BaseView):
             exclude_admin_workflow(workflows)
 
             settings = AdminSettings.get('sword_api_setting')
-            if page_type == page_xml:
-                if settings.data_format[page_xml]['active'] == 'True':
+            if page_type == PAGE_XML:
+                if settings.data_format[PAGE_XML]['active'] == 'True':
                     active_value = 'checked'
                 else:
                     active_value = ''
-                registration_type_value = settings.data_format[page_xml]['registration_type']
-                workflow_value = settings.data_format[page_xml]['workflow']
+                registration_type_value = settings.data_format[PAGE_XML]['registration_type']
+                workflow_value = settings.data_format[PAGE_XML]['workflow']
             else:
-                if settings.data_format[page_tsvcsv]['active'] == 'True':
+                if settings.data_format[PAGE_TSVCSV]['active'] == 'True':
                     active_value = 'checked'
                 else:
                     active_value = ''
-                registration_type_value = settings.data_format[page_tsvcsv]['registration_type']
+                registration_type_value = settings.data_format[PAGE_TSVCSV]['registration_type']
                 workflow_value = ''
 
             return self.render(template,
@@ -1490,16 +1490,16 @@ class SwordAPISettingsView(BaseView):
             registration_type = request.json.get('registration_type')
             workflow = request.json.get('workflow')
 
-            if page_type == page_tsvcsv:
-                xml_active = settings.data_format[page_xml]['active']
-                xml_registration_type = settings.data_format[page_xml]['registration_type']
-                xml_workflow = settings.data_format[page_xml]['workflow']
-                settings.data_format = {page_tsvcsv:
+            if page_type == PAGE_TSVCSV:
+                xml_active = settings.data_format[PAGE_XML]['active']
+                xml_registration_type = settings.data_format[PAGE_XML]['registration_type']
+                xml_workflow = settings.data_format[PAGE_XML]['workflow']
+                settings.data_format = {PAGE_TSVCSV:
                                         {
                                             "active": active,
                                             "registration_type": registration_type,
                                         },
-                                        page_xml:
+                                        PAGE_XML:
                                         {
                                             "active": xml_active,
                                             "registration_type": xml_registration_type,
@@ -1507,14 +1507,14 @@ class SwordAPISettingsView(BaseView):
                                         }
                                         }
             else:
-                tsvcsv_active = settings.data_format[page_tsvcsv]['active']
-                tsvcsv_registration_type = settings.data_format[page_tsvcsv]['registration_type']
-                settings.data_format = {page_tsvcsv:
+                tsvcsv_active = settings.data_format[PAGE_TSVCSV]['active']
+                tsvcsv_registration_type = settings.data_format[PAGE_TSVCSV]['registration_type']
+                settings.data_format = {PAGE_TSVCSV:
                                         {
                                             "active": tsvcsv_active,
                                             "registration_type": tsvcsv_registration_type,
                                         },
-                                        page_xml:
+                                        PAGE_XML:
                                         {
                                             "active": active,
                                             "registration_type": registration_type,
@@ -1576,7 +1576,7 @@ class SwordAPIJsonldSettingsView(ModelView):
         'creator': _format_creator,
         'registration_type': _format_registration_type,
         'input_support': _format_input_support,
-                         }
+    }
 
     def get_query(self):
         role_ids = [role.id for role in current_user.roles]
@@ -1634,7 +1634,6 @@ class SwordAPIJsonldSettingsView(ModelView):
                 deleted_workflow_name_dict=json.dumps(deleted_workflow_name_dict),
                 workflows=workflows,
                 sword_item_type_mappings=sword_item_type_mappings,
-
                 return_url = request.args.get('url'),
                 current_page_type='add',
                 current_client_name=None,
@@ -1742,7 +1741,6 @@ class SwordAPIJsonldSettingsView(ModelView):
                 deleted_workflow_name_dict=json.dumps(deleted_workflow_name_dict),
                 workflows=workflows,
                 sword_item_type_mappings=sword_item_type_mappings,
-
                 return_url = request.args.get('url'),
                 current_page_type='edit',
                 current_client_name=current_client_name,
@@ -1805,7 +1803,7 @@ class SwordAPIJsonldMappingView(ModelView):
 
     column_formatters = {
         'item_type': _item_type_name,
-                         }
+    }
     column_searchable_list = ('id', 'name', 'item_type_id')
 
     def get_query(self):
@@ -1823,9 +1821,6 @@ class SwordAPIJsonldMappingView(ModelView):
             # GET ItemType
             itemtypes = ItemTypes.get_latest_with_item_type()
             item_types = [{'id': itemtype.id, 'item_type_name': itemtype.name} for itemtype in itemtypes]
-            # Get ItemTypeNames
-            # result = ItemTypeNames.get_name_and_id_all()
-            # item_type_names = [{'id': item_type.id, 'name': item_type.name} for item_type in result]
 
             return self.render(
                 self.create_template,
@@ -1900,7 +1895,7 @@ class SwordAPIJsonldMappingView(ModelView):
                     current_model_json=current_model_json,
                     exist_Waiting_approval_workflow=exist_Waiting_approval_workflow,
                     id=id,
-                )
+                    )
         else:
             # POST
             try:

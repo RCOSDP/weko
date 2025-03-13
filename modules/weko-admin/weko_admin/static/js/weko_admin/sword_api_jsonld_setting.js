@@ -88,8 +88,7 @@ $(document).ready(function () {
         '<div class="alert alert-light" id="alert-style">' +
         '<button type="button" class="close" data-dismiss="alert">' +
         '&times;</button>' + message + '</div>');
-         }
-
+  }
 });
 
 
@@ -131,8 +130,8 @@ function componentDidMount() {
 }
 
 function isDeletedWorkflow(value){
-  var is_deleted = false;
-  var keys = Object.keys(deleted_workflows_name)
+  let is_deleted = false;
+  let keys = Object.keys(deleted_workflows_name)
   if(keys.includes(value)){
     is_deleted = true;
   }
@@ -159,16 +158,16 @@ function changeRegistrationType(value) {
   } else if(value === "Workflow"){
     workflowMenu.removeAttribute("disabled");
     workflowMenu.setAttribute("required",true);
-      if(isDeletedWorkflow('workflow_current')){
-        workflowOption.value = "deleted_workflow";
-        workflowOption.textContent = deleted_workflows_name['workflow_current'] + "(削除済みワークフロー)";
-        workflowOption.selected = true;
-        workflowOption.setAttribute("hidden","hidden");
-        workflowMenu.appendChild(workflowOption);
-        return showMsg(workflow_deleted_alert, false);
-      }else{
-        workflowMenu.value = 'workflow_current';
-      }
+    if(isDeletedWorkflow('workflow_current')){
+      workflowOption.value = "deleted_workflow";
+      workflowOption.textContent = deleted_workflows_name['workflow_current'] + "(削除済みワークフロー)";
+      workflowOption.selected = true;
+      workflowOption.setAttribute("hidden","hidden");
+      workflowMenu.appendChild(workflowOption);
+      return showMsg(workflow_deleted_alert, false);
+    }else{
+      workflowMenu.value = 'workflow_current';
+    }
     $("#mapping").children().remove();
     $('#mapping').append($('<option>').html("").val(""));
   }else{
@@ -189,8 +188,8 @@ function isEmpty(value){
 
 $("#workflow").change(function(){
   // mapping set
-  var selectedOption = $(this).find('option:selected');
-  var select_item_type_id = selectedOption.data('itemtype');
+  const selectedOption = $(this).find('option:selected');
+  const select_item_type_id = selectedOption.data('itemtype');
   $("#mapping").children().remove();
   $('#mapping').append($('<option>').html("").val(""));
   for (let i = 0; i < sword_item_type_mappings.length; i++){
@@ -211,7 +210,7 @@ $("#mapping").change(function(){
   mapping_val = $(this).val();
   if ( mapping_val !== "" ){
     mapping_val = Number(mapping_val);
-    var result = sword_item_type_mappings.find(data => data.id === mapping_val);
+    let result = sword_item_type_mappings.find(data => data.id === mapping_val);
     item_type_id = result["item_type_id"];
     result = item_type_names.find(data => data.id === item_type_id);
     item_type_name = result["name"];
@@ -280,12 +279,12 @@ function saveDataFormat(type) {
   const selectedChildren = $('#rightSelect').children();
   selected_API = []
   for (let index = 0; index < selectedChildren.length; index++) {
-    var element = selectedChildren[index].value
+    let element = selectedChildren[index].value
     selected_API.push(element)
   }
   no_selected_API = []
   for (let index = 0; index < children.length; index++) {
-    var element = children[index].value
+    let element = children[index].value
     no_selected_API.push(element)
   }
 
@@ -311,7 +310,7 @@ function saveDataFormat(type) {
   .then(res => {
     if(!res.ok){
       console.log(error);
-  }
+    }
     alert(Successfully_Changed);
     window.location.href = "/admin/swordapi/jsonld/";
   })
@@ -343,8 +342,8 @@ window.onload = function() {
       changeRegistrationType("Workflow");
       $('#workflow').val(current_model_json["workflow_id"]);
       // mapping set
-      var selectedOption = $('#workflow').find('option:selected');
-      var select_item_type_id = selectedOption.data('itemtype');
+      const selectedOption = $('#workflow').find('option:selected');
+      const select_item_type_id = selectedOption.data('itemtype');
       $("#mapping").children().remove();
       $('#mapping').append($('<option>').html("").val(""));
       for (let i = 0; i < sword_item_type_mappings.length; i++){
