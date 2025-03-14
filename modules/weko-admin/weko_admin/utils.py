@@ -596,6 +596,10 @@ class StatisticMail:
         if not setting.get('is_sending_feedback') and not stats_date:
             return
         banned_mail = cls.get_banned_mail(setting.get('data'))
+        if repo != "Root Index":
+            root_setting = FeedbackMail.get_feed_back_email_setting(repo_id='Root Index')
+            root_banned_mail= cls.get_banned_mail(root_setting.get('data'))
+            banned_mail = list(set(banned_mail + root_banned_mail))
 
         session = db.session
         id = FeedbackMailHistory.get_sequence(session)
