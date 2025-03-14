@@ -271,69 +271,69 @@ def post_service_document():
         "workflow_id": check_result.get("workflow_id"),
     }
 
-    # Initialize a list to store responses for each item
-    responses = {}
     # Define a nested function to process a single item
     def process_item(item, data_path, file_format, register_format, request_info):
+        """Process a single item for import.
+
+        Args:
+            item (dict): The item to process.
+            data_path (str): The path to the data directory.
+            file_format (str): The format of the file.
+            register_format (str): The registration format (Direct or Workflow).
+            request_info (dict): Information about the request.
+
+        Returns:
+            tuple: A tuple containing the response and the record ID.
         """
-        Logic to process a single item.
-        """
-        # Set the root path for the item
         item["root_path"] = os.path.join(data_path, "data")
 
-        if file_format == "TSV/CSV" or (file_format == "JSON" and register_format == "Direct"):
-            # Directly import the item into the system
+        if register_format == "Direct":
             import_result = import_items_to_system(item, request_info=request_info)
             if not import_result.get("success"):
                 current_app.logger.error(
                     f"Error in import_items_to_system: {item.get('error_id')}"
                 )
-                raise WekoSwordserverException(
-                    f"Error in import_items_to_system: {item.get('error_id')}",
-                    ErrorType.ServerError,
-                )
             recid = import_result.get("recid")
-            return _get_status_document(recid) ,recid
+            return _get_status_document(recid), recid
 
-        elif file_format == "XML" or (file_format == "JSON" and register_format == "Workflow"):
-            # Import the item into a workflow
+        elif register_format == "Workflow":
             required_scopes = set([activity_scope.id])
             token_scopes = set(request.oauth.access_token.scopes)
             if not required_scopes.issubset(token_scopes):
                 abort(403)
             try:
-                # Import the item into the activity workflow
-                url, recid, aution = import_items_to_activity(item, data_path, request_info=request_info)
-                activity_id = url.split("/")[-1]
-                return _get_status_workflow_document(activity_id, recid),recid
-            except Exception as e:
-                current_app.logger.error(f"An error occurred while importing to activity: {str(e)}")
-                raise WekoSwordserverException(
-                    "An error occurred while importing to activity", ErrorType.ServerError
+                url, recid, _ = import_items_to_activity(
+                    item, data_path, request_info=request_info
                 )
+                activity_id = url.split("/")[-1]
+                return _get_status_workflow_document(activity_id, recid), recid
+            except Exception as e:
+                current_app.logger.error(f"Error importing to activity: {str(e)}")
+                raise
+
         else:
-            # Unsupported file format
             if os.path.exists(data_path):
                 shutil.rmtree(data_path)
                 TempDirInfo().delete(data_path)
             raise WekoSwordserverException(
-                "Invalid register format has been set for admin setting", ErrorType.ServerError
+                "Invalid register format in admin settings", ErrorType.ServerError
             )
 
-    # Iterate over each item in the list_record
+    # Validate items in the check result
     for item in check_result["list_record"]:
-        # Check if the item is missing or has errors
         if not item or item.get("errors"):
-            errorType = ErrorType.ContentMalformed
-            check_result_msg = ", ".join(item.get("errors")) if item and item.get("errors") else "item_missing"
-            current_app.logger.error(
-                f"Error in check_import_items: {check_result_msg}"
+            error_msg = (
+                ", ".join(item.get("errors")) 
+                if item and item.get("errors") 
+                else "item_missing"
             )
+            current_app.logger.error(f"Error in check_import_items: {error_msg}")
             raise WekoSwordserverException(
-                f"Error in check_import_items: {check_result_msg}", errorType
+                f"Error in check_import_items: {error_msg}", 
+                ErrorType.ContentMalformed
             )
 
-        # Check if the item's status is not "new"
+
         if item.get("status") != "new":
             current_app.logger.error(
                 f"This item is already registered: {item.get('item_title')}"
@@ -343,13 +343,35 @@ def post_service_document():
                 ErrorType.BadRequest,
             )
 
-        # Process the item and get the response
-        response, recid = process_item(item, data_path, file_format, register_type, request_info)
-        update_item_ids(check_result["list_record"], recid)
+    # Determine registration format
+    if file_format in ("TSV/CSV", "JSON") and register_type == "Direct":
+        register_format = "Direct"
+    elif file_format in ("XML", "JSON") and register_type == "Workflow":
+        register_format = "Workflow"
+    else:
+        if os.path.exists(data_path):
+            shutil.rmtree(data_path)
+            TempDirInfo().delete(data_path)
+        raise WekoSwordserverException(
+            "Invalid register format in admin settings", ErrorType.ServerError
+        )
+        
+    # Process and register items
+    for item in check_result["list_record"]:
+        try:
+            response, recid = process_item(
+                item, data_path, file_format, register_format, request_info
+            )
+            if file_format == "JSON":
+                update_item_ids(check_result["list_record"], recid)
+        except ValueError as e:
+            current_app.logger.error(f"Error in update_item_ids: {str(e)}")
+            continue  # Skip to the next iteration
+        except Exception as e:
+            current_app.logger.error(f"Unexpected error: {str(e)}")
+            continue  # Skip to the next iteration
 
-        responses[recid] = response
-
-    # Clean up the temporary directory
+    # Clean up temporary directory
     if os.path.exists(data_path):
         shutil.rmtree(data_path)
         TempDirInfo().delete(data_path)
@@ -358,8 +380,7 @@ def post_service_document():
         f"Items imported by sword from {request.oauth.client.name}"
     )
 
-    # Return the responses for all items
-    return responses
+    return response
 
 @blueprint.route("/deposit/<recid>", methods=["GET"])
 @oauth2.require_oauth()
