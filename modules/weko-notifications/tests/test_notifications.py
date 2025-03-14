@@ -9,6 +9,7 @@ import pytest
 from unittest.mock import patch
 from marshmallow import ValidationError
 
+from weko_notifications.config import COAR_NOTIFY_CONTEXT
 from weko_notifications.notifications import Notification, ActivityType
 
 # .tox/c1/bin/pytest --cov=weko_notifications tests/test_notifications.py -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
@@ -96,3 +97,43 @@ class TestNotifications:
         assert notification.payload == after_approval
         assert notification._is_validated == True
 
+    # def create_item_registared(cls, target_id, actor_id, object_id, **kwargs):
+    # .tox/c1/bin/pytest --cov=weko_notifications tests/test_notifications.py::TestNotifications::test_create_item_registared -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
+    def test_create_item_registared(self, app, json_notifications):
+        notification = Notification.create_item_registared(
+            target_id=3,
+            actor_id=3,
+            object_id=2000001,
+            object_name="Test item",
+            actor_name="Alex",
+        )
+        assert notification.id is not None
+        assert notification.updated is not None
+        assert notification.payload["@context"] == COAR_NOTIFY_CONTEXT
+        assert notification.activity_type == ActivityType.ANNOUNCE_INGEST.value
+        assert notification.origin == {
+            "id": app.config["THEME_SITEURL"],
+            "inbox": app.config["THEME_SITEURL"] + "/inbox",
+            "type": "Service",
+            }
+        assert notification.target == {
+            "id": app.config["THEME_SITEURL"] + "/user/3",
+            "inbox": app.config["THEME_SITEURL"] + "/inbox",
+            "type": "Person",
+            }
+        assert notification.object == {
+            "id": app.config["THEME_SITEURL"] + "/records/2000001",
+            "object": None,
+            "type": ["Page", "sorg:WebPage"],
+            "name": "Test item",
+            "url": None,
+            "ietf:cite-as": None
+            }
+        assert notification.actor == {
+            "id": app.config["THEME_SITEURL"] + "/user/3",
+            "type": "Person",
+            "name": "Alex",
+            }
+        assert notification.context == {}
+        assert notification.in_reply_to is None
+        assert notification._is_validated == True

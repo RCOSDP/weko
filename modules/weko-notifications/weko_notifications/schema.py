@@ -81,6 +81,7 @@ class DocumentObject(Schema):
         allow_none=True, attribute="ietf:cite-as", load_from="ietf:cite-as"
     )
     url = fields.Nested(UrlObject, allow_none=True)
+    name = fields.String(allow_none=True)
 
     class Meta:
         strict = True

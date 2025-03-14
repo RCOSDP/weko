@@ -13,7 +13,11 @@ from datetime import datetime
 from flask import current_app
 
 def inbox_url(_external=False):
-    """Return the inbox URL."""
+    """Return the inbox URL.
+
+    Args:
+        _external (bool): Whether to return the URL with the full domain.
+    """
     address = (
         current_app.config["THEME_SITEURL"]
         if _external

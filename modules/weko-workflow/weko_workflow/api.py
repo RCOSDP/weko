@@ -36,10 +36,13 @@ from sqlalchemy import and_, asc, desc, func, or_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 from weko_deposit.api import WekoDeposit
+from weko_notifications import Notification, NotificationClient
+from weko_notifications.utils import inbox_url
 from weko_records.serializers.utils import get_item_type_name
 from weko_records.api import RequestMailList
 from weko_schema_ui.models import PublishStatus
 from weko_index_tree.api import Indexes
+from weko_user_profiles.models import UserProfile
 
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
     WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB
@@ -429,7 +432,7 @@ class WorkFlow(object):
             query = _WorkFlow.query.filter_by(
                 is_deleted=False).order_by(asc(_WorkFlow.flows_id))
             return query.all()
-        
+
     def get_deleted_workflow_list(self):
         """Get workflow list info.
 
@@ -2554,6 +2557,56 @@ class WorkActivity(object):
         ).count()
 
         return activities_number
+
+    def notify_item_registered(self, activity_id):
+        """Notify item registered.
+
+        """
+        try:
+            with db.session.begin_nested():
+                activity = self.get_activity_by_id(activity_id)
+                if activity is None:
+                    return
+
+                target_id = activity.activity_login_user
+                recid = (
+                    PersistentIdentifier
+                    .get_by_object("recid", "rec", activity.item_id)
+                )
+                actor_id = (
+                    activity.shared_user_id
+                    if activity.shared_user_id != -1 else target_id
+                )
+
+                actor_profile = UserProfile.get_by_userid(actor_id)
+                actor_name = (
+                    actor_profile.username
+                    if actor_profile is not None else None
+                )
+        except SQLAlchemyError as ex:
+            current_app.logger.error("Error had orrured in notify_item_registered.")
+            traceback.print_exc()
+
+        try:
+            Notification.create_item_registared(
+                target_id, recid.pid_value.split(".")[0], actor_id,
+                actor_name=actor_name, object_name=activity.title
+            ).send(NotificationClient(inbox_url()))
+        except Exception as ex:
+            traceback.print_exc()
+
+
+    def notify_item_approved(self, activity_id):
+        """Notify approved items.
+
+        """
+        pass
+
+    def notify_item_rejected(self, activity_id):
+        """Notify rejected items.
+
+        """
+        pass
 
 
 class WorkActivityHistory(object):

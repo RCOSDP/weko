@@ -106,13 +106,13 @@ class Notification(object):
         """
         from .schema import NotificationSchema
         self.payload = NotificationSchema().load(self.current_body).data
-        self.activity_type = self.payload["type"]
-        self.origin = self.payload["origin"]
-        self.target = self.payload["target"]
-        self.object = self.payload["object"]
-        self.actor = self.payload["actor"]
-        self.context = self.payload["context"]
-        self.in_reply_to = self.payload["inReplyTo"]
+        self.activity_type = self.payload.get("type")
+        self.origin = self.payload.get("origin")
+        self.target = self.payload.get("target")
+        self.object = self.payload.get("object")
+        self.actor = self.payload.get("actor", {})
+        self.context = self.payload.get("context", {})
+        self.in_reply_to = self.payload.get("inReplyTo")
         self._is_validated = True
         return self
 
@@ -133,6 +133,15 @@ class Notification(object):
         obj._is_validated = True
         return obj
 
+    def validate(self):
+        """Validate notification payload.
+
+        Returns:
+            Notification: Notification instance with payload.
+        """
+        from .schema import NotificationSchema
+        self.payload = NotificationSchema().load(self.current_body).data
+
     def set_type(self, activity_type):
         """Set activity type.
 
@@ -146,7 +155,7 @@ class Notification(object):
         self._is_validated = False
         return self
 
-    def set_origin(self, id, inbox, type):
+    def set_origin(self, id, inbox, entity_type):
         """Set origin entity.
 
         Args:
@@ -159,12 +168,12 @@ class Notification(object):
         Returns:
             Notification: Notification instance
         """
-        self.origin = {"id": id, "inbox": inbox, "type": type}
+        self.origin = {"id": id, "inbox": inbox, "type": entity_type}
         self._is_validated = False
         return self
 
 
-    def set_target(self, id, inbox, type):
+    def set_target(self, id, inbox, entity_type):
         """Set target entity.
 
         Args:
@@ -177,11 +186,14 @@ class Notification(object):
         Returns:
             Notification: Notification instance
         """
-        self.target = {"id": id, "inbox": inbox, "type": type}
+        self.target = {"id": id, "inbox": inbox, "type": entity_type}
         self._is_validated = False
         return self
 
-    def set_object(self, id, object=None, type=None, ietf_cite_as=None, url=None):
+    def set_object(
+            self, id,
+            object=None, object_type=None, ietf_cite_as=None, url=None, name=None
+    ):
         """Set object entity.
 
         Args:
@@ -195,18 +207,21 @@ class Notification(object):
                 IETF Cite As of the object entity.
             url (dict | None):
                 URL of the object entity.
+            name (str | None):
+                Name of the object entity.
         Returns:
             Notification: Notification instance
         """
         self.object["id"] = id
         self.object["object"] = object if object else None
-        self.object["type"] = type if type else None
+        self.object["type"] = object_type if object_type else None
         self.object["ietf:cite-as"] = ietf_cite_as if ietf_cite_as else None
         self.object["url"] = url if url else None
+        self.object["name"] = name if name else None
         self._is_validated = False
         return self
 
-    def set_actor(self, id, type, name):
+    def set_actor(self, id, entity_type, name):
         """Set actor entity.
 
         Args:
@@ -219,11 +234,11 @@ class Notification(object):
         Returns:
             Notification: Notification instance
         """
-        self.actor = {"id": id, "type": type, "name": name}
+        self.actor = {"id": id, "type": entity_type, "name": name}
         self._is_validated = False
         return self
 
-    def set_context(self, id, ietf_cite_as=None, type=None):
+    def set_context(self, id, ietf_cite_as=None, entity_type=None):
         """Set context entity.
 
         Args:
@@ -238,7 +253,52 @@ class Notification(object):
         """
         self.context["id"] = id
         self.context["ietf:cite-as"] = ietf_cite_as if ietf_cite_as else None
-        self.context["type"] = type if type else None
+        self.context["type"] = entity_type if entity_type else None
         self._is_validated = False
         return self
+
+    def send(self, client):
+        """Send notification.
+
+        Args:
+            client (NotificationClient): Notification client.
+        """
+        client.send(self)
+
+
+    @classmethod
+    def create_item_registared(
+            cls, target_id, object_id, actor_id, **kwargs
+        ):
+        """Create item registared notification.
+
+        Returns:
+            Notification: Notification instance
+        """
+        from flask import current_app
+        from .utils import inbox_url
+        obj = cls()
+        obj.set_type(ActivityType.ANNOUNCE_INGEST)
+        obj.set_origin(
+            id=current_app.config["THEME_SITEURL"],
+            inbox=inbox_url(_external=True),
+            entity_type="Service"
+        )
+        obj.set_target(
+            id=f"{current_app.config['THEME_SITEURL']}/user/{target_id}",
+            inbox=inbox_url(_external=True),
+            entity_type="Person"
+        )
+        obj.set_object(
+            id=f"{current_app.config['THEME_SITEURL']}/records/{object_id}",
+            ietf_cite_as=kwargs.get("ietf_cite_as"),
+            object_type=["Page", "sorg:WebPage"],
+            name=kwargs.get("object_name")
+        )
+        obj.set_actor(
+            id=f"{current_app.config['THEME_SITEURL']}/user/{actor_id}",
+            entity_type="Person",
+            name=kwargs.get("actor_name") or "Unknown"
+        )
+        return obj.create()
 

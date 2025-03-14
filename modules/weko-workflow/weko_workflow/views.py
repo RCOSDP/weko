@@ -79,7 +79,6 @@ from weko_search_ui.utils import check_tsv_import_items, import_items_to_system
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
-from weko_inbox_sender.api import publish_notification
 
 from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
@@ -1576,7 +1575,6 @@ def next_action(activity_id='0', action_id=0, json_data=None):
             else:
                 RequestMailList.delete_by_list_item_id(item_ids)
 
-        publish_notification(record)
 
     if action_endpoint == 'item_link' and item_id:
 
@@ -1708,6 +1706,12 @@ def next_action(activity_id='0', action_id=0, json_data=None):
             action_order=next_action_order
         )
         work_activity.end_activity(activity)
+
+        if action_endpoint == "approval":
+            work_activity.notify_item_approved(activity_id)
+        else:
+            work_activity.notify_item_registered(activity_id)
+
         # Call signal to push item data to ES.
         try:
             if '.' not in current_pid.pid_value and has_request_context():
@@ -1953,6 +1957,10 @@ def previous_action(activity_id='0', action_id=0, req=0):
             res = ResponseMessageSchema().load({'code':-2,'msg':""})
             return jsonify(res.data), 500
     res = ResponseMessageSchema().load({'code':0,'msg':_('success')})
+
+    if action_id == 4:          # action_endpoint == "approval"
+        work_activity.notify_item_rejected(activity_id)
+
     return jsonify(res.data), 200
 
 
