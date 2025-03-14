@@ -482,7 +482,7 @@ class TestWekoSwordMapper:
         item_map_keys = ["item_1617258105262"]
         type_of_item_type_path = ["value"]
         json_value = "other"
-        mapper._create_child_metadata_of_a_property(0, child_metadata, item_map_keys, type_of_item_type_path, json_value)
+        mapper._create_child_metadata_of_a_property(child_metadata, item_map_keys, type_of_item_type_path, json_value)
         assert child_metadata == {"item_1617258105262": "other"}
 
         # case: value in dict
@@ -492,7 +492,7 @@ class TestWekoSwordMapper:
         item_map_keys = ["item_1617258105262"]
         type_of_item_type_path = ["value"]
         json_value = None
-        mapper._create_child_metadata_of_a_property(0, child_metadata, item_map_keys, type_of_item_type_path, json_value)
+        mapper._create_child_metadata_of_a_property(child_metadata, item_map_keys, type_of_item_type_path, json_value)
         assert child_metadata == {}
 
         # case: nested object
@@ -502,7 +502,7 @@ class TestWekoSwordMapper:
         item_map_keys = ["item_1617186331708"]
         type_of_item_type_path = ["value"]
         json_value = "サンプルアイテム"
-        mapper._create_child_metadata_of_a_property(0, child_metadata, item_map_keys, type_of_item_type_path, json_value)
+        mapper._create_child_metadata_of_a_property(child_metadata, item_map_keys, type_of_item_type_path, json_value)
         assert child_metadata == {'item_1617186331708': 'サンプルアイテム'}
 
         # case: nested object
@@ -511,7 +511,7 @@ class TestWekoSwordMapper:
         item_map_keys = ["item_1617186476635", "subitem_1600958577026"]
         type_of_item_type_path = ["object", "value"]
         json_value = "サンプルアイテム"
-        mapper._create_child_metadata_of_a_property(0, child_metadata, item_map_keys, type_of_item_type_path, json_value)
+        mapper._create_child_metadata_of_a_property(child_metadata, item_map_keys, type_of_item_type_path, json_value)
         assert child_metadata == {"item_1617186476635": {"subitem_1600958577026": "サンプルアイテム"}}
 
         # case: nested object
@@ -520,7 +520,7 @@ class TestWekoSwordMapper:
         item_map_keys = ["item_1617186476635", "subitem_1600958577026"]
         type_of_item_type_path = ["object", "value"]
         json_value = "サンプルアイテム"
-        mapper._create_child_metadata_of_a_property(0, child_metadata, item_map_keys, type_of_item_type_path, json_value)
+        mapper._create_child_metadata_of_a_property(child_metadata, item_map_keys, type_of_item_type_path, json_value)
         assert child_metadata == {"item_1617186476635": {"subitem_1600958577026": "サンプルアイテム"}}
 
         # case: nested array
@@ -528,7 +528,7 @@ class TestWekoSwordMapper:
         item_map_keys = ["item_1617349709064", "givenNames","givenName"]
         type_of_item_type_path = ["array", "array", "value"]
         json_value = ["Stian"]
-        mapper._create_child_metadata_of_a_property(1, child_metadata, item_map_keys, type_of_item_type_path, json_value)
+        mapper._create_child_metadata_of_a_property(child_metadata, item_map_keys, type_of_item_type_path, json_value)
         assert child_metadata == {'item_1617349709064': [{'givenNames': [{'givenName': 'Stian'}]}]}
 
         # case: nested object in array
@@ -536,7 +536,7 @@ class TestWekoSwordMapper:
         item_map_keys = ["item_1617349709064", "givenNames", "givenName"]
         type_of_item_type_path = ["array", "object", "value"]
         json_value = [{"givenName": "Stian"}]
-        mapper._create_child_metadata_of_a_property(0, child_metadata, item_map_keys, type_of_item_type_path, json_value)
+        mapper._create_child_metadata_of_a_property(child_metadata, item_map_keys, type_of_item_type_path, json_value)
         assert child_metadata == {'item_1617349709064': [{'givenNames': {'givenName': {'givenName': 'Stian'}}}]}
 
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_mapper.py::TestWekoSwordMapper::test__create_metadata_of_a_property -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
