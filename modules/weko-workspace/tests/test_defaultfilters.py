@@ -102,8 +102,6 @@ def test_merge_default_filters(default_con, expected_response):
     result = merge_default_filters(default_con)
     assert result == expected_response
 
-# elif key == "resource_type": について、test_merge_default_filtersメソッドでどうしてもカバレッジ確認できないため、以下のテストを追加して確認した。
-def test_merge_default_filters_elif():
+    # # elif key == "resource_type": について、test_merge_default_filtersメソッドでどうしてもカバレッジ確認できないため、以下のテストを追加して確認した。
     default_con = {"favorite": True, "award_title": [], "funder_name": [], "peer_review": "", "file_present": True, "resource_type": ["conference paper"], "related_to_data": "", "related_to_paper": ""}
     result = merge_default_filters(default_con)
-    assert 1 == 1

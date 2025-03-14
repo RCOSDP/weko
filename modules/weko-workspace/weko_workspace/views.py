@@ -73,10 +73,22 @@ def get_workspace_itemlist():
 
     # 2,ESからアイテム一覧取得処理
     records_data = get_es_itemlist()
+    
+    # 7,ユーザー名と所属情報取得処理
+    userInfo = get_userNm_affiliation()
+    
+    if ( not records_data or "hits" not in records_data or "hits" not in records_data["hits"]):
+        return render_template(
+            current_app.config["WEKO_WORKSPACE_BASE_TEMPLATE"],
+            username=userInfo[0],
+            affiliation=userInfo[1],
+            workspaceItemList=[],
+            defaultconditions=jsonCondition,
+        )
     # →ループ処理
     for hit in records_data["hits"]["hits"]:
         workspaceItem = copy.deepcopy(current_app.config["WEKO_WORKSPACE_ITEM"])
-        
+
         # ファイルリストと査読状況を取得
         item_metadata = hit["metadata"]["_item_metadata"]
         filelist, peer_reviewed = extract_metadata_info(item_metadata)
@@ -149,7 +161,6 @@ def get_workspace_itemlist():
         else:
             workspaceItem["conferenceName"] = None
 
-
         # "volume": None,  # 巻
         workspaceItem["volume"] = (
             hit["metadata"].get("volume", [])[0]
@@ -185,6 +196,9 @@ def get_workspace_itemlist():
 
         # "fbEmailSts": None,  # フィードバックメールステータス
         workspaceItem["fbEmailSts"] = True if current_user.email  in list(FeedbackMailList.get_feedback_mail_list().keys()) else False
+
+        if userInfo[0] in workspaceItem["authorlist"]:
+            workspaceItem["fbEmailSts"] = True
 
         # "connectionToPaperSts": None,  # 論文への関連チェック状況
         workspaceItem["connectionToPaperSts"] = True if workspaceItem["resourceType"] in current_app.config["WEKO_WORKSPACE_ARTICLE_TYPES"] else None
@@ -274,16 +288,9 @@ def get_workspace_itemlist():
         workspaceItem["restrictedPublicationCnt"] = (
             restrictedPublicationCnt if "restrictedPublicationCnt" in locals() else 0
         )
-        
-        if str(workspaceItem):
-            workspaceItemList.append(workspaceItem)
 
-    # 7,ユーザー名と所属情報取得処理
-    userInfo = get_userNm_affiliation()
+        workspaceItemList.append(workspaceItem)
 
-    if userInfo[0] in workspaceItem["authorlist"]:
-        workspaceItem["fbEmailSts"] = True
-    
     # デフォルト絞込み条件より、workspaceItemListを洗い出す
     if isnotNone:
         defaultconditions = merge_default_filters(jsonCondition)
