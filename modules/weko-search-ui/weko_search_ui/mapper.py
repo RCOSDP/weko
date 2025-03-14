@@ -1342,7 +1342,11 @@ class JsonLdMapper(JsonMapper):
         mapped_metadata = self._InformedMetadata()
         mapped_metadata.id = metadata.id
         mapped_metadata.link_data = metadata.link_data
-        mapped_metadata.non_extract = metadata.non_extract
+        mapped_metadata.non_extract = [
+            filename[5:]
+            for filename in metadata.non_extract
+            if filename.startswith("data/")
+        ]
         mapped_metadata.save_as_is = metadata.save_as_is
         mapped_metadata.setdefault("publish_status", "private")
         mapped_metadata.setdefault("edit_mode", "Keep")
@@ -1478,12 +1482,24 @@ class JsonLdMapper(JsonMapper):
 
         files_info = []
         for v in item_map.values():
-            if v.endswith(".filename"):
-                files_key = v.split(".")[0]
-                files_info.append({
-                    "key": files_key,
-                    "items": mapped_metadata.get(files_key, [])
-                })
+            if not v.endswith(".filename"):
+                continue
+
+            files_key = v.split(".")[0]
+            files = mapped_metadata.get(files_key, [])
+
+            # remove "data/" prefix from label
+            files = [
+                file["url"].update({"label": label[5:]})
+                for file in files
+                for label in [file["url"].get("label")]
+                if label.startswith("data/")
+            ]
+
+            files_info.append({
+                "key": files_key,
+                "items": mapped_metadata.get(files_key, [])
+            })
         mapped_metadata["files_info"] = files_info
         # result = {
         #     "pubdate": "2021-10-15",
