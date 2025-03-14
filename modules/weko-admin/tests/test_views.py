@@ -7,10 +7,11 @@ from flask_menu import current_menu
 from mock import patch, MagicMock
 from invenio_accounts.testutils import login_user_via_session
 from weko_records.models import SiteLicenseInfo
-from weko_admin.models import SessionLifetime, SiteInfo
+from weko_admin.models import SessionLifetime, SiteInfo, AdminSettings
 from weko_admin.views import (
     _has_admin_access,
-    dbsession_clean
+    dbsession_clean,
+    manual_send_site_license_mail
 )
 from tests.helpers import login, logout
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -361,13 +362,28 @@ def test_get_email_author(api,users):
         res = api.post(url,json={"key":"data"})
         assert response_data(res) == {"key":"value"}
 
+#def get_repository_list():
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_repository_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+@pytest.mark.parametrize("index,repositories",[
+    (0,[{'id': 'Root Index'}, {'id': 'repo1'}]),
+    (2,[{'id': 'repo1'}]),
+    ])
+@patch("invenio_communities.models.Community")
+def test_get_repository_list(mock_community,api,users,index,repositories):
+    url = url_for("weko_admin.get_repository_list")
+    login_user_via_session(api, email=users[index]["email"])
+    community = MagicMock(id="repo1")
+    mock_community.query.all.return_value = [community]
+    mock_community.get_repositories_by_user.return_value = [community]
+    res = api.get(url)
+    assert json.loads(res.data) == {'success': True, 'repositories': repositories, 'error': ''}
 
 #def update_feedback_mail():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_update_feedback_mail_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 @pytest.mark.parametrize("index,is_permission",[
                          (0,True),# sysadmin
                          (1,True),# repoadmin
-                         (2,False),# comadmin
+                         (2,True),# comadmin
                          (3,False),# contributor
                          (4,False),# generaluser
                          ])
@@ -405,7 +421,7 @@ def test_update_feedback_mail(api, users):
 @pytest.mark.parametrize("index,is_permission",[
                          (0,True),# sysadmin
                          (1,True),# repoadmin
-                         (2,False),# comadmin
+                         (2,True),# comadmin
                          (3,False),# contributor
                          (4,False),# generaluser
                          ])
@@ -428,25 +444,25 @@ def test_get_feedback_mail(api, users):
     login_user_via_session(client=api, email=users[0]["email"])
     url = url_for("weko_admin.get_feedback_mail")
     with patch("weko_admin.views.FeedbackMail.get_feed_back_email_setting",return_value={"data":["datas"],"is_sending_feedback":True,"root_url":"http://test.com","error":""}):
-        res = api.post(url)
+        res = api.post(url, json={"repo_id": "Root Index"})
         assert response_data(res) == {"data":["datas"],"is_sending_feedback":True,"error":""}
     
     # data.get(error)
     with patch("weko_admin.views.FeedbackMail.get_feed_back_email_setting",return_value={"error":"test_error"}):
-        res = api.post(url)
+        res = api.post(url, json={"repo_id": "Root Index"})
         assert response_data(res) == {"data":"","is_sending_feedback":"","error":"test_error"}
 
 
 #def get_send_mail_history():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_send_mail_history -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_get_send_mail_history(api, mocker):
-    mocker.patch("weko_admin.views.FeedbackMail.load_feedback_mail_history",side_effect=lambda x:{"page":x})
+    mocker.patch("weko_admin.views.FeedbackMail.load_feedback_mail_history",side_effect=lambda x, y:{"page":x})
     url = url_for("weko_admin.get_send_mail_history")
-    input = {"page":2}
+    input = {"page":2, "repo_id":"Root Index"}
     res = api.get(url,query_string=input)
     assert response_data(res) == {"page":2}
     
-    input = {"page":"not page"}
+    input = {"page":"not page", "repo_id":"Root Index"}
     res = api.get(url,query_string=input)
     assert response_data(res) == {"page":1}
 
@@ -479,10 +495,10 @@ def test_get_failed_mail(api, users,mocker):
     mocker.patch("weko_admin.views.FeedbackMail.load_feedback_failed_mail",side_effect=lambda x,y:{"history_id":x,"page":y})
     login_user_via_session(client=api, email=users[0]["email"])
     url = url_for("weko_admin.get_failed_mail")
-    res = api.post(url,data={"page":5,"id":3})
+    res = api.post(url,json={"page":5,"id":3})
     assert response_data(res) == {"history_id":3,"page":5}
     
-    res = api.post(url,data={"page":"not page","id":"not id"})
+    res = api.post(url,json={"page":"not page","id":"not id"})
     assert response_data(res) == {"history_id":1,"page":1}
 
 #def resend_failed_mail():
@@ -526,11 +542,11 @@ def test_resend_failed_mail(api,users,mocker):
     url = url_for("weko_admin.resend_failed_mail")
     login_user_via_session(client=api, email=users[0]["email"])
     mocker.patch("weko_admin.views.FeedbackMail",side_effect=Mock_FeedbackMail)
-    with patch("weko_admin.views.StatisticMail.send_mail_to_all"):
+    with patch("weko_admin.views.StatisticMail.send_mail_to_one"):
         res = api.post(url, json={"history_id":1})
         assert response_data(res) == {"success":True, "error":""}
     
-    with patch("weko_admin.views.StatisticMail.send_mail_to_all",side_effect=Exception("test_error")):
+    with patch("weko_admin.views.StatisticMail.send_mail_to_one",side_effect=Exception("test_error")):
         res = api.post(url, json={"history_id":1})
         assert response_data(res) == {"success":False, "error":"Request package is invalid"}
 
@@ -539,7 +555,7 @@ def test_resend_failed_mail(api,users,mocker):
 @pytest.mark.parametrize("index,is_permission",[
                          (0,True),# sysadmin
                          (1,True),# repoadmin
-                         (2,False),# comadmin
+                         (2,True),# comadmin
                          (3,False),# contributor
                          (4,False),# generaluser
                          ])
@@ -548,7 +564,7 @@ def test_manual_send_site_license_mail_acl(api,users,site_license,index,is_permi
     login_user_via_session(client=api, email=users[index]["email"])
     with patch("weko_admin.views.QueryCommonReportsHelper.get", return_value={"institution_name":[]}):
         with patch("weko_admin.views.send_site_license_mail"):
-            res = api.post(url,data=json.dumps({}),content_type="application/json")
+            res = api.post(url,data={"repo_id": "Root Index"})
             assert_role(res, is_permission)
 
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_manual_send_site_license_mail_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -583,11 +599,21 @@ def test_manual_send_site_license_mail(api, db, users, mocker):
     db.session.add(site_license1)
     db.session.add(site_license2)
     db.session.commit()
+    
     report_helper_result = {"institution_name":[{"name":"other_name"},{"name":"test data1"}]}
     mocker.patch("weko_admin.views.QueryCommonReportsHelper.get",return_value=report_helper_result)
     mock_send = mocker.patch("weko_admin.views.send_site_license_mail")
-    res = api.post(url)
+    res = api.post(url, data={"repo_id": "Root Index"})
     assert res.data == b"finished"
+    mock_send.assert_has_calls(
+        [mocker.call("test data1",["test@mail.com"],"202201-202203",{"name":"test data1"}),
+        mocker.call("test data2",["test@mail.com"],"202201-202203",{"file_download":0,"file_preview":0,"record_view":0,"search":0,"top_view":0}),
+        ]
+    )
+    
+    # call with repo_id
+    res = manual_send_site_license_mail("202201", "202203", "Root Index")
+    assert res == "finished"
     mock_send.assert_has_calls(
         [mocker.call("test data1",["test@mail.com"],"202201-202203",{"name":"test data1"}),
         mocker.call("test data2",["test@mail.com"],"202201-202203",{"file_download":0,"file_preview":0,"record_view":0,"search":0,"top_view":0}),
@@ -599,6 +625,44 @@ def test_manual_send_site_license_mail(api, db, users, mocker):
     db.session.commit()
     with pytest.raises(TypeError):
         res = api.post(url)
+
+#def get_site_license_send_mail_settings():
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_site_license_send_mail_settings -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_get_site_license_send_mail_settings(db, api, users):
+    url = url_for("weko_admin.get_site_license_send_mail_settings")
+    login_user_via_session(client=api, email=users[0]["email"])
+    
+    site_license1 = SiteLicenseInfo(
+        organization_id=0,
+        organization_name="test data1",
+        receive_mail_flag="T",
+        mail_address="test@mail.com",
+        domain_name="test_domain",
+        repository_id="Root Index"
+    )
+    db.session.add(site_license1)
+    db.session.commit()
+    
+    res = api.get(url, query_string={"repo_id":"Root Index"})
+    assert response_data(res) == {'sitelicenses': [{
+                                    'organization_id': 0,
+                                    'organization_name': 'test data1',
+                                    'receive_mail_flag': 'T',
+                                    'mail_address': 'test@mail.com'}], 
+                                'auto_send': False}
+    
+    
+    setting = AdminSettings(id=3,name='site_license_mail_settings',settings={"Root Index": {"auto_send_flag": True}})
+    db.session.add(setting)
+    db.session.commit()
+    
+    res = api.get(url, query_string={"repo_id":"Root Index"})
+    assert response_data(res) == {'sitelicenses': [{
+                                    'organization_id': 0,
+                                    'organization_name': 'test data1',
+                                    'receive_mail_flag': 'T',
+                                    'mail_address': 'test@mail.com'}], 
+                                'auto_send': True}
 
 #def update_site_info():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_update_site_info_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp

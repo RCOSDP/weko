@@ -32,9 +32,9 @@ from flask_login.config import EXEMPT_METHODS
 from .config import WEKO_API_LIMIT_RATE_DEFAULT
 
 limiter = Limiter(
-            app=None,
-            key_func=lambda: f"{request.endpoint}_{get_remote_addr()}",
-            default_limits=WEKO_API_LIMIT_RATE_DEFAULT
+    app=None,
+    key_func=lambda: f"{request.endpoint}_{get_remote_addr()}",
+    default_limits=WEKO_API_LIMIT_RATE_DEFAULT
 )
 
 

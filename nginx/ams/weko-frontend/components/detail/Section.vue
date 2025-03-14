@@ -10,7 +10,7 @@
         </label>
         <select
           v-model="sectionName"
-          class="border border-miby-dark-gray text-sm text-left pl-2 p-1"
+          class="border border-miby-dark-gray text-sm text-left pl-2 p-1 cursor-pointer"
           @change="scrollToSection(sectionName)">
           <option v-for="element in titleList" :key="element" :value="element">
             {{ element }}

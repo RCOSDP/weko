@@ -73,12 +73,12 @@ const isRender = ref(false);
 // function
 /////////////////////////////////// */
 
-/**
- * 作成者情報モーダル表示
- */
-function openCreaterModal() {
-  creater.value.openModal();
-}
+// /**
+//  * 作成者情報モーダル表示
+//  */
+// function openCreaterModal() {
+//   creater.value.openModal();
+// }
 
 /**
  * ページ最上部にスクロール
@@ -98,7 +98,10 @@ try {
   // アクセストークン取得
   if (state) {
     if (sessionStorage.getItem('login:state') === state) {
-      await useFetch('/api/token/create', { method: 'GET', params: { code: String(query.code) } })
+      await useFetch('/api/token/create', {
+        method: 'GET',
+        params: { code: String(query.code) }
+      })
         .then((response) => {
           if (response.status.value === 'success') {
             const data: any = response.data.value;
@@ -110,7 +113,6 @@ try {
           }
         })
         .finally(() => {
-          sessionStorage.removeItem('login:state');
           useRouter().replace({ query: {} });
           setTimeout(() => {
             location.reload();

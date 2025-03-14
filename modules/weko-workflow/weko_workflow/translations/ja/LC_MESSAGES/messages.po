@@ -678,6 +678,9 @@ msgstr "プロパティを指定する"
 msgid "Specify property"
 msgstr "プロパティを指定"
 
+msgid "Request mail"
+msgstr "リクエスト送信先"
+
 msgid "Approval Request Notification Email"
 msgstr "承認依頼通知メール"
 
