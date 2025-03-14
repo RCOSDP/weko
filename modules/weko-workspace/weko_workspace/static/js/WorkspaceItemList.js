@@ -619,7 +619,7 @@ document.addEventListener('DOMContentLoaded', function () {
           </span><br><br>
         </td>
         <td style="text-align: center; vertical-align: top;">
-          <a href="javascript:void(0)" class="edit-item" data-item-id="">
+          <a href="/records/${item.recid}" class="edit-item" data-item-id="">
             <i class="bi bi-pencil-square" style="font-size: 25px;"></i>
           </a>
         </td>
