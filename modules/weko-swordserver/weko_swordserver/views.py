@@ -294,7 +294,7 @@ def post_service_document():
                     f"Error in import_items_to_system: {item.get('error_id')}"
                 )
             recid = import_result.get("recid")
-            return _get_status_document(recid), recid
+            return jsonify(_get_status_document(recid)), recid
 
         elif register_format == "Workflow":
             required_scopes = set([activity_scope.id])
@@ -306,7 +306,7 @@ def post_service_document():
                     item, data_path, request_info=request_info
                 )
                 activity_id = url.split("/")[-1]
-                return _get_status_workflow_document(activity_id, recid), recid
+                return jsonify(_get_status_workflow_document(activity_id, recid)), recid
             except Exception as e:
                 current_app.logger.error(f"Error importing to activity: {str(e)}")
                 raise
@@ -357,7 +357,7 @@ def post_service_document():
         raise WekoSwordserverException(
             "Invalid register format in admin settings", ErrorType.ServerError
         )
-
+    response = {}
     # Process and register items
     for item in check_result["list_record"]:
         try:
