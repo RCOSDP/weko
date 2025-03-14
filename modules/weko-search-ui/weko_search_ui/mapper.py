@@ -1247,6 +1247,125 @@ class JsonLdMapper(JsonMapper):
         # }
         return mapped_metadata
 
+
+    @staticmethod
+    def itemtype_to_rocrate(metadata, filenames):
+        """Map to RO-Crate."""
+        context = {
+            "@context": [
+                # "http://www.w3.org/ns/odrl.jsonld",
+                # "http://localhost:8080/wk/0.1/context.jsonld",
+                "https://w3id.org/ro/crate/1.1/context",
+            ]
+        }
+
+        # TODO : Implement mapping from item type to RO-Crate metadata
+        graph = [
+            {
+                "@id": "ro-crate-metadata.json",
+                "@type": "CreativeWork",
+                "about": {
+                    "@id": "./"
+                },
+                "conformsTo": {
+                    "@id": "https://w3id.org/ro/crate/1.1"
+                }
+            },
+            {
+                "@id": "./",
+                "@type": [
+                    "Dataset",
+                    "rdm:Dataset"
+                ],
+                "name": "The Sample Dataset for WEKO",
+                "description": "This is a sample dataset for WEKO in order to demonstrate the RO-Crate metadata.",
+                "dc:title": [
+                    {
+                        "@id": "_:たいとる"
+                    },
+                    {
+                        "@id": "_:タイトル"
+                    }
+                ],
+                "author": [
+                    {
+                        "@id": "_:作者"
+                    }
+                ],
+                "creator": [
+                    {
+                        "@id": "http://orcid.org/0000-0002-1825-0097"
+                    }
+                ],
+                "contributor": [
+                    {
+                        "@id": "http://orcid.org/0000-0002-1825-0085"
+                    }
+                ],
+                "datePublished": "2021-10-15",
+                "license": {
+                    "@id": "https://creativecommons.org/licenses/by-nc-sa/3.0/au/"
+                },
+                "rdm:inProject": [
+                    {
+                        "@id": "_:Project_1"
+                    }
+                ],
+                "hasPart": [
+                    {
+                        "@id": "data/sample.rst"
+                    },
+                    {
+                        "@id": "data/data.csv"
+                    }
+                ],
+                "hasPolicy": [
+                    {
+                        "@id": "_:Policy1"
+                    },
+                    {
+                        "@id": "_:Policy3"
+                    }
+                ],
+                "wk:feedbackMail": [
+                    "wekosoftware@nii.ac.jp"
+                ],
+                "identifier": "https://example.repo.nii.ac.jp/records/123456789",
+                "wk:index": [
+                    "1623632832836"
+                ],
+                "wk:publishStatus": "public",
+                "wk:editMode": "Keep",
+                "dc:type": {
+                    "@id": "http://purl.org/coar/resource_types/c_0640"
+                },
+                "wk:grant": [
+                    {
+                        "@id": "https://hdl.handle.net/1234/5678"
+                    },
+                    {
+                        "@id": "https://doi.org/10.1234/5678"
+                    }
+                ],
+                "wk:saveAsIs": False
+            },
+        ]
+
+
+        graphs = {
+            "@graph": [*graph]
+        }
+
+        rocrate = {**context, **graphs}
+
+        # result = {
+        #     "@context": "",
+        #     "@graph": [
+        #     ]
+        # }
+        return metadata
+
+
     @staticmethod
     def process_json_ld(json_ld):
         """Process json-ld.
