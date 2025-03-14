@@ -41,9 +41,15 @@ class WekoSwordMapper(JsonMapper):
         metadata = self._create_metadata(item_map)
 
         files_info = []
-        for k, v in self.itemtype.schema.get("properties").items():
-            if v.get("title") == "File":
-                files_info.append({"key": k, "items": metadata.get(k)})
+        for v in item_map.values():
+            if not v.endswith(".filename"):
+                continue
+            files_key = v.split(".")[0]
+            files_info.append({
+                "key": files_key,
+                "items": metadata.get(files_key, [])
+            })
+
         files_info = {"files_info": files_info}
 
         res = {**res, **files_info, **metadata}
