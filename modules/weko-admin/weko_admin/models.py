@@ -1164,7 +1164,7 @@ class FeedbackMailSetting(db.Model, Timestamp):
         """
         try:
             with db.session.begin_nested():
-                settings = cls.query.all()[0]
+                settings = cls.query.filter_by(repository_id=repo_id).first()
                 settings.account_author = account_author
                 settings.manual_mail = manual_mail
                 settings.is_sending_feedback = is_sending_feedback

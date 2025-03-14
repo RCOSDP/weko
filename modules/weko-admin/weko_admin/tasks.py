@@ -36,7 +36,7 @@ from invenio_stats.utils import QueryCommonReportsHelper, \
 
 from weko_admin.api import TempDirInfo
 
-from .models import AdminSettings, StatisticsEmail
+from .models import AdminSettings, StatisticsEmail, FeedbackMailSetting
 from .utils import StatisticMail, get_user_report_data, package_reports ,elasticsearch_reindex
 from .views import manual_send_site_license_mail 
 from celery.task.control import inspect
@@ -185,7 +185,10 @@ def check_send_all_reports():
 def send_feedback_mail():
     """Check Redis periodically for when to run a task."""
     with current_app.app_context():
-        StatisticMail.send_mail_to_all()
+        setting = FeedbackMailSetting.get_feedback_email_setting_by_repo(repo_id='Root Index')
+        if setting:
+            if setting[0].is_sending_feedback:
+                StatisticMail.send_mail_to_all()
 
 
 def _due_to_run(schedule):
