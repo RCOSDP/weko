@@ -4157,7 +4157,7 @@ def handle_check_authors_prefix(list_record):
         list_record (list[dict]): List record import.
     """
     settings = AuthorsPrefixSettings.query.all()
-    allowed_scheme = [setting.prefix for setting in settings]
+    allowed_scheme = [setting.scheme for setting in settings]
 
     for item in list_record:
         errors = []
