@@ -357,12 +357,20 @@ def delete_version(recid):
             pid_without_ver.pid_value)
         if weko_record:
             weko_record.update_item_link(latest_pid.pid_value)
+        # upate index of new lastest_pid
+        list_index = parent_deposit.get('path', [])
+        if list_index:
+            data = {"index": list_index}
+            latest_record = WekoRecord.get_record_by_pid(latest_version)
+            latest_deposit = WekoDeposit(latest_record, latest_record.model)
+            latest_deposit.update(data, latest_deposit.item_metadata)
+            latest_deposit.commit()
     # update draft item
-    draft_pid = PersistentIdentifier.get(
-        'recid',
-        '{}.0'.format(id_without_version)
-    )
-    if not is_workflow_activity_work(draft_pid.object_uuid):
+    draft_pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid',
+        pid_value='{}.0'.format(id_without_version)
+    ).one_or_none()
+    if draft_pid and not is_workflow_activity_work(draft_pid.object_uuid):
         draft_deposit = WekoDeposit.get_record(
             draft_pid.object_uuid)
         new_draft_record = draft_deposit. \
