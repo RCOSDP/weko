@@ -251,9 +251,11 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
             mock_flash = mocker.patch("weko_accounts.views.flash")
             client.get(url)
             mock_flash.assert_called_with("FAILED bind_relation_info!",category="error")
+            assert redis_connect.redis.exists("Shib-Session-1111") is False
         with patch("weko_accounts.views.ShibUser.bind_relation_info",return_value=True):
             # ShibUser.check_in is error
             with patch("weko_accounts.views.ShibUser.check_in",return_value="test_error"):
+                redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
                 mock_flash = mocker.patch("weko_accounts.views.flash")
                 client.get(url)
                 mock_flash.assert_called_with("test_error",category="error")

@@ -255,6 +255,7 @@ def confirm_user_without_page():
         # bind relation info
         if not shib_user.bind_relation_info(cache_val.get('shib_mail')):
             flash('FAILED bind_relation_info!', category='error')
+            datastore.delete(cache_key)
             return _redirect_method()
 
         # check in
