@@ -78,6 +78,7 @@ class MockRecordIndexer:
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_update_authorInfo -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 def test_update_authorInfo(app, db, records,mocker):
+    raise Exception("test_update_authorInfo")
     app.config.update(WEKO_SEARCH_MAX_RESULT=1)
     mocker.patch("weko_deposit.tasks.WekoDeposit.update_author_link")
     mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
@@ -222,4 +223,341 @@ def test_update_authorInfo(app, db, records,mocker):
     with patch("weko_deposit.tasks.RecordsSearch", mock_recordssearch):
         with patch("weko_deposit.tasks.RecordIndexer", MockRecordIndexer):
             update_items_by_authorInfo(["1","xxx"], _target)
+
+from sqlalchemy.exc import SQLAlchemyError
+import pytest
+from mock import patch
+from weko_deposit.tasks import _get_author_prefix, _get_affiliation_id, _process
+from weko_authors.models import AuthorsPrefixSettings
+
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestUpdateItemsByAuthorInfo -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+class TestUpdateItemsByAuthorInfo:
+    def test_update_items_by_authorInfo_success(self,  db, app):
+        with patch('weko_deposit.tasks._get_author_prefix') as mock_get_author_prefix, \
+                patch('weko_deposit.tasks._get_affiliation_id') as mock_get_affiliation_id, \
+                patch('weko_deposit.tasks._process') as mock_process, \
+                patch('weko_deposit.tasks.get_origin_data') as mock_get_origin_data, \
+                patch('weko_deposit.tasks.update_db_es_data') as mock_update_db_es_data, \
+                patch('weko_deposit.tasks.delete_cache_data') as mock_delete_cache_data, \
+                patch('weko_deposit.tasks.update_cache_data') as mock_update_cache_data:
+            
+            mock_get_author_prefix.return_value = {}
+            mock_get_affiliation_id.return_value = {}
+            mock_process.return_value = (1, False)
+            mock_get_origin_data.return_value = []
+            mock_update_db_es_data.return_value = None
+            mock_delete_cache_data.return_value = None
+            mock_update_cache_data.return_value = None
+            
+            user_id = 1
+            target = {"pk_id": "1", "authorIdInfo": [{"idType": "1", "authorId": "weko_id_1", "authorIdShowFlg": "true"}]}
+            origin_pkid_list = ["1"]
+            origin_id_list = ["weko_id_1"]
+            update_gather_flg = True
+            force_change = False
+            
+            update_items_by_authorInfo(user_id, target, origin_pkid_list, origin_id_list, update_gather_flg, force_change)
+            
+            mock_process.assert_called()
+            mock_get_origin_data.assert_called()
+            mock_update_db_es_data.assert_called()
+            mock_delete_cache_data.assert_called()
+            mock_update_cache_data.assert_called()
+                
+    # Test for update_gather_flg = False and 「if not next」
+    def test_update_items_by_authorInfo_success2(self, db, app):
+        with patch('weko_deposit.tasks._get_author_prefix') as mock_get_author_prefix, \
+                patch('weko_deposit.tasks._get_affiliation_id') as mock_get_affiliation_id, \
+                patch('weko_deposit.tasks._process') as mock_process, \
+                patch('weko_deposit.tasks.get_origin_data') as mock_get_origin_data, \
+                patch('weko_deposit.tasks.update_db_es_data') as mock_update_db_es_data, \
+                patch('weko_deposit.tasks.delete_cache_data') as mock_delete_cache_data, \
+                patch('weko_deposit.tasks.update_cache_data') as mock_update_cache_data:
+            
+            mock_get_author_prefix.return_value = {}
+            mock_get_affiliation_id.return_value = {}
+            mock_process.side_effect = [(1, True), (2, False)]  # 1度目と2度目のreturn_valueを設定
+            mock_get_origin_data.return_value = []
+            mock_update_db_es_data.return_value = None
+            mock_delete_cache_data.return_value = None
+            mock_update_cache_data.return_value = None
+            
+            user_id = 1
+            target = {"pk_id": "1", "authorIdInfo": [{"idType": "1", "authorId": "weko_id_1", "authorIdShowFlg": "true"}]}
+            origin_pkid_list = ["1"]
+            origin_id_list = ["weko_id_1"]
+            update_gather_flg = False
+            force_change = False
+            
+            update_items_by_authorInfo(user_id, target, origin_pkid_list, origin_id_list, update_gather_flg, force_change)
+            
+            mock_process.assert_called()
+            mock_get_origin_data.assert_not_called()
+            mock_update_db_es_data.assert_not_called()
+            mock_delete_cache_data.assert_not_called()
+            mock_update_cache_data.assert_not_called()
+                
+    def test_update_items_by_authorInfo_sqlalchemy_error(self, db, app):
+        with patch('weko_deposit.tasks._get_author_prefix') as mock_get_author_prefix, \
+                patch('weko_deposit.tasks._get_affiliation_id') as mock_get_affiliation_id, \
+                patch('weko_deposit.tasks._process') as mock_process, \
+                patch('weko_deposit.tasks.get_origin_data') as mock_get_origin_data, \
+                patch('weko_deposit.tasks.update_db_es_data') as mock_update_db_es_data, \
+                patch('weko_deposit.tasks.delete_cache_data') as mock_delete_cache_data, \
+                patch('weko_deposit.tasks.update_cache_data') as mock_update_cache_data, \
+                patch('weko_deposit.tasks.db.session.rollback') as mock_db_rollback, \
+                patch('weko_deposit.tasks.update_items_by_authorInfo.retry') as mock_retry:
+            
+            mock_get_author_prefix.return_value = {}
+            mock_get_affiliation_id.return_value = {}
+            mock_process.side_effect = SQLAlchemyError("Test SQLAlchemyError")
+            mock_get_origin_data.return_value = []
+            mock_update_db_es_data.return_value = None
+            mock_delete_cache_data.return_value = None
+            mock_update_cache_data.return_value = None
+            mock_db_rollback.return_value = None
+            mock_retry.return_value = None
+            
+            user_id = 1
+            target = {"pk_id": "1", "authorIdInfo": [{"idType": "1", "authorId": "weko_id_1", "authorIdShowFlg": "true"}]}
+            origin_pkid_list = ["1"]
+            origin_id_list = ["weko_id_1"]
+            update_gather_flg = True
+            force_change = False
+            
+            update_items_by_authorInfo(user_id, target, origin_pkid_list, origin_id_list, update_gather_flg, force_change)
+            
+            mock_process.assert_called()
+            mock_db_rollback.assert_called()
+            mock_retry.assert_called()
+
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestGetAuthorPrefix -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp            
+class TestGetAuthorPrefix:
+    def test_get_author_prefix_with_data(self, db):
+        # 条件: AuthorsPrefixSettings テーブルにデータが存在する
+        weko = AuthorsPrefixSettings(
+        id=1,
+        name="WEKO",
+        scheme="WEKO"
+        )
+        orcid = AuthorsPrefixSettings(
+            id=2,
+            name="ORCID",
+            scheme="ORCID",
+            url="https://orcid.org/##"
+        )
+        cinii = AuthorsPrefixSettings(
+            id=3,
+            name="CiNii",
+            scheme="CiNii",
+            url="https://ci.nii.ac.jp/author/"
+        )
+        db.session.add(weko)
+        db.session.add(orcid)
+        db.session.add(cinii)
+        
+        # 期待結果: 関数はデータを含む辞書を返す
+        expected_result = {'1': {'scheme': 'WEKO', 'url': None},
+                        '2': {'scheme': 'ORCID', 'url': 'https://orcid.org/##'},
+                        '3': {'scheme': 'CiNii', 'url': 'https://ci.nii.ac.jp/author/'}}
+        assert _get_author_prefix() == expected_result
+
+    def test_get_author_prefix_no_data(self, db):
+        # 条件: AuthorsPrefixSettings テーブルにデータが存在しない
+        # 期待結果: 関数は空の辞書を返す
+        assert _get_author_prefix() == {}
+
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestGetAffiliaitonId -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+class TestGetAffiliaitonId:
+# テストケース1: 正常系 - データが存在する場合
+    def test_get_affiliation_id_with_data(self, db):
+        isni = AuthorsAffiliationSettings(
+            id=1,
+            name="ISNI",
+            scheme="ISNI",
+            url="http://www.isni.org/isni/##"
+        )
+        grid = AuthorsAffiliationSettings(
+            id=2,
+            name="GRID",
+            scheme="GRID",
+            url="https://www.grid.ac/institutes/"
+        )
+        ringgold = AuthorsAffiliationSettings(
+            id=3,
+            name="Ringgold",
+            scheme="Ringgold",
+        )
+        db.session.add(isni)
+        db.session.add(grid)
+        db.session.add(ringgold)
+        
+        expected_result = {'1': {'scheme': 'ISNI', 'url': 'http://www.isni.org/isni/##'},
+                        '2': {'scheme': 'GRID', 'url': 'https://www.grid.ac/institutes/'}, 
+                        '3': {'scheme': 'Ringgold', 'url': None}}
+        assert _get_affiliation_id() == expected_result
+
+    # テストケース2: 正常系 - データが存在しない場合
+    def test_get_affiliation_id_no_data(self, db):
+        assert _get_affiliation_id() == {}
+
+import uuid
+from weko_deposit.api import WekoDeposit
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestProcess -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+class TestProcess:
+    
+    class MockWekoDeposit:
+        def __init__(self):
+            self.control_number = '1'
+            
+        def get_record(self):
+            return self
+        
+        def update_author_link_and_weko_link(self):
+            pass
+    
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestProcess::test_process_with_data -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    @patch('weko_deposit.tasks.RecordsSearch')
+    @patch('weko_deposit.tasks._update_author_data')
+    @patch('weko_deposit.tasks.db.session.commit')
+    def test_process_with_data(self, mock_commit, mock_update_author_data, mock_records_search, app, db, mocker):
+        mocker.patch('invenio_indexer.api.RecordIndexer.bulk_index')
+        mocker.patch('invenio_indexer.api.RecordIndexer.process_bulk_queue')
+        with patch('weko_deposit.api.WekoDeposit.get_record', return_value = WekoDeposit({})):
+            mocker.patch('weko_deposit.api.WekoDeposit.update_author_link_and_weko_link')
+            # 条件
+            data_size = 10
+            data_from = 0
+            process_counter = {}
+            target = {"pk_id": "1", "authorIdInfo": [{"idType": "1", "authorId": "weko_id_1", "authorIdShowFlg": "true"}]}
+            origin_pkid_list = ["1"]
+            key_map = {...}
+            author_prefix = {...}
+            affiliation_id = {...}
+            force_change = False
+
+            # モックの設定
+            mock_records_search.return_value.update_from_dict.return_value.execute.return_value.to_dict.return_value = {
+                'hits': {
+                    'hits': [{'_source': {'control_number': '1'}}],
+                    'total': 1
+                }
+            }
+            uuid1 = uuid.uuid4()
+            mock_update_author_data.return_value = (uuid1, [uuid1], set(), {})
+
+            # 実行
+            result = _process(data_size, data_from, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
+
+            # 期待結果
+            assert result == (1, False)
+
+            # if data_total > data_size + data_from
+            mock_records_search.return_value.update_from_dict.return_value.execute.return_value.to_dict.return_value = {
+                'hits': {
+                    'hits': [{'_source': {'control_number': '1'}}],
+                    'total': 11
+                }
+            }
+            result = _process(data_size, data_from, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
+            assert result == (1, True)
+            
+            
+            
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestProcess::test_process_no_data -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    @patch('weko_deposit.tasks.RecordsSearch')
+    @patch('weko_deposit.tasks._update_author_data')
+    @patch('weko_deposit.tasks.db.session.commit')
+    def test_process_no_data(self, mock_commit, mock_update_author_data, mock_records_search, app, db, mocker):
+        mocker.patch('invenio_indexer.api.RecordIndexer.bulk_index')
+        mocker.patch('invenio_indexer.api.RecordIndexer.process_bulk_queue')
+        # 条件
+        data_size = 10
+        data_from = 0
+        process_counter = {}
+        target = {"pk_id": "1", "authorIdInfo": [{"idType": "1", "authorId": "weko_id_1", "authorIdShowFlg": "true"}]}
+        origin_pkid_list = ["1"]
+        key_map = {...}
+        author_prefix = {...}
+        affiliation_id = {...}
+        force_change = False
+
+        # モックの設定
+        mock_records_search.return_value.update_from_dict.return_value.execute.return_value.to_dict.return_value = {
+            'hits': {
+                'hits': [],
+                'total': 0
+            }
+        }
+
+        # 実行
+        result = _process(data_size, data_from, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
+
+        # 期待結果
+        assert result == (0, False)
+        
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestProcess::test_process_first_retry_error -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    @patch('weko_deposit.tasks.RecordsSearch')
+    @patch('weko_deposit.tasks._update_author_data')
+    @patch('weko_deposit.tasks.db.session.commit')
+    def test_process_first_retry_error(self, mock_commit, mock_update_author_data, mock_records_search, app):
+        # 条件
+        data_size = 10
+        data_from = 0
+        process_counter = {}
+        target = {"pk_id": "1", "authorIdInfo": [{"idType": "1", "authorId": "weko_id_1", "authorIdShowFlg": "true"}]}
+        origin_pkid_list = ["1"]
+        key_map = {...}
+        author_prefix = {...}
+        affiliation_id = {...}
+        force_change = False
+
+        # モックの設定
+        mock_records_search.return_value.update_from_dict.return_value.execute.return_value.to_dict.return_value = {
+            'hits': {
+                'hits': [{'_source': {'control_number': '1'}}],
+                'total': 1
+            }
+        }
+        mock_update_author_data.return_value = ('uuid', ['uuid'], set(), {})
+
+        # 実行と期待結果
+        with pytest.raises(Exception):
+            _process(data_size, data_from, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
+            
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestProcess::test_process_second_retry_error -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    @patch('weko_deposit.tasks.RecordsSearch')
+    @patch('weko_deposit.tasks._update_author_data')
+    @patch('weko_deposit.tasks.db.session.commit')
+    def test_process_second_retry_error(self, mock_commit, mock_update_author_data, mock_records_search, app, db, mocker):
+        mocker.patch('invenio_indexer.api.RecordIndexer.bulk_index')
+        mocker.patch('invenio_indexer.api.RecordIndexer.process_bulk_queue')
+        # 条件
+        data_size = 10
+        data_from = 0
+        process_counter = {}
+        target = {"pk_id": "1", "authorIdInfo": [{"idType": "1", "authorId": "weko_id_1", "authorIdShowFlg": "true"}]}
+        origin_pkid_list = ["1"]
+        key_map = {...}
+        author_prefix = {...}
+        affiliation_id = {...}
+        force_change = False
+
+        # モックの設定
+        mock_records_search.return_value.update_from_dict.return_value.execute.return_value.to_dict.return_value = {
+            'hits': {
+                'hits': [{'_source': {'control_number': '1'}}],
+                'total': 1
+            }
+        }
+        uuid1 = uuid.uuid4()
+        mock_update_author_data.return_value = (uuid1, [uuid1], set(), {})
+
+        # 実行と期待結果
+        with pytest.raises(Exception):
+            _process(data_size, data_from, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
+            
+
+
+
 
