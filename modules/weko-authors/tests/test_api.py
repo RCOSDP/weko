@@ -269,4 +269,80 @@ class TestWekoAuthors:
         
         assert data == [[None,None,None,None,None,None,None,None,None,None,None]]
         
+from sqlalchemy.exc import SQLAlchemyError
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsMappingMaxItem -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+class TestWekoAuthorsMappingMaxItem:
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsMappingMaxItem::test_mapping_max_item_normal_case -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_mapping_max_item_normal_case(self, app, db, authors, mocker):
+        mappings = [{'json_id': 'authorIdInfo', 'child': [{'json_id': 'idType'}, {'json_id': 'authorId'}]}]
+        affiliation_mappings = {'json_id': 'affiliationInfo', 'child': [{'json_id': 'identifierInfo', 'child': [{'json_id': 'idType'}, {'json_id': 'affiliationId'}]}]}
+        records_count = 2
         
+        result_mappings, result_affiliation_mappings = WekoAuthors.mapping_max_item(mappings, affiliation_mappings, records_count)
+        assert result_mappings[0]['max'] > 1
+        assert 'max' in result_affiliation_mappings
+        
+        result_mappings, result_affiliation_mappings = WekoAuthors.mapping_max_item(mappings, None, records_count)
+        assert result_mappings[0]['max'] > 1
+        assert result_affiliation_mappings["max"]== [{'identifierInfo': 2, 'affiliationNameInfo': 1, 'affiliationPeriodInfo': 1}]
+        
+        # Authors is None
+        mocker.patch("weko_authors.api.WekoAuthors.get_by_range",return_value=[])
+        result_mappings, result_affiliation_mappings = WekoAuthors.mapping_max_item(mappings, None, records_count)
+        assert result_mappings[0]["max"] == 1
+        assert result_affiliation_mappings["max"] == []
+        
+        # Author dont has element
+        author = {
+            "authorIdInfo": [],
+            "affiliationInfo": [{
+                "affiliationNameInfo": [],
+                "identifierInfo": []
+                }]
+        }
+        mappings = [{'json_id': 'authorIdInfo', "max":0, 'child': [{'json_id': 'idType'}, {'json_id': 'authorId'}]}]
+        authors = [Authors(json=author)]
+        mocker.patch("weko_authors.api.WekoAuthors.get_by_range",return_value=authors)
+        result_mappings, result_affiliation_mappings = WekoAuthors.mapping_max_item(mappings, None, records_count)
+        
+        assert result_mappings
+        assert result_affiliation_mappings
+        
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsMappingMaxItem::test_mapping_max_item_sqlalchemy_error -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_mapping_max_item_sqlalchemy_error(self, app, db, authors):
+        with patch('weko_authors.api.WekoAuthors.get_records_count', side_effect=SQLAlchemyError):
+            with pytest.raises(SQLAlchemyError):
+                WekoAuthors.mapping_max_item(None, None, None)
+                    
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsMappingMaxItem::test_mapping_max_item_other_exception -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_mapping_max_item_other_exception(self, app, db, authors):
+        with patch('weko_authors.api.WekoAuthors.get_records_count', side_effect=Exception):
+            with pytest.raises(Exception):
+                WekoAuthors.mapping_max_item(None, None, None)
+                
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsMappingMaxItem::test_mapping_max_item_retry -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_mapping_max_item_retry(self, app, db, authors, mocker):
+        mappings = [{'json_id': 'authorIdInfo', 'child': [{'json_id': 'idType'}, {'json_id': 'authorId'}]}]
+        affiliation_mappings = {'json_id': 'affiliationInfo', 'child': [{'json_id': 'identifierInfo', 'child': [{'json_id': 'idType'}, {'json_id': 'affiliationId'}]}]}
+        records_count = 2
+        
+        # Mock get_by_range to return a fixed value
+        mocker.patch("weko_authors.api.WekoAuthors.get_by_range", return_value=authors)
+
+        # Mock db.session.rollback and sleep to verify retry mechanism
+        with patch('weko_authors.api.db.session.rollback') as mock_rollback, \
+                patch('weko_authors.api.sleep') as mock_sleep:
+            
+            # First call to mapping_max_item raises SQLAlchemyError, second call succeeds
+            with patch("weko_authors.api.WekoAuthors.get_records_count", side_effect=[SQLAlchemyError, 2]):
+                result_mappings, result_affiliation_mappings = WekoAuthors.mapping_max_item(mappings, affiliation_mappings, None)
+                
+                # Verify that rollback and sleep were called
+                mock_rollback.assert_called_once()
+                mock_sleep.assert_called_once()
+                
+                # Verify the results
+                assert result_mappings
+                assert result_affiliation_mappings

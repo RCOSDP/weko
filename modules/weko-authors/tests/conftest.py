@@ -190,6 +190,131 @@ def app(base_app):
 def base_app2(instance_path,search_class):
     """Flask application fixture for ES."""
     app_ = Flask('testapp', instance_path=instance_path)
+    WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION ={
+        "json_id": "affiliationInfo",
+        "child": [
+            {
+                "json_id": "identifierInfo",
+                "child": [
+                    {
+                        "json_id": "affiliationIdType",
+                        "label_en": "Affiliation Identifier Scheme",
+                        "label_jp": "外部所属機関ID 識別子",
+                        "validation": {
+                            "validator": {
+                                "class_name": "weko_authors.contrib.validation",
+                                "func_name": "validate_affiliation_identifier_scheme"
+                            },
+                            "required": {
+                                "if": [
+                                    "affiliationId"
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "json_id": "affiliationId",
+                        "label_en": "Affiliation Identifier",
+                        "label_jp": "外部所属機関ID",
+                        "validation": {
+                            "required": {
+                                "if": [
+                                    "affiliationIdType"
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "json_id": "identifierShowFlg",
+                        "label_en": "Affiliation Identifier Display",
+                        "label_jp": "外部所属機関ID 表示／非表示",
+                        "mask": {
+                            "true": "Y",
+                            "false": "N"
+                        }
+                    }
+                ]
+            },
+            {
+                "json_id": "affiliationNameInfo",
+                "child": [
+                    {
+                        "json_id": "affiliationName",
+                        "label_en": "Affiliation Name",
+                        "label_jp": "外部所属機関名"
+                    },
+                    {
+                        "json_id": "affiliationNameLang",
+                        "label_en": "Language",
+                        "label_jp": "言語",
+                        "validation": {
+                            "map": [
+                                "ja",
+                                "ja-Kana",
+                                "en",
+                                "fr",
+                                "it",
+                                "de",
+                                "es",
+                                "zh-cn",
+                                "zh-tw",
+                                "ru",
+                                "la",
+                                "ms",
+                                "eo",
+                                "ar",
+                                "el",
+                                "ko"
+                            ]
+                        }
+                    },
+                    {
+                        "json_id": "affiliationNameShowFlg",
+                        "label_en": "Affiliation Name Display",
+                        "label_jp": "外部所属機関名・言語 表示／非表示",
+                        "mask": {
+                            "true": "Y",
+                            "false": "N"
+                        },
+                        "validation": {
+                            "map": [
+                                "Y",
+                                "N"
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "json_id": "affiliationPeriodInfo",
+                "child": [
+                    {
+                        "json_id": "periodStart",
+                        "label_en": "Affiliation Period Start",
+                        "label_jp": "外部所属機関 所属期間 開始日",
+                        "validation": {
+                            "validator": {
+                                "class_name": "weko_authors.contrib.validation",
+                                "func_name": "validate_affiliation_period_start"
+                            }
+                        }
+                    },
+                    {
+                        "json_id": "periodEnd",
+                        "label_en": "Affiliation Period End",
+                        "label_jp": "外部所属機関 所属期間 終了日",
+                        "validation": {
+                            "validator": {
+                                "class_name": "weko_authors.contrib.validation",
+                                "func_name": "validate_affiliation_period_end"
+                            }
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+
     app_.config.update(
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
@@ -220,6 +345,10 @@ def base_app2(instance_path,search_class):
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
         SEARCH_ELASTIC_HOSTS=os.environ.get("SEARCH_ELASTIC_HOSTS", "elasticsearch"),
+        WEKO_AUTHORS_EXPORT_BATCH_SIZE=2,
+        WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION=WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION,
+        WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY=2,
+        WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL=1
     )
     Babel(app_)
     InvenioDB(app_)
