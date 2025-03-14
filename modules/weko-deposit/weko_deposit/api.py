@@ -1595,21 +1595,20 @@ class WekoDeposit(Deposit):
         """
         if index_id:
             index_id = str(index_id)
-        obj_ids = next((cls.indexer.get_pid_by_es_scroll(index_id, only_latest_version=True)), [])
-        removed_records = []
+        obj_ids = next((cls.indexer.get_pid_by_es_scroll(index_id)), [])
         for obj_uuid in obj_ids:
             r = RecordMetadata.query.filter_by(id=obj_uuid).first()
             if r.json['recid'] in ignore_items:
                 continue
             r.json['path'].remove(index_id)
+            if index_id in r.json.get('_oai', {}).get('sets', []):
+                r.json['_oai']['sets'].remove(index_id)
             flag_modified(r, 'json')
             if r.json and not r.json['path']:
                 from weko_records_ui.utils import soft_delete
                 soft_delete(obj_uuid)
-                removed_records.append(r)
-        for r in removed_records:
             dep = WekoDeposit(r.json, r)
-            dep.indexer.update_es_data(dep, update_revision=False)
+            dep.indexer.update_es_data(dep, update_revision=False, update_oai=True)
 
     def update_pid_by_index_tree_id(self, path):
         """ 

@@ -130,8 +130,9 @@ def get_record_sets(record):
             yield spec
 
     # get list of sets that match using percolator
-    index, doc_type = RecordIndexer().record_to_index(record)
     document = record.dumps()
+    document.pop('$schema', None)
+    index, doc_type = RecordIndexer().record_to_index(document)
 
     percolator_doc_type = _get_percolator_doc_type(index)
     _create_percolator_mapping(index, percolator_doc_type)
