@@ -1021,10 +1021,10 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
     def post_v1(self, **kwargs):
         """Create a new index tree node."""
         try:
-            try:
-                request_data = request.get_json()
-            except BadRequest:
-                request_data = {} 
+            request_data = request.get_json() or {}
+
+            if not request_data:
+                raise BadRequest("Request body is empty or invalid JSON format.")
 
             raw_index_data = request_data.get("index",{})
            
@@ -1039,6 +1039,9 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                 pid=raw_index_data.get("parent_id", "0"),
                 indexes=indexes
             )
+            
+            if not create_result:
+                return make_response(jsonify({'status': 500, 'error': 'Internal Server Error: Failed to create index'}), 500)
             
             index_data = {
                 "id": index_id,
@@ -1063,9 +1066,6 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                 "online_issn": raw_index_data.get("online_issn", ""),
             }
             
-            if not create_result:
-                return make_response(jsonify({'status': 500, 'error': 'Internal Server Error: Failed to create index'}), 500)
-
             updated_index = self.record_class.update(index_id, **index_data)
 
             if not updated_index:
@@ -1103,7 +1103,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             
             return make_response(jsonify(response_data), 200)
 
-        except (SameContentException, PermissionError, IndexNotFound404Error) as e:
+        except (SameContentException, PermissionError, IndexNotFound404Error, BadRequest) as e:
             raise e
 
         except SQLAlchemyError:
