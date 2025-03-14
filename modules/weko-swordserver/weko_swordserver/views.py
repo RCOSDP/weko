@@ -251,7 +251,7 @@ def post_service_document():
                 )
 
         check_result = check_bagit_import_items(file, packaging)
-        register_type = check_result.get("register_type")
+        register_format = check_result.get("register_type")
 
     else:
         check_result, file_format = check_import_items(file, False)
@@ -323,13 +323,13 @@ def post_service_document():
     for item in check_result["list_record"]:
         if not item or item.get("errors"):
             error_msg = (
-                ", ".join(item.get("errors")) 
-                if item and item.get("errors") 
+                ", ".join(item.get("errors"))
+                if item and item.get("errors")
                 else "item_missing"
             )
             current_app.logger.error(f"Error in check_import_items: {error_msg}")
             raise WekoSwordserverException(
-                f"Error in check_import_items: {error_msg}", 
+                f"Error in check_import_items: {error_msg}",
                 ErrorType.ContentMalformed
             )
 
@@ -344,9 +344,11 @@ def post_service_document():
             )
 
     # Determine registration format
-    if file_format in ("TSV/CSV", "JSON") and register_type == "Direct":
+    if (file_format == "TSV/CSV"
+         or (file_format == "JSON" and register_format == "Direct")):
         register_format = "Direct"
-    elif file_format in ("XML", "JSON") and register_type == "Workflow":
+    elif (file_format == "XML"
+          or (file_format == "JSON" and register_format == "Workflow")):
         register_format = "Workflow"
     else:
         if os.path.exists(data_path):
@@ -355,7 +357,7 @@ def post_service_document():
         raise WekoSwordserverException(
             "Invalid register format in admin settings", ErrorType.ServerError
         )
-        
+
     # Process and register items
     for item in check_result["list_record"]:
         try:
