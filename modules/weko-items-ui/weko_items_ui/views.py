@@ -100,46 +100,57 @@ blueprint = Blueprint(
      __name__,
      url_prefix="/api")
 
-@blueprint_api.route("/get-client-secret", methods=["GET"])
-def get_client_secret():
-    """Database から client_secret を取得し、JSON で返す。"""
-    certificate = ApiCertificate.query.first()
-
-    if certificate:
-        return jsonify({
-            "client_secret": certificate.client_secret
-        })
-    else:
-        return jsonify({"error": "Client secret not found"}), 404
-
-@blueprint_api.route("/oauth/token", methods=["POST"])
-def get_oauth_token():
-    """OAuth2 トークンを発行"""
-    data = request.json
-    client_id = data.get("client_id")
-    client_secret = data.get("client_secret")
-
-    # DB から `client_secret` を取得して照合
-    certificate = ApiCertificate.query.filter_by(client_id=client_id).first()
-
-    if not certificate or certificate.client_secret != client_secret:
-        return jsonify({"error": "invalid_client"}), 401
-
-    # 仮のトークン
-    access_token = "mocked_token_123456"
-    expires_in = 3600  # 1時間
-
-    return jsonify({
-        "access_token": access_token,
-        "token_type": "Bearer",
-        "expires_in": expires_in
-    })
-
-@blueprint.route("/item-edit")
+@blueprint.route("{}workflow/activity/detail/{}")
+@login_required
 def item_edit():
+    print("URL Called")  # デバッグログ
     """Item edit page with OA Policy API URL from config."""
     oa_policy_api_url = current_app.config.get("WEKO_ITEMS_UI_OA_POLICY_API_URL", "/api/oa_policies")
     return render_template("weko_items_ui/iframe/item_edit.html", api_url=oa_policy_api_url)
+
+@blueprint.route("/oauth/token", methods=["POST"])
+@login_required
+def getAccessToken():
+    """OAuth2 トークンを取得するエンドポイント"""
+    print("OAuth Token Request Received")  # デバッグログ
+    try:
+        data = request.json
+        api_code = data.get("api_code")
+        print("Received JSON:", request.json)
+
+        certificate = ApiCertificate.query.filter_by(api_code=api_code).first()
+        if not certificate:
+            return jsonify({"error": "invalid_client"}), 401  # 認証失敗
+
+        # 既存のトークンが有効なら再利用
+        if certificate.cert_data.get("token") and certificate.cert_data.get("expires_at"):
+            expires_at = datetime.fromisoformat(certificate.cert_data["expires_at"])
+            if expires_at > datetime.now():
+                return jsonify({
+                    "access_token": certificate.cert_data["token"],
+                    "token_type": "Bearer",
+                    "expires_in": (expires_at - datetime.now()).seconds
+                })
+
+        # 新しいトークンを発行
+        new_access_token = secrets.token_urlsafe(40)  # ランダムなトークンを生成
+        expires_in = 3600  # 1時間
+        expires_at = (datetime.now() + timedelta(seconds=expires_in)).isoformat()
+
+        # `cert_data` にトークン情報を保存
+        certificate.cert_data["token"] = new_access_token
+        certificate.cert_data["expires_at"] = expires_at
+        db.session.commit()  # データベースの変更を保存
+
+        return jsonify({
+            "access_token": new_access_token,
+            "token_type": "Bearer",
+            "expires_in": expires_in
+        })
+
+    except Exception as e:
+        db.session.rollback()  # データベースのロールバック
+        return jsonify({"error": str(e)}), 500
 
 @blueprint.route('/', methods=['GET'])
 @blueprint.route('/<int:item_type_id>', methods=['GET'])
