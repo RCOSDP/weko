@@ -78,7 +78,6 @@ class MockRecordIndexer:
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_update_authorInfo -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 def test_update_authorInfo(app, db, records,mocker):
-    raise Exception("test_update_authorInfo")
     app.config.update(WEKO_SEARCH_MAX_RESULT=1)
     mocker.patch("weko_deposit.tasks.WekoDeposit.update_author_link")
     mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
@@ -227,7 +226,7 @@ def test_update_authorInfo(app, db, records,mocker):
 from sqlalchemy.exc import SQLAlchemyError
 import pytest
 from mock import patch
-from weko_deposit.tasks import _get_author_prefix, _get_affiliation_id, _process
+from weko_deposit.tasks import _get_author_prefix, _get_affiliation_id, _process, _change_to_meta, _update_author_data, update_items_by_authorInfo
 from weko_authors.models import AuthorsPrefixSettings
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestUpdateItemsByAuthorInfo -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -558,6 +557,490 @@ class TestProcess:
             _process(data_size, data_from, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
             
 
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestChangeToMeta -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+class TestChangeToMeta:
+    # テストケース1: 正常系 - 強制変更フラグがオフの場合
+    def test_change_to_meta_force_change_false(self, app, db):
+        # 条件
+        target = {
+            "authorIdInfo": [
+                {"idType": "1", "authorId": "weko_id_1", "authorIdShowFlg": "true"}
+            ]
+        }
+        author_prefix = {
+            "1": {"scheme": "WEKO", "url": "https://weko.example.com/##"}
+        }
+        affiliation_id = {}
+        key_map = {
+            "id_scheme_key": "nameIdentifierScheme",
+            "id_key": "nameIdentifier",
+            "id_uri_key": "nameIdentifierURI",
+            "ids_key": "nameIdentifiers"
+        }
+        force_change = False
+
+        # 期待結果
+        expected_target_id = "weko_id_1"
+        expected_meta = {
+            "nameIdentifiers": [
+                {
+                    "nameIdentifierScheme": "WEKO",
+                    "nameIdentifier": "weko_id_1",
+                    "nameIdentifierURI": "https://weko.example.com/weko_id_1"
+                }
+            ]
+        }
+
+        # 実行と検証
+        target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, key_map, force_change)
+        assert target_id == expected_target_id
+        assert meta == expected_meta
+
+    # テストケース2: 正常系 - 強制変更フラグがオンの場合
+    def test_change_to_meta_force_change_true1(self, app, db):
+        # 条件
+        target = {
+            "authorIdInfo": [
+                {"idType": "1", "authorId": "weko_id_1", "authorIdShowFlg": "true"}
+            ],
+            "authorNameInfo": [
+                {"nameShowFlg": "true", "familyName": "Test", "firstName": "User", "language": "en"}
+            ],
+            "emailInfo": [
+                {"email": "test@example.com"}
+            ],
+            "affiliationInfo": [
+                {
+                    "identifierInfo": [
+                        {"identifierShowFlg": "true", "affiliationIdType": "1", "affiliationId": "aff_id_1"}
+                    ],
+                    "affiliationNameInfo": [
+                        {"affiliationNameShowFlg": "true", "affiliationName": "Test Affiliation", "affiliationNameLang": "en"}
+                    ]
+                }
+            ]
+        }
+        author_prefix = {
+            "1": {"scheme": "WEKO", "url": "https://weko.example.com/##"}
+        }
+        affiliation_id = {
+            "1": {"scheme": "Affiliation", "url": "https://affiliation.example.com/##"}
+        }
+        key_map = {
+            "id_scheme_key": "nameIdentifierScheme",
+            "id_key": "nameIdentifier",
+            "id_uri_key": "nameIdentifierURI",
+            "ids_key": "nameIdentifiers",
+            "fnames_key": "familyNames",
+            "fname_key": "familyName",
+            "fname_lang_key": "familyNameLang",
+            "gnames_key": "givenNames",
+            "gname_key": "givenName",
+            "gname_lang_key": "givenNameLang",
+            "names_key": "names",
+            "name_key": "name",
+            "name_lang_key": "nameLang",
+            "mails_key": "mails",
+            "mail_key": "mail",
+            "affiliations_key": "affiliations",
+            "affiliation_ids_key": "nameIdentifiers",
+            "affiliation_id_key": "nameIdentifier",
+            "affiliation_id_uri_key": "nameIdentifierURI",
+            "affiliation_id_scheme_key": "nameIdentifierScheme",
+            "affiliation_names_key": "affiliationNames",
+            "affiliation_name_key": "affiliationName",
+            "affiliation_name_lang_key": "affiliationNameLang"
+        }
+        force_change = True
+
+        # 期待結果
+        expected_target_id = "weko_id_1"
+        expected_meta = {
+            "nameIdentifiers": [
+                {
+                    "nameIdentifierScheme": "WEKO",
+                    "nameIdentifier": "weko_id_1",
+                    "nameIdentifierURI": "https://weko.example.com/weko_id_1"
+                }
+            ],
+            "familyNames": [
+                {"familyName": "Test", "familyNameLang": "en"}
+            ],
+            "givenNames": [
+                {"givenName": "User", "givenNameLang": "en"}
+            ],
+            "names": [
+                {"name": "Test, User", "nameLang": "en"}
+            ],
+            "mails": [
+                {"mail": "test@example.com"}
+            ],
+            "affiliations": [
+                {
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "Affiliation",
+                            "nameIdentifier": "aff_id_1",
+                            "nameIdentifierURI": "https://affiliation.example.com/aff_id_1"
+                        }
+                    ],
+                    "affiliationNames": [
+                        {"affiliationName": "Test Affiliation", "affiliationNameLang": "en"}
+                    ]
+                }
+            ]
+        }
+
+        # 実行と検証
+        target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, key_map, force_change)
+        assert target_id == expected_target_id
+        assert meta == expected_meta
 
 
+    # テストケース3: 正常系 - 強制変更フラグがオンの場合,URLに♯♯なし
+    def test_change_to_meta_force_change_true2(self, app, db):
+        # 条件
+        target = {
+            "authorIdInfo": [
+                {"idType": "1", "authorId": "weko_id_1", "authorIdShowFlg": "true"}
+            ],
+            "authorNameInfo": [
+                {"nameShowFlg": "true", "familyName": "Test", "firstName": "User", "language": "en"}
+            ],
+            "emailInfo": [
+                {"email": "test@example.com"}
+            ],
+            "affiliationInfo": [
+                {
+                    "identifierInfo": [
+                        {"identifierShowFlg": "true", "affiliationIdType": "1", "affiliationId": "aff_id_1"}
+                    ],
+                    "affiliationNameInfo": [
+                        {"affiliationNameShowFlg": "true", "affiliationName": "Test Affiliation", "affiliationNameLang": "en"}
+                    ]
+                }
+            ]
+        }
+        author_prefix = {
+            "1": {"scheme": "WEKO", "url": "https://weko.example.com/"}
+        }
+        affiliation_id = {
+            "1": {"scheme": "Affiliation", "url": "https://affiliation.example.com/"}
+        }
+        key_map = {
+            "id_scheme_key": "nameIdentifierScheme",
+            "id_key": "nameIdentifier",
+            "id_uri_key": "nameIdentifierURI",
+            "ids_key": "nameIdentifiers",
+            "fnames_key": "familyNames",
+            "fname_key": "familyName",
+            "fname_lang_key": "familyNameLang",
+            "gnames_key": "givenNames",
+            "gname_key": "givenName",
+            "gname_lang_key": "givenNameLang",
+            "names_key": "names",
+            "name_key": "name",
+            "name_lang_key": "nameLang",
+            "mails_key": "mails",
+            "mail_key": "mail",
+            "affiliations_key": "affiliations",
+            "affiliation_ids_key": "nameIdentifiers",
+            "affiliation_id_key": "nameIdentifier",
+            "affiliation_id_uri_key": "nameIdentifierURI",
+            "affiliation_id_scheme_key": "nameIdentifierScheme",
+            "affiliation_names_key": "affiliationNames",
+            "affiliation_name_key": "affiliationName",
+            "affiliation_name_lang_key": "affiliationNameLang"
+        }
+        force_change = True
 
+        # 期待結果
+        expected_target_id = "weko_id_1"
+        expected_meta = {
+            "nameIdentifiers": [
+                {
+                    "nameIdentifierScheme": "WEKO",
+                    "nameIdentifier": "weko_id_1",
+                    "nameIdentifierURI": "https://weko.example.com/weko_id_1"
+                }
+            ],
+            "familyNames": [
+                {"familyName": "Test", "familyNameLang": "en"}
+            ],
+            "givenNames": [
+                {"givenName": "User", "givenNameLang": "en"}
+            ],
+            "names": [
+                {"name": "Test, User", "nameLang": "en"}
+            ],
+            "mails": [
+                {"mail": "test@example.com"}
+            ],
+            "affiliations": [
+                {
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "Affiliation",
+                            "nameIdentifier": "aff_id_1",
+                            "nameIdentifierURI": "https://affiliation.example.com/"
+                        }
+                    ],
+                    "affiliationNames": [
+                        {"affiliationName": "Test Affiliation", "affiliationNameLang": "en"}
+                    ]
+                }
+            ]
+        }
+
+        # 実行と検証
+        target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, key_map, force_change)
+        assert target_id == expected_target_id
+        assert meta == expected_meta
+
+
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestChangeToMeta::test_change_to_meta_other_pattern -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    # テストケース4: 正常系 - 表示フラグがオフの場合
+    def test_change_to_meta_other_pattern(self, app, db):
+        # 条件
+        target = {
+            "authorIdInfo": [
+                {"idType": "1", "authorId": "weko_id_1", "authorIdShowFlg": "false"}
+            ],
+            "authorNameInfo": [
+                {"nameShowFlg": "false", "familyName": "Test", "firstName": "User", "language": "en"}
+            ],
+            "emailInfo": [
+                {"email": "test@example.com"}
+            ],
+            "affiliationInfo": [
+                {
+                    "identifierInfo": [
+                        {"identifierShowFlg": "false", "affiliationIdType": "1", "affiliationId": "aff_id_1"}
+                    ],
+                    "affiliationNameInfo": [
+                        {"affiliationNameShowFlg": "false", "affiliationName": "Test Affiliation", "affiliationNameLang": "en"}
+                    ]
+                }
+            ]
+        }
+        author_prefix = {
+            "1": {"scheme": "WEKO", "url": "https://weko.example.com/"}
+        }
+        affiliation_id = {
+            "1": {"scheme": "Affiliation", "url": "https://affiliation.example.com/"}
+        }
+        key_map = {
+            "id_scheme_key": "nameIdentifierScheme",
+            "id_key": "nameIdentifier",
+            "id_uri_key": "nameIdentifierURI",
+            "ids_key": "nameIdentifiers",
+            "fnames_key": "familyNames",
+            "fname_key": "familyName",
+            "fname_lang_key": "familyNameLang",
+            "gnames_key": "givenNames",
+            "gname_key": "givenName",
+            "gname_lang_key": "givenNameLang",
+            "names_key": "names",
+            "name_key": "name",
+            "name_lang_key": "nameLang",
+            "mails_key": "mails",
+            "mail_key": "mail",
+            "affiliations_key": "affiliations",
+            "affiliation_ids_key": "nameIdentifiers",
+            "affiliation_id_key": "nameIdentifier",
+            "affiliation_id_uri_key": "nameIdentifierURI",
+            "affiliation_id_scheme_key": "nameIdentifierScheme",
+            "affiliation_names_key": "affiliationNames",
+            "affiliation_name_key": "affiliationName",
+            "affiliation_name_lang_key": "affiliationNameLang"
+        }
+        force_change = True
+
+        # 期待結果
+        expected_target_id = None
+        expected_meta = {'mails': [{'mail': 'test@example.com'}], 'affiliations': [{'nameIdentifiers': [], 'affiliationNames': []}]}
+        # 実行と検証
+        target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, key_map, force_change)
+        assert target_id == expected_target_id
+        assert meta == expected_meta
+
+
+    # テストケース5: 異常系 - targetが空の場合
+    def test_change_to_meta_empty_target(self, app, db):
+        # 条件
+        target = {}
+        author_prefix = {}
+        affiliation_id = {}
+        key_map = {}
+        force_change = False
+
+        # 期待結果
+        expected_target_id = None
+        expected_meta = {}
+
+        # 実行と検証
+        target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, key_map, force_change)
+        assert target_id == expected_target_id
+        assert meta == expected_meta
+
+    # テストケース6: 異常系 - authorIdInfoが空の場合
+    def test_change_to_meta_empty_authorIdInfo(self, app, db):
+        # 条件
+        target = {
+            "authorIdInfo": []
+        }
+        author_prefix = {}
+        affiliation_id = {}
+        key_map = {}
+        force_change = False
+
+        # 期待結果
+        expected_target_id = None
+        expected_meta = {}
+
+        # 実行と検証
+        target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, key_map, force_change)
+        assert target_id == expected_target_id
+        assert meta == expected_meta
+
+
+from weko_records.api import ItemsMetadata
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestUpdateAuthorData -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+class TestUpdateAuthorData:
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestUpdateAuthorData::test_update_author_data_success -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    @patch('weko_deposit.tasks.PersistentIdentifier.get')
+    @patch('weko_deposit.tasks.WekoDeposit.get_record')
+    @patch('weko_deposit.tasks.ItemsMetadata.get_record')
+    @patch('weko_deposit.tasks._change_to_meta')
+    @patch('weko_deposit.tasks.WekoDeposit.update_item_by_task')
+    def test_update_author_data_success(self, mock_update_item, mock_change_to_meta, mock_get_record, mock_get_record_items, mock_get_pid, app, db, mocker):
+        mocker.patch("weko_deposit.api.WekoDeposit.update")
+        mocker.patch("weko_deposit.api.WekoDeposit.commit")
+        # 条件
+        item_id = "1"
+        record_ids = []
+        process_counter = {"success_items": [], "fail_items": []}
+        target = {"pk_id": "1", "authorIdInfo": [{"idType": "1", "authorId": "weko_id_1"}]}
+        origin_pkid_list = ["1"]
+        key_map = {"creator": {}, "contributor": {}, "full_name": {}}
+        author_prefix = {}
+        affiliation_id = {}
+        force_change = False
+        dep_items = {
+            "title": "Sample Title",
+            "test":{
+                "attribute_value_mlt": [
+                    {
+                        "nameIdentifiers": [
+                            {"nameIdentifierScheme": "ORCID", "nameIdentifier": "0000-0002-1825-0097"}
+                        ],
+                        "test": [
+                            {"contributorName": "Jane Smith", "lang": "en"}
+                        ]
+                    }
+                ]
+            },
+            "creator": {
+                "attribute_value_mlt": [
+                    {
+                        "nameIdentifiers": [
+                            {"nameIdentifierScheme": "ORCID", "nameIdentifier": "12345"},
+                            {"nameIdentifierScheme": "WEKO", "nameIdentifier": "12345"}
+                        ],
+                        "creatorNames": [
+                            {"creatorName": "John Doe", "creatorNameLang": "en"}
+                        ]
+                    }
+                ]
+            },
+            "contributor": {
+                "attribute_value_mlt": [
+                    {
+                        "nameIdentifiers": [
+                            {"nameIdentifierScheme": "ORCID", "nameIdentifier": "0000-0002-1825-0097"}
+                        ],
+                        "contributorNames": [
+                            {"contributorName": "Jane Smith", "lang": "en"}
+                        ]
+                    }
+                ]
+            },
+            "names":{
+                "attribute_value_mlt": [
+                    {
+                        "nameIdentifiers": [
+                            {"nameIdentifierScheme": "ORCID", "nameIdentifier": "0000-0002-1825-0097"}
+                        ],
+                        "names": [
+                            {"contributorName": "Jane Smith", "lang": "en"}
+                        ]
+                    }
+                ]
+            },
+            "weko_link": {
+                "1": "12345"
+            }
+        }
+                # モックの設定
+            
+        mock_get_pid.return_value = MagicMock(object_uuid="uuid1")
+        mock_get_record.return_value = WekoDeposit({})
+        mock_get_record_items.return_value = WekoDeposit(dep_items)
+        mock_change_to_meta.return_value = ("weko_id_1", {})
+
+        # 実行
+        result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
+        # 期待結果
+        assert result ==  ('uuid1', ['uuid1'], {'1'}, {'1': 'weko_id_1'})
+        assert process_counter["success_items"] == [{"record_id": "1", "author_ids": [], "message": ""}]
+
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestUpdateAuthorData::test_update_author_data_pid_not_exist -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    @patch('weko_deposit.tasks.PersistentIdentifier.get')
+    @patch('weko_deposit.tasks.WekoDeposit.get_record')
+    @patch('weko_deposit.tasks.ItemsMetadata.get_record')
+    def test_update_author_data_pid_not_exist(self, mock_get_record_items, mock_get_record, mock_get_pid, app, db):
+        # 条件
+        item_id = "1"
+        record_ids = []
+        process_counter = {"success_items": [], "fail_items": []}
+        target = {"pk_id": "1", "authorIdInfo": [{"idType": "1", "authorId": "weko_id_1"}]}
+        origin_pkid_list = ["1"]
+        key_map = {"creator": {}, "contributor": {}, "full_name": {}}
+        author_prefix = {}
+        affiliation_id = {}
+        force_change = False
+
+        # モックの設定
+        mock_get_pid.side_effect = PIDDoesNotExistError("pid_type", "pid_value")
+
+        # 実行
+        result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
+
+        # 期待結果
+        assert result == (None, set(), {})
+        assert process_counter["fail_items"] == [{"record_id": "1", "author_ids": [], "message": "PID 1 does not exist."}]
+
+    @patch('weko_deposit.tasks.PersistentIdentifier.get')
+    @patch('weko_deposit.tasks.WekoDeposit.get_record')
+    @patch('weko_deposit.tasks.ItemsMetadata.get_record')
+    def test_update_author_data_exception(self, mock_get_record_items, mock_get_record, mock_get_pid, app, db):
+        # 条件
+        item_id = "1"
+        record_ids = []
+        process_counter = {"success_items": [], "fail_items": []}
+        target = {"pk_id": "1", "authorIdInfo": [{"idType": "1", "authorId": "weko_id_1"}]}
+        origin_pkid_list = ["1"]
+        key_map = {"creator": {}, "contributor": {}, "full_name": {}}
+        author_prefix = {}
+        affiliation_id = {}
+        force_change = False
+
+        # モックの設定
+        mock_get_pid.side_effect = Exception("Test Exception")
+
+        # 実行
+        result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
+
+        # 期待結果
+        assert result == (None, set(), {})
+        assert process_counter["fail_items"] == [{"record_id": "1", "author_ids": [], "message": "Test Exception"}]

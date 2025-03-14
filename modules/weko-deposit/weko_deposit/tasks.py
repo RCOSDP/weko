@@ -364,7 +364,7 @@ def _update_author_data(item_id, record_ids, process_counter, target, origin_pki
         obj.update(author_data)
         obj.commit()
         process_counter[SUCCESS_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": ""})
-        return pid.object_uuid, records_ids, author_link, weko_link
+        return pid.object_uuid, record_ids, author_link, weko_link
     except PIDDoesNotExistError as pid_error:
         current_app.logger.error("PID {} does not exist.".format(item_id))
         process_counter[FAIL_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": "PID {} does not exist.".format(item_id)})
