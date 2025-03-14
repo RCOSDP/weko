@@ -202,7 +202,7 @@ class UserView(ModelView):
 
     _system_role = os.environ.get('INVENIO_ROLE_SYSTEM',
                                   'System Administrator')
-    _repo_role = os.environ.get('INVENIO_ROLE_REPOSITORY'
+    _repo_role = os.environ.get('INVENIO_ROLE_REPOSITORY',
                                 'Repository Administrator')
     _com_role = os.environ.get('INVENIO_ROLE_COMMUNITY',
                                'Community Administrator')

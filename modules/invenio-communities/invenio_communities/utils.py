@@ -247,7 +247,7 @@ def get_repository_id_by_item_id(item_id):
     record = Record.get_record(item_id)
     index_id = record.get("path")
     index = Index.get_index_by_id(index_id[0])
-    repository_id = None
+    repository_id = "Root Index"
     while True:
         com = Community.query.filter_by(root_node_id=index.id).first()
         if com:
