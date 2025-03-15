@@ -16,4 +16,4 @@ from weko_notifications.utils import inbox_url, rfc3339
 def test_inbox_url(app):
     with app.app_context():
         assert inbox_url() == "http://inbox:8080/inbox"
-        assert inbox_url(_external=True) == "http://localhost/inbox"
+        assert inbox_url(_external=True) == f"{app.config['THEME_SITEURL']}/inbox"

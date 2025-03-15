@@ -100,40 +100,43 @@ class TestNotifications:
     # def create_item_registared(cls, target_id, actor_id, object_id, **kwargs):
     # .tox/c1/bin/pytest --cov=weko_notifications tests/test_notifications.py::TestNotifications::test_create_item_registared -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
     def test_create_item_registared(self, app, json_notifications):
+        after_registration = json_notifications["after_registration"]
+        after_registration.pop("id")
+
         notification = Notification.create_item_registared(
             target_id=3,
             actor_id=3,
             object_id=2000001,
-            object_name="Test item",
+            object_name="A new record",
             actor_name="Alex",
+            ietf_cite_as="https://doi.org/10.34477/0002000001"
         )
-        assert notification.id is not None
-        assert notification.updated is not None
+
+        assert notification.payload.pop("id") is not None
+        assert notification.payload.pop("updated") is not None
         assert notification.payload["@context"] == COAR_NOTIFY_CONTEXT
         assert notification.activity_type == ActivityType.ANNOUNCE_INGEST.value
-        assert notification.origin == {
-            "id": app.config["THEME_SITEURL"],
-            "inbox": app.config["THEME_SITEURL"] + "/inbox",
-            "type": "Service",
-            }
-        assert notification.target == {
-            "id": app.config["THEME_SITEURL"] + "/user/3",
-            "inbox": app.config["THEME_SITEURL"] + "/inbox",
-            "type": "Person",
-            }
-        assert notification.object == {
-            "id": app.config["THEME_SITEURL"] + "/records/2000001",
-            "object": None,
-            "type": ["Page", "sorg:WebPage"],
-            "name": "Test item",
-            "url": None,
-            "ietf:cite-as": None
-            }
-        assert notification.actor == {
-            "id": app.config["THEME_SITEURL"] + "/user/3",
-            "type": "Person",
-            "name": "Alex",
-            }
-        assert notification.context == {}
-        assert notification.in_reply_to is None
+        assert notification.payload == after_registration
+        assert notification._is_validated == True
+
+    # def create_request_approval(cls, target_id, object_id, actor_id, context_id, **kwargs):
+    # .tox/c1/bin/pytest --cov=weko_notifications tests/test_notifications.py::TestNotifications::test_create_request_approval -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
+    def test_create_request_approval(self, app, json_notifications):
+        offer_approval = json_notifications["offer_approval"]
+        offer_approval.pop("id")
+
+        notification = Notification.create_request_approval(
+            target_id=1,
+            actor_id=3,
+            object_id=2000001,
+            object_name="A new record",
+            context_id="A-20250306-00001",
+            actor_name="Alex"
+        )
+
+        assert notification.payload.pop("id") is not None
+        assert notification.payload.pop("updated") is not None
+        assert notification.payload["@context"] == COAR_NOTIFY_CONTEXT
+        assert notification.activity_type == ActivityType.OFFER_ENDORSE.value
+        assert notification.payload == offer_approval
         assert notification._is_validated == True

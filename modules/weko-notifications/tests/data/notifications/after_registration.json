@@ -9,18 +9,20 @@
     "coar-notify:IngestAction"
   ],
   "origin": {
-    "id": "https://example.repo.nii.ac.jp/",
-    "inbox": "https://example.repo.nii.ac.jp/inbox",
+    "id": "http://test_server.localdomain/",
+    "inbox": "http://test_server.localdomain/inbox",
     "type": "Service"
   },
   "target": {
-    "id": "https://example.repo.nii.ac.jp/user/3",
-    "inbox": "https://example.repo.nii.ac.jp/inbox",
+    "id": "http://test_server.localdomain/user/3",
+    "inbox": "http://test_server.localdomain/inbox",
     "type": "Person"
   },
   "object": {
-    "id": "https://example.repo.nii.ac.jp/records/2000001",
-    "ietf:cite-as": "https://example.repo.nii.ac.jp/records/2000001",
+    "id": "http://test_server.localdomain/records/2000001",
+    "ietf:cite-as": "https://doi.org/10.34477/0002000001",
+    "object": null,
+    "url": null,
     "type": [
       "Page",
       "sorg:WebPage"
@@ -28,7 +30,7 @@
     "name": "A new record"
   },
   "actor": {
-    "id": "https://example.repo.nii.ac.jp/user/3",
+    "id": "http://test_server.localdomain/user/3",
     "type": "Person",
     "name": "Alex"
   }
