@@ -23,6 +23,7 @@
 import orjson
 import re
 import sys
+import pytz
 from datetime import datetime
 from datetime import timezone
 from functools import partial
@@ -33,6 +34,7 @@ from flask_security import current_user
 from flask_babelex import get_timezone
 from invenio_communities.models import Community
 from invenio_records_rest.errors import InvalidQueryRESTError
+from invenio_stats.config import STATS_WEKO_DEFAULT_TIMEZONE
 from weko_index_tree.api import Indexes, Index
 from weko_records.models import ItemTypeName
 from weko_index_tree.utils import get_user_roles
@@ -1126,6 +1128,12 @@ def item_path_search_factory(self, search, index_id=None):
             [dict]: Search query.
 
         """
+        tz = pytz.timezone(STATS_WEKO_DEFAULT_TIMEZONE)
+        now = datetime.now()
+        utc_offset = pytz.utc.localize(now) - tz.localize(now)
+        minutes = int(utc_offset.total_seconds() / 60) if utc_offset else 0
+        offset = f"{'+' if minutes >= 0 else '-'}{abs(minutes)}m"
+        date_range = "now+1d" + offset + "/d"
         query_q = {
             "_source": {"excludes": ["content"]},
             "query": {
@@ -1146,8 +1154,8 @@ def item_path_search_factory(self, search, index_id=None):
                                     "range": {
                                         "field": "publish_date",
                                         "ranges": [
-                                            {"from": "now+1d/d"},
-                                            {"to": "now+1d/d"},
+                                            {"from": date_range},
+                                            {"to": date_range},
                                         ],
                                     },
                                 }
@@ -1254,8 +1262,8 @@ def item_path_search_factory(self, search, index_id=None):
                                         "range": {
                                             "field": "publish_date",
                                             "ranges": [
-                                                {"from": "now+1d/d"},
-                                                {"to": "now+1d/d"},
+                                                {"from": date_range},
+                                                {"to": date_range},
                                             ],
                                         },
                                     }

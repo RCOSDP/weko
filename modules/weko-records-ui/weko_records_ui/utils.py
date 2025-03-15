@@ -252,14 +252,13 @@ def is_open_access(record: Dict, file_name: str) -> bool:
                 if file.get('filename') != file_name:
                     continue
                 access_role = file.get('accessrole')
-                if not file.get('date') or file.get('date')[0] or file.get('date')[0].get('dateValue'):
-                    return False
-                open_access_date = dt.strptime(file.get('date')[0].get('dateValue'),
-                                                '%Y-%m-%d').date()
                 if access_role == 'open_access':
                     return True
-                elif access_role == 'open_date' and open_access_date <= dt.now().date():
-                    return True
+                if access_role == 'open_date':
+                    if file.get('date') and file.get('date')[0] and file.get('date')[0].get('dateValue'):
+                        if dt.strptime(file.get('date')[0].get('dateValue'), 
+                                                '%Y-%m-%d').date() <= dt.now().date():
+                            return True
     return False
 
 

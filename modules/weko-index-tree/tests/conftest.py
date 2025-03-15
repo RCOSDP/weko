@@ -75,6 +75,7 @@ from sqlalchemy_utils.functions import create_database, database_exists, drop_da
 from simplekv.memory.redisstore import RedisStore
 from invenio_oaiharvester.models import HarvestSettings
 from invenio_stats import InvenioStats
+from invenio_stats.config import STATS_WEKO_DEFAULT_TIMEZONE
 from invenio_admin import InvenioAdmin
 from invenio_search import RecordsSearch
 from invenio_pidstore import InvenioPIDStore, current_pidstore
@@ -105,7 +106,6 @@ from weko_workflow import WekoWorkflow
 from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
 from weko_index_tree.models import Index
 from weko_index_tree import WekoIndexTree, WekoIndexTreeREST
-from weko_index_tree.config import WEKO_INDEX_TREE_PUBLIC_DEFAULT_TIMEZONE
 from weko_index_tree.views import blueprint_api
 from weko_index_tree.rest import create_blueprint
 from weko_index_tree.scopes import create_index_scope
@@ -146,7 +146,7 @@ def base_app(instance_path):
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
         WEKO_INDEX_TREE_STATE_PREFIX="index_tree_expand_state",
-        WEKO_INDEX_TREE_PUBLIC_DEFAULT_TIMEZONE = 'Asia/Tokyo',
+        STATS_WEKO_DEFAULT_TIMEZONE = 'Asia/Tokyo',
         REDIS_PORT='6379',
         DEPOSIT_DEFAULT_JSONSCHEMA=DEPOSIT_DEFAULT_JSONSCHEMA,
         SERVER_NAME='TEST_SERVER',

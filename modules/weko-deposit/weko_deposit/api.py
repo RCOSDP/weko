@@ -2419,7 +2419,7 @@ class _FormatSysCreator:
                     if lst_value[i] and lst_value[i].get(lang_key) == language:
                         if name_key in lst_value[i]:
                             lst.append(lst_value[i][name_key])
-                            break
+                            #break
 
     def _get_creator_to_show_popup(self, creators: Union[list, dict],
                                    language: any,

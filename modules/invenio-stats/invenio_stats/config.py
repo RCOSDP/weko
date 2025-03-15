@@ -216,7 +216,7 @@ STATS_AGGREGATION_INDEXES = [
 """Stats aggregation indexes."""
 
 
-STATS_WEKO_DEFAULT_TIMEZONE = get_timezone
+STATS_WEKO_DEFAULT_TIMEZONE = 'Asia/Tokyo'
 """Bucketing should use a different time zone."""
 
 STATS_WEKO_DB_BACKUP_EVENTS = True
