@@ -140,3 +140,27 @@ class TestNotifications:
         assert notification.activity_type == ActivityType.OFFER_ENDORSE.value
         assert notification.payload == offer_approval
         assert notification._is_validated == True
+
+    # def create_item_approved(cls, target_id, object_id, actor_id, context_id, **kwargs):
+    # .tox/c1/bin/pytest --cov=weko_notifications tests/test_notifications.py::TestNotifications::test_create_item_approved -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
+    def test_create_item_approved(self, app, json_notifications):
+        after_approval = json_notifications["after_approval"]
+        after_approval.pop("id")
+        after_approval.pop("inReplyTo")
+
+        notification = Notification.create_item_approved(
+            target_id=3,
+            actor_id=1,
+            object_id=2000001,
+            object_name="A new record",
+            context_id="A-20250306-00001",
+            actor_name="admin",
+            ietf_cite_as="https://doi.org/10.34477/0002000001"
+        )
+
+        assert notification.payload.pop("id") is not None
+        assert notification.payload.pop("updated") is not None
+        assert notification.payload["@context"] == COAR_NOTIFY_CONTEXT
+        assert notification.activity_type == ActivityType.ANNOUNCE_ENDORSE.value
+        assert notification.payload == after_approval
+        assert notification._is_validated == True

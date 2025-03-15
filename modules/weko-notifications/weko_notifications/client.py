@@ -24,10 +24,13 @@ class NotificationClient:
 
         Args:
             notification (Notification): Notification object.
+        Returns:
+            str: Notification ID sent.
         """
         notification.validate() if not notification._is_validated else None
         sender = ldnlib.Sender()
         sender.send(self.inbox, notification.payload)
+        return notification.id
 
     def notifications(self):
         """

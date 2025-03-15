@@ -32,12 +32,15 @@
   "actor": {
     "id": "http://test_server.localdomain/user/1",
     "type": "Person",
-    "name": "ADMIN"
+    "name": "admin"
   },
   "context": {
     "id": "http://test_server.localdomain/workflow/activity/detail/A-20250306-00001",
-    "ietf:cite-as": "https://doi.org/10.34477/2000001",
-    "type": "sorg:ScholarlyArticle"
+    "ietf:cite-as": null,
+    "type": [
+      "Page",
+      "sorg:WebPage"
+    ]
   },
   "inReplyTo": "urn:uuid:7c74da60-3455-485a-9068-83ece6920529"
 }

@@ -2563,6 +2563,11 @@ class WorkActivity(object):
     def notify_item_registered(self, activity_id):
         """Notify item registered.
 
+        Make notification and send to user when item registered.
+        Create user and shared user will be notified.
+
+        Args:
+            activity_id (str): Activity ID.
         """
         try:
             with db.session.begin_nested():
@@ -2612,11 +2617,116 @@ class WorkActivity(object):
             traceback.print_exc()
 
 
+    def notify_request_approval(self, activity_id):
+        """Notify request approval.
+
+        Make notification and send to user when request approval.
+        Users with the authority to approve will be notified.
+
+        Args:
+            activity_id (str): Activity ID.
+        """
+        try:
+            with db.session.begin_nested():
+                activity = self.get_activity_by_id(activity_id)
+                if activity is None:
+                    return
+                # TODO: detect target user for notification
+                list_target_id = []
+
+                recid = (
+                    PersistentIdentifier
+                    .get_by_object("recid", "rec", activity.item_id)
+                )
+                actor_id = activity.activity_login_user
+
+                actor_profile = UserProfile.get_by_userid(actor_id)
+                actor_name = (
+                    actor_profile.username
+                    if actor_profile is not None else None
+                )
+        except SQLAlchemyError as ex:
+            current_app.logger.error(
+                "Error had orrured in database during getting notification "
+                f"parameters for activity: {activity_id}"
+            )
+            traceback.print_exc()
+
+        for target_id in list_target_id:
+            try:
+                Notification.create_request_approval(
+                    target_id, recid.pid_value.split(".")[0], actor_id,
+                    activity_id, actor_name=actor_name, object_name=activity.title
+                ).send(NotificationClient(inbox_url()))
+            except (ValidationError, HTTPError) as ex:
+                current_app.logger.error(
+                    "Error had orrured during sending notification "
+                    f"for activity: {activity_id}"
+                )
+                traceback.print_exc()
+            except Exception as ex:
+                current_app.logger.error(
+                    "Unexpected error had orrured during sending notification "
+                    f"for activity: {activity_id}"
+                )
+                traceback.print_exc()
+
     def notify_item_approved(self, activity_id):
         """Notify approved items.
 
+        Make notification and send to user when item approved.
+        Create user and shared user will be notified.
+
+        Args:
+            activity_id (str): Activity ID.
         """
-        pass
+        try:
+            with db.session.begin_nested():
+                activity = self.get_activity_by_id(activity_id)
+                if activity is None:
+                    return
+
+                list_target_id = [activity.activity_login_user]
+                if activity.shared_user_id != -1:
+                    list_target_id.append(activity.shared_user_id)
+
+                recid = (
+                    PersistentIdentifier
+                    .get_by_object("recid", "rec", activity.item_id)
+                )
+                actor_id = activity.activity_update_user
+
+                actor_profile = UserProfile.get_by_userid(actor_id)
+                actor_name = (
+                    actor_profile.username
+                    if actor_profile is not None else None
+                )
+        except SQLAlchemyError as ex:
+            current_app.logger.error(
+                "Error had orrured in database during getting notification "
+                f"parameters for activity: {activity_id}"
+            )
+            traceback.print_exc()
+
+        for target_id in list_target_id:
+            try:
+                Notification.create_item_approved(
+                    target_id, recid.pid_value.split(".")[0], actor_id,
+                    activity_id, actor_name=actor_name, object_name=activity.title
+                ).send(NotificationClient(inbox_url()))
+            except (ValidationError, HTTPError) as ex:
+                current_app.logger.error(
+                    "Error had orrured during sending notification "
+                    f"for activity: {activity_id}"
+                )
+                traceback.print_exc()
+            except Exception as ex:
+                current_app.logger.error(
+                    "Unexpected error had orrured during sending notification "
+                    f"for activity: {activity_id}"
+                )
+                traceback.print_exc()
+
 
     def notify_item_rejected(self, activity_id):
         """Notify rejected items.

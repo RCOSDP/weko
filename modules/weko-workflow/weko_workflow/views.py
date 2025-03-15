@@ -1690,11 +1690,15 @@ def next_action(activity_id='0', action_id=0, json_data=None):
         comment='',
         action_order=action_order
     )
-    if 'end_action' == next_action_endpoint:
+
+    if next_action_endpoint == "approval":
+        work_activity.notify_request_approval(activity_id)
+
+    if next_action_endpoint == "end_action":
         new_activity_id = None
-        new_activity_id = handle_finish_workflow(deposit,
-                                                 current_pid,
-                                                 recid)
+        new_activity_id = handle_finish_workflow(
+            deposit, current_pid, recid
+        )
         if new_activity_id is None:
             res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
             return jsonify(res.data), 500
@@ -1711,6 +1715,8 @@ def next_action(activity_id='0', action_id=0, json_data=None):
             work_activity.notify_item_approved(activity_id)
         else:
             work_activity.notify_item_registered(activity_id)
+        if next_action_endpoint == "approval":
+            current_app.logger.info("next_action: request approval notification.")
 
         # Call signal to push item data to ES.
         try:
@@ -1904,7 +1910,7 @@ def previous_action(activity_id='0', action_id=0, req=0):
             db.session.delete(pid_identifier)
         db.session.commit()
     except PIDDoesNotExistError as pidNotEx:
-        current_app.logger.info(pidNotEx)
+        current_app.logger.info("doi does not exists.")
 
     if req == -1:
         pre_action = flow.get_item_registration_flow_action(

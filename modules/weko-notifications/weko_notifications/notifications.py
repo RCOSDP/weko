@@ -194,8 +194,8 @@ class Notification(object):
         return self
 
     def set_object(
-            self, id,
-            object=None, object_type=None, ietf_cite_as=None, url=None, name=None
+            self, id, object=None,
+            object_type=None, ietf_cite_as=None, url=None, name=None
     ):
         """Set object entity.
 
@@ -265,8 +265,10 @@ class Notification(object):
 
         Args:
             client (NotificationClient): Notification client.
+        Returns:
+            str: Notification ID sent.
         """
-        client.send(self)
+        return client.send(self)
 
 
     @classmethod
@@ -291,7 +293,9 @@ class Notification(object):
             Notification: Notification instance
         """
         site_index_url = url_for('weko_theme.index', _external=True)
-        item_url = url_for("invenio_records_ui.recid", pid_value=object_id, _external=True)
+        item_url = url_for(
+            "invenio_records_ui.recid", pid_value=object_id, _external=True
+        )
         obj = cls()
         obj.set_type(ActivityType.ANNOUNCE_INGEST)
         obj.set_origin(
@@ -343,7 +347,8 @@ class Notification(object):
             "invenio_records_ui.recid", pid_value=object_id, _external=True
         )
         activity_url = url_for(
-            "weko_workflow.display_activity", activity_id=context_id, _external=True
+            "weko_workflow.display_activity", activity_id=context_id,
+            _external=True
         )
 
         obj = cls()
@@ -360,6 +365,64 @@ class Notification(object):
         )
         obj.set_object(
             id=item_url,
+            object_type=["Page", "sorg:WebPage"],
+            name=kwargs.get("object_name")
+        )
+        obj.set_actor(
+            id=f"{site_index_url}user/{actor_id}",
+            entity_type="Person",
+            name=kwargs.get("actor_name") or "Unknown"
+        )
+        obj.set_context(
+            id=activity_url,
+            entity_type=["Page", "sorg:WebPage"]
+        )
+        return obj.create()
+
+    @classmethod
+    def create_item_approved(
+            cls, target_id, object_id, actor_id, context_id, **kwargs
+        ):
+        """Create item approved notification.
+
+        Create a notification of type Announce,coar-notify:EndorsementAction
+        for the item had approved.
+
+        Args:
+            target_id (int): ID of the target user.
+            object_id (int): ID of the object item.
+            actor_id (int): ID of the actor user.
+            kwargs (dict):
+                object_name (str): Name of the object item. <br>
+                ietf_cite_as (str): IETF Cite As of the object item. <br>
+                actor_name (str): Name of the actor user.
+
+        Returns:
+            Notification: Notification instance
+        """
+        site_index_url = url_for('weko_theme.index', _external=True)
+        item_url = url_for(
+            "invenio_records_ui.recid", pid_value=object_id, _external=True
+        )
+        activity_url = url_for(
+            "weko_workflow.display_activity", activity_id=context_id,
+            _external=True
+        )
+        obj = cls()
+        obj.set_type(ActivityType.ANNOUNCE_ENDORSE)
+        obj.set_origin(
+            id=site_index_url,
+            inbox=inbox_url(_external=True),
+            entity_type="Service"
+        )
+        obj.set_target(
+            id=f"{site_index_url}user/{target_id}",
+            inbox=inbox_url(_external=True),
+            entity_type="Person"
+        )
+        obj.set_object(
+            id=item_url,
+            ietf_cite_as=kwargs.get("ietf_cite_as"),
             object_type=["Page", "sorg:WebPage"],
             name=kwargs.get("object_name")
         )
