@@ -41,4 +41,5 @@ class NotificationClient:
         notifications = consumer.notifications(
             self.inbox, accept="application/ld+json"
         )
+        return notifications
 

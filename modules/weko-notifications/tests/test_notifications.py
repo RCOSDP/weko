@@ -67,6 +67,18 @@ class TestNotifications:
 
         assert str(after_approval["id"]) in result
 
+    # def __eq__(self, other):
+    # .tox/c1/bin/pytest --cov=weko_notifications tests/test_notifications.py::TestNotifications::test__eq__ -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
+    def test__eq__(self, json_notifications):
+        after_approval = json_notifications["after_approval"]
+        offer_approval = json_notifications["offer_approval"]
+        notification = Notification().load(after_approval)
+        notification2 = Notification().load(after_approval)
+        notification3 = Notification().load(offer_approval)
+
+        assert notification == notification2
+        assert notification != notification3
+
     # def create(self):
     # .tox/c1/bin/pytest --cov=weko_notifications tests/test_notifications.py::TestNotifications::test_create -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
     def test_create(self, json_notifications):
@@ -154,7 +166,7 @@ class TestNotifications:
             object_id=2000001,
             object_name="A new record",
             context_id="A-20250306-00001",
-            actor_name="admin",
+            actor_name="Admin",
             ietf_cite_as="https://doi.org/10.34477/0002000001"
         )
 
@@ -163,4 +175,27 @@ class TestNotifications:
         assert notification.payload["@context"] == COAR_NOTIFY_CONTEXT
         assert notification.activity_type == ActivityType.ANNOUNCE_ENDORSE.value
         assert notification.payload == after_approval
+        assert notification._is_validated == True
+
+    # def create_item_rejected(cls, target_id, object_id, actor_id, context_id, **kwargs):
+    # .tox/c1/bin/pytest --cov=weko_notifications tests/test_notifications.py::TestNotifications::test_create_item_rejected -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
+    def test_create_item_rejected(self, app, json_notifications):
+        after_rejection = json_notifications["after_rejection"]
+        after_rejection.pop("id")
+        after_rejection.pop("inReplyTo")
+
+        notification = Notification.create_item_rejected(
+            target_id=3,
+            actor_id=1,
+            object_id=2000001,
+            object_name="A new record",
+            context_id="A-20250306-00001",
+            actor_name="Admin"
+        )
+
+        assert notification.payload.pop("id") is not None
+        assert notification.payload.pop("updated") is not None
+        assert notification.payload["@context"] == COAR_NOTIFY_CONTEXT
+        assert notification.activity_type == ActivityType.ACKNOWLEDGE_AND_REJECT.value
+        assert notification.payload == after_rejection
         assert notification._is_validated == True

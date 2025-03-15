@@ -66,6 +66,10 @@ class Notification(object):
         """Return notification body."""
         return str(self.current_body)
 
+    def __eq__(self, other):
+        """Return True if the value is equal to the current id."""
+        return self.id == other.id
+
     @property
     def id(self):
         """str: Notification ID."""
@@ -410,6 +414,63 @@ class Notification(object):
         )
         obj = cls()
         obj.set_type(ActivityType.ANNOUNCE_ENDORSE)
+        obj.set_origin(
+            id=site_index_url,
+            inbox=inbox_url(_external=True),
+            entity_type="Service"
+        )
+        obj.set_target(
+            id=f"{site_index_url}user/{target_id}",
+            inbox=inbox_url(_external=True),
+            entity_type="Person"
+        )
+        obj.set_object(
+            id=item_url,
+            ietf_cite_as=kwargs.get("ietf_cite_as"),
+            object_type=["Page", "sorg:WebPage"],
+            name=kwargs.get("object_name")
+        )
+        obj.set_actor(
+            id=f"{site_index_url}user/{actor_id}",
+            entity_type="Person",
+            name=kwargs.get("actor_name") or "Unknown"
+        )
+        obj.set_context(
+            id=activity_url,
+            entity_type=["Page", "sorg:WebPage"]
+        )
+        return obj.create()
+
+    @classmethod
+    def create_item_rejected(
+            cls, target_id, object_id, actor_id, context_id, **kwargs
+        ):
+        """Create item rejected notification.
+
+        Create a notification of type Reject for the item had rejected.
+
+        Args:
+            target_id (int): ID of the target user.
+            object_id (int): ID of the object item.
+            actor_id (int): ID of the actor user.
+            kwargs (dict):
+                object_name (str): Name of the object item. <br>
+                ietf_cite_as (str): IETF Cite As of the object item. <br>
+                actor_name (str): Name of the actor user.
+
+        Returns:
+            Notification: Notification instance
+        """
+        site_index_url = url_for('weko_theme.index', _external=True)
+        item_url = url_for(
+            "invenio_records_ui.recid", pid_value=object_id, _external=True
+        )
+        activity_url = url_for(
+            "weko_workflow.display_activity", activity_id=context_id,
+            _external=True
+        )
+        obj = cls()
+        obj.set_type(ActivityType.ACKNOWLEDGE_AND_REJECT)
         obj.set_origin(
             id=site_index_url,
             inbox=inbox_url(_external=True),

@@ -32,7 +32,7 @@
   "actor": {
     "id": "http://test_server.localdomain/user/1",
     "type": "Person",
-    "name": "admin"
+    "name": "Admin"
   },
   "context": {
     "id": "http://test_server.localdomain/workflow/activity/detail/A-20250306-00001",

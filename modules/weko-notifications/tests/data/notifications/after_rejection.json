@@ -8,18 +8,20 @@
     "Reject"
   ],
   "origin": {
-    "id": "https://example.repo.nii.ac.jp/",
-    "inbox": "https://example.repo.nii.ac.jp/inbox",
+    "id": "http://test_server.localdomain/",
+    "inbox": "http://test_server.localdomain/inbox",
     "type": "Service"
   },
   "target": {
-    "id": "https://example.repo.nii.ac.jp/user/3",
-    "inbox": "https://example.repo.nii.ac.jp/inbox",
+    "id": "http://test_server.localdomain/user/3",
+    "inbox": "http://test_server.localdomain/inbox",
     "type": "Person"
   },
   "object": {
-    "id": "https://example.repo.nii.ac.jp/records/2000001",
-    "ietf:cite-as": "https://example.repo.nii.ac.jp/records/2000001",
+    "id": "http://test_server.localdomain/records/2000001",
+    "ietf:cite-as": null,
+    "object": null,
+    "url": null,
     "type": [
       "Page",
       "sorg:WebPage"
@@ -27,14 +29,17 @@
     "name": "A new record"
   },
   "actor": {
-    "id": "https://example.repo.nii.ac.jp/user/1",
+    "id": "http://test_server.localdomain/user/1",
     "type": "Person",
-    "name": "ADMIN"
+    "name": "Admin"
   },
   "context": {
-    "id": "https://example.repo.nii.ac.jp/workflow/activity/detail/A-20250306-00001",
-    "ietf:cite-as": "https://doi.org/10.1101/2000001",
-    "type": "sorg:ScholarlyArticle"
+    "id": "http://test_server.localdomain/workflow/activity/detail/A-20250306-00001",
+    "ietf:cite-as": null,
+    "type": [
+      "Page",
+      "sorg:WebPage"
+    ]
   },
   "inReplyTo": "urn:uuid:4123522e-8211-4bd2-9cef-24892a19b92f"
 }

@@ -49,3 +49,15 @@ class TestNotificationClient:
         notification = Notification().load(after_approval)
 
         client.send(notification)
+
+    # def notifications(self):
+    # .tox/c1/bin/pytest --cov=weko_notifications tests/test_client.py::TestNotificationClient::test_notifications -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
+    def test_notifications(self):
+        inbox = "http://localhost/inbox"
+        client = NotificationClient(inbox)
+        with patch("weko_notifications.client.ldnlib.Consumer") as mock_consumer:
+            mock_consumer.return_value.notifications.return_value = ["1", "2", "3"]
+            notifications = client.notifications()
+            mock_consumer.assert_called_once()
+            mock_consumer.return_value.notifications.assert_called_once_with(inbox, accept="application/ld+json")
+            assert notifications == ["1", "2", "3"]
