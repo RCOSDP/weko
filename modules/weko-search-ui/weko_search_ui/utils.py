@@ -67,7 +67,7 @@ from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
 from invenio_records_rest.errors import InvalidQueryRESTError
 from invenio_search import RecordsSearch
-from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
+from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix, STATS_WEKO_DEFAULT_TIMEZONE
 from invenio_stats.models import StatsEvents
 from invenio_stats.processors import (
     anonymize_user,
@@ -3612,7 +3612,7 @@ def write_files(item_datas, export_path, user_id, retrys):
         name=_run_msg_config,
         user_id=user_id
     )
-    _timezone = current_app.config["STATS_WEKO_DEFAULT_TIMEZONE"]
+    _timezone = STATS_WEKO_DEFAULT_TIMEZONE
     _file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
 
     try:

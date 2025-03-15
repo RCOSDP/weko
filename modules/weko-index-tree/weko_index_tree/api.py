@@ -37,6 +37,7 @@ from invenio_accounts.models import Role
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
+from invenio_stats.config import STATS_WEKO_DEFAULT_TIMEZONE
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.attributes import flag_modified
@@ -1792,7 +1793,7 @@ class Indexes(object):
             list: public index id list
         """
         if not target_date:
-            default_timezone = current_app.config["WEKO_INDEX_TREE_PUBLIC_DEFAULT_TIMEZONE"]
+            default_timezone = STATS_WEKO_DEFAULT_TIMEZONE
             target_date=datetime.now(pytz.timezone(default_timezone)).strftime("%Y-%m-%d %H:%M:%S")
         recursive_t = db.session.query(
             Index.parent.label("pid"),

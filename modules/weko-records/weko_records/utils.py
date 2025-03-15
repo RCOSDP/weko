@@ -1475,13 +1475,22 @@ async def sort_meta_data_by_options(
 def convert_array_to_dict(solst_dict_array,key):
     dict = {}
     idx = 0
+    name_list = []
     for item in solst_dict_array:
         if item.get(key):
             item['idx']=idx
             dict[item.get(key)] = item
+            if key == 'creatorNameLang':
+                name_list.append(item.get('creatorName'))
+                creator_names = ";".join(name_list)
+                dict[item.get(key)]['creatorName'] = creator_names
         else:
             item['idx']=idx
             dict['None'] = item
+            if key == 'creatorNameLang':
+                name_list.append(item.get('creatorName'))
+                creator_names = ";".join(name_list)
+                dict['None']['creatorName'] = creator_names
         idx=idx+1
     return dict
     

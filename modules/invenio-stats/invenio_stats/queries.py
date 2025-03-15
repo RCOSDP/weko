@@ -134,7 +134,7 @@ class ESDateHistogramQuery(ESQuery):
             'date_histogram',
             field=self.time_field,
             interval=interval,
-            time_zone=str(current_app.config['STATS_WEKO_DEFAULT_TIMEZONE']())
+            time_zone=current_app.config['STATS_WEKO_DEFAULT_TIMEZONE']
         )
 
         for destination, (metric, field, opts) in self.metric_fields.items():
@@ -251,8 +251,7 @@ class ESTermsQuery(ESQuery):
                 time_range['gte'] = start_date.isoformat()
             if end_date:
                 time_range['lte'] = end_date.isoformat()
-            time_range['time_zone'] = str(
-                current_app.config['STATS_WEKO_DEFAULT_TIMEZONE']())
+            time_range['time_zone'] = current_app.config['STATS_WEKO_DEFAULT_TIMEZONE']
             agg_query = agg_query.filter(
                 'range',
                 **{self.time_field: time_range})
@@ -431,8 +430,7 @@ class ESWekoFileStatsQuery(ESTermsQuery):
                 time_range['gte'] = start_date.isoformat()
             if end_date:
                 time_range['lte'] = end_date.isoformat()
-            time_range['time_zone'] = str(
-                current_app.config['STATS_WEKO_DEFAULT_TIMEZONE']())
+            time_range['time_zone'] = current_app.config['STATS_WEKO_DEFAULT_TIMEZONE']
             agg_query = agg_query.filter(
                 'range',
                 **{self.time_field: time_range})
@@ -491,8 +489,8 @@ class ESWekoTermsQuery(ESTermsQuery):
                 time_range['gte'] = start_date.isoformat()
             if end_date is not None:
                 time_range['lte'] = end_date.isoformat()
-            time_range['time_zone'] = str(current_app.config[
-                'STATS_WEKO_DEFAULT_TIMEZONE']())
+            time_range['time_zone'] = current_app.config[
+                'STATS_WEKO_DEFAULT_TIMEZONE']
             agg_query = agg_query.filter(
                 'range',
                 **{self.time_field: time_range})
@@ -577,7 +575,7 @@ class ESWekoRankingQuery(ESTermsQuery):
                 "@{}".format(_field), kwargs.get(_field, ""))
 
         query_q = query_q.replace(
-            "@time_zone", str(current_app.config['STATS_WEKO_DEFAULT_TIMEZONE']())
+            "@time_zone", current_app.config['STATS_WEKO_DEFAULT_TIMEZONE']
         )
         query_q = orjson.loads(query_q)
         if kwargs.get("must_not"):
