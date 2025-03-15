@@ -23,6 +23,7 @@
 import base64
 import csv
 import io
+import re
 import sys
 import tempfile
 import traceback
@@ -35,17 +36,13 @@ from flask import current_app
 from flask_babelex import gettext as _
 from invenio_cache import current_cache
 from invenio_db import db
-from invenio_files_rest.models import FileInstance, Location
 from invenio_indexer.api import RecordIndexer
 
 from weko_authors.contrib.validation import validate_by_extend_validator, \
     validate_external_author_identifier, validate_map, validate_required
 
 from .api import WekoAuthors
-from .config import WEKO_AUTHORS_FILE_MAPPING, \
-    WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY, WEKO_AUTHORS_EXPORT_CACHE_URL_KEY
 from .models import AuthorsPrefixSettings, AuthorsAffiliationSettings
-
 
 def get_author_prefix_obj(scheme):
     """Check item Scheme exist in DB."""
@@ -56,11 +53,29 @@ def get_author_prefix_obj(scheme):
         current_app.logger.debug(ex)
     return None
 
+def get_author_prefix_obj_by_id(id):
+    """Check item Scheme exist in DB."""
+    try:
+        return db.session.query(AuthorsPrefixSettings).filter(
+            AuthorsPrefixSettings.id == id).one_or_none()
+    except Exception as ex:
+        current_app.logger.debug(ex)
+    return None
+
 def get_author_affiliation_obj(scheme):
     """Check item Scheme exist in DB."""
     try:
         return db.session.query(AuthorsAffiliationSettings).filter(
             AuthorsAffiliationSettings.scheme == scheme).one_or_none()
+    except Exception as ex:
+        current_app.logger.debug(ex)
+    return None
+
+def get_author_affiliation_obj_by_id(id):
+    """Check item Scheme exist in DB."""
+    try:
+        return db.session.query(AuthorsAffiliationSettings).filter(
+            AuthorsAffiliationSettings.id == id).one_or_none()
     except Exception as ex:
         current_app.logger.debug(ex)
     return None
@@ -104,7 +119,7 @@ def check_email_existed(email: str):
 
 def get_export_status():
     """Get export status from cache."""
-    return current_cache.get(WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY) or {}
+    return current_cache.get(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY")) or {}
 
 
 def set_export_status(start_time=None, task_id=None):
@@ -115,18 +130,18 @@ def set_export_status(start_time=None, task_id=None):
     if task_id:
         data['task_id'] = task_id
 
-    current_cache.set(WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY, data, timeout=0)
+    current_cache.set(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY"), data, timeout=0)
     return data
 
 
 def delete_export_status():
     """Delete export status."""
-    current_cache.delete(WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY)
+    current_cache.delete(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY"))
 
 
 def get_export_url():
     """Get exported info from cache."""
-    return current_cache.get(WEKO_AUTHORS_EXPORT_CACHE_URL_KEY) or {}
+    return current_cache.get(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY")) or {}
 
 
 def save_export_url(start_time, end_time, file_uri):
@@ -137,7 +152,7 @@ def save_export_url(start_time, end_time, file_uri):
         file_uri=file_uri
     )
 
-    current_cache.set(WEKO_AUTHORS_EXPORT_CACHE_URL_KEY, data, timeout=0)
+    current_cache.set(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY"), data, timeout=0)
     return data
 
 
@@ -145,7 +160,8 @@ def export_authors():
     """Export all authors."""
     file_uri = None
     try:
-        mappings = deepcopy(WEKO_AUTHORS_FILE_MAPPING)
+        mapping = current_app.config.get("WEKO_AUTHORS_FILE_MAPPING")
+        mappings = deepcopy(mapping)
         authors = WekoAuthors.get_all(with_deleted=False, with_gather=False)
         schemes = WekoAuthors.get_identifier_scheme_info()
         row_header, row_label_en, row_label_jp, row_data = \
@@ -165,6 +181,7 @@ def export_authors():
             file_io.getvalue().encode("utf-8-sig")))
 
         # save data into location
+        from invenio_files_rest.models import FileInstance, Location
         cache_url = get_export_url()
         if not cache_url:
             file = FileInstance.create()
@@ -201,9 +218,9 @@ def check_import_data(file_name: str, file_content: str):
     try:
         temp_file.write(base64.b64decode(file_content))
         temp_file.flush()
-
+        mapping = current_app.config.get("WEKO_AUTHORS_FILE_MAPPING")
         flat_mapping_all, flat_mapping_ids = flatten_authors_mapping(
-            WEKO_AUTHORS_FILE_MAPPING)
+            mapping)
         file_format = file_name.split('.')[-1].lower()
         file_data = unpackage_and_check_import_file(
             file_format, file_name, temp_file.name, flat_mapping_ids)
@@ -636,3 +653,104 @@ def count_authors():
     )
 
     return result
+
+        
+def validate_weko_id(weko_id, pk_id = None):
+    """Validate WEKO ID."""
+    if not bool(re.fullmatch(r'[0-9]+', weko_id)):
+        return False, "not half digit"
+    # jsonify(msg=_('The author ID must be the half digit.')), 500
+    
+    try:
+        result = check_weko_id_is_exists(weko_id, pk_id)
+    except Exception as ex:
+        current_app.logger.error(ex)
+        raise ex
+    # 存在するならエラーを返す
+    if result == True:
+        return False, "already exists"
+    # jsonify(msg=_('The value is already in use as WEKO ID.')), 500
+    return True, None
+
+def check_weko_id_is_exists(weko_id, pk_id = None):
+    """
+    weko_idが既に存在するかチェック
+    author_idが同じ場合はスキップする
+    ※weko_idはauthorIdInfo.Idtypeが1であるAuthorIdの値のことです。
+    
+    args:
+        weko_id: weko_id
+    return:
+        True: weko_idが存在する
+        False: weko_idが存在しない
+    """
+    # 同じweko_idが存在するかチェック
+    query = {
+        "_source": ["pk_id", "authorIdInfo"],  # authorIdInfoフィールドのみを取得
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "term": {
+                            "authorIdInfo.authorId": weko_id
+                        }
+                    },
+                    {"term": {"gather_flg": {"value": 0}}}
+                ],
+                "must_not": [
+                    {"term": {"is_deleted": True}}
+                ]
+            }
+        }
+    }
+
+    # 検索
+    indexer = RecordIndexer()
+    result = indexer.client.search(
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        body=query
+    )
+    
+    # 同じweko_idが存在する場合はエラー
+    for res in result['hits']['hits']:
+        # 同じauthor_idの場合はスキップ
+        if pk_id and pk_id == res['_source']['pk_id']:
+            continue
+        author_id_info_from_es = res['_source']['authorIdInfo']
+        for info in author_id_info_from_es:
+            if info.get('idType') == '1':
+                author_id = info.get('authorId')
+                if author_id == weko_id:
+                    return True
+    return False
+
+
+def check_period_date(data):
+    """
+        dataのperiodを確認します。
+        args:
+            data: dict, 著者DBのjsonカラムのデータ
+        return:
+            True or False: 期間が正しいかどうか
+            String: エラーの種別
+    """
+    from datetime import datetime
+    if data.get("affiliationInfo"):
+        for affiliation in data.get("affiliationInfo"):
+            if affiliation.get("affiliationPeriodInfo"):
+                for periodinfo in affiliation.get("affiliationPeriodInfo"):
+                    if periodinfo.get("periodStart") or periodinfo.get("periodEnd"):
+                        if periodinfo.get("periodStart"):
+                            date_str = periodinfo.get("periodStart")
+                            if not bool(re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}', date_str)):
+                                return False, "not date format"
+                        if periodinfo.get("periodEnd"):
+                            date_str = periodinfo.get("periodEnd")
+                            if not bool(re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}', date_str)):
+                                return False, "not date format"
+                        if periodinfo.get("periodStart") and periodinfo.get("periodEnd"):
+                            period_start = datetime.strptime(periodinfo.get("periodStart"), "%Y-%m-%d")
+                            period_end = datetime.strptime(periodinfo.get("periodEnd"), "%Y-%m-%d")
+                            if period_start > period_end:
+                                return False, "start is after end"
+    return True, None
