@@ -611,6 +611,30 @@ def authors(app,db,esindex):
     db.session.commit()
     return returns
 
+@pytest.fixture()
+def authors2(app,db,esindex):
+    datas = json_data("data/author2.json")
+    returns = list()
+    for data in datas:
+        returns.append(Authors(
+            gather_flg=0,
+            is_deleted=False,
+            json=data
+        ))
+        es_id = data["id"]
+        es_data = json.loads(json.dumps(data))
+        es_data["id"]=""
+        current_search_client.index(
+            index=app.config["WEKO_AUTHORS_ES_INDEX_NAME"],
+            doc_type=app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+            id=es_id,
+            body=es_data,
+            refresh='true')
+    
+    db.session.add_all(returns)
+    db.session.commit()
+    return returns
+
 
 @pytest.fixture()
 def location(app,db):

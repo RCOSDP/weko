@@ -1,4 +1,4 @@
-from mock import patch
+from mock import patch, MagicMock
 import json
 import uuid
 import pytest
@@ -346,3 +346,547 @@ class TestWekoAuthorsMappingMaxItem:
                 # Verify the results
                 assert result_mappings
                 assert result_affiliation_mappings
+                
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsPrepareExport -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+class TestWekoAuthorsPrepareExport:
+    # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsPrepareExport::test_prepare_export_data_full_data -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_prepare_export_data_full_data(self, app, db, authors_prefix_settings, authors_affiliation_settings, authors2, mocker):
+        res_header, res_label_en, res_label_jp, res_row_data = WekoAuthors.prepare_export_data(None, None, None, None, None, 0, 2)
+        
+        assert res_header
+        assert res_label_en
+        assert res_label_jp
+        assert res_row_data == [['1', '1', 'テスト', '太郎', 'ja', 'familyNmAndNm', 'Y', 'ORCID', '1234', 'Y', 'CiNii', '12345', 'Y', 'test.taro@test.org', '', None, None, None, None, None, None, '', 'ja', 'Y', None, None, None, None, None, None, None, None, None, None, None, None, None], ['2', '2', 'test', 'smith', 'en', 'familyNmAndNm', 'Y', 'ORCID', '5678', 'Y', None, None, None, 'test.smith@test.org', '', 'ISNI', '1234', 'Y', 'GRID', '12345', 'Y', '', 'ja', 'Y', None, None, 'ISNI', '1234', 'Y', 'GRID', '12345', 'Y', '', 'ja', 'Y', None, None]]
+        
+    
+    @pytest.fixture
+    def mock_dependencies(self, app, db):
+        """テストに必要な依存関係をモック化するフィクスチャ"""
+        with patch('weko_authors.api.WekoAuthors.mapping_max_item') as mock_mapping_max_item, \
+            patch('weko_authors.api.WekoAuthors.get_by_range') as mock_get_by_range, \
+            patch('weko_authors.api.WekoAuthors.get_identifier_scheme_info') as mock_get_identifier_scheme_info, \
+            patch('weko_authors.api.WekoAuthors.get_affiliation_identifier_scheme_info') as mock_get_affiliation_identifier_scheme_info, \
+            patch('weko_authors.api.WekoAuthors.get_records_count') as mock_get_records_count, \
+            patch('weko_authors.api.WEKO_AUTHORS_FILE_MAPPING', new=[]) as mock_file_mapping:
+            
+            # 各モックのデフォルト設定
+            mock_mapping_max_item.return_value = ([], {})
+            mock_get_by_range.return_value = []
+            mock_get_identifier_scheme_info.return_value = {}
+            mock_get_affiliation_identifier_scheme_info.return_value = {}
+            mock_get_records_count.return_value = 0
+            
+            yield {
+                'mock_mapping_max_item': mock_mapping_max_item,
+                'mock_get_by_range': mock_get_by_range,
+                'mock_get_identifier_scheme_info': mock_get_identifier_scheme_info,
+                'mock_get_affiliation_identifier_scheme_info': mock_get_affiliation_identifier_scheme_info,
+                'mock_get_records_count': mock_get_records_count
+            }
+
+
+    def test_prepare_export_data_all_params_provided(self, app, db, mock_dependencies):
+        """
+        正常系：全てのパラメータが適切に指定されている場合
+        """
+        # テストデータ設定
+        mappings = [
+            {'json_id': 'simple_field', 'label_en': 'Simple Field', 'label_jp': 'シンプルフィールド'},
+            {'json_id': 'authorIdInfo', 'label_en': 'Author ID', 'label_jp': '著者ID', 'max': 2, 'child': [
+                {'json_id': 'idType', 'label_en': 'ID Type', 'label_jp': 'ID種別'},
+                {'json_id': 'authorId', 'label_en': 'Author ID', 'label_jp': '著者ID'}
+            ]},
+            {'json_id': 'masked_field', 'label_en': 'Masked Field', 'label_jp': 'マスクフィールド', 'mask': {'1': 'one', '2': 'two'}},
+            {'json_id': 'weko_id', 'label_en': 'WEKO ID', 'label_jp': 'WEKO ID'}
+        ]
+        
+        affiliation_mappings = {
+            'json_id': 'affiliationInfo',
+            'child': [
+                {'json_id': 'identifierInfo', 'child': [
+                    {'json_id': 'affiliationIdType', 'label_en': 'Affiliation ID Type', 'label_jp': '所属ID種別'}
+                ]},
+                {'json_id': 'affiliationNameInfo', 'child': [
+                    {'json_id': 'affiliationName', 'label_en': 'Affiliation Name', 'label_jp': '所属名'},
+                    {'json_id': 'language', 'label_en': 'Language', 'label_jp': '言語', 'mask': {'ja': '日本語', 'en': '英語'}}
+                ]}
+            ],
+            'max': [
+                {'identifierInfo': 1, 'affiliationNameInfo': 2, 'affiliationPeriodInfo': 0}
+            ]
+        }
+        
+        authors = [
+            MagicMock(json={
+                'simple_field': 'simple value',
+                'masked_field': '1',
+                'authorIdInfo': [
+                    {'idType': '1', 'authorId': 'weko123'},
+                    {'idType': '2', 'authorId': 'orcid456'}
+                ],
+                'affiliationInfo': [
+                    {
+                        'identifierInfo': [
+                            {'affiliationIdType': '1', 'affiliationId': 'aff123'}
+                        ],
+                        'affiliationNameInfo': [
+                            {'affiliationName': 'University A', 'language': 'en'},
+                            {'affiliationName': '大学A', 'language': 'ja'}
+                        ]
+                    }
+                ]
+            })
+        ]
+        
+        schemes = {
+            '1': {'scheme': 'WEKO', 'url': 'http://weko.example.com'},
+            '2': {'scheme': 'ORCID', 'url': 'http://orcid.org'}
+        }
+        
+        aff_schemes = {
+            '1': {'scheme': 'ROR', 'url': 'http://ror.org'}
+        }
+        
+        start = 0
+        size = 10
+        
+        # 関数実行
+        result = WekoAuthors.prepare_export_data(
+            mappings, affiliation_mappings, authors, schemes, aff_schemes, start, size
+        )
+        
+        # 結果検証
+        row_header, row_label_en, row_label_jp, row_data = result
+        
+        # ヘッダーと表示ラベルの検証
+        assert row_header[0].startswith('#')
+        assert row_label_en[0].startswith('#')
+        assert row_label_jp[0].startswith('#')
+        
+        # データ行の検証
+        assert len(row_data) == 1  # 1件の著者データ
+        author_row = row_data[0]
+        
+        # 単純フィールドが正しく処理されていることを確認
+        assert 'simple value' in author_row
+        
+        # マスク処理が正しく適用されていることを確認
+        assert 'one' in author_row
+        
+        # WEKO IDが正しく抽出されていることを確認
+        assert 'weko123' in author_row
+        
+        # IDスキームが正しく変換されていることを確認
+        assert 'ORCID' in author_row
+        
+        # 所属情報が正しく処理されていることを確認
+        assert 'University A' in author_row
+        assert '英語' in author_row or 'en' in author_row
+        
+        # モック関数が呼び出されていないことを確認（すべてのパラメータが提供されているため）
+        mock_dependencies['mock_mapping_max_item'].assert_not_called()
+        mock_dependencies['mock_get_by_range'].assert_not_called()
+        mock_dependencies['mock_get_identifier_scheme_info'].assert_not_called()
+        mock_dependencies['mock_get_affiliation_identifier_scheme_info'].assert_not_called()
+
+
+    def test_prepare_export_data_auto_fetch_params(self, app, db, mock_dependencies):
+        """
+        正常系：パラメータが一部指定されていない場合の自動補完
+        """
+        # モックの準備
+        test_mappings = [{'json_id': 'test_field', 'label_en': 'Test', 'label_jp': 'テスト'}]
+        test_aff_mappings = {'json_id': 'affiliationInfo', 'max': [], 'child': []}
+        test_authors = [MagicMock(json={'test_field': 'test value'})]
+        
+        mock_dependencies['mock_mapping_max_item'].return_value = (test_mappings, test_aff_mappings)
+        mock_dependencies['mock_get_by_range'].return_value = test_authors
+        mock_dependencies['mock_get_identifier_scheme_info'].return_value = {'1': {'scheme': 'TEST'}}
+        mock_dependencies['mock_get_affiliation_identifier_scheme_info'].return_value = {'1': {'scheme': 'TEST_AFF'}}
+        
+        # 関数実行（すべてNoneで渡す）
+        result = WekoAuthors.prepare_export_data(None, None, None, None, None, 0, 10)
+        
+        # 結果検証
+        row_header, row_label_en, row_label_jp, row_data = result
+        
+        # 各モックが正しく呼び出されたことを確認
+        mock_dependencies['mock_mapping_max_item'].assert_called_once()
+        mock_dependencies['mock_get_by_range'].assert_called_once_with(0, 10, False, False)
+        mock_dependencies['mock_get_identifier_scheme_info'].assert_called_once()
+        mock_dependencies['mock_get_affiliation_identifier_scheme_info'].assert_called_once()
+        
+        # 返されたデータが期待通りであることを確認
+        assert '#test_field' in row_header[0]
+        assert '#Test' in row_label_en[0]
+        assert '#テスト' in row_label_jp[0]
+        assert row_data[0][0] == 'test value'
+
+
+    def test_prepare_export_data_different_mapping_types(self, app, db, mock_dependencies):
+        """
+        正常系：異なる種類のmappingパターンの処理
+        """
+        # 異なるタイプのマッピングを含むテストデータを設定
+        mappings = [
+            # childなしマッピング
+            {'json_id': 'simple_field', 'label_en': 'Simple Field', 'label_jp': 'シンプルフィールド'},
+            # childありマッピング
+            {'json_id': 'complex_field', 'label_en': 'Complex Field', 'label_jp': '複合フィールド', 'max': 2, 'child': [
+                {'json_id': 'sub_field1', 'label_en': 'Sub Field 1', 'label_jp': 'サブフィールド1'},
+                {'json_id': 'sub_field2', 'label_en': 'Sub Field 2', 'label_jp': 'サブフィールド2'}
+            ]}
+        ]
+        
+        affiliation_mappings = {
+            'json_id': 'affiliationInfo',
+            'child': [],
+            'max': []
+        }
+        
+        authors = [
+            MagicMock(json={
+                'simple_field': 'simple value',
+                'complex_field': [
+                    {'sub_field1': 'value1_1', 'sub_field2': 'value1_2'},
+                    {'sub_field1': 'value2_1', 'sub_field2': 'value2_2'}
+                ],
+                'affiliationInfo': []
+            })
+        ]
+        
+        # 関数実行
+        result = WekoAuthors.prepare_export_data(
+            mappings, affiliation_mappings, authors, {}, {}, 0, 10
+        )
+        
+        # 結果検証
+        row_header, row_label_en, row_label_jp, row_data = result
+        
+        # ヘッダーに期待される項目が含まれていることを確認
+        assert any('simple_field' in header for header in row_header)
+        assert any('complex_field[0].sub_field1' in header for header in row_header)
+        assert any('complex_field[1].sub_field2' in header for header in row_header)
+        
+        # ラベルに期待される項目が含まれていることを確認
+        assert any('Simple Field' in label for label in row_label_en)
+        assert any('Sub Field 1[0]' in label for label in row_label_en)
+        assert any('サブフィールド2[1]' in label for label in row_label_jp)
+        
+        # データ行の値が正しいことを確認
+        author_row = row_data[0]
+        assert 'simple value' in author_row
+        assert 'value1_1' in author_row
+        assert 'value2_2' in author_row
+
+
+    def test_prepare_export_data_author_id_info(self, app, db, mock_dependencies):
+        """
+        正常系：authorIdInfoの特殊処理
+        """
+        # authorIdInfoを含むテストデータを設定
+        mappings = [
+            {'json_id': 'authorIdInfo', 'label_en': 'Author ID', 'label_jp': '著者ID', 'max': 2, 'child': [
+                {'json_id': 'idType', 'label_en': 'ID Type', 'label_jp': 'ID種別'},
+                {'json_id': 'authorId', 'label_en': 'Author ID', 'label_jp': '著者ID'}
+            ]}
+        ]
+        
+        affiliation_mappings = {
+            'json_id': 'affiliationInfo',
+            'child': [],
+            'max': []
+        }
+        
+        authors = [
+            MagicMock(json={
+                'authorIdInfo': [
+                    {'idType': '1', 'authorId': 'weko123'},
+                    {'idType': '2', 'authorId': 'orcid456'},
+                    {'idType': '3', 'authorId': 'scopus789'}
+                ],
+                'affiliationInfo': []
+            })
+        ]
+        
+        schemes = {
+            '1': {'scheme': 'WEKO', 'url': 'http://weko.example.com'},
+            '2': {'scheme': 'ORCID', 'url': 'http://orcid.org'},
+            '3': {'scheme': 'Scopus', 'url': 'http://scopus.com'}
+        }
+        
+        # 関数実行
+        result = WekoAuthors.prepare_export_data(
+            mappings, affiliation_mappings, authors, schemes, {}, 0, 10
+        )
+        
+        # 結果検証
+        row_header, row_label_en, row_label_jp, row_data = result
+        
+        # IDが正しく処理されていることを確認
+        author_row = row_data[0]
+        
+        # WEKO ID（index 0）がスキップされ、index 1と2のデータが処理されていることを確認
+        assert 'ORCID' in author_row
+        assert 'orcid456' in author_row
+        assert 'Scopus' in author_row
+        assert 'scopus789' in author_row
+
+
+    @pytest.fixture
+    def sample_mappings(self):
+        """Fixture for sample mappings."""
+        return [
+            {
+                'json_id': 'familyName',
+                'label_en': 'Family Name',
+                'label_jp': '姓'
+            },
+            {
+                'json_id': 'firstName',
+                'label_en': 'First Name',
+                'label_jp': '名'
+            },
+            {
+                'json_id': 'gender',
+                'label_en': 'Gender',
+                'label_jp': '性別',
+                'mask': {'m': 'Male', 'f': 'Female', 'o': 'Other'}
+            },
+            {
+                'json_id': 'authorIdInfo',
+                'label_en': 'Author ID',
+                'label_jp': '著者ID',
+                'max': 2,
+                'child': [
+                    {
+                        'json_id': 'idType',
+                        'label_en': 'ID Type',
+                        'label_jp': 'ID種別'
+                    },
+                    {
+                        'json_id': 'authorId',
+                        'label_en': 'Author ID',
+                        'label_jp': '著者ID'
+                    }
+                ]
+            },
+            {
+                'json_id': 'weko_id',
+                'label_en': 'WEKO ID',
+                'label_jp': 'WEKO ID'
+            }
+        ]
+
+
+    @pytest.fixture
+    def sample_affiliation_mappings(self):
+        """Fixture for sample affiliation mappings."""
+        return {
+            'json_id': 'affiliationInfo',
+            'child': [
+                {
+                    'json_id': 'identifierInfo',
+                    'child': [
+                        {
+                            'json_id': 'affiliationIdType',
+                            'label_en': 'Affiliation ID Type',
+                            'label_jp': '所属ID種別'
+                        },
+                        {
+                            'json_id': 'affiliationId',
+                            'label_en': 'Affiliation ID',
+                            'label_jp': '所属ID'
+                        }
+                    ]
+                },
+                {
+                    'json_id': 'affiliationNameInfo',
+                    'child': [
+                        {
+                            'json_id': 'language',
+                            'label_en': 'Language',
+                            'label_jp': '言語',
+                            'mask': {'en': 'English', 'ja': 'Japanese'}
+                        },
+                        {
+                            'json_id': 'affiliationName',
+                            'label_en': 'Affiliation Name',
+                            'label_jp': '所属名'
+                        }
+                    ]
+                }
+            ],
+            'max': [
+                {
+                    'identifierInfo': 2,
+                    'affiliationNameInfo': 2,
+                    'affiliationPeriodInfo': 1
+                }
+            ]
+        }
+
+
+    @pytest.fixture
+    def sample_authors(self):
+        """Fixture for sample authors."""
+        return [
+            MagicMock(
+                json={
+                    'familyName': 'Smith',
+                    'firstName': 'John',
+                    'gender': 'm',
+                    'authorIdInfo': [
+                        {'idType': '2', 'authorId': 'ORCID001'}
+                    ],
+                    'affiliationInfo': [
+                        {
+                            'identifierInfo': [
+                                {'affiliationIdType': '1', 'affiliationId': 'UNI001'},
+                                {'affiliationIdType': '2', 'affiliationId': 'GRID001'}
+                            ],
+                            'affiliationNameInfo': [
+                                {'language': 'en', 'affiliationName': 'University A'},
+                                {'language': 'ja', 'affiliationName': '大学A'}
+                            ]
+                        }
+                    ]
+                }
+            )
+        ]
+
+
+    @pytest.fixture
+    def sample_schemes(self):
+        """Fixture for sample ID schemes."""
+        return {
+            '1': {'scheme': 'WEKO', 'url': 'https://weko.org'},
+            '2': {'scheme': 'ORCID', 'url': 'https://orcid.org'}
+        }
+
+
+    @pytest.fixture
+    def sample_aff_schemes(self):
+        """Fixture for sample affiliation ID schemes."""
+        return {
+            '1': {'scheme': 'University ID', 'url': 'https://university.org'},
+            '2': {'scheme': 'GRID', 'url': 'https://grid.ac'}
+        }
+
+
+    def test_mask_processing(self, app, db, sample_mappings, sample_affiliation_mappings, sample_authors, 
+                            sample_schemes, sample_aff_schemes):
+        """Test case 7: mask processing is correctly applied."""
+        row_header, row_label_en, row_label_jp, row_data = WekoAuthors.prepare_export_data(
+            sample_mappings,
+            sample_affiliation_mappings,
+            sample_authors,
+            sample_schemes,
+            sample_aff_schemes,
+            0,
+            10
+        )
+        
+        # Check if mask processing was applied for gender
+        assert row_data[0][2] == 'Male'  # The gender 'm' should be masked to 'Male'
+        
+        # Check if mask processing was applied for affiliation language
+        # Finding the index for affiliationInfo[0].affiliationNameInfo[0].language
+        language_index = row_header.index('affiliationInfo[0].affiliationNameInfo[0].language')
+        assert row_data[0][language_index] == 'English'  # 'en' should be masked to 'English'
+
+
+    def test_affiliation_info_processing(self, app, db, sample_mappings, sample_affiliation_mappings, sample_authors, 
+                                        sample_schemes, sample_aff_schemes):
+        """Test case 8: affiliation information is correctly processed."""
+        row_header, row_label_en, row_label_jp, row_data = WekoAuthors.prepare_export_data(
+            sample_mappings,
+            sample_affiliation_mappings,
+            sample_authors,
+            sample_schemes,
+            sample_aff_schemes,
+            0,
+            10
+        )
+        
+        # Check if affiliationIdType is correctly processed with scheme lookup
+        # Find index for affiliationInfo[0].identifierInfo[0].affiliationIdType
+        aff_id_type_index = row_header.index('affiliationInfo[0].identifierInfo[0].affiliationIdType')
+        assert row_data[0][aff_id_type_index] == 'University ID'
+        
+        # Check if affiliationId is correctly included
+        aff_id_index = row_header.index('affiliationInfo[0].identifierInfo[0].affiliationId')
+        assert row_data[0][aff_id_index] == 'UNI001'
+        
+        # Check if affiliationName is correctly included
+        aff_name_index = row_header.index('affiliationInfo[0].affiliationNameInfo[0].affiliationName')
+        assert row_data[0][aff_name_index] == 'University A'
+        
+        # Check if headers and labels are correctly formatted for nested structure
+        assert 'affiliationInfo[0].identifierInfo[0].affiliationIdType' in row_header
+        assert 'Affiliation ID Type[0][0]' in row_label_en
+        assert '所属ID種別[0][0]' in row_label_jp
+
+
+    @patch('weko_authors.api.WekoAuthors.mapping_max_item')
+    @patch('weko_authors.api.WekoAuthors.get_by_range')
+    @patch('weko_authors.api.WekoAuthors.get_identifier_scheme_info')
+    @patch('weko_authors.api.WekoAuthors.get_affiliation_identifier_scheme_info')
+    def test_affiliation_info_missing_data(self, mock_aff_scheme, mock_scheme, mock_get, mock_map,
+                                        sample_mappings, sample_affiliation_mappings,
+                                        sample_schemes, sample_aff_schemes, app, db):
+        """Test case 8: handling of missing affiliation data."""
+        # Author with partial affiliation data
+        authors_with_missing = [
+            MagicMock(
+                json={
+                    'familyName': 'Doe',
+                    'firstName': 'Jane',
+                    'gender': 'f',
+                    'authorIdInfo': [
+                        {'idType': '1', 'authorId': 'WEKO002'}
+                    ],
+                    'affiliationInfo': [
+                        {
+                            # Missing identifierInfo
+                            'affiliationNameInfo': [
+                                {'language': 'en', 'affiliationName': 'University B'}
+                                # Only one name, not two as in max
+                            ]
+                        }
+                    ]
+                }
+            )
+        ]
+        
+        # Configure mocks to return our test data
+        mock_map.return_value = (sample_mappings, sample_affiliation_mappings)
+        mock_get.return_value = authors_with_missing
+        mock_scheme.return_value = sample_schemes
+        mock_aff_scheme.return_value = sample_aff_schemes
+        
+        row_header, row_label_en, row_label_jp, row_data = WekoAuthors.prepare_export_data(
+            None,  # Let the method fetch mappings
+            None,  # Let the method fetch affiliation mappings
+            None,  # Let the method fetch authors
+            None,  # Let the method fetch schemes
+            None,  # Let the method fetch affiliation schemes
+            0,
+            10
+        )
+        
+        # Check if missing affiliationIdType is correctly handled as None
+        aff_id_type_index = row_header.index('affiliationInfo[0].identifierInfo[0].affiliationIdType')
+        assert row_data[0][aff_id_type_index] is None
+        
+        # Check if missing second affiliationNameInfo is correctly handled as None
+        aff_name_index = row_header.index('affiliationInfo[0].affiliationNameInfo[1].affiliationName')
+        assert row_data[0][aff_name_index] is None
+        
+        # Verify all expected headers are present
+        assert 'affiliationInfo[0].identifierInfo[1].affiliationId' in row_header
+        assert 'affiliationInfo[0].affiliationNameInfo[0].language' in row_header
+        
+        # Verify headers and labels match
+        assert len(row_header) == len(row_label_en)
+        assert len(row_header) == len(row_label_jp)
