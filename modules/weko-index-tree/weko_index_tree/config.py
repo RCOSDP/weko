@@ -93,5 +93,5 @@ WEKO_INDEX_TREE_STATE_TIME_LIFE_SECONDS = 60
 WEKO_INDEX_TREE_INDEX_LOCK_KEY_PREFIX = "lock_index_"
 """Index lock key prefix."""
 
-WEKO_INDEX_PUBLIC_DEFAULT_TIMEZONE = 'Asia/Tokyo'
+WEKO_INDEX_TREE_PUBLIC_DEFAULT_TIMEZONE = 'Asia/Tokyo'
 """Default time zone for index publication date."""

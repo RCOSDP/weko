@@ -3432,6 +3432,7 @@ def export_all(root_url, user_id, data, start_time):
                 gc.collect()
                 
                 file_count = math.ceil(len(record_ids) / current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_LIMIT"])
+                write_file_json = json.loads(get_redis_cache(_file_create_key))
                 for i in range(file_count):
                     write_file_json['write_file_status'][item_type_id + '.' + str(i + 1)] = 'waiting'
                 reset_redis_cache(
@@ -3527,7 +3528,10 @@ def export_all(root_url, user_id, data, start_time):
     reset_redis_cache(_msg_key, "")
     reset_redis_cache(_run_msg_key, "")
     reset_redis_cache(_file_create_key, json.dumps({}))
-    temp_path = "/tmp/bulk_export"
+    # 1件エクスポート実行して失敗したらコメントアウトしてる方を使用してください
+    # temp_path = "/tmp/bulk_export"
+
+    temp_path = os.getenv('TMPDIR')
     os.makedirs(temp_path, exist_ok=True)
     try:
         # Delete old file
@@ -3596,7 +3600,7 @@ def write_files(item_datas, export_path, user_id, retrys):
         name=_run_msg_config,
         user_id=user_id
     )
-    _timezone = current_app.config.get("WEKO_INDEX_PUBLIC_DEFAULT_TIMEZONE")
+    _timezone = current_app.config.get("WEKO_INDEX_TREE_PUBLIC_DEFAULT_TIMEZONE")
     _file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
 
     try:
@@ -3746,6 +3750,7 @@ def get_export_status():
 
     def _check_write_file_info(json):
         status = json.get('write_file_status','before')
+        cancel_flg = json.get('cancel_flg', False)
         if status == 'before':
             return 'BEFORE'
         elif status and ('waiting' not in status.values()) and ('started' not in status.values()):
@@ -3755,6 +3760,8 @@ def get_export_status():
                 return 'REVOKED'
             else:
                 return 'SUCCESS'
+        elif cancel_flg:
+            return 'REVOKED'
         elif not status:
             return 'SUCCESS'
         else:
@@ -3796,7 +3803,7 @@ def get_export_status():
                             src.set_contents(file, default_location=Location.get_default().uri)
                         db.session.commit()
                         download_uri = src.uri
-                        _timezone = current_app.config.get("WEKO_INDEX_PUBLIC_DEFAULT_TIMEZONE")
+                        _timezone = current_app.config.get("WEKO_INDEX_TREE_PUBLIC_DEFAULT_TIMEZONE")
                         finish_time = datetime.now(pytz.timezone(_timezone)).strftime('%Y/%m/%d %H:%M:%S')
                         write_file_data = json.loads(get_redis_cache(file_msg))
                         write_file_data["finish_time"] = finish_time
