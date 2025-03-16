@@ -1,12 +1,14 @@
 
 from mock import patch
+import pytest
 
 from weko_authors.contrib.validation import (
     validate_by_extend_validator,
     validate_required,
     validate_map,
     validate_identifier_scheme,
-    validate_external_author_identifier
+    validate_external_author_identifier,
+    validate_affiliation_period_end
 )
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_validation.py -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -134,3 +136,163 @@ def test_validate_external_author_identifier(authors):
     existed_external_authors_id = {"2":{"1234":["2"]}}
     result = validate_external_author_identifier(item, values, existed_external_authors_id)
     assert result == "External author identifier exists in DB.<br/>1234"
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_validation.py::TestValidateAffiliationPeriodEnd -vv -s --cov-branch --cov-report=html --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+class TestValidateAffiliationPeriodEnd:
+    """validate_affiliation_period_end関数のテストクラス"""
+
+    @pytest.fixture
+    def error_messages(self):
+        """エラーメッセージを返すフィクスチャ"""
+        return {
+            'format_error': "External Affiliation Period must be in the format: yyyy-MM-dd, blank. {}",
+            'period_error': "Period end must be after Period start."
+        }
+
+    def test_empty_values(self):
+        """
+        正常系
+        条件：値のリストが空
+        入力：item={}, values=[]
+        期待結果：空のエラーリスト
+        """
+        item = {}
+        values = []
+        result = validate_affiliation_period_end(item, values)
+        assert result == []
+
+    def test_period_end_none(self):
+        """
+        正常系
+        条件：periodEndが空の場合
+        入力：item={}, values=[{'value': None, 'reduce_keys': ['affiliations', 0, 'periodEnd']}]
+        期待結果：空のエラーリスト
+        """
+        item = {}
+        values = [{'value': None, 'reduce_keys': ['affiliations', 0, 'periodEnd']}]
+        result = validate_affiliation_period_end(item, values)
+        assert result == []
+
+    def test_period_end_empty_string(self):
+        """
+        正常系
+        条件：periodEndが空文字の場合
+        入力：item={}, values=[{'value': '', 'reduce_keys': ['affiliations', 0, 'periodEnd']}]
+        期待結果：空のエラーリスト
+        """
+        item = {}
+        values = [{'value': '', 'reduce_keys': ['affiliations', 0, 'periodEnd']}]
+        result = validate_affiliation_period_end(item, values)
+        assert result == []
+
+    def test_period_end_invalid_format(self):
+        """
+        異常系
+        条件：periodEndのフォーマットが不正な場合
+        入力：item={}, values=[{'value': '2023/01/01', 'reduce_keys': ['affiliations', 0, 'periodEnd']}]
+        期待結果：フォーマットエラーメッセージを含むリスト
+        """
+        item = {}
+        values = [{'value': '2023/01/01', 'reduce_keys': ['affiliations', 0, 'periodEnd']}]
+        result = validate_affiliation_period_end(item, values)
+        assert len(result) == 1
+        assert "External Affiliation Period must be in the format: yyyy-MM-dd, blank. 2023/01/01" in result
+
+    def test_period_end_valid_format_period_start_none(self):
+        """
+        正常系
+        条件：periodEndのフォーマットが正しく、periodStartがNoneの場合
+        入力：item={'affiliations': [{'periodStart': None}]}, values=[{'value': '2023-01-01', 'reduce_keys': ['affiliations', 0, 'periodEnd']}]
+        期待結果：空のエラーリスト
+        """
+        item = {'affiliations': [{'periodStart': None}]}
+        values = [{'value': '2023-01-01', 'reduce_keys': ['affiliations', 0, 'periodEnd']}]
+        result = validate_affiliation_period_end(item, values)
+        assert result == []
+
+    def test_period_end_valid_format_period_start_empty(self):
+        """
+        正常系
+        条件：periodEndのフォーマットが正しく、periodStartが空文字の場合
+        入力：item={'affiliations': [{'periodStart': ''}]}, values=[{'value': '2023-01-01', 'reduce_keys': ['affiliations', 0, 'periodEnd']}]
+        期待結果：空のエラーリスト
+        """
+        item = {'affiliations': [{'periodStart': ''}]}
+        values = [{'value': '2023-01-01', 'reduce_keys': ['affiliations', 0, 'periodEnd']}]
+        result = validate_affiliation_period_end(item, values)
+        assert result == []
+
+    def test_period_start_invalid_format(self):
+        """
+        異常系
+        条件：periodEndのフォーマットが正しく、periodStartのフォーマットが不正な場合
+        入力：item={'affiliations': [{'periodStart': '2023/01/01'}]}, values=[{'value': '2023-01-01', 'reduce_keys': ['affiliations', 0, 'periodEnd']}]
+        期待結果：フォーマットエラーメッセージを含むリスト
+        """
+        item = {'affiliations': [{'periodStart': '2023/01/01'}]}
+        values = [{'value': '2023-01-01', 'reduce_keys': ['affiliations', 0, 'periodEnd']}]
+        result = validate_affiliation_period_end(item, values)
+        assert len(result) == 1
+        assert "External Affiliation Period must be in the format: yyyy-MM-dd, blank. 2023-01-01" in result
+
+    def test_period_end_before_period_start(self):
+        """
+        異常系
+        条件：periodEndがperiodStartより前の日付の場合
+        入力：item={'affiliations': [{'periodStart': '2023-02-01'}]}, values=[{'value': '2023-01-01', 'reduce_keys': ['affiliations', 0, 'periodEnd']}]
+        期待結果：期間エラーメッセージを含むリスト
+        """
+        item = {'affiliations': [{'periodStart': '2023-02-01'}]}
+        values = [{'value': '2023-01-01', 'reduce_keys': ['affiliations', 0, 'periodEnd']}]
+        result = validate_affiliation_period_end(item, values)
+        assert len(result) == 1
+        assert "Period end must be after Period start." in result
+
+    def test_period_end_equal_period_start(self):
+        """
+        正常系
+        条件：periodEndとperiodStartが同じ日付の場合
+        入力：item={'affiliations': [{'periodStart': '2023-01-01'}]}, values=[{'value': '2023-01-01', 'reduce_keys': ['affiliations', 0, 'periodEnd']}]
+        期待結果：空のエラーリスト（同日は許容される）
+        """
+        item = {'affiliations': [{'periodStart': '2023-01-01'}]}
+        values = [{'value': '2023-01-01', 'reduce_keys': ['affiliations', 0, 'periodEnd']}]
+        result = validate_affiliation_period_end(item, values)
+        assert result == []
+
+    def test_period_end_after_period_start(self):
+        """
+        正常系
+        条件：periodEndがperiodStartより後の日付の場合
+        入力：item={'affiliations': [{'periodStart': '2023-01-01'}]}, values=[{'value': '2023-02-01', 'reduce_keys': ['affiliations', 0, 'periodEnd']}]
+        期待結果：空のエラーリスト
+        """
+        item = {'affiliations': [{'periodStart': '2023-01-01'}]}
+        values = [{'value': '2023-02-01', 'reduce_keys': ['affiliations', 0, 'periodEnd']}]
+        result = validate_affiliation_period_end(item, values)
+        assert result == []
+
+    def test_multiple_values(self):
+        """
+        正常系と異常系の混合
+        条件：複数の値がある場合
+        入力：複数の値を持つitem, values
+        期待結果：エラーがある項目のみエラーメッセージを含むリスト
+        """
+        item = {
+            'affiliations': [
+                {'periodStart': '2023-01-01'},
+                {'periodStart': '2023-03-01'},
+                {'periodStart': '2023/05/01'},
+                {'periodStart': None}
+            ]
+        }
+        values = [
+            {'value': '2023-02-01', 'reduce_keys': ['affiliations', 0, 'periodEnd']},
+            {'value': '2023-02-01', 'reduce_keys': ['affiliations', 1, 'periodEnd']},
+            {'value': '2023-06-01', 'reduce_keys': ['affiliations', 2, 'periodEnd']},
+            {'value': '2023-07-01', 'reduce_keys': ['affiliations', 3, 'periodEnd']}
+        ]
+        result = validate_affiliation_period_end(item, values)
+        assert len(result) == 2
+        assert "Period end must be after Period start." in result
