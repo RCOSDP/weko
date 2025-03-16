@@ -23,6 +23,7 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidrelations.models import PIDRelation
 from tests.test_rest import DummySearchResult
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
+from weko_authors.models import AuthorsPrefixSettings, AuthorsAffiliationSettings
 from weko_deposit.api import WekoDeposit, WekoIndexer
 from weko_records.api import ItemsMetadata, WekoRecord
 from weko_records.models import ItemType
@@ -97,6 +98,8 @@ from weko_search_ui.utils import (
     handle_check_metadata_not_existed,
     handle_check_thumbnail,
     handle_check_thumbnail_file_type,
+    handle_check_authors_prefix,
+    handle_check_authors_affiliation,
     handle_convert_validate_msg_to_jp,
     handle_doi_required_check,
     handle_fill_system_item,
@@ -3373,3 +3376,647 @@ def test_create_tsv_row(app):
             'Title': 'メタボリックシンドロームモデルマウスの多臓器遺伝子発現量データ',
             'Field': '生物学'
         }
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::TestHandleCheckAuthorsPrefix -v -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+class TestHandleCheckAuthorsPrefix:
+    
+    @pytest.fixture()
+    def authors_prefix_settings(self, db):
+        apss = list()
+        apss.append(AuthorsPrefixSettings(name="WEKO",scheme="WEKO"))
+        apss.append(AuthorsPrefixSettings(name="ORCID",scheme="ORCID",url="https://orcid.org/##"))
+        apss.append(AuthorsPrefixSettings(name="CiNii",scheme="CiNii",url="https://ci.nii.ac.jp/author/##"))
+        apss.append(AuthorsPrefixSettings(name="KAKEN2",scheme="KAKEN2",url="https://nrid.nii.ac.jp/nrid/##"))
+        apss.append(AuthorsPrefixSettings(name="ROR",scheme="ROR",url="https://ror.org/##"))
+        db.session.add_all(apss)
+        db.session.commit()
+        return apss
+    
+    def test_handle_check_authors_prefix_no_nameidentifiers(self, db, authors_prefix_settings):
+        """
+        正常系
+        条件：nameIdentifiersを含まないレコードの場合
+        入力：nameIdentifiersがないレコードのリスト
+        期待結果：errorsが追加されない
+        """
+        # モックデータ
+        list_record = [
+            {
+                "metadata": {
+                    "authors": [{"name": "Author 1"}, {"name": "Author 2"}]
+                }
+            }
+        ]
+        
+        # AuthorsPrefixSettingsのモック
+        with patch('weko_authors.models.AuthorsPrefixSettings') as MockSettings:
+            mock_setting = MagicMock()
+            mock_setting.scheme = "ORCID"
+            MockSettings.query.all.return_value = [mock_setting]
+            
+            # テスト対象関数を実行
+            handle_check_authors_prefix(list_record)
+            
+            # 検証
+            assert "errors" not in list_record[0]
+
+
+    def test_handle_check_authors_prefix_valid_scheme(self, db, authors_prefix_settings):
+        """
+        正常系
+        条件：すべてのnameIdentifierSchemeが許可されたスキームである場合
+        入力：有効なスキームを持つレコードのリスト
+        期待結果：errorsが追加されない
+        """
+        # モックデータ
+        list_record = [
+            {
+                "metadata": {
+                    "authors": [
+                        {
+                            "name": "Author 1",
+                            "nameIdentifiers": [
+                                {"nameIdentifierScheme": "ORCID", "nameIdentifier": "0000-0001-2345-6789"}
+                            ]
+                        }
+                    ]
+                }
+            }
+        ]
+        
+        # AuthorsPrefixSettingsのモック
+        with patch('weko_authors.models.AuthorsPrefixSettings') as MockSettings:
+            mock_setting = MagicMock()
+            mock_setting.scheme = "ORCID"
+            MockSettings.query.all.return_value = [mock_setting]
+            
+            # テスト対象関数を実行
+            handle_check_authors_prefix(list_record)
+            
+            # 検証
+            assert "errors" not in list_record[0]
+
+
+    def test_handle_check_authors_prefix_invalid_scheme(self, db, authors_prefix_settings):
+        """
+        異常系
+        条件：nameIdentifierSchemeが許可されていないスキームである場合
+        入力：無効なスキームを持つレコードのリスト
+        期待結果：errorsに該当するエラーメッセージが追加される
+        """
+        # モックデータ
+        list_record = [
+            {
+                "metadata": {
+                    "authors": [
+                        {
+                            "name": "Author 1",
+                            "nameIdentifiers": [
+                                {"nameIdentifierScheme": "INVALID", "nameIdentifier": "0000-0001-2345-6789"}
+                            ]
+                        }
+                    ]
+                }
+            }
+        ]
+        
+        # AuthorsPrefixSettingsのモック
+        with patch('weko_authors.models.AuthorsPrefixSettings') as MockSettings:
+            mock_setting = MagicMock()
+            mock_setting.scheme = "ORCID"
+            MockSettings.query.all.return_value = [mock_setting]
+            
+            # テスト対象関数を実行
+            handle_check_authors_prefix(list_record)
+            
+            # 検証
+            assert "errors" in list_record[0]
+            assert '"INVALID" is not one of [\'WEKO\', \'ORCID\', \'CiNii\', \'KAKEN2\', \'ROR\'] in authors' in list_record[0]["errors"]
+
+
+    def test_handle_check_authors_prefix_dict_instead_of_list(self, db, authors_prefix_settings):
+        """
+        正常系
+        条件：authorsが配列ではなくオブジェクト（辞書）である場合
+        入力：authorsがオブジェクトのレコードのリスト
+        期待結果：正しく処理され、無効なスキームがあればエラーが追加される
+        """
+        # モックデータ
+        list_record = [
+            {
+                "metadata": {
+                    "authors": {
+                        "name": "Author 1",
+                        "nameIdentifiers": [
+                            {"nameIdentifierScheme": "INVALID", "nameIdentifier": "0000-0001-2345-6789"}
+                        ]
+                    }
+                }
+            }
+        ]
+        
+        # AuthorsPrefixSettingsのモック
+        with patch('weko_authors.models.AuthorsPrefixSettings') as MockSettings:
+            mock_setting = MagicMock()
+            mock_setting.scheme = "ORCID"
+            MockSettings.query.all.return_value = [mock_setting]
+            
+            # テスト対象関数を実行
+            handle_check_authors_prefix(list_record)
+            
+            # 検証
+            assert "errors" in list_record[0]
+            assert '"INVALID" is not one of [\'WEKO\', \'ORCID\', \'CiNii\', \'KAKEN2\', \'ROR\'] in authors' in list_record[0]["errors"]
+
+
+    def test_handle_check_authors_prefix_nested_structure(self, db, authors_prefix_settings):
+        """
+        正常系
+        条件：複雑なネスト構造を持つメタデータの場合
+        入力：複雑なネスト構造を持つレコードのリスト
+        期待結果：すべてのエラーが正しく検出される
+        """
+        # モックデータ
+        list_record = [
+            {
+                "metadata": {
+                    "contributors": [
+                        {
+                            "name": "Contributor 1",
+                            "nameIdentifiers": [
+                                {"nameIdentifierScheme": "INVALID1", "nameIdentifier": "0000-0001-2345-6789"}
+                            ]
+                        }
+                    ],
+                    "creator": {
+                        "name": "Creator 1",
+                        "nameIdentifiers": [
+                            {"nameIdentifierScheme": "INVALID2", "nameIdentifier": "0000-0001-2345-6789"}
+                        ]
+                    }
+                }
+            }
+        ]
+        
+        # AuthorsPrefixSettingsのモック
+        with patch('weko_authors.models.AuthorsPrefixSettings') as MockSettings:
+            mock_setting = MagicMock()
+            mock_setting.scheme = "ORCID"
+            MockSettings.query.all.return_value = [mock_setting]
+            
+            # テスト対象関数を実行
+            handle_check_authors_prefix(list_record)
+            
+            # 検証
+            assert "errors" in list_record[0]
+            assert len(list_record[0]["errors"]) == 2
+            assert '"INVALID1" is not one of [\'WEKO\', \'ORCID\', \'CiNii\', \'KAKEN2\', \'ROR\'] in contributors' in list_record[0]["errors"]
+            assert '"INVALID2" is not one of [\'WEKO\', \'ORCID\', \'CiNii\', \'KAKEN2\', \'ROR\'] in creator' in list_record[0]["errors"]
+
+
+    def test_handle_check_authors_prefix_existing_errors(self, db, authors_prefix_settings):
+        """
+        正常系
+        条件：既にエラーがあるレコードの場合
+        入力：既存のエラーを持つレコードのリスト
+        期待結果：既存のエラーに新しいエラーが追加される
+        """
+        # モックデータ
+        list_record = [
+            {
+                "metadata": {
+                    "authors": [
+                        {
+                            "name": "Author 1",
+                            "nameIdentifiers": [
+                                {"nameIdentifierScheme": "INVALID", "nameIdentifier": "0000-0001-2345-6789"}
+                            ]
+                        }
+                    ],
+                    "test1":{"test":"test"},
+                    "test2":"test2"
+                },
+                "errors": ["Existing error"]
+            }
+        ]
+        
+        # AuthorsPrefixSettingsのモック
+        with patch('weko_authors.models.AuthorsPrefixSettings') as MockSettings:
+            mock_setting = MagicMock()
+            mock_setting.scheme = "ORCID"
+            MockSettings.query.all.return_value = [mock_setting]
+            
+            # テスト対象関数を実行
+            handle_check_authors_prefix(list_record)
+            
+            # 検証
+            assert "errors" in list_record[0]
+            assert len(list_record[0]["errors"]) == 2
+            assert "Existing error" in list_record[0]["errors"]
+            assert '"INVALID" is not one of [\'WEKO\', \'ORCID\', \'CiNii\', \'KAKEN2\', \'ROR\'] in authors' in list_record[0]["errors"]
+
+
+    def test_handle_check_authors_prefix_none_scheme(self, db, authors_prefix_settings):
+        """
+        正常系
+        条件：nameIdentifierSchemeがNoneの場合
+        入力：nameIdentifierSchemeがNoneのレコードのリスト
+        期待結果：エラーが追加されない
+        """
+        # モックデータ
+        list_record = [
+            {
+                "metadata": {
+                    "authors": [
+                        {
+                            "name": "Author 1",
+                            "nameIdentifiers": [
+                                {"nameIdentifierScheme": None, "nameIdentifier": "0000-0001-2345-6789"}
+                            ]
+                        }
+                    ]
+                }
+            }
+        ]
+        
+        # AuthorsPrefixSettingsのモック
+        with patch('weko_authors.models.AuthorsPrefixSettings') as MockSettings:
+            mock_setting = MagicMock()
+            mock_setting.scheme = "ORCID"
+            MockSettings.query.all.return_value = [mock_setting]
+            
+            # テスト対象関数を実行
+            handle_check_authors_prefix(list_record)
+            
+            # 検証
+            assert "errors" not in list_record[0]
+            
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::TestHandleCheckAuthorsAffiliation -v -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+class TestHandleCheckAuthorsAffiliation:
+    
+    @pytest.fixture()
+    def authors_affiliation_settings(self, db):
+        aass = list()
+        aass.append(AuthorsAffiliationSettings(name="ISNI",scheme="ISNI",url="http://www.isni.org/isni/##"))
+        aass.append(AuthorsAffiliationSettings(name="ROR",scheme="ROR",url="https://ror.org/##"))
+        db.session.add_all(aass)
+        db.session.commit()
+    
+        return aass
+
+    @pytest.fixture
+    def mock_settings(self, app, db):
+        """AuthorsAffiliationSettingsをモックする"""
+        setting1 = MagicMock()
+        setting1.scheme = "ROR"
+        setting2 = MagicMock()
+        setting2.scheme = "ISNI"
+        
+        with patch('weko_authors.models.AuthorsAffiliationSettings') as mock_settings:
+            mock_settings.query.all.return_value = [setting1, setting2]
+            yield mock_settings
+    
+    def test_no_affiliations(self, mock_settings, app, db):
+        """
+        正常系
+        条件：所属機関情報がない場合
+        入力：所属機関情報を含まないレコード
+        期待結果：errorsフィールドが追加されない
+        """
+        list_record = [
+            {
+                "metadata": {
+                    "title": "Test Title",
+                    "authors": []
+                }
+            }
+        ]
+        
+        handle_check_authors_affiliation(list_record)
+        
+        assert "errors" not in list_record[0]
+    
+    def test_creator_valid_scheme(self, mock_settings, app, db, authors_affiliation_settings):
+        """
+        正常系
+        条件：creatorAffiliationsに有効なスキームがある場合
+        入力：RORスキームを持つcreatorAffiliations
+        期待結果：errorsフィールドが追加されない
+        """
+        list_record = [
+            {
+                "metadata": {
+                    "creator": {
+                        "creatorName": "Test Author",
+                        "creatorAffiliations": [
+                            {
+                                "affiliationName": "Test University",
+                                "affiliationNameIdentifiers": [
+                                    {
+                                        "affiliationNameIdentifier": "https://ror.org/12345",
+                                        "affiliationNameIdentifierScheme": "ROR"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+        
+        handle_check_authors_affiliation(list_record)
+        
+        assert "errors" not in list_record[0]
+    
+    def test_creator_invalid_scheme(self, mock_settings, app, db):
+        """
+        異常系
+        条件：creatorAffiliationsに無効なスキームがある場合
+        入力：無効なDOIスキームを持つcreatorAffiliations
+        期待結果：errorsフィールドにエラーメッセージが追加される
+        """
+        list_record = [
+            {
+                "metadata": {
+                    "creator": {
+                        "creatorName": "Test Author",
+                        "creatorAffiliations": [
+                            {
+                                "affiliationName": "Test University",
+                                "affiliationNameIdentifiers": [
+                                    {
+                                        "affiliationNameIdentifier": "10.12345/67890",
+                                        "affiliationNameIdentifierScheme": "DOI"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+        
+        handle_check_authors_affiliation(list_record)
+        
+        assert "errors" in list_record[0]
+        assert len(list_record[0]["errors"]) == 1
+        assert '"DOI" is not one of' in list_record[0]["errors"][0]
+        assert "creator" in list_record[0]["errors"][0]
+    
+    def test_creator_list_invalid_scheme(self, mock_settings, app, db):
+        """
+        異常系
+        条件：リスト形式のcreatorに無効なスキームがある場合
+        入力：無効なスキームを持つcreatorのリスト
+        期待結果：errorsフィールドにエラーメッセージが追加される
+        """
+        list_record = [
+            {
+                "metadata": {
+                    "creators": [
+                        {
+                            "creatorName": "Test Author 1",
+                            "creatorAffiliations": [
+                                {
+                                    "affiliationName": "Test University",
+                                    "affiliationNameIdentifiers": [
+                                        {
+                                            "affiliationNameIdentifier": "12345",
+                                            "affiliationNameIdentifierScheme": "GRID"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        ]
+        
+        handle_check_authors_affiliation(list_record)
+        
+        assert "errors" in list_record[0]
+        assert len(list_record[0]["errors"]) == 1
+        assert '"GRID" is not one of' in list_record[0]["errors"][0]
+        assert "creators" in list_record[0]["errors"][0]
+    
+    def test_contributor_valid_scheme(self, mock_settings, app, db, authors_affiliation_settings):
+        """
+        正常系
+        条件：contributorAffiliationsに有効なスキームがある場合
+        入力：ISNIスキームを持つcontributorAffiliations
+        期待結果：errorsフィールドが追加されない
+        """
+        list_record = [
+            {
+                "metadata": {
+                    "contributor": {
+                        "contributorName": "Test Contributor",
+                        "contributorAffiliations": [
+                            {
+                                "affiliationName": "Test Organization",
+                                "affiliationNameIdentifiers": [
+                                    {
+                                        "affiliationNameIdentifier": "0000-0001-2345-6789",
+                                        "affiliationNameIdentifierScheme": "ISNI"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+        
+        handle_check_authors_affiliation(list_record)
+        
+        assert "errors" not in list_record[0]
+    
+    def test_contributor_invalid_scheme(self, mock_settings, app, db):
+        """
+        異常系
+        条件：contributorAffiliationsに無効なスキームがある場合
+        入力：無効なスキームを持つcontributorAffiliations
+        期待結果：errorsフィールドにエラーメッセージが追加される
+        """
+        list_record = [
+            {
+                "metadata": {
+                    "contributor": {
+                        "contributorName": "Test Contributor",
+                        "contributorAffiliations": [
+                            {
+                                "affiliationName": "Test Organization",
+                                "affiliationNameIdentifiers": [
+                                    {
+                                        "affiliationNameIdentifier": "12345",
+                                        "affiliationNameIdentifierScheme": "ORCID"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+        
+        handle_check_authors_affiliation(list_record)
+        
+        assert "errors" in list_record[0]
+        assert len(list_record[0]["errors"]) == 1
+        assert '"ORCID" is not one of' in list_record[0]["errors"][0]
+        assert "contributor" in list_record[0]["errors"][0]
+    
+    def test_contributor_list_invalid_scheme(self, mock_settings, app, db):
+        """
+        異常系
+        条件：リスト形式のcontributorに無効なスキームがある場合
+        入力：無効なスキームを持つcontributorのリスト
+        期待結果：errorsフィールドにエラーメッセージが追加される
+        """
+        list_record = [
+            {
+                "metadata": {
+                    "contributors": [
+                        {
+                            "contributorName": "Test Contributor 1",
+                            "contributorAffiliations": [
+                                {
+                                    "affiliationName": "Test Organization",
+                                    "affiliationNameIdentifiers": [
+                                        {
+                                            "affiliationNameIdentifier": "12345",
+                                            "affiliationNameIdentifierScheme": "Scopus"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        ]
+        
+        handle_check_authors_affiliation(list_record)
+        
+        assert "errors" in list_record[0]
+        assert len(list_record[0]["errors"]) == 1
+        assert '"Scopus" is not one of' in list_record[0]["errors"][0]
+        assert "contributors" in list_record[0]["errors"][0]
+    
+    def test_existing_errors(self, mock_settings, app, db):
+        """
+        正常系
+        条件：既存のerrorsフィールドがある場合に新しいエラーを追加する
+        入力：既存のerrorsフィールドと無効なスキーム
+        期待結果：既存のerrorsに新しいエラーが追加される
+        """
+        list_record = [
+            {
+                "metadata": {
+                    "creator": {
+                        "creatorName": "Test Author",
+                        "creatorAffiliations": [
+                            {
+                                "affiliationName": "Test University",
+                                "affiliationNameIdentifiers": [
+                                    {
+                                        "affiliationNameIdentifier": "12345",
+                                        "affiliationNameIdentifierScheme": "Wikidata"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "errors": ["Existing error"]
+            }
+        ]
+        
+        handle_check_authors_affiliation(list_record)
+        
+        assert "errors" in list_record[0]
+        assert len(list_record[0]["errors"]) == 2
+        assert "Existing error" == list_record[0]["errors"][0]
+        assert '"Wikidata" is not one of' in list_record[0]["errors"][1]
+    
+    def test_multiple_invalid_schemes(self, mock_settings, app, db):
+        """
+        異常系
+        条件：複数の無効なスキームがある場合
+        入力：複数の無効なスキームを持つクリエイターとコントリビューター
+        期待結果：すべてのエラーがerrorsフィールドに追加される
+        """
+        list_record = [
+            {
+                "metadata": {
+                    "creator": {
+                        "creatorName": "Test Author",
+                        "creatorAffiliations": [
+                            {
+                                "affiliationName": "Test University",
+                                "affiliationNameIdentifiers": [
+                                    {
+                                        "affiliationNameIdentifier": "12345",
+                                        "affiliationNameIdentifierScheme": "Wikidata"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "contributor": {
+                        "contributorName": "Test Contributor",
+                        "contributorAffiliations": [
+                            {
+                                "affiliationName": "Test Organization",
+                                "affiliationNameIdentifiers": [
+                                    {
+                                        "affiliationNameIdentifier": "12345",
+                                        "affiliationNameIdentifierScheme": "ORCID"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+        
+        handle_check_authors_affiliation(list_record)
+        
+        assert "errors" in list_record[0]
+        assert len(list_record[0]["errors"]) == 2
+        assert any('"Wikidata" is not one of' in error for error in list_record[0]["errors"])
+        assert any('"ORCID" is not one of' in error for error in list_record[0]["errors"])
+    
+    def test_none_scheme(self, mock_settings, app, db):
+        """
+        正常系
+        条件：スキームがNoneの場合
+        入力：affiliationNameIdentifierSchemeがNoneのレコード
+        期待結果：エラーは追加されない（条件にscheme is not Noneがあるため）
+        """
+        list_record = [
+            {
+                "metadata": {
+                    "creator": {
+                        "creatorName": "Test Author",
+                        "creatorAffiliations": [
+                            {
+                                "affiliationName": "Test University",
+                                "affiliationNameIdentifiers": [
+                                    {
+                                        "affiliationNameIdentifier": "12345",
+                                        "affiliationNameIdentifierScheme": None
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+        
+        handle_check_authors_affiliation(list_record)
+        
+        assert "errors" not in list_record[0]
