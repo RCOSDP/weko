@@ -1,6 +1,7 @@
 from flask_login.utils import login_user
 
 from weko_workflow.api import Flow, WorkActivity, _WorkFlow,WorkFlow
+from weko_workflow.models import Activity as _Activity
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_Flow_action -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_Flow_action(app, client, users, db, action_data):
@@ -88,6 +89,66 @@ def test_WorkActivity_filter_by_date(app, db):
     query = db.session.query()
     activity = WorkActivity()
     assert activity.filter_by_date('2022-01-01', '2022-01-02', query)
+
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_filter_by_action -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_WorkActivity_filter_by_action(app, db):
+    query = db.session.query()
+    activity = WorkActivity()
+
+
+    # case: empty action
+    list_action = []
+    assert activity.__filter_by_action(query, list_action) == query
+
+
+    # case: single action, correct
+    list_action = [1]
+    query = query.filter(_Activity.action_id.in_(list_action))
+    assert activity.__filter_by_action(query, list_action) == query
+
+    list_action = [2]
+    query = query.filter(_Activity.action_id.in_(list_action))
+    assert activity.__filter_by_action(query, list_action) == query
+
+    list_action = [3]
+    query = query.filter(_Activity.action_id.in_(list_action))
+    assert activity.__filter_by_action(query, list_action) == query
+
+    list_action = [4]
+    query = query.filter(_Activity.action_id.in_(list_action))
+    assert activity.__filter_by_action(query, list_action) == query
+
+    list_action = [5]
+    query = query.filter(_Activity.action_id.in_(list_action))
+    assert activity.__filter_by_action(query, list_action) == query
+
+    list_action = [6]
+    query = query.filter(_Activity.action_id.in_(list_action))
+    assert activity.__filter_by_action(query, list_action) == query
+
+    list_action = [7]
+    query = query.filter(_Activity.action_id.in_(list_action))
+    assert activity.__filter_by_action(query, list_action) == query
+
+
+    # case: single action, incorrect
+    list_action = [8]
+    assert activity.__filter_by_action(query, list_action) == query
+
+    list_action = [17]
+    assert activity.__filter_by_action(query, list_action) == query
+
+
+    # case: multiple actions, correct
+    list_action = [1, 3, 4, 7]
+    query = query.filter(_Activity.action_id.in_(list_action))
+    assert activity.__filter_by_action(query, list_action) == query
+
+
+    # case: multiple actions, incorrect
+    list_action = [0, 8, 17]
+    assert activity.__filter_by_action(query, list_action) == query
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_get_all_activity_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
