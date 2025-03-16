@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2024 National Institute of Informatics.
+# Copyright (C) 2025 National Institute of Informatics.
 #
-# WEKO-SWORDServer is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
+# WEKO-Notifications is free software; you can redistribute it and/or modify
+# it under the terms of the MIT License; see LICENSE file for more details.
 
 import pytest
 from unittest.mock import patch

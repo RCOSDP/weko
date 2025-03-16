@@ -10,8 +10,14 @@
 WEKO_NOTIFICATIONS = True
 """Enable or disable module extensions."""
 
-WEKO_NOTIFICATIONS_TEMPLATE = "weko_notifications/settings/notification.html"
+WEKO_NOTIFICATIONS_TEMPLATE = "weko_notifications/settings/notifications.html"
 """Default base template for the demo page."""
+
+WEKO_NOTIFICATIONS_BASE_TEMPLATE = None
+"""Base templates for user profile module."""
+
+WEKO_NOTIFICATIONS_SETTINGS_TEMPLATE = None
+"""Settings base templates for user profile module."""
 
 WEKO_NOTIFICATIONS_INBOX_ADDRESS = "http://inbox:8080"
 """Address of the inbox."""

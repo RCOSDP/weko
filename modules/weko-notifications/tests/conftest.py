@@ -53,6 +53,8 @@ from weko_records_ui import WekoRecordsUI
 from weko_schema_ui import WekoSchemaUI
 from weko_theme import WekoTheme
 from weko_user_profiles import WekoUserProfiles
+from weko_user_profiles.models import UserProfile
+from weko_user_profiles.config import USERPROFILES_LANGUAGE_DEFAULT, USERPROFILES_TIMEZONE_DEFAULT
 from weko_workflow import WekoWorkflow
 
 from weko_notifications import WekoNotifications
@@ -85,7 +87,7 @@ def base_app(instance_path):
         SQLALCHEMY_DATABASE_URI=os.getenv(
             "SQLALCHEMY_DATABASE_URI",
             "postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest"),
-
+        WEKO_NOTIFICATIONS=True,
     )
     Babel(app_)
     Mail(app_)
@@ -272,6 +274,85 @@ def users(app, db):
         {"email": user.email, "id": user.id, "obj": user},
         {"email": student.email,"id": student.id, "obj": student}
     ]
+
+
+@pytest.fixture()
+def user_profiles(db,users):
+    all_data = UserProfile(
+        user_id=users[0]["id"],
+        _username="sysadmin",
+        _displayname="sysadmin user",
+        fullname="test taro",
+        timezone=USERPROFILES_TIMEZONE_DEFAULT,
+        language=USERPROFILES_LANGUAGE_DEFAULT,
+        university="test university",
+        department="test department",
+        position = "test position",
+        otherPosition="test other position",
+        phoneNumber="123-4567",
+        instituteName="test institute",
+        institutePosition="test institute position",
+        instituteName2="test institute2",
+        institutePosition2="test institute position2",
+        instituteName3="",
+        institutePosition3="",
+        instituteName4="",
+        institutePosition4="",
+        instituteName5="",
+        institutePosition5=""
+    )
+    db.session.add(all_data)
+    repo_profile = UserProfile(
+        user_id=users[1]["id"],
+        _username="repoadmin",
+        _displayname="repoadmin user",
+        fullname="test taro",
+        timezone=USERPROFILES_TIMEZONE_DEFAULT,
+        language=USERPROFILES_LANGUAGE_DEFAULT,
+        university="test university",
+        department="test department",
+        position = "test position",
+        otherPosition="test other position",
+        phoneNumber="123-4567",
+        instituteName="test institute",
+        institutePosition="test institute position",
+        instituteName2="test institute2",
+        institutePosition2="test institute position2",
+        instituteName3="",
+        institutePosition3="",
+        instituteName4="",
+        institutePosition4="",
+        instituteName5="",
+        institutePosition5=""
+    )
+    db.session.add(repo_profile)
+    not_validate_language = UserProfile(
+        user_id=users[2]["id"],
+        _username="comadmin",
+        _displayname="comadmin user",
+        fullname="test taro",
+        timezone=USERPROFILES_TIMEZONE_DEFAULT,
+        language="not exist language",
+        university="test university",
+        department="test department",
+        position = "test position",
+        otherPosition="test other position",
+        phoneNumber="123-4567",
+        instituteName="test institute",
+        institutePosition="test institute position",
+        instituteName2="test institute2",
+        institutePosition2="test institute position2",
+        instituteName3="",
+        institutePosition3="",
+        instituteName4="",
+        institutePosition4="",
+        instituteName5="",
+        institutePosition5=""
+    )
+    db.session.add(not_validate_language)
+    db.session.commit()
+    return [all_data,repo_profile,not_validate_language]
+
 
 @pytest.fixture()
 def json_notifications():

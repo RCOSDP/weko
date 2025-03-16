@@ -37,10 +37,6 @@
   {% assets "weko_search_ui_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_search_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_check_inbox_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {%- if config.USERPROFILES %}
-    {% assets "weko_interval_check_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {%- endif %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}

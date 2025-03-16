@@ -81,12 +81,16 @@ setup(
         # TODO: Edit these entry points to fit your needs.
         # 'invenio_access.actions': [],
         # 'invenio_admin.actions': [],
-        # 'invenio_assets.bundles': [],
+        'invenio_assets.bundles': [
+            'weko_notifications_settings_css = weko_notifications.bundles:notifications_settings_css',
+        ],
         # 'invenio_base.api_apps': [],
         # 'invenio_base.api_blueprints': [],
         # 'invenio_base.blueprints': [],
         # 'invenio_celery.tasks': [],
-        # 'invenio_db.models': [],
+        'invenio_db.models': [
+            'weko_notifications = weko_notifications.models',
+        ],
         # 'invenio_pidstore.minters': [],
         # 'invenio_records.jsonresolver': [],
     },
