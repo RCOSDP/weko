@@ -300,11 +300,12 @@ class WekoAuthors(object):
         used_external_id = []
         for author in cls.get_all():
             metadata = author.json
-            for affiliationInfo in metadata.get('affiliationInfo', {}):
-                idType = affiliationInfo.get('idType')
-                if idType \
-                    and idtype_and_scheme.get(int(idType)) not in used_external_id:
-                    used_external_id.append(idtype_and_scheme.get(int(idType)))
+            for affiliationInfo in metadata.get('affiliationInfo', []):
+                for identifierInfo in affiliationInfo.get('identifierInfo', []):
+                    idType = identifierInfo.get('affiliationIdType')
+                    if idType \
+                        and idtype_and_scheme.get(int(idType)) not in used_external_id:
+                        used_external_id.append(idtype_and_scheme.get(int(idType)))
         return used_external_id, idtype_and_scheme
     
 
