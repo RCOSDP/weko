@@ -238,7 +238,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
                     raise BadRequest(f"Invalid idtype '{idtype}'.")
                 idtype_id = prefix_obj.id
 
-            search_query = {"query": {"bool": {"must": []}}}
+            search_query = {"query": {"bool": {"must": [], "must_not": [{ "term": { "is_deleted": True}}]}}}
 
             if fullname:
                 parts = fullname.split(" ", 1)
