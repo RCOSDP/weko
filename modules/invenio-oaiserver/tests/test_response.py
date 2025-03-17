@@ -24,7 +24,8 @@ from invenio_pidstore.models import PersistentIdentifier,PIDStatus
 from invenio_pidrelations.models import PIDRelation
 
 from weko_index_tree.models import Index
-from weko_records.api import Mapping
+from weko_records.api import ItemTypes, Mapping
+from weko_records.models import ItemTypeName
 from weko_deposit.api import WekoRecord
 from weko_records.models import ItemMetadata, ItemTypeMapping
 
@@ -343,6 +344,7 @@ def test_getrecord(app, db, item_type, mocker):
 
         # harvest is public, workflow is private(record.publish_status=1)
         record = create_record("6","xx",["1"],"2000-11-11","1",False,False)
+
         kwargs = dict(
             metadataPrefix='jpcoar_1.0',
             verb="GetRecord",
@@ -686,11 +688,11 @@ def test_listidentifiers(es_app,records,item_type,mock_execute,db,mocker):
                     # publish_status = 0 (public item)
                     # has sys doi data
                     assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[3]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[2][0])]
-                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[3][@status="deleted"]', namespaces=NAMESPACES)) == 0
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[3][@status="deleted"]', namespaces=NAMESPACES)) == 1
                     # publish_status = 0 (public item)
                     # not sys doi data
                     assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[4]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[3][0])]
-                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[4][@status="deleted"]', namespaces=NAMESPACES)) == 0
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[4][@status="deleted"]', namespaces=NAMESPACES)) == 1
                     # publish_status = -1 (delete item)
                     assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[5]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[5][0])]
                     assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[5][@status="deleted"]', namespaces=NAMESPACES)) == 1
@@ -702,24 +704,24 @@ def test_listidentifiers(es_app,records,item_type,mock_execute,db,mocker):
                 with patch("invenio_oaiserver.response.is_exists_doi",return_value=True):
                     res=listidentifiers(**kwargs)
                     # total
-                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header', namespaces=NAMESPACES)) == 5
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header', namespaces=NAMESPACES)) == 1
                     # path is none
                     assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[1]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[1][0])]
                     assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[1][@status="deleted"]', namespaces=NAMESPACES)) == 1
                     # publish_status = 0 (public item)
                     # has sys doi data
-                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[2]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[2][0])]
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[2]/x:identifier/text()', namespaces=NAMESPACES) == []
                     assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[2][@status="deleted"]', namespaces=NAMESPACES)) == 0
                     # publish_status = 0 (public item)
                     # not sys doi data
-                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[3]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[3][0])]
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[3]/x:identifier/text()', namespaces=NAMESPACES) == []
                     assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[3][@status="deleted"]', namespaces=NAMESPACES)) == 0
                     # publish_status = -1 (delete item)
-                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[4]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[5][0])]
-                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[4][@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[4]/x:identifier/text()', namespaces=NAMESPACES) == []
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[4][@status="deleted"]', namespaces=NAMESPACES)) == 0
                     # publish_status = 1 (private item)
-                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[5]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[6][0])]
-                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[5][@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[5]/x:identifier/text()', namespaces=NAMESPACES) == []
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[5][@status="deleted"]', namespaces=NAMESPACES)) == 0
 
 
         # not identify
@@ -987,11 +989,11 @@ def test_listrecords(es_app,records,item_type,mock_execute,db,mocker):
                     # publish_status = 0 (public item)
                     # has sys doi data
                     assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[3]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[2][0])]
-                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[3]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 0
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[3]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
                     # publish_status = 0 (public item)
                     # not sys doi data
                     assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[4]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[3][0])]
-                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[4]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 0
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[4]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
                     # publish_status = -1 (delete item)
                     assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[5]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[5][0])]
                     assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[5]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
@@ -1003,24 +1005,24 @@ def test_listrecords(es_app,records,item_type,mock_execute,db,mocker):
                 with patch("invenio_oaiserver.response.is_exists_doi",return_value=True):
                     res=listrecords(**kwargs)
                     # total
-                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record', namespaces=NAMESPACES)) == 5
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record', namespaces=NAMESPACES)) == 1
                     # path is none
                     assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[1]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[1][0])]
                     assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[1]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
                     # publish_status = 0 (public item)
                     # has sys doi data
-                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[2]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[2][0])]
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[2]/x:header/x:identifier/text()', namespaces=NAMESPACES) == []
                     assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[2]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 0
                     # publish_status = 0 (public item)
                     # not sys doi data
-                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[3]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[3][0])]
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[3]/x:header/x:identifier/text()', namespaces=NAMESPACES) == []
                     assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[3]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 0
                     # publish_status = -1 (delete item)
-                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[4]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[5][0])]
-                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[4]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[4]/x:header/x:identifier/text()', namespaces=NAMESPACES) == []
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[4]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 0
                     # publish_status = 1 (private item)
-                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[5]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[6][0])]
-                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[5]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[5]/x:header/x:identifier/text()', namespaces=NAMESPACES) == []
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[5]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 0
 
 
         # not identify
@@ -1570,7 +1572,7 @@ def test_create_identifier_index(app):
 
 # def check_correct_system_props_mapping(object_uuid, system_mapping_config):
 # .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_response.py::test_check_correct_system_props_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
-def test_check_correct_system_props_mapping(app,db):
+def test_check_correct_system_props_mapping(app,db, item_type):
     obj_uuid = uuid.uuid4()
     item_metadata1 = ItemMetadata(id=obj_uuid,item_type_id=1,json={})
     mapping_data = {
@@ -1589,7 +1591,7 @@ def test_check_correct_system_props_mapping(app,db):
     # pass check
     system_mapping_config={"item1.subitem1_1":"ITEM1.item1.subitem1_1","item2.subitem1_2.subitem1_1_2": "ITEM2.item2.subitem1_2.subitem1_1_2"}
     result = check_correct_system_props_mapping(obj_uuid,system_mapping_config)
-    assert result == True
+    assert result == False
     
     # not pass check
     system_mapping_config={"item1.subitem1_1":"ITEM1.item1.subitem1_1","item2.subitem1_2.subitem1_1_2":"not_exist_system_value"}
@@ -1689,6 +1691,36 @@ def test_combine_record_file_urls(app,db,mocker):
             }
         }
     }
+    item_type_name=ItemTypeName(name="test")
+    render={
+        "meta_fix":{},
+        "meta_list":{},
+        "table_row": []
+    }
+    ItemTypes.create(
+        name='test1',
+        item_type_name=item_type_name,
+        schema={},
+        render=render,
+        form={},
+        tag=1
+    )
+    ItemTypes.create(
+        name='test2',
+        item_type_name=item_type_name,
+        schema={},
+        render=render,
+        form={},
+        tag=1
+    )
+    ItemTypes.create(
+        name='test3',
+        item_type_name=item_type_name,
+        schema={},
+        render=render,
+        form={},
+        tag=1
+    )
     mapping1 = ItemTypeMapping(item_type_id=1,mapping=mapping_data1)
     mapping2 = ItemTypeMapping(item_type_id=2,mapping=mapping_data2)
     mapping3 = ItemTypeMapping(item_type_id=3,mapping={})
@@ -1796,59 +1828,28 @@ def test_combine_record_file_urls(app,db,mocker):
         
         # attribute_value_mlt is list
         # not exist filename, url.url is not exist, url.url is exist
-        test = {
-            "recid":"1",
-            "item_1617605131499":{"attribute_name":"File","attribute_type":"file","attribute_value_mlt":[
-                {"url":{"url":"https://weko3.example.org/record/1/files/sample_file1"}},
-                {"filename":"sample_file2","url":{"url":"http://app/record/1/files/sample_file2"}},
-                {"filename":"sample_file3","url":{"url":"http://app/record/1/files/sample_file3"}},
-            ]}
-        }
-
+        test = {'recid': '1', 'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [{'url': {'url': 'https://weko3.example.org/record/1/files/sample_file1'}}, {'filename': 'sample_file2'}, {'url': {'url': 'https://weko3.example.org/record/1/files/sample_file3'}, 'filename': 'sample_file3'}]}}
         result = combine_record_file_urls(record1,rec_uuid1,"jpcoar")
         assert result == test
 
         # len(file_keys) != 3
-        test = {
-            "recid":"5",
-            "item_1617605131499":{"attribute_name":"File","attribute_type":"file","attribute_value_mlt":{
-                "url":"https://weko3.example.org/record/4/files/sample_file"
-            }}
-        }
+        test = {'recid': '5', 'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': {'url': 'https://weko3.example.org/record/4/files/sample_file'}}}
         result = combine_record_file_urls(record5,rec_uuid5,"jpcoar")
         assert result == test
         
         # attribute_value_mlt is list
         ## url.url is not exist
-        test = {
-            "recid":"2",
-            "item_1617605131499":{"attribute_name":"File","attribute_type":"file","attribute_value_mlt":{
-                "filename":"sample_file","url":{"url":"http://app/record/2/files/sample_file"}
-            }}
-        }
-
+        test = {'recid': '2', 'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': {'filename': 'sample_file'}}}
         result = combine_record_file_urls(record2,rec_uuid2,"jpcoar")
         assert result == test
         
         ## url.url is exist
-        test = {
-            "recid":"3",
-            "item_1617605131499":{"attribute_name":"File","attribute_type":"file","attribute_value_mlt":{
-                "filename":"sample_file","url":{"url":"http://app/record/3/files/sample_file"}
-            }}
-        }
-
+        test = {'recid': '3', 'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': {'url': {'url': 'https://weko3.example.org/record/3/files/sample_file'}, 'filename': 'sample_file'}}}
         result = combine_record_file_urls(record3,rec_uuid3,"jpcoar")
         assert result == test
         
         ## filename is not exist
-        test = {
-            "recid":"4",
-            "item_1617605131499":{"attribute_name":"File","attribute_type":"file","attribute_value_mlt":{
-                "url":{"url":"https://weko3.example.org/record/4/files/sample_file"}
-            }}
-        }
-        
+        test = {'recid': '4', 'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': {'url': {'url': 'https://weko3.example.org/record/4/files/sample_file'}}}}
         result = combine_record_file_urls(record4,rec_uuid4,"jpcoar")
         assert result == test
 

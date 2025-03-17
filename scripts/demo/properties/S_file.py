@@ -196,12 +196,16 @@ def form(key="", title="", title_ja="", title_en="", multi_flag=multiple_flag):
                     "key": "{}.subitem_systemfile_filename".format(key),
                     "items": [
                         {
-                            "key": "{}.subitem_systemfile_filename[].subitem_systemfile_filename_label".format(key),
+                            "key": "{}.subitem_systemfile_filename[].subitem_systemfile_filename_label".format(
+                                key
+                            ),
                             "type": "text",
                             "title": "SYSTEMFILE Filename Label",
                         },
                         {
-                            "key": "{}.subitem_systemfile_filename[].subitem_systemfile_filename_type".format(key),
+                            "key": "{}.subitem_systemfile_filename[].subitem_systemfile_filename_type".format(
+                                key
+                            ),
                             "type": "select",
                             "title": "SYSTEMFILE Filename Type",
                             "titleMap": [
@@ -213,7 +217,9 @@ def form(key="", title="", title_ja="", title_en="", multi_flag=multiple_flag):
                             ],
                         },
                         {
-                            "key": "{}.subitem_systemfile_filename[].subitem_systemfile_filename_uri".format(key),
+                            "key": "{}.subitem_systemfile_filename[].subitem_systemfile_filename_uri".format(
+                                key
+                            ),
                             "type": "text",
                             "title": "SYSTEMFILE Filename URI",
                         },
@@ -236,14 +242,18 @@ def form(key="", title="", title_ja="", title_en="", multi_flag=multiple_flag):
                     "key": "{}.subitem_systemfile_datetime".format(key),
                     "items": [
                         {
-                            "key": "{}.subitem_systemfile_datetime[].subitem_systemfile_datetime_date".format(key),
+                            "key": "{}.subitem_systemfile_datetime[].subitem_systemfile_datetime_date".format(
+                                key
+                            ),
                             "type": "template",
                             "title": "SYSTEMFILE DateTime Date",
                             "format": "yyyy-MM-dd",
                             "templateUrl": "/static/templates/weko_deposit/datepicker.html",
                         },
                         {
-                            "key": "{}.subitem_systemfile_datetime[].subitem_systemfile_datetime_type".format(key),
+                            "key": "{}.subitem_systemfile_datetime[].subitem_systemfile_datetime_type".format(
+                                key
+                            ),
                             "type": "select",
                             "title": "SYSTEMFILE DateTime Type",
                             "titleMap": [

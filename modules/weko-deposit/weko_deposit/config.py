@@ -30,8 +30,9 @@ WEKO_BUCKET_QUOTA_SIZE = 50 * 1024 * 1024 * 1024  # 50 GB
 WEKO_MAX_FILE_SIZE = WEKO_BUCKET_QUOTA_SIZE
 """Maximum file size accepted."""
 
+WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES = ['text/plain','text/csv','text/html','text/tab-separated-values','text/xml','application/x-tex','application/x-latex']
+
 WEKO_MIMETYPE_WHITELIST_FOR_ES = [
-    'text/plain',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/vnd.oasis.opendocument.text',
@@ -42,7 +43,12 @@ WEKO_MIMETYPE_WHITELIST_FOR_ES = [
     'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     'application/vnd.oasis.opendocument.presentation',
     'application/pdf',
-]
+] + WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES
+
+
+
+WEKO_DEPOSIT_FILESIZE_LIMIT = 2 * 1024 * 1024
+""" The file size(Byte) limit for extracting text from a file. """
 
 FILES_REST_STORAGE_FACTORY = 'weko_deposit.storage.pyfs_storage_factory'
 """Import path of factory used to create a storage instance."""
@@ -204,8 +210,4 @@ WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY = [
 ]
 """Bibliographic information sys key."""
 
-WEKO_DEPOSIT_ES_PARSING_ERROR_PROCESS_ENABLE = True
-"""Allow reindex data when catching parsing error from ElasticSearch."""
 
-WEKO_DEPOSIT_ES_PARSING_ERROR_KEYWORD = 'ElasticsearchParseException'
-"""Parsing error's Keyword in Elasticsearch exception info."""

@@ -258,7 +258,7 @@ class QueryFileReportsHelper(object):
             elif i['userrole'] == 'Contributor':
                 data['reg'] += count
                 data['login'] += count
-            elif 'Administrator' in i['userrole']:
+            elif i['userrole'] in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']+ current_app.config["WEKO_PERMISSION_ROLE_COMMUNITY"]:
                 data['admin'] += count
                 data['login'] += count
             else:
@@ -1277,7 +1277,7 @@ class QueryRankingHelper(object):
             end_date = kwargs.get('end_date')
             params = {
                 'start_date': start_date,
-                'end_date': end_date + 'T23:59:59',
+                'end_date': end_date,
                 'agg_size': str(kwargs.get('agg_size', 10)),
                 'must_not': kwargs.get('must_not', ''),
                 'new_items': True

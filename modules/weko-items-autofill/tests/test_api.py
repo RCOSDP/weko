@@ -127,7 +127,7 @@ class TestCiNiiURL:
     def test_create_endpoint(self):
         cini = CiNiiURL("test_naid")
         result = cini._create_endpoint()
-        assert result == "naid/test_naid.json"
+        assert result == "crid/test_naid.json"
 
 
 #     def _create_url(self):
@@ -136,7 +136,7 @@ class TestCiNiiURL:
         mocker.patch("weko_items_autofill.api.CiNiiURL._create_endpoint",return_value="naid/test_naid.json")
         cini = CiNiiURL("test_naid")
         result = cini._create_url()
-        assert result == "https://ci.nii.ac.jp/naid/test_naid.json"
+        assert result == "https://cir.nii.ac.jp/naid/test_naid.json"
 
 
 #     def url(self):
@@ -154,7 +154,7 @@ class TestCiNiiURL:
         mock_get = mocker.patch("weko_items_autofill.api.requests.get")
         cini = CiNiiURL("test_naid")
         cini._do_http_request()
-        mock_get.assert_called_with("https://ci.nii.ac.jp/naid/test_naid.json",
+        mock_get.assert_called_with("https://cir.nii.ac.jp/crid/test_naid.json",
                                     timeout=5,proxies={"http":"test_http_proxy","https":"test_https_proxy"})
 
 

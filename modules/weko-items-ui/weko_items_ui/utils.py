@@ -75,7 +75,7 @@ from weko_redis.redis import RedisConnection
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
-    get_root_item_option, get_sub_item_option
+    get_root_item_option, get_sub_item_option, get_identifier_setting
 from weko_schema_ui.models import PublishStatus
 from weko_user_profiles import UserProfile
 from weko_workflow.api import WorkActivity
@@ -588,7 +588,14 @@ def validate_form_input_data(
         return ret
 
     def _get_keys_that_exist_from_data(given_data: dict) -> list:
-        return list(given_data.keys())
+        ret = []
+        if given_data is not None:
+            if type(given_data) is dict:
+                ret = list(given_data.keys())
+            elif type(given_data) is str:
+                ret = list(given_data)
+        return ret
+        
 
     # Get langauge key - DONE
     # Iterate data for validating the value - 
@@ -1597,6 +1604,7 @@ def validate_form_input_data(
     remove_excluded_items_in_json_schema(item_id, json_schema)
 
     data['$schema'] = json_schema.copy()
+    
     validation_data = RecordBase(data)
 
     try:
@@ -1907,16 +1915,19 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
     """
     from weko_records_ui.views import escape_newline, escape_str
 
-    item_type = ItemTypes.get_by_id(item_type_id).render
-    list_hide = get_item_from_option(item_type_id)
+    item_type = ItemTypes.get_by_id(item_type_id)
+    if item_type:
+        list_hide = get_item_from_option(item_type_id, item_type=ItemTypes(item_type.schema, model=item_type))
+    else:
+        list_hide = get_item_from_option(item_type_id)
     no_permission_show_hide = hide_meta_data_for_role(
         list_item_role.get(item_type_id))
-    if no_permission_show_hide and item_type and item_type.get('table_row'):
+    if no_permission_show_hide and item_type and item_type.render.get('table_row'):
         for name_hide in list_hide:
-            item_type['table_row'] = hide_table_row(
-                item_type.get('table_row'), name_hide)
+            item_type.render['table_row'] = hide_table_row(
+                item_type.render.get('table_row'), name_hide)
 
-    table_row_properties = item_type['table_row_map']['schema'].get(
+    table_row_properties = item_type.render['table_row_map']['schema'].get(
         'properties')
 
     class RecordsManager:
@@ -2210,6 +2221,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
         doi_value, doi_type = identifier.get_idt_registration_data()
         doi_type_str = doi_type[0] if doi_type and doi_type[0] else ''
         doi_str = doi_value[0] if doi_value and doi_value[0] else ''
+        identifier_setting = get_identifier_setting("Root Index")
         if doi_type_str and doi_str:
             doi_domain = ''
             if doi_type_str == WEKO_IMPORT_DOI_TYPE[0]:
@@ -2222,6 +2234,9 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
                 doi_domain = IDENTIFIER_GRANT_LIST[4][2]
             if doi_domain and doi_str.startswith(doi_domain):
                 doi_str = doi_str.replace(doi_domain + '/', '', 1)
+            if doi_type_str == WEKO_IMPORT_DOI_TYPE[0] and \
+                    doi_str.startswith(identifier_setting.ndl_jalc_doi + "/"):
+                doi_type_str = WEKO_IMPORT_DOI_TYPE[3]
         records.attr_output[recid].extend([
             doi_type_str,
             doi_str
@@ -2232,7 +2247,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
             pubdate = record.get('pubdate', {}).get('attribute_value', '')
             records.attr_output[recid].append(pubdate)
 
-    for item_key in item_type.get('table_row'):
+    for item_key in item_type.render.get('table_row'):
         item = table_row_properties.get(item_key)
         records.get_max_ins(item_key)
         keys = []
@@ -2288,9 +2303,9 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
     ret_option = []
     multiple_option = ['.metadata.path', '.pos_index',
                        '.feedback_mail', '.file_path', '.thumbnail_path']
-    meta_list = item_type.get('meta_list', {})
-    meta_list.update(item_type.get('meta_fix', {}))
-    form = item_type.get('table_row_map', {}).get('form', {})
+    meta_list = item_type.render.get('meta_list', {})
+    meta_list.update(item_type.render.get('meta_fix', {}))
+    form = item_type.render.get('table_row_map', {}).get('form', {})
     del_num = 0
     total_col = len(ret)
     for index in range(total_col):
@@ -2609,8 +2624,11 @@ def _export_item(record_id,
         if not records_data:
             records_data = record
         if exported_item['item_type_id']:
-            list_hidden = get_ignore_item_from_mapping(
-                exported_item['item_type_id'])
+            item_type_id = exported_item['item_type_id']
+            list_hidden = []
+            item_type = ItemTypes.get_by_id(item_type_id)
+            if item_type:
+                list_hidden = get_ignore_item_from_mapping(item_type_id, item_type)
             if records_data.get('metadata'):
                 meta_data = records_data.get('metadata')
                 _custom_export_metadata(meta_data.get('_item_metadata', {}),
@@ -3139,33 +3157,40 @@ def hide_meta_data_for_role(record):
     return is_hidden
 
 
-def get_ignore_item_from_mapping(_item_type_id):
+def get_ignore_item_from_mapping(_item_type_id, item_type):
     """Get ignore item from mapping.
 
     :param _item_type_id:
+    :param item_type:
     :return ignore_list:
     """
     ignore_list = []
-    meta_options, item_type_mapping = get_options_and_order_list(_item_type_id)
-    sub_ids = get_hide_list_by_schema_form(item_type_id=_item_type_id)
+    meta_options, item_type_mapping = get_options_and_order_list(
+        _item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
+    sub_ids = get_hide_list_by_schema_form(item_type=item_type)
     for key, val in meta_options.items():
         hidden = val.get('option').get('hidden')
         if hidden:
             ignore_list.append(
                 get_mapping_name_item_type_by_key(key, item_type_mapping))
     for sub_id in sub_ids:
-        key = [re.sub(r'\[\d+\]', '', _id) for _id in sub_id.split('.')]
+        key = [re.sub(r'\[\d*\]', '', _id) for _id in sub_id.split('.')]
         if key[0] in item_type_mapping:
             mapping = item_type_mapping.get(key[0]).get('jpcoar_mapping')
             if isinstance(mapping, dict):
-                name = [list(mapping.keys())[0]]
-                if len(key) > 1:
-                    tree_name = get_mapping_name_item_type_by_sub_key(
-                        '.'.join(key[1:]), mapping.get(name[0])
-                    )
-                    if tree_name:
-                        name += tree_name
-                ignore_list.append(name)
+                for _name in mapping.keys():
+                    name = None
+                    if len(key) > 1:
+                        tree_name = get_mapping_name_item_type_by_sub_key(
+                            '.'.join(key[1:]),mapping.get(_name)
+                        )
+                        if tree_name is not None:
+                            name = [_name]
+                            name += tree_name
+                    else:
+                        name = [_name]
+                    if name is not None:
+                        ignore_list.append(name)
     return ignore_list
 
 
@@ -3179,7 +3204,7 @@ def get_mapping_name_item_type_by_key(key, item_type_mapping):
     for mapping_key in item_type_mapping:
         if mapping_key == key:
             property_data = item_type_mapping.get(mapping_key)
-            if isinstance(property_data.get('jpcoar_mapping'), dict):
+            if isinstance(property_data, dict) and isinstance(property_data.get('jpcoar_mapping'), dict):
                 for name in property_data.get('jpcoar_mapping'):
                     return name
     return key
@@ -3205,7 +3230,10 @@ def get_mapping_name_item_type_by_sub_key(key, item_type_mapping):
                 tree_name += _mapping_name
                 break
         elif key == property_data:
-            tree_name = [mapping_key if mapping_key != '@value' else '']
+            if mapping_key!= '@value':
+                tree_name = [mapping_key]
+            else:
+                tree_name = []
             break
     return tree_name
 
@@ -3227,12 +3255,11 @@ def del_hide_sub_item(key, mlt, hide_list):
     else:
         pass
 
-def get_hide_list_by_schema_form(item_type_id=None, schemaform=None):
+def get_hide_list_by_schema_form(item_type=None, schemaform=None):
     """Get hide list by schema form."""
     ids = []
-    if item_type_id and not schemaform:
-        item_type = ItemTypes.get_by_id(item_type_id).render
-        schemaform = item_type.get('table_row_map', {}).get('form', {})
+    if item_type and not schemaform:
+        schemaform = item_type.render.get('table_row_map', {}).get('form', {})
     if schemaform:
         for item in schemaform:
             if not item.get('items'):
@@ -3243,16 +3270,15 @@ def get_hide_list_by_schema_form(item_type_id=None, schemaform=None):
     return ids
 
 
-def get_hide_parent_keys(item_type_id=None, meta_list=None):
+def get_hide_parent_keys(item_type=None, meta_list=None):
     """Get all hide parent keys.
 
-    :param item_type_id:
+    :param item_type:
     :param meta_list:
     :return: hide parent keys
     """
-    if item_type_id and not meta_list:
-        item_type = ItemTypes.get_by_id(item_type_id).render
-        meta_list = item_type.get('meta_list', {})
+    if item_type and not meta_list:
+        meta_list = item_type.render.get('meta_list', {})
     hide_parent_keys = []
     for key, val in meta_list.items():
         hidden = val.get('option', {}).get('hidden')
@@ -3268,18 +3294,18 @@ def get_hide_parent_and_sub_keys(item_type):
     """
     # Get parent keys of 'Hide' items.
     meta_list = item_type.render.get('meta_list', {})
-    hide_parent_key = get_hide_parent_keys(item_type.id, meta_list)
+    hide_parent_key = get_hide_parent_keys(item_type, meta_list)
     # Get sub keys of 'Hide' items.
     forms = item_type.render.get('table_row_map', {}).get('form', {})
-    hide_sub_keys = get_hide_list_by_schema_form(item_type.id, forms)
+    hide_sub_keys = get_hide_list_by_schema_form(item_type, forms)
     hide_sub_keys = [prop.replace('[]', '') for prop in hide_sub_keys]
     return hide_parent_key, hide_sub_keys
 
 
-def get_item_from_option(_item_type_id):
+def get_item_from_option(_item_type_id, item_type=None):
     """Get all keys of properties that is set Hide option on metadata."""
     ignore_list = []
-    meta_options = get_options_list(_item_type_id)
+    meta_options = get_options_list(_item_type_id, json_item=item_type)
     for key, val in meta_options.items():
         hidden = val.get('option').get('hidden')
         if hidden:
@@ -3294,15 +3320,17 @@ def get_options_list(item_type_id, json_item=None):
     :param json_item:
     :return: options dict
     """
+    meta_options = {}
     if json_item is None:
         json_item = ItemTypes.get_record(item_type_id)
-    meta_options = json_item.model.render.get('meta_fix')
-    meta_options.update(json_item.model.render.get('meta_list'))
+    if json_item:
+        meta_options = json_item.model.render.get('meta_fix')
+        meta_options.update(json_item.model.render.get('meta_list'))
     return meta_options
 
 
 def get_options_and_order_list(item_type_id, item_type_mapping=None,
-                               item_type_data=None):
+                               item_type_data=None, mapping_flag=True):
     """Get Options by item type id.
 
     :param item_type_id:
@@ -3315,9 +3343,13 @@ def get_options_and_order_list(item_type_id, item_type_mapping=None,
     item_type_mapping = None
     if item_type_id:
         meta_options = get_options_list(item_type_id, item_type_data)
-        if item_type_mapping is None:
+        if item_type_mapping is None and mapping_flag:
             item_type_mapping = Mapping.get_record(item_type_id)
-    return meta_options, item_type_mapping
+
+    if mapping_flag:
+        return meta_options, item_type_mapping
+    else:
+        return meta_options
 
 
 def hide_table_row(table_row, hide_key):
@@ -3816,24 +3848,22 @@ def hide_thumbnail(schema_form):
             break
 
 
-def get_ignore_item(_item_type_id, item_type_mapping=None,
-                    item_type_data=None):
+def get_ignore_item(_item_type_id, item_type_data=None):
     """Get ignore item from mapping.
 
     :param _item_type_id:
-    :param item_type_mapping:
     :param item_type_data:
     :return ignore_list:
     """
     ignore_list = []
-    meta_options, _ = get_options_and_order_list(
-        _item_type_id, item_type_mapping, item_type_data)
+    sub_ids = []
+    meta_options = get_options_and_order_list(
+        _item_type_id, item_type_data=item_type_data, mapping_flag=False)
     schema_form = None
     if item_type_data is not None:
         schema_form = item_type_data.model.render.get("table_row_map", {}).get(
             'form')
-    sub_ids = get_hide_list_by_schema_form(
-        item_type_id=_item_type_id, schemaform=schema_form)
+        sub_ids = get_hide_list_by_schema_form(schemaform=schema_form)
     for key, val in meta_options.items():
         hidden = val.get('option').get('hidden')
         if hidden:
@@ -4208,6 +4238,7 @@ def make_stats_file_with_permission(item_type_id, recids,
         doi_value, doi_type = identifier.get_idt_registration_data()
         doi_type_str = doi_type[0] if doi_type and doi_type[0] else ''
         doi_str = doi_value[0] if doi_value and doi_value[0] else ''
+        identifier_setting = get_identifier_setting("Root Index")
         if doi_type_str and doi_str:
             doi_domain = ''
             if doi_type_str == WEKO_IMPORT_DOI_TYPE[0]:
@@ -4220,6 +4251,9 @@ def make_stats_file_with_permission(item_type_id, recids,
                 doi_domain = IDENTIFIER_GRANT_LIST[4][2]
             if doi_domain and doi_str.startswith(doi_domain):
                 doi_str = doi_str.replace(doi_domain + '/', '', 1)
+            if doi_type_str == WEKO_IMPORT_DOI_TYPE[0] and \
+                    doi_str.startswith(identifier_setting.ndl_jalc_doi + "/"):
+                doi_type_str = WEKO_IMPORT_DOI_TYPE[3]
         records.attr_output[recid].extend([
             doi_type_str,
             doi_str

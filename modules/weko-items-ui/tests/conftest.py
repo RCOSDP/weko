@@ -90,7 +90,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy_utils.functions import create_database, database_exists
 from weko_admin import WekoAdmin
 from weko_admin.config import WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS
-from weko_admin.models import SessionLifetime,RankingSettings
+from weko_admin.models import SessionLifetime,RankingSettings,Identifier
 from weko_deposit import WekoDeposit
 from weko_deposit.api import WekoIndexer
 from weko_deposit.config import DEPOSIT_RECORDS_API,WEKO_DEPOSIT_ITEMS_CACHE_PREFIX
@@ -168,7 +168,7 @@ def base_app(instance_path):
         TESTING=True,
         SERVER_NAME="test_server",
         SQLALCHEMY_DATABASE_URI=os.environ.get(
-             "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
+            "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
         ),
         #SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
@@ -184,11 +184,11 @@ def base_app(instance_path):
         #  WEKO_ITEMS_UI_INDEX_TEMPLATE= 'weko_items_ui/item_index.html',
         CACHE_TYPE="redis",
         ACCOUNTS_SESSION_REDIS_DB_NO=1,
-        CACHE_REDIS_HOST=os.environ.get("INVENIO_REDIS_HOST"),
         REDIS_PORT="6379",
+        CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
         WEKO_BUCKET_QUOTA_SIZE=50 * 1024 * 1024 * 1024,
         WEKO_MAX_FILE_SIZE=50 * 1024 * 1024 * 1024,
-        SEARCH_ELASTIC_HOSTS=os.environ.get("INVENIO_ELASTICSEARCH_HOST"),
+        SEARCH_ELASTIC_HOSTS=os.environ.get("SEARCH_ELASTIC_HOSTS", "elasticsearch"),
         SEARCH_INDEX_PREFIX="{}-".format('test'),
         SEARCH_CLIENT_CONFIG=dict(timeout=120, max_retries=10),
         OAISERVER_ID_PREFIX="oai:inveniosoftware.org:recid/",
@@ -513,6 +513,38 @@ def users(app, db):
         {"email": user.email, "id": user.id, "obj": user},
     ]
 
+
+@pytest.fixture()
+def identifier(db):
+    identifier_info = {
+        "Root Index":{
+            "JaLC": "1234",
+            "Crossref": "2345",
+            "DataCite": "3456",
+            "NDL JaLC": "4567",
+        }
+    }
+    identifiers = []
+    for index, info in identifier_info.items():
+        identifiers.append(Identifier(
+            repository=index,
+            jalc_flag=True,
+            jalc_crossref_flag=True,
+            jalc_datacite_flag=True,
+            ndl_jalc_flag=True,
+            jalc_doi=info["JaLC"],
+            jalc_crossref_doi=info["Crossref"],
+            jalc_datacite_doi=info["DataCite"],
+            ndl_jalc_doi=info["NDL JaLC"],
+            suffix="",
+            created_userId=1,
+            created_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+            updated_userId=1,
+            updated_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+        ))
+    db.session.add_all(identifiers)
+    db.session.commit()
+    return identifier_info
 
 
 @pytest.fixture()

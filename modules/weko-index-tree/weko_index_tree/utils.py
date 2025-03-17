@@ -91,7 +91,7 @@ def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
     """
     if more_ids is None:
         more_ids = []
-    roles = get_user_roles()
+    roles = get_user_roles(is_super_role=True)
     groups = get_user_groups()
     if path is not None:
         id_tp = []
@@ -209,13 +209,15 @@ def get_tree_json(index_list, root_id):
     return index_tree
 
 
-def get_user_roles():
+def get_user_roles(is_super_role=False):
     """Get user roles."""
     def _check_admin():
         result = False
         for lst in list(current_user.roles or []):
             # if is administrator
-            if 'Administrator' in lst.name:
+            admin_roles = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
+                (current_app.config["WEKO_PERMISSION_ROLE_COMMUNITY"] if is_super_role else [])
+            if lst.name in admin_roles:
                 result = True
         return result
 
@@ -243,10 +245,11 @@ def check_roles(user_role, roles):
         roles = roles.split(',')
     if not user_role[0]:
         if current_user.is_authenticated:
-            role = [x for x in (user_role[1] or ['-98'])
-                    if str(x) in (roles or [])]
-            if not role and (user_role[1] or "-98" not in roles):
-                is_can = False
+            self_role = user_role[1] or ['-98']
+            for role in self_role:
+                if str(role) not in (roles or []):
+                    is_can = False
+                    break
         elif roles and "-99" not in roles:
             is_can = False
     return is_can
@@ -281,7 +284,7 @@ def filter_index_list_by_role(index_list):
         return can_view
 
     result_list = []
-    roles = get_user_roles()
+    roles = get_user_roles(is_super_role=True)
     groups = get_user_groups()
     for i in index_list:
         if _check(i, roles, groups):
@@ -589,7 +592,9 @@ def get_record_in_es_of_index(index_id, recursively=True):
     @param index_id:
     @return:
     """
+    from weko_search_ui.utils import execute_search_with_pagination
     from .api import Indexes
+
     if recursively:
         child_idx = Indexes.get_child_list_recursive(index_id)
     else:
@@ -598,6 +603,7 @@ def get_record_in_es_of_index(index_id, recursively=True):
     query_string = "relation_version_is_last:true"
     search = RecordsSearch(
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
+    search = search.sort({"control_number": {"order": "asc"}})
     must_query = [
         QueryString(query=query_string),
         Q("terms", path=child_idx),
@@ -609,9 +615,7 @@ def get_record_in_es_of_index(index_id, recursively=True):
     search = search.query(
         Bool(filter=must_query)
     )
-    records = search.execute().to_dict().get('hits', {}).get('hits', [])
-
-    return records
+    return execute_search_with_pagination(search, max_result_size=-1)
 
 
 def check_doi_in_list_record_es(index_id):
@@ -790,7 +794,7 @@ def check_index_permissions(record=None, index_id=None, index_path_list=None,
 
     if not is_check_doi:
         # Get user roles and user groups.
-        roles = get_user_roles()
+        roles = get_user_roles(is_super_role=True)
         groups = get_user_groups()
         check_index_method = _check_index_permission
     else:
@@ -815,15 +819,18 @@ def check_doi_in_index_and_child_index(index_id, recursively=True):
     Args:
         index_id (list): Record list.
     """
+    from weko_search_ui.utils import execute_search_with_pagination
     from .api import Indexes
 
     if recursively:
         child_idx = Indexes.get_child_list_recursive(index_id)
     else:
         child_idx = [index_id]
+
     query_string = "relation_version_is_last:true AND publish_status: {}".format(PublishStatus.PUBLIC.value)
     search = RecordsSearch(
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
+    search = search.sort({"control_number": {"order": "asc"}})
     must_query = [
         QueryString(query=query_string),
         Q("terms", path=child_idx),
@@ -833,8 +840,7 @@ def check_doi_in_index_and_child_index(index_id, recursively=True):
     search = search.query(
         Bool(filter=must_query)
     )
-    records = search.execute().to_dict().get('hits', {}).get('hits', [])
-    return records
+    return execute_search_with_pagination(search, max_result_size=-1)
 
 
 def __get_redis_store():
@@ -980,7 +986,7 @@ def perform_delete_index(index_id, record_class, action: str):
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        current_app.logger.erorr(e)
+        current_app.logger.error(e)
         msg = 'Failed to delete index.'
     finally:
         if is_unlock:
@@ -1011,19 +1017,21 @@ def get_editing_items_in_index(index_id, recursively=False):
     @return:
     """
     from weko_items_ui.utils import check_item_is_being_edit
-    from weko_workflow.utils import check_an_item_is_locked
+    from weko_workflow.utils import bulk_check_an_item_is_locked
 
     result = []
     records = get_record_in_es_of_index(index_id, recursively)
-    for record in records:
-        item_id = record.get('_source', {}).get(
-            '_item_metadata', {}).get('control_number')
-        if check_item_is_being_edit(
-            PersistentIdentifier.get('recid', item_id)) or \
-                check_an_item_is_locked(int(item_id)):
+    item_ids = [
+        record.get('_source', {}).get('_item_metadata', {}).get('control_number')
+        for record in records
+    ]
+    for item_id in item_ids:
+        if check_item_is_being_edit(PersistentIdentifier.get('recid', item_id)):
             result.append(item_id)
 
-    return result
+    result.extend(bulk_check_an_item_is_locked(item_ids))
+
+    return sorted(list(set(result)))
 
 def save_index_trees_to_redis(tree, lang=None):
     """save inde_tree to redis for roles

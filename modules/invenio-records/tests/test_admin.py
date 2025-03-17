@@ -57,6 +57,7 @@ def test_admin(app, db):
         delete_view_url = url_for('recordmetadata.delete_view')
         detail_view_url = url_for(
             'recordmetadata.details_view', id=rec_uuid)
+        soft_delete_url = url_for('recordmetadata.soft_delete', id=1)
 
     with app.test_client() as client:
         # List index view and check record is there.
@@ -79,7 +80,7 @@ def test_admin(app, db):
         #     assert res.status_code == 200
 
         # soft delete
-        res = client.post('/admin/recordmetadata/soft_delete/{}'.format(1), headers=HEADERS)
+        res = client.get(soft_delete_url, headers=HEADERS)
         assert res.status_code == 500
 
         # Delete it.
