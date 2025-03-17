@@ -87,6 +87,7 @@ from weko_indextree_journal.api import Journals
 from weko_records.api import FeedbackMailList, RequestMailList, ItemTypeNames, ItemTypes, Mapping
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_full_mapping, get_mapping
+from weko_records_ui.external import call_external_system
 from weko_redis.redis import RedisConnection
 from weko_schema_ui.models import PublishStatus
 from weko_search_ui.mapper import BaseMapper, JPCOARV2Mapper
@@ -1689,10 +1690,13 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
             # current_app.logger.debug("item: {0}".format(item))
             status = item.get("status")
             root_path = item.get("root_path", "")
+            old_record = None
+            record_pid = None
             if status == "new":
                 item_id = create_deposit(item.get("id"))
                 item["id"] = item_id["recid"]
                 item["pid"] = item_id.pid
+                record_pid = item_id.pid
             else:
                 handle_check_item_is_locked(item)
                 # cache ES data for rollback
@@ -1704,6 +1708,8 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                 bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
                     PIDVersioning(child=pid).last_child.object_uuid
                 )
+                record_pid = pid
+                old_record = WekoRecord.get_record_by_pid(record_pid.pid_value)
 
             register_item_metadata(item, root_path, owner, is_gakuninrdm)
             if not is_gakuninrdm:
@@ -1719,6 +1725,8 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                     # Send item_created event to ES.
                     send_item_created_event_to_es(item, request_info)
             db.session.commit()
+            new_record = WekoRecord.get_record_by_pid(record_pid.pid_value)
+            call_external_system(old_record=old_record, new_record=new_record)
 
             # clean unuse file content in keep mode if import success
             cache_key = current_app.config[
