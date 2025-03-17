@@ -1625,7 +1625,7 @@ def create_tokens(client_api, client, users):
     tokens = {}
     roles_scopes = {
         "noroleuser": "index:read",
-        "contributor": "index:create index:read",
+        "contributor": "index:create",
         "repoadmin": "index:update index:delete index:read index:create",
         "sysadmin": "index:update index:delete index:read index:create",
         "comadmin": "index:read",
