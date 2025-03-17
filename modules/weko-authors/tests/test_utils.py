@@ -1,7 +1,7 @@
 
 from os.path import dirname, join
 import pytest
-from mock import patch
+from mock import patch, MagicMock
 from flask import current_app
 
 from invenio_indexer.api import RecordIndexer
@@ -701,3 +701,479 @@ def test_count_authors(app2, esindex):
 
     # 6 Not register author data
     assert count_authors()['count'] == 0
+
+from weko_authors.utils import validate_weko_id, check_weko_id_is_exists, check_period_date, delete_export_url,\
+    handle_exception, export_prefix
+from redis.exceptions import RedisError
+from sqlalchemy.exc import SQLAlchemyError
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestValidateWekoId -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+class TestValidateWekoId:
+    # 正常系
+    def test_validate_weko_id_valid(self, app):
+        with patch("weko_authors.utils.check_weko_id_is_exists", return_value=False):
+            result = validate_weko_id("12345")
+            assert result == (True, None)
+
+    # 異常系
+    def test_validate_weko_id_not_half_digit(self, app):
+        result = validate_weko_id("abcde")
+        assert result == (False, "not half digit")
+
+    # 異常系
+    def test_validate_weko_id_already_exists(self, app):
+        with patch("weko_authors.utils.check_weko_id_is_exists", return_value=True):
+            result = validate_weko_id("12345")
+            assert result == (False, "already exists")
+
+    # 異常系
+    def test_validate_weko_id_exception(self, app):
+        with patch("weko_authors.utils.check_weko_id_is_exists", side_effect=Exception("Test Exception")):
+            with pytest.raises(Exception, match="Test Exception"):
+                validate_weko_id("12345")
+                
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestCheckWekoIdIsExists -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+class TestCheckWekoIdIsExists:
+    # 正常系: weko_idが存在しない場合
+    def test_check_weko_id_is_exists_not_exist(self, app):
+        with patch('weko_authors.utils.RecordIndexer') as MockIndexer:
+            mock_indexer = MockIndexer.return_value
+            mock_indexer.client.search.return_value = {'hits': {'hits': []}}
+            assert check_weko_id_is_exists("12345") == False
+
+    # 正常系: weko_idが存在するが、pk_idが一致する場合
+    def test_check_weko_id_is_exists_exist_same_pk_id(self, app):
+        with patch('weko_authors.utils.RecordIndexer') as MockIndexer:
+            mock_indexer = MockIndexer.return_value
+            mock_indexer.client.search.return_value = {
+                'hits': {
+                    'hits': [
+                        {
+                            '_source': {
+                                'pk_id': '1',
+                                'authorIdInfo': [{'idType': '1', 'authorId': '12345'}]
+                            }
+                        }
+                    ]
+                }
+            }
+            assert check_weko_id_is_exists("12345", pk_id="1") == False
+
+    # 異常系: weko_idが存在する場合
+    def test_check_weko_id_is_exists_exist(self, app):
+        with patch('weko_authors.utils.RecordIndexer') as MockIndexer:
+            mock_indexer = MockIndexer.return_value
+            mock_indexer.client.search.return_value = {
+                'hits': {
+                    'hits': [
+                        {
+                            '_source': {
+                                'pk_id': '2',
+                                'authorIdInfo': [{'idType': '1', 'authorId': '12345'}]
+                            }
+                        }
+                    ]
+                }
+            }
+            assert check_weko_id_is_exists("12345") == True
+
+    # 異常系: Elasticsearchクライアントが例外をスローする場合
+    def test_check_weko_id_is_exists_exception(self, app):
+        with patch('weko_authors.utils.RecordIndexer') as MockIndexer:
+            mock_indexer = MockIndexer.return_value
+            mock_indexer.client.search.side_effect = Exception("Elasticsearch error")
+            with pytest.raises(Exception):
+                check_weko_id_is_exists("12345")
+                
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestCheckPeriodDate -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+class TestCheckPeriodDate:
+# 正常系: affiliationInfoが存在し、期間が正しい場合
+    def test_check_period_date_valid(self, app):
+        data = {
+            "affiliationInfo": [
+                {
+                    "affiliationPeriodInfo": [
+                        {"periodStart": "2020-01-01", "periodEnd": "2021-01-01"}
+                    ]
+                }
+            ]
+        }
+        assert check_period_date(data) == (True, None)
+
+    # 異常系: periodStartが日付形式でない場合
+    def test_check_period_date_invalid_start_date(self, app):
+        data = {
+            "affiliationInfo": [
+                {
+                    "affiliationPeriodInfo": [
+                        {"periodStart": "2020-13-01"}
+                    ]
+                }
+            ]
+        }
+        assert check_period_date(data) == (False, "not date format")
+
+    # 異常系: periodEndが日付形式でない場合
+    def test_check_period_date_invalid_end_date(self, app):
+        data = {
+            "affiliationInfo": [
+                {
+                    "affiliationPeriodInfo": [
+                        {"periodEnd": "2020-13-01"}
+                    ]
+                }
+            ]
+        }
+        assert check_period_date(data) == (False, "not date format")
+
+    # 異常系: periodStartがperiodEndより後の場合
+    def test_check_period_date_start_after_end(self, app):
+        data = {
+            "affiliationInfo": [
+                {
+                    "affiliationPeriodInfo": [
+                        {"periodStart": "2021-01-01", "periodEnd": "2020-01-01"}
+                    ]
+                }
+            ]
+        }
+        assert check_period_date(data) == (False, "start is after end")
+        
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestDeleteExportUrl -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+class TestDeleteExportUrl:
+    # 正常系: キャッシュキーが存在する場合
+    def test_delete_export_url_key_exists(self, app2):
+        with patch('weko_authors.utils.current_cache') as mock_cache:
+            delete_export_url()
+            mock_cache.delete.assert_called_once_with(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_URL_KEY"])
+
+    # 正常系: キャッシュキーが存在しない場合
+    def test_delete_export_url_key_not_exists(self, app2):
+        with patch('weko_authors.utils.current_cache') as mock_cache:
+            mock_cache.delete.return_value = None  # Simulate key not existing
+            delete_export_url()
+            mock_cache.delete.assert_called_once_with(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_URL_KEY"])
+   
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestHandleException -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+class TestHandleException:
+# 正常系: リトライ回数が残っている場合
+    def test_handle_exception_retry(self, app2):
+        with patch('weko_authors.utils.current_app') as mock_app, patch('weko_authors.utils.sleep') as mock_sleep:
+            mock_app.logger = MagicMock()
+            handle_exception(Exception("Test error"), attempt=0, retrys=3, interval=1, stop_point=0)
+            mock_sleep.assert_called_once_with(1)
+
+    # 異常系: リトライ回数が残っていない場合
+    def test_handle_exception_no_retry(self, app2):
+        with patch('weko_authors.utils.current_app') as mock_app:
+            mock_app.logger = MagicMock()
+            with pytest.raises(Exception):
+                handle_exception(Exception("Test error"), attempt=2, retrys=3, interval=1, stop_point=0)
+
+    # 異常系: リトライ回数が残っていない場合、かつstop_pointが指定されている場合
+    def test_handle_exception_no_retry_with_stop_point(self, app2):
+        with patch('weko_authors.utils.current_app') as mock_app, patch('weko_authors.utils.update_cache_data') as mock_update_cache:
+            mock_app.logger = MagicMock()
+            with pytest.raises(Exception):
+                handle_exception(Exception("Test error"), attempt=2, retrys=3, interval=1, stop_point=5)
+            mock_update_cache.assert_called_once_with(
+                mock_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"],
+                5,
+                mock_app.config["WEKO_AUTHORS_CACHE_TTL"]
+            )
+            
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestExportAuthors -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+class TestExportAuthors:
+    
+    @pytest.fixture
+    def setup_app_config(self, app, db):
+        """テスト用のapp configを設定するフィクスチャ"""
+        app_config = {
+            "WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY": 3,
+            "WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL": 1,
+            "WEKO_AUTHORS_EXPORT_BATCH_SIZE": 1000,
+            "WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY": "stop_point_key",
+            "WEKO_AUTHORS_FILE_MAPPING": {"key": "value"},
+            "WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION": {"aff_key": "aff_value"},
+            "WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY": "temp_file_path_key",
+            "WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY": "target_cache_key"
+        }
+        return app_config
+    
+    @pytest.fixture
+    def mock_dependencies(self, setup_app_config):
+        """依存関係をモックするフィクスチャ"""
+        with patch('builtins.open') as mock_open, \
+            patch('weko_authors.utils.current_app') as mock_app, \
+            patch('weko_authors.utils.current_cache') as mock_cache, \
+            patch('weko_authors.utils.WekoAuthors') as mock_weko, \
+            patch('weko_authors.utils.db') as mock_db, \
+            patch('weko_authors.utils.os') as mock_os, \
+            patch('weko_authors.utils.FileInstance') as mock_file, \
+            patch('weko_authors.utils.Location') as mock_location, \
+            patch('weko_authors.utils.get_export_url') as mock_get_url, \
+            patch('weko_authors.utils.write_to_tempfile') as mock_write, \
+            patch('weko_authors.utils.handle_exception') as mock_handle, \
+            patch('weko_authors.utils.io.BufferedReader') as mock_reader, \
+            patch('weko_authors.utils.traceback') as mock_traceback, \
+            patch('weko_authors.utils.stdout') as mock_stdout:
+            
+            # モックオブジェクトの設定
+            mock_app.config = setup_app_config
+            mock_app.logger = MagicMock()
+            
+            mock_cache.get.side_effect = lambda key: None if key == "stop_point_key" else "/tmp/test_file.csv"
+            mock_cache.delete = MagicMock()
+            mock_cache.set = MagicMock()
+            
+            mock_weko.get_records_count.return_value = 2000
+            mock_weko.mapping_max_item.return_value = ({"key": "value"}, {"aff_key": "aff_value"})
+            mock_weko.get_identifier_scheme_info.return_value = {"scheme1": "info1"}
+            mock_weko.get_affiliation_identifier_scheme_info.return_value = {"aff_scheme1": "aff_info1"}
+            mock_weko.get_by_range.return_value = [{"id": 1}, {"id": 2}]
+            mock_weko.prepare_export_data.return_value = (["header"], ["label_en"], ["label_jp"], [["data1"], ["data2"]])
+            
+            mock_get_url.return_value = None
+            
+            mock_file_instance = MagicMock()
+            mock_file_instance.uri = "file://test_uri"
+            mock_file.create.return_value = mock_file_instance
+            mock_file.get_by_uri = MagicMock(return_value=mock_file_instance)
+            
+            mock_default_location = MagicMock()
+            mock_default_location.uri = "default_uri"
+            mock_location.get_default.return_value = mock_default_location
+            
+            mock_reader_instance = MagicMock()
+            mock_reader.return_value = mock_reader_instance
+            
+            mock_db.session.commit = MagicMock()
+            mock_db.session.rollback = MagicMock()
+            
+            mock_os.remove = MagicMock()
+            
+            yield {
+                'app': mock_app,
+                'cache': mock_cache,
+                'weko': mock_weko,
+                'db': mock_db,
+                'os': mock_os,
+                'file': mock_file,
+                'location': mock_location,
+                'get_url': mock_get_url,
+                'write': mock_write,
+                'handle': mock_handle,
+                'reader': mock_reader,
+                'reader_instance': mock_reader_instance,
+                'file_instance': mock_file_instance,
+                'traceback': mock_traceback,
+                'stdout': mock_stdout
+            }
+
+
+    def test_normal_case(self, mock_dependencies):
+        """
+        テストケース1: 正常系 - 著者データがある場合
+        条件: 著者データが存在し、すべての処理が正常に完了する
+        入力: なし（関数内部でデータを取得）
+        期待結果:
+        - 非nullのfile_uriが返される
+        - 一時ファイルが作成され、その後削除される
+        - キャッシュに"author_db"が設定される
+        - 著者データが正しくエクスポートされる
+        """
+        
+        
+        result = export_authors()
+        
+        # 検証
+        assert result == "file://test_uri"
+        mock_dependencies['cache'].delete.assert_called_once_with("stop_point_key")
+        mock_dependencies['write'].assert_called()
+        mock_dependencies['os'].remove.assert_called_once_with("/tmp/test_file.csv")
+        mock_dependencies['db'].session.commit.assert_called_once()
+        mock_dependencies['cache'].set.assert_called_once_with(
+            "target_cache_key", "author_db", timeout=0
+        )
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestExportAuthors::test_with_stop_point -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_with_stop_point(self, mock_dependencies):
+        """
+        テストケース2: 正常系 - stop_pointが設定されている場合
+        条件: キャッシュにstop_pointが設定されている
+        入力: stop_point = 500（キャッシュ内）
+        期待結果:
+        - start_pointが500から開始される
+        - 処理が正常に完了し、非nullのfile_uriが返される
+        - キャッシュからstop_pointが削除される
+        """
+        # stop_pointを設定
+        mock_dependencies['cache'].get.side_effect = lambda key: 500 if key == "stop_point_key" else "/tmp/test_file.csv"
+        
+        result = export_authors()
+        
+        # 検証
+        assert result == "file://test_uri"
+        mock_dependencies['cache'].delete.assert_called_once_with("stop_point_key")
+        # 500から始まって1500で終わることを確認
+        mock_dependencies['app'].logger.info.assert_any_call("Export authors start_point：500")
+        mock_dependencies['weko'].get_by_range.assert_called_with(1500, 1000, False, False)
+
+
+    def test_with_existing_cache_url(self, mock_dependencies):
+        """
+        テストケース3: 正常系 - キャッシュURLが存在する場合
+        条件: get_export_url()が既存のキャッシュURLを返す
+        入力: cache_url = {'file_uri': 'existing_uri'}
+        期待結果:
+        - 既存のファイルが更新される
+        - 同じfile_uriが返される
+        """
+        # 既存のキャッシュURLを設定
+        mock_dependencies['get_url'].return_value = {'file_uri': 'existing_uri'}
+        
+        
+        
+        result = export_authors()
+        
+        # 検証
+        assert result == "file://test_uri"
+        mock_dependencies['file'].get_by_uri.assert_called_once_with('existing_uri')
+        mock_dependencies['file_instance'].set_contents.assert_called_once_with(mock_dependencies['reader_instance'])
+        mock_dependencies['file'].create.assert_not_called()
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestExportAuthors::test_sqlalchemy_error_on_mapping_with_retry_success -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_sqlalchemy_error_on_mapping_with_retry_success(self, mock_dependencies):
+        """
+        テストケース4: 異常系 - マッピング取得時のSQLAlchemyエラー（リトライ成功）
+        条件: 最初のSQLAlchemyエラーが発生し、リトライが成功する
+        入力: 1回目のマッピング取得時にSQLAlchemyErrorを発生させ、2回目は成功
+        期待結果:
+        - リトライ後に処理が続行され、正常に完了する
+        - 非nullのfile_uriが返される
+        """
+        # 1回目のマッピング取得でエラー、2回目は成功するように設定
+        mock_dependencies['weko'].get_records_count.side_effect = [SQLAlchemyError("DB Error"), 2000]
+        
+        
+        
+        result = export_authors()
+        
+        # 検証
+        assert result == "file://test_uri"
+        mock_dependencies['handle'].assert_called_once()
+        mock_dependencies['weko'].get_records_count.assert_called_with(False, False)
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestExportAuthors::test_redis_error_on_mapping_with_retry_success -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_redis_error_on_mapping_with_retry_success(self, mock_dependencies):
+        """
+        テストケース5: 異常系 - マッピング取得時のRedisエラー（リトライ成功）
+        条件: 最初のRedisエラーが発生し、リトライが成功する
+        入力: 1回目のマッピング取得時にRedisErrorを発生させ、2回目は成功
+        期待結果:
+        - リトライ後に処理が続行され、正常に完了する
+        - 非nullのfile_uriが返される
+        """
+        # 1回目のマッピング取得でRedisエラー、2回目は成功するように設定
+        mock_dependencies['weko'].mapping_max_item.side_effect = [RedisError("Redis Error"), ({"key": "value"}, {"aff_key": "aff_value"})]
+        
+        
+        
+        result = export_authors()
+        
+        # 検証
+        assert result == "file://test_uri"
+        mock_dependencies['handle'].assert_called_once()
+
+
+    def test_timeout_error_on_mapping_with_retry_success(self, mock_dependencies):
+        """
+        テストケース6: 異常系 - マッピング取得時のTimeoutエラー（リトライ成功）
+        条件: 最初のTimeoutエラーが発生し、リトライが成功する
+        入力: 1回目のマッピング取得時にTimeoutErrorを発生させ、2回目は成功
+        期待結果:
+        - リトライ後に処理が続行され、正常に完了する
+        - 非nullのfile_uriが返される
+        """
+        # 1回目のマッピング取得でTimeoutエラー、2回目は成功するように設定
+        mock_dependencies['weko'].get_identifier_scheme_info.side_effect = [TimeoutError("Timeout"), {"scheme1": "info1"}]
+        
+        
+        
+        result = export_authors()
+        
+        # 検証
+        assert result == "file://test_uri"
+        mock_dependencies['handle'].assert_called_once()
+
+
+    def test_sqlalchemy_error_on_author_info_with_retry_success(self, mock_dependencies):
+        """
+        テストケース7: 異常系 - 著者情報取得時のSQLAlchemyエラー（リトライ成功）
+        条件: 著者情報取得時にSQLAlchemyErrorが発生し、リトライが成功する
+        入力: 1回目の著者情報取得時にSQLAlchemyErrorを発生させ、2回目は成功
+        期待結果:
+        - リトライ後に処理が続行され、正常に完了する
+        - 非nullのfile_uriが返される
+        """
+        # 著者情報取得でSQLAlchemyエラー、2回目は成功するように設定
+        mock_dependencies['weko'].get_by_range.side_effect = [SQLAlchemyError("DB Error"), [{"id": 1}, {"id": 2}]]
+        
+        
+        
+        result = export_authors()
+        
+        # 検証
+        mock_dependencies['handle'].assert_called_once_with(
+            mock_dependencies['handle'].call_args[0][0], 
+            0, 
+            3, 
+            1, 
+            stop_point=0
+        )
+
+
+    def test_redis_error_on_author_info_with_retry_success(self, mock_dependencies):
+        """
+        テストケース8: 異常系 - 著者情報取得時のRedisエラー（リトライ成功）
+        条件: 著者情報取得時にRedisErrorが発生し、リトライが成功する
+        入力: 1回目の著者情報取得時にRedisErrorを発生させ、2回目は成功
+        期待結果:
+        - リトライ後に処理が続行され、正常に完了する
+        - 非nullのfile_uriが返される
+        """
+        # 著者情報取得でRedisエラー、2回目は成功するように設定
+        mock_dependencies['weko'].prepare_export_data.side_effect = [
+            RedisError("Redis Error"), 
+            (["header"], ["label_en"], ["label_jp"], [["data1"], ["data2"]])
+        ]
+        
+        
+        
+        result = export_authors()
+        
+        # 検証
+        mock_dependencies['handle'].assert_called_once_with(
+            mock_dependencies['handle'].call_args[0][0], 
+            0, 
+            3, 
+            1, 
+            stop_point=0
+        )
+        
+    # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestExportAuthors::test_timeout_error_on_author_info_with_retry_success -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_timeout_error_on_author_info_with_retry_success(self, mock_dependencies):
+        """
+        テストケース9: 異常系 - 著者情報取得時のTimeoutエラー（リトライ成功）
+        条件: 著者情報取得時にTimeoutErrorが発生し、リトライが成功する
+        入力: 1回目の著者情報取得時にTimeoutErrorを発生させ、2回目は成功
+        期待結果:
+        - リトライ後に処理が続行され、正常に完了する
+        """
+        # 1回目のマッピング取得でRedisエラー、2回目は成功するように設定
+        mock_dependencies['weko'].prepare_export_data.side_effect = [TimeoutError("TimeoutError"), ({"key": "value"}, {"aff_key": "aff_value"})]
+        
+        result = export_authors()
+        
+        # 検証
+        mock_dependencies['handle'].assert_called_once()
+        
