@@ -1,7 +1,7 @@
 
 from os.path import dirname, join
 import pytest
-from mock import patch, MagicMock
+from mock import patch, MagicMock, Mock
 from flask import current_app
 
 from invenio_indexer.api import RecordIndexer
@@ -703,7 +703,7 @@ def test_count_authors(app2, esindex):
     assert count_authors()['count'] == 0
 
 from weko_authors.utils import validate_weko_id, check_weko_id_is_exists, check_period_date, delete_export_url,\
-    handle_exception, export_prefix
+    handle_exception, export_prefix,check_file_name
 from redis.exceptions import RedisError
 from sqlalchemy.exc import SQLAlchemyError
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestValidateWekoId -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -1176,4 +1176,424 @@ class TestExportAuthors:
         
         # 検証
         mock_dependencies['handle'].assert_called_once()
-        
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestExportPrefix -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+class TestExportPrefix:
+    def test_export_prefix_id_prefix_success(self, app):
+        """正常系: id_prefixの正常エクスポート"""
+        # モックの準備
+        with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
+            patch('weko_authors.utils.get_export_url') as mock_get_export_url, \
+            patch('weko_authors.utils.FileInstance') as mock_file_instance, \
+            patch('weko_authors.utils.Location') as mock_location, \
+            patch('weko_authors.utils.current_cache') as mock_current_cache, \
+            patch('weko_authors.utils.db') as mock_db:
+            
+            # モックの設定
+            mock_weko_authors.get_id_prefix_all.return_value = ['test_prefix']
+            mock_weko_authors.prepare_export_prefix.return_value = [['scheme1', 'name1', 'url1', 'false']]
+            mock_get_export_url.return_value = None
+            
+            mock_file = Mock()
+            mock_file.uri = 'test_uri'
+            mock_file_instance.create.return_value = mock_file
+            
+            mock_location_instance = Mock()
+            mock_location_instance.uri = 'default_uri'
+            mock_location.get_default.return_value = mock_location_instance
+            
+            # テスト対象の関数を実行
+            app.config['WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY'] = 3
+            app.config['WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL'] = 0
+            app.config['WEKO_ADMIN_OUTPUT_FORMAT'] = 'tsv'
+            app.config['WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY'] = 'test_cache_key'
+            
+            result = export_prefix('id_prefix')
+            
+            # 検証
+            assert result == 'test_uri'
+            mock_weko_authors.get_id_prefix_all.assert_called_once()
+            mock_weko_authors.prepare_export_prefix.assert_called_once_with('id_prefix', ['test_prefix'])
+            mock_file.set_contents.assert_called_once()
+            mock_db.session.commit.assert_called_once()
+            mock_current_cache.set.assert_called_once_with('test_cache_key', 'id_prefix', timeout=0)
+
+    def test_export_prefix_affiliation_id_success(self, app):
+        """正常系: affiliation_idの正常エクスポート"""
+        # モックの準備
+        with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
+            patch('weko_authors.utils.get_export_url') as mock_get_export_url, \
+            patch('weko_authors.utils.FileInstance') as mock_file_instance, \
+            patch('weko_authors.utils.Location') as mock_location, \
+            patch('weko_authors.utils.current_cache') as mock_current_cache, \
+            patch('weko_authors.utils.db') as mock_db:
+            
+            # モックの設定
+            mock_weko_authors.get_affiliation_id_all.return_value = ['test_affiliation']
+            mock_weko_authors.prepare_export_prefix.return_value = [['scheme1', 'name1', 'url1', 'false']]
+            mock_get_export_url.return_value = None
+            
+            mock_file = Mock()
+            mock_file.uri = 'test_uri'
+            mock_file_instance.create.return_value = mock_file
+            
+            mock_location_instance = Mock()
+            mock_location_instance.uri = 'default_uri'
+            mock_location.get_default.return_value = mock_location_instance
+            
+            # テスト対象の関数を実行
+            app.config['WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY'] = 3
+            app.config['WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL'] = 0
+            app.config['WEKO_ADMIN_OUTPUT_FORMAT'] = 'tsv'
+            app.config['WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY'] = 'test_cache_key'
+            
+            result = export_prefix('affiliation_id')
+            
+            # 検証
+            assert result == 'test_uri'
+            mock_weko_authors.get_affiliation_id_all.assert_called_once()
+            mock_weko_authors.prepare_export_prefix.assert_called_once_with('affiliation_id', ['test_affiliation'])
+            mock_file.set_contents.assert_called_once()
+            mock_db.session.commit.assert_called_once()
+            mock_current_cache.set.assert_called_once_with('test_cache_key', 'affiliation_id', timeout=0)
+
+    def test_export_prefix_csv_format(self, app):
+        """正常系: CSVフォーマットでの出力"""
+        # モックの準備
+        with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
+            patch('weko_authors.utils.get_export_url') as mock_get_export_url, \
+            patch('weko_authors.utils.FileInstance') as mock_file_instance, \
+            patch('weko_authors.utils.Location') as mock_location, \
+            patch('weko_authors.utils.current_cache') as mock_current_cache, \
+            patch('weko_authors.utils.db') as mock_db:
+            
+            # モックの設定
+            mock_weko_authors.get_id_prefix_all.return_value = ['test_prefix']
+            mock_weko_authors.prepare_export_prefix.return_value = [['scheme1', 'name1', 'url1', 'false']]
+            mock_get_export_url.return_value = None
+            
+            mock_file = Mock()
+            mock_file.uri = 'test_uri'
+            mock_file_instance.create.return_value = mock_file
+            
+            # テスト対象の関数を実行
+            app.config['WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY'] = 3
+            app.config['WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL'] = 0
+            app.config['WEKO_ADMIN_OUTPUT_FORMAT'] = 'csv'
+            
+            result = export_prefix('id_prefix')
+            
+            # 検証
+            assert result == 'test_uri'
+            # CSVフォーマットで書き込まれたことを検証（実装依存のため詳細な検証は省略）
+
+    def test_export_prefix_tsv_format(self, app):
+        """正常系: TSVフォーマットでの出力（デフォルト）"""
+        # モックの準備
+        with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
+            patch('weko_authors.utils.get_export_url') as mock_get_export_url, \
+            patch('weko_authors.utils.FileInstance') as mock_file_instance, \
+            patch('weko_authors.utils.Location') as mock_location, \
+            patch('weko_authors.utils.current_cache') as mock_current_cache, \
+            patch('weko_authors.utils.db') as mock_db:
+            
+            # モックの設定
+            mock_weko_authors.get_id_prefix_all.return_value = ['test_prefix']
+            mock_weko_authors.prepare_export_prefix.return_value = [['scheme1', 'name1', 'url1', 'false']]
+            mock_get_export_url.return_value = None
+            
+            mock_file = Mock()
+            mock_file.uri = 'test_uri'
+            mock_file_instance.create.return_value = mock_file
+            
+            # テスト対象の関数を実行
+            app.config['WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY'] = 3
+            app.config['WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL'] = 0
+            app.config['WEKO_ADMIN_OUTPUT_FORMAT'] = 'tsv'
+            
+            result = export_prefix('id_prefix')
+            
+            # 検証
+            assert result == 'test_uri'
+            # TSVフォーマットで書き込まれたことを検証（実装依存のため詳細な検証は省略）
+
+    def test_export_prefix_with_cache_url(self, app):
+        """正常系: キャッシュURLが存在する場合"""
+        # モックの準備
+        with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
+            patch('weko_authors.utils.get_export_url') as mock_get_export_url, \
+            patch('weko_authors.utils.FileInstance') as mock_file_instance, \
+            patch('weko_authors.utils.current_cache') as mock_current_cache, \
+            patch('weko_authors.utils.db') as mock_db:
+            
+            # モックの設定
+            mock_weko_authors.get_id_prefix_all.return_value = ['test_prefix']
+            mock_weko_authors.prepare_export_prefix.return_value = [['scheme1', 'name1', 'url1', 'false']]
+            mock_get_export_url.return_value = {'file_uri': 'cached_uri'}
+            
+            mock_file = Mock()
+            mock_file.uri = 'cached_uri'
+            mock_file_instance.get_by_uri.return_value = mock_file
+            
+            # テスト対象の関数を実行
+            app.config['WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY'] = 3
+            app.config['WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL'] = 0
+            app.config['WEKO_ADMIN_OUTPUT_FORMAT'] = 'tsv'
+            app.config['WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY'] = 'test_cache_key'
+            
+            result = export_prefix('id_prefix')
+            
+            # 検証
+            assert result == 'cached_uri'
+            mock_file_instance.get_by_uri.assert_called_once_with('cached_uri')
+            assert mock_file.writable == True
+            mock_file.set_contents.assert_called_once()
+            mock_db.session.commit.assert_called_once()
+
+    def test_export_prefix_without_cache_url(self, app):
+        """正常系: キャッシュURLが存在しない場合"""
+        # モックの準備
+        with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
+            patch('weko_authors.utils.get_export_url') as mock_get_export_url, \
+            patch('weko_authors.utils.FileInstance') as mock_file_instance, \
+            patch('weko_authors.utils.Location') as mock_location, \
+            patch('weko_authors.utils.current_cache') as mock_current_cache, \
+            patch('weko_authors.utils.db') as mock_db:
+            
+            # モックの設定
+            mock_weko_authors.get_id_prefix_all.return_value = ['test_prefix']
+            mock_weko_authors.prepare_export_prefix.return_value = [['scheme1', 'name1', 'url1', 'false']]
+            mock_get_export_url.return_value = None
+            
+            mock_file = Mock()
+            mock_file.uri = 'new_uri'
+            mock_file_instance.create.return_value = mock_file
+            
+            mock_location_instance = Mock()
+            mock_location_instance.uri = 'default_uri'
+            mock_location.get_default.return_value = mock_location_instance
+            
+            # テスト対象の関数を実行
+            app.config['WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY'] = 3
+            app.config['WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL'] = 0
+            
+            result = export_prefix('id_prefix')
+            
+            # 検証
+            assert result == 'new_uri'
+            mock_file_instance.create.assert_called_once()
+            mock_location.get_default.assert_called_once()
+
+    def test_export_prefix_sqlalchemy_error_retry_success(self, app):
+        """異常系: SQLAlchemyエラー発生（リトライ成功）"""
+        # モックの準備
+        with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
+            patch('weko_authors.utils.get_export_url') as mock_get_export_url, \
+            patch('weko_authors.utils.FileInstance') as mock_file_instance, \
+            patch('weko_authors.utils.Location') as mock_location, \
+            patch('weko_authors.utils.current_cache') as mock_current_cache, \
+            patch('weko_authors.utils.db') as mock_db, \
+            patch('weko_authors.utils.handle_exception') as mock_handle_exception:
+            
+            # 1回目はエラー、2回目は成功するように設定
+            mock_weko_authors.get_id_prefix_all.side_effect = [SQLAlchemyError("DB Error"), ['test_prefix']]
+            mock_weko_authors.prepare_export_prefix.return_value = [['scheme1', 'name1', 'url1', 'false']]
+            mock_get_export_url.return_value = None
+            
+            mock_file = Mock()
+            mock_file.uri = 'test_uri'
+            mock_file_instance.create.return_value = mock_file
+            
+            mock_location_instance = Mock()
+            mock_location_instance.uri = 'default_uri'
+            mock_location.get_default.return_value = mock_location_instance
+            
+            # テスト対象の関数を実行
+            app.config['WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY'] = 3
+            app.config['WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL'] = 0
+            
+            result = export_prefix('id_prefix')
+            
+            # 検証
+            assert result == 'test_uri'
+            assert mock_weko_authors.get_id_prefix_all.call_count == 2
+            mock_handle_exception.assert_called_once()
+
+    def test_export_prefix_sqlalchemy_error_all_fails(self, app):
+        """異常系: SQLAlchemyエラー発生（全リトライ失敗）"""
+        # モックの準備
+        with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
+            patch('weko_authors.utils.handle_exception') as mock_handle_exception:
+            
+            # 全てのリトライでエラーを発生させる
+            mock_weko_authors.get_id_prefix_all.side_effect = SQLAlchemyError("DB Error")
+            
+            # テスト対象の関数を実行
+            app.config['WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY'] = 3
+            app.config['WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL'] = 0
+            
+            result = export_prefix('id_prefix')
+            
+            # 検証
+            assert result is None
+            assert mock_weko_authors.get_id_prefix_all.call_count == 3
+            assert mock_handle_exception.call_count == 3
+
+    def test_export_prefix_redis_error_retry_success(self, app):
+        """異常系: RedisErrorエラー発生（リトライ成功）"""
+        # モックの準備
+        with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
+            patch('weko_authors.utils.get_export_url') as mock_get_export_url, \
+            patch('weko_authors.utils.FileInstance') as mock_file_instance, \
+            patch('weko_authors.utils.Location') as mock_location, \
+            patch('weko_authors.utils.current_cache') as mock_current_cache, \
+            patch('weko_authors.utils.db') as mock_db, \
+            patch('weko_authors.utils.handle_exception') as mock_handle_exception:
+            
+            # モックの設定
+            mock_weko_authors.get_id_prefix_all.return_value = ['test_prefix']
+            mock_weko_authors.prepare_export_prefix.return_value = [['scheme1', 'name1', 'url1', 'false']]
+            mock_get_export_url.return_value = None
+            
+            mock_file = Mock()
+            mock_file.uri = 'test_uri'
+            mock_file_instance.create.return_value = mock_file
+            
+            mock_location_instance = Mock()
+            mock_location_instance.uri = 'default_uri'
+            mock_location.get_default.return_value = mock_location_instance
+            
+            # 1回目はエラー、2回目は成功するように設定
+            mock_current_cache.set.side_effect = [RedisError("Redis Error"), None]
+            
+            # テスト対象の関数を実行
+            app.config['WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY'] = 3
+            app.config['WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL'] = 0
+            app.config['WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY'] = 'test_cache_key'
+            
+            result = export_prefix('id_prefix')
+            
+            # 検証
+            assert result == 'test_uri'
+            mock_handle_exception.assert_called_once()
+            assert mock_current_cache.set.call_count == 2
+
+    def test_export_prefix_redis_error_all_fails(self, app):
+        """異常系: RedisErrorエラー発生（全リトライ失敗）"""
+        # モックの準備
+        with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
+            patch('weko_authors.utils.get_export_url') as mock_get_export_url, \
+            patch('weko_authors.utils.FileInstance') as mock_file_instance, \
+            patch('weko_authors.utils.Location') as mock_location, \
+            patch('weko_authors.utils.current_cache') as mock_current_cache, \
+            patch('weko_authors.utils.db') as mock_db, \
+            patch('weko_authors.utils.handle_exception') as mock_handle_exception:
+            
+            # モックの設定
+            mock_weko_authors.get_id_prefix_all.return_value = ['test_prefix']
+            mock_weko_authors.prepare_export_prefix.return_value = [['scheme1', 'name1', 'url1', 'false']]
+            mock_get_export_url.return_value = None
+            
+            mock_file = Mock()
+            mock_file.uri = 'test_uri'
+            mock_file_instance.create.return_value = mock_file
+            
+            mock_location_instance = Mock()
+            mock_location_instance.uri = 'default_uri'
+            mock_location.get_default.return_value = mock_location_instance
+            
+            # 全てのリトライでエラーを発生させる
+            mock_current_cache.set.side_effect = RedisError("Redis Error")
+            
+            # テスト対象の関数を実行
+            app.config['WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY'] = 3
+            app.config['WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL'] = 0
+            app.config['WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY'] = 'test_cache_key'
+            
+            result = export_prefix('id_prefix')
+            
+            # 検証
+            assert result is 'test_uri'
+            assert mock_handle_exception.call_count == 3
+
+    def test_export_prefix_timeout_error_retry_success(self, app):
+        """異常系: TimeoutErrorエラー発生（リトライ成功）"""
+        # モックの準備
+        with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
+            patch('weko_authors.utils.get_export_url') as mock_get_export_url, \
+            patch('weko_authors.utils.FileInstance') as mock_file_instance, \
+            patch('weko_authors.utils.Location') as mock_location, \
+            patch('weko_authors.utils.current_cache') as mock_current_cache, \
+            patch('weko_authors.utils.db') as mock_db, \
+            patch('weko_authors.utils.handle_exception') as mock_handle_exception:
+            
+            # 1回目はエラー、2回目は成功するように設定
+            mock_weko_authors.get_id_prefix_all.side_effect = [TimeoutError("Timeout"), ['test_prefix']]
+            mock_weko_authors.prepare_export_prefix.return_value = [['scheme1', 'name1', 'url1', 'false']]
+            mock_get_export_url.return_value = None
+            
+            mock_file = Mock()
+            mock_file.uri = 'test_uri'
+            mock_file_instance.create.return_value = mock_file
+            
+            mock_location_instance = Mock()
+            mock_location_instance.uri = 'default_uri'
+            mock_location.get_default.return_value = mock_location_instance
+            
+            # テスト対象の関数を実行
+            app.config['WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY'] = 3
+            app.config['WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL'] = 0
+            
+            result = export_prefix('id_prefix')
+            
+            # 検証
+            assert result == 'test_uri'
+            assert mock_weko_authors.get_id_prefix_all.call_count == 2
+            mock_handle_exception.assert_called_once()
+
+    def test_export_prefix_timeout_error_all_fails(self, app):
+        """異常系: TimeoutErrorエラー発生（全リトライ失敗）"""
+        # モックの準備
+        with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
+            patch('weko_authors.utils.handle_exception') as mock_handle_exception:
+            
+            # 全てのリトライでエラーを発生させる
+            mock_weko_authors.get_id_prefix_all.side_effect = TimeoutError("Timeout")
+            
+            # テスト対象の関数を実行
+            app.config['WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY'] = 3
+            app.config['WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL'] = 0
+            
+            result = export_prefix('id_prefix')
+            
+            # 検証
+            assert result is None
+            assert mock_weko_authors.get_id_prefix_all.call_count == 3
+            assert mock_handle_exception.call_count == 3
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestCheckFileName -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+class TestCheckFileName:
+    def test_check_file_name_author_db(self, app):
+        """正常系: export_targetがauthor_dbの場合"""
+        app.config['WEKO_AUTHORS_EXPORT_FILE_NAME'] = 'author_db_export.tsv'
+        result = check_file_name('author_db')
+        assert result == 'author_db_export.tsv'
+
+    def test_check_file_name_id_prefix(self, app):
+        """正常系: export_targetがid_prefixの場合"""
+        app.config['WEKO_AUTHORS_ID_PREFIX_EXPORT_FILE_NAME'] = 'id_prefix_export.tsv'
+        result = check_file_name('id_prefix')
+        assert result == 'id_prefix_export.tsv'
+
+    def test_check_file_name_affiliation_id(self, app):
+        """正常系: export_targetがaffiliation_idの場合"""
+        app.config['WEKO_AUTHORS_AFFILIATION_EXPORT_FILE_NAME'] = 'affiliation_id_export.tsv'
+        result = check_file_name('affiliation_id')
+        assert result == 'affiliation_id_export.tsv'
+
+    def test_check_file_name_invalid_target(self, app):
+        """異常系: export_targetが無効な場合"""
+        result = check_file_name('invalid_target')
+        assert result == ''
+
+
