@@ -102,7 +102,7 @@ WEKO_RECORDS_TIME_PERIOD_TITLES = ['時間的範囲', 'Time Period',
                                    'TimePeriod', 'Time Period(s)', 'Temporal']
 """List time period titles."""
 
-WEKO_ITEM_REFERENCE_SUPPLEMENT = ['isSupplementTo','isSupplementedBy']
+WEKO_RECORDS_REFERENCE_SUPPLEMENT = ['isSupplementTo','isSupplementedBy']
 """List item reference supplement."""
 
 """

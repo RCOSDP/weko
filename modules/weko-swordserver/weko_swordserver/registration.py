@@ -124,9 +124,10 @@ def import_items_to_activity(item, data_path, request_info):
             in files_info[0].get("items", {})
     ]
     comment = metadata.get("comment")
-    link_data = item['metadata'].link_data
+    link_data = getattr(item['metadata'], 'link_data', None)
     grant_data = item.get("grant_data")
 
+    error = None
     try:
         headless = HeadlessActivity()
         url, current_action, recid = headless.auto(
@@ -136,12 +137,12 @@ def import_items_to_activity(item, data_path, request_info):
         )
     except Exception as ex:
         traceback.print_exc()
-        raise WekoSwordserverException(
-            f"An error occurred while {headless.current_action}.",
-            ErrorType.ServerError
-        ) from ex
+        url = headless.detail
+        recid = headless.recid
+        current_action = headless.current_action
+        error = True
 
-    return url, recid, current_action
+    return url, recid, current_action, error
 
 
 def create_activity_from_jpcoar(check_result, data_path):

@@ -241,9 +241,18 @@ def get_priority(link_data):
     item_ids = [link['item_id'] for link in link_data]
 
     # Check conditions
-    all_is_supplement_to = all(sele_id == 'isSupplementTo' for sele_id in sele_ids)
-    all_item_ids_not_numbers = all(not item_id.isdigit() for item_id in item_ids)
-    has_item_ids_not_numbers = any(not item_id.isdigit() for item_id in item_ids)
+    all_is_supplement_to = all(
+        sele_id == 'isSupplementTo'
+        for sele_id in sele_ids
+        )
+    all_item_ids_not_numbers = all(
+        not item_id.isdigit()
+        for item_id in item_ids
+        )
+    has_item_ids_not_numbers = any(
+        not item_id.isdigit()
+        for item_id in item_ids
+        )
     has_is_supplement_to_with_not_number = any(
         link['sele_id'] == 'isSupplementTo' and not link['item_id'].isdigit()
         for link in link_data
@@ -252,7 +261,10 @@ def get_priority(link_data):
         link['item_id'].isdigit() for link in link_data
         if link['sele_id'] == 'isSupplementTo'
     )
-    all_is_supplemented_by = all(sele_id == 'isSupplementedBy' for sele_id in sele_ids)
+    all_is_supplemented_by = all(
+        sele_id == 'isSupplementedBy'
+        for sele_id in sele_ids
+        )
 
     # Determine priority
     if all_is_supplement_to and all_item_ids_not_numbers:
@@ -295,8 +307,8 @@ def update_item_ids(list_record, new_id):
         if not metadata or not hasattr(metadata, 'id'):
             continue  # Skip if metadata is missing or doesn't have 'id'
 
-        current_identifier = getattr(metadata, 'id', '')
-        if current_identifier != '':  # Skip if identifier is empty
+        current_identifier = getattr(metadata, 'id')
+        if current_identifier is not None:  # Skip if identifier is empty
             identifier_to_item[current_identifier] = item
 
     # Iterate through each ITEM in list_record
@@ -312,7 +324,6 @@ def update_item_ids(list_record, new_id):
         if not isinstance(link_data, list):
             continue
 
-        # Iterate through link_data to check if any item_id matches a known identifier
         for link_item in link_data:
             if not isinstance(link_item, dict):
                 continue
@@ -323,7 +334,8 @@ def update_item_ids(list_record, new_id):
                 # If a match is found, overwrite item_id with new_id
                 link_item["item_id"] = new_id
                 current_app.logger.info(
-                    f"Updated item_id {item_id} to {new_id} in ITEM {item.get('identifier')}"
+                    f"Updated item_id {item_id} to {new_id} "
+                    f"in ITEM {item.get('identifier')}"
                 )
 
     return list_record

@@ -257,7 +257,8 @@ def post_service_document():
         check_result, file_format = check_import_items(file, False)
     data_path = check_result.get("data_path","")
     expire = datetime.now() + timedelta(days=1)
-    TempDirInfo().set(data_path, {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")})
+    TempDirInfo().set(data_path,
+                      {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")})
     # Prepare request information
     owner = -1
     if current_user.is_authenticated:
@@ -272,13 +273,12 @@ def post_service_document():
     }
 
     # Define a nested function to process a single item
-    def process_item(item, data_path, file_format, register_format, request_info):
+    def process_item(item, data_path, register_format, request_info):
         """Process a single item for import.
 
         Args:
             item (dict): The item to process.
             data_path (str): The path to the data directory.
-            file_format (str): The format of the file.
             register_format (str): The registration format (Direct or Workflow).
             request_info (dict): Information about the request.
 
@@ -286,38 +286,47 @@ def post_service_document():
             tuple: A tuple containing the response and the record ID.
         """
         item["root_path"] = os.path.join(data_path, "data")
+        try:
+            if register_format == "Direct":
+                import_result = import_items_to_system(item,
+                                    request_info=request_info)
+                if not import_result.get("success"):
+                    current_app.logger.error(
+                        f"Error in import_items_to_system: {item.get('error_id')}"
+                    )
+                recid = import_result.get("recid")
+                return recid
 
-        if register_format == "Direct":
-            import_result = import_items_to_system(item, request_info=request_info)
-            if not import_result.get("success"):
-                current_app.logger.error(
-                    f"Error in import_items_to_system: {item.get('error_id')}"
-                )
-            recid = import_result.get("recid")
-            return jsonify(_get_status_document(recid)), recid
+            elif register_format == "Workflow":
+                required_scopes = set([activity_scope.id])
+                token_scopes = set(request.oauth.access_token.scopes)
+                if not required_scopes.issubset(token_scopes):
+                    abort(403)
 
-        elif register_format == "Workflow":
-            required_scopes = set([activity_scope.id])
-            token_scopes = set(request.oauth.access_token.scopes)
-            if not required_scopes.issubset(token_scopes):
-                abort(403)
-            try:
-                url, recid, _ = import_items_to_activity(
+                url, recid, _ , error = import_items_to_activity(
                     item, data_path, request_info=request_info
                 )
                 activity_id = url.split("/")[-1]
-                return jsonify(_get_status_workflow_document(activity_id, recid)), recid
-            except Exception as e:
-                current_app.logger.error(f"Error importing to activity: {str(e)}")
-                raise
+                return activity_id, recid, error
 
-        else:
-            if os.path.exists(data_path):
-                shutil.rmtree(data_path)
-                TempDirInfo().delete(data_path)
+
+            else:
+                if os.path.exists(data_path):
+                    shutil.rmtree(data_path)
+                    TempDirInfo().delete(data_path)
+                raise WekoSwordserverException(
+                    "Invalid register format in admin settings",
+                    ErrorType.ServerError
+                )
+        except WekoSwordserverException as e:
+            current_app.logger.error(f"Error in process_item: {str(e)}")
+            raise  # Re-raise the exception after logging
+        except Exception as e:
+            current_app.logger.error(f"Unexpected error in process_item: {str(e)}")
             raise WekoSwordserverException(
-                "Invalid register format in admin settings", ErrorType.ServerError
-            )
+                f"Unexpected error in process_item: {str(e)}",
+                ErrorType.ServerError
+            ) from e
 
     # Validate items in the check result
     for item in check_result["list_record"]:
@@ -358,12 +367,17 @@ def post_service_document():
             "Invalid register format in admin settings", ErrorType.ServerError
         )
     response = {}
+    warns = []
+    activity_id = None
+    recid = None
     # Process and register items
     for item in check_result["list_record"]:
         try:
-            response, recid = process_item(
-                item, data_path, file_format, register_format, request_info
+            activity_id, recid, error = process_item(
+                item, data_path, register_format, request_info
             )
+            if error:
+                warns.append((activity_id, recid))
             if file_format == "JSON":
                 update_item_ids(check_result["list_record"], recid)
         except ValueError as e:
@@ -381,6 +395,31 @@ def post_service_document():
     current_app.logger.info(
         f"Items imported by sword from {request.oauth.client.name}"
     )
+    if len(warns) > 0:
+        error_messages = "; ".join(
+            [
+                "An error occurred. Please open the following URL to continue "
+                "with the remaining operations.{url}: Item id: {recid}."
+                .format(
+                    url=url_for(
+                        "weko_workflow.display_activity",
+                        activity_id=activity_id, _external=True
+                    ),
+                    recid=recid)
+                for activity_id, recid in warns
+            ]
+        )
+
+        response = jsonify(
+            _create_error_document(
+                ErrorType.ContentMalformed.type, error_messages
+            )
+        )
+    else:
+        if register_format == "Direct":
+            response = jsonify(_get_status_document(recid))
+        elif register_format == "Workflow":
+            response = jsonify(_get_status_workflow_document(activity_id,recid))
 
     return response
 

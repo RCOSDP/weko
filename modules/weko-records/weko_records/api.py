@@ -2669,8 +2669,11 @@ class ItemLink(object):
         # - updated_deleted_supplement: Items with supplement relationships that need to be deleted
         # - created: New items to be added
         # - created_supplement: New supplement relationships to be created
-        updated, updated_deleted_supplement, created, created_supplement = [], [], [], []
-        supplement_key = current_app.config["WEKO_ITEM_REFERENCE_SUPPLEMENT"]
+        updated = []
+        updated_deleted_supplement = []
+        created = []
+        created_supplement = []
+        supplement_key = current_app.config["WEKO_RECORDS_REFERENCE_SUPPLEMENT"]
         # Iterate through each item in the input list
         for item in items:
             item_id = item['item_id']
@@ -2681,13 +2684,18 @@ class ItemLink(object):
             # Check if the item already has a relationship with the current item
             if item_id in dst_ids:
                 # Find the corresponding destination item in the existing relationships
-                dst_item = next((d for d in dst_relations if d.dst_item_pid == item_id), None)
+                dst_item = next(
+                    (d for d in dst_relations if d.dst_item_pid == item_id),
+                    None
+                )
                 # If the relationship type has changed, handle the update
                 if dst_item and dst_item.reference_type != sele_id:
                     # If the old relationship was a supplement type, mark it for deletion
-                    if dst_item.reference_type in (supplement_key[0], supplement_key[1]):
+                    if dst_item.reference_type in (
+                        supplement_key[0],
+                        supplement_key[1]
+                    ):
                         updated_deleted_supplement.append(item_id)
-                    # If the new relationship is a supplement type, create the inverse relationship
                         updated.append(item)
                     if sele_id == supplement_key[1]:
                         item['sele_id'] = supplement_key[0]
@@ -2716,8 +2724,8 @@ class ItemLink(object):
                             'dst_item_id': item['item_id'],
                             'sele_id': item['sele_id']
                         })
-                # created.append(item)
-                # If the new relationship is a supplement type, create the inverse relationship
+                # If the new relationship is a supplement type,
+                # create the inverse relationship
                 if sele_id == supplement_key[1]:
                     item['sele_id'] = supplement_key[0]
                     if self.bulk_select(item) == False:
@@ -2735,7 +2743,6 @@ class ItemLink(object):
                             'sele_id': supplement_key[1]
                         })
 
-        # Items to be deleted are those still in dst_ids (no longer in the input list)
         deleted = list(dst_ids)
         if created_supplement:
             created.extend(created_supplement)
@@ -2763,7 +2770,7 @@ class ItemLink(object):
             db.session.rollback()
             return str(ex.orig)
         except SQLAlchemyError as ex:
-            # Log and handle other SQLAlchemy errors (e.g., database connection issues)
+            # Log and handle other SQLAlchemy errors
             current_app.logger.error(ex)
             db.session.rollback()
             return str(ex)
@@ -2810,7 +2817,12 @@ class ItemLink(object):
     def bulk_create_supplement(self, dst_items):
         """Create a list of supplement item links in bulk.
 
-        :param dst_items: List of dictionaries containing 'src_item_id', 'dst_item_id', and 'sele_id'.
+        Args:
+            dst_items (list of dict): List of dictionaries containing 'src_item_id', 'dst_item_id', and 'sele_id'.
+                Each dictionary represents a supplement item link with the source item ID, destination item ID, and reference type.
+
+        Returns:
+            None
         """
         # Create a list of ItemReference objects for bulk insertion
         objects = [
@@ -2828,7 +2840,6 @@ class ItemLink(object):
 
         :param dst_item_ids: List of destination item IDs to delete.
         """
-        # Delete all relationships where the current item is the source and the destination is in the list
         db.session.query(ItemReference).filter(
             ItemReference.src_item_pid == self.org_item_id,
             ItemReference.dst_item_pid.in_(dst_item_ids)
@@ -2837,12 +2848,18 @@ class ItemLink(object):
     def bulk_delete_supplement(self, dst_item_ids):
         """Delete a list of supplement item links in bulk.
 
-        :param dst_item_ids: List of destination item IDs to delete.
+        Args:
+            dst_item_ids (list of int): List of destination item IDs to delete from the ItemReference table.
+                These IDs will be matched against the source item ID in the query.
+
+        Returns:
+            None
+
         """
-        # Delete all supplement relationships where the destination is the current item
-        # and the source is in the list, and the relationship type is either 'isSupplementTo' or 'isSupplementBy'
         db.session.query(ItemReference).filter(
             ItemReference.src_item_pid.in_(dst_item_ids),
             ItemReference.dst_item_pid == self.org_item_id,
-            ItemReference.reference_type.in_(current_app.config["WEKO_ITEM_REFERENCE_SUPPLEMENT"])
+            ItemReference.reference_type.in_(
+                current_app.config["WEKO_RECORDS_REFERENCE_SUPPLEMENT"]
+            )
         ).delete(synchronize_session='fetch')
