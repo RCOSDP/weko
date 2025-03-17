@@ -82,6 +82,7 @@ from .utils import (
     get_root_item_option,
     get_sub_item_option,
     get_tree_items,
+    handle_doi,
     handle_get_all_sub_id_and_name,
     handle_workflow,
     make_stats_file,
@@ -334,7 +335,7 @@ class ItemImportView(BaseView):
         workflow = WorkFlow()
         workflows = workflow.get_workflow_list()
         workflows_js = [get_content_workflow(item) for item in workflows]
-        
+
         form =FlaskForm(request.form)
 
         return self.render(
@@ -347,9 +348,9 @@ class ItemImportView(BaseView):
     @expose("/check", methods=["POST"])
     def check(self) -> jsonify:
         """Validate item import."""
-        
+
         validate_csrf_header(request)
-        
+
         data = request.form
         file = request.files["file"] if request.files else None
 
@@ -456,13 +457,16 @@ class ItemImportView(BaseView):
         list_record = [
             item for item in data.get("list_record", []) if not item.get("errors")
         ]
+        list_doi = data.get("list_doi")
         if list_record:
             group_tasks = []
-            for item in list_record:
+            for idx, item in enumerate(list_record):
                 try:
                     item["root_path"] = data_path + "/data"
                     create_flow_define()
                     handle_workflow(item)
+                    metadata_doi = handle_doi(item, list_doi[idx])
+                    item["metadata"] = metadata_doi
                     group_tasks.append(import_item.s(item, request_info))
                     db.session.commit()
                 except Exception as e:
@@ -721,7 +725,7 @@ class ItemImportView(BaseView):
                     "error_id": check,
                 }
             )
-            
+
         else:
             return jsonify({"is_available": True})
 
@@ -846,8 +850,22 @@ item_management_custom_sort_adminview = {
 
 item_management_import_adminview = {
     "view_class": ItemImportView,
-    "kwargs": {"category": _("Items"), "name": _("Import"), "endpoint": "items/import"},
+    "kwargs": {
+        "category": _("Items"),
+        "name": _("Import"),
+        "endpoint": "items/import",
+    },
 }
+
+# FIXME: RO-Crate import is not implemented yet
+# item_management_rocrate_import_adminview = {
+#     "view_class": ItemImportView,
+#     "kwargs": {
+#         "category": _("Items"),
+#         "name": _("RO-Crate Import"),
+#         "endpoint": "items/rocrate_import",
+#     },
+# }
 
 item_management_export_adminview = {
     "view_class": ItemBulkExport,
@@ -863,5 +881,6 @@ __all__ = (
     "item_management_bulk_search_adminview",
     "item_management_custom_sort_adminview",
     "item_management_import_adminview",
+    # "item_management_rocrate_import_adminview",
     "item_management_export_adminview",
 )
