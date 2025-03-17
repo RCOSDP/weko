@@ -1021,8 +1021,11 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
     def post_v1(self, **kwargs):
         """Create a new index tree node."""
         try:
-            request_data = request.get_json()
-            if not request_data or "index" not in request_data:
+            try:
+                request_data = request.get_json()
+                if not isinstance(request_data,dict) :
+                    return make_response(jsonify({'status': 400, 'error': 'Bad Request: No data provided'}), 400)
+            except:
                 return make_response(jsonify({'status': 400, 'error': 'Bad Request: No data provided'}), 400)
 
             raw_index_data = request_data.get("index",{})
@@ -1044,7 +1047,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             
             index_data = {
                 "id": index_id,
-                "parent": raw_index_data.get("parent_id", "0"),
+                "parent": int(raw_index_data.get("parent_id", "0")),
                 "index_name": raw_index_data.get("index_name", "New Index"),
                 "index_name_english": raw_index_data.get("index_name_english", "New Index"),
                 "index_link_name": raw_index_data.get("index_link_name", ""),
@@ -1119,6 +1122,11 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             index_obj = self.record_class.get_index(index_id)
             if not index_obj:
                 return make_response(jsonify({'status': 404, 'error': 'Index not found'}), 404)
+            else:
+                from .utils import can_user_access_index
+                lst = {column.name: getattr(index_obj, column.name) for column in index_obj.__table__.columns}
+                if not can_user_access_index(lst):
+                    return make_response(jsonify({'status': 403, 'error': f'Permission denied: You do not have access to index {index_id}.'}), 403)
             
             request_data = request.get_json()
             if not request_data or "index" not in request_data:
@@ -1188,7 +1196,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             
             return make_response(jsonify(response_data), 200)
 
-        except (SameContentException, PermissionError, IndexNotFound404Error) as e:
+        except (SameContentException, PermissionError, IndexNotFound404Error, BadRequest) as e:
             raise e
 
         except SQLAlchemyError:
@@ -1202,13 +1210,19 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
     def delete_v1(self, index_id, **kwargs):
         """Delete an existing index tree node."""
         try:
+            index_obj = self.record_class.get_index(index_id)
+            if not index_obj:
+                return make_response(jsonify({'status': 404, 'error': 'Index not found'}), 404)
+            else:
+                from .utils import can_user_access_index
+                lst = {column.name: getattr(index_obj, column.name) for column in index_obj.__table__.columns}
+                if not can_user_access_index(lst):
+                    return make_response(jsonify({'status': 403, 'error': f'Permission denied: You do not have access to index {index_id}.'}), 403)
+            
             delete_result = self.record_class.delete(index_id)
 
             if not delete_result:
-                if delete_result == 0:
-                    return make_response(jsonify({'status': 404, 'error': 'Index not found'}), 404)
-                else:
-                    return make_response(jsonify({'status': 500, 'error': 'Internal Server Error: Failed to delete index'}), 500)
+                return make_response(jsonify({'status': 500, 'error': 'Internal Server Error: Failed to delete index'}), 500)
 
             return make_response(jsonify({'status': 200, 'message': 'Index deleted successfully.'}), 200)
 

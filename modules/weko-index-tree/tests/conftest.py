@@ -97,6 +97,7 @@ from weko_admin.models import AdminLangSettings
 from weko_schema_ui.models import OAIServerSchema
 from weko_index_tree.api import Indexes
 from weko_records import WekoRecords
+from weko_accounts import WekoAccounts
 from weko_records.api import ItemTypes
 from weko_records.config import WEKO_ITEMTYPE_EXCLUDED_KEYS
 from weko_records.models import ItemTypeName, ItemType
@@ -476,6 +477,7 @@ def base_app(instance_path):
     WekoSearchUI(app_)
     WekoWorkflow(app_)
     WekoGroups(app_)
+    WekoAccounts(app_)
     
     current_assets = LocalProxy(lambda: app_.extensions["invenio-assets"])
     current_assets.collect.collect()
@@ -1560,9 +1562,27 @@ def create_token_user_noroleuser(client_api, client, users):
     return token_
 
 @pytest.fixture()
+def create_token_user_noroleuser_1(client_api, client, users):
+    """Create token."""
+    with db_.session.begin_nested():
+        token_ = Token(
+            client=client,
+            user=next((user for user in users if user["id"] == 9), None)['obj'],
+            token_type='bearer',
+            access_token='dev_access_create_token_user_noroleuser_1',
+            # refresh_token='',
+            expires=datetime.now() + timedelta(hours=10),
+            is_personal=True,
+            is_internal=False,
+            _scopes="index:update index:delete index:read index:create",
+        )
+        db_.session.add(token_)
+    db_.session.commit()
+    return token_
+
+@pytest.fixture()
 def create_token_user_sysadmin(client_api, client, users):
     """Create token."""
-    print(next((user for user in users if user["id"] == 5), None)['obj'])
     with db_.session.begin_nested():
         token_ = Token(
             client=client,
@@ -1583,7 +1603,6 @@ def create_token_user_sysadmin(client_api, client, users):
 @pytest.fixture()
 def create_token_user_sysadmin_without_scope(client_api, client, users):
     """Create token."""
-    print(next((user for user in users if user["id"] == 5), None)['obj'])
     with db_.session.begin_nested():
         token_ = Token(
             client=client,
@@ -1601,6 +1620,56 @@ def create_token_user_sysadmin_without_scope(client_api, client, users):
     return token_
 
 @pytest.fixture()
+def create_tokens(client_api, client, users):
+    """Create tokens for users that exist in roles_scopes."""
+    tokens = {}
+    roles_scopes = {
+        "noroleuser": "index:read",
+        "contributor": "index:create index:read",
+        "repoadmin": "index:update index:delete index:read index:create",
+        "sysadmin": "index:update index:delete index:read index:create",
+        "comadmin": "index:read",
+        "generaluser": "index:read",
+    }
+
+    with db_.session.begin_nested():
+        for user_data in users:
+            role_name = user_data["email"].split("@")[0]
+
+            if role_name not in roles_scopes:
+                continue
+
+            user_obj = user_data["obj"]
+            access_token = f"dev_access_{role_name}"
+            scopes = roles_scopes[role_name]
+
+            token_ = Token(
+                client=client,
+                user=user_obj,
+                token_type='bearer',
+                access_token=access_token,
+                expires=datetime.now() + timedelta(hours=10),
+                is_personal=True,
+                is_internal=False,
+                _scopes=scopes,
+            )
+            db_.session.add(token_)
+            tokens[role_name] = token_
+
+    db_.session.commit()
+    return tokens
+
+@pytest.fixture()
+def create_auth_headers(client_api, json_headers, create_tokens):
+    """Generate authentication headers for each user role."""
+    auth_headers = {}
+
+    for role, token in create_tokens.items():
+        auth_headers[role] = fill_oauth2_headers(json_headers, token)
+
+    return auth_headers
+
+@pytest.fixture()
 def json_headers():
     """JSON headers."""
     return [('Content-Type', 'application/json'),
@@ -1614,6 +1683,14 @@ def auth_headers(client_api, json_headers, create_token_user_1):
     It uses the token associated with the first user.
     """
     return fill_oauth2_headers(json_headers, create_token_user_1)
+
+@pytest.fixture()
+def auth_headers_noroleuser_1(client_api, json_headers, create_token_user_noroleuser_1):
+    """Authentication headers (with a valid oauth2 token).
+
+    It uses the token associated with the first user.
+    """
+    return fill_oauth2_headers(json_headers, create_token_user_noroleuser_1)
 
 @pytest.fixture()
 def auth_headers_noroleuser(client_api, json_headers, create_token_user_noroleuser):
