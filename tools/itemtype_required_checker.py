@@ -84,6 +84,7 @@ def check_sub_item_required(fail_list, schemaeditor_schema, tableRowMap_schema, 
         tableRowMap_required_list = deepcopy(tableRowMap_schema.get('required', []))
     else:
         tableRowMap_required_list = []
+    title = tableRowMap_schema.get('title', '')
     for form in tableRowMap_form:
         key = form.get('key', '').split('.')[-1]
         # skip for system item
@@ -102,7 +103,7 @@ def check_sub_item_required(fail_list, schemaeditor_schema, tableRowMap_schema, 
             else:
                 append_flag = True
             if append_flag:
-                fail_list.append(form.get('key', ''))
+                fail_list.append('{}({})'.format(title, form.get('key', '')))
         items = form.get('items', [])
         if items and key:
             # get schema of schemaeditor
@@ -120,7 +121,6 @@ def check_sub_item_required(fail_list, schemaeditor_schema, tableRowMap_schema, 
             else:
                 tableRowMap_prop = tableRowMap_schema.get(key, {})
             check_sub_item_required(fail_list, schemaeditor_prop, tableRowMap_prop, items)
-    title = tableRowMap_schema.get('title', '')
     if schemaeditor_required_list:
         fail_list += ['{}({})'.format(title, a) for a in schemaeditor_required_list]
     if tableRowMap_required_list:
