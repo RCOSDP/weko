@@ -1029,6 +1029,17 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                 return make_response(jsonify({'status': 400, 'error': 'Bad Request: No data provided'}), 400)
 
             raw_index_data = request_data.get("index",{})
+            
+            parent_id = int(raw_index_data.get("parent_id", "0"))
+            if parent_id != 0:
+                index_obj = self.record_class.get_index(parent_id)
+                if not index_obj:
+                    return make_response(jsonify({'status': 404, 'error': 'Index not found'}), 404)
+                else:
+                    from .utils import can_user_access_index
+                    lst = {column.name: getattr(index_obj, column.name) for column in index_obj.__table__.columns}
+                    if not can_user_access_index(lst):
+                        return make_response(jsonify({'status': 403, 'error': f'Permission denied: You do not have access to parent index {parent_id}.'}), 403)
            
             index_id = int(time.time() * 1000)
 
