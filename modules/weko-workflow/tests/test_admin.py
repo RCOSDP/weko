@@ -575,14 +575,17 @@ class TestWorkFlowSettingView:
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestActivitySettingView -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 class TestActivitySettingsView:
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestActivitySettingView::test_index_get_request -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    @patch("weko_workflow.admin.db_register2", autospec=True)
-    def test_index_get_request(self, mock_db_register2, client):
+    @patch("sqlalchemy.create_engine")
+    def test_index_get_request(self, mock_create_engine, client, app):
         # モックの設定
-        mock_db_register2.return_value = None
+        mock_engine = MagicMock()
+        mock_create_engine.return_value = mock_engine
+        mock_engine.connect.return_value = MagicMock()
 
-        url = url_for('activity.index', _external=True)
-        res = client.get(url)
-        assert res.status_code == 302  # Redirect for unauthenticated users
+        with app.test_request_context():
+            url = url_for('activity.index', _external=True)
+            res = client.get(url)
+            assert res.status_code == 302
 
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestActivitySettingView::test_index_post_request_invalid_form -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     @patch("weko_workflow.admin.db_register2", autospec=True)
