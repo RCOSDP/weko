@@ -22,7 +22,6 @@ from weko_search_ui.utils import handle_check_date, handle_check_exist_record, i
 from weko_workflow.models import Activity
 
 from weko_swordserver.errors import *
-from weko_swordserver.registration import check_import_items, check_bagit_import_items, generate_metadata_from_json
 from weko_swordserver.views import _get_status_workflow_document, blueprint, _get_status_document,_create_error_document,post_service_document
 
 from .helpers import json_data, calculate_hash

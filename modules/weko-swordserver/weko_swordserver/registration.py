@@ -14,12 +14,10 @@ import shutil
 import traceback
 import bagit
 from zipfile import BadZipFile
-from sqlalchemy.exc import SQLAlchemyError
-from flask import current_app, request, url_for, abort
+from flask import current_app, url_for
 
 from invenio_accounts.models import User
 from invenio_db import db
-from invenio_deposit.scopes import actions_scope
 from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_files_rest.errors import FileSizeError
 from invenio_files_rest.utils import _location_has_quota
@@ -31,6 +29,7 @@ from weko_accounts.models import ShibbolethUser
 from weko_admin.models import AdminSettings
 from weko_deposit.api import WekoDeposit
 from weko_deposit.serializer import file_uploaded_owner
+from weko_records.api import ItemTypes
 from weko_search_ui.mapper import JsonLdMapper
 from weko_search_ui.utils import (
     check_tsv_import_items,
@@ -44,14 +43,15 @@ from weko_search_ui.utils import (
     handle_fill_system_item,
     handle_item_title,
     handle_set_change_identifier_flag,
-    handle_validate_item_import
+    handle_validate_item_import,
+    handle_check_authors_prefix,
+    handle_check_authors_affiliation
 )
 from weko_workflow.api import WorkActivity, WorkFlow as WorkFlows
 from weko_workflow.models import ActionStatusPolicy, WorkFlow
 from weko_workflow.headless import HeadlessActivity
 
-
-from weko_records.api import ItemTypes
+from .api import SwordItemTypeMapping
 from .errors import ErrorType, WekoSwordserverException
 from .mapper import WekoSwordMapper
 from .utils import (
@@ -297,74 +297,57 @@ def create_file_info(bucket, file_path, size_limit, content_length):
         "filename": obj.basename,
     }
 
-def check_bagit_import_items(file, packaging, is_change_identifier=False):
+def check_jsonld_import_items(
+        file,
+        packaging,
+        shared_id=-1,
+        client_id=None,
+        mapping_id=None,
+        is_change_identifier=False):
     """Check bagit import items.
 
     Check that the actual file contents match the recorded hashes stored
     in the manifest files and mapping metadata to the item type.
+    client_id or mapping_id is required to get the mapping data.
 
     Args:
         file (FileStorage | str): File object or file path.
         packaging (str): Packaging type. SWORDBagIt or SimpleZip.
+        shared_id (int): Shared ID. Defaults to -1.
+        client_id (int): Client ID. Defaults to None.
+        mapping_id (int): Mapping ID. Defaults to None.
+        is_change_identifier (bool, optional):
+            Change Identifier Mode. Defaults to False.
 
     Returns:
-        dict: Result of mapping to item type
-        str: Registration type "Direct" or "Workflow"
+        tuple(dict, str):
+            dict: Result of mapping to item type
+            str: Registration type "Direct" or "Workflow"
 
-        example when register_type is "Direct":
-            check_result = {
-                "data_path": "/tmp/xxxxx",
-                "list_record": [
-                    # metadata
-                ]
-                "register_type": "Direct",
-                "item_type_id": 1,
-            }
+    Example:
 
+    >>> check_bagit_import_items(file, "SimpleZip")
+    {
+        "data_path": "/tmp/xxxxx",
+        "list_record": [
+            # list of metadata
+        ]
+        "register_type": "Direct",
+        "item_type_id": 1,
+    } # Setiing is `Direct`
 
-        example when register_type is "Workflow":
-            check_result = {
-                "data_path": "/tmp/xxxxx",
-                "list_record": [
-                    # metadata
-                ]
-                "register_type": "Workflow",
-                "workflow_id": 1,
-                "item_type_id": 2,
-            }
+    >>> check_bagit_import_items(file, "SimpleZip")
+    {
+        "data_path": "/tmp/xxxxx",
+        "list_record": [
+            # list of metadata
+        ]
+        "register_type": "Workflow",
+        "workflow_id": 1,
+        "item_type_id": 2,
+    } # Setting is `Workflow`
     """
     check_result = {}
-
-    shared_id = None
-    try:
-        # parse On-Behalf-Of
-        if "On-Behalf-Of" in request.headers:
-            # get weko user id from email
-            on_behalf_of = request.headers.get("On-Behalf-Of")
-            user = User.query.filter_by(email=on_behalf_of).one_or_none()
-            shared_id = user.id if user is not None else None
-            if shared_id is None:
-                # get weko user id from personal access token
-                token = (
-                    Token.query
-                    .filter_by(access_token=on_behalf_of).one_or_none()
-                )
-                shared_id = token.user_id if token is not None else None
-            if shared_id is None:
-                # get weko user id from shibboleth user eppn
-                shib_user = (
-                    ShibbolethUser.query
-                    .filter_by(shib_eppn=on_behalf_of).one_or_none()
-                )
-                shared_id = shib_user.weko_uid if shib_user is not None else None
-    except SQLAlchemyError as ex:
-        current_app.logger.error(
-            "Somthing went wrong while searching user by On-Behalf-Of.")
-        traceback.print_exc()
-        raise WekoSwordserverException(
-            "An error occurred while searching user by On-Behalf-Of.",
-            errorType=ErrorType.ServerError
-        ) from ex
 
     if isinstance(file, str):
         filename = os.path.basename(file)
@@ -373,7 +356,10 @@ def check_bagit_import_items(file, packaging, is_change_identifier=False):
 
     try:
         data_path, files_list = unpack_zip(file)
-        check_result.update({"data_path": data_path})
+        check_result.update({
+            "data_path": data_path,
+            "weko_shared_id": shared_id
+        })
 
         # metadata json file name
         json_name = (
@@ -386,8 +372,17 @@ def check_bagit_import_items(file, packaging, is_change_identifier=False):
         bag = bagit.Bag(data_path)
         bag.validate()
 
-        client_id = request.oauth.client.client_id
-        sword_client, sword_mapping = get_record_by_client_id(client_id)
+        if client_id is not None:
+            sword_client, sword_mapping = get_record_by_client_id(client_id)
+        elif mapping_id is not None:
+            sword_mapping = SwordItemTypeMapping.get_mapping_by_id(mapping_id)
+        else:
+            current_app.logger.error(f"Client ID or Mapping ID not defined.")
+            raise WekoSwordserverException(
+                "Client ID or Mapping ID not defined.",
+                errorType=ErrorType.ServerError
+            )
+
         if sword_mapping is None:
             current_app.logger.error(f"Mapping not defined for sword client.")
             raise WekoSwordserverException(
@@ -438,16 +433,19 @@ def check_bagit_import_items(file, packaging, is_change_identifier=False):
         mapper = JsonLdMapper(item_type.id, mapping)
         item_metadatas, _ = mapper.to_item_metadata(json_ld)
         list_record = [
-                {
-                    "$schema": f"/items/jsonschema/{item_type.id}",
-                    "metadata": item_metadata,
-                    "item_type_name": item_type.item_type_name.name,
-                    "item_type_id": item_type.id,
-                    "publish_status": item_metadata.get("publish_status"),
-                } for item_metadata in item_metadatas
-            ]
-        list_record.sort(key=lambda x: get_priority(x['metadata'].link_data))
+            {
+                "$schema": f"/items/jsonschema/{item_type.id}",
+                "metadata": item_metadata,
+                "item_type_name": item_type.item_type_name.name,
+                "item_type_id": item_type.id,
+                "publish_status": item_metadata.get("publish_status")
+                # item_metadata has attributes
+                # >  id, link_data, non_existent, save_as_is, metadata_only,
+                # >  cnri, doi_ra, doi
+            } for item_metadata in item_metadatas
+        ]
 
+        list_record.sort(key=lambda x: get_priority(x['metadata'].link_data))
         handle_index_tree_much_with_workflow(list_record, workflow)
         handle_file_save_as_is(file, data_path, filename)
 
@@ -462,16 +460,11 @@ def check_bagit_import_items(file, packaging, is_change_identifier=False):
         handle_check_id(list_record)
         handle_check_and_prepare_index_tree(list_record, True, [])
         handle_check_and_prepare_publish_status(list_record)
-        # check if the user has scopes to publish
-        required_scopes = set([actions_scope.id])
-        token_scopes = set(request.oauth.access_token.scopes)
-        if (
-            list_record[0].get("publish_status") == "public"
-            and not required_scopes.issubset(token_scopes)
-        ):
-            abort(403)
 
         handle_check_file_metadata(list_record, data_path)
+
+        handle_check_authors_prefix(list_record)
+        handle_check_authors_affiliation(list_record)
 
         # add zip file to temporary dictionary
         if current_app.config.get("WEKO_SWORDSERVER_DEPOSIT_DATASET"):
@@ -483,10 +476,6 @@ def check_bagit_import_items(file, packaging, is_change_identifier=False):
             files_list.append(f"data/{filename}")
 
         # handle_files_info(list_record, files_list, data_path, filename)
-
-        # add on-behalf-of user id to metadata
-        if shared_id is not None:
-            list_record[0].get("metadata").update({"weko_shared_id": shared_id})
 
         check_result.update({"list_record": list_record})
 

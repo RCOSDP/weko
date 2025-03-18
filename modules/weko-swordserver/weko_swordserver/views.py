@@ -24,7 +24,7 @@ from sword3common.lib.seamless import SeamlessException
 from werkzeug.http import parse_options_header
 
 from invenio_db import db
-from invenio_deposit.scopes import write_scope
+from invenio_deposit.scopes import write_scope, actions_scope
 from invenio_oaiserver.api import OaiIdentify
 from invenio_oauth2server.decorators import require_oauth_scopes
 from invenio_oauth2server.ext import verify_oauth_token_and_set_current_user
@@ -41,7 +41,7 @@ from .config import WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE
 from .decorators import check_on_behalf_of, check_package_contents
 from .errors import ErrorType, WekoSwordserverException
 from .registration import (
-    check_bagit_import_items,
+    check_jsonld_import_items,
     check_import_items,
     create_activity_from_jpcoar,
     import_items_to_activity
@@ -49,7 +49,8 @@ from .registration import (
 from .utils import (
     check_import_file_format,
     is_valid_file_hash,
-    update_item_ids
+    update_item_ids,
+    get_shared_id_from_on_behalf_of
 )
 from weko_accounts.utils import limiter
 
@@ -250,16 +251,20 @@ def post_service_document():
                     ErrorType.DigestMismatch
                 )
 
-        check_result = check_bagit_import_items(file, packaging)
-        register_format = check_result.get("register_type")
+        client_id = request.oauth.client.client_id
+        shared_id = get_shared_id_from_on_behalf_of(request.headers.get("On-Behalf-Of"))
+        check_result = check_jsonld_import_items(file, packaging, shared_id, client_id)
+        register_type = check_result.get("register_type")
 
     else:
-        check_result, file_format = check_import_items(file, False)
+        check_result, file_format, register_type = check_import_items(file, False)
     data_path = check_result.get("data_path","")
     expire = datetime.now() + timedelta(days=1)
+
     TempDirInfo().set(data_path,
                       {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")})
     # Prepare request information
+
     owner = -1
     if current_user.is_authenticated:
         owner = current_user.id
@@ -273,13 +278,13 @@ def post_service_document():
     }
 
     # Define a nested function to process a single item
-    def process_item(item, data_path, register_format, request_info):
+    def process_item(item, data_path, register_type, request_info):
         """Process a single item for import.
 
         Args:
             item (dict): The item to process.
             data_path (str): The path to the data directory.
-            register_format (str): The registration format (Direct or Workflow).
+            register_type (str): The registration type (Direct or Workflow).
             request_info (dict): Information about the request.
 
         Returns:
@@ -287,7 +292,7 @@ def post_service_document():
         """
         item["root_path"] = os.path.join(data_path, "data")
         try:
-            if register_format == "Direct":
+            if register_type == "Direct":
                 import_result = import_items_to_system(item,
                                     request_info=request_info)
                 if not import_result.get("success"):
@@ -297,7 +302,7 @@ def post_service_document():
                 recid = import_result.get("recid")
                 return recid
 
-            elif register_format == "Workflow":
+            elif register_type == "Workflow":
                 required_scopes = set([activity_scope.id])
                 token_scopes = set(request.oauth.access_token.scopes)
                 if not required_scopes.issubset(token_scopes):
@@ -354,11 +359,11 @@ def post_service_document():
 
     # Determine registration format
     if (file_format == "TSV/CSV"
-         or (file_format == "JSON" and register_format == "Direct")):
-        register_format = "Direct"
+         or (file_format == "JSON" and register_type == "Direct")):
+        register_type = "Direct"
     elif (file_format == "XML"
-          or (file_format == "JSON" and register_format == "Workflow")):
-        register_format = "Workflow"
+          or (file_format == "JSON" and register_type == "Workflow")):
+        register_type = "Workflow"
     else:
         if os.path.exists(data_path):
             shutil.rmtree(data_path)
@@ -374,7 +379,7 @@ def post_service_document():
     for item in check_result["list_record"]:
         try:
             activity_id, recid, error = process_item(
-                item, data_path, register_format, request_info
+                item, data_path, register_type, request_info
             )
             if error:
                 warns.append((activity_id, recid))
@@ -416,9 +421,9 @@ def post_service_document():
             )
         )
     else:
-        if register_format == "Direct":
+        if register_type == "Direct":
             response = jsonify(_get_status_document(recid))
-        elif register_format == "Workflow":
+        elif register_type == "Workflow":
             response = jsonify(_get_status_workflow_document(activity_id,recid))
 
     return response
