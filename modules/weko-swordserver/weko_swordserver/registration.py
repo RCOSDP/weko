@@ -56,7 +56,9 @@ from .errors import ErrorType, WekoSwordserverException
 from .mapper import WekoSwordMapper
 from .utils import (
     get_record_by_client_id,
-    unpack_zip
+    unpack_zip,
+    process_json,
+    get_priority
 )
 
 
@@ -122,9 +124,10 @@ def import_items_to_activity(item, data_path, request_info):
             in files_info[0].get("items", {})
     ]
     comment = metadata.get("comment")
-    link_data = item.get("link_data")
+    link_data = getattr(item['metadata'], 'link_data', None)
     grant_data = item.get("grant_data")
 
+    error = None
     try:
         headless = HeadlessActivity()
         url, current_action, recid = headless.auto(
@@ -134,12 +137,12 @@ def import_items_to_activity(item, data_path, request_info):
         )
     except Exception as ex:
         traceback.print_exc()
-        raise WekoSwordserverException(
-            f"An error occurred while {headless.current_action}.",
-            ErrorType.ServerError
-        ) from ex
+        url = headless.detail
+        recid = headless.recid
+        current_action = headless.current_action
+        error = True
 
-    return url, recid, current_action
+    return url, recid, current_action, error
 
 
 def create_activity_from_jpcoar(check_result, data_path):
@@ -425,10 +428,8 @@ def check_jsonld_import_items(
 
         # TODO: validate mapping
         mapping = sword_mapping.mapping
-
         with open(f"{data_path}/{json_name}", "r") as f:
             json_ld = json.load(f)
-
         mapper = JsonLdMapper(item_type.id, mapping)
         item_metadatas, _ = mapper.to_item_metadata(json_ld)
         list_record = [
@@ -443,6 +444,8 @@ def check_jsonld_import_items(
                 # >  cnri, doi_ra, doi
             } for item_metadata in item_metadatas
         ]
+
+        list_record.sort(key=lambda x: get_priority(x['metadata'].link_data))
         handle_index_tree_much_with_workflow(list_record, workflow)
         handle_file_save_as_is(file, data_path, filename)
 

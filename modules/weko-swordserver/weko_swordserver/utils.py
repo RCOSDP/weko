@@ -190,10 +190,8 @@ def get_record_by_client_id(client_id):
             value in the tuple will be None.
     """
     sword_client = SwordClient.get_client_by_id(client_id)
-
     mapping_id = sword_client.mapping_id if sword_client is not None else None
     sword_mapping = SwordItemTypeMapping.get_mapping_by_id(mapping_id)
-
     return sword_client, sword_mapping
 
 
@@ -275,3 +273,115 @@ def process_json(json_ld):
     }
 
     return json
+
+def get_priority(link_data):
+    """Determine the priority of link data based on specific conditions.
+
+    Args:
+        link_data (list): A list of dictionaries containing 'sele_id' and 'item_id'.
+
+    Returns:
+        int: The priority level (1 to 6) based on the conditions.
+    """
+    sele_ids = [link['sele_id'] for link in link_data]
+    item_ids = [link['item_id'] for link in link_data]
+
+    # Check conditions
+    all_is_supplement_to = all(
+        sele_id == 'isSupplementTo'
+        for sele_id in sele_ids
+        )
+    all_item_ids_not_numbers = all(
+        not item_id.isdigit()
+        for item_id in item_ids
+        )
+    has_item_ids_not_numbers = any(
+        not item_id.isdigit()
+        for item_id in item_ids
+        )
+    has_is_supplement_to_with_not_number = any(
+        link['sele_id'] == 'isSupplementTo' and not link['item_id'].isdigit()
+        for link in link_data
+    )
+    all_is_supplement_to_item_ids_are_numbers = all(
+        link['item_id'].isdigit() for link in link_data
+        if link['sele_id'] == 'isSupplementTo'
+    )
+    all_is_supplemented_by = all(
+        sele_id == 'isSupplementedBy'
+        for sele_id in sele_ids
+        )
+
+    # Determine priority
+    if all_is_supplement_to and all_item_ids_not_numbers:
+        return 1  # Highest priority
+    elif all_is_supplement_to and has_item_ids_not_numbers:
+        return 2  # Second priority
+    elif has_is_supplement_to_with_not_number:
+        return 3  # Third priority
+    elif all_is_supplement_to and all_is_supplement_to_item_ids_are_numbers:
+        return 4  # Fourth priority
+    elif all_is_supplemented_by:
+        return 5  # Lowest priority
+    else:
+        return 6  # Other cases
+
+
+def update_item_ids(list_record, new_id):
+    """Iterate through list_record, check and update item_id.
+
+    Args:
+        list_record (list): A list containing multiple ITEMs.
+        new_id (str): The new ID used to overwrite item_id.
+
+    Returns:
+        list: The updated list_record.
+
+    Raises:
+        ValueError: If list_record is not a list.
+    """
+    if not isinstance(list_record, list):
+        raise ValueError("list_record must be a list.")
+
+    # Create a dictionary to map identifiers to their respective items
+    identifier_to_item = {}
+    for item in list_record:
+        if not isinstance(item, dict):
+            continue
+
+        metadata = item.get('metadata')
+        if not metadata or not hasattr(metadata, 'id'):
+            continue  # Skip if metadata is missing or doesn't have 'id'
+
+        current_identifier = getattr(metadata, 'id')
+        if current_identifier is not None:  # Skip if identifier is empty
+            identifier_to_item[current_identifier] = item
+
+    # Iterate through each ITEM in list_record
+    for item in list_record:
+        if not isinstance(item, dict):
+            continue
+
+        metadata = item.get('metadata')
+        if not metadata or not hasattr(metadata, 'link_data'):
+            continue  # Skip if metadata is missing or doesn't have 'link_data'
+
+        link_data = getattr(metadata, 'link_data', [])
+        if not isinstance(link_data, list):
+            continue
+
+        for link_item in link_data:
+            if not isinstance(link_item, dict):
+                continue
+
+            item_id = link_item.get("item_id")
+            sele_id = link_item.get("sele_id")
+            if item_id in identifier_to_item and sele_id == "isSupplementedBy":
+                # If a match is found, overwrite item_id with new_id
+                link_item["item_id"] = new_id
+                current_app.logger.info(
+                    f"Updated item_id {item_id} to {new_id} "
+                    f"in ITEM {item.get('identifier')}"
+                )
+
+    return list_record
