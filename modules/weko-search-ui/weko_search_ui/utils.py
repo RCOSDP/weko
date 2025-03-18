@@ -84,12 +84,12 @@ from weko_index_tree.utils import (
     check_restrict_doi_with_indexes,
 )
 from weko_indextree_journal.api import Journals
-from weko_records.api import FeedbackMailList, RequestMailList, ItemTypeNames, ItemTypes, Mapping
+from weko_records.api import FeedbackMailList, JsonldMapping, RequestMailList, ItemTypeNames, ItemTypes, Mapping
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_full_mapping, get_mapping
 from weko_redis.redis import RedisConnection
 from weko_schema_ui.models import PublishStatus
-from weko_search_ui.mapper import BaseMapper, JPCOARV2Mapper
+from weko_search_ui.mapper import BaseMapper, JPCOARV2Mapper, JsonLdMapper
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.config import (
     IDENTIFIER_GRANT_LIST,
@@ -774,6 +774,350 @@ def generate_metadata_from_jpcoar(data_path: str, filenames: list, item_type_id:
     # current_app.logger.debug('list_record: {}'.format(list_record))
     return list_record
 
+def check_jsonld_import_items(
+        file,
+        packaging,
+        mapping_id,
+        shared_id=-1,
+        is_change_identifier=False):
+    """Check bagit import items.
+
+    Check that the actual file contents match the recorded hashes stored
+    in the manifest files and mapping metadata to the item type.
+
+    Args:
+        file (FileStorage | str): File object or file path.
+        packaging (str): Packaging type. SWORDBagIt or SimpleZip.
+        shared_id (int): Shared ID. Defaults to -1.
+        mapping_id (int): Mapping ID. Defaults to None.
+        is_change_identifier (bool, optional):
+            Change Identifier Mode. Defaults to False.
+
+    Returns:
+        dict: Result of mapping to item type
+
+    Example:
+
+    >>> check_bagit_import_items(file, "SimpleZip")
+    {
+        "data_path": "/tmp/xxxxx",
+        "list_record": [
+            # list of metadata
+        ]
+        "register_type": "Direct",
+        "item_type_id": 1,
+    } # Setiing is `Direct`
+
+    >>> check_bagit_import_items(file, "SimpleZip")
+    {
+        "data_path": "/tmp/xxxxx",
+        "list_record": [
+            # list of metadata
+        ]
+        "register_type": "Workflow",
+        "workflow_id": 1,
+        "item_type_id": 2,
+    } # Setting is `Workflow`
+    """
+    check_result = {}
+
+    if isinstance(file, str):
+        filename = os.path.basename(file)
+    else:
+        filename = file.filename
+
+    try:
+        data_path = os.path.join(
+            tempfile.gettempdir(),
+            current_app.config.get("WEKO_SEARCH_UI_IMPORT_TMP_PREFIX")
+                + datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")[:-3]
+        )
+
+        # Create temp dir for import data
+        os.mkdir(data_path)
+
+        # Extract zip file, Extracted files remain.
+        with zipfile.ZipFile(file) as zip_ref:
+            for info in zip_ref.infolist():
+                try:
+                    info.filename = info.orig_filename
+                    inf = chardet.detect(info.orig_filename)
+                    if inf['encoding'] is not None and inf['encoding'] == 'cp437':
+                        info.filename = info.orig_filename.encode("cp437").decode("cp932")
+                        if os.sep != "/" and os.sep in info.filename:
+                            info.filename = info.filename.replace(os.sep, "/")
+                except Exception:
+                    traceback.print_exc()
+            zip_ref.extractall(path=data_path)
+
+        check_result.update({
+            "data_path": data_path,
+            "weko_shared_id": shared_id
+        })
+
+        # metadata json file name
+        json_name = (
+            current_app.config['WEKO_SWORDSERVER_METADATA_FILE_SWORD']
+                if "SWORDBagIt" in packaging
+                else current_app.config['WEKO_SWORDSERVER_METADATA_FILE_ROCRATE']
+        )
+
+        # Check if the bag is valid
+        bag = bagit.Bag(data_path)
+        bag.validate()
+
+        json_mapping = JsonldMapping.get_mapping_by_id(mapping_id)
+        if json_mapping is None:
+            current_app.logger.error(f"Mapping not defined for sword client.")
+            raise Exception(
+                "Metadata mapping not defined for registration your item."
+            )
+
+        item_type = ItemTypes.get_by_id(json_mapping.item_type_id)
+        check_result.update({"item_type_id": item_type.id})
+
+        # TODO: validate mapping
+        mapping = json_mapping.mapping
+        mapper = JsonLdMapper(item_type.id, mapping)
+        with open(f"{data_path}/{json_name}", "r") as f:
+            json_ld = json.load(f)
+        item_metadatas, _ = mapper.to_item_metadata(json_ld)
+        list_record = [
+            {
+                "$schema": f"/items/jsonschema/{item_type.id}",
+                "metadata": item_metadata,
+                "item_type_name": item_type.item_type_name.name,
+                "item_type_id": item_type.id,
+                "publish_status": item_metadata.get("publish_status"),
+                "non_extract": item_metadata.non_extract
+                # item_metadata has attributes
+                # >  id, link_data, non_extract, save_as_is, metadata_only,
+                # >  cnri, doi_ra, doi
+            } for item_metadata in item_metadatas
+        ]
+
+        list_record.sort(key=lambda x: get_priority(x['metadata'].link_data))
+        handle_save_bagit(list_record, file, data_path, filename)
+
+        handle_set_change_identifier_flag(list_record, is_change_identifier)
+        handle_fill_system_item(list_record)
+
+        list_record = handle_validate_item_import(list_record, item_type.schema)
+
+        list_record = handle_check_exist_record(list_record)
+        handle_item_title(list_record)
+        list_record = handle_check_date(list_record)
+        handle_check_id(list_record)
+        handle_check_and_prepare_index_tree(list_record, True, [])
+        handle_check_and_prepare_publish_status(list_record)
+
+        handle_check_file_metadata(list_record, data_path)
+
+        handle_check_authors_prefix(list_record)
+        handle_check_authors_affiliation(list_record)
+
+        check_result.update({"list_record": list_record})
+
+    except zipfile.BadZipFile as ex:
+        current_app.logger.error(
+            "An error occurred while extraction the file."
+        )
+        traceback.print_exc()
+        check_result.update({
+            "error": f"The format of the specified file {filename} dose not "
+            + "support import. Please specify a zip file."
+        })
+
+    except bagit.BagValidationError as ex:
+        current_app.logger.error("Bag validation failed.")
+        traceback.print_exc()
+        check_result.update({
+            "error": str(ex)
+        })
+
+    except (UnicodeDecodeError, UnicodeEncodeError) as ex:
+        current_app.logger.error(
+            "An error occurred while reading the file."
+        )
+        traceback.print_exc()
+        check_result.update({
+            "error": ex.reason
+        })
+
+    except Exception as ex:
+        msg = ""
+        if (
+            ex.args
+            and len(ex.args)
+            and isinstance(ex.args[0], dict)
+            and ex.args[0].get("error_msg")
+        ):
+            msg = ex.args[0].get("error_msg")
+            check_result.update({"error": msg})
+        else:
+            msg = str(ex)
+            check_result.update({"error": str(ex)})
+        current_app.logger.error(
+            f"Check items error: {msg}")
+        traceback.print_exc()
+
+    return check_result
+
+
+def handle_save_bagit(list_record, file, data_path, filename):
+    """Handle save bagit file as is.
+
+    Save the bagit file as is if the metadata has the save_as_is flag.
+    """
+    if len(list_record) > 1:
+        # item split flag takes precedence over save Bag flag
+        return
+
+    metadata = list_record[0].get("metadata")
+    if metadata is None or not metadata.save_as_is:
+        return
+
+    if isinstance(file, str):
+        shutil.copy(file, os.path.join(data_path, "data", filename))
+    else:
+        file.seek(0, 0)
+        file.save(os.path.join(data_path, "data", filename))
+
+    current_app.logger.info("Save the bagit file as is.")
+    list_record[0]["file_path"] = [filename] # for Direct registration
+
+    files_info = metadata.get("files_info")  # for Workflow registration
+    key = files_info[0].get("key")
+
+    dataset_info = {                         # replace metadata
+        "filesize": [
+            {
+                "value": str(os.path.getsize(
+                    os.path.join(data_path, "data", filename))
+                ),
+            }
+        ],
+        "filename":  filename,
+        "format": "application/zip",
+        "url": {
+            "objectType": "dataset",
+            "label": filename
+        },
+    }
+    metadata[key] = [dataset_info]
+
+
+def get_priority(link_data):
+    """Determine the priority of link data based on specific conditions.
+
+    Args:
+        link_data (list): A list of dictionaries containing 'sele_id' and 'item_id'.
+
+    Returns:
+        int: The priority level (1 to 6) based on the conditions.
+    """
+    sele_ids = [link['sele_id'] for link in link_data]
+    item_ids = [link['item_id'] for link in link_data]
+
+    # Check conditions
+    all_is_supplement_to = all(
+        sele_id == 'isSupplementTo'
+        for sele_id in sele_ids
+        )
+    all_item_ids_not_numbers = all(
+        not item_id.isdigit()
+        for item_id in item_ids
+        )
+    has_item_ids_not_numbers = any(
+        not item_id.isdigit()
+        for item_id in item_ids
+        )
+    has_is_supplement_to_with_not_number = any(
+        link['sele_id'] == 'isSupplementTo' and not link['item_id'].isdigit()
+        for link in link_data
+    )
+    all_is_supplement_to_item_ids_are_numbers = all(
+        link['item_id'].isdigit() for link in link_data
+        if link['sele_id'] == 'isSupplementTo'
+    )
+    all_is_supplemented_by = all(
+        sele_id == 'isSupplementedBy'
+        for sele_id in sele_ids
+        )
+
+    # Determine priority
+    if all_is_supplement_to and all_item_ids_not_numbers:
+        return 1  # Highest priority
+    elif all_is_supplement_to and has_item_ids_not_numbers:
+        return 2  # Second priority
+    elif has_is_supplement_to_with_not_number:
+        return 3  # Third priority
+    elif all_is_supplement_to and all_is_supplement_to_item_ids_are_numbers:
+        return 4  # Fourth priority
+    elif all_is_supplemented_by:
+        return 5  # Lowest priority
+    else:
+        return 6  # Other cases
+
+
+def update_item_ids(list_record, new_id):
+    """Iterate through list_record, check and update item_id.
+
+    Args:
+        list_record (list): A list containing multiple ITEMs.
+        new_id (str): The new ID used to overwrite item_id.
+
+    Returns:
+        list: The updated list_record.
+
+    Raises:
+        ValueError: If list_record is not a list.
+    """
+    if not isinstance(list_record, list):
+        raise ValueError("list_record must be a list.")
+
+    # Create a dictionary to map identifiers to their respective items
+    identifier_to_item = {}
+    for item in list_record:
+        if not isinstance(item, dict):
+            continue
+
+        metadata = item.get('metadata')
+        if not metadata or not hasattr(metadata, 'id'):
+            continue  # Skip if metadata is missing or doesn't have 'id'
+
+        current_identifier = getattr(metadata, 'id')
+        if current_identifier is not None:  # Skip if identifier is empty
+            identifier_to_item[current_identifier] = item
+
+    # Iterate through each ITEM in list_record
+    for item in list_record:
+        if not isinstance(item, dict):
+            continue
+
+        metadata = item.get('metadata')
+        if not metadata or not hasattr(metadata, 'link_data'):
+            continue  # Skip if metadata is missing or doesn't have 'link_data'
+
+        link_data = getattr(metadata, 'link_data', [])
+        if not isinstance(link_data, list):
+            continue
+
+        for link_item in link_data:
+            if not isinstance(link_item, dict):
+                continue
+
+            item_id = link_item.get("item_id")
+            sele_id = link_item.get("sele_id")
+            if item_id in identifier_to_item and sele_id == "isSupplementedBy":
+                # If a match is found, overwrite item_id with new_id
+                link_item["item_id"] = new_id
+                current_app.logger.info(
+                    f"Updated item_id {item_id} to {new_id} "
+                    f"in ITEM {item.get('identifier')}"
+                )
+
+    return list_record
 
 def getEncode(filepath):
     """

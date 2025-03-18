@@ -70,10 +70,10 @@ from weko_deposit.api import WekoIndexer
 from weko_index_tree.ext import WekoIndexTree
 from weko_index_tree.models import Index
 from weko_items_ui.ext import WekoItemsUI
-from weko_records.models import ItemTypeName, ItemType,ItemTypeMapping
+from weko_records.models import ItemTypeName, ItemType,ItemTypeMapping, ItemTypeJsonldMapping
 from weko_schema_ui.ext import WekoSchemaUI
 from weko_search_ui import WekoSearchUI
-from weko_swordserver.models import SwordClientModel, SwordItemTypeMappingModel
+from weko_swordserver.models import SwordClientModel
 from weko_theme.ext import WekoTheme
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import Action, ActionStatus, FlowAction, FlowDefine, WorkFlow
@@ -887,7 +887,7 @@ def workflow(app, db, item_type, action_data, users):
 def sword_mapping(db, item_type):
     sword_mapping = []
     for i in range(1, 4):
-        obj = SwordItemTypeMappingModel(
+        obj = ItemTypeJsonldMapping(
             name=f"test{i}",
             mapping=json_data("data/jsonld/ro-crate_mapping.json"),
             item_type_id=item_type[1]["item_type"].id,

@@ -50,12 +50,14 @@ from weko_authors.models import Authors
 
 
 from .fetchers import weko_record_fetcher
-from .models import FeedbackMailList as _FeedbackMailList
-from .models import RequestMailList as _RequestMailList
-from .models import FileMetadata, ItemMetadata, ItemReference, ItemType
-from .models import ItemTypeEditHistory as ItemTypeEditHistoryModel
-from .models import ItemTypeMapping, ItemTypeName, ItemTypeProperty, \
-    SiteLicenseInfo, SiteLicenseIpAddress
+from .models import (
+    FeedbackMailList as _FeedbackMailList,
+    RequestMailList as _RequestMailList,
+    FileMetadata, ItemMetadata, ItemReference, ItemType,
+    ItemTypeEditHistory as ItemTypeEditHistoryModel,
+    ItemTypeMapping, ItemTypeName, ItemTypeProperty,
+    ItemTypeJsonldMapping, SiteLicenseInfo, SiteLicenseIpAddress
+)
 
 
 _records_state = LocalProxy(
@@ -1420,6 +1422,128 @@ class Mapping(RecordBase):
 
             return [cls(obj.mapping, model=obj) for obj in query.all()]
 
+
+class JsonldMapping():
+    @classmethod
+    def create(cls, name, mapping, item_type_id):
+        """Create mapping.
+
+        Create new mapping for item type. ID is autoincremented.
+        mapping dict is dumped to JSON format.
+
+        Args:
+            name (str): Name of the mapping.
+            mapping (dict): Mapping in JSON format.
+            item_type_id (str): Target itemtype of the mapping.
+
+        Returns:
+            ItemTypeJsonldMapping: Created mapping object.
+
+        Raises:
+            SQLAlchemyError: An error occurred while creating the mapping.
+        """
+        obj = ItemTypeJsonldMapping(
+            name=name,
+            mapping=mapping or {},
+            item_type_id=item_type_id,
+        )
+
+        try:
+            with db.session.begin_nested():
+                db.session.add(obj)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            db.session.rollback()
+            raise
+
+        return obj
+
+
+    @classmethod
+    def update(cls, id, name, mapping, item_type_id):
+        """Update mapping.
+
+        Update mapping by ID. Specify the value to be updated.
+        The verion_id is incremented and the previousmapping moves to
+        the history table.
+
+        Args:
+            id (int): Mapping ID.
+            name (str, optional): Name of the mapping. Not required.
+            mapping (dict, optional): Mapping in JSON format. Not required.
+            item_type_id (str, optional):
+                Target itemtype of the mapping. Not required.
+
+        Returns:
+            ItemTypeJsonldMapping: Updated mapping object.
+
+        Raises:
+            WekoSwordserverException: When mapping not found.
+            SQLAlchemyError: An error occurred while updating the mapping.
+        """
+        obj = JsonldMapping.get_mapping_by_id(id)
+        if obj is None:
+            return None
+
+        obj.name = name
+        obj.mapping = mapping or {}
+        obj.item_type_id = item_type_id
+
+        try:
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            db.session.rollback()
+            raise
+
+        return obj
+
+
+    @classmethod
+    def delete(cls, id):
+        """Delete mapping.
+
+        Soft-delete mapping by ID.
+
+        Args:
+            id (int): Mapping ID.
+
+        Returns:
+            ItemTypeJsonldMapping: Deleted mapping object.
+        """
+        obj = JsonldMapping.get_mapping_by_id(id)
+        if obj is not None:
+            obj.is_deleted = True
+            db.session.commit()
+        return obj
+
+
+    @classmethod
+    def get_mapping_by_id(cls, id, include_deleted=False):
+        """Get mapping by mapping_id.
+
+        Get mapping latest version by mapping_id.
+        If include_deleted=False, return None if the mapping is deleted(default).
+        Specify include_deleted=True to get the mapping even if it is deleted.
+
+        Args:
+            id (int): Mapping ID.
+            include_deleted (bool, optional):
+                Include deleted mapping. Default is False.
+
+        Returns:
+            ItemTypeJsonldMapping:
+            Mapping object. If not found or deleted, return `None`.
+        """
+
+        obj = (
+            ItemTypeJsonldMapping.query
+            .filter_by(id=id)
+            .first()
+        )
+
+        if not include_deleted and obj is not None and obj.is_deleted:
+            return None
+        return obj
 
 class ItemTypeProps(RecordBase):
     """Define API for Itemtype Property creation and manipulation."""

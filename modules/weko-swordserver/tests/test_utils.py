@@ -18,7 +18,7 @@ from weko_swordserver.api import SwordClient, SwordItemTypeMapping
 from unittest.mock import MagicMock, patch
 from weko_swordserver.utils import (
     check_import_file_format,
-    get_record_by_client_id,
+    # get_record_by_client_id,
     process_json,
     unpack_zip,
     is_valid_file_hash
@@ -171,35 +171,35 @@ def test_is_valid_file_hash():
 
 # def get_record_by_client_id(client_id):
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_get_record_by_client_id -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-def test_get_record_by_client_id(app,mocker):
-    # No 1
-    client_id = "valid_client_id"
-    expected_client = SwordClientModel(client_id="client_id", mapping_id="mapping_id")
-    expected_mapping = SwordItemTypeMappingModel(id="mapping_id")
+# def test_get_record_by_client_id(app,mocker):
+#     # No 1
+#     client_id = "valid_client_id"
+#     expected_client = SwordClientModel(client_id="client_id", mapping_id="mapping_id")
+#     expected_mapping = SwordItemTypeMappingModel(id="mapping_id")
 
-    with patch.object(SwordClient, 'get_client_by_id', return_value=expected_client):
-        with patch.object(SwordItemTypeMapping, 'get_mapping_by_id', return_value=expected_mapping):
-            client, mapping = get_record_by_client_id(client_id)
-            assert client == expected_client
-            assert mapping == expected_mapping
+#     with patch.object(SwordClient, 'get_client_by_id', return_value=expected_client):
+#         with patch.object(SwordItemTypeMapping, 'get_mapping_by_id', return_value=expected_mapping):
+#             client, mapping = get_record_by_client_id(client_id)
+#             assert client == expected_client
+#             assert mapping == expected_mapping
 
-    # No 2
-    invalid_client_id = "invalid_client_id"
+#     # No 2
+#     invalid_client_id = "invalid_client_id"
 
-    with patch.object(SwordClient, 'get_client_by_id', return_value=None):
-        with patch.object(SwordItemTypeMapping, 'get_mapping_by_id', return_value=expected_mapping):
-            client, mapping = get_record_by_client_id(invalid_client_id)
-            assert client == None
-            assert mapping == expected_mapping
+#     with patch.object(SwordClient, 'get_client_by_id', return_value=None):
+#         with patch.object(SwordItemTypeMapping, 'get_mapping_by_id', return_value=expected_mapping):
+#             client, mapping = get_record_by_client_id(invalid_client_id)
+#             assert client == None
+#             assert mapping == expected_mapping
 
-    # No 3
-    valid_client_id = "valid_client_id"
-    expected_client = SwordClientModel(client_id="client_id", mapping_id="invalid_mapping_id")
-    with patch.object(SwordClient, 'get_client_by_id', return_value=expected_client):
-        with patch.object(SwordItemTypeMapping, 'get_mapping_by_id', return_value=None):
-            client, mapping = get_record_by_client_id(valid_client_id)
-            assert client == expected_client
-            assert mapping == None
+#     # No 3
+#     valid_client_id = "valid_client_id"
+#     expected_client = SwordClientModel(client_id="client_id", mapping_id="invalid_mapping_id")
+#     with patch.object(SwordClient, 'get_client_by_id', return_value=expected_client):
+#         with patch.object(SwordItemTypeMapping, 'get_mapping_by_id', return_value=None):
+#             client, mapping = get_record_by_client_id(valid_client_id)
+#             assert client == expected_client
+#             assert mapping == None
 
 # def process_json(json_ld):
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_process_json -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace

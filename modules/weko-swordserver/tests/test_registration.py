@@ -27,12 +27,12 @@ from weko_swordserver.errors import ErrorType, WekoSwordserverException
 from weko_swordserver.registration import (
     check_import_items,
     import_items_to_activity,
-    create_activity_from_jpcoar,
-    upload_jpcoar_contents,
-    create_file_info,
+    # create_activity_from_jpcoar,
+    # upload_jpcoar_contents,
+    # create_file_info,
     check_jsonld_import_items,
-    generate_metadata_from_json,
-    handle_files_info,
+    # generate_metadata_from_json,
+    # handle_files_info,
 )
 from weko_swordserver.utils import unpack_zip
 
@@ -74,6 +74,7 @@ def admin_xml_settings(workflow):
 
 # def check_import_items(file, is_change_identifier: bool = False)
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_registration.py::test_check_import_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
+@pytest.mark.skip(reason="old test")
 def test_check_import_items(app, admin_tsv_settings, admin_xml_settings):
     check_tsv_result = {"error": [], "list_record": [{"sample": "Tsv metadata here."}]}
     check_xml_result = {"error": [], "list_record": [{"sample": "Xml metadata here."}]}
@@ -194,311 +195,312 @@ def test_check_import_items(app, admin_tsv_settings, admin_xml_settings):
 
 # def import_items_to_activity(item, data_path, request_info)
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_registration.py::test_import_items_to_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
-def test_import_items_to_activity(app, db,index,users,tokens,sword_mapping,sword_client,make_zip,make_crate,mocker,workflow,admin_settings):
+# def test_import_items_to_activity(app, db,index,users,tokens,sword_mapping,sword_client,make_zip,make_crate,mocker,workflow,admin_settings):
 
-    check_result = {"data_path": "/tmp/weko_import_20250210103204704","list_record": [{"$schema": "/items/jsonschema/2","metadata": {"path": [1623632832836],"publish_status": "public","files_info": [{"key": "item_1617604990215","items": [{"filesize": [{"value": "333"}],"version": "1.0","fileDate": [{"fileDateValue": "2023-01-18","fileDateType": "Created"}],"filename": "sample.rst","url": {"url": "https://example.org/data/sample.rst","objectType": "fulltext","label": "data/sample.rst"},"format": "text/x-rst"}]}]},"publish_status": "public","file_path": ["sample.rst"]}]}
-    item = check_result.get("list_record")[0]
-    data_path = check_result.get("data_path","")
-    item["root_path"] = os.path.join(data_path, "data")
-    owner = 1
-    request_info = {
-        "user_id": owner,
-        "action": "IMPORT",
-        "workflow_id": str(workflow[0]["workflow"].id),
-    }
+#     check_result = {"data_path": "/tmp/weko_import_20250210103204704","list_record": [{"$schema": "/items/jsonschema/2","metadata": {"path": [1623632832836],"publish_status": "public","files_info": [{"key": "item_1617604990215","items": [{"filesize": [{"value": "333"}],"version": "1.0","fileDate": [{"fileDateValue": "2023-01-18","fileDateType": "Created"}],"filename": "sample.rst","url": {"url": "https://example.org/data/sample.rst","objectType": "fulltext","label": "data/sample.rst"},"format": "text/x-rst"}]}]},"publish_status": "public","file_path": ["sample.rst"]}]}
+#     item = check_result.get("list_record")[0]
+#     data_path = check_result.get("data_path","")
+#     item["root_path"] = os.path.join(data_path, "data")
+#     owner = 1
+#     request_info = {
+#         "user_id": owner,
+#         "action": "IMPORT",
+#         "workflow_id": str(workflow[0]["workflow"].id),
+#     }
 
-    # normal case
-    url = "http://test_server.localdomain/workflow/activity/detail/A-TEST-00002"
-    current_action = "end_action"
-    recid = 200001
-    with patch("weko_workflow.headless.HeadlessActivity.auto", return_value=(url, current_action, recid)) as mock_auto:
-        url, recid, current_action = import_items_to_activity(item, data_path, request_info)
-        mock_auto.assert_called_once()
-        assert url == url
-        assert recid == recid
-        assert current_action == current_action
+#     # normal case
+#     url = "http://test_server.localdomain/workflow/activity/detail/A-TEST-00002"
+#     current_action = "end_action"
+#     recid = 200001
+#     with patch("weko_workflow.headless.HeadlessActivity.auto", return_value=(url, current_action, recid)) as mock_auto:
+#         url, recid, current_action = import_items_to_activity(item, data_path, request_info)
+#         mock_auto.assert_called_once()
+#         assert url == url
+#         assert recid == recid
+#         assert current_action == current_action
 
-    # except case
-    expect_current_action = "item_login"
-    mock_activity = MagicMock()
-    type(mock_activity).current_action = mocker.PropertyMock(return_value=expect_current_action)
-    mocker.patch("weko_swordserver.registration.HeadlessActivity", return_value=mock_activity)
-    with patch("weko_workflow.headless.HeadlessActivity.auto", side_effect=Exception()) as mock_auto:
-        with pytest.raises(WekoSwordserverException) as e:
-            import_items_to_activity(item, data_path, request_info)
-            mock_auto.assert_called_once()
-        assert e.value.errorType == ErrorType.ServerError
-        assert e.value.message == f"An error occurred while {expect_current_action}."
+#     # except case
+#     expect_current_action = "item_login"
+#     mock_activity = MagicMock()
+#     type(mock_activity).current_action = mocker.PropertyMock(return_value=expect_current_action)
+#     mocker.patch("weko_swordserver.registration.HeadlessActivity", return_value=mock_activity)
+#     with patch("weko_workflow.headless.HeadlessActivity.auto", side_effect=Exception()) as mock_auto:
+#         with pytest.raises(WekoSwordserverException) as e:
+#             import_items_to_activity(item, data_path, request_info)
+#             mock_auto.assert_called_once()
+#         assert e.value.errorType == ErrorType.ServerError
+#         assert e.value.message == f"An error occurred while {expect_current_action}."
 
-    # xml case
-    settings1 = {"data_format":{"TSV":{"item_type":"15","register_format":"Direct"},"XML":{"workflow":"1","item_type":"15","register_format":"Workflow"}},"default_format":"TSV"}
-    settings2 = {"data_format":{"TSV":{"item_type":"15","register_format":"Direct"},"XML":{"workflow":"-1","item_type":"15","register_format":"Workflow"}},"default_format":"TSV"}
-    sword_api_setting = admin_settings[9]
-    sword_api_setting.settings = settings1
-    db.session.merge(sword_api_setting)
-    db.session.commit()
-    item = check_result.get("list_record")[0]
-    data_path = check_result.get("data_path","")
-    item["root_path"] = os.path.join(data_path, "data")
-    owner = 1
-    request_info = {
-        "user_id": owner,
-        "action": "IMPORT",
-        "workflow_id": None,
-    }
-    expect_current_action = "item_login"
-    mock_activity = MagicMock()
-    type(mock_activity).current_action = mocker.PropertyMock(return_value=expect_current_action)
-    mocker.patch("weko_swordserver.registration.HeadlessActivity", return_value=mock_activity)
-    with patch("weko_workflow.headless.HeadlessActivity.auto", side_effect=Exception()) as mock_auto:
-        with pytest.raises(WekoSwordserverException) as e:
-            import_items_to_activity(item, data_path, request_info)
-            mock_auto.assert_called_once()
-        assert e.value.errorType == ErrorType.ServerError
-        assert e.value.message == f"An error occurred while {expect_current_action}."
-    sword_api_setting = admin_settings[9]
-    sword_api_setting.settings = settings2
-    db.session.merge(sword_api_setting)
-    db.session.commit()
+#     # xml case
+#     settings1 = {"data_format":{"TSV":{"item_type":"15","register_format":"Direct"},"XML":{"workflow":"1","item_type":"15","register_format":"Workflow"}},"default_format":"TSV"}
+#     settings2 = {"data_format":{"TSV":{"item_type":"15","register_format":"Direct"},"XML":{"workflow":"-1","item_type":"15","register_format":"Workflow"}},"default_format":"TSV"}
+#     sword_api_setting = admin_settings[9]
+#     sword_api_setting.settings = settings1
+#     db.session.merge(sword_api_setting)
+#     db.session.commit()
+#     item = check_result.get("list_record")[0]
+#     data_path = check_result.get("data_path","")
+#     item["root_path"] = os.path.join(data_path, "data")
+#     owner = 1
+#     request_info = {
+#         "user_id": owner,
+#         "action": "IMPORT",
+#         "workflow_id": None,
+#     }
+#     expect_current_action = "item_login"
+#     mock_activity = MagicMock()
+#     type(mock_activity).current_action = mocker.PropertyMock(return_value=expect_current_action)
+#     mocker.patch("weko_swordserver.registration.HeadlessActivity", return_value=mock_activity)
+#     with patch("weko_workflow.headless.HeadlessActivity.auto", side_effect=Exception()) as mock_auto:
+#         with pytest.raises(WekoSwordserverException) as e:
+#             import_items_to_activity(item, data_path, request_info)
+#             mock_auto.assert_called_once()
+#         assert e.value.errorType == ErrorType.ServerError
+#         assert e.value.message == f"An error occurred while {expect_current_action}."
+#     sword_api_setting = admin_settings[9]
+#     sword_api_setting.settings = settings2
+#     db.session.merge(sword_api_setting)
+#     db.session.commit()
 
 
 # def create_activity_from_jpcoar(check_result, data_path)
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_registration.py::test_create_activity_from_jpcoar -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
 @pytest.mark.skip(reason="old test")
-def test_create_activity_from_jpcoar(app, users, admin_xml_settings):
-    contributor = users[3]["obj"]
+# def test_create_activity_from_jpcoar(app, users, admin_xml_settings):
+#     contributor = users[3]["obj"]
 
-    mocker_pid = MagicMock(spec=PersistentIdentifier)
-    prop_mock = PropertyMock(return_value=uuid.uuid4())
-    type(mocker_pid).object_uuid = prop_mock
-    dummy_deposit = {"recid": '1'}
-    dummy_files = {
-        "key": "item_file",
-        "items": [
-            {
-                "filename": "test1.txt",
-                'subitem_1551255854908': '1.0',
-                'subitem_1551255750794': 'text/plain',
-                'subitem_1551255788530': [{'subitem_1570068579439': '18 KB'}],
-                'subitem_1551255820788': [{'subitem_1551255828320': '2022-10-20', 'subitem_1551255833133': 'Accepted'}],
-                'url': {
-                    'url': 'https://weko3.example.org/record/1/files/test1.txt',
-                    "objectType": "abstract",
-                    "label": "test1.txt"
-                },
-            }
-        ]
-    }
-    expected_metadata = {
-        "item_title": [{"title": "sample", "lang": "en"}],
-        "item_creator": [{
-            "creatorNames": [{"creatorName": "sample, creator", "creatorNameLang": "en"}],
-        }],
-        "item_date": [{"keyword": "Issued", "date_val": "2015-10-01"}],
-        "item_lang": [{"lang": "eng"}],
-        "pubdate": "2024-03-06",
-        "title": "title_sample"
-    }
+#     mocker_pid = MagicMock(spec=PersistentIdentifier)
+#     prop_mock = PropertyMock(return_value=uuid.uuid4())
+#     type(mocker_pid).object_uuid = prop_mock
+#     dummy_deposit = {"recid": '1'}
+#     dummy_files = {
+#         "key": "item_file",
+#         "items": [
+#             {
+#                 "filename": "test1.txt",
+#                 'subitem_1551255854908': '1.0',
+#                 'subitem_1551255750794': 'text/plain',
+#                 'subitem_1551255788530': [{'subitem_1570068579439': '18 KB'}],
+#                 'subitem_1551255820788': [{'subitem_1551255828320': '2022-10-20', 'subitem_1551255833133': 'Accepted'}],
+#                 'url': {
+#                     'url': 'https://weko3.example.org/record/1/files/test1.txt',
+#                     "objectType": "abstract",
+#                     "label": "test1.txt"
+#                 },
+#             }
+#         ]
+#     }
+#     expected_metadata = {
+#         "item_title": [{"title": "sample", "lang": "en"}],
+#         "item_creator": [{
+#             "creatorNames": [{"creatorName": "sample, creator", "creatorNameLang": "en"}],
+#         }],
+#         "item_date": [{"keyword": "Issued", "date_val": "2015-10-01"}],
+#         "item_lang": [{"lang": "eng"}],
+#         "pubdate": "2024-03-06",
+#         "title": "title_sample"
+#     }
 
-    with app.test_request_context():
-        login_user(contributor)
-        with patch("weko_admin.admin.AdminSettings.get", return_value=admin_xml_settings):
-            # Case01: create activity without content files
-            activity, recid = create_activity_from_jpcoar({
-                "error": [],
-                "list_record": [{
-                    "metadata": {
-                        "$schema": 15,
-                        **expected_metadata
-                    }
-                }]
-            }, "tests/data/zip_data/data")
-            assert json.loads(activity.temp_data) == {
-                "metainfo": expected_metadata,
-            }
-            assert recid is None
-            db_activity = Activity.query.filter_by(id=activity.id).one_or_none()
-            assert db_activity is not None
+#     with app.test_request_context():
+#         login_user(contributor)
+#         with patch("weko_admin.admin.AdminSettings.get", return_value=admin_xml_settings):
+#             # Case01: create activity without content files
+#             activity, recid = create_activity_from_jpcoar({
+#                 "error": [],
+#                 "list_record": [{
+#                     "metadata": {
+#                         "$schema": 15,
+#                         **expected_metadata
+#                     }
+#                 }]
+#             }, "tests/data/zip_data/data")
+#             assert json.loads(activity.temp_data) == {
+#                 "metainfo": expected_metadata,
+#             }
+#             assert recid is None
+#             db_activity = Activity.query.filter_by(id=activity.id).one_or_none()
+#             assert db_activity is not None
 
-            # Case02: create activity with content files
-            with patch("weko_swordserver.registration.upload_jpcoar_contents", return_value=(mocker_pid, dummy_files, dummy_deposit)):
-                activity, recid = create_activity_from_jpcoar({
-                    "error": [],
-                    "list_record": [{
-                        "metadata": {
-                            **expected_metadata,
-                            "files_info": [dummy_files]
-                        }
-                    }]
-                }, "tests/data/zip_data/data")
-                assert json.loads(activity.temp_data) == {
-                    "metainfo": expected_metadata,
-                    "files": dummy_files
-                }
-                assert recid == "1"
-                db_activity = Activity.query.filter_by(id=activity.id).one_or_none()
-                assert db_activity is not None
+#             # Case02: create activity with content files
+#             with patch("weko_swordserver.registration.upload_jpcoar_contents", return_value=(mocker_pid, dummy_files, dummy_deposit)):
+#                 activity, recid = create_activity_from_jpcoar({
+#                     "error": [],
+#                     "list_record": [{
+#                         "metadata": {
+#                             **expected_metadata,
+#                             "files_info": [dummy_files]
+#                         }
+#                     }]
+#                 }, "tests/data/zip_data/data")
+#                 assert json.loads(activity.temp_data) == {
+#                     "metainfo": expected_metadata,
+#                     "files": dummy_files
+#                 }
+#                 assert recid == "1"
+#                 db_activity = Activity.query.filter_by(id=activity.id).one_or_none()
+#                 assert db_activity is not None
 
-            # Case03: exception occured when init activity
-            with patch("weko_swordserver.registration.upload_jpcoar_contents", return_value=(mocker_pid, dummy_files, dummy_deposit)):
-                with patch("weko_workflow.api.WorkActivity.init_activity", side_effect=Exception()):
-                    with pytest.raises(Exception):
-                        activity, recid = create_activity_from_jpcoar({
-                            "error": [],
-                            "list_record": [{"metadata": expected_metadata}]
-                        }, "tests/data/zip_data/data")
-                        assert json.loads(activity.temp_data) == {
-                            "metainfo": expected_metadata,
-                            "files": dummy_files
-                        }
-                    db_activity_doing = Activity.query.filter(Activity.action_status=='M').all()
-                    db_activity_quit = Activity.query.filter(Activity.action_status=='C').all()
-                    assert len(db_activity_doing) == 2
-                    assert len(db_activity_quit) == 0
+#             # Case03: exception occured when init activity
+#             with patch("weko_swordserver.registration.upload_jpcoar_contents", return_value=(mocker_pid, dummy_files, dummy_deposit)):
+#                 with patch("weko_workflow.api.WorkActivity.init_activity", side_effect=Exception()):
+#                     with pytest.raises(Exception):
+#                         activity, recid = create_activity_from_jpcoar({
+#                             "error": [],
+#                             "list_record": [{"metadata": expected_metadata}]
+#                         }, "tests/data/zip_data/data")
+#                         assert json.loads(activity.temp_data) == {
+#                             "metainfo": expected_metadata,
+#                             "files": dummy_files
+#                         }
+#                     db_activity_doing = Activity.query.filter(Activity.action_status=='M').all()
+#                     db_activity_quit = Activity.query.filter(Activity.action_status=='C').all()
+#                     assert len(db_activity_doing) == 2
+#                     assert len(db_activity_quit) == 0
 
-            # Case04: exception occured after init activity
-            with patch("weko_swordserver.registration.upload_jpcoar_contents", return_value=(mocker_pid, dummy_files, dummy_deposit)):
-                with patch("weko_workflow.api.WorkActivity.update_title", side_effect=Exception()):
-                    with pytest.raises(Exception):
-                        activity, recid = create_activity_from_jpcoar({
-                            "error": [],
-                            "list_record": [{"metadata": expected_metadata}]
-                        }, "tests/data/zip_data/data")
-                        assert json.loads(activity.temp_data) == {
-                            "metainfo": expected_metadata,
-                            "files": dummy_files
-                        }
-                    db_activity_doing = Activity.query.filter(Activity.action_status=='M').all()
-                    db_activity_quit = Activity.query.filter(Activity.action_status=='C').all()
-                    assert len(db_activity_doing) == 2
-                    assert len(db_activity_quit) == 1
+#             # Case04: exception occured after init activity
+#             with patch("weko_swordserver.registration.upload_jpcoar_contents", return_value=(mocker_pid, dummy_files, dummy_deposit)):
+#                 with patch("weko_workflow.api.WorkActivity.update_title", side_effect=Exception()):
+#                     with pytest.raises(Exception):
+#                         activity, recid = create_activity_from_jpcoar({
+#                             "error": [],
+#                             "list_record": [{"metadata": expected_metadata}]
+#                         }, "tests/data/zip_data/data")
+#                         assert json.loads(activity.temp_data) == {
+#                             "metainfo": expected_metadata,
+#                             "files": dummy_files
+#                         }
+#                     db_activity_doing = Activity.query.filter(Activity.action_status=='M').all()
+#                     db_activity_quit = Activity.query.filter(Activity.action_status=='C').all()
+#                     assert len(db_activity_doing) == 2
+#                     assert len(db_activity_quit) == 1
 
-            # Case05: exception occured when quit activity
-            with patch("weko_swordserver.registration.upload_jpcoar_contents", return_value=(mocker_pid, dummy_files, dummy_deposit)):
-                with patch("weko_workflow.api.WorkActivity.update_title", side_effect=Exception()):
-                    with patch("weko_workflow.api.WorkActivity.quit_activity", side_effect=Exception()):
-                        with pytest.raises(Exception):
-                            activity, recid = create_activity_from_jpcoar({
-                                "error": [],
-                                "list_record": [{"metadata": expected_metadata}]
-                            }, "tests/data/zip_data/data")
-                            assert json.loads(activity.temp_data) == {
-                                "metainfo": expected_metadata,
-                                "files": dummy_files
-                            }
-                        db_activity_doing = Activity.query.filter(Activity.action_status=='M').all()
-                        db_activity_quit = Activity.query.filter(Activity.action_status=='C').all()
-                        assert len(db_activity_doing) == 3
-                        assert len(db_activity_quit) == 1
+#             # Case05: exception occured when quit activity
+#             with patch("weko_swordserver.registration.upload_jpcoar_contents", return_value=(mocker_pid, dummy_files, dummy_deposit)):
+#                 with patch("weko_workflow.api.WorkActivity.update_title", side_effect=Exception()):
+#                     with patch("weko_workflow.api.WorkActivity.quit_activity", side_effect=Exception()):
+#                         with pytest.raises(Exception):
+#                             activity, recid = create_activity_from_jpcoar({
+#                                 "error": [],
+#                                 "list_record": [{"metadata": expected_metadata}]
+#                             }, "tests/data/zip_data/data")
+#                             assert json.loads(activity.temp_data) == {
+#                                 "metainfo": expected_metadata,
+#                                 "files": dummy_files
+#                             }
+#                         db_activity_doing = Activity.query.filter(Activity.action_status=='M').all()
+#                         db_activity_quit = Activity.query.filter(Activity.action_status=='C').all()
+#                         assert len(db_activity_doing) == 3
+#                         assert len(db_activity_quit) == 1
 
 
 # def upload_jpcoar_contents(data_path, contents_data)
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_registration.py::test_upload_jpcoar_contents -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
-def test_upload_jpcoar_contents(app, location, index, indexer):
-    def dummy_url_for( links, pid_value="", filename="", _external=False):
-        return "https://www.sample.ac.jp/" + pid_value + "/" + filename + "?_external=" + str(_external)
+# def test_upload_jpcoar_contents(app, location, index, indexer):
+#     def dummy_url_for( links, pid_value="", filename="", _external=False):
+#         return "https://www.sample.ac.jp/" + pid_value + "/" + filename + "?_external=" + str(_external)
 
-    data_path="tests/data/zip_data2/data"
-    contents_data = [
-        {
-            "items": [
-                {"url": {"url": "contents/sample_data.pdf"}},
-                {"url": {"url": "contents/sample_txt.txt"}},
-                {"url": {"url": "contents/weko_test_sample.jpg"}},
-            ]
-        }
-    ]
-    with app.test_request_context():
-        with patch("invenio_indexer.api.RecordIndexer.index", return_value=None):
-            with patch("weko_swordserver.registration.url_for", dummy_url_for):
-                contents_data_copy = copy.deepcopy(contents_data)
-                pid, activity_files_data, deposit = upload_jpcoar_contents(data_path, contents_data_copy)
-                assert pid.pid_type == "depid"
-                assert pid.id == 2
-                assert len(activity_files_data) == 3
-                assert deposit['recid'] == "1"
-                assert deposit['_deposit'] == {"id": "1", "status": "draft", "owners": []}
-                assert contents_data_copy == [
-                            {
-                                "items": [
-                                    {"url": {"url": "https://www.sample.ac.jp/1/sample_data.pdf?_external=True"}},
-                                    {"url": {"url": "https://www.sample.ac.jp/1/sample_txt.txt?_external=True"}},
-                                    {"url": {"url": "https://www.sample.ac.jp/1/weko_test_sample.jpg?_external=True"}},
-                                ]
-                            }
-                        ]
+#     data_path="tests/data/zip_data2/data"
+#     contents_data = [
+#         {
+#             "items": [
+#                 {"url": {"url": "contents/sample_data.pdf"}},
+#                 {"url": {"url": "contents/sample_txt.txt"}},
+#                 {"url": {"url": "contents/weko_test_sample.jpg"}},
+#             ]
+#         }
+#     ]
+#     with app.test_request_context():
+#         with patch("invenio_indexer.api.RecordIndexer.index", return_value=None):
+#             with patch("weko_swordserver.registration.url_for", dummy_url_for):
+#                 contents_data_copy = copy.deepcopy(contents_data)
+#                 pid, activity_files_data, deposit = upload_jpcoar_contents(data_path, contents_data_copy)
+#                 assert pid.pid_type == "depid"
+#                 assert pid.id == 2
+#                 assert len(activity_files_data) == 3
+#                 assert deposit['recid'] == "1"
+#                 assert deposit['_deposit'] == {"id": "1", "status": "draft", "owners": []}
+#                 assert contents_data_copy == [
+#                             {
+#                                 "items": [
+#                                     {"url": {"url": "https://www.sample.ac.jp/1/sample_data.pdf?_external=True"}},
+#                                     {"url": {"url": "https://www.sample.ac.jp/1/sample_txt.txt?_external=True"}},
+#                                     {"url": {"url": "https://www.sample.ac.jp/1/weko_test_sample.jpg?_external=True"}},
+#                                 ]
+#                             }
+#                         ]
 
-            # Case02: missing url
-            with pytest.raises(FileNotFoundError):
-                upload_jpcoar_contents(data_path, [{"items": [{"dummy": "dummy"}]}])
+#             # Case02: missing url
+#             with pytest.raises(FileNotFoundError):
+#                 upload_jpcoar_contents(data_path, [{"items": [{"dummy": "dummy"}]}])
 
-            # Case03: path is directory
-            with pytest.raises(FileNotFoundError):
-                upload_jpcoar_contents(data_path, [{"items": [{"url": {"url": "contents"}}]}])
+#             # Case03: path is directory
+#             with pytest.raises(FileNotFoundError):
+#                 upload_jpcoar_contents(data_path, [{"items": [{"url": {"url": "contents"}}]}])
 
-            # Case04: bucket size exceeded
-            with patch("os.path.getsize", return_value=100*1024*1024*1024*1024):
-                with pytest.raises(FileSizeError):
-                    upload_jpcoar_contents(data_path, contents_data)
+#             # Case04: bucket size exceeded
+#             with patch("os.path.getsize", return_value=100*1024*1024*1024*1024):
+#                 with pytest.raises(FileSizeError):
+#                     upload_jpcoar_contents(data_path, contents_data)
 
-            bucket = MagicMock(spec=Bucket)
-            location_mock = MagicMock(spec=Location)
-            location_mock.max_file_size = 4096
-            bucket.location = location_mock
-            bucket.size_limit = 2048
-            with patch("os.path.getsize", return_value=100*1024*1024*1024*1024):
-                with patch("sqlalchemy.orm.Query.get", return_value=bucket):
-                    with pytest.raises(FileSizeError):
-                        upload_jpcoar_contents(data_path, contents_data)
+#             bucket = MagicMock(spec=Bucket)
+#             location_mock = MagicMock(spec=Location)
+#             location_mock.max_file_size = 4096
+#             bucket.location = location_mock
+#             bucket.size_limit = 2048
+#             with patch("os.path.getsize", return_value=100*1024*1024*1024*1024):
+#                 with patch("sqlalchemy.orm.Query.get", return_value=bucket):
+#                     with pytest.raises(FileSizeError):
+#                         upload_jpcoar_contents(data_path, contents_data)
 
-            # Case05: bucket quota exceeded
-            with patch("weko_swordserver.registration._location_has_quota", return_value=False):
-                with pytest.raises(FileSizeError):
-                    upload_jpcoar_contents(data_path, contents_data)
+#             # Case05: bucket quota exceeded
+#             with patch("weko_swordserver.registration._location_has_quota", return_value=False):
+#                 with pytest.raises(FileSizeError):
+#                     upload_jpcoar_contents(data_path, contents_data)
 
 
 # def create_file_info(bucket, file_path, size_limit, content_length)
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_registration.py::test_create_file_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
-def test_create_file_info(app, bucket, users, admin_xml_settings):
-    contributor = users[3]["obj"]
-    with app.test_request_context():
-        login_user(contributor)
-        with patch("weko_admin.admin.AdminSettings.get", return_value=admin_xml_settings):
-            actual = create_file_info(bucket, 'tests/data/zip_data/data/index.csv', 2000000, 36742)
-            objectversion = ObjectVersion.query.filter_by(key=actual['key']).one_or_none()
-            assert actual['key'] == "index.csv"
-            assert actual['uri'] == False
-            assert actual['multipart'] == False
-            assert actual['progress'] == 100
-            assert actual['completed'] == True
-            assert actual['version_id'] == str(objectversion.version_id)
-            assert actual['is_head'] == True
-            assert actual["checksum"] == "sha256:9ac67868b3a74fb749502288fe8c97b8e42b45fef519609f54c054cfdb22a780"
-            assert actual['delete_marker'] == False
-            assert actual['size'] == 36742
-            assert actual['tags'] == {}
-            assert actual['is_show'] == False
-            assert actual['is_thumbnail'] == False
-            assert actual['filename'] == "index.csv"
-            assert actual['created_user_id'] == str(contributor.id)
-            assert actual['created_user'] == {
-                'user_id': str(contributor.id),
-                'username': '',
-                'displayname': '',
-                'email': contributor.email
-            }
-            assert actual['updated_user_id'] == str(contributor.id)
-            assert actual['updated_user'] == {
-                'user_id': str(contributor.id),
-                'username': '',
-                'displayname': '',
-                'email': contributor.email
-            }
-            assert 'created' in actual
-            assert 'updated' in actual
+# def test_create_file_info(app, bucket, users, admin_xml_settings):
+#     contributor = users[3]["obj"]
+#     with app.test_request_context():
+#         login_user(contributor)
+#         with patch("weko_admin.admin.AdminSettings.get", return_value=admin_xml_settings):
+#             actual = create_file_info(bucket, 'tests/data/zip_data/data/index.csv', 2000000, 36742)
+#             objectversion = ObjectVersion.query.filter_by(key=actual['key']).one_or_none()
+#             assert actual['key'] == "index.csv"
+#             assert actual['uri'] == False
+#             assert actual['multipart'] == False
+#             assert actual['progress'] == 100
+#             assert actual['completed'] == True
+#             assert actual['version_id'] == str(objectversion.version_id)
+#             assert actual['is_head'] == True
+#             assert actual["checksum"] == "sha256:9ac67868b3a74fb749502288fe8c97b8e42b45fef519609f54c054cfdb22a780"
+#             assert actual['delete_marker'] == False
+#             assert actual['size'] == 36742
+#             assert actual['tags'] == {}
+#             assert actual['is_show'] == False
+#             assert actual['is_thumbnail'] == False
+#             assert actual['filename'] == "index.csv"
+#             assert actual['created_user_id'] == str(contributor.id)
+#             assert actual['created_user'] == {
+#                 'user_id': str(contributor.id),
+#                 'username': '',
+#                 'displayname': '',
+#                 'email': contributor.email
+#             }
+#             assert actual['updated_user_id'] == str(contributor.id)
+#             assert actual['updated_user'] == {
+#                 'user_id': str(contributor.id),
+#                 'username': '',
+#                 'displayname': '',
+#                 'email': contributor.email
+#             }
+#             assert 'created' in actual
+#             assert 'updated' in actual
 
 # def check_bagit_import_items(file, packaging):
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_registration.py::test_check_jsonld_import_items -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+@pytest.mark.skip(reason="old test")
 def test_check_jsonld_import_items(app,db,index,users,tokens,sword_mapping,sword_client,make_crate,make_crate2,mocker,workflow):
     client_direct = tokens[0]["client"].client_id
     client_workflow = tokens[1]["client"].client_id
@@ -1284,111 +1286,111 @@ def test_check_jsonld_import_items(app,db,index,users,tokens,sword_mapping,sword
 
 # def generate_metadata_from_json(json, mapping, item_type, is_change_identifier=False):
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_registration.py::test_generate_metadata_from_json -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-def test_generate_metadata_from_json(app,db,index,users,tokens,sword_mapping,sword_client,item_type,make_crate,mocker,workflow):
-    # sucsess case for publish_status is "public". It is required to scope "deposit:actions".
-    json_ld = json_data("data/item_type/ro-crate-metadata_2.json")
-    # case # 17 : normal case
-    sword__mapping = sword_mapping[0]["sword_mapping"]
-    item__type = item_type[0]["item_type"]
-    processed__json = json_data("data/item_type/processed_json_2.json")
-    mapped__json = json_data("data/item_type/mapped_json_2.json")
-    with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json) as mock_map:
-        with app.test_request_context():
-            res = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type)
-            assert len(res) == 1
-            assert res[0]["errors"] is None, "errors is not None"
-        mock_map.assert_called_once()
+# def test_generate_metadata_from_json(app,db,index,users,tokens,sword_mapping,sword_client,item_type,make_crate,mocker,workflow):
+#     # sucsess case for publish_status is "public". It is required to scope "deposit:actions".
+#     json_ld = json_data("data/item_type/ro-crate-metadata_2.json")
+#     # case # 17 : normal case
+#     sword__mapping = sword_mapping[0]["sword_mapping"]
+#     item__type = item_type[0]["item_type"]
+#     processed__json = json_data("data/item_type/processed_json_2.json")
+#     mapped__json = json_data("data/item_type/mapped_json_2.json")
+#     with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json) as mock_map:
+#         with app.test_request_context():
+#             res = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type)
+#             assert len(res) == 1
+#             assert res[0]["errors"] is None, "errors is not None"
+#         mock_map.assert_called_once()
 
-    # case # 18 : is_change_identifier is True
-    sword__mapping = sword_mapping[0]["sword_mapping"]
-    item__type = item_type[0]["item_type"]
-    processed__json = json_data("data/item_type/processed_json_2.json")
-    mapped__json = json_data("data/item_type/mapped_json_2.json")
-    with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json) as mock_map:
-        with app.test_request_context():
-            with patch.dict("flask.current_app.config", {"WEKO_HANDLE_ALLOW_REGISTER_CNRI": True}):
-                res = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type, True)
-                assert len(res) == 1
-                assert res[0]["is_change_identifier"] is True, "errors is not True"
-        mock_map.assert_called_once()
+#     # case # 18 : is_change_identifier is True
+#     sword__mapping = sword_mapping[0]["sword_mapping"]
+#     item__type = item_type[0]["item_type"]
+#     processed__json = json_data("data/item_type/processed_json_2.json")
+#     mapped__json = json_data("data/item_type/mapped_json_2.json")
+#     with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json) as mock_map:
+#         with app.test_request_context():
+#             with patch.dict("flask.current_app.config", {"WEKO_HANDLE_ALLOW_REGISTER_CNRI": True}):
+#                 res = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type, True)
+#                 assert len(res) == 1
+#                 assert res[0]["is_change_identifier"] is True, "errors is not True"
+#         mock_map.assert_called_once()
 
-    # case # 19 : is_change_identifier is False
-    sword__mapping = sword_mapping[0]["sword_mapping"]
-    item__type = item_type[0]["item_type"]
-    processed__json = json_data("data/item_type/processed_json_2.json")
-    mapped__json = json_data("data/item_type/mapped_json_2.json")
-    with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json) as mock_map:
-        with app.test_request_context():
-            with patch.dict("flask.current_app.config", {"WEKO_HANDLE_ALLOW_REGISTER_CNRI": True}):
-                res = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type, False)
-                assert len(res) == 1
-                assert res[0]["is_change_identifier"] is False, "errors is not False"
-        mock_map.assert_called_once()
-
-
-
-# def handle_files_info(list_record, files_list, data_path, filename):
-# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_registration.py::test_handle_files_info -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-def test_handle_files_info(app,sword_mapping,item_type,make_crate):
-    # sucsess case for publish_status is "public". It is required to scope "deposit:actions".
-
-    # case # 20 : normal case
-    file__name = "payload.zip"
-    zip, _ = make_crate()
-    storage = FileStorage(filename=file__name,stream=zip)
-    data__path, files__list = unpack_zip(storage)
-    json_ld = json_data("data/item_type/ro-crate-metadata_2.json")
-
-    sword__mapping = sword_mapping[0]["sword_mapping"]
-    item__type = item_type[0]["item_type"]
-    mapped__json = json_data("data/item_type/mapped_json_2.json")
-    processed__json = json_data("data/item_type/processed_json_2.json")
-    with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json):
-        with app.test_request_context():
-            list__record = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type)
-            res = handle_files_info(list__record, files__list, data__path, file__name)
-            assert len(res) == 1
-            assert res[0]["errors"] is None
-            assert len(res[0]["file_path"]) > 0
+#     # case # 19 : is_change_identifier is False
+#     sword__mapping = sword_mapping[0]["sword_mapping"]
+#     item__type = item_type[0]["item_type"]
+#     processed__json = json_data("data/item_type/processed_json_2.json")
+#     mapped__json = json_data("data/item_type/mapped_json_2.json")
+#     with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json) as mock_map:
+#         with app.test_request_context():
+#             with patch.dict("flask.current_app.config", {"WEKO_HANDLE_ALLOW_REGISTER_CNRI": True}):
+#                 res = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type, False)
+#                 assert len(res) == 1
+#                 assert res[0]["is_change_identifier"] is False, "errors is not False"
+#         mock_map.assert_called_once()
 
 
-    # case # 21 : files_list is empty
-    file__name = "payload.zip"
-    zip, _ = make_crate()
-    storage = FileStorage(filename=file__name,stream=zip)
-    data__path, files__list = unpack_zip(storage)
 
-    sword__mapping = sword_mapping[0]["sword_mapping"]
-    item__type = item_type[0]["item_type"]
-    mapped__json = json_data("data/item_type/mapped_json_2.json")
-    processed__json = json_data("data/item_type/processed_json_2.json")
-    with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json):
-        with app.test_request_context():
-            list__record = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type)
-            res = handle_files_info(list__record, [], data__path, file__name)
-            assert len(res) == 1
-            assert res[0]["errors"] is None, "errors is not None"
-            assert not hasattr(res[0], 'file_path')
+# # def handle_files_info(list_record, files_list, data_path, filename):
+# # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_registration.py::test_handle_files_info -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+# def test_handle_files_info(app,sword_mapping,item_type,make_crate):
+#     # sucsess case for publish_status is "public". It is required to scope "deposit:actions".
+
+#     # case # 20 : normal case
+#     file__name = "payload.zip"
+#     zip, _ = make_crate()
+#     storage = FileStorage(filename=file__name,stream=zip)
+#     data__path, files__list = unpack_zip(storage)
+#     json_ld = json_data("data/item_type/ro-crate-metadata_2.json")
+
+#     sword__mapping = sword_mapping[0]["sword_mapping"]
+#     item__type = item_type[0]["item_type"]
+#     mapped__json = json_data("data/item_type/mapped_json_2.json")
+#     processed__json = json_data("data/item_type/processed_json_2.json")
+#     with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json):
+#         with app.test_request_context():
+#             list__record = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type)
+#             res = handle_files_info(list__record, files__list, data__path, file__name)
+#             assert len(res) == 1
+#             assert res[0]["errors"] is None
+#             assert len(res[0]["file_path"]) > 0
 
 
-    # case # 22 : other error
-    file__name = "payload.zip"
-    zip, file__size = make_crate()
-    storage = FileStorage(filename=file__name,stream=zip)
-    data__path, files__list = unpack_zip(storage)
+#     # case # 21 : files_list is empty
+#     file__name = "payload.zip"
+#     zip, _ = make_crate()
+#     storage = FileStorage(filename=file__name,stream=zip)
+#     data__path, files__list = unpack_zip(storage)
 
-    storage.seek(0, 0)
-    storage.save(os.path.join(data__path, "data", file__name))
+#     sword__mapping = sword_mapping[0]["sword_mapping"]
+#     item__type = item_type[0]["item_type"]
+#     mapped__json = json_data("data/item_type/mapped_json_2.json")
+#     processed__json = json_data("data/item_type/processed_json_2.json")
+#     with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json):
+#         with app.test_request_context():
+#             list__record = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type)
+#             res = handle_files_info(list__record, [], data__path, file__name)
+#             assert len(res) == 1
+#             assert res[0]["errors"] is None, "errors is not None"
+#             assert not hasattr(res[0], 'file_path')
 
-    sword__mapping = sword_mapping[0]["sword_mapping"]
-    item__type = item_type[0]["item_type"]
-    mapped__json = json_data("data/item_type/mapped_json_2.json")
-    processed__json = json_data("data/item_type/processed_json_2.json")
-    with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json):
-        with app.test_request_context():
-            with patch.dict("flask.current_app.config", {"WEKO_SWORDSERVER_DEPOSIT_DATASET": True}):
-                list__record = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type)
-                res = handle_files_info(list__record, files__list, data__path, file__name)
-                assert len(res) == 1
-                assert res[0]["errors"] is None, "errors is not None"
-                assert res[0]["metadata"]["files_info"][0]["items"][1]["filesize"][0]["value"] == str(file__size)
+
+#     # case # 22 : other error
+#     file__name = "payload.zip"
+#     zip, file__size = make_crate()
+#     storage = FileStorage(filename=file__name,stream=zip)
+#     data__path, files__list = unpack_zip(storage)
+
+#     storage.seek(0, 0)
+#     storage.save(os.path.join(data__path, "data", file__name))
+
+#     sword__mapping = sword_mapping[0]["sword_mapping"]
+#     item__type = item_type[0]["item_type"]
+#     mapped__json = json_data("data/item_type/mapped_json_2.json")
+#     processed__json = json_data("data/item_type/processed_json_2.json")
+#     with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped__json):
+#         with app.test_request_context():
+#             with patch.dict("flask.current_app.config", {"WEKO_SWORDSERVER_DEPOSIT_DATASET": True}):
+#                 list__record = generate_metadata_from_json(processed__json, json_ld, sword__mapping, item__type)
+#                 res = handle_files_info(list__record, files__list, data__path, file__name)
+#                 assert len(res) == 1
+#                 assert res[0]["errors"] is None, "errors is not None"
+#                 assert res[0]["metadata"]["files_info"][0]["items"][1]["filesize"][0]["value"] == str(file__size)

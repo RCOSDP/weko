@@ -165,7 +165,7 @@ class HeadlessActivity(WorkActivity):
         if workflow_id is None:
             current_app.logger.error("workflow_id is required to create activity.")
             raise WekoWorkflowException("workflow_id is required to create activity.")
-        workflow = WorkFlow().get_workflow_by_id(workflow_id)
+        self.workflow = workflow = WorkFlow().get_workflow_by_id(workflow_id)
         if workflow is None:
             current_app.logger.error(f"workflow(id={workflow_id}) is not found.")
             raise WekoWorkflowException(f"workflow(id={workflow_id}) is not found.")
@@ -244,7 +244,7 @@ class HeadlessActivity(WorkActivity):
 
         return returns
 
-    def item_registration(self, metadata, files, index, comment=""):
+    def item_registration(self, metadata, files, index=None, comment=None):
         """Action for item registration."""
         if self._model is None:
             current_app.logger.error("activity is not initialized.")
@@ -323,8 +323,7 @@ class HeadlessActivity(WorkActivity):
                 pass
 
             metadata.update({"$schema": f"/items/jsonschema/{self.item_type.id}"})
-            index = {'index': metadata.get('path', []),
-                        'actions': metadata.get('publish_status')}
+            index = {"actions": metadata.get("publish_status")}
             self._deposit.update(index, metadata)
             self._deposit.commit()
 
@@ -423,7 +422,7 @@ class HeadlessActivity(WorkActivity):
 
         return files_info
 
-    def _designate_index(self, index):
+    def _designate_index(self, index=None):
         """Designate Index.
 
 
@@ -433,9 +432,11 @@ class HeadlessActivity(WorkActivity):
         self._user_lock()
         locked_value = self._activity_lock()
 
+        index = index or self.workflow.index_tree_id
+
+        if not isinstance(index, list):
+            index = [index]
         try:
-            if not isinstance(index, list):
-                index = [index]
             for idx in index:
                 update_index_tree_for_record(self.recid, idx)
         except Exception as ex:

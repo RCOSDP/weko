@@ -41,15 +41,15 @@ from .config import WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE
 from .decorators import check_on_behalf_of, check_package_contents
 from .errors import ErrorType, WekoSwordserverException
 from .registration import (
-    check_jsonld_import_items,
+    # check_jsonld_import_items,
     check_import_items,
-    create_activity_from_jpcoar,
+    # create_activity_from_jpcoar,
     import_items_to_activity
 )
 from .utils import (
     check_import_file_format,
     is_valid_file_hash,
-    update_item_ids,
+    # update_item_ids,
     get_shared_id_from_on_behalf_of
 )
 from weko_accounts.utils import limiter
@@ -254,8 +254,9 @@ def post_service_document():
         client_id = request.oauth.client.client_id
         on_behalf_of = request.headers.get("On-Behalf-Of")
         shared_id = get_shared_id_from_on_behalf_of(on_behalf_of)
-        check_result = check_jsonld_import_items(
-            file, packaging, shared_id, client_id
+        check_result = check_import_items(
+            file, file_format, packaging=packaging,
+            shared_id=shared_id, client_id=client_id
         )
 
     else:
