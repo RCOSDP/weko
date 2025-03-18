@@ -1068,8 +1068,8 @@ class TestImportView():
         current_cache.set("authors_import_band_check_user_file_path",{"key":"authors_import_band_check_user_file_path"})
         res = client.post(url, data=json.dumps(data), content_type='application/json')
         mock_send_file.assert_called_once()
-        assert res.status_code == 200
-        assert b'File not found' in res.data
+        assert res.status_code == 500
+        assert json.loads(res.data) == {"msg":"Failed"}
     
     # def get_task(self, target, task_id):
     # .tox/c1/bin/pytest --cov=weko_authors tests/test_admin.py::TestImportView::test_get_task -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -1125,7 +1125,7 @@ class TestImportView():
         
         mocker.patch("weko_authors.admin.create_result_file_for_user",return_value="test_file_path")
         mock_send_file = mocker.patch("weko_authors.admin.send_file", side_effect=Exception("File not found"))
-        client.post(url, data=json.dumps(data), content_type='application/json')
+        res = client.post(url, data=json.dumps(data), content_type='application/json')
         mock_send_file.assert_called_once()
-        assert res.status_code == 200
-        assert b'File not found' in res.data
+        assert res.status_code == 500
+        assert json.loads(res.data) == {"msg":"Failed"}

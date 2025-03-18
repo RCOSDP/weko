@@ -360,7 +360,7 @@ class ImportView(BaseView):
             return send_file(band_file_path, as_attachment=True)
         except Exception as e:
             current_app.logger.error(e)
-            return jsonify(e)
+            return jsonify(msg=_('Failed')), 500
 
     @author_permission.require(http_exception=403)
     @expose('/import', methods=['POST'])
@@ -567,7 +567,7 @@ class ImportView(BaseView):
             return send_file(result_file_path, as_attachment=True)
         except Exception as e:
             current_app.logger.error(e)
-            return jsonify(e)
+            return jsonify(msg=_('Failed')), 500
         
     
 authors_list_adminview = {
