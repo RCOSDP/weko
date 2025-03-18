@@ -398,6 +398,18 @@ def test_getrecord(app, db, item_type, mocker):
         assert res.xpath("/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()",namespaces=NAMESPACES) == [record[2].pid_value]
         assert len(res.xpath("/x:OAI-PMH/x:GetRecord/x:record/x:metadata",namespaces=NAMESPACES)) == 1
 
+        # exception is raised
+        record = create_record("11","xx",["1"],"2000-11-11","0",False,False)
+        kwargs = dict(
+            metadataPrefix='jpcoar_1.0',
+            verb="GetRecord",
+            identifier=str(record[2].pid_value)
+        )
+        with patch("invenio_oaiserver.response.pickle.loads",side_effect=Exception):
+            res = getrecord(**kwargs)
+            assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "idDoesNotExist"
+
+
 
 def test_getrecord_future_item(app,records,item_type,mock_execute,db,mocker):
     """Test of method which creates OAI-PMH response for verb GetRecord."""
@@ -784,6 +796,10 @@ def test_listidentifiers(es_app,records,item_type,mock_execute,db,mocker):
                 assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
             # raise NoResultFound
             with patch("invenio_oaiserver.response.WekoRecord.get_record_by_uuid",side_effect=NoResultFound()):
+                res=listidentifiers(**kwargs)
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
+            # raise Exception
+            with patch("invenio_oaiserver.response.WekoRecord.get_record_by_uuid",side_effect=Exception()):
                 res=listidentifiers(**kwargs)
                 assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
 
