@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-
+weko_linkを作成するスクリプト
+records_metadataのauthor_linkからweko_linkを作成し、records_metadataを更新する。
+workflow_activityのtemp_dataからweko_linkを作成し、workflow_activityを更新する。
 """
 
 import csv, json, psycopg2, sys, traceback
