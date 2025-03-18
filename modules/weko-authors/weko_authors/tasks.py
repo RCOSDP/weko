@@ -133,6 +133,7 @@ def import_affiliation_id(affiliation_id):
     result['end_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return result
 
+@shared_task
 def import_author_over_max(reached_point, task_ids ,max_part):
     """
     WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYSを超えた著者をインポートする場合の処理です。
@@ -142,8 +143,8 @@ def import_author_over_max(reached_point, task_ids ,max_part):
         reached_point: 一時ファイルにおいてmax_displayに達した位置 
                 part_numberが一時ファイルのpart数で、countが一時ファイルの再開位置
                 データ例:{"part_number": 101, "count": 3}
-        count: インポートする著者データの数.
         task_ids: 先に行っているmax_diplay分のタスクID.
+        max_part: パート数の最大値
     """
     
     # task_idsの全てのtaskが終了するまで待つ

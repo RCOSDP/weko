@@ -454,7 +454,7 @@ class ImportView(BaseView):
             
             # WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYSを超えた分を別のタスクで処理
             if count > current_app.config.get("WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYS"):
-                task = import_author_over_max.delay(reached_point, count ,task_ids, max_page_for_import_tab)
+                task = import_author_over_max.delay(reached_point ,task_ids, max_page_for_import_tab)
                 update_cache_data(\
                     current_app.config.get("WEKO_AUTHORS_IMPORT_CACHE_OVER_MAX_TASK_KEY"),
                     task.id, 
