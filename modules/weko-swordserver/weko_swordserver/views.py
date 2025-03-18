@@ -252,19 +252,56 @@ def post_service_document():
                 )
 
         client_id = request.oauth.client.client_id
-        shared_id = get_shared_id_from_on_behalf_of(request.headers.get("On-Behalf-Of"))
-        check_result = check_jsonld_import_items(file, packaging, shared_id, client_id)
-        register_type = check_result.get("register_type")
+        on_behalf_of = request.headers.get("On-Behalf-Of")
+        shared_id = get_shared_id_from_on_behalf_of(on_behalf_of)
+        check_result = check_jsonld_import_items(
+            file, packaging, shared_id, client_id
+        )
 
     else:
-        check_result, file_format, register_type = check_import_items(file, False)
+        check_result = check_import_items(file, file_format, False)
     data_path = check_result.get("data_path","")
+
     expire = datetime.now() + timedelta(days=1)
+    TempDirInfo().set(
+        data_path,
+        {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")}
+    )
+    register_type = check_result.get("register_type")
+    # Determine registration type
+    if register_type is None:
+        if os.path.exists(data_path):
+            shutil.rmtree(data_path)
+            TempDirInfo().delete(data_path)
+        raise WekoSwordserverException(
+            "Invalid register type in admin settings", ErrorType.ServerError
+        )
 
-    TempDirInfo().set(data_path,
-                      {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")})
+    # Validate items in the check result
+    for item in check_result["list_record"]:
+        if not item or item.get("errors"):
+            error_msg = (
+                ", ".join(item.get("errors"))
+                if item and item.get("errors")
+                else "item_missing"
+            )
+            current_app.logger.error(f"Error in check_import_items: {error_msg}")
+            raise WekoSwordserverException(
+                f"Error in check_import_items: {error_msg}",
+                ErrorType.ContentMalformed
+            )
+
+
+        if item.get("status") != "new":
+            current_app.logger.error(
+                f"This item is already registered: {item.get('item_title')}"
+            )
+            raise WekoSwordserverException(
+                f"This item is already registered: {item.get('item_title')}",
+                ErrorType.BadRequest,
+            )
+
     # Prepare request information
-
     owner = -1
     if current_user.is_authenticated:
         owner = current_user.id
@@ -333,44 +370,6 @@ def post_service_document():
                 ErrorType.ServerError
             ) from e
 
-    # Validate items in the check result
-    for item in check_result["list_record"]:
-        if not item or item.get("errors"):
-            error_msg = (
-                ", ".join(item.get("errors"))
-                if item and item.get("errors")
-                else "item_missing"
-            )
-            current_app.logger.error(f"Error in check_import_items: {error_msg}")
-            raise WekoSwordserverException(
-                f"Error in check_import_items: {error_msg}",
-                ErrorType.ContentMalformed
-            )
-
-
-        if item.get("status") != "new":
-            current_app.logger.error(
-                f"This item is already registered: {item.get('item_title')}"
-            )
-            raise WekoSwordserverException(
-                f"This item is already registered: {item.get('item_title')}",
-                ErrorType.BadRequest,
-            )
-
-    # Determine registration format
-    if (file_format == "TSV/CSV"
-         or (file_format == "JSON" and register_type == "Direct")):
-        register_type = "Direct"
-    elif (file_format == "XML"
-          or (file_format == "JSON" and register_type == "Workflow")):
-        register_type = "Workflow"
-    else:
-        if os.path.exists(data_path):
-            shutil.rmtree(data_path)
-            TempDirInfo().delete(data_path)
-        raise WekoSwordserverException(
-            "Invalid register format in admin settings", ErrorType.ServerError
-        )
     response = {}
     warns = []
     activity_id = None

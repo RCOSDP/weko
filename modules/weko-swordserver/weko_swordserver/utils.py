@@ -48,7 +48,7 @@ def check_import_file_format(file, packaging):
             file_format = "JSON"
         else:
             current_app.logger.error(
-                "SWORDBagIt requires metadate/sword.json."
+                "metadate/sword.json is not found in SWORDBagIt."
             )
             raise WekoSwordserverException(
                 "SWORDBagIt requires metadate/sword.json.",
@@ -57,8 +57,22 @@ def check_import_file_format(file, packaging):
     elif "SimpleZip" in packaging:
         if "ro-crate-metadata.json" in file_list:
             file_format = "JSON"
+        elif any(filename.split("/")[1].endswith(".xml")
+                for filename in file_list if "/" in filename
+            ):
+            file_format = "XML"
+        elif any(filename.split("/")[1].endswith((".tsv", ".csv"))
+                for filename in file_list if "/" in filename
+            ):
+            file_format = "TSV/CSV"
         else:
-            file_format = "OTHERS"
+            current_app.logger.error(
+                "ro-crate-metadata.json or other metadata file is not found."
+            )
+            raise WekoSwordserverException(
+                "SimpleZip requires ro-crate-metadata.json or other metadata file.",
+                ErrorType.MetadataFormatNotAcceptable
+                )
     else:
         current_app.logger.error(
             f"Not accept packaging format: {packaging}"
@@ -82,6 +96,9 @@ def get_shared_id_from_on_behalf_of(on_behalf_of):
         int: Shared ID
     """
     shared_id = -1
+    if on_behalf_of is None:
+        return shared_id
+
     try:
         # get weko user id from email
         user = User.query.filter_by(email=on_behalf_of).one_or_none()
