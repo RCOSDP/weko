@@ -1,12 +1,14 @@
 
 from os.path import dirname, join
 import pytest
+import copy
 from mock import patch, MagicMock, Mock
 from flask import current_app
 
 from invenio_indexer.api import RecordIndexer
 from invenio_cache import current_cache
 
+from weko_authors.models import Authors
 from weko_authors.config import WEKO_AUTHORS_FILE_MAPPING
 from weko_authors.utils import (
     get_author_prefix_obj,
@@ -703,7 +705,7 @@ def test_count_authors(app2, esindex):
     assert count_authors()['count'] == 0
 
 from weko_authors.utils import validate_weko_id, check_weko_id_is_exists, check_period_date, delete_export_url,\
-    handle_exception, export_prefix,check_file_name
+    handle_exception, export_prefix,check_file_name, clean_deep, update_data_for_weko_link
 from redis.exceptions import RedisError
 from sqlalchemy.exc import SQLAlchemyError
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestValidateWekoId -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -1596,4 +1598,406 @@ class TestCheckFileName:
         result = check_file_name('invalid_target')
         assert result == ''
 
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestCleanDeep -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+class TestCleanDeep:
+    # 正常系
+    # 条件: 辞書の中にNoneや空文字が含まれている
+    # 入力: {'fullname': 'Jane Doe', 'warnings': None, 'email': {"test": "", "test2": "test2"}, 'test': [{"test": ""}, {"test2": "test2"}]}
+    # 期待結果: {'fullname': 'Jane Doe', 'email': {"test2": "test2"}, 'test': [{"test2": "test2"}]}
+    def test_clean_deep_normal_case(self, app):
+        data = {'fullname': 'Jane Doe', 'warnings': None, 'email': {"test": "", "test2": "test2"}, 'test': [{"test": ""}, {"test2": "test2"}]}
+        expected = {'fullname': 'Jane Doe', 'email': {"test2": "test2"}, 'test': [{"test2": "test2"}]}
+        assert clean_deep(data) == expected
 
+    # 正常系
+    # 条件: リストの中にNoneや空文字が含まれている
+    # 入力: [None, '', 'valid', {'key': ''}, {'key': 'value'}]
+    # 期待結果: ['valid', {'key': 'value'}]
+    def test_clean_deep_list_with_none_and_empty_string(self, app):
+        data = [None, '', 'valid', {'key': ''}, {'key': 'value'}]
+        expected = ['valid', {'key': 'value'}]
+        assert clean_deep(data) == expected
+        
+    # 正常系
+    # 条件: リストの中に空の辞書が含まれている
+    # 入力: [{'key': 'value'}, {}]
+    # 期待結果: [{'key': 'value'}]
+    def test_clean_deep_list_with_empty_dict(self, app):
+        data = [{'key': 'value'}, {}]
+        expected = [{'key': 'value'}]
+        assert clean_deep(data) == expected
+
+    # 正常系
+    # 条件: 辞書の中にNoneや空文字が含まれていない
+    # 入力: {'fullname': 'Jane Doe', 'email': {"test2": "test2"}, 'test': [{"test2": "test2"}]}
+    # 期待結果: {'fullname': 'Jane Doe', 'email': {"test2": "test2"}, 'test': [{"test2": "test2"}]}
+    def test_clean_deep_no_none_or_empty_string(self, app):
+        data = {'fullname': 'Jane Doe', 'email': {"test2": "test2"}, 'test': [{"test2": "test2"}]}
+        expected = {'fullname': 'Jane Doe', 'email': {"test2": "test2"}, 'test': [{"test2": "test2"}]}
+        assert clean_deep(data) == expected
+        
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestUpdateDataForWekoLink -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+class TestUpdateDataForWekoLink:
+    """update_data_for_weko_linkのテストクラス"""
+    
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestUpdateDataForWekoLink::test_update_data_normal_case -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_update_data_normal_case(self, app):
+        """
+        正常系
+        条件：weko_linkの内容が更新される場合
+        入力：
+            - data: nameIdentifiersを含むメタデータ
+            - weko_link: 更新前のweko_link
+        期待結果：
+            - weko_linkが更新される
+            - dataのnameIdentifierが更新される
+        """
+        # テスト用データ
+        data = {
+            "creators": [
+                {
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "WEKO",
+                            "nameIdentifier": "old_weko_id_1"
+                        }
+                    ]
+                }
+            ]
+        }
+        weko_link = {"1": "old_weko_id_1"}
+        
+        # AuthorsクラスのMock
+        author_mock = {
+            "authorIdInfo": [
+                {"idType": "1", "authorId": "new_weko_id_1"}
+            ]
+        }
+        
+        with patch.object(Authors, 'get_author_by_id', return_value=author_mock):
+            update_data_for_weko_link(data, weko_link)
+        result = data["creators"][0]["nameIdentifiers"][0]["nameIdentifier"]
+        # 検証
+        assert result == "new_weko_id_1"
+
+    def test_no_change_in_weko_link(self, app):
+        """
+        正常系
+        条件：weko_linkの内容が変更されない場合
+        入力：
+            - data: nameIdentifiersを含むメタデータ
+            - weko_link: 更新前のweko_link
+        期待結果：
+            - weko_linkは変更されない
+            - dataは変更されない
+        """
+        data = {
+            "creators": [
+                {
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "WEKO",
+                            "nameIdentifier": "weko_id_1"
+                        }
+                    ]
+                }
+            ]
+        }
+        weko_link = {"1": "weko_id_1"}
+        data_copy = copy.deepcopy(data)
+        
+        author_mock = {
+            "authorIdInfo": [
+                {"idType": "1", "authorId": "weko_id_1"}
+            ]
+        }
+        
+        with patch.object(Authors, 'get_author_by_id', return_value=author_mock):
+            update_data_for_weko_link(data, weko_link)
+        
+        assert data == data_copy
+
+    def test_author_not_found(self, app):
+        """
+        正常系
+        条件：Authorsテーブルに該当するauthorが存在しない場合
+        入力：
+            - data: 任意のメタデータ
+            - weko_link: 更新前のweko_link
+        期待結果：
+            - weko_linkは変更されない
+            - dataは変更されない
+        """
+        data = {"creators": [{"name": "test"}]}
+        weko_link = {"1": "weko_id_1"}
+        data_copy = copy.deepcopy(data)
+        weko_link_copy = copy.deepcopy(weko_link)
+        
+        with patch.object(Authors, 'get_author_by_id', return_value=None):
+            update_data_for_weko_link(data, weko_link)
+        
+        assert data == data_copy
+
+    def test_id_type_not_1(self, app):
+        """
+        正常系
+        条件：authorIdInfoのidTypeが1でない場合
+        入力：
+            - data: 任意のメタデータ
+            - weko_link: 更新前のweko_link
+        期待結果：
+            - weko_linkは変更されない
+            - dataは変更されない
+        """
+        data = {"creators": [{"name": "test"}]}
+        weko_link = {"1": "weko_id_1"}
+        data_copy = copy.deepcopy(data)
+        weko_link_copy = copy.deepcopy(weko_link)
+        
+        author_mock = {
+            "authorIdInfo": [
+                {"idType": "2", "authorId": "other_id"}
+            ]
+        }
+        
+        with patch.object(Authors, 'get_author_by_id', return_value=author_mock):
+            update_data_for_weko_link(data, weko_link)
+        
+        assert data == data_copy
+
+    def test_multiple_authors_and_identifiers(self, app):
+        """
+        正常系
+        条件：複数のauthorとnameIdentifiersがある場合
+        入力：
+            - data: 複数のauthorとnameIdentifiersを含むメタデータ
+            - weko_link: 複数のエントリを持つweko_link
+        期待結果：
+            - dataの全てのnameIdentifierが更新される
+        """
+        data = {
+            "creators": [
+                {
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "WEKO",
+                            "nameIdentifier": "old_weko_id_1"
+                        },
+                        {
+                            "nameIdentifierScheme": "OTHER",
+                            "nameIdentifier": "other_id"
+                        }
+                    ]
+                },
+                {
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "WEKO",
+                            "nameIdentifier": "old_weko_id_2"
+                        }
+                    ]
+                }
+            ],
+            "contributors": [
+                {
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "WEKO",
+                            "nameIdentifier": "old_weko_id_3"
+                        }
+                    ]
+                }
+            ]
+        }
+        weko_link = {
+            "1": "old_weko_id_1",
+            "2": "old_weko_id_2",
+            "3": "old_weko_id_3"
+        }
+        
+        def mock_get_author_by_id(pk_id):
+            if pk_id == "1":
+                return {"authorIdInfo": [{"idType": "1", "authorId": "new_weko_id_1"}]}
+            elif pk_id == "2":
+                return {"authorIdInfo": [{"idType": "1", "authorId": "new_weko_id_2"}]}
+            elif pk_id == "3":
+                return {"authorIdInfo": [{"idType": "1", "authorId": "new_weko_id_3"}]}
+            return None
+        
+        with patch.object(Authors, 'get_author_by_id', side_effect=mock_get_author_by_id):
+            update_data_for_weko_link(data, weko_link)
+        
+        assert data["creators"][0]["nameIdentifiers"][0]["nameIdentifier"] == "new_weko_id_1"
+        assert data["creators"][1]["nameIdentifiers"][0]["nameIdentifier"] == "new_weko_id_2"
+        assert data["contributors"][0]["nameIdentifiers"][0]["nameIdentifier"] == "new_weko_id_3"
+        # 他のスキームのIDは変更されないことを確認
+        assert data["creators"][0]["nameIdentifiers"][1]["nameIdentifier"] == "other_id"
+
+    def test_non_list_data_fields(self, app):
+        """
+        正常系
+        条件：dataのフィールドがリストでない場合
+        入力：
+            - data: リスト以外のデータ型を含むフィールドを持つメタデータ
+            - weko_link: weko_link
+        期待結果：
+            - dataの該当フィールドはスキップされる
+        """
+        data = {
+            "creators": [
+                {
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "WEKO",
+                            "nameIdentifier": "old_weko_id_1"
+                        }
+                    ]
+                }
+            ],
+            "title": "Test Title",  # 文字列フィールド
+            "description": {"text": "Test Description"}  # 辞書フィールド
+        }
+        weko_link = {"1": "old_weko_id_1"}
+        
+        author_mock = {
+            "authorIdInfo": [
+                {"idType": "1", "authorId": "new_weko_id_1"}
+            ]
+        }
+        
+        with patch.object(Authors, 'get_author_by_id', return_value=author_mock):
+            update_data_for_weko_link(data, weko_link)
+        
+        assert data["creators"][0]["nameIdentifiers"][0]["nameIdentifier"] == "new_weko_id_1"
+        # 文字列や辞書フィールドは変更されないこと
+        assert data["title"] == "Test Title"
+        assert data["description"] == {"text": "Test Description"}
+
+    def test_string_items_in_list(self, app):
+        """
+        正常系
+        条件：dataのリストフィールド内に文字列アイテムがある場合
+        入力：
+            - data: リスト内に文字列アイテムを含むメタデータ
+            - weko_link:　weko_link
+        期待結果：
+            - 文字列アイテムはスキップされる
+        """
+        data = {
+            "creators": [
+                {
+                    "other_identifiers":[],
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "WEKO",
+                            "nameIdentifier": "old_weko_id_1"
+                        }
+                    ]
+                },
+                "Simple String Creator"  # 文字列アイテム
+            ]
+        }
+        weko_link = {"1": "old_weko_id_1"}
+        
+        author_mock = {
+            "authorIdInfo": [
+                {"idType": "1", "authorId": "new_weko_id_1"}
+            ]
+        }
+        
+        with patch.object(Authors, 'get_author_by_id', return_value=author_mock):
+            update_data_for_weko_link(data, weko_link)
+        
+        assert data["creators"][0]["nameIdentifiers"][0]["nameIdentifier"] == "new_weko_id_1"
+        # 文字列アイテムは変更されないこと
+        assert data["creators"][1] == "Simple String Creator"
+
+    def test_no_matching_nameIdentifier(self, app):
+        """
+        正常系
+        条件：nameIdentifierがweko_linkの値と一致しない場合
+        入力：
+            - data: weko_linkと一致しないnameIdentifierを含むメタデータ
+            - weko_link: weko_link
+        期待結果：
+            - dataのnameIdentifierは更新されない
+        """
+        data = {
+            "creators": [
+                {
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "WEKO",
+                            "nameIdentifier": "different_weko_id"
+                        }
+                    ]
+                }
+            ]
+        }
+        weko_link = {"1": "old_weko_id_1"}
+        data_copy = copy.deepcopy(data)
+        
+        author_mock = {
+            "authorIdInfo": [
+                {"idType": "1", "authorId": "new_weko_id_1"}
+            ]
+        }
+        
+        with patch.object(Authors, 'get_author_by_id', return_value=author_mock):
+            update_data_for_weko_link(data, weko_link)
+        
+        # 一致するnameIdentifierがないため、データは変更されない
+        assert data == data_copy
+
+    def test_empty_input_data(self, app):
+        """
+        正常系
+        条件：空のデータ辞書が入力された場合
+        入力：
+            - data: 空の辞書
+            - weko_link: weko_link
+        期待結果：
+            - dataは変更されない（空のまま）
+        """
+        data = {}
+        weko_link = {"1": "old_weko_id_1"}
+        
+        author_mock = {
+            "authorIdInfo": [
+                {"idType": "1", "authorId": "new_weko_id_1"}
+            ]
+        }
+        
+        with patch.object(Authors, 'get_author_by_id', return_value=author_mock):
+            update_data_for_weko_link(data, weko_link)
+        
+        assert data == {}
+
+    def test_empty_weko_link(self, app):
+        """
+        正常系
+        条件：空のweko_linkが入力された場合
+        入力：
+            - data: 任意のメタデータ
+            - weko_link: 空の辞書
+        期待結果：
+            - dataは変更されない
+        """
+        data = {
+            "creators": [
+                {
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "WEKO",
+                            "nameIdentifier": "weko_id_1"
+                        }
+                    ]
+                }
+            ]
+        }
+        weko_link = {}
+        data_copy = copy.deepcopy(data)
+        
+        update_data_for_weko_link(data, weko_link)
+        
+        assert data == data_copy
