@@ -608,11 +608,11 @@ msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:290
 msgid "oa_policy_label"
-msgstr ""
+msgstr "OA policy Information:"
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:298
 msgid "oa_policy_export"
-msgstr ""
+msgstr "OA Policy"
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:311
 msgid "Please enter ISSN, eISSN, or journal title"

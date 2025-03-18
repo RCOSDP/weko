@@ -22,6 +22,7 @@
 
 import json
 import os
+import secrets
 import sys
 from copy import deepcopy
 from datetime import date, datetime, timedelta
@@ -95,62 +96,103 @@ blueprint_api = Blueprint(
     url_prefix="/items",
 )
 
-blueprint = Blueprint(
-    'oapolicy',
-     __name__,
-     url_prefix="/api")
+class GetInfo:
+    @staticmethod
+    def get_access_token(api_code):
+        print("[DEBUG] /oauth/token にリクエストが来た")
+        """OAuth2 トークンを取得するメソッド"""
+        try:
+            if not api_code:
+                print("[ERROR] api_code がリクエストに含まれていません")
+                return {"error": "invalid_request", "message": "api_code is required"}, 400
 
-@blueprint.route("{}workflow/activity/detail/{}")
+            certificate = ApiCertificate.select_by_api_code(api_code)
+            if not certificate:
+                return {"error": "invalid_client"}, 401
+
+            token = certificate.get("cert_data", {}).get("token")
+            expires_at = certificate.get("cert_data", {}).get("expires_at")
+            print(f"[DEBUG] 取得したトークン: {token}")
+            print(f"[DEBUG] トークン有効期限: {expires_at}")
+
+            if token and expires_at:
+                expires_at_dt = datetime.strptime(expires_at, "%Y-%m-%dT%H:%M:%S")
+                print(f"[DEBUG] 現在時刻: {datetime.now()}")
+                print(f"[DEBUG] トークン有効期限: {expires_at_dt}")
+                if expires_at_dt > datetime.now():
+                    return {
+                        "access_token": token,
+                        "token_type": "Bearer",
+                        "expires_in": (expires_at_dt - datetime.now()).seconds
+                    }
+
+            new_access_token = secrets.token_urlsafe(40)
+            expires_in = 3600
+            expires_at = (datetime.now() + timedelta(seconds=expires_in)).isoformat()
+
+            print(f"[DEBUG] 新しいトークンを発行: {new_access_token}")
+            print(f"[DEBUG] 新しいトークン有効期限: {expires_at}")
+
+            return jsonify({
+                "access_token": new_access_token,
+                "token_type": "Bearer",
+                "expires_in": expires_in
+            })
+
+        except Exception as e:
+            current_app.logger.error(f"AccessToken取得エラー: {str(e)}")
+            return {"error": "サーバー内部のエラーが発生しました"}, 500
+
+    @staticmethod
+    def get_oa_policy(issn, eissn, title):
+        """OAポリシー情報を取得"""
+        try:
+            if not issn and not eissn and not title:
+                return jsonify({"error": "ISSN、eISSN、または雑誌名を入力してください。"}), 400
+
+            api_url = current_app.config.get("WEKO_ITEMS_UI_OA_POLICY_API_URL", "/api/oa_policies")
+            token_info = GetInfo.get_access_token("your_api_code")
+
+            if "error" in token_info:
+                return jsonify(token_info), 401
+
+            token = token_info["access_token"]
+            headers = {"Authorization": f"Bearer {token}"}
+            params = {"issn": issn, "eissn": eissn, "title": title}
+            response = requests.get(api_url, headers=headers, params=params)
+
+            if response.status_code == 200:
+                data = response.json()
+                return jsonify({"policy_url": data.get("url", "No policy found")})
+            return jsonify({"error": "APIリクエストに失敗しました"}), response.status_code
+
+        except requests.exceptions.RequestException:
+            return jsonify({"error": "APIリクエストに失敗しました"}), 500
+        except Exception as e:
+            return jsonify({"error": f"不明なエラーが発生しました: {str(e)}"}), 500
+
+
+# トークン取得エンドポイント
+@blueprint_api.route("/oauth/token", methods=["POST"])
 @login_required
-def item_edit():
-    print("URL Called")  # デバッグログ
-    """Item edit page with OA Policy API URL from config."""
-    oa_policy_api_url = current_app.config.get("WEKO_ITEMS_UI_OA_POLICY_API_URL", "/api/oa_policies")
-    return render_template("weko_items_ui/iframe/item_edit.html", api_url=oa_policy_api_url)
+def get_access_token():
+    print("[DEBUG] Access Token が実行されました！")  # デバッグ用ログ
+    """OAuth2 トークンを取得するAPI"""
+    data = request.get_json()
+    api_code = data.get("api_code")
+    return jsonify(GetInfo.get_access_token(api_code))
 
-@blueprint.route("/oauth/token", methods=["POST"])
+
+#  OAポリシー取得エンドポイント
+@blueprint_api.route("/api/oa_policies", methods=["GET"])
 @login_required
-def getAccessToken():
-    """OAuth2 トークンを取得するエンドポイント"""
-    print("OAuth Token Request Received")  # デバッグログ
-    try:
-        data = request.json
-        api_code = data.get("api_code")
-        print("Received JSON:", request.json)
-
-        certificate = ApiCertificate.query.filter_by(api_code=api_code).first()
-        if not certificate:
-            return jsonify({"error": "invalid_client"}), 401  # 認証失敗
-
-        # 既存のトークンが有効なら再利用
-        if certificate.cert_data.get("token") and certificate.cert_data.get("expires_at"):
-            expires_at = datetime.fromisoformat(certificate.cert_data["expires_at"])
-            if expires_at > datetime.now():
-                return jsonify({
-                    "access_token": certificate.cert_data["token"],
-                    "token_type": "Bearer",
-                    "expires_in": (expires_at - datetime.now()).seconds
-                })
-
-        # 新しいトークンを発行
-        new_access_token = secrets.token_urlsafe(40)  # ランダムなトークンを生成
-        expires_in = 3600  # 1時間
-        expires_at = (datetime.now() + timedelta(seconds=expires_in)).isoformat()
-
-        # `cert_data` にトークン情報を保存
-        certificate.cert_data["token"] = new_access_token
-        certificate.cert_data["expires_at"] = expires_at
-        db.session.commit()  # データベースの変更を保存
-
-        return jsonify({
-            "access_token": new_access_token,
-            "token_type": "Bearer",
-            "expires_in": expires_in
-        })
-
-    except Exception as e:
-        db.session.rollback()  # データベースのロールバック
-        return jsonify({"error": str(e)}), 500
+def get_oa_policy():
+    print("[DEBUG] get_oa_policy が実行されました！")  # デバッグ用ログ
+    """OAポリシー情報を取得するAPI"""
+    issn = request.args.get("issn", "")
+    eissn = request.args.get("eissn", "")
+    title = request.args.get("title", "")
+    return GetInfo.get_oa_policy(issn, eissn, title)
 
 @blueprint.route('/', methods=['GET'])
 @blueprint.route('/<int:item_type_id>', methods=['GET'])
