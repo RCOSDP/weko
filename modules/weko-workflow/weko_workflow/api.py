@@ -185,13 +185,19 @@ class Flow(object):
                 flow = _Flow.query.filter_by(
                     flow_id=flow_id).one_or_none()
                 if flow:
-                    # logical delete
-                    # flow.is_deleted = True
-                    # db.session.merge(flow)
-                    # physical delete
-                    _FlowAction.query.filter_by(flow_id=flow_id).delete()
-                    _Flow.query.filter_by(
-                        flow_id=flow_id).delete()
+                    workflow = _WorkFlow.query.filter(
+                        and_(_WorkFlow.flow_id == flow.id,
+                             _WorkFlow.is_deleted == True)
+                        ).all()
+                    if len(workflow) > 0:
+                        # logical delete
+                        flow.is_deleted = True
+                        db.session.merge(flow)
+                    else:
+                        # physical delete
+                        _FlowAction.query.filter_by(flow_id=flow_id).delete()
+                        _Flow.query.filter_by(
+                            flow_id=flow_id).delete()
             db.session.commit()
             return {'code': 0, 'msg': ''}
         except Exception as ex:
@@ -2708,21 +2714,22 @@ class WorkActivityHistory(object):
 class UpdateItem(object):
     """The class about item."""
 
-    def publish(self, record):
+    def publish(self, record, status):
         r"""Record publish  status change view.
 
         Change record publish status with given status and renders record
         export template.
 
         :param record: record object.
+        :param status: publish status
         :return: The rendered template.
         """
         from weko_deposit.api import WekoIndexer
         publish_status = record.get('publish_status')
         if not publish_status:
-            record.update({'publish_status': PublishStatus.PUBLIC.value})
+            record.update({'publish_status': status})
         else:
-            record['publish_status'] = PublishStatus.PUBLIC.value
+            record['publish_status'] = status
 
         record.commit()
         db.session.commit()

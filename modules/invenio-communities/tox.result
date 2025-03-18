@@ -1,5 +1,0 @@
-GLOB sdist-make: /code/modules/invenio-communities/setup.py
-c1 create: /code/modules/invenio-communities/.tox/c1
-ERROR: cowardly refusing to delete `envdir` (it does not look like a virtualenv): /code/modules/invenio-communities/.tox/c1
-___________________________________ summary ____________________________________
-ERROR:   c1: error

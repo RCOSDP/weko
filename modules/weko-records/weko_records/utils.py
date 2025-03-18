@@ -823,32 +823,33 @@ def to_orderdict(alst, klst, is_full_key=False):
                     to_orderdict(v, klst, is_full_key)
 
 
-def get_options_and_order_list(item_type_id, ojson=None):
+def get_options_and_order_list(item_type_id, item_type_data=None):
     """Get Options by item type id.
 
     :param item_type_id:
-    :param ojson:
+    :param item_type_data:
     :return: options dict and sorted list
     """
-    if ojson is None:
-        ojson = ItemTypes.get_record(item_type_id)
-    solst = find_items(ojson.model.form)
-    meta_options = ojson.model.render.get("meta_fix")
-    meta_options.update(ojson.model.render.get("meta_list"))
+    meta_options = {}
+    solst = []
+    if item_type_data is None:
+        item_type_data = ItemTypes.get_record(item_type_id)
+    if item_type_data:
+        solst = find_items(item_type_data.model.form)
+        meta_options = item_type_data.model.render.get("meta_fix")
+        meta_options.update(item_type_data.model.render.get("meta_list"))
     return solst, meta_options
 
 
 async def sort_meta_data_by_options(
     record_hit,
     settings,
-    item_type_mapping,
     item_type_data,
 ):
     """Reset metadata by '_options'.
 
     :param record_hit:
     :param settings:
-    :param item_type_mapping:
     :param item_type_data:
     """
     
@@ -1333,12 +1334,19 @@ async def sort_meta_data_by_options(
         item_type_id = record_hit["_source"].get("item_type_id") or src.get(
             "item_type_id"
         )
-        item_map = get_mapping(item_type_id, "jpcoar_mapping")
         
         # selected title
         from weko_items_ui.utils import get_hide_list_by_schema_form
-        solst, meta_options = get_options_and_order_list(item_type_id, item_type_data)
-        hide_list = get_hide_list_by_schema_form(item_type_id)
+
+        item_type = ItemTypes.get_by_id(item_type_id)
+        hide_list = []
+        if item_type:
+            solst, meta_options = get_options_and_order_list(
+                item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
+            hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+        else:
+            solst, meta_options = get_options_and_order_list(item_type_id)
+        item_map = get_mapping(item_type_id, "jpcoar_mapping", item_type=item_type)
         title_value_key = 'title.@value'
         title_lang_key = 'title.@attributes.xml:lang'
         title_languages = []
@@ -1372,15 +1380,12 @@ async def sort_meta_data_by_options(
 
         if not item_type_id:
             return
-        
-        from weko_items_ui.utils import get_hide_list_by_schema_form
-        solst, meta_options = get_options_and_order_list(item_type_id, item_type_data)
-        hide_list = get_hide_list_by_schema_form(item_type_id)
+
         solst_dict_array = convert_data_to_dict(solst)
         files_info = []
         creator_info = None
         thumbnail = None
-        hide_item_metadata(src, settings, item_type_mapping, item_type_data)
+        hide_item_metadata(src, settings, item_type_data)
         # Set value and parent option
         for lst in solst:
             key = lst[0]
@@ -1989,7 +1994,7 @@ def selected_value_by_language(
     result = None
     lang_key_list = lang_key_str.split(",")
     val_key_list = val_key_str.split(",")
-    
+
     for val_key in val_key_list:
         val_parent_key = val_key.split(".")[0]
         val_sub_key = val_key.split(".")[-1]
@@ -2044,28 +2049,40 @@ def selected_value_by_language(
                             ):
                                 noreturn = True
                                 break
-                            if len(lg) > 0:
+                            if lg:
                                 value = check_info_in_metadata(
                                     lang_key, val_key, lg, _item_metadata
                                 )
                                 if value is not None:
                                     result = value
+                                    break
                         if noreturn:
                             result = None
                     # 1st value when registering without language
                     if not result and len(value_array) > 0:
                         result = check_info_in_metadata(lang_key, val_key, None, _item_metadata)
-            if not result:
+            if result:
                 break
-        if not result:
+        if result:
+            break
+
+    if not result:
+        for val_key in val_key_list:
+            val_parent_key = val_key.split(".")[0]
+            val_sub_key = val_key.split(".")[-1]
+            prop_hidden = meta_option.get(val_parent_key, {}).get('option', {}).get('hidden', False)
+            for h in hide_list:
+                if h.startswith(val_parent_key) and h.endswith(val_sub_key):
+                    prop_hidden = True
+
             if (
                 (value_array is not None and len(value_array) > 0)
                 and isinstance(lang_selected, str)
                 and not prop_hidden
             ):
                 result = check_info_in_metadata('', val_key, None, _item_metadata)
-        if result:
-            break
+            if result:
+                break
     return result
 
 
@@ -2094,7 +2111,7 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
         if str_key_val[0] in metadata:
             obj = metadata.get(str_key_val[0])
             if not isinstance(obj,list):
-                obj = obj.get("attribute_value_mlt")
+                obj = obj.get("attribute_value_mlt",obj)
             save = obj
             for ob in str_key_val:
                 if (
@@ -2104,28 +2121,38 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
                     for x in save:
                         if x.get(ob):
                             save = x.get(ob)
-            for s in save:
-                if s is not None and str_lang is None:
-                    value = s
-                    if isinstance(s,dict):
-                        value = s.get(str_key_val[len(str_key_val) - 1])
-                        if value:
-                            value.strip()
-                            if len(value) > 0:
-                                return value
-                
-                if (
-                    s and str_key_lang 
-                    and isinstance(s, dict)
-                    and s.get(str_key_lang[-1])
-                    and s.get(str_key_val[-1])
-                ):
+            
+            if isinstance(save, list):
+                for s in save:
+                    if s is not None and str_lang is None:
+                        value = s
+                        if isinstance(s,dict):
+                            value = s.get(str_key_val[len(str_key_val) - 1])
+                            if value:
+                                value.strip()
+                                if len(value) > 0:
+                                    return value
+                    
                     if (
-                        s.get(str_key_lang[-1]).strip() == str_lang.strip()
-                        and str_key_val[-1] in s
-                        and len(s.get(str_key_val[-1]).strip()) > 0
+                        s and str_key_lang 
+                        and isinstance(s, dict)
+                        and s.get(str_key_lang[-1])
+                        and s.get(str_key_val[-1])
                     ):
-                        return s.get(str_key_val[-1])
+                        if (
+                            s.get(str_key_lang[-1]).strip() == str_lang.strip()
+                            and str_key_val[-1] in s
+                            and len(s.get(str_key_val[-1]).strip()) > 0
+                        ):
+                            return s.get(str_key_val[-1])
+            elif isinstance(save, dict):
+                if (
+                    save.get(str_key_lang[-1])
+                    and save.get(str_key_val[-1])
+                    and save.get(str_key_lang[-1]).strip() == str_lang.strip()
+                ):
+                    return save.get(str_key_val[-1])
+
     return None
 
 

@@ -967,6 +967,10 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 $(this).closest('li')
                   .find('input, select')
                   .attr('disabled', true);
+              }else{
+                $(this).closest('li')
+                  .find('input, select')
+                  .attr('disabled', false);
               }
             });
         }, 1000);
@@ -3547,15 +3551,18 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           return invalid_emails;
         }
         emails.each(function (idx) {
-          email = emails[idx]
-          result = re.test(String(email.text).toLowerCase());
+          mail_info = emails[idx]
+          value = mail_info.attributes[1]['value'].split('_')
+          author_id = value[0]
+          mail = value[1]
+          result = re.test(String(mail).toLowerCase());
           if (result) {
             $scope.feedback_emails.push({
-              "author_id": email.attributes[1]['value'],
-              "email": email.text
+              "author_id": author_id,
+              "email": mail
             })
           } else {
-            invalid_emails.push(email.text);
+            invalid_emails.push(mail);
           }
         });
         return invalid_emails;

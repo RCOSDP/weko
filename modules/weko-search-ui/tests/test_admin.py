@@ -12,6 +12,7 @@ from flask import Flask, json, jsonify, session, url_for,current_app, make_respo
 
 from invenio_accounts.testutils import login_user_via_session
 
+from weko_index_tree.models import Index
 from weko_search_ui.admin import (
     ItemManagementBulkDelete,
     ItemManagementCustomSort,
@@ -93,6 +94,25 @@ def test_ItemManagementCustomSort_save_sort(i18n_app, users, db_records2):
         test = ItemManagementCustomSort()
         with patch("flask.templating._render", return_value=""):
             assert test.save_sort()
+
+        with patch.object(request, "get_json", return_value={"q_id": "1", "sort": [{"custom_sort": {"1": 1}}, {"custom_sort": {"2": 2}}]}):
+            with patch("weko_index_tree.api.Indexes.set_item_sort_custom", return_value=Index(id=1)):
+                res = test.save_sort()
+                res_data = json.loads(res.get_data(as_text=True))
+                assert res.status_code == 200
+                assert res_data["message"] == "Data is successfully updated."
+
+            with patch("weko_index_tree.api.Indexes.set_item_sort_custom", return_value=None):
+                res = test.save_sort()
+                res_data = json.loads(res.get_data(as_text=True))
+                assert res.status_code == 405
+                assert res_data["message"] == "Data update failed."
+
+            with patch("weko_index_tree.api.Indexes.set_item_sort_custom", side_effect=Exception):
+                res = test.save_sort()
+                res_data = json.loads(res.get_data(as_text=True))
+                assert res.status_code == 405
+                assert res_data["message"] == "Error."
 
 
 # class ItemManagementBulkSearch(BaseView):

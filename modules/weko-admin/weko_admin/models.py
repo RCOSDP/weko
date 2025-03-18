@@ -270,7 +270,7 @@ class AdminLangSettings(db.Model):
 
     __tablename__ = 'admin_lang_settings'
 
-    lang_code = db.Column(db.String(3), primary_key=True, nullable=False,
+    lang_code = db.Column(db.String(5), primary_key=True, nullable=False,
                           unique=True)
 
     lang_name = db.Column(db.String(30), nullable=False)
@@ -1557,7 +1557,7 @@ class FeedbackMailHistory(db.Model):
             session.commit()
         except BaseException as ex:
             session.rollback()
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
 
     @classmethod
     def update_lastest_status(cls, id, status):
@@ -1682,7 +1682,7 @@ class FeedbackMailFailed(db.Model):
             session.commit()
         except BaseException as ex:
             session.rollback()
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
 
 
 class Identifier(db.Model):

@@ -29,7 +29,8 @@
                             m_is_top_page=False,
                             m_is_logged_in=False,
                             m_open_day_display_flg=true,
-                            m_cur_step=None) %}
+                            m_cur_step=None,
+                            m_community=None) %}
   {% autoescape False %}
   <table class="table table-bordered table-striped detail-table">
       {% if m_record.item_type_info %}
@@ -143,7 +144,7 @@
           </td>
         </tr>
       {% endif %}
-      {% if m_record.pubdate and m_is_top_page and m_is_logged_in %}
+      {% if m_record.publish_status and m_is_top_page and m_is_logged_in %}
         <tr>
           <th scope="row" colspan="6">{{ _('Publish Status') }}</th>
             {%- set public_status = m_record.get('publish_status','1') -%}
@@ -155,7 +156,11 @@
           <td>
             <div>
               <form class="form form-inline" id="public_status_form"
-                    action="{{ url_for('invenio_records_ui.recid_publish', pid_value=m_pid.pid_value) }}"
+                    {%- if m_community -%}
+                      action="{{ url_for('invenio_records_ui.recid_publish', pid_value=m_pid.pid_value, community=m_community) }}"
+                    {%- else -%}
+                      action="{{ url_for('invenio_records_ui.recid_publish', pid_value=m_pid.pid_value) }}"
+                    {%- endif -%}
                     method="POST">
                 {% if m_record | check_permission %}
                     {% if '0' in public_status %}
