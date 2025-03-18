@@ -288,8 +288,8 @@
 
                   <!-- ボタン + URL + エラーメッセージ -->
                   <div class="col-sm-9">
-                    <div class="input-group" data-api-url="{{ api_url }}">
-                      <!-- Policy 取得ボタン -->git
+                    <div class="input-group">
+                      <!-- Policy 取得ボタン -->
                       <button type="button" class="btn btn-primary" id="oapolicyurl">
                         {{ _('oa_policy_export') }}
                       </button>
@@ -303,7 +303,7 @@
                       <span id="oaPolicyError" class="text-danger ml-2" aria-live="polite"></span>
                     </div>
 
-                    <!-- エラーメッセージ（翻訳適用） -->
+                    <!-- エラーメッセージ -->
                     <input type="hidden" id="error_missing_input" value="{{ _('Please enter ISSN, eISSN, or journal title') }}">
                     <input type="hidden" id="error_no_policy_found" value="{{ _('No Policy Information found') }}">
                     <input type="hidden" id="error_api_400" value="{{ _('Invalid parameters') }}">

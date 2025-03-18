@@ -10,20 +10,23 @@ $(document).ready(function () {
 
   /**
    * エラーメッセージを表示
-   * @param {string} errorKey
+   * @param {string} errorKey - エラーコードに対応する
    */
   function showError(errorKey) {
       let message = $("#" + errorKey).val() || "不明なエラーが発生しました";
       $("#oaPolicyError").text(message).css({
-          "display": "block",
+          "display": "inline-block",
           "color": "red",
-          "font-weight": "bold"
+          "font-weight": "bold",
+          "min-width": "200px",
+          "margin-left": "10px",
+          "vertical-align": "middle"
       });
   }
 
   /**
    * OAポリシー URL を表示
-   * @param {string} url
+   * @param {string} url - 取得したポリシーのURL
    */
   function showResult(url) {
       $("#oaPolicyText").text(url);
@@ -38,7 +41,7 @@ $(document).ready(function () {
       console.log("[OA Policy] ボタンがクリックされました");
       resetPolicyInfo();
 
-      // フォームからISSN, eISSN, 雑誌名を取得
+      // メタデータ入力ISSN, eISSN, 雑誌名を取得
       let identifierType = $("select[name*='subitem_source_identifier_type']").val()?.trim().replace(/^string:/, "") || "";
       let identifierValue = $("#subitem_source_identifier").val()?.trim() || "";
 
@@ -69,19 +72,14 @@ $(document).ready(function () {
       }).fail(function (xhr) {
           console.error("[API] リクエストエラー:", xhr);
 
-          if (xhr.status === 400) {
-              showError("error_api_400");
-          } else if (xhr.status === 401) {
-              showError("error_api_401");
-          } else if (xhr.status === 404) {
-              showError("error_api_404");
-          } else if (xhr.status === 429) {
-              showError("error_api_429");
-          } else if (xhr.status === 500) {
-              showError("error_api_500");
-          } else {
-              showError("error_api_generic");
-          }
+          const errorMap = {
+            400: "error_api_400",
+            401: "error_api_401",
+            404: "error_api_404",
+            429: "error_api_429",
+            500: "error_api_500"
+        };
+        showError(errorMap[xhr.status] || "error_api_generic");
       });
   });
 });

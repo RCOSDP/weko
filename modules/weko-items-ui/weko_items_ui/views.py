@@ -23,6 +23,7 @@
 import json
 import os
 import secrets
+import requests
 import sys
 from copy import deepcopy
 from datetime import date, datetime, timedelta
@@ -44,7 +45,7 @@ from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from weko_accounts.utils import login_required_customize
-from weko_admin.models import AdminSettings, RankingSettings, ApiCertificate
+from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
 from weko_index_tree.utils import check_index_permissions, get_index_id, \
@@ -74,7 +75,7 @@ from .utils import _get_max_export_items, check_item_is_being_edit, \
     translate_validation_message, update_index_tree_for_record, \
     update_json_schema_by_activity_id, update_schema_form_by_activity_id, \
     update_sub_items_by_user_role, validate_form_input_data, validate_user, \
-    validate_user_mail_and_index
+    validate_user_mail_and_index, get_access_token
 from .config import WEKO_ITEMS_UI_FORM_TEMPLATE,WEKO_ITEMS_UI_ERROR_TEMPLATE
 from weko_theme.config import WEKO_THEME_DEFAULT_COMMUNITY
 
@@ -96,103 +97,66 @@ blueprint_api = Blueprint(
     url_prefix="/items",
 )
 
-class GetInfo:
-    @staticmethod
-    def get_access_token(api_code):
-        print("[DEBUG] /oauth/token にリクエストが来た")
-        """OAuth2 トークンを取得するメソッド"""
-        try:
-            if not api_code:
-                print("[ERROR] api_code がリクエストに含まれていません")
-                return {"error": "invalid_request", "message": "api_code is required"}, 400
-
-            certificate = ApiCertificate.select_by_api_code(api_code)
-            if not certificate:
-                return {"error": "invalid_client"}, 401
-
-            token = certificate.get("cert_data", {}).get("token")
-            expires_at = certificate.get("cert_data", {}).get("expires_at")
-            print(f"[DEBUG] 取得したトークン: {token}")
-            print(f"[DEBUG] トークン有効期限: {expires_at}")
-
-            if token and expires_at:
-                expires_at_dt = datetime.strptime(expires_at, "%Y-%m-%dT%H:%M:%S")
-                print(f"[DEBUG] 現在時刻: {datetime.now()}")
-                print(f"[DEBUG] トークン有効期限: {expires_at_dt}")
-                if expires_at_dt > datetime.now():
-                    return {
-                        "access_token": token,
-                        "token_type": "Bearer",
-                        "expires_in": (expires_at_dt - datetime.now()).seconds
-                    }
-
-            new_access_token = secrets.token_urlsafe(40)
-            expires_in = 3600
-            expires_at = (datetime.now() + timedelta(seconds=expires_in)).isoformat()
-
-            print(f"[DEBUG] 新しいトークンを発行: {new_access_token}")
-            print(f"[DEBUG] 新しいトークン有効期限: {expires_at}")
-
-            return jsonify({
-                "access_token": new_access_token,
-                "token_type": "Bearer",
-                "expires_in": expires_in
-            })
-
-        except Exception as e:
-            current_app.logger.error(f"AccessToken取得エラー: {str(e)}")
-            return {"error": "サーバー内部のエラーが発生しました"}, 500
-
-    @staticmethod
-    def get_oa_policy(issn, eissn, title):
-        """OAポリシー情報を取得"""
-        try:
-            if not issn and not eissn and not title:
-                return jsonify({"error": "ISSN、eISSN、または雑誌名を入力してください。"}), 400
-
-            api_url = current_app.config.get("WEKO_ITEMS_UI_OA_POLICY_API_URL", "/api/oa_policies")
-            token_info = GetInfo.get_access_token("your_api_code")
-
-            if "error" in token_info:
-                return jsonify(token_info), 401
-
-            token = token_info["access_token"]
-            headers = {"Authorization": f"Bearer {token}"}
-            params = {"issn": issn, "eissn": eissn, "title": title}
-            response = requests.get(api_url, headers=headers, params=params)
-
-            if response.status_code == 200:
-                data = response.json()
-                return jsonify({"policy_url": data.get("url", "No policy found")})
-            return jsonify({"error": "APIリクエストに失敗しました"}), response.status_code
-
-        except requests.exceptions.RequestException:
-            return jsonify({"error": "APIリクエストに失敗しました"}), 500
-        except Exception as e:
-            return jsonify({"error": f"不明なエラーが発生しました: {str(e)}"}), 500
-
-
-# トークン取得エンドポイント
-@blueprint_api.route("/oauth/token", methods=["POST"])
-@login_required
-def get_access_token():
-    print("[DEBUG] Access Token が実行されました！")  # デバッグ用ログ
-    """OAuth2 トークンを取得するAPI"""
-    data = request.get_json()
-    api_code = data.get("api_code")
-    return jsonify(GetInfo.get_access_token(api_code))
-
-
 #  OAポリシー取得エンドポイント
-@blueprint_api.route("/api/oa_policies", methods=["GET"])
+@blueprint.route("/api/oa_policies", methods=["GET"])
 @login_required
 def get_oa_policy():
-    print("[DEBUG] get_oa_policy が実行されました！")  # デバッグ用ログ
-    """OAポリシー情報を取得するAPI"""
-    issn = request.args.get("issn", "")
-    eissn = request.args.get("eissn", "")
-    title = request.args.get("title", "")
-    return GetInfo.get_oa_policy(issn, eissn, title)
+    """
+    OAポリシー情報を取得するAPIエンドポイント。
+
+    リクエストパラメータ:
+        - issn (str): ISSN番号
+        - eissn (str): eISSN番号
+        - title (str): 雑誌名
+
+    レスポンス:
+        - 成功時: {"policy_url": "取得したポリシーURL"}
+        - 失敗時: {"error": "エラーメッセージ"}, HTTPステータスコード
+    """
+    try:
+        issn = request.args.get("issn", "").strip()
+        eissn = request.args.get("eissn", "").strip()
+        title = request.args.get("title", "").strip()
+
+        if not issn and not eissn and not title:
+            return jsonify({"error": "ISSN、eISSN、または雑誌名を入力してください。"}), 400
+
+        api_url = current_app.config.get("WEKO_ITEMS_UI_OA_POLICY_API_URL")
+        api_code = current_app.config.get("WEKO_ITEMS_UI_OA_POLICY_API_CODE")
+
+        # アクセストークンを取得
+        token_info = get_access_token(api_code)
+
+        if not token_info or "access_token" not in token_info:
+            return jsonify({"error": "認証エラーが発生しました。"}), 401
+
+        token = token_info["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+        params = {"issn": issn, "eissn": eissn, "title": title}
+
+        # APIリクエスト送信
+        response = requests.get(api_url, headers=headers, params=params)
+
+        if response.status_code == 200:
+            data = response.json()
+            return jsonify({"policy_url": data.get("url", "ポリシー情報が見つかりませんでした。")})
+        elif response.status_code == 400:
+            return jsonify({"error": "パラメータが不正です。"}), 400
+        elif response.status_code == 401:
+            return jsonify({"error": "認証エラーが発生しました。"}), 401
+        elif response.status_code == 404:
+            return jsonify({"error": "一致するポリシー情報が見つかりませんでした。"}), 404
+        elif response.status_code == 429:
+            return jsonify({"error": "リクエスト制限を超えました。"}), 429
+        elif response.status_code == 500:
+            return jsonify({"error": "サーバー内部のエラーが発生しました。"}), 500
+        else:
+            return jsonify({"error": "不明なエラーが発生しました。"}), 500
+
+    except requests.exceptions.RequestException:
+        return jsonify({"error": "APIリクエストに失敗しました。"}), 500
+    except Exception as e:
+        return jsonify({"error": f"予期しないエラーが発生しました: {str(e)}"}), 500
 
 @blueprint.route('/', methods=['GET'])
 @blueprint.route('/<int:item_type_id>', methods=['GET'])
