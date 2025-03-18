@@ -67,6 +67,35 @@ WEKO_WORKSPACE_ITEM = {
 }
 """Default item template for the workspace item list page."""
 
+WEKO_ITEMS_AUTOFILL_JAMAS_XML_DATA_KEYS = [
+    "dc:title",
+    "dc:creator",
+    "prism:organization",
+    "prism:publicationName",
+    "prism:volume",
+    "prism:number",
+    "prism:startingPage",
+    "prism:pageRange",
+    "prism:publicationDate",
+    "prism:issn",
+    "prism:eIssn",
+    "prism:doi",
+]
+"""Jamas XML data keys"""
+
+WEKO_ITEMS_AUTOFILL_JAMAS_REQUIRED_ITEM = [
+    "title",
+    "creator",
+    "sourceTitle",
+    "sourceIdentifier",
+    "volume",
+    "issue",
+    "pageStart",
+    "date",
+    "relation"
+]
+"""Jamas required item"""
+
 WEKO_WORKSPACE_ARTICLE_TYPES = [
     "conference paper",
     "data paper",

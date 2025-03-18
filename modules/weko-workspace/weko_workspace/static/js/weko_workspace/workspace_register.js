@@ -2618,6 +2618,7 @@ function toObject(arr) {
         jalcDataEmpty = this.setRecordDataFromJalcApi(param_api);
 
         datacitDataEmpty = this.setRecordDataFromDataciteApi(param_api);
+        datacitDataEmpty = this.setRecordDataFromJamasApi(param_api);
         return corssrefDataEmpty,ciniiDataEmpty,jalcDataEmpty,datacitDataEmpty
 
     }
@@ -2662,7 +2663,43 @@ function toObject(arr) {
           return item;
         }
       }
+      
 
+      $scope.setRecordDataFromJamasApi = function (param) {
+        let request = {
+          url: '/api/workspaceAPI/get_auto_fill_record_data_jamasapi',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          method: "POST",
+          data: JSON.stringify(param),
+          dataType: "json"
+        };
+        
+        InvenioRecordsAPI.request(request).then(
+          function success(response) {
+            let data = response.data;
+            if (data.error) {
+              $scope.enableAutofillButton();
+              $scope.setAutoFillErrorMessage("An error have occurred!\nDetail: " + data.error);
+            } else if (!$.isEmptyObject(data.result)) {
+              $scope.clearAllField();
+              $("#metaDataSelectJamas").prop('disabled', false);
+              $("#metaDataSelectJamas").val(JSON.stringify(data.result))
+            } else {
+              $scope.enableAutofillButton();
+              $scope.corssrefDataEmpty = true;
+              $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
+            }
+            $scope.checkBothDataEmpty($scope.corssrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
+          },
+          function error(response) {
+            $scope.enableAutofillButton();
+            $scope.setAutoFillErrorMessage("Cannot connect to server!");
+          }
+        );
+      }
+      
 
       $scope.setRecordDataFromCrossRefApi = function (param) {
         let request = {
