@@ -368,6 +368,7 @@ def base_app2(instance_path,search_class):
         WEKO_AUTHORS_BULK_IMPORT_RETRY_INTERVAL= 1,
         WEKO_AUTHORS_EXPORT_CACHE_URL_KEY= 'weko_authors_exported_url',
         WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY= 'weko_authors_export_stop_point',
+        WEKO_AUTHORS_IMPORT_CACHE_FORCE_CHANGE_MODE_KEY= 'authors_import_force_change',
     )
     Babel(app_)
     InvenioDB(app_)

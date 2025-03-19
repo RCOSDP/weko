@@ -259,7 +259,7 @@ def _process(data_size, data_from, process_counter, target, origin_pkid_list, ke
             except Exception as e:
                 current_app.logger.error("Failed to update record to ES. method:process_bulk_queue err:{}".format(e))
                 current_app.logger.error("retrys:{} sleep:{}s records_ids:{}".format(count, sleep_time, record_ids))
-                if sleep_time*2 >= max_back_off_time:
+                if sleep_time > max_back_off_time:
                     raise e
                 sleep(sleep_time)
                 count += 1
@@ -277,7 +277,7 @@ def _process(data_size, data_from, process_counter, target, origin_pkid_list, ke
                 except Exception as e:
                     current_app.logger.error("Failed to update record to ES. method:update_author_link_and_weko_link err:{}".format(e))
                     current_app.logger.error("retrys:{} sleep{}".format(count, sleep_time))
-                    if sleep_time*2 >= max_back_off_time:
+                    if sleep_time > max_back_off_time:
                         raise e
                     sleep(sleep_time)
                     count += 1

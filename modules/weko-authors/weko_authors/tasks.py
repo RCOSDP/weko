@@ -237,8 +237,11 @@ def import_authors_for_over_max(authors):
     group_tasks = []
     tasks = []
     task_ids = []
+    force_change_mode = current_cache.get(\
+        current_app.config.get("WEKO_AUTHORS_IMPORT_CACHE_FORCE_CHANGE_MODE_KEY", False)
+        )
     for author in authors:
-        group_tasks.append(import_author.s(author))
+        group_tasks.append(import_author.s(author, force_change_mode))
 
     # group_tasksを実行
     import_task = group(group_tasks).apply_async()
@@ -299,8 +302,8 @@ def import_authors_for_over_max(authors):
         result.append({
             "start_date": start_date,
             "end_date": end_date,
-            'previous_weko_id': _task.get('current_weko_id'),
-            'new_weko_id': _task.get('weko_id'),
+            'previous_weko_id': _task.get('previous_weko_id'),
+            'new_weko_id': _task.get('new_weko_id'),
             "full_name": _task['full_name'],
             "type": _task['type'],
             "status": status,
@@ -340,8 +343,8 @@ def write_result_temp_file(result):
             for res in result:
                 start_date = res.get("start_date", "")
                 end_date = res.get("end_date", "")
-                prev_weko_id= res.get('current_weko_id', "")
-                new_weko_id= res.get('weko_id', "")
+                prev_weko_id= res.get('previous_weko_id', "")
+                new_weko_id= res.get('new_weko_id', "")
                 full_name = res.get("full_name", "")
                 type = res.get("type", "")
                 status = res.get("status", "")
@@ -405,7 +408,7 @@ def prepare_success_msg(type):
 def check_task_end(task_ids):
     length = len(task_ids)
     sleep_time = current_app.config.get("WEKO_AUTHORS_BULK_IMPORT_RETRY_INTERVAL")
-    for i in range(length):
+    for i in range(length+10):
         count = 0
         for task_id in task_ids:
             task = import_author.AsyncResult(task_id)
