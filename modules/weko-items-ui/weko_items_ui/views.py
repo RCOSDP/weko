@@ -73,7 +73,7 @@ from .utils import _get_max_export_items, check_item_is_being_edit, \
     translate_validation_message, update_index_tree_for_record, \
     update_json_schema_by_activity_id, update_schema_form_by_activity_id, \
     update_sub_items_by_user_role, validate_form_input_data, validate_user, \
-    validate_user_mail_and_index
+    validate_user_mail_and_index, get_weko_link
 from .config import WEKO_ITEMS_UI_FORM_TEMPLATE,WEKO_ITEMS_UI_ERROR_TEMPLATE
 from weko_theme.config import WEKO_THEME_DEFAULT_COMMUNITY
 
@@ -239,6 +239,9 @@ def iframe_save_model():
         if activity_id:
             sanitize_input_data(data)
             save_title(activity_id, data)
+            # メタデータからweko_linkを作成します。
+            weko_link = get_weko_link(data)
+            data["weko_link"] = weko_link
             activity = WorkActivity()
             activity.upt_activity_metadata(activity_id, json.dumps(data))
             db.session.commit()
@@ -1265,9 +1268,11 @@ def get_authors_affiliation_settings():
     if author_affiliation_settings is not None:
         results = []
         for affiliation in author_affiliation_settings:
+            name = affiliation.name
             scheme = affiliation.scheme
             url = affiliation.url
             result = dict(
+                name=name,
                 scheme=scheme,
                 url=url
             )
