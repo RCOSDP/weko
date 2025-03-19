@@ -161,7 +161,8 @@ def base_app(request, instance_path,search_class):
         WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY='cache_result_over_max_file_path_key',
         WEKO_AUTHORS_IMPORT_CACHE_RESULT_FILE_PATH_KEY = "authors_import_result_file_path",
         WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY= "result_summary_key",
-        WEKO_AUTHORS_IMPORT_CACHE_OVER_MAX_TASK_KEY = "authors_import_over_max_task"
+        WEKO_AUTHORS_IMPORT_CACHE_OVER_MAX_TASK_KEY = "authors_import_over_max_task",
+        WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH = "authors_import_user_file_key",
     )
     Babel(app_)
     InvenioDB(app_)
