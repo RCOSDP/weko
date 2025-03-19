@@ -378,7 +378,7 @@ class WekoAuthors(object):
         try: 
             size = current_app.config["WEKO_AUTHORS_EXPORT_BATCH_SIZE"]
             if not mappings:
-                mappings = deepcopy(WEKO_AUTHORS_FILE_MAPPING)
+                mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING"])
             if not affiliation_mappings:
                 affiliation_mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"])
             if not records_count:
@@ -467,7 +467,7 @@ class WekoAuthors(object):
        
         if not mappings or not affiliation_mappings:
             mappings, affiliation_mappings = WekoAuthors.mapping_max_item(\
-                deepcopy(WEKO_AUTHORS_FILE_MAPPING),
+                deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING"]),
                 deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"]),
                 WekoAuthors.get_records_count(False, False)
                 )

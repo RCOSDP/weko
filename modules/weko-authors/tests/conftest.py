@@ -154,7 +154,6 @@ def base_app(request, instance_path,search_class):
         WEKO_API_LIMIT_RATE_DEFAULT=["100 per minute"],
         CELERY_ALWAYS_EAGER=True,
         CELERY_CACHE_BACKEND="memory",
-        WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY = "authors_import_summary",
         WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY = "authors_import_result_file_of_over_path",
         WEKO_AUTHORS_EXPORT_TEMP_FOLDER_PATH =   "/var/tmp/authors_export",
         WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY = 'authors_import_user_file_key',
@@ -175,11 +174,9 @@ def base_app(request, instance_path,search_class):
         WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY="weko_authors_export_stop_point",
         WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY="weko_authors_export_temp_file_path_key",
         WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_USER_FILE_PATH_KEY = "authors_import_band_check_user_file_path",
-        WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY='cache_result_over_max_file_path_key',
         WEKO_AUTHORS_IMPORT_CACHE_RESULT_FILE_PATH_KEY = "authors_import_result_file_path",
         WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY= "result_summary_key",
         WEKO_AUTHORS_IMPORT_CACHE_OVER_MAX_TASK_KEY = "authors_import_over_max_task",
-        WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH = "authors_import_user_file_key",
     )
     Babel(app_)
     Menu(app_)
@@ -381,7 +378,6 @@ def base_app2(instance_path,search_class):
         WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY=2,
         WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL=1,
         WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH='/data',
-        WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY='cache_result_over_max_file_path_key',
         WEKO_AUTHORS_CACHE_TTL=100,
         WEKO_AUTHORS_IMPORT_BATCH_SIZE=2,
         WEKO_AUTHORS_IMPORT_MAX_RETRY=2,

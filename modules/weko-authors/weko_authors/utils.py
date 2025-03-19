@@ -53,8 +53,6 @@ from weko_authors.contrib.validation import validate_by_extend_validator, \
         check_weko_id_is_exits_for_import
 
 from .api import WekoAuthors
-from .config import WEKO_AUTHORS_FILE_MAPPING, \
-    WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY, WEKO_AUTHORS_EXPORT_CACHE_URL_KEY
 from .models import AuthorsPrefixSettings, AuthorsAffiliationSettings, Authors
 
 def update_cache_data(key: str, value: str, timeout=None):
@@ -285,7 +283,7 @@ def save_export_url(start_time, end_time, file_uri):
 
 def delete_export_url():
     """Delete exported url."""
-    current_cache.delete(WEKO_AUTHORS_EXPORT_CACHE_URL_KEY)
+    current_cache.delete(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY"))
     
 def handle_exception(ex, attempt, retrys, interval, stop_point=0):
     """
@@ -314,6 +312,7 @@ def handle_exception(ex, attempt, retrys, interval, stop_point=0):
     
 def export_authors():
     """Export all authors."""
+    from invenio_files_rest.models import FileInstance, Location
     file_uri = None
     retrys = current_app.config["WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY"]
     interval = current_app.config["WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL"]
@@ -427,6 +426,7 @@ def export_prefix(target):
     return:
         file_uri(str): ファイルURI
     """
+    from invenio_files_rest.models import FileInstance, Location
     file_uri = None
     retrys = current_app.config["WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY"]
     interval = current_app.config["WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL"]

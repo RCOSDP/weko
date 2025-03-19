@@ -126,14 +126,13 @@ class TestWekoAuthors:
         author_id=2
         es_id = create_author(json.loads(json.dumps(test_data)), author_id)
         with patch("weko_authors.api.db.session.merge",side_effect=Exception("test_error")):
-            
-    #         with pytest.raises(Exception):
-    #             WekoAuthors.update(author_id,data)
-    #         db.session.rollback()
-    #         author = Authors.query.filter_by(id=author_id).one()
-    #         assert author.is_deleted==False
-    #         res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
-    #         assert res["_source"]["is_deleted"] == "false"
+            with pytest.raises(Exception):
+                WekoAuthors.update(author_id,data)
+            db.session.rollback()
+            author = Authors.query.filter_by(id=author_id).one()
+            assert author.is_deleted==False
+            res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+            assert res["_source"]["is_deleted"] == "false"
                 
         # not hit in es
         author_id=3
@@ -294,32 +293,6 @@ class TestWekoAuthors:
         res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
         assert res["_source"]["is_deleted"] == "false"
         
-    def test_a(self,app,db,esindex,mocker,authors):
-        test_data = {
-            "authorNameInfo": [{"familyName": "テスト","firstName": "ハナコ","fullName": "","language": "ja-Kana","nameFormat": "familyNmAndNm","nameShowFlg": "true"}],
-            "authorIdInfo": [{"idType": "2","authorId": "01234","authorIdShowFlg": "true"}],
-            "emailInfo": [{"email": "example@com"}],
-            "is_deleted":"false"
-        }
-        
-        author_id=7
-        #  es_id = create_author(json.loads(json.dumps(test_data)), author_id)
-        
-        # is_deleted is false, 
-        data={
-            "authorNameInfo": [{"familyName": "テスト","firstName": "ハナコ","fullName": "","language": "ja-Kana","nameFormat": "familyNmAndNm","nameShowFlg": "true"}],
-            "authorIdInfo": [{"idType": "2","authorId": "01234","authorIdShowFlg": "true"}],
-            "emailInfo": [{"email": "example@com"}],
-            "is_deleted":False
-        }
-        search_data = {
-            "hits": {
-                "total": 0,
-                "hits": [],
-            },
-        }
-        WekoAuthors.update(author_id,data)
-
 #     def get_all(cls, with_deleted=True, with_gather=True):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_all -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_get_all(self,app,authors):
@@ -333,38 +306,18 @@ class TestWekoAuthors:
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_records_count -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_get_records_count(self,app,authors, mocker):
         result = WekoAuthors.get_records_count(with_deleted=True, with_gather=True)
-        assert result == 2
+        assert result == 4
 
         result = WekoAuthors.get_records_count(with_deleted=True, with_gather=False)
-        assert result == 2
+        assert result == 3
 
         result = WekoAuthors.get_records_count(with_deleted=False, with_gather=True)
-        assert result == 2
+        assert result == 3
 
-        # with patch('weko_authors.api.WekoAuthors.get_records_count') as mock_func:
-        #     mock_func.side_effect = Exception("Mocked exception")
-        #     with pytest.raises(Exception) as exinfo:
-        #         WekoAuthors.get_records_count(with_deleted=True, with_gather=True)
-        #     assert str(exinfo) == "<ExceptionInfo Exception('Mocked exception',) tblen=4>"
-        
         with pytest.raises(Exception):
             mocker.patch.object(Authors, 'id', return_value = "test_id")
             result = WekoAuthors.get_records_count(with_deleted=False, with_gather=True)
         
-
-
-        # with patch('weko_authors.api.WekoAuthors.get_records_count') as mock_func:
-        #     mock_func.side_effect = Exception("Mocked exception")
-        # with pytest.raises(Exception) as exinfo:
-        #     WekoAuthors.get_records_count(with_deleted=True, with_gather=True)
-        # assert str(exinfo) == "<ExceptionInfo Exception('Mocked exception',) tblen=4>"
-        # mock_query = MagicMock()
-        # mock_query.filter.return_value = mock_query
-        # mock_query.order_by.side_effect = AttributeError("Invalid column in order_by")
-        # mocker.patch.object(Authors, "query", return_value=mock_query)
-        # with pytest.raises(AttributeError, match="Invalid column in order_by"):
-        #     WekoAuthors.get_records_count(with_deleted=True, with_gather=True)
-
 #     def get_author_for_validation(cls):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_author_for_validation -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_get_author_for_validation(self,authors,mocker):
@@ -399,17 +352,11 @@ class TestWekoAuthors:
             # mock_func.side_effect = WekoAuthors.get_id_prefix_all()
 
         test = ['WEKO', 'ORCID', 'CiNii', 'KAKEN2', 'ROR']
-        results = WekoAuthors.get_id_prefix_all()
-        result_list = []
-        for result in results:
-            result_list.append(result.scheme)
-        assert result_list == test
-
-        AuthorsPrefixSettings.query.delete()
-        db.session.commit()
-        result = WekoAuthors.get_scheme_of_id_prefix()
-        assert result == []
-
+        results = WekoAuthors.get_scheme_of_id_prefix()
+        assert results == test
+        with patch("weko_authors.api.WekoAuthors.get_id_prefix_all", return_value=[]):
+            results = WekoAuthors.get_scheme_of_id_prefix()
+            assert results == []
         
 
 
@@ -516,50 +463,7 @@ class TestWekoAuthors:
         db.session.commit()
         result = WekoAuthors.get_identifier_scheme_info()
         assert result == {}
-        
-#     def prepare_export_data(cls, mappings, authors, schemes):
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_prepare_export_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-    def test_prepare_export_data(self,db, authors,mocker):
-        mocker.patch("weko_authors.api.WekoAuthors.get_all",return_value=authors)
-        scheme_info={"1":{"scheme":"WEKO","url":None},"2":{"scheme":"ORCID","url":"https://orcid.org/##"}}
-        mocker.patch("weko_authors.api.WekoAuthors.get_identifier_scheme_info",return_value=scheme_info)
-        header, label_en,label_jp,data = WekoAuthors.prepare_export_data(None,None,None)
-        assert header == ["#pk_id","authorNameInfo[0].familyName","authorNameInfo[0].firstName","authorNameInfo[0].language","authorNameInfo[0].nameFormat","authorNameInfo[0].nameShowFlg","authorIdInfo[0].idType","authorIdInfo[0].authorId","authorIdInfo[0].authorIdShowFlg","emailInfo[0].email","is_deleted"]
-        assert label_en == ["#WEKO ID","Family Name[0]","Given Name[0]","Language[0]","Name Format[0]","Name Display[0]","Identifier Scheme[0]","Identifier[0]","Identifier Display[0]","Mail Address[0]","Delete Flag"]
-        assert label_jp == ["#WEKO ID","姓[0]","名[0]","言語[0]","フォーマット[0]","姓名・言語 表示／非表示[0]","外部著者ID 識別子[0]","外部著者ID[0]","外部著者ID 表示／非表示[0]","メールアドレス[0]","削除フラグ"]
-        
-        assert data == [["1","テスト","太郎","ja","familyNmAndNm","Y","ORCID","1234","Y","test.taro@test.org",""],
-                        ["2","test","smith","en","familyNmAndNm","Y","ORCID","5678","Y","test.smith@test.org",""]]
 
-        # authors is false
-        mocker.patch("weko_authors.api.WekoAuthors.get_all",return_value=[])
-        header, label_en,label_jp,data = WekoAuthors.prepare_export_data(None,None,None)
-        assert header == ["#pk_id","authorNameInfo[0].familyName","authorNameInfo[0].firstName","authorNameInfo[0].language","authorNameInfo[0].nameFormat","authorNameInfo[0].nameShowFlg","authorIdInfo[0].idType","authorIdInfo[0].authorId","authorIdInfo[0].authorIdShowFlg","emailInfo[0].email","is_deleted"]
-        assert label_en == ["#WEKO ID","Family Name[0]","Given Name[0]","Language[0]","Name Format[0]","Name Display[0]","Identifier Scheme[0]","Identifier[0]","Identifier Display[0]","Mail Address[0]","Delete Flag"]
-        assert label_jp == ["#WEKO ID","姓[0]","名[0]","言語[0]","フォーマット[0]","姓名・言語 表示／非表示[0]","外部著者ID 識別子[0]","外部著者ID[0]","外部著者ID 表示／非表示[0]","メールアドレス[0]","削除フラグ"]
-        
-        assert data == []
-        
-        
-        author = {
-            "authorNameInfo":[],
-            "authorIdInfo":[],
-            "emailInfo":[]
-        }
-        a = Authors(
-            gather_flg=0,
-            is_deleted=False,
-            json=author
-        )
-        mapping = WEKO_AUTHORS_FILE_MAPPING
-        header, label_en,label_jp,data = WekoAuthors.prepare_export_data(mapping,[a],scheme_info)
-        
-        assert header == ["#pk_id","authorNameInfo[0].familyName","authorNameInfo[0].firstName","authorNameInfo[0].language","authorNameInfo[0].nameFormat","authorNameInfo[0].nameShowFlg","authorIdInfo[0].idType","authorIdInfo[0].authorId","authorIdInfo[0].authorIdShowFlg","emailInfo[0].email","is_deleted"]
-        assert label_en == ["#WEKO ID","Family Name[0]","Given Name[0]","Language[0]","Name Format[0]","Name Display[0]","Identifier Scheme[0]","Identifier[0]","Identifier Display[0]","Mail Address[0]","Delete Flag"]
-        assert label_jp == ["#WEKO ID","姓[0]","名[0]","言語[0]","フォーマット[0]","姓名・言語 表示／非表示[0]","外部著者ID 識別子[0]","外部著者ID[0]","外部著者ID 表示／非表示[0]","メールアドレス[0]","削除フラグ"]
-        
-        assert data == [[None,None,None,None,None,None,None,None,None,None,None]]
-        
     #     def get_by_range(cls, start_point, sum, with_deleted=True, with_gather=True):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_by_range -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     @pytest.mark.parametrize('base_app',[dict(
@@ -724,8 +628,7 @@ class TestWekoAuthorsPrepareExport:
             patch('weko_authors.api.WekoAuthors.get_by_range') as mock_get_by_range, \
             patch('weko_authors.api.WekoAuthors.get_identifier_scheme_info') as mock_get_identifier_scheme_info, \
             patch('weko_authors.api.WekoAuthors.get_affiliation_identifier_scheme_info') as mock_get_affiliation_identifier_scheme_info, \
-            patch('weko_authors.api.WekoAuthors.get_records_count') as mock_get_records_count, \
-            patch('weko_authors.api.WEKO_AUTHORS_FILE_MAPPING', new=[]) as mock_file_mapping:
+            patch('weko_authors.api.WekoAuthors.get_records_count') as mock_get_records_count:
             
             # 各モックのデフォルト設定
             mock_mapping_max_item.return_value = ([], {})

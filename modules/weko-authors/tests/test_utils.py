@@ -47,7 +47,7 @@ from weko_authors.utils import (
     import_id_prefix_to_system,
     import_affiliation_id_to_system,
     band_check_file_for_user,
-    prepare_import_data
+    prepare_import_data,
     write_to_tempfile,
     create_result_file_for_user
 )
