@@ -212,84 +212,84 @@ def is_valid_file_hash(expected_hash, file):
 #     return sword_client, sword_mapping
 
 
-def process_json(json_ld):
-    """Process json-ld.
+# def process_json(json_ld):
+#     """Process json-ld.
 
-    Process RO-Crate metadata json-ld data.
-    Pick up necessary data from @graph and resolve links
-    in order to map to WEKO item type.
+#     Process RO-Crate metadata json-ld data.
+#     Pick up necessary data from @graph and resolve links
+#     in order to map to WEKO item type.
 
-    Args:
-        json_ld (dict): Json-ld data.
+#     Args:
+#         json_ld (dict): Json-ld data.
 
-    Returns:
-        dict: Processed json data.
-    """
-    json = deepcopy(json_ld)
+#     Returns:
+#         dict: Processed json data.
+#     """
+#     json = deepcopy(json_ld)
 
-    # transform list which contains @id to dict in @graph
-    if "@graph" in json and isinstance(json["@graph"], list):
-        new_value = {}
-        for v in json["@graph"]:
-            if isinstance(v, dict) and "@id" in v:
-                new_value[v["@id"]] = v
-            else:
-                current_app.logger.error("Invalid json-ld format.")
-                raise WekoSwordserverException(
-                    "Invalid json-ld format.",
-                    ErrorType.MetadataFormatNotAcceptable
-                )
-        json["@graph"] = new_value
-    # TODO: support SWORD json-ld format
-    else:
-        current_app.logger.error("Invalid json-ld format.")
-        raise WekoSwordserverException(
-            "Invalid json-ld format.",
-            ErrorType.MetadataFormatNotAcceptable
-        )
-    # Remove unnecessary keys
-    json = json.get("@graph")
+#     # transform list which contains @id to dict in @graph
+#     if "@graph" in json and isinstance(json["@graph"], list):
+#         new_value = {}
+#         for v in json["@graph"]:
+#             if isinstance(v, dict) and "@id" in v:
+#                 new_value[v["@id"]] = v
+#             else:
+#                 current_app.logger.error("Invalid json-ld format.")
+#                 raise WekoSwordserverException(
+#                     "Invalid json-ld format.",
+#                     ErrorType.MetadataFormatNotAcceptable
+#                 )
+#         json["@graph"] = new_value
+#     # TODO: support SWORD json-ld format
+#     else:
+#         current_app.logger.error("Invalid json-ld format.")
+#         raise WekoSwordserverException(
+#             "Invalid json-ld format.",
+#             ErrorType.MetadataFormatNotAcceptable
+#         )
+#     # Remove unnecessary keys
+#     json = json.get("@graph")
 
-    def _resolve_link(parent, key, value):
-        if isinstance(value, dict):
-            if len(value) == 1 and "@id" in value and value["@id"] in json:
-                parent[key] = json[value["@id"]]
-            else:
-                for k, v in value.items():
-                    _resolve_link(value, k, v)
-        elif isinstance(value, list):
-            for i, v in enumerate(value):
-                _resolve_link(value, i, v)
+#     def _resolve_link(parent, key, value):
+#         if isinstance(value, dict):
+#             if len(value) == 1 and "@id" in value and value["@id"] in json:
+#                 parent[key] = json[value["@id"]]
+#             else:
+#                 for k, v in value.items():
+#                     _resolve_link(value, k, v)
+#         elif isinstance(value, list):
+#             for i, v in enumerate(value):
+#                 _resolve_link(value, i, v)
 
-    for key, value in json.items():
-        _resolve_link(json, key, value)
+#     for key, value in json.items():
+#         _resolve_link(json, key, value)
 
-    # replace Dataset identifier
-    id = current_app.config["WEKO_SWORDSERVER_DATASET_ROOT"].get("")
-    enc = current_app.config["WEKO_SWORDSERVER_DATASET_ROOT"].get("enc")
-    json.update({enc: json.pop(id)})
+#     # replace Dataset identifier
+#     id = current_app.config["WEKO_SWORDSERVER_DATASET_ROOT"].get("")
+#     enc = current_app.config["WEKO_SWORDSERVER_DATASET_ROOT"].get("enc")
+#     json.update({enc: json.pop(id)})
 
-    # prepare json for mapper format
-    json = {
-        "record": {
-            "header": {
-                "identifier": json.get(enc).get("name"),
-                "datestamp": (
-                    parser.parse(json.get(enc).pop("datePublished"))
-                    .strftime('%Y-%m-%d')
-                ),
-                "publish_status": json.get(enc).pop("accessMode"),
-                "indextree": (
-                    int(json.get(enc).get("isPartOf").pop("sameAs", "/").split("/")[-1])
-                        if "sameAs" in json.get(enc).get("isPartOf")
-                        else None
-                )
-            },
-            "metadata": json
-        }
-    }
+#     # prepare json for mapper format
+#     json = {
+#         "record": {
+#             "header": {
+#                 "identifier": json.get(enc).get("name"),
+#                 "datestamp": (
+#                     parser.parse(json.get(enc).pop("datePublished"))
+#                     .strftime('%Y-%m-%d')
+#                 ),
+#                 "publish_status": json.get(enc).pop("accessMode"),
+#                 "indextree": (
+#                     int(json.get(enc).get("isPartOf").pop("sameAs", "/").split("/")[-1])
+#                         if "sameAs" in json.get(enc).get("isPartOf")
+#                         else None
+#                 )
+#             },
+#             "metadata": json
+#         }
+#     }
 
-    return json
+#     return json
 
 # def get_priority(link_data):
 #     """Determine the priority of link data based on specific conditions.
@@ -344,61 +344,61 @@ def process_json(json_ld):
 #         return 6  # Other cases
 
 
-# def update_item_ids(list_record, new_id):
-#     """Iterate through list_record, check and update item_id.
+def update_item_ids(list_record, new_id):
+    """Iterate through list_record, check and update item_id.
 
-#     Args:
-#         list_record (list): A list containing multiple ITEMs.
-#         new_id (str): The new ID used to overwrite item_id.
+    Args:
+        list_record (list): A list containing multiple ITEMs.
+        new_id (str): The new ID used to overwrite item_id.
 
-#     Returns:
-#         list: The updated list_record.
+    Returns:
+        list: The updated list_record.
 
-#     Raises:
-#         ValueError: If list_record is not a list.
-#     """
-#     if not isinstance(list_record, list):
-#         raise ValueError("list_record must be a list.")
+    Raises:
+        ValueError: If list_record is not a list.
+    """
+    if not isinstance(list_record, list):
+        raise ValueError("list_record must be a list.")
 
-#     # Create a dictionary to map identifiers to their respective items
-#     identifier_to_item = {}
-#     for item in list_record:
-#         if not isinstance(item, dict):
-#             continue
+    # Create a dictionary to map identifiers to their respective items
+    identifier_to_item = {}
+    for item in list_record:
+        if not isinstance(item, dict):
+            continue
 
-#         metadata = item.get('metadata')
-#         if not metadata or not hasattr(metadata, 'id'):
-#             continue  # Skip if metadata is missing or doesn't have 'id'
+        metadata = item.get('metadata')
+        if not metadata or not hasattr(metadata, 'id'):
+            continue  # Skip if metadata is missing or doesn't have 'id'
 
-#         current_identifier = getattr(metadata, 'id')
-#         if current_identifier is not None:  # Skip if identifier is empty
-#             identifier_to_item[current_identifier] = item
+        current_identifier = getattr(metadata, 'id')
+        if current_identifier is not None:  # Skip if identifier is empty
+            identifier_to_item[current_identifier] = item
 
-#     # Iterate through each ITEM in list_record
-#     for item in list_record:
-#         if not isinstance(item, dict):
-#             continue
+    # Iterate through each ITEM in list_record
+    for item in list_record:
+        if not isinstance(item, dict):
+            continue
 
-#         metadata = item.get('metadata')
-#         if not metadata or not hasattr(metadata, 'link_data'):
-#             continue  # Skip if metadata is missing or doesn't have 'link_data'
+        metadata = item.get('metadata')
+        if not metadata or not hasattr(metadata, 'link_data'):
+            continue  # Skip if metadata is missing or doesn't have 'link_data'
 
-#         link_data = getattr(metadata, 'link_data', [])
-#         if not isinstance(link_data, list):
-#             continue
+        link_data = getattr(metadata, 'link_data', [])
+        if not isinstance(link_data, list):
+            continue
 
-#         for link_item in link_data:
-#             if not isinstance(link_item, dict):
-#                 continue
+        for link_item in link_data:
+            if not isinstance(link_item, dict):
+                continue
 
-#             item_id = link_item.get("item_id")
-#             sele_id = link_item.get("sele_id")
-#             if item_id in identifier_to_item and sele_id == "isSupplementedBy":
-#                 # If a match is found, overwrite item_id with new_id
-#                 link_item["item_id"] = new_id
-#                 current_app.logger.info(
-#                     f"Updated item_id {item_id} to {new_id} "
-#                     f"in ITEM {item.get('identifier')}"
-#                 )
+            item_id = link_item.get("item_id")
+            sele_id = link_item.get("sele_id")
+            if item_id in identifier_to_item and sele_id == "isSupplementedBy":
+                # If a match is found, overwrite item_id with new_id
+                link_item["item_id"] = new_id
+                current_app.logger.info(
+                    f"Updated item_id {item_id} to {new_id} "
+                    f"in ITEM {item.get('identifier')}"
+                )
 
-#     return list_record
+    return list_record

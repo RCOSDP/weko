@@ -109,7 +109,7 @@ def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
         item_type_id = workflow.itemtype_id
         check_result.update(check_xml_import_items(file, item_type_id))
 
-    elif file_format == "JSON-LD":
+    elif file_format == "JSON":
         packaging = kwargs.get("packaging")
         client_id = kwargs.get("client_id")
         shared_id = kwargs.get("shared_id", -1)

@@ -299,6 +299,9 @@ class HeadlessActivity(WorkActivity):
                 "shared_user_id": metadata.pop("shared_user_id", -1)
             })
 
+            # to exclude from file text extraction
+            non_extract = metadata.pop("non_extract", [])
+
             result = {"is_valid": True}
             validate_form_input_data(result, self.item_type.id, deepcopy(metadata))
             if not result.get("is_valid"):
@@ -325,6 +328,8 @@ class HeadlessActivity(WorkActivity):
             metadata.update({"$schema": f"/items/jsonschema/{self.item_type.id}"})
             index = {"actions": metadata.get("publish_status")}
             self._deposit.update(index, metadata)
+            # to exclude from file text extraction
+            self._deposit.non_extract = non_extract
             self._deposit.commit()
 
             data = {

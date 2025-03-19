@@ -49,7 +49,7 @@ from .registration import (
 from .utils import (
     check_import_file_format,
     is_valid_file_hash,
-    # update_item_ids,
+    update_item_ids,
     get_shared_id_from_on_behalf_of
 )
 from weko_accounts.utils import limiter

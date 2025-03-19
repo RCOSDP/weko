@@ -1060,65 +1060,6 @@ def get_priority(link_data):
         return 6  # Other cases
 
 
-def update_item_ids(list_record, new_id):
-    """Iterate through list_record, check and update item_id.
-
-    Args:
-        list_record (list): A list containing multiple ITEMs.
-        new_id (str): The new ID used to overwrite item_id.
-
-    Returns:
-        list: The updated list_record.
-
-    Raises:
-        ValueError: If list_record is not a list.
-    """
-    if not isinstance(list_record, list):
-        raise ValueError("list_record must be a list.")
-
-    # Create a dictionary to map identifiers to their respective items
-    identifier_to_item = {}
-    for item in list_record:
-        if not isinstance(item, dict):
-            continue
-
-        metadata = item.get('metadata')
-        if not metadata or not hasattr(metadata, 'id'):
-            continue  # Skip if metadata is missing or doesn't have 'id'
-
-        current_identifier = getattr(metadata, 'id')
-        if current_identifier is not None:  # Skip if identifier is empty
-            identifier_to_item[current_identifier] = item
-
-    # Iterate through each ITEM in list_record
-    for item in list_record:
-        if not isinstance(item, dict):
-            continue
-
-        metadata = item.get('metadata')
-        if not metadata or not hasattr(metadata, 'link_data'):
-            continue  # Skip if metadata is missing or doesn't have 'link_data'
-
-        link_data = getattr(metadata, 'link_data', [])
-        if not isinstance(link_data, list):
-            continue
-
-        for link_item in link_data:
-            if not isinstance(link_item, dict):
-                continue
-
-            item_id = link_item.get("item_id")
-            sele_id = link_item.get("sele_id")
-            if item_id in identifier_to_item and sele_id == "isSupplementedBy":
-                # If a match is found, overwrite item_id with new_id
-                link_item["item_id"] = new_id
-                current_app.logger.info(
-                    f"Updated item_id {item_id} to {new_id} "
-                    f"in ITEM {item.get('identifier')}"
-                )
-
-    return list_record
-
 def getEncode(filepath):
     """
     getEncode [summary]
@@ -1845,6 +1786,10 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
     deposit['_deposit']['owners'] = [int(owner)]
     deposit['_deposit']['created_by'] = int(owner)
     deposit['owner'] = str(owner)
+
+    # to exclude from file text extraction
+    deposit.non_extract = item.pop("non_extract", [])
+
     deposit.commit()
 
     feedback_mail_list = item["metadata"].get("feedback_mail_list")
