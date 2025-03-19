@@ -13,6 +13,7 @@ const cancel_messaage = document.getElementById("cancel_messaage").value;
 const run_label = document.getElementById("run").value;
 const cancel_label = document.getElementById("cancel").value;
 const celery_not_run = document.getElementById("celery_not_run").value;
+const lifetime_not_one_day = document.getElementById("lifetime_not_one_day").value;
 const error_get_lstItemType = document.getElementById("error_get_lstItemType").value;
 const error_get_lastItemId = document.getElementById("error_get_lastItemId").value;
 
@@ -247,7 +248,7 @@ class ExportComponent extends React.Component {
             esportRunMessage: response.data.export_run_msg,
             exportStatus: response.data.export_status,
             uriStatus: response.data.uri_status,
-            isDisableExport: response.data.export_status || !response.data.celery_is_run,
+            isDisableExport: response.data.export_status || !response.data.celery_is_run || !response.data.is_lifetime,
             isDisableCancel: !response.data.export_status,
             taskStatus: response.data.status,
             startTime: response.data.start_time,
@@ -258,6 +259,12 @@ class ExportComponent extends React.Component {
               '<div class="alert alert-danger alert-dismissable">' +
               '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
               '&times;</button>' + celery_not_run + '</div>');
+          }
+          if (!response.data.is_lifetime) {
+            $('#errors').append(
+              '<div class="alert alert-danger alert-dismissable">' +
+              '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
+              '&times;</button>' + lifetime_not_one_day + '</div>');
           }
           if (response.data.error_message) {
             if(response.data.error_message.length>0){

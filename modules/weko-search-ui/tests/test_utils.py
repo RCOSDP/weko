@@ -6,19 +6,26 @@ import os
 import unittest
 from datetime import datetime
 import uuid
+import weko_search_ui
 
 import pytest
 from flask import current_app, make_response, request
 from flask_babelex import Babel
 from flask_login import current_user
+from sqlalchemy import func as _func
+from sqlalchemy.exc import SQLAlchemyError
+from invenio_files_rest.models import FileInstance
 from invenio_i18n.babel import set_locale
 from invenio_records.api import Record
-from mock import MagicMock, Mock, patch
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_records.models import RecordMetadata
+from mock import MagicMock, Mock, patch, mock_open
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
+from invenio_db import db as iv_db
 from invenio_pidrelations.models import PIDRelation
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
-from weko_deposit.api import WekoDeposit, WekoIndexer
+from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord as d_wekorecord
 from weko_records.api import ItemsMetadata, WekoRecord
+from weko_records.models import ItemMetadata
 
 from weko_search_ui import WekoSearchUI
 from weko_search_ui.config import (
@@ -46,6 +53,7 @@ from weko_search_ui.utils import (
     delete_exported,
     delete_records,
     export_all,
+    get_retry_info,
     get_change_identifier_mode_content,
     get_content_workflow,
     get_current_language,
@@ -117,6 +125,7 @@ from weko_search_ui.utils import (
     update_publish_status,
     validation_date_property,
     validation_file_open_date,
+    write_files,
     combine_aggs
 )
 
@@ -174,6 +183,14 @@ class MockSearchPerm:
     
     def can(self):
         return True
+    
+def clear_test_data():
+    Redirect.query.delete()
+    iv_db.session.commit()
+    
+    PersistentIdentifier.query.delete()
+    iv_db.session.commit()
+
 # def get_tree_items(index_tree_id): ERROR ~ AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_get_tree_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_get_tree_items(i18n_app, indices, users, mocker):
@@ -2278,30 +2295,202 @@ def test_handle_check_duplication_item_id(i18n_app):
 
 
 # def export_all(root_url, user_id, data): *** not yet done
-def test_export_all(db_activity, i18n_app, users, item_type, db_records2):
-    root_url = "/"
-    user_id = users[3]["obj"].id
-    data = {"item_type_id": "1", "item_id_range": "1"}
-    data2 = {"item_type_id": "-1", "item_id_range": "1-9"}
-    data3 = {"item_type_id": -1, "item_id_range": "1"}
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_export_all -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_export_all(db_activity, i18n_app, users, item_type, db_records2, redis_connect, db, create_export_all_data, mocker):
+    clear_test_data()
 
-    assert not export_all(root_url, user_id, data)
-    assert not export_all(root_url, user_id, data2)
-    assert not export_all(root_url, user_id, data3)
+    # Delete existing data to avoid IntegrityError
+    db.session.query(PersistentIdentifier).delete()
+    db.session.commit()
+
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        with patch("weko_search_ui.utils.os.getenv", return_value="/tmp/bulk_export"):
+            with patch("weko_search_ui.utils.os.makedirs") as mock_makedirs:
+                mock_makedirs.return_value = None  # モックの戻り値を設定
+                root_url = "/"
+                user_id = users[3]["obj"].id
+                data = {"item_type_id": "1", "item_id_range": "1"}
+                data2 = {"item_type_id": "-1", "item_id_range": "1-9"}
+                start_time_str = '2024/05/21 23:44:12'
+                msg_key = i18n_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+                    name="MSG_EXPORT_ALL", user_id=current_user.get_id()
+                )
+                uri_key = i18n_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+                    name="URI_EXPORT_ALL", user_id=current_user.get_id()
+                )
+                datastore = redis_connect
+
+                task = MagicMock()
+                task.task_id = 1
+                mocker.patch("weko_search_ui.tasks.write_files_task", return_value=task)
+                mocker.patch('builtins.open', side_effect=unittest.mock.mock_open())
+                mocker.patch("weko_search_ui.utils.pickle.dump")
+
+                # datastore.put(uri_key, "testuri".encode('utf-8'))
+                datastore.delete(uri_key)
+                export_all(root_url, user_id, data, start_time_str)
+                msg = datastore.get(msg_key)
+                assert msg.decode() == ""
+
+                with patch("weko_search_ui.utils.delete_exported", return_value=None):
+                    datastore.put(uri_key, 'test_uri'.encode('utf-8'))
+                    export_all(root_url, user_id, data2, start_time_str)
+                    msg = datastore.get(msg_key)
+                    assert msg.decode() == ""
+
+                datastore.delete(uri_key)
+
+                data_no_range = {"item_type_id": "1", "item_id_range": ""}
+                export_all(root_url, user_id, data_no_range, start_time_str)
+
+                recid_data_1 = [
+                    {
+                        "pid_value": "1",
+                        "object_uuid": "uuid1",
+                        "json": {"publish_status": "public"}
+                    },
+                    {
+                        "pid_value": "2",
+                        "object_uuid": "uuid2",
+                        "json": {"publish_status": "private"}
+                    }
+                ]
+
+                recid_data_2 = [
+                    {
+                        "pid_value": "1",
+                        "object_uuid": "uuid1",
+                        "json": {"publish_status": "public"}
+                    },
+                    {
+                        "pid_value": "2",
+                        "object_uuid": "uuid2",
+                        "json": {"publish_status": "private"}
+                    }
+                ]
+                
+                with patch("weko_search_ui.utils.get_all_record_id", return_value=recid_data_1):
+                    export_all(root_url, user_id, data, start_time_str)
+
+                    data_err = {"item_type_id": "1", "item_id_range": "10-1"}
+                    export_all(root_url, user_id, data_err, start_time_str)
+                    msg = datastore.get(msg_key)
+                    assert msg.decode() == "Export failed. Please check item id range."
+
+                    with patch("weko_search_ui.utils.get_record_ids", return_value={}):
+                        export_all(root_url, user_id, data, start_time_str)
+
+                    with patch("builtins.open", side_effect=SQLAlchemyError("Test SQLAlchemyError")):
+                        export_all(root_url, user_id, data, start_time_str)
+
+                    with patch("weko_search_ui.tasks.write_files_task.apply_async", return_value=None):
+                        with patch("weko_search_ui.utils.WekoRecord.get_record_by_uuid", side_effect=SQLAlchemyError("test_error")):
+                            export_all(root_url, user_id, data, start_time_str)
+
+                    # recidsをモックして、record_idsが空になるように設定
+                    recids = [
+                        MagicMock(pid_value=str(uuid.uuid4()), object_uuid="uuid1", json=None),  # json属性が存在しない
+                        MagicMock(pid_value=str(uuid.uuid4()), object_uuid="uuid2", json={"publish_status": "draft"}),  # publish_statusがPUBLICまたはPRIVATEでない
+                        MagicMock(pid_value=str(uuid.uuid4()), object_uuid="uuid3", json={})  # json属性にpublish_statusが含まれていない
+                    ]
+
+                    with patch("weko_search_ui.utils.db.session.query", return_value=recids):
+                        export_all(root_url, user_id, data, start_time_str)
+
+                    with patch("weko_search_ui.utils.math.ceil", side_effect=Exception("test_error")):
+                        export_all(root_url, user_id, data, start_time_str)
+
+                    # raise Exception in _get_item_type_list
+                    with patch("weko_search_ui.utils.ItemTypes.get_by_id", side_effect=Exception("test_error")):
+                        export_all(root_url, user_id, data, start_time_str)
+
+                    # # raise Exception in _get_export_data
+                    with patch("weko_search_ui.tasks.write_files_task", side_effect=Exception("test_error")):
+                        export_all(root_url, user_id, data_no_range, start_time_str)
+
+
+def test_get_retry_info():
+    # Test case 1: When item_type_id is included in retry_info
+    item_type_id = "1"
+    retry_info = {
+        "1": {
+            "counter": 5,
+            "part": 2,
+            "max": "10"
+        }
+    }
+    fromid = "1"
+
+    counter, file_part, from_pid = get_retry_info(item_type_id, retry_info, fromid)
+
+    assert counter == 5
+    assert file_part == 2
+    assert from_pid == "10"
+
+    # Test case 2: When item_type_id is not included in retry_info
+    item_type_id = "2"
+    retry_info = {}
+    fromid = "1"
+
+    counter, file_part, from_pid = get_retry_info(item_type_id, retry_info, fromid)
+
+    assert counter == 0
+    assert file_part == 1
+    assert from_pid == "1"
+
+    # Test case 3: When fromid is empty
+    item_type_id = "2"
+    retry_info = {}
+    fromid = ""
+
+    counter, file_part, from_pid = get_retry_info(item_type_id, retry_info, fromid)
+
+    assert counter == 0
+    assert file_part == 1
+    assert from_pid == "1"
 
 
 # def delete_exported(uri, cache_key):
 def test_delete_exported(i18n_app, file_instance_mock):
-    file_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "data",
-        "sample_file",
-        "sample_file.txt",
-    )
+    file_path = '/code/modules/weko-search-ui/tests/data/sample_file/sample_file.txt'
+    
+    mock_file_instance = FileInstance(uri=file_path)
+    
+    with patch("invenio_files_rest.models.FileInstance.get_by_uri", return_value=mock_file_instance):
+        with patch("invenio_files_rest.models.FileInstance.delete", return_value=None):
+            # Doesn't return any value
+            assert not delete_exported(file_path, "key")
 
-    with patch("invenio_files_rest.models.FileInstance.delete", return_value=None):
-        # Doesn't return any value
-        assert not delete_exported(file_path, "key")
+
+# def write_files(item_datas, export_path, user_id, retrys):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_write_files -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_write_files(db_activity, i18n_app, users, redis_connect, mocker, item_type, db_records2):
+    import pytz
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        # result is True
+        record = d_wekorecord.get_record_by_pid(1)
+        item_datas = {
+            "item_type_id": "1",
+            "name": "test_item_type",
+            "recids": ["1"],
+            "root_url":"https://localhost/",
+            "jsonschema":'items/jsonschema/1',
+            "data": {
+                "1": record
+            }
+        }
+
+        mocker.patch("weko_search_ui.utils.os.makedirs")
+        mocker.patch('builtins.open', side_effect=unittest.mock.mock_open())
+        now = datetime.now()
+        mocker_datetime = mocker.patch('weko_search_ui.utils.datetime')
+        mocker_datetime.now.return_value = now
+        with patch('weko_search_ui.utils.pytz.timezone', return_value=pytz.UTC):
+            assert write_files(item_datas, "tests/data/write_files", current_user.get_id(), 0)
+
+        # result is False
+        with patch("weko_items_ui.utils.make_stats_file_with_permission", side_effect=SQLAlchemyError("test_error")):
+            assert not write_files(item_datas, "tests/data/write_files", current_user.get_id(), 0)
 
 
 # def cancel_export_all():
@@ -2311,24 +2500,51 @@ def test_cancel_export_all(i18n_app, users, redis_connect, mocker):
         cache_key = i18n_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
             name="KEY_EXPORT_ALL", user_id=current_user.get_id()
         )
+        file_cache_key = i18n_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+            name="RUN_MSG_EXPORT_ALL_FILE_CREATE", user_id=current_user.get_id()
+        )
+        file_json = {
+            'start_time': '2024/05/21 14:23:46',
+            'finish_time': '',
+            'export_path': '',
+            'cancel_flg': False,
+            'write_file_status': {
+                '1': 'started'
+            }
+        }
+        file_result_json = {
+            'start_time': '2024/05/21 14:23:46',
+            'finish_time': '',
+            'export_path': '',
+            'cancel_flg': True,
+            'write_file_status': {
+                '1': 'started'
+            }
+        }
         datastore = redis_connect
         datastore.put(cache_key, "test_task_key".encode("utf-8"), ttl_secs=30)
 
         # export_status is True
-        with patch("weko_search_ui.utils.get_export_status", return_value=(True,None,None,None,None)):
+        with patch("weko_search_ui.utils.get_export_status", return_value=(True,None,None,None,None,None,None)):
+            datastore.put(file_cache_key, json.dumps(file_json).encode('utf-8'), ttl_secs=30)
             mock_revoke = mocker.patch("weko_search_ui.utils.revoke")
             mock_delete_id = mocker.patch("weko_search_ui.utils.delete_task_id_cache.apply_async")
             result = cancel_export_all()
             assert result == True
+            ds_file_json = datastore.get(file_cache_key).decode('utf-8')
+            assert json.loads(ds_file_json) == file_result_json
             mock_revoke.assert_called_with("test_task_key",terminate=True)
             mock_delete_id.assert_called_with(args=("test_task_key","admin_cache_KEY_EXPORT_ALL_5"),countdown=60)
         
         # export_status is False
-        with patch("weko_search_ui.utils.get_export_status", return_value=(False,None,None,None,None)):
+        with patch("weko_search_ui.utils.get_export_status", return_value=(False,None,None,None,None,None,None)):
+            datastore.put(file_cache_key, json.dumps(file_json).encode('utf-8'), ttl_secs=30)
             mock_revoke = mocker.patch("weko_search_ui.utils.revoke")
             mock_delete_id = mocker.patch("weko_search_ui.utils.delete_task_id_cache.apply_async")
             result = cancel_export_all()
             assert result == True
+            ds_file_json = datastore.get(file_cache_key).decode('utf-8')
+            assert json.loads(ds_file_json) == file_json
             mock_revoke.assert_not_called()
             mock_delete_id.assert_not_called()
         
@@ -2340,7 +2556,8 @@ def test_cancel_export_all(i18n_app, users, redis_connect, mocker):
 
 # def get_export_status():
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_get_export_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_get_export_status(i18n_app, users, redis_connect,mocker):
+def test_get_export_status(i18n_app, users, redis_connect,mocker, location):
+    import pytz
     class MockAsyncResult:
         def __init__(self,task_id):
             self.task_id=task_id
@@ -2351,6 +2568,47 @@ def test_get_export_status(i18n_app, users, redis_connect,mocker):
             return self.state == "SUCCESS"
         def failed(self):
             return self.state == "FAILED"
+        
+    start_time_str = '2024/05/21 14:23:46'
+    def create_file_json(status):
+        return {
+            'start_time': start_time_str,
+            'finish_time': '',
+            'export_path': '',
+            'cancel_flg': False,
+            'write_file_status': {
+                '1': status
+            }
+        }
+    
+    def create_file_cancel_json(status):
+        return {
+            'start_time': start_time_str,
+            'finish_time': '',
+            'export_path': '',
+            'cancel_flg': True,
+            'write_file_status': {
+                '1': status
+            }
+        }
+
+    def create_not_status_file_json():
+        return {
+            'start_time': start_time_str,
+            'finish_time': '',
+            'export_path': '',
+            'cancel_flg': False,
+            'write_file_status': {}
+        }
+    
+    def create_not_param_file_json():
+        return {
+            'start_time': start_time_str,
+            'finish_time': '',
+            'export_path': '',
+            'cancel_flg': False
+        }
+
     mocker.patch("weko_search_ui.utils.AsyncResult",side_effect=MockAsyncResult)
     with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
         cache_key = i18n_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
@@ -2365,31 +2623,125 @@ def test_get_export_status(i18n_app, users, redis_connect,mocker):
         run_msg = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
             name="RUN_MSG_EXPORT_ALL", user_id=current_user.get_id()
         )
+        file_msg = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+            name='RUN_MSG_EXPORT_ALL_FILE_CREATE', user_id=current_user.get_id()
+        )
         datastore = redis_connect
         
         datastore.put(cache_uri, "test_uri".encode("utf-8"), ttl_secs=30)
         datastore.put(cache_msg, "test_msg".encode("utf-8"), ttl_secs=30)
         datastore.put(run_msg, "test_run_msg".encode("utf-8"), ttl_secs=30)
-        # task is success, failed, revoked
-        datastore.put(cache_key, "SUCCESS_task".encode("utf-8"), ttl_secs=30)
-        result=get_export_status()
-        assert result == (False, "test_uri", "test_msg", "test_run_msg", "SUCCESS")
-        
-        # task is not success, failed, revoked
-        datastore.delete(cache_key)
-        datastore.put(cache_key, "PENDING_task".encode("utf-8"), ttl_secs=30)
-        result=get_export_status()
-        assert result == (True, "test_uri", "test_msg", "test_run_msg", "PENDING")
-        
         # not exist task_id
         datastore.delete(cache_key)
         result=get_export_status()
-        assert result == (False, "test_uri", "test_msg", "test_run_msg", "")
+        assert result == (False, "test_uri", "test_msg", "test_run_msg", "", "", "")
+
+        # task is not success, failed, revoked (write_file_data is not exist)
+        datastore.put(cache_key, "PENDING_task".encode("utf-8"), ttl_secs=30)
+        datastore.delete(file_msg)
+        datastore.put(file_msg, json.dumps({}).encode('utf-8'), ttl_secs=30)
+        result=get_export_status()
+        assert result == (False, "test_uri", "test_msg", "test_run_msg", "", "", "")
+
+        # task is not success, failed, revoked (write_file_status is not exist)
+        datastore.put(cache_key, "PENDING_task".encode("utf-8"), ttl_secs=30)
+        datastore.put(file_msg, json.dumps(create_not_param_file_json()).encode('utf-8'), ttl_secs=30)
+        result=get_export_status()
+        assert result == (True, "test_uri", "test_msg", "test_run_msg", "", start_time_str, "")
+
+        # task is not success, failed, revoked (write_file_status is started)
+        datastore.put(cache_key, "PENDING_task".encode("utf-8"), ttl_secs=30)
+        datastore.put(file_msg, json.dumps(create_file_json('started')).encode('utf-8'), ttl_secs=30)
+        result=get_export_status()
+        assert result == (True, "test_uri", "test_msg", "test_run_msg", "STARTED", start_time_str, "")
+
+        # task is not success, failed, revoked (cancel_flg is True)
+        datastore.put(cache_key, "PENDING_task".encode("utf-8"), ttl_secs=30)
+        datastore.put(file_msg, json.dumps(create_file_cancel_json('started')).encode('utf-8'), ttl_secs=30)
+        result=get_export_status()
+        assert result == (True, "test_uri", "test_msg", "test_run_msg", "REVOKED", start_time_str, "")
+
+        # task is success, failed, revoked (write_file_status is finished)
+        mocker.patch("os.path.isdir", return_value=False)
+        datastore.delete(cache_key)
+        datastore.put(cache_key, "SUCCESS_task".encode("utf-8"), ttl_secs=30)
+        datastore.delete(file_msg)
+        file_json = create_file_json('finished')
+        file_json['export_path'] = 'tests/data/import'
+        datastore.put(file_msg, json.dumps(file_json).encode('utf-8'), ttl_secs=30)
+        now = datetime.now()
+        mocker_datetime = mocker.patch('weko_search_ui.utils.datetime')
+        mocker_datetime.now.return_value = now
+        mocker.patch('weko_search_ui.utils.bagit.make_bag')
+        mocker.patch('weko_search_ui.utils.shutil.make_archive')
+        mocker.patch("builtins.open", mock_open(read_data=b"data"))
+        mocker.patch("weko_search_ui.utils.FileInstance.create", return_value=MagicMock(uri="test_uri"))
+        mocker.patch("weko_search_ui.utils.Location.get_default", return_value=MagicMock(uri="test_location"))
+        task = MagicMock()
+        task.task_id = 1
+        mocker.patch("weko_search_ui.tasks.delete_exported_task", return_value=task)
+        with patch('weko_search_ui.utils.pytz.timezone', return_value=pytz.UTC):
+            result = get_export_status()
+            uri = datastore.get(cache_uri)
+            assert result == (False, uri.decode(), "test_msg", "test_run_msg", "SUCCESS", start_time_str, now.strftime('%Y/%m/%d %H:%M:%S'))
+
+        # os.path.isdir is True
+        with patch("weko_search_ui.utils.os.path.isdir", return_value=True):
+            datastore.delete(file_msg)
+            file_json = create_file_json('finished')
+            file_json['export_path'] = 'tests/data/import'
+            mocker.patch('weko_search_ui.utils.bagit.make_bag')
+            mocker.patch('weko_search_ui.utils.shutil.make_archive')
+            mocker.patch("builtins.open", mock_open(read_data=b"data"))
+            mocker.patch("weko_search_ui.utils.FileInstance.create", return_value=MagicMock(uri="test_uri"))
+            mocker.patch("weko_search_ui.utils.Location.get_default", return_value=MagicMock(uri="test_location"))
+            datastore.put(file_msg, json.dumps(file_json).encode('utf-8'), ttl_secs=30)
+            datastore.delete(run_msg)
+            datastore.put(run_msg, "test_run_msg".encode("utf-8"), ttl_secs=30)
+            result=get_export_status()
+            assert result == (False, uri.decode(), "test_msg", "test_run_msg", "SUCCESS", start_time_str, "")
+
+        # task is success, failed, revoked (write_file_status is not value)
+        datastore.put(cache_key, "PENDING_task".encode("utf-8"), ttl_secs=30)
+        file_json = create_not_status_file_json()
+        file_json['export_path'] = 'tests/data/import'
+        datastore.put(file_msg, json.dumps(file_json).encode('utf-8'), ttl_secs=30)
+        now = datetime.now()
+        mocker_datetime = mocker.patch('weko_search_ui.utils.datetime')
+        mocker_datetime.now.return_value = now
+        mocker.patch('weko_search_ui.utils.bagit.make_bag')
+        mocker.patch('weko_search_ui.utils.shutil.make_archive')
+        task = MagicMock()
+        task.task_id = 1
+        mocker.patch("weko_search_ui.tasks.delete_exported_task", return_value=task)
+        result=get_export_status()
+        uri = datastore.get(cache_uri)
+        assert result == (True, uri.decode(), "test_msg", "test_run_msg", "SUCCESS", start_time_str, "")
         
         # raise Exception
         with patch("weko_search_ui.utils.AsyncResult",side_effect=Exception("test_error")):
+            datastore.delete(cache_uri)
+            datastore.put(cache_uri, "test_uri".encode("utf-8"), ttl_secs=30)
+            datastore.delete(cache_msg)
+            datastore.put(cache_msg, "test_msg".encode("utf-8"), ttl_secs=30)
+            datastore.delete(run_msg)
+            datastore.put(run_msg, "test_run_msg".encode("utf-8"), ttl_secs=30)
             result=get_export_status()
-            assert result == (False, "test_uri", "test_msg", "test_run_msg", "")
+            assert result == (False, "test_uri", "test_msg", "test_run_msg", "", "", "")
+
+        # write_file_status is canceled
+        with patch("weko_search_ui.utils.AsyncResult",return_value=MockAsyncResult("REVOKED_task")):
+            datastore.delete(file_msg)
+            datastore.put(file_msg, json.dumps(create_file_json('canceled')).encode('utf-8'), ttl_secs=30)
+            result = get_export_status()
+            assert result == (False, "test_uri", "test_msg", "test_run_msg", "REVOKED", start_time_str, "")
+
+        # write_file_status is errorwith patch("weko_search_ui.utils.AsyncResult",return_value=MockAsyncResult("FAILED_task")):
+        with patch("weko_search_ui.utils.AsyncResult",return_value=MockAsyncResult("FAILED_task")):
+            datastore.delete(file_msg)
+            datastore.put(file_msg, json.dumps(create_file_json('error')).encode('utf-8'), ttl_secs=30)
+            result = get_export_status()
+            assert result == (False, "test_uri", "test_msg", "test_run_msg", "", start_time_str, "")
 
 
 # def handle_check_item_is_locked(item):

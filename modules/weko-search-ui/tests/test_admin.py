@@ -276,10 +276,95 @@ def test_ItemBulkExport_index(i18n_app, users, client_request_args, db_records2,
         
 
 #     def export_all(self): ~ GETS STUCK
-# def test_ItemBulkExport_export_all(i18n_app, users, client_request_args, db_records2):
-#     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-#         test = ItemBulkExport()
-#         assert test.export_all()
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemBulkExport_export_all -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_ItemBulkExport_export_all(users, client, redis_connect, mocker):
+    url = url_for('items/bulk-export.export_all')
+    start_time_str = '2024/05/01 12:55:36'
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        mocker.patch("weko_search_ui.admin.check_celery_is_run",return_value=True)
+        mocker.patch("weko_search_ui.admin.check_session_lifetime",return_value=True)
+        with patch("weko_search_ui.admin.get_export_status",
+                   return_value=(True, '', '', '', 'STARTED', start_time_str, '')):
+            res = client.post(url)
+            assert json.loads(res.data) == {'data': {
+                'celery_is_run': True,
+                'is_lifetime': True,
+                'error_message': '',
+                'export_run_msg': '',
+                'export_status': True,
+                'finish_time': '',
+                'start_time': start_time_str,
+                'status': 'STARTED',
+                'uri_status': False
+            }}
+
+        task = MagicMock()
+        task.task_id = 1
+        mocker.patch('weko_search_ui.tasks.export_all_task.apply_async',
+                     return_value=task)
+        file_json = {
+            'start_time': start_time_str,
+            'finish_time': '',
+            'export_path': '',
+            'cancel_flg': False,
+            'write_file_status': {
+                '1': 'started'
+            }
+        }
+        cache_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+            name='KEY_EXPORT_ALL',
+            user_id=current_user.get_id()
+        )
+        cache_uri_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+            name='URI_EXPORT_ALL',
+            user_id=current_user.get_id()
+        )
+        cache_msg_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+            name='MSG_EXPORT_ALL',
+            user_id=current_user.get_id()
+        )
+        run_msg_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+            name='RUN_MSG_EXPORT_ALL',
+            user_id=current_user.get_id()
+        )
+        file_cache_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+            name='RUN_MSG_EXPORT_ALL_FILE_CREATE',
+            user_id=current_user.get_id()
+        )
+        datastore = redis_connect
+        datastore.delete(cache_key)
+        datastore.put(cache_uri_key, 'test_uri'.encode('utf-8'), ttl_secs=30)
+        datastore.put(cache_msg_key, ''.encode('utf-8'), ttl_secs=30)
+        datastore.put(run_msg_key, ''.encode('utf-8'), ttl_secs=30)
+        datastore.put(file_cache_key, json.dumps(file_json).encode('utf-8'), ttl_secs=30)
+        mocker.patch("weko_search_ui.utils.AsyncResult",side_effect=MockAsyncResult)
+        res = client.post(url)
+        assert json.loads(res.data) == {'data': {
+            'celery_is_run': True,
+            'is_lifetime': True,
+            'error_message': '',
+            'export_run_msg': '',
+            'export_status': True,
+            'finish_time': '',
+            'start_time': start_time_str,
+            'status': 'STARTED',
+            'uri_status': True
+        }}
+
+        with patch("weko_search_ui.admin.get_export_status",
+                   return_value=(False, '', '', '', 'STARTED', start_time_str, '')):
+            res = client.post(url)
+            assert json.loads(res.data) == {'data': {
+                'celery_is_run': True,
+                'is_lifetime': True,
+                'error_message': '',
+                'export_run_msg': '',
+                'export_status': False,
+                'finish_time': '',
+                'start_time': start_time_str,
+                'status': 'STARTED',
+                'uri_status': False
+            }}
 
 #     def check_export_status(self): ~ GETS STUCK
 # def test_ItemBulkExport_check_export_status(i18n_app, users, client_request_args, db_records2):
@@ -312,34 +397,83 @@ class TestItemBulkExport:
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::TestItemBulkExport::test_check_export_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_check_export_status(self,app,client,users, redis_connect,mocker):
         
-        mocker.patch("weko_search_ui.utils.AsyncResult",side_effect=MockAsyncResult)
         mocker.patch("weko_search_ui.admin.check_celery_is_run",return_value=True)
-        with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
-            cache_key = app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
-                name="KEY_EXPORT_ALL", user_id=current_user.get_id()
-            )
-            datastore = redis_connect
-            datastore.put(cache_key, "SUCCESS_task".encode("utf-8"), ttl_secs=30)
-            
+        mocker.patch("weko_search_ui.admin.check_session_lifetime",return_value=True)
+        start_time_str = '2024/05/01 12:55:36'
+        with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):      
             url = url_for("items/bulk-export.check_export_status")
+            with patch('weko_search_ui.admin.get_export_status',
+                       return_value=(True, '', '', '', 'STARTED', start_time_str, '')):
+                res = client.get(url)
+                assert json.loads(res.data) == {'data': {
+                    'celery_is_run': True,
+                    'is_lifetime': True,
+                    'error_message': '',
+                    'export_run_msg': '',
+                    'export_status': True,
+                    'finish_time': '',
+                    'start_time': start_time_str,
+                    'status': 'STARTED',
+                    'uri_status': False
+                }}
 
-            res = client.get(url)
-            assert json.loads(res.data) == {'data': {
-                'celery_is_run': True, 
-                'error_message': None, 
-                'export_run_msg': None, 
-                'export_status': False, 
-                'status': 'SUCCESS', 
-                'uri_status': False}}
+            with patch('weko_search_ui.admin.get_export_status',
+                       return_value=(True, 'test_uri', '', '', 'STARTED', start_time_str, '')):
+                res = client.get(url)
+                assert json.loads(res.data) == {'data': {
+                    'celery_is_run': True,
+                    'is_lifetime': True,
+                    'error_message': '',
+                    'export_run_msg': '',
+                    'export_status': True,
+                    'finish_time': '',
+                    'start_time': start_time_str,
+                    'status': 'STARTED',
+                    'uri_status': True
+                }}
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::TestItemBulkExport::test_cancel_export -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_cancel_export(self, app, client, users, redis_connect, mocker):
         url = url_for("items/bulk-export.cancel_export")
         with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
             mocker.patch("weko_search_ui.admin.cancel_export_all",return_value=True)
-            mocker.patch("weko_search_ui.admin.get_export_status",return_value=(False,"","","","REVOKED",))
+            mocker.patch("weko_search_ui.admin.get_export_status",return_value=(False,"","","","REVOKED","","",))
             res = client.get(url)
             assert json.loads(res.data) == {"data":{"cancel_status":True,"export_status":False,"status":"REVOKED"}}
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::TestItemBulkExport::test_download -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_download(self, client, users, mocker, create_file_instance):
+        url = url_for('items/bulk-export.download')
+        with patch('flask_login.utils._get_user', return_value=users[3]['obj']):
+            file_path = create_file_instance
+            # export_status is False, download_uri is not None
+            with patch('weko_search_ui.admin.get_export_status',
+                       return_value=(False, file_path, '', '', '', '', '')):
+                res = client.get(url)
+                assert res.headers['Content-Disposition'].split('; ')[1].replace('filename=', '') == 'export-all.zip'
+                assert res.headers['Content-Type'] == 'application/octet-stream'
+                assert res.status_code == 200
+            # export_status is False, download_uri is None
+            with patch('weko_search_ui.admin.get_export_status',
+                       return_value=(False, None, '', '', '', '', '')):
+                res = client.get(url)
+                assert 'Content-Disposition' not in res.headers
+                assert res.headers['Content-Type'] != 'application/octet-stream'
+                assert res.status_code == 200
+            # export_status is True, download_uri is not None
+            with patch('weko_search_ui.admin.get_export_status',
+                       return_value=(True, file_path, '', '', '', '', '')):
+                res = client.get(url)
+                assert 'Content-Disposition' not in res.headers
+                assert res.headers['Content-Type'] != 'application/octet-stream'
+                assert res.status_code == 200
+            # export_stauts is True, download_uri is None
+            with patch('weko_search_ui.admin.get_export_status',
+                       return_value=(True, None, '', '', '', '', '')):
+                res = client.get(url)
+                assert 'Content-Disposition' not in res.headers
+                assert res.headers['Content-Type'] != 'application/octet-strean'
+                assert res.status_code == 200
 
 def compare_csv(data1, data2):
     def _str2csv(data):

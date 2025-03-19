@@ -64,6 +64,7 @@ from .config import (
 )
 from .tasks import (
     check_celery_is_run,
+    check_session_lifetime,
     check_import_items_task,
     export_all_task,
     import_item,
@@ -767,14 +768,16 @@ class ItemBulkExport(BaseView):
             reset_redis_cache(_cache_key, str(export_task.task_id))
 
         # return Response(status=200)
-        check = check_celery_is_run()
+        check_celery = check_celery_is_run()
+        check_life_time = check_session_lifetime()
         export_status, download_uri, message, run_message, \
             status, start_time, finish_time = get_export_status()
         return jsonify(
             data={
                 "export_status": export_status,
                 "uri_status": True if download_uri else False,
-                "celery_is_run": check,
+                "celery_is_run": check_celery,
+                "is_lifetime": check_life_time,
                 "error_message": message,
                 "export_run_msg": run_message,
                 "status": status,
@@ -786,14 +789,16 @@ class ItemBulkExport(BaseView):
     @expose("/check_export_status", methods=["GET"])
     def check_export_status(self):
         """Check export status."""
-        check = check_celery_is_run()
+        check_celery = check_celery_is_run()
+        check_life_time = check_session_lifetime()
         export_status, download_uri, message, run_message, \
             status, start_time, finish_time = get_export_status()
         return jsonify(
             data={
                 "export_status": export_status,
                 "uri_status": True if download_uri else False,
-                "celery_is_run": check,
+                "celery_is_run": check_celery,
+                "is_lifetime": check_life_time,
                 "error_message": message,
                 "export_run_msg": run_message,
                 "status": status,

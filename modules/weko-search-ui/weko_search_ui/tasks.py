@@ -206,3 +206,8 @@ def check_celery_is_run():
         return False
     else:
         return True
+    
+def check_session_lifetime():
+    """Check session lifetime."""
+    lifetime = get_lifetime()
+    return True if lifetime >= 86400 else False

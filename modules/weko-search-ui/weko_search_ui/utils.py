@@ -3351,81 +3351,20 @@ def export_all(root_url, user_id, data, start_time):
                 item_type_name = it[1]
                 item_datas = {}
                 pickle_file_name = ''
-                if item_type_id in retry_info:
-                    counter = retry_info[item_type_id]["counter"]
-                    file_part = retry_info[item_type_id]["part"]
-                    from_pid = retry_info[item_type_id]["max"]
-                else:
-                    counter = 0
-                    file_part = 1
-                    from_pid = fromid if fromid else "1"
+                counter, file_part, from_pid = get_retry_info(
+                    item_type_id, retry_info, fromid)
                 current_app.logger.info(
                     "Start bulk export of item type {}({}).".format(
                         item_type_name, item_type_id
                     )
                 )
-                # get all record id
-                if toid:
-                    recids = db.session.query(
-                        PersistentIdentifier.pid_value,
-                        PersistentIdentifier.object_uuid,
-                        RecordMetadata.json
-                    ).join(
-                        ItemMetadata,
-                        PersistentIdentifier.object_uuid == ItemMetadata.id,
-                    ).join(
-                        RecordMetadata,
-                        PersistentIdentifier.object_uuid == RecordMetadata.id,
-                    ).filter(
-                        PersistentIdentifier.pid_type == "recid",
-                        PersistentIdentifier.status == PIDStatus.REGISTERED,
-                        PersistentIdentifier.pid_value.notlike("%.%"),
-                        _func.to_number(
-                            PersistentIdentifier.pid_value,
-                            current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
-                        ) >= from_pid,
-                        _func.to_number(
-                            PersistentIdentifier.pid_value,
-                            current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
-                        ) <= toid,
-                        ItemMetadata.item_type_id == item_type_id
-                    ).order_by(_func.to_number(
-                        PersistentIdentifier.pid_value,
-                        current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
-                    )).yield_per(500)
-                else:
-                    recids = db.session.query(
-                        PersistentIdentifier.pid_value,
-                        PersistentIdentifier.object_uuid,
-                        RecordMetadata.json
-                    ).join(
-                        ItemMetadata,
-                        PersistentIdentifier.object_uuid == ItemMetadata.id,
-                    ).join(
-                        RecordMetadata,
-                        PersistentIdentifier.object_uuid == RecordMetadata.id,
-                    ).filter(
-                        PersistentIdentifier.pid_type == "recid",
-                        PersistentIdentifier.status == PIDStatus.REGISTERED,
-                        PersistentIdentifier.pid_value.notlike("%.%"),
-                        _func.to_number(
-                            PersistentIdentifier.pid_value,
-                            current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
-                        ) >= from_pid,
-                        ItemMetadata.item_type_id == item_type_id
-                    ).order_by(_func.to_number(
-                        PersistentIdentifier.pid_value,
-                        current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
-                    )).yield_per(500)
-                current_app.logger.info("{}({}) get recids completed:{}".format(item_type_name, item_type_id, recids.count()))
 
-                if recids.count() == 0:
+                recids = get_all_record_id(toid, from_pid, item_type_id)
+                current_app.logger.info("{}({}) get recids completed:{}".format(item_type_name, item_type_id, recids.count()))
+                if not recids:
                     item_types.remove(it)
                     continue
-
-                record_ids = [(recid.pid_value, recid.object_uuid) 
-                    for recid in recids if recid.json and 'publish_status' in recid.json \
-                    and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]]
+                record_ids = get_record_ids(recids)
 
                 # recidsを削除
                 del recids
@@ -3528,8 +3467,6 @@ def export_all(root_url, user_id, data, start_time):
     reset_redis_cache(_msg_key, "")
     reset_redis_cache(_run_msg_key, "")
     reset_redis_cache(_file_create_key, json.dumps({}))
-    # 1件エクスポート実行して失敗したらコメントアウトしてる方を使用してください
-    # temp_path = "/tmp/bulk_export"
 
     temp_path = os.getenv('TMPDIR')
     os.makedirs(temp_path, exist_ok=True)
@@ -3579,6 +3516,111 @@ def export_all(root_url, user_id, data, start_time):
         current_app.logger.error(ex)
         reset_redis_cache(_msg_key, "Export failed.")
         reset_redis_cache(_run_msg_key, "")
+
+def get_all_record_id(toid, from_pid, item_type_id):
+    """Get all record id.
+
+    Args:
+        toid (str): The ending ID.
+        from_pid (str): The starting ID.
+        item_type_id (str): The item type ID.
+
+    Returns:
+        list: List of record IDs.
+    """
+
+    # get all record id
+    if toid:
+        recids = db.session.query(
+            PersistentIdentifier.pid_value,
+            PersistentIdentifier.object_uuid,
+            RecordMetadata.json
+        ).join(
+            ItemMetadata,
+            PersistentIdentifier.object_uuid == ItemMetadata.id,
+        ).join(
+            RecordMetadata,
+            PersistentIdentifier.object_uuid == RecordMetadata.id,
+        ).filter(
+            PersistentIdentifier.pid_type == "recid",
+            PersistentIdentifier.status == PIDStatus.REGISTERED,
+            PersistentIdentifier.pid_value.notlike("%.%"),
+            _func.to_number(
+                PersistentIdentifier.pid_value,
+                current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
+            ) >= from_pid,
+            _func.to_number(
+                PersistentIdentifier.pid_value,
+                current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
+            ) <= toid,
+            ItemMetadata.item_type_id == item_type_id
+        ).order_by(_func.to_number(
+            PersistentIdentifier.pid_value,
+            current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
+        )).yield_per(500)
+    else:
+        recids = db.session.query(
+            PersistentIdentifier.pid_value,
+            PersistentIdentifier.object_uuid,
+            RecordMetadata.json
+        ).join(
+            ItemMetadata,
+            PersistentIdentifier.object_uuid == ItemMetadata.id,
+        ).join(
+            RecordMetadata,
+            PersistentIdentifier.object_uuid == RecordMetadata.id,
+        ).filter(
+            PersistentIdentifier.pid_type == "recid",
+            PersistentIdentifier.status == PIDStatus.REGISTERED,
+            PersistentIdentifier.pid_value.notlike("%.%"),
+            _func.to_number(
+                PersistentIdentifier.pid_value,
+                current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
+            ) >= from_pid,
+            ItemMetadata.item_type_id == item_type_id
+        ).order_by(_func.to_number(
+            PersistentIdentifier.pid_value,
+            current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
+        )).yield_per(500)
+    
+    return recids
+
+
+def get_retry_info(item_type_id, retry_info, fromid):
+    """Get retry information for item type.
+
+    Args:
+        item_type_id (str): The item type ID.
+        retry_info (dict): The retry information dictionary.
+        fromid (str): The starting ID.
+
+    Returns:
+        tuple: A tuple containing counter, file_part, and from_pid.
+    """
+    if item_type_id in retry_info:
+        counter = retry_info[item_type_id]["counter"]
+        file_part = retry_info[item_type_id]["part"]
+        from_pid = retry_info[item_type_id]["max"]
+    else:
+        counter = 0
+        file_part = 1
+        from_pid = fromid if fromid else "1"
+    return counter, file_part, from_pid
+
+
+def get_record_ids(recids):
+    """Get record ids.
+    
+    Args:
+        recids (list): List of record ids.
+        
+    Returns:
+        list: List of record ids.
+    """
+    record_ids = [(recid.pid_value, recid.object_uuid) 
+        for recid in recids if recid.json and 'publish_status' in recid.json \
+        and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]]
+    return record_ids
 
 
 def write_files(item_datas, export_path, user_id, retrys):
@@ -3795,7 +3837,8 @@ def get_export_status():
                 finish_time = write_file_data.get("finish_time")
                 if status_cond and write_file_status == 'SUCCESS':
                     export_path = write_file_data['export_path']
-                    if not os.path.isdir(os.path.join(export_path, 'data')):
+                    is_dir = not os.path.isdir(os.path.join(export_path, 'data'))
+                    if is_dir:
                         bagit.make_bag(export_path)
                         shutil.make_archive(export_path, "zip", export_path)
                         with open(export_path + ".zip", "rb") as file:
