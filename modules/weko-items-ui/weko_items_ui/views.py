@@ -139,24 +139,24 @@ def get_oa_policy():
 
         if response.status_code == 200:
             data = response.json()
-            return jsonify({"policy_url": data.get("url", "ポリシー情報が見つかりませんでした。")})
+            return jsonify({"policy_url": data.get("url", "No Policy Information found")})
         elif response.status_code == 400:
-            return jsonify({"error": "パラメータが不正です。"}), 400
+            return jsonify({"error": "Invalid parameters"}), 400
         elif response.status_code == 401:
-            return jsonify({"error": "認証エラーが発生しました。"}), 401
+            return jsonify({"error": "Authentication error occurred"}), 401
         elif response.status_code == 404:
-            return jsonify({"error": "一致するポリシー情報が見つかりませんでした。"}), 404
+            return jsonify({"error": "No matching policy"}), 404
         elif response.status_code == 429:
-            return jsonify({"error": "リクエスト制限を超えました。"}), 429
+            return jsonify({"error": "Request limit exceeded"}), 429
         elif response.status_code == 500:
-            return jsonify({"error": "サーバー内部のエラーが発生しました。"}), 500
+            return jsonify({"error": "Internal server error"}), 500
         else:
-            return jsonify({"error": "不明なエラーが発生しました。"}), 500
+            return jsonify({"error": "An unknown error occurred"}), 500
 
     except requests.exceptions.RequestException:
-        return jsonify({"error": "APIリクエストに失敗しました。"}), 500
+        return jsonify({"error": "API Request Failed"}), 500
     except Exception as e:
-        return jsonify({"error": f"予期しないエラーが発生しました: {str(e)}"}), 500
+        return jsonify({"error": f"An unknown error occurred: {str(e)}"}), 500
 
 @blueprint.route('/', methods=['GET'])
 @blueprint.route('/<int:item_type_id>', methods=['GET'])

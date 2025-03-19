@@ -4487,7 +4487,7 @@ def get_access_token(api_code):
     """
     try:
         if not api_code:
-            return {"error": "invalid_request", "message": "APIコードが必要です。"}, 400
+            return {"error": "invalid_request", "message": "API Code Required"}, 400
 
         certificate = ApiCertificate.select_by_api_code(api_code)
         if not certificate:
@@ -4517,5 +4517,5 @@ def get_access_token(api_code):
         })
 
     except Exception as e:
-        current_app.logger.error(f"AccessToken取得エラー: {str(e)}")
-        return {"error": "サーバー内部のエラーが発生しました"}, 500
+        current_app.logger.error(f"AccessToken Error: {str(e)}")
+        return {"error": "Internal server error"}, 500
