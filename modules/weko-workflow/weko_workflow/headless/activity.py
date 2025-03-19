@@ -326,8 +326,12 @@ class HeadlessActivity(WorkActivity):
                 pass
 
             metadata.update({"$schema": f"/items/jsonschema/{self.item_type.id}"})
+            workflow_index = self.workflow.index_tree_id
             index = {
-                "index": [self.workflow.index_tree_id] or metadata.get("path", []),
+                "index": (
+                    [workflow_index]
+                    if workflow_index is not None else metadata.get("path", [])
+                ),
                 "actions": metadata.get("publish_status")
             }
             self._deposit.update(index, metadata)

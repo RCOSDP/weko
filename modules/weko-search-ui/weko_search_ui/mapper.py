@@ -1269,6 +1269,8 @@ class JsonMapper(BaseMapper):
             """Link data. <br>
             e.g. [{"item_id": 123, "sele_id": "isSupplementedBy"}]
             """
+            self.list_file = []
+            """List of files."""
             self.non_extract = []
             """Non-extract file list for elastic search."""
             self.save_as_is = False
@@ -1342,14 +1344,18 @@ class JsonLdMapper(JsonMapper):
         mapped_metadata = self._InformedMetadata()
         mapped_metadata.id = metadata.id
         mapped_metadata.link_data = metadata.link_data
+        mapped_metadata.list_file = [
+            filename[5:] for filename in metadata.list_file
+            if filename.startswith("data/")
+        ]
         mapped_metadata.non_extract = [
-            filename[5:]
-            for filename in metadata.non_extract
+            filename[5:] for filename in metadata.non_extract
             if filename.startswith("data/")
         ]
         mapped_metadata.save_as_is = metadata.save_as_is
         mapped_metadata.setdefault("publish_status", "private")
         mapped_metadata.setdefault("edit_mode", "Keep")
+
         missing_metadata = {}
 
         def _empty_metadata():
@@ -1630,6 +1636,9 @@ class JsonLdMapper(JsonMapper):
             metadata.link_data = [
                 {"item_id": link.get("identifier"), "sele_id" : link.get("value")}
                     for link in extracted.get("wk:itemLinks", [])
+            ]
+            metadata.list_file = [
+                file["@id"] for file in extracted.get("hasPart", [])
             ]
             metadata.non_extract = [
                 file["@id"] for file in extracted.get("hasPart", [])

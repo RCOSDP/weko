@@ -261,8 +261,8 @@ def post_service_document():
 
     else:
         check_result = check_import_items(file, file_format, False)
-    data_path = check_result.get("data_path","")
 
+    data_path = check_result.get("data_path","")
     expire = datetime.now() + timedelta(days=1)
     TempDirInfo().set(
         data_path,
@@ -338,7 +338,7 @@ def post_service_document():
                         f"Error in import_items_to_system: {item.get('error_id')}"
                     )
                 recid = import_result.get("recid")
-                return recid
+                return None, recid, None
 
             elif register_type == "Workflow":
                 required_scopes = set([activity_scope.id])
@@ -386,9 +386,11 @@ def post_service_document():
             if file_format == "JSON":
                 update_item_ids(check_result["list_record"], recid)
         except ValueError as e:
+            traceback.print_exc()
             current_app.logger.error(f"Error in update_item_ids: {str(e)}")
             continue  # Skip to the next iteration
         except Exception as e:
+            traceback.print_exc()
             current_app.logger.error(f"Unexpected error: {str(e)}")
             continue  # Skip to the next iteration
 
@@ -398,7 +400,7 @@ def post_service_document():
         TempDirInfo().delete(data_path)
 
     current_app.logger.info(
-        f"Items imported by sword from {request.oauth.client.name}"
+        f"Items imported by sword from {request.oauth.client.name}; item: {recid}"
     )
     if len(warns) > 0:
         error_messages = "; ".join(

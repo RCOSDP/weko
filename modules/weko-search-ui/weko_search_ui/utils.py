@@ -889,13 +889,14 @@ def check_jsonld_import_items(
                 "item_type_name": item_type.item_type_name.name,
                 "item_type_id": item_type.id,
                 "publish_status": item_metadata.get("publish_status"),
+                "file_path" : item_metadata.list_file,
                 "non_extract": item_metadata.non_extract
                 # item_metadata has attributes
-                # >  id, link_data, non_extract, save_as_is, metadata_only,
-                # >  cnri, doi_ra, doi
+                # >  id, link_data, list_file, non_extract, save_as_is,
+                # >  metadata_only, cnri, doi_ra, doi
             } for item_metadata in item_metadatas
         ]
-
+        data_path = os.path.join(data_path, "data")
         list_record.sort(key=lambda x: get_priority(x['metadata'].link_data))
         handle_save_bagit(list_record, file, data_path, filename)
 
@@ -978,10 +979,10 @@ def handle_save_bagit(list_record, file, data_path, filename):
         return
 
     if isinstance(file, str):
-        shutil.copy(file, os.path.join(data_path, "data", filename))
+        shutil.copy(file, os.path.join(data_path, filename))
     else:
         file.seek(0, 0)
-        file.save(os.path.join(data_path, "data", filename))
+        file.save(os.path.join(data_path, filename))
 
     current_app.logger.info("Save the bagit file as is.")
     list_record[0]["file_path"] = [filename] # for Direct registration
@@ -993,7 +994,7 @@ def handle_save_bagit(list_record, file, data_path, filename):
         "filesize": [
             {
                 "value": str(os.path.getsize(
-                    os.path.join(data_path, "data", filename))
+                    os.path.join(data_path, filename))
                 ),
             }
         ],
