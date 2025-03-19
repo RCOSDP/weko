@@ -419,7 +419,7 @@ class WekoAuthors(object):
                     #         "affiliationPeriodInfo" : affiliationInfo[i]affiliationPeriodInfoの長さ
                     #       },
                     #     ]
-                    for index, affiliation in enumerate(json_data[affiliation_mappings["json_id"]]):
+                    for index, affiliation in enumerate(json_data.get(affiliation_mappings["json_id"], [])):
                         if len(mapping_max) < index+1 :
                             mapping_max.append({
                                 "identifierInfo" : 1,

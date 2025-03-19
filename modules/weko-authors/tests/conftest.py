@@ -154,6 +154,15 @@ def base_app(request, instance_path,search_class):
         SEARCH_ELASTIC_HOSTS=os.environ.get("INVENIO_ELASTICSEARCH_HOST"),
         SEARCH_INDEX_PREFIX="{}-".format('test'),
         SEARCH_CLIENT_CONFIG=dict(timeout=120, max_retries=10),
+        WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY="weko_authors_export_target",
+        WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY="weko_authors_export_stop_point",
+        WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY="weko_authors_export_temp_file_path_key",
+        WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_USER_FILE_PATH_KEY = "authors_import_band_check_user_file_path",
+        WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY='cache_result_over_max_file_path_key',
+        WEKO_AUTHORS_IMPORT_CACHE_RESULT_FILE_PATH_KEY = "authors_import_result_file_path",
+        WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY= "result_summary_key",
+        WEKO_AUTHORS_IMPORT_CACHE_OVER_MAX_TASK_KEY = "authors_import_over_max_task",
+        WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH = "authors_import_user_file_key",
     )
     Babel(app_)
     InvenioDB(app_)
@@ -604,8 +613,8 @@ def authors(app,db,esindex):
     returns = list()
     for data in datas:
         returns.append(Authors(
-            gather_flg=0,
-            is_deleted=False,
+            gather_flg=data.get("gather_flg", 0),
+            is_deleted=data.get("is_deleted", False),
             json=data
         ))
         es_id = data["id"]
