@@ -140,10 +140,6 @@ def get_oa_policy():
         if response.status_code == 200:
             data = response.json()
             return jsonify({"policy_url": data.get("url", "No Policy Information found")})
-        elif response.status_code == 400:
-            return jsonify({"error": "Invalid parameters"}), 400
-        elif response.status_code == 401:
-            return jsonify({"error": "Authentication error occurred"}), 401
         elif response.status_code == 404:
             return jsonify({"error": "No matching policy"}), 404
         elif response.status_code == 429:
