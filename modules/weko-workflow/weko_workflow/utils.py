@@ -445,13 +445,13 @@ def item_metadata_validation(item_id, identifier_type, record=None,
         if resource_type in journalarticle_type:
             required_properties = [
                 'title',
-                # 'publisher',
-                # 'publisher_jpcoar',
-                # 'date',
-                # 'dateGranted',
+                'publisher',
+                'publisher_jpcoar',
+                'date',
+                'dateGranted',
                 'type',
-                # 'identifier',
-                # 'identifierRegistration',
+                'identifier',
+                'identifierRegistration',
                 'pageStart',
                 # 'fileURI',
             ]
@@ -464,14 +464,14 @@ def item_metadata_validation(item_id, identifier_type, record=None,
         elif resource_type in thesis_types:
             required_properties = [
                 'title',
-                # 'publisher',
-                # 'publisher_jpcoar',
-                # 'date',
-                # 'dateGranted',
-                # 'degreeGrantor',
+                'publisher',
+                'publisher_jpcoar',
+                'date',
+                'dateGranted',
+                'degreeGrantor',
                 'type',
-                # 'identifier',
-                # 'identifierRegistration',
+                'identifier',
+                'identifierRegistration',
                 # 'fileURI',
             ]
             # いずれか必須が動いていない
@@ -480,13 +480,13 @@ def item_metadata_validation(item_id, identifier_type, record=None,
         elif resource_type in report_types:
             required_properties = [
                 'title',
-                # 'publisher',
-                # 'publisher_jpcoar',
-                # 'date',
-                # 'dateGranted',
+                'publisher',
+                'publisher_jpcoar',
+                'date',
+                'dateGranted',
                 'type',
-                # 'identifier',
-                # 'identifierRegistration',
+                'identifier',
+                'identifierRegistration',
                 # 'fileURI',
             ]
             # いずれか必須が動いていない
@@ -495,13 +495,13 @@ def item_metadata_validation(item_id, identifier_type, record=None,
         elif resource_type in elearning_type:
             required_properties = [
                 'title',
-                # 'publisher',
-                # 'publisher_jpcoar',
-                # 'date',
-                # 'dateGranted',
+                'publisher',
+                'publisher_jpcoar',
+                'date',
+                'dateGranted',
                 'type',
-                # 'identifier',
-                # 'identifierRegistration',
+                'identifier',
+                'identifierRegistration',
                 # 'fileURI',
             ]
             # いずれか必須が動いていない
@@ -510,15 +510,15 @@ def item_metadata_validation(item_id, identifier_type, record=None,
         elif resource_type in dataset_type:
             required_properties = [
                 'title',
-                # 'givenName',
-                # 'creatorName',
-                # 'publisher',
-                # 'publisher_jpcoar',
-                # 'date',
-                # 'dateGranted',
+                'givenName',
+                'creatorName',
+                'publisher',
+                'publisher_jpcoar',
+                'date',
+                'dateGranted',
                 'type',
-                # 'identifier',
-                # 'identifierRegistration',
+                'identifier',
+                'identifierRegistration',
                 # 'fileURI',
             ]
             # いずれか必須が動いていない
@@ -530,13 +530,13 @@ def item_metadata_validation(item_id, identifier_type, record=None,
         elif resource_type in datageneral_types:
             required_properties = [
                 'title',
-                # 'publisher',
-                # 'publisher_jpcoar',
-                # 'date',
-                # 'dateGranted',
+                'publisher',
+                'publisher_jpcoar',
+                'date',
+                'dateGranted',
                 'type',
-                # 'identifier',
-                # 'identifierRegistration',
+                'identifier',
+                'identifierRegistration',
                 # 'fileURI',
             ]
             # いずれか必須が動いていない
@@ -548,30 +548,31 @@ def item_metadata_validation(item_id, identifier_type, record=None,
         if resource_type in journalarticle_type:
             required_properties = [
                 'title',
-                # 'publisher',
-                # 'publisher_jpcoar',
-                # 'date',
-                # 'dateGranted',
+                'publisher',
+                'publisher_jpcoar',
+                'date',
+                'dateGranted',
                 'type',
-                # 'identifier',
-                # 'identifierRegistration',
+                'identifier',
+                'identifierRegistration',
                 'sourceIdentifier',
                 'sourceTitle',
                 # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['date','publisher']
+        # 別表3-2 Crossref DOI登録メタデータのJPCOAR/JaLCマッピング【書籍】
         elif resource_type in report_types \
                 or resource_type in thesis_types:
             required_properties = [
                 'title',
-                # 'publisher',
-                # 'publisher_jpcoar',
-                # 'date',
-                # 'dateGranted',
+                'publisher',
+                'publisher_jpcoar',
+                'date',
+                'dateGranted',
                 'type',
-                # 'identifier',
-                # 'identifierRegistration',
+                'identifier',
+                'identifierRegistration',
                 # 'fileURI',
             ]
             # いずれか必須が動いていない
@@ -581,15 +582,15 @@ def item_metadata_validation(item_id, identifier_type, record=None,
         if resource_type in dataset_type:
             required_properties = [
                 'title',
-                # 'givenName',
-                # 'creatorName',
-                # 'publisher',
-                # 'publisher_jpcoar', 
-                # 'date',
-                # 'dateGranted',
+                'givenName',
+                'creatorName',
+                'publisher',
+                'publisher_jpcoar',
+                'date',
+                'dateGranted',
                 'type',
-                # 'identifier',
-                # 'identifierRegistration',
+                'identifier',
+                'identifierRegistration',
                 # 'fileURI',
             ]
             # いずれか必須が動いていない
