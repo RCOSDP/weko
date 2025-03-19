@@ -299,11 +299,12 @@ class WekoAuthors(object):
         used_external_id = []
         for author in cls.get_all():
             metadata = author.json
-            for affiliationInfo in metadata.get('affiliationInfo', {}):
-                idType = affiliationInfo.get('idType')
-                if idType \
-                    and idtype_and_scheme.get(int(idType)) not in used_external_id:
-                    used_external_id.append(idtype_and_scheme.get(int(idType)))
+            for affiliationInfo in metadata.get('affiliationInfo', []):
+                for identifierInfo in affiliationInfo.get('identifierInfo', []):
+                    idType = identifierInfo.get('affiliationIdType')
+                    if idType \
+                        and idtype_and_scheme.get(int(idType)) not in used_external_id:
+                        used_external_id.append(idtype_and_scheme.get(int(idType)))
         return used_external_id, idtype_and_scheme
     
 
@@ -417,7 +418,7 @@ class WekoAuthors(object):
                     #         "affiliationPeriodInfo" : affiliationInfo[i]affiliationPeriodInfoの長さ
                     #       },
                     #     ]
-                    for index, affiliation in enumerate(json_data[affiliation_mappings["json_id"]]):
+                    for index, affiliation in enumerate(json_data.get(affiliation_mappings["json_id"], [])):
                         if len(mapping_max) < index+1 :
                             mapping_max.append({
                                 "identifierInfo" : 1,

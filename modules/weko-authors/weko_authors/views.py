@@ -114,6 +114,7 @@ def update_author():
     data = req["author"]
     force_change_flag = request.get_json()["forceChangeFlag"]
     # weko_idを取得する。
+    weko_id = None
     author_id_info = data["authorIdInfo"]
     for i in author_id_info:
         if i.get('idType') == '1':

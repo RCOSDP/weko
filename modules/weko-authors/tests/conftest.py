@@ -154,6 +154,15 @@ def base_app(request, instance_path,search_class):
         WEKO_API_LIMIT_RATE_DEFAULT=["100 per minute"],
         CELERY_ALWAYS_EAGER=True,
         CELERY_CACHE_BACKEND="memory",
+        WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY = "authors_import_summary",
+        WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY = "authors_import_result_file_of_over_path",
+        WEKO_AUTHORS_EXPORT_TEMP_FOLDER_PATH =   "/var/tmp/authors_export",
+        WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY = 'authors_import_user_file_key',
+        WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH = "var/tmp/authors_import",
+        WEKO_AUTHORS_FILE_MAPPING_FOR_PREFIX =["scheme", "name", "url", "is_deleted"],
+        WEKO_AUTHORS_IMPORT_TMP_PREFIX = 'authors_import_',
+        WEKO_AUTHORS_IMPORT_BATCH_SIZE = 100,
+        WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYS = 1000,
         CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
         CELERY_RESULT_BACKEND="cache",
         CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
@@ -162,6 +171,15 @@ def base_app(request, instance_path,search_class):
         SEARCH_ELASTIC_HOSTS=os.environ.get("INVENIO_ELASTICSEARCH_HOST"),
         SEARCH_INDEX_PREFIX="{}-".format('test'),
         SEARCH_CLIENT_CONFIG=dict(timeout=120, max_retries=10),
+        WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY="weko_authors_export_target",
+        WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY="weko_authors_export_stop_point",
+        WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY="weko_authors_export_temp_file_path_key",
+        WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_USER_FILE_PATH_KEY = "authors_import_band_check_user_file_path",
+        WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY='cache_result_over_max_file_path_key',
+        WEKO_AUTHORS_IMPORT_CACHE_RESULT_FILE_PATH_KEY = "authors_import_result_file_path",
+        WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY= "result_summary_key",
+        WEKO_AUTHORS_IMPORT_CACHE_OVER_MAX_TASK_KEY = "authors_import_over_max_task",
+        WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH = "authors_import_user_file_key",
     )
     Babel(app_)
     Menu(app_)
@@ -203,6 +221,131 @@ def app(base_app):
 def base_app2(instance_path,search_class):
     """Flask application fixture for ES."""
     app_ = Flask('testapp', instance_path=instance_path)
+    WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION ={
+        "json_id": "affiliationInfo",
+        "child": [
+            {
+                "json_id": "identifierInfo",
+                "child": [
+                    {
+                        "json_id": "affiliationIdType",
+                        "label_en": "Affiliation Identifier Scheme",
+                        "label_jp": "外部所属機関ID 識別子",
+                        "validation": {
+                            "validator": {
+                                "class_name": "weko_authors.contrib.validation",
+                                "func_name": "validate_affiliation_identifier_scheme"
+                            },
+                            "required": {
+                                "if": [
+                                    "affiliationId"
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "json_id": "affiliationId",
+                        "label_en": "Affiliation Identifier",
+                        "label_jp": "外部所属機関ID",
+                        "validation": {
+                            "required": {
+                                "if": [
+                                    "affiliationIdType"
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "json_id": "identifierShowFlg",
+                        "label_en": "Affiliation Identifier Display",
+                        "label_jp": "外部所属機関ID 表示／非表示",
+                        "mask": {
+                            "true": "Y",
+                            "false": "N"
+                        }
+                    }
+                ]
+            },
+            {
+                "json_id": "affiliationNameInfo",
+                "child": [
+                    {
+                        "json_id": "affiliationName",
+                        "label_en": "Affiliation Name",
+                        "label_jp": "外部所属機関名"
+                    },
+                    {
+                        "json_id": "affiliationNameLang",
+                        "label_en": "Language",
+                        "label_jp": "言語",
+                        "validation": {
+                            "map": [
+                                "ja",
+                                "ja-Kana",
+                                "en",
+                                "fr",
+                                "it",
+                                "de",
+                                "es",
+                                "zh-cn",
+                                "zh-tw",
+                                "ru",
+                                "la",
+                                "ms",
+                                "eo",
+                                "ar",
+                                "el",
+                                "ko"
+                            ]
+                        }
+                    },
+                    {
+                        "json_id": "affiliationNameShowFlg",
+                        "label_en": "Affiliation Name Display",
+                        "label_jp": "外部所属機関名・言語 表示／非表示",
+                        "mask": {
+                            "true": "Y",
+                            "false": "N"
+                        },
+                        "validation": {
+                            "map": [
+                                "Y",
+                                "N"
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "json_id": "affiliationPeriodInfo",
+                "child": [
+                    {
+                        "json_id": "periodStart",
+                        "label_en": "Affiliation Period Start",
+                        "label_jp": "外部所属機関 所属期間 開始日",
+                        "validation": {
+                            "validator": {
+                                "class_name": "weko_authors.contrib.validation",
+                                "func_name": "validate_affiliation_period_start"
+                            }
+                        }
+                    },
+                    {
+                        "json_id": "periodEnd",
+                        "label_en": "Affiliation Period End",
+                        "label_jp": "外部所属機関 所属期間 終了日",
+                        "validation": {
+                            "validator": {
+                                "class_name": "weko_authors.contrib.validation",
+                                "func_name": "validate_affiliation_period_end"
+                            }
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+
     app_.config.update(
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
@@ -233,6 +376,21 @@ def base_app2(instance_path,search_class):
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
         SEARCH_ELASTIC_HOSTS=os.environ.get("SEARCH_ELASTIC_HOSTS", "elasticsearch"),
+        WEKO_AUTHORS_EXPORT_BATCH_SIZE=2,
+        WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION=WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION,
+        WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY=2,
+        WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL=1,
+        WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH='/data',
+        WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY='cache_result_over_max_file_path_key',
+        WEKO_AUTHORS_CACHE_TTL=100,
+        WEKO_AUTHORS_IMPORT_BATCH_SIZE=2,
+        WEKO_AUTHORS_IMPORT_MAX_RETRY=2,
+        WEKO_AUTHORS_IMPORT_RETRY_INTERVAL=1,
+        WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY= "result_summary_key",
+        WEKO_AUTHORS_BULK_IMPORT_RETRY_INTERVAL= 1,
+        WEKO_AUTHORS_EXPORT_CACHE_URL_KEY= 'weko_authors_exported_url',
+        WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY= 'weko_authors_export_stop_point',
+        WEKO_AUTHORS_IMPORT_CACHE_FORCE_CHANGE_MODE_KEY= 'authors_import_force_change',
     )
     Babel(app_)
     InvenioDB(app_)
@@ -474,6 +632,30 @@ def json_data(filename):
 @pytest.fixture()
 def authors(app,db,esindex):
     datas = json_data("data/author.json")
+    returns = list()
+    for data in datas:
+        returns.append(Authors(
+            gather_flg=data.get("gather_flg", 0),
+            is_deleted=data.get("is_deleted", False),
+            json=data
+        ))
+        es_id = data["id"]
+        es_data = json.loads(json.dumps(data))
+        es_data["id"]=""
+        current_search_client.index(
+            index=app.config["WEKO_AUTHORS_ES_INDEX_NAME"],
+            doc_type=app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+            id=es_id,
+            body=es_data,
+            refresh='true')
+    
+    db.session.add_all(returns)
+    db.session.commit()
+    return returns
+
+@pytest.fixture()
+def authors2(app,db,esindex):
+    datas = json_data("data/author2.json")
     returns = list()
     for data in datas:
         returns.append(Authors(

@@ -228,11 +228,15 @@ def check_period_date(data):
                     if periodinfo.get("periodStart") or periodinfo.get("periodEnd"):
                         if periodinfo.get("periodStart"):
                             date_str = periodinfo.get("periodStart")
-                            if not bool(re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}', date_str)):
+                            try:
+                                datetime.strptime(date_str, "%Y-%m-%d")
+                            except ValueError:
                                 return False, "not date format"
                         if periodinfo.get("periodEnd"):
                             date_str = periodinfo.get("periodEnd")
-                            if not bool(re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}', date_str)):
+                            try:
+                                datetime.strptime(date_str, "%Y-%m-%d")
+                            except ValueError:
                                 return False, "not date format"
                         if periodinfo.get("periodStart") and periodinfo.get("periodEnd"):
                             period_start = datetime.strptime(periodinfo.get("periodStart"), "%Y-%m-%d")
@@ -953,9 +957,10 @@ def unpackage_and_check_import_file_for_prefix(file_format, file_name, temp_file
                         for num, data in enumerate(data_row, start=0):
                             tmp_data[header[num]] = data
                         print(tmp_data)
-                    except Exception({
+                    except Exception:
+                        ex = Exception({
                             'error_msg': _('Cannot read {} file correctly.').format(file_format.upper())
-                        }) as ex:
+                        })
                         raise ex
                     file_data.append(tmp_data)
         except UnicodeDecodeError as ex:
@@ -1199,7 +1204,7 @@ def set_record_status(file_format, list_existed_author_id, item, errors, warning
     """Set status to import data."""
     item['status'] = 'new'
     pk_id = item.get('pk_id')
-    err_msg = _("Specified WEKO ID does not exist.")
+    err_msg = _("Specified Author ID does not exist.")
     if item.get('is_deleted', '') == 'D':
         item['status'] = 'deleted'
         if not pk_id or list_existed_author_id.get(pk_id) is None:
@@ -1310,6 +1315,14 @@ def import_author_to_system(author, status, weko_id, force_change_mode):
             if status == 'new':
                 if check_weko_id:
                     raise Exception({'error_id': "WekoID is duplicated"})
+                author["authorIdInfo"].insert(
+                    0,
+                    {
+                        "idType": "1",
+                        "authorId": weko_id,
+                        "authorIdShowFlg": "true"
+                    }
+                )
                 WekoAuthors.create(author)
             else:
                 if status == 'deleted' \
@@ -1479,95 +1492,7 @@ def import_affiliation_id_to_system(affiliation_id):
         interval = current_app.config["WEKO_AUTHORS_BULK_IMPORT_RETRY_INTERVAL"]
         try:
             status = affiliation_id.pop('status')
-            for attempt in range(5):
-                try:
-                    if not affiliation_id.get('url'):
-                        affiliation_id['url'] = ""
-                    check = get_author_affiliation_obj(affiliation_id['scheme'])
-                    if status == 'new':
-                        if check is None:
-                            AuthorsAffiliationSettings.create(**affiliation_id)
-                    elif status == 'update':
-                        if check is None or check.id == affiliation_id['id']:
-                            AuthorsAffiliationSettings.update(**affiliation_id)
-                    elif status == 'deleted':
-                        used_external_id_prefix,_ = WekoAuthors.get_used_scheme_of_affiliation_id()
-                        if affiliation_id["scheme"] in used_external_id_prefix:
-                            raise Exception({'error_id': 'delete_author_link'})
-                        else:
-                            if check is None or check.id == affiliation_id['id']:
-                                AuthorsAffiliationSettings.delete(affiliation_id['id'])
-                    else:
-                        raise Exception({'error_id': 'status_error'})
-                    db.session.commit()
-                    break
-                except SQLAlchemyError as ex:
-                    handle_exception(ex, attempt, retrys, interval)
-                except TimeoutError as ex:
-                    handle_exception(ex, attempt, retrys, interval)
-        except Exception as ex:
-            db.session.rollback()
-            current_app.logger.error(
-                f'Affiliation Id: {affiliation_id["scheme"]} import error.')
-            traceback.print_exc(file=sys.stdout)
-            raise ex
-
-def import_id_prefix_to_system(id_prefix):
-    """
-    tsv/csvからのid_prefixをDBにインポートする.
-    Args:
-        id_prefix (object): id_prefix metadata from tsv/csv.
-    """
-    if id_prefix:
-        retrys = current_app.config["WEKO_AUTHORS_BULK_IMPORT_MAX_RETRY"]
-        interval = current_app.config["WEKO_AUTHORS_BULK_IMPORT_RETRY_INTERVAL"]
-        try:
-            status = id_prefix.pop('status')
-            for attempt in range(5):
-                try:
-                    if not id_prefix.get('url'):
-                        id_prefix['url'] = ""
-                    check = get_author_prefix_obj(id_prefix['scheme'])
-                    if status == 'new':
-                        if check is None:
-                            AuthorsPrefixSettings.create(**id_prefix)
-                    elif status == 'update':
-                        if check is None or check.id == id_prefix['id']:
-                            AuthorsPrefixSettings.update(**id_prefix)
-                    elif status == 'deleted':
-                        used_external_id_prefix,_ = WekoAuthors.get_used_scheme_of_id_prefix()
-                        if id_prefix["scheme"] in used_external_id_prefix:
-                            raise Exception({'error_id': 'delete_author_link'})
-                        else:
-                            if check is None or check.id == id_prefix['id']:
-                                AuthorsPrefixSettings.delete(id_prefix['id'])
-                    else:
-                        raise Exception({'error_id': 'status_error'})
-                    db.session.commit()
-                    break
-                except SQLAlchemyError as ex:
-                    handle_exception(ex, attempt, retrys, interval)
-                except TimeoutError as ex:
-                    handle_exception(ex, attempt, retrys, interval)
-        except Exception as ex:
-            db.session.rollback()
-            current_app.logger.error(
-                f'Id prefix: {id_prefix["scheme"]} import error.')
-            traceback.print_exc(file=sys.stdout)
-            raise ex
-
-def import_affiliation_id_to_system(affiliation_id):
-    """
-    tsv/csvからのaffiliation_idをDBにインポートする.
-    Args:
-        affiliation_id (object): affiliation_id metadata from tsv/csv.
-    """
-    if affiliation_id:
-        retrys = current_app.config["WEKO_AUTHORS_BULK_IMPORT_MAX_RETRY"]
-        interval = current_app.config["WEKO_AUTHORS_BULK_IMPORT_RETRY_INTERVAL"]
-        try:
-            status = affiliation_id.pop('status')
-            for attempt in range(5):
+            for attempt in range(retrys):
                 try:
                     if not affiliation_id.get('url'):
                         affiliation_id['url'] = ""
