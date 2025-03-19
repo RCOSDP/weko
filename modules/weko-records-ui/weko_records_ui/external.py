@@ -31,33 +31,49 @@ from weko_records.models import ItemReference, OaStatus
 from weko_admin.models import ApiCertificate
 
 
-def call_external_system(old_record=None, new_record=None,
-                         old_item_reference_list=None, new_item_reference_list=None):
+def call_external_system(old_record=None,
+                         new_record=None,
+                         old_item_reference_list=None,
+                         new_item_reference_list=None):
     """call external system if needed
     Args:
         old_record(WekoRocord): record before update
         new_record(WekoRocord): record after update
-        old_item_reference_list(list(ItemReference)): item reference list before update
-        new_item_reference_list(list(ItemReference)):item reference list after update
+        old_item_reference_list(list(ItemReference)):
+            item reference list before update
+        new_item_reference_list(list(ItemReference)):
+            item reference list after update
     """
+    EXTERNAL_SYSTEM = current_app.config.get("EXTERNAL_SYSTEM")
+    if EXTERNAL_SYSTEM is None:
+        return
     if new_item_reference_list is None:
         new_item_reference_list = []
     if old_item_reference_list is None:
         old_item_reference_list = []
-    if not validate_records(old_record, new_record, old_item_reference_list, new_item_reference_list):
+    if not validate_records(
+            old_record,
+            new_record,
+            old_item_reference_list,
+            new_item_reference_list):
         return
+    external_system_list = select_call_external_system_list(
+        old_record=old_record,
+        new_record=new_record,
+        old_item_reference_list=old_item_reference_list,
+        new_item_reference_list=new_item_reference_list
+    )
 
-    external_system_list = select_call_external_system_list(old_record=old_record, new_record=new_record,
-                                                            old_item_reference_list=old_item_reference_list, new_item_reference_list=new_item_reference_list)
-    EXTERNAL_SYSTEM = current_app.config.get("EXTERNAL_SYSTEM")
     # case OA assist
     if EXTERNAL_SYSTEM.OA in external_system_list:
         # get oa token
-        get_token_url = current_app.config.get("WEKO_RECORDS_UI_OA_GET_TOKEN_URL")
+        get_token_url = current_app.config.get(
+            "WEKO_RECORDS_UI_OA_GET_TOKEN_URL")
         headers = {
             'Content-Type': 'application/json'
         }
-        api_cert = ApiCertificate.select_by_api_code(current_app.config.get("WEKO_RECORDS_UI_OA_API_CODE"))
+        api_cert = ApiCertificate.select_by_api_code(
+            current_app.config.get("WEKO_RECORDS_UI_OA_API_CODE"))
         if not api_cert:
             return
         client_id = api_cert.get("cert_data",{}).get("client_id")
@@ -73,8 +89,9 @@ def call_external_system(old_record=None, new_record=None,
         current_app.logger.debug("call OA token api")
         try:
             with requests.Session() as s:
-                retries = Retry(total=current_app.config.get("WEKO_RECORDS_UI_OA_API_CODE"),
-                                status_forcelist=[500, 502, 503, 504])
+                retries = Retry(
+                    total=current_app.config.get("WEKO_RECORDS_UI_OA_API_CODE"),
+                    status_forcelist=[500, 502, 503, 504])
                 s.mount('https://', HTTPAdapter(max_retries=retries))
                 s.mount('http://', HTTPAdapter(max_retries=retries))
                 response = s.post(get_token_url, headers=headers, json=data)
@@ -92,12 +109,13 @@ def call_external_system(old_record=None, new_record=None,
         data = {}
         data["action"] = action.value
         data["item_info"] = {}
-        data["item_info"]["pub_date"] = record.get("pubdate",{}).get("attribute_value")
+        data["item_info"]["pub_date"] = \
+            record.get("pubdate",{}).get("attribute_value")
         ITEM_ACTION = current_app.config.get("ITEM_ACTION")
         if action == ITEM_ACTION.DELETED:
             data["item_info"]["publish_status"] = -1
         else:
-            data["item_info"]["publish_status"] = record.get("publish_status")
+            data["item_info"]["publish_status"] = int(record.get("publish_status"))
 
         files = []
         for property in record.values():
@@ -109,46 +127,67 @@ def call_external_system(old_record=None, new_record=None,
 
         pid_value_without_ver = get_pid_value_without_ver(old_record, new_record)
         article_id = get_article_id(pid_value_without_ver)
-        update_status_url = current_app.config.get("WEKO_RECORDS_UI_OA_UPDATE_STATUS_URL").format(article_id)
+        update_status_url = current_app.config.get(
+            "WEKO_RECORDS_UI_OA_UPDATE_STATUS_URL").format(article_id)
         headers = {
             'Content-Type': 'application/json',
             'Authorization': f'Bearer {token}'
         }
-        result = {"action": action.value, "recid": pid_value_without_ver}
-        result[EXTERNAL_SYSTEM.OA.value] = {}
+        remarks = {}
+        remarks["action"] = action.value
+        oa_result = {}
 
         current_app.logger.debug("call OA update status api")
         try:
             with requests.Session() as s:
-                retries = Retry(total=current_app.config.get("WEKO_RECORDS_UI_OA_API_RETRY_COUNT"),
-                                status_forcelist=[500, 502, 503, 504])
+                retries = Retry(
+                    total=current_app.config.get("WEKO_RECORDS_UI_OA_API_RETRY_COUNT"),
+                    status_forcelist=[500, 502, 503, 504])
                 s.mount('https://', HTTPAdapter(max_retries=retries))
                 s.mount('http://', HTTPAdapter(max_retries=retries))
                 response = s.put(update_status_url, headers=headers, json=data)
                 if response.status_code == 200:
-                    result[EXTERNAL_SYSTEM.OA.value]["status"] = response.json().get("status")
+                    oa_result["status"] = response.json().get("status")
                 else:
-                    result[EXTERNAL_SYSTEM.OA.value]["status"] = response.json().get("status")
-                    result[EXTERNAL_SYSTEM.OA.value]["message"] = response.json().get("message")
+                    oa_result["status"] = response.json().get("status")
+                    oa_result["message"] = response.json().get("message")
 
         except requests.exceptions.RequestException as req_err:
             current_app.logger.error(req_err)
             current_app.logger.error(traceback.format_exc())
-            result[EXTERNAL_SYSTEM.OA.value]["status"] = "error"
+            oa_result["status"] = "error"
 
-        # TODO 基本監査ログ機能が実装されたらそちらに出力する
         finally:
-            current_app.logger.info(result)
+            remarks[EXTERNAL_SYSTEM.OA.value] = oa_result
+            # TODO 基本監査ログ機能が実装されたらそちらに出力する
+            current_app.logger.info(remarks)
+            # 基本監査ログに機能ID、処理ID、対象キー、備考を渡して出力する
+
+            # operation_type_id: 機能ID
+            # operation_id: 処理ID
+            # target: 対象キー
+            # remarks: 備考
+
+            # user_log.info(
+            #     operation_type_id = "ITEM",
+            #     operation_id = "ITEM_EXTERNAL_LINK"
+            #     target_key = pid_value_without_ver,
+            #     remarks = remarks
+            # )
 
 
-def select_call_external_system_list(old_record=None, new_record=None,
-                                     old_item_reference_list=None, new_item_reference_list=None):
+def select_call_external_system_list(old_record=None,
+                                     new_record=None,
+                                     old_item_reference_list=None,
+                                     new_item_reference_list=None):
     """Determine the list of external systems to integrate with
     Args:
         old_record(WekoRocord): record before update
         new_record(WekoRocord): record after update
-        old_item_reference_list(list(ItemReference)): item reference list before update
-        new_item_reference_list(list(ItemReference)):item reference list after update
+        old_item_reference_list(list(ItemReference)):
+            item reference list before update
+        new_item_reference_list(list(ItemReference)):
+            item reference list after update
     Returns:
         list: external systems to integrate with
     """
@@ -167,7 +206,8 @@ def select_call_external_system_list(old_record=None, new_record=None,
                 changed_property = get_record_diff(old_record, new_record)
                 property_list = ["pubdate", "publish_status", "file_counts"]
                 for property in property_list:
-                    if changed_property["before"].get(property) != changed_property["after"].get(property):
+                    if changed_property["before"].get(property) != \
+                        changed_property["after"].get(property):
                         selected_system_set.add(EXTERNAL_SYSTEM.OA)
 
     except Exception as ex:
@@ -270,13 +310,18 @@ def get_file_counts(files):
     return file_counts
 
 
-def validate_records(old_record, new_record, old_item_reference_list, new_item_reference_list):
+def validate_records(old_record,
+                     new_record,
+                     old_item_reference_list,
+                     new_item_reference_list):
     """valudate records
     Args:
         old_record(WekoRocord): record before update
         new_record(WekoRocord): record after update
-        old_item_reference_list(list(ItemReference)): item reference list before update
-        new_item_reference_list(list(ItemReference)):item reference list after update
+        old_item_reference_list(list(ItemReference)):
+            item reference list before update
+        new_item_reference_list(list(ItemReference)):
+            item reference list after update
     Returns:
         boolean: Whether records are valid
     """
@@ -291,11 +336,15 @@ def validate_records(old_record, new_record, old_item_reference_list, new_item_r
     pid_value_without_ver = get_pid_value_without_ver(old_record, new_record)
     if pid_value_without_ver is None:
         return False
+    if not isinstance(old_item_reference_list, list):
+        return
     for reference in old_item_reference_list:
         if not isinstance(reference, ItemReference):
             return False
         if pid_value_without_ver != reference.src_item_pid.split('.')[0]:
             return False
+    if not isinstance(new_item_reference_list, list):
+        return
     for reference in new_item_reference_list:
         if not isinstance(reference, ItemReference):
             return False
@@ -310,7 +359,8 @@ def get_record_diff(old_record, new_record):
         old_record(WekoRocord): record before update
         new_record(WekoRocord): record after update
     Returns:
-        dict: the difference of publish_status, pubdate and file_counts between old record and new record
+        dict: the difference of publish_status, pubdate and file_counts
+        between old record and new record
     """
     diff = {}
     if old_record is None:
