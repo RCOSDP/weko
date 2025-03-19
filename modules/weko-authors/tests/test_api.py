@@ -204,6 +204,8 @@ class TestWekoAuthors:
         
         author_id=5
         es_id = create_author(json.loads(json.dumps(test_data)), author_id)
+        author = Authors.query.filter_by(id=author_id).one()
+        id = author.json["id"]
         
         # is_deleted is false, 
         data={
@@ -230,6 +232,19 @@ class TestWekoAuthors:
                 }
             ],
         }
+        es_author = {
+            'hits': {
+                'total': 1,
+                'hits': [
+                    {
+                        '_id': id,
+                        '_source': {
+                        }
+                    }
+                ]
+            }
+        }
+        RecordIndexer().client.search = MagicMock(return_value=es_author)
         mock_filter_by =mocker.patch("weko_authors.api.Authors.query.filter_by")
         mock_filter_by.return_value.one.return_value = mock_author
         WekoAuthors.update(author_id,data)
@@ -274,6 +289,32 @@ class TestWekoAuthors:
         assert author.json["is_deleted"] == False
         res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
         assert res["_source"]["is_deleted"] == "false"
+        
+    def test_a(self,app,db,esindex,mocker,authors):
+        test_data = {
+            "authorNameInfo": [{"familyName": "テスト","firstName": "ハナコ","fullName": "","language": "ja-Kana","nameFormat": "familyNmAndNm","nameShowFlg": "true"}],
+            "authorIdInfo": [{"idType": "2","authorId": "01234","authorIdShowFlg": "true"}],
+            "emailInfo": [{"email": "example@com"}],
+            "is_deleted":"false"
+        }
+        
+        author_id=7
+        #  es_id = create_author(json.loads(json.dumps(test_data)), author_id)
+        
+        # is_deleted is false, 
+        data={
+            "authorNameInfo": [{"familyName": "テスト","firstName": "ハナコ","fullName": "","language": "ja-Kana","nameFormat": "familyNmAndNm","nameShowFlg": "true"}],
+            "authorIdInfo": [{"idType": "2","authorId": "01234","authorIdShowFlg": "true"}],
+            "emailInfo": [{"email": "example@com"}],
+            "is_deleted":False
+        }
+        search_data = {
+            "hits": {
+                "total": 0,
+                "hits": [],
+            },
+        }
+        WekoAuthors.update(author_id,data)
 
 #     def get_all(cls, with_deleted=True, with_gather=True):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_all -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -289,7 +330,7 @@ class TestWekoAuthors:
         
         authors_result, external_result = WekoAuthors.get_author_for_validation()
         assert authors_result == {"1":True,"2":True,"3":True,"4":False}
-        assert external_result == {"1":{"1":["1"],"2":["2"]},"2":{"1234":["1"],"5678":["2"]}}
+        assert external_result == {"1":{"1":["1"],"2":["2"]},"2":{"1234":["1"],"5678":["2"]},"3":{"12345":["1"]}}
 
 #     def get_identifier_scheme_info(cls):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_identifier_scheme_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -352,6 +393,73 @@ class TestWekoAuthors:
         
         assert data == [[None,None,None,None,None,None,None,None,None,None,None]]
         
+    #     def get_by_range(cls, start_point, sum, with_deleted=True, with_gather=True):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_by_range -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    @pytest.mark.parametrize('base_app',[dict(
+        is_es=True
+    )],indirect=['base_app'])
+    def test_get_by_range(self, app, authors, mocker):
+        result = WekoAuthors.get_by_range(0, 10, False, False)
+        authors_copy = authors
+        authors_copy.pop()
+        assert authors_copy == result
+        result = WekoAuthors.get_by_range(0, 10, True, False)
+        assert authors == result
+        result = WekoAuthors.get_by_range(0, 10, False, True)
+        assert authors == result
+        with pytest.raises(Exception):
+            mocker.patch.object(Authors, 'id', return_value = None)
+            WekoAuthors.get_by_range(0, 10, True, True)
+            
+#     def get_pk_id_by_weko_id(cls, weko_id):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_pk_id_by_weko_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    @pytest.mark.parametrize('base_app',[dict(
+        is_es=True
+    )],indirect=['base_app'])
+    def test_get_pk_id_by_weko_id(self, app, mocker):
+        data = {
+            "hits": {
+                "total": 1,
+                "hits": [
+                    {
+                        "_source": {
+                            "authorIdInfo": [
+                                {"idType": "1", "authorId": "1111", "authorIdShowFlg": "true"},
+                                {"idType": "2", "authorId": "1111", "authorIdShowFlg": "true"},
+                            ],
+                            "pk_id": "1",
+                        },
+                    },
+                ],
+            },
+        }
+        mock_indexer = RecordIndexer()
+        mocker.patch("weko_authors.api.RecordIndexer",return_value=mock_indexer)
+        mock_indexer.client = MockClient()
+        mock_indexer.client.return_value=data
+        result = WekoAuthors.get_pk_id_by_weko_id("1111")
+        assert result == "1"
+        result = WekoAuthors.get_pk_id_by_weko_id("-1")
+        assert result == -1
+        
+#     def get_weko_id_by_pk_id(cls, pk_id):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_weko_id_by_pk_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    @pytest.mark.parametrize('base_app',[dict(
+        is_es=True
+    )],indirect=['base_app'])
+    def test_get_weko_id_by_pk_id(self, app, mocker, authors):
+        result = WekoAuthors.get_weko_id_by_pk_id("1")
+        assert result == "1"
+        result = WekoAuthors.get_weko_id_by_pk_id("-1")
+        assert result == None
+        with pytest.raises(Exception):
+            result = WekoAuthors.get_weko_id_by_pk_id("3")
+        with pytest.raises(Exception):
+            result = WekoAuthors.get_weko_id_by_pk_id("4")
+        with pytest.raises(Exception):
+            WekoAuthors.get_weko_id_by_pk_id("test_pk_id")
+
+  
 from sqlalchemy.exc import SQLAlchemyError
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsMappingMaxItem -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -973,81 +1081,17 @@ class TestWekoAuthorsPrepareExport:
         # Verify headers and labels match
         assert len(row_header) == len(row_label_en)
         assert len(row_header) == len(row_label_jp)
-        
-#     def get_by_range(cls, start_point, sum, with_deleted=True, with_gather=True):
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_by_range -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-    @pytest.mark.parametrize('base_app',[dict(
-        is_es=True
-    )],indirect=['base_app'])
-    def test_get_by_range(self, app, authors, mocker):
-        result = WekoAuthors.get_by_range(0, 10, False, False)
-        authors_copy = authors
-        authors_copy.pop()
-        assert authors_copy == result
-        result = WekoAuthors.get_by_range(0, 10, True, False)
-        assert authors == result
-        result = WekoAuthors.get_by_range(0, 10, False, True)
-        assert authors == result
-        with pytest.raises(Exception):
-            mocker.patch.object(Authors, 'id', return_value = None)
-            WekoAuthors.get_by_range(0, 10, True, True)
-            
-#     def get_pk_id_by_weko_id(cls, weko_id):
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_pk_id_by_weko_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-    @pytest.mark.parametrize('base_app',[dict(
-        is_es=True
-    )],indirect=['base_app'])
-    def test_get_pk_id_by_weko_id(self, app, mocker):
-        data = {
-            "hits": {
-                "total": 1,
-                "hits": [
-                    {
-                        "_source": {
-                            "authorIdInfo": [
-                                {"idType": "1", "authorId": "1111", "authorIdShowFlg": "true"},
-                                {"idType": "2", "authorId": "1111", "authorIdShowFlg": "true"},
-                            ],
-                            "pk_id": "1",
-                        },
-                    },
-                ],
-            },
-        }
-        mock_indexer = RecordIndexer()
-        mocker.patch("weko_authors.api.RecordIndexer",return_value=mock_indexer)
-        mock_indexer.client = MockClient()
-        mock_indexer.client.return_value=data
-        result = WekoAuthors.get_pk_id_by_weko_id("1111")
-        assert result == "1"
-        result = WekoAuthors.get_pk_id_by_weko_id("-1")
-        assert result == -1
-        
-#     def get_weko_id_by_pk_id(cls, pk_id):
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_weko_id_by_pk_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-    @pytest.mark.parametrize('base_app',[dict(
-        is_es=True
-    )],indirect=['base_app'])
-    def test_get_weko_id_by_pk_id(self, app, mocker, authors):
-        result = WekoAuthors.get_weko_id_by_pk_id("1")
-        assert result == "1"
-        result = WekoAuthors.get_weko_id_by_pk_id("-1")
-        assert result == None
-        with pytest.raises(Exception):
-            result = WekoAuthors.get_weko_id_by_pk_id("3")
-        with pytest.raises(Exception):
-            result = WekoAuthors.get_weko_id_by_pk_id("4")
-        with pytest.raises(Exception):
-            WekoAuthors.get_weko_id_by_pk_id("test_pk_id")
 
 #     def get_used_scheme_of_id_prefix(cls):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsGetUsedSchemeOfIdPrefix -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+class TestWekoAuthorsGetUsedSchemeOfIdPrefix:
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_used_scheme_of_id_prefix_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
     )],indirect=['base_app'])
     def test_get_used_scheme_of_id_prefix_1(self, app, authors, authors_prefix_settings):
         result = WekoAuthors.get_used_scheme_of_id_prefix()
-        assert result == (['ORCID'], {1: 'WEKO', 2: 'ORCID', 3: 'CiNii', 4: 'KAKEN2', 5: 'ROR'})
+        assert result == (['ORCID', 'CiNii'], {1: 'WEKO', 2: 'ORCID', 3: 'CiNii', 4: 'KAKEN2', 5: 'ROR'})
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_used_scheme_of_id_prefix_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     @pytest.mark.parametrize('base_app',[dict(
@@ -1066,14 +1110,16 @@ class TestWekoAuthorsPrepareExport:
         assert result == ([None], {})
 
 #     def get_used_scheme_of_affiliation_id(cls):
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_used_scheme_of_affiliation_id_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsGetUsedSchemeOfAffiliationId -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+class TestWekoAuthorsGetUsedSchemeOfAffiliationId:
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_used_scheme_of_affiliation_id_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp 
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
     )],indirect=['base_app'])
-    def test_get_used_scheme_of_affiliation_id_1(self, app, authors):        
+    def test_get_used_scheme_of_affiliation_id_1(self, app, authors, authors_affiliation_settings):        
         result = WekoAuthors.get_used_scheme_of_affiliation_id()
-        assert result == ([], {})
-        
+        assert result == (['ISNI', 'GRID'], {1: 'ISNI', 2: 'GRID', 3: 'Ringgold', 4: 'kakenhi'})
+
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_used_scheme_of_affiliation_id_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
@@ -1081,11 +1127,11 @@ class TestWekoAuthorsPrepareExport:
     def test_get_used_scheme_of_affiliation_id_2(self, app, authors_affiliation_settings):        
         result = WekoAuthors.get_used_scheme_of_affiliation_id()
         assert result == ([], {1: 'ISNI', 2: 'GRID', 3: 'Ringgold', 4: 'kakenhi'})
-
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_used_scheme_of_affiliation_id_3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp 
+  
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_used_scheme_of_affiliation_id_3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
     )],indirect=['base_app'])
-    def test_get_used_scheme_of_affiliation_id_3(self, app, authors, authors_affiliation_settings):        
+    def test_get_used_scheme_of_affiliation_id_3(self, app, authors):
         result = WekoAuthors.get_used_scheme_of_affiliation_id()
-        assert result == ([], {1: 'ISNI', 2: 'GRID', 3: 'Ringgold', 4: 'kakenhi'})
+        assert result == ([None], {})
