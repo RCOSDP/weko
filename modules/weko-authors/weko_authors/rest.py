@@ -670,10 +670,18 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
 
             if author_by_pk and not es_id:
                 es_id = author_by_pk.json.get("id")
+                search_results = current_search_client.search(
+                    index=search_index,
+                    body={"query": {"term": {"_id": es_id}}},
+                    size=1
+                )
+                if search_results["hits"]["total"]> 0:
+                    author_by_es = search_results["hits"]["hits"][0]["_source"]
 
             if author_by_es and not pk_id:
                 pk_id = author_by_es.get("pk_id")
-
+                author_by_pk = Authors.query.filter_by(id=pk_id).first()
+                
             if author_by_pk and author_by_es and str(author_by_pk.id) != str(author_by_es.get("pk_id")):
                 raise BadRequest("Parameters 'id' and 'pk_id' refer to different users.")
 
