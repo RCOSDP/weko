@@ -119,7 +119,7 @@ def get_oa_policy():
         title = request.args.get("title", "").strip()
 
         if not issn and not eissn and not title:
-            return jsonify({"error": "ISSN、eISSN、または雑誌名を入力してください。"}), 400
+            return jsonify({"error": "Please enter ISSN, eISSN, or journal title"}), 400
 
         api_url = current_app.config.get("WEKO_ITEMS_UI_OA_POLICY_API_URL")
         api_code = current_app.config.get("WEKO_ITEMS_UI_OA_POLICY_API_CODE")
@@ -128,7 +128,7 @@ def get_oa_policy():
         token_info = get_access_token(api_code)
 
         if not token_info or "access_token" not in token_info:
-            return jsonify({"error": "認証エラーが発生しました。"}), 401
+            return jsonify({"error": "Authentication error occurred"}), 401
 
         token = token_info["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
