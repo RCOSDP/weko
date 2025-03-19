@@ -513,6 +513,7 @@ def test_get_acl_users(client, users, index, is_permission):
         res = client.post(url, json={})
         assert_role(res, is_permission)
 
+
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_get(client, users):
     """
@@ -527,13 +528,11 @@ def test_get(client, users):
     url = url_for("weko_authors.get")
     login_user_via_session(client=client, email=users[0]['email'])
     
-    # not exist searchKey, sortKey, sortOrder
-    input = {"searchKey": "", "pageNumber": 1, "numOfPage": 25,
-             "sortKey": "", "sortOrder": ""}
+    input = {"searchKey": "example", "pageNumber": 1, "numOfPage": 10,
+             "sortKey": "name", "sortOrder": "asc"}
     data = {
         "test-authors":{"hits":{"hits":[
-            {"_source":{"authorIdInfo":[]}}, # author_id_info is false
-            {"_source":{"authorIdInfo":[{"authorId":"test_id"}]}}
+            {"_source":{"authorIdInfo":[{"authorId":"test_id"}], 'pk_id':'xxx'}}, # author_id_info is false
         ]}},
         "test-weko":{"hits":{"total":1}}
     }
@@ -541,36 +540,99 @@ def test_get(client, users):
     record_indexer.client=MockClient(data)
     test = {
         "hits":{"hits":[
-            {"_source":{"authorIdInfo":[]}},
-            {"_source":{"authorIdInfo":[{"authorId":"test_id"}]}}
+            {"_source":{"authorIdInfo":[{"authorId":"test_id"}], 'pk_id':'xxx'}},
         ]},
-        "item_cnt":{"aggregations":{"item_count":{"buckets":[{"key":"test_id","doc_count":1}]}}}
+        "item_cnt":{"aggregations":{"item_count":{"buckets":[{"key":"xxx","doc_count":1}]}}}
     }
     with patch("weko_authors.views.RecordIndexer",return_value=record_indexer):
         res = client.post(url, json=input)
         assert res.status_code == 200
         assert get_json(res) == test
-    
-    input = {"searchKey": "test_key", "pageNumber": 1, "numOfPage": 25,
-             "sortKey": "test_sort", "sortOrder": "test_order"}
+
+    input = {"searchKey": "", "pageNumber": 1, "numOfPage": 10,
+             "sortKey": "name", "sortOrder": "asc"}
     data = {
         "test-authors":{"hits":{"hits":[
-            {"_source":{"authorIdInfo":[{"authorId":"test_id"}]}}
+            {"_source":{"authorIdInfo":[{"authorId":"test_id"}], 'pk_id':'xxx'}}, # author_id_info is false
         ]}},
-        "test-weko":{"hits":{"total":0}}# result_itemCnt is not
+        "test-weko":{"hits":{"total":1}}
     }
     record_indexer = RecordIndexer()
     record_indexer.client=MockClient(data)
     test = {
         "hits":{"hits":[
-            {"_source":{"authorIdInfo":[{"authorId":"test_id"}]}}
+            {"_source":{"authorIdInfo":[{"authorId":"test_id"}], 'pk_id':'xxx'}},
         ]},
-        "item_cnt":{"aggregations":{"item_count":{"buckets":[]}}}
+        "item_cnt":{"aggregations":{"item_count":{"buckets":[{"key":"xxx","doc_count":1}]}}}
     }
     with patch("weko_authors.views.RecordIndexer",return_value=record_indexer):
         res = client.post(url, json=input)
         assert res.status_code == 200
         assert get_json(res) == test
+
+    input = {"searchKey": "example", "pageNumber": 1, "numOfPage": None,
+             "sortKey": "name", "sortOrder": "asc"}
+    data = {
+        "test-authors":{"hits":{"hits":[
+            {"_source":{"authorIdInfo":[{"authorId":"test_id"}], 'pk_id':'xxx'}}, # author_id_info is false
+        ]}},
+        "test-weko":{"hits":{"total":1}}
+    }
+    record_indexer = RecordIndexer()
+    record_indexer.client=MockClient(data)
+    test = {
+        "hits":{"hits":[
+            {"_source":{"authorIdInfo":[{"authorId":"test_id"}], 'pk_id':'xxx'}},
+        ]},
+        "item_cnt":{"aggregations":{"item_count":{"buckets":[{"key":"xxx","doc_count":1}]}}}
+    }
+    with patch("weko_authors.views.RecordIndexer",return_value=record_indexer):
+        res = client.post(url, json=input)
+        assert res.status_code == 200
+        assert get_json(res) == test
+
+    input = {"searchKey": "example", "pageNumber": None, "numOfPage": 10,
+             "sortKey": "name", "sortOrder": "asc"}
+    data = {
+        "test-authors":{"hits":{"hits":[
+            {"_source":{"authorIdInfo":[{"authorId":"test_id"}], 'pk_id':'xxx'}}, # author_id_info is false
+        ]}},
+        "test-weko":{"hits":{"total":1}}
+    }
+    record_indexer = RecordIndexer()
+    record_indexer.client=MockClient(data)
+    test = {
+        "hits":{"hits":[
+            {"_source":{"authorIdInfo":[{"authorId":"test_id"}], 'pk_id':'xxx'}},
+        ]},
+        "item_cnt":{"aggregations":{"item_count":{"buckets":[{"key":"xxx","doc_count":1}]}}}
+    }
+    with patch("weko_authors.views.RecordIndexer",return_value=record_indexer):
+        res = client.post(url, json=input)
+        assert res.status_code == 200
+        assert get_json(res) == test
+
+    input = {"searchKey": "example", "pageNumber": 1, "numOfPage": 10,
+             "sortKey": "", "sortOrder": ""}
+    data = {
+        "test-authors":{"hits":{"hits":[
+            {"_source":{"authorIdInfo":[{"authorId":"test_id"}], 'pk_id':'xxx'}}, # author_id_info is false
+        ]}},
+        "test-weko":{"hits":{"total":1}}
+    }
+    record_indexer = RecordIndexer()
+    record_indexer.client=MockClient(data)
+    test = {
+        "hits":{"hits":[
+            {"_source":{"authorIdInfo":[{"authorId":"test_id"}], 'pk_id':'xxx'}},
+        ]},
+        "item_cnt":{"aggregations":{"item_count":{"buckets":[{"key":"xxx","doc_count":1}]}}}
+    }
+    with patch("weko_authors.views.RecordIndexer",return_value=record_indexer):
+        res = client.post(url, json=input)
+        assert res.status_code == 200
+        assert get_json(res) == test
+
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_getById_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_getById_acl_guest(client):
@@ -1418,3 +1480,89 @@ def test_dbsession_clean(app, db):
     db.session.add(itemtype_name3)
     dbsession_clean(Exception)
     assert ItemTypeName.query.filter_by(id=3).first() is None
+
+
+#     def get_max_weko_id():
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_max_weko_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_get_max_weko_id(client, users, mocker ):
+    class MockClient():
+        def __init__(self,data):
+            self.data = data
+        def search(self,index=None,body=None,scroll='2m'):
+            return self.data[index]
+        def scroll(self,scroll_id='scroll_id',scroll='2m'):
+            self.data['test-authors']['hits'] ={"hits":{"hits":[]}}
+            return self.data['test-authors']['hits']
+
+    url = url_for("weko_authors.get_max_weko_id")
+    login_user_via_session(client=client, email=users[0]['email'])
+
+    data = {
+    "test-authors": {
+        "hits": {
+            "hits": [
+                {"_source": {"authorIdInfo": [{"authorId": "2",'idType': '1'}]}, 'pk_id': 'xxx'}
+            ]
+        },
+        "_scroll_id": "AAA"
+    },
+    "test-weko": {
+        "hits": {
+            "total": 1
+        }
+    }
+    }
+
+    record_indexer = RecordIndexer()
+    record_indexer.client=MockClient(data)
+    mocker.patch("weko_authors.views.RecordIndexer",return_value=record_indexer)
+    test = {'max_author_id': 2}
+    res = client.get(url)
+    assert get_json(res) == test
+
+    data_2 = {
+    "test-authors": {
+        "hits": {
+            "hits": [
+                {"_source": {}, 'pk_id': 'xxx'}
+            ]
+        },
+        "_scroll_id": "AAA"
+    },
+    "test-weko": {
+        "hits": {
+            "total": 1
+        }
+    }
+    }
+
+    record_indexer = RecordIndexer()
+    record_indexer.client=MockClient(data_2)
+    mocker.patch("weko_authors.views.RecordIndexer",return_value=record_indexer)
+    test = {'max_author_id': 0}
+    res = client.get(url)
+    assert get_json(res) == test
+
+
+    data_3 = {
+    "test-authors": {
+        "hits": {
+            "hits": [
+                {"_source": {"authorIdInfo": [{"authorId": "2",'idType': '1'}]}, 'pk_id': 'xxx'}
+            ]
+        },
+        "_scroll_id": "AAA"
+    },
+    "test-weko": {
+        "hits": {
+            "total": 1
+        }
+    }
+    }
+
+    record_indexer = RecordIndexer()
+    record_indexer.client=MockClient(data_3)
+    mocker.patch("weko_authors.views.RecordIndexer",return_value=record_indexer)
+    test = {'max_author_id': 0}
+    res = client.get(url)
+    assert get_json(res) == test

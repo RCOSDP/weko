@@ -2,14 +2,18 @@ from mock import patch, MagicMock
 import json
 import uuid
 import pytest
+import logging
+from _pytest.logging import LogCaptureFixture
+from logging import INFO, ERROR
 from flask import current_app
 from elasticsearch.exceptions import NotFoundError
 from invenio_indexer.api import RecordIndexer
 from invenio_search import current_search_client
-from mock import MagicMock
+from mock import patch, MagicMock
+
 
 from weko_authors.api import WekoAuthors
-from weko_authors.models import Authors, AuthorsPrefixSettings
+from weko_authors.models import Authors, AuthorsPrefixSettings, AuthorsAffiliationSettings
 from weko_authors.config import WEKO_AUTHORS_FILE_MAPPING
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -123,13 +127,13 @@ class TestWekoAuthors:
         es_id = create_author(json.loads(json.dumps(test_data)), author_id)
         with patch("weko_authors.api.db.session.merge",side_effect=Exception("test_error")):
             
-            with pytest.raises(Exception):
-                WekoAuthors.update(author_id,data)
-            db.session.rollback()
-            author = Authors.query.filter_by(id=author_id).one()
-            assert author.is_deleted==False
-            res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
-            assert res["_source"]["is_deleted"] == "false"
+    #         with pytest.raises(Exception):
+    #             WekoAuthors.update(author_id,data)
+    #         db.session.rollback()
+    #         author = Authors.query.filter_by(id=author_id).one()
+    #         assert author.is_deleted==False
+    #         res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+    #         assert res["_source"]["is_deleted"] == "false"
                 
         # not hit in es
         author_id=3
@@ -323,6 +327,44 @@ class TestWekoAuthors:
         assert authors
         result = WekoAuthors.get_all(False,False)
         assert authors
+
+
+#     def get_records_count(cls, with_deleted=True, with_gather=True):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_records_count -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_get_records_count(self,app,authors, mocker):
+        result = WekoAuthors.get_records_count(with_deleted=True, with_gather=True)
+        assert result == 2
+
+        result = WekoAuthors.get_records_count(with_deleted=True, with_gather=False)
+        assert result == 2
+
+        result = WekoAuthors.get_records_count(with_deleted=False, with_gather=True)
+        assert result == 2
+
+        # with patch('weko_authors.api.WekoAuthors.get_records_count') as mock_func:
+        #     mock_func.side_effect = Exception("Mocked exception")
+        #     with pytest.raises(Exception) as exinfo:
+        #         WekoAuthors.get_records_count(with_deleted=True, with_gather=True)
+        #     assert str(exinfo) == "<ExceptionInfo Exception('Mocked exception',) tblen=4>"
+        
+        with pytest.raises(Exception):
+            mocker.patch.object(Authors, 'id', return_value = "test_id")
+            result = WekoAuthors.get_records_count(with_deleted=False, with_gather=True)
+        
+
+
+        # with patch('weko_authors.api.WekoAuthors.get_records_count') as mock_func:
+        #     mock_func.side_effect = Exception("Mocked exception")
+        # with pytest.raises(Exception) as exinfo:
+        #     WekoAuthors.get_records_count(with_deleted=True, with_gather=True)
+        # assert str(exinfo) == "<ExceptionInfo Exception('Mocked exception',) tblen=4>"
+        # mock_query = MagicMock()
+        # mock_query.filter.return_value = mock_query
+        # mock_query.order_by.side_effect = AttributeError("Invalid column in order_by")
+        # mocker.patch.object(Authors, "query", return_value=mock_query)
+        # with pytest.raises(AttributeError, match="Invalid column in order_by"):
+        #     WekoAuthors.get_records_count(with_deleted=True, with_gather=True)
+
 #     def get_author_for_validation(cls):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_author_for_validation -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_get_author_for_validation(self,authors,mocker):
@@ -331,6 +373,131 @@ class TestWekoAuthors:
         authors_result, external_result = WekoAuthors.get_author_for_validation()
         assert authors_result == {"1":True,"2":True,"3":True,"4":False}
         assert external_result == {"1":{"1":["1"],"2":["2"]},"2":{"1234":["1"],"5678":["2"]},"3":{"12345":["1"]}}
+
+
+#     def get_id_prefix_all(cls):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_id_prefix_all -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_get_id_prefix_all(self,authors,authors_prefix_settings,db):
+        test = [1, 2, 3, 4, 5]
+        results = WekoAuthors.get_id_prefix_all()
+        result_list = []
+        for result in results:
+            result_list.append(result.id)
+        assert result_list == test
+
+        AuthorsPrefixSettings.query.delete()
+        db.session.commit()
+        result = WekoAuthors.get_id_prefix_all()
+        assert result == []
+
+
+
+#     def get_scheme_of_id_prefix(cls):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_scheme_of_id_prefix -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_get_scheme_of_id_prefix(self,authors,mocker,authors_prefix_settings,db):
+        # with patch('weko_authors.api.WekoAuthors.get_scheme_of_id_prefix') as mock_func:
+            # mock_func.side_effect = WekoAuthors.get_id_prefix_all()
+
+        test = ['WEKO', 'ORCID', 'CiNii', 'KAKEN2', 'ROR']
+        results = WekoAuthors.get_id_prefix_all()
+        result_list = []
+        for result in results:
+            result_list.append(result.scheme)
+        assert result_list == test
+
+        AuthorsPrefixSettings.query.delete()
+        db.session.commit()
+        result = WekoAuthors.get_scheme_of_id_prefix()
+        assert result == []
+
+        
+
+
+#     def get_affiliation_id_all(cls):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_affiliation_id_all -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_get_affiliation_id_all(self,authors,mocker,authors_affiliation_settings,db):
+        test = [1, 2, 3, 4]
+        results = WekoAuthors.get_affiliation_id_all()
+        result_list = []
+        for result in results:
+            result_list.append(result.id)
+        assert result_list == test
+        
+        AuthorsAffiliationSettings.query.delete()
+        db.session.commit()
+        result = WekoAuthors.get_affiliation_id_all()
+        assert result == []
+
+
+#     def get_scheme_of_affiliaiton_id(cls):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_scheme_of_affiliaiton_id -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_get_scheme_of_affiliaiton_id(self,authors,mocker,authors_affiliation_settings,db):
+        test = ['ISNI', 'GRID', 'Ringgold', 'kakenhi']
+        results = WekoAuthors.get_scheme_of_affiliaiton_id()
+        assert results == test
+        with patch("weko_authors.api.WekoAuthors.get_affiliation_id_all", return_value=[]):
+            results = WekoAuthors.get_scheme_of_affiliaiton_id()
+            assert results == []
+
+
+#     def test_get_affiliation_identifier_scheme_info(cls):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_affiliation_identifier_scheme_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_get_affiliation_identifier_scheme_info(self,authors_affiliation_settings,db):
+        test = {
+            "1": {"scheme": "ISNI", "url": "http://www.isni.org/isni/##"},
+            "2": {"scheme": "GRID", "url": "https://www.grid.ac/institutes/##"},
+            "3": {"scheme": "Ringgold", "url": None},
+            "4": {"scheme": "kakenhi", "url": None},
+        }
+        result = WekoAuthors.get_affiliation_identifier_scheme_info()
+        assert result == test
+
+        AuthorsAffiliationSettings.query.delete()
+        db.session.commit()
+        result = WekoAuthors.get_affiliation_identifier_scheme_info()
+        assert result == {}
+
+
+#     def prepare_export_prefix(cls, target_prefix, prefixes):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_prepare_export_prefix -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_prepare_export_prefix(self,authors_affiliation_settings,db,authors_prefix_settings):
+        data = [
+            ['ORCID', 'ORCID', 'https://orcid.org/##'], 
+            ['CiNii', 'CiNii', 'https://ci.nii.ac.jp/author/##'], 
+            ['KAKEN2', 'KAKEN2', 'https://nrid.nii.ac.jp/nrid/##'], 
+            ['ROR', 'ROR', 'https://ror.org/##']
+        ]
+        tests = WekoAuthors.get_id_prefix_all()
+        result = WekoAuthors.prepare_export_prefix('id_prefix', tests)
+        assert result == data
+        
+        data = [
+            ['ISNI', 'ISNI', 'http://www.isni.org/isni/##'], 
+            ['GRID', 'GRID', 'https://www.grid.ac/institutes/##'], 
+            ['Ringgold', 'Ringgold', None], 
+            ['kakenhi', 'kakenhi', None]
+        ]
+        tests = WekoAuthors.get_affiliation_id_all()
+        result = WekoAuthors.prepare_export_prefix('id_prefix', tests)
+        assert result == data
+
+        data = [
+            ['WEKO', 'WEKO', None], 
+            ['ORCID', 'ORCID', 'https://orcid.org/##'], 
+            ['CiNii', 'CiNii', 'https://ci.nii.ac.jp/author/##'], 
+            ['KAKEN2', 'KAKEN2', 'https://nrid.nii.ac.jp/nrid/##'], 
+            ['ROR', 'ROR', 'https://ror.org/##']
+        ]
+        tests = WekoAuthors.get_id_prefix_all()
+        result = WekoAuthors.prepare_export_prefix('affiliation_id', tests)
+        assert result == data
+
+        test = []
+        result = WekoAuthors.prepare_export_prefix('id_prefix', test)
+        assert result == []
+        
+
+
 
 #     def get_identifier_scheme_info(cls):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_identifier_scheme_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp

@@ -1,12 +1,24 @@
+
 import json
 import pytest
 from mock import patch, MagicMock, call, mock_open, call
-from datetime import datetime
+from datetime import datetime,  timedelta, timezone
 from flask import Flask, current_app
 from celery import states
-from invenio_cache import current_cache
 
-from weko_authors.tasks import export_all,import_author,check_is_import_available, import_authors_from_temp_files, import_authors_for_over_max
+import logging
+from logging import INFO
+from _pytest.logging import LogCaptureFixture
+from sqlalchemy.exc import SQLAlchemyError
+from elasticsearch import ElasticsearchException
+
+from invenio_cache import current_cache
+from weko_authors.tasks import export_all,import_author,check_is_import_available,import_id_prefix,import_affiliation_id,import_author_over_max,import_authors_from_temp_files,import_authors_for_over_max,write_result_temp_file,update_summary,prepare_display_status,prepare_success_msg,check_task_end,check_is_import_available,check_tmp_file_time_for_author,update_cache_data, \
+import_authors_from_temp_files, import_authors_for_over_max
+from weko_workflow.utils import get_cache_data, delete_cache_data
+
+# from .config import WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY
+
 
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -18,31 +30,69 @@ def test_export_all(app,mocker):
     mocker.patch("weko_authors.tasks.save_export_url")
     mocker.patch("weko_authors.tasks.export_authors",return_value="test_url.txt")
 
-    result = export_all()
+    result = export_all('author_db')
     assert result == "test_url.txt"
     
     mocker.patch("weko_authors.tasks.export_authors",return_value=None)
-    result = export_all()
+    result = export_all('id_prefix')
     assert result == None
     
     mocker.patch("weko_authors.tasks.export_authors",side_effect=Exception)
-    result = export_all()
+    result = export_all('XXXX')
     assert result == None
 
+
 # def import_author(author):
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_import_author(app):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_01_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_01_import_author(app):
     with patch("weko_authors.tasks.import_author_to_system"):
-        result = import_author("test author")
+        result = import_author({"status":"", "weko_id":"", "current_weko_id":""}, True)
         assert result["status"] == "SUCCESS"
-        
-    with patch("weko_authors.tasks.import_author_to_system",side_effect=Exception({"error_id":"1"})):
-        result = import_author("test author")
-        assert result["status"] == "FAILURE"
-        assert result["error_id"] == "1"
-    with patch("weko_authors.tasks.import_author_to_system",side_effect=KeyError("is_deleted")):
-        result = import_author("test author")
-        assert result["status"] == "FAILURE"
+
+
+# def import_author(author):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_02_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_02_import_author(app, caplog: LogCaptureFixture):
+    with patch("weko_authors.tasks.import_author_to_system",side_effect=SQLAlchemyError("SQLAlchemyError")):
+        result = import_author({"status":"", "weko_id":"", "current_weko_id":""}, True)
+    info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
+    expected = [('testapp', logging.ERROR, 'SQLAlchemyError')] * 6
+    assert info_logs == expected
+    assert result["status"] == "FAILURE"
+
+
+# def import_author(author):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_03_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_03_import_author(app, caplog: LogCaptureFixture):
+    with patch("weko_authors.tasks.import_author_to_system",side_effect=ElasticsearchException("ElasticsearchException")):
+        result = import_author({"status":"", "weko_id":"", "current_weko_id":""}, True)
+    info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
+    expected = [('testapp', logging.ERROR, 'ElasticsearchException')] * 6
+    assert info_logs == expected
+    assert result["status"] == "FAILURE"
+
+
+# def import_author(author):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_04_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_04_import_author(app, caplog: LogCaptureFixture):
+    with patch("weko_authors.tasks.import_author_to_system",side_effect=TimeoutError("TimeoutError")):
+        result = import_author({"status":"", "weko_id":"", "current_weko_id":""}, True)
+    info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
+    expected = [('testapp', logging.ERROR, 'TimeoutError')] * 6
+    assert info_logs == expected
+    assert result["status"] == "FAILURE"
+
+
+# def import_author(author):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_05_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_05_import_author(app, caplog: LogCaptureFixture):
+    with patch("weko_authors.tasks.import_author_to_system",side_effect=TimeoutError({"error_id": 123, "message": "An error occurred"})):
+        result = import_author({"status":"", "weko_id":"", "current_weko_id":""}, True)
+    info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
+    expected = [('testapp', logging.ERROR, "{'error_id': 123, 'message': 'An error occurred'}")] * 6
+    assert info_logs == expected
+    assert result["status"] == "FAILURE"
+
 
 # def check_is_import_available(group_task_id=None):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_check_is_import_available -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -376,8 +426,6 @@ class TestImportAuthorsFromTempFiles:
             return mock
         
 
-
-
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::TestImportAuthorsForOverMax -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 class TestImportAuthorsForOverMax:
     """Test class for import_authors_for_over_max function."""
@@ -693,4 +741,185 @@ class TestImportAuthorsForOverMax:
             # Verify
             # Check that a new summary was created
             mock_update_summary.assert_called_with(0,0)
-                
+
+
+# def import_id_prefix(prefix):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_import_id_prefix -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_import_id_prefix(app, caplog: LogCaptureFixture):
+    result = import_id_prefix(None)
+    assert result['status'] == 'SUCCESS'
+    assert 'start_date' in result
+    assert 'end_date' in result
+
+    with patch('weko_authors.tasks.import_id_prefix_to_system', side_effect=ValueError({"error_id": 123, "message": "DB upload failed"})):
+        # mock_func.side_effect = Exception("Mocked exception")
+        # with pytest.raises(Exception) as ex:
+        result = import_id_prefix(None)
+        info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
+        assert [('testapp', logging.ERROR, "{'error_id': 123, 'message': 'DB upload failed'}")] == info_logs
+        assert result['status'] == 'FAILURE'
+    
+
+# def import_affiliation_id(affiliation_id):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_import_affiliation_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_import_affiliation_id(app, caplog: LogCaptureFixture):
+    result = import_affiliation_id(None)
+    assert result['status'] == 'SUCCESS'
+    assert 'start_date' in result
+    assert 'end_date' in result
+
+    with patch('weko_authors.tasks.import_affiliation_id_to_system', side_effect=ValueError({"error_id": 123, "message": "DB upload failed"})):
+        result = import_affiliation_id(None)
+        info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
+        assert [('testapp', logging.ERROR, "{'error_id': 123, 'message': 'DB upload failed'}")] == info_logs
+        assert result['status'] == 'FAILURE'
+    
+
+# def import_author_over_max(reached_point, task_ids ,max_part):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_import_author_over_max -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_import_author_over_max(app, caplog: LogCaptureFixture):
+    reached_points = {"part_number": 101, "count": 3}
+    task_ids = ["aaa","bbb","ccc"]
+
+    with patch('weko_authors.tasks.check_task_end', return_value=0), \
+        patch("weko_authors.tasks.import_authors_from_temp_files") as mock_temp:
+            result = import_author_over_max(reached_points, task_ids, 5)
+            assert result['status'] == 'SUCCESS'  
+            mock_temp.assert_called()
+
+    with patch('weko_authors.tasks.check_task_end', return_value=0):
+        with patch("weko_authors.tasks.import_authors_from_temp_files", side_effect=ValueError({"error_id": 123, "message": "file not found"})) as mock_temp:
+            info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
+            result = import_author_over_max(reached_points, task_ids, 5)
+            [('testapp', logging.ERROR, "{'error_id': 123, 'message': 'file not found'}")] == info_logs
+            assert result['status'] == 'FAILURE'
+
+
+# def write_result_temp_file(result):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_write_result_temp_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_write_result_temp_file(app):
+    # with patch('weko_authors.tasks.write_result_temp_file', result_file_path):
+    # with patch('weko_authors.tasks.current_cache.get') as mock_getenv:
+        # mock_getenv.return_value = result_file_path
+    test = [{
+            "start_date": 2025-3-10,
+            "end_date": 2025-3-14,
+            "weko_id": 1,
+            "full_name": "kimura,shinji",
+            "type": "new",
+            "status": 'SUCCESS',
+            "error_id": "delete_author_link"
+            }]
+    with patch("weko_authors.tasks.open") as mock_writer:
+        update_cache_data(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY"], "/data/test_over_max")
+        write_result_temp_file(test)
+        mock_writer.assert_called()
+
+    with pytest.raises(Exception):
+        write_result_temp_file(test)
+
+
+# def update_summary(success_count, failure_count):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_update_summary -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_update_summary(app):
+    summary = get_cache_data(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"])
+    success_count = summary["success_count"]
+    failure_count = summary["failure_count"]
+    update_summary(2, 2)
+    summary = get_cache_data(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"])
+    assert summary["success_count"] == success_count + 2
+    assert summary["failure_count"] == failure_count + 2
+    
+    summary = delete_cache_data(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"])
+    update_summary(2, 2)
+    summary = get_cache_data(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"])
+    assert summary["success_count"] == 2
+    assert summary["failure_count"] == 2
+    
+
+# def prepare_display_status(status, type, error_id):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_prepare_display_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_prepare_display_status():
+    result = prepare_display_status('SUCCESS', 'new', None)
+    assert result == 'Register Success'
+
+    result = prepare_display_status('FAILURE', type, 'delete_author_link')
+    assert result == 'Error: The author is linked to items and cannot be deleted.'
+
+    result = prepare_display_status('FAILURE', type, 'other_error')
+    assert result == 'Error: Failed to import.'
+
+
+# def prepare_success_msg(type):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_prepare_success_msg -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_prepare_success_msg():
+    result = prepare_success_msg('new')
+    assert result == 'Register Success'
+
+    result = prepare_success_msg('update')
+    assert result == 'Update Success'
+    
+    result = prepare_success_msg('deleted')
+    assert result == 'Delete Success'
+
+    result = prepare_success_msg('none')
+    assert result == ''
+
+
+# def check_task_end(task_ids):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_check_task_end -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_check_task_end(app):
+    data = ["aaa","bbb","ccc"]
+    mock_task1 = MagicMock()
+    mock_task1.result = {'end_date': '2023-01-01'}
+    
+    mock_task2 = MagicMock()
+    mock_task2.result = {'end_date': '2023-01-01'}
+    
+    mock_task3 = MagicMock()
+    mock_task3.result = {'end_date': '2023-01-01'}
+    with patch('weko_authors.tasks.import_author.AsyncResult', side_effect=[mock_task1, mock_task2, mock_task3]),\
+        patch("weko_authors.tasks.sleep") as mock_sleep:
+        result = check_task_end(data)
+        assert result == 0
+        mock_sleep.assert_not_called()
+    with patch("weko_authors.tasks.import_author.AsyncResult",return_value=MagicMock(result = "")),\
+        patch("weko_authors.tasks.sleep") as mock_sleep:
+        result = check_task_end(data)
+        mock_sleep.assert_called()
+
+
+# def check_tmp_file_time_for_author():
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_check_tmp_file_time_for_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_check_tmp_file_time_for_author(app, caplog: LogCaptureFixture):
+    mock_file_path = '/mock/path/to/file'
+    mock_current_time = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    with patch('glob.glob', return_value=[mock_file_path]), \
+        patch('os.path.getmtime', return_value=(mock_current_time - timedelta(seconds=3600)).timestamp()), \
+        patch('os.remove') as mock_remove,\
+        patch('os.rmdir') as mock_rmdir,\
+        patch('os.path.exists'),\
+        patch('os.listdir', return_value=[]):
+
+        check_tmp_file_time_for_author()
+        mock_remove.assert_called()
+        mock_rmdir.assert_called()
+    
+    mock_current_time = datetime.now(timezone.utc)
+    with patch('glob.glob', return_value=[mock_file_path]), \
+        patch('os.path.getmtime', return_value=(mock_current_time - timedelta(seconds=3600)).timestamp()), \
+        patch('os.remove') as mock_remove,\
+        patch('os.rmdir') as mock_rmdir,\
+        patch('os.listdir', return_value=[]):
+
+        check_tmp_file_time_for_author()
+        mock_remove.assert_not_called()
+        mock_rmdir.assert_not_called()
+    
+    mock_current_time = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    with patch('glob.glob', return_value=[mock_file_path]), \
+        patch('os.path.getmtime', return_value=(mock_current_time - timedelta(seconds=3600)).timestamp()), \
+        patch('os.remove', side_effect=OSError) as mock_remove:
+        caplog.set_level(logging.ERROR)
+
+        check_tmp_file_time_for_author()

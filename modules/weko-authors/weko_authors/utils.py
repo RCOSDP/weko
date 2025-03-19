@@ -939,9 +939,10 @@ def unpackage_and_check_import_file_for_prefix(file_format, file_name, temp_file
                         for num, data in enumerate(data_row, start=0):
                             tmp_data[header[num]] = data
                         print(tmp_data)
-                    except Exception({
+                    except Exception:
+                        ex = Exception({
                             'error_msg': _('Cannot read {} file correctly.').format(file_format.upper())
-                        }) as ex:
+                        })
                         raise ex
                     file_data.append(tmp_data)
         except UnicodeDecodeError as ex:
@@ -1461,7 +1462,6 @@ def import_id_prefix_to_system(id_prefix):
                 f'Id prefix: {id_prefix["scheme"]} import error.')
             traceback.print_exc(file=sys.stdout)
             raise ex
-
 
 def import_affiliation_id_to_system(affiliation_id):
     """

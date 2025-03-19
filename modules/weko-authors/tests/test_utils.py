@@ -4,6 +4,7 @@ import pytest
 import copy
 from mock import patch, MagicMock, Mock
 from flask import current_app
+import datetime
 from unittest.mock import mock_open
 
 from invenio_indexer.api import RecordIndexer
@@ -35,6 +36,18 @@ from weko_authors.utils import (
     import_author_to_system,
     get_count_item_link,
     count_authors,
+    update_cache_data,
+    write_tmp_part_file,
+    unpackage_and_check_import_file_for_prefix,
+    get_check_base_name,
+    get_check_result,
+    handle_check_consistence_with_mapping_for_prefix,
+    check_import_data_for_prefix,
+    validate_import_data_for_prefix,
+    import_id_prefix_to_system,
+    import_affiliation_id_to_system,
+    band_check_file_for_user,
+    prepare_import_data
     write_to_tempfile,
     create_result_file_for_user
 )
@@ -516,6 +529,7 @@ def test_unpackage_and_check_import_file(app, mocker):
     temp_file=join(dirname(__file__),"data/test_files/import_data.csv")
     result = unpackage_and_check_import_file("csv",file_name,temp_file,mapping_ids)
     assert result == 1
+
 
 # def validate_import_data(file_format, file_data, mapping_ids, mapping, list_import_id):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_validate_import_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -1028,7 +1042,6 @@ def test_validate_import_data(authors_prefix_settings,mocker):
     result = validate_import_data(file_format,file_data,mapping_ids,mapping,list_import_id)
     assert result == test
 
-
 # def get_values_by_mapping(keys, data, parent_key=None):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_get_values_by_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_get_values_by_mapping():
@@ -1259,57 +1272,132 @@ def test_flatten_authors_mapping():
 
 # def import_author_to_system(author):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_import_author_to_system -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_import_author_to_system(app,mocker):
-    # author is None
-    result = import_author_to_system(None)
-    assert result == None
-    
-    author = {
-        "status":"",
-        "is_deleted":"",
-    }
-    
-    # authorIdInfo is None,emailInfo is None,status is new
-    mock_create = mocker.patch("weko_authors.utils.WekoAuthors.create")
-    author = {
-        "status":"new",
-        "is_deleted":True,
-    }
-    test = {"is_deleted":True,"authorIdInfo":[],"emailInfo":[]}
-    result = import_author_to_system(author)
-    mock_create.assert_called_with(test)
-    
-    mocker.patch("weko_authors.utils.get_count_item_link",return_value=1)
-    # status is not new
-    author = {
-        "status":"update",
-        "is_deleted":True,
-        "pk_id":"1",
-        "authorIdInfo": [{ "authorId": "1", "authorIdShowFlg": "true", "idType": "1" }],
-        "emailInfo": [{ "email": "test.taro@test.org" }]
-    }
+def test_import_author_to_system(app, mocker):
+
+
+    author = {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎'}]}
+    status = 'new'
+    weko_id = '1234'
+    force_change_mode = False
     test = {
-        "is_deleted":True,
-        "pk_id":"1",
-        "authorIdInfo": [
-            {"idType": "1","authorId":"1","authorIdShowFlg": "true"},
-            { "authorId": "1", "authorIdShowFlg": "true", "idType": "1" },
-            ],
-        "emailInfo": [{ "email": "test.taro@test.org" }],
-        
-        }
-    mock_update = mocker.patch("weko_authors.utils.WekoAuthors.update")
-    result = import_author_to_system(author)
-    mock_update.assert_called_with("1",test)
-    
-    # status is deleted
-    author = {
-        "status":"deleted",
-        "is_deleted":True,
-        "pk_id":"1"
+        'pk_id': '1', 
+        'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎', 'fullName': 'テスト 太郎'}],
+        'is_deleted': False,
+        'authorIdInfo': [],
+        'emailInfo': []
     }
-    with pytest.raises(Exception):
-        import_author_to_system(author)
+    with patch('weko_authors.utils.check_weko_id_is_exists') as mock_check_weko_id, \
+         patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
+         patch('weko_authors.utils.db.session') as mock_session:
+        
+        mock_check_weko_id.return_value = False
+        import_author_to_system(author, status, weko_id, force_change_mode)
+        mock_check_weko_id.assert_called_once_with(weko_id, '1')
+        mock_weko_authors.create.assert_called_once()
+        actual_author = mock_weko_authors.create.call_args[0][0]
+
+        assert actual_author == test
+        mock_session.commit.assert_called_once()
+
+    author = {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎'}]}
+    status = 'update'
+    weko_id = '1234'
+    force_change_mode = False
+    test = {
+        'pk_id': '1', 
+        'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎', 'fullName': 'テスト 太郎'}],
+        'is_deleted': False,
+        'authorIdInfo': [
+            {
+                "idType": "1",
+                "authorId": "1234",
+                "authorIdShowFlg": "true"
+            }
+        ],
+        'emailInfo': []
+    }
+    with patch('weko_authors.utils.check_weko_id_is_exists') as mock_check_weko_id, \
+         patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
+         patch('weko_authors.utils.db.session') as mock_session:
+        
+        mock_check_weko_id.return_value = False
+        import_author_to_system(author, status, weko_id, force_change_mode)
+        mock_check_weko_id.assert_called_once_with(weko_id, '1')
+        mock_weko_authors.update.assert_called_once()
+        update_args = mock_weko_authors.update.call_args
+        actual_author = update_args[0][1]
+        
+        assert actual_author == test
+        mock_session.commit.assert_called_once()
+
+    author = {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎'}]}
+    status = 'deleted'
+    weko_id = '1234'
+    force_change_mode = False
+    test = {
+        'pk_id': '1', 
+        'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎', 'fullName': 'テスト 太郎'}],
+        'is_deleted': False,
+        'authorIdInfo': [
+            {
+                "idType": "1",
+                "authorId": "1234",
+                "authorIdShowFlg": "true"
+            }
+        ],
+        'emailInfo': []
+    }
+    with patch('weko_authors.utils.check_weko_id_is_exists') as mock_check_weko_id, \
+         patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
+         patch('weko_authors.utils.db.session') as mock_session, \
+         patch('weko_authors.utils.get_count_item_link') as mock_get_count_item_link:
+        
+        mock_check_weko_id.return_value = False
+        mock_get_count_item_link.return_value = 0
+        import_author_to_system(author, status, weko_id, force_change_mode)
+        mock_check_weko_id.assert_called_once_with(weko_id, '1')
+        mock_weko_authors.update.assert_called_once()
+        update_args = mock_weko_authors.update.call_args
+        actual_author = update_args[0][1]
+        
+        assert actual_author == test
+        mock_session.commit.assert_called_once()
+    
+    author =  {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎'}]}
+    status = 'new'
+    weko_id = '1234'
+    force_change_mode = False
+    with patch('weko_authors.utils.check_weko_id_is_exists') as mock_check_weko_id:
+        with pytest.raises(Exception) as ex:
+            mock_check_weko_id.return_value = True
+            import_author_to_system(author, status, weko_id, force_change_mode)
+            assert ex.value.args[0]['error_id'] == "WekoID is duplicated"
+            assert str(ex.value) == {'error_id': "WekoID is duplicated"}
+            
+    author =  {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎'}]}
+    status = 'deleted'
+    weko_id = '1234'
+    force_change_mode = False
+    with patch('weko_authors.utils.check_weko_id_is_exists') as mock_check_weko_id,\
+        patch('weko_authors.utils.get_count_item_link') as mock_get_count_item_link:
+        with pytest.raises(Exception) as ex:
+            mock_check_weko_id.return_value = False
+            mock_get_count_item_link.return_value = 1
+            import_author_to_system(author, status, weko_id, force_change_mode)
+            assert ex.value.args[0]['error_id'] == "delete_author_link"
+            assert str(ex.value) == {'error_id': "delete_author_link"}
+    
+    author =  {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎'}]}
+    status = 'update'
+    weko_id = '1234'
+    force_change_mode = False
+    with patch('weko_authors.utils.check_weko_id_is_exists') as mock_check_weko_id:
+        with pytest.raises(Exception) as ex:
+            mock_check_weko_id.return_value = True
+            import_author_to_system(author, status, weko_id, force_change_mode)
+            assert ex.value.args[0]['error_id'] == "WekoID is duplicated"
+            assert str(ex.value) == {'error_id': "WekoID is duplicated"}
+
 # def get_count_item_link(pk_id):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_get_count_item_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_get_count_item_link(app,mocker):
@@ -2269,6 +2357,467 @@ class TestCleanDeep:
         expected = {'fullname': 'Jane Doe', 'email': {"test2": "test2"}, 'test': [{"test2": "test2"}]}
         assert clean_deep(data) == expected
 
+# def update_cache_data(key: str, value: str, timeout=None):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_update_cache_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_update_cache_data(app):
+    with patch('weko_authors.utils.current_cache') as mock_cache:
+        update_cache_data('test', 'test', 100)
+        mock_cache.set.assert_called_once_with('test', 'test', timeout=100)
+    
+    with patch('weko_authors.utils.current_cache') as mock_cache:
+        update_cache_data('test', 'test')
+        mock_cache.set.assert_called_once_with('test', 'test')
+
+# def write_tmp_part_file(part_num, file_data, temp_file_path):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_write_tmp_part_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_write_tmp_part_file(app):
+
+    with patch("weko_authors.utils.open") as mock_writer:
+        update_cache_data(current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH"), "/data/test_over_max")
+        write_tmp_part_file(1, [{"key": "value"}], "temp_file_path")
+        mock_writer.assert_called()
+
+
+# def unpackage_and_check_import_file_for_prefix(file_format, file_name, temp_file):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_unpackage_and_check_import_file_for_prefix -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_unpackage_and_check_import_file_for_prefix(app):
+    data = [
+        [],
+        ["scheme", "name", "url", "is_deleted"],
+        ["123", "aaa", "http://example.com", ''],
+        ["#456", "bbb", "http://example.org", ''],
+        ["789", "ccc", "http://example.net", ''],
+        ["789", "ccc", "http://example.net", ''],
+        ["789", "ccc", "http://example.net", ''],
+        ["789", "ccc", "http://example.net", ''],
+        ["789", "ccc", "http://example.net", ''],
+        ["789", "ccc", "http://example.net", ''],
+        ["789", "ccc", "http://example.net", ''],
+    ]
+
+    with patch("weko_authors.utils.getEncode") as mock_getEncode,\
+        patch("weko_authors.utils.open") as mock_writer,\
+        patch("weko_authors.utils.csv.reader") as mock_csv:
+        mock_getEncode.return_value = 'path/to/tempfile'
+        mock_csv.return_value = iter(data)
+        result = unpackage_and_check_import_file_for_prefix('csv', 'test.csv', 'path/to/tempfile')
+
+    data_2 = [
+        [],
+        ["scheme", "scheme", "scheme", "scheme"],
+        ["123", "aaa", "http://example.com", ''],
+        ["456", "bbb", "http://example.org", ''],
+        ["789", "ccc", "http://example.net", '']
+    ]
+
+    with patch("weko_authors.utils.getEncode") as mock_getEncode,\
+        patch("weko_authors.utils.open") as mock_writer,\
+        patch("weko_authors.utils.csv.reader") as mock_csv:
+        with pytest.raises(Exception) as msg:
+            mock_getEncode.return_value = 'path/to/tempfile'
+            mock_csv.return_value = iter(data_2)
+            result = unpackage_and_check_import_file_for_prefix('tsv', 'test.csv', 'path/to/tempfile')
+            assert str(msg.value) == "{'error_msg': 'The following metadata keys are duplicated.<br/>scheme'}"
+
+    data_3 = [
+        [],
+        ["scheme", "name", "url", "invalid_field"],
+        ["123", "aaa", "http://example.com"],
+        ["456", "bbb", "http://example.org"],
+        ["789", "ccc", "http://example.net"]
+    ]
+
+    with patch("weko_authors.utils.getEncode") as mock_getEncode,\
+        patch("weko_authors.utils.open") as mock_writer,\
+        patch("weko_authors.utils.csv.reader") as mock_csv:
+        with pytest.raises(Exception) as msg:
+            mock_getEncode.return_value = 'path/to/tempfile'
+            mock_csv.return_value = iter(data_3)
+            unpackage_and_check_import_file_for_prefix('csv', 'test.csv', 'path/to/tempfile')
+            assert str(msg.value) == "{'error_msg': 'Specified item does not consistency with DB item.<br/>invalid_field'}"
+
+    data_4 = [
+        [],
+        ["scheme", "name", "url", "is_deleted"],
+        ["123", "aaa", "http://example.com", ''],
+        ["#456", "bbb", "http://example.org", ''],
+        ["789", "ccc", "http://example.net", ''],
+    ]
+
+    with patch("weko_authors.utils.getEncode") as mock_getEncode,\
+        patch("weko_authors.utils.open") as mock_writer,\
+        patch("weko_authors.utils.handle_check_consistence_with_mapping_for_prefix") as mock_check,\
+        patch("weko_authors.utils.csv.reader") as mock_csv:
+        with pytest.raises(UnicodeDecodeError) as msg:
+            mock_getEncode.return_value = 'path/to/tempfile'
+            mock_csv.return_value = iter(data_4)
+            # unicode_error = UnicodeDecodeError('utf-8', b'\x80abc', 0, 1, 'invalid start byte')
+            # mock_csv.side_effect = unicode_error
+            mock_check.side_effect = UnicodeDecodeError("utf-8", b'', 0, 1, "invalid start byte")
+            result = unpackage_and_check_import_file_for_prefix('csv', 'test.csv', 'path/to/tempfile')
+            assert str(msg.value) == "{'error_msg': 'The following metadata keys are duplicated.<br/>scheme'}"
+
+    data_5 = [
+        [],
+        ["scheme", "name", "url", "is_deleted"],
+        [123, "aaa", "http://example.com", ''],
+    ]
+
+    with patch("weko_authors.utils.getEncode") as mock_getEncode,\
+        patch("weko_authors.utils.open") as mock_writer,\
+        patch("weko_authors.utils.csv.reader") as mock_csv:
+        with pytest.raises(Exception) as msg:
+            mock_getEncode.return_value = 'path/to/tempfile'
+            mock_csv.return_value = iter(data_5)
+            unpackage_and_check_import_file_for_prefix('csv', 'test.csv', 'path/to/tempfile')
+            assert str(msg.value) == "{'error_msg': 'The following metadata keys are duplicated.<br/>scheme'}"
+
+    data_6 = [
+        [],
+        ["scheme", "name", "url", "is_deleted"],
+        ["123", "aaa", "http://example.com", ''],
+        ["test"],
+        'aaaaaaaaaaa'
+    ]
+
+    with patch("weko_authors.utils.getEncode") as mock_getEncode,\
+        patch("weko_authors.utils.open") as mock_writer,\
+        patch("weko_authors.utils.csv.reader") as mock_csv:
+        with pytest.raises(Exception) as msg:
+            mock_getEncode.return_value = 'path/to/tempfile'
+            mock_csv.return_value = iter(data_6)
+            unpackage_and_check_import_file_for_prefix('csv', 'test.csv', 'path/to/tempfile')
+            assert str(msg.value) == "{'error_msg': 'The following metadata keys are duplicated.<br/>scheme'}"
+
+
+# def get_check_base_name():
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_get_check_base_name -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_get_check_base_name(app):
+    update_cache_data(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"], "/data/test_over_max")
+    result = get_check_base_name()
+
+    assert result == "test_over_max-check"
+
+
+# def get_check_result(entry):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_get_check_result -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_get_check_result(app):
+    result = get_check_result({"errors": ["error1", "error2"], "status": "new"})
+    assert result == "Error: error1 error2"
+
+    result = get_check_result({"errors": [], "status": "new"})
+    assert result == "Register"
+
+    result = get_check_result({"errors": [], "status": "update"})
+    assert result == "Update"
+
+    result = get_check_result({"errors": [], "status": "deleted"})
+    assert result == "Delete"
+
+    result = get_check_result({"errors": [], "status": "other"})
+    assert result == "other"
+
+
+# def handle_check_consistence_with_mapping_for_prefix(keys, header):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_handle_check_consistence_with_mapping_for_prefix -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_handle_check_consistence_with_mapping_for_prefix(app):
+    result = handle_check_consistence_with_mapping_for_prefix(["scheme", "name", "url", "is_deleted"], ["scheme", "name", "url", "is_deleted"])
+    assert result ==[]
+
+    result = handle_check_consistence_with_mapping_for_prefix(["scheme", "name", "url", "is_deleted"], ["scheme", "name", "url", "is_deleted", "extra_field"])
+    assert result == ["extra_field"]
+
+
+# def check_import_data_for_prefix(target, file_name: str, file_content: str):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_check_import_data_for_prefix -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_check_import_data_for_prefix(app):
+    data = ['aaa', 'bbb']
+
+    with patch('weko_authors.utils.unpackage_and_check_import_file_for_prefix') as mock_file, \
+        patch('weko_authors.utils.validate_import_data_for_prefix') as mock_data:
+        mock_file.return_value = data
+        mock_data.return_value = data
+        result = check_import_data_for_prefix("id_prefix", "test.tsv", "dGVzdA==")
+        assert len(result['list_import_data']) > 0
+
+    with patch('weko_authors.utils.unpackage_and_check_import_file_for_prefix') as mock_file, \
+        patch('weko_authors.utils.validate_import_data_for_prefix') as mock_data:
+        mock_file.return_value = data
+        mock_data.return_value = data
+        result = check_import_data_for_prefix("id_prefix", "test.tsv", "invalid_base64")
+        assert len(result['error']) > 0
+
+    with patch('weko_authors.utils.unpackage_and_check_import_file_for_prefix') as mock_file:
+        unicode_error = UnicodeDecodeError('utf-8', b'\x80abc', 0, 1, 'invalid start byte')
+        mock_file.side_effect = unicode_error
+        result = check_import_data_for_prefix("id_prefix", "test.tsv", "dGVzdA==")
+        assert len(result['error']) > 0
+
+    with patch('weko_authors.utils.unpackage_and_check_import_file_for_prefix') as mock_file, \
+        patch('weko_authors.utils.validate_import_data_for_prefix') as mock_data:
+        mock_file.return_value = data
+        mock_data.side_effect = Exception({"error_msg": "Mocked exception occurred"})
+        result = check_import_data_for_prefix("id_prefix", "test.tsv", "dGVzdA==")
+        assert len(result['error']) > 0
+
+
+# def validate_import_data_for_prefix(file_data, target):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_validate_import_data_for_prefix -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_validate_import_data_for_prefix(authors_prefix_settings):
+    with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix') as mock_prefix,\
+        patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
+        mock_prefix.return_value = ['ORCID']
+        result = validate_import_data_for_prefix([{'scheme': 'ORCID', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': ''}], target = 'id_prefix')
+    assert result == [{'scheme': 'ORCID', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': '', 'status': 'update', 'id': 2}]
+
+    with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix') as mock_prefix,\
+        patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
+        mock_prefix.return_value = ['ORCID']
+        result = validate_import_data_for_prefix([{'scheme': 'ISNI', 'name': 'ISNI', 'url': 'http://isni.org', 'is_deleted': ''}], target = 'affiliation_id')
+    assert result == [{'scheme': 'ISNI', 'name': 'ISNI', 'url': 'http://isni.org', 'is_deleted': '', 'status': 'new'}]
+
+    with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix') as mock_prefix,\
+        patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
+        mock_prefix.return_value = ['ORCID']
+        result = validate_import_data_for_prefix([{'scheme': '', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': ''}], target = 'id_prefix')
+    assert result == [{'scheme': '', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': '', 'status': 'new', 'errors': ['Scheme is required item.']}]
+
+    with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix') as mock_prefix,\
+        patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
+        mock_prefix.return_value = ['ORCID']
+        result = validate_import_data_for_prefix([{'scheme': 'WEKO', 'name': 'WEKO', 'url': 'http://weko.org', 'is_deleted': ''}], target = 'id_prefix')
+    assert result == [{'scheme': 'WEKO', 'name': 'WEKO', 'url': 'http://weko.org', 'is_deleted': '', 'status': 'new', 'errors': ['The scheme WEKO cannot be used.']}]
+
+    with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix') as mock_prefix,\
+        patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
+        mock_prefix.return_value = ['ORCID']
+        result = validate_import_data_for_prefix([{'scheme': 'ORCID', 'name': '', 'url': 'http://orcid.org', 'is_deleted': ''}], target = 'id_prefix')
+    assert result == [{'scheme': 'ORCID', 'name': '', 'url': 'http://orcid.org', 'is_deleted': '', 'id': 2, 'status': 'update', 'errors': ['Name is required item.']}]
+ 
+    with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix') as mock_prefix,\
+        patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
+        mock_prefix.return_value = ['ORCID']
+        result = validate_import_data_for_prefix([{'scheme': '', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': ''}], target = 'id_prefix')
+    assert result == [{'scheme': '', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': '', 'status': 'new', 'errors': ['Scheme is required item.']}]
+
+    with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix') as mock_prefix,\
+        patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
+        mock_prefix.return_value = ['ORCID']
+        result = validate_import_data_for_prefix([{'scheme': 'WEKO', 'name': 'WEKO', 'url': 'http://weko.org', 'is_deleted': ''}], target = 'id_prefix')
+    assert result == [{'scheme': 'WEKO', 'name': 'WEKO', 'url': 'http://weko.org', 'is_deleted': '', 'status': 'new', 'errors': ['The scheme WEKO cannot be used.']}]
+
+    with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix') as mock_prefix,\
+        patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
+        mock_prefix.return_value = ['ORCID']
+        result = validate_import_data_for_prefix([{'scheme': 'ORCID', 'name': '', 'url': 'http://orcid.org', 'is_deleted': ''}], target = 'id_prefix')
+    assert result == [{'scheme': 'ORCID', 'name': '', 'url': 'http://orcid.org', 'is_deleted': '', 'id': 2, 'status': 'update', 'errors': ['Name is required item.']}]
+    
+    with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix') as mock_prefix,\
+        patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
+        mock_prefix.return_value = ['ORCID']
+        result = validate_import_data_for_prefix([{'scheme': 'ORCID', 'name': 'ORCID', 'url': 'orcid', 'is_deleted': ''}], target = 'id_prefix')
+    assert result == [{'scheme': 'ORCID', 'name': 'ORCID', 'url': 'orcid', 'is_deleted': '', 'id': 2, 'status': 'update', 'errors': ['URL is not URL format.']}]
+
+    with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix') as mock_prefix,\
+        patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
+        mock_prefix.return_value = []
+        result = validate_import_data_for_prefix([{'scheme': 'ORCID', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': 'D'}], target = 'id_prefix')
+    assert result == [{'scheme': 'ORCID', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': 'D', 'errors': ['The specified scheme does not exist.']}]
+
+    with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix') as mock_prefix,\
+        patch('weko_authors.utils.WekoAuthors.get_used_scheme_of_id_prefix') as mock_used,\
+        patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
+        mock_prefix.return_value = ['ORCID']
+        mock_used.return_value = (
+            ["ORCID"],
+            {1: 'WEKO', 2: 'ORCID', 3: 'CiNii', 4: 'KAKEN2', 5: 'ROR'}
+        )
+        result = validate_import_data_for_prefix([{'scheme': 'ORCID', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': 'D'}], target = 'id_prefix')
+    assert result == [{'scheme': 'ORCID', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': 'D', 'id': 2, 'status': 'deleted', 'errors': ['The specified scheme is used in the author ID.']}]
+    
+    with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix') as mock_prefix,\
+        patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
+        mock_prefix.return_value = ['ORCID']
+        result = validate_import_data_for_prefix([{'scheme': 'ORCID', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': ''}, {'scheme': 'ORCID', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': ''}], target = 'id_prefix')
+    assert result == [{'scheme': 'ORCID', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': '', 'id': 2, 'status': 'update'}, {'scheme': 'ORCID', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': '', 'id': 2, 'status': 'update', 'errors': ['The specified scheme is duplicated.']}]
+
+
+# def import_id_prefix_to_system(id_prefix):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_import_id_prefix_to_system -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_import_id_prefix_to_system(authors_prefix_settings):    
+    with patch('weko_authors.utils.AuthorsPrefixSettings.create') as mock_create:
+        import_id_prefix_to_system({'scheme': 'test_scheme', 'status': 'new'})
+        mock_create.assert_called_once()
+
+    with patch('weko_authors.utils.AuthorsPrefixSettings.update') as mock_update:
+        import_id_prefix_to_system({'scheme': 'test_scheme', 'status': 'update', 'id': 1})
+        mock_update.assert_called_once()
+
+    with patch('weko_authors.utils.AuthorsPrefixSettings.delete') as mock_delete:
+        import_id_prefix_to_system({'scheme': 'test_scheme', 'status': 'deleted', 'id': 1})
+        mock_delete.assert_called_once()
+
+    with patch('weko_authors.utils.WekoAuthors.get_used_scheme_of_id_prefix') as mock_used:
+        mock_used.return_value = (
+            ["WEKO"],
+            {1: 'WEKO', 2: 'ORCID', 3: 'CiNii', 4: 'KAKEN2', 5: 'ROR'}
+        )
+        with pytest.raises(Exception) as e:
+            import_id_prefix_to_system({'scheme': 'WEKO', 'status': 'deleted', 'id': 1})
+        assert e.value.args[0] == {'error_id': 'delete_author_link'}
+
+    with pytest.raises(Exception) as e:
+        import_id_prefix_to_system({'scheme': 'test_scheme', 'status': 'invalid_status'})
+    assert e.value.args[0] == {'error_id': 'status_error'}
+
+    with patch('weko_authors.utils.AuthorsPrefixSettings.create') as mock_create:
+        mock_create.side_effect = [SQLAlchemyError("SQLAlchemyError")]
+        with pytest.raises(Exception):
+            import_id_prefix_to_system({'scheme': 'test_scheme', 'status': 'new'})
+            mock_create.assert_called_once()
+
+    with patch('weko_authors.utils.AuthorsPrefixSettings.create') as mock_create:
+        mock_create.side_effect = [TimeoutError("Timeout")]
+        with pytest.raises(Exception):
+            import_id_prefix_to_system({'scheme': 'test_scheme', 'status': 'new'})
+            mock_create.assert_called_once()
+
+
+# def import_affiliation_id_to_system(affiliation_id):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_import_affiliation_id_to_system -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_import_affiliation_id_to_system(authors_affiliation_settings):    
+    with patch('weko_authors.utils.AuthorsAffiliationSettings.create') as mock_create:
+        import_affiliation_id_to_system({'scheme': 'test_scheme', 'status': 'new'})
+        mock_create.assert_called_once()
+
+    with patch('weko_authors.utils.AuthorsAffiliationSettings.update') as mock_update:
+        import_affiliation_id_to_system({'scheme': 'test_scheme', 'status': 'update', 'id': 1})
+        mock_update.assert_called_once()
+
+    with patch('weko_authors.utils.AuthorsAffiliationSettings.delete') as mock_delete:
+        import_affiliation_id_to_system({'scheme': 'test_scheme', 'status': 'deleted', 'id': 1})
+        mock_delete.assert_called_once()
+
+    with patch('weko_authors.utils.WekoAuthors.get_used_scheme_of_affiliation_id') as mock_used:
+        mock_used.return_value = (
+            ["WEKO"],
+            {1: 'WEKO', 2: 'ORCID', 3: 'CiNii', 4: 'KAKEN2', 5: 'ROR'}
+        )
+        with pytest.raises(Exception) as e:
+            import_affiliation_id_to_system({'scheme': 'WEKO', 'status': 'deleted', 'id': 1})
+        assert e.value.args[0] == {'error_id': 'delete_author_link'}
+
+    with pytest.raises(Exception) as e:
+        import_affiliation_id_to_system({'scheme': 'test_scheme', 'status': 'invalid_status'})
+    assert e.value.args[0] == {'error_id': 'status_error'}
+
+    with patch('weko_authors.utils.AuthorsAffiliationSettings.create') as mock_create:
+        mock_create.side_effect = [SQLAlchemyError("SQLAlchemyError")]
+        with pytest.raises(Exception):
+            import_affiliation_id_to_system({'scheme': 'test_scheme', 'status': 'new'})
+            mock_create.assert_called_once()
+
+    with patch('weko_authors.utils.AuthorsAffiliationSettings.create') as mock_create:
+        mock_create.side_effect = [TimeoutError("Timeout")]
+        with pytest.raises(Exception):
+            import_affiliation_id_to_system({'scheme': 'test_scheme', 'status': 'new'})
+            mock_create.assert_called_once()
+
+
+# def band_check_file_for_user(max_page):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_band_check_file_for_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_band_check_file_for_user(authors_affiliation_settings):
+    data = [
+        {"pk_id": 1, "authorNameInfo":[{"familyName": "aaa", "firstName": "bbb"}]},
+    ]
+    with patch('weko_authors.utils.get_check_base_name') as mock_check,\
+        patch("weko_authors.utils.open") as mock_open,\
+        patch("weko_authors.utils.json.load") as mock_json:
+        # update_cache_data(current_app.config.get("WEKO_AUTHORS_IMPORT_BATCH_SIZE"), 100)
+        mock_check.return_value = "test_over_max-check"
+        mock_json.return_value = data
+        result = band_check_file_for_user(1)
+        assert result == "var/tmp/authors_import/import_author_check_result_{}.tsv".format(datetime.datetime.now().strftime("%Y%m%d%H%M"))
+
+    data_2 = [
+        {"pk_id": 1, "authorNameInfo":[{"familyName": "a", "firstName": ""}, {"familyName": "b", "firstName": ""}],},
+    ]
+    with patch('weko_authors.utils.get_check_base_name') as mock_check,\
+        patch("weko_authors.utils.open") as mock_open,\
+        patch("weko_authors.utils.json.load") as mock_json:
+        # update_cache_data(current_app.config.get("WEKO_AUTHORS_IMPORT_BATCH_SIZE"), 100)
+        mock_check.return_value = "test_over_max-check"
+        mock_json.return_value = data_2
+        result = band_check_file_for_user(1)
+        assert result == "var/tmp/authors_import/import_author_check_result_{}.tsv".format(datetime.datetime.now().strftime("%Y%m%d%H%M"))
+
+    with patch('weko_authors.utils.get_check_base_name') as mock_check,\
+        patch("weko_authors.utils.open") as mock_open:
+        mock_check.return_value = "test_over_max-check"
+        mock_open.side_effect = Exception('not found')
+        with pytest.raises(Exception) as ex:
+            result = band_check_file_for_user(1)
+            assert str(ex.value) == 'not found'
+
+
+# def prepare_import_data(max_page_for_import_tab):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_prepare_import_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_prepare_import_data(authors_affiliation_settings):
+    data = [
+        {"pk_id": 1, "authorNameInfo":[{"familyName": "aaa", "firstName": "bbb"}]},
+    ]
+    with patch('weko_authors.utils.get_check_base_name') as mock_check,\
+        patch("weko_authors.utils.open") as mock_open,\
+        patch("weko_authors.utils.json.load") as mock_json:
+        mock_check.return_value = "test_over_max-check"
+        mock_json.return_value = data
+        result = prepare_import_data(1)
+        assert result[1]== {}
+        assert result[2]== 1
+
+    data = [
+        {"warnings": 1, "is_deleted": 1, "authorNameInfo":[{"familyName": "aaa", "firstName": "bbb"}]},
+    ]
+    with patch('weko_authors.utils.get_check_base_name') as mock_check,\
+        patch("weko_authors.utils.open") as mock_open,\
+        patch("weko_authors.utils.json.load") as mock_json:
+        mock_check.return_value = "test_over_max-check"
+        mock_json.return_value = data
+        result = prepare_import_data(3)
+        assert result[1]== {}
+        assert result[2]== 3
+
+    data = [
+        {"errors": "error", "pk_id": 1, "authorNameInfo":[{"familyName": "aaa", "firstName": "bbb"}]},
+        {"pk_id": 1, "authorNameInfo":[{"familyName": "aaa", "firstName": "bbb"}]},
+    ]
+    with patch('weko_authors.utils.get_check_base_name') as mock_check,\
+        patch("weko_authors.utils.open") as mock_open,\
+        patch("weko_authors.utils.json.load") as mock_json:
+        mock_check.return_value = "test_over_max-check"
+        mock_json.return_value = data
+        result = prepare_import_data(1)
+        assert result[1]== {}
+        assert result[2]== 1
+
+    data = [
+        {"pk_id": 1, "authorNameInfo":[{"familyName": "aaa", "firstName": "bbb"}]},
+    ]
+    with patch('weko_authors.utils.get_check_base_name') as mock_check,\
+        patch("weko_authors.utils.open") as mock_open,\
+        patch("weko_authors.utils.json.load") as mock_json,\
+        patch('weko_authors.utils.current_app.config.get') as mock_max:
+        mock_check.return_value = "test_over_max-check"
+        mock_json.return_value = data * 3
+        mock_max.side_effect = [
+            2,
+            "var/tmp/authors_import"
+        ]
+        result = prepare_import_data(3)
+        assert result[0] == data * 2
+        assert result[1]['part_number'] == 1
+        assert result[1]['count'] == 2
+        
     # 正常系
     # 条件: リストの中にNoneや空文字が含まれている
     # 入力: [None, '', 'valid', {'key': ''}, {'key': 'value'}]
@@ -2728,4 +3277,4 @@ def test_create_result_file_for_user(app, mocker):
     current_cache.delete("cache_result_over_max_file_path_key")
     res = create_result_file_for_user(json)
     assert res == None
-    
+   
