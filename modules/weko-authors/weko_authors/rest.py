@@ -390,7 +390,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
                     raise BadRequest("The WEKO ID must be numeric characters only.")
                 if not is_valid and error_msg == "already exists":
                     raise BadRequest("The value is already in use as WEKO ID.")
-        if have_weko_id and is_update:
+        if not have_weko_id and is_update:
             raise BadRequest(f"idType: WEKO (weko id) must be provided.")
 
         for name_info in author_data.get("authorNameInfo", []):
@@ -549,7 +549,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             if author_by_es and not pk_id:
                 pk_id = author_by_es.get("pk_id")
 
-            self.validate_author_data(author_data, pk_id)
+            self.validate_author_data(author_data, pk_id, is_update=True)
             
             # scheme -> id
             author_data = self.process_authors_data_before(author_data) 
@@ -558,11 +558,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             author_data['pk_id'] = pk_id
             author_data['gather_flg'] = 0
             
-            WekoAuthors.update(pk_id,author_data)
-
-            # update item metadata
-            user_id = current_user.get_id()
-            update_items_by_authorInfo.delay(user_id,author_data, [pk_id], [es_id], data.get("force_change",False))
+            WekoAuthors.update(pk_id,author_data,data.get("force_change",False))
             
             doc = current_search_client.get(index=search_index, id=es_id, doc_type="_doc")
             result = doc.get("_source", {})
