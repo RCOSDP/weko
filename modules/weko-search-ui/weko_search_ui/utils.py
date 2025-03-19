@@ -4501,7 +4501,7 @@ def handle_check_authors_prefix(list_record):
         list_record (list[dict]): List record import.
     """
     settings = AuthorsPrefixSettings.query.all()
-    allowed_scheme = [setting.prefix for setting in settings]
+    allowed_scheme = [setting.scheme for setting in settings]
 
     for item in list_record:
         errors = []
@@ -4522,11 +4522,11 @@ def handle_check_authors_prefix(list_record):
             for key in keys
             for author in (
                 # author most likely be a list or a single object
-                item["metadata"].get(key, [{}])
+                item["metadata"].get(key)
                 if isinstance(item["metadata"][key], list)
                 else [item["metadata"].get(key, {})]
             )
-            for id in author.get("nameIdentifiers", [{}])
+            for id in author.get("nameIdentifiers", [])
             for scheme in [id.get("nameIdentifierScheme")]
             if scheme is not None and scheme not in allowed_scheme
         ]
@@ -4576,12 +4576,12 @@ def handle_check_authors_affiliation(list_record):
             for key in creator_keys
             for creator in (
                 # creator most likely be a list or a single object
-                item["metadata"].get(key, [{}])
+                item["metadata"].get(key, [])
                 if isinstance(item["metadata"][key], list)
                 else [item["metadata"].get(key, {})]
             )
-            for affiliation in creator.get("creatorAffiliations", [{}])
-            for id in affiliation.get("affiliationNameIdentifiers", [{}])
+            for affiliation in creator.get("creatorAffiliations", [])
+            for id in affiliation.get("affiliationNameIdentifiers", [])
             for scheme in [id.get("affiliationNameIdentifierScheme")]
             if scheme is not None and scheme not in allowed_scheme
         ]
@@ -4590,12 +4590,12 @@ def handle_check_authors_affiliation(list_record):
             for key in contributor_keys
             for contributor in (
                 # contributor most likely be a list or a single object
-                item["metadata"].get(key, [{}])
+                item["metadata"].get(key, [])
                 if isinstance(item["metadata"][key], list)
                 else [item["metadata"].get(key, {})]
             )
-            for affiliation in contributor.get("contributorAffiliations", [{}])
-            for id in affiliation.get("affiliationNameIdentifiers", [{}])
+            for affiliation in contributor.get("contributorAffiliations", [])
+            for id in affiliation.get("affiliationNameIdentifiers", [])
             for scheme in [id.get("affiliationNameIdentifierScheme")]
             if scheme is not None and scheme not in allowed_scheme
         ]
