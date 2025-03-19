@@ -820,21 +820,18 @@ def test_write_result_temp_file(app):
 
 
 # def update_summary(success_count, failure_count):
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_update_summary -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_update_summary -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_update_summary(app):
-    summary = get_cache_data(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"])
-    success_count = summary["success_count"]
-    failure_count = summary["failure_count"]
-    update_summary(2, 2)
-    summary = get_cache_data(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"])
-    assert summary["success_count"] == success_count + 2
-    assert summary["failure_count"] == failure_count + 2
-    
-    summary = delete_cache_data(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"])
+    delete_cache_data(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"])
     update_summary(2, 2)
     summary = get_cache_data(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"])
     assert summary["success_count"] == 2
     assert summary["failure_count"] == 2
+    
+    update_summary(2, 2)
+    summary = get_cache_data(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"])
+    assert summary["success_count"] == 4
+    assert summary["failure_count"] == 4
     
 
 # def prepare_display_status(status, type, error_id):
@@ -890,7 +887,7 @@ def test_check_task_end(app):
 
 
 # def check_tmp_file_time_for_author():
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_check_tmp_file_time_for_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_check_tmp_file_time_for_author -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_check_tmp_file_time_for_author(app, caplog: LogCaptureFixture):
     mock_file_path = '/mock/path/to/file'
     mock_current_time = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
@@ -910,7 +907,8 @@ def test_check_tmp_file_time_for_author(app, caplog: LogCaptureFixture):
         patch('os.path.getmtime', return_value=(mock_current_time - timedelta(seconds=3600)).timestamp()), \
         patch('os.remove') as mock_remove,\
         patch('os.rmdir') as mock_rmdir,\
-        patch('os.listdir', return_value=[]):
+        patch('os.path.exists', result_value = True),\
+        patch('os.listdir', return_value=["a"]):
 
         check_tmp_file_time_for_author()
         mock_remove.assert_not_called()
@@ -919,7 +917,8 @@ def test_check_tmp_file_time_for_author(app, caplog: LogCaptureFixture):
     mock_current_time = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
     with patch('glob.glob', return_value=[mock_file_path]), \
         patch('os.path.getmtime', return_value=(mock_current_time - timedelta(seconds=3600)).timestamp()), \
-        patch('os.remove', side_effect=OSError) as mock_remove:
+        patch('os.remove', side_effect=OSError) as mock_remove,\
+        patch('os.listdir', return_value=["a"]):
         caplog.set_level(logging.ERROR)
 
         check_tmp_file_time_for_author()
