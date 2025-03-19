@@ -31,7 +31,6 @@ from sqlalchemy.sql.functions import func
 from sqlalchemy.exc import SQLAlchemyError
 from time import sleep
 
-from weko_authors.config import WEKO_AUTHORS_FILE_MAPPING
 
 from .models import Authors, AuthorsPrefixSettings, AuthorsAffiliationSettings
 
@@ -464,7 +463,7 @@ class WekoAuthors(object):
         row_label_en = []
         row_label_jp = []
         row_data = []
-        
+       
         if not mappings or not affiliation_mappings:
             mappings, affiliation_mappings = WekoAuthors.mapping_max_item(\
                 deepcopy(WEKO_AUTHORS_FILE_MAPPING),

@@ -25,6 +25,7 @@ import csv
 import os
 import chardet
 import io
+import re
 import sys
 import tempfile
 import traceback
@@ -45,7 +46,6 @@ from flask import current_app, jsonify
 from flask_babelex import gettext as _
 from invenio_cache import current_cache
 from invenio_db import db
-from invenio_files_rest.models import FileInstance, Location
 from invenio_indexer.api import RecordIndexer
 
 from weko_authors.contrib.validation import validate_by_extend_validator, \
@@ -78,11 +78,29 @@ def get_author_prefix_obj(scheme):
         current_app.logger.debug(ex)
     return None
 
+def get_author_prefix_obj_by_id(id):
+    """Check item Scheme exist in DB."""
+    try:
+        return db.session.query(AuthorsPrefixSettings).filter(
+            AuthorsPrefixSettings.id == id).one_or_none()
+    except Exception as ex:
+        current_app.logger.debug(ex)
+    return None
+
 def get_author_affiliation_obj(scheme):
     """Check item Scheme exist in DB."""
     try:
         return db.session.query(AuthorsAffiliationSettings).filter(
             AuthorsAffiliationSettings.scheme == scheme).one_or_none()
+    except Exception as ex:
+        current_app.logger.debug(ex)
+    return None
+
+def get_author_affiliation_obj_by_id(id):
+    """Check item Scheme exist in DB."""
+    try:
+        return db.session.query(AuthorsAffiliationSettings).filter(
+            AuthorsAffiliationSettings.id == id).one_or_none()
     except Exception as ex:
         current_app.logger.debug(ex)
     return None
@@ -225,7 +243,7 @@ def check_period_date(data):
 
 def get_export_status():
     """Get export status from cache."""
-    return current_cache.get(WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY) or {}
+    return current_cache.get(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY")) or {}
 
 
 def set_export_status(start_time=None, task_id=None):
@@ -236,18 +254,18 @@ def set_export_status(start_time=None, task_id=None):
     if task_id:
         data['task_id'] = task_id
 
-    current_cache.set(WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY, data, timeout=0)
+    current_cache.set(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY"), data, timeout=0)
     return data
 
 
 def delete_export_status():
     """Delete export status."""
-    current_cache.delete(WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY)
+    current_cache.delete(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY"))
 
 
 def get_export_url():
     """Get exported info from cache."""
-    return current_cache.get(WEKO_AUTHORS_EXPORT_CACHE_URL_KEY) or {}
+    return current_cache.get(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY")) or {}
 
 
 def save_export_url(start_time, end_time, file_uri):
@@ -258,7 +276,7 @@ def save_export_url(start_time, end_time, file_uri):
         file_uri=file_uri
     )
 
-    current_cache.set(WEKO_AUTHORS_EXPORT_CACHE_URL_KEY, data, timeout=0)
+    current_cache.set(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY"), data, timeout=0)
     return data
 
 def delete_export_url():

@@ -479,7 +479,12 @@ length: "minLength" <= nameidentifier's length <= "maxLength"
 WEKO_AUTHORS_REST_ENDPOINTS = {
     'authors': {
         'route': '/<string:version>/authors/count',
+        'api_route': '/<string:version>/authors',
         'default_media_type': 'application/json',
+        'record_serializers': {
+            'application/json': ('invenio_records_rest.serializers'
+                                 ':json_v1_response'),
+        },
     },
 }
 
