@@ -54,11 +54,32 @@ def test_page_permission_factory(app, records, users,db_file_permission):
 
 # def file_permission_factory(record, *args, **kwargs):
 #    def can(self):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_get_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_file_permission_factory(app, records, users,db_file_permission):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_file_permission_factory -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_file_permission_factory(app, records, users, db_file_permission):
+    app.config['OAUTH2SERVER_JWT_AUTH_HEADER'] = 'Authorization'
     indexer, results = records
     record = results[0]["record"]
     assert file_permission_factory(record).can() == None
+
+    # check_file_download_permission returns True
+    with patch("weko_records_ui.permissions.check_file_download_permission", return_value=True):
+        assert file_permission_factory(record).can() == True
+
+    # check_file_download_permission returns False
+    with patch("weko_records_ui.permissions.check_file_download_permission", return_value=False):
+        assert file_permission_factory(record).can() == False
+
+    # with OAuth2
+    with app.test_request_context(headers={"Authorization": "Bearer testtoken"}):
+        with patch("weko_records_ui.permissions.check_file_download_permission", return_value=True), \
+             patch("weko_records_ui.permissions.require_api_auth", lambda: lambda f: f), \
+             patch("weko_records_ui.permissions.require_oauth_scopes", lambda x: lambda f: f):
+            assert file_permission_factory(record).can() == True
+
+        with patch("weko_records_ui.permissions.check_file_download_permission", return_value=False), \
+             patch("weko_records_ui.permissions.require_api_auth", lambda: lambda f: f), \
+             patch("weko_records_ui.permissions.require_oauth_scopes", lambda x: lambda f: f):
+            assert file_permission_factory(record).can() == False
 
 
 # def check_file_download_permission(record, fjson, is_display_file_info=False):
