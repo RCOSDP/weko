@@ -326,7 +326,10 @@ class HeadlessActivity(WorkActivity):
                 pass
 
             metadata.update({"$schema": f"/items/jsonschema/{self.item_type.id}"})
-            index = {"actions": metadata.get("publish_status")}
+            index = {
+                "index": [self.workflow.index_tree_id] or metadata.get("path", []),
+                "actions": metadata.get("publish_status")
+            }
             self._deposit.update(index, metadata)
             # to exclude from file text extraction
             self._deposit.non_extract = non_extract
