@@ -133,6 +133,7 @@ def import_affiliation_id(affiliation_id):
     result['end_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return result
 
+@shared_task
 def import_author_over_max(reached_point, task_ids ,max_part):
     """
     WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYSを超えた著者をインポートする場合の処理です。
@@ -236,8 +237,11 @@ def import_authors_for_over_max(authors):
     group_tasks = []
     tasks = []
     task_ids = []
+    force_change_mode = current_cache.get(\
+        current_app.config.get("WEKO_AUTHORS_IMPORT_CACHE_FORCE_CHANGE_MODE_KEY", False)
+        )
     for author in authors:
-        group_tasks.append(import_author.s(author))
+        group_tasks.append(import_author.s(author, force_change_mode))
 
     # group_tasksを実行
     import_task = group(group_tasks).apply_async()
@@ -404,7 +408,7 @@ def prepare_success_msg(type):
 def check_task_end(task_ids):
     length = len(task_ids)
     sleep_time = current_app.config.get("WEKO_AUTHORS_BULK_IMPORT_RETRY_INTERVAL")
-    for i in range(length):
+    for i in range(length+10):
         count = 0
         for task_id in task_ids:
             task = import_author.AsyncResult(task_id)
