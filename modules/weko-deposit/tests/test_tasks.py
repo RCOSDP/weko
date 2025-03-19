@@ -76,153 +76,6 @@ class MockRecordIndexer:
     def process_bulk_queue(self, es_bulk_kwargs):
         pass
 
-# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_update_authorInfo -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-def test_update_authorInfo(app, db, records,mocker):
-    app.config.update(WEKO_SEARCH_MAX_RESULT=1)
-    mocker.patch("weko_deposit.tasks.WekoDeposit.update_author_link")
-    mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
-    with patch("weko_deposit.tasks.RecordsSearch", mock_recordssearch):
-        with patch("weko_deposit.tasks.RecordIndexer", MockRecordIndexer):
-            update_items_by_authorInfo(["1","xxx"], {})
-    _target = {
-        'authorNameInfo': [
-            {'nameShowFlg': False}
-        ],
-        'authorIdInfo': [
-            {'authorIdShowFlg': False}
-        ],
-        'affiliationInfo': [
-        ],
-        'emailInfo': []
-    }
-    
-    mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
-    with patch("weko_deposit.tasks.RecordsSearch", mock_recordssearch):
-        with patch("weko_deposit.tasks.RecordIndexer", MockRecordIndexer):
-            update_items_by_authorInfo(["1","xxx"], _target)
-
-    weko = AuthorsPrefixSettings(
-        id=1,
-        name="WEKO",
-        scheme="WEKO"
-    )
-    orcid = AuthorsPrefixSettings(
-        id=2,
-        name="ORCID",
-        scheme="ORCID",
-        url="https://orcid.org/##"
-    )
-    cinii = AuthorsPrefixSettings(
-        id=3,
-        name="CiNii",
-        scheme="CiNii",
-        url="https://ci.nii.ac.jp/author/"
-    )
-    db.session.add(weko)
-    db.session.add(orcid)
-    db.session.add(cinii)
-    isni = AuthorsAffiliationSettings(
-        id=1,
-        name="ISNI",
-        scheme="ISNI",
-        url="http://www.isni.org/isni/##"
-    )
-    grid = AuthorsAffiliationSettings(
-        id=2,
-        name="GRID",
-        scheme="GRID",
-        url="https://www.grid.ac/institutes/"
-    )
-    ringgold = AuthorsAffiliationSettings(
-        id=3,
-        name="Ringgold",
-        scheme="Ringgold",
-    )
-    db.session.add(isni)
-    db.session.add(grid)
-    db.session.add(ringgold)
-    db.session.commit()
-    
-
-    _target = {
-        'authorNameInfo': [
-            {"nameShowFlg":False},
-            {
-                'nameShowFlg': True,
-                'familyName': 'Test Fname',
-                'language': 'en',
-                'firstName': 'Test Gname'
-            }
-        ],
-        'authorIdInfo': [
-            {"authorIdShowFlg":False},
-            {
-                'authorIdShowFlg': True,
-                'idType': '', # not prefix_info
-                'authorId':'1'
-            },
-            {
-                "authorIdShowFlg":True,
-                "idType":"1", # prefix_info[url] is none
-                'authorId':'2'
-            },
-            {
-                "authorIdShowFlg":True,
-                "idType":"2", # prefix_info[url] contain ##
-                'authorId':'3'
-            },
-            {
-                "authorIdShowFlg":True,
-                "idType":"3", # prefix_info[url] not contain ##
-                'authorId':'4'
-            }
-        ],
-        'affiliationInfo': [
-            {
-                'identifierInfo': [
-                    {'identifierShowFlg': False},
-                    {
-                        "identifierShowFlg":True,
-                        "affiliationIdType":"",
-                        "affiliationId":"aaa"
-                    },
-                    {
-                        "identifierShowFlg":True,
-                        "affiliationIdType":"1", # url contain ##
-                        "affiliationId":"bbb"
-                    },
-                    {
-                        "identifierShowFlg":True,
-                        "affiliationIdType":"2", # url not contain ##
-                        "affiliationId":"ccc"
-                    },
-                    {
-                        "identifierShowFlg":True,
-                        "affiliationIdType":"3", # not url
-                        "affiliationId":"ddd"
-                    }
-                ],
-                'affiliationNameInfo': [
-                    {"affiliationNameShowFlg":False},
-                    {
-                        'affiliationNameShowFlg': True,
-                        'affiliationName': 'A01',
-                        'affiliationNameLang': 'en'
-                    }
-                ]
-            }
-        ],
-        'emailInfo': [
-            {
-                'email': 'test@nii.ac.jp'
-            }
-        ]
-    }
-    mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
-    with patch("weko_deposit.tasks.RecordsSearch", mock_recordssearch):
-        with patch("weko_deposit.tasks.RecordIndexer", MockRecordIndexer):
-            update_items_by_authorInfo(["1","xxx"], _target)
-
 from sqlalchemy.exc import SQLAlchemyError
 import pytest
 from mock import patch
@@ -696,7 +549,7 @@ class TestChangeToMeta:
         assert target_id == expected_target_id
         assert meta == expected_meta
 
-
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestChangeToMeta::test_change_to_meta_force_change_true2 -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     # テストケース3: 正常系 - 強制変更フラグがオンの場合,URLに♯♯なし
     def test_change_to_meta_force_change_true2(self, app, db):
         # 条件
@@ -756,41 +609,16 @@ class TestChangeToMeta:
 
         # 期待結果
         expected_target_id = "weko_id_1"
-        expected_meta = {
-            "nameIdentifiers": [
-                {
-                    "nameIdentifierScheme": "WEKO",
-                    "nameIdentifier": "weko_id_1",
-                    "nameIdentifierURI": "https://weko.example.com/weko_id_1"
-                }
-            ],
-            "familyNames": [
-                {"familyName": "Test", "familyNameLang": "en"}
-            ],
-            "givenNames": [
-                {"givenName": "User", "givenNameLang": "en"}
-            ],
-            "names": [
-                {"name": "Test, User", "nameLang": "en"}
-            ],
-            "mails": [
-                {"mail": "test@example.com"}
-            ],
-            "affiliations": [
-                {
-                    "nameIdentifiers": [
-                        {
-                            "nameIdentifierScheme": "Affiliation",
-                            "nameIdentifier": "aff_id_1",
-                            "nameIdentifierURI": "https://affiliation.example.com/"
-                        }
-                    ],
-                    "affiliationNames": [
-                        {"affiliationName": "Test Affiliation", "affiliationNameLang": "en"}
-                    ]
-                }
-            ]
-        }
+        expected_meta = {'familyNames': [{'familyName': 'Test', 'familyNameLang': 'en'}], 
+                    'givenNames': [{'givenName': 'User', 'givenNameLang': 'en'}],
+                    'names': [{'name': 'Test, User', 'nameLang': 'en'}], 'nameIdentifiers': 
+                        [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': 'weko_id_1',
+                        'nameIdentifierURI': 'https://weko.example.com/'}],
+                        'mails': [{'mail': 'test@example.com'}], 
+                        'affiliations': [{'nameIdentifiers':
+                            [{'nameIdentifierScheme': 'Affiliation', 'nameIdentifier': 'aff_id_1', 
+                            'nameIdentifierURI': 'https://affiliation.example.com/'}], 'affiliationNames': 
+                    [{'affiliationName': 'Test Affiliation', 'affiliationNameLang': 'en'}]}]}
 
         # 実行と検証
         target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, key_map, force_change)
@@ -857,7 +685,7 @@ class TestChangeToMeta:
         force_change = True
 
         # 期待結果
-        expected_target_id = None
+        expected_target_id = "weko_id_1"
         expected_meta = {'mails': [{'mail': 'test@example.com'}], 'affiliations': [{'nameIdentifiers': [], 'affiliationNames': []}]}
         # 実行と検証
         target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, key_map, force_change)

@@ -245,7 +245,7 @@ def _process(data_size, data_from, process_counter, target, origin_pkid_list, ke
         current_app.logger.debug("Start updated records to ES. record_ids:{}".format(record_ids))
         sleep_time = 2
         count = 1
-        while sleep_time <= max_back_off_time:
+        while True:
             try: 
                 query = (x[0] for x in PersistentIdentifier.query.filter(
                     PersistentIdentifier.object_uuid.in_(record_ids)
@@ -269,7 +269,7 @@ def _process(data_size, data_from, process_counter, target, origin_pkid_list, ke
         for d in update_es_authorinfo:
             sleep_time = 2
             count = 1
-            while sleep_time <= max_back_off_time:
+            while True:
                 try:
                     dep = WekoDeposit.get_record(d['id'])
                     dep.update_author_link_and_weko_link(d['author_link'], d["weko_link"])
