@@ -939,9 +939,10 @@ def unpackage_and_check_import_file_for_prefix(file_format, file_name, temp_file
                         for num, data in enumerate(data_row, start=0):
                             tmp_data[header[num]] = data
                         print(tmp_data)
-                    except Exception({
+                    except Exception:
+                        ex = Exception({
                             'error_msg': _('Cannot read {} file correctly.').format(file_format.upper())
-                        }) as ex:
+                        })
                         raise ex
                     file_data.append(tmp_data)
         except UnicodeDecodeError as ex:
@@ -1498,49 +1499,6 @@ def import_affiliation_id_to_system(affiliation_id):
             traceback.print_exc(file=sys.stdout)
             raise ex
 
-def import_id_prefix_to_system(id_prefix):
-    """
-    tsv/csvからのid_prefixをDBにインポートする.
-    Args:
-        id_prefix (object): id_prefix metadata from tsv/csv.
-    """
-    if id_prefix:
-        retrys = current_app.config["WEKO_AUTHORS_BULK_IMPORT_MAX_RETRY"]
-        interval = current_app.config["WEKO_AUTHORS_BULK_IMPORT_RETRY_INTERVAL"]
-        try:
-            status = id_prefix.pop('status')
-            for attempt in range(5):
-                try:
-                    if not id_prefix.get('url'):
-                        id_prefix['url'] = ""
-                    check = get_author_prefix_obj(id_prefix['scheme'])
-                    if status == 'new':
-                        if check is None:
-                            AuthorsPrefixSettings.create(**id_prefix)
-                    elif status == 'update':
-                        if check is None or check.id == id_prefix['id']:
-                            AuthorsPrefixSettings.update(**id_prefix)
-                    elif status == 'deleted':
-                        used_external_id_prefix,_ = WekoAuthors.get_used_scheme_of_id_prefix()
-                        if id_prefix["scheme"] in used_external_id_prefix:
-                            raise Exception({'error_id': 'delete_author_link'})
-                        else:
-                            if check is None or check.id == id_prefix['id']:
-                                AuthorsPrefixSettings.delete(id_prefix['id'])
-                    else:
-                        raise Exception({'error_id': 'status_error'})
-                    db.session.commit()
-                    break
-                except SQLAlchemyError as ex:
-                    handle_exception(ex, attempt, retrys, interval)
-                except TimeoutError as ex:
-                    handle_exception(ex, attempt, retrys, interval)
-        except Exception as ex:
-            db.session.rollback()
-            current_app.logger.error(
-                f'Id prefix: {id_prefix["scheme"]} import error.')
-            traceback.print_exc(file=sys.stdout)
-            raise ex
 
 def import_affiliation_id_to_system(affiliation_id):
     """
