@@ -31,7 +31,7 @@
       {%- endif %}
     </div>
     <div class="col-xs-9">
-      <b>{{session.ip}} {% if session.orgniazationname %} ({{session.orgniazationname}}で認証){%- endif %}</b><br />
+      <b>{{session.ip}} {% if session.orgniazation_name %} ({{session.orgniazation_name}}で認証){%- endif %}</b><br />
       <small>
         {{_("Signed in")}}:
         {{session.created | tousertimezone | dateformat}}

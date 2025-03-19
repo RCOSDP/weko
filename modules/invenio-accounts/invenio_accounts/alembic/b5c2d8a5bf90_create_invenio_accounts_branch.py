@@ -22,11 +22,11 @@ def upgrade():
     """Upgrade database."""
     with op.batch_alter_table('accounts_user_session_activity') as batch_op:
         batch_op.add_column(
-            sa.Column('orgniazationname', sa.String(255), nullable=True)
+            sa.Column('orgniazation_name', sa.String(255), nullable=True)
         )
 
 
 def downgrade():
     """Downgrade database."""
     with op.batch_alter_table('accounts_user_session_activity') as batch_op:
-        batch_op.drop_column('orgniazationname')
+        batch_op.drop_column('orgniazation_name')

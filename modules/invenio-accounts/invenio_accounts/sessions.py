@@ -76,7 +76,7 @@ def add_session(session=None):
     user_id, sid_s = session['user_id'], session.sid_s
 
     request_data = request.get_json()
-    orgniazationname = request_data.get('jao') if request_data else None
+    orgniazation_name = request_data.get('jao') if request_data else None
 
     with db.session.begin_nested():
         session_activity = SessionActivity(
@@ -87,7 +87,7 @@ def add_session(session=None):
             **_extract_info_from_useragent(
                 request.headers.get('User-Agent', '')
             ),
-            orgniazationname=orgniazationname
+            orgniazation_name=orgniazation_name
         )
         db.session.merge(session_activity)
 
