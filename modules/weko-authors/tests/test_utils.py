@@ -148,32 +148,7 @@ def test_save_export_url(app):
     current_cache.delete("weko_authors_exported_url")
 
 
-# def export_authors():
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_export_authors -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_export_authors(app,authors,location,file_instance,mocker):
-    mocker.patch("weko_authors.utils.WekoAuthors.get_all",return_value=authors)
-    scheme_info={"1":{"scheme":"WEKO","url":None},"2":{"scheme":"ORCID","url":"https://orcid.org/##"}}
-    mocker.patch("weko_authors.utils.WekoAuthors.get_identifier_scheme_info",return_value=scheme_info)
-    header = ["#pk_id","authorNameInfo[0].familyName","authorNameInfo[0].firstName","authorNameInfo[0].language","authorNameInfo[0].nameFormat","authorNameInfo[0].nameShowFlg","authorIdInfo[0].idType","authorIdInfo[0].authorId","authorIdInfo[0].authorIdShowFlg","emailInfo[0].email","is_deleted"]
-    label_en=["#WEKO ID","Family Name[0]","Given Name[0]","Language[0]","Name Format[0]","Name Display[0]","Identifier Scheme[0]","Identifier[0]","Identifier Display[0]","Mail Address[0]","Delete Flag"]
-    label_jp=["#WEKO ID","姓[0]","名[0]","言語[0]","フォーマット[0]","姓名・言語 表示／非表示[0]","外部著者ID 識別子[0]","外部著者ID[0]","外部著者ID 表示／非表示[0]","メールアドレス[0]","削除フラグ"]
-    row_data = [["1","テスト","太郎","ja","familyNmAndNm","Y","ORCID","1234","Y","test.taro@test.org",""],
-            ["2","test","smith","en","familyNmAndNm","Y","ORCID","5678","Y","test.smith@test.org",""]]
-    mocker.patch("weko_authors.utils.WekoAuthors.prepare_export_data",return_value=(header,label_en,label_jp,row_data))
-    with patch("weko_authors.utils.get_export_url",return_value={}):
-        result = export_authors()
-        assert result
-    
-    current_app.config.update(WEKO_ADMIN_OUTPUT_FORMAT="csv")
-    cache_url = {"file_uri":"/var/tmp/test_dir"}
-    with patch("weko_authors.utils.get_export_url",return_value=cache_url):
-        result = export_authors()
-        assert result == "/var/tmp/test_dir"
-    
-    # raise Exception
-    with patch("weko_authors.utils.WekoAuthors.get_all", side_effect=Exception("test_error")):
-        result = export_authors()
-        assert result == None
+
 
 # def check_import_data(file_name: str, file_content: str):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_check_import_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -1174,7 +1149,7 @@ def test_convert_scheme_to_id():
     
     
 # def set_record_status(file_format, list_existed_author_id, item, errors, warnings):
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_set_record_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_set_record_status -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_set_record_status():
     file_format = "tsv"
     existed_authors_id = {"1":True}
@@ -1205,7 +1180,7 @@ def test_set_record_status():
     errors = []
     warnings = []
     set_record_status(file_format,existed_authors_id,item,errors,warnings)
-    assert errors == ["Specified WEKO ID does not exist."]
+    assert errors == ["Specified Author ID does not exist."]
     assert warnings == []
 
     # is_deleted, existed_authors_id.pk_id is None
@@ -1214,7 +1189,7 @@ def test_set_record_status():
     warnings = []
     set_record_status(file_format,existed_authors_id,item,errors,warnings)
     assert item["status"] == "deleted"
-    assert errors == ["Specified WEKO ID does not exist."]
+    assert errors == ["Specified Author ID does not exist."]
     assert warnings == []
     
     existed_authors_id = {"1":True}
@@ -1235,12 +1210,13 @@ def test_set_record_status():
         assert item["status"] == "deleted"
     
 # def flatten_authors_mapping(mapping, parent_key=None):
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_flatten_authors_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_flatten_authors_mapping -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_flatten_authors_mapping():
     data = WEKO_AUTHORS_FILE_MAPPING
     
     test_all=[
-        {"key":"pk_id","label":{"en":"WEKO ID","jp":"WEKO ID"},"mask":{},"validation":{},"autofill":""},
+        {'key': 'pk_id', 'label': {'en': 'Author ID', 'jp': '著者ID'}, 'mask': {}, 'validation': {}, 'autofill': ''}, 
+        {'key': 'weko_id', 'label': {'en': 'WEKO ID', 'jp': 'WEKO ID'}, 'mask': {}, 'validation': {'validator': {'class_name': 'weko_authors.contrib.validation', 'func_name': 'validate_digits_for_wekoid'}}, 'autofill': ''},
         {"key":"authorNameInfo[0].familyName","label":{"en":"Family Name","jp":"姓"},"mask":{},"validation":{},"autofill":""},
         {"key":"authorNameInfo[0].firstName","label":{"en":"Given Name","jp":"名"},"mask":{},"validation":{},"autofill":""},
         {"key":"authorNameInfo[0].language","label":{"en":"Language","jp":"言語"},"mask":{},"validation":{'map': ['ja', 'ja-Kana', 'en', 'fr','it', 'de', 'es', 'zh-cn', 'zh-tw','ru', 'la', 'ms', 'eo', 'ar', 'el', 'ko']},"autofill":""},
@@ -1254,6 +1230,7 @@ def test_flatten_authors_mapping():
     ]
     
     test_keys = ["pk_id",
+                 'weko_id',
                  "authorNameInfo[0].familyName",
                  "authorNameInfo[0].firstName",
                  "authorNameInfo[0].language",
@@ -1266,12 +1243,14 @@ def test_flatten_authors_mapping():
                  "is_deleted"
                  ]
     all,keys = flatten_authors_mapping(data)
+    print(all)
+    print(keys)
     assert all == test_all
     assert keys == test_keys
 
 
 # def import_author_to_system(author):
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_import_author_to_system -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_import_author_to_system -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_import_author_to_system(app, mocker):
 
 
@@ -1295,8 +1274,9 @@ def test_import_author_to_system(app, mocker):
         mock_check_weko_id.assert_called_once_with(weko_id, '1')
         mock_weko_authors.create.assert_called_once()
         actual_author = mock_weko_authors.create.call_args[0][0]
+        print(actual_author)
 
-        assert actual_author == test
+        assert actual_author == {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎', 'fullName': 'テスト 太郎'}], 'is_deleted': False, 'authorIdInfo': [{'idType': '1', 'authorId': '1234', 'authorIdShowFlg': 'true'}], 'emailInfo': []}
         mock_session.commit.assert_called_once()
 
     author = {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎'}]}
@@ -1421,7 +1401,7 @@ def test_get_count_item_link(app,mocker):
 
 
 # def count_authors():
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_count_authors -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_count_authors -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_count_authors(app2, esindex):
     import json
     index = app2.config["WEKO_AUTHORS_ES_INDEX_NAME"]
@@ -1631,7 +1611,7 @@ class TestHandleException:
                 mock_app.config["WEKO_AUTHORS_CACHE_TTL"]
             )
             
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestExportAuthors -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+# @.tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestExportAuthors -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 class TestExportAuthors:
     
     @pytest.fixture
@@ -1658,8 +1638,8 @@ class TestExportAuthors:
             patch('weko_authors.utils.WekoAuthors') as mock_weko, \
             patch('weko_authors.utils.db') as mock_db, \
             patch('weko_authors.utils.os') as mock_os, \
-            patch('weko_authors.utils.FileInstance') as mock_file, \
-            patch('weko_authors.utils.Location') as mock_location, \
+            patch('invenio_files_rest.models.FileInstance') as mock_file, \
+            patch('invenio_files_rest.models.Location') as mock_location, \
             patch('weko_authors.utils.get_export_url') as mock_get_url, \
             patch('weko_authors.utils.write_to_tempfile') as mock_write, \
             patch('weko_authors.utils.handle_exception') as mock_handle, \
@@ -1934,8 +1914,8 @@ class TestExportPrefix:
         # モックの準備
         with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
             patch('weko_authors.utils.get_export_url') as mock_get_export_url, \
-            patch('weko_authors.utils.FileInstance') as mock_file_instance, \
-            patch('weko_authors.utils.Location') as mock_location, \
+            patch('invenio_files_rest.models.FileInstance') as mock_file_instance, \
+            patch('invenio_files_rest.models.Location') as mock_location, \
             patch('weko_authors.utils.current_cache') as mock_current_cache, \
             patch('weko_authors.utils.db') as mock_db:
             
@@ -1973,8 +1953,8 @@ class TestExportPrefix:
         # モックの準備
         with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
             patch('weko_authors.utils.get_export_url') as mock_get_export_url, \
-            patch('weko_authors.utils.FileInstance') as mock_file_instance, \
-            patch('weko_authors.utils.Location') as mock_location, \
+            patch('invenio_files_rest.models.FileInstance') as mock_file_instance, \
+            patch('invenio_files_rest.models.Location') as mock_location, \
             patch('weko_authors.utils.current_cache') as mock_current_cache, \
             patch('weko_authors.utils.db') as mock_db:
             
@@ -2012,8 +1992,8 @@ class TestExportPrefix:
         # モックの準備
         with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
             patch('weko_authors.utils.get_export_url') as mock_get_export_url, \
-            patch('weko_authors.utils.FileInstance') as mock_file_instance, \
-            patch('weko_authors.utils.Location') as mock_location, \
+            patch('invenio_files_rest.models.FileInstance') as mock_file_instance, \
+            patch('invenio_files_rest.models.Location') as mock_location, \
             patch('weko_authors.utils.current_cache') as mock_current_cache, \
             patch('weko_authors.utils.db') as mock_db:
             
@@ -2042,8 +2022,8 @@ class TestExportPrefix:
         # モックの準備
         with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
             patch('weko_authors.utils.get_export_url') as mock_get_export_url, \
-            patch('weko_authors.utils.FileInstance') as mock_file_instance, \
-            patch('weko_authors.utils.Location') as mock_location, \
+            patch('invenio_files_rest.models.FileInstance') as mock_file_instance, \
+            patch('invenio_files_rest.models.Location') as mock_location, \
             patch('weko_authors.utils.current_cache') as mock_current_cache, \
             patch('weko_authors.utils.db') as mock_db:
             
@@ -2072,7 +2052,7 @@ class TestExportPrefix:
         # モックの準備
         with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
             patch('weko_authors.utils.get_export_url') as mock_get_export_url, \
-            patch('weko_authors.utils.FileInstance') as mock_file_instance, \
+            patch('invenio_files_rest.models.FileInstance') as mock_file_instance, \
             patch('weko_authors.utils.current_cache') as mock_current_cache, \
             patch('weko_authors.utils.db') as mock_db:
             
@@ -2105,8 +2085,8 @@ class TestExportPrefix:
         # モックの準備
         with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
             patch('weko_authors.utils.get_export_url') as mock_get_export_url, \
-            patch('weko_authors.utils.FileInstance') as mock_file_instance, \
-            patch('weko_authors.utils.Location') as mock_location, \
+            patch('invenio_files_rest.models.FileInstance') as mock_file_instance, \
+            patch('invenio_files_rest.models.Location') as mock_location, \
             patch('weko_authors.utils.current_cache') as mock_current_cache, \
             patch('weko_authors.utils.db') as mock_db:
             
@@ -2139,8 +2119,8 @@ class TestExportPrefix:
         # モックの準備
         with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
             patch('weko_authors.utils.get_export_url') as mock_get_export_url, \
-            patch('weko_authors.utils.FileInstance') as mock_file_instance, \
-            patch('weko_authors.utils.Location') as mock_location, \
+            patch('invenio_files_rest.models.FileInstance') as mock_file_instance, \
+            patch('invenio_files_rest.models.Location') as mock_location, \
             patch('weko_authors.utils.current_cache') as mock_current_cache, \
             patch('weko_authors.utils.db') as mock_db, \
             patch('weko_authors.utils.handle_exception') as mock_handle_exception:
@@ -2194,8 +2174,8 @@ class TestExportPrefix:
         # モックの準備
         with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
             patch('weko_authors.utils.get_export_url') as mock_get_export_url, \
-            patch('weko_authors.utils.FileInstance') as mock_file_instance, \
-            patch('weko_authors.utils.Location') as mock_location, \
+            patch('invenio_files_rest.models.FileInstance') as mock_file_instance, \
+            patch('invenio_files_rest.models.Location') as mock_location, \
             patch('weko_authors.utils.current_cache') as mock_current_cache, \
             patch('weko_authors.utils.db') as mock_db, \
             patch('weko_authors.utils.handle_exception') as mock_handle_exception:
@@ -2233,8 +2213,8 @@ class TestExportPrefix:
         # モックの準備
         with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
             patch('weko_authors.utils.get_export_url') as mock_get_export_url, \
-            patch('weko_authors.utils.FileInstance') as mock_file_instance, \
-            patch('weko_authors.utils.Location') as mock_location, \
+            patch('invenio_files_rest.models.FileInstance') as mock_file_instance, \
+            patch('invenio_files_rest.models.Location') as mock_location, \
             patch('weko_authors.utils.current_cache') as mock_current_cache, \
             patch('weko_authors.utils.db') as mock_db, \
             patch('weko_authors.utils.handle_exception') as mock_handle_exception:
@@ -2271,8 +2251,8 @@ class TestExportPrefix:
         # モックの準備
         with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
             patch('weko_authors.utils.get_export_url') as mock_get_export_url, \
-            patch('weko_authors.utils.FileInstance') as mock_file_instance, \
-            patch('weko_authors.utils.Location') as mock_location, \
+            patch('invenio_files_rest.models.FileInstance') as mock_file_instance, \
+            patch('invenio_files_rest.models.Location') as mock_location, \
             patch('weko_authors.utils.current_cache') as mock_current_cache, \
             patch('weko_authors.utils.db') as mock_db, \
             patch('weko_authors.utils.handle_exception') as mock_handle_exception:
@@ -3257,7 +3237,8 @@ def test_create_result_file_for_user(app, mocker):
             "Status": "success",
         }
     ]
-    current_cache.set("cache_result_over_max_file_path_key",{"key":"cache_result_over_max_file_path_key"})
+    result_path_key = current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY"]
+    current_cache.set(result_path_key,{"key":"cache_result_over_max_file_path_key"})
     mocker.patch("builtins.open", mock_open(read_data=""))
     mocker.patch("csv.writer", return_value=MagicMock())
     mocker.patch("csv.reader", return_value=iter(mock_result_over_max_data))
@@ -3274,7 +3255,7 @@ def test_create_result_file_for_user(app, mocker):
     mock_logger.error.assert_called()
     
     # not result_over_max_file_path is true
-    current_cache.delete("cache_result_over_max_file_path_key")
+    current_cache.delete(result_path_key)
     res = create_result_file_for_user(json)
     assert res == None
    

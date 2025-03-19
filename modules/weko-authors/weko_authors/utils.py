@@ -539,7 +539,7 @@ def check_import_data(file_name: str):
         current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"])
     try:
         affiliation_mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"])
-        mapping = deepcopy(WEKO_AUTHORS_FILE_MAPPING)
+        mapping = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING"])
         mapping.append(affiliation_mappings)
         flat_mapping_all, flat_mapping_ids = flatten_authors_mapping(
             mapping)
