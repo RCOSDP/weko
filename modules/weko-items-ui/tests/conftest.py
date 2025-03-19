@@ -27,7 +27,7 @@ import shutil
 import tempfile
 import uuid
 import time
-from datetime import datetime
+from datetime import datetime,timedelta
 from os.path import dirname, exists, join
 import copy
 import pytest
@@ -22341,3 +22341,14 @@ def db_itemtype_15(app, db):
         db.session.add(item_type_mapping)
 
     return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
+
+
+@pytest.fixture
+def mock_certificate():
+    """ApiCertificateのモックデータを返すフィクスチャ"""
+    return {
+        "cert_data": {
+            "token": "valid_token",
+            "expires_at": (datetime.now() + timedelta(seconds=3600)).strftime("%Y-%m-%dT%H:%M:%S")
+        }
+    }
