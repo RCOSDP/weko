@@ -302,8 +302,8 @@ def import_authors_for_over_max(authors):
         result.append({
             "start_date": start_date,
             "end_date": end_date,
-            'previous_weko_id': _task.get('current_weko_id'),
-            'new_weko_id': _task.get('weko_id'),
+            'previous_weko_id': _task.get('previous_weko_id'),
+            'new_weko_id': _task.get('new_weko_id'),
             "full_name": _task['full_name'],
             "type": _task['type'],
             "status": status,
@@ -343,8 +343,8 @@ def write_result_temp_file(result):
             for res in result:
                 start_date = res.get("start_date", "")
                 end_date = res.get("end_date", "")
-                prev_weko_id= res.get('current_weko_id', "")
-                new_weko_id= res.get('weko_id', "")
+                prev_weko_id= res.get('previous_weko_id', "")
+                new_weko_id= res.get('new_weko_id', "")
                 full_name = res.get("full_name", "")
                 type = res.get("type", "")
                 status = res.get("status", "")
