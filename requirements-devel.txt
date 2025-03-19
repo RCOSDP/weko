@@ -221,7 +221,7 @@ Pygments==2.2.0
 PyJWT==1.5.3
 PyLD==2.0.3
 pyparsing==3.0.7
--e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2
+pypdf==4.3.1
 pyPEG2==2.15.2
 pytest==5.4.3
 pytest-cache==1.0
