@@ -360,7 +360,7 @@ class ImportView(BaseView):
             return send_file(band_file_path, as_attachment=True)
         except Exception as e:
             current_app.logger.error(e)
-            return jsonify(e)
+            return jsonify(msg=_('Failed')), 500
 
     @author_permission.require(http_exception=403)
     @expose('/import', methods=['POST'])
@@ -454,12 +454,17 @@ class ImportView(BaseView):
             
             # WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYSを超えた分を別のタスクで処理
             if count > current_app.config.get("WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYS"):
-                task = import_author_over_max.delay(reached_point, count ,task_ids, max_page_for_import_tab)
+                update_cache_data(\
+                    current_app.config.get("WEKO_AUTHORS_IMPORT_CACHE_FORCE_CHANGE_MODE_KEY"),
+                    force_change_mode,
+                    current_app.config.get("WEKO_AUTHORS_CACHE_TTL")
+                )
+                task = import_author_over_max.delay(reached_point ,task_ids, max_page_for_import_tab)
                 update_cache_data(\
                     current_app.config.get("WEKO_AUTHORS_IMPORT_CACHE_OVER_MAX_TASK_KEY"),
                     task.id, 
                     current_app.config.get("WEKO_AUTHORS_CACHE_TTL")
-                    )
+                )
     
         response_data = {
             'group_task_id': import_task.id,
@@ -567,7 +572,7 @@ class ImportView(BaseView):
             return send_file(result_file_path, as_attachment=True)
         except Exception as e:
             current_app.logger.error(e)
-            return jsonify(e)
+            return jsonify(msg=_('Failed')), 500
         
     
 authors_list_adminview = {

@@ -75,8 +75,8 @@ msgid "{} should be set by one of {}."
 msgstr "{}は{}のいずれかを設定してください。"
 
 #: weko_authors/utils.py:462
-msgid "Specified WEKO ID does not exist."
-msgstr "指定されたWEKO IDが存在していません。"
+msgid "Specified Author ID does not exist."
+msgstr "指定されたpk_idが存在していません。"
 
 #: weko_authors/utils.py:470 weko_authors/views.py:140
 msgid "The author is linked to items and cannot be deleted."

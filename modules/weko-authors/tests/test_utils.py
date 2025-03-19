@@ -1,13 +1,17 @@
 
 from os.path import dirname, join
 import pytest
+import copy
 from mock import patch, MagicMock, Mock
 from flask import current_app
 import datetime
+from unittest.mock import mock_open
 
 from invenio_indexer.api import RecordIndexer
 from invenio_cache import current_cache
+import csv
 
+from weko_authors.models import Authors
 from weko_authors.config import WEKO_AUTHORS_FILE_MAPPING
 from weko_authors.utils import (
     get_author_prefix_obj,
@@ -44,6 +48,8 @@ from weko_authors.utils import (
     import_affiliation_id_to_system,
     band_check_file_for_user,
     prepare_import_data
+    write_to_tempfile,
+    create_result_file_for_user
 )
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -169,7 +175,274 @@ def test_export_authors(app,authors,location,file_instance,mocker):
         result = export_authors()
         assert result == None
 
+# def check_import_data(file_name: str, file_content: str):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_check_import_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_check_import_data(app,mocker):
+    mapping_all = [
+        {"key":"pk_id","label":{"en":"WEKO ID","jp":"WEKO ID"},"mask":{},"validation":{},"autofill":""},
+        {"key":"authorNameInfo[0].familyName","label":{"en":"Family Name","jp":"姓"},"mask":{},"validation":{},"autofill":""},
+        {"key":"authorNameInfo[0].firstName","label":{"en":"Given Name","jp":"名"},"mask":{},"validation":{},"autofill":""},
+        {"key":"authorNameInfo[0].language","label":{"en":"Language","jp":"言語"},"mask":{},"validation":{'map': ['ja', 'ja-Kana', 'en', 'fr','it', 'de', 'es', 'zh-cn', 'zh-tw','ru', 'la', 'ms', 'eo', 'ar', 'el', 'ko']},"autofill":""},
+        {"key":"authorNameInfo[0].nameFormat","label":{"en":"Name Format","jp":"フォーマット"},"mask":{},"validation":{'map': ['familyNmAndNm']},"autofill":{'condition': {'either_required': ['familyName', 'firstName']},'value': 'familyNmAndNm'}},
+        {"key":"authorNameInfo[0].nameShowFlg","label":{"en":"Name Display","jp":"姓名・言語 表示／非表示"},"mask":{'true': 'Y','false': 'N'},"validation":{'map': ['Y', 'N']},"autofill":""},
+        {"key":"authorIdInfo[0].idType","label":{"en":"Identifier Scheme","jp":"外部著者ID 識別子"},"mask":{},"validation":{'validator': {'class_name': 'weko_authors.contrib.validation','func_name': 'validate_identifier_scheme'},'required': {'if': ['authorId']}},"autofill":""},
+        {"key":"authorIdInfo[0].authorId","label":{"en":"Identifier","jp":"外部著者ID"},"mask":{},"validation":{'required': {'if': ['idType']}},"autofill":""},
+        {"key":"authorIdInfo[0].authorIdShowFlg","label":{"en":"Identifier Display","jp":"外部著者ID 表示／非表示"},"mask":{'true': 'Y','false': 'N'},"validation":{'map': ['Y', 'N']},"autofill":""},
+        {"key":"emailInfo[0].email","label":{"en":"Mail Address","jp":"メールアドレス"},"mask":{},"validation":{},"autofill":""},
+        {"key":"is_deleted","label":{"en":"Delete Flag","jp":"削除フラグ"},"mask":{'true': 'D','false': ''},"validation":{'map': ['D']},"autofill":""},
+    ]
+    mapping_ids = ["pk_id",
+                 "authorNameInfo[0].familyName",
+                 "authorNameInfo[0].firstName",
+                 "authorNameInfo[0].language",
+                 "authorNameInfo[0].nameFormat",
+                 "authorNameInfo[0].nameShowFlg",
+                 "authorIdInfo[0].idType",
+                 "authorIdInfo[0].authorId",
+                 "authorIdInfo[0].authorIdShowFlg",
+                 "emailInfo[0].email",
+                 "is_deleted"
+                 ]
+    current_cache.set("authors_import_user_file_key","var/tmp/authors_import")
+    mocker.patch("weko_authors.utils.flatten_authors_mapping",return_value=(mapping_all,mapping_ids))
+    mocker.patch("weko_authors.utils.unpackage_and_check_import_file",return_value=1)
+    return_validate = [{'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎', 'language': 'ja', 'nameFormat': 'familyNmAndNm', 'nameShowFlg': 'true'}], 'authorIdInfo': [{'idType': 2, 'authorId': '1234', 'authorIdShowFlg': 'true'}], 'emailInfo': [{'email': 'test.taro@test.org'}], 'is_deleted': '', 'status': 'update'}, {'pk_id': '2', 'authorNameInfo': [{'familyName': 'test', 'firstName': 'smith', 'language': 'en', 'nameFormat': 'familyNmAndNm', 'nameShowFlg': 'true'}], 'authorIdInfo': [{'idType': 2, 'authorId': '5678', 'authorIdShowFlg': 'true'}], 'emailInfo': [{'email': 'test.smith@test.org'}], 'is_deleted': '', 'status': 'update'}]
+    mocker.patch("weko_authors.utils.validate_import_data",return_value=return_validate)
+    mock_json_data = '{"test_id": "1000"}'
+    mocker.patch("builtins.open", mock_open(read_data=mock_json_data))
+    mocker.patch("os.remove")
+    file_name = "testfile.tsv"
+    test = {
+        "list_import_data": {"test_id": "1000"},
+        "max_page": 1,
+        "counts": {
+            "num_total": 2,
+            "num_new": 0,
+            "num_update": 2,
+            "num_delete": 0,
+            "num_error": 0,
+        },
+    }
+    result = check_import_data(file_name)
+    assert result == test
+    
+    current_cache.set("authors_import_user_file_key","var/tmp/authors_import")
+    mocker.patch("weko_authors.utils.flatten_authors_mapping",return_value=(mapping_all,mapping_ids))
+    mocker.patch("weko_authors.utils.unpackage_and_check_import_file",return_value=1)
+    return_validate = [{'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎', 'language': 'ja', 'nameFormat': 'familyNmAndNm', 'nameShowFlg': 'true'}], 'authorIdInfo': [{'idType': 2, 'authorId': '1234', 'authorIdShowFlg': 'true'}], 'emailInfo': [{'email': 'test.taro@test.org'}], 'is_deleted': '', 'status': 'update'}, {'pk_id': '2', 'authorNameInfo': [{'familyName': 'test', 'firstName': 'smith', 'language': 'en', 'nameFormat': 'familyNmAndNm', 'nameShowFlg': 'true'}], 'authorIdInfo': [{'idType': 2, 'authorId': '5678', 'authorIdShowFlg': 'true'}], 'emailInfo': [{'email': 'test.smith@test.org'}], 'is_deleted': '', 'status': 'update'}]
+    mocker.patch("weko_authors.utils.validate_import_data",return_value=return_validate)
+    mock_json_data = '{"test_id": "1000"}'
+    mocker.patch("builtins.open", mock_open(read_data=mock_json_data))
+    mocker.patch("os.remove")
+    file_name = "valid_file.csv"
+    test = {
+        "list_import_data": {"test_id": "1000"},
+        "max_page": 1,
+        "counts": {
+            "num_total": 2,
+            "num_new": 0,
+            "num_update": 2,
+            "num_delete": 0,
+            "num_error": 0,
+        },
+    }
+    result = check_import_data(file_name)
+    assert result == test
+    
+    current_cache.set("authors_import_user_file_key","var/tmp/authors_import")
+    mocker.patch("weko_authors.utils.flatten_authors_mapping",return_value=(mapping_all,mapping_ids))
+    mocker.patch("weko_authors.utils.unpackage_and_check_import_file",return_value=5)
+    return_validate = [{'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎', 'language': 'ja', 'nameFormat': 'familyNmAndNm', 'nameShowFlg': 'true'}], 'authorIdInfo': [{'idType': 2, 'authorId': '1234', 'authorIdShowFlg': 'true'}], 'emailInfo': [{'email': 'test.taro@test.org'}], 'is_deleted': '', 'status': 'update'}, {'pk_id': '2', 'authorNameInfo': [{'familyName': 'test', 'firstName': 'smith', 'language': 'en', 'nameFormat': 'familyNmAndNm', 'nameShowFlg': 'true'}], 'authorIdInfo': [{'idType': 2, 'authorId': '5678', 'authorIdShowFlg': 'true'}], 'emailInfo': [{'email': 'test.smith@test.org'}], 'is_deleted': '', 'status': 'update'}]
+    mocker.patch("weko_authors.utils.validate_import_data",return_value=return_validate)
+    mock_json_data = '{"test_id": "1000"}'
+    mocker.patch("builtins.open", mock_open(read_data=mock_json_data))
+    mocker.patch("os.remove")
+    file_name = "multi_part_file.tsv"
+    test = {
+        "list_import_data": {"test_id": "1000"},
+        "max_page": 5,
+        "counts": {
+            "num_total": 10,
+            "num_new": 0,
+            "num_update": 10,
+            "num_delete": 0,
+            "num_error": 0,
+        },
+    }
+    result = check_import_data(file_name)
+    assert result == test
+    
+    current_cache.set("authors_import_user_file_key","var/tmp/authors_import")
+    mocker.patch("weko_authors.utils.flatten_authors_mapping",return_value=(mapping_all,mapping_ids))
+    mocker.patch("weko_authors.utils.unpackage_and_check_import_file",return_value=5)
+    return_validate = [
+        {
+            "pk_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "true",
+                }
+            ],
+            "authorIdInfo": [{"idType": 2, "authorId": "1234", "authorIdShowFlg": "true"}],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "",
+            "status": "new",
+        },
+        {
+            "pk_id": "2",
+            "authorNameInfo": [
+                {
+                    "familyName": "test",
+                    "firstName": "smith",
+                    "language": "en",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "true",
+                }
+            ],
+            "authorIdInfo": [{"idType": 2, "authorId": "5678", "authorIdShowFlg": "true"}],
+            "emailInfo": [{"email": "test.smith@test.org"}],
+            "is_deleted": "",
+            "status": "update",
+        },
+        {
+            "pk_id": "3",
+            "authorNameInfo": [
+                {
+                    "familyName": "test",
+                    "firstName": "smith",
+                    "language": "en",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "true",
+                }
+            ],
+            "authorIdInfo": [{"idType": 2, "authorId": "5678", "authorIdShowFlg": "true"}],
+            "emailInfo": [{"email": "test.smith@test.org"}],
+            "is_deleted": "",
+            "status": "deleted",
+        },
+    ]
+    mocker.patch("weko_authors.utils.validate_import_data",return_value=return_validate)
+    mock_json_data = '{"test_id": "1000"}'
+    mocker.patch("builtins.open", mock_open(read_data=mock_json_data))
+    mocker.patch("os.remove")
+    file_name = "multi_part_file.tsv"
+    test = {
+        "list_import_data": {"test_id": "1000"},
+        "max_page": 5,
+        "counts": {
+            "num_total": 15,
+            "num_new": 5,
+            "num_update": 5,
+            "num_delete": 5,
+            "num_error": 0,
+        },
+    }
+    result = check_import_data(file_name)
+    assert result == test
+    
+    current_cache.set("authors_import_user_file_key","var/tmp/authors_import")
+    mocker.patch("weko_authors.utils.flatten_authors_mapping",return_value=(mapping_all,mapping_ids))
+    mocker.patch("weko_authors.utils.unpackage_and_check_import_file",return_value=1)
+    return_validate = [
+        {
+            "pk_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "true",
+                }
+            ],
+            "authorIdInfo": [{"idType": 2, "authorId": "1234", "authorIdShowFlg": "true"}],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "",
+            "status": "new",
+            "errors": ["Existing error"]
+        },
+        {
+            "pk_id": "2",
+            "authorNameInfo": [
+                {
+                    "familyName": "test",
+                    "firstName": "smith",
+                    "language": "en",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "true",
+                }
+            ],
+            "authorIdInfo": [{"idType": 2, "authorId": "5678", "authorIdShowFlg": "true"}],
+            "emailInfo": [{"email": "test.smith@test.org"}],
+            "is_deleted": "",
+            "status": "update",
+            "errors": ["Existing error"]
+        },
+        {
+            "pk_id": "3",
+            "authorNameInfo": [
+                {
+                    "familyName": "test",
+                    "firstName": "smith",
+                    "language": "en",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "true",
+                }
+            ],
+            "authorIdInfo": [{"idType": 2, "authorId": "5678", "authorIdShowFlg": "true"}],
+            "emailInfo": [{"email": "test.smith@test.org"}],
+            "is_deleted": "",
+            "status": "delete",
+            "errors": ["Existing error"]
+        },
+    ]
+    mocker.patch("weko_authors.utils.validate_import_data",return_value=return_validate)
+    mock_json_data = '{"test_id": "1000"}'
+    mocker.patch("builtins.open", mock_open(read_data=mock_json_data))
+    mocker.patch("os.remove")
+    file_name = "valid_file.csv"
+    test = {
+        "list_import_data": {"test_id": "1000"},
+        "max_page": 1,
+        "counts": {
+            "num_total": 3,
+            "num_new": 0,
+            "num_update": 0,
+            "num_delete": 0,
+            "num_error": 3,
+        },
+    }
+    result = check_import_data(file_name)
+    assert result == test
+    
+    current_cache.delete("authors_import_user_file_key")
+    mocker.patch("weko_authors.utils.flatten_authors_mapping",return_value=(mapping_all,mapping_ids))
+    mock_json_data = '{"test_id": "1000"}'
+    mocker.patch("builtins.open", mock_open(read_data=mock_json_data))
+    mocker.patch("os.remove", side_effect=Exception)
+    file_name = "testfile.tsv"
+    mock_logger = mocker.patch("weko_authors.utils.current_app.logger")
+    result = check_import_data(file_name)
+    mock_logger.error.assert_called()
 
+    # raise Exception with args[0] is dict
+    with patch("weko_authors.utils.flatten_authors_mapping",side_effect=Exception({"error_msg":"test_error"})):
+        result = check_import_data(file_name)
+        assert result == {"error":"test_error"}
+    
+    # raise Exception with args[0] is not dict
+    with patch("weko_authors.utils.flatten_authors_mapping",side_effect=AttributeError("test_error")):
+        result = check_import_data(file_name)
+        assert result == {"error":"Internal server error"}
+    
+    # raise UnicodeDecodeError
+    with patch("weko_authors.utils.flatten_authors_mapping",side_effect=UnicodeDecodeError("utf-8",b"test",0,1,"test_reason")):
+        result = check_import_data(file_name)
+        assert result == {"error":"test_reason"}
 
 # def getEncode(filepath):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_getEncode -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -198,7 +471,7 @@ def test_getEncode():
 
 # def unpackage_and_check_import_file(file_format, file_name, temp_file, mapping_ids):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_unpackage_and_check_import_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_unpackage_and_check_import_file(app):
+def test_unpackage_and_check_import_file(app, mocker):
     file_format="tsv"
     file_name="test_file.txt"
     mapping_ids = ["pk_id",
@@ -227,10 +500,10 @@ def test_unpackage_and_check_import_file(app):
         assert e.value.args[0] == {"error_msg":"Specified item does not consistency with DB item.<br/>exist_not_consistent_value"}
 
     # nomal
+    mocker.patch("weko_authors.utils.write_tmp_part_file")
     temp_file=join(dirname(__file__),"data/test_files/import_data.tsv")
     result = unpackage_and_check_import_file(file_format,file_name,temp_file,mapping_ids)
-    test = [{'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎', 'language': 'ja', 'nameFormat': 'familyNmAndNm', 'nameShowFlg': 'Y'}], 'authorIdInfo': [{'idType': 'ORCID', 'authorId': '1234', 'authorIdShowFlg': 'Y'}], 'emailInfo': [{'email': 'test.taro@test.org'}], 'is_deleted': ''}, {'pk_id': '2', 'authorNameInfo': [{'familyName': 'test', 'firstName': 'smith', 'language': 'en', 'nameFormat': 'familyNmAndNm', 'nameShowFlg': 'Y'}], 'authorIdInfo': [{'idType': 'ORCID', 'authorId': '5678', 'authorIdShowFlg': 'Y'}], 'emailInfo': [{'email': 'test.smith@test.org'}], 'is_deleted': ''}]
-    assert result == test
+    assert result == 1
 
     # data_parse_metadata is None
     with patch("weko_search_ui.utils.parse_to_json_form", return_value=[]):
@@ -251,11 +524,523 @@ def test_unpackage_and_check_import_file(app):
     assert e.value.args[0] == {"error_msg":"There is no data to import."}
     
     # file format = csv
+    mocker.patch.object(current_app.config, "get", return_value=2)
+    mocker.patch("weko_authors.utils.write_tmp_part_file")
     temp_file=join(dirname(__file__),"data/test_files/import_data.csv")
     result = unpackage_and_check_import_file("csv",file_name,temp_file,mapping_ids)
-    test = [{'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎', 'language': 'ja', 'nameFormat': 'familyNmAndNm', 'nameShowFlg': 'Y'}], 'authorIdInfo': [{'idType': 'ORCID', 'authorId': '1234', 'authorIdShowFlg': 'Y'}], 'emailInfo': [{'email': 'test.taro@test.org'}], 'is_deleted': ''}, {'pk_id': '2', 'authorNameInfo': [{'familyName': 'test', 'firstName': 'smith', 'language': 'en', 'nameFormat': 'familyNmAndNm', 'nameShowFlg': 'Y'}], 'authorIdInfo': [{'idType': 'ORCID', 'authorId': '5678', 'authorIdShowFlg': 'Y'}], 'emailInfo': [{'email': 'test.smith@test.org'}], 'is_deleted': ''}]
+    assert result == 1
+
+
+# def validate_import_data(file_format, file_data, mapping_ids, mapping, list_import_id):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_validate_import_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_validate_import_data(authors_prefix_settings,mocker):
+    mocker.patch("weko_authors.utils.WekoAuthors.get_author_for_validation",return_value=({"1":True,"2":True},{"2":{"1234":["1"],"5678":["2"]}}))
+    
+    file_format = "tsv"
+    file_data = [
+        {
+            "pk_id": "1",
+            "weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [
+                {"idType": "ORCID", "authorId": "1234", "authorIdShowFlg": "Y"}
+            ],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "",
+        }
+    ]
+    mapping_ids = ["pk_id",
+                 "authorNameInfo[0].familyName",
+                 "authorNameInfo[0].firstName",
+                 "authorNameInfo[0].language",
+                 "authorNameInfo[0].nameFormat",
+                 "authorNameInfo[0].nameShowFlg",
+                 "authorIdInfo[0].idType",
+                 "authorIdInfo[0].authorId",
+                 "authorIdInfo[0].authorIdShowFlg",
+                 "emailInfo[0].email",
+                 "is_deleted"
+                 ]
+    mapping = [
+        {"key": "pk_id", "validation": {}},
+        {"key": "authorNameInfo[0].familyName", "validation": {}},
+        {"key": "authorNameInfo[0].firstName", "validation": {}},
+        {"key": "authorNameInfo[0].language", "validation": {"map": ["ja", "en"]}},
+        {"key": "authorNameInfo[0].nameFormat", "validation": {"map": ["familyNmAndNm"]}},
+        {"key": "authorNameInfo[0].nameShowFlg", "validation": {"map": ["Y", "N"]}},
+        {
+            "key": "authorIdInfo[0].idType",
+            "validation": {
+                "validator": {
+                    "class_name": "weko_authors.contrib.validation",
+                    "func_name": "validate_identifier_scheme",
+                }
+            },
+        },
+        {
+            "key": "authorIdInfo[0].authorId",
+            "validation": {"required": {"if": ["authorIdInfo[0].idType"]}},
+        },
+        {"key": "authorIdInfo[0].authorIdShowFlg", "validation": {"map": ["Y", "N"]}},
+        {"key": "emailInfo[0].email", "validation": {}},
+        {"key": "is_deleted", "validation": {"map": ["D"]}},
+    ]
+    list_import_id = []
+    test = [
+        {
+            "pk_id": "1",
+            "weko_id": "1",
+            "current_weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [{"idType": "2", "authorId": "1234", "authorIdShowFlg": "Y"}],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "",
+            "status": "update",
+        }
+    ]
+    mocker.patch("weko_authors.utils.WekoAuthors.get_weko_id_by_pk_id",return_value="1")
+    mocker.patch("weko_authors.utils.check_weko_id_is_exits_for_import",return_value=[])
+    result = validate_import_data(file_format,file_data,mapping_ids,mapping,list_import_id)
     assert result == test
     
+    # pk_id is already in the list_import_id
+    file_format = "tsv"
+    file_data = [
+        {
+            "pk_id": "1",
+            "weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [
+                {"idType": "ORCID", "authorId": "1234", "authorIdShowFlg": "Y"}
+            ],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "",
+        },
+        {
+            "pk_id": "1",
+            "weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [
+                {"idType": "ORCID", "authorId": "1234", "authorIdShowFlg": "Y"}
+            ],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "",
+        },
+    ]
+    list_import_id = []
+    mocker.patch("weko_authors.utils.WekoAuthors.get_weko_id_by_pk_id",return_value="1")
+    mocker.patch("weko_authors.utils.check_weko_id_is_exits_for_import",return_value=[])
+    test = [
+        {
+            "pk_id": "1",
+            "weko_id": "1",
+            "current_weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [{"idType": "2", "authorId": "1234", "authorIdShowFlg": "Y"}],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "",
+            "status": "update",
+        },
+        {
+            "pk_id": "1",
+            "weko_id": "1",
+            "current_weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [{"idType": "2", "authorId": "1234", "authorIdShowFlg": "Y"}],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "",
+            "status": "update",
+            "errors": ["There is duplicated data in the tsv file."],
+        },
+    ]
+    result = validate_import_data(file_format,file_data,mapping_ids,mapping,list_import_id)
+    assert result == test
+    
+    # errors_key is ture（check required）
+    file_format = "tsv"
+    file_data = [
+        {
+            "pk_id": "1",
+            "weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [
+                {"idType": "ORCID", "authorId": "1234", "authorIdShowFlg": "Y"}
+            ],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "",
+        }
+    ]
+    mapping = [
+        {"key": "pk_id", "validation": {}},
+        {
+            "key": "authorNameInfo[0].familyName",
+            "validation": {"required": {"if": ["firstName"]}},
+        },
+        {"key": "authorNameInfo[0].firstName", "validation": {}},
+        {"key": "authorNameInfo[0].language", "validation": {"map": ["ja", "en"]}},
+        {
+            "key": "authorNameInfo[0].nameFormat",
+            "validation": {"map": ["familyNmAndNm"]},
+        },
+        {"key": "authorNameInfo[0].nameShowFlg", "validation": {"map": ["Y", "N"]}},
+        {
+            "key": "authorIdInfo[0].idType",
+            "validation": {
+                "validator": {
+                    "class_name": "weko_authors.contrib.validation",
+                    "func_name": "validate_identifier_scheme",
+                }
+            },
+        },
+        {
+            "key": "authorIdInfo[0].authorId",
+            "validation": {"required": {"if": ["idType"]}},
+        },
+        {"key": "authorIdInfo[0].authorIdShowFlg", "validation": {"map": ["Y", "N"]}},
+        {"key": "emailInfo[0].email", "validation": {}},
+        {"key": "is_deleted", "validation": {"map": ["D"]}},
+    ]
+    list_import_id = []
+    test = [
+        {
+            "pk_id": "1",
+            "weko_id": "1",
+            "current_weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [{"idType": "2", "authorId": "1234", "authorIdShowFlg": "Y"}],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "",
+            "status": "update",
+            "errors": ["authorNameInfo[0].familyName is required item."],
+        }
+    ]
+    mocker.patch("weko_authors.utils.WekoAuthors.get_weko_id_by_pk_id",return_value="1")
+    mocker.patch("weko_authors.utils.check_weko_id_is_exits_for_import",return_value=[])
+    result = validate_import_data(file_format,file_data,mapping_ids,mapping,list_import_id)
+    assert result == test
+    
+    # errors_key is ture（check allow data）
+    file_format = "tsv"
+    file_data = [
+        {
+            "pk_id": "1",
+            "weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "de",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [
+                {"idType": "ORCID", "authorId": "1234", "authorIdShowFlg": "Y"}
+            ],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "",
+        }
+    ]
+    list_import_id = []
+    mapping = [
+        {"key": "pk_id", "validation": {}},
+        {"key": "authorNameInfo[0].familyName", "validation": {}},
+        {"key": "authorNameInfo[0].firstName", "validation": {}},
+        {"key": "authorNameInfo[0].language", "validation": {"map": ["ja", "en"]}},
+        {
+            "key": "authorNameInfo[0].nameFormat",
+            "validation": {"map": ["familyNmAndNm"]},
+        },
+        {"key": "authorNameInfo[0].nameShowFlg", "validation": {"map": ["Y", "N"]}},
+        {
+            "key": "authorIdInfo[0].idType",
+            "validation": {
+                "validator": {
+                    "class_name": "weko_authors.contrib.validation",
+                    "func_name": "validate_identifier_scheme",
+                }
+            },
+        },
+        {
+            "key": "authorIdInfo[0].authorId",
+            "validation": {"required": {"if": ["idType"]}},
+        },
+        {"key": "authorIdInfo[0].authorIdShowFlg", "validation": {"map": ["Y", "N"]}},
+        {"key": "emailInfo[0].email", "validation": {}},
+        {"key": "is_deleted", "validation": {"map": ["D"]}},
+    ]
+    test = [
+        {
+            "pk_id": "1",
+            "weko_id": "1",
+            "current_weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "de",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [{"idType": "2", "authorId": "1234", "authorIdShowFlg": "Y"}],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "",
+            "status": "update",
+            "errors": ["authorNameInfo[0].language should be set by one of ['ja', 'en']."],
+        }
+    ]
+    mocker.patch("weko_authors.utils.WekoAuthors.get_weko_id_by_pk_id",return_value="1")
+    mocker.patch("weko_authors.utils.check_weko_id_is_exits_for_import",return_value=[])
+    result = validate_import_data(file_format,file_data,mapping_ids,mapping,list_import_id)
+    assert result == test
+    
+    # pk_id is None and errors_msg is exists
+    file_format = "tsv"
+    file_data = [
+        {
+            "weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [
+                {"idType": "ORCID", "authorId": "1234", "authorIdShowFlg": "Y"}
+            ],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "",
+        }
+    ]
+    mapping_ids = ["pk_id",
+            "authorNameInfo[0].familyName",
+            "authorNameInfo[0].firstName",
+            "authorNameInfo[0].language",
+            "authorNameInfo[0].nameFormat",
+            "authorNameInfo[0].nameShowFlg",
+            "authorIdInfo[0].idType",
+            "authorIdInfo[0].authorId",
+            "authorIdInfo[0].authorIdShowFlg",
+            "emailInfo[0].email",
+            "is_deleted",
+            "affiliationInfo[0].identifierInfo[0].affiliationIdType"
+            ]
+    mapping = [
+        {"key": "pk_id", "validation": {}},
+        {"key": "authorNameInfo[0].familyName", "validation": {}},
+        {"key": "authorNameInfo[0].firstName", "validation": {}},
+        {"key": "authorNameInfo[0].language", "validation": {"map": ["ja", "en"]}},
+        {
+            "key": "authorNameInfo[0].nameFormat",
+            "validation": {"map": ["familyNmAndNm"]},
+        },
+        {"key": "authorNameInfo[0].nameShowFlg", "validation": {"map": ["Y", "N"]}},
+        {
+            "key": "authorIdInfo[0].idType",
+            "validation": {
+                "validator": {
+                    "class_name": "weko_authors.contrib.validation",
+                    "func_name": "validate_identifier_scheme",
+                }
+            },
+        },
+        {
+            "key": "authorIdInfo[0].authorId",
+            "validation": {"required": {"if": ["idType"]}},
+        },
+        {"key": "authorIdInfo[0].authorIdShowFlg", "validation": {"map": ["Y", "N"]}},
+        {"key": "emailInfo[0].email", "validation": {}},
+        {"key": "is_deleted", "validation": {"map": ["D"]}},
+        {"key": "affiliationInfo[0].identifierInfo[0].affiliationIdType", "validation": {}}
+    ]
+    list_import_id = []
+    test = [
+        {
+            "weko_id": "1",
+            "current_weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [{"idType": "2", "authorId": "1234", "authorIdShowFlg": "Y"}],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "",
+            "status": "new",
+            "errors": ["Specified WEKO ID already exist.", "validator error"],
+            "warnings": ["idType warning"],
+        }
+    ]
+    mocker.patch("weko_authors.utils.WekoAuthors.get_weko_id_by_pk_id",return_value="1")
+    mocker.patch("weko_authors.utils.check_weko_id_is_exits_for_import",return_value=["Specified WEKO ID already exist."])
+    mocker.patch("weko_authors.utils.validate_by_extend_validator",return_value=["validator error"])
+    mocker.patch("weko_authors.utils.validate_external_author_identifier",return_value="idType warning")
+    result = validate_import_data(file_format,file_data,mapping_ids,mapping,list_import_id)
+    assert result == test
+    
+    # autofill and mask is exists
+    file_format = "tsv"
+    file_data = [
+        {
+            "pk_id": "1",
+            "weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [
+                {"idType": "ORCID", "authorId": "1234", "authorIdShowFlg": "Y"}
+            ],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "",
+        }
+    ]
+    mapping_ids = ["pk_id",
+                 "authorNameInfo[0].familyName",
+                 "authorNameInfo[0].firstName",
+                 "authorNameInfo[0].language",
+                 "authorNameInfo[0].nameFormat",
+                 "authorNameInfo[0].nameShowFlg",
+                 "authorIdInfo[0].idType",
+                 "authorIdInfo[0].authorId",
+                 "authorIdInfo[0].authorIdShowFlg",
+                 "emailInfo[0].email",
+                 "is_deleted",
+                 "mask",
+                 "test",
+                 ]
+    mapping = [
+        {"key": "pk_id", "validation": {}},
+        {"key": "authorNameInfo[0].familyName", "validation": {}},
+        {"key": "authorNameInfo[0].firstName", "validation": {}},
+        {"key": "authorNameInfo[0].language", "validation": {"map": ["ja", "en"]}},
+        {"key": "authorNameInfo[0].nameFormat", "validation": {"map": ["familyNmAndNm"]}},
+        {"key": "authorNameInfo[0].nameShowFlg", "validation": {"map": ["Y", "N"]}},
+        {
+            "key": "authorIdInfo[0].idType",
+            "validation": {
+                "validator": {
+                    "class_name": "weko_authors.contrib.validation",
+                    "func_name": "validate_identifier_scheme",
+                }
+            },
+        },
+        {
+            "key": "authorIdInfo[0].authorId",
+            "validation": {"required": {"if": ["authorIdInfo[0].idType"]}},
+        },
+        {"key": "authorIdInfo[0].authorIdShowFlg", "validation": {"map": ["Y", "N"]}},
+        {"key": "emailInfo[0].email", "validation": {}},
+        {"key": "is_deleted", "validation": {"map": ["D"]}},
+        {"autofill": "test","key": "test", "validation": {}},
+        {"mask": "test", "key": "test", "validation": {}}
+    ]
+    list_import_id = []
+    test = [
+        {
+            "pk_id": "1",
+            "weko_id": "1",
+            "current_weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [{"idType": "2", "authorId": "1234", "authorIdShowFlg": "Y"}],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "",
+            "status": "update",
+        }
+    ]
+    mocker.patch("weko_authors.utils.WekoAuthors.get_weko_id_by_pk_id",return_value="1")
+    mocker.patch("weko_authors.utils.check_weko_id_is_exits_for_import",return_value=[])
+    mocker.patch("weko_authors.utils.validate_by_extend_validator",return_value=[])
+    mocker.patch("weko_authors.utils.validate_external_author_identifier",return_value="")
+    mocker.patch("weko_authors.utils.autofill_data")
+    mocker.patch("weko_authors.utils.convert_data_by_mask")
+    result = validate_import_data(file_format,file_data,mapping_ids,mapping,list_import_id)
+    assert result == test
 
 # def get_values_by_mapping(keys, data, parent_key=None):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_get_values_by_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -668,7 +1453,7 @@ def test_count_authors(app2, esindex):
     assert count_authors()['count'] == 0
 
 from weko_authors.utils import validate_weko_id, check_weko_id_is_exists, check_period_date, delete_export_url,\
-    handle_exception, export_prefix,check_file_name
+    handle_exception, export_prefix,check_file_name, clean_deep, update_data_for_weko_link
 from redis.exceptions import RedisError
 from sqlalchemy.exc import SQLAlchemyError
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestValidateWekoId -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -1561,6 +2346,16 @@ class TestCheckFileName:
         result = check_file_name('invalid_target')
         assert result == ''
 
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestCleanDeep -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+class TestCleanDeep:
+    # 正常系
+    # 条件: 辞書の中にNoneや空文字が含まれている
+    # 入力: {'fullname': 'Jane Doe', 'warnings': None, 'email': {"test": "", "test2": "test2"}, 'test': [{"test": ""}, {"test2": "test2"}]}
+    # 期待結果: {'fullname': 'Jane Doe', 'email': {"test2": "test2"}, 'test': [{"test2": "test2"}]}
+    def test_clean_deep_normal_case(self, app):
+        data = {'fullname': 'Jane Doe', 'warnings': None, 'email': {"test": "", "test2": "test2"}, 'test': [{"test": ""}, {"test2": "test2"}]}
+        expected = {'fullname': 'Jane Doe', 'email': {"test2": "test2"}, 'test': [{"test2": "test2"}]}
+        assert clean_deep(data) == expected
 
 # def update_cache_data(key: str, value: str, timeout=None):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_update_cache_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -2022,3 +2817,464 @@ def test_prepare_import_data(authors_affiliation_settings):
         assert result[0] == data * 2
         assert result[1]['part_number'] == 1
         assert result[1]['count'] == 2
+        
+    # 正常系
+    # 条件: リストの中にNoneや空文字が含まれている
+    # 入力: [None, '', 'valid', {'key': ''}, {'key': 'value'}]
+    # 期待結果: ['valid', {'key': 'value'}]
+    def test_clean_deep_list_with_none_and_empty_string(self, app):
+        data = [None, '', 'valid', {'key': ''}, {'key': 'value'}]
+        expected = ['valid', {'key': 'value'}]
+        assert clean_deep(data) == expected
+        
+    # 正常系
+    # 条件: リストの中に空の辞書が含まれている
+    # 入力: [{'key': 'value'}, {}]
+    # 期待結果: [{'key': 'value'}]
+    def test_clean_deep_list_with_empty_dict(self, app):
+        data = [{'key': 'value'}, {}]
+        expected = [{'key': 'value'}]
+        assert clean_deep(data) == expected
+
+    # 正常系
+    # 条件: 辞書の中にNoneや空文字が含まれていない
+    # 入力: {'fullname': 'Jane Doe', 'email': {"test2": "test2"}, 'test': [{"test2": "test2"}]}
+    # 期待結果: {'fullname': 'Jane Doe', 'email': {"test2": "test2"}, 'test': [{"test2": "test2"}]}
+    def test_clean_deep_no_none_or_empty_string(self, app):
+        data = {'fullname': 'Jane Doe', 'email': {"test2": "test2"}, 'test': [{"test2": "test2"}]}
+        expected = {'fullname': 'Jane Doe', 'email': {"test2": "test2"}, 'test': [{"test2": "test2"}]}
+        assert clean_deep(data) == expected
+        
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestUpdateDataForWekoLink -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+class TestUpdateDataForWekoLink:
+    """update_data_for_weko_linkのテストクラス"""
+    
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestUpdateDataForWekoLink::test_update_data_normal_case -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_update_data_normal_case(self, app):
+        """
+        正常系
+        条件：weko_linkの内容が更新される場合
+        入力：
+            - data: nameIdentifiersを含むメタデータ
+            - weko_link: 更新前のweko_link
+        期待結果：
+            - weko_linkが更新される
+            - dataのnameIdentifierが更新される
+        """
+        # テスト用データ
+        data = {
+            "creators": [
+                {
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "WEKO",
+                            "nameIdentifier": "old_weko_id_1"
+                        }
+                    ]
+                }
+            ]
+        }
+        weko_link = {"1": "old_weko_id_1"}
+        
+        # AuthorsクラスのMock
+        author_mock = {
+            "authorIdInfo": [
+                {"idType": "1", "authorId": "new_weko_id_1"}
+            ]
+        }
+        
+        with patch.object(Authors, 'get_author_by_id', return_value=author_mock):
+            update_data_for_weko_link(data, weko_link)
+        result = data["creators"][0]["nameIdentifiers"][0]["nameIdentifier"]
+        # 検証
+        assert result == "new_weko_id_1"
+
+    def test_no_change_in_weko_link(self, app):
+        """
+        正常系
+        条件：weko_linkの内容が変更されない場合
+        入力：
+            - data: nameIdentifiersを含むメタデータ
+            - weko_link: 更新前のweko_link
+        期待結果：
+            - weko_linkは変更されない
+            - dataは変更されない
+        """
+        data = {
+            "creators": [
+                {
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "WEKO",
+                            "nameIdentifier": "weko_id_1"
+                        }
+                    ]
+                }
+            ]
+        }
+        weko_link = {"1": "weko_id_1"}
+        data_copy = copy.deepcopy(data)
+        
+        author_mock = {
+            "authorIdInfo": [
+                {"idType": "1", "authorId": "weko_id_1"}
+            ]
+        }
+        
+        with patch.object(Authors, 'get_author_by_id', return_value=author_mock):
+            update_data_for_weko_link(data, weko_link)
+        
+        assert data == data_copy
+
+    def test_author_not_found(self, app):
+        """
+        正常系
+        条件：Authorsテーブルに該当するauthorが存在しない場合
+        入力：
+            - data: 任意のメタデータ
+            - weko_link: 更新前のweko_link
+        期待結果：
+            - weko_linkは変更されない
+            - dataは変更されない
+        """
+        data = {"creators": [{"name": "test"}]}
+        weko_link = {"1": "weko_id_1"}
+        data_copy = copy.deepcopy(data)
+        weko_link_copy = copy.deepcopy(weko_link)
+        
+        with patch.object(Authors, 'get_author_by_id', return_value=None):
+            update_data_for_weko_link(data, weko_link)
+        
+        assert data == data_copy
+
+    def test_id_type_not_1(self, app):
+        """
+        正常系
+        条件：authorIdInfoのidTypeが1でない場合
+        入力：
+            - data: 任意のメタデータ
+            - weko_link: 更新前のweko_link
+        期待結果：
+            - weko_linkは変更されない
+            - dataは変更されない
+        """
+        data = {"creators": [{"name": "test"}]}
+        weko_link = {"1": "weko_id_1"}
+        data_copy = copy.deepcopy(data)
+        weko_link_copy = copy.deepcopy(weko_link)
+        
+        author_mock = {
+            "authorIdInfo": [
+                {"idType": "2", "authorId": "other_id"}
+            ]
+        }
+        
+        with patch.object(Authors, 'get_author_by_id', return_value=author_mock):
+            update_data_for_weko_link(data, weko_link)
+        
+        assert data == data_copy
+
+    def test_multiple_authors_and_identifiers(self, app):
+        """
+        正常系
+        条件：複数のauthorとnameIdentifiersがある場合
+        入力：
+            - data: 複数のauthorとnameIdentifiersを含むメタデータ
+            - weko_link: 複数のエントリを持つweko_link
+        期待結果：
+            - dataの全てのnameIdentifierが更新される
+        """
+        data = {
+            "creators": [
+                {
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "WEKO",
+                            "nameIdentifier": "old_weko_id_1"
+                        },
+                        {
+                            "nameIdentifierScheme": "OTHER",
+                            "nameIdentifier": "other_id"
+                        }
+                    ]
+                },
+                {
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "WEKO",
+                            "nameIdentifier": "old_weko_id_2"
+                        }
+                    ]
+                }
+            ],
+            "contributors": [
+                {
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "WEKO",
+                            "nameIdentifier": "old_weko_id_3"
+                        }
+                    ]
+                }
+            ]
+        }
+        weko_link = {
+            "1": "old_weko_id_1",
+            "2": "old_weko_id_2",
+            "3": "old_weko_id_3"
+        }
+        
+        def mock_get_author_by_id(pk_id):
+            if pk_id == "1":
+                return {"authorIdInfo": [{"idType": "1", "authorId": "new_weko_id_1"}]}
+            elif pk_id == "2":
+                return {"authorIdInfo": [{"idType": "1", "authorId": "new_weko_id_2"}]}
+            elif pk_id == "3":
+                return {"authorIdInfo": [{"idType": "1", "authorId": "new_weko_id_3"}]}
+            return None
+        
+        with patch.object(Authors, 'get_author_by_id', side_effect=mock_get_author_by_id):
+            update_data_for_weko_link(data, weko_link)
+        
+        assert data["creators"][0]["nameIdentifiers"][0]["nameIdentifier"] == "new_weko_id_1"
+        assert data["creators"][1]["nameIdentifiers"][0]["nameIdentifier"] == "new_weko_id_2"
+        assert data["contributors"][0]["nameIdentifiers"][0]["nameIdentifier"] == "new_weko_id_3"
+        # 他のスキームのIDは変更されないことを確認
+        assert data["creators"][0]["nameIdentifiers"][1]["nameIdentifier"] == "other_id"
+
+    def test_non_list_data_fields(self, app):
+        """
+        正常系
+        条件：dataのフィールドがリストでない場合
+        入力：
+            - data: リスト以外のデータ型を含むフィールドを持つメタデータ
+            - weko_link: weko_link
+        期待結果：
+            - dataの該当フィールドはスキップされる
+        """
+        data = {
+            "creators": [
+                {
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "WEKO",
+                            "nameIdentifier": "old_weko_id_1"
+                        }
+                    ]
+                }
+            ],
+            "title": "Test Title",  # 文字列フィールド
+            "description": {"text": "Test Description"}  # 辞書フィールド
+        }
+        weko_link = {"1": "old_weko_id_1"}
+        
+        author_mock = {
+            "authorIdInfo": [
+                {"idType": "1", "authorId": "new_weko_id_1"}
+            ]
+        }
+        
+        with patch.object(Authors, 'get_author_by_id', return_value=author_mock):
+            update_data_for_weko_link(data, weko_link)
+        
+        assert data["creators"][0]["nameIdentifiers"][0]["nameIdentifier"] == "new_weko_id_1"
+        # 文字列や辞書フィールドは変更されないこと
+        assert data["title"] == "Test Title"
+        assert data["description"] == {"text": "Test Description"}
+
+    def test_string_items_in_list(self, app):
+        """
+        正常系
+        条件：dataのリストフィールド内に文字列アイテムがある場合
+        入力：
+            - data: リスト内に文字列アイテムを含むメタデータ
+            - weko_link:　weko_link
+        期待結果：
+            - 文字列アイテムはスキップされる
+        """
+        data = {
+            "creators": [
+                {
+                    "other_identifiers":[],
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "WEKO",
+                            "nameIdentifier": "old_weko_id_1"
+                        }
+                    ]
+                },
+                "Simple String Creator"  # 文字列アイテム
+            ]
+        }
+        weko_link = {"1": "old_weko_id_1"}
+        
+        author_mock = {
+            "authorIdInfo": [
+                {"idType": "1", "authorId": "new_weko_id_1"}
+            ]
+        }
+        
+        with patch.object(Authors, 'get_author_by_id', return_value=author_mock):
+            update_data_for_weko_link(data, weko_link)
+        
+        assert data["creators"][0]["nameIdentifiers"][0]["nameIdentifier"] == "new_weko_id_1"
+        # 文字列アイテムは変更されないこと
+        assert data["creators"][1] == "Simple String Creator"
+
+    def test_no_matching_nameIdentifier(self, app):
+        """
+        正常系
+        条件：nameIdentifierがweko_linkの値と一致しない場合
+        入力：
+            - data: weko_linkと一致しないnameIdentifierを含むメタデータ
+            - weko_link: weko_link
+        期待結果：
+            - dataのnameIdentifierは更新されない
+        """
+        data = {
+            "creators": [
+                {
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "WEKO",
+                            "nameIdentifier": "different_weko_id"
+                        }
+                    ]
+                }
+            ]
+        }
+        weko_link = {"1": "old_weko_id_1"}
+        data_copy = copy.deepcopy(data)
+        
+        author_mock = {
+            "authorIdInfo": [
+                {"idType": "1", "authorId": "new_weko_id_1"}
+            ]
+        }
+        
+        with patch.object(Authors, 'get_author_by_id', return_value=author_mock):
+            update_data_for_weko_link(data, weko_link)
+        
+        # 一致するnameIdentifierがないため、データは変更されない
+        assert data == data_copy
+
+    def test_empty_input_data(self, app):
+        """
+        正常系
+        条件：空のデータ辞書が入力された場合
+        入力：
+            - data: 空の辞書
+            - weko_link: weko_link
+        期待結果：
+            - dataは変更されない（空のまま）
+        """
+        data = {}
+        weko_link = {"1": "old_weko_id_1"}
+        
+        author_mock = {
+            "authorIdInfo": [
+                {"idType": "1", "authorId": "new_weko_id_1"}
+            ]
+        }
+        
+        with patch.object(Authors, 'get_author_by_id', return_value=author_mock):
+            update_data_for_weko_link(data, weko_link)
+        
+        assert data == {}
+
+    def test_empty_weko_link(self, app):
+        """
+        正常系
+        条件：空のweko_linkが入力された場合
+        入力：
+            - data: 任意のメタデータ
+            - weko_link: 空の辞書
+        期待結果：
+            - dataは変更されない
+        """
+        data = {
+            "creators": [
+                {
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "WEKO",
+                            "nameIdentifier": "weko_id_1"
+                        }
+                    ]
+                }
+            ]
+        }
+        weko_link = {}
+        data_copy = copy.deepcopy(data)
+        
+        update_data_for_weko_link(data, weko_link)
+        
+        assert data == data_copy
+        
+# def write_to_tempfile(start, row_header, row_label_en, row_label_jp, row_data):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_write_to_tempfile -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_write_to_tempfile(app, mocker):
+    start = 0
+    row_header = ["header1", "header2"]
+    row_label_en = ["label_en1", "label_en2"]
+    row_label_jp = ["label_jp1", "label_jp2"]
+    row_data = [["data1", "data2"], ["data3", "data4"]]
+    current_cache.delete("weko_authors_export_temp_file_path_key")
+    mock_open = mocker.patch("builtins.open", mocker.mock_open())
+    write_to_tempfile(start, row_header, row_label_en, row_label_jp, row_data)
+    mock_open.assert_called_with(None, 'a', newline='', encoding='utf-8-sig')
+    current_cache.set("weko_authors_export_temp_file_path_key",{"key":"authors_export_temp_file_path_key"})
+    start = 1
+    write_to_tempfile(start, row_header, row_label_en, row_label_jp, row_data)
+    mock_open.assert_called_with({"key":"authors_export_temp_file_path_key"}, 'a', newline='', encoding='utf-8-sig')
+    mock_logger = mocker.patch("weko_authors.utils.current_app.logger")
+    mock_open.side_effect = Exception("File write error")
+    write_to_tempfile(start, row_header, row_label_en, row_label_jp, row_data)
+    mock_logger.error.assert_called()
+    
+# def create_result_file_for_user(json):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_create_result_file_for_user -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_create_result_file_for_user(app, mocker):
+    json = [
+        {
+            "No.": "1",
+            "Start Date": "2025-01-01",
+            "End Date": "2025-01-02",
+            "Previous WEKO ID": "123",
+            "New WEKO ID": "456",
+            "full_name": "テスト 太郎",
+            "Status": "success",
+        }
+    ]
+    mock_result_over_max_data = [
+        {
+            "No.": "1",
+            "Start Date": "2025-01-01",
+            "End Date": "2025-01-02",
+            "Previous WEKO ID": "123",
+            "New WEKO ID": "456",
+            "full_name": "テスト 太郎",
+            "Status": "success",
+        }
+    ]
+    current_cache.set("cache_result_over_max_file_path_key",{"key":"cache_result_over_max_file_path_key"})
+    mocker.patch("builtins.open", mock_open(read_data=""))
+    mocker.patch("csv.writer", return_value=MagicMock())
+    mocker.patch("csv.reader", return_value=iter(mock_result_over_max_data))
+    create_result_file_for_user(json)
+    open.assert_any_call({"key":"cache_result_over_max_file_path_key"}, "r", encoding="utf-8")
+    csv_writer = csv.writer.return_value
+    csv_writer.writerow.assert_any_call(["No.", "Start Date", "End Date", "Previous WEKO ID", "New WEKO ID", "full_name", "Status"])
+    csv_writer.writerow.assert_any_call(['1', '2025-01-01', '2025-01-02', '123', '456', 'テスト 太郎', 'success'])
+    
+    # Exception
+    mock_logger = mocker.patch("weko_authors.utils.current_app.logger")
+    mocker.patch("csv.writer", side_effect=Exception)
+    create_result_file_for_user(json)
+    mock_logger.error.assert_called()
+    
+    # not result_over_max_file_path is true
+    current_cache.delete("cache_result_over_max_file_path_key")
+    res = create_result_file_for_user(json)
+    assert res == None
+   

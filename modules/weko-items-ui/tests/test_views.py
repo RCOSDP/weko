@@ -12,7 +12,7 @@ from jinja2.exceptions import TemplateNotFound
 from invenio_accounts.testutils import login_user_via_session
 from invenio_i18n.babel import set_locale
 from invenio_pidstore.errors import PIDDoesNotExistError
-from mock import patch
+from mock import patch, MagicMock
 from weko_redis.redis import RedisConnection
 from weko_deposit.api import WekoRecord
 from weko_workflow.api import WorkActivity
@@ -352,7 +352,7 @@ def test_iframe_save_model_error(app, client, db_itemtype, db_workflow, users, i
     ],
 )
 def test_iframe_save_model(
-    app, client, db_itemtype, db_workflow, users, id, status_code
+    app, client, db_itemtype, db_workflow, users, id, status_code, mocker
 ):
     app.config["PRESERVE_CONTEXT_ON_EXCEPTION"] = False
     app.config["TESTING"] = True
@@ -479,7 +479,21 @@ def test_iframe_save_model(
     ret = json.loads(res.data)
     assert ret["code"] == 0
     assert ret["msg"].startswith("Model save success at") == True
-
+    
+    with client.session_transaction() as session:
+        session["activity_info"] = {
+            "activity_id": "A-00000000-00000",
+            "action_id": 3,
+            "action_version": "1.0.1",
+            "action_status": "M",
+            "commond": "",
+        }
+    mocker.patch("weko_items_ui.views.sanitize_input_data",side_effect=Exception("Sanitize error"))
+    res = client.post(url, json={})
+    assert res.status_code == status_code
+    ret = json.loads(res.data)
+    assert ret["code"] == 1
+    assert ret["msg"] == "Model save error"
 
 # def iframe_success():
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_success -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -20949,11 +20963,21 @@ def test_get_authors_prefix_settings_acl_nologin(client_api, db_sessionlifetime)
 
 # def get_authors_affiliation_settings():
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_authors_affiliation_settings_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_authors_affiliation_settings_acl_nologin(client_api, db_sessionlifetime):
+def test_get_authors_affiliation_settings_acl_nologin(client_api, db_sessionlifetime, mocker):
     url = url_for("weko_items_ui_api.get_authors_affiliation_settings", _external=True)
+    mock_affiliation = MagicMock()
+    mock_affiliation.name = "test"
+    mock_affiliation.scheme = "Test Scheme"
+    mock_affiliation.url = "https://test.com"
+    mocker.patch("weko_items_ui.views.get_data_authors_affiliation_settings",return_value=[mock_affiliation])
     res = client_api.get(url)
     assert res.status_code == 200
-
+    json.loads(res.data) == [
+        {"name": "test", "scheme": "Test Scheme", "url": "https://test.com"}
+    ]
+    mocker.patch("weko_items_ui.views.get_data_authors_affiliation_settings",return_value=None)
+    res = client_api.get(url)
+    assert res.status_code == 403
 
 # def session_validate():
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_session_validate_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp

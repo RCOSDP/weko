@@ -1186,7 +1186,7 @@ def set_record_status(file_format, list_existed_author_id, item, errors, warning
     """Set status to import data."""
     item['status'] = 'new'
     pk_id = item.get('pk_id')
-    err_msg = _("Specified WEKO ID does not exist.")
+    err_msg = _("Specified Author ID does not exist.")
     if item.get('is_deleted', '') == 'D':
         item['status'] = 'deleted'
         if not pk_id or list_existed_author_id.get(pk_id) is None:
@@ -1297,6 +1297,14 @@ def import_author_to_system(author, status, weko_id, force_change_mode):
             if status == 'new':
                 if check_weko_id:
                     raise Exception({'error_id': "WekoID is duplicated"})
+                author["authorIdInfo"].insert(
+                    0,
+                    {
+                        "idType": "1",
+                        "authorId": weko_id,
+                        "authorIdShowFlg": "true"
+                    }
+                )
                 WekoAuthors.create(author)
             else:
                 if status == 'deleted' \
@@ -1466,52 +1474,7 @@ def import_affiliation_id_to_system(affiliation_id):
         interval = current_app.config["WEKO_AUTHORS_BULK_IMPORT_RETRY_INTERVAL"]
         try:
             status = affiliation_id.pop('status')
-            for attempt in range(5):
-                try:
-                    if not affiliation_id.get('url'):
-                        affiliation_id['url'] = ""
-                    check = get_author_affiliation_obj(affiliation_id['scheme'])
-                    if status == 'new':
-                        if check is None:
-                            AuthorsAffiliationSettings.create(**affiliation_id)
-                    elif status == 'update':
-                        if check is None or check.id == affiliation_id['id']:
-                            AuthorsAffiliationSettings.update(**affiliation_id)
-                    elif status == 'deleted':
-                        used_external_id_prefix,_ = WekoAuthors.get_used_scheme_of_affiliation_id()
-                        if affiliation_id["scheme"] in used_external_id_prefix:
-                            raise Exception({'error_id': 'delete_author_link'})
-                        else:
-                            if check is None or check.id == affiliation_id['id']:
-                                AuthorsAffiliationSettings.delete(affiliation_id['id'])
-                    else:
-                        raise Exception({'error_id': 'status_error'})
-                    db.session.commit()
-                    break
-                except SQLAlchemyError as ex:
-                    handle_exception(ex, attempt, retrys, interval)
-                except TimeoutError as ex:
-                    handle_exception(ex, attempt, retrys, interval)
-        except Exception as ex:
-            db.session.rollback()
-            current_app.logger.error(
-                f'Affiliation Id: {affiliation_id["scheme"]} import error.')
-            traceback.print_exc(file=sys.stdout)
-            raise ex
-
-
-def import_affiliation_id_to_system(affiliation_id):
-    """
-    tsv/csvからのaffiliation_idをDBにインポートする.
-    Args:
-        affiliation_id (object): affiliation_id metadata from tsv/csv.
-    """
-    if affiliation_id:
-        retrys = current_app.config["WEKO_AUTHORS_BULK_IMPORT_MAX_RETRY"]
-        interval = current_app.config["WEKO_AUTHORS_BULK_IMPORT_RETRY_INTERVAL"]
-        try:
-            status = affiliation_id.pop('status')
-            for attempt in range(5):
+            for attempt in range(retrys):
                 try:
                     if not affiliation_id.get('url'):
                         affiliation_id['url'] = ""
