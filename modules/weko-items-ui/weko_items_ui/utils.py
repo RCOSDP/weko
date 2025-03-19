@@ -4510,11 +4510,11 @@ def get_access_token(api_code):
         expires_in = 3600 # 1時間
         expires_at = (datetime.now() + timedelta(seconds=expires_in)).isoformat()
 
-        return jsonify({
+        return {
             "access_token": new_access_token,
             "token_type": "Bearer",
-            "expires_in": expires_in
-        })
+            "expires_in": expires_in,
+        }
 
     except Exception as e:
         current_app.logger.error(f"AccessToken Error: {str(e)}")
