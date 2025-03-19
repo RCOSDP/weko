@@ -627,6 +627,15 @@ class TestWekoDeposit:
         ret = deposit.get_file_data()
         assert ret==[]
 
+    # def get_file_data_with_item_type(self):
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_get_file_data_with_item_type -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_get_file_data_with_item_type(sel,app,db,location,es_records,db_itemtype):
+        indexer, records = es_records
+        record = records[0]
+        deposit = record['deposit']
+        ret = deposit.get_file_data(item_type=db_itemtype["item_type"])
+        assert ret==[]
+
     # def delete_old_file_index(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_delete_old_file_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_delete_old_file_index(sel,app,db,location,es_records):
@@ -1074,14 +1083,11 @@ class TestWekoRecord:
     def test_get_titles(self,app,es_records,db_itemtype,db_oaischema):
         record = WekoRecord({})
         with app.test_request_context():
-            with pytest.raises(TypeError):
-                assert record.get_titles==""
+            assert record.get_titles==""
         indexer, results = es_records
         result = results[0]
         record = result['record']
         assert record['item_type_id']=="1"
-
-
 
         with app.test_request_context():
             assert record.get_titles=="title"
@@ -1099,6 +1105,28 @@ class TestWekoRecord:
         with app.test_request_context():
             assert record.get_titles=="title"
 
+        record["item_1617186331708"]["attribute_value_mlt"][0].pop("subitem_1551255648112")
+        record["item_1617186331708"]["attribute_value_mlt"][1].pop("subitem_1551255648112")
+        with app.test_request_context():
+            assert record.get_titles=="タイトル"
+
+        record["item_1617186331709"] = {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647226": "タイトル-2", "subitem_1551255648113": "ja"},{"subitem_1551255647226": "title-2", "subitem_1551255648113": "en"}]}
+        with app.test_request_context():
+            assert record.get_titles=="タイトル"
+
+        record.pop("item_1617186331708")
+        app.config['BABEL_DEFAULT_LOCALE'] = 'ja'
+        with app.test_request_context():
+            assert record.get_titles=="タイトル-2"
+
+        app.config['BABEL_DEFAULT_LOCALE'] = 'fr'
+        with app.test_request_context():
+            assert record.get_titles=="title-2"
+
+        record["item_1617186331709"]["attribute_value_mlt"][0].pop("subitem_1551255648113")
+        record["item_1617186331709"]["attribute_value_mlt"][1].pop("subitem_1551255648113")
+        with app.test_request_context():
+            assert record.get_titles=="タイトル-2"
 
     #     def items_show_list(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_items_show_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp

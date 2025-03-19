@@ -961,7 +961,7 @@ class StatisticMail:
                 result += '[閲覧回数] : ' + str(
                     cls.convert_download_count_to_int(
                         item['detail_view'])) + '\n'
-                result += '[ファイルダウンロード回数] : ' + file_down_str
+                result += '[ファイルダウンロード回数] : \n' + file_down_str
 
             else:
                 result += '[Title] : ' + item['title'] + '\n'
@@ -1725,7 +1725,7 @@ def get_restricted_access(key: Optional[str] = None) -> Optional[dict]:
         return restricted_access
     elif key in restricted_access:
         return restricted_access[key]
-    return None
+    return {}
 
 
 def update_restricted_access(restricted_access: dict):

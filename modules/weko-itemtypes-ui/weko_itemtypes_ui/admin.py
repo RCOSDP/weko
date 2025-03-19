@@ -186,7 +186,7 @@ class ItemTypeMetaDataView(BaseView):
             return response
 
         data = request.get_json()
-        # current_app.logger.error("data:{}".format(data))
+        # current_app.logger.eqrror("data:{}".format(data))
         try:
             table_row_map = data.get('table_row_map')
             json_schema = fix_json_schema(table_row_map.get('schema'))
@@ -704,14 +704,15 @@ class ItemTypeMappingView(BaseView):
         item_type = ItemTypes.get_by_id(data.get('item_type_id'))
         meta_system = item_type.render.get('meta_system')
         mapping_type = data.get('mapping_type')
+        data_mapping = data.get('mapping')
         lst_duplicate = check_duplicate_mapping(
-            data.get('mapping'), meta_system, item_type, mapping_type)
+            data_mapping, meta_system, item_type, mapping_type)
         if len(lst_duplicate) > 0:
             return jsonify(duplicate=True, err_items=lst_duplicate,
                            msg=_('Duplicate mapping as below:'))
         try:
             Mapping.create(item_type_id=data.get('item_type_id'),
-                           mapping=data.get('mapping'))
+                           mapping=data_mapping)
             db.session.commit()
         except BaseException:
             db.session.rollback()

@@ -27,6 +27,7 @@ from weko_records_ui.utils import (
     get_billing_file_download_permission,
     get_list_licence,
     restore,
+    delete_version,
     soft_delete,
     is_billing_item,
     get_groups_price,
@@ -61,7 +62,7 @@ from flask_security.utils import login_user
 from invenio_accounts.testutils import login_user_via_session
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from mock import patch
-from weko_deposit.api import WekoRecord
+from weko_deposit.api import WekoRecord, WekoDeposit
 from weko_records_ui.models import FileOnetimeDownload, FileSecretDownload
 from weko_records.api import ItemTypes,Mapping
 from werkzeug.exceptions import NotFound
@@ -217,6 +218,20 @@ def test_get_min_price_billing_file_download(users):
 def test_is_billing_item(app,itemtypes):
     assert is_billing_item(1)==False
 
+
+# def delete_version(recid):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_delete_version -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_delete_version(app, records, users):
+    indexer, results = records
+    record = results[0]["record"]
+    recid = results[0]["recid"]
+
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        delete_version(record.pid.pid_value + '.1')
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid', pid_value=record.pid.pid_value + '.1').first()
+        assert pid.status == PIDStatus.DELETED
+
 # def soft_delete(recid):
 #     def get_cache_data(key: str):
 #     def check_an_item_is_locked(item_id=None):
@@ -344,7 +359,7 @@ def test_hide_by_file(app,records):
 
 # def hide_by_email(item_metadata):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_hide_by_email -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_hide_by_email(app,records):
+def test_hide_by_email(app,records, itemtypes):
     indexer, results = records
     record = results[0]["record"]
     test_record = copy.deepcopy(record)
@@ -353,6 +368,7 @@ def test_hide_by_email(app,records):
     record['item_1617186419668']['attribute_value_mlt'][2].pop('creatorMails')
     record['item_1617349709064']['attribute_value_mlt'][0].pop('contributorMails')
     assert hide_by_email(test_record)==record
+    assert hide_by_email(test_record, item_type=itemtypes["item_type"])==record
 
     record = {
         "item_type_id": "1",
@@ -455,11 +471,14 @@ def test_replace_license_free(app,records):
 #     def set_message_for_file(p_file):
 #     def get_data_by_key_array_json(key, array_json, get_key):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_file_info_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_file_info_list(app,records):
+def test_get_file_info_list(app,records, itemtypes):
     indexer, results = records
     record = results[0]["record"]
     with app.test_request_context(headers=[("Accept-Language", "en")]):
         ret =  get_file_info_list(record)
+        assert len(ret)==2
+
+        ret =  get_file_info_list(record, item_type=itemtypes["item_type"])
         assert len(ret)==2
 
 # def create_usage_report_for_user(onetime_download_extra_info: dict):
