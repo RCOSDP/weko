@@ -305,7 +305,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                             if "=*" in alst[1]:
                                                 name = alst[0] + "." + val_attr_lst[0]
                                                 qt = [
-                                                    Q("term", **{name: val_attr_lst[1]})
+                                                    Q("term", **{name: key})
                                                 ]
 
                                             mut.extend(qt or [])
