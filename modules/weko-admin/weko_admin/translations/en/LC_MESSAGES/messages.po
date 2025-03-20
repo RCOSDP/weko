@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko_admin 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-04-25 18:26+0900\n"
+"POT-Creation-Date: 2021-07-29 21:12+0900\n"
 "PO-Revision-Date: 2018-01-04 16:19+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -19,470 +19,1575 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_admin/admin.py:107
+#: weko_admin/admin.py:105
 msgid "deny access"
 msgstr "Denied access"
 
-#: weko_admin/admin.py:291
-msgid "No. Of File Downloads"
-msgstr "Number of File Downloads"
-
-#: weko_admin/admin.py:292
-msgid "Open-Access No. Of File Downloads"
-msgstr "Number of Open-Access File Downloads"
-
-#: weko_admin/admin.py:294
-msgid "No. Of File Previews"
-msgstr "Number of File Previews"
-
-#: weko_admin/admin.py:295
-msgid "Open-Access No. Of File Previews"
-msgstr "Number of Open-Access File Previews"
-
-#: weko_admin/admin.py:301
-msgid "Aggregation Monh"
+#: weko_admin/admin.py:124
+msgid "Successfully update color."
 msgstr ""
 
-#: weko_admin/admin.py:304
-msgid "File Name"
+#: weko_admin/admin.py:310
+msgid "Monday"
 msgstr ""
 
-#: weko_admin/admin.py:304
-msgid "Registered Index Name"
+#: weko_admin/admin.py:310
+msgid "Tuesday"
 msgstr ""
 
-#: weko_admin/admin.py:305
-msgid "No. Of Times Downloaded/Viewed"
-msgstr "Number of  Downloads/Views"
-
-#: weko_admin/admin.py:305
-msgid "Non-Logged In User"
-msgstr "Non-Logged in User"
-
-#: weko_admin/admin.py:306
-msgid "Logged In User"
-msgstr "Logged in User"
-
-#: weko_admin/admin.py:306
-msgid "Site License"
+#: weko_admin/admin.py:310
+msgid "Wednesday"
 msgstr ""
 
-#: weko_admin/admin.py:306
-msgid "Admin"
+#: weko_admin/admin.py:311
+msgid "Thursday"
 msgstr ""
 
-#: weko_admin/admin.py:307
-msgid "Registrar"
+#: weko_admin/admin.py:311
+msgid "Friday"
 msgstr ""
 
-#: weko_admin/admin.py:362 weko_admin/admin.py:380 weko_admin/admin.py:389
-msgid "Setting"
+#: weko_admin/admin.py:311
+msgid "Saturday"
+msgstr ""
+
+#: weko_admin/admin.py:312
+msgid "Sunday"
+msgstr ""
+
+#: weko_admin/admin.py:342 weko_admin/tasks.py:92
+msgid " Log report."
+msgstr ""
+
+#: weko_admin/admin.py:353
+msgid "Successfully sent the reports to the recepients."
 msgstr ""
 
 #: weko_admin/admin.py:363
-msgid "Style"
+msgid "Unexpected error occurred."
 msgstr ""
 
-#: weko_admin/admin.py:371
-msgid "Statistics"
+#: weko_admin/admin.py:397
+msgid "Successfully Changed Schedule."
 msgstr ""
 
-#: weko_admin/admin.py:372
-msgid "Report"
+#: weko_admin/admin.py:399
+msgid "Could Not Save Changes."
 msgstr ""
 
-#: weko_admin/admin.py:381
-msgid "Language"
+#: weko_admin/admin.py:464 weko_admin/admin.py:572 weko_admin/admin.py:806
+msgid "Successfully Changed Settings."
 msgstr ""
 
-#: weko_admin/admin.py:390
-msgid "WebAPI Account"
+#: weko_admin/admin.py:485 weko_admin/views.py:564
+msgid "Could not save data."
 msgstr ""
 
-#: weko_admin/admin.py:917
+#: weko_admin/admin.py:496
+msgid "Could not get restricted data: "
+msgstr ""
+
+#: weko_admin/admin.py:497
+msgid "Could not get restricted data."
+msgstr ""
+
+#: weko_admin/admin.py:576 weko_admin/admin.py:809 weko_admin/admin.py:812
+msgid "Failurely Changed Settings."
+msgstr ""
+
+#: weko_admin/admin.py:849
+msgid "Successfully Changed Settings"
+msgstr ""
+
+#: weko_admin/admin.py:853
+msgid "Failed To Change Settings"
+msgstr ""
+
+#: weko_admin/admin.py:913
+msgid "Prefix"
+msgstr ""
+
+#: weko_admin/admin.py:919
+msgid "Suffix"
+msgstr ""
+
+#: weko_admin/admin.py:921
+msgid "Enable/Disable"
+msgstr ""
+
+#: weko_admin/admin.py:931
+msgid "Repository"
+msgstr ""
+
+#: weko_admin/admin.py:931
+msgid "JaLC DOI"
+msgstr ""
+
+#: weko_admin/admin.py:932
+msgid "JaLC CrossRef DOI"
+msgstr ""
+
+#: weko_admin/admin.py:933
+msgid "JaLC DataCite DOI"
+msgstr ""
+
+#: weko_admin/admin.py:934
+msgid "NDL JaLC DOI"
+msgstr ""
+
+#: weko_admin/admin.py:935
+msgid "Semi-automatic Suffix"
+msgstr ""
+
+#: weko_admin/admin.py:952
+msgid "Only allow half with 1-bytes character in input"
+msgstr ""
+
+#: weko_admin/admin.py:1017
 msgid "Specified repository is already registered."
 msgstr ""
 
-#: weko_admin/ext.py:42
+#: weko_admin/admin.py:1137
+msgid "ID"
+msgstr ""
+
+#: weko_admin/admin.py:1138
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:50
+msgid "Item Name(EN)"
+msgstr "Item Name(EN)"
+
+#: weko_admin/admin.py:1139
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:51
+msgid "Item Name(JP)"
+msgstr "Item Name(JP)"
+
+#: weko_admin/admin.py:1140
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:52
+msgid "Mapping"
+msgstr "Mapping"
+
+#: weko_admin/admin.py:1141
+#, fuzzy
+msgid "Active"
+msgstr "Save"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:59
+msgid "UiType"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:60
+msgid "DisplayNumber"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:61
+msgid "OpenClose"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:62
+msgid "OpenClose Open"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:63
+msgid "OpenClose Close"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
+msgid "DisplayNumber Validation1"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
+msgid "DisplayNumber Validation2"
+msgstr ""
+
+#: weko_admin/admin.py:1210 weko_admin/admin.py:1237 weko_admin/admin.py:1246
+#: weko_admin/admin.py:1255 weko_admin/admin.py:1264 weko_admin/admin.py:1273
+#: weko_admin/admin.py:1282 weko_admin/admin.py:1291 weko_admin/admin.py:1309
+#: weko_admin/admin.py:1318 weko_admin/admin.py:1327 weko_admin/admin.py:1336
+#: weko_admin/admin.py:1344 weko_admin/admin.py:1352
+msgid "Setting"
+msgstr ""
+
+#: weko_admin/admin.py:1211
+msgid "Style"
+msgstr ""
+
+#: weko_admin/admin.py:1219 weko_admin/admin.py:1228 weko_admin/admin.py:1300
+msgid "Statistics"
+msgstr ""
+
+#: weko_admin/admin.py:1220
+msgid "Report"
+msgstr ""
+
+#: weko_admin/admin.py:1229
+msgid "Feedback Mail"
+msgstr ""
+
+#: weko_admin/admin.py:1238
+msgid "Stats"
+msgstr ""
+
+#: weko_admin/admin.py:1247
+#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:45
+msgid "Log Analysis"
+msgstr ""
+
+#: weko_admin/admin.py:1256
+#: weko_admin/templates/weko_admin/admin/site_info.html:48
+msgid "Language"
+msgstr ""
+
+#: weko_admin/admin.py:1265
+msgid "WebAPI Account"
+msgstr ""
+
+#: weko_admin/admin.py:1274
+msgid "Ranking"
+msgstr ""
+
+#: weko_admin/admin.py:1283
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:61
+msgid "Search"
+msgstr ""
+
+#: weko_admin/admin.py:1292 weko_admin/admin.py:1301 weko_admin/config.py:154
+#: weko_admin/config.py:159
+msgid "Site License"
+msgstr ""
+
+#: weko_admin/admin.py:1310
+#, fuzzy
+msgid "File Preview"
+msgstr "Number of File Previews"
+
+#: weko_admin/admin.py:1319
+msgid "Item Export"
+msgstr ""
+
+#: weko_admin/admin.py:1328
+msgid "Site Info"
+msgstr ""
+
+#: weko_admin/admin.py:1337
+msgid "Restricted Access"
+msgstr ""
+
+#: weko_admin/admin.py:1345
+msgid "Identifier"
+msgstr ""
+
+#: weko_admin/admin.py:1353
+#, fuzzy
+msgid "Faceted Search"
+msgstr "Facet Search List"
+
+#: weko_admin/api.py:82
+msgid "statistics report"
+msgstr ""
+
+#: weko_admin/config.py:129
+msgid "No. Of File Downloads"
+msgstr "Number of File Downloads"
+
+#: weko_admin/config.py:130
+msgid "No. Of File Previews"
+msgstr "Number of File Previews"
+
+#: weko_admin/config.py:131
+#, fuzzy
+msgid "No. Of Paid File Downloads"
+msgstr "Number of File Downloads"
+
+#: weko_admin/config.py:132
+#, fuzzy
+msgid "No. Of Paid File Previews"
+msgstr "Number of File Previews"
+
+#: weko_admin/config.py:133
+msgid "Detail Views Per Index"
+msgstr ""
+
+#: weko_admin/config.py:134
+msgid "Detail Views Count"
+msgstr ""
+
+#: weko_admin/config.py:135
+msgid "Usage Count By User"
+msgstr ""
+
+#: weko_admin/config.py:136
+msgid "Search Keyword Ranking"
+msgstr ""
+
+#: weko_admin/config.py:137
+msgid "Number Of Access By Host"
+msgstr ""
+
+#: weko_admin/config.py:138
+msgid "User Affiliation Information"
+msgstr ""
+
+#: weko_admin/config.py:139
+#: weko_admin/templates/weko_admin/email_templates/site_license_report.html:21
+msgid "Access Count By Site License"
+msgstr ""
+
+#: weko_admin/config.py:144
+msgid "Open-Access No. Of File Downloads"
+msgstr "Number of Open-Access File Downloads"
+
+#: weko_admin/config.py:145
+msgid "Open-Access No. Of File Previews"
+msgstr "Number of Open-Access File Previews"
+
+#: weko_admin/config.py:146
+msgid "Access Number Breakdown By Site License"
+msgstr ""
+
+#: weko_admin/config.py:152 weko_admin/config.py:157
+msgid "File Name"
+msgstr ""
+
+#: weko_admin/config.py:152 weko_admin/config.py:157 weko_admin/config.py:163
+msgid "Registered Index Name"
+msgstr ""
+
+#: weko_admin/config.py:153
+#, fuzzy
+msgid "No. Of Times Downloaded"
+msgstr "Number of  Downloads/Views"
+
+#: weko_admin/config.py:153 weko_admin/config.py:158
+msgid "Non-Logged In User"
+msgstr "Non-Logged in User"
+
+#: weko_admin/config.py:154 weko_admin/config.py:159
+msgid "Logged In User"
+msgstr "Logged in User"
+
+#: weko_admin/config.py:154 weko_admin/config.py:159
+msgid "Admin"
+msgstr ""
+
+#: weko_admin/config.py:155 weko_admin/config.py:160
+msgid "Registrar"
+msgstr ""
+
+#: weko_admin/config.py:158
+#, fuzzy
+msgid "No. Of Times Viewed"
+msgstr "Number of File Previews"
+
+#: weko_admin/config.py:161
+#, fuzzy
+msgid "Index"
+msgstr "Hide"
+
+#: weko_admin/config.py:161
+#, fuzzy
+msgid "No. Of Views"
+msgstr "Number of File Previews"
+
+#: weko_admin/config.py:163
+msgid "Title"
+msgstr ""
+
+#: weko_admin/config.py:163
+msgid "View Count"
+msgstr ""
+
+#: weko_admin/config.py:164
+#, fuzzy
+msgid "Non-logged-in User"
+msgstr "Non-Logged in User"
+
+#: weko_admin/config.py:165
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:49
+msgid "Mail address"
+msgstr ""
+
+#: weko_admin/config.py:166
+msgid "Username"
+msgstr ""
+
+#: weko_admin/config.py:167
+#, fuzzy
+msgid "File download count"
+msgstr "Number of File Downloads"
+
+#: weko_admin/config.py:168
+msgid "File playing count"
+msgstr ""
+
+#: weko_admin/config.py:169
+#: weko_admin/templates/weko_admin/admin/report.html:116
+msgid "Search Keyword"
+msgstr ""
+
+#: weko_admin/config.py:169 weko_admin/config.py:174
+#: weko_admin/templates/weko_admin/email_templates/site_license_report.html:25
+msgid "Number Of Searches"
+msgstr ""
+
+#: weko_admin/config.py:170
+msgid "Host"
+msgstr ""
+
+#: weko_admin/config.py:170
+msgid "IP Address"
+msgstr ""
+
+#: weko_admin/config.py:171 weko_admin/config.py:173
+#: weko_admin/templates/weko_admin/email_templates/site_license_report.html:24
+msgid "WEKO Top Page Access Count"
+msgstr ""
+
+#: weko_admin/config.py:172
+msgid "Role"
+msgstr ""
+
+#: weko_admin/config.py:172
+msgid "Number Of Users"
+msgstr ""
+
+#: weko_admin/config.py:174
+#: weko_admin/templates/weko_admin/email_templates/site_license_report.html:26
+msgid "Number Of Views"
+msgstr ""
+
+#: weko_admin/config.py:175
+#: weko_admin/templates/weko_admin/email_templates/site_license_report.html:27
+#, fuzzy
+msgid "Number Of File download"
+msgstr "Number of File Downloads"
+
+#: weko_admin/config.py:176
+#: weko_admin/templates/weko_admin/email_templates/site_license_report.html:28
+#, fuzzy
+msgid "Number Of File Regeneration"
+msgstr "Number of items registered"
+
+#: weko_admin/config.py:181
+#, fuzzy
+msgid "FileDownload_"
+msgstr "Number of File Downloads"
+
+#: weko_admin/config.py:182
+#, fuzzy
+msgid "FilePreview_"
+msgstr "Number of File Previews"
+
+#: weko_admin/config.py:183
+msgid "PayFileDownload_"
+msgstr ""
+
+#: weko_admin/config.py:184
+msgid "PayFilePreview_"
+msgstr ""
+
+#: weko_admin/config.py:185
+#, fuzzy
+msgid "IndexAccess_"
+msgstr "Denied access"
+
+#: weko_admin/config.py:186
+msgid "DetailView_"
+msgstr ""
+
+#: weko_admin/config.py:187
+msgid "FileUsingPerUser_"
+msgstr ""
+
+#: weko_admin/config.py:188
+msgid "SearchCount_"
+msgstr ""
+
+#: weko_admin/config.py:189
+msgid "UserAffiliate_"
+msgstr ""
+
+#: weko_admin/config.py:190
+#, fuzzy
+msgid "SiteAccess_"
+msgstr "Denied access"
+
+#: weko_admin/config.py:191
+msgid "TopPageAccess_"
+msgstr ""
+
+#: weko_admin/ext.py:74
 msgid "A translation string"
 msgstr ""
 
-#: weko_admin/utils.py:250
+#: weko_admin/utils.py:235
 msgid "Input type is invalid. Please check again."
 msgstr ""
 
-#: weko_admin/utils.py:253 weko_admin/views.py:342 weko_admin/views.py:347
+#: weko_admin/utils.py:238 weko_admin/views.py:284 weko_admin/views.py:289
 msgid "Account information is invalid. Please check again."
 msgstr ""
 
-#: weko_admin/views.py:96
+#: weko_admin/utils.py:331
+msgid "Registered Users"
+msgstr ""
+
+#: weko_admin/utils.py:373
+#, fuzzy
+msgid "Aggregation Month"
+msgstr "Aggregations List"
+
+#: weko_admin/utils.py:388
+msgid "Total Detail Views"
+msgstr ""
+
+#: weko_admin/utils.py:396
+msgid "Site license member"
+msgstr ""
+
+#: weko_admin/utils.py:400
+msgid "Other than site license"
+msgstr ""
+
+#: weko_admin/utils.py:411
+#, fuzzy
+msgid "Institution Name"
+msgstr "Condition Name"
+
+#: weko_admin/utils.py:1198
+msgid "Cannot update Feedback email settings."
+msgstr ""
+
+#: weko_admin/utils.py:1225
+msgid "Author is duplicated."
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:48
+#: weko_admin/utils.py:1232
+msgid "Duplicate Email Addresses."
+msgstr "Duplicated Email Addresses."
+
+#: weko_admin/views.py:102
 #, python-format
 msgid "%(icon)s Session"
 msgstr ""
 
-#: weko_admin/views.py:102
+#: weko_admin/views.py:108
 msgid "Session"
 msgstr ""
 
-#: weko_admin/views.py:126
+#: weko_admin/views.py:132
 msgid "Session lifetime was updated."
 msgstr ""
 
-#: weko_admin/views.py:131
+#: weko_admin/views.py:137
 msgid "15 mins"
 msgstr "15 minutes"
 
-#: weko_admin/views.py:132
+#: weko_admin/views.py:138
 msgid "30 mins"
 msgstr "30 minutes"
 
-#: weko_admin/views.py:133
+#: weko_admin/views.py:139
 msgid "45 mins"
 msgstr "45 minutes"
 
-#: weko_admin/views.py:134
+#: weko_admin/views.py:140
 msgid "60 mins"
 msgstr "1 hour"
 
-#: weko_admin/views.py:135
+#: weko_admin/views.py:141
 msgid "180 mins"
 msgstr "3 hours"
 
-#: weko_admin/views.py:136
+#: weko_admin/views.py:142
 msgid "360 mins"
 msgstr "6 hours"
 
-#: weko_admin/views.py:137
+#: weko_admin/views.py:143
 msgid "720 mins"
 msgstr "12 hours"
 
-#: weko_admin/views.py:138
+#: weko_admin/views.py:144
 msgid "1440 mins"
 msgstr "1 day"
 
-#: weko_admin/views.py:335
+#: weko_admin/views.py:277
 msgid "Header Error"
 msgstr ""
+
+#: weko_admin/views.py:559
+msgid "Restricted Access was successfully updated."
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:54
+#: weko_admin/views.py:618 weko_admin/views.py:651
+msgid "Success"
+msgstr ""
+
+#: weko_admin/views.py:627
+msgid "Failed to update due to server error."
+msgstr "Failed to update due to server error."
+
+#: weko_admin/views.py:632
+msgid "Failed to create due to server error."
+msgstr "Failed to create due to server error."
+
+#: weko_admin/views.py:635
+msgid ""
+"The item name/mapping is already exists. Please input other faceted "
+"item/mapping."
+msgstr ""
+"The item name/mapping is already exists. Please input other faceted "
+"item/mapping."
+
+#: weko_admin/views.py:658 weko_admin/views.py:661
+msgid "Failed to delete due to server error."
+msgstr "Failed to delete due to server error."
 
 #: weko_admin/templates/weko_admin/index.html:25
 msgid "Welcome to"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/search_management.html:45
+#: weko_admin/templates/weko_admin/admin/block_style.html:87
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:67
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:44
+#: weko_admin/templates/weko_admin/admin/file_preview_settings.html:62
+#: weko_admin/templates/weko_admin/admin/item_export_settings.html:94
+#: weko_admin/templates/weko_admin/admin/lang_settings.html:86
+#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:169
+#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:191
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:145
+#: weko_admin/templates/weko_admin/admin/report.html:224
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:52
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:422
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:459
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:562
+#: weko_admin/templates/weko_admin/admin/site_info.html:49
+#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:174
+#: weko_admin/templates/weko_admin/admin/site_license_settings.html:204
+#: weko_admin/templates/weko_admin/admin/stats_settings.html:71
+#: weko_admin/templates/weko_admin/admin/web_api_account.html:57
+#: weko_admin/templates/weko_admin/partials/email_schedule.html:88
+msgid "Save"
+msgstr "Save"
+
+#: weko_admin/templates/weko_admin/admin/block_style.html:91
+msgid "Color Setting"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/block_style.html:97
+msgid "Background1"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:53
+msgid "Custom Aggregations"
+msgstr "Custom Aggregations"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:54
+msgid "Aggregations List"
+msgstr "Aggregations List"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:55
+msgid "Aggregation Mapping"
+msgstr "Aggregation Mapping"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:56
+msgid "Aggregation Value"
+msgstr "Aggregation Value"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:57
+msgid "Display/Hide"
+msgstr "Display/Hide"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:58
+msgid "_Display"
+msgstr "Display"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:59
+msgid "_Hide"
+msgstr "Hide"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:61
+msgid "List"
+msgstr "List"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:62
+msgid "Create"
+msgstr "Create"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:63
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:230
+msgid "Edit"
+msgstr "Edit"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
+#: weko_admin/templates/weko_admin/partials/email_schedule.html:23
+msgid "Details"
+msgstr "Details"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:66
+#: weko_admin/templates/weko_admin/settings/lifetime.html:55
+msgid "Cancel"
+msgstr "Cancel"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:68
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:45
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:149
+#: weko_admin/templates/weko_admin/admin/site_info.html:57
+#: weko_admin/templates/weko_admin/admin/site_license_settings.html:70
+msgid "Delete"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:69
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:64
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:541
+msgid "Add"
+msgstr "Add"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:70
+msgid "Please input all required item."
+msgstr "Please input all required item."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:77
+#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:183
+#: weko_admin/templates/weko_admin/admin/report.html:247
+#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:197
+msgid "Confirmation"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:78
+msgid "Are you sure you want to delete it?"
+msgstr "Are you sure you want to delete it?"
+
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:39
+msgid "Automatic Transmission ON/OFF"
+msgstr "Feedback email feature"
+
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:40
+#: weko_admin/templates/weko_admin/admin/report.html:166
+#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:86
+msgid "Send"
+msgstr "Enable"
+
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:41
+#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:92
+msgid "Do not send"
+msgstr "Disable"
+
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:42
+msgid "Send exclusion target persons"
+msgstr "Exclusion from sending"
+
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:43
+msgid "From author DB"
+msgstr "Input from author DB"
+
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:46
+#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:104
+#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:183
+msgid "Manual Send"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:47
+msgid "Update successfully."
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:50
+msgid "Send logs"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:51
+msgid "Start time"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:52
+msgid "End time"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:53
+msgid "Counts"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:55
+#: weko_admin/templates/weko_admin/admin/report.html:265
+msgid "Error"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:56
+msgid "List of authors who failed to send"
+msgstr "List of failed feedback emails"
+
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:57
+msgid "Name"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:58
+msgid "Resend"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:59
+#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:195
+#: weko_admin/templates/weko_admin/admin/report.html:273
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:75
+msgid "Close"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:60
+msgid "There is no data."
+msgstr "No search result"
+
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:62
+msgid "Feedback Mail Import"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/file_preview_settings.html:41
+msgid "PDF Save Path"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/file_preview_settings.html:45
+msgid " Can not be selected"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/file_preview_settings.html:49
+msgid "PDF TTL"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/file_preview_settings.html:53
+msgid "Seconds"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/item_export_settings.html:44
+msgid "Item Export Settings"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/item_export_settings.html:52
+msgid "Allow/Disallow Item Exporting"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/item_export_settings.html:59
+#: weko_admin/templates/weko_admin/admin/item_export_settings.html:78
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:47
+#: weko_admin/templates/weko_admin/admin/stats_settings.html:59
+#: weko_admin/templates/weko_admin/partials/email_schedule.html:75
+msgid "On"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/item_export_settings.html:65
+#: weko_admin/templates/weko_admin/admin/item_export_settings.html:84
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:52
+#: weko_admin/templates/weko_admin/admin/stats_settings.html:64
+#: weko_admin/templates/weko_admin/partials/email_schedule.html:80
+msgid "Off"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/item_export_settings.html:71
+msgid "Export File Contents"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/lang_settings.html:47
+msgid "Target language"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/lang_settings.html:62
+msgid "Registered language"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:56
+msgid "Addresses to Filter"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:64
+msgid "Enter the IP Addresses to Filter"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:128
+msgid "Shared Crawler Lists"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:186
+#, fuzzy
+msgid "Are you sure you want to block the given addresses?"
+msgstr "Are you sure you want to delete it?"
+
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:41
+msgid "Show/Hide Ranking"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:58
+msgid "Period To Judge As New Item"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:64
+msgid "Day (Range : 1~30)"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:68
+msgid "Statistical Period"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:73
+msgid "Day"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:77
+#, fuzzy
+msgid "Display Rank"
+msgstr "Display"
+
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:85
+msgid "Rankings"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:91
+msgid "Most Viewed Items"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:102
+msgid "Most Downloaded Items"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:113
+msgid "User Who Created The Most Items"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:124
+msgid "Most Searched Keywords"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/ranking_settings.html:135
+msgid "New Items"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:54
+msgid "Number of items registered"
+msgstr "Number of items registered"
+
+#: weko_admin/templates/weko_admin/admin/report.html:61
+msgid "Total number of items registered:"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:69
+msgid "Number of open items registered:"
+msgstr "Number of public items registered:"
+
+#: weko_admin/templates/weko_admin/admin/report.html:77
+msgid "Number of private items registered:"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:87
+msgid "Fixed Form Reports"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:94
+#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:112
+msgid "Aggregation month"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:105
+msgid "Type"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:108
+msgid "All"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:109
+msgid "File Downloads"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:110
+#, fuzzy
+msgid "Paid File Downloads"
+msgstr "Number of File Downloads"
+
+#: weko_admin/templates/weko_admin/admin/report.html:111
+msgid "File Previews"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:112
+#, fuzzy
+msgid "Paid File Previews"
+msgstr "Number of File Previews"
+
+#: weko_admin/templates/weko_admin/admin/report.html:113
+#, fuzzy
+msgid "Index Access"
+msgstr "Denied access"
+
+#: weko_admin/templates/weko_admin/admin/report.html:114
+msgid "Item View"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:115
+msgid "File Using Per User"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:117
+#, fuzzy
+msgid "Top Page Access"
+msgstr "Denied access"
+
+#: weko_admin/templates/weko_admin/admin/report.html:118
+msgid "Users"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:119
+#, fuzzy
+msgid "Site Access"
+msgstr "Denied access"
+
+#: weko_admin/templates/weko_admin/admin/report.html:123
+msgid "Year"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:137
+msgid "Month"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:143
+#: weko_admin/templates/weko_admin/admin/report.html:145
+#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:131
+#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:133
+#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:158
+#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:160
+#, python-format
+msgid "%(mon)s"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:159
+msgid "Download"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:179
+msgid "Receive Mail"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:180
+msgid "Please register the email address to send the report:"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:189
+#: weko_admin/templates/weko_admin/admin/report.html:198
+#, fuzzy
+msgid "Enter email address."
+msgstr "Duplicated Email Addresses."
+
+#: weko_admin/templates/weko_admin/admin/report.html:217
+#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:43
+#: weko_admin/templates/weko_admin/admin/site_license_settings.html:81
+msgid "Email Address"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:248
+#, fuzzy
+msgid "Are you sure you want to save changes?"
+msgstr "Are you sure you want to delete it?"
+
+#: weko_admin/templates/weko_admin/admin/report.html:255
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:76
+msgid "Send Mail"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:256
+#, fuzzy
+msgid "Are you sure you want to send the mail?"
+msgstr "Are you sure you want to delete it?"
+
+#: weko_admin/templates/weko_admin/admin/report.html:268
+msgid "Could not download file."
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:45
+msgid "Download Limit"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:46
+msgid "Expiration Date"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:48
+msgid "Content File Download"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:51
+msgid "Unlimited"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:53
+msgid "Usage Report Workflow Access"
+msgstr "Usage Report Workflow Access"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:55
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:57
+#, python-format
+msgid "Must set a positive integer for %(name)s."
+msgstr "Must set a positive integer for %(name)s."
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:58
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:59
+#, python-format
+msgid "Please set %(name)s."
+msgstr "Please set %(name)s."
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:61
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:444
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:451
+msgid "English"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:62
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:445
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:452
+msgid "Japanese"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:63
+msgid "Terms and Conditions"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:65
+msgid "Please input the Terms and Conditions in English."
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:68
+msgid "Activity"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:69
+msgid "Item"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:70
+msgid "WorkFlow"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:71
+msgid "Status"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:72
+msgid "User"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:73
+msgid "Usage Report Reminder Email"
+msgstr "Usage Report Reminder Email"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:74
+msgid "Confirm Usage Mail"
+msgstr "Confirm"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:77
+msgid "Email is sent successfully."
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:78
+msgid "Failed to send mail."
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:79
+msgid "action_doing"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:80
+msgid "Secret URL Download"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:81
+msgid "SecretURL Enabled"
+msgstr "Enable"
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:48
+#, fuzzy
+msgid "Search Author Setting"
+msgstr "Search Results Setting"
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:54
+msgid "Search Author"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:59
+msgid "Search by Author Name"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:63
+msgid "Search by Author ID"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:76
 msgid "Search Results Setting"
 msgstr "Search Results Setting"
 
-#: weko_admin/templates/weko_admin/search_management.html:56
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:87
 msgid "Default Display Number :"
 msgstr "Default Display Number："
 
-#: weko_admin/templates/weko_admin/search_management.html:58
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:89
 msgid "[[opt_num.contents]]"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/search_management.html:70
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:101
 msgid "Default Display Sort (Index Search) :"
 msgstr "Default Display Sort (By Index)："
 
-#: weko_admin/templates/weko_admin/search_management.html:72
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:103
 msgid "[[opt_index_sort.contents]]"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/search_management.html:84
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:115
 #, fuzzy
 msgid "Default Display Sort (Keywords Search) :"
 msgstr "Default Display Sort (By Keywords)"
 
-#: weko_admin/templates/weko_admin/search_management.html:86
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:117
 msgid "[[opt_keyword_sort.contents]]"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/search_management.html:97
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:128
 msgid "Please set the sort of search results ."
 msgstr "Please set the sort of search results ."
 
-#: weko_admin/templates/weko_admin/search_management.html:104
-#: weko_admin/templates/weko_admin/site_license.html:173
-msgid "Deny"
-msgstr "Deny"
-
-#: weko_admin/templates/weko_admin/search_management.html:107
-msgid "[[opt_sort_deny.contents]]"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/search_management.html:124
-#: weko_admin/templates/weko_admin/site_license.html:168
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:135
+#: weko_admin/templates/weko_admin/admin/site_license_settings.html:165
 msgid "Allow"
 msgstr "Allow"
 
-#: weko_admin/templates/weko_admin/search_management.html:127
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:138
 msgid "[[opt_sort_allow.contents]]"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/search_management.html:145
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:155
+#: weko_admin/templates/weko_admin/admin/site_license_settings.html:170
+msgid "Deny"
+msgstr "Deny"
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:158
+msgid "[[opt_sort_deny.contents]]"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:176
 msgid "Detail Search Conditions Setting"
 msgstr "Detail Search Conditions Setting"
 
-#: weko_admin/templates/weko_admin/search_management.html:154
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:185
 msgid "Search Item"
 msgstr "Item"
 
-#: weko_admin/templates/weko_admin/search_management.html:159
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:190
 msgid "Useable Item"
 msgstr "Useable Item"
 
-#: weko_admin/templates/weko_admin/search_management.html:164
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:195
 msgid "Condition Name"
 msgstr "Condition Name"
 
-#: weko_admin/templates/weko_admin/search_management.html:169
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:200
 msgid "JPCOAR Mapping"
 msgstr "JPCOAR Mapping"
 
-#: weko_admin/templates/weko_admin/search_management.html:174
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:205
 msgid "Initial Condition"
 msgstr "Initial Condition"
 
-#: weko_admin/templates/weko_admin/search_management.html:188
-msgid "[[option_condition.contents]]"
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:251
+msgid "lat"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/block_style.html:86
-#: weko_admin/templates/weko_admin/admin/block_style.html:128
-#: weko_admin/templates/weko_admin/admin/block_style.html:194
-#: weko_admin/templates/weko_admin/admin/lang_settings.html:90
-#: weko_admin/templates/weko_admin/admin/web_api_account.html:55
-#: weko_admin/templates/weko_admin/search_management.html:215
-#: weko_admin/templates/weko_admin/site_license.html:207
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:62
-msgid "Save"
-msgstr "Save"
-
-#: weko_admin/templates/weko_admin/site_license.html:45
-msgid "Site License setting"
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:252
+msgid "lon"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/site_license.html:51
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:253
+msgid "gte"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:254
+msgid "lte"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:255
+msgid "type"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:256
+msgid "coordinates"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:257
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:264
+#, fuzzy
+msgid "Search item setting"
+msgstr "Search Results Setting"
+
+#: weko_admin/template/weko_admin/admin/search_management_setting.html
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:279
+msgid "Index Tree/Facet Display Setting"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:291
+msgid "Index Tree"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:295
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:336
+#, fuzzy
+msgid "Display"
+msgstr "Display"
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:300
+msgid "Width (Grid)"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:309
+msgid "Height (Pixel)"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:329
+msgid "Facet"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:356
+msgid "Main Screen Initial Display Setting"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:366
+msgid "Default Contents to Display"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:380
+msgid "Default Index to Display"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:397
+msgid "Initial Display Index"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:400
+msgid "An index which is not open in public cannot be selected"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:484
+msgid "Item Type List"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:524
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:531
+msgid "Enter Input Value"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_info.html:39
+msgid "Site Name"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_info.html:40
+msgid "Favicon"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_info.html:41
+msgid "CopyRight"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_info.html:42
+msgid "Description"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_info.html:43
+msgid "Keyword"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_info.html:44
+msgid "Selected icon"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_info.html:45
+msgid "Select icon file"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_info.html:46
+msgid "Add site name"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_info.html:47
+msgid "Site name is not set"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_info.html:50
+msgid "Must set at least 1 site name."
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_info.html:51
+msgid "Please input site information for empty field."
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_info.html:52
+msgid "The same language is set for many site names."
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_info.html:53
+msgid "Site name is required."
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_info.html:54
+msgid "Error when get languages."
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_info.html:55
+msgid "Error when get site infomation."
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_info.html:56
+msgid "Language is deleted from Registered Language of system."
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_info.html:58
+msgid "Site info is saved successfully."
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_info.html:59
+msgid "Log in Instructions"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_info.html:60
+msgid "Add Instructions"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_info.html:61
+msgid "The same language is set for many instructions."
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_info.html:62
+msgid "Maximum length of instruction is 1000 characters. "
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:64
+msgid "Tracking ID"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:65
+msgid "AddThis ID"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:66
+msgid "OGP Image"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:42
+#, fuzzy
+msgid "Organization"
+msgstr "Condition Name"
+
+#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:76
+msgid "Automatic Send"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:79
+msgid ""
+"Select \"Send\" to automatically send a use of site license statistics "
+"email to the checked the organization."
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:107
+msgid ""
+"When manually send a use of site license statistics email to the checked "
+"the organization, select the aggregation period and press the [Manual "
+"Send] button."
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:198
+#, fuzzy
+msgid "Are you sure you want to send an email?"
+msgstr "Are you sure you want to delete it?"
+
+#: weko_admin/templates/weko_admin/admin/site_license_settings.html:47
 msgid ""
 "Please specify range of IP address which allow users can download "
 "contents without login."
 msgstr ""
 
-#: weko_admin/templates/weko_admin/site_license.html:56
-#: weko_admin/templates/weko_admin/site_license.html:61
+#: weko_admin/templates/weko_admin/admin/site_license_settings.html:52
+#: weko_admin/templates/weko_admin/admin/site_license_settings.html:57
 #, fuzzy
 msgid "Organization Name"
 msgstr "Condition Name"
 
-#: weko_admin/templates/weko_admin/site_license.html:73
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:63
-msgid "Delete"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/site_license.html:79
+#: weko_admin/templates/weko_admin/admin/site_license_settings.html:76
 msgid "E-Mail Address"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/site_license.html:84
-msgid "Email Address"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/site_license.html:89
-#: weko_admin/templates/weko_admin/site_license.html:94
+#: weko_admin/templates/weko_admin/admin/site_license_settings.html:86
+#: weko_admin/templates/weko_admin/admin/site_license_settings.html:91
 msgid "Domain Name"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/site_license.html:99
+#: weko_admin/templates/weko_admin/admin/site_license_settings.html:96
 msgid "IP Address Range"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/site_license.html:100
+#: weko_admin/templates/weko_admin/admin/site_license_settings.html:97
 msgid "(from - to)"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/site_license.html:138
+#: weko_admin/templates/weko_admin/admin/site_license_settings.html:135
 msgid "Please input a correct number"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/site_license.html:139
+#: weko_admin/templates/weko_admin/admin/site_license_settings.html:136
 msgid "The range of ipAddress is not correct"
 msgstr "IP Address range is not correct"
 
-#: weko_admin/templates/weko_admin/site_license.html:145
-#: weko_admin/templates/weko_admin/site_license.html:156
+#: weko_admin/templates/weko_admin/admin/site_license_settings.html:142
+#: weko_admin/templates/weko_admin/admin/site_license_settings.html:153
 msgid "More Input Row"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/site_license.html:163
+#: weko_admin/templates/weko_admin/admin/site_license_settings.html:160
 msgid "Please specify item type to be excluded from the site license"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/block_style.html:90
-msgid "Color Setting"
+#: weko_admin/templates/weko_admin/admin/stats_settings.html:44
+msgid "Statistics Settings"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/block_style.html:96
-msgid "Background1"
+#: weko_admin/templates/weko_admin/admin/stats_settings.html:53
+msgid "Show/Hide Record Stats"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/block_style.html:100
-msgid "Background2"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/block_style.html:104
-msgid "Frame Border"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/block_style.html:108
-msgid "Header"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/block_style.html:112
-msgid "Footer"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/block_style.html:132
-#, fuzzy
-msgid "Header Setting"
-msgstr "Search Results Setting"
-
-#: weko_admin/templates/weko_admin/admin/block_style.html:198
-msgid "Footer Setting"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/lang_settings.html:46
-msgid "Target language"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/lang_settings.html:61
-msgid "Registered language"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:49
-msgid "Number of items registered"
-msgstr "Number of items registered"
-
-#: weko_admin/templates/weko_admin/admin/report.html:56
-msgid "Total number of items registered:"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:64
-msgid "Number of open items registered:"
-msgstr "Number of public items registered:"
-
-#: weko_admin/templates/weko_admin/admin/report.html:72
-msgid "Number of private items registered:"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:82
-msgid "File Preview Report"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:89
-msgid "Aggregation month"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:97
-msgid "Type"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:100
-msgid "All"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:101
-msgid "File Downloads"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:102
-msgid "File Previews"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:106
-#: weko_admin/templates/weko_admin/admin/report.html:109
-msgid "Year"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:117
-#: weko_admin/templates/weko_admin/admin/report.html:120
-msgid "Month"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:121
-msgid "01"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:122
-msgid "02"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:123
-msgid "03"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:124
-msgid "04"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:125
-msgid "05"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:126
-msgid "06"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:127
-msgid "07"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:128
-msgid "08"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:129
-msgid "09"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:130
-msgid "10"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:131
-msgid "11"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:132
-msgid "12"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:140
-msgid "Download"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:150
-msgid "Error"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:153
-msgid "Could not download file."
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:158
-msgid "Close"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/web_api_account.html:37
+#: weko_admin/templates/weko_admin/admin/web_api_account.html:39
 msgid "Input Type"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/web_api_account.html:40
+#: weko_admin/templates/weko_admin/admin/web_api_account.html:42
 msgid "Please selected the input type"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/web_api_account.html:45
+#: weko_admin/templates/weko_admin/admin/web_api_account.html:47
 msgid "CrossRef Query Services Account"
 msgstr "Crossref Query Services Account"
+
+#: weko_admin/templates/weko_admin/email_templates/report.html:1
+msgid "The report logs have been sent."
+msgstr ""
+
+#: weko_admin/templates/weko_admin/email_templates/report.html:3
+msgid "Attached file"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/email_templates/site_license_report.html:22
+#, fuzzy
+msgid "Aggregation"
+msgstr "Aggregations List"
+
+#: weko_admin/templates/weko_admin/partials/email_schedule.html:6
+msgid "Report Email Schedule"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/partials/email_schedule.html:12
+msgid "Transmission Interval"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/partials/email_schedule.html:19
+msgid "Frequency"
+msgstr ""
 
 #: weko_admin/templates/weko_admin/settings/lifetime.html:30
 #, fuzzy
@@ -494,18 +1599,66 @@ msgstr "Set lifetime for"
 msgid "Set lifetime for"
 msgstr "Set lifetime for"
 
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html
+msgid "Please select one aggregation mapping."
+msgstr "Please select one aggregation mapping."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html
+msgid "Already exists."
+msgstr "Already exists."
+
 #: weko_admin/templates/weko_admin/settings/lifetime.html:42
 msgid "Current"
 msgstr "Current"
 
-#: weko_admin/templates/weko_admin/settings/lifetime.html:55
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:61
-msgid "Cancel"
-msgstr "Cancel"
-
 #: weko_admin/templates/weko_admin/settings/lifetime.html:58
 msgid "Update"
 msgstr "Update"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "reindex item_index"
+msgstr "アイテムインデックスの再作成"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "reindex item"
+msgstr "アイテムの再インデックス"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "execute"
+msgstr "実行"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "Maintenance"
+msgstr "メンテナンス"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "ElasticSearch Index"
+msgstr "インデックス再作成"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "waiting..."
+msgstr "実行可能"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "executing..."
+msgstr "実行中..."
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "haserror"
+msgstr "エラー発生中につき実行できません"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "validationMsg1"
+msgstr "実行モードが選ばれていません。"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+#, fuzzy
+msgid "confirmMessage"
+msgstr "Confirm"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "completed"
+msgstr "処理が完了しました。"
 
 #~ msgid "Title_Asc"
 #~ msgstr "Title (Asc)"
@@ -558,275 +1711,75 @@ msgstr "Update"
 #~ msgid "Organization name"
 #~ msgstr "Condition Name"
 
-#: weko_admin/template/weko_admin/admin/feedback_mail.html:41
-msgid "Automatic Transmission ON/OFF"
-msgstr "Feedback email feature"
+#~ msgid "Aggregation Monh"
+#~ msgstr ""
 
-#: weko_admin/template/weko_admin/admin/feedback_mail.html:42
-msgid "Send"
-msgstr "Enable"
+#~ msgid "[[option_condition.contents]]"
+#~ msgstr ""
 
-#: weko_admin/template/weko_admin/admin/feedback_mail.html:43
-msgid "Do not send"
-msgstr "Disable"
+#~ msgid "Site License setting"
+#~ msgstr ""
 
-#: weko_admin/template/weko_admin/admin/feedback_mail.html:44
-msgid "Send exclusion target persons"
-msgstr "Exclusion from sending"
+#~ msgid "Background2"
+#~ msgstr ""
 
-#: weko_admin/template/weko_admin/admin/feedback_mail.html:45
-msgid "From author DB"
-msgstr "Input from author DB"
+#~ msgid "Frame Border"
+#~ msgstr ""
 
-#: weko_admin/template/weko_admin/admin/feedback_mail.html:46
-msgid "Delete"
-msgstr ""
+#~ msgid "Header"
+#~ msgstr ""
 
-#: weko_admin/template/weko_admin/admin/feedback_mail.html:47
-msgid "Save"
-msgstr ""
+#~ msgid "Footer"
+#~ msgstr ""
 
-#: weko_admin/template/weko_admin/admin/feedback_mail.html:48
-msgid "Manual Send"
-msgstr ""
+#~ msgid "Header Setting"
+#~ msgstr "Search Results Setting"
 
-#: weko_admin/template/weko_admin/admin/feedback_mail.html:49
-msgid "Update successfully."
-msgstr ""
+#~ msgid "Footer Setting"
+#~ msgstr ""
 
-#: weko_admin/template/weko_admin/admin/feedback_mail.html:50
-msgid "Duplicate Email Addresses."
-msgstr "Duplicated Email Addresses."
+#~ msgid "File Preview Report"
+#~ msgstr ""
 
-#: weko_admin/utils.py:50
-msgid "Send logs"
-msgstr ""
+#~ msgid "01"
+#~ msgstr ""
 
-#: weko_admin/utils.py:50
-msgid "Start time"
-msgstr ""
+#~ msgid "02"
+#~ msgstr ""
 
-#: weko_admin/utils.py:50
-msgid "End time"
-msgstr ""
+#~ msgid "03"
+#~ msgstr ""
 
-#: weko_admin/utils.py:50
-msgid "Counts"
-msgstr ""
+#~ msgid "04"
+#~ msgstr ""
 
-#: weko_admin/utils.py:50
-msgid "Success"
-msgstr ""
+#~ msgid "05"
+#~ msgstr ""
 
-#: weko_admin/utils.py:50
-msgid "Error"
-msgstr ""
+#~ msgid "06"
+#~ msgstr ""
 
-#: weko_admin/utils.py:50
-msgid "List of authors who failed to send"
-msgstr "List of failed feedback emails"
+#~ msgid "07"
+#~ msgstr ""
 
-#: weko_admin/utils.py:50
-msgid "Name"
-msgstr ""
+#~ msgid "08"
+#~ msgstr ""
 
-#: weko_admin/utils.py:50
-msgid "Mail Address"
-msgstr ""
+#~ msgid "09"
+#~ msgstr ""
 
-#: weko_admin/utils.py:50
-msgid "Resend"
-msgstr ""
+#~ msgid "10"
+#~ msgstr ""
 
-#: weko_admin/template/weko_admin/admin/feedback_mail.html:59
-msgid "There is no data."
-msgstr "No search result"
+#~ msgid "11"
+#~ msgstr ""
 
+#~ msgid "12"
+#~ msgstr ""
 
-#: weko_admin/template/weko_admin/admin/site_info.html:59
-msgid "Log in Instructions"
-msgstr ""
+#~ msgid "Mail Address"
+#~ msgstr ""
 
-#: weko_admin/template/weko_admin/admin/site_info.html:60
-msgid "Add Instructions"
-msgstr ""
+#~ msgid "An index which is not open in public cannot be selected."
+#~ msgstr ""
 
-#: weko_admin/template/weko_admin/admin/site_info.html:61
-msgid "The same language is set for many instructions."
-msgstr ""
-
-#: weko_admin/template/weko_admin/admin/site_info.html:61
-msgid "Maximum length of instruction is 1000 characters. "
-msgstr ""
-
-#: weko_admin/template/weko_admin/admin/site_info.html:64
-msgid "Tracking ID"
-msgstr ""
-
-#: weko_admin/template/weko_admin/admin/site_info.html:65
-msgid "AddThis ID"
-msgstr ""
-
-#: weko_admin/template/weko_admin/admin/site_info.html:66
-msgid "OGP Image"
-msgstr ""
-
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
-msgid "Main Screen Initial Display Setting"
-msgstr ""
-
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
-msgid "Default Contents to Display"
-msgstr ""
-
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
-msgid "Default Index to Display"
-msgstr ""
-
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
-msgid "Initial Display Index"
-msgstr ""
-
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
-msgid "An index which is not open in public cannot be selected."
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/rest_settings.html:52
-msgid "Content File Download"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/rest_settings.html:53
-msgid "Expiration Date"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/rest_settings.html:64
-msgid "Download Limit"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/rest_settings.html:65
-msgid "Unlimited"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/rest_settings.html:46
-msgid "Must set a positive integer for %(name)s."
-msgstr "Must set a positive integer for %(name)s."
-
-#: weko_admin/templates/weko_admin/admin/rest_settings.html:49
-msgid "Please set %(name)s."
-msgstr "Please set %(name)s."
-
-msgid "Restricted Access was successfully updated."
-msgstr ""
-
-msgid "Please input the Terms and Conditions in English."
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/restrited_access_settings.html:65
-msgid "Usage Report Workflow Access"
-msgstr "Usage Report Workflow Access"
-
-msgid "Usage Report Reminder Email"
-msgstr "Usage Report Reminder Email"
-
-msgid "Confirm Usage Mail"
-msgstr "Confirm"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:46
-msgid "Item Name(EN)"
-msgstr "Item Name(EN)"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:47
-msgid "Item Name(JP)"
-msgstr "Item Name(JP)"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:48
-msgid "Mapping"
-msgstr "Mapping"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:49
-msgid "Custom Aggregations"
-msgstr "Custom Aggregations"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:50
-msgid "Aggregations List"
-msgstr "Aggregations List"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:51
-msgid "Aggregation Mapping"
-msgstr "Aggregation Mapping"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:52
-msgid "Aggregation Value"
-msgstr "Aggregation Value"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
-msgid "Add"
-msgstr "Add"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:55
-msgid "Display/Hide"
-msgstr "Display/Hide"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:57
-msgid "_Hide"
-msgstr "Hide"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:71
-msgid "Are you sure you want to delete it?"
-msgstr "Are you sure you want to delete it?"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:66
-msgid "List"
-msgstr "List"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:67
-msgid "Create"
-msgstr "Create"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:68
-msgid "Edit"
-msgstr "Edit"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:69
-msgid "Details"
-msgstr "Details"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:58
-msgid "_Display"
-msgstr "Display"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
-msgid "Facet Search List"
-msgstr "Facet Search List"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:70
-msgid "Please input all required item."
-msgstr "Please input all required item."
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html
-msgid "Please select one aggregation mapping."
-msgstr "Please select one aggregation mapping."
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html
-msgid "Already exists."
-msgstr "Already exists."
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
-msgid "Failed to create due to server error."
-msgstr "Failed to create due to server error."
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
-msgid "Failed to update due to server error."
-msgstr "Failed to update due to server error."
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
-msgid "Failed to delete due to server error."
-msgstr "Failed to delete due to server error."
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
-msgid "The item name/mapping is already exists. Please input other faceted item/mapping."
-msgstr "The item name/mapping is already exists. Please input other faceted item/mapping."
-
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:81
-msgid "SecretURL Enabled"
-msgstr "Enable"

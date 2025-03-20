@@ -26,15 +26,6 @@ def test_get_east_asian_width_count():
     assert get_east_asian_width_count("english")==7
     
 
-# def make_combined_pdf(pid, fileobj, obj, lang_user):
-#     def pixels_to_mm(val):
-#     def resize_to_fit(imgFilename):
-#     def get_center_position(imgFilename):
-#     def get_right_position(imgFilename):
-#     def get_pid_object(pid_value):
-#     def get_current_activity_id(pid_object):
-#     def get_url(pid_value):
-#     def get_oa_policy(activity_id):
 def make_record(indexer, id, publisher, subjects, creator,affiliation, lang_langs, is_license=False):
     filepath = "tests/data/helloworld.pdf"
     filename = "helloworld.pdf"
@@ -274,6 +265,15 @@ def make_record(indexer, id, publisher, subjects, creator,affiliation, lang_lang
     item_v1 = ItemsMetadata.create(item_data, id_=rec_uuid2, item_type_id=1)
     return record
 
+# def make_combined_pdf(pid, fileobj, obj, lang_user):
+#     def pixels_to_mm(val):
+#     def resize_to_fit(imgFilename):
+#     def get_center_position(imgFilename):
+#     def get_right_position(imgFilename):
+#     def get_pid_object(pid_value):
+#     def get_current_activity_id(pid_object):
+#     def get_url(pid_value):
+#     def get_oa_policy(activity_id):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_pdf.py::test_make_combined_pdf -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mocker):
     temp_path = "tests/data"

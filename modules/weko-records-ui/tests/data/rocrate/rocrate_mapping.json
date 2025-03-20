@@ -1,0 +1,93 @@
+{
+    "item_type_id": 40001,
+    "entity_types": [
+        "root",
+        "tab",
+        "section",
+        "subsection"
+    ],
+    "tree_structure": {
+        "depth": 0,
+        "name": "root",
+        "map": {
+            "name": "item_1617186331708.subitem_1551255647225",
+            "about": "item_1617186385884.subitem_1551255720400",
+            "abstract": "item_1617186626617.subitem_description",
+            "accessMode" : "item_1617186643794.subitem_1522300316516",
+            "accessModeSufficient": "item_1617349808926.subitem_1523263171732",
+            "accessibilityAPI" : "item_1617186783814.subitem_identifier_uri"
+        },
+        "children": [
+            {
+                "depth": 1,
+                "name": "概要",
+                "map": {},
+                "children": [
+                    {
+                        "depth": 2,
+                        "name": "研究概要",
+                        "map": {},
+                        "children": [
+                            {
+                                "depth": 3,
+                                "name": "実験の説明",
+                                "map": {}
+                            }
+                        ]
+                    },
+                    {
+                        "depth": 2,
+                        "name": "追加情報",
+                        "map": {},
+                        "children": [
+                            {
+                                "depth": 3,
+                                "name": "追加情報の説明",
+                                "map": {}
+                            }
+                        ]
+                    },
+                    {
+                        "depth": 2,
+                        "name": "その他の情報",
+                        "map": {},
+                        "children": [
+                            {
+                                "depth": 3,
+                                "name": "リポジトリ",
+                                "map": {}
+                            },
+                            {
+                                "depth": 3,
+                                "name": "利益相反の有無",
+                                "map": {}
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "depth": 1,
+                "name": "データ",
+                "map": {},
+                "children": [
+                    {
+                        "depth": 2,
+                        "name": "実験データ",
+                        "map": {},
+                        "children": [
+                            {
+                                "depth": 3,
+                                "name": "実験の説明",
+                                "map": {}
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    "file": {
+        "map": {}
+    }
+}
