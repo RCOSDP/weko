@@ -75,7 +75,7 @@ msgid "{} should be set by one of {}."
 msgstr ""
 
 #: weko_authors/utils.py:462
-msgid "Specified WEKO ID does not exist."
+msgid "Specified Author ID does not exist."
 msgstr ""
 
 #: weko_authors/utils.py:470 weko_authors/views.py:140
@@ -189,13 +189,16 @@ msgstr ""
 #~ msgid "Author_On_1_Page"
 #~ msgstr "On 1 Page:"
 
-#~ msgid "Export all creator"
+#~ msgid "Export target"
+#~ msgstr ""
+
+#~ msgid "Export all"
 #~ msgstr ""
 
 #~ msgid "Download URL"
 #~ msgstr ""
 
-#~ msgid "Are you sure you want to export all creator?"
+#~ msgid "Are you sure you want to export all?"
 #~ msgstr ""
 
 #~ msgid "Confirm"
@@ -205,6 +208,15 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Cancel"
+#~ msgstr ""
+
+#~ msgid "Are you sure you want to cancel process of exporting all?"
+#~ msgstr ""
+
+#~ msgid "Resume"
+#~ msgstr ""
+
+#~ msgid "Author DB"
 #~ msgstr ""
 
 #~ msgid "Are you sure you want to cancel process of exporting all creator?"
@@ -286,6 +298,16 @@ msgstr ""
 #~ msgid "Error"
 #~ msgstr ""
 
+#~ msgid "Success"
+#~ msgstr ""
+
+#~ msgid "Failure"
+#~ msgstr ""
+
+#~ msgid "Pending"
+#~ msgstr ""
+
+
 #~ msgid "Warning"
 #~ msgstr ""
 
@@ -332,6 +354,9 @@ msgstr ""
 #~ msgid "There is duplicated data in the TSV file."
 #~ msgstr ""
 
+#~ msgid "The selected target table and the import file format are different."
+#~ msgstr ""
+
 #~ msgid ""
 #~ "The specified author has been deleted."
 #~ " Update author information with tsv "
@@ -339,3 +364,45 @@ msgstr ""
 #~ " it is."
 #~ msgstr ""
 
+#~ msgid "Force Change Mode"
+#~ msgstr ""
+
+#~ msgid "Disclaimer:"
+#~ msgstr ""
+
+#~ msgid "- When using this function, all metadata using author information is forcibly changed to match the author DB when updating."
+#~ msgstr ""
+
+#~ msgid "- If not used, only the author and affiliation identifiers are changed when updating."
+#~ msgstr ""
+
+#~ msgid "- Before starting this operation, you need fully understand the contents and metadata using AuthorDB at your institution."
+#~ msgstr ""
+
+#~ msgid "- Use this function on your own responsibility."
+#~ msgstr ""
+
+#~ msgid "- National Institute of Informatics (NII) does not take any responsibility for damages caused by using this function."
+#~ msgstr ""
+
+#~ msgid "I agree to the terms of use."
+#~ msgid "The selected target table and the import file format are different."
+#~ msgstr ""
+
+#~ msgid "Scheme is required item."
+#~ msgstr ""
+
+#~ msgid "Name is required item."
+#~ msgstr ""
+
+#~ msgid "url is not URL format."
+#~ msgstr ""
+
+#~ msgid "Specified identifier does not exist."
+#~ msgstr ""
+
+#~ msgid "The scheme WEKO cannot be used."
+#~ msgstr ""
+
+#~ msgid "The specified scheme is used in the author ID."
+#~ msgstr ""

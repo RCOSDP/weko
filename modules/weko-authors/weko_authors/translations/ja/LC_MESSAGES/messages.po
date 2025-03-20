@@ -75,8 +75,8 @@ msgid "{} should be set by one of {}."
 msgstr "{}は{}のいずれかを設定してください。"
 
 #: weko_authors/utils.py:462
-msgid "Specified WEKO ID does not exist."
-msgstr "指定されたWEKO IDが存在していません。"
+msgid "Specified Author ID does not exist."
+msgstr "指定されたpk_idが存在していません。"
 
 #: weko_authors/utils.py:470 weko_authors/views.py:140
 msgid "The author is linked to items and cannot be deleted."
@@ -210,14 +210,26 @@ msgstr ""
 #~ msgid "Setting"
 #~ msgstr "設定"
 
-#~ msgid "Export all creator"
+#~ msgid "Export target"
+#~ msgstr "エクスポート対象"
+
+#~ msgid "Export all"
 #~ msgstr "全件エクスポート"
+
+#~ msgid "Author DB"
+#~ msgstr "著者DB"
+
+#~ msgid "ID Prefix"
+#~ msgstr "著者識別子"
+
+#~ msgid "Affiliation ID"
+#~ msgstr "機関識別子"
 
 #~ msgid "Download URL"
 #~ msgstr "ダウンロードURL"
 
-#~ msgid "Are you sure you want to export all creator?"
-#~ msgstr "著者DBの全件エクスポートを実行してよいですか？"
+#~ msgid "Are you sure you want to export all?"
+#~ msgstr "全件エクスポートを実行してよいですか？"
 
 #~ msgid "Confirm"
 #~ msgstr "確認"
@@ -227,6 +239,15 @@ msgstr ""
 
 #~ msgid "Cancel"
 #~ msgstr "キャンセル"
+
+#~ msgid "Are you sure you want to cancel process of exporting all?"
+#~ msgstr "全件エクスポートの処理をキャンセルしてよいですか？"
+
+#~ msgid "Resume"
+#~ msgstr "再開"
+
+#~ msgid "Author DB"
+#~ msgstr "著者DB"
 
 #~ msgid "Are you sure you want to cancel process of exporting all creator?"
 #~ msgstr "著者DBの全件エクスポートの処理をキャンセルしてよいですか？"
@@ -243,6 +264,9 @@ msgstr ""
 # Import authors
 #~ msgid "Select"
 #~ msgstr "選択"
+
+#~ msgid "Import target"
+#~ msgstr "インポート対象"
 
 #~ msgid "Result"
 #~ msgstr "結果"
@@ -304,6 +328,15 @@ msgstr ""
 #~ msgid "To Do"
 #~ msgstr "To Do"
 
+#~ msgid "Success"
+#~ msgstr "成功"
+
+#~ msgid "Failure"
+#~ msgstr "失敗"
+
+#~ msgid "Pending"
+#~ msgstr "処理待ち"
+
 #~ msgid "Error"
 #~ msgstr "エラー"
 
@@ -353,6 +386,9 @@ msgstr ""
 #~ msgid "There is duplicated data in the {} file."
 #~ msgstr "{}ファイルの中に重複するデータがあります。"
 
+#~ msgid "The selected target table and the import file format are different."
+#~ msgstr "選択された登録対象テーブルとインポートファイルの形式が違います。"
+
 #~ msgid ""
 #~ "The specified author has been deleted."
 #~ " Update author information with {} "
@@ -360,3 +396,46 @@ msgstr ""
 #~ " it is."
 #~ msgstr "指定された著者は削除済です。{}の内容で著者情報を更新しますが、著者は削除されたままです。"
 
+#~ msgid "Force Change Mode"
+#~ msgstr "強制変更モード"
+
+#~ msgid "Disclaimer:"
+#~ msgstr "免責事項："
+
+#~ msgid "- When using this function, all metadata using author information is forcibly changed to match the author DB when updating."
+#~ msgstr "・本機能を使用する場合、更新時に著者情報を使ったメタデータを著者DBに合わせて強制的に全て変更します。"
+
+#~ msgid "- If not used, only the author and affiliation identifiers are changed when updating."
+#~ msgstr "・使用しない場合、更新時に著者識別子、機関識別子のみ変更します。"
+
+#~ msgid "- Before starting this operation, you need fully understand the contents and metadata using AuthorDB at your institution."
+#~ msgstr "・本機能は内容及び自機関で登録されている著者情報を使ったメタデータについて十分に理解した上で作業を行なってください。"
+
+#~ msgid "- Use this function on your own responsibility."
+#~ msgstr "・本機能の利用は、自機関の責任で行なってください。"
+
+#~ msgid "- National Institute of Informatics (NII) does not take any responsibility for damages caused by using this function."
+#~ msgstr "・本機能の利用により負った損害などについては、国立情報学研究所は一切の責任を追いません。"
+
+#~ msgid "I agree to the terms of use."
+#~ msgstr "利用規約に同意します。"
+#~ msgid "The selected target table and the import file format are different."
+#~ msgstr "選択された登録対象テーブルとインポートファイルの形式が違います。"
+
+#~ msgid "Scheme is required item."
+#~ msgstr "schemeを設定してください。"
+
+#~ msgid "Name is required item."
+#~ msgstr "nameを設定してください。"
+
+#~ msgid "url is not URL format."
+#~ msgstr "urlをURLの形式にしてください。"
+
+#~ msgid "Specified identifier does not exist."
+#~ msgstr "指定された識別子が存在していません。"
+
+#~ msgid "The scheme WEKO cannot be used."
+#~ msgstr "著者識別子WEKOは編集できません。"
+
+#~ msgid "The specified scheme is used in the author ID."
+#~ msgstr "著者DBで使用されているため、指定された識別子は削除できません。"
