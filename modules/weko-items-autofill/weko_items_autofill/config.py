@@ -17,7 +17,7 @@ WEKO_ITEMS_AUTOFILL_API_UPDATED = True
 
 WEKO_ITEMS_AUTOFILL_API_LIST = [
     "JaLC API",
-    # "医中誌 Web API", TODO: add after weko-workspace implemented
+    "医中誌 Web API",
     "CrossRef",
     "DataCite",
     "CiNii Research",
@@ -25,11 +25,11 @@ WEKO_ITEMS_AUTOFILL_API_LIST = [
 """API list"""
 
 WEKO_ITEMS_AUTOFILL_TO_BE_USED = [
-    "Original",
-    # "医中誌 Web API", TODO: add after weko-workspace implemented
+    "医中誌 Web API",
     "JaLC API",
     "CrossRef",
     "DataCite",
+    "Original",
 ]
 """API list to be used"""
 

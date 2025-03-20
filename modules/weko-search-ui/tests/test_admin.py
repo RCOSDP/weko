@@ -4,9 +4,8 @@ import csv
 import os
 import json
 import pytest
-from mock import patch, MagicMock, Mock
+from unittest.mock import patch, MagicMock, Mock
 from flask_login import current_user
-from mock import patch
 from jinja2.exceptions import TemplateNotFound
 from flask import Flask, json, jsonify, session, url_for,current_app, make_response, request
 
@@ -75,8 +74,8 @@ class TestItemManagementCustomSort:
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::TestItemManagementCustomSort::test_index_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_index_acl(self,client, users, db_records2):
         user = users[3]['obj']
-        assert user.roles[0].name=='System Administrator' 
-        
+        assert user.roles[0].name=='System Administrator'
+
         url = url_for("items/custom_sort.index", _external=True)
         with patch("flask.templating._render", return_value=""):
             res = client.get(url)
@@ -120,8 +119,8 @@ class TestItemManagementBulkSearch:
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::TestItemManagementBulkSearch::test_index_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_index_acl(self,client, users, db_records2):
         user = users[3]['obj']
-        assert user.roles[0].name=='System Administrator' 
-        
+        assert user.roles[0].name=='System Administrator'
+
         url = url_for("items/search.index", _external=True)
         with patch("flask.templating._render", return_value=""):
             res = client.get(url)
@@ -145,8 +144,8 @@ class TestItemImportView:
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::TestItemImportView::test_index_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_index_acl(self,client, users, db_records2):
         user = users[3]['obj']
-        assert user.roles[0].name=='System Administrator' 
-        
+        assert user.roles[0].name=='System Administrator'
+
         url = url_for("items/import.index", _external=True)
         with patch("flask.templating._render", return_value=""):
             res = client.get(url)
@@ -156,7 +155,7 @@ class TestItemImportView:
             with patch("flask.templating._render", return_value=""):
                 res = client.get(url)
                 assert res.status == '200 OK'
-                
+
 # def check(self) -> jsonify: ~ UnboundLocalError: local variable 'task' referenced before assignment request.form needed
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemImportView_check -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_ItemImportView_check(i18n_app, users, client,client_request_args):
@@ -169,7 +168,7 @@ def test_ItemImportView_check(i18n_app, users, client,client_request_args):
 
     csv_data = open(file_path, "rb")
     data = {"file": (csv_data, "sample_csv.csv")}
-    
+
     client.post(
         "/",
         data=data,
@@ -223,6 +222,23 @@ def test_ItemImportView_import_items(i18n_app, users, client_request_args, db_re
         test = ItemImportView()
         assert test.import_items()
 
+
+#     def import_items(self) -> jsonify: ~ GOOD
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemImportView_import_items_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_ItemImportView_import_items_doi(i18n_app, users, client, client_request_args, db_records2):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        data = {"list_record": [{"id": "1"}], "data_path": "/tmp/weko_import_20250319102601371", "list_doi": ["10.5109/16119"]}
+        with patch("flask.request.get_json", return_value=data):
+            with patch("weko_search_ui.admin.create_flow_define"):
+                with patch("weko_search_ui.admin.handle_workflow"):
+                    with patch("weko_search_ui.admin.handle_doi", side_effect=Exception) as mock_handle_doi:
+                        with patch("weko_search_ui.admin.db.session.rollback"):
+                            with patch("weko_search_ui.admin.remove_temp_dir_task"):
+                                test = ItemImportView()
+                                test.import_items()
+                                mock_handle_doi.assert_called_once()
+
+
 #     def get_status(self): ~ GOOD
 def test_ItemImportView_get_status(i18n_app, users, client_request_args, db_records2):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
@@ -273,7 +289,7 @@ def test_ItemBulkExport_index(i18n_app, users, client_request_args, db_records2,
         res = test.index()
         assert res.status_code == 200
         mock_render.assert_called_with("weko_search_ui/admin/export.html")
-        
+
 
 #     def export_all(self): ~ GETS STUCK
 # def test_ItemBulkExport_export_all(i18n_app, users, client_request_args, db_records2):
@@ -311,7 +327,7 @@ class MockAsyncResult:
 class TestItemBulkExport:
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::TestItemBulkExport::test_check_export_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_check_export_status(self,app,client,users, redis_connect,mocker):
-        
+
         mocker.patch("weko_search_ui.utils.AsyncResult",side_effect=MockAsyncResult)
         mocker.patch("weko_search_ui.admin.check_celery_is_run",return_value=True)
         with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
@@ -320,16 +336,16 @@ class TestItemBulkExport:
             )
             datastore = redis_connect
             datastore.put(cache_key, "SUCCESS_task".encode("utf-8"), ttl_secs=30)
-            
+
             url = url_for("items/bulk-export.check_export_status")
 
             res = client.get(url)
             assert json.loads(res.data) == {'data': {
-                'celery_is_run': True, 
-                'error_message': None, 
-                'export_run_msg': None, 
-                'export_status': False, 
-                'status': 'SUCCESS', 
+                'celery_is_run': True,
+                'error_message': None,
+                'export_run_msg': None,
+                'export_status': False,
+                'status': 'SUCCESS',
                 'uri_status': False}}
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::TestItemBulkExport::test_cancel_export -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
@@ -348,7 +364,7 @@ def compare_csv(data1, data2):
         f.seek(0)
         csv_data = [row for row in csv.reader(f)]
         return csv_data
-    
+
     csv1 = _str2csv(data1)
     csv2 = _str2csv(data2)
     for i, row in enumerate(csv1):
@@ -365,18 +381,18 @@ def compare_csv(data1, data2):
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_export_template -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_export_template(app, client, users, item_type):
-    
+
     url="/admin/items/import/export_template"
 
     # data = {}
-    
+
     # with app.test_client() as client:
     login_user_via_session(client=client, email=users[4]["email"])
-    
+
     # no data test
     res = client.post(url, json={})
     assert res.get_data(as_text=True) == ""
-    
+
     # not item_type_id test
     data = {
         "item_type_id":-1
@@ -401,7 +417,7 @@ def test_export_template(app, client, users, item_type):
         io_obj = io.StringIO(result)
     # assert res.get_data(as_text=True) == codecs.BOM_UTF8.decode("utf8")+codecs.BOM_UTF8.decode()+io_obj.getvalue()
     assert compare_csv(res.get_data(as_text=True),codecs.BOM_UTF8.decode("utf8")+codecs.BOM_UTF8.decode()+io_obj.getvalue())
-    
+
 
     # nomal test1
     # exist thumbnail with items
