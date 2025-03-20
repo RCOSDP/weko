@@ -130,6 +130,7 @@ from invenio_stats.contrib.event_builders import (
 from weko_admin import WekoAdmin
 from weko_admin.config import WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS, WEKO_ADMIN_MANAGEMENT_OPTIONS
 from weko_admin.models import FacetSearchSetting, Identifier, SessionLifetime
+from weko_authors.models import Authors, AuthorsAffiliationSettings, AuthorsPrefixSettings
 from weko_deposit.api import WekoDeposit
 from weko_deposit.api import WekoDeposit as aWekoDeposit
 from weko_deposit.api import WekoIndexer, WekoRecord
@@ -4058,7 +4059,7 @@ def test_indices(app, db):
             online_issn=online_issn,
             harvest_spec=harvest_spec
         )
-    
+
     with db.session.begin_nested():
         db.session.add(base_index(1, 0, 0, datetime(2022, 1, 1), True, True, True, True, True, '1234-5678'))
         db.session.add(base_index(2, 0, 1))
@@ -4366,7 +4367,7 @@ def reset_class_value():
     )
     BaseMapper.itemtype_map = {}
     BaseMapper.identifiers = []
-    
+
     DCMapper.itemtype_map = {}
     DCMapper.identifiers = []
     DDIMapper.itemtype_map = {}
@@ -4385,7 +4386,7 @@ def create_record(db, record_data, item_data):
         db.session.add(rel)
         parent=None
         doi = None
-        
+
         if '.' in record_data["recid"]:
             parent = PersistentIdentifier.get("recid",int(float(record_data["recid"])))
             recid_p = PIDRelation.get_child_relations(parent).one_or_none()
@@ -4407,7 +4408,7 @@ def create_record(db, record_data, item_data):
         deposit = WekoDeposit(record, record.model)
 
         deposit.commit()
-        
+
     return recid, depid, record, item, parent, doi, deposit
 
 @pytest.fixture()
@@ -4415,11 +4416,11 @@ def db_records(app,db):
     record_datas = list()
     with open("tests/data/test_record/record_metadata.json") as f:
         record_datas = json.load(f)
-    
+
     item_datas = list()
     with open("tests/data/test_record/item_metadata.json") as f:
         item_datas = json.load(f)
-        
+
     for i in range(len(record_datas)):
         recid, depid, record, item, parent, doi, deposit = create_record(db,record_datas[i],item_datas[i])
 
@@ -4435,7 +4436,7 @@ def mapper_jpcoar(db_itemtype_jpcoar):
         item_type_mapping = Mapping.get_record(item_type.id)
         item_map = get_full_mapping(item_type_mapping, "jpcoar_mapping")
         res = {"$schema":item_type.id,"pubdate": date.today()}
-        
+
         if not isinstance(tags[type],list):
             metadata = [tags[type]]
         else:
@@ -4473,3 +4474,34 @@ def db_rocrate_mapping(db):
     with db.session.begin_nested():
         db.session.add(rocrate_mapping)
     db.session.commit()
+
+
+@pytest.fixture()
+def db_author(db):
+    prefix1 = AuthorsPrefixSettings(name="WEKO",scheme="WEKO",url="")
+    prefix2 = AuthorsPrefixSettings(name="ORCID",scheme="ORCID",url="https://orcid.org/##")
+    prefix3 = AuthorsPrefixSettings(name="CiNii",scheme="CiNii",url="https://ci.nii.ac.jp/author/##")
+    prefix4 = AuthorsPrefixSettings(name="KAKEN2",scheme="KAKEN2",url="https://nrid.nii.ac.jp/nrid/##")
+    prefix5 = AuthorsPrefixSettings(name="ROR",scheme="ROR",url="https://ror.org/##")
+
+    affiliation_prefix1 =AuthorsAffiliationSettings(name="ISNI",scheme="ISNI",url="http://www.isni.org/isni/##")
+    affiliation_prefix2 =AuthorsAffiliationSettings(name="GRID",scheme="GRID",url="https://www.grid.ac/institutes/#")
+    affiliation_prefix3 =AuthorsAffiliationSettings(name="Ringgold",scheme="Ringgold",url="")
+    affiliation_prefix4 =AuthorsAffiliationSettings(name="kakenhi",scheme="kakenhi",url="")
+
+    author_json = {"affiliationInfo": [{"affiliationNameInfo": [{"affiliationName": "xxx", "affiliationNameLang": "ja", "affiliationNameShowFlg": "true"}], "identifierInfo": [{"affiliationId": "xxx", "affiliationIdType": "1", "identifierShowFlg": "true"}]}], "authorIdInfo": [{"authorId": "1", "authorIdShowFlg": "true", "idType": "1"}, {"authorId": "xxxx", "authorIdShowFlg": "true", "idType": "2"}], "authorNameInfo": [{"familyName": "LAST", "firstName": "FIRST", "fullName": "LAST FIRST", "language": "en", "nameFormat": "familyNmAndNm", "nameShowFlg": "true"}], "emailInfo": [{"email": "hoge@hoge"}], "gather_flg": 0, "id": {"_id": "sBXZ7oIBMJ49WnxY8sLQ", "_index": "tenant1-authors-author-v1.0.0", "_primary_term": 4, "_seq_no": 0, "_shards": {"failed": 0, "successful": 1, "total": 2}, "_type": "author-v1.0.0", "_version": 1, "result": "created"}, "is_deleted": "False", "pk_id": "1"}
+    author1 = Authors(json=author_json)
+
+    with db.session.begin_nested():
+        db.session.add(prefix1)
+        db.session.add(prefix2)
+        db.session.add(prefix3)
+        db.session.add(prefix4)
+        db.session.add(prefix5)
+        db.session.add(affiliation_prefix1)
+        db.session.add(affiliation_prefix2)
+        db.session.add(affiliation_prefix3)
+        db.session.add(affiliation_prefix4)
+        db.session.add(author1)
+
+    return {"author_prefix":[prefix1,prefix2,prefix3,prefix4,prefix5],"affiliation_prefix":[affiliation_prefix1,affiliation_prefix2,affiliation_prefix3,affiliation_prefix4],"author":[author1]}
