@@ -353,7 +353,7 @@ def test_iframe_save_model_error(app, client, db_itemtype, db_workflow, users, i
     ],
 )
 def test_iframe_save_model(
-    app, client, db_itemtype, db_workflow, users, id, status_code
+    app, client, db_itemtype, db_workflow, users, id, status_code, db_records3
 ):
     app.config["PRESERVE_CONTEXT_ON_EXCEPTION"] = False
     app.config["TESTING"] = True
@@ -443,6 +443,13 @@ def test_iframe_save_model(
             "action_status": "M",
             "commond": "",
         }
+    
+    res = client.post(url, json={})
+    assert res.status_code == 400
+    ret = json.loads(res.data)
+    assert ret["code"] == 1
+    assert ret["msg"] == "リクエストデータがありません"
+    
     res = client.post(url, json=data)
     assert res.status_code == status_code
     ret = json.loads(res.data)
@@ -480,6 +487,39 @@ def test_iframe_save_model(
     ret = json.loads(res.data)
     assert ret["code"] == 0
     assert ret["msg"].startswith("Model save success at") == True
+    
+    # is_duplicate True
+    data["metainfo"]["item_1617186419668"][0]["creatorNames"] = [{"creatorName":"情報, 太郎"}]
+    data["metainfo"]["item_1617258105262"]={}
+    with client.session_transaction() as session:
+        session["activity_info"] = {
+            "activity_id": None,
+            "action_id": 3,
+            "action_version": "1.0.1",
+            "action_status": "M",
+            "commond": "",
+        }
+    res = client.post(url, json=data)
+    assert res.status_code == 400
+    ret = json.loads(res.data)
+    assert ret["code"] == 1
+    assert ret["msg"] == "既に登録されているデータです"
+    
+    # metainfo false
+    res = client.post(url, json={'data':1})
+    assert res.status_code == status_code
+    ret = json.loads(res.data)
+    assert ret["code"] == 0
+    assert ret["msg"].startswith("Model save success at") == True
+    
+    # Exception 
+    with patch("weko_items_ui.views.is_duplicate_record", side_effect=Exception("Mocked Exception")):
+        res = client.post(url, json=data)
+
+        assert res.status_code == 500
+        ret = json.loads(res.data)
+        assert ret["code"] == 1
+        assert ret["msg"] == "Model save error"
 
 
 # def iframe_success():

@@ -205,10 +205,68 @@ def test_ItemImportView_check(i18n_app, users, client,client_request_args):
             assert test.check()
 
 #     def get_check_status(self) -> jsonify: ~ GOOD
-def test_ItemImportView_get_check_status(i18n_app, users, client_request_args, db_records2):
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        test = ItemImportView()
-        assert test.get_check_status()
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemImportView_get_check_status -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_ItemImportView_get_check_status(i18n_app, users, client_request_args, db_records3):
+    _data = {
+        'task_id': 1
+    }
+    
+    with i18n_app.test_client() as client:
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            # data false
+            res = client.post("/admin/items/import/get_check_status",
+                                data=json.dumps({}),
+                                content_type="application/json")
+            assert res.status_code == 200
+            
+            # list_record none
+            mock_result = {"start_date": "2025-03-19", "end_date": "2025-03-19"}
+            mock_async_result = MagicMock()
+            mock_async_result.status = "SUCCESS"
+            mock_async_result.result = mock_result
+            from weko_search_ui.tasks import import_item
+            import_item.AsyncResult = MagicMock(return_value=mock_async_result)
+            res = client.post("/admin/items/import/get_check_status",
+                              data=json.dumps(_data),
+                              content_type="application/json")
+            result = json.loads(res.data)
+            assert result["status"]=="success"
+            
+            # duplicate True
+            mock_result = {"start_date": "2025-03-19", "end_date": "2025-03-19",
+                   "list_record": [{"metadata":{"subitem_identifier_uri":[{"subitem_identifier_uri":"test"}]}}]}
+            mock_async_result.result = mock_result
+            res = client.post("/admin/items/import/get_check_status",
+                              data=json.dumps(_data),
+                              content_type="application/json")
+            result = json.loads(res.data)
+            assert result["status"]=="success"
+            
+            # duplicate False
+            mock_result = {"start_date": "2025-03-19", "end_date": "2025-03-19",
+                   "list_record": [{"metadata":{"subitem_identifier_uri":[{"subitem_identifier_uri":"http://localhost"}]}}]}
+            mock_async_result.result = mock_result
+            res = client.post("/admin/items/import/get_check_status",
+                              data=json.dumps(_data),
+                              content_type="application/json")
+            result = json.loads(res.data)
+            assert result["status"]=="warning"
+
+            # error
+            mock_async_result.result = None
+            res = client.post("/admin/items/import/get_check_status",
+                              data=json.dumps(_data),
+                              content_type="application/json")
+            result = json.loads(res.data)
+            assert result["error"]=="Internal server error"
+
+            # PENDING
+            mock_async_result.result = None
+            mock_async_result.status = "PENDING"
+            res = client.post("/admin/items/import/get_check_status",
+                              data=json.dumps(_data),
+                              content_type="application/json")
+            assert res.status_code == 200
 
 #     def download_check(self): ~ GOOD
 def test_ItemImportView_download_check(i18n_app, users, client_request_args, db_records2):

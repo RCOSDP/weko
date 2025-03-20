@@ -127,6 +127,7 @@ from weko_items_ui.utils import (
     write_files,
     get_file_download_data,
     get_access_token,
+    check_duplicate,
 )
 from weko_items_ui.config import WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM,WEKO_ITEMS_UI_MAX_EXPORT_NUM_PER_ROLE
 
@@ -10645,3 +10646,49 @@ def test_get_access_token(app, mock_certificate):
             result, status = get_access_token("error_code")
             assert status == 500, "例外が発生した場合、500が返るべき"
             assert result == {"error": "Internal server error"}
+# def check_duplicate(data, is_item=True):
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_check_duplicate -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_check_duplicate(app, users,db_records3):
+    # JSON format NG
+    res, [], [] =  check_duplicate('',True)
+    assert res == False
+
+    # data dict NG
+    res, [], [] =  check_duplicate(1,True)
+    assert res == False
+
+    # metadata format NG
+    res, [], [] =  check_duplicate({"metainfo":123},False)
+    assert res == False
+    
+    # first_item not dict
+    res, [], [] =  check_duplicate({"subitem_identifier_uri":[{"subitem_identifier_uri"}]},True)
+    assert res == False
+    
+    # subitem_identifier_uri NG
+    res, [], [] =  check_duplicate({"subitem_identifier_uri":[{"subitem_identifier_uri":"noexists"}]},True)
+    assert res == False
+    
+    # subitem_identifier_uri OK
+    res, recid_list, item_links =  check_duplicate({"subitem_identifier_uri":[{"subitem_identifier_uri":"http://localhost"}]},True)
+    assert recid_list[0] == 8
+    
+    # subitem_title NG
+    res, [], [] =  check_duplicate({"subitem_title":[{"subitem_title":"title"}]},True)
+    assert res == False
+    
+    # subitem_title:T  resource_type:T
+    res, [], [] =  check_duplicate({"subitem_title":[{"subitem_title":"タイトル"}],"resourcetype":{"resourcetype":"Resource Type"}},True)
+    assert res == False
+    
+    # creatorNames NG
+    res, [], [] =  check_duplicate({"creatorNames":[{"creatorNames":[{"creatorName":"test"}]}]},True)
+    assert res == False
+
+    # creatorNames OK
+    res, recid_list, item_links =  check_duplicate({"creatorNames":[{"creatorNames":[{"creatorName":"情報, 太郎"}]}]},True)
+    assert recid_list[0] == 8
+
+    # resourcetype
+    res, [], [] =  check_duplicate({"resourcetype":{"resourcetype":"test"}},True)
+    assert res == False
