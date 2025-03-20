@@ -1553,7 +1553,7 @@ def update_data_for_weko_link(data, weko_link):
             if not isinstance(x_value, list):
                 continue
             for y_index, y in enumerate(x_value, start=0):
-                if isinstance(y, str):
+                if not isinstance(y, dict):
                     continue
                 for y_key, y_value in y.items():
                     if not y_key == "nameIdentifiers":
