@@ -55,6 +55,11 @@ from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records.api import RecordBase
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.sql import func, cast, text
+from sqlalchemy.types import Text, String
+from sqlalchemy.orm import aliased
+from invenio_records.models import RecordMetadata
 from invenio_accounts.models import User
 from invenio_search import RecordsSearch
 from invenio_stats.utils import QueryRankingHelper, QuerySearchReportHelper
@@ -64,7 +69,7 @@ from invenio_stats import config
 #from invenio_stats.views import QueryRecordViewCount
 from jsonschema import SchemaError, ValidationError
 from simplekv.memory.redisstore import RedisStore
-from sqlalchemy import MetaData, Table
+from sqlalchemy import MetaData, Table, and_
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
@@ -3765,6 +3770,135 @@ def sanitize_input_data(data):
                 data[i] = __sanitize_string(data[i])
             else:
                 sanitize_input_data(data[i])
+
+
+def is_duplicate_item(metadata):
+    """Check if an item is duplicate in records_metadata.
+    重複するアイテムが存在するかチェックする関数。
+
+    Parameters:
+    - metadata (dict): 登録しようとしているアイテムデータ
+
+    Returns:
+    - bool: 重複するデータが存在する場合は True、存在しない場合は False
+    - list: 重複データの recid リスト
+    - list: 重複データのリンクリスト
+    """
+    if not metadata:
+        return False, [], []
+
+    title = identifier = creator = resource_type = ""
+
+    for key, value in metadata.items():
+        if isinstance(value, list) and value:
+            first_item = value[0]
+            if isinstance(first_item, dict):
+                if "subitem_title" in first_item:
+                    title = first_item["subitem_title"]
+                if "subitem_identifier_uri" in first_item:
+                    identifier = first_item["subitem_identifier_uri"]
+                if "creatorNames" in first_item:
+                    creator_info = first_item["creatorNames"][0] if first_item["creatorNames"] else {}
+                    creator = creator_info.get("creatorName", "")
+        elif isinstance(value, dict):
+            if "resourcetype" in value:
+                resource_type = value["resourcetype"]
+
+    query = text("""
+        SELECT COALESCE(
+            CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 
+            0
+        ) AS recid
+        FROM records_metadata
+        WHERE 
+        jsonb_path_exists(json, '$.**.subitem_identifier_uri ? (@ == "{}")')
+        OR
+        (jsonb_path_exists(json, '$.**.subitem_title ? (@ == "{}")') 
+        AND jsonb_path_exists(json, '$.**.creatorNames[*].creatorName ? (@ == "{}")') 
+        AND jsonb_path_exists(json, '$.**.resourcetype ? (@ == "{}")'))
+    """.format(identifier, title, creator, resource_type))
+
+    try:
+        result = db.session.execute(query).fetchall()
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()  # 例外発生時にトランザクションをリセット
+        return False, [], []
+
+    if result:
+        recid_list = [row[0] for row in result]  # **整数型にキャスト**
+        host = request.host
+        item_links = [f"https://{host}/records/{recid}" for recid in recid_list]
+
+        return True, recid_list, item_links
+    else:
+        return False, [], []
+
+
+def is_duplicate_record(data):
+    """
+    重複するレコードが存在するかチェックする関数。
+
+    Parameters:
+    - data (dict): 登録しようとしているレコードデータ
+
+    Returns:
+    - bool: 重複するデータが存在する場合は True、存在しない場合は False
+    - list: 重複データの recid リスト
+    - list: 重複データのリンクリスト
+    """
+    if not data or 'metainfo' not in data:
+        return False, [], []
+
+    metainfo = data['metainfo']
+
+    # 動的にキーを取得する処理
+    title = identifier = author = resource_type = ""
+    
+    for key, value in metainfo.items():
+        if isinstance(value, list) and value:  # リスト型のデータを対象
+            first_item = value[0]
+            if isinstance(first_item, dict):
+                if "subitem_title" in first_item:
+                    title = first_item["subitem_title"]
+                if "subitem_identifier_uri" in first_item:
+                    identifier = first_item["subitem_identifier_uri"]
+                if "creatorNames" in first_item:
+                    creator_info = first_item["creatorNames"][0] if first_item["creatorNames"] else {}
+                    author = creator_info.get("creatorName", "")
+        elif isinstance(value, dict):  # `resource_type` は辞書型のため特別処理
+            if "resourcetype" in value:
+                resource_type = value["resourcetype"]
+
+    # SQL クエリの作成
+    query = text("""
+        SELECT COALESCE(
+            CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 
+            0
+        ) AS recid
+        FROM records_metadata
+        WHERE 
+        jsonb_path_exists(json, '$.**.subitem_identifier_uri ? (@ == "{}")')
+        OR
+        (jsonb_path_exists(json, '$.**.subitem_title ? (@ == "{}")') 
+        AND jsonb_path_exists(json, '$.**.creatorNames[*].creatorName ? (@ == "{}")') 
+        AND jsonb_path_exists(json, '$.**.resourcetype ? (@ == "{}")'))
+    """.format(identifier, title, author, resource_type))
+
+    try:
+        result = db.session.execute(query).fetchall()
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()  # 例外発生時にトランザクションをリセット
+        return False, [], []
+
+    if result:
+        recid_list = [row[0] for row in result]  # **整数型の recid を取得**
+        host = request.host
+        item_links = [f"https://{host}/records/{recid}" for recid in recid_list]
+        return True, recid_list, item_links
+    else:
+        return False, [], []
 
 
 def save_title(activity_id, request_data):
