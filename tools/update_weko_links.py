@@ -158,5 +158,5 @@ def get_weko_link(metadata):
 
 if __name__ == '__main__':
     db_list = [getenv('INVENIO_POSTGRESQL_DBNAME')]
-    # update_records_metadata(db_list)
+    update_records_metadata(db_list)
     update_workflow_activity(db_list)
