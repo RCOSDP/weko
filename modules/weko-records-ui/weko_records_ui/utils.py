@@ -616,6 +616,73 @@ def get_pair_value(name_keys, lang_keys, datas):
                                              datas.get(name_keys[0])):
                 yield name, lang
 
+def get_values_by_selected_lang(source_title, current_lang):
+    """Get value by selected lang.
+
+    @param source_title: e.g. [('None Language': 'test'), ('ja': 'テスト1'), ('ja', 'テスト2')]
+    @param current_lang: e.g. 'ja'
+    @return: e.g. ['テスト1','テスト2'] 
+    """
+    value_cur = []
+    value_en = []
+    value_latn = []
+    title_data_langs = []
+    title_data_langs_none = []
+    for lang, value in source_title:
+        title = {}
+        if not value:
+            continue
+        elif current_lang == lang:
+            value_cur.append(value)
+        else:
+            title[lang] = value
+            if lang == "en":
+                value_en.append(value)
+            elif lang == "ja-Latn":
+                value_latn.append(value)
+            elif lang == "None Language":
+                title_data_langs_none.append(value)
+            elif lang:
+                title_data_langs.append(title)
+    if len(value_cur) > 0:
+        return value_cur
+    
+    if len(title_data_langs_none)>0:
+        source = source_title[0][1]
+        target = title_data_langs_none[0]
+        if source==target:
+            return title_data_langs_none
+        
+    if len(value_latn) > 0:
+        return value_latn
+
+    if len(value_en) > 0 and (
+        current_lang != "ja"
+        or not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)
+    ):
+        return value_en
+
+    if len(title_data_langs) > 0:
+        if current_lang == "en":
+            target_lang = ""
+            for t in title_data_langs:
+                
+                if list(t)[0] != "ja" or not current_app.config.get(
+                    "WEKO_RECORDS_UI_LANG_DISP_FLG", False
+                ):
+                    target_lang = list(t)[0]
+            if target_lang:
+                return [title_data[target_lang] for title_data in title_data_langs if target_lang in title_data]
+                
+        else:
+            target_lang = list(title_data_langs[0].keys())[0]
+            return [title_data[target_lang] for title_data in title_data_langs if target_lang in title_data]
+
+    if len(title_data_langs_none) > 0:
+        return title_data_langs_none
+    else:
+        return None
+
 
 def hide_item_metadata(record, settings=None, item_type_data=None):
     """Hiding emails and hidden item metadata.

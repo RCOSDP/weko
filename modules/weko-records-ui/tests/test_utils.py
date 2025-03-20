@@ -44,6 +44,7 @@ from weko_records_ui.utils import (
     get_terms,
     get_roles,
     check_items_settings,
+    get_values_by_selected_lang,
     #RoCrateConverter,
     #create_tsv
     )
@@ -308,6 +309,65 @@ def test_get_pair_value(app):
         assert name== ('ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'ja')
         assert lang== ('en_conference paperITEM00000001(public_open_access_simple)', 'en')
 
+        name_keys = ['subitem_1551255647225', 'subitem_1551255647225']
+        lang_keys = ['subitem_1551255648112', 'subitem_1551255647225']
+        name,lang =  get_pair_value(name_keys,lang_keys,datas)
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_values_by_selected_lang -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_get_values_by_selected_lang(app):
+    # cur_lang
+    cur_lang = "ja"
+    source_title = [('ja',''),('','test0'),('ja','テスト1'), ('en','test'), ('ja','テスト2')]
+    test = ['テスト1', 'テスト2']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+    
+    # not cur_lang, none language is first
+    source_title = [('None Language', 'test1'), ('en', 'test2'), ('None Language', 'test3'), ('fr', 'test4')]
+    test = ['test1', 'test3']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+    
+    # not cur_lang, none language is not first, exist ja-Latn
+    source_title = [('en', 'test1'), ('en', 'test2'), ('ja-Latn', 'test3'), ('ja-Latn', 'test4')]
+    test = ['test3', 'test4']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+    
+    # not cur_lang, none language is not first, not exist ja-Latn, exist en
+    source_title = [('en', 'test1'), ('en', 'test2'), ('None Language', 'test3'), ('None Language', 'test4')]
+    test = ['test1', 'test2']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+    
+    # cur_lang=en, exist title_data_langs
+    cur_lang = 'en'
+    source_title = [('fr','test1'),('ch','test2'),('ch','test3'),('fr','test4')]
+    test = ['test1', 'test4']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+    
+    # cur_lang !=en, exist title_data_langs
+    cur_lang = "ja"
+    source_title = [('fr','test1'),('ch','test2'),('ch','test3'),('fr','test4')]
+    test = ['test1', 'test4']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+    
+    # return title_data_langs_none
+    app.config["WEKO_RECORDS_UI_LANG_DISP_FLG"] = True
+    cur_lang = "en"
+    source_title = [('ja','test0'),('None Language', 'test1'),('None Language', 'test2')]
+    test = ['test1', 'test2']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+    
+    # enとja-latnがない、noneがない、
+    cur_lang = 'en'
+    source_title = []
+    test = None
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
 
 # def hide_item_metadata(record, settings=None, item_type_mapping=None,
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_hide_item_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
