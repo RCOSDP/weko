@@ -329,22 +329,19 @@ def export_authors():
     # ある程度の処理をまとめてリトライ処理
         for attempt in range(retrys):
             try:
-                print("AAAAAAAAAAAA")
                 # マッピングを取得
                 mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING"])
                 affiliation_mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"])
 
                 # 著者の数を取得（削除、統合された著者は除く）
                 records_count = WekoAuthors.get_records_count(False, False)
-                print("BBBBBBBBBBBBBBB")
                 # マッピング上の複数が可能となる項目の最大値を取得
                 mappings, affiliation_mappings = \
                     WekoAuthors.mapping_max_item(mappings, affiliation_mappings, records_count)
-                print("CCCCCCCC")
                 
                 # 著者識別子の対応を取得
                 schemes = WekoAuthors.get_identifier_scheme_info()
-                print("DDDDDDDDDD")
+                
                 # 所属機関識別子の対応を取得
                 aff_schemes = WekoAuthors.get_affiliation_identifier_scheme_info()
                 
@@ -958,7 +955,6 @@ def unpackage_and_check_import_file_for_prefix(file_format, file_name, temp_file
                     try:
                         for num, data in enumerate(data_row, start=0):
                             tmp_data[header[num]] = data
-                        print(tmp_data)
                     except Exception:
                         ex = Exception({
                             'error_msg': _('Cannot read {} file correctly.').format(file_format.upper())
