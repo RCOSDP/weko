@@ -20,26 +20,40 @@
 
 """Blueprint for Weko index tree rest."""
 
+import inspect
+import json
 import os
+import traceback
 from functools import wraps
-from wsgiref.util import request_uri
+from datetime import datetime, timezone, timedelta
 
 from flask import Blueprint, abort, current_app, jsonify, make_response, \
-    request
+    request, Response
 from flask_babelex import gettext as _
+from flask_babelex import get_locale as get_current_locale
 from flask_login import current_user
+from werkzeug.http import generate_etag
+from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_rest import ContentNegotiatedMethodView
+from invenio_rest.errors import SameContentException
 from invenio_db import db
-
+from sqlalchemy.exc import SQLAlchemyError
 from weko_admin.models import AdminLangSettings
 
 from .api import Indexes
 from .errors import IndexAddedRESTError, IndexNotFoundRESTError, \
-    IndexUpdatedRESTError, InvalidDataRESTError
+    IndexUpdatedRESTError, InvalidDataRESTError, VersionNotFoundRESTError, InternalServerError, \
+    PermissionError, IndexNotFound404Error
 from .models import Index
+from .scopes import read_index_scope
 from .utils import check_doi_in_index, check_index_permissions, \
-    is_index_locked, perform_delete_index, save_index_trees_to_redis
+    is_index_locked, perform_delete_index, save_index_trees_to_redis, reset_tree, \
+    create_limiter
+
+JST = timezone(timedelta(hours=+9), 'JST')
+
+limiter = create_limiter()
 
 
 def need_record_permission(factory_name):
@@ -82,7 +96,7 @@ def create_blueprint(app, endpoints):
         __name__,
         url_prefix='',
     )
-    
+
     @blueprint.teardown_request
     def dbsession_clean(exception):
         current_app.logger.debug("weko_index_tree dbsession_clean: {}".format(exception))
@@ -129,6 +143,20 @@ def create_blueprint(app, endpoints):
             default_media_type=options.get('default_media_type'),
         )
 
+        itg = GetIndex.as_view(
+            GetIndex.view_name.format(endpoint),
+            ctx=ctx,
+            record_serializers=record_serializers,
+            default_media_type=options.get('default_media_type'),
+        )
+
+        itp = GetParentIndex.as_view(
+            GetParentIndex.view_name.format(endpoint),
+            ctx=ctx,
+            record_serializers=record_serializers,
+            default_media_type=options.get('default_media_type'),
+        )
+
         ita = IndexTreeActionResource.as_view(
             IndexTreeActionResource.view_name.format(endpoint),
             ctx=ctx,
@@ -137,25 +165,43 @@ def create_blueprint(app, endpoints):
         )
 
         blueprint.add_url_rule(
-            options.pop('index_route'),
+            options.get('index_route'),
             view_func=iar,
             methods=['GET', 'PUT', 'POST', 'DELETE'],
         )
 
         blueprint.add_url_rule(
-            options.pop('tree_route'),
+            options.get('get_index_tree'),
+            view_func=itg,
+            methods=['GET'],
+        )
+
+        blueprint.add_url_rule(
+            options.get('get_index_root_tree'),
+            view_func=itg,
+            methods=['GET'],
+        )
+
+        blueprint.add_url_rule(
+            options.get('get_parent_index_tree'),
+            view_func=itp,
+            methods=['GET'],
+        )
+
+        blueprint.add_url_rule(
+            options.get('tree_route'),
             view_func=ita,
             methods=['GET'],
         )
 
         blueprint.add_url_rule(
-            options.pop('item_tree_route'),
+            options.get('item_tree_route'),
             view_func=ita,
             methods=['GET'],
         )
 
         blueprint.add_url_rule(
-            options.pop('index_move_route'),
+            options.get('index_move_route'),
             view_func=ita,
             methods=['PUT'],
         )
@@ -249,14 +295,14 @@ class IndexActionResource(ContentNegotiatedMethodView):
             if "ja" in [lang["lang_code"] for lang in langs]:
                 tree_ja = self.record_class.get_index_tree(lang="ja")
             tree = self.record_class.get_index_tree(lang="other_lang")
-            
+
             for lang in langs:
                 lang_code = lang["lang_code"]
                 if lang_code == "ja":
                     save_index_trees_to_redis(tree_ja, lang=lang_code)
                 else:
                     save_index_trees_to_redis(tree, lang=lang_code)
-                
+
         return make_response(
             jsonify({'status': status, 'message': msg, 'errors': errors}),
             status)
@@ -274,14 +320,14 @@ class IndexActionResource(ContentNegotiatedMethodView):
         errors = []
         status = 200
         check = is_import_running()
-        
+
         if check == "is_import_running":
             errors.append(_('The index cannot be updated becase '
                             'import is in progress.'))
         else:
             public_state = data.get('public_state') and data.get(
                 'harvest_public_state')
-            
+
             if is_index_locked(index_id):
                 errors.append(_('Index Delete is in progress on another device.'))
             elif not public_state and check_doi_in_index(index_id):
@@ -310,7 +356,7 @@ class IndexActionResource(ContentNegotiatedMethodView):
                     raise IndexUpdatedRESTError()
                 msg = 'Index updated successfully.'
 
-            
+
             #roles = get_account_role()
             #for role in roles:
             langs = AdminLangSettings.get_registered_language()
@@ -427,10 +473,11 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
             elif action and 'browsing' in action and comm_id is None:
                 if more_id_list is None:
                     tree = self.record_class.get_browsing_tree()
+                    
                 else:
                     tree = self.record_class.get_more_browsing_tree(
                         more_ids=more_ids)
-
+            
             elif action and 'browsing' in action and comm_id is not None:
                 comm = Community.get(comm_id)
 
@@ -446,6 +493,7 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
             else:
                 tree = []
                 role_ids = []
+                
                 if current_user and current_user.is_authenticated:
                     for role in current_user.roles:
                         if role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
@@ -469,6 +517,7 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                             if index_id not in check_list:
                                 tree += self.record_class.get_index_tree(index_id)
                                 check_list.append(index_id)
+            
             return make_response(jsonify(tree), 200)
         except Exception as ex:
             current_app.logger.error('IndexTree Action Exception: ', ex)
@@ -511,3 +560,227 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                     save_index_trees_to_redis(tree, lang=lang_code)
         return make_response(
             jsonify({'status': status, 'message': msg}), status)
+
+
+class GetIndex(ContentNegotiatedMethodView):
+    """Get Index Tree API."""
+
+    view_name = '{0}_get_index_tree'
+
+    def __init__(self, ctx, record_serializers=None, default_media_type=None, **kwargs):
+        """Constructor."""
+        super(GetIndex, self).__init__(
+            method_serializers={
+                'GET': record_serializers,
+            },
+            default_method_media_type={
+                'GET': default_media_type,
+            },
+            default_media_type=default_media_type,
+            **kwargs
+        )
+        for key, value in ctx.items():
+            setattr(self, key, value)
+
+    @require_api_auth(allow_anonymous=True)
+    @require_oauth_scopes(read_index_scope.id)
+    @limiter.limit('')
+    def get(self, **kwargs):
+        """Get tree json."""
+        version = kwargs.get('version')
+        func_name = f'get_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
+        else:
+            raise VersionNotFoundRESTError()
+
+    def get_v1(self, **kwargs):
+        try:
+            pid = kwargs.get('index_id')
+
+            # Get update time
+            if pid and pid != 0:
+                index = self.record_class.get_index(pid)
+                if not index:
+                    raise IndexNotFound404Error()
+                updated = index.updated
+            else:
+                all_indexes = self.record_class.get_all_indexes()
+                all_indexes = sorted(all_indexes, key=lambda x: x.updated, reverse=True)
+                updated = all_indexes[0].updated if len(all_indexes) > 0 else datetime.now()
+
+            # Check Etag
+            hash_str = str(pid) + updated.strftime("%a, %d %b %Y %H:%M:%S GMT")
+            etag = generate_etag(hash_str.encode('utf-8'))
+            self.check_etag(etag, weak=True)
+
+            # Check Last-Modified
+            if not request.if_none_match:
+                self.check_if_modified_since(dt=updated)
+
+            # Language setting
+            language = request.headers.get('Accept-Language')
+            if language == 'ja':
+                get_current_locale().language = language
+
+            # Get index tree
+            if pid and pid != 0:
+                tree = self.record_class.get_index_tree(pid)
+                reset_tree(tree=tree)
+                if len(tree) == 0:
+                    raise PermissionError()
+                result_tree = dict(
+                    index=tree[0]
+                )
+            else:
+                tree = self.record_class.get_index_tree(pid=0)
+                reset_tree(tree=tree)
+                result_tree = dict(
+                    index=dict(
+                        children=tree,
+                        cid=0,
+                        name='Root-index',
+                        id='0',
+                        public_state=True,
+                        value='Root-index'
+                    )
+                )
+
+            # Check pretty
+            indent = 4 if request.args.get('pretty') == 'true' else None
+
+            # Create Response
+            res = Response(
+                response=json.dumps(result_tree, indent=indent),
+                status=200,
+                content_type='application/json')
+            res.set_etag(etag)
+            res.last_modified = updated
+            return res
+
+        except (SameContentException, PermissionError, IndexNotFound404Error) as e:
+            raise e
+
+        except SQLAlchemyError:
+            raise InternalServerError()
+
+        except Exception:
+            current_app.logger.error(traceback.print_exc())
+            raise InternalServerError()
+
+
+class GetParentIndex(ContentNegotiatedMethodView):
+    """Get Parent Index Tree API."""
+
+    view_name = '{0}_get_parent_index_tree'
+
+    def __init__(self, ctx, record_serializers=None, default_media_type=None, **kwargs):
+        """Constructor."""
+        super(GetParentIndex, self).__init__(
+            method_serializers={
+                'GET': record_serializers,
+            },
+            default_method_media_type={
+                'GET': default_media_type,
+            },
+            default_media_type=default_media_type,
+            **kwargs
+        )
+        for key, value in ctx.items():
+            setattr(self, key, value)
+
+    def getParents(self, pid):
+        parents = []
+        index = self.record_class.get_index(pid)
+        parents.append(index)
+        if index.parent and index.parent != 0:
+            parents = parents + self.getParents(index.parent)
+        return parents
+
+    @require_api_auth(allow_anonymous=True)
+    @require_oauth_scopes(read_index_scope.id)
+    @limiter.limit('')
+    def get(self, **kwargs):
+        """Get tree json."""
+        version = kwargs.get('version')
+        func_name = f'get_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
+        else:
+            raise VersionNotFoundRESTError()
+
+    def get_v1(self, **kwargs):
+        try:
+            pid = kwargs.get('index_id')
+
+            index = self.record_class.get_index(pid)
+            if not index:
+                raise IndexNotFound404Error()
+
+            # Get update time
+            updated = index.updated
+
+            # Check Etag
+            hash_str = str(pid) + updated.strftime("%a, %d %b %Y %H:%M:%S GMT")
+            etag = generate_etag(hash_str.encode('utf-8'))
+            self.check_etag(etag, weak=True)
+
+            # Check Last-Modified
+            if not request.if_none_match:
+                self.check_if_modified_since(dt=updated)
+
+            # Language setting
+            language = request.headers.get('Accept-Language')
+            if language == 'ja':
+                get_current_locale().language = language
+
+            # Get index tree
+            tree = self.record_class.get_index_tree(pid=0)
+            reset_tree(tree=tree)
+
+            # Get parent
+            parents = self.getParents(pid)
+
+            # Get index from tree
+            parent_nodes = []
+            for parent in reversed(parents):
+                child = next(iter(filter(lambda child: child['cid'] == parent.id, tree)), None)
+                if child is None:
+                    raise PermissionError()
+                parent_nodes.append(child)
+                tree = child.pop('children')
+
+            # Connect parent node
+            parent_tree = None
+            current_parent = None
+            for parent in reversed(parent_nodes):
+                if parent_tree is None:
+                    parent_tree = parent
+                else:
+                    current_parent['parent'] = parent
+                current_parent = parent
+            result_tree = dict(
+                index=parent_tree
+            )
+
+            # Check pretty
+            indent = 4 if request.args.get('pretty') == 'true' else None
+
+            # Setting Response
+            res = Response(
+                response=json.dumps(result_tree, indent=indent),
+                status=200,
+                content_type='application/json')
+            res.set_etag(etag)
+            res.last_modified = updated
+            return res
+
+        except (SameContentException, PermissionError, IndexNotFound404Error) as e:
+            raise e
+
+        except SQLAlchemyError:
+            raise InternalServerError()
+
+        except Exception:
+            current_app.logger.error(traceback.print_exc())
+            raise InternalServerError()

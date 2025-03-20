@@ -679,6 +679,10 @@ msgid "Admin menu_Item Types_Properties"
 msgstr "Properties"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Item Types_RO-Crate Mapping"
+msgstr "RO-Crate Mapping"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Items_Bulk Update"
 msgstr "Bulk Update"
 
@@ -933,6 +937,10 @@ msgstr "File Preview"
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Shibboleth"
 msgstr "Shibboleth"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_SWORD API"
+msgstr "SWORD API"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Others"

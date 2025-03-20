@@ -51,6 +51,9 @@ WEKO_ADMIN_SITE_LICENSE_TEMPLATE = 'weko_admin/admin/site_license_settings.html'
 WEKO_ADMIN_SITE_LICENSE_SEND_MAIL_TEMPLATE = 'weko_admin/admin/site_license_send_mail_settings.html'
 """Site-license send mail settings templates."""
 
+WEKO_ADMIN_SWORD_API_TEMPLATE = 'weko_admin/admin/sword_api_settings.html'
+"""SWORD API template."""
+
 WEKO_ADMIN_BlOCK_STYLE_TEMPLATE = 'weko_admin/admin/block_style.html'
 """Block-style template."""
 
@@ -1144,6 +1147,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'sitelicensesettings',
     'itemtypesregister',
     'itemtypesmapping',
+    'itemtypesrocratemapping',
     'itemtypes/mapping',
     'items/bulk-export',
     'feedbackmail',

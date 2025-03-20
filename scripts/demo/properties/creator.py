@@ -612,6 +612,8 @@ def form(
                                     },
                                     "titleMap": make_title_map(
                                         config.AFFILIATION_SCHEME_LBL,config.AFFILIATION_SCHEME_VAL
+                                    "titleMap": make_title_map(
+                                        config.AFFILIATION_SCHEME_LBL,config.AFFILIATION_SCHEME_VAL
                                     ),
                                     "type": "select",
                                 },

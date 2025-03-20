@@ -52,6 +52,9 @@ WEKO_INDEX_TREE_REST_ENDPOINTS = dict(
     tid=dict(
         record_class='weko_index_tree.api:Indexes',
         index_route='/tree/index/<int:index_id>',
+        get_index_tree='/<string:version>/tree/index/<int:index_id>',
+        get_index_root_tree='/<string:version>/tree/index',
+        get_parent_index_tree='/<string:version>/tree/index/<int:index_id>/parent',
         tree_route='/tree',
         item_tree_route='/tree/<string:pid_value>',
         index_move_route='/tree/move/<int:index_id>',
@@ -95,3 +98,5 @@ WEKO_INDEX_TREE_INDEX_LOCK_KEY_PREFIX = "lock_index_"
 
 WEKO_INDEX_TREE_PUBLIC_DEFAULT_TIMEZONE = 'Asia/Tokyo'
 """Default time zone for index publication date."""
+
+WEKO_INDEX_TREE_API_LIMIT_RATE_DEFAULT = ['100 per minute']

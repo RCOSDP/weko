@@ -1,12 +1,16 @@
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 
 import copy
+from io import StringIO
 import json
 import os
+import re
+import time
 import unittest
 from datetime import datetime
 import uuid
-import weko_search_ui
+import zipfile
+from elasticsearch import NotFoundError
 
 import pytest
 from flask import current_app, make_response, request
@@ -22,10 +26,12 @@ from mock import MagicMock, Mock, patch, mock_open
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
 from invenio_db import db as iv_db
 from invenio_pidrelations.models import PIDRelation
+from tests.test_rest import DummySearchResult
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord as d_wekorecord
 from weko_records.api import ItemsMetadata, WekoRecord
 from weko_records.models import ItemMetadata
+from weko_records.models import ItemType
 
 from weko_search_ui import WekoSearchUI
 from weko_search_ui.config import (
@@ -39,7 +45,8 @@ from weko_search_ui.config import (
 from weko_search_ui.utils import (
     DefaultOrderedDict,
     cancel_export_all,
-    check_import_items,
+    check_tsv_import_items,
+    check_xml_import_items,
     check_index_access_permissions,
     check_permission,
     check_sub_item_is_system,
@@ -54,6 +61,7 @@ from weko_search_ui.utils import (
     delete_records,
     export_all,
     get_retry_info,
+    generate_metadata_from_jpcoar,
     get_change_identifier_mode_content,
     get_content_workflow,
     get_current_language,
@@ -76,6 +84,7 @@ from weko_search_ui.utils import (
     get_tree_items,
     getEncode,
     handle_check_and_prepare_feedback_mail,
+    handle_check_and_prepare_request_mail,
     handle_check_and_prepare_index_tree,
     handle_check_and_prepare_publish_status,
     handle_check_cnri,
@@ -112,6 +121,7 @@ from weko_search_ui.utils import (
     parse_to_json_form,
     prepare_doi_link,
     prepare_doi_setting,
+    read_jpcoar_xml_file,
     read_stats_file,
     register_item_doi,
     register_item_handle,
@@ -127,7 +137,11 @@ from weko_search_ui.utils import (
     validation_file_open_date,
     write_files,
     combine_aggs
+    result_download_ui,
+    search_results_to_tsv,
+    create_tsv_row,
 )
+from werkzeug.exceptions import NotFound
 
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 
@@ -329,13 +343,216 @@ def test_parse_to_json_form(i18n_app, record_with_metadata):
     assert parse_to_json_form(data)
 
 
-# def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
-def test_check_import_items(i18n_app):
+# def check_tsv_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_tsv_import_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_tsv_import_items(i18n_app):
     current_path = os.path.dirname(os.path.abspath(__file__))
     file_name = "sample_file.zip"
     file_path = os.path.join(current_path, "data", "sample_file", file_name)
 
-    assert check_import_items(file_path, True)
+    ret = check_tsv_import_items(file_path, True)
+    prefix = current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
+    assert ret
+    assert ret["data_path"].startswith(f'/tmp/{prefix}')
+
+    # test case is_gakuninrdm = True
+    ret = check_tsv_import_items(file_path, True, True)
+    assert ret["data_path"].startswith('/tmp/deposit_activity_')
+
+    # current_pathがdict
+    class TestFile(object):
+        @property
+        def filename(self):
+            return 'test_file.txt'
+        
+    file = TestFile()
+    assert check_tsv_import_items(file, True, True)
+
+    time.sleep(1)
+    file_name = "sample_file.zip"
+    file_path = os.path.join(current_path, "data", "sample_file", file_name)
+    prefix = current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
+
+    with patch("weko_search_ui.utils.chardet.detect", return_value = {'encoding': 'cp932'}):
+        ret = check_tsv_import_items(file_path, True)
+        assert ret
+
+    time.sleep(1)
+    with patch("weko_search_ui.utils.chardet.detect", return_value = {'encoding': 'cp437'}):
+        ret = check_tsv_import_items(file_path, True)
+        assert ret
+
+        time.sleep(1)
+        with patch("weko_search_ui.utils.os") as o:
+            type(o).sep = "_"
+            ret = check_tsv_import_items(file_path, True)
+            assert ret
+
+
+@pytest.mark.parametrize('order_if', [1,2,3,4,5,6,7,8,9])
+#def check_tsv_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_tsv_import_items2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_tsv_import_items2(app,test_importdata,mocker,db, order_if):
+    app.config['WEKO_SEARCH_UI_IMPORT_TMP_PREFIX'] = 'importtest'
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "item_map.json")
+    print(filepath)
+    with open(filepath,encoding="utf-8") as f:
+        item_map = json.load(f)
+
+    mocker.patch("weko_records.serializers.utils.get_mapping",return_value=item_map)
+    with app.test_request_context():
+        with set_locale('en'):
+            mocker.patch("weko_search_ui.utils.unpackage_import_file", return_value={"item_type_id":1})
+            mocker.patch("weko_search_ui.utils.handle_check_exist_record", return_value={"item_type_id":1})
+            mocker.patch("weko_search_ui.utils.handle_item_title")
+            mocker.patch("weko_search_ui.utils.handle_check_date", return_value={"item_type_id":1})
+            mocker.patch("weko_search_ui.utils.handle_check_id")
+            mocker.patch("weko_search_ui.utils.handle_check_and_prepare_index_tree")
+            mocker.patch("weko_search_ui.utils.handle_check_and_prepare_publish_status")
+            mocker.patch("weko_search_ui.utils.handle_check_and_prepare_feedback_mail")
+            check_request_mail = mocker.patch("weko_search_ui.utils.handle_check_and_prepare_request_mail")
+            mocker.patch("weko_search_ui.utils.handle_check_file_metadata")
+            mocker.patch("weko_search_ui.utils.handle_check_cnri")
+            mocker.patch("weko_search_ui.utils.handle_check_doi_indexes")
+            mocker.patch("weko_search_ui.utils.handle_check_doi_ra")
+            mocker.patch("weko_search_ui.utils.handle_check_doi")
+
+            for file in test_importdata:
+
+                # for exception
+                if order_if == 1:
+                    with patch("weko_search_ui.utils.zipfile.ZipFile.infolist",return_value=[1,2]):
+                        ret = check_tsv_import_items(file, False, False)
+
+                # for badzipfile exception
+                if order_if == 2:
+                    with patch("weko_search_ui.utils.zipfile.ZipFile",side_effect=zipfile.BadZipFile):
+                        ret = check_tsv_import_items(file, False, False)
+                        assert ret["error"] == 'The format of the specified file import00.zip does not support import. Please specify one of the following formats: zip, tar, gztar, bztar, xztar.'
+                
+                # for FileNotFoundError
+                if order_if == 3:
+                    with patch("weko_search_ui.utils.list",return_value=None):
+                        ret = check_tsv_import_items(file, False, False)
+                        assert ret["error"]=='The csv/tsv file was not found in the specified file import00.zip. Check if the directory structure is correct.'
+                
+                # for UnicodeDecodeError
+                if order_if == 4:
+                    with patch("weko_search_ui.utils.zipfile.ZipFile",side_effect=UnicodeDecodeError("uni", b'\xe3\x81\xad\xe3\x81\x93',2,4,"cp932 cant decode")):
+                        ret = check_tsv_import_items(file, False, False)
+
+                # for error is ex.args
+                if order_if == 5:
+                    with patch("weko_search_ui.utils.zipfile.ZipFile",side_effect=Exception({"error_msg":"エラーメッセージ"})):
+                        ret = check_tsv_import_items(file, False, False)
+
+                # for tsv
+                if order_if == 6:
+                    with patch("weko_search_ui.utils.list",return_value=['items.tsv']):
+                        check_tsv_import_items(file,False,False)==''
+                        check_request_mail.assert_called()
+                
+                # for gakuninrdm is False
+                if order_if == 7:
+                    check_tsv_import_items(file,False,False)==''
+                    check_request_mail.assert_called()
+                    
+                # for gakuninrdm is True
+                if order_if == 8:
+                    check_tsv_import_items(file,False,True)==''
+                    check_request_mail.assert_called()
+
+                # for os.sep is not "/"
+                if order_if == 9:
+                    with patch("weko_search_ui.utils.os") as o:
+                        with patch("weko_search_ui.utils.zipfile.ZipFile.infolist", return_value = [zipfile.ZipInfo(filename = filepath.replace("/","\\"))]):
+                            type(o).sep = "\\"
+                            check_tsv_import_items(file,False,False)
+
+
+# def check_xml_import_items(file, item_type_id, is_gakuninrdm=False)
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_xml_import_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_xml_import_items(i18n_app, db_itemtype_jpcoar):
+    file_name = "sample_file_jpcoar_xml.zip"
+    file_path = os.path.join('tests', "data", "jpcoar", "v2", file_name)
+
+    item_type = db_itemtype_jpcoar["item_type_multiple"]
+
+    # Case01: Call with file path as argument
+    with i18n_app.test_request_context():
+        result = check_xml_import_items(file_path, item_type.id)
+        assert re.fullmatch(r'^/tmp/weko_import_\d{14}', result['data_path']) is not None
+        assert 'error' not in result
+        assert 'list_record' in result
+
+    # Case02: Call with if is_gakuninrdm = True
+    with i18n_app.test_request_context():
+        result = check_xml_import_items(file_path, item_type.id, is_gakuninrdm=True)
+        assert re.fullmatch(r'^/tmp/deposit_activity_\d{14}', result['data_path']) is not None
+        assert 'error' not in result
+        assert 'list_record' in result
+
+    # Case03: zip files is broken
+    with i18n_app.test_request_context():
+        broken_file_name = "sample_zip_broken.zip"
+        broken_file_path = os.path.join('tests', "data", "jpcoar", "v2", broken_file_name)
+        time.sleep(2)
+        result = check_xml_import_items(broken_file_path, item_type.id)
+        assert result["error"] == "The format of the specified file sample_zip_broken.zip does not support import." \
+            " Please specify one of the following formats: zip, tar, gztar, bztar, xztar."
+
+    # Case04: Xml files not included
+    with i18n_app.test_request_context():
+        zip_file_path = os.path.join('tests', "data", "helloworld.zip")
+        time.sleep(2)
+        result = check_xml_import_items(zip_file_path, item_type.id)
+        assert result["error"] ==  "The xml file was not found in the specified file helloworld.zip." \
+            " Check if the directory structure is correct."
+
+    with i18n_app.test_request_context():
+        failed_file_name = "no_jpcoar_xml_file.zip"
+        failed_file_path = os.path.join('tests', "data", "jpcoar", "v2", failed_file_name)
+        time.sleep(2)
+        print("Case04")
+        result = check_xml_import_items(failed_file_path, item_type.id)
+        assert result["error"] ==  "The xml file was not found in the specified file no_jpcoar_xml_file.zip." \
+            " Check if the directory structure is correct."
+
+
+    # Case05: UnicodeDecodeError occured
+    with i18n_app.test_request_context():
+        with patch("weko_search_ui.utils.handle_check_file_metadata", side_effect=lambda x,y: "foo".encode('utf-16').decode('utf-8')):
+            time.sleep(2)
+            result = check_xml_import_items(file_path, item_type.id)
+            assert result["error"] == "invalid start byte"
+
+    # Case06: Other exception occured (without args)
+    with i18n_app.test_request_context():
+        with patch("weko_search_ui.utils.handle_check_file_metadata", side_effect=Exception()):
+            time.sleep(2)
+            result = check_xml_import_items(file_path, item_type.id)
+            assert result["error"] == "Internal server error"
+
+    # Case07: Other exception occured (with args)
+    with i18n_app.test_request_context():
+        with patch("weko_search_ui.utils.handle_check_file_metadata", side_effect=Exception({"error_msg": "error_msg_sample"})):
+            time.sleep(2)
+            result = check_xml_import_items(file_path, item_type.id)
+            assert result["error"] == "error_msg_sample"
+
+    # Case08: item_type is not found
+    with i18n_app.test_request_context():
+        result = check_xml_import_items(file_path, 9999)
+        assert result["error"] == "The item type of the item to be imported is missing or has already been deleted."
+
+    # Case09: item_type has been already deleted
+    with i18n_app.test_request_context():
+        item_type = MagicMock(spec=ItemType)
+        item_type.is_deleted = True
+
+        with patch("weko_search_ui.utils.ItemTypes.get_by_id", return_value=item_type):
+            result = check_xml_import_items(file_path, 9999)
+            assert result["error"] == "The item type of the item to be imported is missing or has already been deleted."
 
 
 # def unpackage_import_file(data_path: str, file_name: str, file_format: str, force_new=False):
@@ -380,6 +597,35 @@ def test_unpackage_import_file(app, db,mocker, mocker_itemtype):
                 unpackage_import_file(path, "items.csv", "csv", True)
                 == result_force_new
             )
+
+
+# def generate_metadata_from_jpcoar(data_path: str, filenames: list, item_type_id: int, is_change_identifier=False)
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_generate_metadata_from_jpcoar -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_generate_metadata_from_jpcoar(app, db_itemtype_jpcoar):
+    item_type = db_itemtype_jpcoar['item_type_multiple']
+
+    with app.test_request_context():
+        # Case01: parse and mapping metadata success
+        result = generate_metadata_from_jpcoar('tests/data/jpcoar/v2', ['test_base.xml'], item_type.id)
+        for record in result:
+            assert '$schema' in record
+            assert 'metadata' in record
+            assert record['item_type_name'] == item_type.item_type_name.name
+            assert record['item_type_id'] == item_type.id
+            assert record['errors'] is None
+            assert record['is_change_identifier'] == False
+
+        # Case02: schema validation error happend
+        result = generate_metadata_from_jpcoar('tests/data/jpcoar/v2', ['test_base_failed.xml'], item_type.id)
+        for record in result:
+            assert len(record['errors']) > 0
+
+        # Case03: item type not found
+        with pytest.raises(Exception) as ex:
+            result = generate_metadata_from_jpcoar('tests/data/jpcoar/v2', ['test_base.xml'], item_type.id+1)
+        assert ex.value.args[0] == {
+            "error_msg": "The item type ID specified in the XML file does not exist."
+        }
 
 
 # def getEncode(filepath):
@@ -430,6 +676,52 @@ def test_read_stats_file(i18n_app, db_itemtype, users):
             assert read_stats_file(file_path_tsv, file_name_tsv, "tsv")
             assert read_stats_file(file_path_csv, file_name_csv, "csv")
             assert read_stats_file(file_path_tsv_2, file_name_tsv_2, "tsv")
+
+
+# def read_jpcoar_xml_file(file_path, item_type_info) -> dict:
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_read_jpcoar_xml_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_read_jpcoar_xml_file(i18n_app, db_itemtype, users):
+    xml_file_name = "test_base.xml"
+    xml_file_path = os.path.join('tests', "data", "jpcoar", "v2", xml_file_name)
+
+    item_type_info = {
+        "schema": "test",
+        "is_lastest": "test",
+        "name": "テストアイテムタイプ",
+        "item_type_id": "test",
+    }
+
+    # Case01: read JPCOAR xml correctly
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        result = read_jpcoar_xml_file(xml_file_path, item_type_info)
+        assert 'metadata' in result['data_list'][0]
+        metadata = result['data_list'][0].pop('metadata')
+        assert result == {
+            'error': False,
+            'error_code': 0,
+            'data_list': [
+                {
+                    "$schema": item_type_info['schema'],
+                    "item_type_name": item_type_info['name'],
+                    "item_type_id": item_type_info['item_type_id'],
+                }
+            ],
+            'item_type_schema': item_type_info['schema']
+        }
+
+    # Case02: UnicodeDecodeError occured
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        with patch("weko_search_ui.mapper.JPCOARV2Mapper.map", side_effect=lambda x: "foo".encode('utf-16').decode('utf-8')):
+            try:
+                result = read_jpcoar_xml_file(xml_file_path, item_type_info)
+                pytest.fail()
+            except UnicodeDecodeError as ex:
+                assert ex.reason == "The XML file could not be read. Make sure the file format is XML and that the file is UTF-8 encoded."
+
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        with patch("weko_search_ui.mapper.JPCOARV2Mapper.map", side_effect=Exception()):
+            with pytest.raises(Exception) as ex:
+                result = read_jpcoar_xml_file(xml_file_path, item_type_info)
 
 
 # def handle_convert_validate_msg_to_jp(message: str):
@@ -684,6 +976,29 @@ def test_register_item_metadata(i18n_app, es_item_file_pipeline, deposit, es_rec
         assert register_item_metadata(item, root_path, is_gakuninrdm=False)
 
 
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_register_item_metadata2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_register_item_metadata2(i18n_app, es_item_file_pipeline, deposit, es_records, db_index, es, db, mocker):
+    item = es_records["results"][0]["item"]
+    item["item_type_id"] = 1000
+    item["$schema"] = "/items/jsonschema/1000"
+    item["metadata"]["item_1617605131499"] = item["metadata"]["item_1617605131499"]["attribute_value_mlt"]
+    root_path = os.path.dirname(os.path.abspath(__file__))
+
+    with patch("weko_search_ui.utils.find_and_update_location_size"):
+        with patch("weko_search_ui.utils.WekoDeposit.commit", return_value=None):
+            with patch("weko_search_ui.utils.WekoDeposit.publish_without_commit", return_value=None):
+                with patch("weko_search_ui.utils.RequestMailList.delete_without_commit") as delete_request_mail:
+                        register_item_metadata(item, root_path, -1, is_gakuninrdm=False)
+                        delete_request_mail.assert_called()
+
+                item["metadata"]["request_mail_list"]=[{"email": "contributor@test.org", "author_id": ""}]
+                item["metadata"]["feedback_mail_list"]=[{"email": "contributor@test.org", "author_id": ""}]
+                with patch("weko_search_ui.utils.WekoDeposit.merge_data_to_record_without_version"):
+                    with patch("weko_search_ui.utils.RequestMailList.update") as update_request_mail:
+                        register_item_metadata(item, root_path, -1, is_gakuninrdm=False)
+                        update_request_mail.assert_called()
+
+
 # def update_publish_status(item_id, status):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_update_publish_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_update_publish_status(i18n_app, es_item_file_pipeline, es_records):
@@ -859,7 +1174,8 @@ def test_handle_check_and_prepare_index_tree2(i18n_app, record_with_metadata, in
 
 # def handle_check_and_prepare_feedback_mail(list_record):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_and_prepare_feedback_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_handle_check_and_prepare_feedback_mail(i18n_app, record_with_metadata):
+def test_handle_check_and_prepare_feedback_mail(i18n_app, record_with_metadata, es_authors_index):
+    i18n_app.config["WEKO_AUTHORS_ES_INDEX_NAME"] = "test-authors"
     list_record = [record_with_metadata[0]]
 
     # Doesn't return any value
@@ -877,6 +1193,31 @@ def test_handle_check_and_prepare_feedback_mail(i18n_app, record_with_metadata):
 
     # Doesn't return any value
     assert not handle_check_and_prepare_feedback_mail([record])
+
+
+# def handle_check_and_prepare_request_mail(list_record):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_and_prepare_request_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_and_prepare_request_mail(i18n_app, record_with_metadata, es_authors_index):
+    i18n_app.config["WEKO_AUTHORS_ES_INDEX_NAME"] = "test-authors"
+    list_record = [record_with_metadata[0]]
+
+    # Doesn't return any value
+    assert not handle_check_and_prepare_request_mail(list_record)
+
+    record = {
+        "request_mail": ["wekosoftware@test.com"],
+        "metadata": {"request_mail_list": ""},
+    }
+
+    # Doesn't return any value
+    assert not handle_check_and_prepare_request_mail([record])
+    assert record["metadata"]["request_mail_list"] == [{'email': 'wekosoftware@test.com', 'author_id': ''}]
+
+    record["request_mail"] = ["test"]
+
+    # Doesn't return any value
+    assert not handle_check_and_prepare_request_mail([record])
+    assert record["errors"] == ['指定されたtestは不正です。']
 
 
 # def handle_set_change_identifier_flag(list_record, is_change_identifier):
@@ -3298,3 +3639,89 @@ def test_conbine_aggs():
     test = {"took": "215","time_out": False,"_shards": {"total": "1","successful": "1","skipped": "0","failed": "0"},"hits": {"total": "0","max_score": None,"hits": []},"aggregations": {"other": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [{"key": "1234567891012","doc_count": "2","date_range": {"doc_count": "2","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "2"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}}}]},"path": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [{"key": "1234567891011","doc_count": "1","date_range": {"doc_count": "1","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "1"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}},{"key": "1234567891012","doc_count": "2","date_range": {"doc_count": "2","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "2"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}},{"key": "1234567891013","doc_count": "3","date_range": {"doc_count": "1","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "3"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}}]}}}
     result = combine_aggs(other_agg)
     assert test == result
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_result_download_ui -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_result_download_ui(app):
+    valid_json = [{
+        "id": 0,
+        "name": {
+            "i18n": "title",
+            "en": "Title",
+            "ja": "タイトル"
+        },
+        "roCrateKey": "title"
+    }]
+    with open('tests/data/rocrate/rocrate_list.json', 'r') as f:
+        search_result = json.load(f)
+
+    with app.test_request_context():
+        with patch('weko_search_ui.utils.search_results_to_tsv', return_value=StringIO('test')):
+            # 9 execute
+            res = result_download_ui(search_result, valid_json)
+            assert res.status_code == 200
+
+            # 10 Empty search_result
+            with pytest.raises(NotFound):
+                res = result_download_ui(None, valid_json)
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_search_results_to_tsv -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_search_results_to_tsv(app):
+    valid_json = [
+        {
+            "id": 0,
+            "name": {
+                "i18n": "title",
+                "en": "Title",
+                "ja": "タイトル"
+            },
+            "roCrateKey": "title"
+        },
+        {
+            "id": 1,
+            "name": {
+                "i18n": "field",
+                "en": "Field",
+                "ja": "分野"
+            },
+            "roCrateKey": "genre"
+        },
+    ]
+    with open('tests/data/rocrate/rocrate_list.json', 'r') as f:
+        search_result = json.load(f)
+
+    with app.test_request_context():
+        # 11 Execute
+        with patch('weko_search_ui.utils.create_tsv_row', return_value={"Title": "Sample Title","Field": "Sample Field"}):
+            res = search_results_to_tsv(search_result, valid_json)
+            assert res.getvalue() == "Title\tField\nSample Title\tSample Field\n"
+
+        # 12 Empty json
+        input_json = [{}]
+        with patch('weko_search_ui.utils.create_tsv_row', return_value={}):
+            try:
+                search_results_to_tsv(search_result, input_json)
+                assert True
+            except:
+                assert False
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_create_tsv_row -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_create_tsv_row(app):
+    field_rocrate_dict = {'Title': 'title', 'Field': 'genre'}
+    with open('tests/data/rocrate/rocrate_list.json', 'r') as f:
+        search_result = json.load(f)
+
+    data_response = [
+        graph for graph in search_result[0]['metadata']['@graph']
+        if graph.get('@id') == './'
+    ][0]
+
+    with app.test_request_context():
+        # 13 Execute
+        res = create_tsv_row(field_rocrate_dict, data_response)
+        assert res == {
+            'Title': 'メタボリックシンドロームモデルマウスの多臓器遺伝子発現量データ',
+            'Field': '生物学'
+        }

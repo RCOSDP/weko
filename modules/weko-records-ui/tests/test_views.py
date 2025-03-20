@@ -168,6 +168,7 @@ def test_export_acl_guest(client, records):
         # (7, 302),
     ],
 )
+@pytest.mark.timeout(60)
 def test_export_acl(client, records, users, id, status_code):
     login_user_via_session(client=client, email=users[id]["email"])
     url = url_for(
@@ -482,6 +483,12 @@ def test_default_view_method(app, records, itemtypes, indexstyle ,users):
                             assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
                         with patch('weko_records_ui.views.AdminSettings.get'
                                     , side_effect=lambda name , dict_to_object : {'items_search_author' : "author"} if name == 'items_display_settings' else None):
+                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                        with patch('weko_records_ui.views.AdminSettings.get'
+                                    , side_effect=lambda name , dict_to_object : {'display_request_form' : False} if name == 'items_display_settings' else None):
+                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                        with patch('weko_records_ui.views.AdminSettings.get'
+                                    , side_effect=lambda name , dict_to_object : {'display_request_form' : True} if name == 'items_display_settings' else None):
                             assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
                         with patch('weko_search_ui.utils.get_data_by_property', return_value=(False,False)):
                             with patch('weko_records_ui.views.selected_value_by_language' ,return_value="helloworld.pdf"):

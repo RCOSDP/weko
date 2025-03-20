@@ -26,10 +26,12 @@ from operator import itemgetter
 
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import Bool, Exists, Q, QueryString
-from flask import Markup, current_app, session, json
+from flask import Markup, current_app, session, json, Flask
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
 from flask_babelex import to_user_timezone, to_utc
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_login import current_user
 from invenio_cache import current_cache
 from invenio_db import db
@@ -106,8 +108,7 @@ def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
             # for browsing role check
             reduce_index_by_role(tree, roles, groups)
         if not ignore_more:
-            reduce_index_by_more(tree=tree, more_ids=more_ids)
-
+            reduce_index_by_more(tree=tree, more_ids=more_ids)   
 
 def get_tree_json(index_list, root_id):
     """Get Tree Json.
@@ -140,7 +141,7 @@ def get_tree_json(index_list, root_id):
         index_name = str(index_element.name).replace("&EMPTY&", "")
         index_name = Markup.escape(index_name)
         index_name = index_name.replace("\n", r"<br\>")
-        
+
         index_link_name = str(index_element.link_name).replace("&EMPTY&", "")
         index_link_name = index_link_name.replace("\n", r"<br\>")
 
@@ -1030,7 +1031,7 @@ def get_editing_items_in_index(index_id, recursively=False):
 
 def save_index_trees_to_redis(tree, lang=None):
     """save inde_tree to redis for roles
-    
+
     """
     def default(o):
         if hasattr(o, "isoformat"):
@@ -1042,7 +1043,7 @@ def save_index_trees_to_redis(tree, lang=None):
         lang = current_i18n.language
     try:
         v = bytes(json.dumps(tree, default=default), encoding='utf-8')
-        
+
         redis.put("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + lang,v)
     except ConnectionError:
         current_app.logger.error("Fail save index_tree to redis")
@@ -1060,3 +1061,8 @@ def str_to_datetime(str_dt, format):
         return datetime.strptime(str_dt, format)
     except ValueError:
         return None
+
+
+def create_limiter():
+    from .config import WEKO_INDEX_TREE_API_LIMIT_RATE_DEFAULT
+    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_INDEX_TREE_API_LIMIT_RATE_DEFAULT)

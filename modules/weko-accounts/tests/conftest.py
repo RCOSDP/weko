@@ -48,7 +48,7 @@ from weko_records_ui import WekoRecordsUI
 from weko_redis.redis import RedisConnection
 from weko_user_profiles import WekoUserProfiles
 
-from weko_accounts import WekoAccounts
+from weko_accounts import WekoAccounts, WekoAccountsREST
 from weko_accounts.views import blueprint
 
 @pytest.yield_fixture()
@@ -94,6 +94,7 @@ def base_app(instance_path):
     WekoAdmin(app_)
     WekoUserProfiles(app_)
     app_.register_blueprint(blueprint)
+    WekoAccountsREST(app_)
     return app_
 
 
@@ -274,3 +275,10 @@ def session_time(app,db):
 def redis_connect(app):
     redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
     return redis_connection
+
+
+@pytest.fixture()
+def users_login(users):
+    inactive_user = create_test_user(email='inactive_user@test.org', active=False)
+    users.append({'email': inactive_user.email, 'id': inactive_user.id, 'obj': inactive_user})
+    return users

@@ -95,7 +95,7 @@ def get_permission_filter(index_id: str = None):
             terms = Q("terms", path=term_list)
     else:
         terms = Q("terms", path=is_perm_indexes)
-    
+
     if is_admin:
         mst.append(status)
     else:
@@ -127,7 +127,7 @@ def get_permission_filter(index_id: str = None):
     return mut, is_perm_paths
 
 
-def default_search_factory(self, search, query_parser=None, search_type=None):
+def default_search_factory(self, search, query_parser=None, search_type=None, additional_params=None):
     """Parse query using Weko-Query-Parser. MetaData Search.
 
     :param self: REST view.
@@ -143,6 +143,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         :param qs: Query string.
         :return: Query parser.
         """
+        qs = qs.replace("　", " ").replace(" | ", " OR ")
         q = (
             Q(
                 "query_string",
@@ -165,25 +166,59 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         def _get_keywords_query(k, v):
             qry = None
             kv = (
-                request.values.get("lang") if k == "language" else request.values.get(k)
+                params.get("lang") if k == "language" else params.get(k)
             )
 
             if not kv:
                 return
 
             if isinstance(v, str):
-                name_dict = dict(operator="and")
-                name_dict.update(dict(query=kv))
-                qry = Q("match", **{v: name_dict})
+                split_text_list = _split_text_by_or(kv)
+
+                if len(split_text_list) == 1:
+                    name_dict = dict(operator="and")
+                    name_dict.update(dict(query=kv))
+                    qry = Q("match", **{v: name_dict})
+                else:
+                    # OR search
+                    should_list = []
+                    for split_text in split_text_list:
+                        name_dict = dict(operator="and")
+                        name_dict.update(dict(query=split_text))
+                        should_list.append(Q("match", **{v: name_dict}))
+                    qry = Q("bool", should=should_list, minimum_should_match=1)
+
             elif isinstance(v, list):
-                qry = Q(
-                    "multi_match",
-                    query=kv,
-                    type="most_fields",
-                    minimum_should_match="75%",
-                    operator="and",
-                    fields=v,
-                )
+                if k == "title" and params.get("exact_title_match"):
+                    should_list = []
+                    should_list.append(Q("term", **{"title":kv}))
+                    should_list.append(Q("term", **{"alternative":kv}))
+                    qry = Q("bool", should=should_list, minimum_should_match=1)
+                else:
+                    split_text_list = _split_text_by_or(kv)
+                    if len(split_text_list) == 1:
+                        qry = Q(
+                            "multi_match",
+                            query=kv,
+                            type="most_fields",
+                            minimum_should_match="75%",
+                            operator="and",
+                            fields=v,
+                        )
+                    else:
+                        # OR search
+                        should_list = []
+                        for split_text in split_text_list:
+                            should_list.append(Q(
+                                "multi_match",
+                                query=split_text,
+                                type="most_fields",
+                                minimum_should_match="75%",
+                                operator="and",
+                                fields=v,
+                        ))
+                        qry = Q("bool", should=should_list, minimum_should_match=1)
+
             elif isinstance(v, dict):
 
                 for key, vlst in v.items():
@@ -226,12 +261,12 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
         def _get_object_query(k, v):
             # text value
-            kv = request.values.get(k)
+            kv = params.get(k)
             if not kv:
                 return
             if isinstance(v, tuple) and len(v) > 1 and isinstance(v[1], dict):
                 # attr keyword in request url
-                attrs = map(lambda x: (x, request.values.get(x)), list(v[1].keys()))
+                attrs = map(lambda x: (x, params.get(x)), list(v[1].keys()))
                 for attr_key, attr_val_str in attrs:
                     attr_obj = v[1].get(attr_key)
                     if isinstance(attr_obj, dict) and attr_val_str:
@@ -260,7 +295,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
         def _get_nested_query(k, v):
             # text value
-            kv = request.values.get(k)
+            kv = params.get(k)
 
             if not kv:
                 return
@@ -270,7 +305,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             if isinstance(v, tuple) and len(v) > 1 and isinstance(v[1], dict):
                 # attr keyword in request url
                 for attr_key, attr_val_str in map(
-                    lambda x: (x, request.values.get(x)), list(v[1].keys())
+                    lambda x: (x, params.get(x)), list(v[1].keys())
                 ):
                     attr_obj = v[1].get(attr_key)
 
@@ -289,20 +324,40 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                     for alst in attr:
                                         if isinstance(alst, tuple):
                                             val_attr_lst = alst[1].split("=")
-                                            name = alst[0] + ".value"
-                                            name_dict = dict(operator="and")
-                                            name_dict.update(dict(query=kv))
-                                            mut = [Q("match", **{name: name_dict})]
                                             qt = None
 
+                                            # attribute conditon
+                                            field_name = alst[0] + "." + val_attr_lst[0]
                                             if "=*" in alst[1]:
-                                                name = alst[0] + "." + val_attr_lst[0]
                                                 qt = [
-                                                    Q("term", **{name: val_attr_lst[1]})
+                                                    Q("exists", field=field_name)
+                                                ]
+                                            else:
+                                                qt = [
+                                                    Q("term", **{field_name: val_attr_lst[1]})
                                                 ]
 
-                                            mut.extend(qt or [])
-                                            qry = Q("bool", must=mut)
+                                            split_text_list = _split_text_by_or(kv)
+                                            if len(split_text_list) == 1:
+                                                name = alst[0] + ".value"
+                                                name_dict = dict(operator="and")
+                                                name_dict.update(dict(query=kv))
+                                                mut = [Q("match", **{name: name_dict})]
+
+                                                mut.extend(qt or [])
+                                                qry = Q("bool", must=mut)
+
+                                            else:
+                                                # OR search
+                                                should_list = []
+                                                for split_text in split_text_list:
+                                                    name = alst[0] + ".value"
+                                                    name_dict = dict(operator="and")
+                                                    name_dict.update(dict(query=split_text))
+                                                    should_list.append(Q("match", **{name: name_dict}))
+                                                mut = []
+                                                mut.extend(qt or [])
+                                                qry = Q("bool", must=mut, should=should_list, minimum_should_match=1)
                                             shuld.append(
                                                 Q("nested", path=alst[0], query=qry)
                                             )
@@ -373,8 +428,8 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             qry = None
 
             if isinstance(v, list) and len(v) >= 2:
-                date_from = request.values.get(k + "_" + v[0][0])
-                date_to = request.values.get(k + "_" + v[0][1])
+                date_from = params.get(k + "_" + v[0][0])
+                date_to = params.get(k + "_" + v[0][1])
 
                 if not date_from or not date_to:
                     return
@@ -412,7 +467,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                     if isinstance(dt, dict):
 
                         for attr_key, attr_val_str in map(
-                            lambda x: (x, request.values.get(x)), list(dt.keys())
+                            lambda x: (x, params.get(x)), list(dt.keys())
                         ):
                             attr_obj = dt.get(attr_key)
 
@@ -443,25 +498,35 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         def _get_text_query(k, v):
             qry = None
             kv = (
-                request.values.get("lang") if k == "language" else request.values.get(k)
+                params.get("lang") if k == "language" else params.get(k)
             )
 
             if not kv:
                 return
 
             if isinstance(v, str):
-                name_dict = dict(operator="and")
-                name_dict.update(dict(query=kv))
-                qry = Q("match", **{v: name_dict})
+                split_text_list = _split_text_by_or(kv)
+                if len(split_text_list) == 1:
+                    name_dict = dict(operator="and")
+                    name_dict.update(dict(query=kv))
+                    qry = Q("match", **{v: name_dict})
 
+                else:
+                    # OR search
+                    should_list = []
+                    for split_text in split_text_list:
+                        name_dict = dict(operator="and")
+                        name_dict.update(dict(query=split_text))
+                        should_list.append(Q("match", **{v: name_dict}))
+                    qry = Q("bool", should=should_list, minimum_should_match=1)
             return qry
 
         def _get_range_query(k, v):
             qry = None
 
             if isinstance(v, list) and len(v) >= 2:
-                value_from = request.values.get(k + "_" + v[0][0])
-                value_to = request.values.get(k + "_" + v[0][1])
+                value_from = params.get(k + "_" + v[0][0])
+                value_to = params.get(k + "_" + v[0][1])
 
                 if not value_from or not value_to:
                     return
@@ -479,9 +544,9 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             qry = None
 
             if isinstance(v, list) and len(v) >= 2:
-                value_lat = request.values.get(k + "_" + v[0][0])
-                value_lon = request.values.get(k + "_" + v[0][1])
-                value_distance = request.values.get(k + "_" + v[0][2])
+                value_lat = params.get(k + "_" + v[0][0])
+                value_lon = params.get(k + "_" + v[0][1])
+                value_distance = params.get(k + "_" + v[0][2])
 
                 if not value_lat or not value_lon or not value_distance:
                     return
@@ -499,9 +564,9 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             qry = None
 
             if isinstance(v, list) and len(v) >= 2:
-                value_lat = request.values.get(k + "_" + v[0][0])
-                value_lon = request.values.get(k + "_" + v[0][1])
-                value_distance = request.values.get(k + "_" + v[0][2])
+                value_lat = params.get(k + "_" + v[0][0])
+                value_lon = params.get(k + "_" + v[0][1])
+                value_distance = params.get(k + "_" + v[0][2])
 
                 if not value_lat or not value_lon or not value_distance:
                     return
@@ -525,6 +590,9 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
             return qry
 
+        params = request.values.to_dict()
+        if additional_params:
+            params.update(additional_params)
         kwd = current_app.config["WEKO_SEARCH_KEYWORDS_DICT"]
         ks = kwd.get("string")
         kd = kwd.get("date")
@@ -631,17 +699,31 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
     def _get_file_content_query(qstr):
         """Query for searching indexed file contents."""
-        multi_cont_q = Q(
-            "multi_match",
-            query=qstr,
-            operator="and",
-            fields=["content.attachment.content"],
-        )
+        split_text_list = _split_text_by_or(qstr)
+        if len(split_text_list) == 1:
+            multi_cont_q = Q(
+                "multi_match",
+                query=qstr,
+                operator="and",
+                fields=["content.attachment.content"],
+            )
+        else:
+            # OR search
+            should_list = []
+            for split_text in split_text_list:
+                should_list.append(Q(
+                    "multi_match",
+                    query=split_text,
+                    operator="and",
+                    fields=["content.attachment.content"],
+                ))
+            multi_cont_q = Q("bool", should=should_list, minimum_should_match=1)
 
         # Search fields may increase so leaving as multi
+        qstr = qstr.replace("　", " ").replace(" | ", " OR ")
         multi_q = Q(
             "query_string",
-            query=qs,
+            query=qstr,
             default_operator="and",
             fields=["search_*", "search_*.ja"],
         )
@@ -1192,8 +1274,11 @@ def opensearch_factory(self, search, query_parser=None):
         index_id = str(index_id)
         return item_path_search_factory(self, search, index_id=index_id)
     else:
+        additional_params = {
+            "exact_title_match": request.args.get("exact_title_match") == "true"
+        }
         return default_search_factory(
-            self, search, query_parser, search_type=search_type
+            self, search, query_parser, search_type=search_type, additional_params=additional_params
         )
 
 
@@ -1269,3 +1354,18 @@ def item_search_factory(
     current_app.logger.debug(json.dumps((search.query()).to_dict()))
     return search, urlkwargs
 
+def _split_text_by_or(text):
+    """split text by " OR " or " | "
+
+    Args:
+        text(str): input text
+    Returns:
+        list: list of split text
+    """
+    if not isinstance(text, str):
+        return []
+    text = text.replace("　", " ")
+    pattern = r'(?<= )(?:OR|\|)(?= )'
+    split_text_list = re.split(pattern, text)
+    split_text_list = [item.strip() for item in split_text_list]
+    return split_text_list

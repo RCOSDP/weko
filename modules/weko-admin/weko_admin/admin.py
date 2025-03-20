@@ -50,6 +50,7 @@ from weko_records.api import ItemTypes, SiteLicense
 from weko_records.models import SiteLicenseInfo
 from weko_records_ui.utils import check_items_settings
 from weko_schema_ui.models import PublishStatus
+from weko_workflow.api import WorkFlow
 from wtforms.fields import StringField
 from wtforms.validators import ValidationError
 
@@ -1367,7 +1368,74 @@ class FacetSearchSettingView(ModelView):
             type_str='delete',
             id=id
         )
+    
+class SwordAPISettingsView(BaseView):
+    
+    @expose('/', methods=['GET'])
+    def index(self):
+        default_sword_api = { "default_format": "TSV",
+                            "data_format":{ "TSV":{"register_format": "Direct"},
+                                           "XML":{"workflow": "-1",  "register_format": "Workflow"}}}  # Default
+        current_settings = AdminSettings.get(
+                name='sword_api_setting',
+                dict_to_object=False)
+        if not current_settings:  
+            AdminSettings.update('sword_api_setting', default_sword_api)
+            current_settings = AdminSettings.get(
+                name='sword_api_setting',
+                dict_to_object=False)
+        current_settings_json = json.dumps(current_settings)
+        form = FlaskForm(request.form)
+        workflow = WorkFlow()
+        workflow_list = workflow.get_workflow_list()
+        workflows = workflow.get_workflows_by_roles(workflow_list)
+        deleted_workflows = workflow.get_deleted_workflow_list()
+        deleted_workflow_name_dict = {}
+        for deleted_workflow in deleted_workflows:
+            deleted_workflow_name_dict[deleted_workflow.id] = deleted_workflow.flows_name
+        # Process exclude workflows
+        from weko_workflow.utils import exclude_admin_workflow
+        exclude_admin_workflow(workflows)
+        return self.render(current_app.config['WEKO_ADMIN_SWORD_API_TEMPLATE'],
+                           current_settings = current_settings,
+                           current_settings_json = current_settings_json,
+                           deleted_workflow_name_dict = json.dumps(deleted_workflow_name_dict),
+                           workflows = workflows,
+                           form = form)
 
+    @expose('/default_format', methods=['POST'])
+    def default_format(self):
+        """Default Format."""
+        try:
+            settings = AdminSettings.get('sword_api_setting')
+            default_format_setting = request.json.get('default_format')
+            settings.default_format = default_format_setting
+            AdminSettings.update('sword_api_setting',
+                        settings.__dict__)
+            return jsonify(success=True),200
+        except Exception as e:
+            current_app.logger.error(
+                'ERROR Default Form Settings: {}'.format(e))
+            return jsonify(success=False),400
+
+    @expose('/data_format', methods=['POST'])
+    def data_format(self):
+        """Data Format Settings."""
+        try:
+            settings = AdminSettings.get('sword_api_setting')
+            data_format_setting = request.json.get('data_format')
+            if data_format_setting == "XML":
+                workflow_setting = request.json.get('workflow')
+                settings.data_format = {"TSV": {"register_format": "Direct"}, "XML": {"workflow": workflow_setting, "register_format": "Workflow"}}  
+            else:
+                settings.data_format["TSV"]["register_format"] = "Direct"
+            AdminSettings.update('sword_api_setting',
+                                    settings.__dict__)
+            return jsonify(success=True),200            
+        except Exception as e:
+            current_app.logger.error(
+                'ERROR Default Form Settings: {}'.format(e))
+            return jsonify(success=False),400
 
 style_adminview = {
     'view_class': StyleSettingView,
@@ -1528,6 +1596,14 @@ reindex_elasticsearch_adminview = {
     }
 }
 
+sword_api_settings_adminview = {
+    'view_class': SwordAPISettingsView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('SWORD API'),
+        'endpoint': 'swordapi'
+    }
+}
 
 __all__ = (
     'style_adminview',
@@ -1547,5 +1623,6 @@ __all__ = (
     'restricted_access_adminview',
     'identifier_adminview',
     'facet_search_adminview',
-    'reindex_elasticsearch_adminview'
+    'reindex_elasticsearch_adminview',
+    'sword_api_settings_adminview'
 )

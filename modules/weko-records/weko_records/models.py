@@ -659,13 +659,51 @@ class FeedbackMailList(db.Model, Timestamp):
         nullable=True
     )
     """List of feedback mail in json format."""
-
     account_author = db.Column(
         db.Text,
         nullable=False,
         default=''
     )
     """Author identifier."""
+
+class RequestMailList(db.Model, Timestamp):
+    """Represent an request mail list.
+
+    Stored table stored list email address base on item_id
+    """
+
+    __tablename__ = 'request_mail_list'
+
+    id = db.Column(
+        db.Integer(),
+        primary_key=True,
+        autoincrement=True
+    )
+
+    """Request mail list identifier."""
+
+    item_id = db.Column(
+        UUIDType,
+        nullable=False,
+        default=uuid.uuid4,
+    )
+    """Item identifier."""
+
+    mail_list = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """List of request mail in json format."""
 
 
 class ItemReference(db.Model, Timestamp):

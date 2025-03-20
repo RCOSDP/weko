@@ -1385,3 +1385,18 @@ msgstr ""
 
 msgid "Success Secret URL Generate"
 msgstr "Success: Secret URL Generate is succeed. Sent the URL to your email adress."
+
+msgid "Please enter the calculation result"
+msgstr ""
+
+msgid "The calculation results are different."
+msgstr ""
+
+msgid "Email sent successfully"
+msgstr ""
+
+msgid "The image has expired. Please enter the calculation result again."
+msgstr ""
+
+msgid "There is an error in the input item"
+msgstr ""
