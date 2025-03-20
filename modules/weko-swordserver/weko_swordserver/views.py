@@ -352,15 +352,6 @@ def post_service_document():
                 activity_id = url.split("/")[-1]
                 return activity_id, recid, error
 
-
-            else:
-                if os.path.exists(data_path):
-                    shutil.rmtree(data_path)
-                    TempDirInfo().delete(data_path)
-                raise WekoSwordserverException(
-                    "Invalid register format in admin settings",
-                    ErrorType.ServerError
-                )
         except WekoSwordserverException as e:
             current_app.logger.error(f"Error in process_item: {str(e)}")
             raise  # Re-raise the exception after logging

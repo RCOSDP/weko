@@ -300,7 +300,7 @@ class HeadlessActivity(WorkActivity):
             })
 
             # to exclude from file text extraction
-            non_extract = metadata.pop("non_extract", [])
+            non_extract = getattr(metadata, "non_extract", [])
 
             result = {"is_valid": True}
             validate_form_input_data(result, self.item_type.id, deepcopy(metadata))

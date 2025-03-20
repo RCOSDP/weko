@@ -22,6 +22,8 @@ from weko_records.api import Mapping, ItemTypes
 from weko_records.models import ItemType
 from weko_records.serializers.utils import get_full_mapping
 
+from .config import ROCRATE_METADATA_FILE
+
 DEFAULT_FIELD = [
     "title",
     "keywords",
@@ -1595,6 +1597,11 @@ class JsonLdMapper(JsonMapper):
                     'Invalid json-ld format: Objects without "@id" '
                     'are directly under "@graph"'
                 ) from ex
+            rocrate_entity_key = ROCRATE_METADATA_FILE.split("/")[-1]
+            if rocrate_entity_key not in extracted:
+                raise ValueError(
+                    f'Invalid json-ld format: "{rocrate_entity_key}" entity is not found.'
+                )
         else:
             raise ValueError('Invalid json-ld format: "@context" is invalid.')
         if not extracted:
@@ -1618,9 +1625,7 @@ class JsonLdMapper(JsonMapper):
 
         list_extracted = []
         if format == "ro-crate":
-            extracted = extracted.get(
-                current_app.config["WEKO_SWORDSERVER_METADATA_FILE_ROCRATE"]
-            ).get("about")
+            extracted = extracted.get(rocrate_entity_key).get("about")
             if extracted.get("wk:is_splited", False) and "hasPart" in extracted:
                 # each metadata part must be in "hasPart"
                 list_extracted = [ part for part in extracted.get("hasPart") ]

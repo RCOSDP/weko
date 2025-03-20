@@ -22,6 +22,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from invenio_accounts.models import User
 from invenio_oauth2server.models import Token
 from weko_accounts.models import ShibbolethUser
+from weko_search_ui.config import SWORD_METADATA_FILE, ROCRATE_METADATA_FILE
 
 from .api import SwordClient, SwordItemTypeMapping
 from .errors import WekoSwordserverException, ErrorType
@@ -44,7 +45,7 @@ def check_import_file_format(file, packaging):
         file_list =  zip_ref.namelist()
 
     if "SWORDBagIt" in packaging:
-        if "metadata/sword.json" in file_list:
+        if SWORD_METADATA_FILE in file_list:
             file_format = "JSON"
         else:
             current_app.logger.error(
@@ -55,7 +56,7 @@ def check_import_file_format(file, packaging):
                 ErrorType.MetadataFormatNotAcceptable
                 )
     elif "SimpleZip" in packaging:
-        if "ro-crate-metadata.json" in file_list:
+        if ROCRATE_METADATA_FILE in file_list:
             file_format = "JSON"
         elif any(filename.split("/")[1].endswith(".xml")
                 for filename in file_list if "/" in filename
@@ -83,6 +84,7 @@ def check_import_file_format(file, packaging):
             )
 
     return file_format
+
 
 def get_shared_id_from_on_behalf_of(on_behalf_of):
     """Get shared ID from on-behalf-of.
@@ -126,6 +128,7 @@ def get_shared_id_from_on_behalf_of(on_behalf_of):
             errorType=ErrorType.ServerError
         ) from ex
     return shared_id
+
 
 def unpack_zip(file):
     """Unpack zip file.

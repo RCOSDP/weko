@@ -137,6 +137,8 @@ from .config import (
     WEKO_SEARCH_UI_BULK_EXPORT_TASK,
     WEKO_SEARCH_UI_BULK_EXPORT_URI,
     WEKO_SYS_USER,
+    SWORD_METADATA_FILE,
+    ROCRATE_METADATA_FILE
 )
 from .query import item_path_search_factory
 
@@ -857,9 +859,8 @@ def check_jsonld_import_items(
 
         # metadata json file name
         json_name = (
-            current_app.config['WEKO_SWORDSERVER_METADATA_FILE_SWORD']
-                if "SWORDBagIt" in packaging
-                else current_app.config['WEKO_SWORDSERVER_METADATA_FILE_ROCRATE']
+            SWORD_METADATA_FILE if "SWORDBagIt" in packaging
+                else ROCRATE_METADATA_FILE
         )
 
         # Check if the bag is valid
@@ -1789,7 +1790,7 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
     deposit['owner'] = str(owner)
 
     # to exclude from file text extraction
-    deposit.non_extract = item.pop("non_extract", [])
+    deposit.non_extract = getattr(item["metadata"], "non_extract", [])
 
     deposit.commit()
 
