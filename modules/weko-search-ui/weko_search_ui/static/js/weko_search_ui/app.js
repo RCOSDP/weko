@@ -514,7 +514,11 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
           $scope.showErrMsgBibtex(invalidBibtexRecordIds);
         }
       }
-      $('#record_metadata').val(JSON.stringify(export_metadata));
+      if ($scope.selectedExportFormat !== "ROCRATE") {
+        $('#record_metadata').val(JSON.stringify(export_metadata));
+      } else {
+        $('#record_metadata').val("");
+      }
       $('#export_items_form').submit();  // Submit form and let controller handle file making
     }
     $('#item_export_button').attr("disabled", false);
