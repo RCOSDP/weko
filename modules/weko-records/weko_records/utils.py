@@ -2199,10 +2199,10 @@ def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
                     data_result = {**data_result, **{save_key: {}}}
                 if (
                     save_key in data_result.keys()
-                    and (j["title"].strip() in "Language")
-                    or (j["title_ja"].strip() in "Language")
-                    or (j["title_ja"].strip() in "言語")
-                    or (j["title"].strip() in "言語")
+                    and (j["title"].strip() == "Language")
+                    or (j["title_ja"].strip() == "Language")
+                    or (j["title_ja"].strip() == "言語")
+                    or (j["title"].strip() == "言語")
                 ):
                     data_result[save_key] = {
                         **data_result[save_key],
