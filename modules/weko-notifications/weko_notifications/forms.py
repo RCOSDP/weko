@@ -12,7 +12,7 @@ from flask import current_app, request, flash
 from flask_babelex import lazy_gettext as _
 from flask_login import current_user
 from flask_wtf import FlaskForm
-from wtforms import BooleanField
+from wtforms import BooleanField, HiddenField
 
 from weko_user_profiles.api import current_userprofile
 
@@ -32,7 +32,7 @@ def handle_notifications_form(form):
             return
         NotificationsUserSettings.create_or_update(
             user_id=current_user.id,
-            subscribe_webpush=form.subscribe_webpush.data,
+            subscribe_webpush=False,  # NOTE: This is not used.
             subscribe_email=form.subscribe_email.data
         )
         flash(_("Notifications settings updated."), category="success")
@@ -51,6 +51,19 @@ class NotificationsForm(FlaskForm):
         _("Web push"),
         # NOTE: Form field help text
         description=_("Receive notifications via web push.")
+    )
+    """Web push notification subscription status."""
+    webpush_endpoint = HiddenField(
+        _("Web push endpoint"),
+    )
+    webpush_expiration_time = HiddenField(
+        _("Web push expiration time"),
+    )
+    webpush_p256dh = HiddenField(
+        _("Web push p256dh"),
+    )
+    webpush_auth = HiddenField(
+        _("Web push auth"),
     )
     subscribe_email = BooleanField(
         _("Email"),

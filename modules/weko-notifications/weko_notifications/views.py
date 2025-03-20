@@ -9,9 +9,10 @@
 
 
 from __future__ import absolute_import, print_function
-import traceback
 
-from flask import Blueprint, current_app, jsonify, render_template, request
+import traceback
+import requests
+from flask import Blueprint, current_app, flash, render_template, request
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
@@ -20,6 +21,7 @@ from invenio_db import db
 
 from .forms import NotificationsForm, handle_notifications_form
 from .models import NotificationsUserSettings
+from .utils import inbox_url, create_subscription
 
 
 blueprint = Blueprint(
@@ -42,7 +44,7 @@ blueprint_ui = Blueprint(
 @register_menu(
     blueprint_ui, "settings.notifications",
     _("%(icon)s Notifications", icon="<i class='fa fa-bell fa-fw'></i>"),
-    order=1
+    order=3
 )
 @register_breadcrumb(
     blueprint_ui, "breadcrumbs.settings.notifications", _("Notifications")
@@ -50,22 +52,44 @@ blueprint_ui = Blueprint(
 def notifications():
     """View for settings notifications."""
     notifications_form = notifications_form_factory()
-    form = request.form.get("submit", None)
+    form_action = request.form.to_dict()
 
-    current_app.logger.info(
-        f"user_id={current_user.id} form={form}"
-    )
-
-    try:
-        if form == "notifications":
+    if form_action:
+        try:
             handle_notifications_form(notifications_form)
             db.session.commit()
-    except Exception as ex:
-        db.session.rollback()
-        traceback.print_exc()
-        current_app.logger.error(
-            f"Error updating notifications settings. user_id={current_user.id}"
+        except Exception as ex:
+            db.session.rollback()
+            traceback.print_exc()
+            current_app.logger.error(
+                f"Error updating notifications settings. user_id={current_user.id}"
+            )
+
+        endpoint = notifications_form.webpush_endpoint.data
+        current_app.logger.info(
+            f"error: {notifications_form.errors}"
         )
+        try:
+            if notifications_form.errors:
+                pass
+            elif notifications_form.subscribe_webpush.data:
+                subscripsion = create_subscription(
+                    current_user.id,
+                    notifications_form.webpush_endpoint.data,
+                    notifications_form.webpush_expiration_time.data,
+                    notifications_form.webpush_p256dh.data,
+                    notifications_form.webpush_auth.data
+                )
+
+                requests.post(inbox_url("/subscribe"), json=subscripsion)
+            elif endpoint != "":
+                requests.post(inbox_url("/unsubscribe"), json={"endpoint": endpoint})
+        except Exception as ex:
+            traceback.print_exc()
+            current_app.logger.error(
+                f"Error updating push subscription. user_id={current_user.id}"
+            )
+            flash(_("Failed to update push subscription."), category="error")
 
     return render_template(
         current_app.config["WEKO_NOTIFICATIONS_TEMPLATE"],
@@ -79,15 +103,14 @@ def notifications_form_factory():
         user_settings = NotificationsUserSettings.create_or_update(
             user_id=current_user.id
         )
-    form = None
-    if user_settings:
-        form = NotificationsForm(
-            subscribe_webpush=user_settings.subscribe_webpush,
-            subscribe_email=user_settings.subscribe_email,
-            prefix="notifications"
-        )
-    else:
-        form = NotificationsForm(
-            prefix="notifications"
-        )
+
+    form = NotificationsForm(
+        subscribe_webpush=False,
+        wwbpush_endpoint="",
+        webpush_expiration_time="",
+        webpush_p256dh="",
+        webpush_auth="",
+        subscribe_email=user_settings.subscribe_email,
+        prefix="notifications"
+    )
     return form

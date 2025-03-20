@@ -14,3 +14,13 @@ notifications_settings_css = Bundle(
     "css/weko_notifications/notifications.settings.css",
     output="gen/notifications_settings.%(version)s.css"
 )
+
+notifications_settings_js = Bundle(
+    "js/weko_notifications/notifications.settings.js",
+    output="gen/notifications_settings.%(version)s.js"
+)
+
+sw_js = Bundle(
+    "js/weko_notifications/sw.js",
+    output="gen/sw.js"
+)

@@ -10,7 +10,14 @@
 {{ super() }}
 {% assets "weko_theme_css_buttons" %}
 <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-{% assets "weko_notifications_settings_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% assets "weko_notifications_settings_css" %}
+<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% endblock %}
+
+{%- block javascript %}
+{{ super() }}
+{% assets "weko_notifications_settings_js" %}
+<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {% endblock %}
 
 {% from "weko_notifications/settings/_macros.html" import render_field, form_errors %}
@@ -19,11 +26,11 @@
 {% set panel_icon = "fa fa-bell" %}
 
 {%- block settings_form %}
-{%- set form = notifications_form %}
+{%- set notifications_form = notifications_form %}
 <p>{{ _("Receive notifications.") }}</p>
 <hr>
 <form method="POST" name="notifications_form">
-  {%- for field in form %}
+  {%- for field in notifications_form %}
   {%- if field.widget.input_type == 'hidden' %}
   {{ field() }}
   {%- else %}
