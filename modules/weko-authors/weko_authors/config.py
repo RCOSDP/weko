@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 """Configuration for weko-authors."""
-
+import os
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 from .rest import Authors
 
@@ -59,19 +59,44 @@ WEKO_AUTHORS_ADMIN_EXPORT_TEMPLATE = 'weko_authors/admin/author_export.html'
 WEKO_AUTHORS_EXPORT_ENTRYPOINTS = {
     'export': '/admin/authors/export/export',
     'cancel': '/admin/authors/export/cancel',
-    'check_status': '/admin/authors/export/check_status'
+    'check_status': '/admin/authors/export/check_status',
+    'stop': '/admin/authors/export/stop',
+    'resume': '/admin/authors/export/resume'
 }
 
 WEKO_AUTHORS_EXPORT_FILE_NAME = 'Creator_export_all'
+WEKO_AUTHORS_ID_PREFIX_EXPORT_FILE_NAME = 'Id_prefix_export_all'
+WEKO_AUTHORS_AFFILIATION_EXPORT_FILE_NAME = 'Affiliation_id_export_all'
 WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY = 'weko_authors_export_status'
 WEKO_AUTHORS_EXPORT_CACHE_URL_KEY = 'weko_authors_exported_url'
+WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY = 'weko_authors_export_target'
+WEKO_AUTHORS_EXPORT_CACHE_KEY = 'weko_author_export_cache_key'
+WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY = 'weko_authors_export_temp_file_path_key'
+WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY = "weko_authors_export_stop_point"
+WEKO_AUTHORS_EXPORT_TMP_PREFIX = 'authors_export_'
+WEKO_AUTHORS_EXPORT_TEMP_FOLDER_PATH = "/var/tmp/authors_export" # os.path.join(os.environ.get("TMPDIR"), "authors_export")
+WEKO_AUTHORS_EXPORT_BATCH_SIZE = 1000
+WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY = 5
+WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL = 5
 
 WEKO_AUTHORS_FILE_MAPPING = [
     {
-        'label_en': 'WEKO ID',
-        'label_jp': 'WEKO ID',
-        'json_id': 'pk_id'
+        "json_id": "pk_id",
+        "label_en": "Author ID",
+        "label_jp": "著者ID"
     },
+    {
+        "json_id": "weko_id",
+        "label_en": "WEKO ID",
+        "label_jp": "WEKO ID",
+        'validation': {
+            'validator': {
+                'class_name': 'weko_authors.contrib.validation',
+                'func_name': 'validate_digits_for_wekoid'
+            }
+        }
+    },
+
     {
         'json_id': 'authorNameInfo',
         'child': [
@@ -188,19 +213,165 @@ WEKO_AUTHORS_FILE_MAPPING = [
     }
 ]
 
+WEKO_AUTHORS_FILE_MAPPING_FOR_PREFIX =["scheme", "name", "url", "is_deleted"]
+
+WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION ={
+        "json_id": "affiliationInfo",
+        "child": [
+            {
+                "json_id": "identifierInfo",
+                "child": [
+                    {
+                        "json_id": "affiliationIdType",
+                        "label_en": "Affiliation Identifier Scheme",
+                        "label_jp": "外部所属機関ID 識別子",
+                        "validation": {
+                            "validator": {
+                                "class_name": "weko_authors.contrib.validation",
+                                "func_name": "validate_affiliation_identifier_scheme"
+                            },
+                            "required": {
+                                "if": [
+                                    "affiliationId"
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "json_id": "affiliationId",
+                        "label_en": "Affiliation Identifier",
+                        "label_jp": "外部所属機関ID",
+                        "validation": {
+                            "required": {
+                                "if": [
+                                    "affiliationIdType"
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "json_id": "identifierShowFlg",
+                        "label_en": "Affiliation Identifier Display",
+                        "label_jp": "外部所属機関ID 表示／非表示",
+                        "mask": {
+                            "true": "Y",
+                            "false": "N"
+                        }
+                    }
+                ]
+            },
+            {
+                "json_id": "affiliationNameInfo",
+                "child": [
+                    {
+                        "json_id": "affiliationName",
+                        "label_en": "Affiliation Name",
+                        "label_jp": "外部所属機関名"
+                    },
+                    {
+                        "json_id": "affiliationNameLang",
+                        "label_en": "Language",
+                        "label_jp": "言語",
+                        "validation": {
+                            "map": [
+                                "ja",
+                                "ja-Kana",
+                                "en",
+                                "fr",
+                                "it",
+                                "de",
+                                "es",
+                                "zh-cn",
+                                "zh-tw",
+                                "ru",
+                                "la",
+                                "ms",
+                                "eo",
+                                "ar",
+                                "el",
+                                "ko"
+                            ]
+                        }
+                    },
+                    {
+                        "json_id": "affiliationNameShowFlg",
+                        "label_en": "Affiliation Name Display",
+                        "label_jp": "外部所属機関名・言語 表示／非表示",
+                        "mask": {
+                            "true": "Y",
+                            "false": "N"
+                        },
+                        "validation": {
+                            "map": [
+                                "Y",
+                                "N"
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "json_id": "affiliationPeriodInfo",
+                "child": [
+                    {
+                        "json_id": "periodStart",
+                        "label_en": "Affiliation Period Start",
+                        "label_jp": "外部所属機関 所属期間 開始日",
+                        "validation": {
+                            "validator": {
+                                "class_name": "weko_authors.contrib.validation",
+                                "func_name": "validate_affiliation_period_start"
+                            }
+                        }
+                    },
+                    {
+                        "json_id": "periodEnd",
+                        "label_en": "Affiliation Period End",
+                        "label_jp": "外部所属機関 所属期間 終了日",
+                        "validation": {
+                            "validator": {
+                                "class_name": "weko_authors.contrib.validation",
+                                "func_name": "validate_affiliation_period_end"
+                            }
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+
+
 WEKO_AUTHORS_ADMIN_IMPORT_TEMPLATE = 'weko_authors/admin/author_import.html'
 """Template for the import page."""
 
-WEKO_AUTHORS_IMPORT_TMP_PREFIX = 'weko_authors_import_'
+WEKO_AUTHORS_IMPORT_TMP_PREFIX = 'authors_import_'
+WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH = "var/tmp/authors_import"# os.path.join(os.environ.get("TMPDIR"), "authors_import")
 
 WEKO_AUTHORS_IMPORT_ENTRYPOINTS = {
     'is_import_available': '/admin/authors/import/is_import_available',
     'check_import_file': '/admin/authors/import/check_import_file',
     'import': '/admin/authors/import/import',
-    'check_import_status': '/admin/authors/import/check_import_status'
+    'check_import_status': '/admin/authors/import/check_import_status',
+    'check_pagination':'/admin/authors/import/check_pagination',
+    'check_file_download':'/admin/authors/import/check_file_download',
+    'result_download':'/admin/authors/import/result_download',
 }
 
 WEKO_AUTHORS_IMPORT_CACHE_KEY = 'author_import_cache'
+WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY = 'authors_import_user_file_key'
+WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_USER_FILE_PATH_KEY = "authors_import_band_check_user_file_path"
+WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_FILE_PATH_KEY = "authors_import_band_check_file_path"
+WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY = "authors_import_result_file_of_over_path"
+WEKO_AUTHORS_IMPORT_CACHE_RESULT_FILE_PATH_KEY = "authors_import_result_file_path"
+WEKO_AUTHORS_IMPORT_CACHE_OVER_MAX_TASK_KEY = "authors_import_over_max_task"
+WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY = "authors_import_summary"
+WEKO_AUTHORS_IMPORT_CACHE_FORCE_CHANGE_MODE_KEY = "authors_import_force_change"
+WEKO_AUTHORS_IMPORT_BATCH_SIZE = 100
+WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYS = 1000
+WEKO_AUTHORS_BULK_IMPORT_MAX_RETRY = 5
+WEKO_AUTHORS_BULK_IMPORT_RETRY_INTERVAL = 5
+WEKO_AUTHORS_CACHE_TTL = 60 * 60 * 24
+WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD = 60 * 60 * 24
 
 WEKO_AUTHORS_NUM_OF_PAGE = 25
 """Default number of author search results that display in one page."""
@@ -309,7 +480,12 @@ length: "minLength" <= nameidentifier's length <= "maxLength"
 WEKO_AUTHORS_REST_ENDPOINTS = {
     'authors': {
         'route': '/<string:version>/authors/count',
+        'api_route': '/<string:version>/authors',
         'default_media_type': 'application/json',
+        'record_serializers': {
+            'application/json': ('invenio_records_rest.serializers'
+                                 ':json_v1_response'),
+        },
     },
 }
 
