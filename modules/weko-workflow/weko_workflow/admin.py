@@ -535,6 +535,10 @@ class WorkFlowSettingView(BaseView):
 class ActivitySettingsView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
+        """Get and update activity settings.
+
+        :return:
+        """
         try:
             form = FlaskForm(request.form)
             # Get display request form settings
@@ -545,7 +549,6 @@ class ActivitySettingsView(BaseView):
                 AdminSettings.update('activity_display_settings', activity_display_settings)
             check_activity_settings()
             activity_display_flg = '0'
-            activity_display_settings = AdminSettings.get('activity_display_settings')
             if current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE']:
                 activity_display_flg = '1'
 
