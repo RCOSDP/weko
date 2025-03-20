@@ -35,7 +35,6 @@ from weko_records.serializers.utils import get_mapping
 from weko_workflow.api import WorkActivity
 from weko_workflow.models import ActionJournal
 from weko_workflow.utils import MappingData
-from weko_workspace.utils import get_datacite_record_data, get_jalc_record_data, get_jamas_record_data
 
 from . import config
 from .api import CiNiiURL, CrossRefOpenURL
@@ -225,6 +224,56 @@ def get_crossref_record_data_default_pid(doi, item_type_id):
     pid = pid_response["cert_data"]
     return get_crossref_record_data(pid, doi, item_type_id)
 
+# FIXME: Remove this function after merge.
+def get_jalc_record_data_kari(doi, item_type_id):
+    """
+    Get record data base on JALC.
+
+    :return: The record data
+    """
+    result = [{"title": "JALC API"}]
+    return result
+
+# FIXME: Remove this function after merge.
+def get_jamas_record_data_kari(doi, item_type_id):
+    """
+    Get record data base on JAMAS.
+
+    :return: The record data
+    """
+    result = [{"title": "JAMAS API"}]
+    return result
+
+# FIXME: Remove this function after merge.
+def get_crossref_record_data_kari(doi, item_type_id):
+    """
+    Get record data base on CROSSREF.
+
+    :return: The record data
+    """
+    result = [{"title": "CROSSREF API"}]
+    return result
+
+# FIXME: Remove this function after merge.
+def get_datacite_record_data_kari(doi, item_type_id):
+    """
+    Get record data base on DATACITE.
+
+    :return: The record data
+    """
+    result = [{"title": "DATACITE API"}]
+    return result
+
+# FIXME: Remove this function after merge.
+def get_cinii_record_data_kari(doi, item_type_id):
+    """
+    Get record data base on CINII.
+
+    :return: The record data
+    """
+    result = [{"title": "CINII API"}]
+    return result
+
 
 @cached_api_json(timeout=50, key_prefix="doi_data")
 def get_doi_record_data(doi, item_type_id, activity_id):
@@ -251,12 +300,13 @@ def get_doi_with_original(doi, item_type_id, original_metadeta=None):
     :return: doi data
     """
     result = list()
+    # FIXME: fix method name after merge
     record_funcs_map = {
-        "JaLC API": get_jalc_record_data,
-        "医中誌 Web API": get_jamas_record_data,
-        "CrossRef": get_crossref_record_data_default_pid,
-        "DataCite": get_datacite_record_data,
-        "CiNii Research": get_cinii_record_data,
+        "JaLC API": get_jalc_record_data_kari,
+        "医中誌 Web API": get_jamas_record_data_kari,
+        "CrossRef": get_crossref_record_data_kari,
+        "DataCite": get_datacite_record_data_kari,
+        "CiNii Research": get_cinii_record_data_kari,
     }
     result_dict = {}
     for key in current_app.config["WEKO_ITEMS_AUTOFILL_TO_BE_USED"]:

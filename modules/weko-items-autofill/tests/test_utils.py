@@ -268,11 +268,17 @@ def test_get_doi_with_original(app,db,itemtypes,mocker):
     crossref_data = [{"id": "id_crossref"}, {"name_crossref": "test_name_crossref"}]
     datacite_data = [{"id": "id_datacite"}, {"name_datacite": "test_name_datacite"}]
     cinii_data = [{"id": "id_cinii"}, {"name_cinii": "test_name_cinii"}]
-    mocker.patch("weko_items_autofill.utils.get_jalc_record_data_for_merge",return_value=jalc_data)
-    mocker.patch("weko_items_autofill.utils.get_ichushi_record_data_for_merge",return_value=ichushi_data)
-    mocker.patch("weko_items_autofill.utils.get_crossref_record_data_for_merge",return_value=crossref_data)
-    mocker.patch("weko_items_autofill.utils.get_datacite_record_data_for_merge",return_value=datacite_data)
-    mocker.patch("weko_items_autofill.utils.get_cinii_record_data_for_merge",return_value=cinii_data)
+
+    # FIXME: fix method name after merge
+    mocker.patch("weko_items_autofill.utils.get_jalc_record_data_kari",return_value=jalc_data)
+    # FIXME: fix method name after merge
+    mocker.patch("weko_items_autofill.utils.get_jamas_record_data_kari",return_value=ichushi_data)
+    # FIXME: fix method name after merge
+    mocker.patch("weko_items_autofill.utils.get_crossref_record_data_kari",return_value=crossref_data)
+    # FIXME: fix method name after merge
+    mocker.patch("weko_items_autofill.utils.get_datacite_record_data_kari",return_value=datacite_data)
+    # FIXME: fix method name after merge
+    mocker.patch("weko_items_autofill.utils.get_cinii_record_data_kari",return_value=cinii_data)
 
     # with all api
     app.config.update(
