@@ -335,11 +335,10 @@ def export_authors():
 
                 # 著者の数を取得（削除、統合された著者は除く）
                 records_count = WekoAuthors.get_records_count(False, False)
-                
                 # マッピング上の複数が可能となる項目の最大値を取得
                 mappings, affiliation_mappings = \
                     WekoAuthors.mapping_max_item(mappings, affiliation_mappings, records_count)
-
+                
                 # 著者識別子の対応を取得
                 schemes = WekoAuthors.get_identifier_scheme_info()
                 
@@ -363,7 +362,7 @@ def export_authors():
         current_cache.delete(\
             current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"])
         # 1000ずつ著者を取得し、データを書き込む
-        for i in range(start_point, records_count-1, size):
+        for i in range(start_point, records_count, size):
             current_app.logger.info(f"Export authors start_point：{start_point}")
             row_header = []
             row_label_en = []
@@ -956,7 +955,6 @@ def unpackage_and_check_import_file_for_prefix(file_format, file_name, temp_file
                     try:
                         for num, data in enumerate(data_row, start=0):
                             tmp_data[header[num]] = data
-                        print(tmp_data)
                     except Exception:
                         ex = Exception({
                             'error_msg': _('Cannot read {} file correctly.').format(file_format.upper())
