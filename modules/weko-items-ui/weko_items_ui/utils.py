@@ -2784,6 +2784,7 @@ def export_rocrate(post_data):
                         ensure_ascii=False)
             # Create bag
             bagify(record_path, checksums=["sha256"])
+        current_app.logger.info("post_data:{}".format(post_data))
         # Create download file
         zip_path = os.path.join(
             tempfile.gettempdir(), "-".join(export_path.split("/")[-2:])
@@ -2832,6 +2833,7 @@ def _get_metadata_dict_in_es(record_ids):
             metadata_dict.update({key: (metadata, extraction_file_list)})
     except NotFoundError as e:
         current_app.logger.debug("Index do not exist yet: ", str(e))
+    current_app.logger.debug("metadata_dict:{}".format(metadata_dict))
     return metadata_dict
 
 
@@ -2963,11 +2965,18 @@ def _export_file(record_id, data_path=None):
         # Get files
         for file in record.files:
             if check_file_download_permission(record, file.info()):
-                if file and file.info().get("accessrole") != "open_restricted":
-                    with file.obj.file.storage().open() as file_buffered:
-                        tmp_path = os.path.join(data_path, file.obj.basename)
-                        with open(tmp_path, "wb") as temp_file:
-                            temp_file.write(file_buffered.read())
+                accessrole = file.info().get("accessrole")
+                if accessrole == "open_restricted":
+                    continue
+                if accessrole == "open_date":
+                    date_value = file.info().get("date").get("dateValue")
+                    open_date = date.strptime(date_value, "%Y-%m-%d")
+                    if open_date > date.today():
+                        continue
+                with file.obj.file.storage().open() as file_buffered:
+                    tmp_path = os.path.join(data_path, file.obj.basename)
+                    with open(tmp_path, "wb") as temp_file:
+                        temp_file.write(file_buffered.read())
 
 
 def _custom_export_metadata(record_metadata: dict, hide_item: bool = True,
