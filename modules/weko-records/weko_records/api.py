@@ -2787,7 +2787,6 @@ class ItemLink(object):
         dst_relations = ItemReference.get_src_references(self.org_item_id).all()
         # Create a set of destination item IDs for quick lookup
         dst_ids = {dst_item.dst_item_pid for dst_item in dst_relations}
-
         # Initialize lists to track changes:
         # - updated: Items whose relationship type has changed
         # - updated_deleted_supplement: Items with supplement relationships that need to be deleted
@@ -2820,25 +2819,25 @@ class ItemLink(object):
                         supplement_key[1]
                     ):
                         updated_deleted_supplement.append(item_id)
-                        updated.append(item)
-                    if sele_id == supplement_key[1]:
-                        item['sele_id'] = supplement_key[0]
-                        if self.bulk_select(item) == False:
-                            created_supplement.append({
-                                'item_id': item_id,
-                                'dst_item_id': self.org_item_id,
-                                'sele_id': supplement_key[0]
-                            })
-                    elif sele_id == supplement_key[0]:
-                        item['sele_id'] = supplement_key[1]
-                        if self.bulk_select(item) == False:
-                            created_supplement.append({
-                                'item_id': item_id,
-                                'dst_item_id': self.org_item_id,
-                                'sele_id': supplement_key[1]
-                            })
-                    # Mark the item as updated
-                    updated.append(item)
+                itemtmp = item.copy()
+                if sele_id == supplement_key[1]:
+                    itemtmp['sele_id'] = supplement_key[0]
+                    if self.bulk_select(itemtmp) == False:
+                        created_supplement.append({
+                            'item_id': item_id,
+                            'dst_item_id': self.org_item_id,
+                            'sele_id': supplement_key[0]
+                        })
+                elif sele_id == supplement_key[0]:
+                    itemtmp['sele_id'] = supplement_key[1]
+                    if self.bulk_select(itemtmp) == False:
+                        created_supplement.append({
+                            'item_id': item_id,
+                            'dst_item_id': self.org_item_id,
+                            'sele_id': supplement_key[1]
+                        })
+                # Mark the item as updated
+                updated.append(item)
                 # Remove the item from the set of existing relationships
                 dst_ids.remove(item_id)
             else:
@@ -2873,19 +2872,20 @@ class ItemLink(object):
         try:
             # Perform all database operations within a nested transaction
             with db.session.begin_nested():
-                # Create new relationships
-                if created:
-                    self.bulk_create(created)
-                # Update existing relationships
-                if updated:
-                    self.bulk_update(updated)
-                    # Delete old supplement relationships for updated items
-                    self.bulk_delete_supplement(updated_deleted_supplement)
                 # Delete relationships for removed items
                 if deleted:
                     self.bulk_delete(deleted)
                     # Delete supplement relationships for deleted items
                     self.bulk_delete_supplement(deleted)
+                # Create new relationships
+                # Update existing relationships
+                if updated:
+                    # Delete old supplement relationships for updated items
+                    self.bulk_delete_supplement(updated_deleted_supplement)
+                    self.bulk_update(updated)
+                if created:
+                    self.bulk_create(created)
+
             # Commit the transaction if all operations succeed
             db.session.commit()
         except IntegrityError as ex:
@@ -2900,6 +2900,7 @@ class ItemLink(object):
             return str(ex)
         # Return None if no errors occurred
         return None
+
 
     def bulk_select(self, item) :
         """select a list of item links in bulk.
