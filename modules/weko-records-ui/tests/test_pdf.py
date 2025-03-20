@@ -312,6 +312,7 @@ def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mock
     records.append(make_record(indexer, 1, {"val": "test_publisher", "lang": "en"}, [{"val": "test_subject", "lang": "en"}, {"val": "テスト主題", "lang": "ja"}], {"val": "test, taro", "lang": "en"}, {"val": "test_affiliation", "lang": "en"}, ["eng"]))
     records.append(make_record(indexer, 2, {"val": "test_publisher", "lang": ""  }, [{"val": "test_subject", "lang": "en"}, {"val": "テスト主題", "lang": "ja"}], {"val": "test, taro", "lang": ""  }, {"val": "test_affiliation", "lang": ""  }, ["jpn", "eng"]))
     records.append(make_record(indexer, 3, {"val": ""              , "lang": "en"}, [{"val": "test_subject", "lang": "en"}, {"val": "テスト主題", "lang": "ja"}], {"val": ""          , "lang": "en"}, {"val": ""                , "lang": "en"}, ["fra", "jpn"],True))
+    records.append(make_record(indexer, 4, {"val": "test_publisher", "lang": "en"}, [{"val": "", "lang": ""}], {"val": "test, taro", "lang": "en"}, {"val": "test_affiliation", "lang": "en"}, ["eng"]))
     db.session.commit()
     
     tests = [
@@ -332,6 +333,12 @@ def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mock
             "言語: fra\n出版者: \n公開日: 2024-03-21\nキーワード: テスト主題\n作成者: \nメールアドレス: \n所属: ",
             "Language: fra\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: test_subject\nAuthor: \nE-mail: test.taro@test.org\nAffiliation: ",
             "Language: fra, Japanese\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: \nE-mail: \nAffiliation: "
+        ),
+        (
+            "Language: English\nPublisher: test_publisher\nDate of Publication: 2024-03-21\nKeywords: \nAuthor: test, taro\nE-mail: \nAffiliation: test_affiliation",
+            "言語: English\n出版者: test_publisher\n公開日: 2024-03-21\nキーワード: \n作成者: test, taro\nメールアドレス: \n所属: test_affiliation",
+            "Language: English\nPublisher: test_publisher\nDate of Publication: 2024-03-21\nKeywords: \nAuthor: test, taro\nE-mail: test.taro@test.org\nAffiliation: test_affiliation",
+            "Language: English\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: \nE-mail: \nAffiliation: "
         )
     ]
 
