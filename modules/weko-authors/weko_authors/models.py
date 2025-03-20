@@ -74,6 +74,22 @@ class Authors(db.Model, Timestamp):
         nullable=True
     )
     """json for author info"""
+    
+    repository_id = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """repository_id of the authors"""
 
     @classmethod
     def get_sequence(cls, session):
@@ -157,6 +173,22 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
         default=datetime.utcnow,
         onupdate=datetime.utcnow)
     """ Updated date."""
+    
+    repository_id = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """repository_id of prefix settings"""
 
     @classmethod
     def create(cls, name, scheme, url):
@@ -234,6 +266,22 @@ class AuthorsAffiliationSettings(db.Model, Timestamp):
         default=datetime.utcnow,
         onupdate=datetime.utcnow)
     """ Updated date."""
+    
+    repository_id = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """repository_id of affiliation organization."""
 
     @classmethod
     def create(cls, name, scheme, url):

@@ -196,7 +196,7 @@ def users(app, db):
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
         student = User.query.filter_by(email='student@test.org').first()
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -288,9 +288,10 @@ def users(app, db):
     db.session.add(index)
     db.session.commit()
     comm = Community.create(community_id="comm01", role_id=sysadmin_role.id,
+                            page=0, ranking=0, curation_policy='',fixed_points=0, thumbnail_path='',catalog_json=[], login_menu_enabled=False,
                             id_user=sysadmin.id, title="test community",
                             description=("this is test community"),
-                            root_node_id=index.id)
+                            root_node_id=index.id, group_id=comadmin_role.id)
     db.session.commit()
     return [
         {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin},
@@ -663,7 +664,7 @@ def admin_settings(app, db):
         name="items_display_settings",
         settings={"items_display_email": True, "items_search_author": "name"}
     )
-    
+
     with db.session.begin_nested():
         db.session.add(setting)
 
@@ -698,7 +699,7 @@ def k_v():
                 '1': {
                     'path': {'gte': '', 'lte': ''},
                     'path_type': {'gte': 'json', 'lte': 'json'}
-                }, 
+                },
                 '12': {
                     'path': {
                         'gte': '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211',

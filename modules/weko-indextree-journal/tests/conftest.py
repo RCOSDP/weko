@@ -346,7 +346,7 @@ def test_indices(app, db):
             biblio_flag=True if not online_issn else False,
             online_issn=online_issn
         )
-    
+
     with db.session.begin_nested():
         db.session.add(base_index(1, 0, 0, datetime(2022, 1, 1), True, True, True, True, True, '1234-5678'))
         db.session.add(base_index(2, 0, 1))
@@ -372,7 +372,9 @@ def test_journals(app, db, test_indices):
             publication_type="serial",
             access_type="F",
             language="en",
-            is_output=True
+            is_output=True,
+            abstract='',
+            code_issnl=''
         )
 
     with db.session.begin_nested():

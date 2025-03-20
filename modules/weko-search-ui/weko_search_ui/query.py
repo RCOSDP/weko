@@ -85,7 +85,8 @@ def get_permission_filter(index_id: str = None):
         if search_type == config.WEKO_SEARCH_TYPE_DICT["FULL_TEXT"]:
             should_path = []
             if index_id in is_perm_indexes:
-                should_path.append(Q("terms", path=index_id))
+                term_list.append(index_id)
+                should_path.append(Q("terms", path=term_list))
 
             terms = Q("bool", should=should_path)
         else:  # In case search_type is keyword or index

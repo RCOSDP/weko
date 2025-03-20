@@ -86,6 +86,7 @@ from weko_index_tree.utils import (
     check_index_permissions,
     check_restrict_doi_with_indexes,
 )
+from weko_index_tree.models import Index
 from weko_indextree_journal.api import Journals
 from weko_records.api import FeedbackMailList, RequestMailList, ItemTypeNames, ItemTypes, Mapping
 from weko_records.models import ItemMetadata
@@ -300,7 +301,8 @@ def get_journal_info(index_id=0):
                         data = res[0]
                     val = title.get(cur_lang) + "{0}{1}".format(": ", data)
                     result.update({value["key"]: val})
-        open_search_uri = request.host_url + journal.get("title_url")
+        index = Index.get_index_by_id(index_id)
+        open_search_uri = index.index_url
         result.update({"openSearchUrl": open_search_uri})
 
     except BaseException:
@@ -3552,7 +3554,26 @@ def export_all(root_url, user_id, data, start_time):
             current_app.logger.error(ex)
         return item_types
 
-    def _get_export_data(export_path, item_types, retrys, fromid="", toid="", retry_info={}):
+    def _get_index_id_list(user_id):
+        """Get index id list."""
+        from invenio_accounts.models import User
+        from invenio_communities.models import Community
+        from weko_index_tree.api import Indexes
+
+        if not user_id:
+            return []
+        user = User.query.get(user_id)
+        if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in user.roles):
+            return None
+        else:
+            index_id_list = []
+            repositories = Community.get_repositories_by_user(user)
+            for repository in repositories:
+                index = Indexes.get_child_list_recursive(repository.root_node_id)
+                index_id_list.extend(index)
+        return index_id_list
+
+    def _get_export_data(export_path, item_types, retrys, fromid="", toid="", retry_info={}, user_id=None):
         try:
             write_file_json = {
                     'start_time': start_time,
@@ -3565,6 +3586,9 @@ def export_all(root_url, user_id, data, start_time):
                     _file_create_key,
                     json.dumps(write_file_json)
                 )
+
+            index_id_list = _get_index_id_list(user_id)
+  
             for it in item_types.copy():
                 item_type_id = it[0]
                 item_type_name = it[1]
@@ -3598,6 +3622,16 @@ def export_all(root_url, user_id, data, start_time):
                     json.dumps(write_file_json)
                 )
                 
+                if index_id_list is None:
+                    record_ids = [(recid.pid_value, recid.object_uuid)
+                    for recid in recids if 'publish_status' in recid.json
+                    and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]]
+                else:
+                    record_ids = [(recid.pid_value, recid.object_uuid)
+                    for recid in recids if 'publish_status' in recid.json
+                    and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]
+                    and any(index in recid.json['path'] for index in  index_id_list)]
+
                 if len(record_ids) == 0:
                     item_types.remove(it)
                     continue
@@ -3677,7 +3711,7 @@ def export_all(root_url, user_id, data, start_time):
                 db.session.rollback()
                 sleep(5)
                 result = _get_export_data(
-                    export_path, item_types, retrys, fromid, toid, retry_info
+                    export_path, item_types, retrys, fromid, toid, retry_info, user_id=user_id
                 )
                 return result
             else:
@@ -3719,7 +3753,7 @@ def export_all(root_url, user_id, data, start_time):
 
         result = None
         if not fromid or not toid or (fromid and toid and int(fromid) <= int(toid)):
-            result = _get_export_data(export_path, item_types, 0, fromid, toid)
+            result = _get_export_data(export_path, item_types, 0, fromid, toid, user_id=user_id)
 
             if result:
                 db.session.commit()

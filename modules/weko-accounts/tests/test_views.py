@@ -1,15 +1,20 @@
 
 import pytest
-
-from flask import url_for,request,make_response,current_app
+import json
+import redis
+from invenio_accounts.models import Role
+from flask import url_for,request,make_response,current_app,Flask
 from flask_login.utils import login_user,logout_user
 from flask_menu import current_menu
 from mock import patch
+from invenio_accounts.models import User
 from weko_accounts.api import ShibUser
+from weko_accounts.models import ShibbolethUser
 from weko_accounts.views import (
     _has_admin_access,
     init_menu,
-    _redirect_method
+    _redirect_method,
+    shib_sp_login,
 )
 def set_session(client,data):
     with client.session_transaction() as session:
@@ -257,18 +262,19 @@ def test_shib_login(client,redis_connect,users,mocker):
     with patch("weko_accounts.views.flash",side_effect=BaseException("test_error")):
         res = client.get(url_base)
         assert res.status_code == 400
+
 #def shib_sp_login():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_shib_sp_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_shib_sp_login(client, redis_connect,mocker):
+def test_shib_sp_login(client, redis_connect,mocker, db, users):
     mocker.patch("weko_accounts.views.RedisConnection.connection",return_value=redis_connect)
     url = url_for("weko_accounts.shib_sp_login")
-    
+
     # not shib_session_id
-    mock_flash = mocker.patch("weko_accounts.views.flash")
-    mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
-    client.post(url,data={})
-    mock_flash.assert_called_with("Missing SHIB_ATTR_SESSION_ID!",category="error")
-    mock_redirect.assert_called_with(url_for("security.login"))
+    with patch("weko_accounts.views.redirect",return_value=make_response()) as mock_redirect:
+        mock_flash = mocker.patch("weko_accounts.views.flash")
+        client.post(url,data={})
+        mock_flash.assert_called_with("Missing SHIB_ATTR_SESSION_ID!",category="error")
+        mock_redirect.assert_called_with(url_for("security.login"))
     
     current_app.config.update(
         WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED=True
@@ -287,22 +293,226 @@ def test_shib_sp_login(client, redis_connect,mocker):
         "SHIB_ATTR_SESSION_ID":"1111",
         "SHIB_ATTR_EPPN":"test_eppn"
     }
+
+    # WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPSがTrueの場合のテスト
+    current_app.config.update(
+        WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS=True
+    )
+    mock_sync_shib_gakunin_map_groups = mocker.patch("weko_accounts.views.sync_shib_gakunin_map_groups", return_value=None)
+    client.post(url, data=form)
+    mock_sync_shib_gakunin_map_groups.assert_called_once()
+
+    # sync_shib_gakunin_map_groupsが例外をスローする場合のテスト
+    mock_sync_shib_gakunin_map_groups = mocker.patch("weko_accounts.views.sync_shib_gakunin_map_groups", side_effect=Exception("test_exception"))
+    mock_redirect_method = mocker.patch("weko_accounts.views._redirect_method", return_value=make_response())
+    res = client.post(url, data=form)
+    mock_redirect_method.assert_called_once()
+    assert res.status_code == 200  # _redirect_methodが呼び出されることを確認
+
+    # WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPSがFalseの場合のテスト
+    current_app.config.update(
+        WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS=False
+    )
+    mock_sync_shib_gakunin_map_groups.reset_mock()
+    res = client.post(url, data=form)
+    mock_sync_shib_gakunin_map_groups.assert_not_called()
+
     # shib_user.get_relation_info is None
-    with patch("weko_accounts.views.ShibUser.get_relation_info",return_value=None):
+    with patch("weko_accounts.views.ShibUser.get_relation_info",return_value=None)\
+        and patch("weko_accounts.views.redirect",return_value=make_response()):
         res = client.post(url,data=form)
         assert res.status_code == 200
         #assert res.url == "/weko/shib/login?SHIB_ATTR_SESSION_ID=1111&_method=GET"
     # shib_user.get_relation_info is not None
-    with patch("weko_accounts.views.ShibUser.get_relation_info",return_value="chib_user"):
+    with patch("weko_accounts.views.ShibUser.get_relation_info",return_value="chib_user")\
+        and patch("weko_accounts.views.redirect",return_value=make_response()):
         res = client.post(url,data=form)
         assert res.status_code == 200
         #assert res == "/weko/auto/login?SHIB_ATTR_SESSION_ID=1111&_method=GET"
     
     # raise BaseException
-    with patch("weko_accounts.views.flash",side_effect=BaseException("test_error")):
-        mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",return_value=make_response())
+    with patch("weko_accounts.views.flash",side_effect=BaseException("test_error"))\
+        and patch("weko_accounts.views._redirect_method",return_value=make_response()) as mock_redirect_:
         res = client.post(url,data={})
         mock_redirect_.assert_called_once()
+    
+    # all attributes have value and some shibboleth_user records don't have target eppn
+    current_app.config.update(
+        WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED=True,
+        WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN=True
+    )
+    headers = {
+        'HTTP_WEKOID': 'test_weko',
+        'HTTP_WEKOSOCIETYAFFILIATION': 'test_aff'
+    }
+    form = {
+        'eppn': 'test_eppn',
+        'mail': 'testuser@example.org',
+        # 'Shib-Session-ID': 'session',
+        'SHIB_ATTR_SESSION_ID': 'session',
+        'HTTP_WEKOID': headers['HTTP_WEKOID'],
+        'HTTP_WEKOSOCIETYAFFILIATION': headers['HTTP_WEKOSOCIETYAFFILIATION']
+    }
+    res = client.post(url, data=form, headers=headers)
+    assert res.status_code == 200
+    assert res.data.decode('utf-8') == '/weko/shib/login?SHIB_ATTR_SESSION_ID=session&next=%2F'
+    with db.session.begin_nested():
+        shib_users = ShibbolethUser.query.all()
+        assert len(shib_users) == 0
+
+    # all attributes have value and some shibboleth_user records have target eppn
+    with db.session.begin_nested():
+        weko_user = User.query.filter_by(email=users[0]['email']).first()
+        insert_shib_user = ShibbolethUser().create(weko_user, shib_eppn='test_eppn')
+        db.session.add(insert_shib_user)
+    res = client.post(url, data=form, headers=headers)
+    assert res.status_code == 200
+    assert res.data.decode('utf-8') == '/weko/auto/login?SHIB_ATTR_SESSION_ID=session&next=%2F'
+    result_shib_user = ShibbolethUser.query.filter_by(shib_eppn='test_eppn').first()
+    assert result_shib_user.shib_mail == form['mail']
+    assert result_shib_user.shib_user_name == headers['HTTP_WEKOID']
+    assert result_shib_user.shib_role_authority_name == headers['HTTP_WEKOSOCIETYAFFILIATION']
+    with db.session.begin_nested():
+        db.session.delete(result_shib_user)
+
+    # HTTP_WEKOID has no value
+    headers = {
+        'HTTP_WEKOID': '',
+        'HTTP_WEKOSOCIETYAFFILIATION': 'test_aff'
+    }
+    form = {
+        'eppn': 'test_eppn',
+        'mail': 'testuser@example.org',
+        # 'Shib-Session-ID': 'session',
+        'SHIB_ATTR_SESSION_ID': 'session',
+        'HTTP_WEKOID': headers['HTTP_WEKOID'],
+        'HTTP_WEKOSOCIETYAFFILIATION': headers['HTTP_WEKOSOCIETYAFFILIATION']
+    }
+    res = client.post(url, data=form, headers=headers)
+    assert res.status_code == 200
+    assert res.data.decode('utf-8') == '/weko/shib/login?SHIB_ATTR_SESSION_ID=session&next=%2F'
+
+    # WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN is False
+    current_app.config.update(
+        WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN=False
+    )
+    headers = {
+        'HTTP_WEKOID': 'test_weko',
+        'HTTP_WEKOSOCIETYAFFILIATION': 'test_aff'
+    }
+    form = {
+        'eppn': 'test_eppn',
+        'mail': 'testuser@example.org',
+        # 'Shib-Session-ID': 'session',
+        'SHIB_ATTR_SESSION_ID': 'session',
+        'HTTP_WEKOID': headers['HTTP_WEKOID'],
+        'HTTP_WEKOSOCIETYAFFILIATION': headers['HTTP_WEKOSOCIETYAFFILIATION']
+    }
+    res = client.post(url, data=form, headers=headers)
+    assert res.status_code == 200
+    assert res.data.decode('utf-8') == '/weko/shib/login?SHIB_ATTR_SESSION_ID=session&next=%2F'
+
+    # eppn has no value
+    current_app.config.update(
+        WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN=True
+    )
+    form = {
+        'eppn': '',
+        'mail': 'testuser@example.org',
+        # 'Shib-Session-ID': 'session'
+        'SHIB_ATTR_SESSION_ID': 'session',
+        'HTTP_WEKOID': headers['HTTP_WEKOID'],
+        'HTTP_WEKOSOCIETYAFFILIATION': headers['HTTP_WEKOSOCIETYAFFILIATION']
+    }
+    res = client.post(url, data=form, headers=headers)
+    assert res.status_code == 200
+    assert res.data.decode('utf-8') == '/weko/shib/login?SHIB_ATTR_SESSION_ID=session&next=%2F'
+
+    # HTTP_WEKOID and eppn have no value
+    headers = {
+        'HTTP_WEKOID': '',
+        'HTTP_WEKOSOCIETYAFFILIATION': 'test_aff'
+    }
+    form = {
+        'eppn': '',
+        'mail': 'testuser@example.org',
+        # 'Shib-Session-ID': 'session',
+        'SHIB_ATTR_SESSION_ID': 'session',
+        'HTTP_WEKOID': headers['HTTP_WEKOID'],
+        'HTTP_WEKOSOCIETYAFFILIATION': headers['HTTP_WEKOSOCIETYAFFILIATION']
+    }
+    res = client.post(url, data=form, headers=headers)
+    assert res.status_code == 302
+    assert res.headers['Location'] == 'http://{}/secure/login.py'.format(current_app.config["SERVER_NAME"])
+
+    # WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN is False and eppn has no value
+    current_app.config.update(
+        WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN=False
+    )
+    headers = {
+        'HTTP_WEKOID': 'test_weko',
+        'HTTP_WEKOSOCIETYAFFILIATION': 'test_aff'
+    }
+    form = {
+        'eppn': '',
+        'mail': 'testuser@example.org',
+        # 'Shib-Session-ID': 'session'
+        'SHIB_ATTR_SESSION_ID': 'session',
+        'HTTP_WEKOID': headers['HTTP_WEKOID'],
+        'HTTP_WEKOSOCIETYAFFILIATION': headers['HTTP_WEKOSOCIETYAFFILIATION']
+    }
+    res = client.post(url, data=form, headers=headers)
+    assert res.status_code == 302
+    assert res.headers['Location'] == 'http://{}/secure/login.py'.format(current_app.config["SERVER_NAME"])
+
+    # WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN is False and eppn has no value
+    current_app.config.update(
+        WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN=False
+    )
+    res = client.post(url, data=form, headers=headers)
+    assert res.status_code == 302
+    assert res.headers['Location'] == 'http://{}/secure/login.py'.format(current_app.config["SERVER_NAME"])
+
+    # WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED is False
+    current_app.config.update(
+        WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED=False
+    )
+    form = {
+        'eppn': 'test_eppn',
+        'mail': 'testuser@example.org',
+        # 'Shib-Session-ID': 'session'
+        'SHIB_ATTR_SESSION_ID': 'session',
+        'HTTP_WEKOID': headers['HTTP_WEKOID'],
+        'HTTP_WEKOSOCIETYAFFILIATION': headers['HTTP_WEKOSOCIETYAFFILIATION']
+    }
+    res = client.post(url, data=form, headers=headers)
+    assert res.status_code == 200
+    assert res.data.decode('utf-8') == '/weko/shib/login?SHIB_ATTR_SESSION_ID=session&next=%2F'
+
+    # Shib-Session-ID has no value
+    current_app.config.update(
+        WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED=True
+    )
+    form = {
+        'eppn': 'test_eppn',
+        'mail': 'testuser@example.com',
+        # 'Shib-Session-ID': ''
+        'SHIB_ATTR_SESSION_ID': '',
+        'HTTP_WEKOID': headers['HTTP_WEKOID'],
+        'HTTP_WEKOSOCIETYAFFILIATION': headers['HTTP_WEKOSOCIETYAFFILIATION']
+    }
+    res = client.post(url, data=form, headers=headers)
+    assert res.status_code == 200
+    assert res.data.decode('utf-8') == '/weko/shib/login?SHIB_ATTR_SESSION_ID=&next=%2F'
+
+    # WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED is False and Shib-Session-ID has no value
+    current_app.config.update(
+        WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED=False
+    )
+    res = client.post(url, data=form, headers=headers)
+    assert res.status_code == 302
+    assert res.headers['Location'] == 'http://{}/login/'.format(current_app.config["SERVER_NAME"])
+
 #def shib_stub_login():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_shib_stub_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_shib_stub_login(client,mocker):
