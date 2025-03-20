@@ -3827,6 +3827,7 @@ def is_duplicate_item(metadata):
 
     if result:
         recid_list = [row[0] for row in result]  # **整数型にキャスト**
+        recid_list = list(set(recid_list))
         host = request.host
         item_links = [f"https://{host}/records/{recid}" for recid in recid_list]
 
@@ -3894,6 +3895,7 @@ def is_duplicate_record(data):
 
     if result:
         recid_list = [row[0] for row in result]  # **整数型の recid を取得**
+        recid_list = list(set(recid_list))  # **重複を除去**
         host = request.host
         item_links = [f"https://{host}/records/{recid}" for recid in recid_list]
         return True, recid_list, item_links
