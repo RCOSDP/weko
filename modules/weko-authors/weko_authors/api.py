@@ -387,7 +387,7 @@ class WekoAuthors(object):
             affiliation_mappings["max"] = []
             
             # AUTHOR_EXPORT_BATCH_SIZE分の数だけauthorを取得して、maxを計算する
-            for i in range(0,records_count-1, size):
+            for i in range(0, records_count, size):
                 authors = cls.get_by_range(i, size, False, False)
                 # 通常のマッピングの処理
                 for mapping in mappings:
