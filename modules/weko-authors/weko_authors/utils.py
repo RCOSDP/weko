@@ -1277,7 +1277,6 @@ def prepare_import_data(max_page_for_import_tab):
                 if check_result:
                     if count < max_display:
                         item.pop("warnings", None)
-                        item.pop("is_deleted", None)
                         authors.append(item)
                     elif count == max_display:
                         reached_point["part_number"] = i

@@ -207,10 +207,19 @@ def _process(data_size, data_from, process_counter, target, origin_pkid_list, ke
                 "must": [
                     {
                         "query_string": {
-                            "query": "(publish_status: {} OR publish_status:{} OR publish_status:{}) AND (relation_version_is_last:true OR relation_version_is_last:null)".format(
+                            "query": "(publish_status: {} OR publish_status:{} OR publish_status:{})".format(
                                 PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value, PublishStatus.NEW.value)
                         }
-                    }, {
+                    },
+                    {
+                        "bool": {
+                            "should": [
+                                {"term": {"relation_version_is_last": True}},
+                                {"bool": {"must_not": {"exists": {"field": "relation_version_is_last"}}}}
+                            ]
+                        }
+                    }, 
+                    {
                         "terms": {
                             "author_link.raw": origin_pkid_list
                         }

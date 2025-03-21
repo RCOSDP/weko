@@ -214,7 +214,6 @@ def import_authors_from_temp_files(reached_point, max_part):
                     check_result = False if item.get("errors", []) else True
                     if check_result:
                         item.pop("warnings", None)
-                        item.pop("is_deleted", None)
                         authors.append(item)
         # authorsが長さWEKO_AUTHORS_IMPORT_BATCH_SIZEを超えた時点でインポート
         if len(authors) >= current_app.config.get("WEKO_AUTHORS_IMPORT_BATCH_SIZE"):
