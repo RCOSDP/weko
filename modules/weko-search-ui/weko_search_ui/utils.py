@@ -4799,3 +4799,21 @@ def create_tsv_row(dict, data_response):
         result_row[key] = data_response.get(dict[key], [None])[0]
 
     return result_row
+
+
+def handle_metadata_amend_by_doi(list_record):
+    """Amend metadata by using DOI.
+
+    Amend metadata, by using Web APIs, if DOI exists in the metadata.
+    The APIs used for this mehtod are set in weko_items_autofill/config.py > 
+    WEKO_ITEMS_AUTOFILL_TO_BE_USED, priority order.
+
+    Args:
+        list_record (list[dict]): List record import.
+    """
+    for item in list_record:
+        metadata = item["metadata"]
+        doi = getattr(metadata, "doi_amend")
+        if doi is None:
+            continue
+        item["metadata"] = handle_doi(item, doi)
