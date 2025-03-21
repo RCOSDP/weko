@@ -1840,8 +1840,8 @@ class SwordAPIJsonldMappingView(ModelView):
             try:
                 model = SwordItemTypeMappingModel()
                 model.name = request.json.get('name')
-                model.mapping = request.json.get('mapping')
                 model.item_type_id = request.json.get('item_type_id')
+                model.mapping = json.loads(request.json.get('mapping'))
 
                 sword_item_type_mapping = SwordItemTypeMapping.create(
                     name=model.name,
@@ -1902,7 +1902,7 @@ class SwordAPIJsonldMappingView(ModelView):
                 model.id = id
                 model.name = request.json.get('name')
                 model.mapping = request.json.get('mapping')
-                model.item_type_id = request.json.get('item_type_id')
+                model.item_type_id = json.loads(request.json.get('item_type_id'))
 
                 db.session.commit()
                 return jsonify(results=True),200

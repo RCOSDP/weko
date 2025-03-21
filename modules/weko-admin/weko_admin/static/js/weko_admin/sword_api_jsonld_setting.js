@@ -202,7 +202,7 @@ $("#workflow").change(function(){
   save_button_state_change();
 });
 
-$("#mapping").change(function(){
+$("#mapping").change(async function(){
   // save button enable
   save_button_state_change();
 
@@ -215,14 +215,35 @@ $("#mapping").change(function(){
     result = item_type_names.find(data => data.id === item_type_id);
     item_type_name = result["name"];
 
-    if ( true ){
-      //後からチェック処理実装予定
-      $('#mapping-check').empty();
-      $('#mapping-check').append("Item type : " + result.name + "<span class=\"text-success\">✓</span>");
-      $('#save_button').prop("disabled", false);
-    } else{
-      $('#mapping-check').append("Item type:" + result.name + "<span class=\"text-danger\">✘</span>");
+
+    const form = {
+      'mapping_id': mapping_val,
+      'itemtype_id': item_type_id,
     }
+    url ="/sword/validate_mapping";
+    await fetch(url ,{method:'POST' ,headers:{'Content-Type':'application/json'} ,credentials:"include", body: JSON.stringify(form)})
+    .then(res => {
+      if (!res.ok) {
+        return res.json().then(errorData => {
+            throw new Error(errorData.error);
+        });
+      }
+      return res.json();
+    })
+    .then(result => {
+      if (result === null) {
+        $('#mapping-check').empty();
+        $('#mapping-check').append("Item type : " + item_type_name + "<span class=\"text-success\">✓</span>");
+        $('#save_button').prop("disabled", false);
+      } else{
+        $('#mapping-check').append("Item type:" + item_type_name + "<span class=\"text-danger\">✘</span>");
+      }
+    })
+    .catch(error => {
+      alert('validation check error');
+      return;
+    });
+
   } else {
     $('#mapping-check').empty();
   }

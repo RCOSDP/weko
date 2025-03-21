@@ -65,7 +65,7 @@ function save_button_state_change() {
   }
 }
 
-function saveDataFormat(type) {
+async function saveDataFormat(type) {
 
   closeError();
 
@@ -89,26 +89,45 @@ function saveDataFormat(type) {
     return showMsg(item_required_alert + NGList , false);
   }
 
-  //mapping check
-  if ( false ) {
-      //後からチェック処理実装予定
-    $('#modal-message').text('mapping inconsistency');
-    $('#error_modal').modal('show');
-    return;
+  // mapping check
+  const data = {
+    'mapping_id': mapping_value,
+    'itemtype_id': item_type_id_value,
   }
+  url ="/sword/validate_mapping";
+  await fetch(url ,{method:'POST' ,headers:{'Content-Type':'application/json'} ,credentials:"include", body: JSON.stringify(data)})
+  .then(res => {
+    if (!res.ok) {
+      return res.json().then(errorData => {
+          throw new Error(errorData.error);
+      });
+    }
+    return res.json();
+  })
+  .then(result => {
+    if (result !== null) {
+      const message = result.join(', ');
+      $('#modal-message').text('mapping inconsistency.' + message );
+      $('#error_modal').modal('show');
+      return;
+    }
+  })
+  .catch(error => {
+    alert('validation check error');
+    return;
+  });
 
   const form = {
     'name': name_value
     ,'mapping': mapping_value
     ,'item_type_id': item_type_id_value
   }
-
-
   if (type === "new") {
     url ="/admin/jsonld-mapping/new/?url=%2Fadmin%2ItemType%2Fjsonld-mapping%2F";
   } else {
     url ="/admin/jsonld-mapping/edit/" + current_model_json["id"] + "/?url=%2Fadmin%2ItemType%2Fjsonld-mapping%2F";
   }
+  console.log(url);
   fetch(url ,{method:'POST' ,headers:{'Content-Type':'application/json'} ,credentials:"include", body: JSON.stringify(form)})
   .then(res => {
     if(!res.ok){
