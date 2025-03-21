@@ -87,7 +87,8 @@ class Flow(object):
             _flow = _Flow(
                 flow_id=uuid.uuid4(),
                 flow_name=flow_name,
-                flow_user=current_user.get_id()
+                flow_user=current_user.get_id(),
+                flow_type=flow.flow_type
             )
             _flowaction_start = _FlowAction(
                 flow_id=_flow.flow_id,
@@ -139,6 +140,7 @@ class Flow(object):
                 if _flow:
                     _flow.flow_name = flow_name
                     _flow.flow_user = current_user.get_id()
+                    _flow.flow_type = flow.flow_type
                     db.session.merge(_flow)
             db.session.commit()
             return _flow
@@ -684,6 +686,7 @@ class WorkActivity(object):
         :param activity:
         :param community_id:
         :param item_id:
+        :param for_delete:
         :return:
         """
         try:

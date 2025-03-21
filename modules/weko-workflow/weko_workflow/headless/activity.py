@@ -21,15 +21,17 @@ from invenio_files_rest.errors import FileSizeError
 from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore import current_pidstore
+from invenio_pidstore.models import PersistentIdentifier
 
 from weko_deposit.api import WekoDeposit
 from weko_deposit.links import base_factory
 from weko_deposit.serializer import file_uploaded_owner
 from weko_items_autofill.utils import get_workflow_journal
 from weko_items_ui.utils import update_index_tree_for_record, validate_form_input_data
-from weko_items_ui.views import check_validation_error_msg
+from weko_items_ui.views import check_validation_error_msg, prepare_edit_item
 from weko_records.api import ItemTypes
 from weko_records.serializers.utils import get_mapping
+from weko_records_ui.utils import soft_delete
 from weko_search_ui.utils import get_data_by_property
 
 from ..api import Action, WorkActivity, WorkFlow, ActivityStatusPolicy
@@ -105,7 +107,7 @@ class HeadlessActivity(WorkActivity):
 
     def init_activity(
             self, user_id, workflow_id=None, community=None,
-            activity_id=None, item_id=None
+            activity_id=None, item_id=None, for_delete=False
         ):
         """Initialize activity.
 
@@ -172,7 +174,7 @@ class HeadlessActivity(WorkActivity):
 
         self.item_type = ItemTypes.get_by_id(workflow.itemtype_id)
         activity = {
-        "flow_id": workflow.flow_id,
+        "flow_id": workflow.flow_id if not for_delete else workflow.delete_flow_id,
         "workflow_id": workflow.id,
         "itemtype_id": workflow.itemtype_id,
         }
@@ -196,9 +198,21 @@ class HeadlessActivity(WorkActivity):
 
         else:
             # create activity for existing item edit
-            """ TODO: weko_items_ui.views.prepare_edit_item"""
-            # self.recid =
-            pass
+            self.recid = item_id
+
+            response = prepare_edit_item(item_id)
+
+            if response.json.get("code") == 0:
+                url = result.json.get("data").get("redirect")
+
+                activity_id = url.split("/activity/detail/")[1]
+                if "?" in activity_id:
+                    activity_id = activity_id.split("?")[0]
+                self._model = super().get_activity_by_id(activity_id)
+            else:
+                current_app.logger.error(
+                    f"failed to create headless activity: {response.json.get('msg')}")
+                raise WekoWorkflowException(response.json.get("msg"))
 
         self.user = User.query.get(user_id)
         current_app.logger.info(
@@ -314,13 +328,13 @@ class HeadlessActivity(WorkActivity):
                 db.session.commit()
 
             else:
-                # TODO: check edit mode
-                # pid = PersistentIdentifier.query.filter_by(
-                #         pid_type="recid", pid_value=self.recid
-                #     ).first()
-                # TODO: case witch pid is already assigned (self.recid is not None)
-                # self._deposit = WekoDeposit...
-                pass
+                # check edit mode
+                pid = PersistentIdentifier.query.filter_by(
+                        pid_type="recid", pid_value=self.recid
+                    ).first()
+
+                self._deposit = WekoDeposit.newversion(pid, True)
+                db.session.commit()
 
             metadata.update({"$schema": f"/items/jsonschema/{self.item_type.id}"})
             index = {'index': metadata.get('path', []),
@@ -336,10 +350,18 @@ class HeadlessActivity(WorkActivity):
                 }
             }
 
+            # data["files"]がDBのどこに保存されるかを調べて、matadataonlyの場合はそこから取り出してdata["files"]にいれる
+
+            # files_fileのjsonのデータをdata["files"] に入れる(入れなかった場合はどうなるのか)
+
+            # filesがNoneの時dataがdata["files"]には何もはいらないがそれでどうなるか
             if files is not None:
                 data["files"] = self.files_info = self._upload_files(files)
             # TODO: update propaties of files metadata, but it is difficult to
             # decide whitch key should be updated.
+
+            else:
+                 data["files"] = self.files_info = []
 
             data["endpoint"].update(base_factory(pid))
             self.upt_activity_metadata(self.activity_id, json.dumps(data))
@@ -357,7 +379,7 @@ class HeadlessActivity(WorkActivity):
         bucket = Bucket.query.get(self._deposit["_buckets"]["deposit"])
         files_info = []
 
-        def upload(file_name, stream, size):
+        def upload(file_name, stream, size, matadata_only=False):
             size_limit = bucket.size_limit
             location_limit = bucket.location.max_file_size
             if location_limit is not None:
@@ -372,7 +394,20 @@ class HeadlessActivity(WorkActivity):
                 raise FileSizeError(description=desc)
 
             # TODO: support thumbnail
-            obj = ObjectVersion.create(bucket, file_name, is_thumbnail=False)
+            if not matadata_only:
+                obj = ObjectVersion.create(bucket, file_name, is_thumbnail=False)
+            else:
+                # バケットからobjectのバージョンを取得して一番新しいバージョンを引数にgetする
+                # update元のファイル情報を取得して同じものをuploadする
+                obj_versions = ObjectVersion.get_versions(bucket, file_name)
+                latest_version = obj_versions.first()
+                if latest_version:
+                    latest_version_id = latest_version.version_id
+                    obj = ObjectVersion.get(bucket, file_name, latest_version_id)
+                else:
+                    current_app.logger.error(f"failed to input metadata: no object version.")
+                    raise WekoWorkflowException(f"failed to input metadata: no object version.")
+
             obj.set_contents(stream, size=size, size_limit=size_limit)
             url = f"{request.url_root}api/files/{obj.bucket_id}/{obj.basename}"
             return {

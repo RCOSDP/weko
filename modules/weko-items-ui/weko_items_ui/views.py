@@ -847,7 +847,7 @@ def get_current_login_user_id():
 
 @blueprint_api.route('/prepare_edit_item', methods=['POST'])
 @login_required
-def prepare_edit_item():
+def prepare_edit_item(id=None):
     """Prepare_edit_item.
 
     Host the api which provide 2 service:
@@ -873,7 +873,7 @@ def prepare_edit_item():
 
     post_activity = request.get_json()
     getargs = request.args
-    pid_value = post_activity.get('pid_value')
+    pid_value = post_activity.get('pid_value') or id
     community = getargs.get('community', None)
 
     # Cache Storage

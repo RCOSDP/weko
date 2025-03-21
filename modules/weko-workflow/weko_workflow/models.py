@@ -502,6 +502,8 @@ class FlowDefine(db.Model, TimestampMixin):
     is_deleted = db.Column(db.Boolean(name='is_deleted'), nullable=False, default=False)
     """flow define delete flag."""
 
+    flow_type = db.Column(db.SmallInteger(), nullable=False, default=1)
+
 
 class FlowAction(db.Model, TimestampMixin):
     """Action list belong to Flow."""
@@ -650,6 +652,10 @@ class WorkFlow(db.Model, TimestampMixin):
     flow_id = db.Column(db.Integer(), db.ForeignKey(FlowDefine.id),
                         nullable=False, unique=False)
     """the id of flow."""
+
+    delete_flow_id = db.Column(db.Integer(), db.ForeignKey(FlowDefine.id),
+                        nullable=False, unique=False)
+    """the id of delete flow."""
 
     flow_define = db.relationship(
         FlowDefine,
