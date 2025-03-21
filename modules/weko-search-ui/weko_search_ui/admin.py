@@ -50,6 +50,8 @@ from weko_index_tree.utils import (
 )
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkFlow
+from weko_records_ui.external import call_external_system
+from weko_deposit.api import WekoRecord
 
 from weko_search_ui.api import get_search_detail_keyword
 
@@ -113,7 +115,7 @@ class ItemManagementBulkDelete(BaseView):
                         edt_items = get_editing_items_in_index(q, recursively)
                         ignore_items = list(set(doi_items + edt_items))
                         # Delete items in current_tree
-                        delete_records(current_tree.id, ignore_items)
+                        delete_record_list = delete_records(current_tree.id, ignore_items)
 
                         # If recursively, then delete items of child indices
                         if recursively:
@@ -124,12 +126,16 @@ class ItemManagementBulkDelete(BaseView):
                                     child_tree = Indexes.get_index(obj[1])
 
                                     # Do delete items in child_tree
-                                    delete_records(child_tree.id, ignore_items)
+                                    child_delete_record_list = delete_records(child_tree.id, ignore_items)
+                                    delete_record_list.extend(child_delete_record_list)
                                     # Add the level 1 child into the current_tree
                                     if obj[0] == current_tree.id:
                                         direct_child_trees.append(child_tree.id)
 
                         db.session.commit()
+                        for recid in delete_record_list:
+                            record = WekoRecord.get_record_by_pid(recid)
+                            call_external_system(old_record=record)
                         if ignore_items:
                             msg = "{}<br/>".format(
                                 _("The following item(s) cannot be deleted.")
@@ -334,7 +340,7 @@ class ItemImportView(BaseView):
         workflow = WorkFlow()
         workflows = workflow.get_workflow_list()
         workflows_js = [get_content_workflow(item) for item in workflows]
-        
+
         form =FlaskForm(request.form)
 
         return self.render(
@@ -347,9 +353,9 @@ class ItemImportView(BaseView):
     @expose("/check", methods=["POST"])
     def check(self) -> jsonify:
         """Validate item import."""
-        
+
         validate_csrf_header(request)
-        
+
         data = request.form
         file = request.files["file"] if request.files else None
 
@@ -721,7 +727,7 @@ class ItemImportView(BaseView):
                     "error_id": check,
                 }
             )
-            
+
         else:
             return jsonify({"is_available": True})
 

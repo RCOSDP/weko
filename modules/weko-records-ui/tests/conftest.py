@@ -136,6 +136,11 @@ from weko_records_ui.config import (
     RECORDS_UI_EXPORT_FORMATS,
     WEKO_PERMISSION_ROLE_COMMUNITY,
     WEKO_RECORDS_UI_EMAIL_ITEM_KEYS,
+    WEKO_RECORDS_UI_OA_API_RETRY_COUNT,
+    WEKO_RECORDS_UI_OA_API_CODE,
+    EXTERNAL_SYSTEM,
+    ITEM_ACTION,
+    FILE_OPEN_STATUS
 )
 from weko_search_ui import WekoSearchUI
 from weko_search_ui.config import WEKO_SEARCH_MAX_RESULT
@@ -272,7 +277,14 @@ def base_app(instance_path):
             'INVENIO_ROLE_SYSTEM',
             'INVENIO_ROLE_REPOSITORY',
             'INVENIO_ROLE_COMMUNITY'
-        ]
+        ],
+        WEKO_RECORDS_UI_OA_GET_TOKEN_URL = "<OA URL>/oauth/token",
+        WEKO_RECORDS_UI_OA_UPDATE_STATUS_URL = "<OA URL>/api/articles/{}/status",
+        WEKO_RECORDS_UI_OA_API_RETRY_COUNT = WEKO_RECORDS_UI_OA_API_RETRY_COUNT,
+        WEKO_RECORDS_UI_OA_API_CODE = WEKO_RECORDS_UI_OA_API_CODE,
+        EXTERNAL_SYSTEM = EXTERNAL_SYSTEM,
+        ITEM_ACTION = ITEM_ACTION,
+        FILE_OPEN_STATUS = FILE_OPEN_STATUS
     )
     # with ESTestServer(timeout=30) as server:
     Babel(app_)
@@ -2729,10 +2741,10 @@ def records_restricted(app, db, workflows_restricted,records ,users):
     filepath = "tests/data/helloworld.pdf"
     wf1 :WorkFlow = workflows_restricted.get("workflow_workflow1")
     wf2 :WorkFlow = workflows_restricted.get("workflow_workflow2")
-    results.append(make_record_restricted(db, indexer, i, filepath, filename, mimetype 
+    results.append(make_record_restricted(db, indexer, i, filepath, filename, mimetype
                                         ,"none_loggin" ,wf2.id))
     i = i + 1
-    results.append(make_record_restricted(db, indexer, i, filepath, filename, mimetype 
+    results.append(make_record_restricted(db, indexer, i, filepath, filename, mimetype
                                         ,str(users[0]["id"]) #contributer
                                         ,wf1.id))
 
@@ -3925,24 +3937,24 @@ def workflows_restricted(db ,itemtypes,users, records):
         db.session.add_all([workflow_workflow1, workflow_workflow2, workflow_workflow3, workflow_workflow4])
 
     workflows.update({
-		"flow_define1"       : flow_define1      
-		,"flow_define2"       : flow_define2      
-		,"flow_define3"       : flow_define3      
-		,"flow_define4"       : flow_define4      
-		,"flow_action1_1"     : flow_action1_1    
-		,"flow_action1_2"     : flow_action1_2    
-		,"flow_action1_3"     : flow_action1_3    
-		,"flow_action2_1"     : flow_action2_1    
-		,"flow_action2_2"     : flow_action2_2    
-		,"flow_action3_1"     : flow_action3_1    
-		,"flow_action3_2"     : flow_action3_2    
-		,"flow_action3_3"     : flow_action3_3    
-		,"flow_action3_4"     : flow_action3_4    
-		,"flow_action4_1"     : flow_action4_1    
-		,"flow_action4_2"     : flow_action4_2    
-		,"flow_action4_3"     : flow_action4_3    
-		,"flow_action4_4"     : flow_action4_4    
-		,"flow_action4_5"     : flow_action4_5    
+		"flow_define1"       : flow_define1
+		,"flow_define2"       : flow_define2
+		,"flow_define3"       : flow_define3
+		,"flow_define4"       : flow_define4
+		,"flow_action1_1"     : flow_action1_1
+		,"flow_action1_2"     : flow_action1_2
+		,"flow_action1_3"     : flow_action1_3
+		,"flow_action2_1"     : flow_action2_1
+		,"flow_action2_2"     : flow_action2_2
+		,"flow_action3_1"     : flow_action3_1
+		,"flow_action3_2"     : flow_action3_2
+		,"flow_action3_3"     : flow_action3_3
+		,"flow_action3_4"     : flow_action3_4
+		,"flow_action4_1"     : flow_action4_1
+		,"flow_action4_2"     : flow_action4_2
+		,"flow_action4_3"     : flow_action4_3
+		,"flow_action4_4"     : flow_action4_4
+		,"flow_action4_5"     : flow_action4_5
 		,"workflow_workflow1" : workflow_workflow1
 		,"workflow_workflow2" : workflow_workflow2
 		,"workflow_workflow3" : workflow_workflow3
@@ -3974,7 +3986,7 @@ def site_license_info(app, db):
 @pytest.fixture()
 def site_license_ipaddr(app, db,site_license_info):
     record1 = SiteLicenseIpAddress(organization_id=1,organization_no=1,start_ip_address="192.168.0.0",finish_ip_address="192.168.0.255")
-    # record2 = SiteLicenseIpAddress(organization_id=1,start_ip_address="192.168.1.0",finish_ip_address="192.168.2.255")   
+    # record2 = SiteLicenseIpAddress(organization_id=1,start_ip_address="192.168.1.0",finish_ip_address="192.168.2.255")
     with db.session.begin_nested():
         db.session.add(record1)
         # db.session.add(record2)
@@ -4001,7 +4013,7 @@ def db_file_permission(app, db,users,records):
     record0 = FilePermission(
         user_id=1, record_id=recid0.pid_value, file_name=filename0,
         usage_application_activity_id="usage_application_activity_id_dummy1",
-        usage_report_activity_id=None, status=1, 
+        usage_report_activity_id=None, status=1,
     )
     recid1 = results[1]["recid"]
     filename1 = results[1]["filename"]
@@ -4051,7 +4063,7 @@ def db_FileOneTimeDownload(app, db):
         db.session.add(file_one_time_download)
     return file_one_time_download
 
-    
+
 @pytest.fixture()
 def db_admin_settings(db):
     with db.session.begin_nested():

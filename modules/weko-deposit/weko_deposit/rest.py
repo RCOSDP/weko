@@ -40,6 +40,7 @@ from invenio_rest import ContentNegotiatedMethodView
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from weko_redis.redis import RedisConnection
+from weko_records_ui.external import call_external_system
 
 from .api import WekoDeposit, WekoRecord
 
@@ -74,7 +75,7 @@ def create_blueprint(app, endpoints):
         __name__,
         url_prefix='',
     )
-    
+
     @blueprint.teardown_request
     def dbsession_clean(exception):
         current_app.logger.debug("weko_deposit dbsession_clean: {}".format(exception))
@@ -162,7 +163,7 @@ def create_blueprint(app, endpoints):
             view_func=publish,
             methods=['PUT'],
         )
-    
+
     return blueprint
 
 
@@ -214,6 +215,8 @@ class ItemResource(ContentNegotiatedMethodView):
             self.__sanitize_input_data(data)
             pid_value = kwargs.get('pid_value').value
             edit_mode = data.get('edit_mode')
+            old_pid_value = pid_value
+            old_record = WekoRecord.get_record_by_pid(old_pid_value)
 
             if edit_mode and edit_mode == 'upgrade':
                 data.pop('edit_mode')
@@ -249,6 +252,8 @@ class ItemResource(ContentNegotiatedMethodView):
                     upgrade_record.pid.pid_value)
                 if weko_record:
                     weko_record.update_item_link(pid_value.split(".")[0])
+                if not ".0" in old_pid_value:
+                    call_external_system(old_record=old_record, new_record=weko_record)
 
             # Saving ItemMetadata cached on Redis by pid
             redis_connection = RedisConnection()
