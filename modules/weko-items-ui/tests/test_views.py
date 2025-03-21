@@ -21089,7 +21089,7 @@ def test_check_record_doi_indexes(
     with pytest.raises(PIDDoesNotExistError):
         res = client_api.get("{}?doi=1".format(url))
 
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_oa_policy -vv -s  --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_oa_policy -vv -s  --cov-branch --cov-report=term --cov-report=html --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 @pytest.mark.parametrize(
     "user_id, params, status_code, expected_response",
     [
@@ -21160,7 +21160,7 @@ def test_get_oa_policy(
             assert json.loads(res.data) == expected_response, "レスポンス内容が期待値と一致するべき"
 
 # 例外処理のテスト
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_oa_policy_exceptions -vv -s  --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_oa_policy_exceptions -vv -s  --cov-branch --cov-report=term --cov-report=html --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_get_oa_policy_exceptions(client_api, users):
     """get_oa_policyの例外処理をテストする"""
     # ユーザーログインをシミュレート

@@ -25,6 +25,7 @@ import os
 import sys
 from copy import deepcopy
 from datetime import date, datetime, timedelta
+import requests
 
 import redis
 from redis import sentinel

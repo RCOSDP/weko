@@ -10593,7 +10593,7 @@ def test_get_file_download_data(app, client, records):
         with pytest.raises(AvailableFilesNotFoundRESTError):
             get_file_download_data(record.id, record, filenames)
 
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_access_token -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_access_token -vv -s --cov-branch --cov-report=xml --cov-report=html --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_get_access_token(app, mock_certificate):
     """get_access_tokenの全シナリオ（正常系と異常系）をテスト"""
     with app.test_request_context():
@@ -10601,7 +10601,7 @@ def test_get_access_token(app, mock_certificate):
         # 1. api_codeが空の場合 (400)
         result, status = get_access_token(None)
         assert status == 400, "api_codeが空の場合、400が返るべき"
-        assert result == {"error": "invalid_request", "message": "API Code Required"}
+        assert result == {"error": "invalid_request", "message": "Required API Code"}
 
         # 2. 無効なapi_codeの場合 (401)
         with patch.object(ApiCertificate, "select_by_api_code", return_value=None):
