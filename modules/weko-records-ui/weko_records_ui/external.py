@@ -92,7 +92,7 @@ def call_external_system(old_record=None,
                 with requests.Session() as s:
                     retries = Retry(
                         total=current_app.config.get(
-                            "WEKO_RECORDS_UI_OA_API_CODE"),
+                            "WEKO_RECORDS_UI_OA_API_RETRY_COUNT"),
                         status_forcelist=[500, 502, 503, 504])
                     s.mount('https://', HTTPAdapter(max_retries=retries))
                     s.mount('http://', HTTPAdapter(max_retries=retries))
