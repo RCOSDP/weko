@@ -13,7 +13,6 @@ from invenio_oauth2server.models import Client
 from weko_records.models import ItemType, Timestamp, ItemTypeJsonldMapping
 from weko_workflow.models import WorkFlow
 
-
 """Models of weko-swordserver."""
 
 class SwordItemTypeMappingModel(db.Model, Timestamp):
@@ -155,6 +154,25 @@ class SwordClientModel(db.Model, Timestamp):
         nullable=True)
     """Workflow ID of the client. Foreign key from WorkFlow."""
 
+    active = db.Column(
+        db.Boolean,
+        unique=False,
+        nullable=True)
+
+    meta_data_api = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
 
     @property
     def registration_type(self):

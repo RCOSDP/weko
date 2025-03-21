@@ -222,6 +222,12 @@ class ItemTypeNames(RecordBase):
                 query = query.filter_by(is_active=True)  # noqa
             return query.one_or_none()
 
+    @classmethod
+    def get_name_and_id_all(cls):
+        """get name and id all."""
+        query = db.session.query(ItemTypeName).with_entities(ItemTypeName.name, ItemTypeName.id)
+        return query.all()
+
     def delete(self, force=False):
         """Delete an item type name.
 

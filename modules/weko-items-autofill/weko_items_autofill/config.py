@@ -109,3 +109,11 @@ WEKO_ITEMS_AUTOFILL_IGNORE_MAPPING = [
     "identifierRegistration.@value",
     "identifierRegistration.@attributes.identifierType"
 ]
+
+WEKO_ITEMS_AUTOFILL_API_LIST = [
+  "JaLC API",
+  "医中誌 Web API",
+  "CrossRef",
+  "DataCite",
+  "CiNii Research"
+]

@@ -36,7 +36,9 @@ from weko_records_ui.utils import get_record_permalink, soft_delete
 from weko_search_ui.utils import import_items_to_system, import_items_to_activity
 from weko_workflow.utils import get_site_info_name
 from weko_workflow.scopes import activity_scope
+from weko_search_ui.mapper import JsonLdMapper
 
+from .api import SwordItemTypeMapping
 from .config import WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE
 from .decorators import check_on_behalf_of, check_package_contents
 from .errors import ErrorType, WekoSwordserverException
@@ -659,6 +661,15 @@ def _create_error_document(type, error):
         # "log": "",
     }
     return Error(raw_data).data
+
+@blueprint.route("/validate_mapping", methods=['POST'])
+def valedate_mapping():
+    data = request.get_json()
+    itemtype_id = data.get('itemtype_id')
+    mapping_id = data.get('mapping_id')
+    obj = SwordItemTypeMapping.get_mapping_by_id(mapping_id)
+
+    return jsonify(JsonLdMapper(itemtype_id, obj.mapping).validate())
 
 @blueprint.errorhandler(401)
 def handle_unauthorized(ex):

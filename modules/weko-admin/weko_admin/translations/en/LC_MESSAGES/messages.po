@@ -171,6 +171,50 @@ msgstr "Mapping"
 msgid "Active"
 msgstr "Save"
 
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:59
+msgid "UiType"
+msgstr "UI"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:60
+msgid "DisplayNumber"
+msgstr "Display Number"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:61
+msgid "OpenClose"
+msgstr "Open/Close"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:62
+msgid "OpenClose Open"
+msgstr "Open"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:63
+msgid "OpenClose Close"
+msgstr "Close"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:67
+msgid "DisplayNumber Validation1"
+msgstr "Display Number must be an integer value from 1 to 99."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:68
+msgid "DisplayNumber Validation2"
+msgstr "If CheckboxList is selected, Display Number must be entered."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
+msgid "Search Condition"
+msgstr "search condition "
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
+msgid "Search Condition or"
+msgstr "OR"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:66
+msgid "Search Condition and"
+msgstr "AND"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:69
+msgid "NameEN Validation"
+msgstr "The value of Item Name(EN) cannot be used."
+
 #: weko_admin/admin.py:1210 weko_admin/admin.py:1237 weko_admin/admin.py:1246
 #: weko_admin/admin.py:1255 weko_admin/admin.py:1264 weko_admin/admin.py:1273
 #: weko_admin/admin.py:1282 weko_admin/admin.py:1291 weko_admin/admin.py:1309
@@ -1077,10 +1121,6 @@ msgstr ""
 msgid "Expiration Date"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html:554
-msgid "Setting detail condition"
-msgstr "condition"
-
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:48
 msgid "Content File Download"
 msgstr ""
@@ -1351,16 +1391,16 @@ msgstr ""
 msgid "Enter Input Value"
 msgstr ""
 
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:554
+msgid "Setting detail condition"
+msgstr "condition"
+
 #: weko_admin/templates/weko_admin/admin/site_info.html:39
 msgid "Site Name"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/site_info.html:40
 msgid "Favicon"
-msgstr ""
-
-#: weko_admin/admin.py:1359
-msgid "The selected Workflow has been deleted. Please recheck and input."
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/site_info.html:41
@@ -1640,6 +1680,47 @@ msgstr "Confirm"
 msgid "completed"
 msgstr "処理が完了しました。"
 
+msgid "TSV/CSV"
+msgstr ""
+
+msgid "XML"
+msgstr ""
+
+msgid "JSON-LD"
+msgstr ""
+
+msgid "Registration Type"
+msgstr ""
+
+msgid "Worlflow"
+msgstr ""
+
+msgid "Add Setting"
+msgstr ""
+
+msgid "Display Numbe"
+msgstr ""
+
+msgid "Application"
+msgstr ""
+
+msgid "Metadata API"
+msgstr ""
+
+msgid "Unapproved Items Exit"
+msgstr ""
+"There are unapproved items in the workflow using this application. Until "
+"all are approved, no changes can be made to the configuration."
+
+msgid "WorkFlow Cautionary Note"
+msgstr "Only item types that are linked to the selected workflow can be registered"
+
+msgid "Active Message"
+msgstr "Active"
+
+msgid "Inactive Message"
+msgstr "Inactive"
+
 #~ msgid "Title_Asc"
 #~ msgstr "Title (Asc)"
 
@@ -1760,47 +1841,15 @@ msgstr "処理が完了しました。"
 #~ msgid "Mail Address"
 #~ msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:60
-msgid "DisplayNumber"
-msgstr "Display Number"
+#~ msgid "The selected Workflow has been deleted. Please recheck and input."
+#~ msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:59
-msgid "UiType"
-msgstr "UI"
+#~ msgid "Accept"
+#~ msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:61
-msgid "OpenClose"
-msgstr "Open/Close"
+#~ msgid "active"
+#~ msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:62
-msgid "OpenClose Open"
-msgstr "Open"
+#~ msgid "inactive"
+#~ msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:63
-msgid "OpenClose Close"
-msgstr "Close"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:67
-#, python-format
-msgid "DisplayNumber Validation1"
-msgstr "Display Number must be an integer value from 1 to 99."
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:68
-msgid "DisplayNumber Validation2"
-msgstr "If CheckboxList is selected, Display Number must be entered."
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
-msgid "Search Condition"
-msgstr "search condition "
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
-msgid "Search Condition or"
-msgstr "OR"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:66
-msgid "Search Condition and"
-msgstr "AND"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:69
-msgid "NameEN Validation"
-msgstr "The value of Item Name(EN) cannot be used."

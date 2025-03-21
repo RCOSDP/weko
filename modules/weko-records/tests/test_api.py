@@ -149,6 +149,10 @@ def test_itemtypenames(app, db, item_type, item_type2):
     lst = ItemTypeNames.get_all_by_id(ids=[1,2,3], with_deleted=True)
     assert len(lst)==3
 
+    # def get_name_and_id_all(cls):
+    lst = ItemTypeNames.get_name_and_id_all()
+    assert len(lst)>0
+
     # def delete(self, force=True):
     item_type_name = ItemTypeNames.get_record(3)
     assert item_type_name.id == 3
