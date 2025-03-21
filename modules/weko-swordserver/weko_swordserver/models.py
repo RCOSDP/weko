@@ -10,7 +10,7 @@ from sqlalchemy_utils.types import JSONType
 
 from invenio_db import db
 from invenio_oauth2server.models import Client
-from weko_records.models import ItemType, Timestamp
+from weko_records.models import ItemType, Timestamp, ItemTypeJsonldMapping
 from weko_workflow.models import WorkFlow
 
 
@@ -143,7 +143,7 @@ class SwordClientModel(db.Model, Timestamp):
 
     mapping_id = db.Column(
         db.Integer,
-        db.ForeignKey(SwordItemTypeMappingModel.id),
+        db.ForeignKey(ItemTypeJsonldMapping.id),
         unique=False,
         nullable=False)
     """Mapping ID of the client. Foreign key from SwordItemTypeMapping."""

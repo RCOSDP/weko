@@ -30,7 +30,6 @@ from weko_items_ui.utils import update_index_tree_for_record, validate_form_inpu
 from weko_items_ui.views import check_validation_error_msg
 from weko_records.api import ItemTypes
 from weko_records.serializers.utils import get_mapping
-from weko_search_ui.utils import get_data_by_property
 
 from ..api import Action, WorkActivity, WorkFlow, ActivityStatusPolicy
 from ..errors import WekoWorkflowException
@@ -165,7 +164,7 @@ class HeadlessActivity(WorkActivity):
         if workflow_id is None:
             current_app.logger.error("workflow_id is required to create activity.")
             raise WekoWorkflowException("workflow_id is required to create activity.")
-        workflow = WorkFlow().get_workflow_by_id(workflow_id)
+        self.workflow = workflow = WorkFlow().get_workflow_by_id(workflow_id)
         if workflow is None:
             current_app.logger.error(f"workflow(id={workflow_id}) is not found.")
             raise WekoWorkflowException(f"workflow(id={workflow_id}) is not found.")
@@ -244,7 +243,7 @@ class HeadlessActivity(WorkActivity):
 
         return returns
 
-    def item_registration(self, metadata, files, index, comment=""):
+    def item_registration(self, metadata, files, index=None, comment=None):
         """Action for item registration."""
         if self._model is None:
             current_app.logger.error("activity is not initialized.")
@@ -290,6 +289,7 @@ class HeadlessActivity(WorkActivity):
                 feedback_maillist=feedback_maillist
             )
 
+            from weko_search_ui.utils import get_data_by_property
             # get value of "Title" from metadata by jpcoar_mapping
             item_map = get_mapping(self.item_type.id, 'jpcoar_mapping', self.item_type)
             title_value_key = "title.@value"
@@ -298,6 +298,9 @@ class HeadlessActivity(WorkActivity):
                 "title": title[0] if len(title) > 0 else "",
                 "shared_user_id": metadata.pop("shared_user_id", -1)
             })
+
+            # to exclude from file text extraction
+            non_extract = getattr(metadata, "non_extract", [])
 
             result = {"is_valid": True}
             validate_form_input_data(result, self.item_type.id, deepcopy(metadata))
@@ -323,9 +326,17 @@ class HeadlessActivity(WorkActivity):
                 pass
 
             metadata.update({"$schema": f"/items/jsonschema/{self.item_type.id}"})
-            index = {'index': metadata.get('path', []),
-                        'actions': metadata.get('publish_status')}
+            workflow_index = self.workflow.index_tree_id
+            index = {
+                "index": (
+                    [workflow_index]
+                    if workflow_index is not None else metadata.get("path", [])
+                ),
+                "actions": metadata.get("publish_status")
+            }
             self._deposit.update(index, metadata)
+            # to exclude from file text extraction
+            self._deposit.non_extract = non_extract
             self._deposit.commit()
 
             data = {
@@ -423,7 +434,7 @@ class HeadlessActivity(WorkActivity):
 
         return files_info
 
-    def _designate_index(self, index):
+    def _designate_index(self, index=None):
         """Designate Index.
 
 
@@ -433,9 +444,11 @@ class HeadlessActivity(WorkActivity):
         self._user_lock()
         locked_value = self._activity_lock()
 
+        index = index or self.workflow.index_tree_id
+
+        if not isinstance(index, list):
+            index = [index]
         try:
-            if not isinstance(index, list):
-                index = [index]
             for idx in index:
                 update_index_tree_for_record(self.recid, idx)
         except Exception as ex:

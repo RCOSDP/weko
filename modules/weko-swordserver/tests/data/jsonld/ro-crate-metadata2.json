@@ -17,6 +17,21 @@
     },
     {
       "@id": "./",
+      "@type": "Dataset",
+      "name": "The Sample Dataset for WEKO, split into two parts",
+      "description": "This is a sample dataset for WEKO in order to demonstrate the RO-Crate metadata. This dataset is split into two parts, and ignore the rood dataset properties.",
+      "hasPart": [
+        {
+          "@id": "_:JournalPaper1"
+        },
+        {
+          "@id": "_:EvidenceData1"
+        }
+      ],
+      "wk:is_splited": true
+    },
+    {
+      "@id": "_:JournalPaper1",
       "@type": [
         "Dataset",
         "rdm:Dataset"
@@ -58,9 +73,6 @@
       "hasPart": [
         {
           "@id": "data/sample.rst"
-        },
-        {
-          "@id": "data/data.csv"
         }
       ],
       "hasPolicy": [
@@ -91,7 +103,95 @@
           "@id": "https://doi.org/10.1234/5678"
         }
       ],
-      "wk:saveAsIs": false
+      "wk:saveAsIs": false,
+      "wk:itemLinks": [
+        {
+          "@id": "_:itemLink1"
+        },
+        {
+          "@id": "_:itemLink2"
+        }
+      ]
+    },
+    {
+      "@id": "_:EvidenceData1",
+      "@type": [
+        "Dataset",
+        "rdm:Dataset"
+      ],
+      "name": "The Sample Dataset for WEKO",
+      "description": "This is a sample dataset for WEKO in order to demonstrate the RO-Crate metadata.",
+      "dc:title": [
+        {
+          "@id": "_:title_3"
+        },
+        {
+          "@id": "_:title_4"
+        }
+      ],
+      "author": [
+        {
+          "@id": "_:Organization_1"
+        }
+      ],
+      "creator": [
+        {
+          "@id": "http://orcid.org/0000-0002-1825-0097"
+        }
+      ],
+      "contributor": [
+        {
+          "@id": "http://orcid.org/0000-0002-1825-0085"
+        }
+      ],
+      "datePublished": "2021-10-15",
+      "license": {
+        "@id": "https://creativecommons.org/licenses/by-nc-sa/3.0/au/"
+      },
+      "rdm:inProject": [
+        {
+          "@id": "_:Project_1"
+        }
+      ],
+      "hasPart": [
+        {
+          "@id": "data/data.csv"
+        }
+      ],
+      "hasPolicy": [
+        {
+          "@id": "_:Policy1"
+        },
+        {
+          "@id": "_:Policy2"
+        }
+      ],
+      "wk:feedbackMail": [
+        "wekosoftware@nii.ac.jp"
+      ],
+      "identifier": "https://example.repo.nii.ac.jp/records/123456789",
+      "wk:index": [
+        "1623632832836"
+      ],
+      "wk:publishStatus": "public",
+      "wk:editMode": "Keep",
+      "dc:type": {
+        "@id": "http://purl.org/coar/resource_type/c_1843"
+      },
+      "wk:grant": [
+        {
+          "@id": "https://hdl.handle.net/1234/5678"
+        },
+        {
+          "@id": "https://doi.org/10.1234/5678"
+        }
+      ],
+      "wk:saveAsIs": false,
+      "wk:itemLinks": [
+        {
+          "@id": "_:itemLink3"
+        }
+      ]
     },
     {
       "@id": "_:title_1",
@@ -105,6 +205,20 @@
       "@type": "PropertyValue",
       "name": "title",
       "value": "WEKO用サンプルデータセット",
+      "language": "ja"
+    },
+    {
+      "@id": "_:title_3",
+      "@type": "PropertyValue",
+      "name": "title",
+      "value": "The Sample Dataset for WEKO, evidence part",
+      "language": "en"
+    },
+    {
+      "@id": "_:title_4",
+      "@type": "PropertyValue",
+      "name": "title",
+      "value": "WEKO用サンプルデータセットのエビデンス部分",
       "language": "ja"
     },
     {
@@ -133,6 +247,11 @@
       "@id": "http://purl.org/coar/resource_type/c_6501",
       "@type": "Concept",
       "name": "journal article"
+    },
+    {
+      "@id": "http://purl.org/coar/resource_type/c_1843",
+      "@type": "Concept",
+      "name": "other"
     },
     {
       "@id": "_:Project_1",
@@ -228,7 +347,7 @@
       "@id": "data/sample.rst",
       "@type": "File",
       "name": "sample.rst",
-      "contentSize": "333 B",
+      "contentSize": "333",
       "dateCreated": {
         "@id": "_:date_1"
       },
@@ -244,7 +363,7 @@
       "@id": "data/data.csv",
       "@type": "File",
       "name": "data.csv",
-      "contentSize": "475 B",
+      "contentSize": "1234",
       "dateCreated": {
         "@id": "_:date_2"
       },
@@ -290,6 +409,24 @@
       "@type": "Organization",
       "name": "University of Manchester",
       "url": "https://www.manchester.ac.uk/"
+    },
+    {
+      "@id": "_:itemLink1",
+      "@type": "PropertyValue",
+      "value": "isSupplementedBy",
+      "identifier": "_:EvidenceData1"
+    },
+    {
+      "@id": "_:itemLink2",
+      "@type": "PropertyValue",
+      "value": "isSupplementedBy",
+      "identifier": "https://example.repo.nii.ac.jp/records/123456789"
+    },
+    {
+      "@id": "_:itemLink3",
+      "@type": "PropertyValue",
+      "value": "isSupplementTo",
+      "identifier": "_:JournalPaper1"
     }
   ]
 }
