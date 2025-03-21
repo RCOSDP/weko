@@ -277,6 +277,14 @@ def test_put(app, client, records):
         mock_record = lambda x: record_1_1 if x == "1.1" else record_1
         with patch("weko_deposit.rest.WekoRecord.get_record_by_pid", mock_record):
             with patch("weko_deposit.rest.call_external_system") as mock_external:
+                with patch("weko_deposit.rest.PersistentIdentifier.get",
+                           return_value=record_1.pid):
+                    data = {'edit_mode': 'upgrade'}
+                    res = client.put("/deposits/redirect/1.0",
+                                    data=json.dumps(data), headers=headers)
+                    assert res.status_code == 200
+                    mock_external.assert_not_called()
+            with patch("weko_deposit.rest.call_external_system") as mock_external:
                 data = {'edit_mode': 'upgrade'}
                 res = client.put("/deposits/redirect/1",
                                 data=json.dumps(data), headers=headers)

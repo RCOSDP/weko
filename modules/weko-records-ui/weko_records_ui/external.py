@@ -67,8 +67,6 @@ def call_external_system(old_record=None,
     # case OA assist
     if EXTERNAL_SYSTEM.OA in external_system_list:
         # get oa token
-        get_token_url = current_app.config.get(
-            "WEKO_RECORDS_UI_OA_GET_TOKEN_URL")
         headers = {
             'Content-Type': 'application/json'
         }
@@ -86,20 +84,24 @@ def call_external_system(old_record=None,
             "client_id": client_id,
             "client_secret": client_secret
         }
-        current_app.logger.debug("call OA token api")
-        try:
-            with requests.Session() as s:
-                retries = Retry(
-                    total=current_app.config.get("WEKO_RECORDS_UI_OA_API_CODE"),
-                    status_forcelist=[500, 502, 503, 504])
-                s.mount('https://', HTTPAdapter(max_retries=retries))
-                s.mount('http://', HTTPAdapter(max_retries=retries))
-                response = s.post(get_token_url, headers=headers, json=data)
-            token = response.text
-        except requests.exceptions.RequestException as req_err:
-            current_app.logger.error(req_err)
-            current_app.logger.error(traceback.format_exc())
-            return
+        get_token_url = current_app.config.get(
+            "WEKO_RECORDS_UI_OA_GET_TOKEN_URL")
+        if get_token_url:
+            current_app.logger.debug("call OA token api")
+            try:
+                with requests.Session() as s:
+                    retries = Retry(
+                        total=current_app.config.get(
+                            "WEKO_RECORDS_UI_OA_API_CODE"),
+                        status_forcelist=[500, 502, 503, 504])
+                    s.mount('https://', HTTPAdapter(max_retries=retries))
+                    s.mount('http://', HTTPAdapter(max_retries=retries))
+                    response = s.post(get_token_url, headers=headers, json=data)
+                token = response.text
+            except requests.exceptions.RequestException as req_err:
+                current_app.logger.error(req_err)
+                current_app.logger.error(traceback.format_exc())
+                return
         if not token:
             return
 
@@ -127,8 +129,6 @@ def call_external_system(old_record=None,
 
         pid_value_without_ver = get_pid_value_without_ver(old_record, new_record)
         article_id = get_article_id(pid_value_without_ver)
-        update_status_url = current_app.config.get(
-            "WEKO_RECORDS_UI_OA_UPDATE_STATUS_URL").format(article_id)
         headers = {
             'Content-Type': 'application/json',
             'Authorization': f'Bearer {token}'
@@ -137,43 +137,50 @@ def call_external_system(old_record=None,
         remarks["action"] = action.value
         oa_result = {}
 
-        current_app.logger.debug("call OA update status api")
-        try:
-            with requests.Session() as s:
-                retries = Retry(
-                    total=current_app.config.get("WEKO_RECORDS_UI_OA_API_RETRY_COUNT"),
-                    status_forcelist=[500, 502, 503, 504])
-                s.mount('https://', HTTPAdapter(max_retries=retries))
-                s.mount('http://', HTTPAdapter(max_retries=retries))
-                response = s.put(update_status_url, headers=headers, json=data)
-                if response.status_code == 200:
-                    oa_result["status"] = response.json().get("status")
-                else:
-                    oa_result["status"] = response.json().get("status")
-                    oa_result["message"] = response.json().get("message")
+        update_status_url = current_app.config.get(
+            "WEKO_RECORDS_UI_OA_UPDATE_STATUS_URL", "")
+        if update_status_url and isinstance(update_status_url, str):
+            update_status_url = update_status_url.format(article_id)
+            current_app.logger.debug("call OA update status api")
+            try:
+                with requests.Session() as s:
+                    retries = Retry(
+                        total=current_app.config.get(
+                            "WEKO_RECORDS_UI_OA_API_RETRY_COUNT"),
+                        status_forcelist=[500, 502, 503, 504])
+                    s.mount('https://', HTTPAdapter(max_retries=retries))
+                    s.mount('http://', HTTPAdapter(max_retries=retries))
+                    response = s.put(update_status_url,
+                                     headers=headers,
+                                     json=data)
+                    if response.status_code == 200:
+                        oa_result["status"] = response.json().get("status")
+                    else:
+                        oa_result["status"] = response.json().get("status")
+                        oa_result["message"] = response.json().get("message")
 
-        except requests.exceptions.RequestException as req_err:
-            current_app.logger.error(req_err)
-            current_app.logger.error(traceback.format_exc())
-            oa_result["status"] = "error"
+            except requests.exceptions.RequestException as req_err:
+                current_app.logger.error(req_err)
+                current_app.logger.error(traceback.format_exc())
+                oa_result["status"] = "error"
 
-        finally:
-            remarks[EXTERNAL_SYSTEM.OA.value] = oa_result
-            # TODO 基本監査ログ機能が実装されたらそちらに出力する
-            current_app.logger.info(remarks)
-            # 基本監査ログに機能ID、処理ID、対象キー、備考を渡して出力する
+            finally:
+                remarks[EXTERNAL_SYSTEM.OA.value] = oa_result
+                # TODO 基本監査ログ機能が実装されたらそちらに出力する
+                current_app.logger.info(remarks)
+                # 基本監査ログに機能ID、処理ID、対象キー、備考を渡して出力する
 
-            # operation_type_id: 機能ID
-            # operation_id: 処理ID
-            # target: 対象キー
-            # remarks: 備考
+                # operation_type_id: 機能ID
+                # operation_id: 処理ID
+                # target: 対象キー
+                # remarks: 備考
 
-            # user_log.info(
-            #     operation_type_id = "ITEM",
-            #     operation_id = "ITEM_EXTERNAL_LINK"
-            #     target_key = pid_value_without_ver,
-            #     remarks = remarks
-            # )
+                # user_log.info(
+                #     operation_type_id = "ITEM",
+                #     operation_id = "ITEM_EXTERNAL_LINK"
+                #     target_key = pid_value_without_ver,
+                #     remarks = remarks
+                # )
 
 
 def select_call_external_system_list(old_record=None,

@@ -710,9 +710,11 @@ WEKO_RECORDS_UI_TSV_FIELD_NAMES_EN = ['Name', 'Size', 'License', 'Date', 'URL']
 
 WEKO_RECORDS_UI_TSV_FIELD_NAMES_JA = ['名前', 'サイズ', 'ライセンス', '公開日', '格納場所']
 
-WEKO_RECORDS_UI_OA_GET_TOKEN_URL = "<OA URL>/oauth/token"
+# The API URL to obtain a token for OA. example: "<OA URL>/oauth/token"
+WEKO_RECORDS_UI_OA_GET_TOKEN_URL = ""
 
-WEKO_RECORDS_UI_OA_UPDATE_STATUS_URL = "<OA URL>/api/articles/{}/status"
+# The API URL to update the status of an OA article. example: "<OA URL>/api/articles/{}/status"
+WEKO_RECORDS_UI_OA_UPDATE_STATUS_URL = ""
 
 WEKO_RECORDS_UI_OA_API_RETRY_COUNT = 3
 

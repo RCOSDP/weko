@@ -1074,6 +1074,14 @@ def test_handle_finish_workflow_external_system(workflow, db_records, mocker):
         assert mock_external.call_args[1]["old_record"] is not None
         assert mock_external.call_args[1]["new_record"] is not None
 
+    current_pid = PersistentIdentifier.get("recid", "1")
+    with patch("weko_deposit.pidstore.get_record_without_version",
+               return_value=None):
+        with patch('weko_workflow.utils.call_external_system') as mock_external:
+            handle_finish_workflow(deposit, current_pid, None)
+            mock_external.assert_not_called()
+
+
 # def delete_cache_data(key: str):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_delete_cache_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_delete_cache_data(client):

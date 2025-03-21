@@ -1987,10 +1987,14 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     item_id = current_pid.object_uuid
                 db.session.commit()
 
-        new_record = WekoRecord.get_record_by_pid(record_pid.pid_value)
-        new_item_reference_list = ItemReference.get_src_references(record_pid.pid_value).all()
-        call_external_system(old_record=old_record, new_record=new_record,
-                             old_item_reference_list=old_item_reference_list, new_item_reference_list=new_item_reference_list)
+        if record_pid:
+            new_record = WekoRecord.get_record_by_pid(record_pid.pid_value)
+            new_item_reference_list = \
+                ItemReference.get_src_references(record_pid.pid_value).all()
+            call_external_system(old_record=old_record,
+                                 new_record=new_record,
+                                 old_item_reference_list=old_item_reference_list,
+                                 new_item_reference_list=new_item_reference_list)
 
         from invenio_oaiserver.tasks import update_records_sets
         update_records_sets.delay([str(pid_without_ver.object_uuid)])

@@ -188,11 +188,71 @@ def test_call_external_system(app, records, mocker):
             update_api_mock.assert_called_once()
             mock_logger.assert_called_with(result)
 
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_external.py::test_call_external_system_error_config -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_call_external_system_error_config(app, records, mocker):
     # case config error
-    current_app.config["EXTERNAL_SYSTEM"] = None
-    with patch("weko_records_ui.external.validate_records") as mock_validate:
-        call_external_system()
-        mock_validate.assert_not_called()
+    EXTERNAL_SYSTEM = current_app.config.get("EXTERNAL_SYSTEM")
+    WEKO_RECORDS_UI_OA_GET_TOKEN_URL = current_app.config.get(
+        "WEKO_RECORDS_UI_OA_GET_TOKEN_URL")
+    record1 = WekoRecord.get_record_by_pid(1)
+    token_api_response = MagicMock()
+    token_api_response.text = "mocked_token"
+    article_id = 1234
+    api_cert = {
+        "cert_data": {
+            "client_id": "aaa",
+            "secret": "bbb"
+        }
+    }
+    mocker.patch("weko_records_ui.external.get_article_id",
+                 return_value=article_id)
+    mocker.patch("weko_records_ui.external.ApiCertificate.select_by_api_code",
+                 return_value=api_cert)
+    with patch('requests.Session.put',
+                   return_value=None) as update_api_mock:
+        # case EXTERNAL_SYSTEM is None
+        current_app.config.update(EXTERNAL_SYSTEM=None)
+        with patch("weko_records_ui.external.validate_records") as mock_validate:
+            call_external_system(record1)
+            mock_validate.assert_not_called()
+
+        current_app.config.update(EXTERNAL_SYSTEM=EXTERNAL_SYSTEM)
+
+        # case WEKO_RECORDS_UI_OA_GET_TOKEN_URL is None
+        current_app.config.update(WEKO_RECORDS_UI_OA_GET_TOKEN_URL=None)
+        with patch('requests.Session.post',
+                   return_value=token_api_response) as token_api_mock:
+            call_external_system(new_record=record1)
+            token_api_mock.assert_not_called()
+            update_api_mock.assert_not_called()
+
+        # case WEKO_RECORDS_UI_OA_GET_TOKEN_URL == ""
+        current_app.config.update(WEKO_RECORDS_UI_OA_GET_TOKEN_URL="")
+        with patch('requests.Session.post',
+                   return_value=token_api_response) as token_api_mock:
+            call_external_system(new_record=record1)
+            token_api_mock.assert_not_called()
+            update_api_mock.assert_not_called()
+
+        current_app.config.update(
+            WEKO_RECORDS_UI_OA_GET_TOKEN_URL=WEKO_RECORDS_UI_OA_GET_TOKEN_URL)
+
+        # case WEKO_RECORDS_UI_OA_UPDATE_STATUS_URL is None
+        current_app.config.update(WEKO_RECORDS_UI_OA_UPDATE_STATUS_URL=None)
+        with patch('requests.Session.post',
+                   return_value=token_api_response) as token_api:
+            call_external_system(new_record=record1)
+            token_api.assert_called()
+            update_api_mock.assert_not_called()
+
+        # case WEKO_RECORDS_UI_OA_UPDATE_STATUS_URL == ""
+        current_app.config.update(WEKO_RECORDS_UI_OA_UPDATE_STATUS_URL="")
+        with patch('requests.Session.post',
+                   return_value=token_api_response) as token_api:
+            call_external_system(new_record=record1)
+            token_api.assert_called()
+            update_api_mock.assert_not_called()
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_external.py::test_select_call_external_system_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
