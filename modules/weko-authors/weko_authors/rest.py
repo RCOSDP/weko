@@ -238,7 +238,15 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
                     raise BadRequest(f"Invalid idtype '{idtype}'.")
                 idtype_id = prefix_obj.id
 
-            search_query = {"query": {"bool": {"must": []}}}
+            search_query = \
+            {"query": 
+                {"bool": 
+                    {"must": [
+                        {"term": {"gather_flg": {"value": 0}}}
+                        ], 
+                    "must_not": [{ "term": { "is_deleted": True}}]}
+                }
+            }
 
             if fullname:
                 parts = fullname.split(" ", 1)
@@ -329,6 +337,11 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
         """Handle POST request for author registration."""
         import uuid
         from weko_authors.models import Authors
+        lang_options_list = [
+                "ja", "ja-Kana", "en", "fr", "it", "de", "es",
+                "zh-cn", "zh-tw", "ru", "la", "ms", "eo", "ar",
+                "el", "ko"
+            ]
         try:
             data = request.get_json()
 
@@ -337,6 +350,10 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             author_data = data.get("author")
             if not author_data:
                 raise BadRequest("author can not be null.")
+            
+            prefix_schemes,affiliation_schemes = self.get_all_schemes()
+            if not self.validate_request_data(self.extract_data(author_data), lang_options_list, prefix_schemes, affiliation_schemes):
+                raise BadRequest("Invalid Author Data, 'idtype' or 'language' Not Allowed.")
 
             self.validate_author_data(author_data,author_data.get("pk_id"))
             
@@ -502,14 +519,11 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             pk_id = data.get("pk_id")
             
             if pk_id:
-                try:
-                    pk_id = int(pk_id)
-                except ValueError:
+                if not pk_id.isdigit():
                     raise BadRequest("Invalid author ID.")
             
             for data_filed in ["emailInfo","authorIdInfo","authorNameInfo","affiliationInfo"]:
                 if not author_data.get(data_filed,False):
-                    print(f"[]{data_filed}")
                     author_data[data_filed] = []
             
             prefix_schemes,affiliation_schemes = self.get_all_schemes()

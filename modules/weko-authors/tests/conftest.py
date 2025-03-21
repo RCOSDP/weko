@@ -419,12 +419,12 @@ def app2(base_app2):
 @pytest.yield_fixture()
 def db(app):
     """Database fixture."""
-    db_.session.remove()
-    db_.drop_all()
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
     db_.create_all()
     yield db_
+    db_.session.remove()
+    db_.drop_all()
     # drop_database(str(db_.engine.url))
 
 
