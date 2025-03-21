@@ -65,6 +65,8 @@ WEKO_DEPOSIT_ITEM_UPDATE_STATUS_TTL = 60 * 10
 WEKO_DEPOSIT_ITEMS_CACHE_TTL = 300
 """ cache default timeout 5 minutes"""
 
+WEKO_DEPOSIT_MAX_BACK_OFF_TIME = 32
+
 _PID = 'pid(depid,record_class="weko_deposit.api:WekoDeposit")'
 
 #: Template for deposit list view.

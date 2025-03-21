@@ -13,7 +13,7 @@ import tempfile
 import json
 import uuid
 from os.path import dirname, join
-
+from datetime import datetime
 from elasticsearch import Elasticsearch
 from sqlalchemy import inspect
 
@@ -32,7 +32,10 @@ from invenio_admin import InvenioAdmin
 from invenio_assets import InvenioAssets
 from invenio_cache import InvenioCache
 from invenio_communities.models import Community
-from invenio_db import InvenioDB, db as db_
+# from invenio_db import InvenioDB, db as db_
+from invenio_db import InvenioDB
+from invenio_oauth2server import InvenioOAuth2Server, InvenioOAuth2ServerREST
+from invenio_db import db as db_
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.models import Location, FileInstance
 from invenio_indexer import InvenioIndexer
@@ -40,12 +43,16 @@ from invenio_search import InvenioSearch,RecordsSearch
 from weko_authors.config import WEKO_AUTHORS_REST_ENDPOINTS
 from weko_search_ui import WekoSearchUI
 from weko_index_tree.models import Index
-
+from flask_limiter import Limiter
+from flask_menu import Menu
 from weko_authors.views import blueprint_api
+from weko_authors.rest import create_blueprint
 from weko_authors import WekoAuthors
 from weko_authors.models import Authors, AuthorsPrefixSettings, AuthorsAffiliationSettings
+from weko_accounts import WekoAccounts
 from weko_theme import WekoTheme
 import weko_authors.mappings.v2
+
 
 sys.path.append(os.path.dirname(__file__))
 
@@ -144,8 +151,17 @@ def base_app(request, instance_path,search_class):
         WEKO_AUTHORS_AFFILIATION_IDENTIFIER_ITEM_OTHER=4,
         WEKO_AUTHORS_LIST_SCHEME_AFFILIATION=[
             'ISNI', 'GRID', 'Ringgold', 'kakenhi', 'Other'],
+        WEKO_API_LIMIT_RATE_DEFAULT=["100 per minute"],
         CELERY_ALWAYS_EAGER=True,
         CELERY_CACHE_BACKEND="memory",
+        WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY = "authors_import_result_file_of_over_path",
+        WEKO_AUTHORS_EXPORT_TEMP_FOLDER_PATH =   "/var/tmp/authors_export",
+        WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY = 'authors_import_user_file_key',
+        WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH = "var/tmp/authors_import",
+        WEKO_AUTHORS_FILE_MAPPING_FOR_PREFIX =["scheme", "name", "url", "is_deleted"],
+        WEKO_AUTHORS_IMPORT_TMP_PREFIX = 'authors_import_',
+        WEKO_AUTHORS_IMPORT_BATCH_SIZE = 100,
+        WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYS = 1000,
         CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
         CELERY_RESULT_BACKEND="cache",
         CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
@@ -154,8 +170,16 @@ def base_app(request, instance_path,search_class):
         SEARCH_ELASTIC_HOSTS=os.environ.get("INVENIO_ELASTICSEARCH_HOST"),
         SEARCH_INDEX_PREFIX="{}-".format('test'),
         SEARCH_CLIENT_CONFIG=dict(timeout=120, max_retries=10),
+        WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY="weko_authors_export_target",
+        WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY="weko_authors_export_stop_point",
+        WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY="weko_authors_export_temp_file_path_key",
+        WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_USER_FILE_PATH_KEY = "authors_import_band_check_user_file_path",
+        WEKO_AUTHORS_IMPORT_CACHE_RESULT_FILE_PATH_KEY = "authors_import_result_file_path",
+        WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY= "result_summary_key",
+        WEKO_AUTHORS_IMPORT_CACHE_OVER_MAX_TASK_KEY = "authors_import_over_max_task",
     )
     Babel(app_)
+    Menu(app_)
     InvenioDB(app_)
     InvenioCache(app_)
     InvenioAccounts(app_)
@@ -173,6 +197,10 @@ def base_app(request, instance_path,search_class):
     WekoTheme(app_)
     WekoAuthors(app_)
     WekoSearchUI(app_)
+    WekoAccounts(app_)
+    InvenioOAuth2Server(app_)
+    InvenioOAuth2ServerREST(app_)
+
 
     # app_.register_blueprint(blueprint)
     app_.register_blueprint(blueprint_api, url_prefix='/api/authors')
@@ -190,6 +218,131 @@ def app(base_app):
 def base_app2(instance_path,search_class):
     """Flask application fixture for ES."""
     app_ = Flask('testapp', instance_path=instance_path)
+    WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION ={
+        "json_id": "affiliationInfo",
+        "child": [
+            {
+                "json_id": "identifierInfo",
+                "child": [
+                    {
+                        "json_id": "affiliationIdType",
+                        "label_en": "Affiliation Identifier Scheme",
+                        "label_jp": "外部所属機関ID 識別子",
+                        "validation": {
+                            "validator": {
+                                "class_name": "weko_authors.contrib.validation",
+                                "func_name": "validate_affiliation_identifier_scheme"
+                            },
+                            "required": {
+                                "if": [
+                                    "affiliationId"
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "json_id": "affiliationId",
+                        "label_en": "Affiliation Identifier",
+                        "label_jp": "外部所属機関ID",
+                        "validation": {
+                            "required": {
+                                "if": [
+                                    "affiliationIdType"
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "json_id": "identifierShowFlg",
+                        "label_en": "Affiliation Identifier Display",
+                        "label_jp": "外部所属機関ID 表示／非表示",
+                        "mask": {
+                            "true": "Y",
+                            "false": "N"
+                        }
+                    }
+                ]
+            },
+            {
+                "json_id": "affiliationNameInfo",
+                "child": [
+                    {
+                        "json_id": "affiliationName",
+                        "label_en": "Affiliation Name",
+                        "label_jp": "外部所属機関名"
+                    },
+                    {
+                        "json_id": "affiliationNameLang",
+                        "label_en": "Language",
+                        "label_jp": "言語",
+                        "validation": {
+                            "map": [
+                                "ja",
+                                "ja-Kana",
+                                "en",
+                                "fr",
+                                "it",
+                                "de",
+                                "es",
+                                "zh-cn",
+                                "zh-tw",
+                                "ru",
+                                "la",
+                                "ms",
+                                "eo",
+                                "ar",
+                                "el",
+                                "ko"
+                            ]
+                        }
+                    },
+                    {
+                        "json_id": "affiliationNameShowFlg",
+                        "label_en": "Affiliation Name Display",
+                        "label_jp": "外部所属機関名・言語 表示／非表示",
+                        "mask": {
+                            "true": "Y",
+                            "false": "N"
+                        },
+                        "validation": {
+                            "map": [
+                                "Y",
+                                "N"
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "json_id": "affiliationPeriodInfo",
+                "child": [
+                    {
+                        "json_id": "periodStart",
+                        "label_en": "Affiliation Period Start",
+                        "label_jp": "外部所属機関 所属期間 開始日",
+                        "validation": {
+                            "validator": {
+                                "class_name": "weko_authors.contrib.validation",
+                                "func_name": "validate_affiliation_period_start"
+                            }
+                        }
+                    },
+                    {
+                        "json_id": "periodEnd",
+                        "label_en": "Affiliation Period End",
+                        "label_jp": "外部所属機関 所属期間 終了日",
+                        "validation": {
+                            "validator": {
+                                "class_name": "weko_authors.contrib.validation",
+                                "func_name": "validate_affiliation_period_end"
+                            }
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+
     app_.config.update(
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
@@ -220,6 +373,20 @@ def base_app2(instance_path,search_class):
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
         SEARCH_ELASTIC_HOSTS=os.environ.get("SEARCH_ELASTIC_HOSTS", "elasticsearch"),
+        WEKO_AUTHORS_EXPORT_BATCH_SIZE=2,
+        WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION=WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION,
+        WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY=2,
+        WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL=1,
+        WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH='/data',
+        WEKO_AUTHORS_CACHE_TTL=100,
+        WEKO_AUTHORS_IMPORT_BATCH_SIZE=2,
+        WEKO_AUTHORS_IMPORT_MAX_RETRY=2,
+        WEKO_AUTHORS_IMPORT_RETRY_INTERVAL=1,
+        WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY= "result_summary_key",
+        WEKO_AUTHORS_BULK_IMPORT_RETRY_INTERVAL= 1,
+        WEKO_AUTHORS_EXPORT_CACHE_URL_KEY= 'weko_authors_exported_url',
+        WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY= 'weko_authors_export_stop_point',
+        WEKO_AUTHORS_IMPORT_CACHE_FORCE_CHANGE_MODE_KEY= 'authors_import_force_change',
     )
     Babel(app_)
     InvenioDB(app_)
@@ -279,9 +446,9 @@ def esindex(app):
 
     yield current_search_client
 
-    with app.test_request_context():
-        current_search_client.indices.delete_alias(index="test-authors-author-v1.0.0", name=app.config["WEKO_AUTHORS_ES_INDEX_NAME"])
-        current_search_client.indices.delete(index="test-authors-author-v1.0.0", ignore=[400, 404])
+    # with app.test_request_context():
+    #     current_search_client.indices.delete_alias(index="test-authors-author-v1.0.0", name=app.config["WEKO_AUTHORS_ES_INDEX_NAME"])
+    #     current_search_client.indices.delete(index="test-authors-author-v1.0.0", ignore=[400, 404])
 
 
 @pytest.fixture()
@@ -464,6 +631,30 @@ def authors(app,db,esindex):
     returns = list()
     for data in datas:
         returns.append(Authors(
+            gather_flg=data.get("gather_flg", 0),
+            is_deleted=data.get("is_deleted", False),
+            json=data
+        ))
+        es_id = data["id"]
+        es_data = json.loads(json.dumps(data))
+        es_data["id"]=""
+        current_search_client.index(
+            index=app.config["WEKO_AUTHORS_ES_INDEX_NAME"],
+            doc_type=app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+            id=es_id,
+            body=es_data,
+            refresh='true')
+    
+    db.session.add_all(returns)
+    db.session.commit()
+    return returns
+
+@pytest.fixture()
+def authors2(app,db,esindex):
+    datas = json_data("data/author2.json")
+    returns = list()
+    for data in datas:
+        returns.append(Authors(
             gather_flg=0,
             is_deleted=False,
             json=data
@@ -530,21 +721,230 @@ def file_instance(db):
     db.session.commit()
 
 
+# @pytest.fixture()
+# def esindex(app2):
+#     from invenio_search import current_search_client as client
+#     index_name = app2.config["INDEXER_DEFAULT_INDEX"]
+#     alias_name = "test-author-alias"
+
+#     with open("tests/data/mappings/author-v1.0.0.json","r") as f:
+#         mapping = json.load(f)
+
+#     with app2.test_request_context():
+#         client.indices.create(index=index_name, body=mapping, ignore=[400])
+#         client.indices.put_alias(index=index_name, name=alias_name)
+
+#     yield client
+
+#     with app2.test_request_context():
+#         client.indices.delete_alias(index=index_name, name=alias_name)
+#         client.indices.delete(index=index_name, ignore=[400, 404])
+        
+from invenio_oauth2server.models import Client
+
 @pytest.fixture()
-def esindex(app2):
-    from invenio_search import current_search_client as client
-    index_name = app2.config["INDEXER_DEFAULT_INDEX"]
-    alias_name = "test-author-alias"
+def client_model(client_api, users):
+    """Create client."""
+    with db_.session.begin_nested():
+        # create resource_owner -> client_1
+        client_ = Client(
+            client_id='client_test_u1c1',
+            client_secret='client_test_u1c1',
+            name='client_test_u1c1',
+            description='',
+            is_confidential=False,
+            user=users[0]['obj'],
+            _redirect_uris='',
+            _default_scopes='',
+        )
+        db_.session.add(client_)
+    db_.session.commit()
+    return client_
 
-    with open("tests/data/mappings/author-v1.0.0.json","r") as f:
-        mapping = json.load(f)
+@pytest.yield_fixture()
+def client_api(app):
+    app.register_blueprint(create_blueprint(app.config['WEKO_AUTHORS_REST_ENDPOINTS']))
+    with app.test_client() as client:
+        yield client
 
-    with app2.test_request_context():
-        client.indices.create(index=index_name, body=mapping, ignore=[400])
-        client.indices.put_alias(index=index_name, name=alias_name)
+from invenio_oauth2server.models import Token
+from datetime import timedelta
+@pytest.fixture()
+def create_token_user_noroleuser(client_api, client_model, users):
+    """Create token."""
+    with db_.session.begin_nested():
+        token_ = Token(
+            client=client_model,
+            user=next((user for user in users if user["id"] == 9), None)['obj'],
+            token_type='bearer',
+            access_token='dev_access_create_token_user_noroleuser',
+            # refresh_token='',
+            expires=datetime.now() + timedelta(hours=10),
+            is_personal=True,
+            is_internal=False,
+            _scopes="author:create author:delete author:search author:update",
+        )
+        db_.session.add(token_)
+    db_.session.commit()
+    return token_
 
-    yield client
+@pytest.fixture()
+def create_token_user_sysadmin(client_api, client_model, users):
+    """Create token."""
+    print(next((user for user in users if user["id"] == 5), None)['obj'])
+    with db_.session.begin_nested():
+        token_ = Token(
+            client=client_model,
+            user=next((user for user in users if user["id"] == 5), None)['obj'],
+            token_type='bearer',
+            access_token='dev_access_create_token_user_sysadmin',
+            # refresh_token='',
+            expires=datetime.now() + timedelta(hours=10),
+            is_personal=True,
+            is_internal=False,
+            _scopes="author:create author:delete author:search author:update",
+        )
+        db_.session.add(token_)
+    db_.session.commit()
+    return token_
 
-    with app2.test_request_context():
-        client.indices.delete_alias(index=index_name, name=alias_name)
-        client.indices.delete(index=index_name, ignore=[400, 404])
+@pytest.fixture()
+def create_token_user_sysadmin_without_scope(client_api, client_model, users):
+    """Create token."""
+    print(next((user for user in users if user["id"] == 5), None)['obj'])
+    with db_.session.begin_nested():
+        token_ = Token(
+            client=client_model,
+            user=next((user for user in users if user["id"] == 5), None)['obj'],
+            token_type='bearer',
+            access_token='dev_access_create_token_user_sysadmin_without_scope',
+            # refresh_token='',
+            expires=datetime.now() + timedelta(hours=10),
+            is_personal=True,
+            is_internal=False,
+            _scopes="",
+        )
+        db_.session.add(token_)
+    db_.session.commit()
+    return token_
+
+@pytest.fixture()
+def json_headers():
+    """JSON headers."""
+    return [('Content-Type', 'application/json'),
+            ('Accept', 'application/json')]
+
+from copy import deepcopy
+def fill_oauth2_headers(json_headers, token):
+    """Create authentication headers (with a valid oauth2 token)."""
+    headers = deepcopy(json_headers)
+    headers.append(
+        ('Authorization', 'Bearer {0}'.format(token.access_token))
+    )
+    return headers
+
+@pytest.fixture()
+def auth_headers_noroleuser(client_api, json_headers, create_token_user_noroleuser):
+    """Authentication headers (with a valid oauth2 token).
+    It uses the token associated with the first user.
+    """
+    return fill_oauth2_headers(json_headers, create_token_user_noroleuser)
+
+@pytest.fixture()
+def auth_headers_sysadmin(client_api, json_headers, create_token_user_sysadmin):
+    """Authentication headers (with a valid oauth2 token).
+    It uses the token associated with the first user.
+    """
+    return fill_oauth2_headers(json_headers, create_token_user_sysadmin)
+
+@pytest.fixture()
+def auth_headers_sysadmin_without_scope(client_api, json_headers, create_token_user_sysadmin_without_scope):
+    """Authentication headers (with a valid oauth2 token).
+    It uses the token associated with the first user.
+    """
+    return fill_oauth2_headers(json_headers, create_token_user_sysadmin_without_scope)
+
+@pytest.fixture
+def author_records_for_test(app, esindex, db):
+    record_1_data = {
+        "emailInfo": [{"email": "sample@xxx.co.jp"}],
+        "authorIdInfo": [
+            {"idType": "2", "authorId": "https://orcid.org/##", "authorIdShowFlg": "true"},
+            {"idType": "1", "authorId": "1", "authorIdShowFlg": "true"}
+        ],
+        "authorNameInfo": [
+            {"language": "en", "firstName": "Test_1", "familyName": "User_1", "nameFormat": "familyNmAndNm", "nameShowFlg": "true"}
+        ],
+        "affiliationInfo": [{
+            "identifierInfo": [{"affiliationId": "https://ror.org/##", "affiliationIdType": "3", "identifierShowFlg": "true"}],
+            "affiliationNameInfo": [{"affiliationName": "NII", "affiliationNameLang": "en", "affiliationNameShowFlg": "true"}]
+        }]
+    }
+
+    record_2_data = {
+        "emailInfo": [{"email": "sample@xxx.co.jp"}],
+        "authorIdInfo": [
+            {"idType": "2", "authorId": "https://orcid.org/##", "authorIdShowFlg": "true"},
+            {"idType": "1", "authorId": "2", "authorIdShowFlg": "true"}
+        ],
+        "authorNameInfo": [
+            {"language": "en", "firstName": "Test_2", "familyName": "User_2", "nameFormat": "familyNmAndNm", "nameShowFlg": "true"}
+        ],
+        "affiliationInfo": [{
+            "identifierInfo": [{"affiliationId": "https://ror.org/##", "affiliationIdType": "3", "identifierShowFlg": "true"}],
+            "affiliationNameInfo": [{"affiliationName": "NII", "affiliationNameLang": "en", "affiliationNameShowFlg": "true"}]
+        }]
+    }
+
+    record_3_data = {
+        "emailInfo": [{"email": "sample@xxx.co.jp"}],
+        "authorIdInfo": [
+            {"idType": "2", "authorId": "https://orcid.org/##", "authorIdShowFlg": "true"},
+            {"idType": "1", "authorId": "3", "authorIdShowFlg": "true"}
+        ],
+        "authorNameInfo": [
+            {"language": "en", "firstName": "Test_3", "familyName": "User_3", "nameFormat": "familyNmAndNm", "nameShowFlg": "true"}
+        ],
+        "affiliationInfo": [{
+            "identifierInfo": [{"affiliationId": "https://ror.org/##", "affiliationIdType": "3", "identifierShowFlg": "true"}],
+            "affiliationNameInfo": [{"affiliationName": "NII", "affiliationNameLang": "en", "affiliationNameShowFlg": "true"}]
+        }]
+    }
+    record_4_data = {
+        "emailInfo": [{"email": "sample@xxx.co.jp"}],
+        "authorIdInfo": [
+            {"idType": "2", "authorId": "https://orcid.org/##", "authorIdShowFlg": "true"},
+            {"idType": "1", "authorId": "4", "authorIdShowFlg": "true"}
+        ],
+        "authorNameInfo": [
+            {"language": "en", "firstName": "Test_3", "familyName": "User_3", "nameFormat": "familyNmAndNm", "nameShowFlg": "true"}
+        ],
+        "affiliationInfo": [{
+            "identifierInfo": [{"affiliationId": "https://ror.org/##", "affiliationIdType": "3", "identifierShowFlg": "true"}],
+            "affiliationNameInfo": [{"affiliationName": "NII", "affiliationNameLang": "en", "affiliationNameShowFlg": "true"}]
+        }]
+    }
+    from weko_authors.api import WekoAuthors
+    record_1 = WekoAuthors.create(record_1_data)
+    record_2 = WekoAuthors.create(record_2_data)
+    record_3 = WekoAuthors.create(record_3_data)
+    record_3 = WekoAuthors.create(record_4_data)
+    
+    esindex.indices.refresh(index=app.config['WEKO_AUTHORS_ES_INDEX_NAME'])
+    result=[]
+    for i in range(4):
+        search_results = esindex.search(
+            index=app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+            body={"query": {"term": {"pk_id": i+1}}},
+            size=1
+        )
+        if search_results["hits"]["total"] > 0:
+            
+            result.append(search_results["hits"]["hits"][0]["_id"])
+
+    return {
+        "1": result[0],
+        "2": result[1],
+        "3": result[2],
+        "4": result[3]
+    }
