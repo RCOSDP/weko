@@ -33,22 +33,17 @@ from invenio_oauth2server.provider import oauth2
 from weko_accounts.utils import roles_required
 from weko_admin.api import TempDirInfo
 from weko_records_ui.utils import get_record_permalink, soft_delete
-from weko_search_ui.utils import import_items_to_system
+from weko_search_ui.utils import import_items_to_system, import_items_to_activity
 from weko_workflow.utils import get_site_info_name
 from weko_workflow.scopes import activity_scope
 
 from .config import WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE
 from .decorators import check_on_behalf_of, check_package_contents
 from .errors import ErrorType, WekoSwordserverException
-from .registration import (
-    # check_jsonld_import_items,
-    check_import_items,
-    # create_activity_from_jpcoar,
-    import_items_to_activity
-)
 from .utils import (
     check_import_file_format,
     is_valid_file_hash,
+    check_import_items,
     update_item_ids,
     get_shared_id_from_on_behalf_of
 )
@@ -331,8 +326,9 @@ def post_service_document():
         item["root_path"] = os.path.join(data_path, "data")
         try:
             if register_type == "Direct":
-                import_result = import_items_to_system(item,
-                                    request_info=request_info)
+                import_result = import_items_to_system(
+                    item, request_info=request_info
+                )
                 if not import_result.get("success"):
                     current_app.logger.error(
                         f"Error in import_items_to_system: {item.get('error_id')}"
@@ -347,7 +343,7 @@ def post_service_document():
                     abort(403)
 
                 url, recid, _ , error = import_items_to_activity(
-                    item, data_path, request_info=request_info
+                    item, request_info=request_info
                 )
                 activity_id = url.split("/")[-1]
                 return activity_id, recid, error

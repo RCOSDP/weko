@@ -2126,6 +2126,46 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
     return {"success": True, "recid": item["id"]}
 
 
+def import_items_to_activity(item, request_info):
+    workflow_id = request_info.get("workflow_id")
+    # when metadata format was XML, get id from admin setting
+    if workflow_id is None:
+        settings = AdminSettings.get("sword_api_setting", dict_to_object=False)
+        default_format = settings.get("default_format", "XML")
+        data_format = settings.get("data_format")
+        workflow_id = int(data_format.get(default_format, {}).get("workflow", "-1"))
+
+    metadata = item.get("metadata")
+    index = metadata.get("path")
+    files_info = metadata.pop("files_info", [{}])
+    files = [
+        os.path.join(item.get("root_path"), file_info.get("url", {}).get("label"))
+            for file_info
+            in files_info[0].get("items", {})
+    ]
+    comment = metadata.get("comment")
+    link_data = getattr(item["metadata"], "link_data", None)
+    grant_data = item.get("grant_data")
+
+    error = None
+    try:
+        from weko_workflow.headless.activity import HeadlessActivity
+        headless = HeadlessActivity()
+        url, current_action, recid = headless.auto(
+            user_id= request_info.get("user_id"), workflow_id=workflow_id,
+            index=index, metadata=metadata, files=files, comment=comment,
+            link_data=link_data, grant_data=grant_data
+        )
+    except Exception as ex:
+        traceback.print_exc()
+        url = headless.detail
+        recid = headless.recid
+        current_action = headless.current_action
+        error = True
+
+    return url, recid, current_action, error
+
+
 def handle_item_title(list_record):
     """Prepare item title.
 

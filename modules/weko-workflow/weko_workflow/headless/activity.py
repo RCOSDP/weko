@@ -30,7 +30,6 @@ from weko_items_ui.utils import update_index_tree_for_record, validate_form_inpu
 from weko_items_ui.views import check_validation_error_msg
 from weko_records.api import ItemTypes
 from weko_records.serializers.utils import get_mapping
-from weko_search_ui.utils import get_data_by_property
 
 from ..api import Action, WorkActivity, WorkFlow, ActivityStatusPolicy
 from ..errors import WekoWorkflowException
@@ -290,6 +289,7 @@ class HeadlessActivity(WorkActivity):
                 feedback_maillist=feedback_maillist
             )
 
+            from weko_search_ui.utils import get_data_by_property
             # get value of "Title" from metadata by jpcoar_mapping
             item_map = get_mapping(self.item_type.id, 'jpcoar_mapping', self.item_type)
             title_value_key = "title.@value"

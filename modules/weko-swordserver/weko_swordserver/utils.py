@@ -22,10 +22,18 @@ from sqlalchemy.exc import SQLAlchemyError
 from invenio_accounts.models import User
 from invenio_oauth2server.models import Token
 from weko_accounts.models import ShibbolethUser
+from weko_admin.models import AdminSettings
 from weko_search_ui.config import SWORD_METADATA_FILE, ROCRATE_METADATA_FILE
+from weko_search_ui.utils import (
+    check_tsv_import_items,
+    check_xml_import_items,
+    check_jsonld_import_items
+)
+from weko_workflow.api import WorkFlow as WorkFlows
+from weko_workflow.models import  WorkFlow
 
-from .api import SwordClient, SwordItemTypeMapping
-from .errors import WekoSwordserverException, ErrorType
+from .api import SwordClient
+from .errors import ErrorType, WekoSwordserverException
 
 
 def check_import_file_format(file, packaging):
@@ -130,46 +138,6 @@ def get_shared_id_from_on_behalf_of(on_behalf_of):
     return shared_id
 
 
-def unpack_zip(file):
-    """Unpack zip file.
-
-    Unpack zip file and return extracted files information.
-
-    Args:
-        file (FileStorage | str): Zip file object or file path.
-
-    Returns:
-        tuple (str, list[str]):
-        data_path: Path of extracted files, file_list: List of extracted files.
-
-    """
-    data_path = os.path.join(
-        tempfile.gettempdir(),
-        current_app.config.get("WEKO_SEARCH_UI_IMPORT_TMP_PREFIX")
-            + datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")[:-3]
-    )
-
-    # Create temp dir for import data
-    os.mkdir(data_path)
-
-    # Extract zip file, Extracted files remain.
-    with ZipFile(file) as zip_ref:
-        file_list = []
-        for info in zip_ref.infolist():
-            try:
-                info.filename = (
-                    info.orig_filename.encode("cp437").decode("cp932"))
-                # replace backslash to slash
-                if os.sep != "/" and os.sep in info.filename:
-                    info.filename = info.filename.replace(os.sep, "/")
-                file_list.append(info.filename)
-            except Exception:
-                traceback.print_exc()
-                raise
-        zip_ref.extractall(path=data_path)
-
-    return data_path, file_list
-
 
 def is_valid_file_hash(expected_hash, file):
     """Validate body hash.
@@ -194,157 +162,106 @@ def is_valid_file_hash(expected_hash, file):
     return expected_hash == body_hash
 
 
-# def get_record_by_client_id(client_id):
-#     """
-#     Get the SwordClient and SwordItemTypeMapping records associated with client ID.
+def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
+    """Check metadata file for import.
 
-#     Args:
-#         client_id (str): The ID of the client to get the settings records for.
+    Check the contents of the file and return the result of the check.
 
-#     Returns:
-#         tuple (SwordClientModel, SwordItemTypeMappingModel):
-#             SwordClientModel: The SwordClient record associated with the client ID.
-#             SwordItemTypeMappingModel: The SwordItemTypeMapping record associated with
-#             the client ID.
-#             If the client or mapping is not found, the corresponding
-#             value in the tuple will be None.
-#     """
-#     sword_client = SwordClient.get_client_by_id(client_id)
-#     mapping_id = sword_client.mapping_id if sword_client is not None else None
-#     sword_mapping = SwordItemTypeMapping.get_mapping_by_id(mapping_id)
-#     return sword_client, sword_mapping
+    Args:
+        file (FileStorage): File object.
+        file_format (str): File format. "TSV/CSV", "XML" or "JSON-LD".
+        is_change_identifier (bool, optional):
+            Change Identifier Mode. Defaults to False.
+    Returns:
+        dict: Result of the check.
+    """
+    settings = AdminSettings.get(
+        "sword_api_setting", dict_to_object=False
+    ) or {}
+    settings = settings.get("data_format", {})
+    register_type = (
+        settings.get(file_format, {}).get("registration_type", "Direct")
+    )
+    check_result = {}
+    check_result.update({"register_type": register_type})
+    is_active = settings.get(file_format, {}).get(
+        "active", file_format == "TSV/CSV"
+    )
+    if not is_active:
+        current_app.logger.error(f"{file_format} metadata import is not enabled.")
+        raise WekoSwordserverException(
+            f"{file_format} metadata import is not enabled.",
+            ErrorType.MetadataFormatNotAcceptable
+        )
 
+    if file_format == "TSV/CSV":
+        check_result.update(check_tsv_import_items(file, is_change_identifier))
 
-# def process_json(json_ld):
-#     """Process json-ld.
+        if register_type == "Workflow":
+            # TODO: get workflow by item type id
+            workflow = None
+            check_result.update({"workflow_id": workflow.id})
+    elif file_format == "XML":
+        if register_type == "Direct":
+            raise WekoSwordserverException(
+                "Direct registration is not allowed for XML metadata yet.",
+                ErrorType.MetadataFormatNotAcceptable
+            )
 
-#     Process RO-Crate metadata json-ld data.
-#     Pick up necessary data from @graph and resolve links
-#     in order to map to WEKO item type.
+        workflow_id = int(settings.get(file_format, {}).get("workflow", "-1"))
+        workflow = WorkFlow.query.get(workflow_id)
+        item_type_id = workflow.itemtype_id
+        check_result.update(check_xml_import_items(file, item_type_id))
 
-#     Args:
-#         json_ld (dict): Json-ld data.
+    elif file_format == "JSON":
+        packaging = kwargs.get("packaging")
+        client_id = kwargs.get("client_id")
+        shared_id = kwargs.get("shared_id", -1)
 
-#     Returns:
-#         dict: Processed json data.
-#     """
-#     json = deepcopy(json_ld)
+        sword_client = SwordClient.get_client_by_id(client_id)
+        mapping_id = sword_client.mapping_id
+        # Check workflow and item type
+        register_type = sword_client.registration_type
+        check_result.update({"register_type": register_type})
 
-#     # transform list which contains @id to dict in @graph
-#     if "@graph" in json and isinstance(json["@graph"], list):
-#         new_value = {}
-#         for v in json["@graph"]:
-#             if isinstance(v, dict) and "@id" in v:
-#                 new_value[v["@id"]] = v
-#             else:
-#                 current_app.logger.error("Invalid json-ld format.")
-#                 raise WekoSwordserverException(
-#                     "Invalid json-ld format.",
-#                     ErrorType.MetadataFormatNotAcceptable
-#                 )
-#         json["@graph"] = new_value
-#     # TODO: support SWORD json-ld format
-#     else:
-#         current_app.logger.error("Invalid json-ld format.")
-#         raise WekoSwordserverException(
-#             "Invalid json-ld format.",
-#             ErrorType.MetadataFormatNotAcceptable
-#         )
-#     # Remove unnecessary keys
-#     json = json.get("@graph")
+        check_result.update({
+            "register_type": register_type,
+            "workflow_id": sword_client.workflow_id
+        })
 
-#     def _resolve_link(parent, key, value):
-#         if isinstance(value, dict):
-#             if len(value) == 1 and "@id" in value and value["@id"] in json:
-#                 parent[key] = json[value["@id"]]
-#             else:
-#                 for k, v in value.items():
-#                     _resolve_link(value, k, v)
-#         elif isinstance(value, list):
-#             for i, v in enumerate(value):
-#                 _resolve_link(value, i, v)
+        check_result.update(
+            check_jsonld_import_items(
+                file, packaging, mapping_id, shared_id,
+                is_change_identifier
+            )
+        )
 
-#     for key, value in json.items():
-#         _resolve_link(json, key, value)
+        if register_type == "Workflow":
+            workflow = WorkFlows().get_workflow_by_id(sword_client.workflow_id)
+            item_type_id = check_result.get("item_type_id")
+            # Check if workflow and item type match
+            if workflow.itemtype_id != item_type_id:
+                current_app.logger.error(
+                    "Item type and workflow do not match. "
+                    f"ItemType ID must be {item_type_id}, "
+                    f"but the workflow's ItemType ID was {workflow.itemtype_id}.")
+                raise WekoSwordserverException(
+                    "Item type and workflow do not match.",
+                    errorType=ErrorType.ServerError
+                )
+    else:
+        raise WekoSwordserverException(
+            f"Unsupported file format: {file_format}",
+            ErrorType.MetadataFormatNotAcceptable
+        )
 
-#     # replace Dataset identifier
-#     id = current_app.config["WEKO_SWORDSERVER_DATASET_ROOT"].get("")
-#     enc = current_app.config["WEKO_SWORDSERVER_DATASET_ROOT"].get("enc")
-#     json.update({enc: json.pop(id)})
+    if register_type == "Workflow" and (workflow is None or workflow.is_deleted):
+        raise WekoSwordserverException(
+            "Workflow is not configured for importing xml.",
+            ErrorType.ServerError
+    )
 
-#     # prepare json for mapper format
-#     json = {
-#         "record": {
-#             "header": {
-#                 "identifier": json.get(enc).get("name"),
-#                 "datestamp": (
-#                     parser.parse(json.get(enc).pop("datePublished"))
-#                     .strftime('%Y-%m-%d')
-#                 ),
-#                 "publish_status": json.get(enc).pop("accessMode"),
-#                 "indextree": (
-#                     int(json.get(enc).get("isPartOf").pop("sameAs", "/").split("/")[-1])
-#                         if "sameAs" in json.get(enc).get("isPartOf")
-#                         else None
-#                 )
-#             },
-#             "metadata": json
-#         }
-#     }
-
-#     return json
-
-# def get_priority(link_data):
-#     """Determine the priority of link data based on specific conditions.
-
-#     Args:
-#         link_data (list): A list of dictionaries containing 'sele_id' and 'item_id'.
-
-#     Returns:
-#         int: The priority level (1 to 6) based on the conditions.
-#     """
-#     sele_ids = [link['sele_id'] for link in link_data]
-#     item_ids = [link['item_id'] for link in link_data]
-
-#     # Check conditions
-#     all_is_supplement_to = all(
-#         sele_id == 'isSupplementTo'
-#         for sele_id in sele_ids
-#         )
-#     all_item_ids_not_numbers = all(
-#         not item_id.isdigit()
-#         for item_id in item_ids
-#         )
-#     has_item_ids_not_numbers = any(
-#         not item_id.isdigit()
-#         for item_id in item_ids
-#         )
-#     has_is_supplement_to_with_not_number = any(
-#         link['sele_id'] == 'isSupplementTo' and not link['item_id'].isdigit()
-#         for link in link_data
-#     )
-#     all_is_supplement_to_item_ids_are_numbers = all(
-#         link['item_id'].isdigit() for link in link_data
-#         if link['sele_id'] == 'isSupplementTo'
-#     )
-#     all_is_supplemented_by = all(
-#         sele_id == 'isSupplementedBy'
-#         for sele_id in sele_ids
-#         )
-
-#     # Determine priority
-#     if all_is_supplement_to and all_item_ids_not_numbers:
-#         return 1  # Highest priority
-#     elif all_is_supplement_to and has_item_ids_not_numbers:
-#         return 2  # Second priority
-#     elif has_is_supplement_to_with_not_number:
-#         return 3  # Third priority
-#     elif all_is_supplement_to and all_is_supplement_to_item_ids_are_numbers:
-#         return 4  # Fourth priority
-#     elif all_is_supplemented_by:
-#         return 5  # Lowest priority
-#     else:
-#         return 6  # Other cases
+    return check_result
 
 
 def update_item_ids(list_record, new_id):
