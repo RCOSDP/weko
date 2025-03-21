@@ -3784,14 +3784,12 @@ def check_duplicate(data, is_item=True):
     - list: List of duplicate record IDs.
     - list: List of duplicate record URLs.
     """
-    print(f"[utils.py] check_duplicate() 実行開始: {data}")
-
     # 文字列なら辞書に変換
     if isinstance(data, str):
         try:
             data = json.loads(data)
         except json.JSONDecodeError as e:
-            print(f"[ERROR] JSONデコード失敗: {e}")
+            current_app.logger.error(f"[ERROR] JSONデコード失敗: {e}")
             return False, [], []
 
     # 型チェック
