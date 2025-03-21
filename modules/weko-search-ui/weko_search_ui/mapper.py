@@ -1330,13 +1330,22 @@ class JsonLdMapper(JsonMapper):
         self.json_mapping = json_mapping
         super().__init__(None, itemtype_id)
 
-    def validate(self):
+    def is_valid(self):
         """Validate json-ld.
 
-        Args:
-            json_mapping (dict): mapping between json-ld and item type metadata.
         Returns:
-            errors (list[str]): list of errors.
+            bool: True if valid, False otherwise.
+        """
+        return self.validate() is None
+
+    def validate(self):
+        """Validate json-ld mapping.
+
+        Check if the json-ld mapping has required properties and
+        is in the item type.
+
+        Returns:
+            errors (list[str] | None): list of errors.
         """
         from flask_babelex import lazy_gettext as _
         errors = []
