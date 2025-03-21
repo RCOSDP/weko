@@ -1399,7 +1399,7 @@ class SwordAPISettingsView(BaseView):
                                 },
                                 PAGE_XML:
                                 {
-                                    "active": 'True',
+                                    "active": 'False',
                                     "registration_type": "Workflow",
                                     "workflow": "-1"
                                 }
