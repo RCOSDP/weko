@@ -2890,9 +2890,9 @@ class ItemLink(object):
             db.session.commit()
         except IntegrityError as ex:
             # Log and handle integrity errors (e.g., duplicate entries)
-            current_app.logger.error(ex.orig)
+            current_app.logger.error(ex)
             db.session.rollback()
-            return str(ex.orig)
+            return str(ex)
         except SQLAlchemyError as ex:
             # Log and handle other SQLAlchemy errors
             current_app.logger.error(ex)
