@@ -1225,6 +1225,20 @@ def db_records2(db, instance_path, users):
     yield result
 
 
+@pytest.fixture()
+def db_records3(db):
+    record_data = json_data("data/test_records2.json")
+    item_data = json_data("data/test_items2.json")
+    record_num = len(record_data)
+    result = []
+    with db.session.begin_nested():
+        for d in range(record_num):
+            result.append(create_record(record_data[d], item_data[d]))
+    db.session.commit()
+
+    yield result
+
+
 @pytest.fixture
 def redis_connect(app):
     redis_connection = RedisConnection().connection(

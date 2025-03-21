@@ -190,6 +190,11 @@ msgstr "取得"
 msgid "The following items is required. Please recheck and input."
 msgstr "以下の項目が入力必須となります。ご確認の上、再度入力してください。"
 
+#: weko_items_ui/templates/weko_items_ui/edit.html:316
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:464
+msgid "The same item may have been registered."
+msgstr "同一のアイテムが登録されている可能性があります。"
+
 #: weko_items_ui/templates/weko_items_ui/edit.html:315
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:462
 msgid ""

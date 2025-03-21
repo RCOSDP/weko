@@ -55,6 +55,11 @@ from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records.api import RecordBase
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.sql import func, cast, text
+from sqlalchemy.types import Text, String
+from sqlalchemy.orm import aliased
+from invenio_records.models import RecordMetadata
 from invenio_accounts.models import User
 from invenio_search import RecordsSearch
 from invenio_stats.utils import QueryRankingHelper, QuerySearchReportHelper
@@ -64,7 +69,7 @@ from invenio_stats import config
 #from invenio_stats.views import QueryRecordViewCount
 from jsonschema import SchemaError, ValidationError
 from simplekv.memory.redisstore import RedisStore
-from sqlalchemy import MetaData, Table
+from sqlalchemy import MetaData, Table, and_
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
@@ -3765,6 +3770,147 @@ def sanitize_input_data(data):
                 data[i] = __sanitize_string(data[i])
             else:
                 sanitize_input_data(data[i])
+
+def check_duplicate(data, is_item=True):
+    """
+    Check if a record or item is duplicate in records_metadata.
+    
+    Parameters:
+    - data (dict or str): Metadata dictionary (or JSON string).
+    - is_item (bool): True if checking an item, False if checking a record.
+
+    Returns:
+    - bool: True if duplicate exists, False otherwise.
+    - list: List of duplicate record IDs.
+    - list: List of duplicate record URLs.
+    """
+    # 文字列なら辞書に変換
+    if isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except json.JSONDecodeError as e:
+            current_app.logger.error(f"[ERROR] JSONデコード失敗: {e}")
+            return False, [], []
+
+    # 型チェック
+    if not isinstance(data, dict):
+        current_app.logger.error("データが辞書型ではありません。")
+        return False, [], []
+
+    # メタデータの取得
+    metadata = data if is_item else data.get("metainfo", {})
+
+    if not isinstance(metadata, dict):
+        current_app.logger.error("metadata の形式が正しくありません。")
+        return False, [], []
+
+    identifier = title = resource_type = creator = ""
+    host = request.host
+
+    # メタデータから検索対象の値を取得
+    for key, value in metadata.items():
+        if isinstance(value, list) and value:
+            first_item = value[0]
+            if isinstance(first_item, dict):
+                if "subitem_identifier_uri" in first_item:
+                    identifier = first_item["subitem_identifier_uri"]
+                if "subitem_title" in first_item:
+                    title = first_item["subitem_title"]
+                if "creatorNames" in first_item:
+                    creator_info = first_item["creatorNames"][0] if first_item["creatorNames"] else {}
+                    creator = creator_info.get("creatorName", "")
+        elif isinstance(value, dict):
+            if "resourcetype" in value:
+                resource_type = value["resourcetype"]
+
+    current_app.logger.debug(f"検索条件 - identifier: {identifier}, title: {title}, resource_type: {resource_type}, creator: {creator}")
+
+    # 1. `identifier` で検索し、ヒットすれば即 True を返す
+    if identifier:
+        query = text("""
+            SELECT COALESCE(
+                CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 
+                0
+            ) AS recid
+            FROM records_metadata
+            WHERE jsonb_path_exists(json, '$.**.subitem_identifier_uri ? (@ == "{}")')
+        """.format(identifier))
+        result = db.session.execute(query).fetchall()
+        db.session.commit()
+        
+        if result:
+            recid_list = [row[0] for row in result]
+            recid_list = list(set(recid_list))
+            item_links = [f"https://{host}/records/{recid}" for recid in recid_list]
+            current_app.logger.debug(f"重複データ (identifier): {recid_list}")
+            return True, recid_list, item_links
+
+    # 2. `title` で検索し、一致しなければ False を返す
+    if title:
+        query = text("""
+            SELECT COALESCE(
+                CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 
+                0
+            ) AS recid
+            FROM records_metadata
+            WHERE jsonb_path_exists(json, '$.**.subitem_title ? (@ == "{}")')
+        """.format(title))
+        result = db.session.execute(query).fetchall()
+        db.session.commit()
+        
+        if not result:
+            current_app.logger.debug("title が一致するレコードなし。")
+            return False, [], []
+
+    # 3. `resource_type` で検索し、一致しなければ False を返す
+    if resource_type:
+        query = text("""
+            SELECT COALESCE(
+                CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 
+                0
+            ) AS recid
+            FROM records_metadata
+            WHERE jsonb_path_exists(json, '$.**.resourcetype ? (@ == "{}")')
+        """.format(resource_type))
+        result = db.session.execute(query).fetchall()
+        db.session.commit()
+        
+        if not result:
+            current_app.logger.debug("resource_type が一致するレコードなし。")
+            return False, [], []
+
+    # 4. `creator` で検索し、1つでも一致していれば True を返す
+    if creator:
+        query = text("""
+            SELECT COALESCE(
+                CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 
+                0
+            ) AS recid
+            FROM records_metadata
+            WHERE jsonb_path_exists(json, '$.**.creatorNames[*].creatorName ? (@ == "{}")')
+        """.format(creator))
+        result = db.session.execute(query).fetchall()
+        db.session.commit()
+        
+        if result:
+            recid_list = [row[0] for row in result]
+            recid_list = list(set(recid_list))
+            item_links = [f"https://{host}/records/{recid}" for recid in recid_list]
+            return True, recid_list, item_links
+
+    # どの条件も一致しなかった場合
+    current_app.logger.debug("重複データなし。")
+    return False, [], []
+
+
+def is_duplicate_item(metadata):
+    """Check if an item is duplicate in records_metadata."""
+    return check_duplicate(metadata, is_item=True)
+
+
+def is_duplicate_record(data):
+    """Check if a record is duplicate in records_metadata."""
+    return check_duplicate(data, is_item=False)
 
 
 def save_title(activity_id, request_data):

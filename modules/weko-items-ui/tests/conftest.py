@@ -887,6 +887,19 @@ def db_records2(db,instance_path,users):
     yield result
 
 @pytest.fixture()
+def db_records3(db):
+    record_data = json_data("data/test_records3.json")
+    item_data = json_data("data/test_items3.json")
+    record_num = len(record_data)
+    result = []
+    with db.session.begin_nested():
+        for d in range(record_num):
+            result.append(create_record(record_data[d], item_data[d]))
+    db.session.commit()
+
+    yield result
+
+@pytest.fixture()
 def db_records_file(app,db,instance_path,users):
     index_metadata = {
         'id': 1,

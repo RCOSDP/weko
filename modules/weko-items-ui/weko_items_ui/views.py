@@ -53,6 +53,7 @@ from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
 from weko_redis.redis import RedisConnection
 from weko_workflow.api import GetCommunity, WorkActivity, WorkFlow
+from .utils import is_duplicate_record
 from weko_workflow.utils import check_an_item_is_locked, \
     get_record_by_root_ver, get_thumbnails, prepare_edit_workflow, \
     set_files_display_type
@@ -283,15 +284,28 @@ def iframe_save_model():
     """
     try:
         data = request.get_json()
-        # remove either check temp data
+
+        if not data:
+            return jsonify(code=1, msg="リクエストデータがありません"), 400
+
+        is_duplicate, recid_list, recid_links = is_duplicate_record(data)
+        if is_duplicate:
+            return jsonify({
+                "code": 1,
+                "msg": _('The same item may have been registered.'),
+                "recid_list": recid_list,
+                "duplicate_links": recid_links,
+                "is_duplicate": is_duplicate,
+            })
+
         if data and data.get('metainfo'):
             metainfo = deepcopy(data.get('metainfo'))
-            for key in metainfo.keys():
+            for key in list(metainfo.keys()):
                 if key.startswith('either_valid_'):
                     del data['metainfo'][key]
 
-        # activity_session = session['activity_info']
-        activity_session = session.get('activity_info',{})
+        # セッション取得
+        activity_session = session.get('activity_info', {})
         activity_id = activity_session.get('activity_id', None)
         if activity_id:
             sanitize_input_data(data)
@@ -302,9 +316,10 @@ def iframe_save_model():
     except Exception as ex:
         db.session.rollback()
         current_app.logger.exception("{}".format(ex))
-        return jsonify(code=1, msg='Model save error')
-    return jsonify(code=0, msg='Model save success at {} (utc)'.format(
-        datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
+        return jsonify(code=1, msg='Model save error'), 500  # HTTP 500 エラーを返す
+
+    return jsonify(code=0, msg='Model save success at {} (UTC)'.format(
+        datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'))), 200
 
 
 @blueprint.route('/iframe/success', methods=['GET'])
