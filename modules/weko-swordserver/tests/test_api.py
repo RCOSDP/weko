@@ -43,6 +43,14 @@ class TestSwordItemTypeMapping:
         assert mapping.id == obj.id
         assert mapping.is_deleted is True
 
+    # def get_id_all(cls, with_deleted=False ):
+    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordItemTypeMapping::test_get_id_all -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+    def test_get_id_all(app, db, sword_mapping):
+        lst = SwordItemTypeMapping.get_id_all()
+        assert len(lst) > 0
+        lst = SwordItemTypeMapping.get_id_all(with_deleted=True)
+        assert len(lst) > 0
+
     # def create(cls, name, mapping, item_type_id):
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordItemTypeMapping::test_create -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
     def test_create(app, db, item_type):
@@ -156,6 +164,13 @@ class TestSwordClient:
         assert SwordClient.get_client_by_id("999") is None
         assert SwordClient.get_client_by_id(None) is None
 
+    # def get_client_id_all(cls):
+    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordClient::test_get_client_id_all -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+    def test_get_client_id_all(app, db, sword_client):
+        # direct
+        lst = SwordClient.get_client_id_all()
+        assert len(lst) > 0
+
     # def register(cls, client_id, registration_type_id, mapping_id, workflow_id):
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordClient::test_register -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
     def test_register(app, db, tokens, sword_mapping, workflow):
@@ -165,6 +180,8 @@ class TestSwordClient:
             client_id=client.client_id,
             registration_type_id=SwordClientModel.RegistrationType.DIRECT,
             mapping_id=sword_mapping[0]["sword_mapping"].id,
+            active=False,
+            meta_data_api=[],
         )
         assert result.client_id == client.client_id
         assert result.registration_type == "Direct"
@@ -177,6 +194,8 @@ class TestSwordClient:
                 client_id=999,
                 registration_type_id=SwordClientModel.RegistrationType.DIRECT,
                 mapping_id=sword_mapping[0]["sword_mapping"].id,
+                active=False,
+                meta_data_api=[],
             )
         assert isinstance(e.value, SQLAlchemyError)
 
@@ -187,6 +206,8 @@ class TestSwordClient:
             registration_type_id=SwordClientModel.RegistrationType.WORKFLOW,
             mapping_id=sword_mapping[1]["sword_mapping"].id,
             workflow_id=workflow[1]["workflow"].id,
+            active=False,
+            meta_data_api=[],
         )
         assert result.client_id == client.client_id
         assert result.registration_type == "Workflow"
@@ -201,6 +222,8 @@ class TestSwordClient:
                 registration_type_id=SwordClientModel.RegistrationType.WORKFLOW,
                 mapping_id=sword_mapping[1]["sword_mapping"].id,
                 workflow_id=999,
+                active=False,
+                meta_data_api=[],
             )
         assert isinstance(e.value, SQLAlchemyError)
 
@@ -211,6 +234,8 @@ class TestSwordClient:
                 client_id=client.client_id,
                 registration_type_id=SwordClientModel.RegistrationType.WORKFLOW,
                 mapping_id=sword_mapping[1]["sword_mapping"].id,
+                active=False,
+                meta_data_api=[],
             )
         assert e.value.errorType == ErrorType.BadRequest
         assert e.value.message == "Workflow ID is required for workflow registration."

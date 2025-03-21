@@ -254,3 +254,27 @@ def test_deletion_of_token2(models_fixture):
 
         # delete consumer
         db.session.delete(User.query.get(app.consumer_id))
+
+def test_get_client_id_by_user_id(models_fixture):
+    app = models_fixture
+    with app.app_context():
+        lst = Client.get_client_id_by_user_id(app.resource_owner_id)
+        assert len(lst) > 0
+
+def test_get_client_id_all(models_fixture):
+    app = models_fixture
+    with app.app_context():
+        lst = Client.get_client_id_all()
+        assert len(lst) > 0
+
+def test_get_name_by_client_id(models_fixture):
+    app = models_fixture
+    with app.app_context():
+        lst = Client.get_name_by_client_id(app.u1c1_id)
+        assert len(lst) > 0
+
+def test_get_user_id_by_client_id(models_fixture):
+    app = models_fixture
+    with app.app_context():
+        lst = Client.get_user_id_by_client_id(app.u1c1_id)
+        assert len(lst) > 0

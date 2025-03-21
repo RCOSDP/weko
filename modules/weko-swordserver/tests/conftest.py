@@ -924,6 +924,8 @@ def sword_client(db, tokens, sword_mapping, workflow):
         client_id=client.client_id,
         registration_type_id=SwordClientModel.RegistrationType.DIRECT,
         mapping_id=sword_mapping[0]["sword_mapping"].id,
+        active=False,
+        meta_data_api=[],
     )
     client = tokens[1]["client"]
     sword_client2 = SwordClientModel(
@@ -931,12 +933,16 @@ def sword_client(db, tokens, sword_mapping, workflow):
         registration_type_id=SwordClientModel.RegistrationType.WORKFLOW,
         mapping_id=sword_mapping[1]["sword_mapping"].id,
         workflow_id=workflow[1]["workflow"].id,
+        active=False,
+        meta_data_api=[],
     )
     client = tokens[2]["client"]
     sword_client3 = SwordClientModel(
         client_id=client.client_id,
         registration_type_id=SwordClientModel.RegistrationType.DIRECT,
         mapping_id=sword_mapping[0]["sword_mapping"].id,
+        active=False,
+        meta_data_api=[],
     )
 
     with db.session.begin_nested():
