@@ -7,12 +7,8 @@
 
 """Module of weko-swordserver."""
 
-import os
-import tempfile
+
 import traceback
-from copy import deepcopy
-from datetime import datetime, timezone
-from dateutil import parser
 from hashlib import sha256
 from zipfile import ZipFile
 
@@ -51,7 +47,6 @@ def check_import_file_format(file, packaging):
     """
     with ZipFile(file, "r") as zip_ref:
         file_list =  zip_ref.namelist()
-
     if "SWORDBagIt" in packaging:
         if SWORD_METADATA_FILE in file_list:
             file_format = "JSON"
@@ -66,6 +61,13 @@ def check_import_file_format(file, packaging):
     elif "SimpleZip" in packaging:
         if ROCRATE_METADATA_FILE in file_list:
             file_format = "JSON"
+        elif any(ROCRATE_METADATA_FILE.split("/")[1] in filename
+                for filename in file_list
+            ):
+            raise WekoSwordserverException(
+                "ro-crate-metadata.json is required in data/ directory.",
+                ErrorType.MetadataFormatNotAcceptable
+                )
         elif any(filename.split("/")[1].endswith(".xml")
                 for filename in file_list if "/" in filename
             ):
@@ -90,7 +92,6 @@ def check_import_file_format(file, packaging):
             f"Not accept packaging format: {packaging}",
             ErrorType.PackagingFormatNotAcceptable
             )
-
     return file_format
 
 
@@ -185,7 +186,7 @@ def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
     check_result = {}
     check_result.update({"register_type": register_type})
     is_active = settings.get(file_format, {}).get(
-        "active", file_format == "TSV/CSV"
+        "active", file_format != "XML"
     )
     if not is_active:
         current_app.logger.error(f"{file_format} metadata import is not enabled.")

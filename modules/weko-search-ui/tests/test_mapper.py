@@ -4646,9 +4646,39 @@ class TestJsonMapper:
         assert "string" in mapper._get_property_type("item_30001_file22.url.label")
         assert "string" in mapper._get_property_type("item_30001_file22.filename")
 
+    # def required_properties(self):
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonMapper::test_required_properties -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_required_properties(self, app, db, item_type2):
+        schema = json_data("data/jsonld/item_type_schema.json")
+        item_type2.model.schema = schema
+        db.session.commit()
+
+        json_mapping = json_data("data/jsonld/ro-crate_mapping.json")
+
+        required = JsonLdMapper(item_type2.model.id, json_mapping).required_properties()
+        assert required["PubDate"] == "pubdate"
+        assert required["Title"] == "item_30001_title0"
+        assert required["Title.タイトル"] == "item_30001_title0.subitem_title"
+        assert required["Title.言語"] == "item_30001_title0.subitem_title_language"
+        assert required["Resource Type"] == "item_30001_resource_type11"
+        assert required["Resource Type.資源タイプ識別子"] == "item_30001_resource_type11.resourceuri"
+        assert required["Resource Type.資源タイプ"] == "item_30001_resource_type11.resourcetype"
+
+
 # def JsonLdMapper:
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 class TestJsonLdMapper:
+    # def validate(self):
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_validate -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_validate(self, app, db, item_type2):
+        schema = json_data("data/jsonld/item_type_schema.json")
+        item_type2.model.schema = schema
+        db.session.commit()
+
+        json_mapping = json_data("data/jsonld/ro-crate_mapping.json")
+
+        assert JsonLdMapper(item_type2.model.id, json_mapping).validate() is None
+
     # def to_item_metadata(self, json_ld):
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_to_item_metadata -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_to_item_metadata(self, app, db, item_type2, item_type_mapping2):

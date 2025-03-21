@@ -1261,6 +1261,37 @@ class JsonMapper(BaseMapper):
                 property_type = properties[p].get("type")
         return property_type
 
+    def required_properties(self):
+        """Get required properties.
+
+        Get required properties of the item type.
+
+        Returns:
+            dict[str, str]: required properties.
+        """
+        if self.itemtype is None:
+            return {}
+
+        required = self._get_required(self.itemtype.schema)
+        # return required
+        return {
+            title: key for title, key in self._create_item_map(detail=True).items()
+            if key in required
+        }
+
+    def _get_required(self, schema, parent=None):
+        required = schema.get("required", [])
+        for k, v in schema.get("properties", {}).items():
+            if v.get("type") == "object":
+                required.extend([
+                    f"{k}.{r}" for r in self._get_required(v, k)
+                ])
+            elif v.get("type") == "array":
+                required.extend([
+                    f"{k}.{r}" for r in self._get_required(v.get("items", {}), k)
+                ])
+        return required
+
     class _InformedMetadata(dict):
         """Meatadata with identifier."""
         def __init__(self, *args, **kwargs):
@@ -1286,6 +1317,7 @@ class JsonMapper(BaseMapper):
             self.metadata_only = False
             """Flag to save only metadata. for SWORD deposit."""
 
+
 class JsonLdMapper(JsonMapper):
     """JsonLdMapper."""
     def __init__(self, itemtype_id, json_mapping):
@@ -1298,7 +1330,7 @@ class JsonLdMapper(JsonMapper):
         self.json_mapping = json_mapping
         super().__init__(None, itemtype_id)
 
-    def validate(self, json_mapping):
+    def validate(self):
         """Validate json-ld.
 
         Args:
@@ -1306,7 +1338,24 @@ class JsonLdMapper(JsonMapper):
         Returns:
             errors (list[str]): list of errors.
         """
-        return []
+        from flask_babelex import lazy_gettext as _
+        errors = []
+        item_map = self._create_item_map(detail=True)
+        required_map = self.required_properties()
+
+        errors += [
+            _("{key} is required", key=k.replace(".", ">"))
+            for k in required_map
+            if k not in self.json_mapping
+        ]
+
+        errors += [
+            _("{key} is not in itemtype", key=k.replace(".", ">"))
+            for k in self.json_mapping.keys()
+            if k not in item_map
+        ]
+
+        return errors if errors else None
 
     def to_item_metadata(self, json_ld):
         """Map to item type metadata.

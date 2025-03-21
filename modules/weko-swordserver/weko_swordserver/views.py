@@ -311,7 +311,7 @@ def post_service_document():
     }
 
     # Define a nested function to process a single item
-    def process_item(item, data_path, register_type, request_info):
+    def process_item(item, data_path, request_info):
         """Process a single item for import.
 
         Args:
@@ -366,7 +366,7 @@ def post_service_document():
     for item in check_result["list_record"]:
         try:
             activity_id, recid, error = process_item(
-                item, data_path, register_type, request_info
+                item, data_path, request_info
             )
             if error:
                 warns.append((activity_id, recid))
