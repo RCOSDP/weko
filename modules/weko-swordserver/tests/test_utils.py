@@ -18,11 +18,13 @@ from weko_swordserver.api import SwordClient, SwordItemTypeMapping
 from unittest.mock import MagicMock, patch
 from weko_swordserver.utils import (
     check_import_file_format,
-    is_valid_file_hash
+    is_valid_file_hash,
+    update_item_ids
 )
 from .helpers import json_data
 from weko_swordserver.errors import ErrorType, WekoSwordserverException
 from weko_swordserver.models import SwordClientModel, SwordItemTypeMappingModel
+from weko_search_ui.mapper import JsonLdMapper
 
 
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
@@ -104,3 +106,143 @@ def test_is_valid_file_hash():
     expected_hash = sha256(b'This is a test file content')
     result = is_valid_file_hash(expected_hash,file_content )
     assert result is False
+
+
+# def update_item_ids(list_record, new_id):
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_update_item_ids -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+def test_update_item_ids(app, mocker):
+    """
+    update_item_ids 関数の動作をテストする。
+    すべての条件分岐やエッジケースをカバーする。
+    """
+    # テストケース 1: list_record がリストでない場合
+    with pytest.raises(ValueError, match="list_record must be a list."):
+        update_item_ids(None, "new_id")
+
+    # テストケース 2: list_record が空のリストの場合
+    assert update_item_ids([], "new_id") == []
+
+    # テストケース 3: list_record に dict 以外の要素が含まれている場合
+    list_record_3 = [1, 2, 3]
+    assert update_item_ids(list_record_3, "new_id") == list_record_3
+
+    # テストケース 4: list_record の要素に metadata がない場合
+    list_record_4 = [{"key": "value"}]
+    assert update_item_ids(list_record_4, "new_id") == list_record_4
+
+    # テストケース 5: metadata に id がない場合
+    list_record_5 = [{"metadata": {}}]
+    assert update_item_ids(list_record_5, "new_id") == list_record_5
+
+    # テストケース 6: metadata に link_data がない場合
+    list_record_6 = [{"metadata": {"id": "123"}}]
+    assert update_item_ids(list_record_6, "new_id") == list_record_6
+
+    # テストケース 7: link_data がリストでない場合
+    list_record_7 = [{"metadata": {"id": "123", "link_data": "not_a_list"}}]
+    assert update_item_ids(list_record_7, "new_id") == list_record_7
+
+    # テストケース 8: link_data の要素が dict でない場合
+    list_record_8 = [{"metadata": {"id": "123", "link_data": [1, 2, 3]}}]
+    assert update_item_ids(list_record_8, "new_id") == list_record_8
+
+    # テストケース 9: link_data の要素に item_id と sele_id がない場合
+    list_record_9 = [{"metadata": {"id": "123", "link_data": [{"key": "value"}]}}]
+    assert update_item_ids(list_record_9, "new_id") == list_record_9
+
+    # テストケース 10: link_data の要素に item_id があるが、sele_id が "isSupplementedBy" でない場合
+    mock_metadata = MagicMock()
+    mock_metadata.id = "123"
+    mock_metadata.link_data = [{"item_id": "456", "sele_id": "isSupplementTo"}]
+    # JsonLdMapper()._InformedMetadata() をモック化
+    with patch.object(JsonLdMapper, '_InformedMetadata', return_value=mock_metadata):
+        # テストデータ
+        list_record = [{"metadata": mock_metadata}]
+        new_id = "new_id"
+
+        # テスト対象関数を呼び出し
+        result = update_item_ids(list_record, new_id)
+
+        # 結果を検証
+        assert result[0]["metadata"].link_data[0]["item_id"] == "456"
+        assert mock_metadata.id == "123"
+        assert mock_metadata.link_data == [{"item_id": "456", "sele_id": "isSupplementTo"}]
+
+    # テストケース 11: link_data の要素に item_id があり、sele_id が "isSupplementedBy" の場合
+    # モックを作成
+    mock_metadata = MagicMock()
+    mock_metadata.id = "123"
+    mock_metadata.link_data = [{"item_id": "123", "sele_id": "isSupplementedBy"}]
+
+    # JsonLdMapper()._InformedMetadata() をモック化
+    with patch.object(JsonLdMapper, '_InformedMetadata', return_value=mock_metadata):
+        # テストデータ
+        list_record = [{"metadata": mock_metadata}]
+        new_id = "new_id"
+
+        # テスト対象関数を呼び出し
+        result = update_item_ids(list_record, new_id)
+
+        # 結果を検証
+        assert result[0]["metadata"].link_data[0]["item_id"] == new_id
+        assert mock_metadata.id == "123"
+        assert mock_metadata.link_data == [{"item_id": "new_id", "sele_id": "isSupplementedBy"}]
+
+    # テストケース 12: 複数の ITEM が含まれる場合
+    # モックを作成
+    mock_metadata = MagicMock()
+    mock_metadata.id = "123"
+    mock_metadata.link_data = [{"item_id": "123", "sele_id": "isSupplementTo"}]
+
+    mock_metadata1 = MagicMock()
+    mock_metadata1.id = "789"
+    mock_metadata1.link_data = [{"item_id": "789", "sele_id": "isSupplementedBy"}]
+
+    # JsonLdMapper()._InformedMetadata() をモック化
+    with patch.object(JsonLdMapper, '_InformedMetadata', return_value=mock_metadata):
+        # テストデータ
+        list_record = [{"metadata": mock_metadata}, {"metadata": mock_metadata1}]
+        new_id = "new_id"
+
+        # テスト対象関数を呼び出し
+        result = update_item_ids(list_record, new_id)
+        # for item in result:
+        #     print(getattr(item.get('metadata'), 'link_data', []))
+
+
+        # 結果を検証
+        assert result[0]["metadata"].link_data[0]["item_id"] == "123"
+
+        assert result[1]["metadata"].link_data[0]["item_id"] == new_id
+
+# def get_record_by_client_id(client_id):
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_get_record_by_client_id -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+# def test_get_record_by_client_id(app,mocker):
+#     # No 1
+#     client_id = "valid_client_id"
+#     expected_client = SwordClientModel(client_id="client_id", mapping_id="mapping_id")
+#     expected_mapping = SwordItemTypeMappingModel(id="mapping_id")
+
+#     with patch.object(SwordClient, 'get_client_by_id', return_value=expected_client):
+#         with patch.object(SwordItemTypeMapping, 'get_mapping_by_id', return_value=expected_mapping):
+#             client, mapping = get_record_by_client_id(client_id)
+#             assert client == expected_client
+#             assert mapping == expected_mapping
+
+#     # No 2
+#     invalid_client_id = "invalid_client_id"
+
+#     with patch.object(SwordClient, 'get_client_by_id', return_value=None):
+#         with patch.object(SwordItemTypeMapping, 'get_mapping_by_id', return_value=expected_mapping):
+#             client, mapping = get_record_by_client_id(invalid_client_id)
+#             assert client == None
+#             assert mapping == expected_mapping
+
+#     # No 3
+#     valid_client_id = "valid_client_id"
+#     expected_client = SwordClientModel(client_id="client_id", mapping_id="invalid_mapping_id")
+#     with patch.object(SwordClient, 'get_client_by_id', return_value=expected_client):
+#         with patch.object(SwordItemTypeMapping, 'get_mapping_by_id', return_value=None):
+#             client, mapping = get_record_by_client_id(valid_client_id)
+#             assert client == expected_client
+#             assert mapping == None
