@@ -1330,6 +1330,7 @@ class JsonLdMapper(JsonMapper):
         self.json_mapping = json_mapping
         super().__init__(None, itemtype_id)
 
+    @property
     def is_valid(self):
         """Validate json-ld.
 
