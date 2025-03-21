@@ -317,7 +317,6 @@ def post_service_document():
         Args:
             item (dict): The item to process.
             data_path (str): The path to the data directory.
-            register_type (str): The registration type (Direct or Workflow).
             request_info (dict): Information about the request.
 
         Returns:

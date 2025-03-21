@@ -4668,6 +4668,15 @@ class TestJsonMapper:
 # def JsonLdMapper:
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 class TestJsonLdMapper:
+    def test_is_valid(self, app, db, item_type2):
+        schema = json_data("data/jsonld/item_type_schema.json")
+        item_type2.model.schema = schema
+        db.session.commit()
+
+        json_mapping = json_data("data/jsonld/ro-crate_mapping.json")
+
+        assert JsonLdMapper(item_type2.model.id, json_mapping).is_valid
+
     # def validate(self):
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_validate -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_validate(self, app, db, item_type2):
