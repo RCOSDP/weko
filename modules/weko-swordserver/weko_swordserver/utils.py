@@ -198,8 +198,8 @@ def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
         check_result.update(check_tsv_import_items(file, is_change_identifier))
 
         if register_type == "Workflow":
-            # TODO: get workflow by item type id
-            workflow = None
+            item_type_id = check_result["list_record"][0].get("item_type_id")
+            workflow = WorkFlows().get_workflow_by_item_type_id(item_type_id)
             check_result.update({"workflow_id": workflow.id})
     elif file_format == "XML":
         if register_type == "Direct":
