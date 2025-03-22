@@ -2560,6 +2560,7 @@ class WorkActivity(object):
 
         return activities_number
 
+
     def notify_item_registered(self, activity_id):
         """Notify item registered.
 
@@ -2575,9 +2576,10 @@ class WorkActivity(object):
                 if activity is None:
                     return
 
-                list_target_id = [activity.activity_login_user]
-                if activity.shared_user_id != -1:
-                    list_target_id.append(activity.shared_user_id)
+                set_target_id = {activity.activity_login_user}
+                is_shared = activity.shared_user_id != -1
+                if is_shared:
+                    set_target_id.add(activity.shared_user_id)
 
                 recid = (
                     PersistentIdentifier
@@ -2590,31 +2592,41 @@ class WorkActivity(object):
                     actor_profile.username
                     if actor_profile is not None else None
                 )
+
+                if not is_shared:
+                    # if self registration, not notify
+                    set_target_id.discard(actor_id)
+
         except SQLAlchemyError as ex:
             current_app.logger.error(
                 "Error had orrured in database during getting notification "
                 f"parameters for activity: {activity_id}"
             )
             traceback.print_exc()
+            return
 
-        for target_id in list_target_id:
-        try:
-            Notification.create_item_registared(
-                target_id, recid.pid_value.split(".")[0], actor_id,
-                actor_name=actor_name, object_name=activity.title
-            ).send(NotificationClient(inbox_url()))
+        for target_id in set_target_id:
+            try:
+                Notification.create_item_registared(
+                    target_id, recid.pid_value.split(".")[0], actor_id,
+                    actor_name=actor_name, object_name=activity.title
+                ).send(NotificationClient(inbox_url()))
             except (ValidationError, HTTPError) as ex:
                 current_app.logger.error(
                     "Error had orrured during sending notification "
                     f"for activity: {activity_id}"
                 )
                 traceback.print_exc()
-        except Exception as ex:
+            except Exception as ex:
                 current_app.logger.error(
                     "Unexpected error had orrured during sending notification "
                     f"for activity: {activity_id}"
                 )
-            traceback.print_exc()
+                traceback.print_exc()
+            current_app.logger.info(
+                "{num} notification(s) sent for item registered: {activity_id}"
+                .format(num=len(set_target_id), activity_id=activity_id)
+            )
 
 
     def notify_request_approval(self, activity_id):
@@ -2631,8 +2643,6 @@ class WorkActivity(object):
                 activity = self.get_activity_by_id(activity_id)
                 if activity is None:
                     return
-                # TODO: detect target user for notification
-                list_target_id = []
 
                 recid = (
                     PersistentIdentifier
@@ -2645,14 +2655,65 @@ class WorkActivity(object):
                     actor_profile.username
                     if actor_profile is not None else None
                 )
+
+                set_target_id = set()
+                flow_id = activity.flow_define.flow_id
+                flow_detail = Flow().get_flow_detail(flow_id)
+                approval_action = _Action.query.filter_by(
+                    action_endpoint="approval"
+                ).one()
+                approval_action_role = None
+                for action in flow_detail.flow_actions:
+                    if action.action_id == approval_action.id:
+                        approval_action_role = action.action_role
+                        break
+
+                admin_roles = current_app.config.get("WEKO_WORKFLOW_ACTIVITYLOG_ROLE_ENABLE")
+                admin_role_ids = {
+                    Role.query.filter_by(name=rolename).one().id
+                    for rolename in admin_roles
+                }
+                target_role = admin_role_ids.copy()
+                if approval_action_role is not None:
+                    action_role_id = approval_action_role.action_role
+                    if not isinstance(action_role_id, int):
+                        pass
+                    elif approval_action_role.action_role_exclude:
+                        target_role.discard(action_role_id)
+                    else:
+                        # target_role.add(action_role_id)
+                        pass # TODO:
+
+                set_target_id = {
+                    user_id[0] for user_id in
+                    db.session.query(userrole.c.user_id)
+                    .filter(userrole.c.role_id.in_(admin_role_ids))
+                    .distinct()
+                    .all()
+                }
+                if approval_action_role is not None:
+                    action_user_id = approval_action_role.action_user
+                    if not isinstance(action_user_id, int):
+                        pass
+                    elif approval_action_role.action_user_exclude:
+                        set_target_id.discard(action_user_id)
+                    else:
+                        set_target_id.add(action_user_id)
+
+                is_shared = activity.shared_user_id != -1
+                if not is_shared:
+                    # if self request, not notify
+                    set_target_id.discard(actor_id)
+
         except SQLAlchemyError as ex:
             current_app.logger.error(
                 "Error had orrured in database during getting notification "
                 f"parameters for activity: {activity_id}"
             )
             traceback.print_exc()
+            return
 
-        for target_id in list_target_id:
+        for target_id in set_target_id:
             try:
                 Notification.create_request_approval(
                     target_id, recid.pid_value.split(".")[0], actor_id,
@@ -2670,6 +2731,11 @@ class WorkActivity(object):
                     f"for activity: {activity_id}"
                 )
                 traceback.print_exc()
+        current_app.logger.info(
+            "{num} notification(s) sent for request approval: {activity_id}"
+            .format(num=len(set_target_id), activity_id=activity_id)
+        )
+
 
     def notify_item_approved(self, activity_id):
         """Notify approved items.
@@ -2686,9 +2752,10 @@ class WorkActivity(object):
                 if activity is None:
                     return
 
-                list_target_id = [activity.activity_login_user]
-                if activity.shared_user_id != -1:
-                    list_target_id.append(activity.shared_user_id)
+                set_target_id = {activity.activity_login_user}
+                is_shared = activity.shared_user_id != -1
+                if is_shared:
+                    set_target_id.add(activity.shared_user_id)
 
                 recid = (
                     PersistentIdentifier
@@ -2701,14 +2768,20 @@ class WorkActivity(object):
                     actor_profile.username
                     if actor_profile is not None else None
                 )
+
+                if not is_shared:
+                    # if self approval, not notify
+                    set_target_id.discard(actor_id)
+
         except SQLAlchemyError as ex:
             current_app.logger.error(
                 "Error had orrured in database during getting notification "
                 f"parameters for activity: {activity_id}"
             )
             traceback.print_exc()
+            return
 
-        for target_id in list_target_id:
+        for target_id in set_target_id:
             try:
                 Notification.create_item_approved(
                     target_id, recid.pid_value.split(".")[0], actor_id,
@@ -2726,6 +2799,10 @@ class WorkActivity(object):
                     f"for activity: {activity_id}"
                 )
                 traceback.print_exc()
+        current_app.logger.info(
+            "{num} notification(s) sent for item approved: {activity_id}"
+            .format(num=len(set_target_id), activity_id=activity_id)
+        )
 
 
     def notify_item_rejected(self, activity_id):
@@ -2738,9 +2815,10 @@ class WorkActivity(object):
                 if activity is None:
                     return
 
-                list_target_id = [activity.activity_login_user]
-                if activity.shared_user_id != -1:
-                    list_target_id.append(activity.shared_user_id)
+                set_target_id = {activity.activity_login_user}
+                is_shared = activity.shared_user_id != -1
+                if is_shared:
+                    set_target_id.append(activity.shared_user_id)
 
                 recid = (
                     PersistentIdentifier
@@ -2753,6 +2831,10 @@ class WorkActivity(object):
                     actor_profile.username
                     if actor_profile is not None else None
                 )
+
+                if not is_shared:
+                    # if self reject, not notify
+                    set_target_id.discard(actor_id)
         except SQLAlchemyError as ex:
             current_app.logger.error(
                 "Error had orrured in database during getting notification "
@@ -2760,7 +2842,7 @@ class WorkActivity(object):
             )
             traceback.print_exc()
 
-        for target_id in list_target_id:
+        for target_id in set_target_id:
             try:
                 Notification.create_item_rejected(
                     target_id, recid.pid_value.split(".")[0], actor_id,
@@ -2778,6 +2860,10 @@ class WorkActivity(object):
                     f"for activity: {activity_id}"
                 )
                 traceback.print_exc()
+        current_app.logger.info(
+            "{num} notification(s) sent for item rejected: {activity_id}"
+            .format(num=len(set_target_id), activity_id=activity_id)
+        )
 
 
 class WorkActivityHistory(object):

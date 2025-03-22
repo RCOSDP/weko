@@ -70,7 +70,7 @@ def notifications():
             f"error: {notifications_form.errors}"
         )
         try:
-            if notifications_form.errors:
+            if endpoint == "":
                 pass
             elif notifications_form.subscribe_webpush.data:
                 subscripsion = create_subscription(
@@ -82,7 +82,7 @@ def notifications():
                 )
 
                 requests.post(inbox_url("/subscribe"), json=subscripsion)
-            elif endpoint != "":
+            else:
                 requests.post(inbox_url("/unsubscribe"), json={"endpoint": endpoint})
         except Exception as ex:
             traceback.print_exc()
