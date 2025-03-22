@@ -424,11 +424,16 @@ services:
     ports:
       - "8080:8080"
     environment:
+      - ENABLE_PUSH_NOTIFICATIONS=False
+      - ICON=/static/images/weko-logo-256.png
       - MONGO_DB_URI=mongodb://inbox:ibpass123@mongo:27017
       - MONGO_DB_NAME=inbox
       - ON_RECEIVE_NOTIFICATION_WEBHOOK_URL=
       - ALLOWED_ADMIN_ORIGINS=["*"]
       - ALLOWED_ORIGINS=["*"]
+      - SUBSCRIBER=mailto:wekosoftware@nii.ac.jp
+      - VAPID_PUBLIC_KEY=
+      - VAPID_PRIVATE_KEY=
     links:
       - mongo
     networks:
