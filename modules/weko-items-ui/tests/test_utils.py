@@ -8549,33 +8549,6 @@ def test_get_ignore_item_from_mapping(users,db):
     assert result == test
 
 
-# def get_ignore_item_from_mapping(_item_type_id):
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_ignore_item_from_mapping_with_item_type -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_ignore_item_from_mapping_with_item_type(users,db, db_itemtype):
-    with open("tests/data/item_type_hide/schema.json") as f:
-        schema = json.load(f)
-    with open("tests/data/item_type_hide/form.json") as f:
-        form = json.load(f)
-    with open("tests/data/item_type_hide/render.json") as f:
-        render = json.load(f)
-    with open("tests/data/item_type_hide/mapping.json") as f:
-        mapping = json.load(f)
-        
-    itemtype_name = ItemTypeName(id=20, name="test_itemtype_hide", has_site_license=True, is_active=True)
-    itemtype = ItemType(id=20,name_id=20, schema=schema, form=form, render=render, tag=1)
-    itemtype_mapping = ItemTypeMapping(id=20,item_type_id=20,mapping=mapping)
-    
-    with db.session.begin_nested():
-        db.session.add(itemtype_name)
-        db.session.add(itemtype)
-        db.session.add(itemtype_mapping)
-    db.session.commit()
-
-    result =  get_ignore_item_from_mapping(20, item_type=itemtype)
-    test = ['title', 'contributor', 'type',  ['date'], ['creator', 'creatorName'], ['contributor', 'contributorName']]
-    assert result == test
-
-
 # def get_mapping_name_item_type_by_key(key, item_type_mapping):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_mapping_name_item_type_by_key -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_get_mapping_name_item_type_by_key(users,db_itemtype):

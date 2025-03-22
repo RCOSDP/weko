@@ -991,12 +991,6 @@ class ItemTypes(RecordBase):
         #         )
         # data['table_row_map']['mapping'] = item_type_mapping.mapping if item_type_mapping else {}
 
-        # current_app.logger.error("Update ItemType({})".format(itemtype_id))
-        # current_app.logger.error("Update data({})".format(data))
-        # current_app.logger.error("Update json_schema({})".format(json_schema))
-        
-        # print(data)
-
         record = cls.update(id_=itemtype_id,
                                       name=item_type.item_type_name.name,
                                       schema=json_schema,

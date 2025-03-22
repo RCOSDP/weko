@@ -34,6 +34,7 @@ from invenio_access.models import ActionRoles, ActionUsers
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.testutils import create_test_user
 from invenio_access import InvenioAccess
+from invenio_accounts import InvenioAccounts
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_i18n import InvenioI18N
@@ -57,6 +58,7 @@ from weko_records_ui.config import (
     WEKO_RECORDS_UI_LICENSE_DICT
 )
 from weko_index_tree.models import Index
+from weko_records_ui import WekoRecordsUI
 
 from invenio_records_rest import InvenioRecordsREST, config
 from invenio_records_rest.facets import terms_filter
@@ -277,6 +279,7 @@ def app(request):
     app.url_map.converters['pid'] = PIDConverter
     InvenioAccounts(app)
     InvenioAccess(app)
+    InvenioAccounts(app)
     InvenioDB(app)
     InvenioREST(app)
     InvenioRecords(app)
@@ -285,9 +288,9 @@ def app(request):
     InvenioPIDStore(app)
     
     WekoRecords(app)
-    search = InvenioSearch(app)
-    #search = InvenioSearch(app, client=MockEs())
-    #search.register_mappings(search_class.Meta.index, 'mock_module.mappings')
+    WekoRecordsUI(app)
+    search = InvenioSearch(app, client=MockEs())
+    search.register_mappings(search_class.Meta.index, 'mock_module.mappings')
     InvenioRecordsREST(app)
     app.register_blueprint(create_blueprint_from_app(app))
 
