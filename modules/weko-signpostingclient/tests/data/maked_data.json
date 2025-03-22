@@ -1,8 +1,0 @@
-[
-    {
-        "url":"https://url.com", "rel": "cite-as"
-    },
-    {
-        "url":"https://meta_json", "rel": "describedby", "type": "application/json"
-    }
-]
