@@ -9,7 +9,7 @@ from mock import patch
 from flask import Flask, json, jsonify, url_for, session, make_response
 from invenio_accounts.testutils import login_user_via_session as login
 from werkzeug.exceptions import InternalServerError ,NotFound,Forbidden
-from weko_workflow.admin import FlowSettingView,WorkFlowSettingView
+from weko_workflow.admin import FlowSettingView,WorkFlowSettingView,AdminSettings
 from weko_workflow.models import FlowDefine, FlowAction, FlowActionRole, WorkFlow, WorkflowRole
 
 # class FlowSettingView(BaseView):
@@ -575,67 +575,54 @@ class TestWorkFlowSettingView:
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestActivitySettingView -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 class TestActivitySettingsView:
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestActivitySettingView::test_index_get_request -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    @patch("sqlalchemy.create_engine")
-    def test_index_get_request(self, mock_create_engine, client, app):
-        # モックの設定
-        mock_engine = MagicMock()
-        mock_create_engine.return_value = mock_engine
-        mock_engine.connect.return_value = MagicMock()
-
-        with app.test_request_context():
-            url = url_for('activity.index', _external=True)
-            res = client.get(url)
-            assert res.status_code == 302
-
-    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestActivitySettingView::test_index_post_request_invalid_form -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    @patch("weko_workflow.admin.db_register2", autospec=True)
-    def test_index_post_request_invalid_form(self, mock_db_register2, app, client, mocker):
-        # モックの設定
-        mock_db_register2.return_value = None
-
-        login(client=client, email="admin@test.org")
-        url = url_for('activity.index', _external=True)
-        mocker.patch("weko_workflow.admin.FlaskForm.validate", return_value=False)
-        res = client.post(url, data={"submit": "set_search_author_form"})
-        assert res.status_code == 200  # Form validation failed, but page should render
+    def test_index_get_request(self, client, db_register2, users):
+        """Test GET request for ActivitySettingsView.index."""
+        login(client=client, email=users[2]['email'])
+        url = url_for("activity.index", _external=True)
+        res = client.get(url)
+        assert res.status_code == 200
 
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestActivitySettingView::test_index_post_request_valid_form -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    @patch("weko_workflow.admin.db_register2", autospec=True)
-    def test_index_post_request_valid_form(self, mock_db_register2, app, client, mocker):
-        # モックの設定
-        mock_db_register2.return_value = None
-
-        login(client=client, email="admin@test.org")
-        url = url_for('activity.index', _external=True)
-        mocker.patch("weko_workflow.admin.FlaskForm.validate", return_value=True)
-        mocker.patch("weko_workflow.admin.AdminSettings.update", return_value=None)
+    def test_index_post_request_valid_form(self, client, app, db_register2, users):
+        """Test POST request with valid form for ActivitySettingsView.index."""
+        login(client=client, email=users[2]['email'])
+        app.config["WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE"] = True
+        AdminSettings.update("activity_display_settings", {"activity_display_flg": "1"})
+        url = url_for("activity.index", _external=True)
         res = client.post(url, data={"submit": "set_search_author_form", "displayRadios": "1"})
-        assert res.status_code == 200  # Form processed successfully
+        assert res.status_code == 200
+
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestActivitySettingView::test_index_post_request_invalid_form -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test_index_post_request_invalid_form(self, client, app, db_register2, users):
+        """Test POST request with invalid form for ActivitySettingsView.index."""
+        login(client=client, email=users[2]['email'])
+        app.config["WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE"] = True
+        AdminSettings.update("activity_display_settings", {"activity_display_flg": "1"})
+        url = url_for("activity.index", _external=True)
+        res = client.post(url, data={"submit": "set_search_author_form"})
+        assert res.status_code == 200
 
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestActivitySettingView::test_index_activity_display_settings_not_found -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    @patch("weko_workflow.admin.db_register2", autospec=True)
-    def test_index_activity_display_settings_not_found(self, mock_db_register2, app, client, mocker):
-        # モックの設定
-        mock_db_register2.return_value = None
-
-        login(client=client, email="admin@test.org")
-        url = url_for('activity.index', _external=True)
-        mocker.patch("weko_workflow.admin.AdminSettings.get", return_value=None)
-        mocker.patch("weko_workflow.admin.AdminSettings.update", return_value=None)
+    def test_index_activity_display_settings_not_found(self, client, app, db_register2, users):
+        """Test GET request when activity_display_settings is not found."""
+        login(client=client, email=users[2]['email'])
+        app.config["WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE"] = True
+        AdminSettings.update("activity_display_settings", None)
+        url = url_for("activity.index", _external=True)
         res = client.get(url)
-        assert res.status_code == 200  # Settings initialized and page rendered
+        assert res.status_code == 200
 
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestActivitySettingView::test_index_exception_handling -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    @patch("weko_workflow.admin.db_register2", autospec=True)
-    def test_index_exception_handling(self, mock_db_register2, app, client, mocker):
-        # モックの設定
-        mock_db_register2.return_value = None
+    def test_index_exception_handling(self, client, app, db_register2, users):
+        """Test exception handling in ActivitySettingsView.index."""
+        login(client=client, email=users[2]['email'])
+        def raise_exception(*args, **kwargs):
+            raise Exception("Test exception")
 
-        login(client=client, email="admin@test.org")
-        url = url_for('activity.index', _external=True)
-        mocker.patch("weko_workflow.admin.AdminSettings.get", side_effect=Exception("Test exception"))
+        AdminSettings.get = raise_exception
+        url = url_for("activity.index", _external=True)
         res = client.get(url)
-        assert res.status_code == 400  # Exception handled and 400 returned
+        assert res.status_code == 400
 
 
 
