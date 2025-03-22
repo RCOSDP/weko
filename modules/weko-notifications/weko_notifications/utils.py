@@ -12,7 +12,7 @@ from datetime import datetime
 
 from flask import current_app, request
 
-def inbox_url(endpoint=None,_external=False):
+def inbox_url(endpoint=None, _external=False):
     """Return the inbox URL.
 
     Args:
@@ -24,12 +24,12 @@ def inbox_url(endpoint=None,_external=False):
         if _external
         else current_app.config["WEKO_NOTIFICATIONS_INBOX_ADDRESS"]
     )
-    url += current_app.config["WEKO_NOTIFICATIONS_INBOX_ENDPOINT"]
     if endpoint is not None:
         url += endpoint
+    else:
+        url += current_app.config["WEKO_NOTIFICATIONS_INBOX_ENDPOINT"]
 
     return url
-
 
 
 def rfc3339(timezone=None):
@@ -56,7 +56,7 @@ def create_subscription(user_id, endpoint, expiration_time, p256dh, auth):
     current_app.logger.info(
         "Creating subscription for user %s: %s",
         user_id,
-        endpoint
+        endpoint[:24] + "..." + endpoint[-8:],
     )
     root_url = request.host_url
 
