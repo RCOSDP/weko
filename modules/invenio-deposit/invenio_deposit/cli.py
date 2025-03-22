@@ -129,7 +129,7 @@ def reindex(recid):
             query = (x[0] for x in query)
             RecordIndexer().bulk_index(query)
     except PIDDoesNotExistError as e:
-        click.secho('Chosen record doesn\'t exist', fg='red')
+        click.secho('Specified record does not exist', fg='red')
     except Exception as e:
         click.secho(e, fg='red')
     click.secho('Execute "run" command to process the queue.', fg='green')

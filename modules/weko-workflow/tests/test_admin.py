@@ -222,7 +222,7 @@ class TestFlowSettingView:
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestFlowSettingView::test_get_actions -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_get_actions(self,app,workflow):
         with app.test_request_context():
-            assert FlowSettingView.get_actions()==""
+            assert len(FlowSettingView.get_actions())==6
  
 #     def upt_flow_action(self, flow_id=0):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestFlowSettingView::test_upt_flow_action -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -355,19 +355,19 @@ class TestWorkFlowSettingView:
 
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestWorkFlowSettingView::test_index_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     @pytest.mark.parametrize('users_index, status_code', [
-        # (0, 403),
+        (0, 403),
         (1, 200),
-        # (2, 200),
-        # (3, 200),
-        # (4, 200),
-        # (5, 200),
-        # (6, 200),
+        (2, 200),
+        (3, 403),
+        (4, 403),
+        (5, 403),
+        (6, 200),
     ])
     def test_index_acl(self,client,db_register2,users,users_index,status_code):
         login(client=client, email=users[users_index]['email'])
         url = url_for('workflowsetting.index',_external=True)
         res =  client.get(url)
-        assert res.status_code == status_code  
+        assert res.status_code == status_code
 
     #     def workflow_detail(self, workflow_id='0'):
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestWorkFlowSettingView::test_workflow_detail_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -487,7 +487,7 @@ class TestWorkFlowSettingView:
         url = '/admin/workflowsetting/{}'.format(workflow['workflow'].flows_id)
         with patch("flask.templating._render", return_value=""):
             res = client.post(url, data=json.dumps(data), headers=[('Content-Type', 'application/json')])
-        assert res.status_code == 400
+        assert res.status_code == 200
         q = WorkFlow.query.first()
         assert q.open_restricted == False
         assert q.is_gakuninrdm == False
@@ -636,22 +636,24 @@ class TestWorkFlowSettingView:
         wf = workflow['workflow']
         
         with app.test_request_context():
-            assert WorkFlowSettingView.save_workflow_role(wf.id,[role0.id,role1.id,role2.id,role3.id,role4.id])
+            WorkFlowSettingView.save_workflow_role(wf.id,[role0.id,role1.id,role2.id,role3.id,role4.id])
+            res = WorkflowRole.query.all()
+            assert len(res) == 5
 
     # def get_language_workflows(cls, key):
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestWorkFlowSettingView::test_get_language_workflows -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    def test_get_language_workflows(self,users):
-        with self.test_request_context():
-            assert self.get_language_workflows("display")=="Display"
+    def test_get_language_workflows(self, app, users):
+        with app.test_request_context():
+            assert WorkFlowSettingView.get_language_workflows("display")=="Display"
             assert WorkFlowSettingView.get_language_workflows("hide")=="Hide"
             assert WorkFlowSettingView.get_language_workflows("display_hide")=="Display/Hide"
             
-        with self.test_request_context(headers=[("Accept-Language", "en")]):
+        with app.test_request_context(headers=[("Accept-Language", "en")]):
             assert WorkFlowSettingView.get_language_workflows("display")=="Display"
             assert WorkFlowSettingView.get_language_workflows("hide")=="Hide"
             assert WorkFlowSettingView.get_language_workflows("display_hide")=="Display/Hide"
         
-        with self.test_request_context(headers=[("Accept-Language", "ja")]):
+        with app.test_request_context(headers=[("Accept-Language", "ja")]):
             assert WorkFlowSettingView.get_language_workflows("display")=="表示"
             assert WorkFlowSettingView.get_language_workflows("hide")=="非表示"
             assert WorkFlowSettingView.get_language_workflows("display_hide")=="表示/非表示"

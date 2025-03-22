@@ -11,6 +11,7 @@
 from __future__ import absolute_import, print_function
 
 from flask import json, request
+from weko_records.api import ItemTypes
 
 from .base import PreprocessorMixin, SerializerMixinInterface
 from .marshmallow import MarshmallowMixin

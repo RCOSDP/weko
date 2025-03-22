@@ -102,16 +102,11 @@ require([
         } else {
           endLoading(_this);
           msg = $('#user_locked_msg').text()
-          console.log(msg)
-          console.log(data.activity_id)
           if (data.activity_id) {
-            console.log(1)
             msg = msg.replace('{}', data.activity_id);
           } else {
-            console.log(2)
             msg = msg.replace('({})', '');
           }
-          console.log(msg)
           $('#user_locked_msg').html(msg)
           $('#action_unlock_activity').modal("show")
         }
@@ -274,7 +269,8 @@ require([
     let post_data = {
       commond: $('#input-comment').val(),
       action_version: act_ver,
-      community: community_id
+      community: community_id,
+      temporary_save: 0,
     };
     $.ajax({
       url: uri_apo,

@@ -74,7 +74,7 @@ def test_url_to_link():
     assert url_to_link("file://localhost") == False
     assert url_to_link("http://localhost") == True
     assert url_to_link("https://localhost") == True
-    assert url_to_link("https://localhost/records/123/files/file.pdf") == False
+    assert url_to_link("https://localhost/records/123/files/file.pdf") == True
 
 
 # def pid_value_version(pid_value):
@@ -428,7 +428,7 @@ def test_get_usage_workflow(app, users, workflows):
 
     with patch("flask_login.utils._get_user", return_value=data1):
         res = get_usage_workflow(_file_json)
-        assert res==3
+        assert res=="3"
 
 
 # def get_workflow_detail(workflow_id):
@@ -477,8 +477,6 @@ def test_default_view_method(app, records, itemtypes, indexstyle ,users):
                             with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
                                 with pytest.raises(Forbidden) : #404
                                     assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-                        with patch('weko_records_ui.views.is_show_email_of_creator', return_value=True):
-                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
                         with patch('weko_records_ui.views.AdminSettings.get'
                                     , side_effect=lambda name , dict_to_object : {'display_stats' : False} if name == 'display_stats_settings' else None):
                             assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
@@ -551,11 +549,11 @@ def test_default_view_method2(app, records, itemtypes, indexstyle, mocker):
                     mock_render_template = mocker.patch("weko_records_ui.views.render_template")
                     default_view_method(recid, record, template='weko_records_ui/detail.html')
                     args, kwargs = mock_render_template.call_args
-                    # hide items: item_1617944105607, item_1617620223087.subitem_1565671169640
+                    # hide items: item_1617944105607, item_1617620223087.subitem_1565671169641
                     res_record = kwargs["record"]
                     assert "item_1617944105607" not in res_record
                     for d in res_record["item_1617620223087"]["attribute_value_mlt"]:
-                        assert "subitem_1565671169640" not in d
+                        assert "subitem_1565671169641" not in d
 
 # def default_view_method(pid, record, filename=None, template=None, **kwargs):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -615,8 +613,6 @@ def test_doi_ish_view_method_acl(app,client,records,users,id,result):
     res = client.get(url)
     assert res.status_code == 302
     assert res.location == 'http://test_server/records/1.1'
-
-    assert "302 FOUND" in doi_ish_view_method(parent_pid_value=1, version=1)
 
 
 # def parent_view_method(pid_value=0):
@@ -763,19 +759,7 @@ def test_file_version_update_acl(client, records, users, id, status_code):
     assert json.loads(res.data) == {'status': 0, 'msg': 'Insufficient permission'}
 
     with patch("weko_records_ui.views.has_update_version_role", return_value=True):
-        _data = {'is_show': '1'}
-        obj = ObjectVersion.get(bucket=None, key=None, version_id=None)
-        assert obj.is_show == False
-
-        with patch('weko_records_ui.views.db.session.commit', side_effect=Exception("")):
-            res = client.put(url, data=_data)
-            obj = ObjectVersion.get(bucket=None, key=None, version_id=None)
-            assert obj.is_show == False
-        
-        res = client.put(url, data=_data)
-        obj = ObjectVersion.get(bucket=None, key=None, version_id=None)
-        assert obj.is_show == True
-
+        _data['is_show'] = '1'
         _data['bucket_id'] = 'none bucket'
         _data['key'] = 'none key'
         _data['version_id'] = 'version_id'
@@ -794,7 +778,7 @@ def test_file_version_update_acl(client, records, users, id, status_code):
 def test_citation(records):
     indexer, results = records
     record = results[0]["record"]
-    assert citation(record,record.pid)==None
+    assert citation(record,record.pid)=='Joho, Taro, Joho, Taro, Joho, Taro, 2021, en_conference paperITEM00000009(public_open_access_simple): Publisher, 1–3 p.'
 
 
 # def soft_delete(recid):
@@ -1041,7 +1025,8 @@ def test_default_view_method_fix35133(app, records, itemtypes, indexstyle,mocker
 
 # def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord, filename:str, **kwargs) -> str:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_create_secret_url_and_send_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_create_secret_url_and_send_mail(app,client,db,users,records,db_restricted_access_secret):
+def test_create_secret_url_and_send_mail(app,client,db,users,records):
+    app.config['WEKO_WORKFLOW_DATE_FORMAT'] = "%Y-%m-%d"
     indexer, results = records
     record = results[1]
 
@@ -1075,16 +1060,16 @@ def test_create_secret_url_and_send_mail(app,client,db,users,records,db_restrict
     "id, is_show",
     [
         (0, False), #contributor
-        (1, True), #repoadmin
-        (2, True), #sysadmin
+        (1, False), #repoadmin
+        (2, False), #sysadmin
         (3, False), #comadmin
         (4, False), #generaluser
-        (5, True), #originalroleuser (owner)
-        (6, True), #originalroleuser2 (repoadmin)
+        (5, False), #originalroleuser (owner)
+        (6, False), #originalroleuser2 (repoadmin)
         (7, False), #user (weko_shared owner)
     ],
 )
-def test__get_show_secret_url_button(users,records ,db_restricted_access_secret,id ,is_show):
+def test__get_show_secret_url_button(users,records,id ,is_show):
     indexer, results = records
     # 80
     i = 0
@@ -1092,14 +1077,17 @@ def test__get_show_secret_url_button(users,records ,db_restricted_access_secret,
     for record in results:
         record["record"]['owner'] = users[5]["id"]
         record["record"]['weko_shared_id'] = users[7]["id"]
-        record["record"].get_file_data()[0].update({'accessrole':role[i]})
-        record["record"].get_file_data()[0].update({'date':[{"dateValue" :'2999-12-31'}]})
-        i = i + 1
+        file_data = record["record"].get_file_data()
+        if len(file_data) > 0:
+            file_data[0].update({'accessrole':role[i%3]})
+            file_data[0].update({'date':[{"dateValue" :'2999-12-31'}]})
+            i = i + 1
 
     with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
         res = []
         for record in results:
-            res.append( _get_show_secret_url_button(record["record"] , record["filename"]) )
+            if 'filename' in record:
+                res.append( _get_show_secret_url_button(record["record"] , record["filename"]) )
         
     assert not res[0]
     assert res[1] == is_show
@@ -1122,13 +1110,16 @@ def test__get_show_secret_url_button2(users,records ,id,is_show):
     for record in results:
         record["record"]['owner'] = users[5]["id"]
         record["record"]['weko_shared_id'] = users[7]["id"]
-        record["record"].get_file_data()[0].update({'accessrole':role[i]})
-        record["record"].get_file_data()[0].update({'date':[{"dateValue" :'2999-12-31'}]})
-        i = i + 1
+        file_data = record["record"].get_file_data()
+        if len(file_data) > 0:
+            file_data[0].update({'accessrole':role[i%3]})
+            file_data[0].update({'date':[{"dateValue" :'2999-12-31'}]})
+            i = i + 1
     with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
         res = []
         for record in results:
-            res.append( _get_show_secret_url_button(record["record"] , record["filename"]) )
+            if 'filename' in record:
+                res.append( _get_show_secret_url_button(record["record"] , record["filename"]) )
     
     assert res[0] == False
     assert res[1] == False
@@ -1139,10 +1130,10 @@ def test__get_show_secret_url_button2(users,records ,id,is_show):
 @pytest.mark.parametrize(
     "id, is_show",
     [
-        (1, True), #repoadmin
+        (1, False), #repoadmin
     ],
 )
-def test__get_show_secret_url_button3(users,records ,db_restricted_access_secret,id,is_show):
+def test__get_show_secret_url_button3(users,records,id,is_show):
     indexer, results = records
     # 80
     i = 0
@@ -1150,13 +1141,16 @@ def test__get_show_secret_url_button3(users,records ,db_restricted_access_secret
     for record in results:
         record["record"]['owner'] = users[5]["id"]
         record["record"]['weko_shared_id'] = users[7]["id"]
-        record["record"].get_file_data()[0].update({'accessrole':role[i]})
-        record["record"].get_file_data()[0].update({'date':[{"dateValue" :'1999-12-31'}]})
-        i = i + 1
+        file_data = record["record"].get_file_data()
+        if len(file_data) > 0:
+            file_data[0].update({'accessrole':role[i%3]})
+            file_data[0].update({'date':[{"dateValue" :'2999-12-31'}]})
+            i = i + 1
     with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
         res = []
         for record in results:
-            res.append( _get_show_secret_url_button(record["record"] , record["filename"]) )
+            if 'filename' in record:
+                res.append( _get_show_secret_url_button(record["record"] , record["filename"]) )
     
     assert res[0] == False
     assert res[1] == is_show

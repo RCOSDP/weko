@@ -1397,15 +1397,17 @@ $(document).ready(function () {
           // Get item id of sub-property is language.
           data.key_subproperty_languague.forEach(function (itemkey) {
             let listSubItem = itemkey.split(".");
-            var temp_prop = properties_obj[data.meta_list[listSubItem[0]].input_type.substr(4)].schema.properties;
-            for (var idx = 1; idx < listSubItem.length; idx++) {
-              let _item = temp_prop[listSubItem[idx]]
-              if (_item && _item.items) {
-                temp_prop = _item.items.properties;
-              } else if (_item && _item.properties) {
-                temp_prop = _item.properties;
-              } else if (_item && idx === listSubItem.length - 1) {
-                _item['isSubLanguage'] = true;
+            if (listSubItem && listSubItem.length > 0 && listSubItem[0] in data.meta_list) {
+              var temp_prop = properties_obj[data.meta_list[listSubItem[0]].input_type.substr(4)].schema.properties;
+              for (var idx = 1; idx < listSubItem.length; idx++) {
+                let _item = temp_prop[listSubItem[idx]]
+                if (_item && _item.items) {
+                  temp_prop = _item.items.properties;
+                } else if (_item && _item.properties) {
+                  temp_prop = _item.properties;
+                } else if (_item && idx === listSubItem.length - 1) {
+                  _item['isSubLanguage'] = true;
+                }
               }
             }
           });
@@ -1741,7 +1743,7 @@ $(document).ready(function () {
           let itpTitleI18nJa = itpForm.title_i18n.ja;
           let itTitleI18nEn = itForm.title_i18n_temp.en;
           let itTitleI18nJa = itForm.title_i18n_temp.ja;
-          if(itTitleI18nEn != itpTitleI18nEn || itTitleI18nJa != itpTitleI18nJa) {
+          if ((itTitleI18nEn != itpTitleI18nEn || itTitleI18nJa != itpTitleI18nJa) && Array.isArray(changedProperties)) {
             itForm.title_i18n_temp = itpForm.title_i18n;
             changedProperties.push(itpTitleI18nEn);
           }
@@ -1772,7 +1774,7 @@ $(document).ready(function () {
           let itpTitleI18nJa = itpForm.title_i18n.ja;
           let itTitleI18nEn = itForm.title_i18n_temp.en;
           let itTitleI18nJa = itForm.title_i18n_temp.ja;
-          if(itTitleI18nEn != itpTitleI18nEn || itTitleI18nJa != itpTitleI18nJa) {
+          if ((itTitleI18nEn != itpTitleI18nEn || itTitleI18nJa != itpTitleI18nJa) && Array.isArray(changedProperties)) {
             itForm.title_i18n_temp = itpForm.title_i18n;
             changedProperties.push(itpTitleI18nEn);
           }
@@ -1882,10 +1884,10 @@ $(document).ready(function () {
     //Set TitleMap for form.
     let _enum, editAble;
     editAble = property.hasOwnProperty('editAble') && property['editAble'];
-    if(property.hasOwnProperty('currentEnum')){
-      _enum = property['currentEnum'];
-    } else if(property.hasOwnProperty('enum')){
+    if(property.hasOwnProperty('enum')&& property['enum']){
       _enum = property['enum'];
+    } else if(property.hasOwnProperty('currentEnum')&& property['currentEnum']){
+      _enum = property['currentEnum'];
     }
     //Trim space for value of enum in item type schema.
     if(_enum){
@@ -1921,6 +1923,8 @@ $(document).ready(function () {
           titleMap.push({"name": val, "value": val});
         }
       });
+      console.log("titleMap");
+      console.log(titleMap);
       form.titleMap = titleMap;
     }
     // Rearrange data for form in case of radio, checkbox, select

@@ -64,8 +64,8 @@
 						<line hits="1" number="79"/>
 						<line hits="1" number="80"/>
 						<line hits="1" number="83"/>
-						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="85"/>
-						<line hits="1" number="86"/>
+						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="86" number="85"/>
+						<line hits="0" number="86"/>
 						<line hits="1" number="89"/>
 						<line hits="1" number="90"/>
 						<line hits="1" number="93"/>

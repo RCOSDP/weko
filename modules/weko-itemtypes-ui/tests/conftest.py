@@ -110,6 +110,7 @@ from weko_records import WekoRecords
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName,ItemTypeProperty
 from weko_records_ui import WekoRecordsUI
 from weko_records_ui.config import WEKO_RECORDS_UI_LICENSE_DICT
+#from weko_records_ui.models import RocrateMapping
 from weko_schema_ui import WekoSchemaUI
 from weko_schema_ui.models import OAIServerSchema
 from weko_search_ui import WekoSearchREST, WekoSearchUI
@@ -121,7 +122,6 @@ from weko_search_ui.config import (
     WEKO_SEARCH_REST_ENDPOINTS,
 )
 from weko_theme import WekoTheme
-from weko_theme.views import blueprint as weko_theme_blueprint
 from weko_user_profiles.config import WEKO_USERPROFILES_GENERAL_ROLE, WEKO_USERPROFILES_ROLES
 from weko_user_profiles.models import UserProfile
 from weko_workflow import WekoWorkflow
@@ -131,7 +131,8 @@ from werkzeug.local import LocalProxy
 
 from weko_itemtypes_ui import WekoItemtypesUI
 from weko_itemtypes_ui.admin import itemtype_meta_data_adminview,itemtype_properties_adminview,itemtype_mapping_adminview
- 
+#,itemtype_rocrate_mapping_adminview
+
 from tests.helpers import json_data
 
 """Pytest configuration."""
@@ -168,11 +169,9 @@ def base_app(instance_path):
         SECRET_KEY="SECRET_KEY",
         TESTING=True,
         SERVER_NAME="test_server",
-        # SQLALCHEMY_DATABASE_URI=os.environ.get(
-        #     "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
-        # ),
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+            "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
+        ),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         ACCOUNTS_USERINFO_HEADERS=True,
         WEKO_PERMISSION_SUPER_ROLE_USER=[
@@ -347,6 +346,10 @@ def admin_view(app):
     admin.add_view(properties_viewclass(**itemtype_properties_adminview["kwargs"]))
     mapping_viewclass = itemtype_mapping_adminview["view_class"]
     admin.add_view(mapping_viewclass(**itemtype_mapping_adminview["kwargs"]))
+    #rocratemapping_viewclass = itemtype_rocrate_mapping_adminview["view_class"]
+    #admin.add_view(rocratemapping_viewclass(**itemtype_rocrate_mapping_adminview["kwargs"]))
+
+
 @pytest.fixture()
 def db(app):
     """Database fixture."""
@@ -877,3 +880,11 @@ def db_itemtype6(app, db):
         "item_type": item_type,
         "item_type_mapping": item_type_mapping,
     }
+
+
+#@pytest.fixture()
+#def rocrate_mapping(db, item_type):
+#    mapping = {'key1': 'value1'}
+#    rocrate_mapping1 = RocrateMapping(2, mapping)
+#    with db.session.begin_nested():
+#        db.session.add(rocrate_mapping1)

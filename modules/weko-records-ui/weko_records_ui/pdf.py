@@ -39,14 +39,14 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from PyPDF2 import PdfFileReader, PdfFileWriter
 from weko_deposit.api import WekoRecord
 from weko_items_autofill.utils import get_workflow_journal
-from weko_records.api import ItemsMetadata
+from weko_records.api import ItemsMetadata, ItemTypes
 from weko_records.serializers.feed import WekoFeedGenerator
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import get_value_by_selected_lang
 from weko_workflow.api import WorkActivity
 
 from weko_records_ui.utils import get_record_permalink, \
-    item_setting_show_email
+    item_setting_show_email,get_values_by_selected_lang
 
 from .models import PDFCoverPageSettings
 from .utils import get_license_pdf, get_pair_value
@@ -62,6 +62,10 @@ def get_east_asian_width_count(text):
             count += 1
     return count
 
+LANG_CONVERT = {
+    "jpn": "Japanese",
+    "eng": "English"
+}
 
 def make_combined_pdf(pid, fileobj, obj, lang_user):
     """Make the cover-page-combined PDF file.
@@ -177,11 +181,20 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     pid_object = get_pid_object(pid.pid_value)
     item_metadata_json = ItemsMetadata.get_record(pid_object.object_uuid)
     wekoRecord = WekoRecord.get_record_by_pid(pid.pid_value)
-    item_type = ItemsMetadata.get_by_object_id(pid_object.object_uuid)
-    item_type_id = item_type.item_type_id
-    meta_options, type_mapping = get_options_and_order_list(item_type_id)
-    hide_list = get_hide_list_by_schema_form(item_type_id)
-    item_map = get_mapping(item_type_id, "jpcoar_mapping")
+    item_type_metadata = ItemsMetadata.get_by_object_id(pid_object.object_uuid)
+    item_type_id = item_type_metadata.item_type_id
+
+    item_type = ItemTypes.get_by_id(item_type_id)
+    hide_list = []
+    if item_type:
+        meta_options = get_options_and_order_list(
+            item_type_id,
+            item_type_data=ItemTypes(item_type.schema, model=item_type),
+            mapping_flag=False)
+        hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+    else:
+        meta_options = get_options_and_order_list(item_type_id, mapping_flag=False)
+    item_map = get_mapping(item_type_id, 'jpcoar_mapping', item_type=item_type)
 
     try:
         with open(lang_file_path) as json_datafile:
@@ -318,29 +331,28 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
 
     try:
         lang_field = item_map['language.@value'].split('.')
+        language = []
         if isinstance(item_metadata_json[lang_field[0]], dict):
-            if item_metadata_json[lang_field[0]][lang_field[1]] == 'eng':
-                item_metadata_json['lang'] = 'English'
-            elif item_metadata_json[lang_field[0]][lang_field[1]] == 'jpn':
-                item_metadata_json['lang'] = 'Japanese'
+            lang_str = item_metadata_json[lang_field[0]][lang_field[1]]
+            language.append(LANG_CONVERT.get(lang_str, lang_str))
         elif isinstance(item_metadata_json[lang_field[0]], list):
-            if item_metadata_json[lang_field[0]][0][lang_field[1]] == 'eng':
-                item_metadata_json['lang'] = 'English'
-            elif item_metadata_json[lang_field[0]][0][lang_field[1]] == 'jpn':
-                item_metadata_json['lang'] = 'Japanese'
+            for lang_metadata in item_metadata_json[lang_field[0]]:
+                lang_str = lang_metadata[lang_field[1]]
+                language.append(LANG_CONVERT.get(lang_str, lang_str))
+        item_metadata_json['lang'] = language
     except BaseException:
-        pass
+        item_metadata_json['lang'] = [item_metadata_json['lang']] if 'lang' in item_metadata_json else []
 
     try:
         lang = item_metadata_json.get('lang')
     except (KeyError, IndexError):
-        lang = None
+        lang = []
 
     # get publisher info
     publisher_attr_lang = 'publisher.@attributes.xml:lang'
     publisher_value = 'publisher.@value'
+    publisher = []
     try:
-        multi_lang_value = {}
         for i in item_map[publisher_value].split(','):
             value_key_list = i.split('.')
             publisher_item_id = value_key_list[0]
@@ -355,18 +367,18 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
                 if publisher_item_id == lang_key_list[0]:
                     publisher_lang_ids = lang_key_list[1:]
                     publisher_text_ids = value_key_list[1:]
-                    publisher = []
                     publishers = item_metadata_json[publisher_item_id]
                     pair_name_language_publisher = get_pair_value(publisher_text_ids,
                                                                   publisher_lang_ids,
                                                                   publishers)
+                    multi_lang_value = []
                     for publisher_name, publisher_lang in pair_name_language_publisher:
                         if not publisher_lang:
                             publisher_lang == 'None Language'
-                        multi_lang_value[publisher_lang] = publisher_name
-                    value = get_value_by_selected_lang(multi_lang_value, cur_lang)
-                    if value:
-                        publisher.append(value)
+                        multi_lang_value.append((publisher_lang, publisher_name))
+                    values = get_values_by_selected_lang(multi_lang_value, cur_lang)
+                    if values:
+                        publisher+=values
     except (KeyError, IndexError):
         publisher = []
 
@@ -379,8 +391,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     # get keyword info
     keyword_attr_lang = 'subject.@attributes.xml:lang'
     keyword_attr_value = 'subject.@value'
-    keywords_ja = []
-    keywords_en = []
+    keywords = []
     try:
         for i in item_map[keyword_attr_value].split(','):
             value_key_list = i.split('.')
@@ -400,14 +411,16 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
                     pair_name_language_keyword = get_pair_value(keyword_item_values,
                                                                 keyword_item_langs,
                                                                 keyword_base)
+                    multi_lang_value = []
                     for name, keyword_lang in pair_name_language_keyword:
-                        if keyword_lang == 'ja' and name:
-                            keywords_ja.append(name)
-                        elif keyword_lang == 'en' and name:
-                            keywords_en.append(name)
+                        if not keyword_lang:
+                            keyword_lang = 'None Language'
+                        multi_lang_value.append((keyword_lang, name))
+                    values = get_values_by_selected_lang(multi_lang_value, cur_lang)
+                    if values:
+                        keywords+=values
     except (KeyError, IndexError):
-        keywords_ja = []
-        keywords_en = []
+        keywords = []
 
     # get creator info
     _creator = 'creator.creatorName.@value'
@@ -484,11 +497,10 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
 
     seperator = ', '
     metadata_dict = {
-        "lang": lang,
+        "lang": seperator.join(lang),
         "publisher": seperator.join(publisher),
         "pubdate": pubdate,
-        "keywords_ja": seperator.join(keywords_ja),
-        "keywords_en": seperator.join(keywords_en),
+        "keywords": seperator.join(keywords),
         "creator_mail": seperator.join(creator_mail_list),
         "creator_name": seperator.join(creator_name_list),
         "affiliation": seperator.join(creator_affiliation_list)
@@ -507,12 +519,9 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         "{}: {}".format(
             lang_data["Metadata"]["PUBLICDATE"],
             metadata_dict["pubdate"]),
-        "{} (Ja): {}".format(
+        "{}: {}".format(
             lang_data["Metadata"]["KEY"],
-            metadata_dict["keywords_ja"]),
-        "{} (En): {}".format(
-            lang_data["Metadata"]["KEY"],
-            metadata_dict["keywords_en"]),
+            metadata_dict["keywords"]),
         "{}: {}".format(
             lang_data["Metadata"]["AUTHOR"],
             metadata_dict["creator_name"]),
@@ -641,17 +650,17 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
 
     # Download the newly generated combined PDF file
     try:
-        combined_filename = 'CV_' + datetime.now().strftime('%Y%m%d') + '_' + \
-                            fileobj['filename']
+        download_filename = 'CV_' + fileobj['filename']
     except (KeyError, IndexError):
-        combined_filename = 'CV_' + title + '.pdf'
+        download_filename = 'CV_' + title + '.pdf'
 
     dir_path = tempfile.gettempdir() + '/comb_pdfs/'
 
     if not os.path.isdir(dir_path):
         os.mkdir(dir_path)
 
-    combined_filepath = dir_path + '{}.pdf'.format(combined_filename)
+    combined_filepath = dir_path + 'CV_{}_{}.pdf'.format(
+        datetime.now().strftime('%Y%m%d'), fileobj.file_id)
 
     with open(combined_filepath, 'wb') as f:
         try:
@@ -709,7 +718,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     return send_file(
         combined_filepath,
         as_attachment=True,
-        attachment_filename=combined_filename,
+        attachment_filename=download_filename,
         mimetype='application/pdf',
         cache_timeout=-1
     )
