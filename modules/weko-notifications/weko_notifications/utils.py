@@ -7,10 +7,13 @@
 
 """Module of weko-notifications."""
 
+import re
 import pytz
 from datetime import datetime
 
 from flask import current_app, request
+
+from weko_user_profiles.config import USERPROFILES_TIMEZONE_LIST
 
 def inbox_url(endpoint=None, _external=False):
     """Return the inbox URL.
@@ -52,12 +55,10 @@ def create_subscription(user_id, endpoint, expiration_time, p256dh, auth):
         expiration_time (str): The expiration
         p256dh (str): The P-256 Diffie-Hellman public key.
         auth (str): The authentication secret.
+
+    Returns:
+        dict: The subscription.
     """
-    current_app.logger.info(
-        "Creating subscription for user %s: %s",
-        user_id,
-        endpoint[:24] + "..." + endpoint[-8:],
-    )
     root_url = request.host_url
 
     subscription = {
@@ -71,3 +72,28 @@ def create_subscription(user_id, endpoint, expiration_time, p256dh, auth):
     }
 
     return subscription
+
+
+def create_userprofile(userprofile):
+    """Create a user profile.
+
+    Args:
+        userprofile (UserProfile): The user profile.
+    """
+    root_url = request.host_url
+
+    posix_tz = userprofile.timezone
+    iana_tz = "GMT+9:00"
+    for posix, iana in USERPROFILES_TIMEZONE_LIST:
+        if posix == posix_tz:
+            pattern = r"\((GMT.*?)\)"
+            iana_tz = re.search(pattern, str(iana)).group(1)
+
+    userprofile = {
+        "uri": f"{root_url}user/{userprofile.user_id}",
+        "displayname": userprofile._displayname,
+        "language": userprofile.language,
+        "timezone": iana_tz,
+    }
+
+    return userprofile

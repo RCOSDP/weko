@@ -20,6 +20,9 @@
 
 """Views for weko-user-profiles."""
 
+import traceback
+import requests
+
 from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
@@ -130,9 +133,18 @@ def profile():
         if form == 'profile':
             handle_profile_form(profile_form)
             db.session.commit()
+
+            if current_app.config["WEKO_NOTIFICATIONS"]:
+                from weko_notifications.utils import create_userprofile, inbox_url
+                create_userprofile(current_userprofile)
+                requests.post(
+                    inbox_url("/userprofile"),
+                    json=create_userprofile(current_userprofile)
+                )
         elif form == 'verification':
             handle_verification_form(verification_form)
     except Exception as e:
+        traceback.print_exc()
         db.session.rollback()
         current_app.logger.error(e)
 

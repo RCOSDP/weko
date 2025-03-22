@@ -19,9 +19,11 @@ from flask_login import current_user, login_required
 from flask_menu import register_menu
 from invenio_db import db
 
+from weko_user_profiles.utils import current_userprofile
+
 from .forms import NotificationsForm, handle_notifications_form
 from .models import NotificationsUserSettings
-from .utils import inbox_url, create_subscription
+from .utils import create_userprofile, inbox_url, create_subscription
 
 
 blueprint = Blueprint(
@@ -66,9 +68,6 @@ def notifications():
             )
 
         endpoint = notifications_form.webpush_endpoint.data
-        current_app.logger.info(
-            f"error: {notifications_form.errors}"
-        )
         try:
             if endpoint == "":
                 pass
@@ -80,8 +79,15 @@ def notifications():
                     notifications_form.webpush_p256dh.data,
                     notifications_form.webpush_auth.data
                 )
+                userprofile = create_userprofile(current_userprofile)
 
+                current_app.logger.info(
+                    "Updating push subscription for user %s: %s",
+                    current_user.id,
+                    endpoint[:24] + "..." + endpoint[-8:]
+                )
                 requests.post(inbox_url("/subscribe"), json=subscripsion)
+                requests.post(inbox_url("/userprofile"), json=userprofile)
             else:
                 requests.post(inbox_url("/unsubscribe"), json={"endpoint": endpoint})
         except Exception as ex:
