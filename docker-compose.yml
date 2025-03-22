@@ -170,9 +170,6 @@ services:
       resources:
         limits:
           memory: 8000m
-    networks:
-      weko3_net:
-        ipv4_address: 172.30.0.20
 
   worker:
     restart: "always"
@@ -299,8 +296,6 @@ services:
       resources:
         limits:
           memory: 8000m
-    networks:
-      - weko3_net
 
   postgresql:
     restart: "always"
@@ -315,8 +310,6 @@ services:
     ports:
       #- "25401:5432"
       - "5432"
-    networks:
-      - weko3_net
 
   pgpool:
     restart: "always"
@@ -336,8 +329,6 @@ services:
       - PGPOOL_MAX_POOL=2
     ports:
       - "25401:5432"
-    networks:
-      - weko3_net
 
   redis:
     restart: "always"
@@ -348,8 +339,6 @@ services:
       resources:
         limits:
           memory: 100m
-    networks:
-      - weko3_net
 
   elasticsearch:
     restart: "always"
@@ -363,8 +352,6 @@ services:
     ports:
       - "29201:9200"
       - "29301:9300"
-    networks:
-      - weko3_net
 
   rabbitmq:
     restart: "always"
@@ -374,8 +361,6 @@ services:
       - "45601:25672"
     environment:
       - "RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit consumer_timeout 10800000"
-    networks:
-      - weko3_net
 
   nginx:
     restart: "always"
@@ -395,8 +380,6 @@ services:
       resources:
         limits:
           memory: 300m
-    networks:
-      - weko3_net
 
 #  certbot:
 #    image: certbot/certbot:latest
@@ -413,8 +396,6 @@ services:
       - "5501:5555"
     links:
       - rabbitmq
-    networks:
-      - weko3_net
 
   inbox:
     restart: "always"
@@ -436,8 +417,6 @@ services:
       - VAPID_PRIVATE_KEY=
     links:
       - mongo
-    networks:
-      - weko3_net
 
   mongo:
     restart: "always"
@@ -449,8 +428,6 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
-    networks:
-      - weko3_net
 
 #  kibana:
 #    build:
@@ -478,9 +455,3 @@ volumes:
 #  letsencrypt_etc:
 #  letsencrypt_html:
 
-networks:
-  weko3_net:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.30.0.0/24
