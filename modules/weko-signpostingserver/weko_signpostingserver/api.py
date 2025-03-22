@@ -7,8 +7,11 @@
 # details.
 from flask import Blueprint, Response, request, current_app, redirect
 
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_pidstore.errors import PIDDoesNotExistError
+from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_db import db
 from invenio_records.api import Record
-from weko_inbox_sender.utils import get_record_permalink
 
 
 def requested_signposting(pid, record, template=None, **kwargs):
@@ -70,3 +73,33 @@ def outside_url(url):
         return url.replace('nginx', current_app.config['WEB_HOST'])
     else:
         return url
+
+
+def get_record_permalink(recid_p):
+    """Get the uuid of the parent element of the record
+    and get the uri of the doi associated with it
+
+    :param string recid_p: recid
+    :return: uri of doi
+    :rtype: string
+    """
+    uuid_p = \
+        PersistentIdentifier.get('parent',
+                                 'parent:'+str(recid_p)
+                                 ).object_uuid
+    try:
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='doi',
+            object_uuid=uuid_p,
+            status=PIDStatus.REGISTERED
+        ).order_by(
+            db.desc(PersistentIdentifier.created)
+        ).first()
+        if pid is None:
+            return '{host_url}records/{recid}'.format(
+                host_url=current_app.config['THEME_SITEURL'] + '/', recid=recid_p)
+        else:
+            return pid.pid_value
+    except PIDDoesNotExistError as e:
+        return '{host_url}records/{recid}'.format(
+            host_url=current_app.config['THEME_SITEURL'] + '/', recid=recid_p)

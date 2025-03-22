@@ -116,9 +116,3 @@ widget_js = Bundle(
     filters='jsmin',
     output="gen/widget.%(version)s.js",
 )
-
-#js_check_inbox = Bundle(
-#    'js/weko_theme/check_inbox.js',
-#    filters='jsmin',
-#    output="gen/check_inbox.%(version)s.js",
-#)

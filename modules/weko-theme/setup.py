@@ -93,7 +93,6 @@ setup(
             'weko_theme_js_detail_search = weko_theme.bundles:js_detail_search',
             'weko_theme_js_widget_lib = weko_theme.bundles:js_widget_lib',
             'weko_theme_js_widget = weko_theme.bundles:widget_js',
-            #'weko_theme_js_check_inbox = weko_theme.bundles:js_check_inbox',
         ],
         'invenio_base.apps': [
             'weko_theme = weko_theme:WekoTheme',
