@@ -76,16 +76,21 @@ def test_index_acl_nologin(client,db_register2):
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_index_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-@pytest.mark.parametrize('users_index, status_code', [
-    (0, 200),
-    (1, 200),
-    (2, 200),
-    (3, 200),
-    (4, 200),
-    (5, 200),
-    (6, 200),
+@pytest.mark.parametrize('users_index, status_code, enable_show_activity, approver_email_visible', [
+    (0, 200, False, False),
+    (1, 200, True, False),
+    (2, 200, False, True),
+    (3, 200, True, True),
+    (4, 200, False, False),
+    (5, 200, True, False),
+    (6, 200, False, True),
 ])
-def test_index_acl(client, users, db_register2,users_index, status_code):
+# def test_index_acl(client, users, db_register2,users_index, status_code):
+def test_index_acl(client, users, db_register2, app, users_index, status_code, enable_show_activity, approver_email_visible):
+    app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] = enable_show_activity
+    app.config['WEKO_WORKFLOW_COLUMNS'] = ['approver_email'] if approver_email_visible else []
+    app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] = approver_email_visible
+
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.index',_external=True)
     res = client.get(url)
