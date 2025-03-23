@@ -182,6 +182,11 @@ msgstr ""
 msgid "The following items is required. Please recheck and input."
 msgstr ""
 
+#: weko_items_ui/templates/weko_items_ui/edit.html:316
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:464
+msgid "The same item may have been registered."
+msgstr "The same item may have been registered."
+
 #: weko_items_ui/templates/weko_items_ui/edit.html:315
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:462
 msgid ""

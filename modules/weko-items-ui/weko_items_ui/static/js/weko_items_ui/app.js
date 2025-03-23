@@ -1,5 +1,7 @@
 const ITEM_SAVE_URL = $("#item_save_uri").val();
 const ITEM_SAVE_FREQUENCY = $("#item_save_frequency").val();
+let isDuplicatePopupShown = false;
+let previousData = null;
 
 require([
   'jquery',
@@ -3717,6 +3719,45 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             $("#allModal").modal("show");
             return false;
           }
+
+          // duplicate check
+          let metainfo = { 'metainfo': $rootScope.recordsVM.invenioRecordsModel };
+          let isModified = !angular.equals(previousData, metainfo);
+          let isDuplicate = false;
+          $.ajax({
+            context: this,
+            headers: {
+            'Content-Type': 'application/json'
+            },
+            async: false,
+            dataType: "json",
+
+            url: "/items/iframe/model/save",
+            method: "POST",
+            data: JSON.stringify(metainfo),
+            success: function (response) {
+                if (response && response.is_duplicate) {
+                    if ((!isDuplicatePopupShown) || isModified) {
+                        this.check_duplicate_items(response);
+                        isDuplicatePopupShown = true;
+                        isDuplicate = true;
+                        previousData = angular.copy(metainfo);
+                    }
+                }
+            },
+            error: function (xhr) {
+                let response = xhr.responseJSON;
+                if (response && response.is_duplicate) {
+                    this.check_duplicate_items(response);
+                    isDuplicat = true;
+                }
+                showErrorMsg("An error occurred while saving the item.");
+            }
+          });
+          if (isDuplicate) {
+            return false;
+          }
+
           // Call API to validate input data base on json schema define
           let validateURL = '/api/items/validate';
           let isValid = false;
@@ -4206,6 +4247,21 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
         return true;
       }
+
+      $scope.check_duplicate_items = function (response) {
+        if (response.duplicate_links && response.duplicate_links.length > 0) {
+            let message = $("#duplicate_warning").val() + '<br/><br/>';
+            response.duplicate_links.forEach(link => {
+                message += `<a href="${link}" target="_blank">${link}</a><br/>`;
+            });
+    
+            $("#inputModal").html(message);
+            $("#allModal").modal("show");
+            return false;
+        }
+        return true;
+      }
+
       $scope.UpdateApplicationDate = function () {
         var applicationDateKey = 'subitem_restricted_access_application_date';
         for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {

@@ -190,6 +190,11 @@ msgstr "取得"
 msgid "The following items is required. Please recheck and input."
 msgstr "以下の項目が入力必須となります。ご確認の上、再度入力してください。"
 
+#: weko_items_ui/templates/weko_items_ui/edit.html:316
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:464
+msgid "The same item may have been registered."
+msgstr "同一のアイテムが登録されている可能性があります。"
+
 #: weko_items_ui/templates/weko_items_ui/edit.html:315
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:462
 msgid ""
@@ -615,3 +620,43 @@ msgstr "リクエストメール送信先"
 
 msgid "Display Request Mail Button"
 msgstr "リクエストボタンを表示"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:290
+msgid "oa_policy_label"
+msgstr "OA ポリシー情報"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:298
+msgid "oa_policy_export"
+msgstr "OA ポリシー取得"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:311
+msgid "Please enter ISSN, eISSN, or journal title"
+msgstr "ISSN、eISSN、または雑誌名を入力してください。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:312
+msgid "No Policy Information found"
+msgstr "一致するポリシー情報が見つかりませんでした。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:313
+msgid "Invalid parameters"
+msgstr "パラメータが不正です。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:314
+msgid "Authentication error occurred"
+msgstr "認証エラーが発生しました。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:315
+msgid "No matching policy"
+msgstr "一致するポリシー情報が見つかりませんでした。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:316
+msgid "Request limit exceeded"
+msgstr "リクエスト制限を超えました。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:317
+msgid "Internal server error"
+msgstr "サーバー内部エラーが発生しました。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:318
+msgid "An unknown error occurred"
+msgstr "不明なエラーが発生しました"

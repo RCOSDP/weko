@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 import uuid
 import pytest
 import io
+import copy
 from flask import Flask, json, jsonify, session, url_for ,make_response
 from flask_security.utils import login_user
 from invenio_accounts.testutils import login_user_via_session
@@ -766,17 +767,22 @@ def test_soft_delete_acl(client, records, users, id, status_code):
             "weko_records_ui.soft_delete", recid=1, _external=True
         )
         with patch("flask.templating._render", return_value=""):
-            pid = PersistentIdentifier.query.filter_by(
-                pid_type='recid', pid_value='1').first()
-            assert pid.status == PIDStatus.REGISTERED
-            res = client.post(url)
-            assert res.status_code == status_code
-            pid = PersistentIdentifier.query.filter_by(
-                pid_type='recid', pid_value='1').first()
-            if status_code == 200:
-                assert pid.status == PIDStatus.DELETED
-            else:
+            with patch("weko_records_ui.views.call_external_system") as mock_external:
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type='recid', pid_value='1').first()
                 assert pid.status == PIDStatus.REGISTERED
+                res = client.post(url)
+                assert res.status_code == status_code
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type='recid', pid_value='1').first()
+                if status_code == 200:
+                    assert pid.status == PIDStatus.DELETED
+                    mock_external.assert_called_once()
+                    assert mock_external.call_args[1]["old_record"] is not None
+                    assert "new_record" not in mock_external.call_args[1]
+                else:
+                    assert pid.status == PIDStatus.REGISTERED
+                    mock_external.assert_not_called()
 
 
 # def restore(recid):
@@ -1110,3 +1116,30 @@ def test__get_show_secret_url_button3(users,records,id,is_show):
     assert res[0] == False
     assert res[1] == is_show
     assert res[2] == False
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_publish -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_publish(app, client, records):
+    record = WekoRecord.get_record_by_pid("1")
+    mock_pid = MagicMock()
+    mock_pid.last_child = record.pid
+    record["publish_status"] = "0"
+    record_0_a = copy.deepcopy(record)
+    record_0_b = copy.deepcopy(record)
+    record_0_c = copy.deepcopy(record)
+    record["publish_status"] = "1"
+    record_1_a = copy.deepcopy(record)
+    record_1_b = copy.deepcopy(record)
+    record_1_c = copy.deepcopy(record)
+    with patch("weko_records_ui.views.PIDVersioning", mock_pid):
+        with patch("weko_records_ui.views.url_for", return_value=""):
+            with patch("weko_records_ui.views.call_external_system") as mock_external:
+                with patch("weko_records_ui.views.WekoRecord.commit"):
+                    with patch("weko_records_ui.views.WekoRecord.get_record_by_pid", return_value=record_0_a):
+                        with app.test_request_context(data={"status": "1"}):
+                            publish(record.pid, record_0_b)
+                            mock_external.assert_called_with(old_record=record_0_c, new_record=record_1_c)
+                    with patch("weko_records_ui.views.WekoRecord.get_record_by_pid", return_value=record_1_a):
+                        with app.test_request_context(data={"status": "0"}):
+                            publish(record.pid, record_1_b)
+                            mock_external.assert_called_with(old_record=record_1_c, new_record=record_0_c)
