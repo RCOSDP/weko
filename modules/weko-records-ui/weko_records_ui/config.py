@@ -669,11 +669,20 @@ WEKO_RECORDS_UI_DISPLAY_VERSION_BOX_FLG = True
 WEKO_RECORDS_UI_DISPLAY_EXPORT_BOX_FLG = True
 """ Display Export box on item detail. """
 
+WEKO_RECORDS_UI_DISPLAY_COMMUNITIES_BOX_FLG = True
+""" Display COMMUNITIES box on item detail. """
+
 WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = False
 """ Display resource type on item detail. """
 
 WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE = True
 """ Display item type name on item detail. """
+
+WEKO_RECORDS_UI_COMMUNITIES_BOX_THUMBNAIL_WIDTH = 50
+""" community thumbnail width in COMMUNITIES BOX. """
+
+WEKO_RECORDS_UI_COMMUNITIES_BOX_THUMBNAIL_HEIGHT = 50
+""" community thumbnail height in COMMUNITIES BOX. """
 
 WEKO_RECORDS_UI_REST_ENDPOINTS = {
     'send_request_mail': {

@@ -40,14 +40,17 @@ from weko_index_tree.utils import (
     generate_path,
     save_index_trees_to_redis,
     delete_index_trees_from_redis,
-    str_to_datetime
+    str_to_datetime,
+    get_descendant_index_names,
+    get_item_ids_in_index,
+    get_all_records_in_index,
 )
 
 from invenio_accounts.testutils import login_user_via_session, client_authenticated
 ######
 import json
 import pytest
-from mock import patch
+from mock import patch, MagicMock
 from datetime import date, datetime, timedelta
 from functools import wraps
 from operator import itemgetter
@@ -706,3 +709,67 @@ def test_str_to_datetime():
     date_format2 = "%Y-%m-%dT%H:%M:%S"
     assert str_to_datetime(date_str, date_format1)==datetime(2022, 1, 1)
     assert str_to_datetime(date_str, date_format2)==None
+
+# def get_descendant_index_names(index_id):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_get_descendant_index_names -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_get_descendant_index_names(app, db, test_indices):
+    result = get_descendant_index_names(1)
+    assert result[0] == "テストインデックス 1"
+    assert result[1] == "テストインデックス 1-/-テストインデックス 11"
+    
+    result = get_descendant_index_names(11)
+    assert result[0] == "テストインデックス 1-/-テストインデックス 11"
+    
+    result = get_descendant_index_names(999)
+    assert result == []
+
+# def get_item_ids_in_index(index_id):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_get_item_ids_in_index -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_get_item_ids_in_index():
+    return_value = [{'_source': {'control_number': 123}}, {'_source': {'control_number': 456}}]
+    with patch("weko_index_tree.utils.get_all_records_in_index", return_value=return_value):
+        assert get_item_ids_in_index(1)==[123, 456]
+    
+    return_value = []
+    with patch("weko_index_tree.utils.get_all_records_in_index", return_value=return_value):
+        assert get_item_ids_in_index(1)==[]
+    
+    return_value = [{'key': 'value'}]
+    with patch("weko_index_tree.utils.get_all_records_in_index", return_value=return_value):
+        assert get_item_ids_in_index(1)==[]     
+    
+# def get_all_records_in_index(index_id):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_get_all_records_in_index -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_get_all_records_in_index(app, db, test_indices, mocker):
+    first_page = {
+        "hits": {
+            "hits": [
+                {'_source': {'control_number': 123}, 'sort': [1]},
+                {'_source': {'control_number': 456}, 'sort': [2]}
+            ]
+        }
+    }
+    mock_search_instance = MagicMock()
+    mock_search_instance.query.return_value.sort.return_value.params.return_value.execute.return_value.to_dict.return_value = first_page
+    mocker.patch("weko_index_tree.utils.RecordsSearch", return_value=mock_search_instance)
+    
+    index_id = 1
+    result = get_all_records_in_index(index_id)
+    assert result == [
+        {'_source': {'control_number': 123}, 'sort': [1]},
+        {'_source': {'control_number': 456}, 'sort': [2]}
+    ]
+    
+    first_page = {
+        "hits": {
+            "hits": [
+                {'_source': {'control_number': i}, 'sort': [i]} for i in range(10000)
+            ]
+        }
+    }
+    second_page = {
+    }
+    mock_search_instance.query.return_value.sort.return_value.params.return_value.execute.return_value.to_dict.side_effect = [first_page, second_page]
+    result = get_all_records_in_index(index_id)
+    assert len(result) == 10000
+    assert mock_search_instance.query.return_value.sort.return_value.params.return_value.execute.call_count == 2

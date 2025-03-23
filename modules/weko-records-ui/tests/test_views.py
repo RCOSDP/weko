@@ -457,84 +457,86 @@ def test_default_view_method(app, records, itemtypes, indexstyle ,users):
             with patch("weko_records_ui.views.get_search_detail_keyword", return_value={}):
                 with patch("weko_records_ui.views.get_index_link_list", return_value=[]):
                     with patch("weko_records_ui.views.render_template", return_value=make_response()):
-                        assert default_view_method(recid, record, 'helloworld.pdf').status_code == 200
-                        # # need to fix
-                        # with pytest.raises(Exception) as e:
-                        #     res = default_view_method(recid, record, 'helloworld.pdf')
-                        # assert e.type==TemplatesNotFound
+                        with patch('weko_workflow.api.GetCommunity.get_community_by_root_node_id',return_value=None):
+                            assert default_view_method(recid, record, 'helloworld.pdf').status_code == 200
+                            # # need to fix
+                            # with pytest.raises(Exception) as e:
+                            #     res = default_view_method(recid, record, 'helloworld.pdf')
+                            # assert e.type==TemplatesNotFound
 
-                        default_view_method(recid, record )
-                        with pytest.raises(NotFound) : #404
-                            default_view_method(recid, record ,'notfound.pdf')
-                        with pytest.raises(NotFound) : #404
-                            default_view_method(recid, record ,'[No FileName]')
-
-                        def cannnot():
-                            return False
-                        file_permission_factory = MagicMock()
-                        file_permission_factory.can = cannnot
-                        with patch('weko_records_ui.views.file_permission_factory', return_value=file_permission_factory):
-                            with patch('weko_records_ui.views._redirect_method', return_value="redirect"):
-                                assert default_view_method(recid, record ,'helloworld.pdf') == "redirect"
-                            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
-                                with pytest.raises(Forbidden) : #404
-                                    assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-                        with patch('weko_records_ui.views.AdminSettings.get'
-                                    , side_effect=lambda name , dict_to_object : {'display_stats' : False} if name == 'display_stats_settings' else None):
-                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-                        with patch('weko_records_ui.views.AdminSettings.get'
-                                    , side_effect=lambda name , dict_to_object : {'items_search_author' : "author"} if name == 'items_display_settings' else None):
-                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-                        with patch('weko_records_ui.views.AdminSettings.get'
-                                    , side_effect=lambda name , dict_to_object : {'display_request_form' : False} if name == 'items_display_settings' else None):
-                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-                        with patch('weko_records_ui.views.AdminSettings.get'
-                                    , side_effect=lambda name , dict_to_object : {'display_request_form' : True} if name == 'items_display_settings' else None):
-                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-                        with patch('weko_search_ui.utils.get_data_by_property', return_value=(False,False)):
-                            with patch('weko_records_ui.views.selected_value_by_language' ,return_value="helloworld.pdf"):
-                                assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-                        with patch('weko_records_ui.views.get_record_permalink', return_value=False):
-                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-
-                            record.update(
-                                {'system_identifier_doi' :
-                                    {"attribute_value_mlt" :[{'subitem_systemidt_identifier':"permalink_uri"}]}})
-                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-
-
-                        def side_effect(arg):
-                            values = ['a', 'b']
-                            return values[arg]
-                        # with patch('weko_search_ui.utils.get_sub_item_value', side_effect=side_effect):
-                        #     default_view_method(recid, record ,'helloworld.pdf')
-                        pid_ver = MagicMock
-                        pid_ver.exists = False
-                        with patch('weko_records_ui.views.PIDVersioning',return_value=pid_ver):
+                            default_view_method(recid, record )
                             with pytest.raises(NotFound) : #404
-                                assert default_view_method(recid, record ,'helloworld.pdf')
+                                default_view_method(recid, record ,'notfound.pdf')
+                            with pytest.raises(NotFound) : #404
+                                default_view_method(recid, record ,'[No FileName]')
 
-                        pid_ver = MagicMock
-                        pid_ver.exists = True
-                        pid_ver.is_last_child = False
-                        mock = MagicMock
-                        mock.object_uuid = uuid.uuid4()
-                        pid_ver.children = [mock]
-                        pid_ver.get_children = lambda ordered,pid_status : [mock]
-                        with patch('weko_records_ui.views.PIDVersioning',return_value=pid_ver):
-                            with patch('weko_records_ui.views.WekoRecord.get_record',return_value={'_deposit':{'status':'draft'}}):
+                            def cannnot():
+                                return False
+                            file_permission_factory = MagicMock()
+                            file_permission_factory.can = cannnot
+                            with patch('weko_records_ui.views.file_permission_factory', return_value=file_permission_factory):
+                                with patch('weko_records_ui.views._redirect_method', return_value="redirect"):
+                                    assert default_view_method(recid, record ,'helloworld.pdf') == "redirect"
+                                with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+                                    with pytest.raises(Forbidden) : #404
+                                        assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                            with patch('weko_records_ui.views.AdminSettings.get'
+                                        , side_effect=lambda name , dict_to_object : {'display_stats' : False} if name == 'display_stats_settings' else None):
+                                assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                            with patch('weko_records_ui.views.AdminSettings.get'
+                                        , side_effect=lambda name , dict_to_object : {'items_search_author' : "author"} if name == 'items_display_settings' else None):
+                                assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                            with patch('weko_records_ui.views.AdminSettings.get'
+                                        , side_effect=lambda name , dict_to_object : {'display_request_form' : False} if name == 'items_display_settings' else None):
+                                assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                            with patch('weko_records_ui.views.AdminSettings.get'
+                                        , side_effect=lambda name , dict_to_object : {'display_request_form' : True} if name == 'items_display_settings' else None):
+                                assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                            with patch('weko_search_ui.utils.get_data_by_property', return_value=(False,False)):
+                                with patch('weko_records_ui.views.selected_value_by_language' ,return_value="helloworld.pdf"):
+                                    assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                            with patch('weko_records_ui.views.get_record_permalink', return_value=False):
                                 assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
 
-                        with patch('weko_records_ui.views.WekoRecord.get_record',side_effect=Exception):
-                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-                        with patch('weko_records_ui.views.ItemLink.get_item_link_info',return_value={"relation":"res"}):
-                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                                record.update(
+                                    {'system_identifier_doi' :
+                                        {"attribute_value_mlt" :[{'subitem_systemidt_identifier':"permalink_uri"}]}})
+                                assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
 
-                        index = MagicMock()
-                        index.index_name = ""
-                        index.index_name_english ="index"
-                        with patch('weko_records_ui.views.Indexes.get_index',return_value=index):
-                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+
+                            def side_effect(arg):
+                                values = ['a', 'b']
+                                return values[arg]
+                            # with patch('weko_search_ui.utils.get_sub_item_value', side_effect=side_effect):
+                            #     default_view_method(recid, record ,'helloworld.pdf')
+                            pid_ver = MagicMock
+                            pid_ver.exists = False
+                            with patch('weko_records_ui.views.PIDVersioning',return_value=pid_ver):
+                                with pytest.raises(NotFound) : #404
+                                    assert default_view_method(recid, record ,'helloworld.pdf')
+
+                            pid_ver = MagicMock
+                            pid_ver.exists = True
+                            pid_ver.is_last_child = False
+                            mock = MagicMock
+                            mock.object_uuid = uuid.uuid4()
+                            pid_ver.children = [mock]
+                            pid_ver.get_children = lambda ordered,pid_status : [mock]
+                            with patch('weko_records_ui.views.PIDVersioning',return_value=pid_ver):
+                                with patch('weko_records_ui.views.WekoRecord.get_record',return_value={'_deposit':{'status':'draft'}}):
+                                    assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+
+                            with patch('weko_records_ui.views.WekoRecord.get_record',side_effect=Exception):
+                                assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                            with patch('weko_records_ui.views.ItemLink.get_item_link_info',return_value={"relation":"res"}):
+                                assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+
+                            index = MagicMock()
+                            index.index_name = ""
+                            index.index_name_english ="index"
+                            with patch('weko_records_ui.views.Indexes.get_index',return_value=index):
+                                with patch('weko_workflow.api.GetCommunity.get_community_by_root_node_id',return_value=[{'id':'33','thumbnail_path':''}]):
+                                    assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
 
 
 
@@ -969,18 +971,19 @@ def test_default_view_method_fix35133(app, records, itemtypes, indexstyle,mocker
     with app.test_request_context():
         with patch('weko_records_ui.views.check_original_pdf_download_permission', return_value=True):
             with patch("weko_records_ui.views.getrecord",return_value=et):
-                default_view_method(recid, record)
-                args, kwargs = mock_render_template.call_args
-                assert kwargs["google_scholar_meta"] == [
-                        {'name': "citation_title","data": "『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表"},
-                        {"name": "citation_publisher", "data": "東京大学史料編纂所附属画像史料解析センター"},
-                        {'name': 'citation_publication_date', 'data': "2022-09-30"},
-                        {"name": "citation_author","data": "creator name"},
-                        {"name":"citation_pdf_url","data":"https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx"},
-                        {'name': 'citation_dissertation_institution','data':""},
-                        {'name': 'citation_abstract_html_url','data': 'http://TEST_SERVER/records/1'},
-                    ]
-                assert kwargs["google_dataset_meta"] == '{"@context": "https://schema.org/", "@type": "Dataset", "citation": ["http://hdl.handle.net/2261/0002005680", "https://repository.dl.itc.u-tokyo.ac.jp/records/2005680"], "creator": [{"@type": "Person", "alternateName": "creator alternative name", "familyName": "creator family name", "givenName": "creator given name", "identifier": "123", "name": "creator name"}], "description": "『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。", "distribution": [{"@type": "DataDownload", "contentUrl": "https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx", "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt", "encodingFormat": "text/plain"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml", "encodingFormat": "application/x-yaml"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild", "encodingFormat": "text/x-shellscript"}], "includedInDataCatalog": {"@type": "DataCatalog", "name": "https://localhost"}, "license": ["CC BY"], "name": "『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表", "spatialCoverage": [{"@type": "Place", "geo": {"@type": "GeoCoordinates", "latitude": "point latitude test", "longitude": "point longitude test"}}, {"@type": "Place", "geo": {"@type": "GeoShape", "box": "1 3 2 4"}}, "geo location place test"]}'
+                with patch('weko_workflow.api.GetCommunity.get_community_by_root_node_id',return_value=None):
+                    default_view_method(recid, record)
+                    args, kwargs = mock_render_template.call_args
+                    assert kwargs["google_scholar_meta"] == [
+                            {'name': "citation_title","data": "『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表"},
+                            {"name": "citation_publisher", "data": "東京大学史料編纂所附属画像史料解析センター"},
+                            {'name': 'citation_publication_date', 'data': "2022-09-30"},
+                            {"name": "citation_author","data": "creator name"},
+                            {"name":"citation_pdf_url","data":"https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx"},
+                            {'name': 'citation_dissertation_institution','data':""},
+                            {'name': 'citation_abstract_html_url','data': 'http://TEST_SERVER/records/1'},
+                        ]
+                    assert kwargs["google_dataset_meta"] == '{"@context": "https://schema.org/", "@type": "Dataset", "citation": ["http://hdl.handle.net/2261/0002005680", "https://repository.dl.itc.u-tokyo.ac.jp/records/2005680"], "creator": [{"@type": "Person", "alternateName": "creator alternative name", "familyName": "creator family name", "givenName": "creator given name", "identifier": "123", "name": "creator name"}], "description": "『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。", "distribution": [{"@type": "DataDownload", "contentUrl": "https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx", "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt", "encodingFormat": "text/plain"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml", "encodingFormat": "application/x-yaml"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild", "encodingFormat": "text/x-shellscript"}], "includedInDataCatalog": {"@type": "DataCatalog", "name": "https://localhost"}, "license": ["CC BY"], "name": "『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表", "spatialCoverage": [{"@type": "Place", "geo": {"@type": "GeoCoordinates", "latitude": "point latitude test", "longitude": "point longitude test"}}, {"@type": "Place", "geo": {"@type": "GeoShape", "box": "1 3 2 4"}}, "geo location place test"]}'
 # def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord, filename:str, **kwargs) -> str:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_create_secret_url_and_send_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_create_secret_url_and_send_mail(app,client,db,users,records):

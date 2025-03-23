@@ -28,8 +28,6 @@ import json
 import sys
 from urllib.parse import quote_plus
 
-import redis
-from redis import sentinel
 from flask import Blueprint, abort, current_app, flash, redirect, \
     render_template, request, session, url_for
 from flask_babelex import gettext as _
@@ -37,13 +35,13 @@ from flask_login import current_user
 from flask_menu import current_menu
 from flask_security import url_for_security
 from invenio_admin.proxies import current_admin
-from simplekv.memory.redisstore import RedisStore
 from weko_redis.redis import RedisConnection
 from werkzeug.local import LocalProxy
 from invenio_db import db
 
-from .api import ShibUser
+from .api import ShibUser, sync_shib_gakunin_map_groups
 from .utils import generate_random_str, parse_attributes
+
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -282,7 +280,12 @@ def shib_sp_login():
     _shib_username_config = current_app.config[
         'WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN']
     next = request.args.get('next', '/')
+
     try:
+        # WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPSがTrueのときの処理
+        if current_app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS']:
+            sync_shib_gakunin_map_groups()
+
         shib_session_id = request.form.get('SHIB_ATTR_SESSION_ID', None)
         if not shib_session_id and not _shib_enable:
             flash(_("Missing SHIB_ATTR_SESSION_ID!"), category='error')

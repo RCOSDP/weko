@@ -696,6 +696,18 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     if file_order >= 0 and files and files[file_order].get('url') and files[file_order]['url'].get('url'):
         file_url = files[file_order]['url']['url']
 
+    # Get communities info
+    belonging_community = []
+    for navi in record.navi:
+        path_arr = navi.path.split('/')
+        for path in path_arr:
+            index = Indexes.get_index(index_id=path)
+            from weko_workflow.api import GetCommunity
+            communities = GetCommunity.get_community_by_root_node_id(index.id)
+            if communities is not None:
+                for comm in communities:
+                    belonging_community.append(comm)
+
     # Get Settings
     enable_request_maillist = False
     items_display_settings = AdminSettings.get(name='items_display_settings',
@@ -750,6 +762,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
         search_author_flg=search_author_flg,
         show_secret_URL=_get_show_secret_url_button(record,filename),
+        belonging_community=belonging_community,
         **ctx,
         **kwargs
     )

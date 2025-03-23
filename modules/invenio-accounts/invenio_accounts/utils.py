@@ -17,6 +17,7 @@ from future.utils import raise_from
 from jwt import DecodeError, ExpiredSignatureError, decode, encode
 
 from .errors import JWTDecodeError, JWTExpiredToken
+from .models import User, userrole, Role
 
 
 def jwt_create_token(user_id=None, additional_data=None):
@@ -85,3 +86,15 @@ def set_session_info(app, response, **extra):
         response.headers['X-Session-ID'] = session_id
     if current_user.is_authenticated:
         response.headers['X-User-ID'] = current_user.get_id()
+
+
+def get_user_ids_by_role(role_id):
+    """Get user IDs by role ID.
+
+    Args:
+        role_id (int): The ID of the role.
+
+    Returns:
+        list: A list of user IDs associated with the given role.
+    """
+    return [str(user.id) for user in User.query.join(userrole).join(Role).filter(Role.id == role_id).all()]

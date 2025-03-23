@@ -561,6 +561,12 @@ class SiteLicenseInfo(db.Model, Timestamp):
         default='F',
         nullable=False
     )
+    
+    repository_id = db.Column(
+        db.String(100),
+        nullable=False,
+        default='Root Index'
+    )
 
     # Relationships definitions
     addresses = db.relationship(
@@ -665,6 +671,12 @@ class FeedbackMailList(db.Model, Timestamp):
         default=''
     )
     """Author identifier."""
+    
+    repository_id = db.Column(
+        db.String(100),
+        nullable=False,
+        default='Root Index'
+    )
 
 class RequestMailList(db.Model, Timestamp):
     """Represent an request mail list.
