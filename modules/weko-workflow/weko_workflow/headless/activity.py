@@ -52,23 +52,44 @@ from ..views import (
 class HeadlessActivity(WorkActivity):
     """Handler of headless activity class.
 
-    This class is used to handle the activity without UI.
+    This class is used to handle the activity without UI. <br>
+    Recommended to use `auto` method to automatically progress the action. <br>
+    If you want to progress the action manually, use each method, such as
+    `item_registration`, `item_link`, `identifier_grant`, `approval`. <br>
+    But, this is not recommended because the order of actions is different for each flow.
+
+
+    Examples:
+
+    >>> headless = HeadlessActivity()
+    >>> url, current_action, recid = headless.auto(
+    ...     user_id=1, workflow_id=1,
+    ...     metadata={"pubdate": "2025-01-01", "item_30001_title0": {...}, ...},
+    ...     files=["/var/tmp/..."], index=[1623632832836],
+    ...     comment="comment", link_data=[{"item_id": 1, "sele_id": "isVersionOf"}],
+    ... )
+    >>> print(url, current_action, recid)
+    http://weko3.example.org/workflow/activity/detail/A-EXAMPLE-0001 end_action 1
     """
-    def __init__(self, is_headless=True):
+    def __init__(self, _lock_skip=True):
         """Initialize.
 
         Args:
-            is_headless (bool, optional): Headless flag. Defaults to True.
+            _lock_skip (bool, optional): Defaults to True.
                 if True, skip user and activity lock and unlock process.
         """
         super().__init__()
         self.user = None
+        """ User: User model """
         self.item_type = None
+        """ ItemType: Item type model """
         self.recid = None
+        """ int: Record ID """
         self.files_info = None
+        """ list: List of file information """
         self._model = None
         self._deposit = None
-        self._lock_skip = is_headless
+        self._lock_skip = _lock_skip
 
         actions = Action().get_action_list()
         self._actions = {
@@ -77,27 +98,31 @@ class HeadlessActivity(WorkActivity):
 
     @property
     def activity_id(self):
-        """Get activity id."""
+        """str: activity id."""
         return self._model.activity_id if self._model is not None else None
 
     @property
     def current_action_id(self):
-        """Get current action id."""
+        """int: current action id."""
         return self._model.action_id if self._model is not None else None
 
     @property
     def current_action(self):
-        """Get current action endpoint."""
+        """str: current action endpoint.
+
+        It can be `begin_action`, `login_item`, `link_item`, `identifier_grant`,
+        `approval` or `end_action`.
+        """
         return self._actions.get(self.current_action_id) if self._model is not None else None
 
     @property
     def community(self):
-        """Get community id."""
+        """str: community id."""
         return self._model.activity_community_id if self._model is not None else None
 
     @property
     def detail(self):
-        """Get activity detail URL."""
+        """str: activity detail URL."""
         return url_for(
             "weko_workflow.display_activity",
             activity_id=self.activity_id, community=self.community,
@@ -108,10 +133,13 @@ class HeadlessActivity(WorkActivity):
             self, user_id, workflow_id=None, community=None,
             activity_id=None, item_id=None
         ):
-        """Initialize activity.
+        """Manual initialization of activity.
 
-        user_id and workflow_id are required to create a new activity.
-        When activity_id is specified, it restarts the activity already exists.
+        Note:
+            Please use `auto` method to automatically progress the action.
+
+        user_id and workflow_id are required to create a new activity. <br>
+        When activity_id is specified, it restarts the activity already exists. <br>
         Additionally, item_id is required when creating an activity
         for an existing item edit.
 
@@ -166,7 +194,7 @@ class HeadlessActivity(WorkActivity):
         if workflow_id is None:
             current_app.logger.error("workflow_id is required to create activity.")
             raise WekoWorkflowException("workflow_id is required to create activity.")
-        workflow = WorkFlow().get_workflow_by_id(workflow_id)
+        self.workflow = workflow = WorkFlow().get_workflow_by_id(workflow_id)
         if workflow is None:
             current_app.logger.error(f"workflow(id={workflow_id}) is not found.")
             raise WekoWorkflowException(f"workflow(id={workflow_id}) is not found.")
@@ -207,7 +235,22 @@ class HeadlessActivity(WorkActivity):
         return self.detail
 
     def auto(self, **params):
-        """Automatically progressing the action."""
+        """Automatically progressing the action.
+
+        Args:
+            user_id (int): User ID <br>
+            workflow_id (int): Workflow ID <br>
+            community (str, optional): Community ID <br>
+            activity_id (str, optional): Activity ID <br>
+            item_id (str, optional): Item ID <br>
+            metadata (dict): Metadata with item type format <br>
+            files (list, optional): List of temporary file avsolute path <br>
+            index (list, optional): List of index ID <br>
+            comment (str, optional): Comment <br>
+            link_data (list, optional): List of item link information <br>
+                e.g. [{"item_id": 1, "sele_id": "isVersionOf"}] <br>
+            grant_data (dict): data for identifier grant <br>
+        """
 
         self.init_activity(
             params.get("user_id"), params.get("workflow_id"),
@@ -245,8 +288,19 @@ class HeadlessActivity(WorkActivity):
 
         return returns
 
-    def item_registration(self, metadata, files, index, comment=""):
-        """Action for item registration."""
+    def item_registration(self, metadata, files=None, index=None, comment=None):
+        """Manual action for item registration.
+
+        Note:
+            Please use `auto` method to automatically progress the action.
+
+        Args:
+            metadata (dict): Metadata with item type format
+            files (list, optional): List of temporary file avsolute path
+            index (list, optional): List of index ID.
+                if use workflow setting, do not specify this parameter.
+            comment (str, optional): Comment
+        """
         if self._model is None:
             current_app.logger.error("activity is not initialized.")
             raise WekoWorkflowException("activity is not initialized.")
@@ -325,8 +379,14 @@ class HeadlessActivity(WorkActivity):
                 pass
 
             metadata.update({"$schema": f"/items/jsonschema/{self.item_type.id}"})
-            index = {'index': metadata.get('path', []),
-                        'actions': metadata.get('publish_status')}
+            workflow_index = self.workflow.index_tree_id
+            index = {
+                "index": (
+                    [workflow_index]
+                    if workflow_index is not None else metadata.get("path", [])
+                ),
+                "actions": metadata.get("publish_status")
+            }
             self._deposit.update(index, metadata)
             self._deposit.commit()
 
@@ -426,7 +486,7 @@ class HeadlessActivity(WorkActivity):
 
         return files_info
 
-    def _designate_index(self, index):
+    def _designate_index(self, index=None):
         """Designate Index.
 
 
@@ -436,9 +496,11 @@ class HeadlessActivity(WorkActivity):
         self._user_lock()
         locked_value = self._activity_lock()
 
+        index = index or self.workflow.index_tree_id
+
+        if not isinstance(index, list):
+            index = [index]
         try:
-            if not isinstance(index, list):
-                index = [index]
             for idx in index:
                 update_index_tree_for_record(self.recid, idx)
         except Exception as ex:
