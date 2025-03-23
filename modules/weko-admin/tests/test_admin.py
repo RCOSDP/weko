@@ -31,8 +31,8 @@ from weko_admin.admin import StyleSettingView,LogAnalysisSettings,ItemExportSett
     SwordAPIJsonldMappingView
 from weko_admin.models import AdminSettings,StatisticsEmail,LogAnalysisRestrictedCrawlerList,\
                                 RankingSettings,SearchManagement, Identifier,FacetSearchSetting
-from weko_swordserver.models import SwordClientModel, SwordItemTypeMappingModel
-from weko_swordserver.api import SwordItemTypeMapping, SwordClient
+from weko_records.models import ItemTypeJsonldMapping
+from weko_swordserver.models import SwordClientModel
 from invenio_oauth2server.models import Client
 
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -2150,7 +2150,7 @@ class TestSwordAPIJsonldSettingsView:
         db.session.add_all(settings)
         db.session.commit()
         settings = list()
-        settings.append(SwordItemTypeMappingModel(id=1,name="sample1",mapping="{data:{}}",item_type_id=item_type[0]["obj"].id,version_id=6,is_deleted=False))
+        settings.append(ItemTypeJsonldMapping(id=1,name="sample1",mapping="{data:{}}",item_type_id=item_type[0]["obj"].id,version_id=6,is_deleted=False))
         db.session.add_all(settings)
         db.session.commit()
         settings = list()
@@ -2266,7 +2266,7 @@ class TestSwordAPIJsonldMappingView:
         # post
         # success
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        with patch("weko_admin.admin.SwordItemTypeMapping.create", return_value=None):
+        with patch("weko_admin.admin.JsonldMapping.create", return_value=None):
             res = client.post(url,
                 data=json.dumps({'name': '1',
                                     'mapping': {},
@@ -2277,7 +2277,7 @@ class TestSwordAPIJsonldMappingView:
         # post
         # Error
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        with patch("weko_admin.admin.SwordItemTypeMapping.create", side_effect=Exception("test_error")):
+        with patch("weko_admin.admin.JsonldMapping.create", side_effect=Exception("test_error")):
             res = client.post(url,
                 data=json.dumps({'name': '1',
                                     'mapping': {},
@@ -2314,7 +2314,7 @@ class TestSwordAPIJsonldMappingView:
         db.session.add_all(settings)
         db.session.commit()
         settings = list()
-        settings.append(SwordItemTypeMappingModel(id=1,name="sample1",mapping="{data:{}}",item_type_id=item_type[0]["obj"].id,version_id=6,is_deleted=False))
+        settings.append(ItemTypeJsonldMapping(id=1,name="sample1",mapping="{data:{}}",item_type_id=item_type[0]["obj"].id,version_id=6,is_deleted=False))
         db.session.add_all(settings)
         db.session.commit()
         login_user_via_session(client,email=users[0]["email"])# sysadmin
@@ -2373,7 +2373,7 @@ class TestSwordAPIJsonldMappingView:
         db.session.add_all(settings)
         db.session.commit()
         settings = list()
-        settings.append(SwordItemTypeMappingModel(id=1,name="sample1",mapping="{data:{}}",item_type_id=item_type[0]["obj"].id,version_id=6,is_deleted=False))
+        settings.append(ItemTypeJsonldMapping(id=1,name="sample1",mapping="{data:{}}",item_type_id=item_type[0]["obj"].id,version_id=6,is_deleted=False))
         db.session.add_all(settings)
         db.session.commit()
         login_user_via_session(client,email=users[0]["email"])# sysadmin
@@ -2382,7 +2382,7 @@ class TestSwordAPIJsonldMappingView:
 
         # error
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        with patch("weko_admin.admin.SwordItemTypeMapping.delete", side_effect=Exception("test_error")):
+        with patch("weko_admin.admin.JsonldMapping.delete", side_effect=Exception("test_error")):
             res = client.post(url)
         assert res.status_code == 400
 

@@ -73,15 +73,13 @@ from weko_index_tree import WekoIndexTree
 from weko_index_tree.models import Index, IndexStyle
 from weko_records_ui import WekoRecordsUI
 from weko_records import WekoRecords
-from weko_records.models import SiteLicenseInfo, SiteLicenseIpAddress,ItemType,ItemTypeName
+from weko_records.models import SiteLicenseInfo, SiteLicenseIpAddress,ItemType,ItemTypeName,ItemTypeJsonldMapping
 from weko_redis.redis import RedisConnection
 from weko_theme import WekoTheme
 from weko_schema_ui import WekoSchemaUI
 from weko_search_ui import WekoSearchUI
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import Action, ActionStatus,FlowDefine,FlowAction,WorkFlow,Activity,ActivityAction
-from weko_swordserver.models import SwordClientModel, SwordItemTypeMappingModel
-from weko_swordserver.api import SwordItemTypeMapping, SwordClient
 
 from weko_admin import WekoAdmin
 from weko_admin.models import SessionLifetime,SiteInfo,SearchManagement,\
@@ -774,8 +772,8 @@ def oauth2server_client(db):
 @pytest.fixture()
 def sword_item_type_mappings(db, item_type):
     sword_item_type_mappings = list()
-    sword_item_type_mappings.append(SwordItemTypeMappingModel(id=1,name="sample1",mapping="{data:{}}",item_type_id=item_type[0]["obj"].id,version_id=6,is_deleted=False))
-    sword_item_type_mappings.append(SwordItemTypeMappingModel(id=2,name="sample2",mapping="{data:{}}",item_type_id=item_type[0]["obj"].id,version_id=6,is_deleted=False))
+    sword_item_type_mappings.append(ItemTypeJsonldMapping(id=1,name="sample1",mapping="{data:{}}",item_type_id=item_type[0]["obj"].id,version_id=6,is_deleted=False))
+    sword_item_type_mappings.append(ItemTypeJsonldMapping(id=2,name="sample2",mapping="{data:{}}",item_type_id=item_type[0]["obj"].id,version_id=6,is_deleted=False))
     db.session.add_all(sword_item_type_mappings)
     db.session.commit()
     return sword_item_type_mappings

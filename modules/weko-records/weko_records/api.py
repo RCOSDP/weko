@@ -1551,6 +1551,25 @@ class JsonldMapping():
             return None
         return obj
 
+    @classmethod
+    def get_all(cls, include_deleted=False):
+        """Get all mapping.
+        
+        Get all mapping. If include_deleted=False, return only active mapping.
+        Specify include_deleted=True to get all mapping including deleted.
+
+        Args:
+            include_deleted (bool, optional):
+                Include deleted mapping. Default is False.
+        
+        Returns:
+            list[ItemTypeJsonldMapping]: List of mapping objects.
+        """
+        query = ItemTypeJsonldMapping.query
+        if not include_deleted:
+            query = query.filter_by(is_deleted=False)
+        return query.all()
+
 class ItemTypeProps(RecordBase):
     """Define API for Itemtype Property creation and manipulation."""
 

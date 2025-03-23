@@ -2072,7 +2072,7 @@ def test_item_link_bulk_delete(app, db, records):
     assert r[0]['value']=='HDL'
 
 
-# class SwordItemTypeMapping:
+# class JsonldMapping:
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestJsonldMapping -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
 class TestJsonldMapping:
     # def get_mapping_by_id(cls, id, ignore_deleted=True):

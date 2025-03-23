@@ -48,12 +48,12 @@ from invenio_db import db
 from invenio_files_rest.storage.pyfs import remove_dir_with_file
 from invenio_mail.api import send_mail
 from weko_index_tree.models import IndexStyle
-from weko_records.api import ItemTypes, SiteLicense, ItemTypeNames
-from weko_records.models import SiteLicenseInfo
+from weko_records.api import ItemTypes, SiteLicense, ItemTypeNames, JsonldMapping
+from weko_records.models import SiteLicenseInfo, ItemTypeJsonldMapping
 from weko_records_ui.utils import check_items_settings
 from weko_schema_ui.models import PublishStatus
-from weko_swordserver.models import SwordClientModel, SwordItemTypeMappingModel
-from weko_swordserver.api import SwordItemTypeMapping, SwordClient
+from weko_swordserver.models import SwordClientModel
+from weko_swordserver.api import SwordClient
 from weko_workflow.api import WorkFlow, WorkActivity
 from wtforms.fields import StringField
 from wtforms.validators import ValidationError
@@ -1619,7 +1619,7 @@ class SwordAPIJsonldSettingsView(ModelView):
             exclude_admin_workflow(workflows)
 
             # Get mapping
-            result = SwordItemTypeMapping.get_id_all()
+            result = JsonldMapping.get_all()
             sword_item_type_mappings = [{'id': mapping.id, 'name': mapping.name, 'item_type_id': mapping.item_type_id} for mapping in result]
 
             # Get ItemTypeNames
@@ -1714,7 +1714,7 @@ class SwordAPIJsonldSettingsView(ModelView):
                     exist_Waiting_approval_workflow = True
 
             # Get mapping
-            result = SwordItemTypeMapping.get_id_all()
+            result = JsonldMapping.get_all()
             sword_item_type_mappings = [{'id': mapping.id, 'name': mapping.name, 'item_type_id': mapping.item_type_id} for mapping in result]
 
             current_model = model
@@ -1808,7 +1808,7 @@ class SwordAPIJsonldMappingView(ModelView):
 
     def get_query(self):
         return super(SwordAPIJsonldMappingView, self).get_query().filter(
-            SwordItemTypeMappingModel.is_deleted == False
+            ItemTypeJsonldMapping.is_deleted == False
         )
 
     @expose('/new/', methods=['GET', 'POST'])
@@ -1838,12 +1838,12 @@ class SwordAPIJsonldMappingView(ModelView):
         else:
             # POST
             try:
-                model = SwordItemTypeMappingModel()
+                model = ItemTypeJsonldMapping()
                 model.name = request.json.get('name')
                 model.item_type_id = request.json.get('item_type_id')
                 model.mapping = json.loads(request.json.get('mapping'))
 
-                sword_item_type_mapping = SwordItemTypeMapping.create(
+                sword_item_type_mapping = JsonldMapping.create(
                     name=model.name,
                     mapping=model.mapping,
                     item_type_id=model.item_type_id,
@@ -1914,7 +1914,7 @@ class SwordAPIJsonldMappingView(ModelView):
     @expose('/delete/<string:id>/', methods=['POST'])
     def delte_data(self, id):
             try:
-                SwordItemTypeMapping.delete(id)
+                JsonldMapping.delete(id)
                 return jsonify(results=True),200
 
             except Exception as e:
@@ -2102,7 +2102,7 @@ sword_api_settings_jsonld_adminview = dict(
 
 sword_api_jsonld_mapping_adminview = dict(
     modelview=SwordAPIJsonldMappingView,
-    model=SwordItemTypeMappingModel,
+    model=ItemTypeJsonldMapping,
     category=_('Item Types'),
     name=_('JSON-LD Mapping'),
     endpoint='jsonld-mapping'
