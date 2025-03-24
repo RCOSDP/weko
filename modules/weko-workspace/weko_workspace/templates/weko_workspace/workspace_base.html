@@ -31,7 +31,8 @@
   {% assets "weko_admin_quill_css" %}
   <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 
-  <link rel="stylesheet" href="static/css/WorkspaceBodyContents.css">
+  {% assets "workspace_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
   {%- endblock css %}
 
@@ -45,6 +46,7 @@
   </script>
 
   <script type="text/javascript" src="static/js/WorkspaceItemList.js"></script>
+
   {%- endblock js %}
 
   <head>

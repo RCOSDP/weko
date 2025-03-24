@@ -54,11 +54,6 @@ setup_requires = [
     'pytest-runner>=3.0.0,<5',
 ]
 
-# install_requires = [
-#     'Flask>=0.11.1',
-#     'Flask-BabelEx>=0.9.2',
-# ]
-
 # weko groupsを参照して以下のように修正した。
 install_requires = [
     'Flask-BabelEx>=0.9.2',
@@ -99,43 +94,16 @@ setup(
     include_package_data=True,
     platforms='any',
     entry_points={
-        # 'flask.commands': [
-        #     'workspace = weko_workspace.cli:workspace',
-        # ],
-        # 'invenio_celery.tasks': [
-        #     'weko_workspace = weko_workspace.tasks',
-        # ],
         'invenio_base.apps': [
             'weko_workspace = weko_workspace:WekoWorkspace',
         ],
         'invenio_base.api_apps': [
             'weko_workspace_rest = weko_workspace:WekoWorkspace',
         ],
-        # 'invenio_admin.views': [
-        #     'weko_workspace = weko_workspace.admin:workspace_adminview',
-        #     'weko_workspace = weko_workspace.admin:flow_adminview',
-        # ],
-        # 'invenio_assets.bundles': [
-        #     'workspace_js = weko_workspace.bundles:js_workspace',
-        #     'workspace_item_link_js = weko_workspace.bundles:js_item_link',
-        #     'workspace_activity_list_js = '
-        #     'weko_workspace.bundles:js_activity_list',
-        #     'workspace_iframe_js = weko_workspace.bundles:js_iframe',
-        #     'workspace_oa_policy_js = weko_workspace.bundles:js_oa_policy',
-        #     'workspace_css = weko_workspace.bundles:css_workspace',
-        #     'workspace_datepicker_css ='
-        #     ' weko_workspace.bundles:css_datepicker_workspace',
-        #     'workspace_identifier_grant_js = '
-        #     'weko_workspace.bundles:js_identifier_grant',
-        #     'workspace_quit_confirmation_js = '
-        #     'weko_workspace.bundles:js_quit_confirmation',
-        #     'workspace_lock_activity_js = '
-        #     'weko_workspace.bundles:js_lock_activity',
-        #     'workspace_detail_admin_js = '
-        #     'weko_workspace.bundles:js_admin_workspace_detail',
-        #     'flow_detail_admin_js = '
-        #     'weko_workspace.bundles:js_admin_flow_detail',
-        # ],
+        'invenio_assets.bundles': [
+            'workspace_item_list_js = weko_workspace.bundles:js_item_list',
+            'workspace_css = weko_workspace.bundles:css_workspace',
+        ],
         'invenio_i18n.translations': [
             'messages = weko_workspace',
         ],
@@ -145,9 +113,6 @@ setup(
         'invenio_db.alembic': [
             'weko_workspace = weko_workspace:alembic',
         ],
-        # 'invenio_oauth2server.scopes': [
-        #     'weko_workspace = weko_workspace.scopes:activity_scope',
-        # ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

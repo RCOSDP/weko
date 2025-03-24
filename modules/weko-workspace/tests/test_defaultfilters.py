@@ -22,7 +22,9 @@
 import pytest
 from flask_babelex import gettext as _
 from weko_workspace.utils import *
-from weko_workspace.defaultfilters import DEFAULT_FILTERS, merge_default_filters
+from weko_workspace.defaultfilters import merge_default_filters
+from weko_workspace.config import WEKO_WORKSPACE_DEFAULT_FILTERS as DEFAULT_FILTERS
+
 
 # ===========================def merge_default_filters():=====================================
 @pytest.mark.parametrize('default_con, expected_response', [

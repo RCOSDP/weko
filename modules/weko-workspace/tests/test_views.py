@@ -20,51 +20,19 @@
 
 """Module tests."""
 from datetime import datetime
-from flask import Flask, json, jsonify, url_for, session, make_response, current_app
 from flask import url_for
 from flask_babelex import gettext as _
-from flask_security import login_user
 from invenio_accounts.testutils import login_user_via_session as login
-from invenio_cache import current_cache
-from invenio_communities.models import Community
-from invenio_db import db
-from invenio_pidstore.errors import PIDDoesNotExistError, PIDDeletedError
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-from mock import patch
-from re import M
-from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm.attributes import flag_modified
-from traceback import print_tb
-from typing_extensions import Self
-from unittest.mock import MagicMock
 from unittest.mock import Mock, patch
-from weko_workspace.models import WorkspaceDefaultConditions, WorkspaceStatusManagement
-import json
-import pytest
-import threading
-import uuid
+from weko_workspace.models import WorkspaceDefaultConditions
 from weko_workspace.ext import WekoWorkspace
 import pytest
-from unittest.mock import patch
-from flask import url_for, current_app
-
-
-import pytest
-from unittest.mock import patch
-from flask import url_for, current_app
-from weko_workspace.views import get_workspace_itemlist
-import pytest
-from unittest.mock import patch
-from flask import current_app, request
-from weko_workspace.views import get_workspace_itemlist
-
 
 # ===========================def __init__(self, app=None):():=====================================
 def test_ext_class_init(app):
     WekoWorkspace.__init__(app)
     assert 1 == 1
-
 
 # ===========================def reset_filters():=====================================
 @pytest.mark.parametrize(

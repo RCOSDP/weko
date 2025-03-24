@@ -20,86 +20,41 @@
 
 """Module of weko-workspace utils."""
 
-import base64
 import json
-import os
-from collections import OrderedDict
-from copy import deepcopy
-from datetime import datetime, timedelta
-from typing import List, NoReturn, Optional, Tuple, Union
-import traceback
-import redis
+from datetime import datetime,timezone
 import requests
-
-from redis import sentinel
-from celery.task.control import inspect
-from flask import current_app, request, session, jsonify
+from flask import current_app, request
 from flask_babelex import gettext as _
 from flask_security import current_user
-from invenio_accounts.models import Role, User, userrole
-from invenio_cache import current_cache
 from invenio_db import db
-from invenio_files_rest.models import Bucket, ObjectVersion
-from invenio_i18n.ext import current_i18n
-from invenio_mail.admin import MailSettingView
-from invenio_mail.models import MailConfig
-from invenio_pidrelations.contrib.versioning import PIDVersioning
-from invenio_pidrelations.models import PIDRelation
-from invenio_pidstore.models import (
-    PersistentIdentifier,
-    PIDDoesNotExistError,
-    PIDStatus,
-)
-from invenio_pidstore.resolver import Resolver
-from invenio_records.models import RecordMetadata
-from invenio_records_files.models import RecordsBuckets
-from passlib.handlers.oracle import oracle10
-from simplekv.memory.redisstore import RedisStore
+from invenio_pidstore.models import PersistentIdentifier
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm.exc import NoResultFound
-from weko_admin.models import Identifier, SiteInfo
-
-from weko_deposit.api import WekoDeposit, WekoRecord
-from weko_handle.api import Handle
-from weko_records.api import (
-    FeedbackMailList,
-    ItemsMetadata,
-    ItemTypeNames,
-    ItemTypes,
-    Mapping,
-)
-from weko_records.models import ItemType
-from weko_records.serializers.utils import get_full_mapping, get_item_type_name
-from weko_records_ui.models import FilePermission
-from weko_redis import RedisConnection
-from weko_user_profiles.config import (
-    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST,
-    WEKO_USERPROFILES_POSITION_LIST,
-)
-from weko_user_profiles.utils import get_user_profile_info
-from werkzeug.utils import import_string
-from weko_deposit.pidstore import get_record_without_version
-
-# =============================================================
 from weko_user_profiles.models import UserProfile
+from weko_records.models import OaStatus
 from weko_admin.utils import StatisticMail
 
-from .models import *
-from .defaultfilters import DEFAULT_FILTERS
-
+from .models import WorkspaceDefaultConditions, WorkspaceStatusManagement
 
 def get_workspace_filterCon():
-    """Get default conditions of the current login user.
-
-    Arguments:
-        --
+    """
+    Retrieves the default filtering conditions for the current user.
 
     Returns:
-        default_con -- default conditions json
+        tuple:
+            - default_con (dict): The user's default filtering conditions. 
+                If the query fails or returns None, `DEFAULT_FILTERS` is returned.
+            - isnotNone (bool): Indicates whether a non-null value was successfully retrieved from the database. 
+                Returns False if the query fails or returns None.
+
+    Raises:
+        SQLAlchemyError: If a database query error occurs, the function returns `DEFAULT_FILTERS`.
+        Exception: If any other unexpected error occurs, the function returns `DEFAULT_FILTERS`.
     """
 
     try:
         isnotNone = True
+        DEFAULT_FILTERS = current_app.config["WEKO_WORKSPACE_DEFAULT_FILTERS"]
+
         default_con = (
             WorkspaceDefaultConditions.query.filter_by(user_id=current_user.id)
             .with_entities(WorkspaceDefaultConditions.default_con)
@@ -120,11 +75,17 @@ def get_workspace_filterCon():
 
 # 2.1.2.2 ESからアイテム一覧取得処理
 def get_es_itemlist():
-    """Get the item list from Elasticsearch.
+    """
+    Fetches records data from an external API.
 
     Returns:
-        dict: Elasticsearch records data if successful.
-        None: If an error occurs during requests or JSON parsing.
+        dict or None: The records data in JSON format if the API requests are successful; 
+                      returns `None` if an error occurs.
+
+    Raises:
+        requests.exceptions.RequestException: If an HTTP error occurs, such as a timeout or invalid response.
+        json.JSONDecodeError: If the response cannot be decoded as JSON.
+        KeyError: If the expected keys are missing in the response data.
     """
     invenio_api_path = "/api/workspace/search"
     headers = {"Accept": "application/json"}
@@ -148,15 +109,20 @@ def get_es_itemlist():
 
 
 def get_workspace_status_management(recid: str):
-    """Get the favorite status and read status of the item.
+    """
+    Retrieves the workspace status for a specific user and record ID.
 
-    Arguments:
-        recid {string} -- recid of item
+    Args:
+        recid (int): The record ID for which the workspace status is being queried.
 
     Returns:
-        tuple: (is_favorited, is_read) if successful, None if no record or on error
-        tuple[0] -- the favorite status
-        tuple[1] -- the read status
+        tuple or None: A tuple containing two boolean values:
+            - `is_favorited` (bool): Whether the workspace is favorited.
+            - `is_read` (bool): Whether the workspace has been read.
+            If the query fails or no result is found, returns `None`.
+
+    Raises:
+        SQLAlchemyError: If a database error occurs during the query, returns `None`.
     """
     try:
         result = (
@@ -173,15 +139,21 @@ def get_workspace_status_management(recid: str):
 
 
 def get_accessCnt_downloadCnt(recid: str):
-    """Get access count and download count of item.
+    """
+    Retrieves the access and download counts for a specific record.
 
-    Arguments:
-        recid {string} -- recid of item
+    Args:
+        recid (int): The record ID for which access and download statistics are being fetched.
 
     Returns:
-        tuple: (access_count, download_count) if successful, (0, 0) if an error occurs
-        tuple[0] -- access count
-        tuple[1] -- download count
+        tuple: A tuple containing two integers:
+            - accessCnt (int): The number of accesses (views) of the record.
+            - downloadCnt (int): The total number of file downloads related to the record.
+            If an error occurs, returns (0, 0).
+
+    Raises:
+        Exception: If any error occurs during the process (e.g., failure in retrieving UUID 
+                   or querying statistics), the function returns (0, 0).
     """
     try:
         uuid = PersistentIdentifier.get(
@@ -200,29 +172,39 @@ def get_accessCnt_downloadCnt(recid: str):
         return (0, 0)
 
 
-# TODO 2.1.2.5 アイテムステータス取得処理
-def get_item_status(recid: int):
+# 2.1.2.5 アイテムステータス取得処理
+def get_item_status(recId: str):
+    """
+    Get the converted OA status for a given recid.
 
-    # テストデータ
-    itemSts = "Unlinked-testdata"
+    Args:
+        recId (str): The record ID (WEKO item PID or related identifier).
 
-    return itemSts
+    Returns:
+        str: The converted OA status based on the mapping, defaults to "Unlinked" if not found.
+    """
+    # recIdをwekoItemPidとしてそのまま使用（文字列として受け取る）
+    wekoItemPid = recId
+
+    # 元のメソッドを呼び出してOA状態を取得
+    oaStatusRecord = OaStatus.get_oa_status_by_weko_item_pid(wekoItemPid)
+
+    # レコードが存在しない場合、"Unlinked"を返す
+    if oaStatusRecord is None:
+        return "Unlinked"
+
+    # 元の状態を取得し、変換を行う
+    originalStatus = oaStatusRecord.oa_status
+    return current_app.config.get("WEKO_WORKSPACE_OA_STATUS_MAPPING").get(originalStatus, "Unlinked")
 
 
 def get_userNm_affiliation():
-    """Get user name and affiliation information of item.
-
-    Arguments:
-        --
+    """
+    Retrieve the username of the current user.
 
     Returns:
-        [tuple] -- user name and affiliation information
-        tuple[0] -- user name
-        tuple[1] -- affiliation information
-
+        str: The username if available; otherwise, the user's email.
     """
-
-    """Get user name"""
     userNm = (
         UserProfile.query.filter_by(user_id=current_user.id)
         .with_entities(UserProfile.username)
@@ -231,36 +213,34 @@ def get_userNm_affiliation():
 
     userNm = current_user.email if userNm is None else userNm
 
-    """Get user affiliation information"""
-    # TODO 外部サービスを参照する必要。取得先確認待ち。
-    affiliation = "ivis-testdata"
-
-    return (userNm, affiliation)
+    return userNm
 
 
 # お気に入り既読未読ステータス情報登録
 def insert_workspace_status(user_id, recid, is_favorited=False, is_read=False):
-    """Insert the favorite status and read status of the item.
+    """
+    Adds a new workspace status entry to the database.
 
     Args:
-        user_id (str): user id
-        recid (str): recid
-        is_favorited (bool, optional): favorited status. Defaults to False.
-        is_read (bool, optional): read status. Defaults to False.
-
-    Raises:
-        e: rollback
+        user_id (int): The ID of the user whose workspace status is being recorded.
+        recid (int): The record ID associated with the workspace status.
+        is_favorited (bool): The status indicating whether the workspace is favorited.
+        is_read (bool): The status indicating whether the workspace has been read.
 
     Returns:
-        touple: new_status
+        WorkspaceStatusManagement: The newly created workspace status entry.
+
+    Raises:
+        Exception: If an error occurs during the database commit, the transaction is rolled back 
+                  and the exception is raised.
     """
     new_status = WorkspaceStatusManagement(
         user_id=user_id,
         recid=recid,
         is_favorited=is_favorited,
         is_read=is_read,
-        created=datetime.utcnow(),
-        updated=datetime.utcnow(),
+        created=datetime.now(timezone.utc),
+        updated=datetime.now(timezone.utc),
     )
     db.session.add(new_status)
     try:
@@ -272,20 +252,24 @@ def insert_workspace_status(user_id, recid, is_favorited=False, is_read=False):
 
 
 # お気に入り既読未読ステータス情報更新
-def update_workspace_status(user_id, recid, is_favorited=None, is_read=None):
-    """Update the favorite status and read status of the item.
+def update_workspace_status(user_id, recid, is_favorited=False, is_read=False):
+    """
+    Update the favorite status and read status of a workspace item.
 
     Args:
-        user_id (str): user id
-        recid (str): _description_
-        is_favorited (bool, optional): favorited status. Defaults to False.
-        is_read (bool, optional): read status. Defaults to False.
-
-    Raises:
-        e: rollback
+        user_id (str): The ID of the user whose workspace status is being updated.
+        recid (str): The record ID of the workspace item to update.
+        is_favorited (bool, optional): The updated favorite status. Defaults to False.
+        is_read (bool, optional): The updated read status. Defaults to False.
 
     Returns:
-        touple: new_status
+        WorkspaceStatusManagement or None: The updated workspace status record if the status 
+                                            was found and updated, or `None` if the status 
+                                            for the given `user_id` and `recid` was not found.
+
+    Raises:
+        Exception: If an error occurs during the commit, the transaction is rolled back and 
+                  the exception is raised.
     """
     status = WorkspaceStatusManagement.query.filter_by(
         user_id=user_id, recid=recid
@@ -295,7 +279,7 @@ def update_workspace_status(user_id, recid, is_favorited=None, is_read=None):
             status.is_favorited = is_favorited
         if is_read is not None:
             status.is_read = is_read
-        status.updated = datetime.utcnow()
+        status.updated = datetime.now(timezone.utc)
 
         try:
             db.session.commit()

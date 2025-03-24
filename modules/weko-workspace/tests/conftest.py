@@ -20,40 +20,28 @@
 
 """Pytest configuration."""
 
-from copy import deepcopy
 import os, sys
 import shutil
 import tempfile
 import json
-import uuid
-from datetime import datetime
-from six import BytesIO
-import base64
-from mock import patch
 
 import pytest
-from flask import Flask, session, url_for, Response
+from flask import Flask, Response
 from flask_babelex import Babel, lazy_gettext as _
 from flask_menu import Menu
 from elasticsearch import Elasticsearch
-from invenio_theme import InvenioTheme
-from invenio_theme.views import blueprint as invenio_theme_blueprint
 from invenio_assets import InvenioAssets
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers,ActionRoles
 from invenio_accounts.testutils import create_test_user
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import User, Role
-from invenio_accounts.views.settings import blueprint \
-    as invenio_accounts_blueprint
 from invenio_i18n import InvenioI18N
 from invenio_cache import InvenioCache
 from invenio_admin import InvenioAdmin
-from invenio_admin.views import blueprint as invenio_admin_blueprint
 from invenio_db import InvenioDB, db as db_
 from invenio_stats import InvenioStats
 from invenio_search import RecordsSearch,InvenioSearch
-from invenio_communities import InvenioCommunities
 from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
 from invenio_communities.models import Community
 from invenio_jsonschemas import InvenioJSONSchemas
@@ -61,52 +49,24 @@ from invenio_records_ui import InvenioRecordsUI
 from weko_search_ui.config import WEKO_SYS_USER
 from weko_records_ui import WekoRecordsUI
 from weko_admin import WekoAdmin
-from weko_admin.models import SessionLifetime,Identifier 
-from weko_admin.views import blueprint as weko_admin_blueprint
-from weko_records.models import ItemTypeName, ItemType,FeedbackMailList,ItemTypeMapping,ItemTypeProperty
-from weko_records.api import Mapping
-from weko_records_ui.models import FilePermission
 from weko_user_profiles import WekoUserProfiles
 from weko_index_tree.models import Index
-
 from weko_workflow import WekoWorkflow
 from weko_workspace import WekoWorkspace
-
 from weko_search_ui import WekoSearchUI
-from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, ActionIdentifier,FlowActionRole, ActivityHistory,GuestActivity, WorkflowRole
 from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
 from weko_workspace.views import workspace_blueprint as weko_workspace_blueprint
-
 from weko_workflow.config import WEKO_WORKFLOW_ACTION_START,WEKO_WORKFLOW_ACTION_END,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,WEKO_WORKFLOW_ACTION_APPROVAL,WEKO_WORKFLOW_ACTION_ITEM_LINK,WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION,WEKO_WORKFLOW_ACTION_GUARANTOR,WEKO_WORKFLOW_ACTION_ADVISOR,WEKO_WORKFLOW_ACTION_ADMINISTRATOR,WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS, DOI_VALIDATION_INFO, DOI_VALIDATION_INFO_CROSSREF, DOI_VALIDATION_INFO_DATACITE, DOI_VALIDATION_INFO_JALC
-from weko_workflow.utils import generate_guest_activity_token_value
-from weko_theme.views import blueprint as weko_theme_blueprint
-from simplekv.memory.redisstore import RedisStore
-from sqlalchemy_utils.functions import create_database, database_exists, \
-    drop_database
-from tests.helpers import json_data, create_record
-
-from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session
-from sqlalchemy import event
-from invenio_files_rest.models import Location, Bucket,ObjectVersion
+from sqlalchemy_utils.functions import create_database, database_exists
+from tests.helpers import json_data
 from invenio_files_rest import InvenioFilesREST
 from invenio_records import InvenioRecords
 from invenio_oauth2server import InvenioOAuth2Server
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_pidstore import InvenioPIDStore
-from weko_index_tree.api import Indexes
-from kombu import Exchange, Queue
 from weko_index_tree.models import Index
-from weko_schema_ui.models import OAIServerSchema
 from weko_schema_ui.config import WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,WEKO_SCHEMA_DDI_SCHEMA_NAME
-from weko_index_tree.config import WEKO_INDEX_TREE_REST_ENDPOINTS,WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER
-from weko_user_profiles.models import UserProfile
-from weko_user_profiles.config import WEKO_USERPROFILES_ROLES,WEKO_USERPROFILES_GENERAL_ROLE
-from weko_authors.models import Authors
-from invenio_records_files.api import RecordsBuckets
-from weko_redis.redis import RedisConnection
 from weko_items_ui import WekoItemsUI
-from weko_admin.models import SiteInfo
 from weko_admin import WekoAdmin
 from weko_deposit import WekoDeposit
 
