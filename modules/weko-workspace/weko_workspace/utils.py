@@ -324,3 +324,56 @@ def extract_metadata_info(item_metadata):
             if peer_reviewed:  # peer_reviewedが見つかった場合、外側のループを終了
                 break
     return filelist, peer_reviewed
+
+
+def changeLang(language: str, defaultconditions: dict):
+    """
+        Translates the labels in the given dictionary to Japanese if the selected language is "ja".
+        
+        Parameters:
+        language (str): The target language code. If it is "ja", the labels will be translated to Japanese.
+        defaultconditions (dict): A dictionary containing resource attributes, where each key represents a category
+                                and each value is a dictionary that may contain a "label" field.
+        
+        Returns:
+        dict: The updated dictionary with translated labels if the language is "ja"; otherwise, the original dictionary.
+        """
+
+    if "ja" == language:
+        label_mapping = {
+            "Resource Type": "リソースタイプ",
+            "Peer Review": "査読",
+            "Related To Paper": "論文への関連",
+            "Related To Data": "根拠データへの関連",
+            "Funding Reference - Funder Name": "資金別情報 - 助成機関名",
+            "Funding Reference - Award Title": "資金別情報 - 研究課題名",
+            "File": "本文ファイル",
+            "Favorite": "お気に入り",
+        }
+
+        for key in defaultconditions:
+            if "label" in defaultconditions[key]:
+                old_label = defaultconditions[key]["label"]
+                if old_label in label_mapping:
+                    defaultconditions[key]["label"] = label_mapping[old_label]
+
+    return defaultconditions
+
+
+def changeMsg(language: str, type: str, boolFlg: bool, message: str):
+
+    if "ja" == language:
+        # デフォルト条件登録の場合
+        if 1 == type:
+            message = "デフォルト条件の保存に成功しました。"
+
+        # デフォルト条件リセットの場合
+        elif 2 == type:
+            if boolFlg:
+                message = "デフォルト条件のリセットに成功しました。"
+            else:
+                message = "リセットするデフォルト条件が見つかりません。"
+    else:
+        pass
+
+    return message

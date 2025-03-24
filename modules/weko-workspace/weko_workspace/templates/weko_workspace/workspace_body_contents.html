@@ -37,18 +37,17 @@
                 </a>
               </div>
             </div>
-
             <div class="pull-right">
               <div class="form-group">
                 <a href="javascript:void(0)" class="btn btn-primary" id="groupYearicon">
                   <i class="bi bi-diagram-3" style="font-size: 20px;" ></i>
                 </a>
-                <a id="toggleButton" class="btn btn-primary" data-toggle="dropdown" href="javascript:void(0)" aria-expanded="false">{{_('絞込み表示')}}<strong class="caret"></strong></a>
+                <a id="toggleButton" class="btn btn-primary" data-toggle="dropdown" href="javascript:void(0)" aria-expanded="false">{{_('Filter Display')}}<strong class="caret"></strong></a>
                 <select class="form-control" id="sort_item">
-                  <option value="1" selected="selected">{{_('出版年月')}}</option>
-                  <option value="2">{{_('タイトル')}}</option>
-                  <option value="3">{{_('アクセス数')}}</option>
-                  <option value="4">{{_('ダウンロード数')}}</option>
+                  <option value="1" selected="selected">{{_('Publication Date')}}</option>
+                  <option value="2">{{_('Title')}}</option>
+                  <option value="3">{{_('Number of accesses')}}</option>
+                  <option value="4">{{_('Number of downloads')}}</option>
                 </select>
                 <select class="form-control" id="sort_order">
                   <option value="1">asc</option>
@@ -72,19 +71,19 @@
                     <div class="button-group">
                       <button id="detail-search-btn" type="button" class="btn btn-primary">
                         <span class="glyphicon glyphicon-search"></span>
-                        {{_('絞込')}}
+                        {{_('Filter')}}
                       </button>
                       <button id="clear-search-btn" type="button" class="btn btn-default">
                         <span class="glyphicon glyphicon-remove"></span>
-                        {{_('クリア')}}
+                        {{_('Clear')}}
                       </button>
                       <button id="save-search-btn" type="button" class="btn btn-primary">
                         <span class="glyphicon glyphicon-save"></span>
-                        {{_('保存')}}
+                        {{_('Save')}}
                       </button>
                       <button id="reset-search-btn" type="button" class="btn btn-default">
                         <span class="glyphicon glyphicon-remove"></span>
-                        {{_('リセット')}}
+                        {{_('Reset')}}
                       </button>
                     </div>
                   </div>

@@ -20,8 +20,8 @@ def merge_default_filters(default_con):
 
     # 単一選択フィールドのマッピングを定義
     single_select_mapping = {
-        True: "あり",
-        False: "なし",
+        True: "Yes",
+        False: "No",
         None: None,  # 未選択時はテンプレートのデフォルト値を保持
     }
 

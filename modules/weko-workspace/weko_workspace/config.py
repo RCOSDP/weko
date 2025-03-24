@@ -100,7 +100,7 @@ WEKO_WORKSPACE_DATASET_TYPES = [
 
 WEKO_WORKSPACE_DEFAULT_FILTERS = {
     "resource_type": {
-        "label": "リソースタイプ",
+        "label": "Resource Type",
         "options": [
             "conference paper",
             "data paper",
@@ -180,38 +180,38 @@ WEKO_WORKSPACE_DEFAULT_FILTERS = {
         "default": [],  # 複数選択フィールド、文字列配列を保持
     },
     "peer_review": {
-        "label": "査読",
-        "options": ["あり", "なし"],
+        "label": "Peer Review",
+        "options": ["Yes", "No"],
         "default": [],  # 単一選択フィールド、デフォルトは未選択で null を使用
     },
     "related_to_paper": {
-        "label": "論文への関連",
-        "options": ["あり", "なし"],
+        "label": "Related To Paper",
+        "options": ["Yes", "No"],
         "default": None,  # 単一選択フィールド、デフォルトは未選択で null を使用
     },
     "related_to_data": {
-        "label": "根拠データへの関連",
-        "options": ["あり", "なし"],
+        "label": "Related To Data",
+        "options": ["Yes", "No"],
         "default": None,  # 単一選択フィールド、デフォルトは未選択で null を使用
     },
     "funder_name": {
-        "label": "資金別情報 - 助成機関名",
+        "label": "Funding Reference - Funder Name",
         "options": [],  # 動的フィールド、初期は空、後でリストデータに基づいて填充される
         "default": [],  # 複数選択フィールド、空配列を保持
     },
     "award_title": {
-        "label": "資金別情報 - 研究課題名",
+        "label": "Funding Reference - Award Title",
         "options": [],  # 動的フィールド、初期は空、後でリストデータに基づいて填充される
         "default": [],  # 複数選択フィールド、空配列を保持
     },
     "file_present": {
-        "label": "本文ファイル",
-        "options": ["あり", "なし"],
+        "label": "File",
+        "options": ["Yes", "No"],
         "default": None,  # 単一選択フィールド、デフォルトは未選択で null を使用
     },
     "favorite": {
-        "label": "お気に入り",
-        "options": ["あり", "なし"],
+        "label": "Favorite",
+        "options": ["Yes", "No"],
         "default": None,  # 単一選択フィールド、デフォルトは未選択で null を使用
     },
 }

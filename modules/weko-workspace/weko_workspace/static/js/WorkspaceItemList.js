@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (filters[key]) {
           if (singleSelectFilters.includes(key)) {
             const selection = currentSelections[key] || [];
-            result[key] = selection.includes('あり') ? true : selection.includes('なし') ? false : null;
+            result[key] = selection.includes('Yes') ? true : selection.includes('No') ? false : null;
           } else if (alwaysEmptyFilters.includes(key)) {
             result[key] = [];
           } else {

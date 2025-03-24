@@ -35,6 +35,7 @@ from flask_login import current_user, login_required
 from weko_records.api import FeedbackMailList
 from invenio_db import db
 from sqlalchemy.exc import SQLAlchemyError
+from flask import session
 
 from .utils import (
     extract_metadata_info,
@@ -45,7 +46,9 @@ from .utils import (
     get_workspace_status_management,
     insert_workspace_status,
     update_workspace_status,
-    get_workspace_filterCon
+    get_workspace_filterCon,
+    changeLang,
+    changeMsg
 )
 from .models import WorkspaceDefaultConditions
 from .defaultfilters import merge_default_filters
@@ -76,6 +79,11 @@ def get_workspace_itemlist():
     workspaceItemList = []
     funderNameList = []
     awardTitleList = []
+    lang = session['language']
+
+    print("111111111111111111111111")
+    print(lang)
+    print("222222222222222222222222")
 
     # 1,デフォルト絞込み条件取得処理
     jsonCondition, isnotNone = (request.get_json() if request.method == "POST" else None), True
@@ -95,9 +103,9 @@ def get_workspace_itemlist():
             current_app.config["WEKO_WORKSPACE_BASE_TEMPLATE"],
             username=userNm,
             workspaceItemList=[],
-            defaultconditions=jsonCondition,
+            defaultconditions=changeLang(lang, jsonCondition),
         )
-    
+
     # ログインユーザーのIDとロールを取得
     recordsDataList = recordsData["hits"]["hits"]
     rolelist = []
@@ -114,7 +122,7 @@ def get_workspace_itemlist():
             current_app.config["WEKO_WORKSPACE_BASE_TEMPLATE"],
             username=userNm,
             workspaceItemList=[],
-            defaultconditions=jsonCondition,
+            defaultconditions=changeLang(lang, jsonCondition),
         )
 
     # →ループ処理
@@ -377,7 +385,7 @@ def get_workspace_itemlist():
         current_app.config["WEKO_WORKSPACE_BASE_TEMPLATE"],
         username=userNm,
         workspaceItemList=workspaceItemList,
-        defaultconditions=defaultconditions,
+        defaultconditions=changeLang(lang, defaultconditions),
     )
 
 
@@ -451,6 +459,7 @@ def save_filters():
     """
     data = request.get_json()
     user_id = current_user.id
+    lang = session['language']
 
     try:
         record = WorkspaceDefaultConditions.query.filter_by(user_id=user_id).first()
@@ -466,11 +475,14 @@ def save_filters():
             )
             db.session.add(record)
         db.session.commit()
+
+        message = "Successfully saved default conditions."
+        message = changeMsg(lang, 1, message)
         return (
             jsonify(
                 {
                     "status": "success",
-                    "message": "Successfully saved default conditions.",
+                    "message": message,
                 }
             ),
             200,
@@ -479,7 +491,7 @@ def save_filters():
     except SQLAlchemyError as e:
         db.session.rollback()
         error_message = (
-            f"Failed to save default conditions due to database error: {str(e)}"
+            f"Failed to save default conditions. Due to database error: {str(e)}"
         )
         return jsonify({"status": "error", "message": error_message}), 500
     except Exception as e:
@@ -507,27 +519,34 @@ def reset_filters():
     """
 
     user_id = current_user.id
+    lang = session['language']
+
     try:
         record = WorkspaceDefaultConditions.query.filter_by(user_id=user_id).first()
 
         if record:
             db.session.delete(record)
             db.session.commit()
+            
+            message = "Successfully reset default conditions."
+            message = changeMsg(lang, 2, True, message)
             return (
                 jsonify(
                     {
                         "status": "success",
-                        "message": "Successfully reset default conditions.",
+                        "message": message,
                     }
                 ),
                 200,
             )
         else:
+            message = "No default conditions found to reset."
+            message = changeMsg(lang, 2, False, message)
             return (
                 jsonify(
                     {
                         "status": "success",
-                        "message": "No default conditions found to reset.",
+                        "message": message,
                     }
                 ),
                 200,
@@ -536,7 +555,7 @@ def reset_filters():
     except SQLAlchemyError as e:
         db.session.rollback()
         error_message = (
-            f"Failed to reset default conditions due to database error: {str(e)}"
+            f"Failed to reset default conditions. Due to database error: {str(e)}"
         )
         return jsonify({"status": "error", "message": error_message}), 500
     except Exception as e:
