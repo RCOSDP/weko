@@ -17,10 +17,19 @@ document.addEventListener('DOMContentLoaded', function () {
   const groupYearButton = document.getElementById('groupYearicon');
   const itemListContainer = document.getElementById('itemListContainer');
   const pagination = document.querySelector('.pagination');
+  const placeholder = document.getElementById('placeholder').value;
+  const showNoResultsMsg = document.getElementById('showNoResultsMsg').value;
+  const remindMsg = document.getElementById('remindMsg').value;
+  const confirmDeleteMsg = document.getElementById('confirmDeleteMsg').value;
+  const relation = document.getElementById('relation').value;
+  const documentfile = document.getElementById('documentfile').value;
+  const published = document.getElementById('published').value;
+  const embargo = document.getElementById('embargo').value;
+  const restricted = document.getElementById('restricted').value;
 
   // 必要な要素のチェック
   if (!filterContainer || !toggleButton || !filterContent || !detailSearchBtn || !clearSearchBtn || !saveSearchBtn || !resetSearchBtn || !saveSuccess || !saveFail || !sortItemSelect || !sortOrderSelect || !itemsPerPageSelect || !groupYearButton || !itemListContainer || !pagination) {
-    console.error('必要な要素が見つかりません: ', {
+    console.error('The required element was not found: ', {
       filterContainer: !!filterContainer,
       toggleButton: !!toggleButton,
       filterContent: !!filterContent,
@@ -36,6 +45,11 @@ document.addEventListener('DOMContentLoaded', function () {
       groupYearButton: !!groupYearButton,
       itemListContainer: !!itemListContainer,
       pagination: !!pagination,
+      placeholder: !!placeholder,
+      showNoResultsMsg: !!showNoResultsMsg,
+      remindMsg: !!remindMsg,
+      confirmDeleteMsg: !!confirmDeleteMsg,
+      relation: !!relation,
     });
     return;
   }
@@ -148,7 +162,7 @@ document.addEventListener('DOMContentLoaded', function () {
         type: 'text',
         id: 'search-input',
         style: { marginBottom: '10px', width: '100%', textAlign: 'left' },
-        placeholder: '入力後、Enterを押下し検索してください',
+        placeholder: placeholder,
         value: query,
         onChange: handleInputChange,
         onKeyDown: handleKeyDown,
@@ -194,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function () {
             whiteSpace: 'nowrap',
           },
         },
-        '検索条件と十分に一致する結果が見つかりません'
+        showNoResultsMsg
       )
     );
   };
@@ -235,7 +249,7 @@ document.addEventListener('DOMContentLoaded', function () {
       ? React.createElement(
           'small',
           { style: { color: '#888', fontSize: '12px', display: 'block', marginTop: '5px' } },
-          '※この項目はデフォルト条件の保存対象外です'
+          remindMsg
         )
       : null;
 
@@ -305,7 +319,7 @@ document.addEventListener('DOMContentLoaded', function () {
           headers: { 'Content-Type': 'application/json' },
           ...(body && { body: JSON.stringify(body) }),
         });
-        if (!response.ok) throw new Error('API呼び出しに失敗しました');
+        if (!response.ok) throw new Error('Failed to call the API.');
         const html = await response.text();
         document.open();
         document.write(html);
@@ -323,7 +337,7 @@ document.addEventListener('DOMContentLoaded', function () {
           headers: { 'Content-Type': 'application/json' },
           ...(body && { body: JSON.stringify(body) }),
         });
-        if (!response.ok) throw new Error('API呼び出しに失敗しました');
+        if (!response.ok) throw new Error('Failed to call the API.');
         return await response.json();
       } catch (error) {
         console.error('JSON取得エラー:', error);
@@ -349,11 +363,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const jsonTemplate = generateJsonTemplate();
         try {
           const data = await fetchJsonResponse('/workspace/save_filters', 'POST', jsonTemplate);
-          alert(data.message || 'デフォルト条件を保存しました。');
+          alert(data.message);
           closeFilter();
           await refreshPage('/workspace', 'GET');
         } catch (error) {
-          alert(error.message || '保存に失敗しました');
+          alert(error.message);
           closeFilter();
           await refreshPage('/workspace', 'GET');
           console.error('保存エラー:', error);
@@ -362,14 +376,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const handleReset = async (e) => {
         e.preventDefault();
-        if (confirm('フィルタ条件を削除しますか？')) {
+        if (confirm(confirmDeleteMsg)) {
           try {
             const data = await fetchJsonResponse('/workspace/reset_filters', 'DELETE');
-            alert(data.message || 'デフォルト条件をリセットしました。');
+            alert(data.message);
             closeFilter();
             await refreshPage('/workspace', 'GET');
           } catch (error) {
-            alert(error.message || 'リセットに失敗しました');
+            alert(error.message);
             closeFilter();
             await refreshPage('/workspace', 'GET');
             console.error('リセットエラー:', error);
@@ -579,7 +593,6 @@ document.addEventListener('DOMContentLoaded', function () {
           `<span>${relatedItem.relationType} ${relatedItem.relationTitle}、<a href="${relatedItem.relationUrl}">${relatedItem.relationUrl}</a></span><br>`
         ).join('')}</div>`
       : '';
-
     return `
       <tr>
         <td style="text-align: center; vertical-align: top;">
@@ -594,10 +607,10 @@ document.addEventListener('DOMContentLoaded', function () {
           <span>${item.volume}（${item.issue}）</span><span> </span>
           <span>${item.funderName || ''} | ${item.awardTitle || ''}</span><span> </span><br><br>
           <span>${item.publicationDate}</span><span> </span>
-          ${item.relation && item.relation.length > 0 ? '<span><a href="javascript:void(0)" class="relatedButton"><strong>関連</strong></a></span><span> </span>' : ''}
+          ${item.relation && item.relation.length > 0 ? `<span><a href="javascript:void(0)" class="relatedButton"><strong>${relation}</strong></a></span><span> </span>` : ''}
           ${item.fileSts 
-            ? `<span>本文ファイル (${item.fileCnt || 0})： 公開（${item.publicCnt || 0}）、エンバーゴ（${item.embargoedCnt || 0}）、 制限公開（${item.restrictedPublicationCnt || 0}）</span>` 
-            : '<span>本文ファイル (0)</span>'}<span> </span><br>
+            ? `<span>${documentfile} (${item.fileCnt || 0})： ${published}（${item.publicCnt || 0}）、${embargo}（${item.embargoedCnt || 0}）、 ${restricted}（${item.restrictedPublicationCnt || 0}）</span>` 
+            : `<span>${documentfile} (0)</span>`}<span> </span><br>
           ${relatedInfoHtml}
         </td>
         <td style="text-align: center; vertical-align: top;">

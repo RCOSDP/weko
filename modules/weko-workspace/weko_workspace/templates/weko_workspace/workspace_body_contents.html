@@ -23,7 +23,10 @@
     <div class="panel panel-default">
       <div role="navigation" style="display: flex; flex-direction: column; width: 300px;">
         <input type="button" id="btn_todo1" value="{{_('アイテム出力')}}" style="margin-bottom: 10px; width: 50%; text-align: left;" />
-        <div id="search-container"></div>
+        <div id="search-container">
+          <input type="hidden" id="placeholder" value="{{_('Please press Enter after inputting to search.')}}" />
+          <input type="hidden" id="showNoResultsMsg" value="{{_('No results found matching your search criteria.')}}" />
+        </div>
         <span><strong>{{username}}</strong></span>
       </div>
       <div id="search-result-body" class="panel-body">
@@ -68,6 +71,8 @@
                     <div id="savaResult-success" class="alert alert-success" style="display: none;"></div>
                     <div id="savaResult-fail" class="alert alert-danger" style="display: none;"></div>
                     <div id="filter-container" class="container testimonial-group"></div>
+                    <input type="hidden" id="remindMsg" value="{{_('※This item is excluded from the default condition save target.')}}" />
+                    <input type="hidden" id="confirmDeleteMsg" value="{{_('Would you like to remove the filter conditions?')}}" />
                     <div class="button-group">
                       <button id="detail-search-btn" type="button" class="btn btn-primary">
                         <span class="glyphicon glyphicon-search"></span>
@@ -98,6 +103,11 @@
                       <div class="panel-body" style="display: flex; flex-direction: column; align-items: left;">
                         <div id="itemListContainer">
                         </div>
+                        <input type="hidden" id="relation" value="{{_('Relation')}}" />
+                        <input type="hidden" id="documentfile" value="{{_('Document file')}}" />
+                        <input type="hidden" id="published" value="{{_('Published')}}" />
+                        <input type="hidden" id="embargo" value="{{_('Embargo')}}" />
+                        <input type="hidden" id="restricted" value="{{_('Restricted')}}" />
                       </div>
                     </div>
                   </div>

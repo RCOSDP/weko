@@ -81,10 +81,6 @@ def get_workspace_itemlist():
     awardTitleList = []
     lang = session['language']
 
-    print("111111111111111111111111")
-    print(lang)
-    print("222222222222222222222222")
-
     # 1,デフォルト絞込み条件取得処理
     jsonCondition, isnotNone = (request.get_json() if request.method == "POST" else None), True
 
@@ -477,7 +473,7 @@ def save_filters():
         db.session.commit()
 
         message = "Successfully saved default conditions."
-        message = changeMsg(lang, 1, message)
+        message = changeMsg(lang, 1, None, message)
         return (
             jsonify(
                 {

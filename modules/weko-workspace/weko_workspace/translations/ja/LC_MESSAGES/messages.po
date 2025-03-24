@@ -54,3 +54,39 @@ msgstr "保存"
 #: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
 msgid "Reset"
 msgstr "リセット"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Please press Enter after inputting to search."
+msgstr "入力後、Enterを押下し検索してください"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "No results found matching your search criteria."
+msgstr "検索条件と十分に一致する結果が見つかりません"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "※This item is excluded from the default condition save target."
+msgstr "※この項目はデフォルト条件の保存対象外です"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Would you like to remove the filter conditions?"
+msgstr "フィルタ条件を削除しますか？"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Relation"
+msgstr "関連"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Document file"
+msgstr "本文ファイル"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Published"
+msgstr "公開"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Embargo"
+msgstr "エンバーゴ"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Restricted"
+msgstr "制限公開"

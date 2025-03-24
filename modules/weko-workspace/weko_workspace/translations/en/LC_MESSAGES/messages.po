@@ -54,3 +54,39 @@ msgstr ""
 #: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
 msgid "Reset"
 msgstr ""
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Please press Enter after inputting to search."
+msgstr ""
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "No results found matching your search criteria."
+msgstr ""
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "※This item is excluded from the default condition save target."
+msgstr ""
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Would you like to remove the filter conditions?"
+msgstr ""
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Relation"
+msgstr ""
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Document file"
+msgstr ""
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Published"
+msgstr ""
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Embargo"
+msgstr ""
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Restricted"
+msgstr ""
