@@ -1041,8 +1041,6 @@ def prepare_delete_item():
             flow_id
     """
 
-    # 編集と共通部分の処理は関数化しておく
-    
 
     # Cache Storage
     redis_connection = RedisConnection()
