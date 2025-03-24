@@ -71,7 +71,9 @@ class HeadlessActivity(WorkActivity):
     >>> print(url, current_action, recid)
     http://weko3.example.org/workflow/activity/detail/A-EXAMPLE-0001 end_action 1
     """
-    def __init__(self, _lock_skip=True):
+    def __init__(
+            self, _lock_skip=True, _metadata_replace=False, _files_replace=False
+        ):
         """Initialize.
 
         Args:
@@ -90,6 +92,8 @@ class HeadlessActivity(WorkActivity):
         self._model = None
         self._deposit = None
         self._lock_skip = _lock_skip
+        self._metadata_replace = _metadata_replace
+        self._files_replace= _files_replace
 
         actions = Action().get_action_list()
         self._actions = {
@@ -336,9 +340,12 @@ class HeadlessActivity(WorkActivity):
 
             # update feedback mail list
             feedback_maillist = []
-            result, _ = get_feedback_maillist(self.activity_id)
-            if result.json.get("code") == 1:
-                feedback_maillist = result.json.get("data")
+            if self.recid is not None:
+                # TODO: get feedback mail list from `feedback_mail_list` table
+                pass
+            # result, _ = get_feedback_maillist(self.activity_id)
+            # if result.json.get("code") == 1:
+            #     feedback_maillist = result.json.get("data")
             feedback_maillist.extend(metadata.pop("feedback_mail_list", []))
             self.create_or_update_action_feedbackmail(
                 activity_id=self.activity_id,
@@ -361,6 +368,7 @@ class HeadlessActivity(WorkActivity):
                 current_app.logger.error(f"failed to input metadata: {result.get('error')}")
                 raise WekoWorkflowException(result.get("error"))
 
+            _old_metadata, _old_files = {}, []
             if self.recid is None:
                 record_data = {}
                 record_uuid = uuid.uuid4()
@@ -376,7 +384,15 @@ class HeadlessActivity(WorkActivity):
                 #     ).first()
                 # TODO: case witch pid is already assigned (self.recid is not None)
                 # self._deposit = WekoDeposit...
+                # TODO:
+                if not self._metadata_replace:
+                    # _old_metadata = { ... }
+                    _old_metadata.update(metadata)
+                    pass
+                "weko_items_ui.utils.to_files_js"
+                # _old_files =   TODO:
                 pass
+
 
             metadata.update({"$schema": f"/items/jsonschema/{self.item_type.id}"})
             workflow_index = self.workflow.index_tree_id
@@ -392,14 +408,18 @@ class HeadlessActivity(WorkActivity):
 
             data = {
                 "metainfo": metadata,
-                "files": [],
+                "files": _old_files,
                 "endpoint": {
                     "initialization": f"/api/deposits/redirect/{pid}",
                 }
             }
 
-            if files is not None:
+            if files is not None and self._files_replace:
                 data["files"] = self.files_info = self._upload_files(files)
+            elif files is not None:
+                # TODO: update submited files and reuse other files
+                pass
+
             # TODO: update propaties of files metadata, but it is difficult to
             # decide whitch key should be updated.
 
