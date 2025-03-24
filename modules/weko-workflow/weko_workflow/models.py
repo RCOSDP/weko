@@ -654,11 +654,13 @@ class WorkFlow(db.Model, TimestampMixin):
     """the id of flow."""
 
     delete_flow_id = db.Column(db.Integer(), db.ForeignKey(FlowDefine.id),
-                        nullable=False, unique=False)
+                        nullable=True, default=None, unique=False)
     """the id of delete flow."""
 
     flow_define = db.relationship(
         FlowDefine,
+        primaryjoin="or_(WorkFlow.flow_id == FlowDefine.id, WorkFlow.delete_flow_id == FlowDefine.id)",
+        foreign_keys="[WorkFlow.flow_id, WorkFlow.delete_flow_id]",
         backref=db.backref('workflow', lazy='dynamic')
     )
 
