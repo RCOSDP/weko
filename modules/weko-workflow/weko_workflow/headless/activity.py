@@ -358,18 +358,55 @@ class HeadlessActivity(WorkActivity):
                 }
             }
 
-            # data["files"]がDBのどこに保存されるかを調べて、matadataonlyの場合はそこから取り出してdata["files"]にいれる
-
-            # files_fileのjsonのデータをdata["files"] に入れる(入れなかった場合はどうなるのか)
-
-            # filesがNoneの時dataがdata["files"]には何もはいらないがそれでどうなるか
             if files is not None:
                 data["files"] = self.files_info = self._upload_files(files)
             # TODO: update propaties of files metadata, but it is difficult to
             # decide whitch key should be updated.
 
             else:
-                 data["files"] = self.files_info = []
+                # files_fileのjsonのデータをdata["files"] に入れる(入れなかった場合はどうなるのか)
+                # filesがNoneの時dataがdata["files"]には何もはいらないがそれでどうなるか
+
+                # _depositを用いてbucketを取得し、そのbucketに紐づくobjectversionを取得
+                # objectversionの数だけループしてfile_infoを作成し、data["files"]に追加する
+                bucket = Bucket.query.get(self._deposit["_buckets"]["deposit"])
+                objs = ObjectVersion.query.filter(ObjectVersion.bucket_id.in_(bucket.subquery()))
+                for obj in objs:
+                    url = f"{request.url_root}api/files/{obj.bucket_id}/{obj.basename}"
+                    file_info = {
+                        "created": obj.created.isoformat(),
+                        "updated": obj.updated.isoformat(),
+                        "key": obj.basename,
+                        "filename": obj.basename,
+                        "size": obj.file.size,
+                        "checksum": obj.file.checksum,
+                        "mimetype": obj.mimetype,
+                        "is_head": True,
+                        "is_show": obj.is_show,
+                        "is_thumbnail": obj.is_thumbnail,
+                        "created_user_id": obj.created_user_id,
+                        "updated_user_id": obj.updated_user_id,
+                        "uploaded_owners": file_uploaded_owner(
+                            created_user_id=obj.created_user_id,
+                            updated_user_id=obj.updated_user_id
+                        ),
+                        "links": {
+                            "sefl": url,
+                            "version": f"{url}?versionId={obj.version_id}",
+                            "uploads": f"{url}?uploads",
+                        },
+                        "tags": {},
+                        "licensetype": None,
+                        "displaytype": None,
+                        "delete_marker": obj.deleted,
+                        "uri": False,
+                        "multiple": False,
+                        "progress": 100,
+                        "cmonplete": True,
+                        "version_id": str(obj.version_id),
+                    }
+                    data["files"].append(file_info)
+                # data["files"] = self.files_info = []
 
             data["endpoint"].update(base_factory(pid))
             self.upt_activity_metadata(self.activity_id, json.dumps(data))
@@ -387,7 +424,7 @@ class HeadlessActivity(WorkActivity):
         bucket = Bucket.query.get(self._deposit["_buckets"]["deposit"])
         files_info = []
 
-        def upload(file_name, stream, size, matadata_only=False):
+        def upload(file_name, stream, size):
             size_limit = bucket.size_limit
             location_limit = bucket.location.max_file_size
             if location_limit is not None:
@@ -402,19 +439,19 @@ class HeadlessActivity(WorkActivity):
                 raise FileSizeError(description=desc)
 
             # TODO: support thumbnail
-            if not matadata_only:
-                obj = ObjectVersion.create(bucket, file_name, is_thumbnail=False)
-            else:
-                # バケットからobjectのバージョンを取得して一番新しいバージョンを引数にgetする
-                # update元のファイル情報を取得して同じものをuploadする
-                obj_versions = ObjectVersion.get_versions(bucket, file_name)
-                latest_version = obj_versions.first()
-                if latest_version:
-                    latest_version_id = latest_version.version_id
-                    obj = ObjectVersion.get(bucket, file_name, latest_version_id)
-                else:
-                    current_app.logger.error(f"failed to input metadata: no object version.")
-                    raise WekoWorkflowException(f"failed to input metadata: no object version.")
+            obj = ObjectVersion.create(bucket, file_name, is_thumbnail=False)
+
+                # # ここでメタデータのみの判定を行う場合使えそうな処理
+                # # バケットからobjectのバージョンを取得して一番新しいバージョンを引数にgetする
+                # # update元のファイル情報を取得して同じものをuploadする
+                # obj_versions = ObjectVersion.get_versions(bucket, file_name)
+                # latest_version = obj_versions.first()
+                # if latest_version:
+                #     latest_version_id = latest_version.version_id
+                #     obj = ObjectVersion.get(bucket, file_name, latest_version_id)
+                # else:
+                #     current_app.logger.error(f"failed to input metadata: no object version.")
+                #     raise WekoWorkflowException(f"failed to input metadata: no object version.")
 
             obj.set_contents(stream, size=size, size_limit=size_limit)
             url = f"{request.url_root}api/files/{obj.bucket_id}/{obj.basename}"

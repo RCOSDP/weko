@@ -1143,7 +1143,6 @@ def prepare_delete_item():
         # workflow_idを元に、ワークフローの情報を取得し直接から削除か、ワークフローから削除かを判定
         # workflow_workflowのdelete_flow_idがNoneかnone出ないかを見る
         workflow = WorkFlow()
-        # リクエストにworkflow_idがある？
         workflow_detail = workflow.get_workflow_by_id(post_activity['workflow_id'])
 
         """weko_records_ui.views.soft_delete"""
