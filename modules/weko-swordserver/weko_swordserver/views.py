@@ -325,6 +325,7 @@ def post_service_document():
         Returns:
             tuple: A tuple containing the response and the record ID.
         """
+        activity_id, recid, error = None, None, False
         try:
             if register_type == "Direct":
                 import_result = import_items_to_system(
@@ -334,8 +335,9 @@ def post_service_document():
                     current_app.logger.error(
                         f"Error in import_items_to_system: {item.get('error_id')}"
                     )
-                recid = import_result.get("recid")
-                return None, recid, None
+                    error = True
+                else:
+                    recid = import_result.get("recid")
 
             elif register_type == "Workflow":
                 required_scopes = set([activity_scope.id])
@@ -347,7 +349,6 @@ def post_service_document():
                     item, request_info=request_info
                 )
                 activity_id = url.split("/")[-1]
-                return activity_id, recid, error
 
         except WekoSwordserverException as e:
             current_app.logger.error(f"Error in process_item: {str(e)}")
@@ -358,6 +359,8 @@ def post_service_document():
                 f"Unexpected error in process_item: {str(e)}",
                 ErrorType.ServerError
             ) from e
+        return activity_id, recid, error
+
 
     response = {}
     warns = []
@@ -374,12 +377,7 @@ def post_service_document():
                 warns.append((activity_id, recid))
             if file_format == "JSON":
                 update_item_ids(check_result["list_record"], recid)
-        except ValueError as e:
-            traceback.print_exc()
-            current_app.logger.error(f"Error in update_item_ids: {str(e)}")
-            continue  # Skip to the next iteration
         except Exception as e:
-            traceback.print_exc()
             current_app.logger.error(f"Unexpected error: {str(e)}")
             continue  # Skip to the next iteration
 
@@ -392,19 +390,23 @@ def post_service_document():
         f"Items imported by sword from {request.oauth.client.name}; item: {recid}"
     )
     if len(warns) > 0:
-        error_messages = "; ".join(
-            [
-                "An error occurred. Please open the following URL to continue "
-                "with the remaining operations.{url}: Item id: {recid}."
-                .format(
-                    url=url_for(
-                        "weko_workflow.display_activity",
-                        activity_id=activity_id, _external=True
-                    ),
-                    recid=recid)
-                for activity_id, recid in warns
-            ]
-        )
+        if register_type == "Direct":
+            raise WekoSwordserverException(
+                "An error occurred by importing Item!", ErrorType.ServerError)
+        else:
+            error_messages = "; ".join(
+                [
+                    "An error occurred. Please open the following URL to continue "
+                    "with the remaining operations.{url}: Item id: {recid}."
+                    .format(
+                        url=url_for(
+                            "weko_workflow.display_activity",
+                            activity_id=activity_id, _external=True
+                        ),
+                        recid=recid)
+                    for activity_id, recid in warns
+                ]
+            )
 
         response = jsonify(
             _create_error_document(

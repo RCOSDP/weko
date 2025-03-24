@@ -281,9 +281,6 @@ def update_item_ids(list_record, new_id):
     Raises:
         ValueError: If list_record is not a list.
     """
-    if not isinstance(list_record, list):
-        raise ValueError("list_record must be a list.")
-
     # Create a dictionary to map identifiers to their respective items
     identifier_to_item = {}
     for item in list_record:
