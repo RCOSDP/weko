@@ -564,19 +564,12 @@ class WorkSpaceWorkFlowSettingView(BaseView):
                 if form == 'set_workspace_workflow_setting_form':
                     workFlow_select_flg = request.form.get('registrationRadio', '')
 
-<<<<<<< HEAD
                     # Direct registration
-=======
->>>>>>> 0c87d0481 (アイテム登録)
                     if workFlow_select_flg == '1':
                         current_settings["workFlow_select_flg"] = '1'
                         current_settings["item_type_id"] = request.form.get('itemType', '')
                     else:
-<<<<<<< HEAD
                         # Registration with workflow
-=======
-                        current_settings = {"item_type_id": "30002", "work_flow_id": "1", "workFlow_select_flg": "0"}
->>>>>>> 0c87d0481 (アイテム登録)
                         current_settings["workFlow_select_flg"] = '0'
                         current_settings["work_flow_id"] = request.form.get('workFlow', '')
 

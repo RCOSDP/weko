@@ -24,6 +24,8 @@ import copy
 
 from datetime import datetime
 
+from datetime import datetime
+
 from flask import (
     Blueprint,
     current_app,
@@ -72,10 +74,12 @@ from weko_user_profiles.views import get_user_profile_info
 from weko_accounts.utils import login_required_customize
 from weko_workflow.headless.activity import HeadlessActivity
 from weko_index_tree.models import Index
+from flask_login import current_user
 from weko_search_ui.utils import handle_check_exist_record, handle_item_title, \
     handle_check_date, handle_check_id, handle_check_and_prepare_index_tree, \
     handle_check_and_prepare_publish_status, import_items_to_system
 from weko_records.api import ItemTypeNames
+
 
 from .utils import get_datacite_record_data, get_jalc_record_data, \
     get_cinii_record_data, get_jamas_record_data
@@ -85,6 +89,8 @@ from weko_user_profiles.config import (
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST,
     WEKO_USERPROFILES_POSITION_LIST,
 )
+from .defaultfilters import merge_default_filters
+
 
 workspace_blueprint = Blueprint(
     "weko_workspace",
@@ -809,6 +815,7 @@ def item_register_save():
             if isinstance(item[key], list):
                 for file in item[key]:
                     if "filename" in file:
+                        file['is_thumbnail'] = False
                         files.append(file)
         settings = AdminSettings.get('workspace_workflow_settings') 
         workflow = WorkFlow()
@@ -820,15 +827,13 @@ def item_register_save():
             item['path'] = indexIdList
             index = indexIdList
         item['publish_status'] = '2'
-        workspace_register = True
         try:
             headless = HeadlessActivity()
             user_id=current_user.get_id()
             api_response = headless.auto(
                 user_id= user_id, workflow_id=settings.work_flow_id,
                 index=index, metadata=item, files=files, comment=comment,
-                link_data=link_data, grant_data=grant_data, 
-                workspace_register=workspace_register
+                link_data=link_data, grant_data=grant_data
             )
 
             result['result'] = api_response
