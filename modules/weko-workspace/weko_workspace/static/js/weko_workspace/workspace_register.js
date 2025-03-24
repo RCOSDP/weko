@@ -513,7 +513,7 @@ function toObject(arr) {
           uri : 'contributorAffiliationURI'
         }
       ]
-      $scope.corssrefDataEmpty = false;
+      $scope.crossrefDataEmpty = false;
       $scope.ciniiDataEmpty = false;
       $scope.jalcDataEmpty = false;
       $scope.datacitDataEmpty = false;
@@ -2605,21 +2605,21 @@ function toObject(arr) {
 
       }
 
-      $scope.checkBothDataEmpty = function (corssrefDataEmpty, ciniiDataEmpty, jalcDataEmpty, datacitDataEmpty) {
-        if ($scope.corssrefDataEmpty && $scope.ciniiDataEmpty && $scope.jalcDataEmpty && $scope.datacitDataEmpty) {
+      $scope.checkBothDataEmpty = function (crossrefDataEmpty, ciniiDataEmpty, jalcDataEmpty, datacitDataEmpty) {
+        if ($scope.crossrefDataEmpty && $scope.ciniiDataEmpty && $scope.jalcDataEmpty && $scope.datacitDataEmpty) {
           alert("No metadata was found that matches the DOI!");
         }
       }
 
       $scope.getItemMetadataAPI = function (param_crossApi,param_api) {
-        corssrefDataEmpty = this.setRecordDataFromCrossRefApi(param_crossApi);
+        crossrefDataEmpty = this.setRecordDataFromCrossRefApi(param_crossApi);
         ciniiDataEmpty = this.setRecordDataFromCINIIApi(param_api);
 
         jalcDataEmpty = this.setRecordDataFromJalcApi(param_api);
 
         datacitDataEmpty = this.setRecordDataFromDataciteApi(param_api);
         datacitDataEmpty = this.setRecordDataFromJamasApi(param_api);
-        return corssrefDataEmpty,ciniiDataEmpty,jalcDataEmpty,datacitDataEmpty
+        return crossrefDataEmpty,ciniiDataEmpty,jalcDataEmpty,datacitDataEmpty
 
     }
 
@@ -2688,10 +2688,10 @@ function toObject(arr) {
               $("#metaDataSelectJamas").val(JSON.stringify(data.result))
             } else {
               $scope.enableAutofillButton();
-              $scope.corssrefDataEmpty = true;
+              $scope.crossrefDataEmpty = true;
               $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
             }
-            $scope.checkBothDataEmpty($scope.corssrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
+            $scope.checkBothDataEmpty($scope.crossrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
           },
           function error(response) {
             $scope.enableAutofillButton();
@@ -2724,10 +2724,10 @@ function toObject(arr) {
               $("#metaDataSelectCrossRef").val(JSON.stringify(data.result))
             } else {
               $scope.enableAutofillButton();
-              $scope.corssrefDataEmpty = true;
+              $scope.crossrefDataEmpty = true;
               $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
             }
-            $scope.checkBothDataEmpty($scope.corssrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
+            $scope.checkBothDataEmpty($scope.crossrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
           },
           function error(response) {
             $scope.enableAutofillButton();
@@ -2798,7 +2798,7 @@ function toObject(arr) {
               $scope.enableAutofillButton();
               $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
             }
-            $scope.checkBothDataEmpty($scope.corssrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
+            $scope.checkBothDataEmpty($scope.crossrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
 
           },
           function error(response) {
@@ -2869,7 +2869,7 @@ function toObject(arr) {
               $scope.enableAutofillButton();
               $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
             }
-            $scope.checkBothDataEmpty($scope.corssrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
+            $scope.checkBothDataEmpty($scope.crossrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
 
           },
           function error(response) {
@@ -2941,7 +2941,7 @@ function toObject(arr) {
               $scope.enableAutofillButton();
               $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
             }
-            $scope.checkBothDataEmpty($scope.corssrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
+            $scope.checkBothDataEmpty($scope.crossrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
 
           },
           function error(response) {
@@ -3537,15 +3537,14 @@ function toObject(arr) {
 
       $scope.saveWorkspaceDataJson = function () {
         let indexlist = []; 
-        $("#selected_indexs .list-group-item").each(function() {
-            indexlist.push($(this).text().trim()); 
-        });
-        
-
-        if (indexlist.length === 0) {
+        if ($("#selected_indexs .list-group-item").length) {
+          $("#selected_indexs .list-group-item").each(function() {
+              indexlist.push($(this).text().trim());
+          });
+          if (indexlist.length === 0) {
             $('#index_select_confirm_modal').fadeIn();
+          }
         }
-        
 
 
         let subitem_title = "";
