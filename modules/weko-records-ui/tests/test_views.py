@@ -527,62 +527,8 @@ def test_default_view_method(app, records, itemtypes, indexstyle ,users):
                         index.index_name_english ="index"
                         with patch('weko_records_ui.views.Indexes.get_index',return_value=index):
                             assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                   
 
-
-# def default_view_method(pid, record, filename=None, template=None, **kwargs):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-#     """Display default view.
-#     def _get_rights_title(result, rights_key, rights_values, current_lang, meta_options):
-def test_default_view_method2(app, records, itemtypes, indexstyle, mocker):
-    indexer, results = records
-    record = results[0]["record"]
-    recid = results[0]["recid"]
-    with app.test_request_context():
-        with patch('weko_records_ui.views.check_original_pdf_download_permission', return_value=True):
-            with patch("weko_records_ui.views.get_search_detail_keyword", return_value={}):
-                with patch("weko_records_ui.views.get_index_link_list", return_value=[]):
-                    # need to fix
-                    with pytest.raises(Exception) as e:
-                        res = default_view_method(recid, record, 'helloworld.pdf')
-                    assert e.type==TemplatesNotFound
-                    
-                    mock_render_template = mocker.patch("weko_records_ui.views.render_template")
-                    default_view_method(recid, record, template='weko_records_ui/detail.html')
-                    args, kwargs = mock_render_template.call_args
-                    # hide items: item_1617944105607, item_1617620223087.subitem_1565671169641
-                    res_record = kwargs["record"]
-                    assert "item_1617944105607" not in res_record
-                    for d in res_record["item_1617620223087"]["attribute_value_mlt"]:
-                        assert "subitem_1565671169641" not in d
-
-# def default_view_method(pid, record, filename=None, template=None, **kwargs):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-#     """Display default view.
-#     def _get_rights_title(result, rights_key, rights_values, current_lang, meta_options):
-def test_default_view_method3(app, records, itemtypes, indexstyle ,users,db_community):
-    indexer, results = records
-    record = results[0]["record"]
-    recid = results[0]["recid"]
-    with app.test_request_context("/?file_order=0&community=community"):
-        with patch('weko_records_ui.views.check_original_pdf_download_permission', return_value=True):
-            with patch("weko_records_ui.views.get_search_detail_keyword", return_value={}):
-                with patch("weko_records_ui.views.get_index_link_list", return_value=[]):
-                    with patch("weko_records_ui.views.render_template", return_value=make_response()):
-                        
-                        assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-
-                        with patch('weko_workflow.api.GetCommunity.get_community_by_id',return_value=[]):
-                            with pytest.raises(AttributeError):
-                                default_view_method(recid, record ,'[No FileName]')
-                        
-                        del record["item_1617605131499"]["attribute_value_mlt"][0]["filename"]
-                        with pytest.raises(NotFound) : #404
-                            default_view_method(recid, record ,'helloworld.pdf')
-                        
-                        del record["item_1617605131499"] # files
-                        with pytest.raises(NotFound) : #404
-                            default_view_method(recid, record ,'helloworld.pdf')
-                    
 
 # def doi_ish_view_method(parent_pid_value=0, version=0):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_doi_ish_view_method_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -1021,8 +967,7 @@ def test_default_view_method_fix35133(app, records, itemtypes, indexstyle,mocker
                         {'name': 'citation_dissertation_institution','data':""},
                         {'name': 'citation_abstract_html_url','data': 'http://TEST_SERVER/records/1'},
                     ]
-                assert kwargs["google_dataset_meta"] == '{"@context": "https://schema.org/", "@type": "Dataset", "citation": ["http://hdl.handle.net/2261/0002005680", "https://repository.dl.itc.u-tokyo.ac.jp/records/2005680"], "creator": [{"@type": "Person", "alternateName": "creator alternative name", "familyName": "creator family name", "givenName": "creator given name", "identifier": "123", "name": "creator name"}], "description": "『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。", "distribution": [{"@type": "DataDownload", "contentUrl": "https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx", "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt", "encodingFormat": "text/plain"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml", "encodingFormat": "application/x-yaml"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild", "encodingFormat": "text/x-shellscript"}], "includedInDataCatalog": {"@type": "DataCatalog", "name": "https://localhost"}, "license": ["CC BY"], "name": "『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表", "spatialCoverage": [{"@type": "Place", "geo": {"@type": "GeoCoordinates", "latitude": "point longitude test", "longitude": "point latitude test"}}, {"@type": "Place", "geo": {"@type": "GeoShape", "box": "1 3 2 4"}}, "geo location place test"]}'
-
+                assert kwargs["google_dataset_meta"] == '{"@context": "https://schema.org/", "@type": "Dataset", "citation": ["http://hdl.handle.net/2261/0002005680", "https://repository.dl.itc.u-tokyo.ac.jp/records/2005680"], "creator": [{"@type": "Person", "alternateName": "creator alternative name", "familyName": "creator family name", "givenName": "creator given name", "identifier": "123", "name": "creator name"}], "description": "『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。", "distribution": [{"@type": "DataDownload", "contentUrl": "https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx", "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt", "encodingFormat": "text/plain"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml", "encodingFormat": "application/x-yaml"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild", "encodingFormat": "text/x-shellscript"}], "includedInDataCatalog": {"@type": "DataCatalog", "name": "https://localhost"}, "license": ["CC BY"], "name": "『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表", "spatialCoverage": [{"@type": "Place", "geo": {"@type": "GeoCoordinates", "latitude": "point latitude test", "longitude": "point longitude test"}}, {"@type": "Place", "geo": {"@type": "GeoShape", "box": "1 3 2 4"}}, "geo location place test"]}' 
 # def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord, filename:str, **kwargs) -> str:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_create_secret_url_and_send_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_create_secret_url_and_send_mail(app,client,db,users,records):
