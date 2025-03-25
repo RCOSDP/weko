@@ -21,14 +21,14 @@
 """Module tests."""
 
 import pytest
-import json
-from elasticsearch.exceptions import NotFoundError
-from tests.helpers import json_data
+import uuid
+import os
+from tests.helpers import json_data, create_record_with_pdf
 from mock import patch, MagicMock
-from invenio_pidstore.errors import PIDDoesNotExistError
 from weko_authors.models import AuthorsAffiliationSettings,AuthorsPrefixSettings
+from weko_deposit.api import WekoIndexer
+from weko_deposit.tasks import update_items_by_authorInfo, extract_pdf_and_update_file_contents, update_file_content
 
-from weko_deposit.tasks import update_items_by_authorInfo
 [
     {
         "recid": "1",
@@ -223,3 +223,147 @@ def test_update_authorInfo(app, db, records,mocker):
         with patch("weko_deposit.tasks.RecordIndexer", MockRecordIndexer):
             update_items_by_authorInfo(["1","xxx"], _target)
 
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_extract_pdf_and_update_file_contents -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+def test_extract_pdf_and_update_file_contents(app, db, location, caplog):
+    app.config["TIKA_JAE_FILE_PARH"] = "/code/tika/tika-app-2.6.0.jar"
+    indexer = WekoIndexer()
+    indexer.get_es_index()
+
+    app.config["WEKO_DEPOSIT_FILESIZE_LIMIT"] = 100 * 1024 # 1KB
+    rec_uuid = uuid.uuid4()
+    pdf_files, deposit = create_record_with_pdf(rec_uuid,1)
+    test_data = {}
+    for filename, file in pdf_files.items():
+        test_data[filename] = {
+            "uri":file.obj.file.uri,
+            "size":file.obj.file.size
+        }
+    extract_pdf_and_update_file_contents(test_data, deposit.id)
+    result = indexer.client.get(
+        index=app.config["INDEXER_DEFAULT_INDEX"],
+        doc_type="item-v1.0.0",
+        id=deposit.id
+    )
+
+    attachments = [r["attachment"] for r in result["_source"]["content"]]
+    test = [
+        {"content":"test file page1   test file page2   test file page3   test file page4   test file page5   test file page6   test file page7   test file page8    test file page9   test file page10   test file page11   test file page12   test file page13   test file page14   test file page15   test file page16   test file page17   test file page18   test file page19   test file page20   test file page21   test file page22   test file page23   test file page24   test file page25   test file page26   test file page27   test file page28   test file page29   test file page30   test file page31   test file page32   test file page33   test file page34   test file page35   test file page36   test file page37   test file page38   test file page39   test file page40 test file page1   test file page2   test file page3   test file page4   test file page5   test file page6   test file page7   test file page8    test file page9   test file page10   test file page11   test file page12   test file page13   test file page14   test file page15   test file page16   test file page17   test file page18   test file page19   test file page20   test file page21   test file page22   test file page23   test file page24   test file page25   test file page26   test file page27   test file page28   test file page29   test file page30   test file page31   test file page32   test file page33   test file page34   test file page35   test file page36   test file page37   test file page38   test file page39   test file page40 test file page1   test file page2   test file page3   test file page4   test file page5   test file page6   test file page7   test file page8    test file page9   test file page10   test file page11   test file page12   test file page13   test file page14   test file page15   test file page16   test file page17   test file page18   test file page19   test file page20   test file page21   test file page22   test file page23   test file page24   test file page25   test file page26   test file page27   test file page28   test file page29   test file page30   test file page31   test file page32   test file page33   test file page34   test file page35   test file page36   test file page37   test file page38   test file page39   test file page40 test file page1   test file page2   test file page3   test file page4   test file page5   test file page6   test file page7   test file page8    test file page9   test file page10   test file page11   test file page12   test file page13   test file page14   test file page15   test file page16   test file page17   test file page18   test file page19   test file page20   test file page21   test file page22   test file page23   test file page24   test file page25   test file page26   test file page27   test file page28   test file page29   test file page30   test file page31   test file page32   test file page33   test file page34   test file page35   test file page36   "}, # big pdf
+        {"content":"これはテストファイルです  This is test file.  "}, # small pdf
+        {}, # not pdf
+        {"content":""}, # not exist pdf
+    ]
+
+    assert attachments == test
+    assert "Resource not found: b'not_exist_dir1'" in caplog.text
+    caplog.clear()
+
+    # not exist es data
+    rec_uuid = uuid.uuid4()
+    pdf_files, deposit = create_record_with_pdf(rec_uuid,2)
+    test_data = {}
+    for filename, file in pdf_files.items():
+        test_data[filename] = {
+            "uri":file.obj.file.uri,
+            "size":file.obj.file.size
+        }
+    indexer.client.delete(
+        index=app.config["INDEXER_DEFAULT_INDEX"],
+        doc_type="item-v1.0.0",
+        id=deposit.id
+    )
+
+    extract_pdf_and_update_file_contents(test_data, deposit.id)
+    assert f"The document targeted for content update({deposit.id}) does not exist." in caplog.text
+    caplog.clear()
+
+    # not jar file
+    tika_path = os.environ.get("TIKA_JAR_FILE_PATH")
+    os.environ["TIKA_JAR_FILE_PATH"] = "not_exist_path"
+    rec_uuid = uuid.uuid4()
+    pdf_files, deposit = create_record_with_pdf(rec_uuid,3)
+    test_data = {}
+    for filename, file in pdf_files.items():
+        test_data[filename] = {
+            "uri":file.obj.file.uri,
+            "size":file.obj.file.size
+        }
+    with pytest.raises(Exception) as e:
+        extract_pdf_and_update_file_contents(test_data, deposit.id)
+    assert str(e.value) == f"not exist tika jar file."
+    result = indexer.client.get(
+        index=app.config["INDEXER_DEFAULT_INDEX"],
+        doc_type="item-v1.0.0",
+        id=deposit.id
+    )
+
+    attachments = [r["attachment"] for r in result["_source"]["content"]]
+    test = [
+        {"content":""}, # small pdf
+        {"content":""}, # big pdf
+        {}, # not pdf
+        {"content":""}, # not exist pdf
+    ]
+
+    assert attachments == test
+    caplog.clear()
+
+    # raise tika error
+    os.environ["TIKA_JAR_FILE_PATH"] = tika_path
+    rec_uuid = uuid.uuid4()
+    pdf_files, deposit = create_record_with_pdf(rec_uuid,4)
+    test_data = {}
+    for filename, file in pdf_files.items():
+        test_data[filename] = {
+            "uri":file.obj.file.uri,
+            "size":file.obj.file.size
+        }
+    from mock import MagicMock
+    mock_run = MagicMock()
+    mock_run.returncode.return_value = 1
+    mock_run.stderr.decode.return_value="test_error"
+    with patch("weko_deposit.tasks.subprocess.run", return_value = mock_run):
+        extract_pdf_and_update_file_contents(test_data, deposit.id)
+    result = indexer.client.get(
+        index=app.config["INDEXER_DEFAULT_INDEX"],
+        doc_type="item-v1.0.0",
+        id=deposit.id
+    )
+
+    attachments = [r["attachment"] for r in result["_source"]["content"]]
+    test = [
+        {"content":""}, # small pdf
+        {"content":""}, # big pdf
+        {}, # not pdf
+        {"content":""}, # not exist pdf
+    ]
+
+    assert attachments == test
+    assert "test_error" in caplog.text
+    caplog.clear()
+
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_update_file_content -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+def test_update_file_content(app, db, location):
+    indexer = WekoIndexer()
+    indexer.get_es_index()
+    rec_uuid = uuid.uuid4()
+    pdf_files, deposit = create_record_with_pdf(rec_uuid,1)
+
+    file_datas = {}
+    for filename, data in pdf_files.items():
+        file_datas[filename] = f"this is {filename}"
+
+    update_file_content(rec_uuid,file_datas)
+
+    result = indexer.client.get(
+        index=app.config["INDEXER_DEFAULT_INDEX"],
+        doc_type="item-v1.0.0",
+        id=deposit.id
+    )
+    attachments = [r["attachment"] for r in result["_source"]["content"]]
+    test = [
+        {"content":"this is test_file_1.2M.pdf"},
+        {"content":"this is test_file_82K.pdf"},
+        {},
+        {"content":"this is not_exist.pdf"},
+    ]
+    assert attachments == test
