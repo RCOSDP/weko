@@ -33,6 +33,7 @@ import traceback
 from collections import OrderedDict
 from datetime import date, datetime, timedelta, timezone
 from io import StringIO
+import zipfile
 
 import bagit
 import redis
@@ -69,14 +70,14 @@ from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
 from weko_index_tree.utils import check_index_permissions, get_index_id, \
     get_user_roles
-from weko_records.api import FeedbackMailList, RequestMailList, ItemTypes, Mapping
+from weko_records.api import FeedbackMailList, JsonldMapping, RequestMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
 from weko_records_ui.errors import AvailableFilesNotFoundRESTError
 from weko_records_ui.permissions import check_created_id, \
     check_file_download_permission, check_publish_status
 from weko_redis.redis import RedisConnection
-from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
+from weko_search_ui.config import ROCRATE_METADATA_FILE, WEKO_IMPORT_DOI_TYPE
 from weko_search_ui.mapper import JsonLdMapper
 from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
@@ -2759,15 +2760,17 @@ def export_rocrate(post_data):
     # Get Metadata from ElasticSearch
     metadata_dict = _get_metadata_dict_in_es(record_ids)
 
+    # Create temporary directory
     temp_path = tempfile.TemporaryDirectory(
-        prefix=current_app.config["WEKO_ITEMS_UI_EXPORT_TMP_PREFIX"])
+            prefix=current_app.config["WEKO_ITEMS_UI_EXPORT_TMP_PREFIX"])
 
     try:
         # Set export folder
-        export_path = os.path.join(
-            temp_path.name, datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-        )
-        # Double check for limits
+        datetime_now = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+        export_path = os.path.join(temp_path.name, datetime_now)
+
+        # Outer zip file path
+        outer_zip_path = os.path.join(export_path, "out_zip")
         for record_id in record_ids:
             record_path = os.path.join(export_path, f"recid_{record_id}")
             data_path = os.path.join(record_path, "data")
@@ -2775,34 +2778,55 @@ def export_rocrate(post_data):
             _export_file(record_id, data_path)
             # Metadata
             metadata, filenames = metadata_dict.get(str(record_id), ({}, []))
+            item_type_id = metadata.get("item_type_id")
+            mappings = JsonldMapping.get_by_itemtype_id(item_type_id)
+            mapper = JsonLdMapper(item_type_id, None)
+            for m in mappings:
+                mapper.json_mapping = m
+                if mapper.is_valid:
+                    break
+            if mapper.json_mapping is None:
+                raise Exception("No valid mapping found for item type")
+
             # Create RO-Crate info file
-            rocrate = JsonLdMapper.itemtype_to_rocrate(metadata, filenames)
-            rocrate_path = os.path.join(record_path, "ro-crate-metadata.json")
+            rocrate = mapper.to_rocrate_metadata(metadata, filenames)
+            rocrate_path = os.path.join(record_path, ROCRATE_METADATA_FILE)
             with open(rocrate_path, "w", encoding="utf8") as f:
                 # text garbling solves when using ensure_ascii=False
                 json.dump(rocrate, f, indent=2, sort_keys=True,
-                        ensure_ascii=False)
+                    ensure_ascii=False)
             # Create bag
             bagify(record_path, checksums=["sha256"])
-        current_app.logger.info("post_data:{}".format(post_data))
+            # Create individual zip file
+            inner_zip_path = os.path.join(outer_zip_path, f"recid_{record_id}")
+            shutil.make_archive(inner_zip_path, "zip", record_path)
+        # Create README.md file
+        readme_path = os.path.join(outer_zip_path, "README.md")
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        source_path = current_app.config["WEKO_ITEMS_UI_README_MD"]
+        src_readme_path = os.path.join(current_dir, source_path)
+        with open(readme_path, "w", encoding="utf8") as dest_readme,\
+                    open(src_readme_path, "r", encoding="utf8") as src_readme:
+                dest_readme.write(src_readme.read())
         # Create download file
         zip_path = os.path.join(
-            tempfile.gettempdir(), "-".join(export_path.split("/")[-2:])
+            export_path, f"{os.path.basename(temp_path.name)}-{datetime_now}"
         )
-        shutil.make_archive(zip_path, "zip", export_path)
-    except Exception:
+        shutil.make_archive(zip_path, 'zip', outer_zip_path)
+        resp = send_file(
+            f"{zip_path}.zip",
+            as_attachment = True,
+            attachment_filename = "export.zip"
+        )
+        return resp
+    except Exception as ex:
         current_app.logger.error("-" * 60)
+        current_app.logger.error(ex)
         traceback.print_exc(file=sys.stdout)
-        current_app.logger.error("-" * 60)
         flash(_("Error occurred during item export."), "error")
         return redirect(url_for("weko_items_ui.export"))
-    resp = send_file(
-        f"{zip_path}.zip",
-        as_attachment = True,
-        attachment_filename = "export.zip"
-    )
-    os.remove(zip_path + ".zip")
-    return resp
+    finally:
+        temp_path.cleanup()
 
 
 def _get_metadata_dict_in_es(record_ids):

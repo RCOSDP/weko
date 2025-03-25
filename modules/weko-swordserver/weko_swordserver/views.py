@@ -636,6 +636,24 @@ def delete_item(recid):
         current_app.logger.error(e)
     return ("", 204)
 
+
+@blueprint.route("/all_mappings", methods=["GET"])
+def all_mappings():
+    """Get all SwordItemTypeMapping list.
+
+    Returns:
+        SwordItemTypeMappingModel: All SwordItemTypeMapping list.
+    """
+    def convert(item):
+        return {
+            "id": item.id,
+            "name": item.name,
+            "item_type_id": item.item_type_id,
+        }
+    mappings = list(map(convert, JsonldMapping.get_all()))
+    return jsonify(mappings)
+
+
 def _create_error_document(type, error):
     class Error(sword3commonError):
         # fix to timestamp coerce function not defined

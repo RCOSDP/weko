@@ -19,13 +19,14 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
+import os
 import shutil
 from datetime import datetime, timedelta
 
 from celery import shared_task
 from celery.result import AsyncResult
 from celery.task.control import inspect
-from flask import current_app
+from flask import current_app, request
 from weko_admin.api import TempDirInfo
 from weko_admin.utils import get_redis_cache
 from weko_redis.redis import RedisConnection
@@ -69,6 +70,57 @@ def check_import_items_task(file_path, is_change_identifier: bool, host_url,
             )
         result["data_path"] = data_path
         result["list_record"] = list_record
+
+    result["end_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return result
+
+
+@shared_task
+def check_rocrate_import_items_task(file_path, host_url, lang="en"):
+    """Check import items."""
+    print(f"file_path: {file_path}")
+
+    current_app.logger.error(f"file_path: {file_path}")
+    result = {"start_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+    print(f"file: {result}")
+
+
+    # with open(file_path, "rb") as f:
+    #     file = f.read()
+    # os.remove(file_path)
+
+
+    # check packaging, "SimpleZip" or "SWORDBagIt"
+    packaging = request.headers.get("Packaging")
+    print(f"packaging: {packaging}")
+    # file_format = check_import_file_format(file_path, packaging)
+    # print(f"file_format: {file_format}")
+
+
+    # TODO:
+    # with current_app.test_request_context(
+    #     host_url, headers=[("Accept-Language", lang)]
+    # ):
+    #     check_result = check_bagit_import_items(file_path, packaging)
+
+    # # remove zip file
+    # shutil.rmtree("/".join(file_path.split("/")[:-1]))
+    # data_path = check_result.get("data_path", "")
+    # if check_result.get("error"):
+    #     remove_temp_dir_task.apply_async((data_path,))
+    #     result["error"] = check_result.get("error")
+    # else:
+    #     list_record = check_result.get("list_record", [])
+    #     num_record_err = len([i for i in list_record if i.get("errors")])
+    #     if len(list_record) == num_record_err:
+    #         remove_temp_dir_task.apply_async((data_path,))
+    #     else:
+    #         expire = datetime.now() + timedelta(seconds=get_lifetime())
+    #         TempDirInfo().set(
+    #             data_path, {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")}
+    #         )
+    #     result["data_path"] = data_path
+    #     result["list_record"] = list_record
 
     result["end_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return result

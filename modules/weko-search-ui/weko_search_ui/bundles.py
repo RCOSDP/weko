@@ -56,6 +56,10 @@ weko_admin_item_import_js = Bundle(
     "js/weko_search_ui/import.js", output="gen/import.%(version)s.js"
 )
 
+weko_admin_item_rocrate_import_js = Bundle(
+    "js/weko_search_ui/rocrate_import.js", output="gen/rocrate_import.%(version)s.js"
+)
+
 weko_admin_item_export_js = Bundle(
     "js/weko_search_ui/export.js", output="gen/export.%(version)s.js"
 )
