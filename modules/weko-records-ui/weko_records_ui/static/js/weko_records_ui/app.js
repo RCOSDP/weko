@@ -304,7 +304,9 @@
                         $('#btn_delete').removeAttr("disabled");
                         $('#btn_ver_delete').removeAttr("disabled");
                       } else {
-                        $http.post(url).then(
+                        $http.post(url, { pid_value: id }, {
+                            headers: { 'Content-Type': 'application/json' }
+                        }).then(
                             function(response) {
                                 $('[role="msg"]').hide();
                                 if (response.data.code === -1 && response.data.is_locked) {
