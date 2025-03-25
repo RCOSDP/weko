@@ -129,7 +129,7 @@ def import_items_to_activity(item, data_path, request_info, metadata_only=False)
     grant_data = item.get("grant_data")
 
     try:
-        headless = HeadlessActivity()
+        headless = HeadlessActivity(_files_replace=False) if metadata_only else HeadlessActivity()
         url, current_action, recid = headless.auto(
             user_id= request_info.get("user_id"), workflow_id=workflow_id,
             index=index, metadata=metadata, files=files, comment=comment,

@@ -27,9 +27,11 @@ from weko_deposit.api import WekoDeposit
 from weko_deposit.links import base_factory
 from weko_deposit.serializer import file_uploaded_owner
 from weko_items_autofill.utils import get_workflow_journal
-from weko_items_ui.utils import update_index_tree_for_record, validate_form_input_data, to_files_js
+from weko_items_ui.utils import (
+    update_index_tree_for_record, validate_form_input_data, to_files_js
+)
 from weko_items_ui.views import check_validation_error_msg, prepare_edit_item
-from weko_records.api import ItemTypes
+from weko_records.api import ItemTypes, ItemsMetadata
 from weko_records.serializers.utils import get_mapping
 from weko_records_ui.utils import soft_delete
 from weko_search_ui.utils import get_data_by_property
@@ -73,13 +75,9 @@ class HeadlessActivity(WorkActivity):
     >>> print(url, current_action, recid)
     http://weko3.example.org/workflow/activity/detail/A-EXAMPLE-0001 end_action 1
     """
-<<<<<<< HEAD
-    def __init__(self, is_headless=True, metadata_only=False):
-=======
     def __init__(
-            self, _lock_skip=True, _metadata_replace=False, _files_replace=False
+            self, _lock_skip=True, _metadata_replace=True, _files_replace=True
         ):
->>>>>>> headlessactivity_2
         """Initialize.
 
         Args:
@@ -97,14 +95,9 @@ class HeadlessActivity(WorkActivity):
         """ list: List of file information """
         self._model = None
         self._deposit = None
-<<<<<<< HEAD
-        self._lock_skip = is_headless
-        self.metadata_only = metadata_only
-=======
         self._lock_skip = _lock_skip
         self._metadata_replace = _metadata_replace
         self._files_replace= _files_replace
->>>>>>> headlessactivity_2
 
         actions = Action().get_action_list()
         self._actions = {
@@ -365,7 +358,8 @@ class HeadlessActivity(WorkActivity):
 
             metadata.setdefault("pubdate", datetime.now().strftime("%Y-%m-%d"))
 
-            # TODO: how use
+            # grouplist = Group.get_group_list()
+            # authors_prefix_settings = get_data_authors_prefix_settings()
             journal = get_workflow_journal(self.activity_id)
 
             # update feedback mail list
@@ -397,8 +391,6 @@ class HeadlessActivity(WorkActivity):
             if not result.get("is_valid"):
                 current_app.logger.error(f"failed to input metadata: {result.get('error')}")
                 raise WekoWorkflowException(result.get("error"))
-            
-            old_files = []
 
             _old_metadata, _old_files = {}, []
             if self.recid is None:
@@ -410,35 +402,21 @@ class HeadlessActivity(WorkActivity):
                 db.session.commit()
 
             else:
-<<<<<<< HEAD
                 # check edit mode
                 pid = PersistentIdentifier.query.filter_by(
                         pid_type="recid", pid_value=self.recid
                     ).first()
                 record_uuid = pid.object_uuid
 
-                # record_uuidからitem_metadataを取得する
-
-                self._deposit = WekoDeposit.get_record(record_uuid)
-                old_files = to_files_js(self._deposit)
+                self._deposit = WekoDeposit.newversion(record_uuid)
+                # get _old_metadata by record_uuid
+                _old_metadata = ItemsMetadata.get_record(record_uuid)
+                _old_files = to_files_js(self._deposit)
                 db.session.commit()
-=======
-                # TODO: check edit mode
-                # pid = PersistentIdentifier.query.filter_by(
-                #         pid_type="recid", pid_value=self.recid
-                #     ).first()
-                # TODO: case witch pid is already assigned (self.recid is not None)
-                # self._deposit = WekoDeposit...
-                # TODO:
-                if not self._metadata_replace:
-                    # _old_metadata = { ... }
-                    _old_metadata.update(metadata)
-                    pass
-                "weko_items_ui.utils.to_files_js"
-                # _old_files =   TODO:
-                pass
->>>>>>> headlessactivity_2
 
+            if self._metadata_replace:
+                # プロパティ単位で更新する場合metadataから_old_metadataにアップデートする
+                metadata = _old_metadata.update(metadata)
 
             metadata.update({"$schema": f"/items/jsonschema/{self.item_type.id}"})
             workflow_index = self.workflow.index_tree_id
@@ -454,29 +432,23 @@ class HeadlessActivity(WorkActivity):
 
             data = {
                 "metainfo": metadata,
-<<<<<<< HEAD
-                "files": old_files,
-=======
                 "files": _old_files,
->>>>>>> headlessactivity_2
                 "endpoint": {
                     "initialization": f"/api/deposits/redirect/{pid}",
                 }
             }
 
-<<<<<<< HEAD
-            if files is not None and self.metadata_only:
+            if self._files_replace:
                 data["files"] = self.files_info = self._upload_files(files)
-=======
-            if files is not None and self._files_replace:
-                data["files"] = self.files_info = self._upload_files(files)
-            elif files is not None:
+            else:
                 # TODO: update submited files and reuse other files
-                pass
-
-            # TODO: update propaties of files metadata, but it is difficult to
-            # decide whitch key should be updated.
->>>>>>> headlessactivity_2
+                _new_files = self._upload_files(files)
+                for i, old_file in enumerate(_old_files):
+                    for new_file in _new_files:
+                        if old_file["key"] == new_file["key"]:
+                            old_file[i] = new_file
+                            break
+                data["files"] = _old_files 
 
             data["endpoint"].update(base_factory(pid))
             self.upt_activity_metadata(self.activity_id, json.dumps(data))
