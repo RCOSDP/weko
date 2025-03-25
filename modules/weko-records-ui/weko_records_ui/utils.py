@@ -859,28 +859,28 @@ def item_setting_show_email():
         is_display = False
     return is_display
 
-def is_show_email_of_creator(item_type_id):
+def is_show_email_of_creator(item_type_id, item_type=None):
     """Check setting show/hide email for 'Detail' and 'PDF Cover Page' screen.
 
     :param item_type_id: item type id of current record.
+    :param item_type: item type data
     :return: True/False, True: show, False: hide.
     """
-    def get_creator_id(item_type_id):
-        type_mapping = Mapping.get_record(item_type_id)
-        # item_map = get_mapping(type_mapping, "jpcoar_mapping")
-        item_map = get_mapping(item_type_id, "jpcoar_mapping")
+    def get_creator_id(item_type_id, item_type):
+        item_map = get_mapping(item_type_id, "jpcoar_mapping", item_type=item_type)
         creator = 'creator.creatorName.@value'
         creator_id = None
         if creator in item_map:
             creator_id = item_map[creator].split('.')[0]
         return creator_id
 
-    def item_type_show_email(item_type_id):
+    def item_type_show_email(item_type_id, item_type):
         # Get flag of creator's email hide from item type.
-        creator_id = get_creator_id(item_type_id)
+        if not item_type:
+            item_type = ItemTypes.get_by_id(item_type_id)
+        creator_id = get_creator_id(item_type_id, item_type)
         if not creator_id:
             return None
-        item_type = ItemTypes.get_by_id(item_type_id)
         schema_editor = item_type.render.get('schemaeditor', {})
         schema = schema_editor.get('schema', {})
         creator = schema.get(creator_id)
@@ -894,7 +894,7 @@ def is_show_email_of_creator(item_type_id):
         is_hide = creator_mail.get('isHide', None)
         return is_hide
 
-    is_hide = item_type_show_email(item_type_id)
+    is_hide = item_type_show_email(item_type_id, item_type)
     is_display = item_setting_show_email()
 
     return not is_hide and is_display
