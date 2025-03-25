@@ -27,7 +27,7 @@ from weko_deposit.api import WekoDeposit
 from weko_deposit.links import base_factory
 from weko_deposit.serializer import file_uploaded_owner
 from weko_items_autofill.utils import get_workflow_journal
-from weko_items_ui.utils import update_index_tree_for_record, validate_form_input_data
+from weko_items_ui.utils import update_index_tree_for_record, validate_form_input_data, to_files_js
 from weko_items_ui.views import check_validation_error_msg, prepare_edit_item
 from weko_records.api import ItemTypes
 from weko_records.serializers.utils import get_mapping
@@ -55,7 +55,7 @@ class HeadlessActivity(WorkActivity):
 
     This class is used to handle the activity without UI.
     """
-    def __init__(self, is_headless=True):
+    def __init__(self, is_headless=True, metadata_only=False):
         """Initialize.
 
         Args:
@@ -70,6 +70,7 @@ class HeadlessActivity(WorkActivity):
         self._model = None
         self._deposit = None
         self._lock_skip = is_headless
+        self.metadata_only = metadata_only
 
         actions = Action().get_action_list()
         self._actions = {
@@ -326,6 +327,8 @@ class HeadlessActivity(WorkActivity):
             if not result.get("is_valid"):
                 current_app.logger.error(f"failed to input metadata: {result.get('error')}")
                 raise WekoWorkflowException(result.get("error"))
+            
+            old_files = []
 
             if self.recid is None:
                 record_data = {}
@@ -340,8 +343,12 @@ class HeadlessActivity(WorkActivity):
                 pid = PersistentIdentifier.query.filter_by(
                         pid_type="recid", pid_value=self.recid
                     ).first()
+                record_uuid = pid.object_uuid
 
-                self._deposit = WekoDeposit.newversion(pid, True)
+                # record_uuidからitem_metadataを取得する
+
+                self._deposit = WekoDeposit.get_record(record_uuid)
+                old_files = to_files_js(self._deposit)
                 db.session.commit()
 
             metadata.update({"$schema": f"/items/jsonschema/{self.item_type.id}"})
@@ -352,61 +359,14 @@ class HeadlessActivity(WorkActivity):
 
             data = {
                 "metainfo": metadata,
-                "files": [],
+                "files": old_files,
                 "endpoint": {
                     "initialization": f"/api/deposits/redirect/{pid}",
                 }
             }
 
-            if files is not None:
+            if files is not None and self.metadata_only:
                 data["files"] = self.files_info = self._upload_files(files)
-            # TODO: update propaties of files metadata, but it is difficult to
-            # decide whitch key should be updated.
-
-            else:
-                # files_fileのjsonのデータをdata["files"] に入れる(入れなかった場合はどうなるのか)
-                # filesがNoneの時dataがdata["files"]には何もはいらないがそれでどうなるか
-
-                # _depositを用いてbucketを取得し、そのbucketに紐づくobjectversionを取得
-                # objectversionの数だけループしてfile_infoを作成し、data["files"]に追加する
-                bucket = Bucket.query.get(self._deposit["_buckets"]["deposit"])
-                objs = ObjectVersion.query.filter(ObjectVersion.bucket_id.in_(bucket.subquery()))
-                for obj in objs:
-                    url = f"{request.url_root}api/files/{obj.bucket_id}/{obj.basename}"
-                    file_info = {
-                        "created": obj.created.isoformat(),
-                        "updated": obj.updated.isoformat(),
-                        "key": obj.basename,
-                        "filename": obj.basename,
-                        "size": obj.file.size,
-                        "checksum": obj.file.checksum,
-                        "mimetype": obj.mimetype,
-                        "is_head": True,
-                        "is_show": obj.is_show,
-                        "is_thumbnail": obj.is_thumbnail,
-                        "created_user_id": obj.created_user_id,
-                        "updated_user_id": obj.updated_user_id,
-                        "uploaded_owners": file_uploaded_owner(
-                            created_user_id=obj.created_user_id,
-                            updated_user_id=obj.updated_user_id
-                        ),
-                        "links": {
-                            "sefl": url,
-                            "version": f"{url}?versionId={obj.version_id}",
-                            "uploads": f"{url}?uploads",
-                        },
-                        "tags": {},
-                        "licensetype": None,
-                        "displaytype": None,
-                        "delete_marker": obj.deleted,
-                        "uri": False,
-                        "multiple": False,
-                        "progress": 100,
-                        "cmonplete": True,
-                        "version_id": str(obj.version_id),
-                    }
-                    data["files"].append(file_info)
-                # data["files"] = self.files_info = []
 
             data["endpoint"].update(base_factory(pid))
             self.upt_activity_metadata(self.activity_id, json.dumps(data))
@@ -440,19 +400,6 @@ class HeadlessActivity(WorkActivity):
 
             # TODO: support thumbnail
             obj = ObjectVersion.create(bucket, file_name, is_thumbnail=False)
-
-                # # ここでメタデータのみの判定を行う場合使えそうな処理
-                # # バケットからobjectのバージョンを取得して一番新しいバージョンを引数にgetする
-                # # update元のファイル情報を取得して同じものをuploadする
-                # obj_versions = ObjectVersion.get_versions(bucket, file_name)
-                # latest_version = obj_versions.first()
-                # if latest_version:
-                #     latest_version_id = latest_version.version_id
-                #     obj = ObjectVersion.get(bucket, file_name, latest_version_id)
-                # else:
-                #     current_app.logger.error(f"failed to input metadata: no object version.")
-                #     raise WekoWorkflowException(f"failed to input metadata: no object version.")
-
             obj.set_contents(stream, size=size, size_limit=size_limit)
             url = f"{request.url_root}api/files/{obj.bucket_id}/{obj.basename}"
             return {
