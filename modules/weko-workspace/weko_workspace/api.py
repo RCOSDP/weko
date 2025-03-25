@@ -20,12 +20,10 @@
 
 """WEKO3 module docstring."""
 
-from .config import WEKO_WORKFLOW_REQUEST_TIMEOUT, WEKO_WORKFLOW_SYS_HTTP_PROXY, \
-    WEKO_WORKFLOW_SYS_HTTPS_PROXY, WEKO_WORKSPACE_CiNii_API_URL, \
-    WEKO_WORKSPACE_JALC_API_URL, WEKO_WORKSPACE_DATACITE_API_URL, \
-    WEKO_WORKSPACE_JAMAS_API_URL
 import requests
 import urllib.parse
+from . import config
+
 
 
 class JamasURL:
@@ -34,10 +32,10 @@ class JamasURL:
     ENDPOINT = 'api/sru?operation=searchRetrieve&version=1.2&startRecord=1'
     POST_FIX = '&recordPacking=xml&recordSchema=pam&query='
     # Set default value
-    _timeout = WEKO_WORKFLOW_REQUEST_TIMEOUT
+    _timeout = config.WEKO_WORKSPACE_REQUEST_TIMEOUT
     _proxy = {
-        'http': WEKO_WORKFLOW_SYS_HTTP_PROXY,
-        'https': WEKO_WORKFLOW_SYS_HTTPS_PROXY
+        'http': config.WEKO_WORKSPACE_SYS_HTTP_PROXY,
+        'https': config.WEKO_WORKSPACE_SYS_HTTPS_PROXY
     }
     def __init__(self, doi, timeout=None, http_proxy=None, https_proxy=None):
         """Init JamasURL API.
@@ -76,7 +74,7 @@ class JamasURL:
         """
         endpoint = self._create_endpoint()
 
-        url =  WEKO_WORKSPACE_JAMAS_API_URL + endpoint
+        url =  config.WEKO_WORKSPACE_JAMAS_API_URL + endpoint
         return url
 
     @property
@@ -113,10 +111,10 @@ class CiNiiURL:
     ENDPOINT = 'doi='
     POST_FIX = '&format=json'
     # Set default value
-    _timeout = WEKO_WORKFLOW_REQUEST_TIMEOUT
+    _timeout = config.WEKO_WORKSPACE_REQUEST_TIMEOUT
     _proxy = {
-        'http': WEKO_WORKFLOW_SYS_HTTP_PROXY,
-        'https': WEKO_WORKFLOW_SYS_HTTPS_PROXY
+        'http': config.WEKO_WORKSPACE_SYS_HTTP_PROXY,
+        'https': config.WEKO_WORKSPACE_SYS_HTTPS_PROXY
     }
     def __init__(self, doi, timeout=None, http_proxy=None, https_proxy=None):
         """Init CiNiiURL API.
@@ -153,7 +151,7 @@ class CiNiiURL:
         """
         endpoint = self._create_endpoint()
 
-        url =  WEKO_WORKSPACE_CiNii_API_URL + '?' + endpoint
+        url =  config.WEKO_WORKSPACE_CiNii_API_URL + '?' + endpoint
         return url
 
     @property
@@ -169,7 +167,7 @@ class CiNiiURL:
                             proxies=self._proxy)
 
     def get_data(self):
-        """This method retrieves the metadata from CrossRef."""
+        """This method retrieves the metadata from CiNii."""
         response = {
             'response': '',
             'error': ''
@@ -186,13 +184,10 @@ class CiNiiURL:
 class JALCURL:
     """The Class retrieves the metadata from JALC."""
 
-    # ENDPOINT = 'doi='
-    # POST_FIX = '&format=json'
-    # Set default value
-    _timeout = WEKO_WORKFLOW_REQUEST_TIMEOUT
+    _timeout = config.WEKO_WORKSPACE_REQUEST_TIMEOUT
     _proxy = {
-        'http': WEKO_WORKFLOW_SYS_HTTP_PROXY,
-        'https': WEKO_WORKFLOW_SYS_HTTPS_PROXY
+        'http': config.WEKO_WORKSPACE_SYS_HTTP_PROXY,
+        'https': config.WEKO_WORKSPACE_SYS_HTTPS_PROXY
     }
     def __init__(self, doi, timeout=None, http_proxy=None, https_proxy=None):
         """Init JALCURL API.
@@ -228,8 +223,7 @@ class JALCURL:
         :return:
         """
         endpoint = self._create_endpoint()
-
-        url =  WEKO_WORKSPACE_JALC_API_URL + endpoint
+        url =  config.WEKO_WORKSPACE_JALC_API_URL + endpoint
         return url
 
     @property
@@ -245,7 +239,7 @@ class JALCURL:
                             proxies=self._proxy)
 
     def get_data(self):
-        """This method retrieves the metadata from CrossRef."""
+        """This method retrieves the metadata from Jalc."""
         response = {
             'response': '',
             'error': ''
@@ -259,18 +253,15 @@ class JALCURL:
         return response
 
 class DATACITEURL:
-    """The Class retrieves the metadata from JALC."""
+    """The Class retrieves the metadata from Datacite."""
 
-    # ENDPOINT = 'doi='
-    # POST_FIX = '&format=json'
-    # Set default value
-    _timeout = WEKO_WORKFLOW_REQUEST_TIMEOUT
+    _timeout = config.WEKO_WORKSPACE_REQUEST_TIMEOUT
     _proxy = {
-        'http': WEKO_WORKFLOW_SYS_HTTP_PROXY,
-        'https': WEKO_WORKFLOW_SYS_HTTPS_PROXY
+        'http': config.WEKO_WORKSPACE_SYS_HTTP_PROXY,
+        'https': config.WEKO_WORKSPACE_SYS_HTTPS_PROXY
     }
     def __init__(self, doi, timeout=None, http_proxy=None, https_proxy=None):
-        """Init JALCURL API.
+        """Init DataciteURL API.
 
         :param doi:
         :param timeout:
@@ -304,7 +295,7 @@ class DATACITEURL:
         """
         endpoint = self._create_endpoint()
 
-        url =  WEKO_WORKSPACE_DATACITE_API_URL + endpoint
+        url =  config.WEKO_WORKSPACE_DATACITE_API_URL + endpoint
         return url
 
     @property
@@ -320,7 +311,7 @@ class DATACITEURL:
                             proxies=self._proxy)
 
     def get_data(self):
-        """This method retrieves the metadata from CrossRef."""
+        """This method retrieves the metadata from Datacite."""
         response = {
             'response': '',
             'error': ''

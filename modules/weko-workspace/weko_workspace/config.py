@@ -67,7 +67,7 @@ WEKO_WORKSPACE_ITEM = {
 }
 """Default item template for the workspace item list page."""
 
-WEKO_ITEMS_AUTOFILL_JAMAS_XML_DATA_KEYS = [
+WEKO_WORKSPACE_AUTOFILL_JAMAS_XML_DATA_KEYS = [
     "dc:title",
     "dc:creator",
     "prism:organization",
@@ -83,7 +83,7 @@ WEKO_ITEMS_AUTOFILL_JAMAS_XML_DATA_KEYS = [
 ]
 """Jamas XML data keys"""
 
-WEKO_ITEMS_AUTOFILL_JAMAS_REQUIRED_ITEM = [
+WEKO_WORKSPACE_AUTOFILL_JAMAS_REQUIRED_ITEM = [
     "title",
     "creator",
     "sourceTitle",

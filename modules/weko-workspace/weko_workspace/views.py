@@ -786,7 +786,6 @@ def item_register_save():
             if isinstance(item[key], list):
                 for file in item[key]:
                     if "filename" in file:
-                        file['is_thumbnail'] = False
                         files.append(file)
         settings = AdminSettings.get('workspace_workflow_settings') 
         workflow = WorkFlow()
@@ -798,13 +797,15 @@ def item_register_save():
             item['path'] = indexIdList
             index = indexIdList
         item['publish_status'] = '2'
+        workspace_register = True
         try:
             headless = HeadlessActivity()
             user_id=current_user.get_id()
             api_response = headless.auto(
                 user_id= user_id, workflow_id=settings.work_flow_id,
                 index=index, metadata=item, files=files, comment=comment,
-                link_data=link_data, grant_data=grant_data
+                link_data=link_data, grant_data=grant_data, 
+                workspace_register=workspace_register
             )
 
             result['result'] = api_response

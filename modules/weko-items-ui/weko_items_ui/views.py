@@ -475,8 +475,8 @@ def get_schema_form_simple(item_type_id=0, activity_id=''):
                                         for sub_sub_item in sub_item['items']:
 
                                             if 'title_i18n' in sub_sub_item and "bibliographic_title" in sub_sub_item.get("key", ""):
-                                                sub_sub_item['title_i18n']['ja'] = '雑誌名'
-                                                sub_sub_item['title'] = '雑誌名'
+                                                sub_sub_item['title_i18n']['ja'] = 'ジャーナル名'
+                                                sub_sub_item['title'] = 'ジャーナル名'
         for item in schema_form:
             if "items" in item:
                 for i in item["items"]:
