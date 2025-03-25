@@ -429,7 +429,7 @@ class WorkFlow(object):
             query = _WorkFlow.query.filter_by(
                 is_deleted=False).order_by(asc(_WorkFlow.flows_id))
             return query.all()
-        
+
     def get_deleted_workflow_list(self):
         """Get workflow list info.
 
@@ -2553,6 +2553,15 @@ class WorkActivity(object):
                 == ActivityStatusPolicy.ACTIVITY_MAKING)
         ).count()
 
+        return activities_number
+
+    def count_waiting_approval_by_workflow_id(self, workflow_id):
+        """Count activity waiting approval workflow.
+        Returns:
+            [int]: The number of activity waiting approval workflow.
+        """
+        activities_number = _Activity.query.filter(
+            _Activity.workflow_id == workflow_id, _Activity.action_id == 4, _Activity.action_status == 'M').count()
         return activities_number
 
 

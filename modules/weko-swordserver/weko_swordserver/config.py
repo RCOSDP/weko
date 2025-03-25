@@ -103,12 +103,6 @@ WEKO_SWORDSERVER_REGISTRATION_TYPE = SwordClientModel.RegistrationType
     - `Workfolw` (2): Workflow registration.
 """
 
-WEKO_SWORDSERVER_METADATA_FILE_ROCRATE = "ro-crate-metadata.json"
-""" Metadata file name for RO-Crate+Bagit. """
-
-WEKO_SWORDSERVER_METADATA_FILE_SWORD = "metadata/sword.json"
-""" Metadata file name for SWORDBagIt. """
-
 WEKO_SWORDSERVER_DATASET_PREFIX = "weko-"
 """ Prefix to be added to the dataset identifier. """
 
