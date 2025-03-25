@@ -1,5 +1,5 @@
 import os
-from unittest.mock import MagicMock, PropertyMock
+from unittest.mock import MagicMock, PropertyMock,Mock
 from flask import url_for,json,request,abort
 from flask_login.utils import login_user
 from zipfile import BadZipFile
@@ -7,7 +7,7 @@ import pytest
 import datetime
 from time import sleep
 from unittest.mock import MagicMock, patch
-
+import shutil
 from flask import url_for,json,abort
 from flask_limiter.errors import RateLimitExceeded
 from sword3common.lib.seamless import SeamlessException
@@ -27,7 +27,7 @@ from weko_swordserver.views import _get_status_workflow_document, blueprint, _ge
 from .helpers import json_data, calculate_hash
 from weko_swordserver.utils import check_import_file_format,update_item_ids
 from weko_search_ui.utils import import_items_to_system,import_items_to_activity
-from weko_swordserver.utils import check_import_items
+from weko_swordserver.utils import check_import_items,get_shared_id_from_on_behalf_of
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
 
 # def get_service_document():
@@ -580,7 +580,54 @@ def test_post_service_document(app,client,db,users,make_crate,esindex,location,i
         assert json.loads(res.data).get("@type") == "DigestMismatch"
         assert json.loads(res.data).get("error") == "Request body and digest verification failed."
 
-    # ケース7: registration typeでエラー
+    # ケース6: Digest一致
+    app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = True
+    login_user_via_session(client=client,email=users[0]["email"])
+    with patch("weko_swordserver.views.check_import_file_format", return_value="JSON"):
+        zip, _ = make_crate()
+        storage = FileStorage(filename="payload.zip", stream=zip)
+        headers = {
+            "Authorization":"Bearer {}".format(token_direct),
+            "Content-Disposition":"attachment; filename=payload.zip",
+            "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
+            "Digest":"SHA-256={}".format(calculate_hash(storage))
+        }
+        with patch("weko_swordserver.views.check_import_items", return_value={
+            "data_path": "/tmp/test",
+            "list_record": [{"status": "new"}],
+            "register_type": "Direct"
+        }):
+            with patch("weko_swordserver.views.get_shared_id_from_on_behalf_of", return_value="share_id"):
+                with patch("weko_swordserver.views.import_items_to_system", return_value={"success": True,  "recid": "recid_test"}):
+                    with patch("weko_swordserver.views._get_status_document", return_value={"status": "created"}):
+                        res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
+                        assert json.loads(res.data)=={"status": "created"}
+
+    # ケース6: registration typeでエラー　かつ　data_pathが存在している場合
+    app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = True
+    login_user_via_session(client=client,email=users[0]["email"])
+    with patch('shutil.rmtree') as mock_rmtree:
+        with patch("weko_swordserver.views.check_import_file_format", return_value="JSON"):
+            zip, _ = make_crate()
+            storage = FileStorage(filename="payload.zip", stream=zip)
+            headers = {
+                "Authorization":"Bearer {}".format(token_direct),
+                "Content-Disposition":"attachment; filename=payload.zip",
+                "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
+                "Digest":"SHA-256={}".format(calculate_hash(storage))
+            }
+            with patch("weko_swordserver.views.check_import_items", return_value={
+                "data_path": "/tmp/test",
+                "list_record": [{"status": "new"}]
+            }):
+                with patch("os.path.exists", return_value=True):
+                    res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
+                    assert res.status_code == 500
+                    assert json.loads(res.data).get("@type") == "ServerError"
+                    assert json.loads(res.data).get("error") == "Invalid register type in admin settings"
+                    mock_rmtree.assert_called_with("/tmp/test")
+
+    # ケース7: registration typeでエラー　かつ　data_pathが存在していない場合
     login_user_via_session(client=client,email=users[0]["email"])
     headers = {
         "Authorization":"Bearer {}".format(token_direct),
@@ -653,7 +700,6 @@ def test_post_service_document(app,client,db,users,make_crate,esindex,location,i
     }):
         with patch("weko_swordserver.views.import_items_to_system", return_value={"success": False, "error_id": "err1"}):
             res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-            print("res.data:",res.data)
             assert res.status_code == 500
             assert json.loads(res.data).get("@type") == "ServerError"
             assert json.loads(res.data).get("error") == "An error occurred by importing Item!"
@@ -677,24 +723,32 @@ def test_post_service_document(app,client,db,users,make_crate,esindex,location,i
                 res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
                 assert json.loads(res.data)=={"status": "created"}
 
-    # ケース12: Workflow - スコープ不足
+    # # ケース12: Workflow - activity スコープ不足
     login_user_via_session(client=client,email=users[0]["email"])
     headers = {
-        "Authorization":"Bearer {}".format(token_none),
+        "Authorization":"Bearer {}".format(token_direct),
         "Content-Disposition":"attachment; filename=payload.zip",
         "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
     }
     zip = make_zip()
     storage=FileStorage(filename="payload.zip",stream=zip)
-    with pytest.raises(Exception) as exc:
-        with patch("weko_swordserver.views.check_import_items", return_value={
-            "data_path": "/tmp/test",
-            "list_record": [{"status": "new"}],
-            "register_type": "Workflow"
-        }):
-
-            res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-            assert "403" in str(exc.value)
+    with patch("weko_swordserver.views.check_import_items", return_value={
+        "data_path": "/tmp/test",
+        "list_record": [{"status": "new"}],
+        "register_type": "Workflow"
+    }):
+        # POSTリクエストを送信
+        res = client.post(
+            url_for("weko_swordserver.post_service_document"),
+            data=dict(file=storage),
+            content_type="multipart/form-data",
+            headers=headers,
+        )
+        # レスポンスの検証
+        print("res.data:",res.data)
+        assert res.status_code == 403
+        assert res.json.get("@type") == "Forbidden"
+        assert res.json.get("error") == "Not allowed operation in your token scope."
 
     # ケース13: Workflow - importエラー
     login_user_via_session(client=client,email=users[0]["email"])
@@ -725,27 +779,35 @@ def test_post_service_document(app,client,db,users,make_crate,esindex,location,i
 
     # ケース14: Workflow - 成功
     login_user_via_session(client=client,email=users[0]["email"])
-    headers = {
-        "Authorization":"Bearer {}".format(token_workflow),
-        "Content-Disposition":"attachment; filename=payload.zip",
-        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
-    }
-    zip = make_zip()
-    storage=FileStorage(filename="payload.zip",stream=zip)
-    with patch("weko_swordserver.views.check_import_items", return_value={
-        "data_path": "/tmp/test",
-        "list_record": [{"status": "new"}],
-        "register_type": "Workflow"
-    }):
-        with patch("weko_swordserver.views.import_items_to_activity", return_value=(
-            "http://test_server.localdomain/workflow/activity/detail/A-TEST-00002",
-            "test_recid",
-            "item_login",
-            False
-            )):
+    with patch('shutil.rmtree') as mock_rmtree:
+        mock_rmtree.reset_mock()
+        with patch("weko_swordserver.views.check_import_file_format", return_value="JSON"):
+            zip = make_zip()
+            storage=FileStorage(filename="payload.zip",stream=zip)
+            headers = {
+                "Authorization":"Bearer {}".format(token_workflow),
+                "Content-Disposition":"attachment; filename=payload.zip",
+                "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
+                "Digest":"SHA-256={}".format(calculate_hash(storage))
+            }
+            test_dir = "/tmp/test"
+            os.makedirs(test_dir, exist_ok=True)
+            with patch("weko_swordserver.views.check_import_items", return_value={
+                "data_path": test_dir,
+                "list_record": [{"status": "new"}],
+                "register_type": "Workflow"
+            }):
 
-            res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-            assert "An error occurred. " not in json.loads(res.data)
+                with patch("weko_swordserver.views.import_items_to_activity", return_value=(
+                    "http://test_server.localdomain/workflow/activity/detail/A-TEST-00002",
+                    "test_recid",
+                    "item_login",
+                    False
+                    )):
+                    res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
+                    mock_rmtree.assert_called_with("/tmp/test")
+                    assert "An error occurred. " not in json.loads(res.data)
+                    shutil.rmtree(test_dir)
 
     # ケース15: 複数なWorkflow - 一番目失敗、二番目成功
     login_user_via_session(client=client,email=users[0]["email"])
@@ -774,25 +836,6 @@ def test_post_service_document(app,client,db,users,make_crate,esindex,location,i
 
             res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
             assert "An error occurred. " not in json.loads(res.data)
-
-    # ケース17: process_item - WekoSwordserverException
-    login_user_via_session(client=client,email=users[0]["email"])
-    headers = {
-        "Authorization":"Bearer {}".format(token_direct),
-        "Content-Disposition":"attachment; filename=payload.zip",
-        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
-    }
-    zip = make_zip()
-    storage=FileStorage(filename="payload.zip",stream=zip)
-    with patch("weko_swordserver.views.check_import_items", return_value={
-        "data_path": "/tmp/test",
-        "list_record": [{"status": "new"}],
-        "register_type": "Direct"
-    }):
-        with patch("weko_swordserver.views.import_items_to_system", side_effect=Exception("WekoSwordserverException")):
-            res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-            assert json.loads(res.data).get("@type") == "NotFound"
-            assert json.loads(res.data).get("error") =="Item not found. (recid=None)"
 
     # ケース18: process_item - 予期しない例外
     login_user_via_session(client=client,email=users[0]["email"])

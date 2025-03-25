@@ -2123,7 +2123,8 @@ def test_item_link_bulk_create(app, db, records):
     _uuid = str(records[0][0].object_uuid)
     _items = [
         {
-            'item_id': '1',
+            'dst_item_id': '1',
+            'item_id': _uuid,
             'sele_id': 'URI'
         }
     ]
@@ -2219,11 +2220,13 @@ def test_item_link_bulk_update(app, db, records):
     ]
     _items2 = [
         {
-            'item_id': '1',
+            'item_id': _uuid,
+            'dst_item_id': '1',
             'sele_id': 'URI'
         },
         {
-            'item_id': '2',
+            'item_id': _uuid,
+            'dst_item_id': '2',
             'sele_id': 'DOI'
         }
     ]
@@ -2246,15 +2249,18 @@ def test_item_link_bulk_delete(app, db, records):
     _uuid = str(records[0][0].object_uuid)
     _items = [
         {
-            'item_id': '1',
+            'item_id': _uuid,
+            'dst_item_id': '1',
             'sele_id': 'URI'
         },
         {
-            'item_id': '2',
+            'item_id': _uuid,
+            'dst_item_id': '2',
             'sele_id': 'DOI'
         },
         {
-            'item_id': '3',
+            'item_id': _uuid,
+            'dst_item_id': '3',
             'sele_id': 'HDL'
         }
     ]
@@ -2472,65 +2478,3 @@ class TestJsonldMapping:
         # Delete with non-existent id
         res = JsonldMapping.delete(id=999)
         assert res == None
-
-
-
-
-    # # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_bulk_create_supplement -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-    # def test_bulk_create_supplement(app, db):
-    #     """
-    #     bulk_create_supplement メソッドの動作をテストする。
-    #     各ケースで期待される動作を確認する。
-    #     """
-    #     # テストケース 1: dst_items に1つのアイテムリンク情報が含まれている場合
-    #     dst_items_single = [
-    #         {'src_item_id': '1', 'dst_item_id': '2', 'sele_id': 'isSupplementTo'}
-    #     ]
-    #     instance = ItemLink(recid='999')
-    #     instance.bulk_create_supplement(dst_items_single)
-
-    #     # データベースに保存されたアイテムを確認
-    #     saved_items = ItemReference.query.all()
-    #     assert len(saved_items) == 1
-    #     assert saved_items[0].src_item_pid == '1'
-    #     assert saved_items[0].dst_item_pid == '2'
-    #     assert saved_items[0].reference_type == 'isSupplementTo'
-
-    #     # テストケース 2: dst_items に複数のアイテムリンク情報（src_item_id キーが重複しない）が含まれている場合
-    #     dst_items_multiple = [
-    #         {'src_item_id': '3', 'dst_item_id': '4', 'sele_id': 'isSupplementedBy'},
-    #         {'src_item_id': '5', 'dst_item_id': '6', 'sele_id': 'isSupplementTo'}
-    #     ]
-    #     instance.bulk_create_supplement(dst_items_multiple)
-
-    #     # データベースに保存されたアイテムを確認
-    #     saved_items = ItemReference.query.all()
-    #     assert len(saved_items) == 3  # 前のテストケースで1つ追加されているため、合計3つ
-    #     assert saved_items[1].src_item_pid == '3'
-    #     assert saved_items[2].src_item_pid == '5'
-
-    #     # テストケース 3: dst_items のいずれかの辞書に src_item_id, dst_item_id, sele_id のいずれかのキーが欠けている場合
-    #     dst_items_missing_key = [
-    #         {'src_item_id': '7', 'dst_item_id': '8', 'sele_id': 'isSupplementTo'},
-    #         {'src_item_id': '9', 'dst_item_id': '10'},  # sele_id が欠けている
-    #         {'src_item_id': '11', 'dst_item_id': '12', 'sele_id': 'isSupplementTo'}
-    #     ]
-    #     with pytest.raises(Exception):
-    #         instance.bulk_create_supplement(dst_items_missing_key)
-
-    #     # データベースに変更がないことを確認
-    #     saved_items = ItemReference.query.all()
-    #     assert len(saved_items) == 3  # 前のテストケースで追加された3つのみ
-
-    #     # テストケース 4: dst_items に複数のアイテムリンク情報（src_item_id キーが重複）が含まれている場合
-    #     dst_items_duplicate_src_id = [
-    #         {'src_item_id': '13', 'dst_item_id': '14', 'sele_id': 'isSupplementTo'},
-    #         {'src_item_id': '13', 'dst_item_id': '15', 'sele_id': 'isSupplementedBy'},  # src_item_id が重複
-    #         {'src_item_id': '16', 'dst_item_id': '17', 'sele_id': 'isSupplementTo'}
-    #     ]
-    #     with pytest.raises(Exception):
-    #         instance.bulk_create_supplement(dst_items_duplicate_src_id)
-
-    #     # データベースに変更がないことを確認
-    #     saved_items = ItemReference.query.all()
-    #     assert len(saved_items) == 3  # 前のテストケースで追加された3つのみ

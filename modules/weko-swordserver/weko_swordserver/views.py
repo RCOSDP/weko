@@ -265,7 +265,16 @@ def post_service_document():
         data_path,
         {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")}
     )
+
     register_type = check_result.get("register_type")
+    if register_type == "Workflow":
+        # activity scope check
+        required_scopes = set([activity_scope.id])
+        token_scopes = set(request.oauth.access_token.scopes)
+        if not required_scopes.issubset(token_scopes):
+            abort(403)
+
+
     # Determine registration type
     if register_type is None:
         if os.path.exists(data_path):
@@ -340,19 +349,11 @@ def post_service_document():
                     recid = import_result.get("recid")
 
             elif register_type == "Workflow":
-                required_scopes = set([activity_scope.id])
-                token_scopes = set(request.oauth.access_token.scopes)
-                if not required_scopes.issubset(token_scopes):
-                    abort(403)
-
                 url, recid, _ , error = import_items_to_activity(
                     item, request_info=request_info
                 )
                 activity_id = url.split("/")[-1]
 
-        except WekoSwordserverException as e:
-            current_app.logger.error(f"Error in process_item: {str(e)}")
-            raise  # Re-raise the exception after logging
         except Exception as e:
             current_app.logger.error(f"Unexpected error in process_item: {str(e)}")
             raise WekoSwordserverException(

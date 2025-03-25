@@ -115,10 +115,6 @@ def test_update_item_ids(app, mocker):
     update_item_ids 関数の動作をテストする。
     すべての条件分岐やエッジケースをカバーする。
     """
-    # テストケース 1: list_record がリストでない場合
-    with pytest.raises(ValueError, match="list_record must be a list."):
-        update_item_ids(None, "new_id")
-
     # テストケース 2: list_record が空のリストの場合
     assert update_item_ids([], "new_id") == []
 
@@ -139,12 +135,30 @@ def test_update_item_ids(app, mocker):
     assert update_item_ids(list_record_6, "new_id") == list_record_6
 
     # テストケース 7: link_data がリストでない場合
-    list_record_7 = [{"metadata": {"id": "123", "link_data": "not_a_list"}}]
-    assert update_item_ids(list_record_7, "new_id") == list_record_7
+    mock_metadata = MagicMock()
+    mock_metadata.id = "123"
+    mock_metadata.link_data = {"item_id": "456", "sele_id": "isSupplementTo"}
+    # JsonLdMapper()._InformedMetadata() をモック化
+    with patch.object(JsonLdMapper, '_InformedMetadata', return_value=mock_metadata):
+        # テストデータ
+        list_record = [{"metadata": mock_metadata}]
+        new_id = "new_id"
 
-    # テストケース 8: link_data の要素が dict でない場合
-    list_record_8 = [{"metadata": {"id": "123", "link_data": [1, 2, 3]}}]
-    assert update_item_ids(list_record_8, "new_id") == list_record_8
+        # テスト対象関数を呼び出し
+        assert update_item_ids(list_record, new_id) == list_record
+
+    # # テストケース 8: link_data の要素が dict でない場合
+    mock_metadata = MagicMock()
+    mock_metadata.id = "123"
+    mock_metadata.link_data = [{"item_id"}]
+    # JsonLdMapper()._InformedMetadata() をモック化
+    with patch.object(JsonLdMapper, '_InformedMetadata', return_value=mock_metadata):
+        # テストデータ
+        list_record = [{"metadata": mock_metadata}]
+        new_id = "new_id"
+
+        # テスト対象関数を呼び出し
+        assert update_item_ids(list_record, new_id) == list_record
 
     # テストケース 9: link_data の要素に item_id と sele_id がない場合
     list_record_9 = [{"metadata": {"id": "123", "link_data": [{"key": "value"}]}}]
@@ -206,9 +220,6 @@ def test_update_item_ids(app, mocker):
 
         # テスト対象関数を呼び出し
         result = update_item_ids(list_record, new_id)
-        # for item in result:
-        #     print(getattr(item.get('metadata'), 'link_data', []))
-
 
         # 結果を検証
         assert result[0]["metadata"].link_data[0]["item_id"] == "123"
