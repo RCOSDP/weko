@@ -36,7 +36,7 @@ from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-from PyPDF2 import PdfFileReader, PdfFileWriter
+from pypdf import PdfReader, PdfWriter
 from weko_deposit.api import WekoRecord
 from weko_items_autofill.utils import get_workflow_journal
 from weko_records.api import ItemsMetadata, ItemTypes
@@ -606,13 +606,13 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     b_output = io.BytesIO(output)
 
     # Combine cover page and existing pages
-    cover_page = PdfFileReader(b_output, strict=False)
+    cover_page = PdfReader(b_output, strict=False)
     f = obj.file.storage().open()
-    existing_pages = PdfFileReader(f)
+    existing_pages = PdfReader(f)
 
     # In the case the PDF file is encrypted by the password, ''(i.e. not
     # encrypted intentionally)
-    if existing_pages.isEncrypted:
+    if existing_pages.is_encrypted:
 
         try:
             existing_pages.decrypt('')
@@ -629,7 +629,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
             )
 
     # In the case the PDF file is encrypted by the password except ''
-    if existing_pages.isEncrypted:
+    if existing_pages.is_encrypted:
         return ObjectResource.send_object(
             obj.bucket, obj,
             expected_chksum=fileobj.get('checksum'),
@@ -641,12 +641,12 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
             as_attachment=False
         )
 
-    combined_pages = PdfFileWriter()
-    combined_pages.addPage(cover_page.getPage(0))
+    combined_pages = PdfWriter()
+    combined_pages.add_page(cover_page.pages[0])
 
-    for page_num in range(existing_pages.numPages):
-        existing_page = existing_pages.getPage(page_num)
-        combined_pages.addPage(existing_page)
+    for page_num in range(len(existing_pages.pages)):
+        existing_page = existing_pages.pages[page_num]
+        combined_pages.add_page(existing_page)
 
     # Download the newly generated combined PDF file
     try:
