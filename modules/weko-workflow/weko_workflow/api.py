@@ -2672,7 +2672,6 @@ class WorkActivity(object):
                     if actor_profile is not None else None
                 )
 
-                set_target_id = set()
                 flow_id = activity.flow_define.flow_id
                 flow_detail = Flow().get_flow_detail(flow_id)
                 approval_action = _Action.query.filter_by(
@@ -2715,10 +2714,34 @@ class WorkActivity(object):
                     else:
                         set_target_id.add(action_user_id)
 
+                # add community admin
                 community_id = activity.activity_community_id
                 if community_id is not None:
-                    # TODO: get community admin
-                    pass
+                    community_admin_role_id = Role.query.filter_by(
+                        name=current_app.config.get("WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY")
+                    ).one().id
+                    community_owner_role_id = (
+                        GetCommunity.get_community_by_id(community_id).id_role
+                    )
+
+                    role_left = userrole.alias("role_left")
+                    role_right = userrole.alias("role_right")
+                    # who has Community Admin role and Community Owner role.
+                    set_community_admin_id = {
+                        user_id[0] for user_id in
+                        db.session.query(role_left.c.user_id)
+                        .join(
+                            role_right,
+                            role_left.c.role_id == role_right.c.role_id
+                        )
+                        .filter(
+                            role_left.c.role_id == community_admin_role_id,
+                            role_right.c.role_id == community_owner_role_id,
+                        )
+                        .distinct()
+                        .all()
+                    }
+                    set_target_id.update(set_community_admin_id)
 
                 is_shared = activity.shared_user_id != -1
                 if not is_shared:
