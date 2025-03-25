@@ -474,15 +474,25 @@ WEKO_THEME_ADMIN_MENU = [
         ]
     },
     {
-        'name': 'Maintenance',
+        'name': 'Logs',
         'order': 16,
+        'submenu': [
+            {
+                'name': 'Export',
+                'order': 1
+            }
+        ]
+    },
+    {
+        'name': 'Maintenance',
+        'order': 17,
         'submenu': [
             {
                 'name': 'ElasticSearch Index',
                 'order': 1
             }
         ]
-    }
+    },
 ]
 
 

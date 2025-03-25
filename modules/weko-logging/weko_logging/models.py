@@ -1,14 +1,15 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
-from invenio_accounts.models import User
-from invenio_db import db
+from sqlalchemy import Sequence
 from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy_utils.types import JSONType
 
+from invenio_accounts.models import User
+from invenio_db import db
 
 class UserActivityLog(db.Model):
     """User activity log model."""
-    
+
     __tablename__ = 'user_activity_logs'
 
     id = db.Column(
@@ -21,7 +22,7 @@ class UserActivityLog(db.Model):
     date = db.Column(
         db.DateTime().with_variant(mysql.DATETIME(fsp=6), 'mysql'),
         nullable=False,
-        default=datetime.utcnow
+        default=datetime.now(timezone.utc)
     )
     """Date and time of the log entry."""
 
@@ -35,13 +36,13 @@ class UserActivityLog(db.Model):
         nullable=True
     )
     """User ID of the user who performed the action."""
-    
+
     repository_path = db.Column(
         db.Text(),
         nullable=False
     )
     """Repository path where the action was performed."""
-    
+
     parent_id = db.Column(
         db.Integer(),
         db.ForeignKey(
@@ -52,7 +53,7 @@ class UserActivityLog(db.Model):
         nullable=True
     )
     """Parent ID of the log entry."""
-    
+
     log = db.Column(
         db.JSON().with_variant(
             postgresql.JSONB(none_as_null=True),
@@ -73,3 +74,28 @@ class UserActivityLog(db.Model):
         nullable=True
     )
     """Remarks for the log entry."""
+
+    def to_dict(self):
+        """Serialize object to dictionary."""
+        return {
+            'id': self.id,
+            'date': self.date,
+            'user_id': self.user_id if self.user_id else "",
+            'repository_path': self.repository_path,
+            'parent_id': self.parent_id if self.parent_id else "",
+            'log': self.log,
+            'remarks': self.remarks
+        }
+
+    @classmethod
+    def get_sequence(cls, session):
+        """Get author id next sequence.
+
+        :param session: Session
+        :return: Next sequence.
+        """
+        if not session:
+            session = db.session
+        seq = Sequence('user_activity_logs_id_seq')
+        next_id = session.execute(seq)
+        return next_id

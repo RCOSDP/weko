@@ -79,7 +79,7 @@ Set to a valid Python logging level: ``CRITICAL``, ``ERROR``, ``WARNING``,
 ``INFO``, ``DEBUG``, or ``NOTSET``.
 """
 
-WEKO_LOGGING_USER_ACTIVITY_SETTING = {
+WEKO_LOGGING_USER_ACTIVITY_DB_SETTING = {
    "log_level": "ERROR",
    "delete": {
       "when": "months",
@@ -88,11 +88,10 @@ WEKO_LOGGING_USER_ACTIVITY_SETTING = {
 }
 """User activity logging to the database."""
 
-# WEKO_LOGGING_USER_ACTIVITY_STREAM_SETTING = {
-#    "log_level": "ERROR"
-# }
-# """User activity logging to the stream."""
-
+WEKO_LOGGING_USER_ACTIVITY_STREAM_SETTING = {
+   "log_level": "ERROR"
+}
+"""User activity logging to the stream."""
 
 WEKO_LOGGING_OPERATION_MASTER = {
    "GENERAL": {
@@ -344,3 +343,7 @@ WEKO_LOGGING_OPERATION_MASTER = {
       }
    }
 }
+
+WEKO_LOGGING_LOG_EXPORT_TEMPLATE = "weko_logging/admin/export_log.html"
+
+WEKO_LOGGING_EXPORT_CACHE_STATUS_KEY = "weko_user_activity_log_export_status"

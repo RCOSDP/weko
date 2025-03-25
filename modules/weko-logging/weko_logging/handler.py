@@ -7,20 +7,12 @@ from invenio_accounts.models import User
 from invenio_db import db
 from weko_logging.models import UserActivityLog
 
-class AuditLogHandler(logging.Handler):
+class UserActivityLogHandler(logging.Handler):
     """Logging handler for audit logs."""
-    
-    def init_app(self, app):
-        """
-        Flask application initialization.
 
-        :param app: The flask application.
-        """
-        self.init_config(app)
-        if app.config["WEKO_LOGGING_FS_LOGFILE"] is None:
-            return
-        self.install_handler(app)
-        app.extensions["weko-logging-fs"] = self
+    def __init__(self, app):
+        super(UserActivityLogHandler, self).__init__()
+        self.app = app
 
     def emit(self, record):
         """Emit a log record."""
@@ -34,8 +26,13 @@ class AuditLogHandler(logging.Handler):
 
         operation = record.operation
         # get operation_type_id, operation_id, target from config "WEKO_LOGGING_OPERATION_MASTER"
-        operation_type_id, operation_id, target = self._get_target_from_operation(operation)
-        
+        operation_type_id, operation_id, target = self._get_target_from_operation_id(operation)
+
+        # get log group uuid
+        parent_id = None
+        if hasattr(record, "parend_id"):
+            parent_id = record.parent_id or None
+
         # get user_id from current_user
         user_id = None
         eppn = None
@@ -44,17 +41,21 @@ class AuditLogHandler(logging.Handler):
             user = User.query.filter_by(id=user_id).first()
             # get eppn from user
             if user is not None:
-                shib_user = user.shib_weko_user
-                if shib_user is not None:
+                shib_users = list(user.shib_weko_user)
+                if shib_users is not None and len(shib_users) == 1:
+                    shib_user = shib_users[0]
                     eppn = shib_user.shib_eppn
 
         # get source, ip_address and client_id from request
         ip_address = request.remote_addr
         if request.headers.getlist("X-Forwarded-For"):
             ip_address = request.headers.getlist("X-Forwarded-For")[0]
-        
-        source = request.headers.get("User-Agent")
-        client_id = request.headers.get("Client-ID")
+        source = request.path
+
+        # get client id from request oauth
+        client_id = None
+        if hasattr(request, "oauth") and request.oauth:
+            client_id = request.oauth.client.client_id
 
         # get other values from record
         target_key = None
@@ -62,35 +63,54 @@ class AuditLogHandler(logging.Handler):
             target_key = record.target_key if hasattr(record, "target_key") else None
         remarks = record.remarks if hasattr(record, "remarks") else None
 
+        # get repositoy path from request
+        # TODO: get repository_path from request
+        repository_path = "/"
+        if hasattr(request, "repository_path"):
+            repository_path = request.repository_path
+
+        timestamp_seconds = record.created
+        created_dt = datetime.fromtimestamp(timestamp_seconds)
+
+        user_activity_log = UserActivityLog(
+            user_id=user_id,
+            log={},
+            repository_path=repository_path,
+            remarks=remarks,
+        )
         log = {
-            "id": record.id,
+            "id": None,
             "log_level": record.levelname,
-            "date": datetime.now().strftime("%Y/%m/%d %H:%M:%S.%f"),
+            "date": created_dt.strftime("%Y/%m/%d %H:%M:%S.%f"),
             "user_id": user_id,
             "eppn": eppn,
             "ip_address": ip_address,
             "client_id": client_id,
-            "repository_path": record.repository_path,
+            "repository_path": repository_path,
             "source": source,
-            "parent_id": record.parent_id,
+            "parent_id": parent_id,
             "operation_type_id": operation_type_id,
             "operation_id": operation_id,
             "target": target,
             "target_key": target_key,
         }
-        db.session.add(
-            UserActivityLog(
-                user_id=record.user_id,
-                repository_path=record.repository_path,
-                log=log,
-                remarks=remarks,
-            )
-        )
-        db.session.commit()
+
+        try:
+            with db.session.begin_nested():
+                db.session.add(user_activity_log)
+                db.session.flush()
+                log["id"] = user_activity_log.id
+                user_activity_log.log = log
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Failed to create user activity log: {e}")
+            current_app.logger.error(e.__traceback__)
+            raise
 
     def _get_target_from_operation_id(self, operation):
         # get target from config "WEKO_LOGGING_OPERATION_MASTER"
-        operation_master = current_app.config.get("WEKO_LOGGING_OPERATION_MASTER", {})
+        operation_master = self.app.config.get("WEKO_LOGGING_OPERATION_MASTER", {})
         for operation_category in operation_master.values():
             if operation not in operation_category.get("operation", {}).keys():
                 continue

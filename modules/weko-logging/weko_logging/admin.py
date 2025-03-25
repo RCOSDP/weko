@@ -1,0 +1,126 @@
+
+
+from datetime import datetime
+from celery import states
+from flask import current_app, jsonify, abort
+from flask.helpers import url_for
+from flask_admin import BaseView, expose
+from flask_babelex import gettext as _
+
+from invenio_files_rest.models import FileInstance
+from invenio_cache import current_cache
+from weko_logging.utils import UserActivityLogUtils
+from weko_logging.tasks import export_all_user_activity_logs
+from weko_search_ui.tasks import check_celery_is_run
+
+class ExportLogAdminView(BaseView):
+    """Export user activity log view."""
+
+    def is_visible(self):
+        return True
+
+    def is_accessible(self):
+        return True
+
+    @expose('/', methods=['GET'])
+    def index(self):
+        """Export user activity log."""
+        return self.render(
+            current_app.config['WEKO_LOGGING_LOG_EXPORT_TEMPLATE']
+        )
+
+    @expose('/export', methods=['POST'])
+    def export_user_activity_log(self):
+        """Start export user activity log task."""
+        # get current task running
+        task_status = UserActivityLogUtils.get_export_task_status()
+        if task_status and task_status.get('task_id'):
+            task = export_all_user_activity_logs.AsyncResult(task_status.get('task_id'))
+            if task.state == states.PENDING or task.state == states.STARTED:
+                return jsonify({
+                    'code': 409,
+                    'data': {'message': _('Export task is running.')}
+                })
+
+        UserActivityLogUtils.clear_export_status()
+        task = export_all_user_activity_logs.delay()
+        UserActivityLogUtils.set_export_status(task_id=task.id)
+        return jsonify({
+            'code': 200,
+            'data': {'task_id': task.id}
+        })
+
+    # @author_permission.require(http_exception=403)
+    @expose('/check_export_status', methods=['GET'])
+    def check_export_status(self):
+        """Api check export status."""
+        current_app.logger.error("Start export status")
+        status = UserActivityLogUtils.get_export_task_status()
+        check = check_celery_is_run()
+        status['celery_is_run'] = check
+        if status and status.get('task_id'):
+            task = export_all_user_activity_logs.AsyncResult(status.get('task_id'))
+            current_app.logger.error("task status:" + task.status)
+            if status:
+                status['status'] = task.status
+
+            if task.successful():
+                url_info = UserActivityLogUtils.get_export_url()
+                status.update(url_info)
+            elif task.failed():
+                status['error'] = 'export failed'
+
+        # set download_link
+        status['download_link'] = ""
+        if status.get('file_uri'):
+            status['download_link'] = url_for(
+                'logs/export.download_user_activity_log', _external=True)
+
+        if 'file_uri' in status:
+            del status['file_uri']
+
+        current_app.logger.error("End export status")
+        current_app.logger.error(status)
+        return jsonify({
+            'code': 200,
+            'data': status
+        })
+
+    @expose("/cancel_export", methods=["GET"])
+    def cancel_export(self):
+        """Check export status."""
+        result = UserActivityLogUtils.cancel_export_log()
+        export_status, _, _, _, status = UserActivityLogUtils.get_export_task_status(current_cache)
+        return jsonify(data={
+            "cancel_status": result,
+            "export_status":export_status,
+            "status":status
+        })
+
+    @expose("/download", methods=['GET'])
+    def download_user_activity_log(self):
+        """Download log info."""
+        url_info = UserActivityLogUtils.get_export_url()
+        if url_info.get('file_uri'):
+            file_instance = FileInstance.get_by_uri(url_info.get('file_uri'))
+            file_name = "export_log.zip"
+            return file_instance.send_file(
+                file_name,
+                mimetype='application/octet-stream',
+                as_attachment=True
+            )
+        else:
+            abort(404)
+
+log_export_admin_view = {
+    "view_class": ExportLogAdminView,
+    "kwargs": {
+        "category": _("Logs"),
+        "name": _("Export"),
+        "endpoint": "logs/export",
+    }
+}
+
+__all__ = (
+    'log_export_admin_view',
+)

@@ -34,6 +34,8 @@ from .config import WEKO_AUTHORS_IMPORT_KEY
 from .models import Authors, AuthorsAffiliationSettings, AuthorsPrefixSettings
 from .permissions import author_permission
 from .utils import get_author_prefix_obj, get_author_affiliation_obj, get_count_item_link
+from weko_logging.activity_logger import UserActivityLogger
+
 
 blueprint = Blueprint(
     'weko_authors',
@@ -110,6 +112,17 @@ def update_author():
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg=_('Header Error'))
 
+
+    UserActivityLogger.error(
+        operation="AUTHOR_CREATE",
+        parent_id=1,
+        target_key="test"
+    )
+    UserActivityLogger.info(
+        operation="AUTHOR_CREATE",
+        parent_id=1,
+        target_key="test"
+    )
     user_id = current_user.get_id()
     data = request.get_json()
     try:

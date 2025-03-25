@@ -992,6 +992,14 @@ msgstr "制限公開"
 msgid "Admin menu_Setting_Faceted Search"
 msgstr "ファセット検索"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Logs"
+msgstr "ログ管理"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Logs_Export"
+msgstr "エクスポート"
+
 #: weko_admin/
 #: msgid "Maintenance"
 msgid "Admin menu_Maintenance"
