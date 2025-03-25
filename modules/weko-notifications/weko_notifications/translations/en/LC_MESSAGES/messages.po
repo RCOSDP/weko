@@ -38,7 +38,7 @@ msgstr ""
 
 #. NOTE: Form field help text
 #: weko_notifications/forms.py:53
-msgid "Receive notifications via web push."
+msgid "Receive web push notifications in this browser. Please refrain from using this feature on shared devices."
 msgstr ""
 
 #: weko_notifications/forms.py:56
@@ -47,7 +47,7 @@ msgstr ""
 
 #: weko_notifications/forms.py:57
 msgid "Receive notifications via email."
-msgstr ""
+msgstr "Receive email notifications via the verified email address in your Profile."
 
 #: weko_notifications/views.py:44
 #, python-format

@@ -2561,7 +2561,31 @@ class WorkActivity(object):
         return activities_number
 
 
-    def notify_item_registered(self, activity_id):
+    def notify_about_activity(self, activity_id, case):
+        """Notify about activity.
+
+        Args:
+            activity_id (str): Activity ID.
+            case (str): Case of notification. <br>
+                `registered`, `request_approval`, `approved` or `rejected`.
+        """
+        if not current_app.config["WEKO_NOTIFICATIONS"]:
+            return
+        activity = self.get_activity_by_id(activity_id)
+        if activity.workflow.open_restricted:
+            return
+
+        if case == 'registered':
+            self.notify_item_registered(activity)
+        elif case == 'request_approval':
+            self.notify_request_approval(activity)
+        elif case == 'approved':
+            self.notify_item_approved(activity)
+        elif case == 'rejected':
+            self.notify_item_rejected(activity)
+
+
+    def notify_item_registered(self, activity):
         """Notify item registered.
 
         Make notification and send to user when item registered.
@@ -2572,10 +2596,6 @@ class WorkActivity(object):
         """
         try:
             with db.session.begin_nested():
-                activity = self.get_activity_by_id(activity_id)
-                if activity is None:
-                    return
-
                 set_target_id = {activity.activity_login_user}
                 is_shared = activity.shared_user_id != -1
                 if is_shared:
@@ -2600,7 +2620,7 @@ class WorkActivity(object):
         except SQLAlchemyError as ex:
             current_app.logger.error(
                 "Error had orrured in database during getting notification "
-                f"parameters for activity: {activity_id}"
+                f"parameters for activity: {activity.activity_id}"
             )
             traceback.print_exc()
             return
@@ -2614,22 +2634,22 @@ class WorkActivity(object):
             except (ValidationError, HTTPError) as ex:
                 current_app.logger.error(
                     "Error had orrured during sending notification "
-                    f"for activity: {activity_id}"
+                    f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
             except Exception as ex:
                 current_app.logger.error(
                     "Unexpected error had orrured during sending notification "
-                    f"for activity: {activity_id}"
+                    f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
-            current_app.logger.info(
-                "{num} notification(s) sent for item registered: {activity_id}"
-                .format(num=len(set_target_id), activity_id=activity_id)
-            )
+        current_app.logger.info(
+            "{num} notification(s) sent for item registered: {activity_id}"
+            .format(num=len(set_target_id), activity_id=activity.activity_id)
+        )
 
 
-    def notify_request_approval(self, activity_id):
+    def notify_request_approval(self, activity):
         """Notify request approval.
 
         Make notification and send to user when request approval.
@@ -2640,10 +2660,6 @@ class WorkActivity(object):
         """
         try:
             with db.session.begin_nested():
-                activity = self.get_activity_by_id(activity_id)
-                if activity is None:
-                    return
-
                 recid = (
                     PersistentIdentifier
                     .get_by_object("recid", "rec", activity.item_id)
@@ -2668,26 +2684,25 @@ class WorkActivity(object):
                         approval_action_role = action.action_role
                         break
 
-                admin_roles = current_app.config.get("WEKO_WORKFLOW_ACTIVITYLOG_ROLE_ENABLE")
-                admin_role_ids = {
-                    Role.query.filter_by(name=rolename).one().id
-                    for rolename in admin_roles
-                }
-                target_role = admin_role_ids.copy()
+                admin_role_id = Role.query.filter_by(
+                    name=current_app.config.get("WEKO_ADMIN_PERMISSION_ROLE_REPO")
+                ).one().id
+
+                target_role = {admin_role_id}
                 if approval_action_role is not None:
                     action_role_id = approval_action_role.action_role
-                    if not isinstance(action_role_id, int):
-                        pass
-                    elif approval_action_role.action_role_exclude:
+                    if (
+                        isinstance(action_role_id, int)
+                        and approval_action_role.action_role_exclude
+                    ):
                         target_role.discard(action_role_id)
-                    else:
-                        # target_role.add(action_role_id)
-                        pass # TODO:
+                    # approval_action_role is not None and not exclude
+                    # nothing to do
 
                 set_target_id = {
                     user_id[0] for user_id in
                     db.session.query(userrole.c.user_id)
-                    .filter(userrole.c.role_id.in_(admin_role_ids))
+                    .filter(userrole.c.role_id.in_(target_role))
                     .distinct()
                     .all()
                 }
@@ -2700,6 +2715,11 @@ class WorkActivity(object):
                     else:
                         set_target_id.add(action_user_id)
 
+                community_id = activity.activity_community_id
+                if community_id is not None:
+                    # TODO: get community admin
+                    pass
+
                 is_shared = activity.shared_user_id != -1
                 if not is_shared:
                     # if self request, not notify
@@ -2708,7 +2728,7 @@ class WorkActivity(object):
         except SQLAlchemyError as ex:
             current_app.logger.error(
                 "Error had orrured in database during getting notification "
-                f"parameters for activity: {activity_id}"
+                f"parameters for activity: {activity.activity_id}"
             )
             traceback.print_exc()
             return
@@ -2717,27 +2737,28 @@ class WorkActivity(object):
             try:
                 Notification.create_request_approval(
                     target_id, recid.pid_value.split(".")[0], actor_id,
-                    activity_id, actor_name=actor_name, object_name=activity.title
+                    activity.activity_id, actor_name=actor_name,
+                    object_name=activity.title
                 ).send(NotificationClient(inbox_url()))
             except (ValidationError, HTTPError) as ex:
                 current_app.logger.error(
                     "Error had orrured during sending notification "
-                    f"for activity: {activity_id}"
+                    f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
             except Exception as ex:
                 current_app.logger.error(
                     "Unexpected error had orrured during sending notification "
-                    f"for activity: {activity_id}"
+                    f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
         current_app.logger.info(
             "{num} notification(s) sent for request approval: {activity_id}"
-            .format(num=len(set_target_id), activity_id=activity_id)
+            .format(num=len(set_target_id), activity_id=activity.activity_id)
         )
 
 
-    def notify_item_approved(self, activity_id):
+    def notify_item_approved(self, activity):
         """Notify approved items.
 
         Make notification and send to user when item approved.
@@ -2748,10 +2769,6 @@ class WorkActivity(object):
         """
         try:
             with db.session.begin_nested():
-                activity = self.get_activity_by_id(activity_id)
-                if activity is None:
-                    return
-
                 set_target_id = {activity.activity_login_user}
                 is_shared = activity.shared_user_id != -1
                 if is_shared:
@@ -2776,7 +2793,7 @@ class WorkActivity(object):
         except SQLAlchemyError as ex:
             current_app.logger.error(
                 "Error had orrured in database during getting notification "
-                f"parameters for activity: {activity_id}"
+                f"parameters for activity: {activity.activity_id}"
             )
             traceback.print_exc()
             return
@@ -2785,36 +2802,38 @@ class WorkActivity(object):
             try:
                 Notification.create_item_approved(
                     target_id, recid.pid_value.split(".")[0], actor_id,
-                    activity_id, actor_name=actor_name, object_name=activity.title
+                    activity.activity_id, actor_name=actor_name,
+                    object_name=activity.title
                 ).send(NotificationClient(inbox_url()))
             except (ValidationError, HTTPError) as ex:
                 current_app.logger.error(
                     "Error had orrured during sending notification "
-                    f"for activity: {activity_id}"
+                    f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
             except Exception as ex:
                 current_app.logger.error(
                     "Unexpected error had orrured during sending notification "
-                    f"for activity: {activity_id}"
+                    f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
         current_app.logger.info(
             "{num} notification(s) sent for item approved: {activity_id}"
-            .format(num=len(set_target_id), activity_id=activity_id)
+            .format(num=len(set_target_id), activity_id=activity.activity_id)
         )
 
 
-    def notify_item_rejected(self, activity_id):
+    def notify_item_rejected(self, activity):
         """Notify rejected items.
 
+        Make notification and send to user when item rejected.
+        Create user and shared user will be notified.
+
+        Args:
+            activity_id (str): Activity ID.
         """
         try:
             with db.session.begin_nested():
-                activity = self.get_activity_by_id(activity_id)
-                if activity is None:
-                    return
-
                 set_target_id = {activity.activity_login_user}
                 is_shared = activity.shared_user_id != -1
                 if is_shared:
@@ -2838,7 +2857,7 @@ class WorkActivity(object):
         except SQLAlchemyError as ex:
             current_app.logger.error(
                 "Error had orrured in database during getting notification "
-                f"parameters for activity: {activity_id}"
+                f"parameters for activity: {activity.activity_id}"
             )
             traceback.print_exc()
 
@@ -2846,23 +2865,24 @@ class WorkActivity(object):
             try:
                 Notification.create_item_rejected(
                     target_id, recid.pid_value.split(".")[0], actor_id,
-                    activity_id, actor_name=actor_name, object_name=activity.title
+                    activity.activity_id, actor_name=actor_name,
+                    object_name=activity.title
                 ).send(NotificationClient(inbox_url()))
             except (ValidationError, HTTPError) as ex:
                 current_app.logger.error(
                     "Error had orrured during sending notification "
-                    f"for activity: {activity_id}"
+                    f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
             except Exception as ex:
                 current_app.logger.error(
                     "Unexpected error had orrured during sending notification "
-                    f"for activity: {activity_id}"
+                    f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
         current_app.logger.info(
             "{num} notification(s) sent for item rejected: {activity_id}"
-            .format(num=len(set_target_id), activity_id=activity_id)
+            .format(num=len(set_target_id), activity_id=activity.activity_id)
         )
 
 

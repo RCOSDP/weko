@@ -133,20 +133,26 @@ def profile():
         if form == 'profile':
             handle_profile_form(profile_form)
             db.session.commit()
-
-            if current_app.config["WEKO_NOTIFICATIONS"]:
-                from weko_notifications.utils import create_userprofile, inbox_url
-                create_userprofile(current_userprofile)
-                requests.post(
-                    inbox_url("/userprofile"),
-                    json=create_userprofile(current_userprofile)
-                )
         elif form == 'verification':
             handle_verification_form(verification_form)
     except Exception as e:
         traceback.print_exc()
         db.session.rollback()
         current_app.logger.error(e)
+
+    if current_app.config["WEKO_NOTIFICATIONS"]:
+        try:
+            from weko_notifications.utils import create_userprofile, inbox_url
+            create_userprofile(current_userprofile)
+            requests.post(
+                inbox_url("/userprofile"),
+                json=create_userprofile(current_userprofile)
+            )
+        except Exception as ex:
+            current_app.logger.error(
+                f"Error sending user profile to inbox. user_id={current_user.id}"
+            )
+            traceback.print_exc()
 
     return render_template(
         current_app.config['USERPROFILES_PROFILE_TEMPLATE'],

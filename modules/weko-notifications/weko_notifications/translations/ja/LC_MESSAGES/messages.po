@@ -39,7 +39,7 @@ msgstr "Webプッシュ通知"
 #. NOTE: Form field help text
 #: weko_notifications/forms.py:53
 msgid "Receive notifications via web push."
-msgstr "プッシュ通知を受け取る。"
+msgstr "このブラウザでプッシュ通知を受け取ります。共用のデバイスでのご利用はお控えください。"
 
 #: weko_notifications/forms.py:56
 msgid "Email"
@@ -47,7 +47,7 @@ msgstr "メール通知"
 
 #: weko_notifications/forms.py:57
 msgid "Receive notifications via email."
-msgstr "メール通知を受け取る。"
+msgstr "プロフィールに設定された確認済みメールアドレスでメール通知を受け取ります。"
 
 #: weko_notifications/views.py:44
 #, python-format

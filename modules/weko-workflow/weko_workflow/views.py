@@ -1692,7 +1692,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
     )
 
     if next_action_endpoint == "approval":
-        work_activity.notify_request_approval(activity_id)
+        work_activity.notify_about_activity(activity_id, "request_approval")
 
     if next_action_endpoint == "end_action":
         new_activity_id = None
@@ -1712,9 +1712,9 @@ def next_action(activity_id='0', action_id=0, json_data=None):
         work_activity.end_activity(activity)
 
         if action_endpoint == "approval":
-            work_activity.notify_item_approved(activity_id)
+            work_activity.notify_about_activity(activity_id, "approved")
         else:
-            work_activity.notify_item_registered(activity_id)
+            work_activity.notify_about_activity(activity_id, "registered")
         if next_action_endpoint == "approval":
             current_app.logger.info("next_action: request approval notification.")
 
@@ -1965,7 +1965,7 @@ def previous_action(activity_id='0', action_id=0, req=0):
     res = ResponseMessageSchema().load({'code':0,'msg':_('success')})
 
     if action_id == 4:          # action_endpoint == "approval"
-        work_activity.notify_item_rejected(activity_id)
+        work_activity.notify_about_activity(activity_id, "rejected")
 
     return jsonify(res.data), 200
 
