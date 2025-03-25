@@ -69,6 +69,8 @@ class Flow(object):
         """
         try:
             flow_name = flow.get('flow_name')
+            for_delete = flow.get('for_delete', False)
+            flow_type = 2 if for_delete else 1
             if not flow_name:
                 raise ValueError('Flow name cannot be empty.')
 
@@ -88,7 +90,7 @@ class Flow(object):
                 flow_id=uuid.uuid4(),
                 flow_name=flow_name,
                 flow_user=current_user.get_id(),
-                flow_type=flow.flow_type
+                flow_type=flow_type
             )
             _flowaction_start = _FlowAction(
                 flow_id=_flow.flow_id,
@@ -122,6 +124,8 @@ class Flow(object):
         """
         try:
             flow_name = flow.get('flow_name')
+            for_delete = flow.get('for_delete', False)
+            flow_type = 2 if for_delete else 1
             if not flow_name:
                 raise ValueError('Flow name cannot be empty.')
 
@@ -139,6 +143,7 @@ class Flow(object):
                     flow_id=flow_id).one_or_none()
                 if _flow:
                     _flow.flow_name = flow_name
+                    _flow.flow_type = flow_type
                     _flow.flow_user = current_user.get_id()
                     _flow.flow_type = flow.flow_type
                     db.session.merge(_flow)
@@ -410,6 +415,7 @@ class WorkFlow(object):
                     _workflow.flows_name = workflow.get('flows_name')
                     _workflow.itemtype_id = workflow.get('itemtype_id')
                     _workflow.flow_id = workflow.get('flow_id')
+                    _workflow.delete_flow_id = workflow.get('delete_flow_id')
                     _workflow.index_tree_id = workflow.get('index_tree_id')
                     _workflow.open_restricted = workflow.get('open_restricted')
                     _workflow.location_id = workflow.get('location_id')
