@@ -21,7 +21,6 @@
 """Blueprint for weko-workspace."""
 
 import copy
-
 from datetime import datetime,timezone
 
 from flask import (
@@ -80,34 +79,6 @@ from weko_user_profiles.config import (
 )
 from .defaultfilters import merge_default_filters
 
-from weko_admin.models import AdminSettings
-from weko_workflow.api import WorkFlow
-from weko_items_ui.utils import is_schema_include_key
-from flask_wtf import FlaskForm
-from weko_workflow.utils import is_show_autofill_metadata
-
-from weko_user_profiles.views import get_user_profile_info
-from weko_accounts.utils import login_required_customize
-from weko_workflow.headless.activity import HeadlessActivity
-from weko_index_tree.models import Index
-from flask_login import current_user
-from weko_search_ui.utils import handle_check_exist_record, handle_item_title, \
-    handle_check_date, handle_check_id, handle_check_and_prepare_index_tree, \
-    handle_check_and_prepare_publish_status, import_items_to_system
-from weko_records.api import ItemTypeNames
-
-
-from .utils import get_datacite_record_data, get_jalc_record_data, \
-    get_cinii_record_data, get_jamas_record_data
-from weko_records.serializers.utils import get_item_type_name
-from weko_records.api import ItemTypes
-from weko_user_profiles.config import (
-    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST,
-    WEKO_USERPROFILES_POSITION_LIST,
-)
-from .defaultfilters import merge_default_filters
-
-
 workspace_blueprint = Blueprint(
     "weko_workspace",
     __name__,
@@ -128,16 +99,21 @@ blueprint_itemapi = Blueprint(
 @workspace_blueprint.route("/", methods=["GET", "POST"])
 @login_required
 def get_workspace_itemlist():
-    """ Get the list of items in the workspace.
+    """
+    Retrieves the list of items in the workspace and applies filters based on default conditions and user input.
 
     Returns:
-        HTML: Returns the workspace item list page.
+        HTML: Renders the workspace item list page with the relevant metadata and user information.
+
+    Raises:
+        Exception: Any unexpected errors during the database or data fetching operations will be handled and returned as a generic response.
     """
 
     # 変数初期化
     workspaceItemList = []
     funderNameList = []
     awardTitleList = []
+    lang = session['language']
 
     # 1,デフォルト絞込み条件取得処理
     jsonCondition, isnotNone = (request.get_json() if request.method == "POST" else None), True
@@ -147,14 +123,45 @@ def get_workspace_itemlist():
         jsonCondition, isnotNone = get_workspace_filterCon()
 
     # 2,ESからアイテム一覧取得処理
-    records_data = get_es_itemlist()
+    recordsData = get_es_itemlist()
+
+    # 7,ユーザー名と所属情報取得処理
+    userNm = get_userNm_affiliation()
+
+    if ( not recordsData or "hits" not in recordsData or "hits" not in recordsData["hits"]):
+        return render_template(
+            current_app.config["WEKO_WORKSPACE_BASE_TEMPLATE"],
+            username=userNm,
+            workspaceItemList=[],
+            defaultconditions=changeLang(lang, jsonCondition),
+        )
+
+    # ログインユーザーのIDとロールを取得
+    recordsDataList = recordsData["hits"]["hits"]
+    rolelist = []
+    for role in current_user.roles:
+        rolelist.append(role.id)
+    # リポジトリ管理者の場合、全てのアイテムを表示
+    if 2 in rolelist:
+        pass
+    # 登録者の場合、自分のアイテムのみ表示
+    elif 3 in rolelist:
+        recordsDataList = [hit for hit in recordsDataList if hit["metadata"]["weko_creator_id"] == str(current_user.id)]
+    else:
+        return render_template(
+            current_app.config["WEKO_WORKSPACE_BASE_TEMPLATE"],
+            username=userNm,
+            workspaceItemList=[],
+            defaultconditions=changeLang(lang, jsonCondition),
+        )
+
     # →ループ処理
-    for hit in records_data["hits"]["hits"]:
+    for hit in recordsDataList:
         workspaceItem = copy.deepcopy(current_app.config["WEKO_WORKSPACE_ITEM"])
 
         # ファイルリストと査読状況を取得
-        item_metadata = hit["metadata"]["_item_metadata"]
-        filelist, peer_reviewed = extract_metadata_info(item_metadata)
+        itemMetadata = hit["metadata"]["_item_metadata"]
+        fileList, peerReviewed = extract_metadata_info(itemMetadata)
 
         # "recid": None,  # レコードID
         recid = hit["id"]
@@ -178,7 +185,7 @@ def get_workspace_itemlist():
         )
 
         # "peerReviewSts": None,  # 査読チェック状況
-        workspaceItem["peerReviewSts"] = peer_reviewed
+        workspaceItem["peerReviewSts"] = peerReviewed
 
         # "doi": None,  # DOIリンク
         identifiers = hit["metadata"].get("identifier", [])
@@ -224,7 +231,6 @@ def get_workspace_itemlist():
         else:
             workspaceItem["conferenceName"] = None
 
-
         # "volume": None,  # 巻
         workspaceItem["volume"] = (
             hit["metadata"].get("volume", [])[0]
@@ -259,20 +265,38 @@ def get_workspace_itemlist():
             workspaceItem["awardTitle"] = None
 
         # "fbEmailSts": None,  # フィードバックメールステータス
-        workspaceItem["fbEmailSts"] = True if current_user.email  in list(FeedbackMailList.get_feedback_mail_list().keys()) else False
+        workspaceItem["fbEmailSts"] = (
+            True
+            if current_user.email
+            in list(FeedbackMailList.get_feedback_mail_list().keys())
+            else False
+        )
+
+        if userNm in workspaceItem["authorlist"]:
+            workspaceItem["fbEmailSts"] = True
 
         # "connectionToPaperSts": None,  # 論文への関連チェック状況
-        workspaceItem["connectionToPaperSts"] = True if workspaceItem["resourceType"] in current_app.config["WEKO_WORKSPACE_ARTICLE_TYPES"] else None
+        workspaceItem["connectionToPaperSts"] = (
+            True
+            if workspaceItem["resourceType"]
+            in current_app.config["WEKO_WORKSPACE_ARTICLE_TYPES"]
+            else None
+        )
 
         # "connectionToDatasetSts": None,  # 根拠データへの関連チェック状況
-        workspaceItem["connectionToDatasetSts"] = True if workspaceItem["resourceType"] in current_app.config["WEKO_WORKSPACE_DATASET_TYPES"] else None
+        workspaceItem["connectionToDatasetSts"] = (
+            True
+            if workspaceItem["resourceType"]
+            in current_app.config["WEKO_WORKSPACE_DATASET_TYPES"]
+            else None
+        )
 
         # "relation": None,  # 関連情報リスト
         relations = []
         relationLen = (
             len(hit["metadata"]["relation"]["relatedTitle"])
             if "relation" in hit["metadata"]
-            else None
+            else 0
         )
 
         if "relation" in hit["metadata"]:
@@ -288,9 +312,7 @@ def get_workspace_itemlist():
                 ][i]
 
                 # # "relationUrl": None,  # 関連情報URLやDOI
-                workspaceItem["relationUrl"] = hit["metadata"].get("relation", [])[
-                    "relatedIdentifier"
-                ][i]["value"]
+                workspaceItem["relationUrl"] = hit["metadata"].get("relation", [])["relatedIdentifier"][i]["value"]
 
                 relation = {
                     "relationType": workspaceItem["relationType"],
@@ -306,19 +328,19 @@ def get_workspace_itemlist():
         embargoedCnt = 0
         restrictedPublicationCnt = 0
 
-        if filelist is not None and len(filelist) > 0:
+        if fileList is not None and len(fileList) > 0:
             # "fileSts": None,  # 本文ファイル有無ステータス
             workspaceItem["fileSts"] = True
 
             # "fileCnt": None,  # 本文ファイル数
-            workspaceItem["fileCnt"] = len(filelist)
+            workspaceItem["fileCnt"] = len(fileList)
 
             accessrole_date_list = [
                 {
                     "accessrole": item["accessrole"],
                     "dateValue": item["date"][0]["dateValue"],
                 }
-                for item in filelist
+                for item in fileList
                 if "accessrole" in item and "date" in item
             ]
 
@@ -350,14 +372,7 @@ def get_workspace_itemlist():
             restrictedPublicationCnt if "restrictedPublicationCnt" in locals() else 0
         )
 
-        if str(workspaceItem):
-            workspaceItemList.append(workspaceItem)
-
-    # 7,ユーザー名と所属情報取得処理
-    userInfo = get_userNm_affiliation()
-
-    if userInfo[0] in workspaceItem["authorlist"]:
-        workspaceItem["fbEmailSts"] = True
+        workspaceItemList.append(workspaceItem)
 
     # デフォルト絞込み条件より、workspaceItemListを洗い出す
     if isnotNone:
@@ -374,7 +389,7 @@ def get_workspace_itemlist():
         }
 
         # フィルタリング処理
-        filtered_items = [
+        filteredItems = [
             item for item in workspaceItemList
             if all(
                 item.get(filter_mapping[key]) == jsonCondition[key]
@@ -387,7 +402,7 @@ def get_workspace_itemlist():
                 jsonCondition.get(key) != []
             )
         ]
-        workspaceItemList = filtered_items
+        workspaceItemList = filteredItems
 
     else:
         defaultconditions = jsonCondition
@@ -397,10 +412,9 @@ def get_workspace_itemlist():
 
     return render_template(
         current_app.config["WEKO_WORKSPACE_BASE_TEMPLATE"],
-        username=userInfo[0],
-        affiliation=userInfo[1],
+        username=userNm,
         workspaceItemList=workspaceItemList,
-        defaultconditions=defaultconditions,
+        defaultconditions=changeLang(lang, defaultconditions),
     )
 
 
@@ -408,10 +422,18 @@ def get_workspace_itemlist():
 @login_required
 def update_workspace_status_management():
     """
-    Update the status of an item.
+    Updates the status of a workspace item (e.g., favorite or read status) based on user input.
+
+    Args:
+        None (request data is retrieved directly from the request body)
 
     Returns:
-        JSON: Returns status and message based on the result of the status update.
+        JSON: A JSON response with the result of the update operation:
+            - success (bool): True if the update was successful, False otherwise.
+            - message (str): Describes the result of the update operation.
+
+    Raises:
+        HTTPError (400): If an invalid type is provided in the request data.
     """
     data = request.get_json()
 
@@ -431,10 +453,12 @@ def update_workspace_status_management():
             is_read=data.get("readSts", False) if type == "2" else False,
         )
     else:
+        #　お気に入りステータス更新の場合
         if type == "1":
             update_workspace_status(
                 user_id=user_id, recid=item_recid, is_favorited=data.get("favoriteSts")
             )
+        # 既読未読ステータス更新の場合
         elif type == "2":
             update_workspace_status(
                 user_id=user_id, recid=item_recid, is_read=data.get("readSts")
@@ -442,40 +466,52 @@ def update_workspace_status_management():
         else:
             return jsonify({"success": False, "message": "Invalid type"}), 400
 
-    return jsonify({"success": True})
+    return jsonify({"success": True}), 200
 
 
 @workspace_blueprint.route("/save_filters", methods=["POST"])
 @login_required
 def save_filters():
     """
-    Save the default filter conditions.
+    Save the default filter conditions for a user.
+
+    Args:
+        None (request data is retrieved directly from the request body)
 
     Returns:
-        JSON: Returns status and message based on the save result.
+        JSON: A JSON response indicating the result of the operation:
+            - status (str): "success" if the conditions were saved successfully, "error" if an error occurred.
+            - message (str): Describes the outcome of the save operation.
+
+    Raises:
+        HTTPError (500): If a database error or unexpected error occurs during the operation.
     """
     data = request.get_json()
     user_id = current_user.id
+    lang = session['language']
 
     try:
         record = WorkspaceDefaultConditions.query.filter_by(user_id=user_id).first()
         if record:
             record.default_con = data
-            record.updated = datetime.utcnow()
+            record.updated = datetime.now(timezone.utc)
         else:
             record = WorkspaceDefaultConditions(
                 user_id=user_id,
                 default_con=data,
-                created=datetime.utcnow(),
-                updated=datetime.utcnow(),
+                created=datetime.now(timezone.utc),
+                updated=datetime.now(timezone.utc),
             )
             db.session.add(record)
         db.session.commit()
+
+        message = "Successfully saved default conditions."
+        message = changeMsg(lang, 1, None, message)
         return (
             jsonify(
                 {
                     "status": "success",
-                    "message": "Successfully saved default conditions.",
+                    "message": message,
                 }
             ),
             200,
@@ -484,7 +520,7 @@ def save_filters():
     except SQLAlchemyError as e:
         db.session.rollback()
         error_message = (
-            f"Failed to save default conditions due to database error: {str(e)}"
+            f"Failed to save default conditions. Due to database error: {str(e)}"
         )
         return jsonify({"status": "error", "message": error_message}), 500
     except Exception as e:
@@ -496,39 +532,50 @@ def save_filters():
 @login_required
 def reset_filters():
     """
-    Delete the workspace_default_conditions data of the current user.
+    Delete the default filter conditions for the current user.
+
+    Args:
+        None (request data is retrieved directly from the current user session)
 
     Returns:
-        JSON: Returns status and message based on the deletion result.
+        JSON: A JSON response indicating the result of the operation:
+            - status (str): "success" if the conditions were deleted successfully or if no conditions were found.
+            - message (str): Describes the outcome of the reset operation.
+
+    Raises:
+        HTTPError (500): If a database error or unexpected error occurs during the operation.
+
     """
 
     user_id = current_user.id
     lang = session['language']
+
     try:
         record = WorkspaceDefaultConditions.query.filter_by(user_id=user_id).first()
 
         if record:
             db.session.delete(record)
             db.session.commit()
-
+            
             message = "Successfully reset default conditions."
             message = changeMsg(lang, 2, True, message)
-
             return (
                 jsonify(
                     {
                         "status": "success",
-                        "message": "Successfully reset default conditions.",
+                        "message": message,
                     }
                 ),
                 200,
             )
         else:
+            message = "No default conditions found to reset."
+            message = changeMsg(lang, 2, False, message)
             return (
                 jsonify(
                     {
                         "status": "success",
-                        "message": "No default conditions found to reset.",
+                        "message": message,
                     }
                 ),
                 200,
@@ -537,7 +584,7 @@ def reset_filters():
     except SQLAlchemyError as e:
         db.session.rollback()
         error_message = (
-            f"Failed to reset default conditions due to database error: {str(e)}"
+            f"Failed to reset default conditions. Due to database error: {str(e)}"
         )
         return jsonify({"status": "error", "message": error_message}), 500
     except Exception as e:
