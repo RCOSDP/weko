@@ -653,15 +653,22 @@ class WorkFlow(db.Model, TimestampMixin):
                         nullable=False, unique=False)
     """the id of flow."""
 
+    flow_define = db.relationship(
+        FlowDefine,
+        primaryjoin="WorkFlow.flow_id == FlowDefine.id",
+        foreign_keys="[WorkFlow.flow_id]",
+        backref=db.backref('workflows', lazy='dynamic')
+    )
+
     delete_flow_id = db.Column(db.Integer(), db.ForeignKey(FlowDefine.id),
                         nullable=True, default=None, unique=False)
     """the id of delete flow."""
 
-    flow_define = db.relationship(
+    delete_flow_define = db.relationship(
         FlowDefine,
-        primaryjoin="or_(WorkFlow.flow_id == FlowDefine.id, WorkFlow.delete_flow_id == FlowDefine.id)",
-        foreign_keys="[WorkFlow.flow_id, WorkFlow.delete_flow_id]",
-        backref=db.backref('workflow', lazy='dynamic')
+        primaryjoin="WorkFlow.delete_flow_id == FlowDefine.id",
+        foreign_keys="[WorkFlow.delete_flow_id]",
+        backref=db.backref('delete_workflows', lazy='dynamic')
     )
 
     is_deleted = db.Column(db.Boolean(name='is_deleted'), nullable=False, default=False)
