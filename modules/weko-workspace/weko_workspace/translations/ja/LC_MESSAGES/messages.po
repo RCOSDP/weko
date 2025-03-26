@@ -87,6 +87,36 @@ msgstr "公開"
 msgid "Embargo"
 msgstr "エンバーゴ"
 
-#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
-msgid "Restricted"
-msgstr "制限公開"
+msgid "Deleted activities cannot be restored."
+msgstr "削除したアクティビティは元に戻せません。"
+
+msgid "Are you sure you want to delete filtered activities?"
+msgstr "フィルターされたアクティビティを削除してもよろしいですか？"
+
+msgid "Deleted activity cannot be restored."
+msgstr "削除したアクティビティは元に戻せません。"
+
+msgid "Are you sure you want to delete the filtered activity?"
+msgstr "選択したアクティビティを削除してもよろしいですか？"
+
+msgid "Clear Confirm"
+msgstr "削除の確認"
+
+#: weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:25
+msgid "btn_export"
+msgstr "アイテム出力"
+
+msgid "Please select the following option:"
+msgstr "以下のオプションを選択してください:"
+
+msgid "Selected Items"
+msgstr "選択アイテム出力"
+
+msgid "All Items"
+msgstr "全て出力"
+
+msgid "Cancel"
+msgstr "キャンセル"
+
+msgid "Error: There is no Selected items. Please check the item you want to export"
+msgstr "エラー: 選択されたアイテムがありません。チェックボックスを選択してください。"

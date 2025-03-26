@@ -523,7 +523,7 @@ def reset_filters():
         if record:
             db.session.delete(record)
             db.session.commit()
-            
+
             message = "Successfully reset default conditions."
             message = changeMsg(lang, 2, True, message)
             return (
