@@ -193,7 +193,7 @@ class Indexes(object):
                             continue
                     if isinstance(v, dict):
                         v = ",".join(map(lambda x: str(x["id"]), v["allow"]))
-                    if "public_date" in k:
+                    if isinstance(v, str) and "public_date" in k:
                         if len(v) > 0:
                             v = datetime.strptime(v, '%Y%m%d')
                         else:
