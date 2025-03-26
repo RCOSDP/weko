@@ -493,9 +493,18 @@ def reset_filters():
         if record:
             db.session.delete(record)
             db.session.commit()
+<<<<<<< HEAD
 
             message = "Successfully reset default conditions."
             message = changeMsg(lang, 2, True, message)
+=======
+<<<<<<< HEAD
+=======
+
+            message = "Successfully reset default conditions."
+            message = changeMsg(lang, 2, True, message)
+>>>>>>> 3a1415f77 (merge)
+>>>>>>> 9369ce072 (merge)
             return (
                 jsonify(
                     {
