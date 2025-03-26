@@ -203,13 +203,14 @@ class HeadlessActivity(WorkActivity):
 
         if workflow_id is None:
             if item_id is not None:
+                self.recid = item_id
                 if not for_delete:
                     response = prepare_edit_item(item_id)
                 else:
                     response = prepare_delete_item(item_id)
 
                 if response.json.get("code") == 0:
-                    url = result.json.get("data").get("redirect")
+                    url = response.json.get("data").get("redirect")
 
                     activity_id = url.split("/activity/detail/")[1]
                     if "?" in activity_id:
@@ -224,6 +225,7 @@ class HeadlessActivity(WorkActivity):
                     #         raise WekoWorkflowException(res.json.get("msg"))
                     self._model = super().get_activity_by_id(activity_id)
                     self.workflow = self._model.workflow
+                    self.item_type = ItemTypes.get_by_id(self.workflow.itemtype_id)
 
                 else:
                     current_app.logger.error(
@@ -379,7 +381,8 @@ class HeadlessActivity(WorkActivity):
             raise WekoWorkflowException(error)
 
         self.recid = self._input_metadata(metadata, files)
-        self._designate_index(index)
+        if index is not None:
+            self._designate_index(index)
         self._comment(comment)
 
         return self.detail
@@ -453,7 +456,8 @@ class HeadlessActivity(WorkActivity):
 
             if self._metadata_replace:
                 # プロパティ単位で更新する場合metadataから_old_metadataにアップデートする
-                metadata = _old_metadata.update(metadata)
+                _old_metadata.update(metadata)
+                metadata = _old_metadata
 
             metadata.update({"$schema": f"/items/jsonschema/{self.item_type.id}"})
             workflow_index = self.workflow.index_tree_id
@@ -565,7 +569,11 @@ class HeadlessActivity(WorkActivity):
                     file_info = upload(os.path.basename(file), f, size)
             else:
                 """werkzeug.datastructures.FileStorage"""
-                file_info = upload(file.filename, file.stream, file.content_length)
+ 
+                file.seek(0, 2)
+                file_size = file.tell()
+                file.seek(0)
+                file_info = upload(file.filename, file.stream, file_size)
             files_info.append(file_info)
 
         return files_info
