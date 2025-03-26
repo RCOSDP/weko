@@ -5,8 +5,8 @@ const selected_file_name = document.getElementById("selected_file_name").value;
 const index_tree = document.getElementById("index_tree").value;
 const designate_index = document.getElementById("designate_index").value;
 const item_type = document.getElementById("item_type").value;
-const mapping = document.getElementById("mapping").value; // FIXME:
-const mapping_templates = document.getElementById("mapping_templates").value; // FIXME:
+const mapping = document.getElementById("mapping").value;
+const mapping_templates = document.getElementById("mapping_templates").value;
 const flow = document.getElementById("flow").value;
 const select = document.getElementById("select").value;
 const cancel = document.getElementById("cancel").value;
@@ -45,7 +45,7 @@ const to_do = document.getElementById("to_do").value;
 const result_label = document.getElementById("result").value;
 const next = document.getElementById("next").value;
 const error_download = document.getElementById("error_download").value;
-const error_get_lstMapping = document.getElementById("error_get_lstMapping").value; // TODO: error message
+const error_get_lstMapping = document.getElementById("error_get_lstMapping").value;
 const internal_server_error = document.getElementById("internal_server_error").value;
 const not_available_error_another = document.getElementById("not_available_error_another").value;
 const not_available_error = document.getElementById("not_available_error").value;
@@ -179,7 +179,7 @@ class MainLayout extends React.Component {
     closeError();
     this.setState({ isChecking: true });
 
-    var  csrf_token=$('#csrf_token').val();
+    var csrf_token=$('#csrf_token').val();
     $.ajaxSetup({
       beforeSend: function(xhr, settings) {
         if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain){
@@ -192,7 +192,6 @@ class MainLayout extends React.Component {
       url: urlCheck,
       type: "POST",
       headers: {
-        "Content-Type": "application/zip",
         "Packaging": "http://purl.org/net/sword/3.0/package/SimpleZip"
       },
       data: formData,
@@ -408,10 +407,13 @@ class RocrateImportComponent extends React.Component {
       show: false,
       is_agree_doi: false,
       is_change_identifier: false,
+      selected_mapping: "-1",
+      is_mapping_selected: false,
       change_identifier_mode_content: [],
       disabled_checkbox: false
     }
     this.handleChangefile = this.handleChangefile.bind(this)
+    this.handleMappingChange = this.handleMappingChange.bind(this)
     this.handleClickFile = this.handleClickFile.bind(this)
     this.getLastString = this.getLastString.bind(this)
     this.handleShowModalWorkFlow = this.handleShowModalWorkFlow.bind(this)
@@ -521,11 +523,12 @@ class RocrateImportComponent extends React.Component {
   }
 
   handleSubmit() {
-    const { file, is_change_identifier } = this.state;
+    const { file, is_change_identifier, selected_mapping } = this.state;
     const { handleCheck, updateShowMessage } = this.props;
     let formData = new FormData();
     formData.append('file', file);
     formData.append('is_change_identifier', is_change_identifier);
+    formData.append('mapping_id', selected_mapping);
 
     if (is_change_identifier) {
       this.setState({
@@ -565,6 +568,14 @@ class RocrateImportComponent extends React.Component {
       [name]: value
     });
   }
+
+  handleMappingChange(value) {
+    this.setState({
+      is_mapping_selected: value && value !== "-1",
+      selected_mapping: value
+    });
+  }
+
   handleAgreeChange(event) {
     const target = event.target;
     const value = target.name === 'is_agree_doi' ? target.checked : target.value;
@@ -583,11 +594,12 @@ class RocrateImportComponent extends React.Component {
     });
   }
   handleConfirm() {
-    const { file, is_change_identifier } = this.state;
+    const { file, is_change_identifier, selected_mapping } = this.state;
     const { handleCheck, updateShowMessage } = this.props;
     let formData = new FormData();
     formData.append('file', file);
     formData.append('is_change_identifier', is_change_identifier);
+    formData.append('mapping_id', selected_mapping);
 
     this.setState({
       show: false,
@@ -603,6 +615,7 @@ class RocrateImportComponent extends React.Component {
       file,
       is_agree_doi,
       is_change_identifier,
+      is_mapping_selected,
       change_identifier_mode_content,
       disabled_checkbox
     } = this.state;
@@ -655,9 +668,9 @@ class RocrateImportComponent extends React.Component {
               <div className="col-md-2">
                 <button
                   className="btn btn-primary"
-                  disabled={!file || isChecking}
+                  disabled={!file || !is_mapping_selected || isChecking}
                   onClick={() => {
-                    file && this.handleSubmit()
+                    file && is_mapping_selected && this.handleSubmit()
                   }}>
                   {isChecking ? <div className="loading" /> : <span className="glyphicon glyphicon-download-alt icon"></span>}
                   {next}
@@ -667,7 +680,7 @@ class RocrateImportComponent extends React.Component {
           </div>
         </div>
         <hr />
-        <MappingComponent />
+        <MappingComponent onMappingChange={this.handleMappingChange} />
         <ReactBootstrap.Modal show={this.state.show} onHide={this.handleClose} dialogClassName="w-725">
           <ReactBootstrap.Modal.Header closeButton>
             <h4 className="modal-title in_line">{change_identifier_mode}</h4>
@@ -1153,7 +1166,7 @@ class MappingComponent extends React.Component {
     super();
     this.state = {
       mappings: null,
-      selected_mapping: '-1'
+      selected_mapping: "-1"
     };
     this.getListMapping = this.getListMapping.bind(this);
     this.onCbxMappingChange = this.onCbxMappingChange.bind(this);
@@ -1185,13 +1198,14 @@ class MappingComponent extends React.Component {
 
   onCbxMappingChange(event) {
     this.setState({ selected_mapping: event.target.value });
+    this.props.onMappingChange(event.target.value);
   }
 
   render() {
     const { mappings, selected_mapping } = this.state;
     const select_options = mappings && mappings.map(item => {
       if (item === null) {
-        return <option value={'-1'} selected={true}></option>;
+        return <option value={"-1"} selected={true}></option>;
       } else {
         return <option value={item.id} selected={item.id === selected_mapping}>{item.name}</option>
       }
