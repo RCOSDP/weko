@@ -638,14 +638,10 @@ class TestShibUser:
                     # モックが返すレスポンスを設定
                     mock_get.return_value.status_code = 200
                     mock_get.return_value.json = lambda: test_response
-                    mock_current_app.config = {
-                        "WEKO_ACCOUNTS_ORTHROS_INSIDE_ROLE": "Orthros"
-                    }
 
                     # ShibUserクラスのメソッドを呼び出し、結果を確認
                     result = shibuser.get_organization_from_api(group_id)
                     assert result == "Orthros"  # 期待値を比較
-                    assert result == mock_current_app.config["WEKO_ACCOUNTS_ORTHROS_INSIDE_ROLE"]  # 期待値を比較
 
 
 #    @classmethod
