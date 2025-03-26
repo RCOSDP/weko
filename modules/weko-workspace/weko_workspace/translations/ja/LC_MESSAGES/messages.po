@@ -36,39 +36,23 @@ msgstr "フローアクションを更新しました。"
 msgid "Approval by Administrator action does not exist, or not in the right order."
 msgstr "管理者の承認了アクションは存在しないか、正しい順序になっていません。"
 
-#: weko_workflow/admin.py:150
-msgid "Approval by Advisor action is not in the right order."
-msgstr "指導教員の承認アクションは正しい順序になっていません。"
+#: weko_workspace/item_register.html:143
+msgid "DOI Input"
+msgstr "DOI入力"
 
-#: weko_workflow/admin.py:152
-msgid "Approval by Guarantor action is not in the right order."
-msgstr "保証人の承認アクションは正しい順序になっていません。"
+#: weko_workspace/item_register.html:226
+msgid "Metadata"
+msgstr "メタデータ"
 
-#: weko_workflow/admin.py:154
-msgid "Start or End action is not in the right order."
-msgstr "開始または終了アクションは存在しないか、正しい順序になっていません。"
+#: weko_workspace/item_register.html:303
+msgid "Regist"
+msgstr "登録"
 
-#: weko_workflow/admin.py:228 weko_workflow/admin.py:237
-msgid "WorkFlow"
-msgstr "ワークフロー"
-
-#: weko_workflow/admin.py:229
-msgid "WorkFlow List"
-msgstr "ワークフロー一覧"
-
-#: weko_workflow/admin.py:238
-msgid "Flow List"
-msgstr "フロー一覧"
-
-#: weko_workspace/admin.py:238
-msgid "WorkSpaceWorkFlow Setting"
-msgstr "ワークスペースワークフロー設定"
-
-#: weko_workspace/item_register.html:38
+#: weko_workspace/item_register.html:397
 msgid "The item is successfully registered."
 msgstr "アイテムが正常に登録されました。"
 
-#: weko_workspace/item_register.html:28
+#: weko_workspace/item_register.html:327
 msgid "At least one index should be selected."
 msgstr "インデックスを指定してください。"
 
