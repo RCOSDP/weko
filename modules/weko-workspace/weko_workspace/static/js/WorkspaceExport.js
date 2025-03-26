@@ -1,20 +1,20 @@
 document.addEventListener('DOMContentLoaded', function () {
-  // 🔹 アイテム出力ボタンの取得
+  // アイテム出力ボタンの取得
   const exportButton = document.getElementById('btn_export');
   if (exportButton) {
     exportButton.addEventListener('click', function () {
-      showExportModal(); // モーダル表示
+      showExportModal(); // エクスポート用モーダルを表示
     });
   } else {
     console.error("アイテム出力ボタン (#btn_export) が見つかりません。");
   }
 
-  // 🔹 選択されたアイテムのみを取得する関数（外側に移動）
+  // チェックされたアイテムのIDを取得する関数
   function getSelectedItems() {
     return Array.from(document.querySelectorAll('.item-checkbox:checked')).map(cb => cb.value);
   }
 
-  // 🔹 「選択アイテム出力」ボタンのクリックイベント
+  // 「選択アイテム出力」ボタンのクリックイベント
   const exportSelectedButton = document.getElementById('export_selected');
   if (exportSelectedButton) {
     exportSelectedButton.addEventListener('click', () => {
@@ -43,7 +43,7 @@ function showErrorMessage(message) {
   errorBox.id = "exportErrorMessage";
   errorBox.innerHTML = `
     <div style="
-        background: #f8d7da;
+        background : #f8d7da;
         color: #721c24;
         padding: 10px;
         border: 1px solid #f5c6cb;
@@ -176,11 +176,11 @@ function getExportHeadersFromDOM() {
   const ths = document.querySelectorAll('#itemListContainer thead th');
   return Array.from(ths).map(th => th.innerText.trim());
 }
-// 🔹 TSV を作成してダウンロード
+// TSV を作成してダウンロード
 function exportItemListToTSV(items, selectedOnly, selectedIds) {
   const filename = `itemlist_export_${new Date().toISOString().replace(/[-T:.Z]/g, "").slice(0, 14)}.tsv`;
 
-  // 🔹 DOMからヘッダーを取得
+  // DOMからヘッダーを取得
   const headers = getExportHeadersFromDOM();
   const tsvRows = [headers.join('\t')];
 
