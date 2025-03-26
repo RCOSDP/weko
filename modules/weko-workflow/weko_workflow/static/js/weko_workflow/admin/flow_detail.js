@@ -235,17 +235,20 @@ $(document).ready(function () {
     });
   });
 
-  function filterActions() {
+  function filterActions(not_first_time = true) {
     const isChecked = $('#chk_for_delete').is(':checked');
     if (isChecked) {
+      if(not_first_time){
+        alert($('#message-for-delete-checked').text());
+      }
       $('.action_normal').hide();
       $('.action_delete').show();
   } else {
       $('.action_normal').show();
-      $('action_delete').hide();
+      $('.action_delete').hide();
     }
   }
-  filterActions();
+  filterActions(false);
   $('#chk_for_delete').on('change', filterActions);
 
   let action_list = [];

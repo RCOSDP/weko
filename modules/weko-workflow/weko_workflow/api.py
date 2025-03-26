@@ -121,8 +121,6 @@ class Flow(object):
         """
         try:
             flow_name = flow.get('flow_name')
-            for_delete = flow.get('for_delete', False)
-            flow_type = 2 if for_delete else 1
             if not flow_name:
                 raise ValueError('Flow name cannot be empty.')
 
@@ -140,7 +138,6 @@ class Flow(object):
                     flow_id=flow_id).one_or_none()
                 if _flow:
                     _flow.flow_name = flow_name
-                    _flow.flow_type = flow_type
                     _flow.flow_user = current_user.get_id()
                     db.session.merge(_flow)
             db.session.commit()
