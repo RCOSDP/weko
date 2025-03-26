@@ -967,6 +967,10 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 $(this).closest('li')
                   .find('input, select')
                   .attr('disabled', true);
+              }else{
+                $(this).closest('li')
+                  .find('input, select')
+                  .attr('disabled', false);
               }
             });
         }, 1000);
@@ -1685,59 +1689,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             case 'doctoral thesis':
               resourceuri = "http://purl.org/coar/resource_type/c_db06";
               break;
-            case 'software paper':
-              resourceuri = "http://purl.org/coar/resource_type/c_7bab";
-              break;
-            case 'newspaper':
-              resourceuri = "http://purl.org/coar/resource_type/c_2fe3";
-              break;
-            case 'data management plan':
-              resourceuri = "http://purl.org/coar/resource_type/c_ab20";
-              break;
             case 'interview':
               resourceuri = "http://purl.org/coar/resource_type/c_26e4";
-              break;
-            case 'manuscript':
-              resourceuri = "http://purl.org/coar/resource_type/c_0040";
-              break;
-            case 'aggregated data':
-              resourceuri = "http://purl.org/coar/resource_type/ACF7-8YT9";
-              break;
-            case 'clinical trial data':
-              resourceuri = "http://purl.org/coar/resource_type/c_cb28";
-              break;
-            case 'compiled data':
-              resourceuri = "http://purl.org/coar/resource_type/FXF3-D3G7";
-              break;
-            case 'encoded data':
-              resourceuri = "http://purl.org/coar/resource_type/AM6W-6QAW";
-              break;
-            case 'experimental data':
-              resourceuri = "http://purl.org/coar/resource_type/63NG-B465";
-              break;
-            case 'genomic data':
-              resourceuri = "http://purl.org/coar/resource_type/A8F1-NPV9";
-              break;
-            case 'geospatial data':
-              resourceuri = "http://purl.org/coar/resource_type/2H0M-X761";
-              break;
-            case 'laboratory notebook':
-              resourceuri = "http://purl.org/coar/resource_type/H41Y-FW7B";
-              break;
-            case 'measurement and test data':
-              resourceuri = "http://purl.org/coar/resource_type/DD58-GFSX";
-              break;
-            case 'observational data':
-              resourceuri = "http://purl.org/coar/resource_type/FF4C-28RK";
-              break;
-            case 'recorded data':
-              resourceuri = "http://purl.org/coar/resource_type/CQMR-7K63";
-              break;
-            case 'simulation data':
-              resourceuri = "http://purl.org/coar/resource_type/W2XT-7017";
-              break;
-            case 'survey data':
-              resourceuri = "http://purl.org/coar/resource_type/NHD0-W6SY";
               break;
             default:
               resourceuri = "";
@@ -3598,15 +3551,18 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           return invalid_emails;
         }
         emails.each(function (idx) {
-          email = emails[idx]
-          result = re.test(String(email.text).toLowerCase());
+          mail_info = emails[idx]
+          value = mail_info.attributes[1]['value'].split('_')
+          author_id = value[0]
+          mail = value[1]
+          result = re.test(String(mail).toLowerCase());
           if (result) {
             $scope.feedback_emails.push({
-              "author_id": email.attributes[1]['value'],
-              "email": email.text
+              "author_id": author_id,
+              "email": mail
             })
           } else {
-            invalid_emails.push(email.text);
+            invalid_emails.push(mail);
           }
         });
         return invalid_emails;

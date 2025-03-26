@@ -592,7 +592,9 @@ def get_record_in_es_of_index(index_id, recursively=True):
     @param index_id:
     @return:
     """
+    from weko_search_ui.utils import execute_search_with_pagination
     from .api import Indexes
+
     if recursively:
         child_idx = Indexes.get_child_list_recursive(index_id)
     else:
@@ -601,6 +603,7 @@ def get_record_in_es_of_index(index_id, recursively=True):
     query_string = "relation_version_is_last:true"
     search = RecordsSearch(
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
+    search = search.sort({"control_number": {"order": "asc"}})
     must_query = [
         QueryString(query=query_string),
         Q("terms", path=child_idx),
@@ -612,9 +615,7 @@ def get_record_in_es_of_index(index_id, recursively=True):
     search = search.query(
         Bool(filter=must_query)
     )
-    records = search.execute().to_dict().get('hits', {}).get('hits', [])
-
-    return records
+    return execute_search_with_pagination(search, max_result_size=-1)
 
 
 def check_doi_in_list_record_es(index_id):
@@ -818,15 +819,18 @@ def check_doi_in_index_and_child_index(index_id, recursively=True):
     Args:
         index_id (list): Record list.
     """
+    from weko_search_ui.utils import execute_search_with_pagination
     from .api import Indexes
 
     if recursively:
         child_idx = Indexes.get_child_list_recursive(index_id)
     else:
         child_idx = [index_id]
+
     query_string = "relation_version_is_last:true AND publish_status: {}".format(PublishStatus.PUBLIC.value)
     search = RecordsSearch(
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
+    search = search.sort({"control_number": {"order": "asc"}})
     must_query = [
         QueryString(query=query_string),
         Q("terms", path=child_idx),
@@ -836,8 +840,7 @@ def check_doi_in_index_and_child_index(index_id, recursively=True):
     search = search.query(
         Bool(filter=must_query)
     )
-    records = search.execute().to_dict().get('hits', {}).get('hits', [])
-    return records
+    return execute_search_with_pagination(search, max_result_size=-1)
 
 
 def __get_redis_store():
@@ -983,7 +986,7 @@ def perform_delete_index(index_id, record_class, action: str):
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        current_app.logger.erorr(e)
+        current_app.logger.error(e)
         msg = 'Failed to delete index.'
     finally:
         if is_unlock:
@@ -1014,19 +1017,21 @@ def get_editing_items_in_index(index_id, recursively=False):
     @return:
     """
     from weko_items_ui.utils import check_item_is_being_edit
-    from weko_workflow.utils import check_an_item_is_locked
+    from weko_workflow.utils import bulk_check_an_item_is_locked
 
     result = []
     records = get_record_in_es_of_index(index_id, recursively)
-    for record in records:
-        item_id = record.get('_source', {}).get(
-            '_item_metadata', {}).get('control_number')
-        if check_item_is_being_edit(
-            PersistentIdentifier.get('recid', item_id)) or \
-                check_an_item_is_locked(int(item_id)):
+    item_ids = [
+        record.get('_source', {}).get('_item_metadata', {}).get('control_number')
+        for record in records
+    ]
+    for item_id in item_ids:
+        if check_item_is_being_edit(PersistentIdentifier.get('recid', item_id)):
             result.append(item_id)
 
-    return result
+    result.extend(bulk_check_an_item_is_locked(item_ids))
+
+    return sorted(list(set(result)))
 
 def save_index_trees_to_redis(tree, lang=None):
     """save inde_tree to redis for roles

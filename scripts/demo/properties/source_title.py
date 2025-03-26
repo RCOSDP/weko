@@ -16,20 +16,20 @@ mapping = {
     "display_lang_type": "",
     "jpcoar_v1_mapping": {
         "sourceTitle": {
-            "@attributes": {"xml:lang": "subitem_record_name_language"},
-            "@value": "subitem_record_name",
+            "@attributes": {"xml:lang": "subitem_source_title_language"},
+            "@value": "subitem_source_title",
         }
     },
     "jpcoar_mapping": {
         "sourceTitle": {
-            "@attributes": {"xml:lang": "subitem_record_name_language"},
-            "@value": "subitem_record_name",
+            "@attributes": {"xml:lang": "subitem_source_title_language"},
+            "@value": "subitem_source_title",
         }
     },
     "junii2_mapping": "",
     "lido_mapping": "",
     "lom_mapping": "",
-    "oai_dc_mapping": {"identifier": {"@value": "subitem_record_name"}},
+    "oai_dc_mapping": {"identifier": {"@value": "subitem_source_title"}},
     "spase_mapping": "",
 }
 
