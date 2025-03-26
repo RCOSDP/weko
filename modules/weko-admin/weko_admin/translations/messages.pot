@@ -1647,3 +1647,60 @@ msgstr "本処理の実行にはかなりの時間がかかることが予想さ
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "completed"
 msgstr "処理が完了しました。"
+
+msgid "TSV/CSV"
+msgstr "TSV/CSV"
+
+msgid "XML"
+msgstr "XML"
+
+msgid "JSON-LD"
+msgstr "JSON-LD"
+
+msgid "Active"
+msgstr "アクティブ"
+
+msgid "Registration Type"
+msgstr "登録方式"
+
+msgid "Worlflow"
+msgstr "ワークフロー"
+
+msgid "Save"
+msgstr "保存"
+
+msgid "Add Setting"
+msgstr "設定追加"
+
+msgid "Display Numbe"
+msgstr "表示件数"
+
+msgid "Edit"
+msgstr "編集"
+
+msgid "Application"
+msgstr "アプリケーション"
+
+msgid "Mapping"
+msgstr "マッピング"
+
+msgid "Metadata API"
+msgstr "メタデータAPI"
+
+msgid "Cancel"
+msgstr "取り消し"
+
+msgid "Delete"
+msgstr "削除"
+
+msgid "Unapproved Items Exit"
+msgstr "このアプリケーションを使用するワークフローに未承認のアイテムがあります。すべて承認されるまで、設定の変更はできません。"
+
+msgid "WorkFlow Cautionary Note"
+msgstr "選択したワークフローに紐づくアイテムタイプのみ登録可能となります"
+
+msgid "Active Message"
+msgstr "有効"
+
+msgid "Inactive Message"
+msgstr "無効"

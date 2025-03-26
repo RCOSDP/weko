@@ -742,3 +742,9 @@ WEKO_SEARCH_UI_FACET_LANG_DISP_FLG = False
 WEKO_SEARCH_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 
 WEKO_SEARCH_UI_RESULT_TMP_PREFIX = 'weko_search_result_list_'
+
+SWORD_METADATA_FILE = "metadata/sword.json"
+""" Metadata file name for SWORDBagIt. """
+
+ROCRATE_METADATA_FILE = "data/ro-crate-metadata.json"
+""" Metadata file name for RO-Crate+Bagit. """

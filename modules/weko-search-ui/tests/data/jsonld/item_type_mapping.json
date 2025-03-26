@@ -1,0 +1,1159 @@
+{
+  "pubdate": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": "",
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": ""
+  },
+  "system_file": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "system_file": {
+        "URI": {
+          "@value": "subitem_systemfile_filename_uri",
+          "@attributes": {
+            "label": "subitem_systemfile_filename_label",
+            "objectType": "subitem_systemfile_filename_type"
+          }
+        },
+        "date": {
+          "@value": "subitem_systemfile_datetime_date",
+          "@attributes": {
+            "dateType": "subitem_systemfile_datetime_type"
+          }
+        },
+        "extent": {
+          "@value": "subitem_systemfile_size"
+        },
+        "version": {
+          "@value": "subitem_systemfile_version"
+        },
+        "mimeType": {
+          "@value": "subitem_systemfile_mimetype"
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "system_file": {
+        "URI": {
+          "@value": "subitem_systemfile_filename_uri",
+          "@attributes": {
+            "label": "subitem_systemfile_filename_label",
+            "objectType": "subitem_systemfile_filename_type"
+          }
+        },
+        "date": {
+          "@value": "subitem_systemfile_datetime_date",
+          "@attributes": {
+            "dateType": "subitem_systemfile_datetime_type"
+          }
+        },
+        "extent": {
+          "@value": "subitem_systemfile_size"
+        },
+        "version": {
+          "@value": "subitem_systemfile_version"
+        },
+        "mimeType": {
+          "@value": "subitem_systemfile_mimetype"
+        }
+      }
+    }
+  },
+  "item_30001_file22": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "file": {
+        "URI": {
+          "@value": "url.url",
+          "@attributes": {
+            "label": "url.label",
+            "objectType": "url.objectType"
+          }
+        },
+        "date": {
+          "@value": "fileDate.fileDateValue",
+          "@attributes": {
+            "dateType": "fileDate.fileDateType"
+          }
+        },
+        "extent": {
+          "@value": "filesize.value"
+        },
+        "version": {
+          "@value": "version"
+        },
+        "mimeType": {
+          "@value": "format"
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "file": {
+        "URI": {
+          "@value": "url.url",
+          "@attributes": {
+            "label": "url.label",
+            "objectType": "url.objectType"
+          }
+        },
+        "date": {
+          "@value": "fileDate.fileDateValue",
+          "@attributes": {
+            "dateType": "fileDate.fileDateType"
+          }
+        },
+        "extent": {
+          "@value": "filesize.value"
+        },
+        "version": {
+          "@value": "version"
+        },
+        "mimeType": {
+          "@value": "format"
+        }
+      }
+    }
+  },
+  "item_30001_title0": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "title": {
+        "@value": "subitem_title",
+        "@attributes": {
+          "xml:lang": "subitem_title_language"
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": {
+      "title": {
+        "@value": "subitem_title"
+      }
+    },
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "title": {
+        "@value": "subitem_title",
+        "@attributes": {
+          "xml:lang": "subitem_title_language"
+        }
+      }
+    }
+  },
+  "item_30001_rights5": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "rights": {
+        "@value": "subitem_rights",
+        "@attributes": {
+          "xml:lang": "subitem_rights_language",
+          "rdf:resource": "subitem_rights_resource"
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": {
+      "rights": {
+        "@value": "subitem_rights"
+      }
+    },
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "rights": {
+        "@value": "subitem_rights",
+        "@attributes": {
+          "xml:lang": "subitem_rights_language",
+          "rdf:resource": "subitem_rights_resource"
+        }
+      }
+    }
+  },
+  "item_30001_creator2": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "creator": {
+        "givenName": {
+          "@value": "givenNames.givenName",
+          "@attributes": {
+            "xml:lang": "givenNames.givenNameLang"
+          }
+        },
+        "familyName": {
+          "@value": "familyNames.familyName",
+          "@attributes": {
+            "xml:lang": "familyNames.familyNameLang"
+          }
+        },
+        "affiliation": {
+          "nameIdentifier": {
+            "@value": "creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifier",
+            "@attributes": {
+              "nameIdentifierURI": "creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifierURI",
+              "nameIdentifierScheme": "creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifierScheme"
+            }
+          },
+          "affiliationName": {
+            "@value": "creatorAffiliations.affiliationNames.affiliationName",
+            "@attributes": {
+              "xml:lang": "creatorAffiliations.affiliationNames.affiliationNameLang"
+            }
+          }
+        },
+        "creatorName": {
+          "@value": "creatorNames.creatorName",
+          "@attributes": {
+            "xml:lang": "creatorNames.creatorNameLang"
+          }
+        },
+        "nameIdentifier": {
+          "@value": "nameIdentifiers.nameIdentifier",
+          "@attributes": {
+            "nameIdentifierURI": "nameIdentifiers.nameIdentifierURI",
+            "nameIdentifierScheme": "nameIdentifiers.nameIdentifierScheme"
+          }
+        },
+        "creatorAlternative": {
+          "@value": "creatorAlternatives.creatorAlternative",
+          "@attributes": {
+            "xml:lang": "creatorAlternatives.creatorAlternativeLang"
+          }
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": {
+      "creator": {
+        "@value": "creatorNames.creatorName,nameIdentifiers.nameIdentifier"
+      }
+    },
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "creator": {
+        "givenName": {
+          "@value": "givenNames.givenName",
+          "@attributes": {
+            "xml:lang": "givenNames.givenNameLang"
+          }
+        },
+        "familyName": {
+          "@value": "familyNames.familyName",
+          "@attributes": {
+            "xml:lang": "familyNames.familyNameLang"
+          }
+        },
+        "affiliation": {
+          "nameIdentifier": {
+            "@value": "creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifier",
+            "@attributes": {
+              "nameIdentifierURI": "creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifierURI",
+              "nameIdentifierScheme": "creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifierScheme"
+            }
+          },
+          "affiliationName": {
+            "@value": "creatorAffiliations.affiliationNames.affiliationName",
+            "@attributes": {
+              "xml:lang": "creatorAffiliations.affiliationNames.affiliationNameLang"
+            }
+          }
+        },
+        "creatorName": {
+          "@value": "creatorNames.creatorName",
+          "@attributes": {
+            "xml:lang": "creatorNames.creatorNameLang"
+          }
+        },
+        "nameIdentifier": {
+          "@value": "nameIdentifiers.nameIdentifier",
+          "@attributes": {
+            "nameIdentifierURI": "nameIdentifiers.nameIdentifierURI",
+            "nameIdentifierScheme": "nameIdentifiers.nameIdentifierScheme"
+          }
+        },
+        "creatorAlternative": {
+          "@value": "creatorAlternatives.creatorAlternative",
+          "@attributes": {
+            "xml:lang": "creatorAlternatives.creatorAlternativeLang"
+          }
+        }
+      }
+    }
+  },
+  "item_30001_subject7": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "subject": {
+        "@value": "subitem_subject",
+        "@attributes": {
+          "xml:lang": "subitem_subject_language",
+          "subjectURI": "subitem_subject_uri",
+          "subjectScheme": "subitem_subject_scheme"
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": {
+      "subject": {
+        "@value": "subitem_subject"
+      }
+    },
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "subject": {
+        "@value": "subitem_subject",
+        "@attributes": {
+          "xml:lang": "subitem_subject_language",
+          "subjectURI": "subitem_subject_uri",
+          "subjectScheme": "subitem_subject_scheme"
+        }
+      }
+    }
+  },
+  "item_30001_heading23": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": "",
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": ""
+  },
+  "item_30001_language10": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "language": {
+        "@value": "subitem_language"
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": {
+      "language": {
+        "@value": "subitem_language"
+      }
+    },
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "language": {
+        "@value": "subitem_language"
+      }
+    }
+  },
+  "item_30001_publisher9": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "publisher": {
+        "@value": "subitem_publisher",
+        "@attributes": {
+          "xml:lang": "subitem_publisher_language"
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": {
+      "publisher": {
+        "@value": "subitem_publisher"
+      }
+    },
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "publisher": {
+        "@value": "subitem_publisher",
+        "@attributes": {
+          "xml:lang": "subitem_publisher_language"
+        }
+      }
+    }
+  },
+  "item_30001_relation14": {
+    "jpcoar_mapping": {
+      "relation": {
+        "@attributes": {
+          "relationType": "subitem_relation_type"
+        },
+        "relatedTitle": {
+          "@value": "subitem_relation_name.subitem_relation_name_text",
+          "@attributes": {
+            "xml:lang": "subitem_relation_name.subitem_relation_name_language"
+          }
+        },
+        "relatedIdentifier": {
+          "@value": "subitem_relation_type_id.subitem_relation_type_id_text",
+          "@attributes": {
+            "identifierType": "subitem_relation_type_id.subitem_relation_type_select"
+          }
+        }
+      }
+    },
+    "oai_dc_mapping": {
+      "relation": {
+        "@value": "subitem_relation_type_id.subitem_relation_type_id_text,subitem_relation_name.subitem_relation_name_text"
+      }
+    },
+    "jpcoar_v1_mapping": {
+      "relation": {
+        "@attributes": {
+          "relationType": "subitem_relation_type"
+        },
+        "relatedTitle": {
+          "@value": "subitem_relation_name.subitem_relation_name_text",
+          "@attributes": {
+            "xml:lang": "subitem_relation_name.subitem_relation_name_language"
+          }
+        },
+        "relatedIdentifier": {
+          "@value": "subitem_relation_type_id.subitem_relation_type_id_text",
+          "@attributes": {
+            "identifierType": "subitem_relation_type_id.subitem_relation_type_select"
+          }
+        }
+      }
+    }
+  },
+  "system_identifier_doi": {
+    "ddi_mapping": {
+      "stdyDscr": {
+        "citation": {
+          "holdings": {
+            "@attributes": {
+              "URI": "subitem_systemidt_identifier"
+            }
+          }
+        }
+      }
+    },
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "identifier": {
+        "@value": "subitem_systemidt_identifier",
+        "@attributes": {
+          "identifierType": "subitem_systemidt_identifier_type"
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": {
+      "identifier": {
+        "@value": "subitem_systemidt_identifier"
+      }
+    },
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "identifier": {
+        "@value": "subitem_systemidt_identifier",
+        "@attributes": {
+          "identifierType": "subitem_systemidt_identifier_type"
+        }
+      }
+    }
+  },
+  "system_identifier_hdl": {
+    "ddi_mapping": {
+      "stdyDscr": {
+        "citation": {
+          "holdings": {
+            "@attributes": {
+              "URI": "subitem_systemidt_identifier"
+            }
+          }
+        }
+      }
+    },
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "identifier": {
+        "@value": "subitem_systemidt_identifier",
+        "@attributes": {
+          "identifierType": "subitem_systemidt_identifier_type"
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": {
+      "identifier": {
+        "@value": "subitem_systemidt_identifier"
+      }
+    },
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "identifier": {
+        "@value": "subitem_systemidt_identifier",
+        "@attributes": {
+          "identifierType": "subitem_systemidt_identifier_type"
+        }
+      }
+    }
+  },
+  "system_identifier_uri": {
+    "ddi_mapping": {
+      "stdyDscr": {
+        "citation": {
+          "holdings": {
+            "@attributes": {
+              "URI": "subitem_systemidt_identifier"
+            }
+          }
+        }
+      }
+    },
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "identifier": {
+        "@value": "subitem_systemidt_identifier",
+        "@attributes": {
+          "identifierType": "subitem_systemidt_identifier_type"
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": {
+      "identifier": {
+        "@value": "subitem_systemidt_identifier"
+      }
+    },
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "identifier": {
+        "@value": "subitem_systemidt_identifier",
+        "@attributes": {
+          "identifierType": "subitem_systemidt_identifier_type"
+        }
+      }
+    }
+  },
+  "item_30001_contributor3": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "contributor": {
+        "givenName": {
+          "@value": "givenNames.givenName",
+          "@attributes": {
+            "xml:lang": "givenNames.givenNameLang"
+          }
+        },
+        "familyName": {
+          "@value": "familyNames.familyName",
+          "@attributes": {
+            "xml:lang": "familyNames.familyNameLang"
+          }
+        },
+        "@attributes": {
+          "contributorType": "contributorType"
+        },
+        "affiliation": {
+          "nameIdentifier": {
+            "@value": "contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationNameIdentifier",
+            "@attributes": {
+              "nameIdentifierURI": "nameIdentifiers.nameIdentifierURI",
+              "nameIdentifierScheme": "contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationScheme"
+            }
+          },
+          "affiliationName": {
+            "@value": "contributorAffiliations.contributorAffiliationNames.contributorAffiliationName",
+            "@attributes": {
+              "xml:lang": "contributorAffiliations.contributorAffiliationNames.contributorAffiliationNameLang"
+            }
+          }
+        },
+        "nameIdentifier": {
+          "@value": "nameIdentifiers.nameIdentifier",
+          "@attributes": {
+            "nameIdentifierURI": "nameIdentifiers.nameIdentifierURI",
+            "nameIdentifierScheme": "nameIdentifiers.nameIdentifierScheme"
+          }
+        },
+        "contributorName": {
+          "@value": "contributorNames.contributorName",
+          "@attributes": {
+            "xml:lang": "contributorNames.lang"
+          }
+        },
+        "contributorAlternative": {
+          "@value": "contributorAlternatives.contributorAlternative",
+          "@attributes": {
+            "xml:lang": "contributorAlternatives.contributorAlternativeLang"
+          }
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": {
+      "contributor": {
+        "@value": "contributorNames.contributorName,nameIdentifiers.nameIdentifier"
+      }
+    },
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "contributor": {
+        "givenName": {
+          "@value": "givenNames.givenName",
+          "@attributes": {
+            "xml:lang": "givenNames.givenNameLang"
+          }
+        },
+        "familyName": {
+          "@value": "familyNames.familyName",
+          "@attributes": {
+            "xml:lang": "familyNames.familyNameLang"
+          }
+        },
+        "@attributes": {
+          "contributorType": "contributorType"
+        },
+        "affiliation": {
+          "nameIdentifier": {
+            "@value": "contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationNameIdentifier",
+            "@attributes": {
+              "nameIdentifierURI": "nameIdentifiers.nameIdentifierURI",
+              "nameIdentifierScheme": "contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationScheme"
+            }
+          },
+          "affiliationName": {
+            "@value": "contributorAffiliations.contributorAffiliationNames.contributorAffiliationName",
+            "@attributes": {
+              "xml:lang": "contributorAffiliations.contributorAffiliationNames.contributorAffiliationNameLang"
+            }
+          }
+        },
+        "nameIdentifier": {
+          "@value": "nameIdentifiers.nameIdentifier",
+          "@attributes": {
+            "nameIdentifierURI": "nameIdentifiers.nameIdentifierURI",
+            "nameIdentifierScheme": "nameIdentifiers.nameIdentifierScheme"
+          }
+        },
+        "contributorName": {
+          "@value": "contributorNames.contributorName",
+          "@attributes": {
+            "xml:lang": "contributorNames.lang"
+          }
+        },
+        "contributorAlternative": {
+          "@value": "contributorAlternatives.contributorAlternative",
+          "@attributes": {
+            "xml:lang": "contributorAlternatives.contributorAlternativeLang"
+          }
+        }
+      }
+    }
+  },
+  "item_30001_description8": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "description": {
+        "@value": "subitem_description",
+        "@attributes": {
+          "xml:lang": "subitem_description_language",
+          "descriptionType": "subitem_description_type"
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": {
+      "description": {
+        "@value": "subitem_description"
+      }
+    },
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "description": {
+        "@value": "subitem_description",
+        "@attributes": {
+          "xml:lang": "subitem_description_language",
+          "descriptionType": "subitem_description_type"
+        }
+      }
+    }
+  },
+  "item_30001_degree_name19": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "degreeName": {
+        "@value": "subitem_degreename",
+        "@attributes": {
+          "xml:lang": "subitem_degreename_language"
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": {
+      "description": {
+        "@value": "subitem_degreename"
+      }
+    },
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "degreeName": {
+        "@value": "subitem_degreename",
+        "@attributes": {
+          "xml:lang": "subitem_degreename_language"
+        }
+      }
+    }
+  },
+  "item_30001_access_rights4": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "accessRights": {
+        "@value": "subitem_access_right",
+        "@attributes": {
+          "rdf:resource": "subitem_access_right_uri"
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": {
+      "rights": {
+        "@value": "subitem_access_right"
+      }
+    },
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "accessRights": {
+        "@value": "subitem_access_right",
+        "@attributes": {
+          "rdf:resource": "subitem_access_right_uri"
+        }
+      }
+    }
+  },
+  "item_30001_date_granted20": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "dateGranted": {
+        "@value": "subitem_dategranted"
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": {
+      "date": {
+        "@value": "subitem_dategranted"
+      }
+    },
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "dateGranted": {
+        "@value": "subitem_dategranted"
+      }
+    }
+  },
+  "item_30001_rights_holder6": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "rightsHolder": {
+        "nameIdentifier": {
+          "@value": "nameIdentifiers.nameIdentifier",
+          "@attributes": {
+            "nameIdentifierURI": "nameIdentifiers.nameIdentifierURI",
+            "nameIdentifierScheme": "nameIdentifiers.nameIdentifierScheme"
+          }
+        },
+        "rightsHolderName": {
+          "@value": "rightHolderNames.rightHolderName",
+          "@attributes": {
+            "xml:lang": "rightHolderNames.rightHolderLanguage"
+          }
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "rightsHolder": {
+        "nameIdentifier": {
+          "@value": "nameIdentifiers.nameIdentifier",
+          "@attributes": {
+            "nameIdentifierURI": "nameIdentifiers.nameIdentifierURI",
+            "nameIdentifierScheme": "nameIdentifiers.nameIdentifierScheme"
+          }
+        },
+        "rightsHolderName": {
+          "@value": "rightHolderNames.rightHolderName",
+          "@attributes": {
+            "xml:lang": "rightHolderNames.rightHolderLanguage"
+          }
+        }
+      }
+    }
+  },
+  "item_30001_version_type12": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "versiontype": {
+        "@value": "subitem_version_type",
+        "@attributes": {
+          "rdf:resource": "subitem_version_resource"
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": {
+      "type": {
+        "@value": "subitem_version_type"
+      }
+    },
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "versiontype": {
+        "@value": "subitem_version_type",
+        "@attributes": {
+          "rdf:resource": "subitem_version_resource"
+        }
+      }
+    }
+  },
+  "item_30001_resource_type11": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "type": {
+        "@value": "resourcetype",
+        "@attributes": {
+          "rdf:resource": "resourceuri"
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": {
+      "type": {
+        "@value": "resourcetype"
+      }
+    },
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "type": {
+        "@value": "resourcetype",
+        "@attributes": {
+          "rdf:resource": "resourceuri"
+        }
+      }
+    }
+  },
+  "item_30001_degree_grantor21": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "degreeGrantor": {
+        "nameIdentifier": {
+          "@value": "subitem_degreegrantor_identifie.subitem_degreegrantor_identifier_name",
+          "@attributes": {
+            "nameIdentifierScheme": "subitem_degreegrantor_identifie.subitem_degreegrantor_identifier_scheme"
+          }
+        },
+        "degreeGrantorName": {
+          "@value": "subitem_degreegrantor.subitem_degreegrantor_name",
+          "@attributes": {
+            "xml:lang": "subitem_degreegrantor.subitem_degreegrantor_language"
+          }
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "degreeGrantor": {
+        "nameIdentifier": {
+          "@value": "subitem_degreegrantor_identifie.subitem_degreegrantor_identifier_name",
+          "@attributes": {
+            "nameIdentifierScheme": "subitem_degreegrantor_identifie.subitem_degreegrantor_identifier_scheme"
+          }
+        },
+        "degreeGrantorName": {
+          "@value": "subitem_degreegrantor.subitem_degreegrantor_name",
+          "@attributes": {
+            "xml:lang": "subitem_degreegrantor.subitem_degreegrantor_language"
+          }
+        }
+      }
+    }
+  },
+  "item_30001_alternative_title1": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "alternative": {
+        "@value": "subitem_alternative_title",
+        "@attributes": {
+          "xml:lang": "subitem_alternative_title_language"
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": {
+      "title": {
+        "@value": "subitem_alternative_title"
+      }
+    },
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "alternative": {
+        "@value": "subitem_alternative_title",
+        "@attributes": {
+          "xml:lang": "subitem_alternative_title_language"
+        }
+      }
+    }
+  },
+  "item_30001_funding_reference15": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "fundingReference": {
+        "awardTitle": {
+          "@value": "subitem_award_titles.subitem_award_title",
+          "@attributes": {
+            "xml:lang": "subitem_award_titles.subitem_award_title_language"
+          }
+        },
+        "funderName": {
+          "@value": "subitem_funder_names.subitem_funder_name",
+          "@attributes": {
+            "xml:lang": "subitem_funder_names.subitem_funder_name_language"
+          }
+        },
+        "awardNumber": {
+          "@value": "subitem_award_numbers.subitem_award_number",
+          "@attributes": {
+            "awardURI": "subitem_award_numbers.subitem_award_uri"
+          }
+        },
+        "funderIdentifier": {
+          "@value": "subitem_funder_identifiers.subitem_funder_identifier",
+          "@attributes": {
+            "funderIdentifierType": "subitem_funder_identifiers.subitem_funder_identifier_type"
+          }
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "fundingReference": {
+        "awardTitle": {
+          "@value": "subitem_award_titles.subitem_award_title",
+          "@attributes": {
+            "xml:lang": "subitem_award_titles.subitem_award_title_language"
+          }
+        },
+        "funderName": {
+          "@value": "subitem_funder_names.subitem_funder_name",
+          "@attributes": {
+            "xml:lang": "subitem_funder_names.subitem_funder_name_language"
+          }
+        },
+        "awardNumber": {
+          "@value": "subitem_award_numbers.subitem_award_number",
+          "@attributes": {
+            "awardURI": "subitem_award_numbers.subitem_award_uri"
+          }
+        },
+        "funderIdentifier": {
+          "@value": "subitem_funder_identifiers.subitem_funder_identifier",
+          "@attributes": {
+            "funderIdentifierType": "subitem_funder_identifiers.subitem_funder_identifier_type"
+          }
+        }
+      }
+    }
+  },
+  "item_30001_source_identifier16": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "sourceIdentifier": {
+        "@value": "subitem_source_identifier",
+        "@attributes": {
+          "identifierType": "subitem_source_identifier_type"
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": {
+      "identifier": {
+        "@value": "subitem_source_identifier"
+      }
+    },
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "sourceIdentifier": {
+        "@value": "subitem_source_identifier",
+        "@attributes": {
+          "identifierType": "subitem_source_identifier_type"
+        }
+      }
+    }
+  },
+  "item_30001_dissertation_number18": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "dissertationNumber": {
+        "@value": "subitem_dissertationnumber"
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": {
+      "identifier": {
+        "@value": "subitem_dissertationnumber"
+      }
+    },
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "dissertationNumber": {
+        "@value": "subitem_dissertationnumber"
+      }
+    }
+  },
+  "item_30001_identifier_registration13": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "identifierRegistration": {
+        "@value": "subitem_identifier_reg_text",
+        "@attributes": {
+          "identifierType": "subitem_identifier_reg_type"
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "identifierRegistration": {
+        "@value": "subitem_identifier_reg_text",
+        "@attributes": {
+          "identifierType": "subitem_identifier_reg_type"
+        }
+      }
+    }
+  },
+  "item_30001_bibliographic_information17": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "date": {
+        "@value": "bibliographicIssueDates.bibliographicIssueDate",
+        "@attributes": {
+          "dateType": "bibliographicIssueDates.bibliographicIssueDateType"
+        }
+      },
+      "issue": {
+        "@value": "bibliographicIssueNumber"
+      },
+      "volume": {
+        "@value": "bibliographicVolumeNumber"
+      },
+      "pageEnd": {
+        "@value": "bibliographicPageEnd"
+      },
+      "numPages": {
+        "@value": "bibliographicNumberOfPages"
+      },
+      "pageStart": {
+        "@value": "bibliographicPageStart"
+      },
+      "sourceTitle": {
+        "@value": "bibliographic_titles.bibliographic_title",
+        "@attributes": {
+          "xml:lang": "bibliographic_titles.bibliographic_titleLang"
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": {
+      "date": {
+        "@value": "bibliographicIssueDates.bibliographicIssueDate"
+      },
+      "identifier": {
+        "@value": "bibliographic_titles.bibliographic_title,bibliographicIssueNumber,bibliographicVolumeNumber,bibliographicPageEnd,bibliographicPageStart"
+      }
+    },
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "date": {
+        "@value": "bibliographicIssueDates.bibliographicIssueDate",
+        "@attributes": {
+          "dateType": "bibliographicIssueDates.bibliographicIssueDateType"
+        }
+      },
+      "issue": {
+        "@value": "bibliographicIssueNumber"
+      },
+      "volume": {
+        "@value": "bibliographicVolumeNumber"
+      },
+      "pageEnd": {
+        "@value": "bibliographicPageEnd"
+      },
+      "numPages": {
+        "@value": "bibliographicNumberOfPages"
+      },
+      "pageStart": {
+        "@value": "bibliographicPageStart"
+      },
+      "sourceTitle": {
+        "@value": "bibliographic_titles.bibliographic_title",
+        "@attributes": {
+          "xml:lang": "bibliographic_titles.bibliographic_titleLang"
+        }
+      }
+    }
+  }
+}

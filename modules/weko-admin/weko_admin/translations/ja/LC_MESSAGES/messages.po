@@ -193,13 +193,29 @@ msgstr "開"
 msgid "OpenClose Close"
 msgstr "閉"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:67
 msgid "DisplayNumber Validation1"
 msgstr "表示件数は1以上99以下の整数値で入力する必要があります。"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:68
 msgid "DisplayNumber Validation2"
 msgstr "CheckboxListを選択した場合は表示件数を入力する必要があります。"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
+msgid "Search Condition"
+msgstr "検索条件"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
+msgid "Search Condition or"
+msgstr "OR"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:66
+msgid "Search Condition and"
+msgstr "AND"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:69
+msgid "NameEN Validation"
+msgstr "項目名（英）の値は使用出来ません。"
 
 #: weko_admin/admin.py:1210 weko_admin/admin.py:1237 weko_admin/admin.py:1246
 #: weko_admin/admin.py:1255 weko_admin/admin.py:1264 weko_admin/admin.py:1273
@@ -285,16 +301,6 @@ msgstr ""
 #, fuzzy
 msgid "Faceted Search"
 msgstr "ファセット検索一覧"
-
-#: weko_admin/admin.py:1357
-#: weko_admin/templates/weko_admin/admin/sword_api_setting.html:111
-msgid "Required item is not inputted"
-msgstr "必須項目がありません。"
-
-#: weko_admin/admin.py:1359
-#: weko_admin/templates/weko_admin/admin/sword_api_setting.html:113
-msgid "The selected Workflow has been deleted. Please recheck and input."
-msgstr "選択されたワークフローは削除されました。ご確認の上、再度入力してください。"
 
 #: weko_admin/api.py:82
 #, fuzzy
@@ -1665,6 +1671,45 @@ msgstr "本処理の実行にはかなりの時間がかかることが予想さ
 msgid "completed"
 msgstr "処理が完了しました。"
 
+msgid "TSV/CSV"
+msgstr "TSV/CSV"
+
+msgid "XML"
+msgstr "XML"
+
+msgid "JSON-LD"
+msgstr "JSON-LD"
+
+msgid "Registration Type"
+msgstr "登録方式"
+
+msgid "Worlflow"
+msgstr "ワークフロー"
+
+msgid "Add Setting"
+msgstr "設定追加"
+
+msgid "Display Numbe"
+msgstr "表示件数"
+
+msgid "Application"
+msgstr "アプリケーション"
+
+msgid "Metadata API"
+msgstr "メタデータAPI"
+
+msgid "Unapproved Items Exit"
+msgstr "このアプリケーションを使用するワークフローに未承認のアイテムがあります。すべて承認されるまで、設定の変更はできません。"
+
+msgid "WorkFlow Cautionary Note"
+msgstr "選択したワークフローに紐づくアイテムタイプのみ登録可能となります"
+
+msgid "Active Message"
+msgstr "有効"
+
+msgid "Inactive Message"
+msgstr "無効"
+
 #~ msgid "Title_Asc"
 #~ msgstr "タイトル（昇順）"
 
@@ -1794,47 +1839,15 @@ msgstr "処理が完了しました。"
 #~ msgid "Facet Search List"
 #~ msgstr "ファセット検索一覧"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:59
-msgid "UiType"
-msgstr "UI"
+#~ msgid "Required item is not inputted"
+#~ msgstr "必須項目がありません。"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:60
-msgid "DisplayNumber"
-msgstr "表示件数"
+#~ msgid "The selected Workflow has been deleted. Please recheck and input."
+#~ msgstr "選択されたワークフローは削除されました。ご確認の上、再度入力してください。"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:61
-msgid "OpenClose"
-msgstr "開閉状態"
+#~ msgid "Accept"
+#~ msgstr "受け入れ"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:62
-msgid "OpenClose Open"
-msgstr "開"
+#~ msgid "active"
+#~ msgstr "有効"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:63
-msgid "OpenClose Close"
-msgstr "閉"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:67
-#, python-format
-msgid "DisplayNumber Validation1"
-msgstr "表示件数は1以上99以下の整数値で入力する必要があります。"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:68
-msgid "DisplayNumber Validation2"
-msgstr "CheckboxListを選択した場合は表示件数を入力する必要があります。"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
-msgid "Search Condition"
-msgstr "検索条件"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
-msgid "Search Condition or"
-msgstr "OR"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:66
-msgid "Search Condition and"
-msgstr "AND"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:69
-msgid "NameEN Validation"
-msgstr "項目名（英）の値は使用出来ません。"

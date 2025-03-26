@@ -325,6 +325,77 @@ class ItemTypeMapping(db.Model, Timestamp):
     }
 
 
+class ItemTypeJsonldMapping(db.Model, Timestamp):
+    """Jsonld Mapping Model
+
+    Mapping for JSON-LD matadata to WEKO item type.
+    When updating the mapping, the verion_id is incremented and the previous
+    mapping moves to the history table.
+
+    Operation methods are defined in api.py.
+
+    Columns:
+        `id` (int): ID of the mapping. Primary key, autoincrement.
+        `name` (str): Name of the mapping.
+        `mapping` (JSON): Mapping in JSON format.
+        `item_type_id` (str): Target itemtype of the mapping.\
+            Foreign key referencing `ItemType.id`.
+        `version_id` (int): Version ID of the mapping.
+        `is_deleted` (bool): Sofr-delete status of the mapping.
+    """
+
+    # Enables SQLAlchemy-Continuum versioning
+    __versioned__ = {}
+
+    __tablename__ = 'jsonld_mappings'
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+        unique=True,
+        autoincrement=True
+    )
+    """ID of the mapping."""
+
+    name = db.Column(db.String(255), nullable=False)
+    """Name of the mapping."""
+
+    mapping = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=False),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: {},
+        nullable=False
+    )
+    """Mapping in JSON format. Foreign key from ItemType."""
+
+    item_type_id = db.Column(
+        db.Integer(),
+        db.ForeignKey(ItemType.id),
+        nullable=False)
+    """Target itemtype of the mapping."""
+
+    version_id = db.Column(db.Integer, nullable=False)
+    """Version id of the mapping."""
+
+    is_deleted = db.Column(
+        db.Boolean(name='is_deleted'),
+        nullable=False,
+        default=False)
+    """Sofr-delete status of the mapping."""
+
+    __mapper_args__ = {
+        'version_id_col': version_id
+    }
+
+
 class ItemMetadata(db.Model, Timestamp):
     """Represent a record metadata.
 
