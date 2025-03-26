@@ -203,15 +203,36 @@ def test_get_records_with_set(es_app,db, users):
         )
     
     rec_uuid1 = uuid.uuid4()
-    rec_data1 = {"title":["test_item1"],"path":["123"],"_oai":{"id":"oai:test:00001","sets":["123"]},"relation_version_is_last":"true","control_number":"1","publish_status":"0"}
+    rec_data1 = {"title":["test_item1"],
+                 "path":["123"],
+                 "_oai":{"id":"oai:test:00001","sets":["123"]},
+                 "relation_version_is_last":"true",
+                 "control_number":"1",
+                 "publish_status":"0",
+                 "_updated": "2022-01-01T00:00:00"
+                 }
     rec1 = RecordMetadata(id=rec_uuid1,json=rec_data1)
     
     rec_uuid2 = uuid.uuid4()
-    rec_data2 = {"title":["test_item2"],"path":["456"],"_oai":{"id":"oai:test:00002","sets":["456"]},"relation_version_is_last":"true","control_number":"2","publish_status":"0"}
+    rec_data2 = {"title":["test_item2"],
+                 "path":["456"],
+                 "_oai":{"id":"oai:test:00002", "sets":["456"]},
+                 "relation_version_is_last":"true",
+                 "control_number":"2",
+                 "publish_status":"0",
+                 "_updated": "2022-01-01T00:00:00"
+                 }
     rec2 = RecordMetadata(id=rec_uuid2,json=rec_data2)
     
     rec_uuid3 = uuid.uuid4()
-    rec_data3 = {"title":["test_item3"],"path":["789"],"_oai":{"id":"oai:test:00003","sets":["789"]},"relation_version_is_last":"true","control_number":"3","publish_status":"0"}
+    rec_data3 = {"title":["test_item3"],
+                 "path":["789"],
+                 "_oai":{"id":"oai:test:00003", "sets":["789"]},
+                 "relation_version_is_last":"true",
+                 "control_number":"3",
+                 "publish_status":"0",
+                 "_updated": "2022-01-01T00:00:00"
+                 }
     rec3 = RecordMetadata(id=rec_uuid3,json=rec_data3)
     
     db.session.add_all(indexes)
@@ -228,10 +249,9 @@ def test_get_records_with_set(es_app,db, users):
     body1 = dict(id=str(rec_uuid1), body=rec_data1)
     body2 = dict(id=str(rec_uuid2), body=rec_data2)
     body3 = dict(id=str(rec_uuid3), body=rec_data3)
-    es = Elasticsearch("http://{}:9200".format(current_app.config["SEARCH_ELASTIC_HOSTS"]))
-    es.index(**es_info,**body1)
-    es.index(**es_info,**body2)
-    es.index(**es_info,**body3)
+    current_search_client.index(**es_info,**body1)
+    current_search_client.index(**es_info,**body2)
+    current_search_client.index(**es_info,**body3)
     
     comm1 = Community.create(community_id="test_comm", role_id=users[0]["id"],
                             id_user=users[0]["id"], title="test community",
@@ -243,22 +263,39 @@ def test_get_records_with_set(es_app,db, users):
     data = {"set":"123"}
     result = get_records(**data)
     assert result.total == 3
+    result_items = [r for r in result.items]
+    assert result_items[0]["json"]["_source"] == rec_data1
+    assert result_items[1]["json"]["_source"] == rec_data2
+    assert result_items[2]["json"]["_source"] == rec_data3
     
     data = {"set":"123:456"}
     result = get_records(**data)
     assert result.total == 2
+    result_items = [r for r in result.items]
+    assert result_items[0]["json"]["_source"] == rec_data2
+    assert result_items[1]["json"]["_source"] == rec_data3
     
     data = {"set":"123:456:789"}
     result = get_records(**data)
     assert result.total == 1
+    result_items = [r for r in result.items]
+    assert result_items[0]["json"]["_source"] == rec_data3
     
     data = {"set":"user-test_comm"}
     result = get_records(**data)
     assert result.total == 3
+    result_items = [r for r in result.items]
+    assert result_items[0]["json"]["_source"] == rec_data1
+    assert result_items[1]["json"]["_source"] == rec_data2
+    assert result_items[2]["json"]["_source"] == rec_data3
     
     data = {"set":"test_comm"}
     result = get_records(**data)
     assert result.total == 3
+    result_items = [r for r in result.items]
+    assert result_items[0]["json"]["_source"] == rec_data1
+    assert result_items[1]["json"]["_source"] == rec_data2
+    assert result_items[2]["json"]["_source"] == rec_data3
     
     data = {"set":"999"}
     result = get_records(**data)
