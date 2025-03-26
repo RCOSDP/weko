@@ -135,15 +135,3 @@
     </div>
   </div>
   <script>
-    // すべてチェックの処理
-    document.addEventListener('DOMContentLoaded', function () {
-      const checkAll = document.getElementById('check_all');
-      const itemCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
-
-      checkAll.addEventListener('change', function () {
-        itemCheckboxes.forEach(checkbox => {
-          checkbox.checked = checkAll.checked;
-        });
-      });
-    });
-  </script>

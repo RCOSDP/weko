@@ -613,6 +613,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     mountButtons();
     bindRelatedButtons();
+    restoreCheckedItems(); //  チェック状態復元を追加
   }
 
   // 通常のテーブル表示
@@ -635,6 +636,7 @@ document.addEventListener('DOMContentLoaded', function () {
     itemListContainer.appendChild(table);
     mountButtons();
     bindRelatedButtons();
+    restoreCheckedItems(); //  チェック状態復元を追加
   }
 
   // 単一アイテムのHTML生成
