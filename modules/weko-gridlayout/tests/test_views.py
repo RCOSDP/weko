@@ -616,7 +616,7 @@ def test_get_access_counter_record(i18n_app, db, es, monkeypatch):
                           repository_id="test_community01",
                           path="main",
                           current_language="en")
-                test = {"1":{"2024-03-08":{"access_counter":"0","all":{"192.168.56.1":{"count":9,"host":"None","ip":"192.168.56.1"},"count":9},"date":"2024-03-08-2024-03-10"}}}
+                test = {"1":{"2024-03-08":{"access_counter":"0","all":{"count":9},"date":"2024-03-08-2024-03-10"}}}
                 res = client.get(url)
                 assert res.status_code==200
                 assert json.loads(res.data) == test
@@ -643,7 +643,7 @@ def test_get_access_counter_record(i18n_app, db, es, monkeypatch):
                           repository_id="test_community01",
                           path="page01",
                           current_language="en")
-                test = {"2":{"2024-03-08":{"access_counter":"0","all":{"192.168.56.1":{"count":9,"host":"None","ip":"192.168.56.1"},"count":9},"date":"2024-03-08-2024-03-10"}}}
+                test = {"2":{"2024-03-08":{"access_counter":"0","all":{"count":9},"date":"2024-03-08-2024-03-10"}}}
                 res = client.get(url)
                 assert res.status_code==200
                 assert json.loads(res.data) == test
