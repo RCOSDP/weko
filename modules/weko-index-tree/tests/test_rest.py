@@ -748,7 +748,7 @@ class TestIndexManagementAPI:
     
     
     # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexManagementAPI::test_post_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace -p no:warnings
-    def test_post_v1(self, app, db, client_rest, auth_headers_sysadmin, auth_headers_noroleuser, auth_headers_sysadmin_without_scope,create_auth_headers):
+    def test_post_v1(self, app, db, client_rest, auth_headers_sysadmin, auth_headers_noroleuser, auth_headers_sysadmin_without_scope,create_auth_headers,indices_for_api):
         """
         インデックス管理API-インデックス登録
         - 正常系: インデックスの作成が成功するか確認
@@ -822,6 +822,18 @@ class TestIndexManagementAPI:
             invalid_parrent_id["index"]["parent_id"] = 999999
             response = client_rest.post(url, headers=auth_headers_sysadmin,json=invalid_parrent_id)
             assert response.status_code == 404
+            
+            private_parrent_id = deepcopy(json_)
+            private_parrent_id["index"]["parent_id"] = "1740974499997"
+            
+            with patch("weko_index_tree.rest.can_user_access_index", return_value=False):
+                url = "v1/tree/index/"
+                response = client_rest.post(url, headers=auth_headers_sysadmin, json=private_parrent_id)
+                assert response.status_code == 403
+
+            url = "v1/tree/index/"
+            response = client_rest.post(url, headers=auth_headers_sysadmin, json=private_parrent_id)
+            assert response.status_code == 200
             
             # エラー
             with patch("weko_index_tree.api.Indexes.create", return_value=None):
@@ -999,6 +1011,11 @@ class TestIndexManagementAPI:
             response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload)
             assert response.status_code == 200
             
+            with patch("weko_index_tree.rest.can_user_access_index", return_value=False):
+                url = "v1/tree/index/1740974554289"
+                response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload)
+                assert response.status_code == 403
+            
             # VersionNotFoundRESTError
             url = "v2/tree/index/9999999999999"
             response = client_rest.put(url, headers=auth_headers_sysadmin, json={})
@@ -1152,6 +1169,12 @@ class TestIndexManagementAPI:
                 assert response.status_code == 400
                 
                 url = "v1/tree/index/1740974612379"
+                
+                with patch("weko_index_tree.rest.can_user_access_index", return_value=False):
+                    url = "v1/tree/index/1740974612379"
+                    response = client_rest.delete(url, headers=auth_headers_sysadmin)
+                    assert response.status_code == 403
+            
                 
                 with patch("weko_index_tree.api.Indexes.delete", return_value=None):
                     response = client_rest.delete(url, headers=auth_headers_sysadmin)

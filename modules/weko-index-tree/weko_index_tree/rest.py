@@ -50,7 +50,7 @@ from .errors import IndexAddedRESTError, IndexNotFoundRESTError, \
     PermissionError, IndexNotFound404Error
 from .models import Index
 from .scopes import create_index_scope,read_index_scope,update_index_scope,delete_index_scope
-from .utils import check_doi_in_index, check_index_permissions, \
+from .utils import check_doi_in_index, check_index_permissions, can_user_access_index,\
     is_index_locked, perform_delete_index, save_index_trees_to_redis, reset_tree
 from weko_accounts.utils import limiter
 WEKO_ADMIN_PERMISSION_ROLE_SYSTEM = "System Administrator"
@@ -1035,7 +1035,6 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                 if not index_obj:
                     return make_response(jsonify({'status': 404, 'error': 'Index not found'}), 404)
                 else:
-                    from .utils import can_user_access_index
                     lst = {column.name: getattr(index_obj, column.name) for column in index_obj.__table__.columns}
                     if not can_user_access_index(lst):
                         return make_response(jsonify({'status': 403, 'error': f'Permission denied: You do not have access to parent index {parent_id}.'}), 403)
@@ -1133,7 +1132,6 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             if not index_obj:
                 return make_response(jsonify({'status': 404, 'error': 'Index not found'}), 404)
             else:
-                from .utils import can_user_access_index
                 lst = {column.name: getattr(index_obj, column.name) for column in index_obj.__table__.columns}
                 if not can_user_access_index(lst):
                     return make_response(jsonify({'status': 403, 'error': f'Permission denied: You do not have access to index {index_id}.'}), 403)
@@ -1224,7 +1222,6 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             if not index_obj:
                 return make_response(jsonify({'status': 404, 'error': 'Index not found'}), 404)
             else:
-                from .utils import can_user_access_index
                 lst = {column.name: getattr(index_obj, column.name) for column in index_obj.__table__.columns}
                 if not can_user_access_index(lst):
                     return make_response(jsonify({'status': 403, 'error': f'Permission denied: You do not have access to index {index_id}.'}), 403)
