@@ -172,7 +172,6 @@ def get_records(**kwargs):
             {'control_number': {'order': 'asc'}}
         )[(page_ - 1) * size_:page_ * size_]
 
-        sets = []
         if 'set' in kwargs:
             if kwargs['set'][0].isdigit():
                 # set is index_id
@@ -189,8 +188,11 @@ def get_records(**kwargs):
             #search = search.query('match', **{'_oai.sets': sets})
             #search = search.query('terms', **{'_oai.sets': sets})
             
-            index_ids = [sets] + get_descendant_ids(sets)
-            search = search.query('terms', **{'_oai.sets': index_ids})
+            if not sets:
+                search = search.query('match_none')
+            else:
+                index_ids = [sets] + get_descendant_ids(sets)
+                search = search.query('terms', **{'_oai.sets': index_ids})
 
         time_range = {}
         if 'from_' in kwargs:
