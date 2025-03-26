@@ -1625,11 +1625,10 @@ def create_tokens(client_api, client, users):
     tokens = {}
     roles_scopes = {
         "noroleuser": "index:read",
-        "contributor": "index:create",
+        "contributor": "index:read",
         "repoadmin": "index:update index:delete index:read index:create",
         "sysadmin": "index:update index:delete index:read index:create",
-        "comadmin": "index:read",
-        "generaluser": "index:read",
+        "comadmin": "index:read"
     }
 
     with db_.session.begin_nested():

@@ -631,7 +631,7 @@ class TestIndexManagementAPI:
         
         for role, headers in create_auth_headers.items():
             print(f"Testing get indices for {role}")
-            if role in ["sysadmin", "repoadmin", "comadmin", "generaluser"]:
+            if role in ["sysadmin", "repoadmin", "comadmin"]:
                 self.run_get_all_indices(app, client_rest, headers, 200, expected_indices=admin_indices)
                 self.run_get_specific_index(app, client_rest, 1740974499997, headers, 200)
                 self.run_get_specific_index(app, client_rest, 1740974554289, headers, 200)
@@ -814,8 +814,14 @@ class TestIndexManagementAPI:
             url = "v1/tree/index/"
             response = client_rest.post(url, headers=auth_headers_sysadmin)
             assert response.status_code == 400
-            response = client_rest.post(url, headers=auth_headers_sysadmin)
+            response = client_rest.post(url, headers=auth_headers_sysadmin,json=123)
             assert response.status_code == 400
+            
+            from copy import deepcopy
+            invalid_parrent_id = deepcopy(json_)
+            invalid_parrent_id["index"]["parent_id"] = 999999
+            response = client_rest.post(url, headers=auth_headers_sysadmin,json=invalid_parrent_id)
+            assert response.status_code == 404
             
             # エラー
             with patch("weko_index_tree.api.Indexes.create", return_value=None):

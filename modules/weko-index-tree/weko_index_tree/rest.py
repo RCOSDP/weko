@@ -908,7 +908,6 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             # Get update time
             if pid and pid != 0:
                 index = self.record_class.get_index(pid)
-                print(index)
                 if not index:
                     raise IndexNotFound404Error()
                 updated = index.updated
