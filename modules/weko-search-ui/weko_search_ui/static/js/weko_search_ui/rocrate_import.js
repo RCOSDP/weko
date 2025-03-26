@@ -24,7 +24,6 @@ const download = document.getElementById("download").value;
 const no = document.getElementById("no").value;
 const item_id = document.getElementById("item_id").value;
 const title = document.getElementById("title").value;
-const doi = document.getElementById("doi").value;
 const check_result = document.getElementById("check_result").value;
 const error = document.getElementById("error").value;
 const warning = document.getElementById("warning").value;
@@ -150,6 +149,7 @@ class MainLayout extends React.Component {
   }
 
   handleChangeTab(tab) {
+    console.log('----handleChangeTab----');
     const { step, tabs } = this.state
     const a = tabs.filter(item => {
       return item.tab_key === tab
@@ -253,6 +253,7 @@ class MainLayout extends React.Component {
   }
 
   handleCheckImportAvailable() {
+    console.log('----handleCheckImportAvailable----');
     closeError();
     let result = false;
     $.ajax({
@@ -261,6 +262,7 @@ class MainLayout extends React.Component {
       dataType: "json",
       async: false,
       success: function (response) {
+        console.log('----handleCheckImportAvailable success----');
         if (!response.is_available) {
           let error_msg = not_available_error;
           if (response.error_id === 'celery_not_run') {
@@ -272,6 +274,7 @@ class MainLayout extends React.Component {
         }
       },
       error: function (error) {
+        console.log('----handleCheckImportAvailable error----');
         console.log(error);
         showErrorMsg(internal_server_error);
       }
@@ -280,7 +283,11 @@ class MainLayout extends React.Component {
   }
 
   handleImport() {
+    console.log('----handleImport----');
     const { list_record, data_path, is_import } = this.state;
+    console.log('list_record', list_record);
+    console.log('data_path', data_path);
+    console.log('is_import', is_import);
     const that = this;
     if (is_import || !this.handleCheckImportAvailable()) {
       return;
@@ -293,30 +300,35 @@ class MainLayout extends React.Component {
       type: 'POST',
       data: JSON.stringify({
         list_record: list_record.filter(item => !item.errors),
-        data_path,
-        list_doi: $('[name="list_doi"]:not(:disabled)').map((_, el) => $(el).val()).get()
+        data_path
       }),
       contentType: "application/json; charset=utf-8",
       dataType: "json",
       success: function (response) {
+        console.log('----handleImport success----');
         that.setState(() => {
           return {
             step: step.RESULT_STEP,
             tasks: response.data.tasks,
           }
         }, () => {
+          console.log('----success - handleChangeTab----');
           that.handleChangeTab('result');
         })
+        console.log('response.data.tasks:', response.data.tasks);
       },
       error: function (error) {
+        console.log('----handleImport error----');
         console.log(error);
       }
     });
   }
 
   getStatus() {
+    console.log('----getStatus----');
     const that = this
     const { tasks } = this.state
+    console.log('tasks', tasks);
     $.ajax({
       url: urlCheckStatus,
       method: 'POST',
@@ -327,21 +339,25 @@ class MainLayout extends React.Component {
       dataType: "json",
     })
       .done((res) => {
-
+        console.log('----getStatus done----');
         that.setState({
           tasks: res.result
         })
+        console.log(`res.status: ${res.status}`);
         if (res.status === 'done') {
+          console.log('----getStatus done done----');
           that.setState({
             import_status: true
           })
           return
         }
         setTimeout(function () {
+          console.log('----getStatus setTimeout----');
           that.getStatus();
         }, 1000);
       })
       .fail((err) => {
+        console.log('----getStatus fail----');
         console.log(err);
       });
   }
@@ -992,7 +1008,6 @@ class CheckComponent extends React.Component {
                   <th><p className="item_type">{item_type}</p></th>
                   <th><p className="item_id">{item_id}</p></th>
                   <th>{title}</th>
-                  <th>{doi}</th>
                   <th><p className="check_result">{check_result}</p></th>
                 </tr>
               </thead>
@@ -1012,12 +1027,6 @@ class CheckComponent extends React.Component {
                           <p className="title_item">
                             {item['item_title'] ? item['item_title'] : ''}
                           </p>
-
-                        </td>
-                        <td>
-                          <div class="form-inline">
-                            <input class="form-control" type="text" name="list_doi" disabled={item.errors && item.errors.length > 0} />
-                          </div>
                         </td>
                         <td>
                           {

@@ -1572,7 +1572,6 @@ class JsonldMapping():
             ItemTypeJsonldMapping.query
             .filter_by(item_type_id=item_type_id)
             .order_by(ItemTypeJsonldMapping.updated.desc())
-            .all()
         )
         if include_deleted:
             query.filter_by(is_deleted=False)

@@ -85,7 +85,7 @@ from weko_index_tree.utils import (
 )
 from weko_indextree_journal.api import Journals
 from weko_items_autofill.utils import get_doi_with_original
-from weko_records.api import FeedbackMailList, RequestMailList, ItemTypeNames, ItemTypes, Mapping
+from weko_records.api import FeedbackMailList, JsonldMapping, RequestMailList, ItemTypes, Mapping
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_full_mapping, get_mapping
 from weko_redis.redis import RedisConnection

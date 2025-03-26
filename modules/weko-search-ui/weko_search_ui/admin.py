@@ -762,12 +762,12 @@ class ItemRocrateImportView(BaseView):
         validate_csrf_header(request)
 
         data = request.form
-        print(f"data: {data}")
         file = request.files["file"] if request.files else None
+        packaging = request.headers.get("Packaging")
+        mapping_id = data.get("mapping_id")
 
         role_ids = []
         can_edit_indexes = []
-        print(f"current_user: {current_user}")
         if current_user and current_user.is_authenticated:
             for role in current_user.roles:
                 if role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
@@ -776,7 +776,6 @@ class ItemRocrateImportView(BaseView):
                     break
                 else:
                     role_ids.append(role.id)
-        print(f"role_ids: {role_ids}")
         if role_ids:
             from invenio_communities.models import Community
             comm_data = Community.query.filter(
@@ -795,16 +794,16 @@ class ItemRocrateImportView(BaseView):
             os.mkdir(temp_path)
             file_path = temp_path + "/" + file.filename
             file.save(file_path)
-            print(f"current_i18n.language: {current_i18n.language}")
             task = check_rocrate_import_items_task.apply_async(
                 (
                     file_path,
+                    data.get("is_change_identifier") == "true",
                     request.host_url,
-                    current_i18n.language
+                    packaging,
+                    mapping_id,
+                    current_i18n.language,
                 ),
             )
-            current_app.logger.error(f"task: {task}")
-            current_app.logger.error(f"task.task_id: {task.task_id}")
         return jsonify(code=1, check_rocrate_import_task_id=task.task_id)
 
     @expose("/get_check_status", methods=["POST"])
@@ -871,16 +870,13 @@ class ItemRocrateImportView(BaseView):
         list_record = [
             item for item in data.get("list_record", []) if not item.get("errors")
         ]
-        list_doi = data.get("list_doi")
         if list_record:
             group_tasks = []
-            for idx, item in enumerate(list_record):
+            for item in list_record:
                 try:
                     item["root_path"] = data_path + "/data"
                     create_flow_define()
                     handle_workflow(item)
-                    metadata_doi = handle_doi(item, list_doi[idx])
-                    item["metadata"] = metadata_doi
                     group_tasks.append(import_item.s(item, request_info))
                     db.session.commit()
                 except Exception as e:
