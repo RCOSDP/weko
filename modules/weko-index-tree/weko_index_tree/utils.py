@@ -111,16 +111,17 @@ def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
             reduce_index_by_more(tree=tree, more_ids=more_ids)   
             
 def can_user_access_index(lst):
-    """
-    指定されたユーザーがインデックス項目にアクセスできるかを判断する。
+    """Check if the specified user has access to the index item.
 
-    ユーザーのロール（roles）およびグループ（groups）に基づいて、
-    インデックスの閲覧権限または編集権限をチェックする。
-    また、インデックスの公開状態（public_state）および公開日（public_date）を考慮し、
-    アクセス可能かどうかを判定する。
+    This function determines access permissions based on the user's roles and groups.
+    It checks whether the user has viewing or editing rights for the index item.
+    It also considers the public state and public date of the index to evaluate accessibility.
 
-    :param lst: インデックス項目の辞書（dict）
-    :return: アクセス可能なら True、不可能なら False
+    Args:
+        lst (dict): Dictionary representing the index item.
+
+    Returns:
+        bool: True if the user has access, False otherwise.
     """
     from weko_records_ui.utils import is_future
     
