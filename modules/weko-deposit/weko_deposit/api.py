@@ -28,7 +28,6 @@ import chardet
 from collections import OrderedDict
 from datetime import datetime, timezone,date
 from typing import NoReturn, Union
-from tika import parser
 
 import redis
 from redis import sentinel
@@ -1102,6 +1101,7 @@ class WekoDeposit(Deposit):
         item_metadata.pop('id', None)
         args = [index, item_metadata]
         deposit.update(*args)
+        deposit.non_extract = getattr(self, "non_extract", None)
         deposit.commit()
         return deposit
 
@@ -1116,10 +1116,16 @@ class WekoDeposit(Deposit):
             None
 
         """
-        from weko_workflow.utils import get_url_root
+        from weko_workflow.utils import get_url_root, get_non_extract_files_by_recid
         contents = []
         fmd = self.get_file_data()
         reading_targets = {}
+        # when prepare edit item, end action
+        non_extract = getattr(self, "non_extract", None)
+        if non_extract is None:
+            # during activity
+            non_extract = get_non_extract_files_by_recid(self['recid']) or []
+
         if fmd:
             for file in self.files:
                 if isinstance(fmd, list):

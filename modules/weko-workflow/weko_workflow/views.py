@@ -1691,18 +1691,19 @@ def next_action(activity_id='0', action_id=0, json_data=None):
         action_order=action_order
     )
     if 'end_action' == next_action_endpoint:
-        new_activity_id = None
-        new_activity_id = handle_finish_workflow(deposit,
-                                                 current_pid,
-                                                 recid)
-        if new_activity_id is None:
+        non_extract = work_activity.get_non_extract_files(activity_id)
+        deposit.non_extract = non_extract
+        new_item_id = handle_finish_workflow(
+            deposit, current_pid, recid
+        )
+        if new_item_id is None:
             res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
             return jsonify(res.data), 500
 
         activity.update(
             action_id=next_action_id,
             action_version=next_flow_action[0].action_version,
-            item_id=new_activity_id,
+            item_id=new_item_id,
             action_order=next_action_order
         )
         work_activity.end_activity(activity)

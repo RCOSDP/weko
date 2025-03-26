@@ -20,6 +20,7 @@
 
 """WEKO3 module docstring."""
 
+import json
 import math
 from typing import List
 import urllib.parse
@@ -429,7 +430,7 @@ class WorkFlow(object):
             query = _WorkFlow.query.filter_by(
                 is_deleted=False).order_by(asc(_WorkFlow.flows_id))
             return query.all()
-        
+
     def get_deleted_workflow_list(self):
         """Get workflow list info.
 
@@ -2463,6 +2464,19 @@ class WorkActivity(object):
         except Exception as ex:
             current_app.logger.exception(str(ex))
             db.session.rollback()
+
+    def get_non_extract_files(self, activity_id):
+        """Get non-extract files."""
+        metadata = self.get_activity_metadata(activity_id)
+        if metadata is None:
+            return None
+        item_json = json.loads(metadata)
+        # Load files from temp_data.
+        files = item_json.get('files', [])
+        return [
+            file["filename"] for file in files if file.get("non_extract", False)
+        ]
+
 
     def cancel_usage_report_activities(self, activities_id: list):
         """Cancel usage report activities are excepted.

@@ -1800,7 +1800,7 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
     deposit['owner'] = str(owner)
 
     # to exclude from file text extraction
-    deposit.non_extract = getattr(item["metadata"], "non_extract", [])
+    deposit.non_extract = item.get("non_extract")
 
     deposit.commit()
 
@@ -2164,7 +2164,8 @@ def import_items_to_activity(item, request_info):
         url, current_action, recid = headless.auto(
             user_id= request_info.get("user_id"), workflow_id=workflow_id,
             index=index, metadata=metadata, files=files, comment=comment,
-            link_data=link_data, grant_data=grant_data
+            link_data=link_data, grant_data=grant_data,
+            non_extract=item.get("non_extract")
         )
     except Exception as ex:
         traceback.print_exc()

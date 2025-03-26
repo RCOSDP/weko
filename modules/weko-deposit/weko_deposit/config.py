@@ -30,7 +30,15 @@ WEKO_BUCKET_QUOTA_SIZE = 50 * 1024 * 1024 * 1024  # 50 GB
 WEKO_MAX_FILE_SIZE = WEKO_BUCKET_QUOTA_SIZE
 """Maximum file size accepted."""
 
-WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES = ['text/plain','text/csv','text/html','text/tab-separated-values','text/xml','application/x-tex','application/x-latex']
+WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES = [
+    'text/plain',
+    'text/csv',
+    'text/html',
+    'text/tab-separated-values',
+    'text/xml',
+    'application/x-tex',
+    'application/x-latex'
+]
 
 WEKO_MIMETYPE_WHITELIST_FOR_ES = [
     'application/msword',
@@ -155,7 +163,7 @@ WEKO_DEPOSIT_SYS_CREATOR_KEY = {
     'identifiers': 'nameIdentifiers',
     'creator_mails': 'creatorMails',
     'affiliation_name_identifier_scheme': 'affiliationNameIdentifierScheme',
-    'affiliation_names': 'affiliationNames', 
+    'affiliation_names': 'affiliationNames',
     'affiliation_name': 'affiliationName',
     'affiliation_lang': 'affiliationNameLang',
     'affiliationNameIdentifiers': 'affiliationNameIdentifiers',

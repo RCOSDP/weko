@@ -224,7 +224,8 @@ class HeadlessActivity(WorkActivity):
             if self.current_action == "item_login":
                 self.item_registration(
                     params.get("metadata"), params.get("files"),
-                    params.get("index"), params.get("comment")
+                    params.get("index"), params.get("comment"),
+                    params.get("non_extract")
                 )
             elif self.current_action == "item_link":
                 self.item_link(params.get("link_data"))
@@ -243,7 +244,9 @@ class HeadlessActivity(WorkActivity):
 
         return returns
 
-    def item_registration(self, metadata, files, index=None, comment=None):
+    def item_registration(
+            self, metadata, files, index=None, comment=None, non_extract=None
+        ):
         """Action for item registration."""
         if self._model is None:
             current_app.logger.error("activity is not initialized.")
@@ -257,14 +260,14 @@ class HeadlessActivity(WorkActivity):
             # it contains ""
             raise WekoWorkflowException(error)
 
-        self.recid = self._input_metadata(metadata, files)
+        self.recid = self._input_metadata(metadata, files, non_extract)
         self._designate_index(index)
         self._comment(comment)
 
         return self.detail
 
 
-    def _input_metadata(self, metadata, files=None):
+    def _input_metadata(self, metadata, files=None, non_extract=None):
         """input metadata."""
         self._user_lock()
         locked_value = self._activity_lock()
@@ -299,9 +302,6 @@ class HeadlessActivity(WorkActivity):
                 "shared_user_id": metadata.pop("shared_user_id", -1)
             })
 
-            # to exclude from file text extraction
-            non_extract = getattr(metadata, "non_extract", [])
-
             result = {"is_valid": True}
             validate_form_input_data(result, self.item_type.id, deepcopy(metadata))
             if not result.get("is_valid"):
@@ -335,8 +335,6 @@ class HeadlessActivity(WorkActivity):
                 "actions": metadata.get("publish_status")
             }
             self._deposit.update(index, metadata)
-            # to exclude from file text extraction
-            self._deposit.non_extract = non_extract
             self._deposit.commit()
 
             data = {
@@ -351,6 +349,11 @@ class HeadlessActivity(WorkActivity):
                 data["files"] = self.files_info = self._upload_files(files)
             # TODO: update propaties of files metadata, but it is difficult to
             # decide whitch key should be updated.
+
+            # to exclude from file text extraction
+            for file in data["files"]:
+                if file["filename"] in non_extract:
+                    file["non_extract"] = True
 
             data["endpoint"].update(base_factory(pid))
             self.upt_activity_metadata(self.activity_id, json.dumps(data))
