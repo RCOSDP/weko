@@ -30,7 +30,9 @@ from weko_items_autofill.utils import get_workflow_journal
 from weko_items_ui.utils import (
     update_index_tree_for_record, validate_form_input_data, to_files_js
 )
-from weko_items_ui.views import check_validation_error_msg, prepare_edit_item
+from weko_items_ui.views import (
+    check_validation_error_msg, prepare_edit_item, prepare_delete_item
+)
 from weko_records.api import ItemTypes, ItemsMetadata
 from weko_records.serializers.utils import get_mapping
 from weko_records_ui.utils import soft_delete
@@ -200,76 +202,96 @@ class HeadlessActivity(WorkActivity):
             return self.detail
 
         if workflow_id is None:
-            if item_id:
-                activity = WorkActivity()
-                pid = PersistentIdentifier.query.filter_by(
-                        pid_type="recid", pid_value=item_id
-                    ).first()
-                item_uuid = pid.object_uuid
-                workflow = activity.get_workflow_activity_by_item_id(item_uuid)
-                if workflow is None:
+            if item_id is not None:
+                if not for_delete:
+                    response = prepare_edit_item(item_id)
+                else:
+                    response = prepare_delete_item(item_id)
+
+                if response.json.get("code") == 0:
+                    url = result.json.get("data").get("redirect")
+
+                    activity_id = url.split("/activity/detail/")[1]
+                    if "?" in activity_id:
+                        activity_id = activity_id.split("?")[0]
+                    self._model = super().get_activity_by_id(activity_id)
+                    self.workflow = self._model.workflow
+
+                    # 削除フラグがあり、かつフローにapprovalがない場合は削除を実行
+                    if for_delete and activity_id[1] == 4:
+                        res = soft_delete(item_id)
+                        if res.json.get("code") != 1:
+                            current_app.logger.error(
+                                f"failed to delete item({item_id}): {res.json.get('msg')}")
+                            raise WekoWorkflowException(res.json.get("msg"))
+                else:
                     current_app.logger.error(
-                        f"workflow for item({item_id}) is not found.")
-                    raise WekoWorkflowException(
-                        f"workflow for item({item_id}) is not found.")
-                workflow_id = workflow.workflow_id
+                        f"failed to create headless activity: {response.json.get('msg')}")
+                    raise WekoWorkflowException(response.json.get("msg"))
+                    
+                # activity = WorkActivity()
+                # pid = PersistentIdentifier.query.filter_by(
+                #         pid_type="recid", pid_value=item_id
+                #     ).first()
+                # item_uuid = pid.object_uuid
+                # workflow = activity.get_workflow_activity_by_item_id(item_uuid)
+                # if workflow is None:
+                #     current_app.logger.error(
+                #         f"workflow for item({item_id}) is not found.")
+                #     raise WekoWorkflowException(
+                #         f"workflow for item({item_id}) is not found.")
+                # workflow_id = workflow.workflow_id
             else:
-                current_app.logger.error("workflow_id is required to create activity.")
-                raise WekoWorkflowException("workflow_id is required to create activity.")
-        self.workflow = workflow = WorkFlow().get_workflow_by_id(workflow_id)
-        if workflow is None:
-            current_app.logger.error(f"workflow(id={workflow_id}) is not found.")
-            raise WekoWorkflowException(f"workflow(id={workflow_id}) is not found.")
-
-        self.item_type = ItemTypes.get_by_id(workflow.itemtype_id)
-        activity = {
-        "flow_id": workflow.flow_id if not for_delete else workflow.delete_flow_id,
-        "workflow_id": workflow.id,
-        "itemtype_id": workflow.itemtype_id,
-        }
-
-        if item_id is None:
-            # create activity for new item
-            activity.update({"activity_login_user": user_id})
-            result, _ = init_activity(activity, community)
-
-            if result.json.get("code") == 0:
-                url = result.json.get("data").get("redirect")
-
-                activity_id = url.split("/activity/detail/")[1]
-                if "?" in activity_id:
-                    activity_id = activity_id.split("?")[0]
-                self._model = super().get_activity_by_id(activity_id)
-            else:
-                current_app.logger.error(
-                    f"failed to create headless activity: {result.json.get('msg')}")
-                raise WekoWorkflowException(result.json.get("msg"))
-
+                current_app.logger.error("workflow_id or item_id is required to create activity.")
+                raise WekoWorkflowException("workflow_id or item_id is required to create activity.")
         else:
-            # create activity for existing item edit
-            self.recid = item_id
+            self.workflow = workflow = WorkFlow().get_workflow_by_id(workflow_id)
+            if workflow is None:
+                current_app.logger.error(f"workflow(id={workflow_id}) is not found.")
+                raise WekoWorkflowException(f"workflow(id={workflow_id}) is not found.")
 
-            response = prepare_edit_item(item_id)
+            self.item_type = ItemTypes.get_by_id(workflow.itemtype_id)
+            activity = {
+            "flow_id": workflow.flow_id if not for_delete else workflow.delete_flow_id,
+            "workflow_id": workflow.id,
+            "itemtype_id": workflow.itemtype_id,
+            }
 
-            if response.json.get("code") == 0:
-                url = result.json.get("data").get("redirect")
+            if item_id is None:
+                # create activity for new item
+                activity.update({"activity_login_user": user_id})
+                result, _ = init_activity(activity, community)
 
-                activity_id = url.split("/activity/detail/")[1]
-                if "?" in activity_id:
-                    activity_id = activity_id.split("?")[0]
-                self._model = super().get_activity_by_id(activity_id)
+                if result.json.get("code") == 0:
+                    url = result.json.get("data").get("redirect")
 
-                # 削除フラグがあり、かつフローにapprovalがない場合は削除を実行
-                if for_delete and activity_id[1] == 4:
-                    res = soft_delete(item_id)
-                    if res.json.get("code") != 1:
-                        current_app.logger.error(
-                            f"failed to delete item({item_id}): {res.json.get('msg')}")
-                        raise WekoWorkflowException(res.json.get("msg"))
-            else:
-                current_app.logger.error(
-                    f"failed to create headless activity: {response.json.get('msg')}")
-                raise WekoWorkflowException(response.json.get("msg"))
+                    activity_id = url.split("/activity/detail/")[1]
+                    if "?" in activity_id:
+                        activity_id = activity_id.split("?")[0]
+                    self._model = super().get_activity_by_id(activity_id)
+                else:
+                    current_app.logger.error(
+                        f"failed to create headless activity: {result.json.get('msg')}")
+                    raise WekoWorkflowException(result.json.get("msg"))
+
+        # else:
+        #     # create activity for existing item edit
+        #     self.recid = item_id
+
+        #     response = prepare_edit_item(item_id)
+
+        #     if response.json.get("code") == 0:
+        #         url = result.json.get("data").get("redirect")
+
+        #         activity_id = url.split("/activity/detail/")[1]
+        #         if "?" in activity_id:
+        #             activity_id = activity_id.split("?")[0]
+        #         self._model = super().get_activity_by_id(activity_id)
+
+        #     else:
+        #         current_app.logger.error(
+        #             f"failed to create headless activity: {response.json.get('msg')}")
+        #         raise WekoWorkflowException(response.json.get("msg"))
 
         self.user = User.query.get(user_id)
         current_app.logger.info(
