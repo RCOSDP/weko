@@ -74,16 +74,79 @@ WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP = {
 }
 """IdP attribute map."""
 
-WEKO_ACCOUNTS_SHIB_ROLE_RELATION = {
-    '管理者': 'System Administrator',
-    '図書館員': 'Repository Administrator',
-    '教員': 'Contributor',
-    '教官': 'Contributor'
+WEKO_ACCOUNTS_ATTRIBUTE_MAP = {
+    'shib_eppn': 'eppn',
+    'shib_role_authority_name': 'eduPersonAffiliation',
+    'shib_mail': 'mail',
+    'shib_user_name': 'DisplayName'
 }
-"""Role relation."""
+"""IdP attribute map."""
+
+WEKO_ACCOUNTS_ATTRIBUTE_LIST = [
+    'eppn',
+    'DisplayName',
+    'mail',
+    'eduPersonOrcid',
+    'jasn',
+    'jaGivenName',
+    'jaDisplayName',
+    'jao',
+    'jaou',
+    'isMemberOf',
+    'sn',
+    'o',
+    'ou',
+    'givenName',
+    'eduPersonAffiliation',
+    'eduPersonScopedAffiliation',
+    'eduPersonTargetedID'
+]
+"""Attribute List."""
+
+WEKO_ACCOUNTS_ROLE_LIST = [
+    'System Administrator', 
+    'Repository Administrator', 
+    'Community Administrator', 
+    'Contributor', 
+    'None'
+]
+"""Role List."""
 
 WEKO_ACCOUNTS_GENERAL_ROLE = 'Contributor'
 """Default role."""
+
+WEKO_ACCOUNTS_GAKUNIN_ROLE = {
+  'defaultRole': 'Contributor',
+  'organizationName': []  
+} 
+"""Gakunin Default role."""
+
+WEKO_ACCOUNTS_ORTHROS_INSIDE_ROLE = {
+  'defaultRole': 'Repository Administrator',
+  'organizationName': []  
+} 
+"""Orthros (Inside) Default role."""
+
+WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE = {
+  'defaultRole': 'Community Administrator',
+  'organizationName': []  
+} 
+"""Orthros (Outsite) Default role."""
+
+WEKO_ACCOUNTS_EXTRA_ROLE = {
+  'defaultRole': 'None', # ロール無
+  'organizationName': []  
+} 
+"""Extra Default role."""
+
+WEKO_ACCOUNTS_SHIB_ROLE_RELATION = {
+    '管理者': 'System Administrator',
+    '学認IdP': WEKO_ACCOUNTS_GAKUNIN_ROLE['defaultRole'],
+    '機関内のOrthros': WEKO_ACCOUNTS_ORTHROS_INSIDE_ROLE['defaultRole'],
+    '機関外のOrthros': WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE['defaultRole'],
+    'その他': WEKO_ACCOUNTS_EXTRA_ROLE['defaultRole']
+}
+"""Role relation."""
 
 WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED = True
 """Shibboleth login pattern."""
