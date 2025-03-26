@@ -857,16 +857,6 @@ item_management_import_adminview = {
     },
 }
 
-# FIXME: RO-Crate import is not implemented yet
-# item_management_rocrate_import_adminview = {
-#     "view_class": ItemImportView,
-#     "kwargs": {
-#         "category": _("Items"),
-#         "name": _("RO-Crate Import"),
-#         "endpoint": "items/rocrate_import",
-#     },
-# }
-
 item_management_export_adminview = {
     "view_class": ItemBulkExport,
     "kwargs": {
@@ -881,6 +871,5 @@ __all__ = (
     "item_management_bulk_search_adminview",
     "item_management_custom_sort_adminview",
     "item_management_import_adminview",
-    # "item_management_rocrate_import_adminview",
     "item_management_export_adminview",
 )
