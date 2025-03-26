@@ -30,6 +30,7 @@ import shutil
 import sys
 import tempfile
 import traceback
+import unicodedata
 from collections import OrderedDict
 from datetime import date, datetime, timedelta
 from io import StringIO
@@ -3774,7 +3775,7 @@ def sanitize_input_data(data):
 def check_duplicate(data, is_item=True):
     """
     Check if a record or item is duplicate in records_metadata.
-    
+
     Parameters:
     - data (dict or str): Metadata dictionary (or JSON string).
     - is_item (bool): True if checking an item, False if checking a record.
@@ -3829,7 +3830,7 @@ def check_duplicate(data, is_item=True):
     if identifier:
         query = text("""
             SELECT COALESCE(
-                CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 
+                CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER),
                 0
             ) AS recid
             FROM records_metadata
@@ -3837,7 +3838,7 @@ def check_duplicate(data, is_item=True):
         """.format(identifier))
         result = db.session.execute(query).fetchall()
         db.session.commit()
-        
+
         if result:
             recid_list = [row[0] for row in result]
             recid_list = list(set(recid_list))
@@ -3845,28 +3846,46 @@ def check_duplicate(data, is_item=True):
             current_app.logger.debug(f"重複データ (identifier): {recid_list}")
             return True, recid_list, item_links
 
-    # 2. `title` で検索し、一致しなければ False を返す
+    # 2. `title` で検索し、一致しなければ False を返す（表記揺れ対応）
     if title:
+
+        normalized_title = unicodedata.normalize("NFKC", title).lower()
+        normalized_title = re.sub(r'[,\s　]', '', normalized_title)
+
         query = text("""
-            SELECT COALESCE(
-                CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 
-                0
-            ) AS recid
-            FROM records_metadata
-            WHERE jsonb_path_exists(json, '$.**.subitem_title ? (@ == "{}")')
-        """.format(title))
+            SELECT recid, json
+            FROM (
+                SELECT
+                    COALESCE(CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 0) AS recid,
+                    json
+                FROM records_metadata
+                WHERE jsonb_path_exists(json, '$.**.subitem_title')
+            ) AS sub
+        """)
         result = db.session.execute(query).fetchall()
         db.session.commit()
-        
-        if not result:
-            current_app.logger.debug("title が一致するレコードなし。")
+
+        matched_recids = set()
+        for recid, json_obj in result:
+            json_str = json.dumps(json_obj, ensure_ascii=False)
+            titles = re.findall(r'"subitem_title"\s*:\s*"([^"]+)"', json_str)
+            for t in titles:
+                cleaned = unicodedata.normalize("NFKC", t).lower()
+                cleaned = re.sub(r'[,\s　]', '', cleaned)
+                if cleaned == normalized_title:
+                    matched_recids.add(recid)
+                    break
+
+        if not matched_recids:
             return False, [], []
+
+        # title一致が見つかれば続行
 
     # 3. `resource_type` で検索し、一致しなければ False を返す
     if resource_type:
         query = text("""
             SELECT COALESCE(
-                CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 
+                CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER),
                 0
             ) AS recid
             FROM records_metadata
@@ -3874,29 +3893,75 @@ def check_duplicate(data, is_item=True):
         """.format(resource_type))
         result = db.session.execute(query).fetchall()
         db.session.commit()
-        
+
         if not result:
             current_app.logger.debug("resource_type が一致するレコードなし。")
             return False, [], []
 
-    # 4. `creator` で検索し、1つでも一致していれば True を返す
+    # 4. `creator` で検索し、1つでも一致していれば True を返す（表記揺れ・authorsテーブル含む）
     if creator:
-        query = text("""
-            SELECT COALESCE(
-                CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 
-                0
-            ) AS recid
-            FROM records_metadata
-            WHERE jsonb_path_exists(json, '$.**.creatorNames[*].creatorName ? (@ == "{}")')
-        """.format(creator))
-        result = db.session.execute(query).fetchall()
+        normalized_creator = re.sub(r'[,\s，　]', '', creator)
+
+        # ① records_metadata から検索
+        query1 = text("""
+            SELECT recid, json
+            FROM (
+                SELECT
+                    COALESCE(CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 0) AS recid,
+                    json
+                FROM records_metadata
+                WHERE jsonb_path_exists(json, '$.**.creatorNames[*].creatorName')
+            ) AS sub
+        """)
+        result1 = db.session.execute(query1).fetchall()
         db.session.commit()
-        
-        if result:
-            recid_list = [row[0] for row in result]
-            recid_list = list(set(recid_list))
-            item_links = [f"https://{host}/records/{recid}" for recid in recid_list]
-            return True, recid_list, item_links
+
+        matched_recids = set()
+        for recid, json_obj in result1:
+            json_str = json.dumps(json_obj, ensure_ascii=False)
+            creators = re.findall(r'"creatorName"\s*:\s*"([^"]+)"', json_str)
+            for name in creators:
+                cleaned = re.sub(r'[,\s，　]', '', name)
+                if cleaned == normalized_creator:
+                    matched_recids.add(recid)
+                    break
+
+        # ② authors テーブルから検索
+        author_query = text("SELECT json->>'pk_id', json FROM authors")
+        author_results = db.session.execute(author_query).fetchall()
+        db.session.commit()
+
+        matched_author_ids = []
+        for pk_id, author_json in author_results:
+            author_str = json.dumps(author_json, ensure_ascii=False)
+            fullnames = re.findall(r'"fullName"\s*:\s*"([^"]+)"', author_str)
+            for fullname in fullnames:
+                cleaned_name = re.sub(r'[,\s，　]', '', fullname)
+                if cleaned_name == normalized_creator:
+                    matched_author_ids.append(pk_id)
+                    break
+
+        # author_link 経由で records_metadata を検索
+        matched_recids_authors = set()
+        if matched_author_ids:
+            # authors の ID は string として保存されている（"1", "2", ...）
+            conditions = " OR ".join([f'jsonb_path_exists(json, \'$.**.author_link[*] ? (@ == "{aid}")\')' for aid in matched_author_ids])
+            link_query = text(f"""
+                SELECT
+                    COALESCE(CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 0) AS recid
+                FROM records_metadata
+                WHERE {conditions}
+            """)
+            result2 = db.session.execute(link_query).fetchall()
+            db.session.commit()
+            for row in result2:
+                matched_recids_authors.add(row[0])
+
+        # 重複している recid をまとめる
+        total_recids = list(matched_recids.union(matched_recids_authors))
+        if total_recids:
+            item_links = [f"https://{host}/records/{recid}" for recid in total_recids]
+            return True, total_recids, item_links
 
     # どの条件も一致しなかった場合
     current_app.logger.debug("重複データなし。")
