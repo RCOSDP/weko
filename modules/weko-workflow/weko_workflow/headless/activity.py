@@ -200,8 +200,22 @@ class HeadlessActivity(WorkActivity):
             return self.detail
 
         if workflow_id is None:
-            current_app.logger.error("workflow_id is required to create activity.")
-            raise WekoWorkflowException("workflow_id is required to create activity.")
+            if item_id:
+                activity = WorkActivity()
+                pid = PersistentIdentifier.query.filter_by(
+                        pid_type="recid", pid_value=item_id
+                    ).first()
+                item_uuid = pid.object_uuid
+                workflow = activity.get_workflow_activity_by_item_id(item_uuid)
+                if workflow is None:
+                    current_app.logger.error(
+                        f"workflow for item({item_id}) is not found.")
+                    raise WekoWorkflowException(
+                        f"workflow for item({item_id}) is not found.")
+                workflow_id = workflow.workflow_id
+            else:
+                current_app.logger.error("workflow_id is required to create activity.")
+                raise WekoWorkflowException("workflow_id is required to create activity.")
         self.workflow = workflow = WorkFlow().get_workflow_by_id(workflow_id)
         if workflow is None:
             current_app.logger.error(f"workflow(id={workflow_id}) is not found.")
@@ -408,7 +422,7 @@ class HeadlessActivity(WorkActivity):
                     ).first()
                 record_uuid = pid.object_uuid
 
-                self._deposit = WekoDeposit.newversion(record_uuid)
+                self._deposit = WekoDeposit.get_record(record_uuid)
                 # get _old_metadata by record_uuid
                 _old_metadata = ItemsMetadata.get_record(record_uuid)
                 _old_files = to_files_js(self._deposit)
