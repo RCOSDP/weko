@@ -22,6 +22,7 @@
 
 import base64
 import os
+import six
 from datetime import datetime as dt
 from datetime import timedelta
 from decimal import Decimal
@@ -42,6 +43,7 @@ from invenio_oaiserver.response import getrecord
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
+from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from passlib.handlers.oracle import oracle10
 from weko_admin.models import AdminSettings
@@ -49,7 +51,7 @@ from weko_admin.utils import UsageReport, get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
-from weko_records.utils import replace_fqdn
+from weko_records.utils import custom_record_medata_for_export, replace_fqdn
 from weko_records.models import ItemReference
 from weko_schema_ui.models import PublishStatus
 from weko_workflow.api import WorkActivity, WorkFlow, UpdateItem
@@ -2019,3 +2021,36 @@ def update_secret_download(**kwargs) -> Optional[List[FileSecretDownload]]:
     """
     current_app.logger.debug("update_secret_download:{}".format(kwargs))
     return FileSecretDownload.update_download(**kwargs)
+
+
+def export_preprocess(pid, record, schema_type):
+    """Preprocess for export.
+
+    Args:
+        PersistentIdentifier : pid:
+        WekoRecord : record:
+        str : schema_type:
+    Returns:
+        str : data for export
+    """
+    formats = current_app.config.get('RECORDS_UI_EXPORT_FORMATS', {}).get(pid.pid_type, {})
+    fmt = formats.get(schema_type)
+
+    if fmt is False:
+        # If value is set to False, it means it was deprecated.
+        abort(410)
+    elif fmt is None:
+        abort(404)
+    else:
+        custom_record_medata_for_export(record)
+
+        if 'json' not in schema_type and 'bibtex' not in schema_type:
+            record.update({'@export_schema_type': schema_type})
+
+        serializer = obj_or_import_string(fmt['serializer'])
+        data = serializer.serialize(pid, record)
+
+        if isinstance(data, six.binary_type):
+            data = data.decode('utf8')
+
+        return data
