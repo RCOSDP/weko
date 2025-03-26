@@ -214,16 +214,17 @@ class HeadlessActivity(WorkActivity):
                     activity_id = url.split("/activity/detail/")[1]
                     if "?" in activity_id:
                         activity_id = activity_id.split("?")[0]
+
+                    # # 削除フラグがあり、かつフローにapprovalがない場合は削除を実行
+                    # if for_delete and activity_id[1] == 4:
+                    #     res = soft_delete(item_id)
+                    #     if res.json.get("code") != 1:
+                    #         current_app.logger.error(
+                    #             f"failed to delete item({item_id}): {res.json.get('msg')}")
+                    #         raise WekoWorkflowException(res.json.get("msg"))
                     self._model = super().get_activity_by_id(activity_id)
                     self.workflow = self._model.workflow
 
-                    # 削除フラグがあり、かつフローにapprovalがない場合は削除を実行
-                    if for_delete and activity_id[1] == 4:
-                        res = soft_delete(item_id)
-                        if res.json.get("code") != 1:
-                            current_app.logger.error(
-                                f"failed to delete item({item_id}): {res.json.get('msg')}")
-                            raise WekoWorkflowException(res.json.get("msg"))
                 else:
                     current_app.logger.error(
                         f"failed to create headless activity: {response.json.get('msg')}")
