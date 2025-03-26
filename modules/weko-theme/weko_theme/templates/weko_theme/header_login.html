@@ -50,6 +50,23 @@
       {%- for item in current_menu.submenu('settings').children if item.visible %}
       <li><a href="{{ item.url }}">{{ item.text|safe }}</a></li>
       {%- endfor %}
+
+      {%- set ns = namespace(has_role=false) %}
+      {%- for role in current_user.roles %}
+        {%- if role.id in [2, 3] %}
+          {%- set ns.has_role = true %}
+        {%- endif %}
+      {%- endfor %}
+
+      {%- if ns.has_role %}
+      <li>
+        <a href="{{url_for('weko_workspace.get_workspace_itemlist')}}" style="display: flex; align-items: center;">
+          <i class="fa fa-list-alt" aria-hidden="true" style="margin-right: 8px;"></i>
+            Workspace
+        </a>
+      </li>
+      {%- endif %}
+      
       <li class="divider"></li>
       <li><a href="{{url_for_security('logout')}}"><i class="fa fa-sign-out"></i> {{_('Log out')}}</a></li>
     </ul>

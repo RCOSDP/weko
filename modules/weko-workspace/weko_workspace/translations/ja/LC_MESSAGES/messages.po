@@ -1,0 +1,92 @@
+# Japanese translations for weko-workspace.
+# Copyright (C) 2018 National Institute of Informatics
+# This file is distributed under the same license as the weko-workspace
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: weko-workspace 0.1.0.dev20250201\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2019-07-02 09:20+0000\n"
+"PO-Revision-Date: 2018-08-06 13:44+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.5.1\n"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Filter Display"
+msgstr "絞込み表示"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Publication Date"
+msgstr "出版年月"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Title"
+msgstr "タイトル"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Number of accesses"
+msgstr "アクセス数"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Number of downloads"
+msgstr "ダウンロード数"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Filter"
+msgstr "絞込"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Clear"
+msgstr "クリア"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Save"
+msgstr "保存"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Reset"
+msgstr "リセット"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Please press Enter after inputting to search."
+msgstr "入力後、Enterを押下し検索してください"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "No results found matching your search criteria."
+msgstr "検索条件と十分に一致する結果が見つかりません"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "※This item is excluded from the default condition save target."
+msgstr "※この項目はデフォルト条件の保存対象外です"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Would you like to remove the filter conditions?"
+msgstr "フィルタ条件を削除しますか？"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Relation"
+msgstr "関連"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Document file"
+msgstr "本文ファイル"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Published"
+msgstr "公開"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Embargo"
+msgstr "エンバーゴ"
+
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Restricted"
+msgstr "制限公開"

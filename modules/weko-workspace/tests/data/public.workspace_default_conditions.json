@@ -1,0 +1,8 @@
+[
+    {
+        "user_id": 1,
+        "default_con": "{\"favorite\": true, \"award_title\": [], \"funder_name\": [], \"peer_review\": null, \"file_present\": true, \"resource_type\": [\"conference paper\"], \"related_to_data\": null, \"related_to_paper\": null}",
+        "created": "2025-03-11T15:32:21.790+09:00",
+        "updated": "2025-03-11T15:32:21.790+09:00"
+    }
+]
