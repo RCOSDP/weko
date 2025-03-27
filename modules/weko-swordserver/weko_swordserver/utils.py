@@ -287,26 +287,18 @@ def update_item_ids(list_record, new_id):
         if not isinstance(item, dict):
             continue
 
-        metadata = item.get('metadata')
-        if not metadata or not hasattr(metadata, 'id'):
-            continue  # Skip if metadata is missing or doesn't have 'id'
+        metadata = item.get("metadata")
+        if not metadata or not item.get("_id"):
+            continue  # Skip if metadata is missing or doesn't have "_id"
 
-        current_identifier = getattr(metadata, 'id')
-        if current_identifier is not None:  # Skip if identifier is empty
-            identifier_to_item[current_identifier] = item
+        identifier_to_item[item["_id"]] = item
 
     # Iterate through each ITEM in list_record
     for item in list_record:
-        if not isinstance(item, dict):
-            continue
-
-        metadata = item.get('metadata')
-        if not metadata or not hasattr(metadata, 'link_data'):
-            continue  # Skip if metadata is missing or doesn't have 'link_data'
-
-        link_data = getattr(metadata, 'link_data', [])
-        if not isinstance(link_data, list):
-            continue
+        metadata = item.get("metadata")
+        if not metadata or not item.get("link_data"):
+            continue  # Skip if metadata is missing or doesn't have "link_data"
+        link_data = item.get("link_data")
 
         for link_item in link_data:
             if not isinstance(link_item, dict):
@@ -423,7 +415,7 @@ def get_register_format():
                 "Item type and workflow do not match.",
                 errorType=ErrorType.ServerError
             )
-        
+
         # Check if workflow has delete_flow_id
         delete_flow_id = WorkFlow.query.filter_by(id=sword_client.workflow_id).one_or_none().delete_flow_id
 

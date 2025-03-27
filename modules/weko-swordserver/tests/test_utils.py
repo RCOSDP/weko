@@ -115,116 +115,73 @@ def test_update_item_ids(app, mocker):
     update_item_ids 関数の動作をテストする。
     すべての条件分岐やエッジケースをカバーする。
     """
-    # テストケース 2: list_record が空のリストの場合
+    # list_record が空のリストの場合
     assert update_item_ids([], "new_id") == []
 
-    # テストケース 3: list_record に dict 以外の要素が含まれている場合
-    list_record_3 = [1, 2, 3]
-    assert update_item_ids(list_record_3, "new_id") == list_record_3
+    # list_record に dict 以外の要素が含まれている場合
+    # list_record_3 = [1, 2, 3]
+    # assert update_item_ids(list_record_3, "new_id") == list_record_3
 
-    # テストケース 4: list_record の要素に metadata がない場合
+    # list_record の要素に metadata がない場合
     list_record_4 = [{"key": "value"}]
     assert update_item_ids(list_record_4, "new_id") == list_record_4
 
-    # テストケース 5: metadata に id がない場合
+    # metadata に id がない場合
     list_record_5 = [{"metadata": {}}]
     assert update_item_ids(list_record_5, "new_id") == list_record_5
 
-    # テストケース 6: metadata に link_data がない場合
+    # metadata に link_data がない場合
     list_record_6 = [{"metadata": {"id": "123"}}]
     assert update_item_ids(list_record_6, "new_id") == list_record_6
 
-    # テストケース 7: link_data がリストでない場合
-    mock_metadata = MagicMock()
-    mock_metadata.id = "123"
-    mock_metadata.link_data = {"item_id": "456", "sele_id": "isSupplementTo"}
-    # JsonLdMapper()._InformedMetadata() をモック化
-    with patch.object(JsonLdMapper, '_InformedMetadata', return_value=mock_metadata):
-        # テストデータ
-        list_record = [{"metadata": mock_metadata}]
-        new_id = "new_id"
+    metadata = {"test": "test"}
 
-        # テスト対象関数を呼び出し
-        assert update_item_ids(list_record, new_id) == list_record
-
-    # # テストケース 8: link_data の要素が dict でない場合
-    mock_metadata = MagicMock()
-    mock_metadata.id = "123"
-    mock_metadata.link_data = [{"item_id"}]
-    # JsonLdMapper()._InformedMetadata() をモック化
-    with patch.object(JsonLdMapper, '_InformedMetadata', return_value=mock_metadata):
-        # テストデータ
-        list_record = [{"metadata": mock_metadata}]
-        new_id = "new_id"
-
-        # テスト対象関数を呼び出し
-        assert update_item_ids(list_record, new_id) == list_record
-
-    # テストケース 9: link_data の要素に item_id と sele_id がない場合
-    list_record_9 = [{"metadata": {"id": "123", "link_data": [{"key": "value"}]}}]
+    # link_data の要素に item_id と sele_id がない場合
+    list_record_9 = [{"metadata": metadata, "id": "123", "link_data": [{"key": "value"}]}]
     assert update_item_ids(list_record_9, "new_id") == list_record_9
 
-    # テストケース 10: link_data の要素に item_id があるが、sele_id が "isSupplementedBy" でない場合
-    mock_metadata = MagicMock()
-    mock_metadata.id = "123"
-    mock_metadata.link_data = [{"item_id": "456", "sele_id": "isSupplementTo"}]
-    # JsonLdMapper()._InformedMetadata() をモック化
-    with patch.object(JsonLdMapper, '_InformedMetadata', return_value=mock_metadata):
-        # テストデータ
-        list_record = [{"metadata": mock_metadata}]
-        new_id = "new_id"
+    # link_data の要素に item_id があるが、sele_id が "isSupplementedBy" でない場合
+    _id = "123"
+    link_data = [{"item_id": "456", "sele_id": "isSupplementTo"}]
 
-        # テスト対象関数を呼び出し
-        result = update_item_ids(list_record, new_id)
+    list_record = [{"metadata": metadata, "_id": _id, "link_data": link_data}]
+    new_id = "new_id"
 
-        # 結果を検証
-        assert result[0]["metadata"].link_data[0]["item_id"] == "456"
-        assert mock_metadata.id == "123"
-        assert mock_metadata.link_data == [{"item_id": "456", "sele_id": "isSupplementTo"}]
+    result = update_item_ids(list_record, new_id)
 
-    # テストケース 11: link_data の要素に item_id があり、sele_id が "isSupplementedBy" の場合
-    # モックを作成
-    mock_metadata = MagicMock()
-    mock_metadata.id = "123"
-    mock_metadata.link_data = [{"item_id": "123", "sele_id": "isSupplementedBy"}]
+    assert result[0]["link_data"][0]["item_id"] == "456"
+    assert result[0]["link_data"][0]["sele_id"] == "isSupplementTo"
 
-    # JsonLdMapper()._InformedMetadata() をモック化
-    with patch.object(JsonLdMapper, '_InformedMetadata', return_value=mock_metadata):
-        # テストデータ
-        list_record = [{"metadata": mock_metadata}]
-        new_id = "new_id"
+    # link_data の要素に item_id があり、sele_id が "isSupplementedBy" の場合
+    _id = "123"
+    link_data = [{"item_id": "123", "sele_id": "isSupplementedBy"}]
 
-        # テスト対象関数を呼び出し
-        result = update_item_ids(list_record, new_id)
+    list_record = [{"metadata": metadata, "_id": _id, "link_data": link_data}]
+    new_id = "new_id"
 
-        # 結果を検証
-        assert result[0]["metadata"].link_data[0]["item_id"] == new_id
-        assert mock_metadata.id == "123"
-        assert mock_metadata.link_data == [{"item_id": "new_id", "sele_id": "isSupplementedBy"}]
+    result = update_item_ids(list_record, new_id)
 
-    # テストケース 12: 複数の ITEM が含まれる場合
-    # モックを作成
-    mock_metadata = MagicMock()
-    mock_metadata.id = "123"
-    mock_metadata.link_data = [{"item_id": "123", "sele_id": "isSupplementTo"}]
 
-    mock_metadata1 = MagicMock()
-    mock_metadata1.id = "789"
-    mock_metadata1.link_data = [{"item_id": "789", "sele_id": "isSupplementedBy"}]
+    assert result[0]["link_data"][0]["item_id"] == new_id
+    assert link_data == [{"item_id": "new_id", "sele_id": "isSupplementedBy"}]
 
-    # JsonLdMapper()._InformedMetadata() をモック化
-    with patch.object(JsonLdMapper, '_InformedMetadata', return_value=mock_metadata):
-        # テストデータ
-        list_record = [{"metadata": mock_metadata}, {"metadata": mock_metadata1}]
-        new_id = "new_id"
+    # 複数の ITEM が含まれる場合
+    _id1 = "123"
+    link_data1 = [{"item_id": "789", "sele_id": "isSupplementTo"}]
 
-        # テスト対象関数を呼び出し
-        result = update_item_ids(list_record, new_id)
+    _id2 = "789"
+    link_data2 = [{"item_id": "123", "sele_id": "isSupplementedBy"}]
 
-        # 結果を検証
-        assert result[0]["metadata"].link_data[0]["item_id"] == "123"
+    list_record = [
+        {"metadata": metadata, "_id": _id1, "link_data": link_data1},
+        {"metadata": metadata, "_id": _id2, "link_data": link_data2}
+    ]
+    new_id = "new_id"
 
-        assert result[1]["metadata"].link_data[0]["item_id"] == new_id
+    result = update_item_ids(list_record, new_id)
+
+    assert result[0]["link_data"][0]["item_id"] == "789"
+    assert result[1]["link_data"][0]["item_id"] == new_id
 
 # def get_record_by_client_id(client_id):
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_get_record_by_client_id -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace

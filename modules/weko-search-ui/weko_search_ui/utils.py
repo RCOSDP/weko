@@ -884,12 +884,12 @@ def check_jsonld_import_items(
 
         mapping = json_mapping.mapping
         mapper = JsonLdMapper(item_type.id, mapping)
-        if mapper.is_valid:
+        if not mapper.is_valid:
             current_app.logger.info(
-                f"Mapping is valid for item type {item_type.item_type_name.name}."
+                f"Mapping is invalid for item type {item_type.item_type_name.name}."
             )
             raise Exception(
-                f"Mapping is valid for item type {item_type.item_type_name.name}."
+                f"Mapping is invalid for item type {item_type.item_type_name.name}."
             )
 
         with open(f"{data_path}/{json_name}", "r") as f:

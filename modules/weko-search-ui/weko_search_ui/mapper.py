@@ -1280,7 +1280,7 @@ class JsonMapper(BaseMapper):
         }
 
     def _get_required(self, schema, parent=None):
-        required = schema.get("required", [])
+        required = schema.get("required", []).copy()
         for k, v in schema.get("properties", {}).items():
             if v.get("type") == "object":
                 required.extend([
@@ -1401,7 +1401,7 @@ class JsonLdMapper(JsonMapper):
                 for prop_name, ld_key in self.json_mapping.items()
                 if prop_name in item_map
         }
-        
+
         fixed_properties = {}
         for k, v in properties_mapping.items():
             if k.startswith("$") and "." in v:
