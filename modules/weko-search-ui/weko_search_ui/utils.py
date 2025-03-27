@@ -890,13 +890,16 @@ def check_jsonld_import_items(
         list_record = [
             {
                 "$schema": f"/items/jsonschema/{item_type.id}",
-                # if new item, must not exist "id"
-                **({"id": item_metadata["id"]} if "id" in item_metadata else {}),
+                # if new item, must not exist "id" and "uri"
+                **({"id": item_metadata.pop("id")} if "id" in item_metadata else {}),
+                **({"uri": item_metadata.pop("uri")} if "uri" in item_metadata else {}),
                 "_id": item_metadata.id,
                 "metadata": item_metadata,
                 "item_type_name": item_type.item_type_name.name,
                 "item_type_id": item_type.id,
                 "publish_status": item_metadata.get("publish_status"),
+                **({"edit_mode": item_metadata.pop("edit_mode")}
+                    if "edit_mode" in item_metadata else {}),
                 "link_data": item_metadata.link_data,
                 "file_path": item_metadata.list_file,
                 "non_extract": item_metadata.non_extract,
@@ -908,7 +911,7 @@ def check_jsonld_import_items(
             } for item_metadata in item_metadatas
         ]
         data_path = os.path.join(data_path, "data")
-        list_record.sort(key=lambda x: get_priority(x['metadata'].link_data))
+        list_record.sort(key=lambda x: get_priority(x["link_data"]))
         handle_save_bagit(list_record, file, data_path, filename)
 
         handle_set_change_identifier_flag(list_record, is_change_identifier)
@@ -1453,7 +1456,7 @@ def handle_check_exist_record(list_record) -> list:
         if item_id and item_id is not "":
             system_url = request.host_url + "records/" + str(item_id)
             if item.get("uri") != system_url:
-                errors.append(_("Specified URI and system" " URI do not match."))
+                errors.append(_("Specified URI and system URI do not match."))
                 item["status"] = None
             else:
                 item_exist = None

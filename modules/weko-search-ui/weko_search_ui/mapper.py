@@ -1415,7 +1415,8 @@ class JsonLdMapper(JsonMapper):
         ]
         mapped_metadata.save_as_is = metadata.save_as_is
         mapped_metadata.metadata_replace = metadata.metadata_replace
-        mapped_metadata.update({"id": metadata["id"]} if "id" in metadata else {}) 
+        mapped_metadata.update({"id": metadata["id"]} if "id" in metadata else {})
+        mapped_metadata.update({"uri": metadata["uri"]} if "uri" in metadata else {})
         mapped_metadata.setdefault("publish_status", "private")
         mapped_metadata.setdefault("edit_mode", "Keep")
 
@@ -1699,9 +1700,13 @@ class JsonLdMapper(JsonMapper):
         for extracted in list_extracted:
             metadata = cls._deconstruct_dict(extracted, cls._InformedMetadata())
             metadata.update(
-                {"id": extracted["identifier"]} 
+                {"id": extracted["identifier"]}
                 if "identifier" in extracted else {}
-            ) 
+            )
+            metadata.update(
+                {"uri": extracted["uri"]}
+                if "uri" in extracted else {}
+            )
             metadata.id = extracted["@id"]
             metadata.link_data = [
                 {"item_id": link.get("identifier"), "sele_id" : link.get("value")}
