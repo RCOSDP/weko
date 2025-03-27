@@ -1534,52 +1534,44 @@ class WorkActivity(object):
     @staticmethod
     def query_activities_by_tab_is_all(
         query,
-        is_community_admin,
-        community_user_ids,
     ):
         """Query activities by tab is all.
 
         :param query:
-        :param is_community_admin:
-        :param community_user_ids:
         :return:
         """
         self_user_id = int(current_user.get_id())
         self_group_ids = [role.id for role in current_user.roles]
-        if is_community_admin:
-            query = query \
-                .filter(_Activity.activity_login_user.in_(community_user_ids))
-        else:
-            query = query.filter(
-                or_(
-                    and_(
-                        _Activity.activity_login_user == self_user_id,
-                        _Activity.activity_status
-                        == ActivityStatusPolicy.ACTIVITY_FINALLY
-                    ),
-                    and_(
-                        ActivityAction.action_handler == self_user_id
-                    ),
-                    and_(
-                        _Activity.approval1 == current_user.email
-                    ),
-                    and_(
-                        _Activity.approval2 == current_user.email
-                    ),
-                    and_(
-                        _FlowActionRole.action_user == self_user_id,
-                        _FlowActionRole.action_user_exclude == '0'
-                    ),
-                    and_(
-                        _FlowActionRole.action_role.in_(self_group_ids),
-                        _FlowActionRole.action_role_exclude == '0'
-                    ),
-                    and_(
-                        _Activity.shared_user_id == self_user_id,
-                        _FlowAction.action_id != 4
-                    ),
-                )
+        query = query.filter(
+            or_(
+                and_(
+                    _Activity.activity_login_user == self_user_id,
+                    _Activity.activity_status
+                    == ActivityStatusPolicy.ACTIVITY_FINALLY
+                ),
+                and_(
+                    ActivityAction.action_handler == self_user_id
+                ),
+                and_(
+                    _Activity.approval1 == current_user.email
+                ),
+                and_(
+                    _Activity.approval2 == current_user.email
+                ),
+                and_(
+                    _FlowActionRole.action_user == self_user_id,
+                    _FlowActionRole.action_user_exclude == '0'
+                ),
+                and_(
+                    _FlowActionRole.action_role.in_(self_group_ids),
+                    _FlowActionRole.action_role_exclude == '0'
+                ),
+                and_(
+                    _Activity.shared_user_id == self_user_id,
+                    _FlowAction.action_id != 4
+                ),
             )
+        )
 
         return query
 
@@ -1607,12 +1599,13 @@ class WorkActivity(object):
         return is_admin, is_community_admin
 
     @staticmethod
-    def query_activities_by_tab_is_todo(query, is_admin):
+    def query_activities_by_tab_is_todo(query, is_admin, is_community_admin):
         """
         Query activities by tab is todo.
 
         :param query:
         :param is_admin:
+        :param is_community_admin:
         :return:
         """
         query = query \
@@ -1620,10 +1613,20 @@ class WorkActivity(object):
                         == ActivityStatusPolicy.ACTIVITY_BEGIN,
                         _Activity.activity_status
                         == ActivityStatusPolicy.ACTIVITY_MAKING))
-        if not is_admin or current_app.config[
-                'WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']:
-            self_user_id = int(current_user.get_id())
-            self_group_ids = [role.id for role in current_user.roles]
+        self_user_id = int(current_user.get_id())
+        self_group_ids = [role.id for role in current_user.roles]
+        query = query \
+            .filter(_FlowAction.action_id == _Activity.action_id) \
+            .filter(_FlowAction.action_order == _Activity.action_order)
+        if is_admin or is_community_admin:
+            query = query \
+                .filter(
+                    or_(
+                        ActivityAction.action_handler.in_([-1, self_user_id]),
+                        _Activity.shared_user_id == self_user_id
+                    )
+                )
+        else:
             query = query \
                 .filter(
                     or_(
@@ -1642,15 +1645,8 @@ class WorkActivity(object):
                             _Activity.shared_user_id == self_user_id,
                         ),
                     )
-                )\
-                .filter(_FlowAction.action_id == _Activity.action_id) \
-                .filter(_FlowAction.action_order == _Activity.action_order)
-            if is_admin:
-                query = query.filter(
-                    ActivityAction.action_handler.in_([-1, self_user_id])
-                )
-            else:
-                query = query.filter(
+                ) \
+                .filter(
                     or_(
                         ActivityAction.action_handler == self_user_id,
                         and_(
@@ -1699,28 +1695,14 @@ class WorkActivity(object):
                     ActivityAction.activity_id == _Activity.activity_id,
                     ActivityAction.action_id == _Activity.action_id,
                 )
-            )
-
-        if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] or \
-                current_app.config['WEKO_ITEMS_UI_MULTIPLE_APPROVALS']:
-            common_query = common_query \
-                .outerjoin(
-                    User,
-                    and_(
-                        _Activity.activity_login_user == User.id,
-                    )
-                ) \
-                .outerjoin(
-                    userrole, and_(User.id == userrole.c.user_id)
-                ).outerjoin(Role, and_(userrole.c.role_id == Role.id))
-        else:
-            common_query = common_query \
-                .outerjoin(
-                    User,
-                    and_(
-                        _Activity.activity_update_user == User.id,
-                    )
+            ).outerjoin(
+                User,
+                and_(
+                    _Activity.activity_login_user == User.id,
                 )
+            ).outerjoin(userrole, and_(User.id == userrole.c.user_id)
+            ).outerjoin(Role, and_(userrole.c.role_id == Role.id))
+
         return common_query
     
     @staticmethod
@@ -1779,7 +1761,9 @@ class WorkActivity(object):
             activity_data.role_name = role_name if role_name else ''
 
             if is_community_admin:
-                if not self._check_community_permission(activity_data, index_ids):
+                if activity_data.activity_login_user != int(current_user.get_id()) and \
+                        activity_data.shared_user_id != int(current_user.get_id()) and \
+                        not self._check_community_permission(activity_data, index_ids):
                     continue
             # Append to do and action activities into the master list
             activities.append(activity_data)
@@ -1850,12 +1834,10 @@ class WorkActivity(object):
                     page = page_all[0]
                 if size_all and size_all[0].isnumeric():
                     size = size_all[0]
-                if not is_admin:
-                    community_user_ids = self.__get_community_user_ids()
+                if not is_admin and not is_community_admin:
                     query_action_activities = self \
                         .query_activities_by_tab_is_all(
-                            query_action_activities, is_community_admin,
-                            community_user_ids
+                            query_action_activities
                         )
             # query activities by tab is todo
             elif tab == WEKO_WORKFLOW_TODO_TAB:
@@ -1865,16 +1847,14 @@ class WorkActivity(object):
                     page = page_todo[0]
                 if size_todo and size_todo[0].isnumeric():
                     size = size_todo[0]
-                if not is_admin:
-                    community_user_ids = self.__get_community_user_ids()
+                if not is_admin and not is_community_admin:
                     query_action_activities = self\
                         .query_activities_by_tab_is_all(
-                            query_action_activities, is_community_admin,
-                            community_user_ids
+                            query_action_activities
                         )
 
                 query_action_activities = self.query_activities_by_tab_is_todo(
-                    query_action_activities, is_admin
+                    query_action_activities, is_admin, is_community_admin
                 )
 
             # Filter conditions
