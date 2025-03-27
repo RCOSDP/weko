@@ -23,6 +23,8 @@ import copy
 import inspect
 import sys
 import uuid
+import io
+import chardet
 from collections import OrderedDict
 from datetime import datetime, timezone,date
 from typing import NoReturn, Union
@@ -60,8 +62,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from weko_admin.models import AdminSettings
 from weko_index_tree.api import Indexes
-from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, \
-    ItemTypes
+from weko_records.api import ItemLink, ItemsMetadata, ItemTypes,FeedbackMailList
 from weko_records.models import ItemMetadata, ItemReference
 from weko_records.utils import get_all_items, get_attribute_value_all_items, \
     get_options_and_order_list, json_loader, remove_weko2_special_character, \
@@ -157,7 +158,10 @@ class WekoIndexer(RecordIndexer):
         es_info = dict(id=str(item_id),
                        index=self.es_index,
                        doc_type=self.es_doc_type)
-        body = dict(version=revision_id + 1,
+        # body = dict(version=revision_id + 1,
+        #             version_type=self._version_type,
+        #             body=jrc)
+        body = dict(version=revision_id,
                     version_type=self._version_type,
                     body=jrc)
 
@@ -168,6 +172,9 @@ class WekoIndexer(RecordIndexer):
         # hfix merge
         # current_app.logger.debug(full_body)
         # self.client.index(**full_body)
+        # current_app.logger.error("client:{}".format(self.client.__dict__))
+        # current_app.logger.error("es_info:{}".format(es_info))
+        # current_app.logger.error("body:{}".format(body))
 
         self.client.index(**{**es_info, **body})
 
@@ -317,21 +324,37 @@ class WekoIndexer(RecordIndexer):
                                           body=search_query)
         return search_result.get('count')
 
-    def get_pid_by_es_scroll(self, path):
+    def get_pid_by_es_scroll(self, path, only_latest_version=False):
         """Get pid by es scroll.
 
         :param path:
+        :param only_latest_version:
         :return: _scroll_id
         """
         search_query = {
             "query": {
-                "match": {
-                    "path.tree": path
+                "bool": {
+                    "must": [
+                        {
+                            "match": {
+                                "path.tree": path
+                            }
+                        }
+                    ]
                 }
             },
             "_source": "_id",
             "size": 3000
         }
+
+        if only_latest_version:
+            search_query["query"]["bool"]["must"].append(
+                {
+                    "match": {
+                        "relation_version_is_last": "true"
+                    }
+                }
+            )
 
         def get_result(result):
             if result:
@@ -957,28 +980,11 @@ class WekoDeposit(Deposit):
                     self.indexer.upload_metadata(self.jrc,
                                                  self.pid.object_uuid,
                                                  self.revision_id)
-                    feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(self.id)
-                    if feedback_mail_list:
-                        self.update_feedback_mail()
-                    else:
-                        self.remove_feedback_mail()
-                except TransportError as err:
-                    err_passing_config = current_app.config.get(
-                        'WEKO_DEPOSIT_ES_PARSING_ERROR_PROCESS_ENABLE')
-                    parse_err = current_app.config.get(
-                        'WEKO_DEPOSIT_ES_PARSING_ERROR_KEYWORD')
-                    if err_passing_config and \
-                            parse_err in err.info["error"]["reason"]:
-                        self.delete_content_files()
-                        self.indexer.upload_metadata(self.jrc,
-                                                     self.pid.object_uuid,
-                                                     self.revision_id,
-                                                     True)
-                        record_id = self['_deposit']['id']
-                        message = 'Failed to parse file from item {}'
-                        current_app.logger.warn(message.format(record_id))
-                    else:
-                        raise err
+                except TransportError as err:    
+                    if self.jrc.get('content'):
+                        for content in self.jrc['content']:
+                            if 'attachment' in content and 'content' in content.get('attachment'):
+                                del content['attachment']['content']
 
                 # Remove large base64 files for release memory
                 if self.jrc.get('content'):
@@ -1138,8 +1144,17 @@ class WekoDeposit(Deposit):
                                 attachment = {}
                                 if file.obj.mimetype in mimetypes:
                                     try:
-                                        reader = parser.from_file(file.obj.file.uri)
-                                        attachment["content"] = "".join(reader["content"].splitlines())
+                                        with file.obj.file.storage().open(mode='rb') as fp:
+                                            data = ""
+                                            if file.obj.mimetype in current_app.config['WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES']:
+                                                data = fp.read(current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT'])
+                                                inf = chardet.detect(data)
+                                                data = data.decode(inf['encoding'], errors='replace')
+                                            else:
+                                                reader = parser.from_buffer(fp.read(current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT']))
+                                                if reader is not None and "content" in reader and reader["content"] is not None:
+                                                    data = "".join(reader["content"].splitlines())
+                                            attachment["content"] = data
                                     except FileNotFoundError as se:
                                         current_app.logger.error("FileNotFoundError: {}".format(se))
                                         current_app.logger.error("file.obj: {}".format(file.obj))
@@ -1411,7 +1426,10 @@ class WekoDeposit(Deposit):
         try:
             deposit_owners = self.get('_deposit', {}).get('owners')
             owner_id = str(deposit_owners[0] if deposit_owners else 1)
-            dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
+            if str(self.pid.pid_value).endswith(".0"):
+                dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id,replace_field=False)
+            else:
+                dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
             dc['publish_date'] = data.get('pubdate')
             dc['title'] = [data.get('title')]
             dc['relation_version_is_last'] = True
@@ -1421,6 +1439,8 @@ class WekoDeposit(Deposit):
             self._convert_jpcoar_data_to_es()
         except RuntimeError:
             raise
+        except ValueError as ex:
+            raise ex
         except BaseException:
             import traceback
             current_app.logger.error(traceback.format_exc())
@@ -1568,7 +1588,6 @@ class WekoDeposit(Deposit):
             index_id (str): index_id
             ignore_items (list):
                 list of items that will be ingnored, therefore will not be deleted
-        
 
         Returns:
             None
@@ -1578,19 +1597,21 @@ class WekoDeposit(Deposit):
         """
         if index_id:
             index_id = str(index_id)
-        obj_ids = next((cls.indexer.get_pid_by_es_scroll(index_id)), [])
+        obj_ids = next((cls.indexer.get_pid_by_es_scroll(index_id, only_latest_version=True)), [])
+        removed_records = []
         for obj_uuid in obj_ids:
             r = RecordMetadata.query.filter_by(id=obj_uuid).first()
-            if r.json['recid'].split('.')[0] in ignore_items:
+            if r.json['recid'] in ignore_items:
                 continue
             r.json['path'].remove(index_id)
             flag_modified(r, 'json')
             if r.json and not r.json['path']:
                 from weko_records_ui.utils import soft_delete
                 soft_delete(obj_uuid)
-            else:
-                dep = WekoDeposit(r.json, r)
-                dep.indexer.update_es_data(dep, update_revision=False)
+                removed_records.append(r)
+        for r in removed_records:
+            dep = WekoDeposit(r.json, r)
+            dep.indexer.update_es_data(dep, update_revision=False)
 
     def update_pid_by_index_tree_id(self, path):
         """ 
@@ -1681,27 +1702,6 @@ class WekoDeposit(Deposit):
                 "author_link": author_link
             }
             self.indexer.update_author_link(author_link_info)
-
-    def update_feedback_mail(self):
-        """ 
-
-        Index feedback mail list.
-
-        Args:
-            None
-
-        Returns:
-            None
-
-        """
-        item_id = self.id
-        mail_list = FeedbackMailList.get_mail_list_by_item_id(item_id)
-        if mail_list:
-            feedback_mail = {
-                "id": item_id,
-                "mail_list": mail_list
-            }
-            self.indexer.update_feedback_mail_list(feedback_mail)
 
     def remove_feedback_mail(self):
         """ 
@@ -1997,13 +1997,12 @@ class WekoRecord(Record):
         :param hide_list: hide item list of item type
         :return:
         """
-        parent_key = None
-        title_key = None
-        language_key = None
+        parent_key = []
+        title_key = {}
+        language_key = {}
         if item_type_mapping:
             for mapping_key in item_type_mapping:
-                property_data = item_type_mapping.get(mapping_key).get(
-                    'jpcoar_mapping')
+                property_data = item_type_mapping.get(mapping_key).get('jpcoar_mapping')
                 prop_hidden = meta_option.get(mapping_key, {}).get('option', {}).get('hidden', False)
                 if (
                     isinstance(property_data, dict)
@@ -2011,17 +2010,19 @@ class WekoRecord(Record):
                     and not prop_hidden
                 ):
                     title = property_data.get('title')
-                    parent_key = mapping_key
-                    title_key = title.get("@value")
-                    language_key = title.get("@attributes", {}).get("xml:lang")
+                    _parent_key = mapping_key
+                    _title_key = title.get("@value")
+                    _language_key = title.get("@attributes", {}).get("xml:lang")
                     for h in hide_list:
-                        if parent_key in h and language_key in h:
-                            language_key = None
-                        if parent_key in h and title_key in h:
-                            title_key = None
-                            parent_key = None
-                    if parent_key and title_key and language_key:
-                        break
+                        if _parent_key in h and _language_key in h:
+                            _language_key = None
+                        if _parent_key in h and _title_key in h:
+                            _title_key = None
+                            _parent_key = None
+                    if _parent_key:
+                        parent_key.append(_parent_key)
+                        title_key[_parent_key] = _title_key
+                        language_key[_parent_key] = _language_key
         return parent_key, title_key, language_key
 
     @property
@@ -2035,23 +2036,35 @@ class WekoRecord(Record):
             TypeError
         """
         from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
-        meta_option, item_type_mapping = get_options_and_order_list(self.get('item_type_id'))
-        hide_list = get_hide_list_by_schema_form(self.get('item_type_id'))
+        item_type_id = self.get('item_type_id')
+        item_type = ItemTypes.get_by_id(item_type_id)
+        hide_list = []
+        if item_type:
+            meta_option, item_type_mapping = get_options_and_order_list(
+                item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
+            hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+        else:
+             meta_option, item_type_mapping = get_options_and_order_list(item_type_id)
         parent_key, title_key, language_key = self.__get_titles_key(
             item_type_mapping, meta_option, hide_list)
-        title_metadata = self.get(parent_key)
+        attribute_value = []
         titles = []
-        if title_metadata:
-            attribute_value = title_metadata.get('attribute_value_mlt')
+        for pk in parent_key:
+            attribute_value = None
+            if self.get(pk) and \
+                    'attribute_value_mlt' in self.get(pk):
+                attribute_value = self.get(pk).get('attribute_value_mlt')
             if isinstance(attribute_value, list):
                 for attribute in attribute_value:
                     tmp = dict()
-                    if attribute.get(title_key):
-                        tmp['title'] = attribute.get(title_key)
-                    if attribute.get(language_key):
-                        tmp['language'] = attribute.get(language_key)
+                    if attribute.get(title_key.get(pk)):
+                        tmp['title'] = attribute.get(title_key.get(pk))
+                    if attribute.get(language_key.get(pk)):
+                        tmp['language'] = attribute.get(language_key.get(pk))
                     if tmp.get('title'):
                         titles.append(tmp.copy())
+            if titles:
+                break
         return self.switching_language(titles)
 
     @property
@@ -2070,10 +2083,16 @@ class WekoRecord(Record):
         items = []
         settings = AdminSettings.get('items_display_settings')
         hide_email_flag = not settings.items_display_email
-        solst, meta_options = get_options_and_order_list(
-            self.get('item_type_id'))
-        hide_list = get_hide_list_by_schema_form(self.get('item_type_id'))
-        item_type = ItemTypes.get_by_id(self.get('item_type_id'))
+
+        item_type_id = self.get('item_type_id')
+        item_type = ItemTypes.get_by_id(item_type_id)
+        hide_list = []
+        if item_type:
+            solst, meta_options = get_options_and_order_list(
+                item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
+            hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+        else:
+             solst, meta_options = get_options_and_order_list(item_type_id)
         meta_list = item_type.render.get('meta_list', []) if item_type else {}
 
         for lst in solst:
@@ -2412,10 +2431,14 @@ class WekoRecord(Record):
 
         item_link.update(relation_data)
 
-    def get_file_data(self):
+    def get_file_data(self, item_type=None):
         """Get file data."""
         item_type_id = self.get('item_type_id')
-        solst, _ = get_options_and_order_list(item_type_id)
+        if item_type:
+            solst, _ = get_options_and_order_list(
+                item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
+        else:
+            solst, _ = get_options_and_order_list(item_type_id)
         items = []
         for lst in solst:
             key = lst[0]

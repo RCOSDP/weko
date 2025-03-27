@@ -58,6 +58,19 @@ mapping = {
                 },
                 "@value": "subitem_funder_names.subitem_funder_name",
             },
+            "fundingStreamIdentifier": {
+                "@attributes": {
+                    "fundingStreamIdentifierType": "subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type",
+                    "fundingStreamIdentifierTypeURI": "subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type_uri",
+                },
+                "@value": "subitem_funding_stream_identifiers.subitem_funding_stream_identifier",
+            },
+            "fundingStream": {
+                "@attributes": {
+                    "xml:lang": "subitem_funding_streams.subitem_funding_stream_language"
+                },
+                "@value": "subitem_funding_streams.subitem_funding_stream",
+            },
             "awardNumber": {
                 "@attributes": {
                     "awardURI": "subitem_award_numbers.subitem_award_uri",
@@ -139,6 +152,51 @@ def schema(title="", multi_flag=multiple_flag):
                         },
                     },
                     "title": "助成機関名",
+                },
+                "subitem_funding_stream_identifiers": {
+                    "type": "object",
+                    "format": "object",
+                    "properties": {
+                        "subitem_funding_stream_identifier_type": {
+                            "type": ["null", "string"],
+                            "format": "select",
+                            "enum": config.FUNDING_STREAM_IDENTIFIER_TYPE,
+                            "title": "プログラム情報識別子タイプ",
+                        },
+                        "subitem_funding_stream_identifier_type_uri": {
+                            "format": "text",
+                            "title": "プログラム情報識別子タイプURI",
+                            "type": "string",
+                        },
+                        "subitem_funding_stream_identifier": {
+                            "format": "text",
+                            "title": "プログラム情報識別子",
+                            "type": "string",
+                        },
+                    },
+                    "title": "プログラム情報識別子",
+                },
+                "subitem_funding_streams": {
+                    "type": "array",
+                    "format": "array",
+                    "items": {
+                        "type": "object",
+                        "format": "object",
+                        "properties": {
+                            "subitem_funding_stream_language": {
+                                "type": ["null", "string"],
+                                "format": "select",
+                                "enum": config.LANGUAGE_VAL2_1,
+                                "title": "言語",
+                            },
+                            "subitem_funding_stream": {
+                                "format": "text",
+                                "title": "プログラム情報",
+                                "type": "string",
+                            },
+                        },
+                    },
+                    "title": "プログラム情報",
                 },
                 "subitem_award_numbers": {
                     "type": "object",
@@ -272,6 +330,81 @@ def form(
                 {
                     "items": [
                         {
+                            "key": "{}.subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type".format(
+                                key
+                            ),
+                            "title": "プログラム情報識別子タイプ",
+                            "title_i18n": {
+                                "en": "Funding Stream Identifier Type",
+                                "ja": "プログラム情報識別子タイプ",
+                            },
+                            "titleMap": get_select_value(
+                                config.FUNDING_STREAM_IDENTIFIER_TYPE
+                            ),
+                            "type": "select",
+                        },
+                        {
+                            "key": "{}.subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type_uri".format(
+                                key
+                            ),
+                            "title": "プログラム情報識別子タイプURI",
+                            "title_i18n": {
+                                "en": "Funding Stream Identifier Type URI",
+                                "ja": "プログラム情報識別子タイプURI",
+                            },
+                            "type": "text",
+                        },
+                        {
+                            "key": "{}.subitem_funding_stream_identifiers.subitem_funding_stream_identifier".format(
+                                key
+                            ),
+                            "title": "プログラム情報識別子",
+                            "title_i18n": {
+                                "en": "Funding Stream Identifier",
+                                "ja": "プログラム情報識別子",
+                            },
+                            "type": "text",
+                        },
+                    ],
+                    "key": "{}.subitem_funding_stream_identifiers".format(key),
+                    "title": "プログラム情報識別子",
+                    "title_i18n": {
+                        "en": "Funding Stream Identifiers",
+                        "ja": "プログラム情報識別子",
+                    },
+                },
+                {
+                    "add": "New",
+                    "items": [
+                        {
+                            "key": "{}.subitem_funding_streams[].subitem_funding_stream_language".format(
+                                key
+                            ),
+                            "title": "言語",
+                            "title_i18n": {"en": "Language", "ja": "言語"},
+                            "titleMap": get_select_value(config.LANGUAGE_VAL2_1),
+                            "type": "select",
+                        },
+                        {
+                            "key": "{}.subitem_funding_streams[].subitem_funding_stream".format(
+                                key
+                            ),
+                            "title": "プログラム情報",
+                            "title_i18n": {
+                                "en": "Funding Stream",
+                                "ja": "プログラム情報",
+                            },
+                            "type": "text",
+                        },
+                    ],
+                    "key": "{}.subitem_funding_streams".format(key),
+                    "style": {"add": "btn-success"},
+                    "title": "プログラム情報",
+                    "title_i18n": {"en": "Funding Streams", "ja": "プログラム情報"},
+                },
+                {
+                    "items": [
+                        {
                             "key": "{}.subitem_award_numbers.subitem_award_uri".format(
                                 key
                             ),
@@ -287,9 +420,20 @@ def form(
                             "title_i18n": {"en": "Award Number", "ja": "研究課題番号"},
                             "type": "text",
                         },
+                        {
+                            "key": "{}.subitem_award_numbers.subitem_award_number_type".format(
+                                key
+                            ),
+                            "title": "研究課題番号タイプ",
+                            "title_i18n": {
+                                "en": "Award Number Type",
+                                "ja": "研究課題番号タイプ",
+                            },
+                            "titleMap": get_select_value(config.AWARD_NUMBER_TYPE),
+                            "type": "select",
+                        },
                     ],
                     "key": "{}.subitem_award_numbers".format(key),
-                    "type": "fieldset",
                     "title": "研究課題番号",
                     "title_i18n": {"en": "Award Number", "ja": "研究課題番号"},
                 },

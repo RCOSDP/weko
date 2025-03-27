@@ -27,6 +27,7 @@ from invenio_records_rest.errors import InvalidQueryRESTError
 from invenio_search import RecordsSearch
 from weko_index_tree.api import Indexes
 from weko_schema_ui.models import PublishStatus
+from weko_search_ui.utils import execute_search_with_pagination
 
 from .config import WEKO_ROOT_INDEX
 
@@ -36,14 +37,13 @@ def get_items_by_index_tree(index_tree_id):
     records_search = RecordsSearch()
     records_search = records_search.with_preference_param().params(
         version=False)
+    records_search = records_search.sort({"control_number": {"order": "asc"}})
     records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
     search_instance = item_path_search_factory(
         search=records_search,
         index_id=index_tree_id
     )
-    search_result = search_instance.execute().to_dict()
-
-    return search_result.get('hits').get('hits')
+    return execute_search_with_pagination(search_instance, -1)
 
 
 def get_item_changes_by_index(index_tree_id, date_from, date_until):
@@ -58,9 +58,7 @@ def get_item_changes_by_index(index_tree_id, date_from, date_until):
         date_from=date_from,
         date_until=date_until
     )
-    search_result = search_instance.execute().to_dict()
-
-    return search_result.get('hits').get('hits')
+    return execute_search_with_pagination(search_instance, -1)
 
 
 def item_path_search_factory(search, index_id="0"):
@@ -224,11 +222,13 @@ def item_changes_search_factory(search,
                     ]
                 }
             },
-            "sort": {
-                "_updated": {
-                    "order": "asc"
+            "sort": [
+                {
+                    "_updated": {
+                        "order": "asc"
+                    }
                 }
-            },
+            ],
             "post_filter": {
                 "bool": {
                     "must": [

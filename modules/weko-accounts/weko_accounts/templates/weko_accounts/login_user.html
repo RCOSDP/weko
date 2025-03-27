@@ -19,7 +19,8 @@
 #}
 
 {%- if config.WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED and config.WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED and config.WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED %}
-  <meta http-equiv="Refresh" content="0; url={{ config.WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL.format(request.url_root) + request.path }}" />
+{%- set url_args = request.args.get('next', '/') | urlencode -%}
+<meta http-equiv="Refresh" content="0; url={{ config.WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL.format(request.url_root) + request.path + '?next=' + url_args }}" />
 {%- else %}
   {%- extends config.ACCOUNTS_COVER_TEMPLATE %}
 

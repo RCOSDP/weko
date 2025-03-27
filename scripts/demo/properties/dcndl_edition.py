@@ -15,7 +15,7 @@ name_ja = "版"
 name_en = "Edition"
 mapping = {
     "display_lang_type": "",
-    "jpcoar_v1_mapping": {},
+    "jpcoar_v1_mapping": "",
     "jpcoar_mapping": {
         "edition": {
             "@value": "edition",
@@ -49,7 +49,7 @@ def schema(title="", multi_flag=multiple_flag):
         _d = {
             "type": "object",
             "format": "object",
-            "title":"edition",
+            "title": "edition",
             "properties": {
                 "edition": {
                     "type": "string",

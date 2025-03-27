@@ -128,6 +128,7 @@ WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE={
     'interview':'other',
     'internal report':'other',
     'report part':'other',
+    'conference object':'conference output',
 }
 """Resource type replace list for jpcoar v2.0"""
 
@@ -171,9 +172,9 @@ WEKO_SCHEMA_DATE_TYPE = {
 """Modified and original for publisher key"""
 
 WEKO_SCHEMA_RELATION_TYPE = [
-    'isVersionOf', 'hasVersion', 'isPartOf', 'hasPart', 'isReferencedBy',
-    'references', 'isFormatOf', 'hasFormat', 'isReplacedBy', 'replaces',
-    'isRequiredBy', 'requires', 'isSupplementedBy', 'isSupplementTo',
-    'isIdenticalTo', 'isDerivedFrom', 'isSourceOf'
+    'inSeries','isCitedBy','Cites','isVersionOf','hasVersion','isPartOf','hasPart',
+    'isReferencedBy','references','isFormatOf','hasFormat',
+    'isReplacedBy','replaces','isRequiredBy','requires','isSupplementedBy',
+    'isSupplementTo','isIdenticalTo','isDerivedFrom','isSourceOf'
 ]
 """jpcoar:relation relationType Controlled Vocabularies"""

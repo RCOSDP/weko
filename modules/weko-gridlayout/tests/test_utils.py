@@ -139,12 +139,65 @@ def test_update_menu_item(i18n_app):
 
 
 # def update_access_counter_item(item, data_result):
+# .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_utils.py::test_update_access_counter_item -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-gridlayout/.tox/c1/tmp
 def test_update_access_counter_item(i18n_app):
-    item = MagicMock()
-    data_result = MagicMock()
-
-    # Doesn't return any value
-    assert not update_access_counter_item(item, data_result)
+    
+    item = {
+        'x': 2, 'y': 0, 'width': 2, 'height': 6, 
+        'name': 'test_counter01', 
+        'id': 'test_community05', 
+        'type': 'Access counter', 
+        'widget_id': 1, 
+        'background_color': '#FFFFFF', 'label_enable': True, 'theme': 'default', 'frame_border_color': '#DDDDDD', 
+        'border_style': 'solid', 'label_text_color': '#333333', 'label_color': '#F5F5F5', 
+        'access_counter': '11', 
+        'following_message': 'foll', 
+        'other_message': 'other', 
+        'preceding_message': 'pre', 
+        'count_start_date': '2024-02-10',
+        'multiLangSetting': {
+            'en': {
+                'label': 'test_conter06', 
+                'description': {
+                    'preceding_message': 'pre', 
+                    'following_message': 'foll', 
+                    'other_message': 'other', 
+                    'access_counter': '12',
+                    'count_start_date': '2024-02-10'
+                }
+            }
+        }, 
+        'created_date': '2024-03-19'
+    } 
+    data_result = {'access_counter': '14', 'count_start_date': '2024-02-14', 'preceding_message': 'pre_1', 'following_message': 'foll_1'}
+    update_access_counter_item(item, data_result)
+    assert item == {
+        'x': 2, 'y': 0, 'width': 2, 'height': 6, 
+        'name': 'test_counter01', 
+        'id': 'test_community05', 
+        'type': 'Access counter', 
+        'widget_id': 1, 
+        'background_color': '#FFFFFF', 'label_enable': True, 'theme': 'default', 'frame_border_color': '#DDDDDD', 
+        'border_style': 'solid', 'label_text_color': '#333333', 'label_color': '#F5F5F5', 
+        'access_counter': '14', 
+        'following_message': 'foll_1', 
+        'other_message': None, 
+        'preceding_message': 'pre_1', 
+        'count_start_date': '2024-02-14',
+        'multiLangSetting': {
+            'en': {
+                'label': 'test_conter06', 
+                'description': {
+                    'preceding_message': 'pre', 
+                    'following_message': 'foll', 
+                    'other_message': 'other', 
+                    'access_counter': '12',
+                    'count_start_date': '2024-02-10'
+                }
+            }
+        }, 
+        'created_date': '2024-03-19'
+    } 
 
 
 # def update_new_arrivals_item(item, data_result):
@@ -239,16 +292,41 @@ def test_build_data_setting(i18n_app):
 
 
 # def _build_access_counter_setting_data(result, setting):
+# .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_utils.py::test__build_access_counter_setting_data -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-gridlayout/.tox/c1/tmp
 def test__build_access_counter_setting_data(i18n_app):
-    result = {}
-    setting = {
-        "access_counter": "test",
-        "following_message": "test",
-        "other_message": "test",
-        "preceding_message": "test",
+    result = {
+        'background_color': '#FFFFFF', 
+        'label_enable': True, 
+        'theme': 'default', 
+        'frame_border_color': '#DDDDDD', 
+        'border_style': 'solid', 
+        'label_text_color': '#333333', 
+        'label_color': '#F5F5F5'
     }
-    # Doesn't return any value
-    assert not _build_access_counter_setting_data(result, setting)
+    setting = {
+        'preceding_message': 'pre', 
+        'following_message': 'foll', 
+        'other_message': 'other', 
+        'access_counter': 10,
+        'count_start_date': '2024-04-10'
+    }
+    _build_access_counter_setting_data(result, setting)
+    from flask import Markup
+    test = {
+        'background_color': '#FFFFFF', 
+        'label_enable': True, 
+        'theme': 'default', 
+        'frame_border_color': '#DDDDDD', 
+        'border_style': 'solid', 
+        'label_text_color': '#333333', 
+        'label_color': '#F5F5F5',
+        'preceding_message': Markup('pre'), 
+        'following_message': Markup('foll'), 
+        'other_message': Markup('other'), 
+        'access_counter': Markup(10),
+        'count_start_date': Markup('2024-04-10')
+    }
+    assert result == test
 
 
 # def _build_new_arrivals_setting_data(result, setting):
@@ -352,44 +430,102 @@ def test_convert_data_to_design_pack(i18n_app):
 
 
 # def convert_data_to_edit_pack(data):
-def test_convert_data_to_edit_pack(i18n_app):
-    WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE = "Access counter"
-    WEKO_GRIDLAYOUT_NEW_ARRIVALS_TYPE = "New arrivals"
-    WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE = 'Menu'
-    WEKO_GRIDLAYOUT_HEADER_WIDGET_TYPE = 'Header'
-    data = {
-        "settings": {
-            "multiLangSetting": "test",
-            "access_counter": "test",
-            "preceding_message": "test",
-            "following_message": "test",
-            "other_message": "test",
-            "new_dates": "test",
-            "display_result": "test",
-            "rss_feed": "test",
-        },
-        "widget_id": "test",
-        "is_enabled": "test",
-        "repository_id": "test",
-        "widget_type": "test",
-        "updated": "test",
-        "widget_type": WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE,
+# .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_utils.py::test_convert_data_to_edit_pack -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-gridlayout/.tox/c1/tmp
+def test_convert_data_to_edit_pack():
+    data_tmp = {
+        "widget_id":1,
+        "repository_id": "test_repository01",
+        "is_enabled":True, "is_deleted": False,
+        "updated": 1710792308.342129,
+        "settings":{
+            "background_color": "#FFFFFF","label_enable": True,"theme": "default","frame_border_color": "#DDDDDD",
+            "border_style": "solid","label_text_color": "#333333","label_color": "#F5F5F5",
+            "access_counter":10,
+            "preceding_message":"test_pre",
+            "following_message": "test_follow",
+            "other_message": "test_other",
+            "count_start_date": "2024-01-11",
+            "new_dates": "test_new_dates",
+            "display_result": "test_display_result",
+            "rss_feed": "test_rss",
+            "menu_orientation":"test_menu_orientation",
+            "menu_bg_color":"test_color",
+            "fixedHeaderBackgroundColor":"test_fixedHeaderBackgroundColor",
+            "multiLangSetting":"test_multi_lang_settings"
+        }
     }
-    with patch("weko_gridlayout.utils.convert_popular_data", return_value=""):
-        assert convert_data_to_edit_pack(data)
-    with patch("weko_gridlayout.utils.convert_popular_data", return_value=""):
-        data["widget_type"] = WEKO_GRIDLAYOUT_NEW_ARRIVALS_TYPE
-        assert convert_data_to_edit_pack(data)
-    with patch("weko_gridlayout.utils.convert_popular_data", return_value=""):
-        data["widget_type"] = WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE
-        assert convert_data_to_edit_pack(data)
-    with patch("weko_gridlayout.utils.convert_popular_data", return_value=""):
-        data["widget_type"] = WEKO_GRIDLAYOUT_HEADER_WIDGET_TYPE
-        assert convert_data_to_edit_pack(data)
-    data = None
-    assert not convert_data_to_edit_pack(data)
-
-
+    test_tmp = {
+        "background_color": "#FFFFFF",
+        "label_enable": True,
+        "theme": "default",
+        "frame_border_color": "#DDDDDD",
+        "border_style": "solid",
+        "label_text_color": "#333333",
+        "label_color": "#F5F5F5",
+        "widget_id": 1,
+        "is_enabled": True,
+        "enable": True,
+        "multiLangSetting": "test_multi_lang_settings",
+        "repository_id": "test_repository01",
+        "updated": 1710792308.342129,
+    }
+    
+    # widget_type = Access counter
+    data = json.loads(json.dumps(data_tmp))
+    data["widget_type"] = "Access counter"
+    result = convert_data_to_edit_pack(data)
+    test = json.loads(json.dumps(test_tmp))
+    test["widget_type"] = "Access counter"
+    test["settings"] = {
+        "access_counter": 10,
+        "preceding_message": "test_pre",
+        "following_message": "test_follow",
+        "other_message": "test_other",
+        "count_start_date": "2024-01-11",
+    }
+    assert result == test
+    
+    # widget_type = New arrivals
+    data = json.loads(json.dumps(data_tmp))
+    data["widget_type"] = "New arrivals"
+    result = convert_data_to_edit_pack(data)
+    test = json.loads(json.dumps(test_tmp))
+    test["widget_type"] = "New arrivals"
+    test["settings"] = {
+        "new_dates": "test_new_dates",
+        "display_result": "test_display_result",
+        "rss_feed": "test_rss",
+    }
+    assert result == test
+    
+    # widget_type = Menu
+    data = json.loads(json.dumps(data_tmp))
+    data["widget_type"] = "Menu"
+    result = convert_data_to_edit_pack(data)
+    test = json.loads(json.dumps(test_tmp))
+    test["widget_type"] = "Menu"
+    test["settings"] = {
+        "menu_orientation":"test_menu_orientation",
+        "menu_bg_color":"test_color",
+        "menu_active_bg_color": None,
+        "menu_default_color": None,
+        "menu_active_color": None,
+        "menu_show_pages": None
+    }
+    assert result == test
+    
+    # widget_type = Header
+    data = json.loads(json.dumps(data_tmp))
+    data["widget_type"] = "Header"
+    result = convert_data_to_edit_pack(data)
+    test = json.loads(json.dumps(test_tmp))
+    test["widget_type"] = "Header"
+    test["settings"] = {
+        "fixedHeaderBackgroundColor": "test_fixedHeaderBackgroundColor",
+        "fixedHeaderTextColor": None
+    }
+    assert result == test
+    
 # @pytest.mark.parametrize("data, result",[({}, None),
 #     ({
 #         "settings": {
@@ -558,12 +694,16 @@ def test_convert_data_to_edit_pack(i18n_app):
 
 
 # def build_rss_xml(data=None, index_id=0, page=1, count=20, term=0, lang=''):
+# .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_utils.py::test_build_rss_xml -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-gridlayout/.tox/c1/tmp
 def test_build_rss_xml(i18n_app, indices):
     assert build_rss_xml(index_id=33)
     assert build_rss_xml()
     with patch("weko_gridlayout.utils.find_rss_value", return_value=""):
         assert build_rss_xml(data=["test"])
-    
+    with patch("weko_index_tree.api.Indexes.get_index", return_value=None):
+        res = build_rss_xml(index_id=33)
+        from weko_theme import config as theme_config
+        assert theme_config.THEME_SITENAME in res.get_data(as_text=True)
 
 # def find_rss_value(data, keyword):
 keywords = [

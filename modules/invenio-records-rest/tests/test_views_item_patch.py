@@ -50,7 +50,7 @@ def test_valid_patch(app, es, test_records, test_patch, content_type,
         # Check that year changed.
         new_year = get_json(client.get(url))['metadata']['year']
         assert previous_year != new_year
-        IndexFlusher(search_class).flush_and_wait()
+        # IndexFlusher(search_class).flush_and_wait()
         #res = client.get(search_url, query_string={'year': new_year})
         #assert_hits_len(res, 1)
 
@@ -107,7 +107,7 @@ def test_invalid_patch(app, es, test_records, test_patch, charset, search_url,
         res = client.patch(
             record_url('0'), data=json.dumps(test_patch), headers=HEADERS)
         assert res.status_code == 404
-        IndexFlusher(search_class).flush_and_wait()
+        # IndexFlusher(search_class).flush_and_wait()
         # res = client.get(search_url)
         # assert_hits_len(res, 0)
 

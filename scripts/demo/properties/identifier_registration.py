@@ -33,7 +33,7 @@ mapping = {
     "spase_mapping": "",
 }
 
-id_type = [None, "JaLC", "Crossref", "DataCite", "PMID【現在不使用】"]
+id_type = [None, "JaLC", "Crossref", "DataCite", "PMID"]
 
 
 def add(post_data, key, **kwargs):
@@ -63,7 +63,7 @@ def schema(title="", multi_flag=multiple_flag):
         """Schema text."""
         _d = {
             "type": "object",
-            "title":"identifier_registration",
+            "title": "identifier_registration",
             "properties": {
                 "subitem_identifier_reg_text": {
                     "format": "text",

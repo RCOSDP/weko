@@ -15,7 +15,7 @@ name_ja = "大きさ"
 name_en = "Extent"
 mapping = {
     "display_lang_type": "",
-    "jpcoar_v1_mapping": {},
+    "jpcoar_v1_mapping": "",
     "jpcoar_mapping": {
         "extent": {
             "@value": "dcterms_extent",
@@ -49,7 +49,7 @@ def schema(title="", multi_flag=multiple_flag):
         _d = {
             "type": "object",
             "format": "object",
-            "title":"dcterms_extent",
+            "title": "dcterms_extent",
             "properties": {
                 "dcterms_extent": {
                     "type": "string",

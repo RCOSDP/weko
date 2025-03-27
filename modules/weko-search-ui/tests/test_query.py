@@ -20,8 +20,7 @@ from weko_search_ui.query import (
     item_path_search_factory,
     check_permission_user,
     opensearch_factory,
-    item_search_factory,
-    feedback_email_search_factory
+    item_search_factory
 )
 
 # def get_item_type_aggs(search_index):
@@ -166,6 +165,19 @@ def test_default_search_factory(app, users, communities):
                 with patch('invenio_records_rest.facets.default_facets_factory', return_value=_rv):
                     res = default_search_factory(self=None, search=search)
                     assert res
+        
+        _data["lang"] = "jpn,other"
+        with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
+            with patch("weko_search_ui.query.Indexes.get_browsing_tree_paths",return_value=["33", "33/44"]):
+                from flask_login.utils import login_user
+                login_user(users[3]["obj"])
+                app.preprocess_request()
+                app.extensions['invenio-oauth2server'] = 1
+                app.extensions['invenio-queues'] = 1
+                res = default_search_factory(self=None, search=search)
+                query = (res[0].query()).to_dict()
+                assert query == {"query": {"bool": {"filter": [{"bool": {"must": [{"bool": {"should": [{"bool": {"must": [{"terms": {"publish_status": ["0", "1"]}}, {"match": {"weko_creator_id": "5"}}]}}, {"bool": {"must": [{"terms": {"publish_status": ["0", "1"]}}, {"match": {"weko_shared_id": "5"}}]}}, {"bool": {"must": [{"terms": {"publish_status": ["0", "1"]}}]}}], "must": [{"terms": {"path": ["33", "44"]}}]}}, {"bool": {"must": [{"match": {"relation_version_is_last": "true"}}]}}, {"bool": {"should": [{"match": {"language": {"operator": "and", "query": "jpn"}}}, {"bool": {"filter": [{"script": {"script": {"source": "boolean flg=false; for(lang in doc['language']){if (!params.param1.contains(lang)){flg=true;}} return flg;", "params": {"param1": ["jpn", "eng", "fra", "ita", "deu", "spa", "zho", "rus", "lat", "msa", "epo", "ara", "ell", "kor", "other"]}}}}]}}]}}, {"bool": {"should": [{"nested": {"path": "relation.relatedIdentifier", "query": {"bool": {"must": [{"match": {"relation.relatedIdentifier.value": {"operator": "and", "query": "1"}}}, {"term": {"relation.relatedIdentifier.identifierType": "identifier"}}]}}}}]}}, {"bool": {"should": [{"nested": {"path": "content", "query": {"bool": {"must": [{"terms": {"content.licensetype.raw": ["test_license"]}}]}}}}]}}, {"nested": {"path": "file.date", "query": {"bool": {"should": [{"term": {"file.date.dateType": "Accepted"}}], "must": [{"range": {"file.date.value": {"gte": "2022-10-01", "lte": "2022-10-30"}}}]}}}}, {"range": {"date_range1": {"gte": "2022-10-01", "lte": "2022-10-30"}}}, {"match": {"text1": {"operator": "and", "query": "test_text"}}}]}}], "must": [{"match_all": {}}]}}, "_source": {"excludes": ["content"]}}
+        
 
 
 # def item_path_search_factory(self, search, index_id=None):
@@ -237,14 +249,6 @@ def test_item_search_factory(i18n_app, users, indices):
             list_index_id=[33])
         assert res
 
-
-# def feedback_email_search_factory(self, search):
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_query.py::test_feedback_email_search_factory -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_feedback_email_search_factory(i18n_app, users, indices):
-    search = RecordsSearch()
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        res = feedback_email_search_factory(self=None, search=search)
-        assert res
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_query.py::test_function_issue35902 -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_function_issue35902(app, users, communities, mocker):

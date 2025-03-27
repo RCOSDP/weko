@@ -249,6 +249,7 @@ class IndexActionResource(ContentNegotiatedMethodView):
             if "ja" in [lang["lang_code"] for lang in langs]:
                 tree_ja = self.record_class.get_index_tree(lang="ja")
             tree = self.record_class.get_index_tree(lang="other_lang")
+            
             for lang in langs:
                 lang_code = lang["lang_code"]
                 if lang_code == "ja":
@@ -263,7 +264,7 @@ class IndexActionResource(ContentNegotiatedMethodView):
     @need_record_permission('update_permission_factory')
     def put(self, index_id, **kwargs):
         """Update a new index."""
-        from weko_workflow.utils import get_cache_data
+        from weko_search_ui.tasks import is_import_running
 
         data = self.loaders[request.mimetype]()
         if not data:
@@ -272,12 +273,15 @@ class IndexActionResource(ContentNegotiatedMethodView):
         delete_flag = False
         errors = []
         status = 200
-        if get_cache_data("import_start_time"):
+        check = is_import_running()
+        
+        if check == "is_import_running":
             errors.append(_('The index cannot be updated becase '
                             'import is in progress.'))
         else:
             public_state = data.get('public_state') and data.get(
                 'harvest_public_state')
+            
             if is_index_locked(index_id):
                 errors.append(_('Index Delete is in progress on another device.'))
             elif not public_state and check_doi_in_index(index_id):
@@ -306,6 +310,7 @@ class IndexActionResource(ContentNegotiatedMethodView):
                     raise IndexUpdatedRESTError()
                 msg = 'Index updated successfully.'
 
+            
             #roles = get_account_role()
             #for role in roles:
             langs = AdminLangSettings.get_registered_language()
@@ -326,14 +331,15 @@ class IndexActionResource(ContentNegotiatedMethodView):
     @need_record_permission('delete_permission_factory')
     def delete(self, index_id, **kwargs):
         """Delete a index."""
-        from weko_workflow.utils import get_cache_data
+        from weko_search_ui.tasks import is_import_running
 
         errors = []
         msg = ''
         if not index_id or index_id <= 0:
             raise IndexNotFoundRESTError()
 
-        if get_cache_data("import_start_time"):
+        check = is_import_running()
+        if check == "is_import_running":
             errors.append(_('The index cannot be deleted becase '
                             'import is in progress.'))
         else:
@@ -417,39 +423,7 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                     tree = self.record_class.get_contribute_tree(
                         pid, int(comm.root_node_id))
                 else:
-                    tree = []
-                    role_ids = []
-                    can_edit_indexes = []
-                    is_admin = False
-                    if current_user and current_user.is_authenticated:
-                        for role in current_user.roles:
-                            if role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
-                                role_ids = []
-                                tree = self.record_class.get_contribute_tree(pid)
-                                is_admin = True
-                                break
-                            else:
-                                role_ids.append(role.id)
-                    if role_ids:
-                        from invenio_communities.models import Community
-                        comm_list = Community.query.filter(
-                            Community.id_role.in_(role_ids)
-                        ).all()
-                        root_id_list = []
-                        
-                        for comm in comm_list:
-                            index_list = Indexes.get_self_list(comm.root_node_id)
-                            if len(index_list) > 0:
-                                root_id = index_list[0].path.split('/')[0]
-                                if root_id not in root_id_list:
-                                    root_id_list.append(root_id)
-                            for index in index_list:
-                                if index.cid not in can_edit_indexes:
-                                    can_edit_indexes.append(str(index.cid))
-                        for index_id in root_id_list:
-                            tree += self.record_class.get_contribute_tree(pid, int(index_id))
-                    _check_edit_permission(is_admin, tree, can_edit_indexes)
-                    # tree = self.record_class.get_contribute_tree(pid)
+                    tree = self.record_class.get_contribute_tree(pid)
             elif action and 'browsing' in action and comm_id is None:
                 if more_id_list is None:
                     tree = self.record_class.get_browsing_tree()
@@ -503,12 +477,16 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
     @need_record_permission('update_permission_factory')
     def put(self, index_id, **kwargs):
         """Move a index."""
-        from weko_workflow.utils import get_cache_data
+        from weko_search_ui.tasks import is_import_running
 
         data = self.loaders[request.mimetype]()
         if not data:
             raise InvalidDataRESTError()
-        if get_cache_data("import_start_time"):
+
+        msg = ''
+        status = 200
+        check = is_import_running()
+        if check == "is_import_running":
             status = 202
             msg = _('The index cannot be moved becase '
                     'import is in progress.')

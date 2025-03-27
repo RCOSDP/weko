@@ -81,7 +81,7 @@ def schema(title="", multi_flag=multiple_flag):
         _d = {
             "system_prop": True,
             "type": "object",
-            "title":"bibliographic_information",
+            "title": "bibliographic_information",
             "properties": {
                 "bibliographic_titles": {
                     "type": "array",

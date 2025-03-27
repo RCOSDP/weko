@@ -81,7 +81,7 @@
   {%- block trackingcode %}{% include config.THEME_TRACKINGCODE_TEMPLATE with context %}
   {%- endblock trackingcode %}
   <!-- end tracking code -->
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   {%- endblock head %}
 </head>
@@ -176,8 +176,9 @@
             learnMore: "詳細を見る",
           },
           contextualConsent:{
-            description: "サードパティ製アプリケーションを利用しています。",
-            acceptOnce: "一時的に同意する"
+            description: "{title}が提供する外部コンテンツを読み込みますか?",
+            acceptOnce: "一時的に同意する",
+            acceptAlways: "常に同意する"
           },
           ok: "同意",
           poweredBy: "Powered by Klaro",
@@ -237,9 +238,9 @@
           onlyOnce: true,
         },
         {
-          name: 'addthis',
+          name: 'facebook',
           default: false,
-          title: 'Addthis',
+          title: 'Facebook',
           purposes: ['analytics'],
           callback: function (consent, service) {
             console.log(
@@ -250,6 +251,20 @@
           optOut: false,
           onlyOnce: true,
         },
+        {
+          name: 'x',
+          default: false,
+          title: 'X',
+          purposes: ['analytics'],
+          callback: function (consent, service) {
+            console.log(
+              'User consent for service ' + service.name + ': consent=' + consent
+            );
+          },
+          required: false,
+          optOut: false,
+          onlyOnce: true,
+        }
       ],
     };
 

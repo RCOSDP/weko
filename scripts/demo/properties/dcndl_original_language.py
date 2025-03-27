@@ -15,7 +15,7 @@ name_ja = "原文の言語"
 name_en = "Original Language"
 mapping = {
     "display_lang_type": "",
-    "jpcoar_v1_mapping": {},
+    "jpcoar_v1_mapping": "",
     "jpcoar_mapping": {
         "originalLanguage": {
             "@value": "original_language",
@@ -49,7 +49,7 @@ def schema(title="", multi_flag=multiple_flag):
         _d = {
             "type": "object",
             "format": "object",
-            "title":"original_language",
+            "title": "original_language",
             "properties": {
                 "original_language": {
                     "type": "string",

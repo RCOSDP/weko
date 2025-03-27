@@ -251,46 +251,50 @@ def test_deactivate_user(app):
             assert not testutils.client_authenticated(client)
 
 
+# .tox/c1/bin/pytest --cov=invenio_accounts tests/test_sessions.py::test_session_extra_info_on_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
 def test_session_extra_info_on_login(app, users):
     """Test session extra info on login."""
     ua = 'Mozilla/5.0 (X11; Linux x86_64; rv:43.0) Gecko/20100101 Firefox/43.0'
 
-    with app.test_client() as client:
-        res = client.post(
-            url_for_security('login'),
-            data={
-                'email': users[0]['email'],
-                'password': users[0]['password']
-            },
-            environ_base={'REMOTE_ADDR': '188.184.9.234'},
-            headers={'User-Agent': ua}
-        )
-        assert res.status_code == 302
-        # check if session extra info is there
-        [session] = SessionActivity.query.all()
-        assert session.browser == 'Firefox'
-        assert session.browser_version == '43'
-        assert session.device == 'Other'
-        assert session.os == 'Linux'
-        assert session.country == 'CH'
-        assert session.ip == '188.184.9.234'
+    with app.app_context():
+        with app.test_client() as client:
+            res = client.post(
+                url_for_security('login'),
+                data={
+                    'email': users[0]['email'],
+                    'password': users[0]['password']
+                },
+                environ_base={'REMOTE_ADDR': '188.184.9.234'},
+                headers={'User-Agent': ua}
+            )
+            assert res.status_code == 302
+            # check if session extra info is there
+            [session] = SessionActivity.query.all()
+            assert session.browser == 'Firefox'
+            assert session.browser_version == '43'
+            assert session.device == 'Other'
+            assert session.os == 'Linux'
+            assert session.country == 'CH'
+            assert session.ip == '188.184.9.234'
 
 
+# .tox/c1/bin/pytest --cov=invenio_accounts tests/test_sessions.py::test_session_ip_no_country -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
 def test_session_ip_no_country(app, users):
     """Test session with an IP without country information."""
     ua = 'Mozilla/5.0 (X11; Linux x86_64; rv:43.0) Gecko/20100101 Firefox/43.0'
 
-    with app.test_client() as client:
-        res = client.post(
-            url_for_security('login'),
-            data={
-                'email': users[0]['email'],
-                'password': users[0]['password']
-            },
-            environ_base={'REMOTE_ADDR': '139.191.247.1'},
-            headers={'User-Agent': ua}
-        )
-        assert res.status_code == 302
-        [session] = SessionActivity.query.all()
-        assert session.country is None
-        assert session.ip == '139.191.247.1'
+    with app.app_context():
+        with app.test_client() as client:
+            res = client.post(
+                url_for_security('login'),
+                data={
+                    'email': users[0]['email'],
+                    'password': users[0]['password']
+                },
+                environ_base={'REMOTE_ADDR': '139.191.247.1'},
+                headers={'User-Agent': ua}
+            )
+            assert res.status_code == 302
+            [session] = SessionActivity.query.all()
+            assert session.country is None
+            assert session.ip == '139.191.247.1'
