@@ -1106,85 +1106,96 @@ class WekoDeposit(Deposit):
         return deposit
 
     def get_content_files(self):
-        """ 
+        """Get content file metadata.
 
-        Get content file metadata.
+        Get content file metadata and extract content from the file.
+        Files to be excluded from extraction must be kept in a list in the
+        instance variable `non_extract` or activity temp_data.
 
         Args:
             None
         Returns:
             None
-
         """
         from weko_workflow.utils import get_url_root, get_non_extract_files_by_recid
         contents = []
-        fmd = self.get_file_data()
         reading_targets = {}
-        # when prepare edit item, end action
+        root_url = get_url_root()
+        fmd = self.get_file_data()
+
+        # Handle non-extract files
         non_extract = getattr(self, "non_extract", None)
         if non_extract is None:
-            # during activity
             non_extract = get_non_extract_files_by_recid(self['recid']) or []
+        current_app.logger.info(f"non_extract: {non_extract}")
 
-        if fmd:
-            for file in self.files:
-                if isinstance(fmd, list):
-                    for lst in fmd:
-                        filename = lst.get('filename')
-                        if file.obj.key == filename:
-                            lst.update({'mimetype': file.obj.mimetype})
-                            lst.update(
-                                {'version_id': str(file.obj.version_id)})
+        if not fmd or not isinstance(fmd, list):
+            return reading_targets
 
-                            # update file url
-                            url_metadata = lst.get('url', {})
-                            url_metadata['url'] = '{}record/{}/files/{}' \
-                                .format(get_url_root(),
-                                        self['recid'], filename)
-                            lst.update({'url': url_metadata})
+        # Process files that key is matched with file metadata
+        for file, lst in (
+            (file, lst)
+            for file in self.files
+            for lst in fmd
+            if lst.get("filename") == file.obj.key
+        ):
+            lst.update({"mimetype": file.obj.mimetype, "version_id": str(file.obj.version_id)})
 
-                            # update file_files's json
-                            file.obj.file.update_json(lst)
+            # Update file URL
+            url_metadata = lst.get("url", {})
+            url_metadata["url"] = (
+                f"{root_url}record/{self['recid']}/files/{lst['filename']}"
+            )
+            lst.update({"url": url_metadata})
 
-                            # upload file metadata to Elasticsearch
-                            try:
-                                mimetypes = current_app.config[
-                                    'WEKO_MIMETYPE_WHITELIST_FOR_ES']
-                                content = lst.copy()
-                                attachment = {}
-                                if (
-                                    file.obj.mimetype in mimetypes
-                                    and file.obj.key not in non_extract
-                                ):
-                                    try:
-                                        with file.obj.file.storage().open(mode='rb') as fp:
-                                            data = ""
-                                            if file.obj.mimetype in current_app.config['WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES']:
-                                                data = fp.read(current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT'])
-                                                inf = chardet.detect(data)
-                                                data = data.decode(inf['encoding'], errors='replace')
-                                            else:
-                                                file_instance = file.obj.file
-                                                file_info = {
-                                                    "uri": file_instance.uri,
-                                                    "size": file_instance.size,
-                                                }
-                                                reading_targets[filename] = file_info
-                                            attachment["content"] = data
-                                    except FileNotFoundError as se:
-                                        current_app.logger.error("FileNotFoundError: {}".format(se))
-                                        current_app.logger.error("file.obj: {}".format(file.obj))
+            # Update file's JSON metadata
+            file.obj.file.update_json(lst)
 
-                                content.update({"attachment": attachment})
-                                contents.append(content)
-                            except Exception as e2:
-                                import traceback
-                                current_app.logger.error(e2)
-                                current_app.logger.error(
-                                    traceback.format_exc())
-                                abort(500, '{}'.format(str(e2)))
-                            break
-            self.jrc.update({'content': contents})
+            # Upload file metadata to Elasticsearch
+            try:
+                mimetypes = current_app.config["WEKO_MIMETYPE_WHITELIST_FOR_ES"]
+                content = lst.copy()
+                attachment = {}
+                current_app.logger.info(f"name: {lst['filename']}, mimetype: {file.obj.mimetype}")
+
+                if (
+                    file.obj.mimetype in mimetypes
+                    and file.obj.key not in non_extract
+                ):
+                    # Extract content from file
+                    try:
+                        current_app.logger.warn(f"extracting content from {lst['filename']}")
+                        with file.obj.file.storage().open(mode="rb") as fp:
+                            data = ""
+                            if file.obj.mimetype in current_app.config[
+                                "WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES"
+                            ]:
+                                data = fp.read(
+                                    current_app.config["WEKO_DEPOSIT_FILESIZE_LIMIT"]
+                                )
+                                inf = chardet.detect(data)
+                                data = data.decode(inf["encoding"], errors="replace")
+                            else:
+                                file_instance = file.obj.file
+                                file_info = {
+                                    "uri": file_instance.uri,
+                                    "size": file_instance.size
+                                }
+                                reading_targets[lst["filename"]] = file_info
+                            attachment["content"] = data
+                    except FileNotFoundError as se:
+                        current_app.logger.error(f"FileNotFoundError: {se}")
+                        current_app.logger.error(f"file.obj: {file.obj}")
+
+                content.update({"attachment": attachment})
+                contents.append(content)
+            except Exception as e2:
+                import traceback
+                current_app.logger.error(e2)
+                current_app.logger.error(traceback.format_exc())
+                abort(500, f"{str(e2)}")
+
+        self.jrc.update({"content": contents})
         return reading_targets
 
     def get_pdf_info(self):
