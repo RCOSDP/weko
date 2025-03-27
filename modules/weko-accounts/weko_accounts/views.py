@@ -135,6 +135,7 @@ def _adjust_shib_admin_DB():
             setting = AdminSettings.query.filter_by(name='attribute_mapping').first()
             setting.settings = _app.config['WEKO_ACCOUNTS_ATTRIBUTE_MAP']
             db.session.commit()
+    yield
 
 
 def _redirect_method(has_next=False):
