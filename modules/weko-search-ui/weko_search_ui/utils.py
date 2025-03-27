@@ -2739,7 +2739,7 @@ def get_list_key_of_iso_date(schemaform):
     keys = []
     for item in schemaform:
         if not item.get("items"):
-            if item.get("templateUrl", "") == DATE_ISO_TEMPLATE_URL:
+            if (item.get("templateUrl", "") == DATE_ISO_TEMPLATE_URL) or ("dateValue" in item.get("key","")):
                 keys.append(item.get("key").replace("[]", ""))
         else:
             keys.extend(get_list_key_of_iso_date(item.get("items")))
