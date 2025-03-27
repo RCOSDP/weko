@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of WEKO3.
-# Copyright (C) 2017 National Institute of Informatics.
+# Copyright (C) 2025 National Institute of Informatics.
 #
 # WEKO3 is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -91,7 +91,10 @@ class UserActivityLog(db.Model):
     """Remarks for the log entry."""
 
     def to_dict(self):
-        """Serialize object to dictionary."""
+        """Serialize object to dictionary.
+
+        :return: Dictionary representation of the object.
+        """
         return {
             'id': self.id,
             'date': self.date,

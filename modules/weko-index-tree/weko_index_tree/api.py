@@ -41,6 +41,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import case, func, literal_column, and_
 from weko_groups.api import Group
 from weko_redis.redis import RedisConnection
+from weko_logging.activity_logger import UserActivityLogger
 
 from .models import Index
 from .utils import cached_index_tree_json, check_doi_in_index, \

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of WEKO3.
-# Copyright (C) 2017 National Institute of Informatics.
+# Copyright (C) 2025 National Institute of Informatics.
 #
 # WEKO3 is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -21,11 +21,19 @@ class UserActivityLogHandler(logging.Handler):
     """Logging handler for audit logs."""
 
     def __init__(self, app):
+        """Initialize the handler.
+
+        :param app: The flask application.
+        """
         super(UserActivityLogHandler, self).__init__()
         self.app = app
 
     def emit(self, record):
-        """Emit a log record."""
+        """Emit a log record.
+
+        :param record: The log record.
+        :raises: Exception if failed to create user activity log.
+        """
         # if not has operation, skip create record
         if not hasattr(record, "operation"):
             return
@@ -116,6 +124,10 @@ class UserActivityLogHandler(logging.Handler):
 
     @classmethod
     def get_community_id_from_path(cls):
+        """Get community id from request path.
+
+        :return: The community id.
+        """
         community_id = None
         path_info = urllib.parse.urlparse(request.path)
         if "/c/" in path_info.path:
@@ -127,12 +139,21 @@ class UserActivityLogHandler(logging.Handler):
 
     @classmethod
     def get_user_id(cls):
+        """Get user id from current_user.
+
+        :return: The user id.
+        """
         user_id = None
         if current_user.is_authenticated and hasattr(current_user, "id"):
             user_id = current_user.id
         return user_id
 
     def _get_target_from_operation_id(self, operation):
+        """Get target from operation id.
+
+        :param operation: The operation id.
+        :return: The operation type id, operation id, and target.
+        """
         # get target from config "WEKO_LOGGING_OPERATION_MASTER"
         operation_master = self.app.config.get("WEKO_LOGGING_OPERATION_MASTER", {})
         for operation_category in operation_master.values():
@@ -145,4 +166,3 @@ class UserActivityLogHandler(logging.Handler):
             target = operation_info.get("target")
             return (operation_type_id, operation_id, target)
         return (None, None, None)
-

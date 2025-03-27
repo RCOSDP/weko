@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of WEKO3.
-# Copyright (C) 2017 National Institute of Informatics.
+# Copyright (C) 2025 National Institute of Informatics.
 #
 # WEKO3 is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -19,12 +19,21 @@ class UserActivityLogger:
     """User activity logger."""
 
     def __init__(self, app):
-        """Initialize user logger."""
+        """Initialize user logger.
+
+        :param app: The flask application.
+        """
         self.app = app
 
     @classmethod
     def error(cls, operation=None, parent_id=None, target_key=None, remarks=None):
-        """Log error."""
+        """Output as error log.
+
+        :param operation: User operation type.
+        :param parent_id: Parent log id.
+        :param target_key: Operation target key(eg. id).
+        :param remarks: Remarks.
+        """
 
         user_id = UserActivityLogHandler.get_user_id()
         community_id = UserActivityLogHandler.get_community_id_from_path()
@@ -40,7 +49,13 @@ class UserActivityLogger:
 
     @classmethod
     def info(cls, operation=None, parent_id=None, target_key=None, remarks=None):
-        """Log info."""
+        """Output as info log.
+
+        :param operation: User operation type.
+        :param parent_id: Parent log id.
+        :param target_key: Operation target key(eg. id).
+        :param remarks: Remarks.
+        """
         user_id = UserActivityLogHandler.get_user_id()
         community_id = UserActivityLogHandler.get_community_id_from_path()
 
@@ -56,5 +71,9 @@ class UserActivityLogger:
 
     @classmethod
     def get_next_parent_id(session):
-        """Get next parent id."""
+        """Get next parent id.
+
+        :param session: The database session.
+        :return: The next log id.
+        """
         return UserActivityLog.get_sequence(session)

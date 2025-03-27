@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of WEKO3.
-# Copyright (C) 2017 National Institute of Informatics.
+# Copyright (C) 2025 National Institute of Informatics.
 #
 # WEKO3 is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -23,21 +23,35 @@ class ExportLogAdminView(BaseView):
     """Export user activity log view."""
 
     def is_visible(self):
+        """Check if the view is visible.
+
+        :returns: This view is visible or not.
+        """
         return True
 
     def is_accessible(self):
+        """Check if the view is accessible.
+
+        :returns: This view is accessible or not.
+        """
         return True
 
     @expose('/', methods=['GET'])
     def index(self):
-        """Export user activity log."""
+        """Log export admin view.
+
+        :returns: Log export admin view template.
+        """
         return self.render(
             current_app.config['WEKO_LOGGING_LOG_EXPORT_TEMPLATE']
         )
 
     @expose('/export', methods=['POST'])
     def export_user_activity_log(self):
-        """Start export user activity log task."""
+        """Start export user activity log task.
+
+        :returns: Responce (export task id.)
+        """
         # get current task running
         task_status = UserActivityLogUtils.get_export_task_status()
         if task_status and task_status.get('task_id'):
@@ -56,10 +70,12 @@ class ExportLogAdminView(BaseView):
             'data': {'task_id': task.id}
         })
 
-    # @author_permission.require(http_exception=403)
     @expose('/check_export_status', methods=['GET'])
     def check_export_status(self):
-        """Api check export status."""
+        """Api check export status.
+
+        :returns: Responce (export status.)
+        """
         status = UserActivityLogUtils.get_export_task_status()
         check = check_celery_is_run()
         status['celery_is_run'] = check
@@ -90,7 +106,10 @@ class ExportLogAdminView(BaseView):
 
     @expose("/cancel_export", methods=["GET"])
     def cancel_export(self):
-        """Check export status."""
+        """Check export status.
+
+        :returns: Responce (export cancel status.)
+        """
         result = UserActivityLogUtils.cancel_export_log()
         export_status, _, _, _, status = UserActivityLogUtils.get_export_task_status(current_cache)
         return jsonify(data={
@@ -101,7 +120,10 @@ class ExportLogAdminView(BaseView):
 
     @expose("/download", methods=['GET'])
     def download_user_activity_log(self):
-        """Download log info."""
+        """Download log as zip (includes tsv).
+
+        : returns: Log zip file.
+        """
         url_info = UserActivityLogUtils.get_export_url()
         if url_info.get('file_uri'):
             file_instance = FileInstance.get_by_uri(url_info.get('file_uri'))
@@ -122,6 +144,7 @@ log_export_admin_view = {
         "endpoint": "logs/export",
     }
 }
+"""Log export admin view."""
 
 __all__ = (
     'log_export_admin_view',
