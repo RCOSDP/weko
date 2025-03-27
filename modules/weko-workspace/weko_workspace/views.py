@@ -22,9 +22,7 @@
 
 import copy
 
-from datetime import datetime
-
-from datetime import datetime
+from datetime import datetime,timezone
 
 from flask import (
     Blueprint,
@@ -36,6 +34,24 @@ from flask import (
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from weko_records.api import FeedbackMailList
+from invenio_db import db
+from sqlalchemy.exc import SQLAlchemyError
+from flask import session
+
+from .utils import (
+    extract_metadata_info,
+    get_accessCnt_downloadCnt,
+    get_es_itemlist,
+    get_item_status,
+    get_userNm_affiliation,
+    get_workspace_status_management,
+    insert_workspace_status,
+    update_workspace_status,
+    get_workspace_filterCon,
+    changeLang,
+    changeMsg
+)
+from .models import WorkspaceDefaultConditions
 
 from weko_admin.models import AdminSettings
 from weko_workflow.api import WorkFlow
@@ -487,24 +503,17 @@ def reset_filters():
     """
 
     user_id = current_user.id
+    lang = session['language']
     try:
         record = WorkspaceDefaultConditions.query.filter_by(user_id=user_id).first()
 
         if record:
             db.session.delete(record)
             db.session.commit()
-<<<<<<< HEAD
 
             message = "Successfully reset default conditions."
             message = changeMsg(lang, 2, True, message)
-=======
-<<<<<<< HEAD
-=======
 
-            message = "Successfully reset default conditions."
-            message = changeMsg(lang, 2, True, message)
->>>>>>> 3a1415f77 (merge)
->>>>>>> 9369ce072 (merge)
             return (
                 jsonify(
                     {
