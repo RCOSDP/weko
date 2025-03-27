@@ -1401,6 +1401,16 @@ class JsonLdMapper(JsonMapper):
                 for prop_name, ld_key in self.json_mapping.items()
                 if prop_name in item_map
         }
+        
+        fixed_properties = {}
+        for k, v in properties_mapping.items():
+            if k.startswith("$") and "." in v:
+                key = v[:v.rfind(".")]
+                sub_key = v[v.rfind(".")+1:]
+                value = k[1:]
+                if key not in fixed_properties:
+                    fixed_properties[key] = {}
+                fixed_properties[key][sub_key] = value
 
         mapped_metadata = self._InformedMetadata()
         mapped_metadata.id = metadata.id
@@ -1422,10 +1432,8 @@ class JsonLdMapper(JsonMapper):
 
         missing_metadata = {}
 
-        def _empty_metadata():
-            return {
-                # TODO: FIXED VALUE
-            }
+        def _empty_metadata(parent_prop_key):
+            return fixed_properties.get(parent_prop_key, {})
 
         def _set_metadata(
             parent, META_KEY, meta_props, PROP_PATH, prop_props
@@ -1459,13 +1467,13 @@ class JsonLdMapper(JsonMapper):
                 # The corresponding layers are different,
                 # so the prop_path needs to progress to the lower layer.
                 if self._get_property_type(parent_prop_key) == "object":
-                    sub_prop_object = parent.get(prop_props[0], {
-                        # TODO: FIXED VALUE
-                    })
+                    sub_prop_object = parent.get(
+                        prop_props[0], {} # TODO: FIXED VALUE
+                    )
                     # FIXME: check sub_sub propaty type
-                    sub_sub_object = sub_prop_object.get(prop_props[1], {
-                        # TODO: FIXED VALUE
-                    })
+                    sub_sub_object = sub_prop_object.get(
+                        prop_props[1], {} # TODO: FIXED VALUE
+                    )
                     _set_metadata(
                         sub_sub_object, META_KEY, meta_props[1:],
                         PROP_PATH, prop_props[1:]
@@ -1476,13 +1484,12 @@ class JsonLdMapper(JsonMapper):
                     sub_prop_array = parent.get(prop_props[0], [])
                     index = 0 if index is None else index
                     if len(sub_prop_array) <= index:
-                        sub_prop_array.extend([{
-                            # TODO: FIXED VALUE
-                        } for _ in range(index - len(sub_prop_array) + 1)])
+                        sub_prop_array.extend([
+                            {} # TODO: FIXED VALUE
+                            for _ in range(index - len(sub_prop_array) + 1)
+                        ])
                     # FIXME: check sub_sub propaty type
-                    sub_sub_object = {
-                        # TODO: FIXED VALUE
-                    }
+                    sub_sub_object = {} # TODO: FIXED VALUE
                     _set_metadata(
                         sub_sub_object, META_KEY, meta_props,
                         PROP_PATH, prop_props[1:]
@@ -1491,9 +1498,9 @@ class JsonLdMapper(JsonMapper):
                     parent.update({prop_props[0]: sub_prop_array})
                 return
             if self._get_property_type(parent_prop_key) == "object":
-                sub_prop_object = parent.get(prop_props[0], {
-                    # TODO: FIXED VALUE
-                })
+                sub_prop_object = parent.get(
+                    prop_props[0], _empty_metadata(parent_prop_key)
+                )
                 if index is not None and index > 1:
                     return
                 _set_metadata(
@@ -1506,9 +1513,10 @@ class JsonLdMapper(JsonMapper):
                 sub_prop_array = parent.get(prop_props[0], [])
                 index = 0 if index is None else index
                 if len(sub_prop_array) <= index:
-                    sub_prop_array.extend([{
-                        # TODO: FIXED VALUE
-                    } for _ in range(index - len(sub_prop_array) + 1)])
+                    sub_prop_array.extend([
+                        _empty_metadata(parent_prop_key)
+                        for _ in range(index - len(sub_prop_array) + 1)
+                    ])
                 _set_metadata(
                     sub_prop_array[index], META_KEY, meta_props[1:],
                     PROP_PATH, prop_props[1:]
