@@ -82,56 +82,65 @@ document.addEventListener('DOMContentLoaded', function () {
   let items = workspaceItemList.slice(0); // 一覧データのコピー
 
   // // 選択状態を保持するためのオブジェクト
-  // let checkedItems = new Set();
-  // // すべてチェックの処理
-  // function handleCheckAll() {
-  //   const itemCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
-  //   itemCheckboxes.forEach(checkbox => {
-  //     checkbox.checked = checkAll.checked;
-  //     const recid = checkbox.closest('tr')?.querySelector('td:nth-child(2) strong a')?.href.split('/').pop();
-  //     if (recid) {
-  //       if (checkAll.checked) {
-  //         checkedItems.add(recid);
-  //       } else {
-  //         checkedItems.delete(recid);
-  //       }
-  //     }
-  //   });
-  // }
+  let checkedItems = new Set();
+  // すべてチェックの処理
+  function handleCheckAll() {
+    const itemCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+    itemCheckboxes.forEach(checkbox => {
+      checkbox.checked = checkAll.checked;
+      const tr = checkbox.closest('tr');
+      const anchor = tr && tr.querySelector('td:nth-child(2) strong a');
+      const recid = anchor ? anchor.href.split('/').pop() : null;
+      if (recid) {
+        if (checkAll.checked) {
+          checkedItems.add(recid);
+        } else {
+          checkedItems.delete(recid);
+        }
+      }
+    });
+  }
 
-  // checkAll.addEventListener('change', handleCheckAll);
+  checkAll.addEventListener('change', handleCheckAll);
 
-  // // 個別チェックボックスの処理
-  // function handleItemCheckboxChange() {
-  //   const recid = this.closest('tr')?.querySelector('td:nth-child(2) strong a')?.href.split('/').pop();
-  //   if (recid) {
-  //     if (this.checked) {
-  //       checkedItems.add(recid);
-  //     } else {
-  //       checkedItems.delete(recid);
-  //     }
-  //   }
-  //   updateCheckAllStatus();
-  // }
+  // 個別チェックボックスの処理
+  function handleItemCheckboxChange() {
+    // const recid = this.closest('tr')?.querySelector('td:nth-child(2) strong a')?.href.split('/').pop();
+    const tr = checkbox.closest('tr');
+    const anchor = tr && tr.querySelector('td:nth-child(2) strong a');
+    const recid = anchor ? anchor.href.split('/').pop() : null;
 
-  // // すべてチェックボックスの状態を更新
-  // function updateCheckAllStatus() {
-  //   const itemCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
-  //   checkAll.checked = itemCheckboxes.length > 0 && [...itemCheckboxes].every(cb => cb.checked);
-  // }
+    if (recid) {
+      if (this.checked) {
+        checkedItems.add(recid);
+      } else {
+        checkedItems.delete(recid);
+      }
+    }
+    updateCheckAllStatus();
+  }
 
-  // // ページ変更時にチェックボックスの状態を復元
-  // function restoreCheckedItems() {
-  //   const itemCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
-  //   itemCheckboxes.forEach(checkbox => {
-  //     const recid = checkbox.closest('tr')?.querySelector('td:nth-child(2) strong a')?.href.split('/').pop();
-  //     if (recid && checkedItems.has(recid)) {
-  //       checkbox.checked = true;
-  //     }
-  //     checkbox.addEventListener('change', handleItemCheckboxChange);
-  //   });
-  //   updateCheckAllStatus();
-  // }
+  // すべてチェックボックスの状態を更新
+  function updateCheckAllStatus() {
+    const itemCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+    checkAll.checked = itemCheckboxes.length > 0 && [...itemCheckboxes].every(cb => cb.checked);
+  }
+
+  // ページ変更時にチェックボックスの状態を復元
+  function restoreCheckedItems() {
+    const itemCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+    itemCheckboxes.forEach(checkbox => {
+      //const recid = checkbox.closest('tr')?.querySelector('td:nth-child(2) strong a')?.href.split('/').pop();
+      const tr = checkbox.closest('tr');
+      const anchor = tr && tr.querySelector('td:nth-child(2) strong a');
+      const recid = anchor ? anchor.href.split('/').pop() : null;
+      if (recid && checkedItems.has(recid)) {
+        checkbox.checked = true;
+      }
+      checkbox.addEventListener('change', handleItemCheckboxChange);
+    });
+    updateCheckAllStatus();
+  }
   // SearchBar コンポーネント
   const SearchBar = ({ items, onFilter }) => {
     const [query, setQuery] = React.useState('');
@@ -272,7 +281,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var filter = props.filter;
     var selectedOptions = props.selectedOptions;
     var onSelectionChange = props.onSelectionChange;
-  
+
     function handleCheckboxChange(option) {
       var newSelection;
       if (singleSelectFilters.includes(filterKey)) {
@@ -284,11 +293,11 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       onSelectionChange(filterKey, newSelection);
     }
-  
+
     if (filter.options.length === 0 && (filterKey === 'funder_name' || filterKey === 'award_title')) {
       return null;
     }
-  
+
     var checkboxes = filter.options.map(function(option) {
       return React.createElement(
         'label',
@@ -301,7 +310,7 @@ document.addEventListener('DOMContentLoaded', function () {
         option
       );
     });
-  
+
     var isExcludedFilter = filterKey === 'funder_name' || filterKey === 'award_title';
     var note = isExcludedFilter
       ? React.createElement(
@@ -310,7 +319,7 @@ document.addEventListener('DOMContentLoaded', function () {
           remindMsg
         )
       : null;
-  
+
     return React.createElement(
       'tr',
       null,
@@ -396,7 +405,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function fetchJsonResponse(url, method, body) {
       body = typeof body !== 'undefined' ? body : null;
-    
+
       return fetch(url, {
         method: method,
         headers: { 'Content-Type': 'application/json' },

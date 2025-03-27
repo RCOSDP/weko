@@ -151,7 +151,7 @@ def get_workspace_itemlist():
     # →ループ処理
     for hit in records_data["hits"]["hits"]:
         workspaceItem = copy.deepcopy(current_app.config["WEKO_WORKSPACE_ITEM"])
-        
+
         # ファイルリストと査読状況を取得
         item_metadata = hit["metadata"]["_item_metadata"]
         filelist, peer_reviewed = extract_metadata_info(item_metadata)
@@ -205,7 +205,7 @@ def get_workspace_itemlist():
         workspaceItem["downloadCnt"] = get_accessCnt_downloadCnt(recid)[1]
 
         # "itemStatus": None,  # アイテムステータス
-        workspaceItem["itemStatus"] = get_item_status(recid)
+        workspaceItem["itemStatus"] = get_item_status(str(recid))
 
         # "publicationDate": None,  # 出版年月日
         workspaceItem["publicationDate"] = hit["metadata"]["publish_date"]
@@ -349,7 +349,7 @@ def get_workspace_itemlist():
         workspaceItem["restrictedPublicationCnt"] = (
             restrictedPublicationCnt if "restrictedPublicationCnt" in locals() else 0
         )
-        
+
         if str(workspaceItem):
             workspaceItemList.append(workspaceItem)
 
@@ -358,7 +358,7 @@ def get_workspace_itemlist():
 
     if userInfo[0] in workspaceItem["authorlist"]:
         workspaceItem["fbEmailSts"] = True
-    
+
     # デフォルト絞込み条件より、workspaceItemListを洗い出す
     if isnotNone:
         defaultconditions = merge_default_filters(jsonCondition)
@@ -567,7 +567,7 @@ def item_register():
         user_id = current_user.id if hasattr(current_user , 'id') else None
         user_profile = None
         if user_id:
-            
+
             user_profile={}
             user_profile['results'] = get_user_profile_info(int(user_id))
 
@@ -586,7 +586,7 @@ def item_register():
         form = FlaskForm(request.form)
         institute_position_list = WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
         position_list = WEKO_USERPROFILES_POSITION_LIST
-        
+
         item_type_name = get_item_type_name(workflow_detail.itemtype_id)
         show_autofill_metadata = is_show_autofill_metadata(item_type_name)
 
@@ -640,10 +640,10 @@ def item_register():
         form = FlaskForm(request.form)
         institute_position_list = WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
         position_list = WEKO_USERPROFILES_POSITION_LIST
-        
+
         item_type_name = get_item_type_name(settings.item_type_id)
         show_autofill_metadata = is_show_autofill_metadata(item_type_name)
-        
+
         return render_template(
             'weko_workspace/item_register.html',
             need_file=need_file,
@@ -672,7 +672,7 @@ def item_register():
             is_show_autofill_metadata=show_autofill_metadata,
             form=form
         )
-    
+
 
 @blueprint_itemapi.route('/get_auto_fill_record_data_jamasapi', methods=['POST'])
 @login_required_customize
@@ -692,7 +692,7 @@ def get_auto_fill_record_data_jamasapi():
         return jsonify(result)
 
     data = request.get_json()
-    
+
     search_data = data.get('search_data', '')
     item_type_id = data.get('item_type_id', '')
 
@@ -806,7 +806,7 @@ def item_register_save():
         'items': '',
         'error': ''
     }
-    
+
     if request.headers['Content-Type'] != 'application/json':
         result['error'] = _('Header Error')
         return jsonify(result)
@@ -814,7 +814,7 @@ def item_register_save():
     data = request.get_json()
     item = data.get('recordModel', '')
     settings = AdminSettings.get('workspace_workflow_settings')
-    
+
     indexIdList = []
     indexList = data.get('indexlist', '')
     for indexName in indexList:
@@ -835,9 +835,9 @@ def item_register_save():
                     if "filename" in file:
                         file['is_thumbnail'] = False
                         files.append(file)
-        settings = AdminSettings.get('workspace_workflow_settings') 
+        settings = AdminSettings.get('workspace_workflow_settings')
         workflow = WorkFlow()
-        workflow_detail = workflow.get_workflow_by_id(settings.work_flow_id)  
+        workflow_detail = workflow.get_workflow_by_id(settings.work_flow_id)
         if  workflow_detail.index_tree_id is not None:
             item['path'].append(workflow_detail.index_tree_id)
             index.append(workflow_detail.index_tree_id)
@@ -865,7 +865,7 @@ def item_register_save():
             item_dict = {}
             item['path'] = indexIdList
             item_dict['metadata'] = item
-            
+
             item_type_name = ItemTypeNames.get_record(int(settings.item_type_id))
 
             item_dict['pos_index'] = indexList
