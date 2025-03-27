@@ -29,6 +29,14 @@ from weko_workspace.models import WorkspaceDefaultConditions
 from weko_workspace.ext import WekoWorkspace
 import pytest
 
+from unittest.mock import MagicMock
+from mock import patch
+
+from flask import json
+from flask_babelex import gettext as _
+
+from invenio_accounts.testutils import login_user_via_session as login
+
 # ===========================def __init__(self, app=None):():=====================================
 def test_ext_class_init(app):
     WekoWorkspace.__init__(app)
@@ -668,3 +676,649 @@ def test_get_workspace_itemlist(
         # defaultconditions の検証
         if post_data:
             assert defaultconditions == post_data
+
+
+def response_data(response):
+    return json.loads(response.data)
+
+# .tox/c1/bin/pytest --cov=weko_workspace tests/test_views.py::test_itemregister -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-weko_workspace/.tox/c1/tmp
+def test_itemregister(db,users, workflow, app, client,mocker,without_remove_session):
+    # ワークフローを経由で
+    admin_settings = {"workFlow_select_flg": '0', "work_flow_id": '1'}
+    login(client=client, email=users[0]['email'])
+    session = {
+        "itemlogin_id":"1",
+        "itemlogin_action_id":3,
+        "itemlogin_cur_step":"item_login",
+        "itemlogin_community_id":"comm01"
+    }
+    from types import SimpleNamespace
+    settings_obj = SimpleNamespace(**admin_settings)
+    mocker.patch("weko_workspace.views.session",session)
+    with patch("weko_admin.admin.AdminSettings.get", return_value=settings_obj):
+        url = url_for("weko_workspace.itemregister")
+        res = client.get(url, json=admin_settings)
+        assert res is not None
+
+    # item_type is None
+    admin_settings = {"workFlow_select_flg": '0', "work_flow_id": '1'}
+
+    login(client=client, email=users[0]['email'])
+    session = {
+        "itemlogin_id":"1",
+        "itemlogin_action_id":3,
+        "itemlogin_cur_step":"item_login",
+        "itemlogin_community_id":"comm01"
+    }
+    from types import SimpleNamespace
+    settings_obj = SimpleNamespace(**admin_settings)
+    mocker.patch("weko_workspace.views.session",session)
+    with patch("weko_admin.admin.AdminSettings.get", return_value=settings_obj):
+        with patch("weko_records.api.ItemTypes.get_by_id", return_value=None):
+            url = url_for("weko_workspace.itemregister")
+            res = client.get(url, json=admin_settings)
+            assert res.status_code == 404
+
+
+    # 直接登録
+    admin_settings = {"workFlow_select_flg": '1', "item_type_id": '1'}
+    login(client=client, email=users[0]['email'])
+    session = {
+        "itemlogin_id":"1",
+        "itemlogin_action_id":3,
+        "itemlogin_cur_step":"item_login",
+        "itemlogin_community_id":"comm01"
+    }
+    from types import SimpleNamespace
+    settings_obj = SimpleNamespace(**admin_settings)
+    mocker.patch("weko_workspace.views.session",session)
+    with patch("weko_admin.admin.AdminSettings.get", return_value=settings_obj):
+        url = url_for("weko_workspace.itemregister")
+        res = client.get(url, json=admin_settings)
+        assert res is not None
+    
+        # item_type is None
+    admin_settings = {"workFlow_select_flg": '1', "item_type_id": '1'}
+
+    login(client=client, email=users[0]['email'])
+    session = {
+        "itemlogin_id":"1",
+        "itemlogin_action_id":3,
+        "itemlogin_cur_step":"item_login",
+        "itemlogin_community_id":"comm01"
+    }
+    from types import SimpleNamespace
+    settings_obj = SimpleNamespace(**admin_settings)
+    mocker.patch("weko_workspace.views.session",session)
+    with patch("weko_admin.admin.AdminSettings.get", return_value=settings_obj):
+        with patch("weko_records.api.ItemTypes.get_by_id", return_value=None):
+            url = url_for("weko_workspace.itemregister")
+            res = client.get(url, json=admin_settings)
+            assert res.status_code == 404
+
+
+# .tox/c1/bin/pytest --cov=weko_workspace tests/test_views.py::test_get_auto_fill_record_data_ciniiapi -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-weko_workspace/.tox/c1/tmp
+def test_get_auto_fill_record_data_ciniiapi(db,users, workflow,client_api, client,mocker,without_remove_session):
+    # data あり
+    login(client=client, email=users[0]['email'])
+    session = {
+        "itemlogin_id":"1",
+        "itemlogin_action_id":3,
+        "itemlogin_cur_step":"item_login",
+        "itemlogin_community_id":"comm01"
+    }
+    from mock import MagicMock, patch, PropertyMock
+    from unittest.mock import patch, Mock, MagicMock
+    import os
+    item_type = Mock()
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/item_type/15_render.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+        render = json.load(f)
+    item_type.render = render
+
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/item_type/15_schema.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+        schema = json.load(f)
+    item_type.schema = schema
+
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/item_type/15_form.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+        form = json.load(f)
+    item_type.form = form
+
+    item_type.item_type_name.name="デフォルトアイテムタイプ（フル）"
+    item_type.item_type_name.item_type.first().id=15
+    data = {
+        "search_data":"10.5109/16119",
+        "item_type_id":"1"
+    }
+
+    mocker.patch("weko_workspace.views.session",session)
+    with patch("weko_records.api.ItemTypes.get_by_id", return_value=item_type):
+        with patch("weko_workspace.utils.get_cinii_record_data", return_value={"result":"","items":"test","error":""}):
+            url = url_for("weko_workspace_api.get_auto_fill_record_data_ciniiapi")
+            res = client.post(url, 
+                        data=json.dumps(data),
+                        content_type='application/json')
+            assert res.status_code == 200
+            assert res is not None
+
+    # header error
+    login(client=client, email=users[0]['email'])
+    session = {
+        "itemlogin_id":"1",
+        "itemlogin_action_id":3,
+        "itemlogin_cur_step":"item_login",
+        "itemlogin_community_id":"comm01"
+    }
+
+    data = {
+        "search_data":"10.5109/16119",
+        "item_type_id":"15"
+    }
+
+    mocker.patch("weko_workspace.views.session",session)
+    url = url_for("weko_workspace_api.get_auto_fill_record_data_ciniiapi")
+    res = client.post(url, 
+                data=json.dumps(data),
+                content_type='test/json')
+    assert res.status_code == 200
+
+
+    # not exist
+    data = {
+        "search_data":"test",
+        "item_type_id":"15"
+    }
+
+    mocker.patch("weko_workspace.views.session",session)
+    url = url_for("weko_workspace_api.get_auto_fill_record_data_ciniiapi")
+    res = client.post(url, 
+                data=json.dumps(data),
+                content_type='application/json')
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"result":[],"items":"","error":""}
+
+
+# .tox/c1/bin/pytest --cov=weko_workspace tests/test_views.py::test_get_auto_fill_record_data_jalcapi -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-weko_workspace/.tox/c1/tmp
+def test_get_auto_fill_record_data_jalcapi(db,users, workflow,client_api, client,mocker,without_remove_session):
+    # data あり
+    login(client=client, email=users[0]['email'])
+    session = {
+        "itemlogin_id":"1",
+        "itemlogin_action_id":3,
+        "itemlogin_cur_step":"item_login",
+        "itemlogin_community_id":"comm01"
+    }
+    from unittest.mock import patch, Mock, MagicMock
+    import os
+    item_type = Mock()
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/item_type/15_render.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+        render = json.load(f)
+    item_type.render = render
+
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/item_type/15_schema.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+        schema = json.load(f)
+    item_type.schema = schema
+
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/item_type/15_form.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+        form = json.load(f)
+    item_type.form = form
+
+    item_type.item_type_name.name="デフォルトアイテムタイプ（フル）"
+    item_type.item_type_name.item_type.first().id=15
+    data = {
+        "search_data":"10.5109/16119",
+        "item_type_id":"1"
+    }
+
+    mocker.patch("weko_workspace.views.session",session)
+    with patch("weko_records.api.ItemTypes.get_by_id", return_value=item_type):
+        with patch("weko_workspace.utils.get_jalc_record_data", return_value={"result":"","items":"test","error":""}):
+            url = url_for("weko_workspace_api.get_auto_fill_record_data_jalcapi")
+            res = client.post(url, 
+                        data=json.dumps(data),
+                        content_type='application/json')
+            assert res.status_code == 200
+            assert res is not None
+
+    # header error
+    login(client=client, email=users[0]['email'])
+    session = {
+        "itemlogin_id":"1",
+        "itemlogin_action_id":3,
+        "itemlogin_cur_step":"item_login",
+        "itemlogin_community_id":"comm01"
+    }
+
+    data = {
+        "search_data":"10.5109/16119",
+        "item_type_id":"15"
+    }
+
+    mocker.patch("weko_workspace.views.session",session)
+    url = url_for("weko_workspace_api.get_auto_fill_record_data_jalcapi")
+    res = client.post(url, 
+                data=json.dumps(data),
+                content_type='test/json')
+    assert res.status_code == 200
+
+
+    # not exist
+    data = {
+        "search_data":"test",
+        "item_type_id":"15"
+    }
+
+    mocker.patch("weko_workspace.views.session",session)
+    url = url_for("weko_workspace_api.get_auto_fill_record_data_jalcapi")
+    res = client.post(url, 
+                data=json.dumps(data),
+                content_type='application/json')
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"result":[],"items":"","error":""}
+
+
+# .tox/c1/bin/pytest --cov=weko_workspace tests/test_views.py::test_get_auto_fill_record_data_dataciteapi -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-weko_workspace/.tox/c1/tmp
+def test_get_auto_fill_record_data_dataciteapi(db,users, workflow,client_api, client,mocker,without_remove_session):
+    # data あり
+    login(client=client, email=users[0]['email'])
+    session = {
+        "itemlogin_id":"1",
+        "itemlogin_action_id":3,
+        "itemlogin_cur_step":"item_login",
+        "itemlogin_community_id":"comm01"
+    }
+    from mock import MagicMock, patch, PropertyMock
+    from unittest.mock import patch, Mock, MagicMock
+    import os
+    item_type = Mock()
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/item_type/15_render.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+        render = json.load(f)
+    item_type.render = render
+
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/item_type/15_schema.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+        schema = json.load(f)
+    item_type.schema = schema
+
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/item_type/15_form.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+        form = json.load(f)
+    item_type.form = form
+
+    item_type.item_type_name.name="デフォルトアイテムタイプ（フル）"
+    item_type.item_type_name.item_type.first().id=15
+    data = {
+        "search_data":"10.14454/FXWS-0523",
+        "item_type_id":"1"
+    }
+
+    mocker.patch("weko_workspace.views.session",session)
+    with patch("weko_records.api.ItemTypes.get_by_id", return_value=item_type):
+        with patch("weko_workspace.utils.get_datacite_record_data", return_value={"result":"","items":"test","error":""}):
+            url = url_for("weko_workspace_api.get_auto_fill_record_data_dataciteapi")
+            res = client.post(url, 
+                        data=json.dumps(data),
+                        content_type='application/json')
+            assert res.status_code == 200
+            assert res is not None
+
+    # header error
+    login(client=client, email=users[0]['email'])
+    session = {
+        "itemlogin_id":"1",
+        "itemlogin_action_id":3,
+        "itemlogin_cur_step":"item_login",
+        "itemlogin_community_id":"comm01"
+    }
+
+    data = {
+        "search_data":"10.5109/16119",
+        "item_type_id":"15"
+    }
+
+    mocker.patch("weko_workspace.views.session",session)
+    url = url_for("weko_workspace_api.get_auto_fill_record_data_dataciteapi")
+    res = client.post(url, 
+                data=json.dumps(data),
+                content_type='test/json')
+    assert res.status_code == 200
+
+
+    # not exist
+    data = {
+        "search_data":"test",
+        "item_type_id":"15"
+    }
+
+    mocker.patch("weko_workspace.views.session",session)
+    url = url_for("weko_workspace_api.get_auto_fill_record_data_dataciteapi")
+    res = client.post(url, 
+                data=json.dumps(data),
+                content_type='application/json')
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"result":[],"items":"","error":""}
+
+
+# .tox/c1/bin/pytest --cov=weko_workspace tests/test_views.py::test_itemregister_save -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-weko_workspace/.tox/c1/tmp
+def test_itemregister_save(db,users,location, workflow, app, client,mocker,without_remove_session):
+    # ワークフローを経由で
+    admin_settings = {"workFlow_select_flg": '0', "work_flow_id": '1'}
+    login(client=client, email=users[0]['email'])
+    session = {
+        "itemlogin_id":"1",
+        "itemlogin_action_id":3,
+        "itemlogin_cur_step":"item_login",
+        "itemlogin_community_id":"comm01"
+    }
+
+    index_metadata = {
+        "id": 2,
+        "parent": 1,
+        "position": 1,
+        "index_name": "test-weko",
+        "index_name_english": "Contents Type",
+        "index_link_name": "",
+        "index_link_name_english": "New Index",
+        "index_link_enabled": False,
+        "more_check": False,
+        "display_no": 5,
+        "harvest_public_state": True,
+        "display_format": 1,
+        "image_name": "",
+        "public_state": True,
+        "recursive_public_state": True,
+        "rss_status": False,
+        "coverpage_state": False,
+        "recursive_coverpage_check": False,
+        "browsing_role": "3,-98,-99",
+        "recursive_browsing_role": False,
+        "contribute_role": "1,2,3,4,-98,-99",
+        "recursive_contribute_role": False,
+        "browsing_group": "",
+        "recursive_browsing_group": False,
+        "recursive_contribute_group": False,
+        "owner_user_id": 1,
+        "item_custom_sort": {"2": 1}
+    }
+    from weko_index_tree.models import Index
+    index = Index(**index_metadata)
+
+    with db.session.begin_nested():
+        db.session.add(index)
+
+    from types import SimpleNamespace
+    settings_obj = SimpleNamespace(**admin_settings)
+    mocker.patch("weko_workspace.views.session",session)
+    data = {
+        "recordModel":{'pubdate': '2025-03-11', 'item_30002_title0': [{'subitem_title': 'Identification of cDNA Sequences Encoding the Complement Components of Zebrafish (Danio rerio)', 'subitem_title_language': 'en'}], 'item_30002_creator2': [{'creatorNames': [{'creatorName': 'Vo Kha Tam', 'creatorNameLang': 'en'}]}, {'creatorNames': [{'creatorName': 'Tsujikura Masakazu', 'creatorNameLang': 'en'}]}, {'creatorNames': [{'creatorName': 'Somamoto Tomonori', 'creatorNameLang': 'en'}]}, {'creatorNames': [{'creatorName': 'Nakano Miki', 'creatorNameLang': 'en'}]}], 'item_30002_identifier16': [{'subitem_identifier_uri': '10.5109/16119'}], 'item_30002_relation18': [{'subitem_relation_type_id': {'subitem_relation_type_id_text': '10.5109/16119', 'subitem_relation_type_select': 'DOI'}}], 'item_30002_funding_reference21': [{'subitem_funder_names': [{'subitem_funder_name': 'test1'}]}], 'item_30002_conference34': [{'subitem_conference_names': [{'subitem_conference_name': 'test3'}]}], 'item_30002_file35': [{'version_id': '9e7f93b3-7290-4a6f-aea0-87856279cf48', 'filename': '1_1.png', 'filesize': [{'value': '55 KB'}], 'format': 'image/png', 'date': [{'dateValue': '2025-03-11', 'dateType': 'Available'}], 'accessrole': 'open_access', 'url': {'url': 'https://192.168.56.106/record/2000235/files/1_1.png'}}], 'item_30002_bibliographic_information29': {'bibliographic_titles': [{'bibliographic_title': 'test2'}]}, 'item_30002_source_title23': [{'subitem_source_title': 'Journal of the Faculty of Agriculture, Kyushu University', 'subitem_source_title_language': 'en'}], 'item_30002_source_identifier22': [{'subitem_source_identifier': '0023-6152', 'subitem_source_identifier_type': 'ISSN'}], 'item_30002_volume_number24': {'subitem_volume': '54'}, 'item_30002_issue_number25': {'subitem_issue': '2'}, 'item_30002_page_start27': {'subitem_start_page': '373'}, 'item_30002_page_end28': {'subitem_end_page': '387'}, 'item_30002_date11': [{'subitem_date_issued_datetime': '2009', 'subitem_date_issued_type': 'Issued'}], 'item_30002_access_rights4': {'subitem_access_right': 'embargoed access'}, 'item_30002_resource_type13': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_30002_version_type15': {'subitem_version_type': 'AO'}, 'deleted_items': []},
+        "indexlist":['test-weko']
+    }
+    with patch("weko_admin.admin.AdminSettings.get", return_value=settings_obj):
+        url = url_for("weko_workspace.workflow_registration")
+        res = client.post(url, json=data)
+        assert res is not None
+
+    # header error
+    login(client=client, email=users[0]['email'])
+    session = {
+        "itemlogin_id":"1",
+        "itemlogin_action_id":3,
+        "itemlogin_cur_step":"item_login",
+        "itemlogin_community_id":"comm01"
+    }
+
+    data = {
+        "recordModel":{'pubdate': '2025-03-11', 'item_30002_title0': [{'subitem_title': 'Identification of cDNA Sequences Encoding the Complement Components of Zebrafish (Danio rerio)', 'subitem_title_language': 'en'}], 'item_30002_creator2': [{'creatorNames': [{'creatorName': 'Vo Kha Tam', 'creatorNameLang': 'en'}]}, {'creatorNames': [{'creatorName': 'Tsujikura Masakazu', 'creatorNameLang': 'en'}]}, {'creatorNames': [{'creatorName': 'Somamoto Tomonori', 'creatorNameLang': 'en'}]}, {'creatorNames': [{'creatorName': 'Nakano Miki', 'creatorNameLang': 'en'}]}], 'item_30002_identifier16': [{'subitem_identifier_uri': '10.5109/16119'}], 'item_30002_relation18': [{'subitem_relation_type_id': {'subitem_relation_type_id_text': '10.5109/16119', 'subitem_relation_type_select': 'DOI'}}], 'item_30002_funding_reference21': [{'subitem_funder_names': [{'subitem_funder_name': 'test1'}]}], 'item_30002_conference34': [{'subitem_conference_names': [{'subitem_conference_name': 'test3'}]}], 'item_30002_file35': [{'version_id': '9e7f93b3-7290-4a6f-aea0-87856279cf48', 'filename': '1_1.png', 'filesize': [{'value': '55 KB'}], 'format': 'image/png', 'date': [{'dateValue': '2025-03-11', 'dateType': 'Available'}], 'accessrole': 'open_access', 'url': {'url': 'https://192.168.56.106/record/2000235/files/1_1.png'}}], 'item_30002_bibliographic_information29': {'bibliographic_titles': [{'bibliographic_title': 'test2'}]}, 'item_30002_source_title23': [{'subitem_source_title': 'Journal of the Faculty of Agriculture, Kyushu University', 'subitem_source_title_language': 'en'}], 'item_30002_source_identifier22': [{'subitem_source_identifier': '0023-6152', 'subitem_source_identifier_type': 'ISSN'}], 'item_30002_volume_number24': {'subitem_volume': '54'}, 'item_30002_issue_number25': {'subitem_issue': '2'}, 'item_30002_page_start27': {'subitem_start_page': '373'}, 'item_30002_page_end28': {'subitem_end_page': '387'}, 'item_30002_date11': [{'subitem_date_issued_datetime': '2009', 'subitem_date_issued_type': 'Issued'}], 'item_30002_access_rights4': {'subitem_access_right': 'embargoed access'}, 'item_30002_resource_type13': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_30002_version_type15': {'subitem_version_type': 'AO'}, 'deleted_items': []}
+    }
+
+    mocker.patch("weko_workspace.views.session",session)
+    url = url_for("weko_workspace.workflow_registration")
+    res = client.post(url, 
+                data=json.dumps(data),
+                content_type='test/json')
+    assert res.status_code == 200
+
+    # error
+    admin_settings = {"workFlow_select_flg": '0', "work_flow_id": '1'}
+    login(client=client, email=users[0]['email'])
+    session = {
+        "itemlogin_id":"1",
+        "itemlogin_action_id":3,
+        "itemlogin_cur_step":"item_login",
+        "itemlogin_community_id":"comm01"
+    }
+    from types import SimpleNamespace
+    settings_obj = SimpleNamespace(**admin_settings)
+    mocker.patch("weko_workspace.views.session",session)
+    data = {
+        "recordModel":{}
+    }
+    with patch("weko_admin.admin.AdminSettings.get", return_value=settings_obj):
+        url = url_for("weko_workspace.workflow_registration")
+        res = client.post(url, json=data)
+        assert res is not None
+
+
+    # data is None
+    admin_settings = {"workFlow_select_flg": '0', "work_flow_id": '1'}
+
+    login(client=client, email=users[0]['email'])
+    session = {
+        "itemlogin_id":"1",
+        "itemlogin_action_id":3,
+        "itemlogin_cur_step":"item_login",
+        "itemlogin_community_id":"comm01"
+    }
+    data = {
+        "recordModel":{'pubdate': '2025-03-11', 'item_30002_title0': [{'subitem_title': 'Identification of cDNA Sequences Encoding the Complement Components of Zebrafish (Danio rerio)', 'subitem_title_language': 'en'}], 'item_30002_creator2': [{'creatorNames': [{'creatorName': 'Vo Kha Tam', 'creatorNameLang': 'en'}]}, {'creatorNames': [{'creatorName': 'Tsujikura Masakazu', 'creatorNameLang': 'en'}]}, {'creatorNames': [{'creatorName': 'Somamoto Tomonori', 'creatorNameLang': 'en'}]}, {'creatorNames': [{'creatorName': 'Nakano Miki', 'creatorNameLang': 'en'}]}], 'item_30002_identifier16': [{'subitem_identifier_uri': '10.5109/16119'}], 'item_30002_relation18': [{'subitem_relation_type_id': {'subitem_relation_type_id_text': '10.5109/16119', 'subitem_relation_type_select': 'DOI'}}], 'item_30002_funding_reference21': [{'subitem_funder_names': [{'subitem_funder_name': 'test1'}]}], 'item_30002_conference34': [{'subitem_conference_names': [{'subitem_conference_name': 'test3'}]}], 'item_30002_file35': [{'version_id': '9e7f93b3-7290-4a6f-aea0-87856279cf48', 'filename': '1_1.png', 'filesize': [{'value': '55 KB'}], 'format': 'image/png', 'date': [{'dateValue': '2025-03-11', 'dateType': 'Available'}], 'accessrole': 'open_access', 'url': {'url': 'https://192.168.56.106/record/2000235/files/1_1.png'}}], 'item_30002_bibliographic_information29': {'bibliographic_titles': [{'bibliographic_title': 'test2'}]}, 'item_30002_source_title23': [{'subitem_source_title': 'Journal of the Faculty of Agriculture, Kyushu University', 'subitem_source_title_language': 'en'}], 'item_30002_source_identifier22': [{'subitem_source_identifier': '0023-6152', 'subitem_source_identifier_type': 'ISSN'}], 'item_30002_volume_number24': {'subitem_volume': '54'}, 'item_30002_issue_number25': {'subitem_issue': '2'}, 'item_30002_page_start27': {'subitem_start_page': '373'}, 'item_30002_page_end28': {'subitem_end_page': '387'}, 'item_30002_date11': [{'subitem_date_issued_datetime': '2009', 'subitem_date_issued_type': 'Issued'}], 'item_30002_access_rights4': {'subitem_access_right': 'embargoed access'}, 'item_30002_resource_type13': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_30002_version_type15': {'subitem_version_type': 'AO'}, 'deleted_items': []}
+    }
+    from types import SimpleNamespace
+    settings_obj = SimpleNamespace(**admin_settings)
+    mocker.patch("weko_workspace.views.session",session)
+    with patch("weko_admin.admin.AdminSettings.get", return_value=settings_obj):
+        with patch("weko_workflow.headless.activity.HeadlessActivity.auto", return_value=None):
+            url = url_for("weko_workspace.workflow_registration")
+            res = client.post(url, json=data)
+            assert res.status_code == 200
+
+
+    # 直接登録
+    admin_settings = {"workFlow_select_flg": '1', "item_type_id": '1'}
+    login(client=client, email=users[0]['email'])
+    session = {
+        "itemlogin_id":"1",
+        "itemlogin_action_id":3,
+        "itemlogin_cur_step":"item_login",
+        "itemlogin_community_id":"comm01"
+    }
+
+    index_metadata = {
+        "id": 3,
+        "parent": 1,
+        "position": 2,
+        "index_name": "test-weko",
+        "index_name_english": "Contents Type",
+        "index_link_name": "",
+        "index_link_name_english": "New Index",
+        "index_link_enabled": False,
+        "more_check": False,
+        "display_no": 5,
+        "harvest_public_state": True,
+        "display_format": 1,
+        "image_name": "",
+        "public_state": True,
+        "recursive_public_state": True,
+        "rss_status": False,
+        "coverpage_state": False,
+        "recursive_coverpage_check": False,
+        "browsing_role": "3,-98,-99",
+        "recursive_browsing_role": False,
+        "contribute_role": "1,2,3,4,-98,-99",
+        "recursive_contribute_role": False,
+        "browsing_group": "",
+        "recursive_browsing_group": False,
+        "recursive_contribute_group": False,
+        "owner_user_id": 1,
+        "item_custom_sort": {"2": 1}
+    }
+
+    return_value = {
+            "error_id":None,
+        }
+    from types import SimpleNamespace
+    settings_obj = SimpleNamespace(**admin_settings)
+    mocker.patch("weko_workspace.views.session",session)
+    data = {
+        "recordModel":{'pubdate': '2025-03-11', 'item_30002_title0': [{'subitem_title': 'Identification of cDNA Sequences Encoding the Complement Components of Zebrafish (Danio rerio)', 'subitem_title_language': 'en'}], 'item_30002_creator2': [{'creatorNames': [{'creatorName': 'Vo Kha Tam', 'creatorNameLang': 'en'}]}, {'creatorNames': [{'creatorName': 'Tsujikura Masakazu', 'creatorNameLang': 'en'}]}, {'creatorNames': [{'creatorName': 'Somamoto Tomonori', 'creatorNameLang': 'en'}]}, {'creatorNames': [{'creatorName': 'Nakano Miki', 'creatorNameLang': 'en'}]}], 'item_30002_relation18': [{'subitem_relation_type_id': {'subitem_relation_type_id_text': '10.5109/16119', 'subitem_relation_type_select': 'DOI'}}], 'item_30002_file35': [{'date': [{'dateValue': '2025-03-11'}], 'url': {'url': 'https://192.168.56.106/record/2000235/files/1_1.png'}}], 'item_30002_source_title23': [{'subitem_source_title': 'Journal of the Faculty of Agriculture, Kyushu University', 'subitem_source_title_language': 'en'}], 'item_30002_source_identifier22': [{'subitem_source_identifier': '0023-6152', 'subitem_source_identifier_type': 'ISSN'}], 'item_30002_volume_number24': {'subitem_volume': '54'}, 'item_30002_issue_number25': {'subitem_issue': '2'}, 'item_30002_page_start27': {'subitem_start_page': '373'}, 'item_30002_page_end28': {'subitem_end_page': '387'}, 'item_30002_date11': [{'subitem_date_issued_datetime': '2009', 'subitem_date_issued_type': 'Issued'}], 'item_30002_resource_type13': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'deleted_items': ['item_30002_identifier16', 'item_30002_funding_reference21', 'item_30002_conference34', 'item_30002_bibliographic_information29'], 'path': ['1623632832836']},
+        "indexlist":['Sample Index']
+    }
+    with patch("weko_admin.admin.AdminSettings.get", return_value=settings_obj):
+        submeta2 = {'success': True}
+        with patch("weko_search_ui.utils.import_items_to_system",side_effect=submeta2): 
+            with patch("weko_search_ui.utils.register_item_metadata"):
+                with patch("weko_search_ui.utils.register_item_doi"):
+                    with patch("weko_search_ui.utils.register_item_update_publish_status"):
+                
+                        url = url_for("weko_workspace.workflow_registration")
+                        res = client.post(url, json=data)
+                        assert res is not None
+
+
+    admin_settings = {"workFlow_select_flg": '1', "item_type_id": '1'}
+    login(client=client, email=users[0]['email'])
+    session = {
+        "itemlogin_id":"1",
+        "itemlogin_action_id":3,
+        "itemlogin_cur_step":"item_login",
+        "itemlogin_community_id":"comm01"
+    }
+
+    index_metadata = {
+        "id": 3,
+        "parent": 1,
+        "position": 2,
+        "index_name": "test-weko",
+        "index_name_english": "Contents Type",
+        "index_link_name": "",
+        "index_link_name_english": "New Index",
+        "index_link_enabled": False,
+        "more_check": False,
+        "display_no": 5,
+        "harvest_public_state": True,
+        "display_format": 1,
+        "image_name": "",
+        "public_state": True,
+        "recursive_public_state": True,
+        "rss_status": False,
+        "coverpage_state": False,
+        "recursive_coverpage_check": False,
+        "browsing_role": "3,-98,-99",
+        "recursive_browsing_role": False,
+        "contribute_role": "1,2,3,4,-98,-99",
+        "recursive_contribute_role": False,
+        "browsing_group": "",
+        "recursive_browsing_group": False,
+        "recursive_contribute_group": False,
+        "owner_user_id": 1,
+        "item_custom_sort": {"2": 1}
+    }
+
+    return_value = {
+            "error_id":None,
+        }
+    from types import SimpleNamespace
+    settings_obj = SimpleNamespace(**admin_settings)
+    mocker.patch("weko_workspace.views.session",session)
+    data = {
+        "recordModel":{'pubdate': '2025-03-11', 'item_30002_title0': [{'subitem_title': 'Identification of cDNA Sequences Encoding the Complement Components of Zebrafish (Danio rerio)', 'subitem_title_language': 'en'}], 'item_30002_creator2': [{'creatorNames': [{'creatorName': 'Vo Kha Tam', 'creatorNameLang': 'en'}]}, {'creatorNames': [{'creatorName': 'Tsujikura Masakazu', 'creatorNameLang': 'en'}]}, {'creatorNames': [{'creatorName': 'Somamoto Tomonori', 'creatorNameLang': 'en'}]}, {'creatorNames': [{'creatorName': 'Nakano Miki', 'creatorNameLang': 'en'}]}], 'item_30002_relation18': [{'subitem_relation_type_id': {'subitem_relation_type_id_text': '10.5109/16119', 'subitem_relation_type_select': 'DOI'}}], 'item_30002_file35': [{'date': [{'dateValue': '2025-03-11'}], 'url': {'url': 'https://192.168.56.106/record/2000235/files/1_1.png'}}], 'item_30002_source_title23': [{'subitem_source_title': 'Journal of the Faculty of Agriculture, Kyushu University', 'subitem_source_title_language': 'en'}], 'item_30002_source_identifier22': [{'subitem_source_identifier': '0023-6152', 'subitem_source_identifier_type': 'ISSN'}], 'item_30002_volume_number24': {'subitem_volume': '54'}, 'item_30002_issue_number25': {'subitem_issue': '2'}, 'item_30002_page_start27': {'subitem_start_page': '373'}, 'item_30002_page_end28': {'subitem_end_page': '387'}, 'item_30002_date11': [{'subitem_date_issued_datetime': '2009', 'subitem_date_issued_type': 'Issued'}], 'item_30002_resource_type13': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'deleted_items': ['item_30002_identifier16', 'item_30002_funding_reference21', 'item_30002_conference34', 'item_30002_bibliographic_information29'], 'path': ['1623632832836']},
+
+        "indexlist":['Sample Index']
+    }
+
+    submeta2 = {
+        "itemlogin_id":"1",
+        "itemlogin_action_id":3,
+        "itemlogin_cur_step":"item_login",
+        "itemlogin_community_id":"comm01"
+    }
+   
+    with patch("weko_admin.admin.AdminSettings.get", return_value=settings_obj):
+        from elasticsearch import ElasticsearchException
+
+        with patch("weko_search_ui.utils.import_items_to_system", return_value={"success": False, "recid": 1}):
+            with patch("weko_search_ui.utils.register_item_metadata"):
+                with patch("weko_search_ui.utils.register_item_doi",MagicMock(side_effect=ElasticsearchException())):
+                    with patch("weko_search_ui.utils.register_item_update_publish_status",side_effect=submeta2):
+                        with patch("weko_search_ui.utils.register_item_doi"):
+                            with patch("weko_search_ui.utils.register_item_doi"):
+                                    url = url_for("weko_workspace.workflow_registration")
+                                    res = client.post(url, json=data)
+                                    assert res is not None
+
+    # error
+    admin_settings = {"workFlow_select_flg": '1', "item_type_id": '1'}
+    login(client=client, email=users[0]['email'])
+    session = {
+        "itemlogin_id":"1",
+        "itemlogin_action_id":3,
+        "itemlogin_cur_step":"item_login",
+        "itemlogin_community_id":"comm01"
+    }
+    from types import SimpleNamespace
+    settings_obj = SimpleNamespace(**admin_settings)
+    mocker.patch("weko_workspace.views.session",session)
+    data = {
+        "recordModel":{}
+    }
+    with patch("weko_admin.admin.AdminSettings.get", return_value=settings_obj):
+        url = url_for("weko_workspace.workflow_registration")
+        res = client.post(url, json=data)
+        assert res is not None
+
+
+    # data is None
+    admin_settings = {"workFlow_select_flg": '1', "item_type_id": '30002'}
+
+    login(client=client, email=users[0]['email'])
+    session = {
+        "itemlogin_id":"1",
+        "itemlogin_action_id":3,
+        "itemlogin_cur_step":"item_login",
+        "itemlogin_community_id":"comm01"
+    }
+    data = {
+        "recordModel":{'pubdate': '2025-03-11', 'item_30002_title0': [{'subitem_title': 'Identification of cDNA Sequences Encoding the Complement Components of Zebrafish (Danio rerio)', 'subitem_title_language': 'en'}], 'item_30002_creator2': [{'creatorNames': [{'creatorName': 'Vo Kha Tam', 'creatorNameLang': 'en'}]}, {'creatorNames': [{'creatorName': 'Tsujikura Masakazu', 'creatorNameLang': 'en'}]}, {'creatorNames': [{'creatorName': 'Somamoto Tomonori', 'creatorNameLang': 'en'}]}, {'creatorNames': [{'creatorName': 'Nakano Miki', 'creatorNameLang': 'en'}]}], 'item_30002_identifier16': [{'subitem_identifier_uri': '10.5109/16119'}], 'item_30002_relation18': [{'subitem_relation_type_id': {'subitem_relation_type_id_text': '10.5109/16119', 'subitem_relation_type_select': 'DOI'}}], 'item_30002_funding_reference21': [{'subitem_funder_names': [{'subitem_funder_name': 'test1'}]}], 'item_30002_conference34': [{'subitem_conference_names': [{'subitem_conference_name': 'test3'}]}], 'item_30002_file35': [{'version_id': '9e7f93b3-7290-4a6f-aea0-87856279cf48', 'filename': '1_1.png', 'filesize': [{'value': '55 KB'}], 'format': 'image/png', 'date': [{'dateValue': '2025-03-11', 'dateType': 'Available'}], 'accessrole': 'open_access', 'url': {'url': 'https://192.168.56.106/record/2000235/files/1_1.png'}}], 'item_30002_bibliographic_information29': {'bibliographic_titles': [{'bibliographic_title': 'test2'}]}, 'item_30002_source_title23': [{'subitem_source_title': 'Journal of the Faculty of Agriculture, Kyushu University', 'subitem_source_title_language': 'en'}], 'item_30002_source_identifier22': [{'subitem_source_identifier': '0023-6152', 'subitem_source_identifier_type': 'ISSN'}], 'item_30002_volume_number24': {'subitem_volume': '54'}, 'item_30002_issue_number25': {'subitem_issue': '2'}, 'item_30002_page_start27': {'subitem_start_page': '373'}, 'item_30002_page_end28': {'subitem_end_page': '387'}, 'item_30002_date11': [{'subitem_date_issued_datetime': '2009', 'subitem_date_issued_type': 'Issued'}], 'item_30002_access_rights4': {'subitem_access_right': 'embargoed access'}, 'item_30002_resource_type13': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_30002_version_type15': {'subitem_version_type': 'AO'}, 'deleted_items': []}
+    }
+    from types import SimpleNamespace
+    settings_obj = SimpleNamespace(**admin_settings)
+    mocker.patch("weko_workspace.views.session",session)
+    with patch("weko_admin.admin.AdminSettings.get", return_value=settings_obj):
+        with patch("weko_search_ui.utils.import_items_to_system", side_effect=Exception):
+            with patch("weko_search_ui.utils.register_item_metadata", side_effect=Exception):
+                url = url_for("weko_workspace.workflow_registration")
+                res = client.post(url, json=data)
+                assert res.status_code == 200

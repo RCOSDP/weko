@@ -104,6 +104,7 @@ from weko_items_ui import WekoItemsUI
 from weko_admin.models import SiteInfo
 from weko_admin import WekoAdmin
 from weko_deposit import WekoDeposit
+from weko_admin.models import AdminSettings
 
 sys.path.append(os.path.dirname(__file__))
 # @event.listens_for(Engine, "connect")
@@ -207,6 +208,16 @@ def cache_config():
             ).split(",")
         )
     return config
+
+@pytest.fixture()
+def admin_settings(db):
+    settings = list()
+    settings.append(AdminSettings(id=1,name='workspace_workflow_settings',settings={ "item_type_id": "30002",
+                            "work_flow_id": "1", "workFlow_select_flg":"1"}))
+    db.session.add_all(settings)
+    db.session.commit()
+    return settings
+
 
 @pytest.fixture()
 def base_app(instance_path, search_class, cache_config):

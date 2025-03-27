@@ -210,7 +210,8 @@ class HeadlessActivity(WorkActivity):
             if self.current_action == "item_login":
                 self.item_registration(
                     params.get("metadata"), params.get("files"),
-                    params.get("index"), params.get("comment")
+                    params.get("index"), params.get("comment"),
+                    params.get("workspace_register")
                 )
             elif self.current_action == "item_link":
                 self.item_link(params.get("link_data"))
@@ -229,7 +230,7 @@ class HeadlessActivity(WorkActivity):
 
         return returns
 
-    def item_registration(self, metadata, files, index, comment=""):
+    def item_registration(self, metadata, files, index, comment="", workspace_register=None):
         """Action for item registration."""
         if self._model is None:
             current_app.logger.error("activity is not initialized.")
@@ -242,14 +243,14 @@ class HeadlessActivity(WorkActivity):
             # it contains ""
             raise WekoWorkflowException(error)
 
-        self.recid = self._input_metadata(metadata, files)
+        self.recid = self._input_metadata(metadata, files, workspace_register)
         self._designate_index(index)
         self._comment(comment)
 
         return self.detail
 
 
-    def _input_metadata(self, metadata, files=None):
+    def _input_metadata(self, metadata, files=None, workspace_register=None):
         """input metadata."""
         self._user_lock()
         locked_value = self._activity_lock()
@@ -325,6 +326,10 @@ class HeadlessActivity(WorkActivity):
                 data["files"] = self.files_info = self._upload_files(files)
             # TODO: update propaties of files metadata, but it is difficult to
             # decide whitch key should be updated.
+          
+            if workspace_register:
+                data_without_outer_list = data["files"][0]
+                data["files"] = data_without_outer_list
 
             data["endpoint"].update(base_factory(pid))
             self.upt_activity_metadata(self.activity_id, json.dumps(data))
@@ -402,6 +407,8 @@ class HeadlessActivity(WorkActivity):
                 size = os.path.getsize(file)
                 with open(file, "rb") as f:
                     file_info = upload(os.path.basename(file), f, size)
+            elif isinstance(file, dict):
+                file_info = files
             else:
                 """werkzeug.datastructures.FileStorage"""
                 file_info = upload(file.filename, file.stream, file.content_length)

@@ -26,6 +26,7 @@ import datetime
 from flask_babelex import gettext as _
 from flask_login.utils import login_user
 from weko_user_profiles import UserProfile
+
 import json
 from unittest.mock import Mock, patch
 import pytest
@@ -35,7 +36,7 @@ from weko_workspace.models import WorkspaceDefaultConditions
 import requests
 
 from weko_workspace.utils import *
-from weko_workspace.config import WEKO_WORKSPACE_DEFAULT_FILTERS as DEFAULT_FILTERS
+from weko_workspace.defaultfilters import DEFAULT_FILTERS
 
 # ===========================def get_workspace_filterCon():=====================================
 # ワークスペースのフィルター条件を取得する関数のテスト
@@ -265,7 +266,7 @@ def test_get_item_status(recid, expected_response):
     assert result == expected_response
 
 # ===========================def get_userNm_affiliation():=====================================
-# ユーザー名を取得する関数のテスト
+# TODO ユーザー名と所属情報を取得する関数のテスト（未完成）
 @pytest.mark.parametrize('mock_setup, expected_response', [
     (
         {

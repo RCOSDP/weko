@@ -24,9 +24,14 @@ import os, sys
 import shutil
 import tempfile
 import json
+import uuid
+from datetime import datetime
+from six import BytesIO
+import base64
+from mock import patch,Mock
 
 import pytest
-from flask import Flask, Response
+from flask import Flask, url_for, Response
 from flask_babelex import Babel, lazy_gettext as _
 from flask_menu import Menu
 from elasticsearch import Elasticsearch
@@ -70,7 +75,12 @@ from weko_items_ui import WekoItemsUI
 from weko_admin import WekoAdmin
 from weko_deposit import WekoDeposit
 
+from weko_workspace.views import workspace_blueprint as weko_workspace_blueprint
+from weko_workspace.views import blueprint_itemapi as weko_workspace_blueprint_itemapi
+
 from weko_workspace.models import WorkspaceDefaultConditions,WorkspaceStatusManagement
+from weko_workspace.config import WEKO_ITEMS_AUTOFILL_CINII_REQUIRED_ITEM
+from weko_redis.redis import RedisConnection
 
 sys.path.append(os.path.dirname(__file__))
 class TestSearch(RecordsSearch):
@@ -441,6 +451,7 @@ def base_app(instance_path, search_class, cache_config):
         WEKO_WORKFLOW_ACTION_GUARANTOR=WEKO_WORKFLOW_ACTION_GUARANTOR,
         WEKO_WORKFLOW_ACTION_ADVISOR=WEKO_WORKFLOW_ACTION_ADVISOR,
         WEKO_WORKFLOW_ACTION_ADMINISTRATOR=WEKO_WORKFLOW_ACTION_ADMINISTRATOR,
+        WEKO_ITEMS_AUTOFILL_CINII_REQUIRED_ITEM=WEKO_ITEMS_AUTOFILL_CINII_REQUIRED_ITEM,
         WEKO_WORKFLOW_GAKUNINRDM_DATA=[
             {
                 'workflow_id': -1,
@@ -502,6 +513,9 @@ def base_app(instance_path, search_class, cache_config):
     InvenioOAuth2Server(app_)
     app_.register_blueprint(invenio_communities_blueprint)
     app_.register_blueprint(weko_workflow_blueprint)
+    app_.register_blueprint(weko_workspace_blueprint)
+    app_.register_blueprint(weko_workspace_blueprint_itemapi)
+    
 
     # 20250311 workspace
     WekoWorkspace(app_)
@@ -529,6 +543,44 @@ def db(app):
     # drop_database(str(db_.engine.url))
 
 
+@pytest.fixture()
+def mocker_itemtype(mocker):
+    item_type = Mock()
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/item_type/15_render.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+        render = json.load(f)
+    item_type.render = render
+
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/item_type/15_render.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+        schema = json.load(f)
+    item_type.schema = schema
+
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/item_type/15_render.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+        form = json.load(f)
+    item_type.form = form
+
+    item_type.item_type_name.name = "デフォルトアイテムタイプ（フル）"
+    item_type.item_type_name.item_type.first().id = 15
+
+    mocker.patch("weko_records.api.ItemTypes.get_by_id", return_value=item_type)
+
+
+@pytest.yield_fixture()
+def client_api(app):
+    from weko_workspace.views import blueprint_itemapi as weko_workspace_blueprint_itemapi
+    app.register_blueprint(weko_workspace_blueprint_itemapi)
+
+    with app.test_client() as client:
+        yield client
+
 @pytest.yield_fixture()
 def client(app):
     """make a test client.
@@ -539,6 +591,30 @@ def client(app):
     """
     with app.test_client() as client:
         yield client
+
+@pytest.yield_fixture()
+def guest(client):
+    with client.session_transaction() as sess:
+        sess['guest_token'] = "test_guest_token"
+        sess['guest_email'] = "guest@test.org"
+        sess['guest_url'] = url_for("weko_workflow.display_guest_activity",file_name="test_file")
+    yield client
+
+@pytest.yield_fixture()
+def req_context(client,app):
+    with app.test_request_context():
+        yield client
+        
+@pytest.fixture
+def redis_connect(app):
+    redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
+    redis_connection.put('updated_json_schema_A-00000001-10001',bytes('test', 'utf-8'))
+    return redis_connection
+
+@pytest.fixture()
+def without_remove_session(app):
+    with patch("weko_workflow.views.db.session.remove"):
+        yield
 
 @pytest.fixture()
 def users(app, db):
