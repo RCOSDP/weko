@@ -2618,7 +2618,7 @@ function toObject(arr) {
         jalcDataEmpty = this.setRecordDataFromJalcApi(param_api);
 
         datacitDataEmpty = this.setRecordDataFromDataciteApi(param_api);
-<<<<<<< HEAD
+
         datacitDataEmpty = this.setRecordDataFromJamasApi(param_api);
         return crossrefDataEmpty,ciniiDataEmpty,jalcDataEmpty,datacitDataEmpty
 
@@ -2664,7 +2664,6 @@ function toObject(arr) {
           return item;
         }
       }
-<<<<<<< HEAD
       
 
       $scope.setRecordDataFromJamasApi = function (param) {
@@ -2704,9 +2703,6 @@ function toObject(arr) {
         );
       }
       
-=======
-
->>>>>>> 0c87d0481 (アイテム登録)
 
       $scope.setRecordDataFromCrossRefApi = function (param) {
         let request = {
