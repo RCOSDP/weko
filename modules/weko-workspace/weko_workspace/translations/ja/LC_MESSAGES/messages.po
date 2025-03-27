@@ -22,43 +22,6 @@ msgstr ""
 #: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
 msgid "Filter Display"
 msgstr "絞込み表示"
-#: weko_workflow/admin.py:100
-#, fuzzy
-msgid "Updated flow successfully."
-msgstr "フローを更新しました"
-
-#: weko_workflow/admin.py:138
-#, fuzzy
-msgid "Updated flow action successfully"
-msgstr "フローアクションを更新しました。"
-
-#: weko_workflow/admin.py:148
-msgid "Approval by Administrator action does not exist, or not in the right order."
-msgstr "管理者の承認了アクションは存在しないか、正しい順序になっていません。"
-
-#: weko_workspace/item_register.html:143
-msgid "DOI Input"
-msgstr "DOI入力"
-
-#: weko_workspace/item_register.html:226
-msgid "Metadata"
-msgstr "メタデータ"
-
-#: weko_workspace/item_register.html:303
-msgid "Regist"
-msgstr "登録"
-
-#: weko_workspace/item_register.html:397
-msgid "The item is successfully registered."
-msgstr "アイテムが正常に登録されました。"
-
-#: weko_workspace/item_register.html:327
-msgid "At least one index should be selected."
-msgstr "インデックスを指定してください。"
-
-#: weko_workflow/api.py:1130 weko_workflow/views.py:219
-msgid "End"
-msgstr "終了"
 
 #: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
 msgid "Publication Date"
@@ -124,6 +87,10 @@ msgstr "公開"
 msgid "Embargo"
 msgstr "エンバーゴ"
 
+#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
+msgid "Restricted"
+msgstr "制限公開"
+
 msgid "Deleted activities cannot be restored."
 msgstr "削除したアクティビティは元に戻せません。"
 
@@ -161,6 +128,30 @@ msgstr "エラー: 選択されたアイテムがありません。チェック�
 #: weko_workspace/item_register.html:148
 msgid "Please enter the DOI."
 msgstr "DOIを入力してください。"
+
+#: weko_workspace/item_register.html:143
+msgid "DOI Input"
+msgstr "DOI入力"
+
+#: weko_workspace/item_register.html:226
+msgid "Metadata"
+msgstr "メタデータ"
+
+#: weko_workspace/item_register.html:303
+msgid "Regist"
+msgstr "登録"
+
+#: weko_workspace/item_register.html:397
+msgid "The item is successfully registered."
+msgstr "アイテムが正常に登録されました。"
+
+#: weko_workspace/item_register.html:327
+msgid "At least one index should be selected."
+msgstr "インデックスを指定してください。"
+
+#: weko_workspace/item_register.html:335
+msgid "Cancel"
+msgstr "取消"
 
 #: weko_workspace/item_register.html:356
 msgid "The Required items is required. Please recheck and input."
