@@ -1127,7 +1127,6 @@ class WekoDeposit(Deposit):
         non_extract = getattr(self, "non_extract", None)
         if non_extract is None:
             non_extract = get_non_extract_files_by_recid(self['recid']) or []
-        current_app.logger.info(f"non_extract: {non_extract}")
 
         if not fmd or not isinstance(fmd, list):
             return reading_targets
@@ -1156,7 +1155,6 @@ class WekoDeposit(Deposit):
                 mimetypes = current_app.config["WEKO_MIMETYPE_WHITELIST_FOR_ES"]
                 content = lst.copy()
                 attachment = {}
-                current_app.logger.info(f"name: {lst['filename']}, mimetype: {file.obj.mimetype}")
 
                 if (
                     file.obj.mimetype in mimetypes
@@ -1164,7 +1162,9 @@ class WekoDeposit(Deposit):
                 ):
                     # Extract content from file
                     try:
-                        current_app.logger.warn(f"extracting content from {lst['filename']}")
+                        current_app.logger.info(
+                            f"extracting content from {lst['filename']}"
+                        )
                         with file.obj.file.storage().open(mode="rb") as fp:
                             data = ""
                             if file.obj.mimetype in current_app.config[
