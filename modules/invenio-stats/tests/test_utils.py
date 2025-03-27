@@ -404,15 +404,21 @@ def test_query_common_reports_helper(app, es):
         assert res=={'date': '2022-10-01-2022-10-10', 'all': {'localhost': {'host': 'name2', 'ip': 'localhost', 'count': 2}}}
 
     _res = {
-        'buckets': [
+        "interval": "year",
+        "key_type": "date",
+        "start_date": None,
+        "end_date": None,
+        "buckets": [
             {
-                'value': 2
+                "key": 1704034800000,
+                "date": "2024-01-01T00:00:00.000+09:00",
+                "value": 56.0
             }
         ]
     }
     with patch('invenio_stats.queries.ESDateHistogramQuery.run', return_value=_res):
         res = QueryCommonReportsHelper.get(event='top_page_access', year=2022, month=-1)
-        assert res=={'date': 'all', 'all': {'count': 2}}
+        assert res=={'date': 'all', 'all': {'2024-01-01T00:00:00.000+09:00':{'count':56.0}}}
 
     _res = {
         'buckets': [

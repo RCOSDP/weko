@@ -25,12 +25,14 @@ from datetime import timedelta, timezone
 import traceback
 from typing import List, Optional
 
-from flask import abort, current_app
+from flask import abort, current_app, request
 from flask_babelex import get_locale, to_user_timezone, to_utc
 from flask_security import current_user
 from invenio_access import Permission, action_factory
 from invenio_accounts.models import User
 from invenio_db import db
+from invenio_deposit.scopes import write_scope
+from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from weko_groups.api import Group, Membership, MembershipState
 from weko_index_tree.utils import check_index_permissions, get_user_roles
 from weko_records.api import ItemTypes
@@ -76,10 +78,21 @@ def page_permission_factory(record, *args, **kwargs):
 def file_permission_factory(record, *args, **kwargs):
     """File permission factory."""
 
+    @require_api_auth()
+    @require_oauth_scopes(write_scope.id)
+    def can_by_oauth(fjson):
+        return check_file_download_permission(record, fjson)
+
     def can(self):
+        is_ok = False
         fjson = kwargs.get('fjson')
-        item_type = kwargs.get('item_type', None)
-        return check_file_download_permission(record, fjson, item_type)
+        if request.headers and \
+                request.headers.get(current_app.config['OAUTH2SERVER_JWT_AUTH_HEADER']):
+            is_ok = can_by_oauth(fjson)
+        else:
+            item_type = kwargs.get('item_type', None)
+            is_ok = check_file_download_permission(record, fjson, item_type)
+        return is_ok
 
     return type('FileDownLoadPermissionChecker', (), {'can': can})()
 

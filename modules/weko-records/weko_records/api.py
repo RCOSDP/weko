@@ -585,17 +585,14 @@ class ItemTypes(RecordBase):
         :param item_type_name: Item Type Name.
         :return: Record list.
         """
-        name = urllib.parse.quote_plus(item_type_name)
-        query_string = "itemtype:{}".format(
-            name)
+        from weko_search_ui.utils import execute_search_with_pagination
         result = []
         try:
             search = RecordsSearch(
                 index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
-            search = search.query(QueryString(query=query_string))
+            search = search.query('term', **{"itemtype.keyword": item_type_name})
             search = search.sort('-publish_date', '-_updated')
-            search_result = search.execute().to_dict()
-            result = search_result.get('hits', {}).get('hits', [])
+            result = execute_search_with_pagination(search, -1)
         except NotFoundError as e:
             current_app.logger.debug("Indexes do not exist yet: ", str(e))
         return result
@@ -974,18 +971,18 @@ class ItemTypes(RecordBase):
         
         table_row_map = data.get('table_row_map')
         json_schema = fix_json_schema(table_row_map.get('schema'))
+        
         json_form = table_row_map.get('form')
         json_schema = update_required_schema_not_exist_in_form(
             json_schema, json_form)
-
+        
         if itemtype_id != 0:
             json_schema, json_form = update_text_and_textarea(
                 itemtype_id, json_schema, json_form)
         
         if 'schemaeditor' in data:
             if 'schema' in data['schemaeditor']:
-                if 'properties' in data['schemaeditor']['schema']:
-                    data['schemaeditor']['schema'] = json_schema
+                data['schemaeditor']['schema'] = json_schema
         
         # item_type_mapping = (
         #             ItemTypeMapping.query.filter(ItemTypeMapping.item_type_id == itemtype_id)
@@ -993,6 +990,12 @@ class ItemTypes(RecordBase):
         #             .first()
         #         )
         # data['table_row_map']['mapping'] = item_type_mapping.mapping if item_type_mapping else {}
+
+        # current_app.logger.error("Update ItemType({})".format(itemtype_id))
+        # current_app.logger.error("Update data({})".format(data))
+        # current_app.logger.error("Update json_schema({})".format(json_schema))
+        
+        # print(data)
 
         record = cls.update(id_=itemtype_id,
                                       name=item_type.item_type_name.name,

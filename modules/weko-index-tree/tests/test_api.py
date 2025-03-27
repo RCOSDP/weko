@@ -595,6 +595,34 @@ def test_update_set_info(i18n_app, db, users, test_indices):
     
 #     def delete_set_info(cls, action, index_id, id_list):
 #     def get_public_indexes_list(cls):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_Indexes_get_public_indexes_list -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_Indexes_get_public_indexes_list(i18n_app, db):
+    def make_index(id, parent, position, index_name, index_name_english,public_state,public_date):
+        return Index(
+            id=id,
+            parent=parent,position=position,
+            index_name=index_name,index_name_english=index_name_english,
+            public_state=public_state,public_date=public_date
+        )
+    
+    with db.session.begin_nested():
+        db.session.add(make_index(1,0,0,'公開','publish',True,None))
+        db.session.add(make_index(11,1,0,'公開_公開','publish',True,None))
+        db.session.add(make_index(12,1,1,'公開_未公開','publish_notpublish',False,None))
+        db.session.add(make_index(13,1,2,'公開_未来公開','publish_feature',True,datetime.strptime("2100/09/21","%Y/%m/%d")))
+        db.session.add(make_index(2,0,1,'非公開','notpublish',False,None))
+        db.session.add(make_index(21,2,0,'非公開_公開','notpublish_publish',True,None))
+        db.session.add(make_index(22,2,1,'非公開_非公開','notpublish_notpublish',False,None))
+        db.session.add(make_index(23,2,2,'非公開_未来公開','notpublish_feature',True,datetime.strptime("2100/09/21","%Y/%m/%d")))
+        db.session.add(make_index(3,0,2,'未来公開','feature',True,datetime.strptime("2100/09/21","%Y/%m/%d")))
+        db.session.add(make_index(31,3,0,'未来公開_公開','feature_publish',True,None))
+        db.session.add(make_index(32,3,1,'未来公開_非公開','feature_notpublish',False,None))
+        db.session.add(make_index(33,3,2,'未来公開_未来公開','feature_feature',True,datetime.strptime("2100/09/21","%Y/%m/%d")))
+    db.session.commit()
+    
+    result = Indexes.get_public_indexes_list()
+    assert result == ["1", "11"]
+    
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_indexes_get_index_tree -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_indexes_get_index_tree(i18n_app, db, redis_connect, users, db_records, test_indices, communities):
     os.environ['INVENIO_WEB_HOST_NAME'] = "test"

@@ -1206,30 +1206,37 @@ def check_authority_action(activity_id='0', action_id=0,
     # If action_roles is not set
     # or action roles does not contain any role of current_user:
     # Gather information
-    # If user is the author of activity
-    if int(cur_user) == activity.activity_login_user and \
-            not contain_login_item_application:
-        return 0
+    if not contain_login_item_application:
+        # If user is the author of activity
+        if int(cur_user) == activity.activity_login_user:
+            return 0
 
-    if current_app.config['WEKO_WORKFLOW_ENABLE_CONTRIBUTOR']:
-        # Check if this activity has contributor equaling to current user
-        im = ItemMetadata.query.filter_by(id=activity.item_id) \
-            .filter(or_(
-            cast(ItemMetadata.json['shared_user_id'], types.INT)== int(cur_user),
-            cast(ItemMetadata.json['weko_shared_id'], types.INT)== int(cur_user))).one_or_none()
-        if im:
-            # There is an ItemMetadata with contributor equaling to current
-            # user, allow to access
-            return 0
-        if int(cur_user) == activity.shared_user_id:
-            return 0
+        if current_app.config['WEKO_WORKFLOW_ENABLE_CONTRIBUTOR']:
+            # Check if this activity has contributor equaling to current user
+            im = ItemMetadata.query.filter_by(id=activity.item_id) \
+                .filter(or_(
+                cast(ItemMetadata.json['shared_user_id'], types.INT)== int(cur_user),
+                cast(ItemMetadata.json['weko_shared_id'], types.INT)== int(cur_user))).one_or_none()
+            if im:
+                # There is an ItemMetadata with contributor equaling to current
+                # user, allow to access
+                return 0
+            if int(cur_user) == activity.shared_user_id:
+                return 0
+
     # Check current user is action handler of activity
     activity_action_obj = work.get_activity_action_comment(
         activity_id, action_id, action_order)
     if (activity_action_obj and activity_action_obj.action_handler
-            and int(activity_action_obj.action_handler) == int(cur_user)
             and contain_login_item_application):
-        return 0
+        # Check current user is action handler of activity
+        if int(activity_action_obj.action_handler) == int(cur_user):
+            return 0
+
+        # Check action is not "approval" and current user is shared user of activity
+        if (int(activity_action_obj.action_handler) != -1
+                and int(activity.shared_user_id) == int(cur_user)):
+            return 0
 
     # Otherwise, user has no permission
     return 1
@@ -1358,7 +1365,7 @@ def next_action(activity_id='0', action_id=0):
         work_activity.end_activity(activity)
         res = ResponseMessageSchema().load({"code":0,"msg":_("success")})
         return jsonify(res.data), 200
-    if 'approval' == action_endpoint:
+    if 'approval' == action_endpoint and post_json.get('temporary_save') == 0:
         update_approval_date(activity_detail)
     item_id = None
     recid = None
@@ -1408,7 +1415,7 @@ def next_action(activity_id='0', action_id=0):
     next_action_order = next_flow_action[
         0].action_order if action_order else None
     # Start to send mail
-    if next_action_endpoint in ['approval' , 'end_action']:
+    if next_action_endpoint in ['approval' , 'end_action'] and post_json.get('temporary_save') == 0:
         current_flow_action = flow.get_flow_action_detail(
             activity_detail.flow_define.flow_id, action_id, action_order)
         if current_flow_action is None:

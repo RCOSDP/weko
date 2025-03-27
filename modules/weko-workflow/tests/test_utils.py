@@ -134,7 +134,9 @@ from weko_workflow.utils import (
     is_terms_of_use_only,
     grant_access_rights_to_all_open_restricted_files,
     delete_lock_activity_cache,
-    delete_user_lock_activity_cache
+    delete_user_lock_activity_cache,
+    check_an_item_is_locked,
+    bulk_check_an_item_is_locked,
 )
 from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
 from weko_workflow.models import Activity
@@ -186,27 +188,38 @@ def test_saving_doi_pidstore(db_records,item_type,mocker):#c
         "identifier_grant_jalc_dc_doi_link":"https://doi.org/3000/0000000001",
         "identifier_grant_ndl_jalc_doi_link":"https://doi.org/4000/0000000001"
     }
+    # jalc doi, tmp save
     mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
     result = saving_doi_pidstore(item_id,pid_without_ver,data,1,True)
     assert result == True
     mock_update.assert_has_calls([mocker.call("1000/0000000001","JaLC")])
     
+    # jalc crossref doi
     mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
     result = saving_doi_pidstore(item_id,pid_without_ver,data,2,False)
     assert result == True
     mock_update.assert_has_calls([mocker.call("2000/0000000001","Crossref")])
     
+    # jalc datacite doi
     with patch("weko_workflow.utils.IdentifierHandle.register_pidstore",return_value=True):
         mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
         result = saving_doi_pidstore(item_id,pid_without_ver,data,3,False)
         assert result == True
         mock_update.assert_has_calls([mocker.call("3000/0000000001","DataCite"),mocker.call("3000/0000000001","DataCite")])
     
+    with patch("weko_workflow.utils.IdentifierHandle.register_pidstore",return_value=False):
+        mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
+        result = saving_doi_pidstore(item_id,pid_without_ver,data,4,False)
+        mock_update.assert_has_calls([mocker.call("4000/0000000001","JaLC")])
+        assert result == True
+
+    # ndl jalc doi, raise exception
     with patch("weko_workflow.utils.IdentifierHandle.register_pidstore",side_effect=Exception):
         mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
         result = saving_doi_pidstore(item_id,pid_without_ver,data,4,False)
         assert result == False
 
+    # other doi
     mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
     result = saving_doi_pidstore(uuid.uuid4(),pid_without_ver,data,"wrong",False)
     assert result == False
@@ -1010,11 +1023,48 @@ def test_get_cache_data(client):
     current_cache.set(key, value)
     result = get_cache_data(key)
     assert result == value
+
+
 # def check_an_item_is_locked(item_id=None):
+# def bulk_check_an_item_is_locked(item_ids=[]):
 #     def check(workers):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_check_an_item_is_locked():
-    pass
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_check_an_item_is_locked -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_check_an_item_is_locked(app):
+    with app.app_context():
+        with patch("weko_workflow.utils.inspect") as mock_inspect:
+            mock_inspect_instance = mock_inspect.return_value
+            # inspect(timeout=_timeout).ping()
+            mock_inspect_instance.ping.return_value = True
+            # inspect(timeout=_timeout).active()
+            mock_inspect_instance.active.return_value = {
+                'worker1': [
+                    {'name': 'weko_search_ui.tasks.import_item', 'args': [{'id': '1'}]},
+                    {'name': 'weko_search_ui.tasks.import_item', 'args': [{'id': '2'}]},
+                ],
+                'worker2': [
+                    {'name': 'weko_search_ui.tasks.import_item', 'args': [{'id': '3'}, {'id': '99'}]},
+                ],
+            }
+            # inspect(timeout=_timeout).reserved()
+            mock_inspect_instance.reserved.return_value = {
+                'worker3': [
+                    {'name': 'weko_search_ui.tasks.import_item', 'args': [{'id': '4'}]},
+                    {'name': 'weko_search_ui.tasks.test_task', 'args': [{'id': '5'}]},
+                ],
+            }
+
+            item_ids = list(range(1,5))
+            result = []
+            for i in item_ids:
+                if check_an_item_is_locked(str(i)):
+                    result.append(str(i))
+
+            assert bulk_check_an_item_is_locked(item_ids) == result == ["1","2","3","4"]
+
+            assert check_an_item_is_locked() == False
+            assert bulk_check_an_item_is_locked() == []
+
+
 # def get_account_info(user_id):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_accoutn_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_accoutn_info(users):

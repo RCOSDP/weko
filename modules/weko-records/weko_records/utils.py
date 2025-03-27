@@ -312,7 +312,15 @@ def copy_field_test(dc, map, jrc, iid=None):
                                         b = None
                                         if idx < len(_lte):
                                             b = _lte[idx]
-                                        ranges.append(convert_range_value(a, b))
+                                        try:
+                                            ranges.append(convert_range_value(a, b))
+                                        except:
+                                            _error_col = val.get("path", {}).get("gte") \
+                                                if val.get("path", {}).get("gte") else val.get("path", {}).get("lte")
+                                            raise ValueError(
+                                                "can not convert to range value. start:{} end:{}. column: {}".format(
+                                                    a, b, _error_col)
+                                            )
                                 if len(ranges) > 0:
                                     value_range = {id: ranges}
                                     jrc.update(value_range)
@@ -331,7 +339,15 @@ def copy_field_test(dc, map, jrc, iid=None):
                                         b = None
                                         if idx < len(_lte):
                                             b = _lte[idx]
-                                        dateRanges.append(convert_date_range_value(a, b))
+                                        try:
+                                            dateRanges.append(convert_date_range_value(a, b))
+                                        except:
+                                            _error_col = val.get("path", {}).get("gte") \
+                                                if val.get("path", {}).get("gte") else val.get("path", {}).get("lte")
+                                            raise ValueError(
+                                                "can not convert to range value. start:{} end:{}. column: {}".format(
+                                                    a, b, _error_col)
+                                            )
                                 if len(dateRanges) > 0:
                                     value_range = {id: dateRanges}
                                     jrc.update(value_range)
@@ -403,20 +419,13 @@ def convert_range_value(start, end=None):
             else:
                 ret = {_start: end, _end: start}
         else:
-            try:
-                a = float(start)
-                b = float(end)
+            a = float(start)
+            b = float(end)
 
-                if a < b:
-                    ret = {_start: start, _end: end}
-                else:
-                    ret = {_start: end, _end: start}
-            except ValueError:
-                current_app.logger.exception(
-                    "can not convert to range value. start:{0} end:{1}".format(
-                        start, end
-                    )
-                )
+            if a < b:
+                ret = {_start: start, _end: end}
+            else:
+                ret = {_start: end, _end: start}
     return ret
 
 
@@ -479,15 +488,18 @@ def makeDateRangeValue(start, end):
     a = None
     b = None
     if p2.match(start):
-        a = time.strptime(start, "%Y-%m-%d")
-        b = time.strptime(end, "%Y-%m-%d")
-
+        _s = start.split('-')
+        _e = end.split('-')
+        a = time.strptime('{:0>4}-{}-{}'.format(_s[0], _s[1], _s[2]), "%Y-%m-%d")
+        b = time.strptime('{:0>4}-{}-{}'.format(_e[0], _e[1], _e[2]), "%Y-%m-%d")
     elif p3.match(start):
-        a = time.strptime(start, "%Y-%m")
-        b = time.strptime(end, "%Y-%m")
+        _s = start.split('-')
+        _e = end.split('-')
+        a = time.strptime('{:0>4}-{}'.format(_s[0], _s[1]), "%Y-%m")
+        b = time.strptime('{:0>4}-{}'.format(_e[0], _e[1]), "%Y-%m")
     elif p4.match(start):
-        a = time.strptime(start, "%Y")
-        b = time.strptime(end, "%Y")
+        a = time.strptime('{:0>4}'.format(start), "%Y")
+        b = time.strptime('{:0>4}'.format(end), "%Y")
 
     if a is not None and b is not None:
         if a < b:
@@ -906,6 +918,11 @@ async def sort_meta_data_by_options(
                     result = get_author_comment(
                         data_result, key, result, is_specify_newline_array
                     )
+                elif "is_biographic_prop" in data_result[key] \
+                        and data_result[key].pop("is_biographic_prop"):
+                    for k, v in data_result[key].items():
+                        if "value" in v:
+                            result.append(v["value"])
                 else:
                     if "lang_id" in data_result[key]:
                         lang_id = (
@@ -1989,7 +2006,7 @@ def selected_value_by_language(
     result = None
     lang_key_list = lang_key_str.split(",")
     val_key_list = val_key_str.split(",")
-    
+
     for val_key in val_key_list:
         val_parent_key = val_key.split(".")[0]
         val_sub_key = val_key.split(".")[-1]
@@ -2044,28 +2061,40 @@ def selected_value_by_language(
                             ):
                                 noreturn = True
                                 break
-                            if len(lg) > 0:
+                            if lg:
                                 value = check_info_in_metadata(
                                     lang_key, val_key, lg, _item_metadata
                                 )
                                 if value is not None:
                                     result = value
+                                    break
                         if noreturn:
                             result = None
                     # 1st value when registering without language
                     if not result and len(value_array) > 0:
                         result = check_info_in_metadata(lang_key, val_key, None, _item_metadata)
-            if not result:
+            if result:
                 break
-        if not result:
+        if result:
+            break
+
+    if not result:
+        for val_key in val_key_list:
+            val_parent_key = val_key.split(".")[0]
+            val_sub_key = val_key.split(".")[-1]
+            prop_hidden = meta_option.get(val_parent_key, {}).get('option', {}).get('hidden', False)
+            for h in hide_list:
+                if h.startswith(val_parent_key) and h.endswith(val_sub_key):
+                    prop_hidden = True
+
             if (
                 (value_array is not None and len(value_array) > 0)
                 and isinstance(lang_selected, str)
                 and not prop_hidden
             ):
                 result = check_info_in_metadata('', val_key, None, _item_metadata)
-        if result:
-            break
+            if result:
+                break
     return result
 
 
@@ -2170,10 +2199,10 @@ def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
                     data_result = {**data_result, **{save_key: {}}}
                 if (
                     save_key in data_result.keys()
-                    and (j["title"].strip() in "Language")
-                    or (j["title_ja"].strip() in "Language")
-                    or (j["title_ja"].strip() in "言語")
-                    or (j["title"].strip() in "言語")
+                    and (j["title"].strip() == "Language")
+                    or (j["title_ja"].strip() == "Language")
+                    or (j["title_ja"].strip() == "言語")
+                    or (j["title"].strip() == "言語")
                 ):
                     data_result[save_key] = {
                         **data_result[save_key],
@@ -2522,7 +2551,12 @@ def add_biographic(
     )
     stt_key.append(bibliographic_key)
     is_specify_newline_array.append({s["key"]: True})
-    data_result.update({bibliographic_key: {s["key"]: {"value": [bibliographic]}}})
+    data_result.update({
+        bibliographic_key: {
+            s["key"]: {"value": bibliographic},
+            "is_biographic_prop": True
+        }
+    })
 
     return stt_key, data_result, is_specify_newline_array
 
