@@ -1,4 +1,5 @@
 import pytest
+import json
 from mock import patch
 from flask import current_app,url_for,make_response
 from invenio_accounts.testutils import login_user_via_session as login
@@ -41,16 +42,6 @@ class TestShibSettingView:
             mock_render = mocker.patch("weko_accounts.admin.ShibSettingView.render",return_value=make_response())
             current_app.config["WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED"] = True
 
-            # new_shib_flg = 1
-            if object_session(user) is None:
-                user = db.session.merge(user)
-            res = client.post(url,data=dict(
-                submit="shib_form",
-                shibbolethRadios="1"
-            ))
-            assert admin_settings[1].settings["shib_flg"] is True
-            assert res.status_code==200
-
             # モックに渡す変数を設定
             role_list = current_app.config['WEKO_ACCOUNTS_ROLE_LIST']
             attr_list = current_app.config['WEKO_ACCOUNTS_ATTRIBUTE_LIST']
@@ -59,6 +50,24 @@ class TestShibSettingView:
             set_language = "en"
             shib_flg = "1"
             attributes = admin_settings[3].settings
+
+            data = {
+                "submit": "shib_form",
+                "shibbolethRadios": "1",
+                "block-eppn-option-list": json.dumps(block_user_list)
+            }
+
+            for i, (_, value) in enumerate(roles.items()):
+                data[f"role-lists{i}"] = value
+
+            for i, (_, value) in enumerate(attributes.items()):
+                data[f"attr-lists{i}"] = value
+
+            # new_shib_flg = 1
+            res = client.post(url, data=data)
+
+            assert admin_settings[1].settings["shib_flg"] is True
+            assert res.status_code==200
 
             mock_render.assert_called_with(
                 sibuser_html,
@@ -72,11 +81,11 @@ class TestShibSettingView:
             )
             current_app.config["WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED"] = False
 
+            data["shibbolethRadios"] = "0"
+
             # new_shib_flg = 0
-            res = client.post(url,data=dict(
-                submit="shib_form",
-                shibbolethRadios="0"
-            ))
+            res = client.post(url, data=data)
+
             assert res.status_code == 200
             assert admin_settings[1].settings["shib_flg"] is False
             shib_flg = "0"
@@ -87,6 +96,83 @@ class TestShibSettingView:
                 role_list=role_list,
                 attr_list=attr_list,
                 block_user_list=block_user_list,
+                **roles,
+                **attributes
+            )
+
+            # デフォルトロールを変更
+            mock_render = mocker.patch("weko_accounts.admin.ShibSettingView.render",return_value=make_response())
+            roles = {
+                "gakunin_role": "Repository Administrator",
+                "orthros_outside_role": "None",
+                "extra_role": "Contributor"}  
+            
+            for i, (_, value) in enumerate(roles.items()):
+                data[f"role-lists{i}"] = value
+
+            res = client.post(url, data=data)
+
+            assert res.status_code == 200
+            assert admin_settings[2].settings["gakunin_role"] == "Repository Administrator"
+            assert admin_settings[2].settings["orthros_outside_role"] == "None"
+            assert admin_settings[2].settings["extra_role"] == "Contributor"
+            mock_render.assert_called_with(
+                sibuser_html,
+                shib_flg=shib_flg,
+                set_language=set_language,
+                role_list=role_list,
+                attr_list=attr_list,
+                block_user_list=block_user_list,
+                **roles,
+                **attributes
+            )
+
+            # 属性を変更
+            mock_render = mocker.patch("weko_accounts.admin.ShibSettingView.render",return_value=make_response())
+            attributes = {
+                "shib_eppn": "eduPersonAffiliation",
+                "shib_role_authority_name": "eppn",
+                "shib_mail": "DisplayName",
+                "shib_user_name": "sn"}  
+            
+            for i, (_, value) in enumerate(attributes.items()):
+                data[f"attr-lists{i}"] = value
+
+            res = client.post(url, data=data)
+
+            assert res.status_code == 200
+            assert admin_settings[3].settings["shib_eppn"] == "eduPersonAffiliation"
+            assert admin_settings[3].settings["shib_role_authority_name"] == "eppn"
+            assert admin_settings[3].settings["shib_mail"] == "DisplayName"
+            assert admin_settings[3].settings["shib_user_name"] == "sn"
+            mock_render.assert_called_with(
+                sibuser_html,
+                shib_flg=shib_flg,
+                set_language=set_language,
+                role_list=role_list,
+                attr_list=attr_list,
+                block_user_list=block_user_list,
+                **roles,
+                **attributes
+            )
+
+            # ブロックユーザーを変更
+            mock_render = mocker.patch("weko_accounts.admin.ShibSettingView.render",return_value=make_response())
+            block_user_list = ['test1','test2','test3'] 
+            data["block-eppn-option-list"] = json.dumps(block_user_list)
+
+            res = client.post(url, data=data)
+
+            assert res.status_code == 200
+            assert "test1" in admin_settings[0].settings["blocked_ePPNs"]
+
+            mock_render.assert_called_with(
+                sibuser_html,
+                shib_flg=shib_flg,
+                set_language=set_language,
+                role_list=role_list,
+                attr_list=attr_list,
+                block_user_list=str(block_user_list),
                 **roles,
                 **attributes
             )
@@ -110,7 +196,6 @@ class TestShibSettingView:
                 **roles,
                 **attributes
             )
-
 
     @pytest.fixture
     def admin_settings(self, db):
