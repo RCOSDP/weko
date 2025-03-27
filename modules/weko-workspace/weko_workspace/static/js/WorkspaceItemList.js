@@ -79,58 +79,59 @@ document.addEventListener('DOMContentLoaded', function () {
   let currentPage = 1;
   let itemsPerPage = parseInt(itemsPerPageSelect.value) || 20;
   let isGroupedByYear = false;
-  let items = [...workspaceItemList]; // 一覧データのコピー
-  // 選択状態を保持するためのオブジェクト
-  let checkedItems = new Set();
-  // すべてチェックの処理
-  function handleCheckAll() {
-    const itemCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
-    itemCheckboxes.forEach(checkbox => {
-      checkbox.checked = checkAll.checked;
-      const recid = checkbox.closest('tr')?.querySelector('td:nth-child(2) strong a')?.href.split('/').pop();
-      if (recid) {
-        if (checkAll.checked) {
-          checkedItems.add(recid);
-        } else {
-          checkedItems.delete(recid);
-        }
-      }
-    });
-  }
+  let items = workspaceItemList.slice(0); // 一覧データのコピー
 
-  checkAll.addEventListener('change', handleCheckAll);
+  // // 選択状態を保持するためのオブジェクト
+  // let checkedItems = new Set();
+  // // すべてチェックの処理
+  // function handleCheckAll() {
+  //   const itemCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+  //   itemCheckboxes.forEach(checkbox => {
+  //     checkbox.checked = checkAll.checked;
+  //     const recid = checkbox.closest('tr')?.querySelector('td:nth-child(2) strong a')?.href.split('/').pop();
+  //     if (recid) {
+  //       if (checkAll.checked) {
+  //         checkedItems.add(recid);
+  //       } else {
+  //         checkedItems.delete(recid);
+  //       }
+  //     }
+  //   });
+  // }
 
-  // 個別チェックボックスの処理
-  function handleItemCheckboxChange() {
-    const recid = this.closest('tr')?.querySelector('td:nth-child(2) strong a')?.href.split('/').pop();
-    if (recid) {
-      if (this.checked) {
-        checkedItems.add(recid);
-      } else {
-        checkedItems.delete(recid);
-      }
-    }
-    updateCheckAllStatus();
-  }
+  // checkAll.addEventListener('change', handleCheckAll);
 
-  // すべてチェックボックスの状態を更新
-  function updateCheckAllStatus() {
-    const itemCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
-    checkAll.checked = itemCheckboxes.length > 0 && [...itemCheckboxes].every(cb => cb.checked);
-  }
+  // // 個別チェックボックスの処理
+  // function handleItemCheckboxChange() {
+  //   const recid = this.closest('tr')?.querySelector('td:nth-child(2) strong a')?.href.split('/').pop();
+  //   if (recid) {
+  //     if (this.checked) {
+  //       checkedItems.add(recid);
+  //     } else {
+  //       checkedItems.delete(recid);
+  //     }
+  //   }
+  //   updateCheckAllStatus();
+  // }
 
-  // ページ変更時にチェックボックスの状態を復元
-  function restoreCheckedItems() {
-    const itemCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
-    itemCheckboxes.forEach(checkbox => {
-      const recid = checkbox.closest('tr')?.querySelector('td:nth-child(2) strong a')?.href.split('/').pop();
-      if (recid && checkedItems.has(recid)) {
-        checkbox.checked = true;
-      }
-      checkbox.addEventListener('change', handleItemCheckboxChange);
-    });
-    updateCheckAllStatus();
-  }
+  // // すべてチェックボックスの状態を更新
+  // function updateCheckAllStatus() {
+  //   const itemCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+  //   checkAll.checked = itemCheckboxes.length > 0 && [...itemCheckboxes].every(cb => cb.checked);
+  // }
+
+  // // ページ変更時にチェックボックスの状態を復元
+  // function restoreCheckedItems() {
+  //   const itemCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+  //   itemCheckboxes.forEach(checkbox => {
+  //     const recid = checkbox.closest('tr')?.querySelector('td:nth-child(2) strong a')?.href.split('/').pop();
+  //     if (recid && checkedItems.has(recid)) {
+  //       checkbox.checked = true;
+  //     }
+  //     checkbox.addEventListener('change', handleItemCheckboxChange);
+  //   });
+  //   updateCheckAllStatus();
+  // }
   // SearchBar コンポーネント
   const SearchBar = ({ items, onFilter }) => {
     const [query, setQuery] = React.useState('');
@@ -142,24 +143,25 @@ document.addEventListener('DOMContentLoaded', function () {
     const fuzzyMatch = (query, item) => {
       const lowerQuery = query.toLowerCase();
       return (
-        (item.title?.toLowerCase() || '').includes(lowerQuery) ||
-        (item.magazineName?.toLowerCase() || '').includes(lowerQuery) ||
-        (item.conferenceName?.toLowerCase() || '').includes(lowerQuery) ||
-        (item.funderName?.toLowerCase() || '').includes(lowerQuery) ||
-        (item.awardTitle?.toLowerCase() || '').includes(lowerQuery) ||
-        (item.doi?.toLowerCase() || '').includes(lowerQuery)
+        ((item.title ? item.title.toLowerCase() : '') || '').includes(lowerQuery) ||
+        ((item.magazineName ? item.magazineName.toLowerCase() : '') || '').includes(lowerQuery) ||
+        ((item.conferenceName ? item.conferenceName.toLowerCase() : '') || '').includes(lowerQuery) ||
+        ((item.funderName ? item.funderName.toLowerCase() : '') || '').includes(lowerQuery) ||
+        ((item.awardTitle ? item.awardTitle.toLowerCase() : '') || '').includes(lowerQuery) ||
+        ((item.doi ? item.doi.toLowerCase() : '') || '').includes(lowerQuery)
       );
     };
+
 
     // マッチするフィールドを判断する補助関数
     const getMatchedField = (query, item) => {
       const lowerQuery = query.toLowerCase();
-      if ((item.title?.toLowerCase() || '').includes(lowerQuery)) return 'title';
-      if ((item.magazineName?.toLowerCase() || '').includes(lowerQuery)) return 'magazineName';
-      if ((item.conferenceName?.toLowerCase() || '').includes(lowerQuery)) return 'conferenceName';
-      if ((item.funderName?.toLowerCase() || '').includes(lowerQuery)) return 'funderName';
-      if ((item.awardTitle?.toLowerCase() || '').includes(lowerQuery)) return 'awardTitle';
-      if ((item.doi?.toLowerCase() || '').includes(lowerQuery)) return 'doi';
+      if (((item.title ? item.title.toLowerCase() : '') || '').includes(lowerQuery)) return 'title';
+      if (((item.magazineName ? item.magazineName.toLowerCase() : '') || '').includes(lowerQuery)) return 'magazineName';
+      if (((item.conferenceName ? item.conferenceName.toLowerCase() : '') || '').includes(lowerQuery)) return 'conferenceName';
+      if (((item.funderName ? item.funderName.toLowerCase() : '') || '').includes(lowerQuery)) return 'funderName';
+      if (((item.awardTitle ? item.awardTitle.toLowerCase() : '') || '').includes(lowerQuery)) return 'awardTitle';
+      if (((item.doi ? item.doi.toLowerCase() : '') || '').includes(lowerQuery)) return 'doi';
       return 'title'; // デフォルトで title に戻る
     };
 
@@ -265,45 +267,50 @@ document.addEventListener('DOMContentLoaded', function () {
   };
 
   // フィルタコンポーネント
-  const FilterItem = ({ filterKey, filter, selectedOptions, onSelectionChange }) => {
-    const handleCheckboxChange = (option) => {
-      let newSelection;
+  function FilterItem(props) {
+    var filterKey = props.filterKey;
+    var filter = props.filter;
+    var selectedOptions = props.selectedOptions;
+    var onSelectionChange = props.onSelectionChange;
+  
+    function handleCheckboxChange(option) {
+      var newSelection;
       if (singleSelectFilters.includes(filterKey)) {
         newSelection = selectedOptions.includes(option) ? [] : [option];
       } else {
         newSelection = selectedOptions.includes(option)
-          ? selectedOptions.filter((item) => item !== option)
-          : [...selectedOptions, option];
+          ? selectedOptions.filter(function(item) { return item !== option; })
+          : selectedOptions.slice(0).concat([option]);
       }
       onSelectionChange(filterKey, newSelection);
-    };
-
+    }
+  
     if (filter.options.length === 0 && (filterKey === 'funder_name' || filterKey === 'award_title')) {
       return null;
     }
-
-    const checkboxes = filter.options.map((option) =>
-      React.createElement(
+  
+    var checkboxes = filter.options.map(function(option) {
+      return React.createElement(
         'label',
         { key: option },
         React.createElement('input', {
           type: 'checkbox',
           checked: selectedOptions.includes(option),
-          onChange: () => handleCheckboxChange(option),
+          onChange: function() { handleCheckboxChange(option); }
         }),
         option
-      )
-    );
-
-    const isExcludedFilter = filterKey === 'funder_name' || filterKey === 'award_title';
-    const note = isExcludedFilter
+      );
+    });
+  
+    var isExcludedFilter = filterKey === 'funder_name' || filterKey === 'award_title';
+    var note = isExcludedFilter
       ? React.createElement(
           'small',
           { style: { color: '#888', fontSize: '12px', display: 'block', marginTop: '5px' } },
           remindMsg
         )
       : null;
-
+  
     return React.createElement(
       'tr',
       null,
@@ -315,11 +322,12 @@ document.addEventListener('DOMContentLoaded', function () {
         note
       )
     );
-  };
+  }
+
 
   const FilterTable = ({ filters }) => {
     const [selections, setSelections] = React.useState(
-      Object.fromEntries(filterOrder.map((key) => [key, filters[key]?.default || []]))
+      Object.fromEntries(filterOrder.map((key) => [key, (filters[key] ? filters[key].default : undefined) || []]))
     );
 
     const selectionsRef = React.useRef(selections);
@@ -328,10 +336,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }, [selections]);
 
     const handleSelectionChange = (filterKey, newSelection) => {
-      setSelections((prev) => ({
-        ...prev,
-        [filterKey]: newSelection,
-      }));
+      setSelections(function(prev) {
+        return Object.assign({}, prev, { [filterKey]: newSelection });
+      });
     };
 
     const clearSelections = () => {
@@ -363,38 +370,52 @@ document.addEventListener('DOMContentLoaded', function () {
       filterContent.style.display = 'none';
     };
 
-    const refreshPage = async (url, method, body = null) => {
-      try {
-        const response = await fetch(url, {
-          method,
-          headers: { 'Content-Type': 'application/json' },
-          ...(body && { body: JSON.stringify(body) }),
+    function refreshPage(url, method, body) {
+      body = typeof body !== 'undefined' ? body : null;
+      return fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: body ? JSON.stringify(body) : undefined
+      })
+        .then(function(response) {
+          if (!response.ok) {
+            throw new Error('Failed to call the API.');
+          }
+          return response.text();
+        })
+        .then(function(html) {
+          document.open();
+          document.write(html);
+          document.close();
+        })
+        .catch(function(error) {
+          console.error('ページ更新エラー:', error);
+          throw error;
         });
-        if (!response.ok) throw new Error('Failed to call the API.');
-        const html = await response.text();
-        document.open();
-        document.write(html);
-        document.close();
-      } catch (error) {
-        console.error('ページ更新エラー:', error);
-        throw error;
-      }
-    };
+    }
 
-    const fetchJsonResponse = async (url, method, body = null) => {
-      try {
-        const response = await fetch(url, {
-          method,
-          headers: { 'Content-Type': 'application/json' },
-          ...(body && { body: JSON.stringify(body) }),
+    function fetchJsonResponse(url, method, body) {
+      body = typeof body !== 'undefined' ? body : null;
+    
+      return fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: body ? JSON.stringify(body) : undefined
+      })
+        .then(function(response) {
+          if (!response.ok) {
+            throw new Error('Failed to call the API.');
+          }
+          return response.json();
+        })
+        .then(function(data) {
+          return data;
+        })
+        .catch(function(error) {
+          console.error('JSON取得エラー:', error);
+          throw error;
         });
-        if (!response.ok) throw new Error('Failed to call the API.');
-        return await response.json();
-      } catch (error) {
-        console.error('JSON取得エラー:', error);
-        throw error;
-      }
-    };
+    }
 
     React.useEffect(() => {
       const handleClear = (e) => {
@@ -613,7 +634,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     mountButtons();
     bindRelatedButtons();
-    restoreCheckedItems(); //  チェック状態復元を追加
+    // restoreCheckedItems(); //  チェック状態復元を追加
   }
 
   // 通常のテーブル表示
@@ -636,7 +657,7 @@ document.addEventListener('DOMContentLoaded', function () {
     itemListContainer.appendChild(table);
     mountButtons();
     bindRelatedButtons();
-    restoreCheckedItems(); //  チェック状態復元を追加
+    // restoreCheckedItems(); //  チェック状態復元を追加
   }
 
   // 単一アイテムのHTML生成
@@ -749,12 +770,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // 表示の更新
   function updateDisplay() {
-    const sortedItems = sortItems([...items], sortItemSelect.value, sortOrderSelect.value);
+    var sortedItems = sortItems(items.slice(0), sortItemSelect.value, sortOrderSelect.value);
     if (isGroupedByYear) {
       renderGroupedByYear(sortedItems);
-      const groupedItems = {};
-      sortedItems.forEach((item) => {
-        const year = new Date(item.publicationDate).getFullYear();
+      var groupedItems = {};
+      sortedItems.forEach(function(item) {
+        var year = new Date(item.publicationDate).getFullYear();
         if (!groupedItems[year]) groupedItems[year] = [];
         groupedItems[year].push(item);
       });
@@ -814,23 +835,23 @@ document.addEventListener('DOMContentLoaded', function () {
     ReactDOM.render(
       React.createElement(SearchBar, {
         items: workspaceItemList,
-        onFilter: (query) => {
+        onFilter: function(query) {
           items = query
-            ? workspaceItemList.filter(item => {
-                const lowerQuery = query.toLowerCase();
+            ? workspaceItemList.filter(function(item) {
+                var lowerQuery = query.toLowerCase();
                 return (
-                  (item.title?.toLowerCase() || '').includes(lowerQuery) ||
-                  (item.magazineName?.toLowerCase() || '').includes(lowerQuery) ||
-                  (item.conferenceName?.toLowerCase() || '').includes(lowerQuery) ||
-                  (item.funderName?.toLowerCase() || '').includes(lowerQuery) ||
-                  (item.awardTitle?.toLowerCase() || '').includes(lowerQuery) ||
-                  (item.doi?.toLowerCase() || '').includes(lowerQuery)
+                  ((item.title ? item.title.toLowerCase() : '') || '').includes(lowerQuery) ||
+                  ((item.magazineName ? item.magazineName.toLowerCase() : '') || '').includes(lowerQuery) ||
+                  ((item.conferenceName ? item.conferenceName.toLowerCase() : '') || '').includes(lowerQuery) ||
+                  ((item.funderName ? item.funderName.toLowerCase() : '') || '').includes(lowerQuery) ||
+                  ((item.awardTitle ? item.awardTitle.toLowerCase() : '') || '').includes(lowerQuery) ||
+                  ((item.doi ? item.doi.toLowerCase() : '') || '').includes(lowerQuery)
                 );
               })
-            : [...workspaceItemList];
+            : workspaceItemList.slice(0);
           currentPage = 1;
           updateDisplay();
-        },
+        }
       }),
       searchContainer
     );
