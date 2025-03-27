@@ -157,3 +157,11 @@ msgstr "キャンセル"
 
 msgid "Error: There is no Selected items. Please check the item you want to export"
 msgstr "エラー: 選択されたアイテムがありません。チェックボックスを選択してください。"
+
+#: weko_workspace/item_register.html:148
+msgid "Please enter the DOI."
+msgstr "DOIを入力してください。"
+
+#: weko_workspace/item_register.html:356
+msgid "The Required items is required. Please recheck and input."
+msgstr "必須項目をご確認の上、再度入力してください。"
