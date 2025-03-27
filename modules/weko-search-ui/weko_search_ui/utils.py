@@ -1801,7 +1801,6 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
 
     # to exclude from file text extraction
     deposit.non_extract = item.get("non_extract")
-
     deposit.commit()
 
     feedback_mail_list = item["metadata"].get("feedback_mail_list")
@@ -1858,6 +1857,7 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
                 _draft_record = WekoDeposit.get_record(_draft_pid.object_uuid)
                 _draft_record["path"] = new_data.get("path")
                 _draft_deposit = WekoDeposit(_draft_record, _draft_record.model)
+                _draft_deposit.non_extract = item.get("non_extract")
                 _draft_deposit.merge_data_to_record_without_version(
                     pid, keep_version=True, is_import=True
                 )

@@ -1152,7 +1152,10 @@ class WekoDeposit(Deposit):
                                     'WEKO_MIMETYPE_WHITELIST_FOR_ES']
                                 content = lst.copy()
                                 attachment = {}
-                                if file.obj.mimetype in mimetypes:
+                                if (
+                                    file.obj.mimetype in mimetypes
+                                    and file.obj.key not in non_extract
+                                ):
                                     try:
                                         with file.obj.file.storage().open(mode='rb') as fp:
                                             data = ""
