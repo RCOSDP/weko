@@ -79,7 +79,19 @@ def check_import_items_task(file_path, is_change_identifier: bool, host_url,
 @shared_task
 def check_rocrate_import_items_task(file_path, is_change_identifier: bool,
                                 host_url, packaging, mapping_id, lang="en"):
-    """Check RO-Crate import items."""
+    """Check RO-Crate import items.
+    Check the contents of an RO-Crate file and processes its metadata.
+
+    Args:
+        file_path (str): File path.
+        is_change_identifier (bool): Change identifier or not.
+        host_url (str): Host URL.
+        packaging (str): Packaging.
+        mapping_id (int): Mapping ID.
+        lang (str): Language code(default is "en").
+    Returns:
+        dict: Check Result.
+    """
     result = {"start_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
     with current_app.test_request_context(
         host_url, headers=[("Accept-Language", lang)]

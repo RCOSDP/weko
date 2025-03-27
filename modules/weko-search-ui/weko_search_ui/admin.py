@@ -739,7 +739,6 @@ class ItemRocrateImportView(BaseView):
     def index(self):
         """Renders an item rocrate import view.
 
-        :param
         :return: The rendered template.
         """
         workflow = WorkFlow()
@@ -757,7 +756,10 @@ class ItemRocrateImportView(BaseView):
 
     @expose("/check", methods=["POST"])
     def check(self) -> jsonify:
-        """Validate item import."""
+        """Validate item import.
+
+        :return: The result of the validation.
+        """
 
         validate_csrf_header(request)
 
@@ -808,7 +810,10 @@ class ItemRocrateImportView(BaseView):
 
     @expose("/get_check_status", methods=["POST"])
     def get_check_status(self) -> jsonify:
-        """Validate item import."""
+        """Validate item import.
+
+        :return: check status.
+        """
         data = request.get_json()
         print(f"data812: {data}")
         result = {}
@@ -827,7 +832,10 @@ class ItemRocrateImportView(BaseView):
 
     @expose("/download_check", methods=["POST"])
     def download_check(self):
-        """Download report check result."""
+        """Download report check result.
+
+        :return: The response of the download.
+        """
         data = request.get_json()
         now = str(datetime.date(datetime.now()))
         file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
@@ -851,7 +859,10 @@ class ItemRocrateImportView(BaseView):
 
     @expose("/import", methods=["POST"])
     def import_items(self) -> jsonify:
-        """Import item into System."""
+        """Import item into System.
+
+        :return: The response of the import.
+        """
         data = request.get_json() or {}
         data_path = data.get("data_path")
         user_id = current_user.get_id() if current_user else -1
@@ -901,7 +912,10 @@ class ItemRocrateImportView(BaseView):
 
     @expose("/check_status", methods=["POST"])
     def get_status(self):
-        """Get status of import process."""
+        """Get status of import process.
+
+        :return: check status.
+        """
         data = request.get_json()
         result = []
         if data and data.get("tasks"):
@@ -946,7 +960,10 @@ class ItemRocrateImportView(BaseView):
 
     @expose("/export_import", methods=["POST"])
     def download_import(self):
-        """Download import result."""
+        """Download import result.
+
+        :return: The response of the download.
+        """
         data = request.get_json()
         now = str(datetime.date(datetime.now()))
 
@@ -968,13 +985,19 @@ class ItemRocrateImportView(BaseView):
 
     @expose("/get_disclaimer_text", methods=["GET"])
     def get_disclaimer_text(self):
-        """Get disclaimer text."""
+        """Get disclaimer text.
+
+        :return: The disclaimer text.
+        """
         data = get_change_identifier_mode_content()
         return jsonify(code=1, data=data)
 
     @expose("/export_template", methods=["POST"])
     def export_template(self):
-        """Download item type template."""
+        """Download item type template.
+
+        :return: The response of the download.
+        """
         file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
         file_name = None
         output_file = None
@@ -1127,6 +1150,10 @@ class ItemRocrateImportView(BaseView):
 
     @expose("/check_import_is_available", methods=["GET"])
     def check_import_available(self):
+        """Check import is available.
+
+        :return: check result.
+        """
         check = is_import_running()
         if check:
             return jsonify(

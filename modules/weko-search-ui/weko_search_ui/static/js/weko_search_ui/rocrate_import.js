@@ -178,7 +178,7 @@ class MainLayout extends React.Component {
     closeError();
     this.setState({ isChecking: true });
 
-    var csrf_token=$('#csrf_token').val();
+    const csrf_token=$('#csrf_token').val();
     $.ajaxSetup({
       beforeSend: function(xhr, settings) {
         if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain){
