@@ -75,6 +75,7 @@ from weko_records.api import FeedbackMailList, RequestMailList, ItemLink
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
+from weko_records_ui.views import soft_delete
 from weko_search_ui.utils import check_tsv_import_items, import_items_to_system
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
@@ -83,7 +84,8 @@ from weko_user_profiles.config import \
 from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
-    IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
+    IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB, \
+    WEKO_WORKFLOW_DELETE_FLOW_TYPE
 from .errors import ActivityBaseRESTError, ActivityNotFoundRESTError, \
     DeleteActivityFailedRESTError, InvalidInputRESTError, \
     RegisteredActivityNotFoundRESTError
@@ -1307,6 +1309,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
         current_app.logger.error("next_action: can not get activity_detail")
         res = ResponseMessageSchema().load({"code":-1, "msg":"can not get activity detail"})
         return jsonify(res.data), 500
+    for_delete = activity_detail.flow_define.flow_type == WEKO_WORKFLOW_DELETE_FLOW_TYPE
     action_order = activity_detail.action_order
 
     try:
@@ -1706,19 +1709,23 @@ def next_action(activity_id='0', action_id=0, json_data=None):
             action_order=next_action_order
         )
         work_activity.end_activity(activity)
-        # Call signal to push item data to ES.
-        try:
-            if '.' not in current_pid.pid_value and has_request_context():
-                user_id = activity_detail.activity_login_user if \
-                    activity and activity_detail.activity_login_user else -1
-                item_created.send(
-                    current_app._get_current_object(),
-                    user_id=user_id,
-                    item_id=current_pid,
-                    item_title=activity_detail.title
-                )
-        except BaseException:
-            abort(500, 'MAPPING_ERROR')
+        if for_delete:
+            delete_item_id = current_pid.pid_value.split('.')[0]
+            soft_delete(delete_item_id)
+        else:
+            # Call signal to push item data to ES.
+            try:
+                if '.' not in current_pid.pid_value and has_request_context():
+                    user_id = activity_detail.activity_login_user if \
+                        activity and activity_detail.activity_login_user else -1
+                    item_created.send(
+                        current_app._get_current_object(),
+                        user_id=user_id,
+                        item_id=current_pid,
+                        item_title=activity_detail.title
+                    )
+            except BaseException:
+                abort(500, 'MAPPING_ERROR')
     else:
         flag = work_activity.upt_activity_action(
             activity_id=activity_id, action_id=next_action_id,

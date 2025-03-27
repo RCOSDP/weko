@@ -44,6 +44,8 @@ from .utils import (
     check_import_file_format,
     is_valid_file_hash,
     check_import_items,
+    delete_items_with_activity,
+    get_register_format,
     update_item_ids,
     get_shared_id_from_on_behalf_of
 )
@@ -311,16 +313,19 @@ def post_service_document():
     }
 
     # Define a nested function to process a single item
-    def process_item(item, request_info):
+    def process_item(item, data_path, request_info):
         """Process a single item for import.
 
         Args:
             item (dict): The item to process.
+            data_path (str): The path to the data directory.
+            register_type (str): The registration type (Direct or Workflow).
             request_info (dict): Information about the request.
 
         Returns:
             tuple: A tuple containing the response and the record ID.
         """
+        item["root_path"] = os.path.join(data_path, "data")
         try:
             if register_type == "Direct":
                 import_result = import_items_to_system(
@@ -361,9 +366,10 @@ def post_service_document():
     recid = None
     # Process and register items
     for item in check_result["list_record"]:
-        item["root_path"] = os.path.join(data_path, "data")
         try:
-            activity_id, recid, error = process_item(item, request_info)
+            activity_id, recid, error = process_item(
+                item, data_path, request_info
+            )
             if error:
                 warns.append((activity_id, recid))
             if file_format == "JSON":
@@ -410,6 +416,161 @@ def post_service_document():
             response = jsonify(_get_status_document(recid))
         elif register_type == "Workflow":
             response = jsonify(_get_status_workflow_document(activity_id,recid))
+
+    return response
+
+@blueprint.route("/deposit/<recid>", methods=["PUT"])
+@oauth2.require_oauth()
+@limiter.limit("")
+@require_oauth_scopes(write_scope.id)
+@roles_required(WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE)
+@check_on_behalf_of()
+@check_package_contents()
+def put_object(recid):
+    """
+    """
+
+    """
+    Check content-disposition
+        Request format:
+            Content-Disposition	attachment; filename=[filename]
+    """
+    # Get status document
+    _ = _get_status_document(recid)
+
+    content_disposition, content_disposition_options = parse_options_header(
+        request.headers.get("Content-Disposition") or ""
+    )
+
+    filename = content_disposition_options.get("filename")
+    if (content_disposition != "attachment"
+            or filename is None):
+        current_app.logger.error("Cannot get filename by Content-Disposition.")
+        raise WekoSwordserverException(
+            "Cannot get filename by Content-Disposition.",
+            ErrorType.BadRequest
+        )
+
+    # Check import item
+    file = None
+    for _, value in request.files.items():
+        if value.filename == filename:
+            file = value
+
+    if file is None:
+        current_app.logger.error(f"Not found {filename} in request body.")
+        raise WekoSwordserverException(
+            f"Not found {filename} in request body.", ErrorType.BadRequest
+        )
+
+    # check packaging, "SimpleZip" or "SWORDBagIt"
+    packaging = request.headers.get("Packaging")
+    file_format = check_import_file_format(file, packaging)
+
+    if file_format == "JSON":
+        digest = request.headers.get("Digest")
+        if current_app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"]:
+            if (
+                digest is None
+                or not digest.startswith("SHA-256=")
+                or not is_valid_file_hash(digest.split("SHA-256=")[-1], file)
+            ):
+                current_app.logger.error(
+                    "Request body and digest verification failed."
+                )
+                raise WekoSwordserverException(
+                    "Request body and digest verification failed.",
+                    ErrorType.DigestMismatch
+                )
+
+        client_id = request.oauth.client.client_id
+        on_behalf_of = request.headers.get("On-Behalf-Of")
+        shared_id = get_shared_id_from_on_behalf_of(on_behalf_of)
+        check_result = check_import_items(
+            file, file_format, packaging=packaging,
+            shared_id=shared_id, client_id=client_id
+        )
+
+    else:
+        check_result = check_import_items(file, file_format, False)
+    data_path = check_result.get("data_path","")
+    expire = datetime.now() + timedelta(days=1)
+    TempDirInfo().set(
+        data_path,
+        {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")}
+    )
+    item = (
+        check_result.get("list_record")[0]
+            if "list_record" in check_result else None
+    )
+    register_type = check_result.get("register_type")
+    # Determine registration type
+    if register_type is None:
+        if os.path.exists(data_path):
+            shutil.rmtree(data_path)
+            TempDirInfo().delete(data_path)
+        raise WekoSwordserverException(
+            "Invalid register type in admin settings", ErrorType.ServerError
+        )
+
+    # APIのURLのid優先
+    item['id'] = recid
+
+    # itemのstatusをpublishedに変更
+    item['status'] = 'published'
+    item["root_path"] = os.path.join(data_path, "data")
+
+    # Prepare request information
+    owner = -1
+    if current_user.is_authenticated:
+        owner = current_user.id
+    request_info = {
+        "remote_addr": request.remote_addr,
+        "referrer": request.referrer,
+        "hostname": request.host,
+        "user_id": owner,
+        "action": "IMPORT",
+        "workflow_id": check_result.get("workflow_id"),
+    }
+    response = {}
+
+    # メタデータのみ更新フラグ
+    metadata_only_flg = item["metadata"].get("metadata_only",False)
+    if file_format == "TSV/CSV" or file_format == "JSON" and register_type == "Direct":
+        item["root_path"] = data_path+"/data"
+        import_result = import_items_to_system(item, request_info=request_info, metadata_only=metadata_only_flg)
+        if not import_result.get("success"):
+            current_app.logger.error(
+                f"Error in import_items_to_system: {item.get('error_id')}"
+            )
+            raise WekoSwordserverException("Error in import_items_to_system: {0}".format(import_result.get("error_id")), ErrorType.ServerError)
+        response = jsonify(_get_status_document(recid))
+    elif file_format == "XML" or file_format == "JSON" and register_type == "Workflow":
+        required_scopes = set([activity_scope.id])
+        token_scopes = set(request.oauth.access_token.scopes)
+        if not required_scopes.issubset(token_scopes):
+            abort(403)
+        try:
+            url, _, _ = import_items_to_activity(item, data_path, request_info=request_info, metadata_only=metadata_only_flg)
+            activity_id = url.split("/")[-1]
+        except:
+            traceback.print_exc()
+            raise WekoSwordserverException("An error occurred while import to activity", ErrorType.ServerError)
+        response = jsonify(_get_status_workflow_document(activity_id, recid))
+    else:
+        if os.path.exists(data_path):
+            shutil.rmtree(data_path)
+            TempDirInfo().delete(data_path)
+        raise WekoSwordserverException("Invalid register format has been set for admin setting", ErrorType.ServerError)
+    # FIXME: finaly block
+    if os.path.exists(data_path):
+        shutil.rmtree(data_path)
+        TempDirInfo().delete(data_path)
+
+    current_app.logger.info(
+        f"item imported by sword from {request.oauth.client.name} (recid={recid})"
+    )
+
 
     return response
 
@@ -620,6 +781,59 @@ def delete_item(recid):
         * If the server does not allow this method in this context at this time, MAY respond with a 405 (MethodNotAllowed)
         * If the server does not support On-Behalf-Of deposit and the On-Behalf-Of header has been provided, MAY respond with a 412 (OnBehalfOfNotAllowed)
     """
+    # リクエストのアイテムIDがあるかのチェック
+    # Get status document
+    _ = _get_status_document(recid)
+
+    #  設定値を取ってきて、ダイレクトなのかワークフローなのかを判断するget_register_formatを使用
+    check_result = get_register_format()
+
+    register_format = check_result.get("register_format")
+    delete_flow_id = check_result.get("delete_flow_id")
+    # register_format = "Direct"
+
+    # 設定値がworkflowの場合かつ削除用フローIDがある場合
+    if register_format == "Workflow" and delete_flow_id:
+
+        # スコープのチェック
+        required_scopes = set([activity_scope.id])
+        token_scopes = set(request.oauth.access_token.scopes)
+        if not required_scopes.issubset(token_scopes):
+            abort(403)
+
+        try:
+            owner = -1
+            if current_user.is_authenticated:
+                owner = current_user.id
+            request_info = {
+                "user_id": owner,
+                "action": "DELETE"
+            }
+            url, _, _ = delete_items_with_activity(recid, request_info=request_info)
+            activity_id = url.split("/")[-1]
+
+            response = jsonify(_get_status_workflow_document(activity_id, recid))
+
+            deletestatus = _soft_delete(recid)
+            status_code = deletestatus[1]
+            if status_code != 204:
+                current_app.logger.error("An error occurred while delete to activity")
+                raise WekoSwordserverException("An error occurred while delete to activity", ErrorType.ServerError)
+
+        except:
+            traceback.print_exc()
+            raise WekoSwordserverException("An error occurred while delete to activity", ErrorType.ServerError)
+
+        return response
+    
+
+    # ダイレクトまたはワークフローだけど対象のワークフローに削除フラグIDがない場合
+    # ダイレクト処理
+    # else付けなくていいかもworkflowが通った後に削除する処理がないため
+    else:
+        return _soft_delete(recid)
+
+def _soft_delete(recid):
     try:
         # delete item
         soft_delete(recid)
@@ -628,6 +842,7 @@ def delete_item(recid):
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(e)
+        return ("", 500)
     return ("", 204)
 
 def _create_error_document(type, error):
