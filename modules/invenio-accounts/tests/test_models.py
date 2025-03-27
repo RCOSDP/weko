@@ -14,7 +14,7 @@ from invenio_db import db
 from sqlalchemy import inspect
 
 from invenio_accounts import testutils
-from invenio_accounts.models import SessionActivity
+from invenio_accounts.models import SessionActivity, User
 
 
 def test_session_activity_model(app):
@@ -67,3 +67,9 @@ def test_session_activity_model(app):
         database.session.commit()
         assert len(user.active_sessions) == 1
         assert user.active_sessions[0].sid_s != session_to_delete.sid_s
+
+def test_get_email_by_id(app, users):
+    with app.app_context():
+        with app.test_client() as client:
+            lst = User.get_email_by_id(1)
+            assert len(lst) > 0

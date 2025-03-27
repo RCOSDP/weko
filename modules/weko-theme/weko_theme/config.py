@@ -204,6 +204,10 @@ WEKO_THEME_ADMIN_MENU = [
             {
                 'name': 'RO-Crate mapping',
                 'order': 5
+            },
+            {
+                'name': 'JSON-LD Mapping',
+                'order': 6
             }
         ]
     },
@@ -249,7 +253,7 @@ WEKO_THEME_ADMIN_MENU = [
     },
     {
         'name': 'Records',
-        'order': 12,
+        'order': 13,
         'submenu': [
             {
                 'name': 'Persistent Identifier',
@@ -257,6 +261,20 @@ WEKO_THEME_ADMIN_MENU = [
             },
             {
                 'name': 'Record Metadata',
+                'order': 2
+            }
+        ]
+    },
+    {
+        'name': 'SWORD API',
+        'order': 12,
+        'submenu': [
+            {
+                'name': 'TSV/XML',
+                'order': 1
+            },
+            {
+                'name': 'JSON-LD',
                 'order': 2
             }
         ]
@@ -281,7 +299,7 @@ WEKO_THEME_ADMIN_MENU = [
     },
     {
         'name': 'Setting',
-        'order': 15,
+        'order': 16,
         'submenu': [
             {
                 'name': 'Items',
@@ -364,12 +382,8 @@ WEKO_THEME_ADMIN_MENU = [
                 'order': 20
             },
             {
-                'name': 'SWORD API',
-                'order': 21
-            },
-            {
                 'name': 'Others',
-                'order': 22
+                'order': 21
             }
         ]
     },
@@ -393,7 +407,7 @@ WEKO_THEME_ADMIN_MENU = [
     },
     {
         'name': 'User Management',
-        'order': 14,
+        'order': 15,
         'submenu': [
             {
                 'name': 'Access: Roles',
@@ -475,7 +489,7 @@ WEKO_THEME_ADMIN_MENU = [
     },
     {
         'name': 'Maintenance',
-        'order': 16,
+        'order': 17,
         'submenu': [
             {
                 'name': 'ElasticSearch Index',
@@ -486,7 +500,7 @@ WEKO_THEME_ADMIN_MENU = [
 ]
 
 
-WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER = False 
+WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER = False
 """インデックスツリー設定"""
 
 DISPLAY_LOGIN = True

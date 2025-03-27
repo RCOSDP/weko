@@ -30,6 +30,7 @@ from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import User, Role
 from invenio_accounts.testutils import create_test_user
 from invenio_access.models import ActionUsers,ActionRoles
+from invenio_communities.config import COMMUNITIES_OAI_FORMAT
 from invenio_communities.models import Community
 from invenio_db import InvenioDB
 from invenio_db import db as db_
@@ -100,7 +101,8 @@ def base_app(instance_path):
         INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format("test"),
         SEARCH_UI_SEARCH_INDEX="{}-weko".format("test"),
         SEARCH_ELASTIC_HOSTS="elasticsearch",
-        SEARCH_INDEX_PREFIX="test-"
+        SEARCH_INDEX_PREFIX="test-",
+        COMMUNITIES_OAI_FORMAT=COMMUNITIES_OAI_FORMAT,
     )
     if not hasattr(app_, 'cli'):
         from flask_cli import FlaskCLI
@@ -408,6 +410,8 @@ def records(app, db):
                     }
                 }
             },
+            "_oai":{"sets":[]},
+            "item_type_id":"1"
         },
         {
           "publish_date":"2000-08-09",
@@ -422,7 +426,9 @@ def records(app, db):
                       }
                     }
                 }
-            }
+            },
+            "_oai":{"sets":[]},
+            "item_type_id":"1"
         },
         {
             "path":["1557819692844"],

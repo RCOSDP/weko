@@ -83,6 +83,11 @@ def test_Flow_get_flow_action_list(db,workflow):
     assert res[5].action_order == 6
     assert res[6].action_order == 7
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_count_waiting_approval_by_workflow_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_WorkActivity_count_waiting_approval_by_workflow_id(app, db, db_register):
+    activity = WorkActivity()
+    assert activity.count_waiting_approval_by_workflow_id(1) == 0
+
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_filter_by_date -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_WorkActivity_filter_by_date(app, db):
     query = db.session.query()

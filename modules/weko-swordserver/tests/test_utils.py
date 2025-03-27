@@ -6,15 +6,9 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 import pytest
-import os
 from io import BytesIO
-import shutil
-import tempfile
-import zipfile
-import time
 from hashlib import sha256,sha512
-from zipfile import ZipFile, BadZipFile
-from weko_swordserver.api import SwordClient, SwordItemTypeMapping
+from zipfile import ZipFile
 from unittest.mock import MagicMock, patch
 from weko_swordserver.utils import (
     check_import_file_format,
@@ -22,7 +16,6 @@ from weko_swordserver.utils import (
 )
 from .helpers import json_data
 from weko_swordserver.errors import ErrorType, WekoSwordserverException
-from weko_swordserver.models import SwordClientModel, SwordItemTypeMappingModel
 
 
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
