@@ -1,12 +1,18 @@
-import logging
-from os.path import dirname, exists
+# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+"""Weko logging user audit logger app."""
 
-from weko_logging.handler import UserActivityLogHandler
+import logging
 
 from weko_logging import config
 from weko_logging.views import blueprint
+from weko_logging.handler import UserActivityLogHandler
 from .ext import WekoLoggingBase
-
 
 class WekoLoggingUserActivity(WekoLoggingBase):
     """WEKO-Logging extension. Filesystem handler."""

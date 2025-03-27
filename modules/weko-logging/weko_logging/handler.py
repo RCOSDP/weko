@@ -1,5 +1,15 @@
-from datetime import datetime
+# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+"""Weko logging handler."""
+
 import logging
+import urllib
+from datetime import datetime
 from flask import request, current_app
 from flask_security import current_user
 
@@ -34,10 +44,9 @@ class UserActivityLogHandler(logging.Handler):
             parent_id = record.parent_id or None
 
         # get user_id from current_user
-        user_id = None
+        user_id = self.get_user_id()
         eppn = None
-        if current_user.is_authenticated and hasattr(current_user, "id"):
-            user_id = current_user.id
+        if user_id:
             user = User.query.filter_by(id=user_id).first()
             # get eppn from user
             if user is not None:
@@ -63,11 +72,8 @@ class UserActivityLogHandler(logging.Handler):
             target_key = record.target_key if hasattr(record, "target_key") else None
         remarks = record.remarks if hasattr(record, "remarks") else None
 
-        # get repositoy path from request
-        # TODO: get repository_path from request
-        repository_path = "/"
-        if hasattr(request, "repository_path"):
-            repository_path = request.repository_path
+        # get community id from request
+        community_id = self.get_community_id_from_path()
 
         timestamp_seconds = record.created
         created_dt = datetime.fromtimestamp(timestamp_seconds)
@@ -75,7 +81,7 @@ class UserActivityLogHandler(logging.Handler):
         user_activity_log = UserActivityLog(
             user_id=user_id,
             log={},
-            repository_path=repository_path,
+            community_id=community_id,
             remarks=remarks,
         )
         log = {
@@ -86,7 +92,7 @@ class UserActivityLogHandler(logging.Handler):
             "eppn": eppn,
             "ip_address": ip_address,
             "client_id": client_id,
-            "repository_path": repository_path,
+            "community_id": community_id or "",
             "source": source,
             "parent_id": parent_id,
             "operation_type_id": operation_type_id,
@@ -107,6 +113,24 @@ class UserActivityLogHandler(logging.Handler):
             current_app.logger.error(f"Failed to create user activity log: {e}")
             current_app.logger.error(e.__traceback__)
             raise
+
+    @classmethod
+    def get_community_id_from_path(cls):
+        community_id = None
+        path_info = urllib.parse.urlparse(request.path)
+        if "/c/" in path_info.path:
+            community_path = path_info.path.split("/c/")[1]
+            community_id = community_path.split("/")[0]
+        elif "community" in request.args:
+            community_id = request.args.get("community")
+        return community_id
+
+    @classmethod
+    def get_user_id(cls):
+        user_id = None
+        if current_user.is_authenticated and hasattr(current_user, "id"):
+            user_id = current_user.id
+        return user_id
 
     def _get_target_from_operation_id(self, operation):
         # get target from config "WEKO_LOGGING_OPERATION_MASTER"

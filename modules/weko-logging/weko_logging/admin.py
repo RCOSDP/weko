@@ -1,14 +1,20 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+"""Weko logging admin view."""
 
-
-from datetime import datetime
 from celery import states
 from flask import current_app, jsonify, abort
 from flask.helpers import url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 
-from invenio_files_rest.models import FileInstance
 from invenio_cache import current_cache
+from invenio_files_rest.models import FileInstance
 from weko_logging.utils import UserActivityLogUtils
 from weko_logging.tasks import export_all_user_activity_logs
 from weko_search_ui.tasks import check_celery_is_run
@@ -54,13 +60,11 @@ class ExportLogAdminView(BaseView):
     @expose('/check_export_status', methods=['GET'])
     def check_export_status(self):
         """Api check export status."""
-        current_app.logger.error("Start export status")
         status = UserActivityLogUtils.get_export_task_status()
         check = check_celery_is_run()
         status['celery_is_run'] = check
         if status and status.get('task_id'):
             task = export_all_user_activity_logs.AsyncResult(status.get('task_id'))
-            current_app.logger.error("task status:" + task.status)
             if status:
                 status['status'] = task.status
 
@@ -79,8 +83,6 @@ class ExportLogAdminView(BaseView):
         if 'file_uri' in status:
             del status['file_uri']
 
-        current_app.logger.error("End export status")
-        current_app.logger.error(status)
         return jsonify({
             'code': 200,
             'data': status

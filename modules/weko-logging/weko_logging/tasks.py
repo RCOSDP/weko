@@ -1,11 +1,15 @@
-
-
+# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 """Tasks for the WEKO logging module."""
 
 from datetime import datetime
 from celery import shared_task
 from flask import current_app
-from invenio_cache import current_cache
 
 from .utils import UserActivityLogUtils
 

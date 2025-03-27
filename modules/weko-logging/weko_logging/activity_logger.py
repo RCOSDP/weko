@@ -1,7 +1,17 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+"""Weko logging user activity logger wrapper."""
+
 from flask import current_app
 from werkzeug.local import LocalProxy
 
 from weko_logging.models import UserActivityLog
+from weko_logging.handler import UserActivityLogHandler
 
 _logger = LocalProxy(lambda: current_app.extensions["weko-logging-activity"])
 
@@ -15,19 +25,33 @@ class UserActivityLogger:
     @classmethod
     def error(cls, operation=None, parent_id=None, target_key=None, remarks=None):
         """Log error."""
-        _logger.error("update author db", extra={
+
+        user_id = UserActivityLogHandler.get_user_id()
+        community_id = UserActivityLogHandler.get_community_id_from_path()
+
+        error_message = f"Error occurred: operation={operation}, parent_id={parent_id}, target_key={target_key}, "
+        error_message += f"user_id={user_id}, community_id={community_id}"
+        _logger.error(error_message, extra={
             "parent_id": parent_id,
             "operation": operation,
-            "target_key": target_key
+            "target_key": target_key,
+            "remarks": remarks,
         })
 
     @classmethod
     def info(cls, operation=None, parent_id=None, target_key=None, remarks=None):
         """Log info."""
-        _logger.info("update author db", extra={
+        user_id = UserActivityLogHandler.get_user_id()
+        community_id = UserActivityLogHandler.get_community_id_from_path()
+
+        error_message = f"Info: operation={operation}, parent_id={parent_id}, target_key={target_key}, "
+        error_message += f"user_id={user_id}, community_id={community_id}"
+
+        _logger.info(error_message, extra={
             "parent_id": parent_id,
             "operation": operation,
-            "target_key": target_key
+            "target_key": target_key,
+            "remarks": remarks,
         })
 
     @classmethod

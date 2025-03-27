@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+"""User activity log model."""
+
 from datetime import datetime, timezone
 
 from sqlalchemy import Sequence
@@ -5,6 +14,7 @@ from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy_utils.types import JSONType
 
 from invenio_accounts.models import User
+from invenio_communities.models import Community
 from invenio_db import db
 
 class UserActivityLog(db.Model):
@@ -30,24 +40,29 @@ class UserActivityLog(db.Model):
         db.Integer(),
         db.ForeignKey(
             User.id,
-            name='fk_active_user_id',
+            name='fk_user_activity_active_user_id',
             ondelete='SET NULL'
         ),
         nullable=True
     )
     """User ID of the user who performed the action."""
 
-    repository_path = db.Column(
-        db.Text(),
-        nullable=False
+    community_id = db.Column(
+        db.String(100),
+        db.ForeignKey(
+            Community.id,
+            name='fk_user_activity_community_id',
+            ondelete='SET NULL'
+        ),
+        nullable=True
     )
-    """Repository path where the action was performed."""
+    """Community ID of the community where the action was performed."""
 
     parent_id = db.Column(
         db.Integer(),
         db.ForeignKey(
             'user_activity_logs.id',
-            name='fk_active_parent_id',
+            name='fk_user_activity_parent_id',
             ondelete='SET NULL'
         ),
         nullable=True
@@ -81,7 +96,7 @@ class UserActivityLog(db.Model):
             'id': self.id,
             'date': self.date,
             'user_id': self.user_id if self.user_id else "",
-            'repository_path': self.repository_path,
+            'community_id': self.community_id,
             'parent_id': self.parent_id if self.parent_id else "",
             'log': self.log,
             'remarks': self.remarks

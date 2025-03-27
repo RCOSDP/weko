@@ -1,15 +1,23 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+"""User activity log utilities."""
+
 import csv
-import os
+import json
+import traceback
+import zipfile
 from celery.result import AsyncResult
 from celery.task.control import revoke
 from datetime import datetime, timedelta
-import json
-from sys import stdout
-import traceback
-import zipfile
 from dateutil.relativedelta import relativedelta
 from flask import current_app
 from io import BufferedReader, BytesIO, StringIO
+from sys import stdout
 
 from invenio_db import db
 from invenio_files_rest.models import FileInstance, Location
@@ -44,7 +52,6 @@ class UserActivityLogUtils:
                     file["filename"],
                     cls._write_log_to_tsv(file["data"])
                 )
-            current_app.logger.error(f"Zip file: {zip_stream.getvalue()}")
 
             # set bufferd reader
             reader = BufferedReader(BytesIO(zip_stream.getvalue()))
@@ -94,7 +101,6 @@ class UserActivityLogUtils:
         except Exception as ex:
             current_app.logger.error(ex)
             return False
-
 
     @classmethod
     def delete_log(cls):

@@ -330,7 +330,7 @@ WEKO_LOGGING_OPERATION_MASTER = {
             "label": "著者情報登録",
             "target": "author",
          },
-         "AUTHOR_DUPDATE": {
+         "AUTHOR_UPDATE": {
             "id": 2,
             "label": "著者情報変更",
             "target": "author",
