@@ -243,7 +243,8 @@ $(document).ready(function () {
       }
       $('.action_normal').hide();
       $('.action_delete').show();
-  } else {
+    } 
+    else {
       $('.action_normal').show();
       $('.action_delete').hide();
     }
