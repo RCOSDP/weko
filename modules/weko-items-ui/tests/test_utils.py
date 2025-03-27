@@ -15,6 +15,7 @@ import uuid
 
 import pytest
 from flask_security.utils import login_user
+from sqlalchemy.exc import SQLAlchemyError
 from weko_redis.redis import RedisConnection
 from invenio_accounts.testutils import login_user_via_session
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -7440,6 +7441,13 @@ def test_package_export_file(app):
         hash_result = hashlib.md5(ret.getvalue().encode("utf8")).hexdigest()
         assert hash_expect == hash_result
 
+        item_type_data["recids"] = ["1"]
+        item_type_data["data"] = {"1": [["title1"], "Exception : test error"]}
+        error_records = ["1"]
+        ret = package_export_file(item_type_data, error_records)
+        assert "#1\t" in ret.getvalue()
+        assert "['title1']\tException : test error" in ret.getvalue()
+
 
 # def make_stats_file(item_type_id, recids, list_item_role):
 #         def __init__(self, record_ids):
@@ -8078,7 +8086,70 @@ def test_make_stats_file_issue36234(app, users,db_itemtype,db_records_file):
     with app.test_request_context():
         result = make_stats_file(item_type_id, recids, list_item_role,export_path)
         assert result == test
-    
+
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_make_stats_file_issue43174 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_make_stats_file_issue43174(app, db, users, db_itemtype_checkbox, db_records_checkbox):
+    # Test make_stats_file and make_stats_file_with_permission for issue #43174
+    item_type_id = 6
+    recids = ["1", "2"]
+    records_metadata = {}
+    for id in recids:
+        records_metadata[id] = WekoRecord.get_record_by_pid(int(id))
+    permissions = dict(
+        permission_show_hide=lambda a: True,
+        check_created_id=lambda a: True,
+        hide_meta_data_for_role=lambda a: True,
+        current_language=lambda: True,
+    )
+
+    with app.test_request_context():
+        with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+            res = make_stats_file(item_type_id, recids, records_metadata, permissions)
+            assert res[0][1][-4] == "チェックボックステスト.値[0]"
+            assert res[1]["1"][-4] == "A"
+            assert res[1]["2"][-4] == "A"
+            assert res[0][1][-3] == "チェックボックステスト.値[1]"
+            assert res[1]["1"][-3] == "B"
+            assert res[1]["2"][-3] == "B"
+            assert res[0][1][-2] == "チェックボックステスト.値[2]"
+            assert res[1]["1"][-2] == ""
+            assert res[1]["2"][-2] == "C"
+            assert res[0][1][-1] == "チェックボックステスト.言語"
+            assert res[1]["1"][-1] == "ja"
+            assert res[1]["2"][-1] == "ja"
+
+            res = make_stats_file_with_permission(item_type_id, recids, records_metadata, permissions)
+            assert res[0][1][-4] == "チェックボックステスト.値[0]"
+            assert res[1]["1"][-4] == "A"
+            assert res[1]["2"][-4] == "A"
+            assert res[0][1][-3] == "チェックボックステスト.値[1]"
+            assert res[1]["1"][-3] == "B"
+            assert res[1]["2"][-3] == "B"
+            assert res[0][1][-2] == "チェックボックステスト.値[2]"
+            assert res[1]["1"][-2] == ""
+            assert res[1]["2"][-2] == "C"
+            assert res[0][1][-1] == "チェックボックステスト.言語"
+            assert res[1]["1"][-1] == "ja"
+            assert res[1]["2"][-1] == "ja"
+
+            with patch("weko_index_tree.api.Indexes.get_path_list", side_effect=Exception('test error')):
+                res = make_stats_file_with_permission(item_type_id, recids, records_metadata, permissions)
+                assert res[1]["1"] == [["title1"], "Exception : test error"]
+                assert res[2] == ["1", "2"]
+
+            with patch("weko_index_tree.api.Indexes.get_path_list", side_effect=SQLAlchemyError):
+                with pytest.raises(SQLAlchemyError):
+                    make_stats_file_with_permission(item_type_id, recids, records_metadata, permissions)
+
+            itemtype = ItemTypes.get_by_id(item_type_id)
+            itemtype.render["table_row_map"]["schema"]["properties"]["item_1617186331708"]["items"] = ""
+            with patch("weko_records.api.ItemTypes.get_by_id", return_value=itemtype):
+                res = make_stats_file_with_permission(item_type_id, recids, records_metadata, permissions)
+                assert res[1]["1"] == [["title1"], "TypeError : string indices must be integers"]
+                assert res[2] == ["1", "2"]
+
+
 # def get_list_file_by_record_id(recid):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_list_file_by_record_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_get_list_file_by_record_id(db_records,users,esindex):

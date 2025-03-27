@@ -61,6 +61,7 @@ from invenio_stats import config
 from jsonschema import SchemaError, ValidationError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
+from sqlalchemy.exc import SQLAlchemyError
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
@@ -92,7 +93,7 @@ def get_list_username():
 
     Query database to get all available username
     return: list of username
-    TODO: 
+    TODO:
     """
     current_user_id = current_user.get_id()
     current_app.logger.debug("current_user:{}".format(current_user))
@@ -104,7 +105,7 @@ def get_list_username():
         username = user.get_username
         if username:
             result.append(username)
-    
+
     return result
 
 
@@ -356,7 +357,7 @@ def find_hidden_items(item_id_list, idx_paths=None, check_creator_permission=Fal
     no_permission_index = []
     hidden_list = []
     for record in WekoRecord.get_records(item_id_list):
-        
+
         if check_creator_permission:
             # Check if user is owner of the item
             if check_created_id(record):
@@ -436,7 +437,7 @@ def get_permission_record(rank_type, es_data, display_rank, has_permission_index
                         break
                 add_flag = is_public and has_index_permission
         except PIDDoesNotExistError:
-            # do not add deleted items into ranking list. 
+            # do not add deleted items into ranking list.
             add_flag = False
             current_app.logger.debug("PID {} does not exist.".format(pid_value))
 
@@ -575,7 +576,7 @@ def validate_form_input_data(
 
     :param result: result dictionary.
     :param item_id: item type identifier.
-    :param data: form input data 
+    :param data: form input data
     :param activity_id: activity id
     """
     # current_app.logger.error("result: {}".format(result))
@@ -595,11 +596,11 @@ def validate_form_input_data(
             elif type(given_data) is str:
                 ret = list(given_data)
         return ret
-        
+
 
     # Get langauge key - DONE
-    # Iterate data for validating the value - 
-    # Check each item and raise an error for duplicate langauge value - 
+    # Iterate data for validating the value -
+    # Check each item and raise an error for duplicate langauge value -
 
     item_type = ItemTypes.get_by_id(item_id)
     json_schema = item_type.schema.copy()
@@ -729,13 +730,13 @@ def validate_form_input_data(
     for key in item_type_mapping_keys:
         jpcoar_value: dict = _get_jpcoar_mapping_value_mapping(key, item_type_mapping)
         jpcoar_value_keys_lv1: list = list(jpcoar_value)
-        
+
         for key_lv1 in jpcoar_value_keys_lv1:
             if "title" == key_lv1:
                 title_sub_items: dict = jpcoar_value[key_lv1]
                 title_sub_items_keys: list = list(title_sub_items.keys())
                 mapping_title_item_key: str = key
-                
+
                 for title_sub_item in title_sub_items:
                     if "@attributes" == title_sub_item:
                         mapping_title_language_key: list = title_sub_items.get(title_sub_item, {}).get("xml:lang", "_").split(".")
@@ -744,11 +745,11 @@ def validate_form_input_data(
                 alternative_title_sub_items: dict = jpcoar_value[key_lv1]
                 alternative_title_sub_items_title_sub_items_keys: list = list(alternative_title_sub_items.keys())
                 mapping_alternative_title_item_key: str = key
-                
+
                 for alternative_title_sub_item in alternative_title_sub_items:
                     if "@attributes" == alternative_title_sub_item:
                         mapping_alternative_title_language_key: list = alternative_title_sub_items.get(alternative_title_sub_item, {}).get("xml:lang", "_").split(".")
-                
+
             elif "creator" == key_lv1:
                 mapping_creator_item_key: str = key
                 creator_sub_items: dict = jpcoar_value[key_lv1]
@@ -775,7 +776,7 @@ def validate_form_input_data(
                         mapping_creator_alternative_name_language_key = (
                             creator_sub_items.get(creator_sub_item, {}).get("@attributes", {"xml:lang": "_._"}).get("xml:lang", "_._").split(".")
                         )
-            
+
             elif "contributor" == key_lv1:
                 mapping_contributor_item_key: str = key
                 contributor_sub_items: dict = jpcoar_value[key_lv1]
@@ -834,16 +835,16 @@ def validate_form_input_data(
                     source_title_sub_items: dict = jpcoar_value[key_lv1]
                     source_title_sub_items_keys: list = list(source_title_sub_items.keys())
                     mapping_source_title_item_key: str = key
-                    
+
                     for source_title_sub_item in source_title_sub_items:
                         if "@attributes" == source_title_sub_item:
                             mapping_source_title_language_key: list = source_title_sub_items.get(source_title_sub_item, {}).get("xml:lang", "_").split(".")
-            
+
             elif "degreeName" == key_lv1:
                 degree_name_sub_items: dict = jpcoar_value[key_lv1]
                 degree_name_sub_items_keys: list = list(degree_name_sub_items.keys())
                 mapping_degree_name_item_key: str = key
-                
+
                 for degree_name_sub_item in degree_name_sub_items:
                     if "@attributes" == degree_name_sub_item:
                         mapping_degree_name_language_key: list = degree_name_sub_items.get(degree_name_sub_item, {}).get("xml:lang", "_").split(".")
@@ -884,7 +885,7 @@ def validate_form_input_data(
                         mapping_conference_sponsor_language_key = (
                             conference_sub_items.get(conference_sub_item, {}).get("@attributes", {"xml:lang": "_._"}).get("xml:lang", "_._").split(".")
                         )
-            
+
     """
     For iterating the argument 'data' and validating its language value
     """
@@ -898,13 +899,13 @@ def validate_form_input_data(
         ):
             if language_value_list.count(language_value) > 1:
                 raise ValidationError(f"{item_error_message} -- {duplication_error}")
-        
+
         duplication_error: str = """
             Please ensure that the following applicable items have no duplicate language values:
-            Title, Creator Name ,Creator Family Name, Creator Given Name, Creator Affliation Name, 
-            Contributor Name ,Contributor Family Name, Contributor Given Name, Contributor Affliation Name, 
-            Related Title, Funding Reference Funder Name, Funding Reference Award Title, Source Title, Degree Name, 
-            Degree Grantor Name, Conference Name, Conference Sponsor, Conference Date, Conference Venue, Conference Place, 
+            Title, Creator Name ,Creator Family Name, Creator Given Name, Creator Affliation Name,
+            Contributor Name ,Contributor Family Name, Contributor Given Name, Contributor Affliation Name,
+            Related Title, Funding Reference Funder Name, Funding Reference Award Title, Source Title, Degree Name,
+            Degree Grantor Name, Conference Name, Conference Sponsor, Conference Date, Conference Venue, Conference Place,
             Holding Agent Name, Catalog Title
         """
 
@@ -933,11 +934,11 @@ def validate_form_input_data(
         ):
             if language_value == "ja-Kana" and "ja" not in language_value_list:
                 raise ValidationError(f"{item_error_message} -- {ja_kana_error}")
-        
+
         ja_kana_error: str = """
             If ja-Kana is used, please ensure that the following applicable items have ja language values:
-            Creator Name ,Creator Family Name, Creator Given Name, Creator Alternative Name, 
-            Contributor Name ,Contributor Family Name, Contributor Given Name, Contributor Alternative Name, 
+            Creator Name ,Creator Family Name, Creator Given Name, Creator Alternative Name,
+            Contributor Name ,Contributor Family Name, Contributor Given Name, Contributor Alternative Name,
             Holding Agent Name, Catalog Title.
         """
 
@@ -966,11 +967,11 @@ def validate_form_input_data(
         ):
             if language_value == "ja-Latn" and "ja" not in language_value_list:
                 raise ValidationError(f"{item_error_message} -- {ja_latn_error}")
-        
+
         ja_latn_error: str = """
             If ja-Latn is used, please ensure that the following applicable items have ja language values:
-            Creator Name ,Creator Family Name, Creator Given Name, Creator Alternative Name, 
-            Contributor Name ,Contributor Family Name, Contributor Given Name, Contributor Alternative Name, 
+            Creator Name ,Creator Family Name, Creator Given Name, Creator Alternative Name,
+            Contributor Name ,Contributor Family Name, Contributor Given Name, Contributor Alternative Name,
             Holding Agent Name, Catalog Title.
         """
 
@@ -1004,10 +1005,10 @@ def validate_form_input_data(
 
             if not result:
                 raise ValidationError(f"{item_error_message} -- {date_format_error}")
-        
+
         date_format_error: str = """
-            Please ensure that entered date has the following formats: YYYY, YYYY-MM, YYYY-MM-DD, 
-            YYYY-MM-DDThh:mm+TZD, YYYY-MM-DDThh:mm-TZD, YYYY-MM-DDThh:mm:ss+TZD, YYYY-MM-DDThh:mm:ss-TZD, 
+            Please ensure that entered date has the following formats: YYYY, YYYY-MM, YYYY-MM-DD,
+            YYYY-MM-DDThh:mm+TZD, YYYY-MM-DDThh:mm-TZD, YYYY-MM-DDThh:mm:ss+TZD, YYYY-MM-DDThh:mm:ss-TZD,
             YYYY-MM-DDThh:mm:ss.ss+TZD, YYYY-MM-DDThh:mm:ss.ss-TZD
         """
 
@@ -1089,7 +1090,7 @@ def validate_form_input_data(
                         items_to_be_checked_for_ja_latn.append(data_item_values.get(mapping_key))
                     else:
                         pass
-            
+
             # Validation for ALTERNATIVE TITLE
             validation_ja_kana_error_checker(
                 _("Alternative Title"),
@@ -1165,7 +1166,7 @@ def validate_form_input_data(
                             items_to_be_checked_for_duplication = []
                             items_to_be_checked_for_ja_kana = []
                             items_to_be_checked_for_ja_latn = []
-                        
+
                         # CREATOR AFFLIATION NAMES
                         elif data_creator_item_values_key == mapping_creator_affiliation_name_language_key[0]:
                             creator_affiliations: [dict] = data_creator_item_values.get(mapping_creator_affiliation_name_language_key[0])
@@ -1302,7 +1303,7 @@ def validate_form_input_data(
                             items_to_be_checked_for_duplication = []
                             items_to_be_checked_for_ja_kana = []
                             items_to_be_checked_for_ja_latn = []
-                        
+
                         # CONTRIBUTOR AFFLIATION NAMES
                         elif data_contributor_item_values_key == mapping_contributor_affiliation_name_language_key[0]:
                             contributor_affiliations: [dict] = data_contributor_item_values.get(mapping_contributor_affiliation_name_language_key[0])
@@ -1514,7 +1515,7 @@ def validate_form_input_data(
                                 if mapping_key in keys_that_exist_in_data:
                                     # Append CONFERENCE DATE LANGUAGE value to items_to_be_checked_for_duplication list
                                     items_to_be_checked_for_duplication.append(date_values.get(mapping_key))
-            if isinstance(data_conference_item_values, dict):                                    
+            if isinstance(data_conference_item_values, dict):
                 # Validation for CONFERENCE DATE
                 validation_duplication_error_checker(
                     _("Conference Date"),
@@ -1542,7 +1543,7 @@ def validate_form_input_data(
                             )
                             # Reset validation lists below for the next item to be validated
                             items_to_be_checked_for_duplication = []
-                        
+
                         # CONFERENCE PLACE
                         elif data_conference_item_values_key == mapping_conference_place_language_key[0]:
                             conference_places_values: [dict] = data_conference_item_values.get(mapping_conference_place_language_key[0])
@@ -1604,7 +1605,7 @@ def validate_form_input_data(
     remove_excluded_items_in_json_schema(item_id, json_schema)
 
     data['$schema'] = json_schema.copy()
-    
+
     validation_data = RecordBase(data)
 
     try:
@@ -1836,7 +1837,7 @@ def recursive_update_schema_form_with_condition(
             condition_item['item'])
 
 
-def package_export_file(item_type_data):
+def package_export_file(item_type_data, error_records=[]):
     """Export TSV/CSV Files.
 
     Args:
@@ -1888,7 +1889,10 @@ def package_export_file(item_type_data):
     file_metadata_option_writer.writeheader()
     for recid in item_type_data.get('recids'):
         file_metadata_data_writer.writerow(
-            [recid, item_type_data.get('root_url') + 'records/' + str(recid)]
+            [
+                '#' + recid if recid in error_records else recid,
+                item_type_data.get('root_url') + 'records/' + str(recid)
+            ]
             + item_type_data['data'].get(recid)
         )
 
@@ -1975,6 +1979,19 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
             self.attr_data[attr]['max_size'] = largest_size
 
             return self.attr_data[attr]['max_size']
+
+        def get_enum_max_ins(self, attr):
+            """Get max data each checkbox enum in all exporting records."""
+            largest_size = 1
+            self.attr_data[attr]['enum_max_size'] = 0
+            for record in self.records:
+                if self.records[record].get(attr):
+                    rec_size = len(self.records[record][attr]['attribute_value_mlt'][0]['subitem_checkbox_item'])
+                    if rec_size > largest_size:
+                        largest_size = rec_size
+            self.attr_data[attr]['enum_max_size'] = largest_size
+
+            return self.attr_data[attr]['enum_max_size']
 
         def get_max_ins_feedback_mail(self):
             """Get max data each feedback mail in all exporting records."""
@@ -2080,13 +2097,17 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
                     if properties[key].get('format', '') == 'checkboxes':
                         new_key += '[{}]'
                         new_label += '[{}]'
+                        enum_max_size = self.attr_data[item_key].get('enum_max_size', 1)
                         if isinstance(data, dict):
                             data = [data]
-                        if data and data[idx].get(key):
-                            for idx_c in range(len(data[idx][key])):
+                        if data and idx < len(data) and data[idx].get(key):
+                            for idx_c in range(enum_max_size):
                                 key_list.append(new_key.format(idx_c))
                                 key_label.append(new_label.format(idx_c))
-                                key_data.append(data[idx][key][idx_c])
+                                if len(data[idx][key]) > idx_c:
+                                    key_data.append(data[idx][key][idx_c])
+                                else:
+                                    key_data.append('')
                         else:
                             key_list.append(new_key.format('0'))
                             key_label.append(new_label.format('0'))
@@ -2250,6 +2271,11 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
     for item_key in item_type.render.get('table_row'):
         item = table_row_properties.get(item_key)
         records.get_max_ins(item_key)
+        for i in item.get('properties', {}):
+            if 'subitem_checkbox_item' in i:
+                records.get_enum_max_ins(item_key)
+                break
+
         keys = []
         labels = []
         for recid in recids:
@@ -2283,7 +2309,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
                 if not keys:
                     keys = [item_key]
                 if not labels:
-                    labels = [item.get('title')]                
+                    labels = [item.get('title')]
                 data = records.attr_data[item_key].get(recid) or {}
                 attr_val = data.get("attribute_value", "")
                 if isinstance(attr_val,str):
@@ -2403,7 +2429,7 @@ def write_bibtex_files(item_types_data, export_path):
     """
     # current_app.logger.error("item_types_data:{}".format(item_types_data))
     # current_app.logger.error("export_path:{}".format(export_path))
-    
+
     for item_type_id in item_types_data:
         item_type_data = item_types_data[item_type_id]
         output = make_bibtex_data(item_type_data['recids'])
@@ -2429,7 +2455,7 @@ def write_files(item_types_data, export_path, list_item_role):
     file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
 
     for item_type_id in item_types_data:
-        
+
         current_app.logger.debug("item_type_id:{}".format(item_type_id))
         current_app.logger.debug("item_types_data[item_type_id]['recids']:{}".format(item_types_data[item_type_id]['recids']))
         headers, records = make_stats_file(
@@ -2796,7 +2822,7 @@ def to_files_js(record):
     Returns:
         _type_: _description_
     """
-    current_app.logger.debug("type: {}".format(type(record))) 
+    current_app.logger.debug("type: {}".format(type(record)))
     res = []
     files = record.files or []
     files_content_dict = {}
@@ -2809,7 +2835,7 @@ def to_files_js(record):
     # Get files form meta_data, so that you can append any extra info to files
     # (which not contained by file_bucket) such as license below
     files_from_meta = get_files_from_metadata(record)
-    
+
     # get file with order similar metadata
     files_content = []
     for _k, f in files_from_meta.items():
@@ -3263,7 +3289,7 @@ def del_hide_sub_item(key, mlt, hide_list):
             elif isinstance(v, str):
                 for h in hide_list:
                     if h.startswith(key) and h.endswith(k) and k in mlt:
-                        mlt.pop(k) 
+                        mlt.pop(k)
             else:
                 pass
     elif isinstance(mlt, list):
@@ -3440,7 +3466,7 @@ def translate_validation_message(item_property, cur_lang):
     """
     # current_app.logger.error("item_property:{}".format(item_property))
     # current_app.logger.error("cur_lang:{}".format(cur_lang))
-    
+
     items_attr = 'items'
     properties_attr = 'properties'
     if isExistKeyInDict(items_attr, item_property):
@@ -3585,7 +3611,7 @@ def get_ranking(settings):
     :param settings: ranking setting.
     :return:
     """
-    
+
     def _get_index_info(index_json, index_info):
         for index in index_json:
             index_info[index["id"]] = {
@@ -3639,7 +3665,7 @@ def get_ranking(settings):
 
         current_app.logger.debug("finished getting most_downloaded_items data from ES")
         rankings['most_downloaded_items'] = get_permission_record('most_downloaded_items', result, settings.display_rank, has_permission_indexes)
-    
+
     # created_most_items_user
     current_app.logger.debug("get created_most_items_user start")
     if settings.rankings['created_most_items_user']:
@@ -3709,10 +3735,10 @@ def get_ranking(settings):
             agg_size=settings.display_rank + rank_buffer,
             must_not=json.dumps([{"wildcard": {"control_number": "*.*"}}])
         )
-        
+
         current_app.logger.debug("finished getting new_items data from ES")
         rankings['new_items'] = get_permission_record('new_items', result, settings.display_rank, has_permission_indexes)
-        
+
     return rankings
 
 
@@ -3738,7 +3764,7 @@ def sanitize_input_data(data):
 
     Args:
         data (dict or list): target dict or list
-    """    
+    """
     if isinstance(data, dict):
         for k, v in data.items():
             if isinstance(v, str):
@@ -3910,12 +3936,12 @@ def make_stats_file_with_permission(item_type_id, recids,
 
     Returns:
         _type_: _description_
-    """                                   
+    """
     """
 
     Arguments:
-        item_type_id    -- 
-        recids          -- 
+        item_type_id    --
+        recids          --
     Returns:
         ret             -- Key properties
         ret_label       -- Label properties
@@ -4019,6 +4045,21 @@ def make_stats_file_with_permission(item_type_id, recids,
             self.attr_data[attr]['max_size'] = largest_size
 
             return self.attr_data[attr]['max_size']
+
+        def get_enum_max_ins(self, attr):
+            """Get max data each checkbox enum in all exporting records."""
+            largest_size = 1
+            self.attr_data[attr]['enum_max_size'] = 0
+            for record in self.records:
+                if self.records[record].get(attr):
+                    rec_size = len(
+                        self.records[record][attr]['attribute_value_mlt'][0]['subitem_checkbox_item']
+                    )
+                    if rec_size > largest_size:
+                        largest_size = rec_size
+            self.attr_data[attr]['enum_max_size'] = largest_size
+
+            return self.attr_data[attr]['enum_max_size']
 
         def get_max_ins_feedback_mail(self):
             """Get max data each feedback mail in all exporting records."""
@@ -4124,13 +4165,17 @@ def make_stats_file_with_permission(item_type_id, recids,
                     if properties[key].get('format', '') == 'checkboxes':
                         new_key += '[{}]'
                         new_label += '[{}]'
+                        enum_max_size = self.attr_data[item_key].get('enum_max_size', 1)
                         if isinstance(data, dict):
                             data = [data]
-                        if data and data[idx].get(key):
-                            for idx_c in range(len(data[idx][key])):
+                        if data and idx < len(data) and data[idx].get(key):
+                            for idx_c in range(enum_max_size):
                                 key_list.append(new_key.format(idx_c))
                                 key_label.append(new_label.format(idx_c))
-                                key_data.append(data[idx][key][idx_c])
+                                if len(data[idx][key]) > idx_c:
+                                    key_data.append(data[idx][key][idx_c])
+                                else:
+                                    key_data.append('')
                         else:
                             key_list.append(new_key.format('0'))
                             key_label.append(new_label.format('0'))
@@ -4205,6 +4250,7 @@ def make_stats_file_with_permission(item_type_id, recids,
             return o_ret, o_ret_label, ret_data
 
     records = RecordsManager(recids, records_metadata)
+    error_records = []
 
     ret = ['#.id', '.uri']
     ret_label = ['#ID', 'URI']
@@ -4231,109 +4277,129 @@ def make_stats_file_with_permission(item_type_id, recids,
                      permissions['current_language']() == 'ja' else 'PubDate')
 
     for recid in recids:
-        record = records.records[recid]
-        paths = records.attr_data['path'][recid]
-        index_infos = Indexes.get_path_list(paths)
-        for info in index_infos:
-            records.attr_output[recid].append(info.cid)
-            records.attr_output[recid].append(info.name_en.replace(
-                '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']))
-        records.attr_output[recid].extend(
-            [''] * (max_path * 2 - len(records.attr_output[recid]))
-        )
+        try:
+            record = records.records[recid]
+            paths = records.attr_data['path'][recid]
+            index_infos = Indexes.get_path_list(paths)
+            for info in index_infos:
+                records.attr_output[recid].append(info.cid)
+                records.attr_output[recid].append(info.name_en.replace(
+                    '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']))
+            records.attr_output[recid].extend(
+                [''] * (max_path * 2 - len(records.attr_output[recid]))
+            )
 
-        records.attr_output[recid].append(
-            'public' if record['publish_status'] == PublishStatus.PUBLIC.value else 'private')
-        feedback_mail_list = records.attr_data['feedback_mail_list'] \
-            .get(recid, [])
-        records.attr_output[recid].extend(feedback_mail_list)
-        records.attr_output[recid].extend(
-            [''] * (max_feedback_mail - len(feedback_mail_list))
-        )
+            records.attr_output[recid].append(
+                'public' if record['publish_status'] == PublishStatus.PUBLIC.value else 'private')
+            feedback_mail_list = records.attr_data['feedback_mail_list'] \
+                .get(recid, [])
+            records.attr_output[recid].extend(feedback_mail_list)
+            records.attr_output[recid].extend(
+                [''] * (max_feedback_mail - len(feedback_mail_list))
+            )
 
-        pid_cnri = record.pid_cnri
-        cnri = ''
-        if pid_cnri:
-            cnri = pid_cnri.pid_value.replace(WEKO_SERVER_CNRI_HOST_LINK, '')
-        records.attr_output[recid].append(cnri)
+            pid_cnri = record.pid_cnri
+            cnri = ''
+            if pid_cnri:
+                cnri = pid_cnri.pid_value.replace(WEKO_SERVER_CNRI_HOST_LINK, '')
+            records.attr_output[recid].append(cnri)
 
-        identifier = IdentifierHandle(record.pid_recid.object_uuid)
-        doi_value, doi_type = identifier.get_idt_registration_data()
-        doi_type_str = doi_type[0] if doi_type and doi_type[0] else ''
-        doi_str = doi_value[0] if doi_value and doi_value[0] else ''
-        identifier_setting = get_identifier_setting("Root Index")
-        if doi_type_str and doi_str:
-            doi_domain = ''
-            if doi_type_str == WEKO_IMPORT_DOI_TYPE[0]:
-                doi_domain = IDENTIFIER_GRANT_LIST[1][2]
-            elif doi_type_str == WEKO_IMPORT_DOI_TYPE[1]:
-                doi_domain = IDENTIFIER_GRANT_LIST[2][2]
-            elif doi_type_str == WEKO_IMPORT_DOI_TYPE[2]:
-                doi_domain = IDENTIFIER_GRANT_LIST[3][2]
-            elif doi_type_str == WEKO_IMPORT_DOI_TYPE[3]:
-                doi_domain = IDENTIFIER_GRANT_LIST[4][2]
-            if doi_domain and doi_str.startswith(doi_domain):
-                doi_str = doi_str.replace(doi_domain + '/', '', 1)
-            if doi_type_str == WEKO_IMPORT_DOI_TYPE[0] and \
-                    doi_str.startswith(identifier_setting.ndl_jalc_doi + "/"):
-                doi_type_str = WEKO_IMPORT_DOI_TYPE[3]
-        records.attr_output[recid].extend([
-            doi_type_str,
-            doi_str
-        ])
+            identifier = IdentifierHandle(record.pid_recid.object_uuid)
+            doi_value, doi_type = identifier.get_idt_registration_data()
+            doi_type_str = doi_type[0] if doi_type and doi_type[0] else ''
+            doi_str = doi_value[0] if doi_value and doi_value[0] else ''
+            identifier_setting = get_identifier_setting("Root Index")
+            if doi_type_str and doi_str:
+                doi_domain = ''
+                if doi_type_str == WEKO_IMPORT_DOI_TYPE[0]:
+                    doi_domain = IDENTIFIER_GRANT_LIST[1][2]
+                elif doi_type_str == WEKO_IMPORT_DOI_TYPE[1]:
+                    doi_domain = IDENTIFIER_GRANT_LIST[2][2]
+                elif doi_type_str == WEKO_IMPORT_DOI_TYPE[2]:
+                    doi_domain = IDENTIFIER_GRANT_LIST[3][2]
+                elif doi_type_str == WEKO_IMPORT_DOI_TYPE[3]:
+                    doi_domain = IDENTIFIER_GRANT_LIST[4][2]
+                if doi_domain and doi_str.startswith(doi_domain):
+                    doi_str = doi_str.replace(doi_domain + '/', '', 1)
+                if doi_type_str == WEKO_IMPORT_DOI_TYPE[0] and \
+                        doi_str.startswith(identifier_setting.ndl_jalc_doi + "/"):
+                    doi_type_str = WEKO_IMPORT_DOI_TYPE[3]
+            records.attr_output[recid].extend([
+                doi_type_str,
+                doi_str
+            ])
 
-        # .edit Keep or Upgrade. default is Keep
-        records.attr_output[recid].append('Keep')
+            # .edit Keep or Upgrade. default is Keep
+            records.attr_output[recid].append('Keep')
 
-        records.attr_output[recid].append(record[
-            'pubdate']['attribute_value'])
+            records.attr_output[recid].append(record[
+                'pubdate']['attribute_value'])
+        except SQLAlchemyError as e:
+            raise e
+        except Exception as e:
+            error_records.append(recid)
+            records.attr_output[recid] = [record.get('title'), f'{type(e).__name__} : {str(e)}']
 
     for item_key in item_type.get('table_row'):
         item = table_row_properties.get(item_key)
         records.get_max_ins(item_key)
+        for i in item.get('properties', {}):
+            if 'subitem_checkbox_item' in i:
+                records.get_enum_max_ins(item_key)
+                break
+
         keys = []
         labels = []
         for recid in recids:
-            records.cur_recid = recid
-            # print("item.get(type):{}".format(item.get('type')))
-            # print("item_key:{}".format(item_key))
-            # print("records.attr_data[item_key]: {}".format(records.attr_data[item_key]))
-            if item.get('type') == 'array':
-                key, label, data = records.get_subs_item(
-                    item_key,
-                    item.get('title'),
-                    item['items']['properties'],
-                    records.attr_data[item_key][recid]
-                )
-                if not keys:
-                    keys = key
-                if not labels:
-                    labels = label
-                records.attr_output[recid].extend(data)
-            elif item.get('type') == 'object':
-                key, label, data = records.get_subs_item(
-                    item_key,
-                    item.get('title'),
-                    item['properties'],
-                    records.attr_data[item_key][recid],
-                    True
-                )
-                if not keys:
-                    keys = key
-                if not labels:
-                    labels = label
-                records.attr_output[recid].extend(data)
-            else:
-                if not keys:
-                    keys = [item_key]
-                if not labels:
-                    labels = [item.get('title')]
-                data = records.attr_data[item_key].get(recid) or {}
-                attr_val = data.get("attribute_value", "")
-                if isinstance(attr_val,str):
-                    records.attr_output[recid].append(attr_val)
+            try:
+                if recid in error_records:
+                    continue
+                records.cur_recid = recid
+                # print("item.get(type):{}".format(item.get('type')))
+                # print("item_key:{}".format(item_key))
+                # print("records.attr_data[item_key]: {}".format(records.attr_data[item_key]))
+                if item.get('type') == 'array':
+                    key, label, data = records.get_subs_item(
+                        item_key,
+                        item.get('title'),
+                        item['items']['properties'],
+                        records.attr_data[item_key][recid]
+                    )
+                    if not keys:
+                        keys = key
+                    if not labels:
+                        labels = label
+                    records.attr_output[recid].extend(data)
+                elif item.get('type') == 'object':
+                    key, label, data = records.get_subs_item(
+                        item_key,
+                        item.get('title'),
+                        item['properties'],
+                        records.attr_data[item_key][recid],
+                        True
+                    )
+                    if not keys:
+                        keys = key
+                    if not labels:
+                        labels = label
+                    records.attr_output[recid].extend(data)
                 else:
-                    records.attr_output[recid].extend(attr_val)
+                    if not keys:
+                        keys = [item_key]
+                    if not labels:
+                        labels = [item.get('title')]
+                    data = records.attr_data[item_key].get(recid) or {}
+                    attr_val = data.get("attribute_value", "")
+                    if isinstance(attr_val,str):
+                        records.attr_output[recid].append(attr_val)
+                    else:
+                        records.attr_output[recid].extend(attr_val)
+            except SQLAlchemyError as e:
+                raise e
+            except Exception as e:
+                record = records.records[recid]
+                error_records.append(recid)
+                records.attr_output[recid] = [record.get('title'), f'{type(e).__name__} : {str(e)}']
 
         new_keys = []
         for key in keys:
@@ -4384,7 +4450,7 @@ def make_stats_file_with_permission(item_type_id, recids,
             ret_system.append('')
             ret_option.append('')
 
-    return [ret, ret_label, ret_system, ret_option], records.attr_output
+    return [ret, ret_label, ret_system, ret_option], records.attr_output, error_records
 
 
 def check_item_is_being_edit(
@@ -4458,7 +4524,7 @@ def check_item_is_deleted(recid):
 
     Returns:
         bool: True: deleted, False: available
-    """    
+    """
     pid = PersistentIdentifier.query.filter_by(
         pid_type='recid', pid_value=recid).first()
     if not pid:
@@ -4477,7 +4543,7 @@ def permission_ranking(result, pid_value_permissions, display_rank, list_name,
         display_rank (_type_): _description_
         list_name (_type_): _description_
         pid_value (_type_): _description_
-    """                       
+    """
     list_result = list()
     for data in result.get(list_name, []):
         if data.get(pid_value, '') in pid_value_permissions:

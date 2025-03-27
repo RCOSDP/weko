@@ -223,12 +223,11 @@ class ExportComponent extends React.Component {
 
   checkExportStatus() {
     const me = this;
-    closeError();
     $.ajax({
       type: 'GET',
       url: urlExportStatus,
       dataType: 'json',
-      async: false,
+      async: true,
       success: function (response) {
         if (response.data) {
           if (!me.state.checkExportSttInterval) {
@@ -246,6 +245,7 @@ class ExportComponent extends React.Component {
             isDisableCancel: !response.data.export_status,
             taskStatus: response.data.status
           });
+          closeError();
           if (!response.data.celery_is_run) {
             $('#errors').append(
               '<div class="alert alert-danger alert-dismissable">' +
@@ -263,6 +263,7 @@ class ExportComponent extends React.Component {
         }
       },
       error: function () {
+        closeError();
         $('#errors').append(
           '<div class="alert alert-danger alert-dismissable">' +
           '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
