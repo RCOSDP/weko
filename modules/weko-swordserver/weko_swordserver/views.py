@@ -325,7 +325,6 @@ def post_service_document():
         Returns:
             tuple: A tuple containing the response and the record ID.
         """
-        item["root_path"] = os.path.join(data_path, "data")
         try:
             if register_type == "Direct":
                 import_result = import_items_to_system(
@@ -366,6 +365,7 @@ def post_service_document():
     recid = None
     # Process and register items
     for item in check_result["list_record"]:
+        item["root_path"] = os.path.join(data_path, "data")
         try:
             activity_id, recid, error = process_item(
                 item, data_path, request_info
@@ -428,16 +428,14 @@ def post_service_document():
 @check_package_contents()
 def put_object(recid):
     """
-    """
+    Replace the Object on the server, sending a single Binary File.
 
-    """
-    Check content-disposition
-        Request format:
-            Content-Disposition	attachment; filename=[filename]
-    """
-    # Get status document
-    _ = _get_status_document(recid)
+    Args:
+        recid (str): Record Identifier.
 
+    Returns:
+        Response: A response document.
+    """
     content_disposition, content_disposition_options = parse_options_header(
         request.headers.get("Content-Disposition") or ""
     )
@@ -493,15 +491,12 @@ def put_object(recid):
 
     else:
         check_result = check_import_items(file, file_format, False)
+
     data_path = check_result.get("data_path","")
     expire = datetime.now() + timedelta(days=1)
     TempDirInfo().set(
         data_path,
         {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")}
-    )
-    item = (
-        check_result.get("list_record")[0]
-            if "list_record" in check_result else None
     )
     register_type = check_result.get("register_type")
     # Determine registration type
@@ -513,10 +508,37 @@ def put_object(recid):
             "Invalid register type in admin settings", ErrorType.ServerError
         )
 
-    # APIのURLのid優先
-    item['id'] = recid
+    # only first item
+    item = check_result.get("list_record")[0]
+    if not item or item.get("errors"):
+        error_msg = (
+            ", ".join(item.get("errors"))
+            if item and item.get("errors")
+            else "item_missing"
+        )
+        current_app.logger.error(f"Error in check_import_items: {error_msg}")
+        raise WekoSwordserverException(
+            f"Error in check_import_items: {error_msg}",
+            ErrorType.ContentMalformed
+        )
 
-    # itemのstatusをpublishedに変更
+    if item.get("status") == "new":
+        current_app.logger.error(
+            f"This item is not registered yet: {item.get('item_title')}"
+        )
+        raise WekoSwordserverException(
+            f"This item is not registered yet: {item.get('item_title')}",
+            ErrorType.BadRequest,
+        )
+    if item.get("id") != recid:
+        current_app.logger.error(
+            f"Item id does not match: {item.get('id')}, {recid}"
+        )
+        raise WekoSwordserverException(
+            f"Item id does not match: {item.get('id')}, {recid}",
+            ErrorType.BadRequest,
+        )
+
     item['status'] = 'published'
     item["root_path"] = os.path.join(data_path, "data")
 
@@ -531,38 +553,40 @@ def put_object(recid):
         "user_id": owner,
         "action": "IMPORT",
         "workflow_id": check_result.get("workflow_id"),
+        "metadata_replace": item["metadata_replace"]
     }
     response = {}
-
-    # メタデータのみ更新フラグ
-    metadata_only_flg = item["metadata"].get("metadata_only",False)
-    if file_format == "TSV/CSV" or file_format == "JSON" and register_type == "Direct":
-        item["root_path"] = data_path+"/data"
-        import_result = import_items_to_system(item, request_info=request_info, metadata_only=metadata_only_flg)
+    if register_type == "Direct":
+        import_result = import_items_to_system(item, request_info=request_info)
         if not import_result.get("success"):
             current_app.logger.error(
                 f"Error in import_items_to_system: {item.get('error_id')}"
             )
-            raise WekoSwordserverException("Error in import_items_to_system: {0}".format(import_result.get("error_id")), ErrorType.ServerError)
+            raise WekoSwordserverException(
+                f"Error in import_items_to_system: {import_result.get('error_id')}",
+                ErrorType.ServerError
+            )
         response = jsonify(_get_status_document(recid))
-    elif file_format == "XML" or file_format == "JSON" and register_type == "Workflow":
+    elif register_type == "Workflow":
         required_scopes = set([activity_scope.id])
         token_scopes = set(request.oauth.access_token.scopes)
         if not required_scopes.issubset(token_scopes):
             abort(403)
-        try:
-            url, _, _ = import_items_to_activity(item, data_path, request_info=request_info, metadata_only=metadata_only_flg)
-            activity_id = url.split("/")[-1]
-        except:
-            traceback.print_exc()
-            raise WekoSwordserverException("An error occurred while import to activity", ErrorType.ServerError)
+
+        url, _, _ = import_items_to_activity(
+            item, data_path, request_info=request_info
+        )
+        activity_id = url.split("/")[-1]
         response = jsonify(_get_status_workflow_document(activity_id, recid))
     else:
         if os.path.exists(data_path):
             shutil.rmtree(data_path)
             TempDirInfo().delete(data_path)
-        raise WekoSwordserverException("Invalid register format has been set for admin setting", ErrorType.ServerError)
-    # FIXME: finaly block
+        raise WekoSwordserverException(
+            "Invalid register format has been set for admin setting",
+            ErrorType.ServerError
+        )
+
     if os.path.exists(data_path):
         shutil.rmtree(data_path)
         TempDirInfo().delete(data_path)
@@ -570,7 +594,6 @@ def put_object(recid):
     current_app.logger.info(
         f"item imported by sword from {request.oauth.client.name} (recid={recid})"
     )
-
 
     return response
 
@@ -825,7 +848,7 @@ def delete_item(recid):
             raise WekoSwordserverException("An error occurred while delete to activity", ErrorType.ServerError)
 
         return response
-    
+
 
     # ダイレクトまたはワークフローだけど対象のワークフローに削除フラグIDがない場合
     # ダイレクト処理

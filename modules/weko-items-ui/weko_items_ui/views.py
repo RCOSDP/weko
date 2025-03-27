@@ -858,6 +858,8 @@ def prepare_edit_item(id=None):
         header: Content type must be json
         data:
             pid_value: pid_value
+    Args:
+        id: pid_value
     return: The result json:
         code: status code,
         msg: meassage result,
@@ -876,12 +878,14 @@ def prepare_edit_item(id=None):
 
     post_activity = request.get_json() if request else {}
     getargs = request.args if request else {}
-    pid_value = post_activity.get('pid_value') or id
+    pid_value = id or post_activity.get('pid_value')
     community = getargs.get('community', None)
 
     # Cache Storage
     redis_connection = RedisConnection()
-    sessionstorage = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+    sessionstorage = redis_connection.connection(
+        db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True
+    )
     if sessionstorage.redis.exists("pid_{}_will_be_edit".format(pid_value)):
         return jsonify(
             code=err_code,
@@ -899,8 +903,10 @@ def prepare_edit_item(id=None):
                             object_type='rec',
                             getter=record_class.get_record)
         recid, deposit = resolver.resolve(pid_value)
-        authenticators = [str(deposit.get('owner')),
-                          str(deposit.get('weko_shared_id'))]
+        authenticators = [
+            str(deposit.get('owner')),
+            str(deposit.get('weko_shared_id'))
+        ]
         user_id = str(get_current_user())
         activity = WorkActivity()
         latest_pid = PIDVersioning(child=recid).last_child
@@ -1017,7 +1023,7 @@ def prepare_edit_item(id=None):
 
 @blueprint_api.route('/prepare_delete_item', methods=['POST'])
 @login_required
-def prepare_delete_item():
+def prepare_delete_item(id=None):
     """Prepare_edit_item.
 
     Host the api which provide 2 service:
@@ -1027,6 +1033,7 @@ def prepare_delete_item():
         header: Content type must be json
         data:
             pid_value: pid_value
+    
     return: The result json:
         code: status code,
         msg: meassage result,
@@ -1044,7 +1051,9 @@ def prepare_delete_item():
 
     # Cache Storage
     redis_connection = RedisConnection()
-    sessionstorage = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+    sessionstorage = redis_connection.connection(
+        db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True
+    )
     if sessionstorage.redis.exists("pid_{}_will_be_edit".format(pid_value)):
         return jsonify(
             code=err_code,

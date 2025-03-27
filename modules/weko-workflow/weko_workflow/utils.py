@@ -1883,12 +1883,13 @@ def prepare_delete_workflow(post_activity, recid, deposit):
 
     if not draft_pid:
         draft_record = deposit.prepare_draft_item(recid)
-        rtn = activity.init_activity(post_activity,
-                                     community,
-                                     draft_record.model.id)
+        rtn = activity.init_activity(
+            post_activity, community, draft_record.model.id
+        )
         # create item link info of draft record from parent record
         weko_record = WekoRecord.get_record_by_pid(
-            draft_record.pid.pid_value)
+            draft_record.pid.pid_value
+        )
         if weko_record:
             weko_record.update_item_link(recid.pid_value)
     else:

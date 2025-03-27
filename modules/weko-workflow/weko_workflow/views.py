@@ -1499,7 +1499,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
             journal=post_json.get('journal')
         )
 
-    if action_endpoint == 'approval' and item_id:
+    if action_endpoint == 'approval' and item_id and not for_delete:
         last_idt_setting = work_activity.get_action_identifier_grant(
             activity_id=activity_id,
             action_id=get_actionid('identifier_grant'))
@@ -1674,6 +1674,10 @@ def next_action(activity_id='0', action_id=0, json_data=None):
                     action_id=action_id,
                     req=-1)
 
+    if next_action_endpoint == "end_action"  and for_delete:
+        delete_item_id = current_pid.pid_value.split('.')[0]
+        soft_delete(delete_item_id)
+
     rtn = history.create_activity_history(activity, action_order)
     if not rtn:
         res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
@@ -1709,23 +1713,19 @@ def next_action(activity_id='0', action_id=0, json_data=None):
             action_order=next_action_order
         )
         work_activity.end_activity(activity)
-        if for_delete:
-            delete_item_id = current_pid.pid_value.split('.')[0]
-            soft_delete(delete_item_id)
-        else:
-            # Call signal to push item data to ES.
-            try:
-                if '.' not in current_pid.pid_value and has_request_context():
-                    user_id = activity_detail.activity_login_user if \
-                        activity and activity_detail.activity_login_user else -1
-                    item_created.send(
-                        current_app._get_current_object(),
-                        user_id=user_id,
-                        item_id=current_pid,
-                        item_title=activity_detail.title
-                    )
-            except BaseException:
-                abort(500, 'MAPPING_ERROR')
+        # Call signal to push item data to ES.
+        try:
+            if '.' not in current_pid.pid_value and has_request_context():
+                user_id = activity_detail.activity_login_user if \
+                    activity and activity_detail.activity_login_user else -1
+                item_created.send(
+                    current_app._get_current_object(),
+                    user_id=user_id,
+                    item_id=current_pid,
+                    item_title=activity_detail.title
+                )
+        except BaseException:
+            abort(500, 'MAPPING_ERROR')
     else:
         flag = work_activity.upt_activity_action(
             activity_id=activity_id, action_id=next_action_id,

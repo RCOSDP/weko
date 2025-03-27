@@ -394,7 +394,10 @@ class WorkFlowSettingView(BaseView):
             flows_name=json_data.get('flows_name', None),
             itemtype_id=json_data.get('itemtype_id', 0),
             flow_id=json_data.get('flow_id', 0),
-            delete_flow_id=json_data.get('delete_flow_id') if json_data.get('delete_flow_id') else None,
+            delete_flow_id=(
+                json_data.get('delete_flow_id') 
+                if json_data.get('delete_flow_id') else None
+            ),
             index_tree_id=json_data.get('index_id'),
             location_id=json_data.get('location_id'),
             open_restricted=json_data.get('open_restricted', False),

@@ -881,9 +881,16 @@ def check_jsonld_import_items(
         item_type = ItemTypes.get_by_id(json_mapping.item_type_id)
         check_result.update({"item_type_id": item_type.id})
 
-        # TODO: validate mapping
         mapping = json_mapping.mapping
         mapper = JsonLdMapper(item_type.id, mapping)
+        if mapper.is_valid:
+            current_app.logger.info(
+                f"Mapping is valid for item type {item_type.item_type_name.name}."
+            )
+            raise Exception(
+                f"Mapping is valid for item type {item_type.item_type_name.name}."
+            )
+
         with open(f"{data_path}/{json_name}", "r") as f:
             json_ld = json.load(f)
         item_metadatas, _ = mapper.to_item_metadata(json_ld)
@@ -2177,6 +2184,10 @@ def import_items_to_activity(item, request_info):
             link_data=link_data, grant_data=grant_data
         )
     except Exception as ex:
+        current_app.logger.error(
+            "Error occurred while importing item to activity: {}"
+            .format(headless.activity_id)
+        )
         traceback.print_exc()
         url = headless.detail
         recid = headless.recid
