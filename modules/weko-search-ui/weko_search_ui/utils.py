@@ -1661,7 +1661,7 @@ def get_file_name(file_path):
     return file_path.split("/")[-1] if file_path.split("/")[-1] else ""
 
 
-def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, metadata_only=False):
+def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
     """Upload file content.
 
     :argument
@@ -1777,7 +1777,7 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, metadata
 
     # set delete flag for file metadata if is empty.
     # Check metadata_only flag
-    if metadata_only:
+    if item.get("metadata_replace"):
         is_cleaned = False
         file_key = None
     else:
@@ -1977,7 +1977,7 @@ def send_item_created_event_to_es(item, request_info):
         )
 
 
-def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, metadata_only=False):
+def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
     """Validation importing zip file.
 
     :argument
@@ -2026,7 +2026,7 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, m
                     PIDVersioning(child=pid).last_child.object_uuid
                 )
 
-            register_item_metadata(item, root_path, owner, is_gakuninrdm, metadata_only)
+            register_item_metadata(item, root_path, owner, is_gakuninrdm)
 
             if not is_gakuninrdm:
                 if current_app.config.get("WEKO_HANDLE_ALLOW_REGISTER_CNRI"):
@@ -2174,11 +2174,12 @@ def import_items_to_activity(item, request_info):
     comment = metadata.get("comment")
     link_data = getattr(item["metadata"], "link_data", None)
     grant_data = item.get("grant_data")
+    metadata_replace = item.get("metadata_replace", False)
 
     error = None
     try:
         from weko_workflow.headless.activity import HeadlessActivity
-        headless = HeadlessActivity()
+        headless = HeadlessActivity(_metadata_replace=metadata_replace)
         url, current_action, recid = headless.auto(
             user_id= request_info.get("user_id"), workflow_id=workflow_id,
             index=index, metadata=metadata, files=files, comment=comment,

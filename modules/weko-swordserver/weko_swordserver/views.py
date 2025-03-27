@@ -556,7 +556,6 @@ def put_object(recid):
         "user_id": owner,
         "action": "IMPORT",
         "workflow_id": check_result.get("workflow_id"),
-        "metadata_replace": item["metadata_replace"]
     }
     response = {}
     if register_type == "Direct":
