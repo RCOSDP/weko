@@ -1110,10 +1110,13 @@ def get_activity_id_of_record_without_version(pid_object=None):
 
 
 def get_non_extract_files_by_recid(recid):
-    """ Get extraction info from temp_data in activity
+    """ Get extraction info from temp_data in activity.
 
     Args:
         recid (str): recid in deposit. "xxxxx" or "xxxxx.0"
+
+    Returns:
+        list[str]: list of non_extract filenames
     """
     pid = PersistentIdentifier.get('recid', recid)
     work_activity = WorkActivity()

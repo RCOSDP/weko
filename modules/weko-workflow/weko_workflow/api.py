@@ -2466,7 +2466,17 @@ class WorkActivity(object):
             db.session.rollback()
 
     def get_non_extract_files(self, activity_id):
-        """Get non-extract files."""
+        """Get non-extract files.
+
+        Get extraction info from temp_data in activity.
+
+        Args:
+            activity_id (str): Activity ID.
+
+        Returns:
+            list[str]: list of non_extract filenames
+
+        """
         metadata = self.get_activity_metadata(activity_id)
         if metadata is None:
             return None
