@@ -1861,6 +1861,147 @@ class JsonLdMapper(JsonMapper):
             parent[key] = value
             return parent
 
+        def ensure_entity_list_size(parent, key, at_type, size):
+            """Ensure list size including empty entity.
+
+            Args:
+                parent (_type_): Parent entity
+                key (_type_): Key of ro-crate-metadata.json
+                at_type (_type_): _description_
+                size (_type_): _description_
+            """
+            if not hasattr(parent, key) or getattr(parent, key) is None:
+                parent[key] = []
+
+            current_size = len(parent[key])
+            for i in range(current_size, size):
+                append_entity(parent, key, gen_id(meta_props[0]), at_type)
+            return
+
+        def extract_list_indices(meta_props, prop_props, property_map):
+            """Exteract list indices.
+
+            Args:
+                meta_props (_type_): _description_
+                prop_props (_type_): _description_
+                property_map (_type_): _description_
+
+            Returns:
+                list: _description_
+            """
+            list_index = []
+            for prop in meta_props:
+                m = re.search(r"\[(\d+)\]", prop)
+                list_index.append(int(m.group(1)) if m else None)
+
+            # case: list_index > prop_props
+            if len(list_index) > len(prop_props):
+                list_non_corresponding = []
+                definition_key = ""
+
+                for i, meta_key in enumerate(meta_props):
+                    definition_key += re.sub(r'\[\d+\]$', '', meta_key)
+                    if definition_key not in property_map:
+                        list_non_corresponding.append(i)
+                    definition_key += "."
+                list_index = [index for i, index in enumerate(list_index) if i not in list_non_corresponding]
+            # case: list_index < prop_props
+            elif len(list_index) < len(prop_props):
+                list_non_corresponding = []
+                definition_key = ""
+                reversed_map = {v: k for k, v in property_map.items()}
+
+                for i, prop_key in enumerate(prop_props):
+                    definition_key += prop_key
+                    if definition_key not in reversed_map:
+                        list_non_corresponding.append(i)
+                    definition_key += "."
+                for i in sorted(list_non_corresponding):
+                    list_index.insert(i, None)
+            return list_index
+
+        def gen_type():
+            return "PropertyValue"
+
+        def _set_rocrate_metadata(parent, META_KEY, meta_props, PROP_PATH, prop_props, deconstructed):
+            # Get list_index
+            list_index = extract_list_indices(meta_props, prop_props, properties_mapping)
+
+            # case: prop_props = []
+            if len(prop_props) == 0:
+                raise Exception("prop_props is empty")
+
+            # case: prop_props = [prop]
+            if len(prop_props) == 1:
+                index = list_index[0] if list_index else None
+                prop = prop_props[0]
+                at_type = gen_type()
+                # at_type = type_map[prop] if prop in type_map else "PropertyValue"
+
+                # dict
+                if index is None:
+                    # If prop is "@id", do nothing.
+                    if prop == "@id":
+                        pass
+                    # If prop is under root, add property directly.
+                    else:
+                        parent[prop] = deconstructed[META_KEY]
+                # list
+                else:
+                    ensure_entity_list_size(parent, prop, at_type, index + 1)
+                    parent[prop][index] = deconstructed[META_KEY]
+
+                return
+
+            _set_child_rocrate_metadata(parent, META_KEY, meta_props, PROP_PATH, prop_props, list_index, deconstructed)
+            return
+
+        def _set_child_rocrate_metadata(parent, META_KEY, meta_props, PROP_PATH, prop_props, list_index, deconstructed):
+            if len(prop_props) == 0:
+                raise Exception("prop_props is empty")
+
+            prop = prop_props[0]
+            index = list_index[0] if list_index else None
+            at_type = gen_type()
+            # at_type = type_map[prop] if prop in type_map else "PropertyValue"
+
+            # dict
+            if index is None:
+                if len(prop_props) == 1:
+                    if prop == "@id":
+                        pass
+                    else:
+                        parent[prop] = deconstructed[META_KEY]
+                        rocrate.add(parent)
+                else:
+                    if "@id" in prop_props:
+                        at_id = deconstructed[META_KEY]
+                        add_entity(parent, prop, at_id, at_type)
+                    else:
+                        if prop not in parent:
+                            add_entity(parent, prop, gen_id(meta_props[0]), at_type)
+                        _set_child_rocrate_metadata(parent[prop], META_KEY, meta_props[1:], PROP_PATH, prop_props[1:], list_index[1:], deconstructed)
+            # list
+            else:
+                if len(prop_props) == 1:
+                    if prop not in parent:
+                        list_val = ["" for _ in range(index + 1)]
+                    else:
+                        list_val = parent[prop]
+                    if len(list_val) <= index:
+                        list_val.extend(["" for _ in range(index - len(list_val) + 1)])
+                    parent[prop] = list_val
+                    list_val[index] = deconstructed[META_KEY]
+                    parent[prop] = list_val
+                    rocrate.add(parent)
+                else:
+                    ensure_entity_list_size(parent, prop, at_type, index + 1)
+                    if isinstance(parent[prop], list):
+                        _set_child_rocrate_metadata(parent[prop][index], META_KEY, meta_props[1:], PROP_PATH, prop_props[1:], list_index[1:], deconstructed)
+                    else:
+                        raise Exception(f"Unexpected structure for prop {prop} at index {index}")
+            return
+
         import itertools
         id_template = "_:{s}_{i}"
         _sequential = (id_template.format(i=i, s="{s}") for i in itertools.count())
@@ -1875,10 +2016,44 @@ class JsonLdMapper(JsonMapper):
             META_KEY = record_key.replace(".attribute_value_mlt", "").replace(".attribute_value", "")
 
             meta_props = META_KEY.split(".")
-            # PROP_PATH = properties_mapping[META_PATH] # attribute_value
-            # prop_props = PROP_PATH.split(".")
+            PROP_PATH = properties_mapping[META_PATH] # attribute_value
+            prop_props = PROP_PATH.split(".")
             print(f"--- {META_KEY}: {deconstructed[record_key]}, {gen_id(meta_props[0])} ---")
-            pass
+
+            # TODO: mapping to ro-crate format
+            _set_rocrate_metadata(rocrate.root_dataset, META_KEY, meta_props, PROP_PATH, prop_props, deconstructed)
 
         rocrate.root_dataset["wk:index"] = metadata.get("path", [])
+        # TODO: Add wk-context to ro-crate-metadata.json
+
+        ### identifier ###
+
+        ### uri ###
+
+        ### wk:publishStatus ###
+        rocrate.root_dataset["wk:publishStatus"] = metadata.get("publish_status", "private")
+
+        ### wk:feedbackMail (If exist) ###
+        feedback_mail_list = []  #TODO: implement feedback mail list
+        rocrate.root_dataset["wk:feedbackMail"] = feedback_mail_list
+
+        ### wk:editMode (default: Keep) ###
+        rocrate.root_dataset["wk:editMode"] = metadata.get("edit_mode", "Keep")
+
+        ### dc:type ###
+
+        ### wk:textExtraction (If exist) ###
+
+        ### wk:itemLinks.identifier ###
+        ### wk:itemLinks.value ###
+        linked_item_id = ""  #TODO: implement linked item id
+        linked_value = ""
+        dict_item_link = {
+            "identifier": linked_item_id,
+            "value": linked_value
+        }
+        add_list_entity(rocrate.root_dataset, "wk:itemLinks", ["_:itemLinks"], "PropertyValue", [dict_item_link])
+        ### wk:itemLinks.identifier (urlでは？) ###
+
+        ### wk:metadataAutoFill ###
         return rocrate
