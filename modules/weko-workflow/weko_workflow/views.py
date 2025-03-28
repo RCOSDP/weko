@@ -1565,7 +1565,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
             items_display_settings = AdminSettings.get(name='items_display_settings',
                                         dict_to_object=False)
             if items_display_settings:
-                enable_request_maillist = items_display_settings.get('display_request_form', False)         
+                enable_request_maillist = items_display_settings.get('display_request_form', False)
 
             if activity_request_mail and activity_request_mail.request_maillist and enable_request_maillist:
                 RequestMailList.update_by_list_item_id(
@@ -1690,7 +1690,11 @@ def next_action(activity_id='0', action_id=0, json_data=None):
         comment='',
         action_order=action_order
     )
-    if 'end_action' == next_action_endpoint:
+    
+    if next_action_endpoint == "approval":
+        work_activity.notify_about_activity(activity_id, "request_approval")
+
+    if next_action_endpoint == "end_action":
         non_extract = work_activity.get_non_extract_files(activity_id)
         deposit.non_extract = non_extract
         new_item_id = handle_finish_workflow(
@@ -1707,6 +1711,14 @@ def next_action(activity_id='0', action_id=0, json_data=None):
             action_order=next_action_order
         )
         work_activity.end_activity(activity)
+
+        if action_endpoint == "approval":
+            work_activity.notify_about_activity(activity_id, "approved")
+        else:
+            work_activity.notify_about_activity(activity_id, "registered")
+        if next_action_endpoint == "approval":
+            current_app.logger.info("next_action: request approval notification.")
+
         # Call signal to push item data to ES.
         try:
             if '.' not in current_pid.pid_value and has_request_context():
@@ -1899,7 +1911,7 @@ def previous_action(activity_id='0', action_id=0, req=0):
             db.session.delete(pid_identifier)
         db.session.commit()
     except PIDDoesNotExistError as pidNotEx:
-        current_app.logger.info(pidNotEx)
+        current_app.logger.info("doi does not exists.")
 
     if req == -1:
         pre_action = flow.get_item_registration_flow_action(
@@ -1952,6 +1964,10 @@ def previous_action(activity_id='0', action_id=0, req=0):
             res = ResponseMessageSchema().load({'code':-2,'msg':""})
             return jsonify(res.data), 500
     res = ResponseMessageSchema().load({'code':0,'msg':_('success')})
+
+    if action_id == 4:          # action_endpoint == "approval"
+        work_activity.notify_about_activity(activity_id, "rejected")
+
     return jsonify(res.data), 200
 
 

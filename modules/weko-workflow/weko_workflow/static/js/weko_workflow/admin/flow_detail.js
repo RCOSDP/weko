@@ -146,6 +146,7 @@ $(document).ready(function () {
   });
   $('#btn-new-flow').on('click', function () {
     let flow_name = $('#txt_flow_name').val();
+    let for_delete = $('#chk_for_delete').is(':checked');
     if (flow_name.length == 0) {
       $('#div_flow_name').addClass('has-error');
       $('#txt_flow_name').focus();
@@ -156,7 +157,7 @@ $(document).ready(function () {
       method: 'POST',
       async: true,
       contentType: 'application/json',
-      data: JSON.stringify({ 'flow_name': flow_name }),
+      data: JSON.stringify({ 'flow_name': flow_name, 'for_delete': for_delete }),
       success: function (data, status) {
         if (data.code == 0) {
           document.location.href = data.data.redirect;
@@ -175,6 +176,7 @@ $(document).ready(function () {
   });
   $('#btn-upt-flow').on('click', function () {
     let flow_name = $('#txt_flow_name').val();
+    let for_delete = $('#chk_for_delete').is(':checked');
     if (flow_name.length == 0) {
       $('#div_flow_name').addClass('has-error');
       $('#txt_flow_name').focus();
@@ -185,7 +187,7 @@ $(document).ready(function () {
       method: 'POST',
       async: true,
       contentType: 'application/json',
-      data: JSON.stringify({ 'flow_name': flow_name }),
+      data: JSON.stringify({ 'flow_name': flow_name, 'for_delete': for_delete }),
       success: function (data, status) {
         document.querySelectorAll('#inputModal').forEach(element => {
           element.innerHTML = data.msg
@@ -232,6 +234,23 @@ $(document).ready(function () {
       }
     });
   });
+
+  function filterActions(not_first_time = true) {
+    const isChecked = $('#chk_for_delete').is(':checked');
+    if (isChecked) {
+      if(not_first_time){
+        alert($('#message-for-delete-checked').text());
+      }
+      $('.action_normal').hide();
+      $('.action_delete').show();
+    } 
+    else {
+      $('.action_normal').show();
+      $('.action_delete').hide();
+    }
+  }
+  filterActions(false);
+  $('#chk_for_delete').on('change', filterActions);
 
   let action_list = [];
   $('#txt_flow_name').focus();

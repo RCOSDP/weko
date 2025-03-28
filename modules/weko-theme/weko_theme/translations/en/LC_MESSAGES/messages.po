@@ -685,6 +685,9 @@ msgstr "Bulk Export"
 msgid "Admin menu_Items_Import"
 msgstr "Import"
 
+msgid "Admin menu_Items_RO-Crate Import"
+msgstr "RO-Crate Import"
+
 msgid "Admin menu_Index Tree_Edit Tree"
 msgstr "Edit Tree"
 

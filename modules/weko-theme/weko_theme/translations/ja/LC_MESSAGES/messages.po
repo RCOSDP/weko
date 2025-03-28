@@ -722,6 +722,9 @@ msgstr "一括エクスポート"
 msgid "Admin menu_Items_Import"
 msgstr "インポート"
 
+msgid "Admin menu_Items_RO-Crate Import"
+msgstr "RO-Crate インポート"
+
 msgid "Admin menu_Index Tree_Edit Tree"
 msgstr "ツリー編集"
 

@@ -389,6 +389,10 @@ msgid "Admin menu_Items_Import"
 msgstr "Import"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Items_RO-Crate Import"
+msgstr "RO-Crate Import"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Index Tree_Edit Tree"
 msgstr "Edit Tree"
 

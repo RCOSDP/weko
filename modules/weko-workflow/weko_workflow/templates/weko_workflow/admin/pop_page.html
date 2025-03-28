@@ -23,7 +23,7 @@
               </thead>
               <tbody>
               {%- for action in action_list %}
-                <tr>
+                <tr class="test {% if action.is_for_delete %}action_delete{% else %}action_normal{% endif %}">
                   <th scope="row" rowspan="2">{{loop.index}}</th>
                   <td><span id="action_name_{{action.id}}">{{action.action_name}}</span></td>
                   <td>{{action.action_desc}}</td>
@@ -32,7 +32,7 @@
                   <td><span id="flow_action_ver_{{action.id}}"></span></td>
                   <td><span id="flow_action_date_{{action.id}}"></span></td>
                 </tr>
-                <tr>
+                <tr class="test {% if action.is_for_delete %}action_delete{% else %}action_normal{% endif %}">
                   <td colspan="6">
                     <div>
                       <button class="btn btn-primary btn_apply" id="btn_apply_{{action.id}}" data-action-id="{{action.id}}">

@@ -1,0 +1,54 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2025 National Institute of Informatics.
+#
+# WEKO-Notifications is free software; you can redistribute it and/or modify
+# it under the terms of the MIT License; see LICENSE file for more details.
+
+# TODO: Generate this manifest file by running the following commands:
+# (please sort the lines in this file after running below commands)
+#
+#  git init
+#  git add -A
+#  pip install -e .[all]
+#  check-manifest -u
+
+# Check manifest will not automatically add these two files:
+include .dockerignore
+include .editorconfig
+include .tx/config
+#prune docs/_build
+
+# added by check_manifest.py
+include *.rst
+include *.sh
+include *.txt
+include LICENSE
+include babel.ini
+include pytest.ini
+recursive-include docs *.bat
+recursive-include docs *.buildinfo
+recursive-include docs *.css
+recursive-include docs *.doctree
+recursive-include docs *.gif
+recursive-include docs *.html
+recursive-include docs *.inv
+recursive-include docs *.js
+recursive-include docs *.pickle
+recursive-include docs *.png
+recursive-include docs *.py
+recursive-include docs *.rst
+recursive-include docs *.txt
+recursive-include docs Makefile
+recursive-include examples *.py
+recursive-include examples *.sh
+recursive-include examples *.txt
+recursive-include tests *.py
+recursive-include weko_notifications *.xsl
+
+# added by check-manifest
+include *.properties
+include tox.ini
+recursive-include tests *.json
+recursive-include weko_notifications *.po
+recursive-include weko_notifications *.pot

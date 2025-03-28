@@ -84,7 +84,8 @@ from weko_index_tree.utils import (
     check_restrict_doi_with_indexes,
 )
 from weko_indextree_journal.api import Journals
-from weko_records.api import FeedbackMailList, JsonldMapping, RequestMailList, ItemTypeNames, ItemTypes, Mapping
+from weko_items_autofill.utils import get_doi_with_original
+from weko_records.api import FeedbackMailList, JsonldMapping, RequestMailList, ItemTypes, Mapping
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_full_mapping, get_mapping
 from weko_redis.redis import RedisConnection
@@ -1904,6 +1905,20 @@ def handle_workflow(item: dict):
             return
         else:
             create_work_flow(item.get("item_type_id"))
+
+def handle_doi(item: dict, doi: str):
+    """Handle doi.
+
+    :argument
+        item           -- {dict} item.
+        doi            -- {str} doi.
+    :return
+        return metadata with doi
+    """
+    metadata = item.get("metadata")
+    item_type_id = item.get("item_type_id")
+    doi_response = get_doi_with_original(doi, item_type_id, metadata)
+    return doi_response
 
 
 def create_work_flow(item_type_id):
