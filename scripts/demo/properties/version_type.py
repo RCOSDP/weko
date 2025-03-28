@@ -33,6 +33,10 @@ mapping = {
     "spase_mapping": "",
 }
 version_type = [None, "AO", "SMUR", "AM", "P", "VoR", "CVoR", "EVoR", "NA"]
+peer_reviewd_dict = {
+    "Peer reviewed": "査読あり",
+    "Not peer reviewed": "査読なし"
+}
 
 
 def add(post_data, key, **kwargs):
@@ -73,6 +77,15 @@ def schema(title="", multi_flag=multiple_flag):
                     },
                     "type": "string",
                 },
+                "subitem_peer_reviewed": {
+                    "editAble": True,
+                    "type": ["null", "string"],
+                    "format": "select",
+                    "enum": [None] + list(peer_reviewd_dict.keys()),
+                    "currentEnum": peer_reviewd_dict.keys,
+                    "title": "査読の有無",
+                    "title_i18n": {"en": "Peer reviewed/Not peer reviewed", "ja": "査読の有無"},
+                },
             },
         }
         return _d
@@ -107,6 +120,13 @@ def form(
                         "ja": "出版タイプResource",
                     },
                     "type": "text",
+                },
+                {
+                    "key": "{}.subitem_peer_reviewed".format(key),
+                    "title": "査読の有無",
+                    "title_i18n": {"en": "Peer reviewed/Not peer reviewed", "ja": "査読の有無"},
+                    "titleMap": get_select_value(peer_reviewd_dict),
+                    "type": "select",
                 },
             ],
             "key": key.replace("[]", ""),
