@@ -23,6 +23,7 @@
 import json
 import os
 import sys
+import traceback
 from copy import deepcopy
 from datetime import date, datetime, timedelta
 
@@ -848,7 +849,7 @@ def get_current_login_user_id():
 
 @blueprint_api.route('/prepare_edit_item', methods=['POST'])
 @login_required
-def prepare_edit_item(id=None):
+def prepare_edit_item(id=None, community=None):
     """Prepare_edit_item.
 
     Host the api which provide 2 service:
@@ -865,9 +866,10 @@ def prepare_edit_item(id=None):
         msg: meassage result,
         data: url redirect
     """
-    err_code = current_app.config.get('WEKO_ITEMS_UI_API_RETURN_CODE_ERROR',
-                                      -1)
-    
+    err_code = current_app.config.get(
+        'WEKO_ITEMS_UI_API_RETURN_CODE_ERROR', -1
+    )
+
     if not id and request:
         if request.headers['Content-Type'] != 'application/json':
             """Check header of request"""
@@ -879,7 +881,7 @@ def prepare_edit_item(id=None):
     post_activity = request.get_json() if request else {}
     getargs = request.args if request else {}
     pid_value = id or post_activity.get('pid_value')
-    community = getargs.get('community', None)
+    community = community or getargs.get('community', None)
 
     # Cache Storage
     redis_connection = RedisConnection()
@@ -1023,7 +1025,7 @@ def prepare_edit_item(id=None):
 
 @blueprint_api.route('/prepare_delete_item', methods=['POST'])
 @login_required
-def prepare_delete_item(id=None):
+def prepare_delete_item(id=None, community=None):
     """Prepare_edit_item.
 
     Host the api which provide 2 service:
@@ -1033,21 +1035,36 @@ def prepare_delete_item(id=None):
         header: Content type must be json
         data:
             pid_value: pid_value
-    
+
     return: The result json:
         code: status code,
         msg: meassage result,
         data: url redirect
-    
+
     Check delete item.
-    
+
     direct or workflow
-    
+
     return: delete_type(direct or workflow)
             workflow_id
             flow_id
     """
+    err_code = current_app.config.get(
+        'WEKO_ITEMS_UI_API_RETURN_CODE_ERROR', -1
+    )
 
+    if not id and request:
+        if request.headers['Content-Type'] != 'application/json':
+            """Check header of request"""
+            return jsonify(
+                code=err_code,
+                msg=_('Header Error')
+            )
+
+    post_activity = request.get_json() if request else {}
+    getargs = request.args if request else {}
+    pid_value = id or post_activity.get('pid_value')
+    community = community or getargs.get('community', None)
 
     # Cache Storage
     redis_connection = RedisConnection()
@@ -1063,22 +1080,20 @@ def prepare_delete_item(id=None):
         sessionstorage.put(
             "pid_{}_will_be_edit".format(pid_value),
             str(current_user.get_id()).encode('utf-8'),
-            ttl_secs=3)
-
-    post_activity = request.get_json()
-    getargs = request.args
-    pid_value = post_activity.get('pid_value')
-    community = getargs.get('community', None)
+            ttl_secs=3
+        )
 
     if pid_value:
         record_class = import_string('weko_deposit.api:WekoDeposit')
-        resolver = Resolver(pid_type='recid',
-                            object_type='rec',
-                            getter=record_class.get_record)
+        resolver = Resolver(
+            pid_type='recid', object_type='rec',
+            getter=record_class.get_record
+        )
         recid, deposit = resolver.resolve(pid_value)
-        authenticators = [str(deposit.get('owner')),
-                          str(deposit.get('weko_shared_id'))]
-        user_id = str(get_current_user())
+        authenticators = [
+            str(deposit.get('owner')), str(deposit.get('weko_shared_id'))
+        ]
+        user_id = str(current_user.get_id())
         activity = WorkActivity()
         latest_pid = PIDVersioning(child=recid).last_child
 
@@ -1114,8 +1129,7 @@ def prepare_delete_item(id=None):
         if check_an_item_is_locked(pid_value):
             return jsonify(
                 code=err_code,
-                msg=_('Item cannot be edited because '
-                      'the import is in progress.')
+                msg=_('Item cannot be edited because the import is in progress.')
             )
 
         # ! Check Record is being edit
@@ -1137,8 +1151,9 @@ def prepare_delete_item(id=None):
             post_workflow = activity.get_workflow_activity_by_item_id(
                 recid.object_uuid
             )
-            workflow = get_workflow_by_item_type_id(item_type.name_id,
-                                                    item_type_id)
+            workflow = get_workflow_by_item_type_id(
+                item_type.name_id, item_type_id
+            )
             if not workflow:
                 return jsonify(
                     code=err_code,
@@ -1149,10 +1164,8 @@ def prepare_delete_item(id=None):
         post_activity['community'] = community
         post_activity['post_workflow'] = post_workflow
 
-        # workflow_idを元に、ワークフローの情報を取得し直接から削除か、ワークフローから削除かを判定
-        # workflow_workflowのdelete_flow_idがNoneかnone出ないかを見る
         workflow = WorkFlow()
-        workflow_detail = workflow.get_workflow_by_id(post_activity['workflow_id'])
+        workflow_detail = workflow.get_workflow_by_id(workflow.id)
 
         """weko_records_ui.views.soft_delete"""
         if workflow_detail.delete_flow_id is None:
@@ -1167,21 +1180,21 @@ def prepare_delete_item(id=None):
             db.session.commit()
         except SQLAlchemyError as ex:
             current_app.logger.error('sqlalchemy error: {}'.format(ex))
+            traceback.format_exc()
             db.session.rollback()
             return jsonify(
                 code=err_code,
                 msg=_('An error has occurred.')
             )
-        except BaseException as ex:
-            import traceback
-            current_app.logger.error(traceback.format_exc())
+        except Exception as ex:
             current_app.logger.error('Unexpected error: {}'.format(ex))
+            traceback.format_exc()
             db.session.rollback()
             return jsonify(
                 code=err_code,
                 msg=_('An error has occurred.')
             )
-        
+
         err_code = current_app.config.get('WEKO_ITEMS_UI_API_RETURN_CODE_ERROR',
                                         -1)
         if request.headers['Content-Type'] != 'application/json':
@@ -1193,20 +1206,24 @@ def prepare_delete_item(id=None):
 
         if community:
             comm = GetCommunity.get_community_by_id(community)
-            url_redirect = url_for('weko_workflow.display_activity',
-                                   activity_id=rtn.activity_id,
-                                   community=comm.id)
+            url_redirect = url_for(
+                'weko_workflow.display_activity',
+                activity_id=rtn.activity_id, community=comm.id
+            )
         else:
-            url_redirect = url_for('weko_workflow.display_activity',
-                                   activity_id=rtn.activity_id)
+            url_redirect = url_for(
+                'weko_workflow.display_activity',
+                activity_id=rtn.activity_id
+            )
 
-        response = soft_delete(recid)
+        if rtn.action_id == 2:   # end_action
+            soft_delete(recid)
+
 
         return jsonify(
             code=0,
             msg='success',
             data=dict(redirect=url_redirect),
-            response=response
         )
 
     return jsonify(
