@@ -269,6 +269,19 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
                 assert redis_connect.redis.exists("Shib-Session-1111") is False
                 
                 # exist ShibUser.shib_user
+                set_session(client,{"shib_session_id":"1111"})
+                redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
+
+                shibuser = ShibUser({})
+                shibuser.shib_user = "test_user"
+                with patch("weko_accounts.views.ShibUser",return_value=shibuser):
+                    mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
+                    mock_flash = mocker.patch("weko_accounts.views.flash")
+                    client.get(url)
+                    mock_redirect.assert_called_with("/")
+                    assert redis_connect.redis.exists("Shib-Session-1111") is False
+                
+                # exist ShibUser.shib_user
                 set_session(client,{"shib_session_id":"1111","next":"/next_page"})
                 redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
 
