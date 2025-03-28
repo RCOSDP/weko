@@ -206,9 +206,16 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                         ]
 
                         for j in kvl:
-                            name_dict = dict(operator="and")
-                            name_dict.update(dict(query=j))
-                            shud.append(Q("match", **{key: name_dict}))
+                            
+                            if j == "other" and k=="language":
+                                source = "boolean flg=false; for(lang in doc['language']){if (!params.param1.contains(lang)){flg=true;}} return flg;"
+                                params = {"param1":vlst}
+                                script = Q("script",script={"source":source,"params":params})
+                                shud.append(Q("bool",filter=script))
+                            else:
+                                name_dict = dict(operator="and")
+                                name_dict.update(dict(query=j))
+                                shud.append(Q("match", **{key: name_dict}))
 
                         if shud:
                             return Q("bool", should=shud)
@@ -298,7 +305,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                             if "=*" in alst[1]:
                                                 name = alst[0] + "." + val_attr_lst[0]
                                                 qt = [
-                                                    Q("term", **{name: val_attr_lst[1]})
+                                                    Q("term", **{name: key})
                                                 ]
 
                                             mut.extend(qt or [])

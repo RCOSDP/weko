@@ -183,6 +183,7 @@ class WidgetSettingView(ModelView):
             list_forms=list_forms,
             delete_form=delete_form,
             action_form=action_form,
+            extra_args=view_args.extra_args,
 
             # List
             list_columns=self._list_columns,

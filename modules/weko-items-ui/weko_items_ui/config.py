@@ -69,8 +69,8 @@ WEKO_ITEMS_UI_MAX_EXPORT_NUM_PER_ROLE = {
 }
 """Max number of items that can be exported per role."""
 
-WEKO_ITEMS_UI_EXPORT_FORMAT_JSON = 'JSON'
-"""Format for exporting items -- JSON. """
+WEKO_ITEMS_UI_EXPORT_FORMAT_TSV = 'TSV'
+"""Format for exporting items -- TSV. """
 
 WEKO_ITEMS_UI_EXPORT_FORMAT_BIBTEX = 'BIBTEX'
 """Format for exporting items -- BIBTEX. """

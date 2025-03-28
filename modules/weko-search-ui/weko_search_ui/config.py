@@ -248,20 +248,20 @@ WEKO_SEARCH_KEYWORDS_DICT = {
             "",
             {
                 "id_attr": {
-                    "identifier": ("relation.relatedIdentifier", "identifierType=*"),
+                    "identifier": ("relation.relatedIdentifier", "identifierType=identifier"),
                     "URI": ("identifier", "identifierType=*"),
-                    "fullTextURL": ("file.URI", "objectType=*"),
-                    "selfDOI": ("identifierRegistration", "identifierType=*"),
-                    "ISBN": ("relation.relatedIdentifier", "identifierType=ISBN"),
-                    "ISSN": ("sourceIdentifier", "identifierType=ISSN"),
+                    "fullTextURL": ("file.URI", "objectType=fullTextURL"),
+                    "selfDOI": ("identifierRegistration", "identifierType=selfDOI"),
+                    "ISBN": ("relation.relatedIdentifier", "identifierType=*"),
+                    "ISSN": ("sourceIdentifier", "identifierType=*"),
                     "NCID": [
-                        ("relation.relatedIdentifier", "identifierType=NCID"),
-                        ("sourceIdentifier", "identifierType=NCID"),
+                        ("relation.relatedIdentifier", "identifierType=*"),
+                        ("sourceIdentifier", "identifierType=*"),
                     ],
-                    "pmid": ("relation.relatedIdentifier", "identifierType=PMID"),
-                    "doi": ("relation.relatedIdentifier", "identifierType=DOI"),
-                    "NAID": ("relation.relatedIdentifier", "identifierType=NAID"),
-                    "ichushi": ("relation.relatedIdentifier", "identifierType=ICHUSHI"),
+                    "PMID": ("relation.relatedIdentifier", "identifierType=*"),
+                    "DOI": ("relation.relatedIdentifier", "identifierType=*"),
+                    "NAID": ("relation.relatedIdentifier", "identifierType=*"),
+                    "ICHUSHI": ("relation.relatedIdentifier", "identifierType=*"),
                 }
             },
         ),
@@ -342,13 +342,13 @@ WEKO_SEARCH_KEYWORDS_DICT = {
                 "ara",
                 "ell",
                 "kor",
-                "-",
+                "other"
             ]
         },
         "srctitle": ["sourceTitle", "sourceTitle.ja"],
         "spatial": "geoLocation.geoLocationPlace",
         "temporal": "temporal",
-        "version": "versionType",
+        "version": "versiontype",
         "dissno": "dissertationNumber",
         "degreename": ["degreeName", "degreeName.ja"],
         "dgname": ["dgName", "dgName.ja"],
@@ -713,7 +713,7 @@ WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 3
 
 WEKO_SEARCH_UI_BULK_EXPORT_TASKID_EXPIRED_TIME = 1
 
-WEKO_SEARCH_UI_BULK_EXPORT_LIMIT = 1000
+WEKO_SEARCH_UI_BULK_EXPORT_LIMIT = 100
 """The number of items exported to tsv/csv file each once."""
 
 WEKO_SEARCH_UI_BULK_EXPORT_RETRY = 5

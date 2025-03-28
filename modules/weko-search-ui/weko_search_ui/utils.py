@@ -21,6 +21,7 @@
 """Weko Search-UI admin."""
 
 import csv
+import chardet
 import json
 import os
 import re
@@ -31,6 +32,7 @@ import tempfile
 import traceback
 import uuid
 import zipfile
+import chardet
 from collections import Callable, OrderedDict
 from datetime import datetime
 from functools import partial, reduce, wraps
@@ -124,6 +126,7 @@ from .config import (
     WEKO_IMPORT_VALIDATE_MESSAGE,
     WEKO_REPO_USER,
     WEKO_SEARCH_TYPE_DICT,
+    WEKO_SEARCH_MAX_RESULT,
     WEKO_SEARCH_UI_BULK_EXPORT_LIMIT,
     WEKO_SEARCH_UI_BULK_EXPORT_MSG,
     WEKO_SEARCH_UI_BULK_EXPORT_RUN_MSG,
@@ -195,7 +198,48 @@ class DefaultOrderedDict(OrderedDict):
         )
 
 
-def get_tree_items(index_tree_id):
+def execute_search_with_pagination(
+        search_instance,
+        max_result_size=WEKO_SEARCH_MAX_RESULT
+):
+    """Execute search with pagination.
+
+    @param search_instance: search instance
+    @param max_result_size: maximum number of records to get
+                            if < 0, get all records
+    @return: search result
+    """
+    if max_result_size < 0:
+        search_size = 10000
+    else:
+        search_size = min(max_result_size, 10000)
+        max_result_size -= search_size
+
+    search_instance = search_instance.extra(size=search_size)
+    search_result = search_instance.execute()
+    records = search_result.to_dict().get('hits', {}).get('hits', [])
+    result = records
+
+    while len(records) == 10000 and max_result_size != 0:
+        if max_result_size < 0:
+            search_size = 10000
+        else:
+            search_size = min(max_result_size, 10000)
+            max_result_size -= search_size
+
+        search_after = records[-1]['sort']
+        search_instance = search_instance.extra(
+            size=search_size,
+            search_after=search_after
+        )
+        search_result = search_instance.execute()
+        records = search_result.to_dict().get('hits', {}).get('hits', [])
+        result.extend(records)
+
+    return result
+
+
+def get_tree_items(index_tree_id, max_result_size=WEKO_SEARCH_MAX_RESULT):
     """Get tree items."""
     records_search = RecordsSearch()
     records_search = records_search.with_preference_param().params(version=False)
@@ -203,14 +247,12 @@ def get_tree_items(index_tree_id):
     search_instance, _ = item_path_search_factory(
         None, records_search, index_id=index_tree_id
     )
-    search_result = search_instance.execute()
-    rd = search_result.to_dict()
-    return rd.get("hits").get("hits")
+    return execute_search_with_pagination(search_instance, max_result_size)
 
 
 def delete_records(index_tree_id, ignore_items):
     """Bulk delete records."""
-    hits = get_tree_items(index_tree_id)
+    hits = get_tree_items(index_tree_id, max_result_size=-1)
     result = []
 
     for hit in hits:
@@ -234,7 +276,7 @@ def delete_records(index_tree_id, ignore_items):
                             paths.remove(index_id)
                         break
 
-                
+
                 indexer = WekoIndexer()
 
                 if not del_flag:
@@ -475,13 +517,15 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
     try:
         # Create temp dir for import data
         os.mkdir(data_path)
-
         with zipfile.ZipFile(file) as z:
             for info in z.infolist():
                 try:
-                    info.filename = info.orig_filename.encode("cp437").decode("cp932")
-                    if os.sep != "/" and os.sep in info.filename:
-                        info.filename = info.filename.replace(os.sep, "/")
+                    info.filename = info.orig_filename
+                    inf = chardet.detect(info.orig_filename)
+                    if inf['encoding'] is not None and inf['encoding'] == 'cp437':
+                        info.filename = info.orig_filename.encode("cp437").decode("cp932")
+                        if os.sep != "/" and os.sep in info.filename:
+                            info.filename = info.filename.replace(os.sep, "/")
                 except Exception:
                     current_app.logger.warning("-" * 60)
                     traceback.print_exc(file=sys.stdout)
@@ -593,7 +637,7 @@ def unpackage_import_file(data_path: str, file_name: str, file_format: str, forc
         for record in list_record:
             record["id"] = None
             record["uri"] = None
-    
+
     current_app.logger.debug('list_record2: {}'.format(list_record))
     # [{'pos_index': ['Index A'], 'publish_status': 'public', 'feedback_mail': ['wekosoftware@nii.ac.jp'], 'edit_mode': 'Keep', 'metadata': {'pubdate': '2021-03-19', 'item_1617186331708': [{'subitem_1551255647225': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'en_conference paperITEM00000001(public_open_access_simple)', 'subitem_1551255648112': 'en'}], 'item_1617186385884': [{'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'en'}, {'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'ja'}], 'item_1617186419668': [{'creatorAffiliations': [{'affiliationNameIdentifiers': [{'affiliationNameIdentifier': '0000000121691048', 'affiliationNameIdentifierScheme': 'ISNI', 'affiliationNameIdentifierURI': 'http://isni.org/isni/0000000121691048'}], 'affiliationNames': [{'affiliationName': 'University', 'affiliationNameLang': 'en'}]}], 'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': '4', 'nameIdentifierScheme': 'WEKO'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617349709064': [{'contributorMails': [{'contributorMail': 'wekosoftware@nii.ac.jp'}], 'contributorNames': [{'contributorName': '情報, 太郎', 'lang': 'ja'}, {'contributorName': 'ジョウホウ, タロウ', 'lang': 'ja-Kana'}, {'contributorName': 'Joho, Taro', 'lang': 'en'}], 'contributorType': 'ContactPerson', 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617186476635': {'subitem_1522299639480': 'open access', 'subitem_1600958577026': 'http://purl.org/coar/access_right/c_abf2'}, 'item_1617351524846': {'subitem_1523260933860': 'Unknown'}, 'item_1617186499011': [{'subitem_1522650717957': 'ja', 'subitem_1522650727486': 'http://localhost', 'subitem_1522651041219': 'Rights Information'}], 'item_1617610673286': [{'nameIdentifiers': [{'nameIdentifier': 'xxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}], 'rightHolderNames': [{'rightHolderLanguage': 'ja', 'rightHolderName': 'Right Holder Name'}]}], 'item_1617186609386': [{'subitem_1522299896455': 'ja', 'subitem_1522300014469': 'Other', 'subitem_1522300048512': 'http://localhost/', 'subitem_1523261968819': 'Sibject1'}], 'item_1617186626617': [{'subitem_description': 'Description\nDescription<br/>Description', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}, {'subitem_description': '概要\n概要\n概要\n概要', 'subitem_description_language': 'ja', 'subitem_description_type': 'Abstract'}], 'item_1617186643794': [{'subitem_1522300295150': 'en', 'subitem_1522300316516': 'Publisher'}], 'item_1617186660861': [{'subitem_1522300695726': 'Available', 'subitem_1522300722591': '2021-06-30'}], 'item_1617186702042': [{'subitem_1551255818386': 'jpn'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_1617349808926': {'subitem_1523263171732': 'Version'}, 'item_1617265215918': {'subitem_1522305645492': 'AO', 'subitem_1600292170262': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce'}, 'item_1617186783814': [{'subitem_identifier_type': 'URI', 'subitem_identifier_uri': 'http://localhost'}], 'item_1617353299429': [{'subitem_1522306207484': 'isVersionOf', 'subitem_1522306287251': {'subitem_1522306382014': 'arXiv', 'subitem_1522306436033': 'xxxxx'}, 'subitem_1523320863692': [{'subitem_1523320867455': 'en', 'subitem_1523320909613': 'Related Title'}]}], 'item_1617186859717': [{'subitem_1522658018441': 'en', 'subitem_1522658031721': 'Temporal'}], 'item_1617186882738': [{'subitem_geolocation_place': [{'subitem_geolocation_place_text': 'Japan'}]}], 'item_1617186901218': [{'subitem_1522399143519': {'subitem_1522399281603': 'ISNI', 'subitem_1522399333375': 'http://xxx'}, 'subitem_1522399412622': [{'subitem_1522399416691': 'en', 'subitem_1522737543681': 'Funder Name'}], 'subitem_1522399571623': {'subitem_1522399585738': 'Award URI', 'subitem_1522399628911': 'Award Number'}, 'subitem_1522399651758': [{'subitem_1522721910626': 'en', 'subitem_1522721929892': 'Award Title'}]}], 'item_1617186920753': [{'subitem_1522646500366': 'ISSN', 'subitem_1522646572813': 'xxxx-xxxx-xxxx'}], 'item_1617186941041': [{'subitem_1522650068558': 'en', 'subitem_1522650091861': 'Source Title'}], 'item_1617186959569': {'subitem_1551256328147': '1'}, 'item_1617186981471': {'subitem_1551256294723': '111'}, 'item_1617186994930': {'subitem_1551256248092': '12'}, 'item_1617187024783': {'subitem_1551256198917': '1'}, 'item_1617187045071': {'subitem_1551256185532': '3'}, 'item_1617187112279': [{'subitem_1551256126428': 'Degree Name', 'subitem_1551256129013': 'en'}], 'item_1617187136212': {'subitem_1551256096004': '2021-06-30'}, 'item_1617944105607': [{'subitem_1551256015892': [{'subitem_1551256027296': 'xxxxxx', 'subitem_1551256029891': 'kakenhi'}], 'subitem_1551256037922': [{'subitem_1551256042287': 'Degree Grantor Name', 'subitem_1551256047619': 'en'}]}], 'item_1617187187528': [{'subitem_1599711633003': [{'subitem_1599711636923': 'Conference Name', 'subitem_1599711645590': 'ja'}], 'subitem_1599711655652': '1', 'subitem_1599711660052': [{'subitem_1599711680082': 'Sponsor', 'subitem_1599711686511': 'ja'}], 'subitem_1599711699392': {'subitem_1599711704251': '2020/12/11', 'subitem_1599711712451': '1', 'subitem_1599711727603': '12', 'subitem_1599711731891': '2000', 'subitem_1599711735410': '1', 'subitem_1599711739022': '12', 'subitem_1599711743722': '2020', 'subitem_1599711745532': 'ja'}, 'subitem_1599711758470': [{'subitem_1599711769260': 'Conference Venue', 'subitem_1599711775943': 'ja'}], 'subitem_1599711788485': [{'subitem_1599711798761': 'Conference Place', 'subitem_1599711803382': 'ja'}], 'subitem_1599711813532': 'JPN'}], 'item_1617605131499': [{'accessrole': 'open_access', 'date': [{'dateType': 'Available', 'dateValue': '2021-07-12'}], 'displaytype': 'simple', 'filename': '1KB.pdf', 'filesize': [{'value': '1 KB'}], 'format': 'text/plain'}, {'filename': ''}], 'item_1617620223087': [{'subitem_1565671149650': 'ja', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheading'}, {'subitem_1565671149650': 'en', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheding'}]}, 'file_path': ['file00000001/1KB.pdf', ''], 'item_type_name': 'デフォルトアイテムタイプ（フル）', 'item_type_id': 15, '$schema': 'https://localhost:8443/items/jsonschema/15'}]
 
@@ -608,7 +652,7 @@ def unpackage_import_file(data_path: str, file_name: str, file_format: str, forc
     # current_app.logger.debug('list_record4: {}'.format(list_record))
     # [{'pos_index': ['Index A'], 'publish_status': 'public', 'feedback_mail': ['wekosoftware@nii.ac.jp'], 'edit_mode': 'Keep', 'metadata': {'pubdate': '2021-03-19', 'item_1617186331708': [{'subitem_1551255647225': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'en_conference paperITEM00000001(public_open_access_simple)', 'subitem_1551255648112': 'en'}], 'item_1617186385884': [{'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'en'}, {'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'ja'}], 'item_1617186419668': [{'creatorAffiliations': [{'affiliationNameIdentifiers': [{'affiliationNameIdentifier': '0000000121691048', 'affiliationNameIdentifierScheme': 'ISNI', 'affiliationNameIdentifierURI': 'http://isni.org/isni/0000000121691048'}], 'affiliationNames': [{'affiliationName': 'University', 'affiliationNameLang': 'en'}]}], 'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': '4', 'nameIdentifierScheme': 'WEKO'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617349709064': [{'contributorMails': [{'contributorMail': 'wekosoftware@nii.ac.jp'}], 'contributorNames': [{'contributorName': '情報, 太郎', 'lang': 'ja'}, {'contributorName': 'ジョウホウ, タロウ', 'lang': 'ja-Kana'}, {'contributorName': 'Joho, Taro', 'lang': 'en'}], 'contributorType': 'ContactPerson', 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617186476635': {'subitem_1522299639480': 'open access', 'subitem_1600958577026': 'http://purl.org/coar/access_right/c_abf2'}, 'item_1617351524846': {'subitem_1523260933860': 'Unknown'}, 'item_1617186499011': [{'subitem_1522650717957': 'ja', 'subitem_1522650727486': 'http://localhost', 'subitem_1522651041219': 'Rights Information'}], 'item_1617610673286': [{'nameIdentifiers': [{'nameIdentifier': 'xxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}], 'rightHolderNames': [{'rightHolderLanguage': 'ja', 'rightHolderName': 'Right Holder Name'}]}], 'item_1617186609386': [{'subitem_1522299896455': 'ja', 'subitem_1522300014469': 'Other', 'subitem_1522300048512': 'http://localhost/', 'subitem_1523261968819': 'Sibject1'}], 'item_1617186626617': [{'subitem_description': 'Description\nDescription<br/>Description', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}, {'subitem_description': '概要\n概要\n概要\n概要', 'subitem_description_language': 'ja', 'subitem_description_type': 'Abstract'}], 'item_1617186643794': [{'subitem_1522300295150': 'en', 'subitem_1522300316516': 'Publisher'}], 'item_1617186660861': [{'subitem_1522300695726': 'Available', 'subitem_1522300722591': '2021-06-30'}], 'item_1617186702042': [{'subitem_1551255818386': 'jpn'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_1617349808926': {'subitem_1523263171732': 'Version'}, 'item_1617265215918': {'subitem_1522305645492': 'AO', 'subitem_1600292170262': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce'}, 'item_1617186783814': [{'subitem_identifier_type': 'URI', 'subitem_identifier_uri': 'http://localhost'}], 'item_1617353299429': [{'subitem_1522306207484': 'isVersionOf', 'subitem_1522306287251': {'subitem_1522306382014': 'arXiv', 'subitem_1522306436033': 'xxxxx'}, 'subitem_1523320863692': [{'subitem_1523320867455': 'en', 'subitem_1523320909613': 'Related Title'}]}], 'item_1617186859717': [{'subitem_1522658018441': 'en', 'subitem_1522658031721': 'Temporal'}], 'item_1617186882738': [{'subitem_geolocation_place': [{'subitem_geolocation_place_text': 'Japan'}]}], 'item_1617186901218': [{'subitem_1522399143519': {'subitem_1522399281603': 'ISNI', 'subitem_1522399333375': 'http://xxx'}, 'subitem_1522399412622': [{'subitem_1522399416691': 'en', 'subitem_1522737543681': 'Funder Name'}], 'subitem_1522399571623': {'subitem_1522399585738': 'Award URI', 'subitem_1522399628911': 'Award Number'}, 'subitem_1522399651758': [{'subitem_1522721910626': 'en', 'subitem_1522721929892': 'Award Title'}]}], 'item_1617186920753': [{'subitem_1522646500366': 'ISSN', 'subitem_1522646572813': 'xxxx-xxxx-xxxx'}], 'item_1617186941041': [{'subitem_1522650068558': 'en', 'subitem_1522650091861': 'Source Title'}], 'item_1617186959569': {'subitem_1551256328147': '1'}, 'item_1617186981471': {'subitem_1551256294723': '111'}, 'item_1617186994930': {'subitem_1551256248092': '12'}, 'item_1617187024783': {'subitem_1551256198917': '1'}, 'item_1617187045071': {'subitem_1551256185532': '3'}, 'item_1617187112279': [{'subitem_1551256126428': 'Degree Name', 'subitem_1551256129013': 'en'}], 'item_1617187136212': {'subitem_1551256096004': '2021-06-30'}, 'item_1617944105607': [{'subitem_1551256015892': [{'subitem_1551256027296': 'xxxxxx', 'subitem_1551256029891': 'kakenhi'}], 'subitem_1551256037922': [{'subitem_1551256042287': 'Degree Grantor Name', 'subitem_1551256047619': 'en'}]}], 'item_1617187187528': [{'subitem_1599711633003': [{'subitem_1599711636923': 'Conference Name', 'subitem_1599711645590': 'ja'}], 'subitem_1599711655652': '1', 'subitem_1599711660052': [{'subitem_1599711680082': 'Sponsor', 'subitem_1599711686511': 'ja'}], 'subitem_1599711699392': {'subitem_1599711704251': '2020/12/11', 'subitem_1599711712451': '1', 'subitem_1599711727603': '12', 'subitem_1599711731891': '2000', 'subitem_1599711735410': '1', 'subitem_1599711739022': '12', 'subitem_1599711743722': '2020', 'subitem_1599711745532': 'ja'}, 'subitem_1599711758470': [{'subitem_1599711769260': 'Conference Venue', 'subitem_1599711775943': 'ja'}], 'subitem_1599711788485': [{'subitem_1599711798761': 'Conference Place', 'subitem_1599711803382': 'ja'}], 'subitem_1599711813532': 'JPN'}], 'item_1617605131499': [{'accessrole': 'open_access', 'date': [{'dateType': 'Available', 'dateValue': '2021-07-12'}], 'displaytype': 'simple', 'filename': '1KB.pdf', 'filesize': [{'value': '1 KB'}], 'format': 'text/plain'}, {'filename': ''}], 'item_1617620223087': [{'subitem_1565671149650': 'ja', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheading'}, {'subitem_1565671149650': 'en', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheding'}]}, 'file_path': ['file00000001/1KB.pdf', ''], 'item_type_name': 'デフォルトアイテムタイプ（フル）', 'item_type_id': 15, '$schema': 'https://localhost:8443/items/jsonschema/15', 'identifier_key': 'item_1617186819068', 'errors': None, 'status': 'new', 'id': None, 'item_title': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)'}]
 
-    
+
 
     return list_record
 
@@ -625,27 +669,10 @@ def getEncode(filepath):
     Returns:
         [type]: [description]
     """
-    encs = [
-        "iso-2022-jp",
-        "euc-jp",
-        "shift_jis",
-        "utf-8",
-        "utf-8-sig",
-        "utf-16be",
-        "utf-16le",
-        "utf-32be",
-        "utf-32le",
-        "",
-    ]
-    for enc in encs:
-        if enc != "":
-            with open(filepath, encoding=enc) as fr:
-                try:
-                    fr = fr.read()
-                except UnicodeDecodeError:
-                    continue
-            return enc
-    return enc
+    with open(filepath, mode='rb') as fr:
+        b = fr.read()
+    enc = chardet.detect(b)
+    return enc.get('encoding', 'utf-8-sig')
 
 
 def read_stats_file(file_path: str, file_name: str, file_format: str) -> dict:
@@ -972,7 +999,7 @@ def handle_check_exist_record(list_record) -> list:
                         exist_url = (
                                 request.host_url + "records/" + str(item_exist.get("recid"))
                             )
-                        
+
                         if item.get("uri") == exist_url:
                             _edit_mode = item.get("edit_mode")
                             if not _edit_mode or _edit_mode.lower() not in [
@@ -1207,11 +1234,11 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
 
     def escape_newline(data):
         """Replace <br/> in metadata with \n.
-        
+
         {"key1":["test<br/>test"]} -> {"key1":["test\ntest"]}
         :argument
             data     -- {obj} escape target
-        :return 
+        :return
             obj      -- Obj after escaping
         """
         if isinstance(data,list):
@@ -1631,13 +1658,23 @@ def handle_item_title(list_record):
     """
     from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
     from weko_records.utils import check_info_in_metadata
-        
+
     for item in list_record:
         error = None
-        meta_option, item_type_mapping = get_options_and_order_list(item["item_type_id"])
-        hide_list = get_hide_list_by_schema_form(item["item_type_id"])
-        item_map = get_mapping(item["item_type_id"], "jpcoar_mapping")
-        # current_app.logger.debug("item_type_mapping: {}".format(item_type_mapping))
+        item_type_id = item["item_type_id"]
+
+        item_type = ItemTypes.get_by_id(item_type_id)
+        hide_list = []
+        if item_type:
+            meta_option = get_options_and_order_list(
+                item_type_id,
+                item_type_data=ItemTypes(item_type.schema, model=item_type),
+                mapping_flag=False)
+            hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+        else:
+            meta_option = get_options_and_order_list(item_type_id, mapping_flag=False)
+        item_map = get_mapping(item_type_id, 'jpcoar_mapping', item_type=item_type)
+
         # current_app.logger.debug("item_map: {}".format(item_map))
         title_data, _title_key = get_data_by_property(
             item["metadata"], item_map, "title.@value"
@@ -1759,7 +1796,7 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
                         (info.name and index_name_path == \
                          info.name.replace('-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT'])):
                         index_info = info
-                    
+
                     if not index_info:      # index does not exist by index path
                         if index_id:
                             errors.append(msg_not_exist.format("IndexID, POS_INDEX"))
@@ -1998,7 +2035,7 @@ def handle_check_doi_ra(list_record):
             current_app.logger.debug("item_id:{0} doi_ra:{1}".format(item_id, doi_ra))
             current_app.logger.debug("doi_type:{0} _value:{1}".format(doi_type, _value))
 
-            if doi_type and doi_type[0] != doi_ra:
+            if doi_type and doi_type[0] != doi_ra and (doi_ra != 'NDL JaLC' or doi_type[0] != 'JaLC'):
                 error = _("Specified {} is different from " + "existing {}.").format(
                     "DOI_RA", "DOI_RA"
                 )
@@ -2256,7 +2293,7 @@ def prepare_doi_link(item_id):
 
     Returns:
         _type_: _description_ {'identifier_grant_jalc_doi_link': 'https://doi.org/aaa.bbb/0000000006', 'identifier_grant_jalc_cr_doi_link': 'https://doi.org/ccc.ddd/0000000006', 'identifier_grant_jalc_dc_doi_link': 'https://doi.org/eee.fff/0000000006', 'identifier_grant_ndl_jalc_doi_link': 'https://doi.org/ggg.hhh/0000000006'}
-    """        
+    """
     item_id = "%010d" % int(item_id)
     identifier_setting = prepare_doi_setting()
     suffix = identifier_setting.suffix or ""
@@ -2364,7 +2401,7 @@ def register_item_doi(item):
                 data,
                 WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1
             )
-        elif doi_ra == "NDL JaLC" and doi:
+        elif doi_ra == "NDL JaLC" and doi and not pid_doi:
             data = {
                 "identifier_grant_jalc_doi_link": IDENTIFIER_GRANT_LIST[1][2]
                 + "/"
@@ -2702,7 +2739,7 @@ def get_list_key_of_iso_date(schemaform):
     keys = []
     for item in schemaform:
         if not item.get("items"):
-            if item.get("templateUrl", "") == DATE_ISO_TEMPLATE_URL:
+            if (item.get("templateUrl", "") == DATE_ISO_TEMPLATE_URL) or ("dateValue" in item.get("key","")):
                 keys.append(item.get("key").replace("[]", ""))
         else:
             keys.extend(get_list_key_of_iso_date(item.get("items")))
@@ -2906,27 +2943,27 @@ def handle_fill_system_item(list_record):
             "identifierRegistration.@attributes.identifierType", ""
         )
         identifierRegistration_key = identifierRegistration_key.split(".")[0]
-        
+
         item_doi = item.get("doi","")
         item_doi_prefix = ""
         item_doi_suffix = ""
         item_cnri = item.get("cnri", "")
-        
+
         if item_doi and "/" in item_doi:
             item_doi_prefix, item_doi_suffix = item_doi.split("/")
         else:
             item_doi_prefix = item_doi
-        
+
         item_doi_ra = item.get("doi_ra","")
         item_id = item.get('id',"")
         checked_registerd_doi_ra = False
         existed_doi = False
-        
+
         if identifierRegistration_key:
             item["identifier_key"] = identifierRegistration_key
             is_change_identifier = item.get("is_change_identifier", False)
             doi_setting = prepare_doi_setting()
-            
+
             pid_doi = None
             if item_id:
                 try:
@@ -2935,12 +2972,12 @@ def handle_fill_system_item(list_record):
                     pid_doi = rec.pid_doi
                 except PIDDoesNotExistError:
                     pid_doi=None
-            
+
             registerd_doi = None
             registerd_doi_prefix = None
             registerd_doi_suffix = None
             registerd_doi_ra = None
-            
+
             if pid_doi and doi_setting:
                 doi_value = pid_doi.pid_value
                 registerd_doi = doi_value.replace("https://doi.org/","")
@@ -2959,7 +2996,7 @@ def handle_fill_system_item(list_record):
                     checked_registerd_doi_ra = False
             else:
                 existed_doi = False
-            
+
             checked_item_doi_ra = False
             if item_doi_prefix is not "" and doi_setting:
                 if doi_setting.jalc_doi == item_doi_prefix:
@@ -2998,6 +3035,8 @@ def handle_fill_system_item(list_record):
                 elif is_ndl:
                     item["doi_ra"] = item_doi_ra
 
+            item_doi_ra = "JaLC" if item_doi_ra == "NDL JaLC" else item_doi_ra
+            registerd_doi_ra = "JaLC" if registerd_doi_ra == "NDL JaLC" else registerd_doi_ra
             if identifierRegistration_key in item["metadata"]:
                 if existed_doi and checked_registerd_doi_ra and checked_item_doi_ra:
                     if 'subitem_identifier_reg_type' in item["metadata"][identifierRegistration_key]:
@@ -3020,7 +3059,7 @@ def handle_fill_system_item(list_record):
                             if registerd_doi_ra != item_doi_ra:
                                 fixed_doi_ra = True
 
-                    if 'subitem_identifier_reg_text' in item["metadata"][identifierRegistration_key]:    
+                    if 'subitem_identifier_reg_text' in item["metadata"][identifierRegistration_key]:
                         _doi = item["metadata"][identifierRegistration_key]['subitem_identifier_reg_text']
                         if item.get("is_change_identifier", False) == True:
                             item["metadata"][identifierRegistration_key]['subitem_identifier_reg_text'] = item_doi
@@ -3036,7 +3075,7 @@ def handle_fill_system_item(list_record):
                         if item.get("is_change_identifier", False) == False:
                             item["metadata"][identifierRegistration_key]['subitem_identifier_reg_text'] = registerd_doi
                             if registerd_doi != item_doi:
-                                fixed_doi = True                      
+                                fixed_doi = True
                 else:
                     del item["metadata"][identifierRegistration_key]
             elif item.get("is_change_identifier", False):
@@ -3048,12 +3087,12 @@ def handle_fill_system_item(list_record):
                 item["metadata"][identifierRegistration_key]={'subitem_identifier_reg_type':item_doi_ra, 'subitem_identifier_reg_text': item_doi}
             if fixed_doi:
                 warnings.append(_('The specified DOI is wrong and fixed with the registered DOI.'))
-                    
+
             if fixed_doi_ra:
                 warnings.append(_('The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'))
-            
+
             if is_change_identifier:
-                if not (current_app.config["WEKO_HANDLE_ALLOW_REGISTER_CNRI"] and item_cnri): 
+                if not (current_app.config["WEKO_HANDLE_ALLOW_REGISTER_CNRI"] and item_cnri):
                     if item_doi is "":
                         errors.append(_('Please specify DOI prefix/suffix.'))
                     elif item_doi_suffix is "":
@@ -3065,15 +3104,15 @@ def handle_fill_system_item(list_record):
                 elif item_doi_suffix is "":
                     errors.append(_('Please specify DOI suffix.'))
             else:
-                if item_doi_suffix and existed_doi is False: 
+                if item_doi_suffix and existed_doi is False:
                     errors.append(_('Do not specify DOI suffix.'))
 
             if checked_item_doi_ra is False:
                 if item_doi_ra not in ("JaLC","Crossref","DataCite","NDL JaLC"):
                     errors.append(_('DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'))
                 elif item_doi_prefix:
-                    errors.append(_('Specified Prefix of DOI is incorrect.'))     
-                    
+                    errors.append(_('Specified Prefix of DOI is incorrect.'))
+
         item['errors'] = errors
         item['warnings'] = warnings
 
@@ -3090,6 +3129,8 @@ def get_thumbnail_key(item_type_id=0):
         item_type = item_type.render
         schema = item_type.get("schemaeditor", {}).get("schema", {})
         for key, item in schema.items():
+            if not isinstance(item, dict):
+                continue
             if item.get("properties") and item["properties"].get("subitem_thumbnail"):
                 return key
 
@@ -3304,7 +3345,7 @@ def export_all(root_url, user_id, data, timezone):
             hide_meta_data_for_role=lambda a: True,
             current_language=lambda: True,
         )
-        headers, records = make_stats_file_with_permission(
+        headers, records, error_records = make_stats_file_with_permission(
             item_datas["item_type_id"],
             item_datas["recids"],
             item_datas["data"],
@@ -3312,7 +3353,7 @@ def export_all(root_url, user_id, data, timezone):
             export_path
         )
         keys, labels, is_systems, options = headers
-        item_datas["recids"].sort()
+        item_datas["recids"].sort(key=int)
         item_datas["keys"] = keys
         item_datas["labels"] = labels
         item_datas["is_systems"] = is_systems
@@ -3322,7 +3363,7 @@ def export_all(root_url, user_id, data, timezone):
 
         file_full_path = "{}/{}.{}".format(export_path, item_type_data.get("name"), _file_format)
         with open(file_full_path, "w", encoding="utf-8-sig") as file:
-            file_output = package_export_file(item_type_data)
+            file_output = package_export_file(item_type_data, error_records)
             file.write(file_output.getvalue())
 
     def _get_item_type_list(item_type_id):
@@ -3420,9 +3461,14 @@ def export_all(root_url, user_id, data, timezone):
                     item_types.remove(it)
                     continue
 
-                record_ids = [(recid.pid_value, recid.object_uuid) 
-                    for recid in recids if 'publish_status' in recid.json 
+                record_ids = [(recid.pid_value, recid.object_uuid)
+                    for recid in recids if 'publish_status' in recid.json
                     and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]]
+
+                if len(record_ids) == 0:
+                    item_types.remove(it)
+                    continue
+
                 for recid, uuid in record_ids:
                     if counter % WEKO_SEARCH_UI_BULK_EXPORT_LIMIT == 0 and item_datas:
                         # Create export info file
@@ -3536,7 +3582,7 @@ def export_all(root_url, user_id, data, timezone):
             else:
                 fromid = item_id_range
                 toid = item_id_range
-        
+
         result = None
         if not fromid or not toid or (fromid and toid and int(fromid) <= int(toid)):
             result = _get_export_data(export_path, item_types, 0, fromid, toid)
@@ -3633,7 +3679,7 @@ def get_export_status():
     message = None
     run_message = ""
     status = ""
-    
+
     try:
         task_id = get_redis_cache(cache_key)
         download_uri = get_redis_cache(cache_uri)
@@ -3923,13 +3969,13 @@ def get_data_by_property(item_metadata, item_map, mapping_key):
         return None, None
     for key in key_list.split(","):
         attribute = item_metadata.get(key.split(".")[0])
-        if not attribute:
-            return None, key_list
-        else:
+        if attribute:
             data_result = get_sub_item_value(attribute, key.split(".")[-1])
             if data_result:
                 for value in data_result:
                     data.append(value)
+    if data == []:
+        data = None
     return data, key_list
 
 

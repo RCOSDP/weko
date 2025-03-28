@@ -73,17 +73,11 @@ def search_responsify(serializer, mimetype):
         item_type_id_lst = list(item_type_id_lst)
 
         item_type_dict = __get_item_types(item_type_id_lst)
-        mapping_dict = __get_item_type_mappings(item_type_id_lst)
         tasks = []
         for record in records:
             task = asyncio.ensure_future(
                 sort_meta_data_by_options(
                     record, settings,
-                    mapping_dict.get(str(
-                        record['_source'].get('item_type_id')
-                        or record['_source']['_item_metadata'].get(
-                            'item_type_id'))
-                    ),
                     item_type_dict.get(str(
                         record['_source'].get('item_type_id')
                         or record['_source']['_item_metadata'].get(
@@ -108,22 +102,6 @@ def search_responsify(serializer, mimetype):
         for item_type in item_types:
             item_type_dict[str(item_type.model.id)] = item_type
         return item_type_dict
-
-    def __get_item_type_mappings(ids: list) -> dict:
-        """Get item type mappings base on list of item type id.
-
-        Args:
-            ids (list): Item type identifier list.
-
-        Returns:
-            dict: Item Type mappings.
-
-        """
-        mappings = Mapping.get_mapping_by_item_type_ids(ids)
-        mapping_dict = {}
-        for mapping in mappings:
-            mapping_dict[str(mapping.model.item_type_id)] = mapping
-        return mapping_dict
 
     def view(pid_fetcher, search_result, code=200, headers=None, links=None,
              item_links_factory=None):

@@ -163,12 +163,16 @@ class PreprocessorMixin(PreprocessorMixinInterface):
 
             mapping_dict = RECORDS_REST_DEFAULT_MAPPING_DICT
             # Get mapping of this record.
-            meta_option, item_type_mapping = get_options_and_order_list(item_type_id)
             item_type = ItemTypes.get_by_id(item_type_id)
             item_type_list = None
+            hide_list = []
             if item_type:
                 item_type_list = item_type.render.get('table_row')
-            hide_list = get_hide_list_by_schema_form(item_type_id)
+                hide_list = get_hide_list_by_schema_form(item_type)
+                meta_option, item_type_mapping = get_options_and_order_list(
+                    item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
+            else:
+                meta_option, item_type_mapping = get_options_and_order_list(item_type_id)
             if not item_type_mapping or not item_type_list:
                 return mapping_dict
             # Update default mapping key and lang by mapping of this record.
@@ -177,7 +181,8 @@ class PreprocessorMixin(PreprocessorMixinInterface):
                 if k in item_type_mapping:
                     v = item_type_mapping.get(k)
                     prop_hidden = meta_option.get(k, {}).get('option', {}).get('hidden', False)
-                    if not v or not isinstance(v.get('jpcoar_mapping'), dict) \
+                    if not v or not isinstance(v, dict) \
+                            or not isinstance(v.get('jpcoar_mapping'), dict) \
                             or prop_hidden:
                         continue
                     for k1, v1 in v.get('jpcoar_mapping').items():

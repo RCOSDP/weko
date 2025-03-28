@@ -46,6 +46,16 @@
   {%- if 'BIBTEX' in fmt['title'] %}
   <li><a href="{{ url_for('invenio_records_ui.recid_export', pid_value=pid.pid_value, format=slug) }}">{{fmt['title']}}</a></li>
   {%- endif %}
+  {%- if 'ZIP' in fmt['title'] %}
+  <li><a href="#" onclick="exportZip()">{{fmt['title']}}</a></li>
+  <form method="POST" name="export_zip_form" id="export_zip_form"
+    action={{url_for('weko_items_ui.export')}}>
+    <input type="hidden" id="export_file_contents_radio_on" name="export_file_contents_radio" value="True">
+    <input type="hidden" id="export_format_radio_tsv" name="export_format_radio" value="TSV">
+    <input type="hidden" id="record_ids" name="record_ids" value="[{{ pid.pid_value }}]">
+    <input type="hidden" id="invalid_record_ids" name="invalid_record_ids" value="[]">
+  </form>
+  {%- endif %}
   {%- endfor %}
 </ul>
 {%- endif %}

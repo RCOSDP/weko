@@ -90,7 +90,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy_utils.functions import create_database, database_exists
 from weko_admin import WekoAdmin
 from weko_admin.config import WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS
-from weko_admin.models import SessionLifetime,RankingSettings
+from weko_admin.models import SessionLifetime,RankingSettings,Identifier
 from weko_deposit import WekoDeposit
 from weko_deposit.api import WekoIndexer
 from weko_deposit.config import DEPOSIT_RECORDS_API,WEKO_DEPOSIT_ITEMS_CACHE_PREFIX
@@ -184,11 +184,11 @@ def base_app(instance_path):
         #  WEKO_ITEMS_UI_INDEX_TEMPLATE= 'weko_items_ui/item_index.html',
         CACHE_TYPE="redis",
         ACCOUNTS_SESSION_REDIS_DB_NO=1,
-        CACHE_REDIS_HOST=os.environ.get("INVENIO_REDIS_HOST"),
         REDIS_PORT="6379",
+        CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
         WEKO_BUCKET_QUOTA_SIZE=50 * 1024 * 1024 * 1024,
         WEKO_MAX_FILE_SIZE=50 * 1024 * 1024 * 1024,
-        SEARCH_ELASTIC_HOSTS=os.environ.get("INVENIO_ELASTICSEARCH_HOST"),
+        SEARCH_ELASTIC_HOSTS=os.environ.get("SEARCH_ELASTIC_HOSTS", "elasticsearch"),
         SEARCH_INDEX_PREFIX="{}-".format('test'),
         SEARCH_CLIENT_CONFIG=dict(timeout=120, max_retries=10),
         OAISERVER_ID_PREFIX="oai:inveniosoftware.org:recid/",
@@ -514,6 +514,38 @@ def users(app, db):
     ]
 
 
+@pytest.fixture()
+def identifier(db):
+    identifier_info = {
+        "Root Index":{
+            "JaLC": "1234",
+            "Crossref": "2345",
+            "DataCite": "3456",
+            "NDL JaLC": "4567",
+        }
+    }
+    identifiers = []
+    for index, info in identifier_info.items():
+        identifiers.append(Identifier(
+            repository=index,
+            jalc_flag=True,
+            jalc_crossref_flag=True,
+            jalc_datacite_flag=True,
+            ndl_jalc_flag=True,
+            jalc_doi=info["JaLC"],
+            jalc_crossref_doi=info["Crossref"],
+            jalc_datacite_doi=info["DataCite"],
+            ndl_jalc_doi=info["NDL JaLC"],
+            suffix="",
+            created_userId=1,
+            created_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+            updated_userId=1,
+            updated_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+        ))
+    db.session.add_all(identifiers)
+    db.session.commit()
+    return identifier_info
+
 
 @pytest.fixture()
 def db_oaischema(app, db):
@@ -731,6 +763,48 @@ def db_itemtype5(app, db):
     return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
 
 @pytest.fixture()
+def db_itemtype_checkbox(app, db):
+    item_type_name = ItemTypeName(id=6,
+        name="テストアイテムタイプ6", has_site_license=True, is_active=True
+    )
+    item_type_schema = dict()
+    with open("tests/data/itemtype_checkbox_schema.json", "r") as f:
+        item_type_schema = json.load(f)
+
+    item_type_form = dict()
+    with open("tests/data/itemtype_checkbox_form.json", "r") as f:
+        item_type_form = json.load(f)
+
+    item_type_render = dict()
+    with open("tests/data/itemtype_checkbox_render.json", "r") as f:
+        item_type_render = json.load(f)
+
+    item_type_mapping = dict()
+    with open("tests/data/itemtype_checkbox_mapping.json", "r") as f:
+        item_type_mapping = json.load(f)
+
+    item_type = ItemType(
+        id=6,
+        name_id=6,
+        harvesting_type=True,
+        schema=item_type_schema,
+        form=item_type_form,
+        render=item_type_render,
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+
+    item_type_mapping = ItemTypeMapping(id=6,item_type_id=6, mapping=item_type_mapping)
+
+    with db.session.begin_nested():
+        db.session.add(item_type_name)
+        db.session.add(item_type)
+        db.session.add(item_type_mapping)
+
+    return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
+
+@pytest.fixture()
 def db_itemtype(app, db):
     item_type_name = ItemTypeName(id=1,
         name="テストアイテムタイプ", has_site_license=True, is_active=True
@@ -851,6 +925,19 @@ def db_records2(db,instance_path,users):
             result.append(create_record(record_data[d], item_data[d]))
     db.session.commit()
  
+    yield result
+
+@pytest.fixture()
+def db_records_checkbox(db,instance_path,users):
+    record_data = json_data("data/test_records3.json")
+    item_data = json_data("data/test_items3.json")
+    record_num = len(record_data)
+    result = []
+    with db.session.begin_nested():
+        for d in range(record_num):
+            result.append(create_record(record_data[d], item_data[d]))
+    db.session.commit()
+
     yield result
 
 @pytest.fixture()
