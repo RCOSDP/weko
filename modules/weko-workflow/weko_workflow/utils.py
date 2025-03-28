@@ -4540,14 +4540,19 @@ def convert_to_timezone(dt, user_timezone=None):
 
 
 def load_template(template_name, language=None):
-    """
-    指定されたテンプレートを読み込む。
+    """Load the specified email template.
 
     Args:
-        template_name (str): テンプレートのファイル名
+        template_name (str): The name of the template file.
+        language (str, optional): The language code for the template (e.g., 'en', 'ja').
 
     Returns:
-        dict: {'subject': '件名テンプレート', 'body': '本文テンプレート'}
+        dict: A dictionary containing the email template with the following keys:
+            - 'subject' (str): The subject line of the email template.
+            - 'body' (str): The body content of the email template.
+
+    Raises:
+        FileNotFoundError: If the template file does not exist in the specified directory.
     """
     current_path = os.path.dirname(os.path.abspath(__file__))
     folder_path = os.path.join(
@@ -4562,7 +4567,7 @@ def load_template(template_name, language=None):
         template_path = os.path.join(folder_path, template_name.format(language="en"))
     with open(template_path, "r") as file:
         lines = file.readlines()
-    # 1行目を件名、それ以降を本文とする
+    # The first line is the subject, and the rest is the body.
     subject = lines[0].strip() if lines else ""
     body = "".join(lines[1:]).strip() if len(lines) > 1 else ""
     return {"subject": subject, "body": body}
@@ -4570,14 +4575,18 @@ def load_template(template_name, language=None):
 
 def fill_template(template, data):
     """
-    テンプレートにデータを埋め込み、件名と本文を作成する。
+    Embed data into the template.
 
     Args:
-        template (dict): {'subject': '件名テンプレート', 'body': '本文テンプレート'}
-        data (dict): 置換用データ（例: {'username': 'John', 'order_id': '12345'}）
+        template (dict): email template with the following keys:
+            - 'subject' (str): The subject template of the email.
+            - 'body' (str): The body template of the email.
+        data (dict): data to replace placeholders in the template.
 
     Returns:
-        dict: {'subject': '埋め込み後の件名', 'body': '埋め込み後の本文'}
+        dict: generated email content with the following keys:
+            - 'subject' (str): The subject of the email after embedding the data.
+            - 'body' (str): The body of the email after embedding the data.
     """
     subject = template["subject"]
     body = template["body"]

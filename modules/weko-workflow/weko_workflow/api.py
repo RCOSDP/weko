@@ -2915,15 +2915,21 @@ class WorkActivity(object):
         )
 
     def send_notification_email(self, activity, targets, settings_dict, profiles_dict, template_file, data_callback):
-        """共通のメール作成と送信処理
+        """Common email creation and sending process.
 
         Args:
-            activity (Activity): Activityオブジェクト
-            targets (List[User]): 対象ユーザーのリスト
-            settings_dict (dict): NotificationsUserSettingsの辞書
-            profiles_dict (dict): ユーザープロフィールの辞書
-            template_file (str): 使用するテンプレートファイル名
-            data_callback (function): メールテンプレートに渡すデータを作成するコールバック関数
+            activity (Activity): The activity object
+            targets (List[User]): A list of target users
+            settings_dict (dict): A dictionary of NotificationsUserSettings for the users.
+            profiles_dict (dict): A dictionary of user profiles.
+            template_file (str): The name of the template file to be used for the email.
+            data_callback (function): A callback function to generate data for the email template.
+        
+        Returns:
+            None
+        
+        Raises:
+            Exception: If an unexpected error occurs during the email sending process.
         """
         from .utils import send_mail, load_template, fill_template
 
@@ -2954,13 +2960,20 @@ class WorkActivity(object):
 
 
     def send_mail_item_registered(self, activity):
-        """Notify item registered.
+        """Notify item registered via email.
 
         Send mail to user when item registered.
         Create user and shared user will be notified.
 
         Args:
             activity (Activity): Activity object.
+        
+        Returns:
+            None
+
+        Raises:
+            SQLAlchemyError: If an error occurs while querying the database.
+            Exception: If an unexpected error occurs during the email sending process.
         """
         from .utils import convert_to_timezone
         try:
@@ -3005,6 +3018,17 @@ class WorkActivity(object):
             return
 
         def item_registered_data(activity, target, profile):
+            """
+            Generate data for the item registered email template.
+
+            Args:
+                activity (Activity): The activity object containing details about the registered item.
+                target (User): The target user who will receive the email.
+                profile (UserProfile): The profile of the target user.
+
+            Returns:
+                dict: A dictionary containing the data to be used in the email template.
+            """
             timezone = profile.timezone if profile else None
             registration_date = convert_to_timezone(activity.updated, timezone)
             url = request.host_url + f"records/{recid.pid_value.split('.')[0]}"
@@ -3024,13 +3048,20 @@ class WorkActivity(object):
         )
 
     def send_mail_request_approval(self, activity):
-        """Notify request approval.
+        """Notify request approval via email.
 
         Send mail to user when request approval.
         Users with the authority to approve will be notified.
         
         Args:
             activity (Activity): Activity object.
+        
+        Returns:
+            None
+
+        Raises:
+            SQLAlchemyError: If an error occurs while querying the database.
+            Exception: If an unexpected error occurs during the email sending process.
         """
         try:
             with db.session.begin_nested():
@@ -3143,6 +3174,17 @@ class WorkActivity(object):
         
         from .utils import convert_to_timezone
         def request_approval_data(activity, target, profile):
+            """
+            Generate data for the request approval email template.
+
+            Args:
+                activity (Activity): The activity object.
+                target (User): The target user who will receive the email.
+                profile (UserProfile): The profile of the target user.
+
+            Returns:
+                dict: A dictionary containing the data to be used in the email template.
+            """
             timezone = profile.timezone if profile else None
             submission_date = convert_to_timezone(activity.updated, timezone)
             url = request.host_url + f"workflow/activity/detail/{activity.activity_id}"
@@ -3162,13 +3204,20 @@ class WorkActivity(object):
         )
 
     def send_mail_item_approved(self, activity):
-        """Notify approved items.
+        """Notify approved items via email.
 
         Send mail to user when item approved.
         Create user and shared user will be notified.
 
         Args:
             activity (Activity): Activity object.
+        
+        Returns:
+            None
+
+        Raises:
+            SQLAlchemyError: If an error occurs while querying the database.
+            Exception: If an unexpected error occurs during the email sending process.
         """
         try:
             with db.session.begin_nested():
@@ -3212,6 +3261,17 @@ class WorkActivity(object):
             return
         from .utils import convert_to_timezone
         def item_approved_data(activity, target, profile):
+            """
+            Generate data for the item approved email template.
+
+            Args:
+                activity (Activity): The activity object containing details about the approved item.
+                target (User): The target user who will receive the email.
+                profile (UserProfile): The profile of the target user.
+
+            Returns:
+                dict: A dictionary containing the data to be used in the email template.
+            """
             timezone = profile.timezone if profile else None
             approval_date = convert_to_timezone(activity.updated, timezone)
             url = request.host_url + f"records/{recid.pid_value.split('.')[0]}"
@@ -3232,20 +3292,27 @@ class WorkActivity(object):
 
 
     def send_mail_item_rejected(self, activity):
-        """Notify rejected items.
+        """Notify rejected items via email.
 
         Send mail to user when item rejected.
         Create user and shared user will be notified.
 
         Args:
             activity (Activity): Activity object.
+        
+        Returns:
+            None
+
+        Raises:
+            SQLAlchemyError: If an error occurs while querying the database.
+            Exception: If an unexpected error occurs during the email sending process.
         """
         try:
             with db.session.begin_nested():
                 set_target_id = {activity.activity_login_user}
                 is_shared = activity.shared_user_id != -1
                 if is_shared:
-                    set_target_id.append(activity.shared_user_id)
+                    set_target_id.add(activity.shared_user_id)
 
                 recid = (
                     PersistentIdentifier
@@ -3282,6 +3349,17 @@ class WorkActivity(object):
         
         from .utils import convert_to_timezone
         def item_rejected_data(activity, target, profile):
+            """
+            Generate data for the item rejected email template.
+
+            Args:
+                activity (Activity): The activity object containing details about the rejected item.
+                target (User): The target user who will receive the email.
+                profile (UserProfile): The profile of the target user.
+
+            Returns:
+                dict: A dictionary containing the data to be used in the email template.
+            """
             timezone = profile.timezone if profile else None   
             rejected_date = convert_to_timezone(activity.updated, timezone)
             url = request.host_url + f"workflow/activity/detail/{activity.activity_id}"
