@@ -1,0 +1,51 @@
+{#
+  Copyright (C) 2025 National Institute of Informatics.
+
+  WEKO-Notifications is free software; you can redistribute it and/or modify
+  it under the terms of the MIT License; see LICENSE file for more details.
+#}
+
+{%- extends config.WEKO_NOTIFICATIONS_SETTINGS_TEMPLATE %}
+{% block css %}
+{{ super() }}
+{% assets "weko_theme_css_buttons" %}
+<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% assets "weko_notifications_settings_css" %}
+<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% endblock %}
+
+{%- block javascript %}
+{{ super() }}
+{% assets "weko_notifications_settings_js" %}
+<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{% endblock %}
+
+{% from "weko_notifications/settings/_macros.html" import render_field, form_errors %}
+
+{% set panel_title = _("Notifications") %}
+{% set panel_icon = "fa fa-bell" %}
+
+{%- block settings_form %}
+{%- set notifications_form = notifications_form %}
+<p>{{ _("Receive notifications.") }}</p>
+<hr>
+<form method="POST" name="notifications_form">
+  {%- for field in notifications_form %}
+  {%- if field.widget.input_type == 'hidden' %}
+  {{ field() }}
+  {%- else %}
+  {{ render_field(field, placeholder=field.label.text) }}
+  {%- endif %}
+  {%- endfor %}
+  <div class="form-actions">
+    <a href="." class="btn btn-default">
+      <i class="fa fa-times"></i>&nbsp
+      {{ _('Cancel') }}
+    </a>
+    <button type="submit" name="submit" value="notifications" class="btn btn-primary pull-right">
+      <span class="glyphicon glyphicon-save"></span>&nbsp
+      {{_('Update')}}
+    </button>
+  </div>
+</form>
+{%- endblock settings_form %}

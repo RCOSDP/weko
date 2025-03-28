@@ -186,22 +186,13 @@ def deep_merge(*dicts):
 def merge_lists(list1, list2):
     """Recursively merge dictionaries in the list and remove duplicates"""
     merged_list = list1[:]
-    for item in list2:
-        if isinstance(item, dict):
-            if item not in merged_list:
-                merged_list.append(item)
-        elif item not in merged_list:
-            merged_list.append(item)
 
-    # TODO: what to do with list?
-    # dict1 = list_to_dict(list1)
-    # print("dict1:{}".format(dict1))
-    # dict2 = list_to_dict(list2)
-    # print("dict2:{}".format(dict2))
-    # merged_dict = deep_merge(dict1, dict2)
-    # print("merged_dict:{}".format(merged_dict))
-    # merged_list = dict_to_list(merged_dict)
-    # print("merged_list:{}".format(merged_list))
+    if (len(merged_list) != 1 or len(list2) != 1):
+        return merged_list + list2[:]
+
+    dict1, dict2 = merged_list[0], list2[0]
+    if all(not v for v in dict1.values()) and any(v for v in dict2.values()):
+        merged_list = list2[:]
 
     return merged_list
 
@@ -269,6 +260,17 @@ def get_datacite_record_data(doi, item_type_id):
     return result
 
 
+def get_crossref_record_data_default_pid(doi, item_type_id):
+    """
+    Get record data base on CrossRef default pid.
+
+    :return: The record data
+    """
+    pid_response = get_current_api_certification("crf")
+    pid = pid_response["cert_data"]
+    return get_crossref_record_data(pid, doi, item_type_id)
+
+
 @cached_api_json(timeout=50, key_prefix="doi_data")
 def get_doi_record_data(doi, item_type_id, activity_id):
     """Get record data base on DOI API.
@@ -301,8 +303,9 @@ def get_doi_with_original(doi, item_type_id, original_metadeta=None):
         "DataCite": get_datacite_record_data,
         "CiNii Research": get_cinii_record_data,
     }
+
     result_dict = {}
-    for key in config.WEKO_ITEMS_AUTOFILL_TO_BE_USED:
+    for key in current_app.config["WEKO_ITEMS_AUTOFILL_TO_BE_USED"]:
         record_data_dict = {}
         if key == "Original":
             if original_metadeta is not None:

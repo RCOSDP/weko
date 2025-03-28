@@ -1162,7 +1162,6 @@ class ItemRocrateImportView(BaseView):
                     "error_id": check,
                 }
             )
-
         else:
             return jsonify({"is_available": True})
 
@@ -1301,6 +1300,7 @@ item_management_rocrate_import_adminview = {
         "name": _("RO-Crate Import"),
         "endpoint": "items/rocrate_import",
     },
+
 }
 
 item_management_export_adminview = {

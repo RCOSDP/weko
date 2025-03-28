@@ -29,6 +29,7 @@ from datetime import datetime, timedelta
 from typing import List, NoReturn, Optional, Tuple, Union
 import traceback
 
+import pytz
 import redis
 from redis import sentinel
 from celery.task.control import inspect
@@ -4515,3 +4516,81 @@ def check_pretty(pretty):
         current_app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
     else:
         current_app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+
+
+def convert_to_timezone(dt, user_timezone=None):
+    """
+    Convert a datetime object to the specified timezone.
+
+    Args:
+        dt (datetime): The datetime object to convert.
+        user_timezone (str): The timezone string (e.g., 'Asia/Tokyo').
+
+    Returns:
+        datetime: The converted datetime object.
+    """
+    if dt.tzinfo is None:
+        dt = pytz.utc.localize(dt)
+    if user_timezone:
+        timezone = pytz.timezone(user_timezone)
+        dt = dt.astimezone(timezone)
+    return dt
+
+
+def load_template(template_name, language=None):
+    """Load the specified email template.
+
+    Args:
+        template_name (str): The name of the template file.
+        language (str, optional): The language code for the template (e.g., 'en', 'ja').
+
+    Returns:
+        dict: A dictionary containing the email template with the following keys:
+            - 'subject' (str): The subject line of the email template.
+            - 'body' (str): The body content of the email template.
+
+    Raises:
+        FileNotFoundError: If the template file does not exist in the specified directory.
+    """
+    current_path = os.path.dirname(os.path.abspath(__file__))
+    folder_path = os.path.join(
+                    current_path,
+                    'templates',
+                    'weko_workflow',
+                    'email_templates')
+    if language is None:
+        language = "en"
+    template_path = os.path.join(folder_path, template_name.format(language=language))
+    if not os.path.exists(template_path):
+        template_path = os.path.join(folder_path, template_name.format(language="en"))
+    with open(template_path, "r") as file:
+        lines = file.readlines()
+    # The first line is the subject, and the rest is the body.
+    subject = lines[0].strip() if lines else ""
+    body = "".join(lines[1:]).strip() if len(lines) > 1 else ""
+    return {"subject": subject, "body": body}
+
+
+def fill_template(template, data):
+    """
+    Embed data into the template.
+
+    Args:
+        template (dict): email template with the following keys:
+            - 'subject' (str): The subject template of the email.
+            - 'body' (str): The body template of the email.
+        data (dict): data to replace placeholders in the template.
+
+    Returns:
+        dict: generated email content with the following keys:
+            - 'subject' (str): The subject of the email after embedding the data.
+            - 'body' (str): The body of the email after embedding the data.
+    """
+    subject = template["subject"]
+    body = template["body"]
+
+    for key, value in data.items():
+        subject = subject.replace(f"{{{{ {key} }}}}", str(value))
+        body = body.replace(f"{{{{ {key} }}}}", str(value))
+
+    return {"subject": subject, "body": body}

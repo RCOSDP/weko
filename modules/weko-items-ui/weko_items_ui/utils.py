@@ -2857,7 +2857,9 @@ def _get_metadata_dict_in_es(record_ids):
             metadata_dict.update({key: (metadata, extraction_file_list)})
     except NotFoundError as e:
         current_app.logger.debug("Index do not exist yet: ", str(e))
+
     current_app.logger.debug("metadata_dict:{}".format(metadata_dict))
+
     return metadata_dict
 
 
