@@ -2943,7 +2943,6 @@ class WorkActivity(object):
 
                 mail_data = fill_template(template, data)
                 recipient = target.email
-                recipient = "kihiro.ashino@ivis.co.jp"  # テスト用に自分のアドレス
 
                 send_mail(mail_data.get("subject"), recipient, mail_data.get("body"))
 
@@ -3019,42 +3018,6 @@ class WorkActivity(object):
         
         template_file = 'email_nortification_item_registered_{language}.tpl'
         self.send_notification_email(activity, targets, settings_dict, profiles_dict, template_file, item_registered_data)
-        # from .utils import send_mail, load_template, fill_template, convert_to_timezone
-        # for target in targets:
-        #     try:
-        #         setting = settings_dict.get(target.id)
-        #         if not setting or not setting.subscribe_email:
-        #             continue    
-        #         if not target.confirmed_at:
-        #             continue
-                
-        #         profile = profiles_dict.get(target.id)
-        #         language = profile.language if profile else None
-                
-        #         file_name = 'email_nortification_item_registered__{language}.tpl'
-        #         template = load_template(file_name, language)
-                
-        #         timezone = profile.timezone if profile else None    
-        #         registration_date = convert_to_timezone(activity.updated, timezone)
-                
-        #         url = request.host_url + f"records/{recid.pid_value.split('.')[0]}"
-                
-        #         data = {"item_title": activity.title,
-        #                 "submitter_name": profile.username if profile else None,
-        #                 "registration_date": registration_date.strftime("%Y-%m-%d %H:%M:%S"),
-        #                 "record_url": url}
-        #         mail_data = fill_template(template, data)
-                
-        #         recipient = target.email
-        #         recipient = "kihiro.ashino@ivis.co.jp" # テスト用に自分のアドレス
-                
-        #         send_mail(mail_data.get("subject"), recipient, mail_data.get("body"))
-        #     except Exception as ex:
-        #         current_app.logger.error(
-        #             "Unexpected error had orrured during sending notification "
-        #             f"for activity: {activity.activity_id}"
-        #         )
-        #         traceback.print_exc()
         current_app.logger.info(
             "{num} mail(s) sent for item registered: {activity_id}"
             .format(num=len(set_target_id), activity_id=activity.activity_id)
@@ -3193,44 +3156,6 @@ class WorkActivity(object):
             }
         template_file = 'email_nortification_request_approval_{language}.tpl'
         self.send_notification_email(activity, targets, settings_dict, profiles_dict, template_file, request_approval_data)
-        # from .utils import send_mail, load_template, fill_template, convert_to_timezone
-        # for target in targets:
-        #     try:
-        #         setting = settings_dict.get(target.id)
-        #         if not setting or not setting.subscribe_email:
-        #             continue    
-        #         if not target.confirmed_at:
-        #             continue
-                
-        #         profile = profiles_dict.get(target.id)
-        #         language = profile.language if profile else None
-                
-        #         file_name = 'email_nortification_request_approval_{language}.tpl'
-        #         template = load_template(file_name, language)
-                
-        #         timezone = profile.timezone if profile else None    
-        #         submission_date = convert_to_timezone(activity.updated, timezone)
-                
-        #         url = request.host_url + f"workflow/activity/detail/{activity.activity_id}"
-                
-        #         data = {"approver_name": profile.username if profile else None,
-        #                 "item_title": activity.title,
-        #                 "submitter_name": actor_name,
-        #                 "submission_date": submission_date.strftime("%Y-%m-%d %H:%M:%S"),
-        #                 "approval_url": url}
-        #         mail_data = fill_template(template, data)
-                
-        #         recipient = target.email
-        #         recipient = "kihiro.ashino@ivis.co.jp" # テスト用に自分のアドレス
-                
-        #         send_mail(mail_data.get("subject"), recipient, mail_data.get("body"))
-
-        #     except Exception as ex:
-        #         current_app.logger.error(
-        #             "Unexpected error had orrured during sending notification mail "
-        #             f"for activity: {activity.activity_id}"
-        #         )
-        #         traceback.print_exc()
         current_app.logger.info(
             "{num} mail(s) sent for request approval: {activity_id}"
             .format(num=len(set_target_id), activity_id=activity.activity_id)
@@ -3300,43 +3225,6 @@ class WorkActivity(object):
             
         template_file = 'email_nortification_item_approved_{language}.tpl'
         self.send_notification_email(activity, targets, settings_dict, profiles_dict, template_file, item_approved_data)
-        # from .utils import send_mail, load_template, fill_template, convert_to_timezone
-        # for target in targets:
-        #     try:
-        #         setting = settings_dict.get(target.id)
-        #         if not setting or not setting.subscribe_email:
-        #             continue    
-        #         if not target.confirmed_at:
-        #             continue
-                
-        #         profile = profiles_dict.get(target.id)
-        #         language = profile.language if profile else None
-                
-        #         file_name = 'email_nortification_item_approved_{language}.tpl'
-        #         template = load_template(file_name, language)
-                
-        #         timezone = profile.timezone if profile else None    
-        #         approval_date = convert_to_timezone(activity.updated, timezone)
-                
-        #         url = request.host_url + f"records/{recid.pid_value.split('.')[0]}"
-                
-        #         data = {"approver_name": actor_name,
-        #                 "item_title": activity.title,
-        #                 "submitter_name": profile.username if profile else None,
-        #                 "approval_date": approval_date.strftime("%Y-%m-%d %H:%M:%S"),
-        #                 "record_url": url}
-        #         mail_data = fill_template(template, data)
-                
-        #         recipient = target.email
-        #         recipient = "kihiro.ashino@ivis.co.jp" # テスト用に自分のアドレス
-                
-        #         send_mail(mail_data.get("subject"), recipient, mail_data.get("body"))
-        #     except Exception as ex:
-        #         current_app.logger.error(
-        #             "Unexpected error had orrured during sending notification "
-        #             f"for activity: {activity.activity_id}"
-        #         )
-        #         traceback.print_exc()
         current_app.logger.info(
             "{num} mail(s) sent for item approved: {activity_id}"
             .format(num=len(set_target_id), activity_id=activity.activity_id)
@@ -3407,43 +3295,6 @@ class WorkActivity(object):
 
         template_file = 'email_nortification_item_rejected_{language}.tpl'
         self.send_notification_email(activity, targets, settings_dict, profiles_dict, template_file, item_rejected_data)
-        # from .utils import send_mail, load_template, fill_template, convert_to_timezone
-        # for target in targets:
-        #     try:
-        #         setting = settings_dict.get(target.id)
-        #         if not setting or not setting.subscribe_email:
-        #             continue    
-        #         if not target.confirmed_at:
-        #             continue
-                
-        #         profile = profiles_dict.get(target.id)
-        #         language = profile.language if profile else None
-                
-        #         file_name = 'email_nortification_item_rejected_{language}.tpl'
-        #         template = load_template(file_name, language)
-                
-        #         timezone = profile.timezone if profile else None    
-        #         rejected_date = convert_to_timezone(activity.updated, timezone)
-                
-        #         url = request.host_url + f"workflow/activity/detail/{activity.activity_id}"
-                
-        #         data = {"approver_name": actor_name,
-        #                 "item_title": activity.title,
-        #                 "submitter_name": profile.username if profile else None,
-        #                 "rejection_date": rejected_date.strftime("%Y-%m-%d %H:%M:%S"),
-        #                 "url": url}
-        #         mail_data = fill_template(template, data)
-                
-        #         recipient = target.email
-        #         recipient = "kihiro.ashino@ivis.co.jp" # テスト用に自分のアドレス
-                
-        #         send_mail(mail_data.get("subject"), recipient, mail_data.get("body"))
-        #     except Exception as ex:
-        #         current_app.logger.error(
-        #             "Unexpected error had orrured during sending notification "
-        #             f"for activity: {activity.activity_id}"
-        #         )
-        #         traceback.print_exc()
         current_app.logger.info(
             "{num} mail(s) sent for item rejected: {activity_id}"
             .format(num=len(set_target_id), activity_id=activity.activity_id)
