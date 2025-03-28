@@ -646,3 +646,7 @@ msgstr ""
 
 msgid "Clear Confirm"
 msgstr ""
+
+# weko-workflow/weko_workflow/templates/weko_workflow/admin/flow_detail.html:54
+msgid "Deletion flow activated."
+msgstr ""
