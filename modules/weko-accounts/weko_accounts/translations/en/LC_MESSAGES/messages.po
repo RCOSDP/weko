@@ -39,6 +39,10 @@ msgstr "Orthros Role was updated."
 msgid "Extra Role was updated."
 msgstr ""
 
+#: weko_accounts/admin.py:
+msgid "Blocked user list was updated."
+msgstr "Updated User Login Block settings"
+
 #: weko_accounts/admin.py:69
 msgid "Setting"
 msgstr ""

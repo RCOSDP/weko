@@ -124,3 +124,80 @@ function updateBlockUserList() {
   blockUserEPPNList.push(...optionValues);
   $("#block-eppn-option-list").val(JSON.stringify(blockUserEPPNList));
 }
+
+// ブロックユーザーのePPNを追加
+function addBlockUser() {
+  const select = $("#block-user-lists");
+  const newBlockePPN = $("#block_eppn").val();
+  const enableLoginUserValue = $("#block-user-setting").data("value");
+  const enableLoginUserList =
+    enableLoginUserValue === "[]"
+      ? []
+      : (() => {
+          try {
+            return JSON.parse(enableLoginUserValue.replace(/'/g, '"'));
+          } catch (e) {
+            return [];
+          }
+        })();
+
+  if (newBlockePPN) {
+    const optionValues = select
+      .find("option")
+      .map((_, option) => $(option).val())
+      .get();
+
+    if (optionValues.includes(newBlockePPN)) {
+      const message =
+        setLanguage === "ja"
+          ? "すでに登録済みのePPNです"
+          : "This ePPN is already registered.";
+      alert(message);
+      return;
+    } else if (enableLoginUserList.length > 0) {
+      if (newBlockePPN.includes("*")) {
+        const regex = new RegExp("^" + newBlockePPN.replace("*", ".*") + "$");
+        const isMatch = enableLoginUserList.some((eppn) => regex.test(eppn));
+        if (isMatch) {
+          const matches = enableLoginUserList.filter((eppn) =>
+            regex.test(eppn)
+          );
+          const message =
+            setLanguage === "ja"
+              ? "以下の登録済みユーザーのログインをブロックします\nユーザーのePPN:" +
+                matches
+              : "Block login for the following registered users\nUser's ePPN:" +
+                matches;
+          alert(message);
+        }
+      } else if (enableLoginUserList.includes(newBlockePPN)) {
+        const message =
+          setLanguage === "ja"
+            ? "以下の登録済みユーザーのログインをブロックします\nユーザーのePPN:" +
+              newBlockePPN
+            : "Block login for the following registered users\nUser's ePPN:" +
+              newBlockePPN;
+        alert(message);
+      }
+    }
+
+    const option = $("<option>", {
+      text: newBlockePPN,
+      value: newBlockePPN,
+    });
+    select.append(option);
+    $("#block_eppn").val("");
+
+    updateBlockUserList();
+  }
+}
+
+// ブロックユーザーのePPNを削除
+function deleteBlockUser() {
+  const selectBox = $("#block-user-lists");
+  const selectedOption = selectBox.find("option:selected");
+  if (selectedOption.length) {
+    selectedOption.remove();
+  }
+  updateBlockUserList();
+}

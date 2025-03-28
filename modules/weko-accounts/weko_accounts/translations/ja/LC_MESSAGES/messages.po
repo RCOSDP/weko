@@ -39,6 +39,10 @@ msgstr "機関外のOrthros のロール設定を更新しました"
 msgid "Extra Role was updated."
 msgstr "その他 のロール設定を更新しました"
 
+#: weko_accounts/admin.py:
+msgid "Blocked user list was updated."
+msgstr "ユーザーログインブロック設定を更新しました"
+
 #: weko_accounts/admin.py:69
 msgid "Setting"
 msgstr "設定"

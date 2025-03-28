@@ -85,7 +85,8 @@
         -->
 
         <MetadataProvider type="XML" validate="true" path="idp-metadata.xml"/>
-        
+
+        <MetadataProvider type="XML" validate="true" path="https://core.orthros.gakunin.nii.ac.jp/idp" />
 
         <!-- Example of remotely supplied batch of signed metadata. -->
         <!--
