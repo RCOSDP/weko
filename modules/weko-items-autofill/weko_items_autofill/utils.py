@@ -21,6 +21,7 @@
 """Module of weko-items-autofill utils.."""
 import copy
 from functools import wraps
+import json
 
 from flask import current_app
 from flask_babelex import gettext as _
@@ -28,8 +29,10 @@ from invenio_cache import current_cache
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
 from lxml import etree
+from weko_admin.utils import get_current_api_certification
 from weko_records.api import ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
+from weko_workflow.api import WorkActivity
 from weko_workflow.models import ActionJournal
 from weko_workflow.utils import MappingData
 
@@ -156,6 +159,168 @@ def get_title_pubdate_path(item_type_id):
                 if title:
                     break
     result['title'] = title
+    return result
+
+
+def deep_merge(*dicts):
+    """Recursively merge multiple dictionaries, supporting deep list merging"""
+    merged_dict = {}
+    for d in dicts:
+        for key, value in d.items():
+            if key in merged_dict:
+                if isinstance(value, dict) and isinstance(merged_dict[key], dict):
+                    # Recursively merge sub-dictionaries
+                    merged_dict[key] = deep_merge(merged_dict[key], value)
+                elif isinstance(value, list) and isinstance(merged_dict[key], list):
+                    # Recursively merge elements in the list
+                    merged_dict[key] = merge_lists(merged_dict[key], value)
+                else:
+                    # Do not overwrite existing values
+                    pass
+            else:
+                # Directly add new value
+                merged_dict[key] = value
+    return merged_dict
+
+
+def merge_lists(list1, list2):
+    """Recursively merge dictionaries in the list and remove duplicates"""
+    merged_list = list1[:]
+
+    if (len(merged_list) != 1 or len(list2) != 1):
+        return merged_list + list2[:]
+
+    dict1, dict2 = merged_list[0], list2[0]
+    if all(not v for v in dict1.values()) and any(v for v in dict2.values()):
+        merged_list = list2[:]
+
+    return merged_list
+
+
+def list_to_dict(lst):
+    """If all elements in the list are dictionaries, merge them into a single dictionary"""
+    if isinstance(lst, list) and all(isinstance(item, dict) for item in lst):
+        merged_dict = {}
+        for item in lst:
+            merged_dict.update(item)  # Merge dictionaries
+        return merged_dict
+    return lst  # If the list does not meet the conditions, return
+
+
+def dict_to_list(d):
+    """Convert a dictionary to a list, with each key-value pair becoming a separate dictionary"""
+    if isinstance(d, dict):
+        return [{k: v} for k, v in d.items()]
+    return d  # If not a dictionary, return
+
+
+def get_crossref_record_data_default_pid(doi, item_type_id):
+    """
+    Get record data base on CrossRef default pid.
+
+    :return: The record data
+    """
+    pid_response = get_current_api_certification("crf")
+    pid = pid_response["cert_data"]
+    return get_crossref_record_data(pid, doi, item_type_id)
+
+# FIXME: Remove this function after merge.
+def get_jalc_record_data_kari(doi, item_type_id):
+    """
+    Get record data base on JALC.
+
+    :return: The record data
+    """
+    result = [{"title": "JALC API"}]
+    return result
+
+# FIXME: Remove this function after merge.
+def get_jamas_record_data_kari(doi, item_type_id):
+    """
+    Get record data base on JAMAS.
+
+    :return: The record data
+    """
+    result = [{"title": "JAMAS API"}]
+    return result
+
+# FIXME: Remove this function after merge.
+def get_crossref_record_data_kari(doi, item_type_id):
+    """
+    Get record data base on CROSSREF.
+
+    :return: The record data
+    """
+    result = [{"title": "CROSSREF API"}]
+    return result
+
+# FIXME: Remove this function after merge.
+def get_datacite_record_data_kari(doi, item_type_id):
+    """
+    Get record data base on DATACITE.
+
+    :return: The record data
+    """
+    result = [{"title": "DATACITE API"}]
+    return result
+
+# FIXME: Remove this function after merge.
+def get_cinii_record_data_kari(doi, item_type_id):
+    """
+    Get record data base on CINII.
+
+    :return: The record data
+    """
+    result = [{"title": "CINII API"}]
+    return result
+
+
+@cached_api_json(timeout=50, key_prefix="doi_data")
+def get_doi_record_data(doi, item_type_id, activity_id):
+    """Get record data base on DOI API.
+
+    :param naid: The DOI ID
+    :param item_type_id: The item type ID
+    :param activity_id: The activity ID
+    :return: The record data
+    """
+    activity = WorkActivity()
+    metadata = activity.get_activity_metadata(activity_id)
+    metainfo = json.loads(metadata).get("metainfo", {})
+    doi_response = get_doi_with_original(doi, item_type_id, metainfo)
+    return doi_response
+
+
+def get_doi_with_original(doi, item_type_id, original_metadeta=None):
+    """Get record data base on DOI API.
+
+    :param naid: The DOI ID
+    :param item_type_id: The item type ID
+    :param original_metadeta: The original metadata
+    :return: doi data
+    """
+    result = list()
+    # FIXME: fix method name after merge
+    record_funcs_map = {
+        "JaLC API": get_jalc_record_data_kari,
+        "医中誌 Web API": get_jamas_record_data_kari,
+        "CrossRef": get_crossref_record_data_kari,
+        "DataCite": get_datacite_record_data_kari,
+        "CiNii Research": get_cinii_record_data_kari,
+    }
+    result_dict = {}
+    for key in current_app.config["WEKO_ITEMS_AUTOFILL_TO_BE_USED"]:
+        record_data_dict = {}
+        if key == "Original":
+            if original_metadeta is not None:
+                record_data_dict = original_metadeta
+            else:
+                continue
+        else:
+            record_data_list = record_funcs_map[key](doi, item_type_id)
+            record_data_dict = list_to_dict(record_data_list)
+        result_dict = deep_merge(result_dict, record_data_dict)
+    result = dict_to_list(result_dict)
     return result
 
 
@@ -446,7 +611,7 @@ def get_cinii_product_identifier(data, type1, type2):
     _data = [item.get('identifier') for item in data]
     result = pack_data_with_multiple_type_cinii(_data, type1, type2)
     return result
-    
+
 def get_cinii_data_by_key(api, keyword):
     """Get data from CiNii based on keyword.
 
