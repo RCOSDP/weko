@@ -20,6 +20,7 @@
 
 """WEKO3 module docstring."""
 
+import json
 import math
 from typing import List
 import urllib.parse
@@ -2471,6 +2472,29 @@ class WorkActivity(object):
         except Exception as ex:
             current_app.logger.exception(str(ex))
             db.session.rollback()
+
+    def get_non_extract_files(self, activity_id):
+        """Get non-extract files.
+
+        Get extraction info from temp_data in activity.
+
+        Args:
+            activity_id (str): Activity ID.
+
+        Returns:
+            list[str]: list of non_extract filenames
+
+        """
+        metadata = self.get_activity_metadata(activity_id)
+        if metadata is None:
+            return None
+        item_json = json.loads(metadata)
+        # Load files from temp_data.
+        files = item_json.get('files', [])
+        return [
+            file["filename"] for file in files if file.get("non_extract", False)
+        ]
+
 
     def cancel_usage_report_activities(self, activities_id: list):
         """Cancel usage report activities are excepted.

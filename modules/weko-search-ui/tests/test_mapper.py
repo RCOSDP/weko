@@ -4668,6 +4668,15 @@ class TestJsonMapper:
 # def JsonLdMapper:
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 class TestJsonLdMapper:
+    def test_is_valid(self, app, db, item_type2):
+        schema = json_data("data/jsonld/item_type_schema.json")
+        item_type2.model.schema = schema
+        db.session.commit()
+
+        json_mapping = json_data("data/jsonld/ro-crate_mapping.json")
+
+        assert JsonLdMapper(item_type2.model.id, json_mapping).is_valid
+
     # def validate(self):
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_validate -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_validate(self, app, db, item_type2):
@@ -4717,7 +4726,7 @@ class TestJsonLdMapper:
             assert item_metadata["item_30001_file22"][1]["filesize"][0]["value"] == "1234 B"
             assert item_metadata["item_30001_creator2"][0]["creatorNames"][0]["creatorName"] == "John Doe"
             assert item_metadata["item_30001_creator2"][0]["creatorAffiliations"][0]["affiliationNames"][0]["affiliationName"] == "University of Manchester"
-            assert item_metadata["feedback_mail_list"] == [{"mail": "wekosoftware@nii.ac.jp", "author_id": ""}]
+            assert item_metadata["feedback_mail_list"] == [{"email": "wekosoftware@nii.ac.jp", "author_id": ""}]
             assert item_metadata["files_info"][0]["key"] == "item_30001_file22"
             assert item_metadata["files_info"][0]["items"][0]["filename"] == "sample.rst"
             assert item_metadata["files_info"][0]["items"][0]["url"]["label"] == "sample.rst"
@@ -4842,3 +4851,266 @@ class TestJsonLdMapper:
         with pytest.raises(ValueError) as ex:
             deconstructed_metadata, format = JsonLdMapper._deconstruct_json_ld({})
         ex.match('Invalid json-ld format: "@context" is invalid.')
+
+    # def to_rocrate_metadata(self, metadata):
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_to_rocrate_metadata -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_to_rocrate_metadata(self, app, db, item_type2, item_type_mapping2 ):
+        metadata = {
+            "_oai": {
+                "id": "oai:weko3.example.org:02000007",
+                "sets": [
+                "1623632832836"
+                ]
+            },
+            "path": [
+                "1623632832836"
+            ],
+            "owner": "1",
+            "recid": "2000007",
+            "title": [
+                "The Sample Dataset for WEKO"
+            ],
+            "pubdate": {
+                "attribute_name": "PubDate",
+                "attribute_value": "2025-03-06"
+            },
+            "_buckets": {
+                "deposit": "0fd192c1-8de8-46c2-b73c-66495e40b62d"
+            },
+            "_deposit": {
+                "id": "2000007",
+                "pid": {
+                "type": "depid",
+                "value": "2000007",
+                "revision_id": 0
+                },
+                "owner": "1",
+                "owners": [
+                1
+                ],
+                "status": "published",
+                "created_by": 1,
+                "owners_ext": {
+                "email": "wekosoftware@nii.ac.jp",
+                "username": None,
+                "displayname": "ADMIN"
+                }
+            },
+            "item_title": "The Sample Dataset for WEKO",
+            "author_link": [
+                "1",
+                "2"
+            ],
+            "item_type_id": "30001",
+            "publish_date": "2025-03-06",
+            "control_number": "2000007",
+            "publish_status": "0",
+            "weko_shared_id": -1,
+            "item_30001_file22": {
+                "attribute_name": "File",
+                "attribute_type": "file",
+                "attribute_value_mlt": [
+                {
+                    "url": {
+                    "url": "https://weko3.example.org/record/2000007/files/sample.rst",
+                    "objectType": "abstract"
+                    },
+                    "date": [
+                    {
+                        "dateType": "Available",
+                        "dateValue": "2025-03-06"
+                    }
+                    ],
+                    "format": "application/octet-stream",
+                    "version": "1",
+                    "filename": "sample.rst",
+                    "filesize": [
+                    {
+                        "value": "333 B"
+                    }
+                    ],
+                    "mimetype": "application/octet-stream",
+                    "accessrole": "open_access",
+                    "version_id": "272c4651-711e-427d-8096-b1b20e27820e"
+                },
+                {
+                    "url": {
+                    "url": "https://weko3.example.org/record/2000007/files/data.csv",
+                    "objectType": "dataset"
+                    },
+                    "date": [
+                    {
+                        "dateType": "Available",
+                        "dateValue": "2025-03-10"
+                    }
+                    ],
+                    "format": "text/csv",
+                    "version": "1",
+                    "fileDate": [
+                    {
+                        "fileDateType": "Created",
+                        "fileDateValue": "2025-01-27"
+                    }
+                    ],
+                    "filename": "data.csv",
+                    "filesize": [
+                    {
+                        "value": "475 B"
+                    }
+                    ],
+                    "mimetype": "text/csv",
+                    "accessrole": "open_date",
+                    "version_id": "ac7990f5-a6de-4b61-b34d-34bd0d0240ee"
+                }
+                ]
+            },
+            "item_30001_title0": {
+                "attribute_name": "Title",
+                "attribute_value_mlt": [
+                {
+                    "subitem_title": "The Sample Dataset for WEKO",
+                    "subitem_title_language": "en"
+                },
+                {
+                    "subitem_title": "WEKO用サンプルデータセット",
+                    "subitem_title_language": "ja"
+                }
+                ]
+            },
+            "item_30001_creator2": {
+                "attribute_name": "Creator",
+                "attribute_type": "creator",
+                "attribute_value_mlt": [
+                {
+                    "givenNames": [
+                    {
+                        "givenName": "John",
+                        "givenNameLang": "en"
+                    }
+                    ],
+                    "familyNames": [
+                    {
+                        "familyName": "Doe",
+                        "familyNameLang": "en"
+                    }
+                    ],
+                    "creatorMails": [
+                    {
+                        "creatorMail": "john.doe@example.org"
+                    }
+                    ],
+                    "creatorNames": [
+                    {
+                        "creatorName": "Doe, John",
+                        "creatorNameLang": "en",
+                        "creatorNameType": "Personal"
+                    }
+                    ],
+                    "nameIdentifiers": [
+                    {
+                        "nameIdentifier": "1",
+                        "nameIdentifierScheme": "WEKO"
+                    }
+                    ],
+                    "creatorAffiliations": [
+                    {
+                        "affiliationNames": [
+                        {
+                            "affiliationName": "University of Manchester",
+                            "affiliationNameLang": "en"
+                        }
+                        ]
+                    }
+                    ]
+                }
+                ]
+            },
+            "item_30001_contributor3": {
+                "attribute_name": "Contributor",
+                "attribute_value_mlt": [
+                {
+                    "givenNames": [
+                    {
+                        "givenName": "Kenji",
+                        "givenNameLang": "en"
+                    },
+                    {
+                        "givenName": "健司",
+                        "givenNameLang": "ja"
+                    }
+                    ],
+                    "familyNames": [
+                    {
+                        "familyName": "Ichikawa",
+                        "familyNameLang": "en"
+                    },
+                    {
+                        "familyName": "市川",
+                        "familyNameLang": "ja"
+                    }
+                    ],
+                    "nameIdentifiers": [
+                    {
+                        "nameIdentifier": "2",
+                        "nameIdentifierScheme": "WEKO"
+                    }
+                    ],
+                    "contributorMails": [
+                    {
+                        "contributorMail": "kenji.ichikawa@example.org"
+                    }
+                    ],
+                    "contributorNames": [
+                    {
+                        "lang": "en",
+                        "nameType": "Personal",
+                        "contributorName": "Ichikawa, Kenji"
+                    },
+                    {
+                        "lang": "ja",
+                        "nameType": "Personal",
+                        "contributorName": "市川, 健司"
+                    }
+                    ]
+                }
+                ]
+            },
+            "relation_version_is_last": True,
+            "item_30001_resource_type11": {
+                "attribute_name": "Resource Type",
+                "attribute_value_mlt": [
+                {
+                    "resourceuri": "http://purl.org/coar/resource_type/c_6501",
+                    "resourcetype": "journal article"
+                }
+                ]
+            },
+            "item_30001_identifier_registration13": {
+                "attribute_name": "Identifier Registration",
+                "attribute_value_mlt": [
+                {
+                    "subitem_identifier_reg_text": "<Empty>/0002000007",
+                    "subitem_identifier_reg_type": "JaLC"
+                }
+                ]
+            },
+            "item_30001_bibliographic_information17": {
+                "attribute_name": "Bibliographic Information",
+                "attribute_value_mlt": [
+                {
+                    "bibliographicPageStart": "32"
+                }
+                ]
+            }
+            }
+
+        schema = json_data("data/jsonld/item_type_schema.json")
+        item_type2.model.schema = schema
+        mapping = json_data("data/jsonld/item_type_mapping.json")
+        item_type_mapping2.model.mapping = mapping
+        db.session.commit()
+        json_mapping = json_data("data/jsonld/ro-crate_mapping.json")
+        print("")
+        rocrate = JsonLdMapper(item_type2.model.id, json_mapping).to_rocrate_metadata(metadata)
+        ro_crate_metadata = rocrate.metadata.generate()
+        print(f"rocrate metadata: {ro_crate_metadata}")

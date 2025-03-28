@@ -74,7 +74,7 @@
       "wk:feedbackMail": [
         "wekosoftware@nii.ac.jp"
       ],
-      "identifier": "https://example.repo.nii.ac.jp/records/123456789",
+      "uri": "https://example.repo.nii.ac.jp/records/123456789",
       "wk:index": [
         "1623632832836"
       ],
