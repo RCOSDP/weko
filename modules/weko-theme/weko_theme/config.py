@@ -202,11 +202,11 @@ WEKO_THEME_ADMIN_MENU = [
                 'order': 4
             },
             {
-                'name': 'RO-Crate mapping',
+                'name': 'JSON-LD mapping',
                 'order': 5
             },
             {
-                'name': 'JSON-LD Mapping',
+                'name': 'RO-Crate mapping',
                 'order': 6
             }
         ]
@@ -230,6 +230,10 @@ WEKO_THEME_ADMIN_MENU = [
             {
                 'name': 'Import',
                 'order': 4
+            },
+            {
+                'name': 'RO-Crate Import',
+                'order': 5
             }
         ]
     },

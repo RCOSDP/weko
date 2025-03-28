@@ -214,6 +214,52 @@ def dict_to_list(d):
     return d  # If not a dictionary, return
 
 
+def get_jalc_record_data(doi, item_type_id):
+    """Get record data base on JaLC API. FIXME: delete after merge
+
+    :return: The record data
+    """
+    # result = []
+    result = [{"item_30001_title0": [{"subitem_title": "Identification of cDNA Sequences Encoding the Complement Components of Zebrafish (Danio rerio)", "subitem_title_language": "en"}]}, {"item_30001_creator2": [{"creatorNames": [{"creatorName": "Vo Kha Tam", "creatorNameLang": "en"}]}]}, {"item_30001_bibliographic_information17": {"bibliographic_titles": [{"bibliographic_title": "Journal of the Faculty of Agriculture, Kyushu University", "bibliographic_titleLang": "en"}]}}, {"item_30001_source_identifier16": [{"subitem_source_identifier": "0023-6152", "subitem_source_identifier_type": "ISSN"}]}, {"item_30001_bibliographic_information17": {"bibliographicVolumeNumber": "54"}}, {"item_30001_bibliographic_information17": {"bibliographicIssueNumber": "2"}}, {"item_30001_bibliographic_information17": {"bibliographicPageStart": "373"}}, {"item_30001_bibliographic_information17": {"bibliographicPageEnd": "387"}}, {"item_30001_bibliographic_information17": {"bibliographicIssueDates": {"bibliographicIssueDate": "2009", "bibliographicIssueDateType": "Issued"}}}, {"item_30001_relation14": [{"subitem_relation_type_id": {"subitem_relation_type_id_text": "10.5109/16119", "subitem_relation_type_select": "DOI"}}]}]
+    return result
+
+
+def get_ichushi_record_data(doi, item_type_id):
+    """
+    Get record data base on 医中誌 Web API. FIXME: delete after merge
+
+    :return: The record data
+    """
+    # result = []
+    result = [{"item_30001_title0": [{"subitem_title": "Identification of cDNA Sequences Encoding the Complement Components of Zebrafish (Danio rerio)", "subitem_title_language": "en"}]}, {"item_30001_creator2": [{"creatorNames": [{"creatorName": "Tsujikura Masakazu", "creatorNameLang": "en"}]}]}, {"item_30001_bibliographic_information17": {"bibliographic_titles": [{"bibliographic_title": "Journal of the Faculty of Agriculture, Kyushu University", "bibliographic_titleLang": "en"}]}}, {"item_30001_source_identifier16": [{"subitem_source_identifier": "0023-6152", "subitem_source_identifier_type": "ISSN"}]}, {"item_30001_bibliographic_information17": {"bibliographicVolumeNumber": "54"}}, {"item_30001_bibliographic_information17": {"bibliographicIssueNumber": "2"}}, {"item_30001_bibliographic_information17": {"bibliographicPageStart": "373"}}, {"item_30001_bibliographic_information17": {"bibliographicPageEnd": "387"}}, {"item_30001_bibliographic_information17": {"bibliographicIssueDates": {"bibliographicIssueDate": "2009", "bibliographicIssueDateType": "Issued"}}}, {"item_30001_relation14": [{"subitem_relation_type_id": {"subitem_relation_type_id_text": "10.5109/16119", "subitem_relation_type_select": "DOI"}}]}]
+    return result
+
+
+def get_crossref_record_data_without_pid(doi, item_type_id):
+    """
+    Get record data base on CrossRef without pid. FIXME: change after merge
+
+    :return: The record data
+    """
+    # FIXME: resurrect after merge
+    # pid_response = get_current_api_certification('crf')
+    # pid = pid_response['cert_data']
+    # result = get_crossref_record_data(pid, doi, item_type_id)
+    # FIXME: delete after merge
+    result = [{"item_30001_title0": [{"subitem_title": "Identification of cDNA Sequences Encoding the Complement Components of Zebrafish (Danio rerio)", "subitem_title_language": "en"}]}, {"item_30001_creator2": [{"creatorNames": [{"creatorName": "Somamoto Tomonori", "creatorNameLang": "en"}]}]}, {"item_30001_bibliographic_information17": {"bibliographic_titles": [{"bibliographic_title": "Journal of the Faculty of Agriculture, Kyushu University", "bibliographic_titleLang": "en"}]}}, {"item_30001_source_identifier16": [{"subitem_source_identifier": "0023-6152", "subitem_source_identifier_type": "ISSN"}]}, {"item_30001_bibliographic_information17": {"bibliographicVolumeNumber": "54"}}, {"item_30001_bibliographic_information17": {"bibliographicIssueNumber": "2"}}, {"item_30001_bibliographic_information17": {"bibliographicPageStart": "373"}}, {"item_30001_bibliographic_information17": {"bibliographicPageEnd": "387"}}, {"item_30001_bibliographic_information17": {"bibliographicIssueDates": {"bibliographicIssueDate": "2009", "bibliographicIssueDateType": "Issued"}}}, {"item_30001_relation14": [{"subitem_relation_type_id": {"subitem_relation_type_id_text": "10.5109/16119", "subitem_relation_type_select": "DOI"}}]}]
+    return result
+
+
+def get_datacite_record_data(doi, item_type_id):
+    """Get record data base on DataCite. FIXME: delete after merge
+
+    :return: The record data
+    """
+    # result = []
+    result = [{"item_30001_title0": [{"subitem_title": "Identification of cDNA Sequences Encoding the Complement Components of Zebrafish (Danio rerio)", "subitem_title_language": "en"}]}, {"item_30001_creator2": [{"creatorNames": [{"creatorName": "Nakano Miki", "creatorNameLang": "en"}]}]}, {"item_30001_bibliographic_information17": {"bibliographic_titles": [{"bibliographic_title": "Journal of the Faculty of Agriculture, Kyushu University", "bibliographic_titleLang": "en"}]}}, {"item_30001_source_identifier16": [{"subitem_source_identifier": "0023-6152", "subitem_source_identifier_type": "ISSN"}]}, {"item_30001_bibliographic_information17": {"bibliographicVolumeNumber": "54"}}, {"item_30001_bibliographic_information17": {"bibliographicIssueNumber": "2"}}, {"item_30001_bibliographic_information17": {"bibliographicPageStart": "373"}}, {"item_30001_bibliographic_information17": {"bibliographicPageEnd": "387"}}, {"item_30001_bibliographic_information17": {"bibliographicIssueDates": {"bibliographicIssueDate": "2009", "bibliographicIssueDateType": "Issued"}}}, {"item_30001_relation14": [{"subitem_relation_type_id": {"subitem_relation_type_id_text": "10.5109/16119", "subitem_relation_type_select": "DOI"}}]}]
+    return result
+
+
 def get_crossref_record_data_default_pid(doi, item_type_id):
     """
     Get record data base on CrossRef default pid.
@@ -223,56 +269,6 @@ def get_crossref_record_data_default_pid(doi, item_type_id):
     pid_response = get_current_api_certification("crf")
     pid = pid_response["cert_data"]
     return get_crossref_record_data(pid, doi, item_type_id)
-
-# FIXME: Remove this function after merge.
-def get_jalc_record_data_kari(doi, item_type_id):
-    """
-    Get record data base on JALC.
-
-    :return: The record data
-    """
-    result = [{"title": "JALC API"}]
-    return result
-
-# FIXME: Remove this function after merge.
-def get_jamas_record_data_kari(doi, item_type_id):
-    """
-    Get record data base on JAMAS.
-
-    :return: The record data
-    """
-    result = [{"title": "JAMAS API"}]
-    return result
-
-# FIXME: Remove this function after merge.
-def get_crossref_record_data_kari(doi, item_type_id):
-    """
-    Get record data base on CROSSREF.
-
-    :return: The record data
-    """
-    result = [{"title": "CROSSREF API"}]
-    return result
-
-# FIXME: Remove this function after merge.
-def get_datacite_record_data_kari(doi, item_type_id):
-    """
-    Get record data base on DATACITE.
-
-    :return: The record data
-    """
-    result = [{"title": "DATACITE API"}]
-    return result
-
-# FIXME: Remove this function after merge.
-def get_cinii_record_data_kari(doi, item_type_id):
-    """
-    Get record data base on CINII.
-
-    :return: The record data
-    """
-    result = [{"title": "CINII API"}]
-    return result
 
 
 @cached_api_json(timeout=50, key_prefix="doi_data")
@@ -300,14 +296,14 @@ def get_doi_with_original(doi, item_type_id, original_metadeta=None):
     :return: doi data
     """
     result = list()
-    # FIXME: fix method name after merge
     record_funcs_map = {
-        "JaLC API": get_jalc_record_data_kari,
-        "医中誌 Web API": get_jamas_record_data_kari,
-        "CrossRef": get_crossref_record_data_kari,
-        "DataCite": get_datacite_record_data_kari,
-        "CiNii Research": get_cinii_record_data_kari,
+        "JaLC API": get_jalc_record_data,
+        # "医中誌 Web API": get_ichushi_record_data, # FIXME: add after merge
+        "CrossRef": get_crossref_record_data_without_pid,
+        "DataCite": get_datacite_record_data,
+        "CiNii Research": get_cinii_record_data,
     }
+
     result_dict = {}
     for key in current_app.config["WEKO_ITEMS_AUTOFILL_TO_BE_USED"]:
         record_data_dict = {}
