@@ -26,6 +26,7 @@ Blueprint.
 
 import json
 import sys
+import re
 from urllib.parse import quote_plus
 
 import redis
@@ -75,6 +76,71 @@ def init_menu():
         visible_when=_has_admin_access,
         order=100)
     
+    _adjust_shib_admin_DB()
+
+def _adjust_shib_admin_DB():
+    """
+    Create or Update Shibboleth Admin database table.
+    """
+    with _app.app_context():
+        if AdminSettings.query.filter_by(name='blocked_user_settings').first() is None:
+            max_id = db.session.query(db.func.max(AdminSettings.id)).scalar()
+            new_setting = AdminSettings(
+                id=max_id + 1,
+                name="blocked_user_settings",
+                settings={"blocked_ePPNs": []}
+            )
+            db.session.add(new_setting)
+            db.session.commit()
+
+        if AdminSettings.query.filter_by(name='shib_login_enable').first() is None:
+            max_id = db.session.query(db.func.max(AdminSettings.id)).scalar()
+            new_setting = AdminSettings(
+                id=max_id + 1,
+                name="shib_login_enable",
+                settings={"shib_flg": _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']}
+            )
+            db.session.add(new_setting)
+            db.session.commit()
+        else:
+            setting = AdminSettings.query.filter_by(name='shib_login_enable').first()
+            setting.settings = {"shib_flg": _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']}
+            db.session.commit()
+
+        if AdminSettings.query.filter_by(name='default_role_settings').first() is None:
+            max_id = db.session.query(db.func.max(AdminSettings.id)).scalar()
+            new_setting = AdminSettings(
+                id=max_id + 1,
+                name="default_role_settings",
+                settings={
+                    "gakunin_role": _app.config['WEKO_ACCOUNTS_GAKUNIN_ROLE']['defaultRole'],
+                    "orthros_outside_role": _app.config['WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE']['defaultRole'],
+                    "extra_role": _app.config['WEKO_ACCOUNTS_EXTRA_ROLE']['defaultRole']}
+            )
+            db.session.add(new_setting)
+            db.session.commit()
+        else:
+            setting = AdminSettings.query.filter_by(name='default_role_settings').first()
+            setting.settings = {
+                "gakunin_role": _app.config['WEKO_ACCOUNTS_GAKUNIN_ROLE']['defaultRole'],
+                "orthros_outside_role": _app.config['WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE']['defaultRole'],
+                "extra_role": _app.config['WEKO_ACCOUNTS_EXTRA_ROLE']['defaultRole']}
+            db.session.commit()
+
+        if AdminSettings.query.filter_by(name='attribute_mapping').first() is None:
+            max_id = db.session.query(db.func.max(AdminSettings.id)).scalar()
+            new_setting = AdminSettings(
+                id=max_id + 1,
+                name="attribute_mapping",
+                settings=_app.config['WEKO_ACCOUNTS_ATTRIBUTE_MAP']
+            )
+            db.session.add(new_setting)
+            db.session.commit()
+        else:
+            setting = AdminSettings.query.filter_by(name='attribute_mapping').first()
+            setting.settings = _app.config['WEKO_ACCOUNTS_ATTRIBUTE_MAP']
+            db.session.commit()
+
     _adjust_shib_admin_DB()
 
 def _adjust_shib_admin_DB():
@@ -363,6 +429,26 @@ def shib_sp_login():
             flash(_("Missing SHIB_ATTRs!"), category='error')
             return _redirect_method()
 
+        # Check if shib_eppn is not included in the blocked user list
+        if AdminSettings.query.filter_by(name='blocked_user_settings').first():
+            block_user_settings = AdminSettings.get('blocked_user_settings', dict_to_object=False)
+            if isinstance(block_user_settings, str):
+                block_user_settings = json.loads(block_user_settings)
+            block_user_list = block_user_settings.get('blocked_ePPNs', [])
+            shib_eppn = shib_attr.get('shib_eppn')
+
+            # Convert wildcards to regular expressions
+            def _wildcard_to_regex(pattern):
+                regex_pattern = pattern.replace("*", ".*")
+                return re.compile(f"^{regex_pattern}$")
+            
+            blocked = any(_wildcard_to_regex(pattern).match(shib_eppn) or pattern == shib_eppn for pattern in block_user_list)
+        
+            if blocked:
+                flash(_("Failed to login."), category='error')
+                return _redirect_method()
+
+        # Redis connection
         redis_connection = RedisConnection()
         datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         ttl_sec = int(current_app.config[
@@ -378,6 +464,7 @@ def shib_sp_login():
         rst = shib_user.get_relation_info()
 
         next_url = 'weko_accounts.shib_auto_login'
+
         if not rst:
             # Relation is not existed, cache shibboleth info to redis.
             next_url = 'weko_accounts.shib_login'
