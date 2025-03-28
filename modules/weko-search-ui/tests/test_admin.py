@@ -1,3 +1,4 @@
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 import codecs
 import io
 import csv
@@ -11,13 +12,15 @@ from flask import Flask, json, jsonify, session, url_for,current_app, make_respo
 
 from invenio_accounts.testutils import login_user_via_session
 
+from werkzeug.datastructures import FileStorage
 from weko_index_tree.models import Index
 from weko_search_ui.admin import (
     ItemManagementBulkDelete,
     ItemManagementCustomSort,
     ItemManagementBulkSearch,
     ItemImportView,
-    ItemBulkExport
+    ItemBulkExport,
+    ItemRocrateImportView
 )
 
 
@@ -276,6 +279,116 @@ def test_ItemImportView_export_template(i18n_app, users, item_type):
 #     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
 #         test = ItemImportView()
 #         assert test.check_import_available()
+
+
+# class ItemRocrateImportView(BaseView):
+class TestItemRocrateImportView:
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::TestItemRocrateImportView::test_index_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_index_acl(self,client, users, db_records2):
+        user = users[3]['obj']
+        assert user.roles[0].name=='System Administrator'
+
+        url = url_for("items/rocrate_import.index", _external=True)
+        with patch("flask.templating._render", return_value=""):
+            res = client.get(url)
+            assert res.status == '302 FOUND'
+
+        with patch("flask_login.utils._get_user", return_value=user):
+            with patch("flask.templating._render", return_value=""):
+                res = client.get(url)
+                assert res.status == '200 OK'
+
+# def check(self) -> jsonify: ~ UnboundLocalError: local variable 'task' referenced before assignment request.form needed
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemRocrateImportView_check -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_ItemRocrateImportView_check(i18n_app, users, client, client_request_args, mocker):
+    file_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "data",
+        "rocrate_import",
+        "new_crate_v2.zip"
+    )
+    url = url_for("items/rocrate_import.check")
+    print(f"url: {url}")
+    with open(file_path, "rb") as f:
+        zip_storage = FileStorage(
+            filename="new_crate_v2.zip",
+            stream=io.BytesIO(f.read()),
+            content_type="application/zip"
+        )
+        data = {
+            "file": zip_storage,
+            "is_change_identifier": "false",
+            "mapping_id": 1
+        }
+        headers = {
+            "Content-Disposition":"attachment; filename=new_crate_v2.zip",
+            "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
+        }
+
+        mocker.patch("flask_login.utils._get_user", return_value=users[3]['obj'])
+        mocker.patch("weko_search_ui.admin.validate_csrf_header")
+        task = MagicMock()
+        task.task_id = 1
+        mock_check = mocker.patch("weko_search_ui.admin.check_rocrate_import_items_task.apply_async",return_value=task)
+        res = client.post(
+            url,
+            data=data,
+            content_type="multipart/form-data",
+            headers=headers
+        )
+        mock_check.assert_called_once()
+        print(f"res.data: {res.data}")
+        assert res.status_code == 200
+
+#     def get_check_status(self) -> jsonify: ~ GOOD
+def test_ItemRocrateImportView_get_check_status(i18n_app, users, client_request_args, db_records2):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        test = ItemRocrateImportView()
+        assert test.get_check_status()
+
+#     def download_check(self): ~ GOOD
+def test_ItemRocrateImportView_download_check(i18n_app, users, client_request_args, db_records2):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        test = ItemRocrateImportView()
+        assert test.download_check()
+
+#     def import_items(self) -> jsonify: ~ GOOD
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemRocrateImportView_import_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_ItemRocrateImportView_import_items(i18n_app, users, client_request_args, db_records2):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        test = ItemRocrateImportView()
+        assert test.import_items()
+
+#     def get_status(self): ~ GOOD
+def test_ItemRocrateImportView_get_status(i18n_app, users, client_request_args, db_records2):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        test = ItemRocrateImportView()
+        assert test.get_status()
+
+#     def download_import(self): ~ GOOD
+def test_ItemRocrateImportView_download_import(i18n_app, users, client_request_args, db_records2):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        test = ItemRocrateImportView()
+        assert test.download_import()
+
+#     def get_disclaimer_text(self): ~ GOOD
+def test_ItemRocrateImportView_get_disclaimer_text(i18n_app, users, client_request_args, db_records2):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        test = ItemRocrateImportView()
+        assert test.get_disclaimer_text()
+
+#     def export_template(self):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemRocrateImportView_export_template -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_ItemRocrateImportView_export_template(i18n_app, users, item_type):
+    _data = {
+        'item_type_id': 1
+    }
+    with i18n_app.test_client() as client:
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            res = client.post("/admin/items/rocrate_import/export_template",
+                            data=json.dumps(_data),
+                            content_type="application/json")
+            assert res.status_code==200
 
 
 # class ItemBulkExport(BaseView):

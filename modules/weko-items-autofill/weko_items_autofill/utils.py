@@ -283,7 +283,8 @@ def get_doi_record_data(doi, item_type_id, activity_id):
     activity = WorkActivity()
     metadata = activity.get_activity_metadata(activity_id)
     metainfo = json.loads(metadata).get("metainfo", {})
-    doi_response = get_doi_with_original(doi, item_type_id, metainfo)
+    doi_with_original = get_doi_with_original(doi, item_type_id, metainfo)
+    doi_response = dict_to_list(doi_with_original)
     return doi_response
 
 
@@ -295,7 +296,6 @@ def get_doi_with_original(doi, item_type_id, original_metadeta=None):
     :param original_metadeta: The original metadata
     :return: doi data
     """
-    result = list()
     record_funcs_map = {
         "JaLC API": get_jalc_record_data,
         # "医中誌 Web API": get_ichushi_record_data, # FIXME: add after merge
@@ -316,8 +316,7 @@ def get_doi_with_original(doi, item_type_id, original_metadeta=None):
             record_data_list = record_funcs_map[key](doi, item_type_id)
             record_data_dict = list_to_dict(record_data_list)
         result_dict = deep_merge(result_dict, record_data_dict)
-    result = dict_to_list(result_dict)
-    return result
+    return result_dict
 
 
 @cached_api_json(timeout=50, key_prefix="crossref_data")
