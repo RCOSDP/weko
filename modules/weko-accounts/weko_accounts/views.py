@@ -83,8 +83,9 @@ def _adjust_shib_admin_DB():
     """
     with _app.app_context():
         if AdminSettings.query.filter_by(name='blocked_user_settings').first() is None:
+            max_id = db.session.query(db.func.max(AdminSettings.id)).scalar()
             new_setting = AdminSettings(
-                id=6,
+                id=max_id + 1,
                 name="blocked_user_settings",
                 settings={"blocked_ePPNs": []}
             )
@@ -92,8 +93,9 @@ def _adjust_shib_admin_DB():
             db.session.commit()
 
         if AdminSettings.query.filter_by(name='shib_login_enable').first() is None:
+            max_id = db.session.query(db.func.max(AdminSettings.id)).scalar()
             new_setting = AdminSettings(
-                id=7,
+                id=max_id + 1,
                 name="shib_login_enable",
                 settings={"shib_flg": _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']}
             )
@@ -105,8 +107,9 @@ def _adjust_shib_admin_DB():
             db.session.commit()
         
         if AdminSettings.query.filter_by(name='default_role_settings').first() is None:
+            max_id = db.session.query(db.func.max(AdminSettings.id)).scalar()
             new_setting = AdminSettings(
-                id=8,
+                id=max_id + 1,
                 name="default_role_settings",
                 settings={
                     "gakunin_role": _app.config['WEKO_ACCOUNTS_GAKUNIN_ROLE']['defaultRole'],
@@ -124,8 +127,9 @@ def _adjust_shib_admin_DB():
             db.session.commit()
 
         if AdminSettings.query.filter_by(name='attribute_mapping').first() is None:
+            max_id = db.session.query(db.func.max(AdminSettings.id)).scalar()
             new_setting = AdminSettings(
-                id=9,
+                id=max_id + 1,
                 name="attribute_mapping",
                 settings=_app.config['WEKO_ACCOUNTS_ATTRIBUTE_MAP']
             )
