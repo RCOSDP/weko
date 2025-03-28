@@ -29,6 +29,7 @@ from datetime import datetime, timedelta
 from typing import List, NoReturn, Optional, Tuple, Union
 import traceback
 
+import pytz
 import redis
 from redis import sentinel
 from celery.task.control import inspect
@@ -4515,3 +4516,75 @@ def check_pretty(pretty):
         current_app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
     else:
         current_app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+
+
+def convert_to_timezone(dt, user_timezone=None):
+    """
+    Convert a datetime object to the specified timezone.
+
+    Args:
+        dt (datetime): The datetime object to convert.
+        user_timezone (str): The timezone string (e.g., 'Asia/Tokyo').
+
+    Returns:
+        datetime: The converted datetime object.
+    """
+    # date_time_str = date_time.strftime('%Y-%m-%d %H:%M:%S')
+    # dt = datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S')
+    print(dt)
+    if dt.tzinfo is None:
+        dt = pytz.utc.localize(dt)
+    if user_timezone:
+        timezone = pytz.timezone(user_timezone)
+        dt = dt.astimezone(timezone)
+    return dt
+
+
+def load_template(template_name, language=None):
+    """
+    指定されたテンプレートを読み込む。
+
+    Args:
+        template_name (str): テンプレートのファイル名
+
+    Returns:
+        dict: {'subject': '件名テンプレート', 'body': '本文テンプレート'}
+    """
+    current_path = os.path.dirname(os.path.abspath(__file__))
+    folder_path = os.path.join(
+                    current_path,
+                    'templates',
+                    'weko_workflow',
+                    'email_templates')
+    if language is None:
+        language = "en"
+    template_path = os.path.join(folder_path, template_name.format(language=language))
+    if not os.path.exists(template_path):
+        template_path = os.path.join(folder_path, template_name.format(language="en"))
+    with open(template_path, "r") as file:
+        lines = file.readlines()
+    # 1行目を件名、それ以降を本文とする
+    subject = lines[0].strip() if lines else ""
+    body = "".join(lines[1:]).strip() if len(lines) > 1 else ""
+    return {"subject": subject, "body": body}
+
+
+def fill_template(template, data):
+    """
+    テンプレートにデータを埋め込み、件名と本文を作成する。
+
+    Args:
+        template (dict): {'subject': '件名テンプレート', 'body': '本文テンプレート'}
+        data (dict): 置換用データ（例: {'username': 'John', 'order_id': '12345'}）
+
+    Returns:
+        dict: {'subject': '埋め込み後の件名', 'body': '埋め込み後の本文'}
+    """
+    subject = template["subject"]
+    body = template["body"]
+
+    for key, value in data.items():
+        subject = subject.replace(f"{{{{ {key} }}}}", str(value))
+        body = body.replace(f"{{{{ {key} }}}}", str(value))
+
+    return {"subject": subject, "body": body}
