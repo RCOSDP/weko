@@ -3396,6 +3396,7 @@ def test_delete_user_lock_activity_cache(client,users):
     # cur_locked_val is empty
     result = delete_user_lock_activity_cache(activity_id, data)
     assert result == "Not unlock"
+
     # cur_locked_val is not empty, is_opened is False
     current_cache.set(cache_key, activity_id)
     result = delete_user_lock_activity_cache(activity_id, data)
