@@ -4529,8 +4529,6 @@ def convert_to_timezone(dt, user_timezone=None):
     Returns:
         datetime: The converted datetime object.
     """
-    # date_time_str = date_time.strftime('%Y-%m-%d %H:%M:%S')
-    # dt = datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S')
     if dt.tzinfo is None:
         dt = pytz.utc.localize(dt)
     if user_timezone:
