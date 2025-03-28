@@ -54,7 +54,8 @@ class TestShibSettingView:
             data = {
                 "submit": "shib_form",
                 "shibbolethRadios": "1",
-                "block-eppn-option-list": json.dumps(block_user_list)
+                "block-eppn-option-list": json.dumps(block_user_list),
+                "enable-login-user-list": [],
             }
 
             for i, (_, value) in enumerate(roles.items()):
@@ -76,6 +77,7 @@ class TestShibSettingView:
                 role_list=role_list,
                 attr_list=attr_list,
                 block_user_list=block_user_list,
+                enable_login_user_list=[],
                 **roles,
                 **attributes
             )
@@ -96,6 +98,7 @@ class TestShibSettingView:
                 role_list=role_list,
                 attr_list=attr_list,
                 block_user_list=block_user_list,
+                enable_login_user_list=[],
                 **roles,
                 **attributes
             )
@@ -123,6 +126,7 @@ class TestShibSettingView:
                 role_list=role_list,
                 attr_list=attr_list,
                 block_user_list=block_user_list,
+                enable_login_user_list=[],
                 **roles,
                 **attributes
             )
@@ -152,6 +156,7 @@ class TestShibSettingView:
                 role_list=role_list,
                 attr_list=attr_list,
                 block_user_list=block_user_list,
+                enable_login_user_list=[],
                 **roles,
                 **attributes
             )
@@ -173,6 +178,7 @@ class TestShibSettingView:
                 role_list=role_list,
                 attr_list=attr_list,
                 block_user_list=str(block_user_list),
+                enable_login_user_list=[],
                 **roles,
                 **attributes
             )
@@ -193,6 +199,7 @@ class TestShibSettingView:
                 role_list=role_list,
                 attr_list=attr_list,
                 block_user_list=block_user_list,
+                enable_login_user_list=[],
                 **roles,
                 **attributes
             )

@@ -29,6 +29,7 @@ from flask_babelex import gettext as _
 from werkzeug.local import LocalProxy
 
 from weko_admin.models import AdminSettings, db
+from weko_accounts.models import ShibbolethUser, db
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -47,6 +48,12 @@ class ShibSettingView(BaseView):
             role_list = current_app.config['WEKO_ACCOUNTS_ROLE_LIST']
             attr_list = current_app.config['WEKO_ACCOUNTS_ATTRIBUTE_LIST']
             set_language = _('language')
+
+            block_user_settings = AdminSettings.get('blocked_user_settings')
+            block_user_list = block_user_settings.__dict__['blocked_ePPNs']
+
+            shib_eppns = db.session.query(ShibbolethUser.shib_eppn).all()
+            enable_login_user_list = [shib_eppn[0] for shib_eppn in shib_eppns]
 
             # デフォルトロール
             default_roles = AdminSettings.get('default_role_settings', dict_to_object=False)
@@ -110,7 +117,7 @@ class ShibSettingView(BaseView):
                         
             return self.render(
                 current_app.config['WEKO_ACCOUNTS_SET_SHIB_TEMPLATE'],
-                shib_flg=shib_flg, set_language=set_language, role_list=role_list, attr_list=attr_list, block_user_list=block_user_list, **roles, **attributes )
+                shib_flg=shib_flg, set_language=set_language, role_list=role_list, attr_list=attr_list, block_user_list=block_user_list, enable_login_user_list=enable_login_user_list, **roles, **attributes )
         except BaseException:
             current_app.logger.error(
                 'Unexpected error: {}'.format(sys.exc_info()))
