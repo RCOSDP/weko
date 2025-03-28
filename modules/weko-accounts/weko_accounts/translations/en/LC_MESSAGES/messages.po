@@ -43,6 +43,10 @@ msgstr "Shibboleth Mail mapping was updated."
 msgid "Shib User Name mapping was updated."
 msgstr "Shibboleth User Name mapping was updated."
 
+#: weko_accounts/admin.py:
+msgid "Blocked user list was updated."
+msgstr "Updated User Login Block settings"
+
 #: weko_accounts/admin.py:69
 msgid "Setting"
 msgstr ""
