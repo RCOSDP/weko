@@ -2995,9 +2995,16 @@ def _export_file(record_id, data_path=None):
                 if accessrole == "open_restricted":
                     continue
                 if accessrole == "open_date":
-                    date_value = file.info().get("date").get("dateValue")
-                    open_date = date.strptime(date_value, "%Y-%m-%d")
-                    if open_date > date.today():
+                    file_date = file.info().get("date", {})
+                    date_value = (
+                        file_date[0].get("dateValue")
+                            if isinstance(file_date, list) and file_date
+                        else file_date.get("dateValue")
+                            if isinstance(file_date, dict)
+                        else None
+                    )
+                    open_date = datetime.strptime(date_value, "%Y-%m-%d")
+                    if open_date.date() > datetime.now().date():
                         continue
                 with file.obj.file.storage().open() as file_buffered:
                     tmp_path = os.path.join(data_path, file.obj.basename)

@@ -467,8 +467,9 @@ class ItemImportView(BaseView):
                     item["root_path"] = data_path + "/data"
                     create_flow_define()
                     handle_workflow(item)
-                    metadata_doi = handle_doi(item, list_doi[idx])
-                    item["metadata"] = metadata_doi
+                    if (list_doi[idx]):
+                        metadata_doi = handle_doi(item, list_doi[idx])
+                        item["metadata"] = metadata_doi
                     group_tasks.append(import_item.s(item, request_info))
                     db.session.commit()
                 except Exception as e:
