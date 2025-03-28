@@ -912,6 +912,8 @@ def check_jsonld_import_items(
         list_record.sort(key=lambda x: get_priority(x['metadata'].link_data))
         handle_save_bagit(list_record, file, data_path, filename)
 
+        handle_metadata_amend_by_doi(list_record)
+
         handle_set_change_identifier_flag(list_record, is_change_identifier)
         handle_fill_system_item(list_record)
 
