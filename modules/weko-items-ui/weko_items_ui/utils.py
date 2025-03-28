@@ -30,6 +30,7 @@ import shutil
 import sys
 import tempfile
 import traceback
+import unicodedata
 from collections import OrderedDict
 from datetime import date, datetime, timedelta
 from io import StringIO
@@ -3825,7 +3826,7 @@ def sanitize_input_data(data):
 def check_duplicate(data, is_item=True):
     """
     Check if a record or item is duplicate in records_metadata.
-    
+
     Parameters:
     - data (dict or str): Metadata dictionary (or JSON string).
     - is_item (bool): True if checking an item, False if checking a record.
@@ -3835,123 +3836,173 @@ def check_duplicate(data, is_item=True):
     - list: List of duplicate record IDs.
     - list: List of duplicate record URLs.
     """
-    # 文字列なら辞書に変換
     if isinstance(data, str):
         try:
             data = json.loads(data)
         except json.JSONDecodeError as e:
-            current_app.logger.error(f"[ERROR] JSONデコード失敗: {e}")
+            current_app.logger.error(f"[ERROR] JSON decode failed: {e}")
             return False, [], []
 
-    # 型チェック
     if not isinstance(data, dict):
-        current_app.logger.error("データが辞書型ではありません。")
+        current_app.logger.error("The provided data is not a dictionary.")
         return False, [], []
 
-    # メタデータの取得
     metadata = data if is_item else data.get("metainfo", {})
-
     if not isinstance(metadata, dict):
-        current_app.logger.error("metadata の形式が正しくありません。")
+        current_app.logger.error("Metadata format is invalid.")
         return False, [], []
 
     identifier = title = resource_type = creator = ""
+    author_links = metadata.get("author_link", [])
     host = request.host
 
-    # メタデータから検索対象の値を取得
+    # Fallback: extract author_links from nameIdentifiers
+    if not author_links:
+        for key, value in metadata.items():
+            if "creator" in key and isinstance(value, list):
+                for entry in value:
+                    if isinstance(entry, dict):
+                        name_ids = entry.get("nameIdentifiers", [])
+                        for nid in name_ids:
+                            if isinstance(nid, dict):
+                                author_id = nid.get("nameIdentifier")
+                                if author_id:
+                                    author_links.append(author_id)
+
+    # Extract other fields
     for key, value in metadata.items():
-        if isinstance(value, list) and value:
-            first_item = value[0]
-            if isinstance(first_item, dict):
-                if "subitem_identifier_uri" in first_item:
-                    identifier = first_item["subitem_identifier_uri"]
-                if "subitem_title" in first_item:
-                    title = first_item["subitem_title"]
-                if "creatorNames" in first_item:
-                    creator_info = first_item["creatorNames"][0] if first_item["creatorNames"] else {}
-                    creator = creator_info.get("creatorName", "")
-        elif isinstance(value, dict):
-            if "resourcetype" in value:
-                resource_type = value["resourcetype"]
+        if isinstance(value, dict) and "resourcetype" in value:
+            resource_type = value["resourcetype"]
+        if isinstance(value, list):
+            for v in value:
+                if isinstance(v, dict):
+                    if "subitem_identifier_uri" in v:
+                        identifier = v["subitem_identifier_uri"]
+                    if "subitem_title" in v:
+                        title = v["subitem_title"]
+                    if "creatorNames" in v:
+                        creator_info = v["creatorNames"][0] if v["creatorNames"] else {}
+                        creator = creator_info.get("creatorName", "")
 
-    current_app.logger.debug(f"検索条件 - identifier: {identifier}, title: {title}, resource_type: {resource_type}, creator: {creator}")
 
-    # 1. `identifier` で検索し、ヒットすれば即 True を返す
+    # 1. Check identifier
     if identifier:
-        query = text("""
-            SELECT COALESCE(
-                CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 
-                0
-            ) AS recid
+        query = text(f"""
+            SELECT COALESCE(CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 0)
             FROM records_metadata
-            WHERE jsonb_path_exists(json, '$.**.subitem_identifier_uri ? (@ == "{}")')
-        """.format(identifier))
+            WHERE jsonb_path_exists(json, '$.**.subitem_identifier_uri ? (@ == "{identifier}")')
+        """)
         result = db.session.execute(query).fetchall()
         db.session.commit()
-        
         if result:
-            recid_list = [row[0] for row in result]
-            recid_list = list(set(recid_list))
-            item_links = [f"https://{host}/records/{recid}" for recid in recid_list]
-            current_app.logger.debug(f"重複データ (identifier): {recid_list}")
-            return True, recid_list, item_links
+            recid_list = [r[0] for r in result]
+            return True, recid_list, [f"https://{host}/records/{r}" for r in recid_list]
 
-    # 2. `title` で検索し、一致しなければ False を返す
-    if title:
+    # 2. Normalize title
+    normalized_title = unicodedata.normalize("NFKC", title).lower()
+    normalized_title = re.sub(r'[\s,　]', '', normalized_title)
+
+    query = text("""
+        SELECT COALESCE(CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 0), json
+        FROM records_metadata
+        WHERE jsonb_path_exists(json, '$.**.subitem_title')
+    """)
+    result = db.session.execute(query).fetchall()
+    db.session.commit()
+
+    matched_recids = set()
+    for recid, json_obj in result:
+        json_str = json.dumps(json_obj, ensure_ascii=False)
+        titles = re.findall(r'"subitem_title"\s*:\s*"([^"]+)"', json_str)
+        for t in titles:
+            cleaned = unicodedata.normalize("NFKC", t).lower()
+            cleaned = re.sub(r'[\s,　]', '', cleaned)
+            if cleaned == normalized_title:
+                matched_recids.add(recid)
+                break
+
+    if not matched_recids:
+        return False, [], []
+
+    # 3. Match resource_type
+    query = text(f"""
+        SELECT COALESCE(CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 0)
+        FROM records_metadata
+        WHERE jsonb_path_exists(json, '$.**.resourcetype ? (@ == "{resource_type}")')
+    """)
+    result = db.session.execute(query).fetchall()
+    db.session.commit()
+    recids_resource = {r[0] for r in result}
+    matched_recids &= recids_resource
+    if not matched_recids:
+        return False, [], []
+
+    # 4. Author check (via author_link or creator)
+    final_matched = set()
+    if author_links:
+        # Get fullName(s) from authors table via author_link
+        placeholders = ','.join([f':aid{i}' for i in range(len(author_links))])
+        params = {f'aid{i}': aid for i, aid in enumerate(author_links)}
+        query = text(f"""
+            SELECT json FROM authors
+            WHERE jsonb_path_exists(json, '$.authorIdInfo[*].authorId')
+            AND jsonb_extract_path_text(json, 'authorIdInfo', '0', 'authorId') IN ({placeholders})
+        """)
+        result = db.session.execute(query, params).fetchall()
+        db.session.commit()
+
+        author_names = set()
+        for row in result:
+            json_obj = row[0]
+            name_info = json_obj.get("authorNameInfo", [])
+            for n in name_info:
+                full = n.get("fullName")
+                if full:
+                    cleaned = re.sub(r'[\s,　]', '', full)
+                    author_names.add(cleaned)
+
+        if author_names:
+            query = text("""
+                SELECT COALESCE(CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 0), json
+                FROM records_metadata
+                WHERE jsonb_path_exists(json, '$.**.creatorNames[*].creatorName')
+            """)
+            result = db.session.execute(query).fetchall()
+            db.session.commit()
+            for recid, json_obj in result:
+                json_str = json.dumps(json_obj, ensure_ascii=False)
+                creators = re.findall(r'"creatorName"\s*:\s*"([^"]+)"', json_str)
+                for name in creators:
+                    cleaned = re.sub(r'[\s,　]', '', name)
+                    if cleaned in author_names:
+                        final_matched.add(recid)
+                        break
+    else:
+        normalized_creator = re.sub(r'[\s,　]', '', creator)
         query = text("""
-            SELECT COALESCE(
-                CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 
-                0
-            ) AS recid
+            SELECT COALESCE(CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 0), json
             FROM records_metadata
-            WHERE jsonb_path_exists(json, '$.**.subitem_title ? (@ == "{}")')
-        """.format(title))
+            WHERE jsonb_path_exists(json, '$.**.creatorNames[*].creatorName')
+        """)
         result = db.session.execute(query).fetchall()
         db.session.commit()
-        
-        if not result:
-            current_app.logger.debug("title が一致するレコードなし。")
-            return False, [], []
+        for recid, json_obj in result:
+            json_str = json.dumps(json_obj, ensure_ascii=False)
+            creators = re.findall(r'"creatorName"\s*:\s*"([^"]+)"', json_str)
+            for name in creators:
+                cleaned = re.sub(r'[\s,　]', '', name)
+                if cleaned == normalized_creator:
+                    final_matched.add(recid)
+                    break
 
-    # 3. `resource_type` で検索し、一致しなければ False を返す
-    if resource_type:
-        query = text("""
-            SELECT COALESCE(
-                CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 
-                0
-            ) AS recid
-            FROM records_metadata
-            WHERE jsonb_path_exists(json, '$.**.resourcetype ? (@ == "{}")')
-        """.format(resource_type))
-        result = db.session.execute(query).fetchall()
-        db.session.commit()
-        
-        if not result:
-            current_app.logger.debug("resource_type が一致するレコードなし。")
-            return False, [], []
+    final_matched &= matched_recids
+    if final_matched:
+        links = [f"https://{host}/records/{r}" for r in final_matched]
+        return True, list(final_matched), links
 
-    # 4. `creator` で検索し、1つでも一致していれば True を返す
-    if creator:
-        query = text("""
-            SELECT COALESCE(
-                CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 
-                0
-            ) AS recid
-            FROM records_metadata
-            WHERE jsonb_path_exists(json, '$.**.creatorNames[*].creatorName ? (@ == "{}")')
-        """.format(creator))
-        result = db.session.execute(query).fetchall()
-        db.session.commit()
-        
-        if result:
-            recid_list = [row[0] for row in result]
-            recid_list = list(set(recid_list))
-            item_links = [f"https://{host}/records/{recid}" for recid in recid_list]
-            return True, recid_list, item_links
-
-    # どの条件も一致しなかった場合
-    current_app.logger.debug("重複データなし。")
+    print("No duplicates found.")
     return False, [], []
+
 
 
 def is_duplicate_item(metadata):
