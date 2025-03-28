@@ -496,6 +496,16 @@ WEKO_THEME_ADMIN_MENU = [
         ]
     },
     {
+        'name': 'Logs',
+        'order': 16,
+        'submenu': [
+            {
+                'name': 'Export',
+                'order': 1
+            }
+        ]
+    },
+    {
         'name': 'Maintenance',
         'order': 17,
         'submenu': [
@@ -504,7 +514,7 @@ WEKO_THEME_ADMIN_MENU = [
                 'order': 1
             }
         ]
-    }
+    },
 ]
 
 

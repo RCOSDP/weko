@@ -934,6 +934,14 @@ msgstr "ファセット検索"
 msgid "Other"
 msgstr "その他"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Logs"
+msgstr "ログ管理"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Logs_Export"
+msgstr "エクスポート"
+
 #: weko_admin/
 #: msgid "Maintenance"
 msgid "Admin menu_Maintenance"

@@ -41,6 +41,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import case, func, literal_column, and_
 from weko_groups.api import Group
 from weko_redis.redis import RedisConnection
+from weko_logging.activity_logger import UserActivityLogger
 
 from .models import Index
 from .utils import cached_index_tree_json, check_doi_in_index, \
@@ -148,7 +149,14 @@ class Indexes(object):
                 else:
                     return
             _add_index(data)
+            UserActivityLogger.info(
+                operation="INDEX_CREATE",
+                target_key=data["id"]
+            )
         except IntegrityError as ie:
+            UserActivityLogger.error(
+                operation="INDEX_CREATE",
+            )
             if 'uix_position' in ''.join(ie.args):
                 try:
                     pid_info = cls.get_index(pid, with_count=True)
@@ -236,9 +244,17 @@ class Indexes(object):
                 db.session.merge(index)
             db.session.commit()
             cls.update_set_info(index)
+            UserActivityLogger.info(
+                operation="INDEX_UPDATE",
+                target_key=index_id
+            )
             return index
         except Exception as ex:
             current_app.logger.debug(ex)
+            UserActivityLogger.error(
+                operation="INDEX_UPDATE",
+                target_key=index_id
+            )
             db.session.rollback()
         return
 
@@ -271,6 +287,10 @@ class Indexes(object):
                 slf.is_deleted = True
                 p_lst = [o.id for o in obj_list]
                 cls.delete_set_info('move', index_id, p_lst)
+                UserActivityLogger.info(
+                    operation="INDEX_DELETE",
+                    target_key=index_id
+                )
                 return p_lst
         else:
             with db.session.no_autoflush:
@@ -314,6 +334,10 @@ class Indexes(object):
                                 synchronize_session='fetch'
                             )
                 cls.delete_set_info('delete', index_id, p_lst)
+                UserActivityLogger.info(
+                    operation="INDEX_DELETE",
+                    target_key=index_id
+                )
                 return p_lst
         return 0
 
