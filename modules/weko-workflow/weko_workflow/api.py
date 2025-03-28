@@ -20,6 +20,7 @@
 
 """WEKO3 module docstring."""
 
+import json
 import math
 from typing import List
 import urllib.parse
@@ -1481,6 +1482,36 @@ class WorkActivity(object):
             query = query.filter(
                 _Activity.activity_status.in_(list_status))
         return query
+    
+    @staticmethod
+    def __filter_by_action(query, action):
+        """Filter by activity action.
+
+        @param query:
+        @param action:
+        @return:
+        """
+        if action:
+            list_action = []
+            for i in action:
+                if i == 'start':
+                    list_action.append(1)
+                elif i == 'end':
+                    list_action.append(2)
+                elif i == 'itemregistration':
+                    list_action.append(3)
+                elif i == 'approval':
+                    list_action.append(4)
+                elif i == 'itemlink':
+                    list_action.append(5)
+                elif i == 'oapolicyconfirmation':
+                    list_action.append(6)
+                elif i == 'identifiergrant':
+                    list_action.append(7)
+            query = query.filter(
+                _Activity.action_id.in_(list_action))
+        return query
+
 
     def filter_conditions(self, conditions: dict, query):
         """Filter based on conditions.
@@ -1492,6 +1523,7 @@ class WorkActivity(object):
         if conditions:
             title = conditions.get('item')
             status = conditions.get('status')
+            action = conditions.get('action')
             workflow = conditions.get('workflow')
             user = conditions.get('user')
             created_from = conditions.get('createdfrom')
@@ -1502,6 +1534,8 @@ class WorkActivity(object):
             query = self.__filter_by_user(query, user)
             # Filter by status
             query = self.__filter_by_status(query, status)
+            # # Filter by action
+            query = self.__filter_by_action(query, action)
             # Filter by workflow name
             query = self.__filter_by_workflow(query, workflow)
             # Filter by date
@@ -2471,6 +2505,29 @@ class WorkActivity(object):
         except Exception as ex:
             current_app.logger.exception(str(ex))
             db.session.rollback()
+
+    def get_non_extract_files(self, activity_id):
+        """Get non-extract files.
+
+        Get extraction info from temp_data in activity.
+
+        Args:
+            activity_id (str): Activity ID.
+
+        Returns:
+            list[str]: list of non_extract filenames
+
+        """
+        metadata = self.get_activity_metadata(activity_id)
+        if metadata is None:
+            return None
+        item_json = json.loads(metadata)
+        # Load files from temp_data.
+        files = item_json.get('files', [])
+        return [
+            file["filename"] for file in files if file.get("non_extract", False)
+        ]
+
 
     def cancel_usage_report_activities(self, activities_id: list):
         """Cancel usage report activities are excepted.

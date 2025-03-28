@@ -16,7 +16,7 @@ from functools import partial
 from rocrate.rocrate import ROCrate
 from rocrate.model.contextentity import ContextEntity
 
-from flask import current_app
+from flask import current_app, url_for
 
 from weko_records.api import Mapping, ItemTypes
 from weko_records.models import ItemType
@@ -1314,7 +1314,7 @@ class JsonMapper(BaseMapper):
             """DOI_RA for grant. .DOI_RA in tsv"""
             self.doi = ""
             """DOI for grant. .DOI in tsv"""
-            self.metadata_only = False
+            self.metadata_replace = False
             """Flag to save only metadata. for SWORD deposit."""
 
 
@@ -1414,6 +1414,8 @@ class JsonLdMapper(JsonMapper):
             if filename.startswith("data/")
         ]
         mapped_metadata.save_as_is = metadata.save_as_is
+        mapped_metadata.metadata_replace = metadata.metadata_replace
+        mapped_metadata.update({"id": metadata["id"]} if "id" in metadata else {}) 
         mapped_metadata.setdefault("publish_status", "private")
         mapped_metadata.setdefault("edit_mode", "Keep")
 
@@ -1527,7 +1529,7 @@ class JsonLdMapper(JsonMapper):
                 # TODO: implement handling author_id
                 feedback_mail_list = metadata.get("feedback_mail_list", [])
                 feedback_mail_list.append({
-                    "mail": metadata.get(META_KEY), "author_id": ""}
+                    "email": metadata.get(META_KEY), "author_id": ""}
                 )
                 mapped_metadata["feedback_mail_list"] = feedback_mail_list
             # TODO: implement request mail list
@@ -1696,6 +1698,10 @@ class JsonLdMapper(JsonMapper):
         list_deconstructed = []
         for extracted in list_extracted:
             metadata = cls._deconstruct_dict(extracted, cls._InformedMetadata())
+            metadata.update(
+                {"id": extracted["identifier"]} 
+                if "identifier" in extracted else {}
+            ) 
             metadata.id = extracted["@id"]
             metadata.link_data = [
                 {"item_id": link.get("identifier"), "sele_id" : link.get("value")}
@@ -1709,6 +1715,7 @@ class JsonLdMapper(JsonMapper):
                     if not file.get("wk:textExtraction", True)
             ]
             metadata.save_as_is = extracted.get("wk:saveAsIs", False)
+            metadata.metadata_replace = extracted.get("wk:metadataReplace", False)
             list_deconstructed.append(metadata)
 
         return list_deconstructed, format
@@ -1778,8 +1785,16 @@ class JsonLdMapper(JsonMapper):
         rocrate.name = metadata["title"][0]
         rocrate.description = metadata["item_title"]
         rocrate.datePublished = metadata["publish_date"]
+        rocrate.root_dataset["identifier"] = metadata["control_number"]
+        rocrate.root_dataset["uri"] = url_for(
+            "invenio_records_ui.recid",
+            pid_value=metadata["control_number"], _external=True
+        )
         rocrate.root_dataset["wk:publishStatus"] = (
             "public" if metadata["publish_status"] == "0" else "private")
+        rocrate.root_dataset["wk:index"] = metadata.get("path", [])
+        rocrate.root_dataset["wk:editMode"] = "Keep"
+
 
 
         entity_factory = lambda typename: type(typename, (ContextEntity,), {
@@ -1879,6 +1894,4 @@ class JsonLdMapper(JsonMapper):
             # prop_props = PROP_PATH.split(".")
             print(f"--- {META_KEY}: {deconstructed[record_key]}, {gen_id(meta_props[0])} ---")
             pass
-
-        rocrate.root_dataset["wk:index"] = metadata.get("path", [])
         return rocrate

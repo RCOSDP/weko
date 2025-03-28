@@ -782,6 +782,7 @@ def check_jsonld_import_items(
         packaging,
         mapping_id,
         shared_id=-1,
+        validate_bagit=True,
         is_change_identifier=False):
     """Check bagit import items.
 
@@ -793,6 +794,8 @@ def check_jsonld_import_items(
         packaging (str): Packaging type. SWORDBagIt or SimpleZip.
         shared_id (int): Shared ID. Defaults to -1.
         mapping_id (int): Mapping ID. Defaults to None.
+        validate_bagit (bool, optional):
+            Validate BagIt. Defaults to True.
         is_change_identifier (bool, optional):
             Change Identifier Mode. Defaults to False.
 
@@ -865,8 +868,9 @@ def check_jsonld_import_items(
         )
 
         # Check if the bag is valid
-        bag = bagit.Bag(data_path)
-        bag.validate()
+        if validate_bagit:
+            bag = bagit.Bag(data_path)
+            bag.validate()
 
         json_mapping = JsonldMapping.get_mapping_by_id(mapping_id)
         if json_mapping is None:
@@ -887,20 +891,28 @@ def check_jsonld_import_items(
         list_record = [
             {
                 "$schema": f"/items/jsonschema/{item_type.id}",
+                # if new item, must not exist "id"
+                **({"id": item_metadata["id"]} if "id" in item_metadata else {}),
+                "_id": item_metadata.id,
                 "metadata": item_metadata,
                 "item_type_name": item_type.item_type_name.name,
                 "item_type_id": item_type.id,
                 "publish_status": item_metadata.get("publish_status"),
-                "file_path" : item_metadata.list_file,
-                "non_extract": item_metadata.non_extract
-                # item_metadata has attributes
-                # >  id, link_data, list_file, non_extract, save_as_is,
-                # >  metadata_only, cnri, doi_ra, doi
+                "link_data": item_metadata.link_data,
+                "file_path": item_metadata.list_file,
+                "non_extract": item_metadata.non_extract,
+                "save_as_is": item_metadata.save_as_is,
+                "metadata_replace": item_metadata.metadata_replace,
+                "cnri": item_metadata.cnri,
+                "doi_ra": item_metadata.doi_ra,
+                "doi": item_metadata.doi,
             } for item_metadata in item_metadatas
         ]
         data_path = os.path.join(data_path, "data")
         list_record.sort(key=lambda x: get_priority(x['metadata'].link_data))
         handle_save_bagit(list_record, file, data_path, filename)
+
+        handle_metadata_amend_by_doi(list_record)
 
         handle_set_change_identifier_flag(list_record, is_change_identifier)
         handle_fill_system_item(list_record)
@@ -972,12 +984,12 @@ def handle_save_bagit(list_record, file, data_path, filename):
 
     Save the bagit file as is if the metadata has the save_as_is flag.
     """
-    if len(list_record) > 1:
+    if len(list_record) > 2:
         # item split flag takes precedence over save Bag flag
         return
 
     metadata = list_record[0].get("metadata")
-    if metadata is None or not metadata.save_as_is:
+    if not list_record[0].get("save_as_is", False):
         return
 
     if isinstance(file, str):
@@ -1791,8 +1803,7 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
     deposit['owner'] = str(owner)
 
     # to exclude from file text extraction
-    deposit.non_extract = getattr(item["metadata"], "non_extract", [])
-
+    deposit.non_extract = item.get("non_extract")
     deposit.commit()
 
     feedback_mail_list = item["metadata"].get("feedback_mail_list")
@@ -1849,6 +1860,7 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
                 _draft_record = WekoDeposit.get_record(_draft_pid.object_uuid)
                 _draft_record["path"] = new_data.get("path")
                 _draft_deposit = WekoDeposit(_draft_record, _draft_record.model)
+                _draft_deposit.non_extract = item.get("non_extract")
                 _draft_deposit.merge_data_to_record_without_version(
                     pid, keep_version=True, is_import=True
                 )
@@ -2169,7 +2181,8 @@ def import_items_to_activity(item, request_info):
         url, current_action, recid = headless.auto(
             user_id= request_info.get("user_id"), workflow_id=workflow_id,
             index=index, metadata=metadata, files=files, comment=comment,
-            link_data=link_data, grant_data=grant_data
+            link_data=link_data, grant_data=grant_data,
+            non_extract=item.get("non_extract")
         )
     except Exception as ex:
         traceback.print_exc()

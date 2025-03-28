@@ -54,7 +54,7 @@ from passlib.handlers.oracle import oracle10
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
-from weko_admin.models import Identifier, SiteInfo
+from weko_admin.models import Identifier, SiteInfo, AdminSettings
 from weko_admin.utils import get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
@@ -1108,6 +1108,30 @@ def get_activity_id_of_record_without_version(pid_object=None):
             return activity_first_ver.activity_id
         else:
             return None
+
+
+def get_non_extract_files_by_recid(recid):
+    """ Get extraction info from temp_data in activity.
+
+    Args:
+        recid (str): recid in deposit. "xxxxx" or "xxxxx.0"
+
+    Returns:
+        list[str]: list of non_extract filenames
+    """
+    pid = PersistentIdentifier.get('recid', recid)
+    work_activity = WorkActivity()
+    activity = work_activity.get_workflow_activity_by_item_id(pid.object_uuid)
+
+    if activity is not None and isinstance(activity.temp_data, str):
+        item_json = json.loads(activity.temp_data)
+        # Load files from temp_data.
+        files = item_json.get('files', [])
+        return [
+            file["filename"] for file in files if file.get("non_extract", False)
+        ]
+
+    return None
 
 
 def check_suffix_identifier(idt_regis_value, idt_list, idt_type_list):
@@ -4594,3 +4618,16 @@ def fill_template(template, data):
         body = body.replace(f"{{{{ {key} }}}}", str(value))
 
     return {"subject": subject, "body": body}
+
+
+def check_activity_settings(settings=None):
+    """Check activity setting."""
+    if settings is None:
+        settings = AdminSettings.get('activity_display_settings',dict_to_object=False)
+    if settings is not None:
+        if isinstance(settings,dict):
+            if 'activity_display_flg' in settings:
+                current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] = settings['activity_display_flg']
+        else:
+            if hasattr(settings,'activity_display_flg'):
+                current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] = settings.activity_display_flg

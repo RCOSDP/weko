@@ -814,6 +814,11 @@ msgstr "User Profile"
 msgid "Admin menu_Setting_Items"
 msgstr "Items"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Activity"
+msgstr "Activity"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Index Link"
 msgstr "Index Link"
 
@@ -891,6 +896,14 @@ msgstr "Faceted Search"
 
 msgid "Other"
 msgstr ""
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Logs"
+msgstr "Logs"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Logs_Export"
+msgstr "Export"
 
 #: weko_admin/
 #: msgid "Maintenance"
