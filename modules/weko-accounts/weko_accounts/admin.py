@@ -46,15 +46,6 @@ class ShibSettingView(BaseView):
             attr_list = current_app.config['WEKO_ACCOUNTS_ATTRIBUTE_LIST']
             set_language = _('language')
 
-            # 'blocked_user_settings' が存在しない場合、新しいレコードを追加
-            if AdminSettings.query.filter_by(name='blocked_user_settings').first() is None:
-                new_setting = AdminSettings(
-                    id=6,
-                    name="blocked_user_settings",
-                    settings={"blocked_ePPNs": []}
-                )
-                db.session.add(new_setting)
-                db.session.commit()
             block_user_settings = AdminSettings.get('blocked_user_settings')
             block_user_list = block_user_settings.__dict__['blocked_ePPNs']
 
