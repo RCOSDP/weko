@@ -15,6 +15,15 @@ from .utils import rfc3339
 
 
 def validate_string_or_list(value):
+    """
+    Validate that the value is a string or a list of strings.
+
+    Args:
+        value: Value to validate.
+    Raises:
+        ValidationError:
+            If the value is not a string or a list of strings.
+    """
     if isinstance(value, str):
         return
     elif isinstance(value, list):
@@ -23,13 +32,33 @@ def validate_string_or_list(value):
         return
     raise ValidationError("Must be a string or list of strings.")
 
+
 def validate_activity_type(value):
+    """
+    Validate that the value is a valid activity type.
+
+    Args:
+        value: Value to validate.
+    Raises:
+        ValidationError:
+            If the value is not a valid activity type.
+    """
     from .notifications import ActivityType
     if value not in (activity.value for activity in ActivityType):
         raise ValidationError("Invalid activity type.")
     return
 
+
 def validate_urn_uuid(value):
+    """
+    Validate that the value is a URN UUID.
+
+    Args:
+        value: Value to validate.
+    Raises:
+        ValidationError:
+            If the value is not a URN UUID.
+    """
     if not value.startswith("urn:uuid:"):
         raise ValidationError("Must be a URN UUID.")
     try :
@@ -37,7 +66,17 @@ def validate_urn_uuid(value):
     except ValueError as ex:
         raise ValidationError("Invalid URN UUID format.") from ex
 
+
 def validate_rfc3339(value):
+    """
+    Validate that the value is a RFC3339 format.
+
+    Args:
+        value: Value to validate.
+    Raises:
+        ValidationError:
+            If the value is not a RFC3339 format.
+    """
     try:
         value = value.replace("Z", "+00:00")
         if len(value) > 6 and value[-3] == ':':
@@ -52,8 +91,10 @@ class ActorResource(Schema):
     type = fields.Field(required=True, validate=validate_string_or_list)
     name = fields.Field(required=True, validate=validate_string_or_list)
 
+
     class Meta:
         strict = True
+
 
 class InboxResource(Schema):
     id = fields.String(required=True)
@@ -62,6 +103,7 @@ class InboxResource(Schema):
 
     class Meta:
         strict = True
+
 
 class UrlObject(Schema):
     id = fields.String(required=True)
@@ -72,6 +114,7 @@ class UrlObject(Schema):
 
     class Meta:
         strict = True
+
 
 class DocumentObject(Schema):
     id = fields.String(required=True)
@@ -85,6 +128,7 @@ class DocumentObject(Schema):
 
     class Meta:
         strict = True
+
 
 class ContextObject(Schema):
     id = fields.String(required=True)

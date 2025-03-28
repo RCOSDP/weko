@@ -130,7 +130,7 @@ class Notification(object):
         Load and validate notification payload.
 
         Args:
-            data (dict): Notification payload.
+            payload (dict): Notification payload.
         Returns:
             Notification: Notification instance with payload.
         """
@@ -170,7 +170,7 @@ class Notification(object):
                 ID of the origin entity. This should be the URI of the origin.
             inbox (str):
                 Inbox URL of the origin entity.
-            type (list[str] | str):
+            entity_type (list[str] | str):
                 Type of the origin entity.
         Returns:
             Notification: Notification instance
@@ -188,7 +188,7 @@ class Notification(object):
                 ID of the target entity. This should be the URI of the target.
             inbox (str):
                 Inbox URL of the target entity.
-            type (list[str] | str):
+            entity_type (list[str] | str):
                 Type of the target entity.
         Returns:
             Notification: Notification instance
@@ -208,7 +208,7 @@ class Notification(object):
                 ID of the object entity. This should be the URI of the object.
             object (str | None):
                 Object of the object entity.
-            type (list[str] | str):
+            object_type (list[str] | str):
                 Type of the object entity.
             ietf_cite_as (str | None):
                 IETF Cite As of the object entity.
@@ -234,7 +234,7 @@ class Notification(object):
         Args:
             id (str):
                 ID of the actor entity. This should be the URI of the actor.
-            type (list[str] | str):
+            entity_type (list[str] | str):
                 Type of the actor entity.
             name (str):
                 Name of the actor entity.
@@ -253,7 +253,7 @@ class Notification(object):
                 ID of the context entity. This should be the URI of the context.
             ietf_cite_as (str | None):
                 IETF Cite As of the context entity. alias of 'ietf:cite-as'.
-            type (list[str] | str):
+            entity_type (list[str] | str):
                 Type of the context entity.
         Returns:
             Notification: Notification instance
@@ -396,6 +396,7 @@ class Notification(object):
             target_id (int): ID of the target user.
             object_id (int): ID of the object item.
             actor_id (int): ID of the actor user.
+            context_id (int): ID of the context page.
             kwargs (dict):
                 object_name (str): Name of the object item. <br>
                 ietf_cite_as (str): IETF Cite As of the object item. <br>
@@ -453,6 +454,7 @@ class Notification(object):
             target_id (int): ID of the target user.
             object_id (int): ID of the object item.
             actor_id (int): ID of the actor user.
+            context_id (int): ID of the context page.
             kwargs (dict):
                 object_name (str): Name of the object item. <br>
                 ietf_cite_as (str): IETF Cite As of the object item. <br>

@@ -59,6 +59,10 @@ class WekoNotifications(object):
             )
         )
 
+        app.config.setdefault(
+            "WEKO_NOTIFICATIONS", config.WEKO_NOTIFICATIONS
+        )
+
         for k in dir(config):
             if k.startswith("WEKO_NOTIFICATIONS_"):
                 app.config.setdefault(k, getattr(config, k))

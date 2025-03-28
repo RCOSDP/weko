@@ -21,6 +21,9 @@ def inbox_url(endpoint=None, _external=False):
     Args:
         endpoint (str | None): The endpoint to append to the URL.
         _external (bool): Whether to return the URL with the full domain.
+
+    Returns:
+        str: The inbox URL.
     """
     url = (
         current_app.config["THEME_SITEURL"]
@@ -41,6 +44,9 @@ def rfc3339(timezone=None):
     Args:
         timezone (str | None):
             The timezone to use. Defaults to "Asia/Tokyo".
+
+    Returns:
+        str: The current time in RFC3339 format.
     """
     tz = pytz.timezone(timezone or "Asia/Tokyo")
     return datetime.now(tz).isoformat(timespec="seconds").replace("+00:00", "Z")
@@ -79,6 +85,9 @@ def create_userprofile(userprofile):
 
     Args:
         userprofile (UserProfile): The user profile.
+
+    Returns:
+        dict: The user profile.
     """
     root_url = request.host_url
 

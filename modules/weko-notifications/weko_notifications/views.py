@@ -103,7 +103,11 @@ def notifications():
     )
 
 def notifications_form_factory():
-    """Factory for notifications form."""
+    """Factory for notifications form.
+
+    Returns:
+        NotificationsForm: The notifications form.
+    """
     user_settings = NotificationsUserSettings.get_by_user_id(current_user.id)
     if user_settings is None:
         user_settings = NotificationsUserSettings.create_or_update(

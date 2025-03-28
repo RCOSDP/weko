@@ -20,7 +20,13 @@ from .models import NotificationsUserSettings
 
 
 def handle_notifications_form(form):
-    """Handle notifications form."""
+    """Handle notifications form.
+
+    Validate and Flash messages.
+
+    Args:
+        form (flask_wtf.FlaskForm): The notifications form.
+    """
     form.process(formdata=request.form)
 
     if form.validate_on_submit():
