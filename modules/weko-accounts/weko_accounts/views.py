@@ -62,7 +62,6 @@ def _has_admin_access():
     return current_user.is_authenticated and current_admin \
         .permission_factory(current_admin.admin.index_view).can()
 
-
 @blueprint.before_app_first_request
 def init_menu():
     """Initialize menu before first request."""
@@ -75,16 +74,19 @@ def init_menu():
         visible_when=_has_admin_access,
         order=100)
     
-    _adjust_shib_admin_DB()
-
+@blueprint.before_app_first_request
 def _adjust_shib_admin_DB():
     """
     Create or Update Shibboleth Admin database table.
     """
+    if current_app.config.get('TESTING', False):  # テスト環境では何もしない
+        return
+
     with _app.app_context():
         if AdminSettings.query.filter_by(name='blocked_user_settings').first() is None:
+            max_id = db.session.query(db.func.max(AdminSettings.id)).scalar()
             new_setting = AdminSettings(
-                id=6,
+                id=max_id + 1,
                 name="blocked_user_settings",
                 settings={"blocked_ePPNs": []}
             )
@@ -92,8 +94,9 @@ def _adjust_shib_admin_DB():
             db.session.commit()
 
         if AdminSettings.query.filter_by(name='shib_login_enable').first() is None:
+            max_id = db.session.query(db.func.max(AdminSettings.id)).scalar()
             new_setting = AdminSettings(
-                id=7,
+                id=max_id + 1,
                 name="shib_login_enable",
                 settings={"shib_flg": _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']}
             )
@@ -105,8 +108,9 @@ def _adjust_shib_admin_DB():
             db.session.commit()
         
         if AdminSettings.query.filter_by(name='default_role_settings').first() is None:
+            max_id = db.session.query(db.func.max(AdminSettings.id)).scalar()
             new_setting = AdminSettings(
-                id=8,
+                id=max_id + 1,
                 name="default_role_settings",
                 settings={
                     "gakunin_role": _app.config['WEKO_ACCOUNTS_GAKUNIN_ROLE']['defaultRole'],
@@ -124,8 +128,9 @@ def _adjust_shib_admin_DB():
             db.session.commit()
 
         if AdminSettings.query.filter_by(name='attribute_mapping').first() is None:
+            max_id = db.session.query(db.func.max(AdminSettings.id)).scalar()
             new_setting = AdminSettings(
-                id=9,
+                id=max_id + 1,
                 name="attribute_mapping",
                 settings=_app.config['WEKO_ACCOUNTS_ATTRIBUTE_MAP']
             )
@@ -135,7 +140,6 @@ def _adjust_shib_admin_DB():
             setting = AdminSettings.query.filter_by(name='attribute_mapping').first()
             setting.settings = _app.config['WEKO_ACCOUNTS_ATTRIBUTE_MAP']
             db.session.commit()
-    yield
 
 
 def _redirect_method(has_next=False):
