@@ -310,84 +310,88 @@ WEKO_THEME_ADMIN_MENU = [
                 'order': 1
             },
             {
-                'name': 'Index Link',
+                'name': 'Activity',
                 'order': 2
             },
             {
-                'name': 'Language',
+                'name': 'Index Link',
                 'order': 3
             },
             {
-                'name': 'PDF Cover Page',
+                'name': 'Language',
                 'order': 4
             },
             {
-                'name': 'Ranking',
+                'name': 'PDF Cover Page',
                 'order': 5
             },
             {
-                'name': 'Stats',
+                'name': 'Ranking',
                 'order': 6
             },
             {
-                'name': 'Style',
+                'name': 'Stats',
                 'order': 7
             },
             {
-                'name': 'Identifier',
+                'name': 'Style',
                 'order': 8
             },
             {
-                'name': 'Item Export',
+                'name': 'Identifier',
                 'order': 9
             },
             {
-                'name': 'Log Analysis',
+                'name': 'Item Export',
                 'order': 10
             },
             {
-                'name': 'Search',
+                'name': 'Log Analysis',
                 'order': 11
             },
             {
-                'name': 'Faceted Search',
+                'name': 'Search',
                 'order': 12
             },
             {
-                'name': 'Site Info',
+                'name': 'Faceted Search',
                 'order': 13
             },
             {
-                'name': 'Site License',
+                'name': 'Site Info',
                 'order': 14
             },
             {
-                'name': 'Sitemap',
+                'name': 'Site License',
                 'order': 15
             },
             {
-                'name': 'Mail',
+                'name': 'Sitemap',
                 'order': 16
             },
             {
-                'name': 'WebAPI Account',
+                'name': 'Mail',
                 'order': 17
             },
             {
-                'name': 'File Preview',
+                'name': 'WebAPI Account',
                 'order': 18
             },
             {
-                'name': 'Shibboleth',
+                'name': 'File Preview',
                 'order': 19
             },
             {
-                'name': 'Restricted Access',
+                'name': 'Shibboleth',
                 'order': 20
             },
             {
-                'name': 'Others',
+                'name': 'Restricted Access',
                 'order': 21
+            },
+            {
+                'name': 'Others',
+                'order': 22
             }
         ]
     },

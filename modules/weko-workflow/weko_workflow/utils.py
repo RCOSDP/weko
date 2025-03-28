@@ -54,7 +54,7 @@ from passlib.handlers.oracle import oracle10
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
-from weko_admin.models import Identifier, SiteInfo
+from weko_admin.models import Identifier, SiteInfo, AdminSettings
 from weko_admin.utils import get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
@@ -4618,3 +4618,16 @@ def fill_template(template, data):
         body = body.replace(f"{{{{ {key} }}}}", str(value))
 
     return {"subject": subject, "body": body}
+
+
+def check_activity_settings(settings=None):
+    """Check activity setting."""
+    if settings is None:
+        settings = AdminSettings.get('activity_display_settings',dict_to_object=False)
+    if settings is not None:
+        if isinstance(settings,dict):
+            if 'activity_display_flg' in settings:
+                current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] = settings['activity_display_flg']
+        else:
+            if hasattr(settings,'activity_display_flg'):
+                current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] = settings.activity_display_flg

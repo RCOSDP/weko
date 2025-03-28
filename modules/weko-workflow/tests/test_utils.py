@@ -137,7 +137,8 @@ from weko_workflow.utils import (
     grant_access_rights_to_all_open_restricted_files,
     delete_lock_activity_cache,
     delete_user_lock_activity_cache,
-    get_non_extract_files_by_recid
+    get_non_extract_files_by_recid,
+    check_activity_settings
 )
 from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
 from weko_workflow.models import Activity
@@ -3360,3 +3361,54 @@ def test_get_non_extract_files_by_recid(db_register, mocker):
     mock_activity.return_value = mocker.Mock(temp_data="invalid_json")
     with pytest.raises(json.JSONDecodeError):
         get_non_extract_files_by_recid("12345")
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_check_activity_settings -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_check_activity_settings(app):
+    # case: dict type settings
+    mock_settings = {'activity_display_flg': True}
+
+    true_dict_settings = {'activity_display_flg': True}
+    false_dict_settings = {'activity_display_flg': False}
+    other_dict_settings = {'other_flg': True}
+
+    from types import SimpleNamespace
+    true_obj_settings = SimpleNamespace(activity_display_flg=True)
+    false_obj_settings = SimpleNamespace(activity_display_flg=False)
+    other_obj_settings = SimpleNamespace(other_flg=True)
+
+    with patch('weko_workflow.utils.AdminSettings.get', return_value=mock_settings):
+        # mock current_app.config
+        with app.app_context():
+            # reset current_app.config before test
+            current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] = None
+
+
+
+            # check settings
+            # case: settings is None
+            check_activity_settings()
+            assert current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] == True
+
+            # case: dict type settings(True)
+            check_activity_settings(true_dict_settings)
+            assert current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] == True
+
+            # case: dict type settings(False)
+            check_activity_settings(false_dict_settings)
+            assert current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] == False
+
+            # case: dict type settings(Other), no changes from (case: dict type settings(False))
+            check_activity_settings(other_dict_settings)
+            assert current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] == False
+
+            # case: object type settings(True)
+            check_activity_settings(true_obj_settings)
+            assert current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] == True
+
+            # case: object type settings(False)
+            check_activity_settings(false_obj_settings)
+            assert current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] == False
+
+            # case: object type settings(Other), no changes from (case: object type settings(False))
+            check_activity_settings(other_obj_settings)
+            assert current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] == False
