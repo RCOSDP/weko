@@ -21,11 +21,14 @@
 """WEKO3 module docstring."""
 
 import sys
+import json
 
 from flask import abort, current_app, flash, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from werkzeug.local import LocalProxy
+
+from weko_admin.models import AdminSettings, db
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -37,26 +40,43 @@ class ShibSettingView(BaseView):
     def index(self):
         """Index."""
         try:
-            shib_flg = '0'
-            if current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']:
-                shib_flg = '1'
+            shib_flg = '0' if not current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] else '1'
+            role_list = current_app.config['WEKO_ACCOUNTS_ROLE_LIST']
+            attr_list = current_app.config['WEKO_ACCOUNTS_ATTRIBUTE_LIST']
+            set_language = _('language')
+
+            block_user_settings = AdminSettings.get('blocked_user_settings')
+            block_user_list = block_user_settings.__dict__['blocked_ePPNs']
+
+            # デフォルトロール
+            roles = {
+                'gakunin_role': current_app.config.get('WEKO_ACCOUNTS_GAKUNIN_ROLE', {}).get('defaultRole', '0'),
+                'orthros_role': current_app.config.get('WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE', {}).get('defaultRole', '0'),
+                'extra_role': current_app.config.get('WEKO_ACCOUNTS_EXTRA_ROLE', {}).get('defaultRole', '0')
+            }
+
+            # 属性マッピング
+            attributes = {
+                'weko_eppn_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_eppn', '0'),
+                'weko_role_authority_name_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_role_authority_name', '0'),
+                'weko_mail_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_mail', '0'),
+                'weko_user_name_value': current_app.config.get('WEKO_ACCOUNTS_ATTRIBUTE_MAP', {}).get('shib_user_name', '0')
+            }
 
             if request.method == 'POST':
                 # Process forms
                 form = request.form.get('submit', None)
-                if form == 'shib_form':
-                    shib_flg = request.form.get('shibbolethRadios', '0')
-                    if shib_flg == '1':
-                        _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] = True
-                    else:
-                        _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] = False
-                    flash(
-                        _('Shibboleth flag was updated.'),
-                        category='success')
+                new_shib_flg = request.form.get('shibbolethRadios', '0')
 
+                if form == 'shib_form':
+                    if shib_flg != new_shib_flg:
+                        shib_flg = new_shib_flg
+                        _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] = (shib_flg == '1')
+                        flash(_('Shibboleth flag was updated.'), category='success')
+                        
             return self.render(
                 current_app.config['WEKO_ACCOUNTS_SET_SHIB_TEMPLATE'],
-                shib_flg=shib_flg)
+                shib_flg=shib_flg, set_language=set_language, role_list=role_list, attr_list=attr_list, block_user_list=block_user_list, **roles, **attributes )
         except BaseException:
             current_app.logger.error(
                 'Unexpected error: {}'.format(sys.exc_info()))

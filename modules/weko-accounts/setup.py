@@ -109,6 +109,7 @@ setup(
             'weko_accounts_embedded_ds_multi_lang_js = '
             'weko_accounts.bundles:embedded_ds_multi_language_js',
             'weko_accounts_suggest_js = weko_accounts.bundles:suggest_js',
+            'weko_accounts_shibuser_css = weko_accounts.bundles:shibuser_css',
         ],
     },
     extras_require=extras_require,
