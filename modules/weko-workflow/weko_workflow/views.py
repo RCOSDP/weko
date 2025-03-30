@@ -1568,7 +1568,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
             items_display_settings = AdminSettings.get(name='items_display_settings',
                                         dict_to_object=False)
             if items_display_settings:
-                enable_request_maillist = items_display_settings.get('display_request_form', False)         
+                enable_request_maillist = items_display_settings.get('display_request_form', False)
 
             if activity_request_mail and activity_request_mail.request_maillist and enable_request_maillist:
                 RequestMailList.update_by_list_item_id(
@@ -1698,34 +1698,43 @@ def next_action(activity_id='0', action_id=0, json_data=None):
         action_order=action_order
     )
     if 'end_action' == next_action_endpoint:
-        new_activity_id = None
-        new_activity_id = handle_finish_workflow(deposit,
-                                                 current_pid,
-                                                 recid)
-        if new_activity_id is None:
-            res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
-            return jsonify(res.data), 500
+        if not for_delete:
+            new_activity_id = None
+            new_activity_id = handle_finish_workflow(deposit,
+                                                    current_pid,
+                                                    recid)
+            if new_activity_id is None:
+                res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
+                return jsonify(res.data), 500
 
-        activity.update(
-            action_id=next_action_id,
-            action_version=next_flow_action[0].action_version,
-            item_id=new_activity_id,
-            action_order=next_action_order
-        )
-        work_activity.end_activity(activity)
-        # Call signal to push item data to ES.
-        try:
-            if '.' not in current_pid.pid_value and has_request_context():
-                user_id = activity_detail.activity_login_user if \
-                    activity and activity_detail.activity_login_user else -1
-                item_created.send(
-                    current_app._get_current_object(),
-                    user_id=user_id,
-                    item_id=current_pid,
-                    item_title=activity_detail.title
-                )
-        except BaseException:
-            abort(500, 'MAPPING_ERROR')
+            activity.update(
+                action_id=next_action_id,
+                action_version=next_flow_action[0].action_version,
+                item_id=new_activity_id,
+                action_order=next_action_order
+            )
+            work_activity.end_activity(activity)
+            # Call signal to push item data to ES.
+            try:
+                if '.' not in current_pid.pid_value and has_request_context():
+                    user_id = activity_detail.activity_login_user if \
+                        activity and activity_detail.activity_login_user else -1
+                    item_created.send(
+                        current_app._get_current_object(),
+                        user_id=user_id,
+                        item_id=current_pid,
+                        item_title=activity_detail.title
+                    )
+            except BaseException:
+                abort(500, 'MAPPING_ERROR')
+        else:
+            activity.update(
+                action_id=next_action_id,
+                action_version=next_flow_action[0].action_version,
+                item_id=delete_item_id,
+                action_order=next_action_order
+            )
+            work_activity.end_activity(activity)
     else:
         flag = work_activity.upt_activity_action(
             activity_id=activity_id, action_id=next_action_id,

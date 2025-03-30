@@ -64,6 +64,14 @@ def check_import_file_format(file, packaging):
     elif "SimpleZip" in packaging:
         if ROCRATE_METADATA_FILE in file_list:
             file_format = "JSON"
+        elif SWORD_METADATA_FILE in file_list:
+            current_app.logger.error(
+                "packaging format is SimpleZip, but sword.json is found."
+            )
+            raise WekoSwordserverException(
+                "packaging format is SimpleZip, but sword.json is found.",
+                ErrorType.MetadataFormatNotAcceptable
+                )
         elif any(ROCRATE_METADATA_FILE.split("/")[1] in filename
                 for filename in file_list
             ):

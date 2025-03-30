@@ -906,7 +906,7 @@ def check_jsonld_import_items(
                 "item_type_name": item_type.item_type_name.name,
                 "item_type_id": item_type.id,
                 "publish_status": item_metadata.get("publish_status"),
-                **({"edit_mode": item_metadata.pop("edit_mode")}
+                **({"edit_mode": item_metadata.get("edit_mode")}
                     if "edit_mode" in item_metadata else {}),
                 "link_data": item_metadata.link_data,
                 "file_path": item_metadata.list_file,
@@ -2163,6 +2163,7 @@ def import_items_to_activity(item, request_info):
         data_format = settings.get("data_format")
         workflow_id = int(data_format.get(default_format, {}).get("workflow", "-1"))
 
+    item_id = item.get("id")
     metadata = item.get("metadata")
     index = metadata.get("path")
     files_info = metadata.pop("files_info", [{}])
@@ -2181,9 +2182,10 @@ def import_items_to_activity(item, request_info):
         from weko_workflow.headless.activity import HeadlessActivity
         headless = HeadlessActivity(_metadata_replace=metadata_replace)
         url, current_action, recid = headless.auto(
-            user_id= request_info.get("user_id"), workflow_id=workflow_id,
-            index=index, metadata=metadata, files=files, comment=comment,
-            link_data=link_data, grant_data=grant_data
+            user_id= request_info.get("user_id"),
+            workflow_id=workflow_id,item_id=item_id,
+            index=index, metadata=metadata, files=files,
+            comment=comment, link_data=link_data,  grant_data=grant_data
         )
     except WekoWorkflowException as ex:
         current_app.logger.error(
@@ -2194,7 +2196,7 @@ def import_items_to_activity(item, request_info):
         url = headless.detail
         recid = headless.recid
         current_action = headless.current_action
-        error = True
+        error = str(ex)
 
     return url, recid, current_action, error
 

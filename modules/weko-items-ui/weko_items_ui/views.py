@@ -54,7 +54,7 @@ from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
 from weko_records_ui.views import soft_delete
 from weko_redis.redis import RedisConnection
-from weko_workflow.api import GetCommunity, WorkActivity, WorkFlow
+from weko_workflow.api import GetCommunity, WorkActivity, WorkFlow as WorkFlows
 from weko_workflow.utils import check_an_item_is_locked, \
     get_record_by_root_ver, get_thumbnails, prepare_edit_workflow, \
     set_files_display_type, prepare_delete_workflow
@@ -472,7 +472,7 @@ def iframe_items_index(pid_value='0'):
             if cur_activity is None:
                 abort(400)
 
-            workflow = WorkFlow()
+            workflow = WorkFlows()
             workflow_detail = workflow.get_workflow_by_id(
                 cur_activity.workflow_id)
 
@@ -878,7 +878,7 @@ def prepare_edit_item(id=None, community=None):
                 msg=_('Header Error')
             )
 
-    post_activity = request.get_json() if request else {}
+    post_activity = request.get_json() or {}
     getargs = request.args if request else {}
     pid_value = id or post_activity.get('pid_value')
     community = community or getargs.get('community', None)
@@ -1061,7 +1061,7 @@ def prepare_delete_item(id=None, community=None):
                 msg=_('Header Error')
             )
 
-    post_activity = request.get_json() if request else {}
+    post_activity = request.get_json() or {}
     getargs = request.args if request else {}
     pid_value = id or post_activity.get('pid_value')
     community = community or getargs.get('community', None)
@@ -1094,7 +1094,7 @@ def prepare_delete_item(id=None, community=None):
             str(deposit.get('owner')), str(deposit.get('weko_shared_id'))
         ]
         user_id = str(current_user.get_id())
-        activity = WorkActivity()
+        work_activity = WorkActivity()
         latest_pid = PIDVersioning(child=recid).last_child
 
         # ! Check User's Permissions
@@ -1134,10 +1134,10 @@ def prepare_delete_item(id=None, community=None):
 
         # ! Check Record is being edit
         item_uuid = latest_pid.object_uuid
-        post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
+        latest_activity = work_activity.get_workflow_activity_by_item_id(item_uuid)
 
-        if post_workflow:
-            is_begin_edit = check_item_is_being_edit(recid, post_workflow, activity)
+        if latest_activity:
+            is_begin_edit = check_item_is_being_edit(recid, latest_activity, work_activity)
             if is_begin_edit:
                 return jsonify(
                     code=err_code,
@@ -1145,10 +1145,10 @@ def prepare_delete_item(id=None, community=None):
                     activity_id=is_begin_edit
                 )
 
-        if post_workflow:
-            post_activity['workflow_id'] = post_workflow.workflow_id
+        if latest_activity:
+            post_activity['workflow_id'] = latest_activity.workflow_id
         else:
-            post_workflow = activity.get_workflow_activity_by_item_id(
+            latest_activity = work_activity.get_workflow_activity_by_item_id(
                 recid.object_uuid
             )
             workflow = get_workflow_by_item_type_id(
@@ -1162,16 +1162,17 @@ def prepare_delete_item(id=None, community=None):
             post_activity['workflow_id'] = workflow.id
         post_activity['itemtype_id'] = item_type_id
         post_activity['community'] = community
-        post_activity['post_workflow'] = post_workflow
+        post_activity['post_workflow'] = latest_activity
 
-        workflow = WorkFlow()
-        workflow_detail = workflow.get_workflow_by_id(workflow.id)
+        workflows = WorkFlows()
+        workflow_detail = workflows.get_workflow_by_id(post_activity['workflow_id'])
 
-        """weko_records_ui.views.soft_delete"""
         if workflow_detail.delete_flow_id is None:
-            return soft_delete(recid)
-
-        # ワークフローの場合は、以下の処理を進める
+            soft_delete(pid_value)
+            return jsonify(
+                code=0,
+                msg="success",
+            )
 
         post_activity['flow_id'] = workflow_detail.delete_flow_id
 
@@ -1217,13 +1218,12 @@ def prepare_delete_item(id=None, community=None):
             )
 
         if rtn.action_id == 2:   # end_action
-            soft_delete(recid)
-
+            soft_delete(pid_value)
 
         return jsonify(
             code=0,
             msg='success',
-            data=dict(redirect=url_redirect),
+            data=dict(redirect=url_redirect)
         )
 
     return jsonify(

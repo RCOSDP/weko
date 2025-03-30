@@ -542,7 +542,6 @@ def put_object(recid):
             ErrorType.BadRequest,
         )
 
-    item['status'] = 'published'
     item["root_path"] = os.path.join(data_path, "data")
 
     # Prepare request information
@@ -575,10 +574,20 @@ def put_object(recid):
         if not required_scopes.issubset(token_scopes):
             abort(403)
 
-        url, _, _ = import_items_to_activity(
-            item, data_path, request_info=request_info
-        )
+        url, _, _, error = import_items_to_activity(item, request_info=request_info)
         activity_id = url.split("/")[-1]
+        if error and url:
+            raise WekoSwordserverException(
+                "Error: {error}. Please open the following URL to continue "
+                "with the remaining operations.{url}: Item id: {recid}."
+                .format(error=error, url=url, recid=recid),
+                ErrorType.ServerError
+            )
+        if error:
+            raise WekoSwordserverException(
+                f"Error: {error}. Please contact the administrator.",
+                ErrorType.ServerError
+            )
         response = jsonify(_get_status_workflow_document(activity_id, recid))
     else:
         if os.path.exists(data_path):
