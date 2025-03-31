@@ -70,25 +70,17 @@ from weko_deposit.api import WekoIndexer
 from weko_index_tree.ext import WekoIndexTree
 from weko_index_tree.models import Index
 from weko_items_ui.ext import WekoItemsUI
-from weko_records.models import ItemTypeName, ItemType,ItemTypeMapping
+from weko_records.models import ItemTypeName, ItemType,ItemTypeMapping, ItemTypeJsonldMapping
 from weko_schema_ui.ext import WekoSchemaUI
 from weko_search_ui import WekoSearchUI
-from weko_swordserver.models import SwordClientModel, SwordItemTypeMappingModel
+from weko_swordserver.models import SwordClientModel
 from weko_theme.ext import WekoTheme
 from weko_workflow import WekoWorkflow
-from weko_workflow.models import (
-    Action,
-    ActionStatus,
-    FlowAction,
-    FlowDefine,
-    WorkFlow,
-)
-
+from weko_workflow.models import Action, ActionStatus, FlowAction, FlowDefine, WorkFlow
 from weko_swordserver import WekoSWORDServer
 from weko_swordserver.views import blueprint as weko_swordserver_blueprint
 
-from tests.helpers import json_data, create_record
-from weko_workflow.models import Action, ActionStatus, FlowAction, FlowDefine, WorkFlow
+from .helpers import json_data, create_record
 
 @pytest.yield_fixture()
 def instance_path():
@@ -623,25 +615,26 @@ def make_zip():
         return fp
     return factory
 
-# @pytest.fixture()
-# def make_crate():
-#     def factory():
-#         fp = BytesIO()
-#         with ZipFile(fp, 'w', compression=ZIP_DEFLATED) as new_zip:
-#             for dir, subdirs, files in os.walk("tests/data/zip_crate/"):
-#                 new_zip.write(dir,dir.split("/")[-1])
-#                 for file in files:
-#                     new_zip.write(os.path.join(dir, file),os.path.join(dir.split("/")[-1],file))
-#         fp.seek(0)
-#         return fp
-#     return factory
-
 @pytest.fixture()
 def make_crate():
     def factory():
         temp_dir = tempfile.mkdtemp()
         zip_path = os.path.join(temp_dir, "crate.zip")
         shutil.make_archive(zip_path.replace(".zip", ""), 'zip', "tests/data/zip_crate/")
+        file_size = os.path.getsize(zip_path)
+        with open(zip_path, 'rb') as f:
+            fp = BytesIO(f.read())
+        shutil.rmtree(temp_dir)
+        fp.seek(0)
+        return fp, file_size
+    return factory
+
+@pytest.fixture()
+def make_crate2():
+    def factory():
+        temp_dir = tempfile.mkdtemp()
+        zip_path = os.path.join(temp_dir, "crate.zip")
+        shutil.make_archive(zip_path.replace(".zip", ""), 'zip', "tests/data/zip_crate2/")
         file_size = os.path.getsize(zip_path)
         with open(zip_path, 'rb') as f:
             fp = BytesIO(f.read())
@@ -894,9 +887,9 @@ def workflow(app, db, item_type, action_data, users):
 def sword_mapping(db, item_type):
     sword_mapping = []
     for i in range(1, 4):
-        obj = SwordItemTypeMappingModel(
+        obj = ItemTypeJsonldMapping(
             name=f"test{i}",
-            mapping=json_data("data/item_type/sword_mapping_2.json"),
+            mapping=json_data("data/jsonld/ro-crate_mapping.json"),
             item_type_id=item_type[1]["item_type"].id,
             is_deleted=False
         )
@@ -924,6 +917,8 @@ def sword_client(db, tokens, sword_mapping, workflow):
         client_id=client.client_id,
         registration_type_id=SwordClientModel.RegistrationType.DIRECT,
         mapping_id=sword_mapping[0]["sword_mapping"].id,
+        active=False,
+        meta_data_api=[],
     )
     client = tokens[1]["client"]
     sword_client2 = SwordClientModel(
@@ -931,12 +926,16 @@ def sword_client(db, tokens, sword_mapping, workflow):
         registration_type_id=SwordClientModel.RegistrationType.WORKFLOW,
         mapping_id=sword_mapping[1]["sword_mapping"].id,
         workflow_id=workflow[1]["workflow"].id,
+        active=False,
+        meta_data_api=[],
     )
     client = tokens[2]["client"]
     sword_client3 = SwordClientModel(
         client_id=client.client_id,
         registration_type_id=SwordClientModel.RegistrationType.DIRECT,
         mapping_id=sword_mapping[0]["sword_mapping"].id,
+        active=False,
+        meta_data_api=[],
     )
 
     with db.session.begin_nested():

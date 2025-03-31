@@ -20,25 +20,29 @@
 
 """WEKO3 module docstring."""
 
+import sys
 import re
 import uuid
 
-from flask import abort, current_app, jsonify, request, url_for
+from flask import abort, current_app, flash, jsonify, request, url_for
 from flask_admin import BaseView, expose
 from flask_login import current_user
 from flask_babelex import gettext as _
+from flask_wtf import FlaskForm
 from invenio_accounts.models import Role, User
 from invenio_db import db
 from invenio_files_rest.models import Location
 from invenio_i18n.ext import current_i18n
+from weko_admin.models import AdminSettings
 from weko_index_tree.models import Index
 from weko_records.api import ItemTypes
 from weko_records.models import ItemTypeProperty
 
+from . import config
 from .api import Action, Flow, WorkActivity, WorkFlow
 from .config import WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS
 from .models import WorkflowRole
-from .utils import recursive_get_specified_properties
+from .utils import recursive_get_specified_properties, check_activity_settings
 
 
 class FlowSettingView(BaseView):
@@ -205,6 +209,8 @@ class FlowSettingView(BaseView):
         for action in actions:
             if action.action_name in current_app.config[
                     'WEKO_WORKFLOW_ACTIONS']:
+                action.is_for_delete = action.action_name in current_app.config[
+                    'WEKO_WORKFLOW_DELETE_ACTIONS']
                 action_list.append(action)
         return action_list
 
@@ -392,6 +398,7 @@ class WorkFlowSettingView(BaseView):
             flows_name=json_data.get('flows_name', None),
             itemtype_id=json_data.get('itemtype_id', 0),
             flow_id=json_data.get('flow_id', 0),
+            delete_flow_id=json_data.get('delete_flow_id') if json_data.get('delete_flow_id') else None,
             index_tree_id=json_data.get('index_id'),
             location_id=json_data.get('location_id'),
             open_restricted=json_data.get('open_restricted', False),
@@ -526,6 +533,52 @@ class WorkFlowSettingView(BaseView):
         cur_language = current_i18n.language
         language = cur_language if cur_language in ['en', 'ja'] else "en"
         return cls.MULTI_LANGUAGE[key].get(language)
+    
+        
+class ActivitySettingsView(BaseView):
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        """Get and update activity settings.
+
+        :return:
+        """
+        try:
+            form = FlaskForm(request.form)
+            # Get display request form settings
+            activity_display_settings = AdminSettings.get('activity_display_settings')
+            if not activity_display_settings:
+                activity_display_settings_tmp = current_app.config.get("WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE")
+                activity_display_settings = {"activity_display_flg": activity_display_settings_tmp}
+                AdminSettings.update('activity_display_settings', activity_display_settings)
+            check_activity_settings()
+            activity_display_flg = '0'
+            if current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE']:
+                activity_display_flg = '1'
+
+            if request.method == 'POST' and form.validate():
+                # Process forms
+                form = request.form.get('submit', None)
+                if form == 'set_search_author_form':
+                    settings = activity_display_settings.__dict__
+                    activity_display_flg = request.form.get('displayRadios', '0')
+                    is_activity_display = (activity_display_flg == '1')
+                    settings['activity_display_flg'] = is_activity_display
+
+                    AdminSettings.update('activity_display_settings', settings)
+                    flash(_('Activity setting was updated.'), category='success')
+            
+            return self.render(config.WEKO_ADMIN_ACTIVITY_SETTINGS_TEMPLATE,
+                               activity_display_flg=activity_display_flg,
+                               form=form)
+        except BaseException:
+            import traceback
+            exc, val, tb = sys.exc_info()
+            current_app.logger.error(
+                'Unexpected error: {}'.format(sys.exc_info()))
+            current_app.logger.error(
+                traceback.format_exception(exc, val, tb)
+            )
+        return abort(400)
 
 
 workflow_adminview = {
@@ -546,7 +599,17 @@ flow_adminview = {
     }
 }
 
+activity_settings_adminview = {
+    'view_class': ActivitySettingsView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Activity'),
+        'endpoint': 'activity'
+    }
+}
+
 __all__ = (
     'flow_adminview',
     'workflow_adminview',
+    'activity_settings_adminview',
 )

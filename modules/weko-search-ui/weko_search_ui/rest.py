@@ -57,6 +57,7 @@ from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.views import create_api_errorhandler
 from webargs import fields
 from webargs.flaskparser import use_kwargs
+from weko_accounts.utils import limiter
 from weko_admin.models import SearchManagement as sm
 from weko_admin.utils import get_facet_search_query
 from werkzeug.http import generate_etag
@@ -71,9 +72,6 @@ from werkzeug.utils import secure_filename
 from .error import InvalidRequestError, VersionNotFoundRESTError, InternalServerError
 from .api import SearchSetting
 from .query import default_search_factory
-from .utils import create_limiter
-
-limiter = create_limiter()
 
 
 def create_blueprint(app, endpoints):

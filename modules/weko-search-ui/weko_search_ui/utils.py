@@ -73,7 +73,7 @@ from sqlalchemy import func as _func
 from sqlalchemy.exc import SQLAlchemyError
 from weko_admin.models import AdminSettings, SessionLifetime
 from weko_admin.utils import get_redis_cache, reset_redis_cache
-from weko_authors.models import Authors
+from weko_authors.models import AuthorsAffiliationSettings, AuthorsPrefixSettings
 from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
@@ -84,12 +84,13 @@ from weko_index_tree.utils import (
     check_restrict_doi_with_indexes,
 )
 from weko_indextree_journal.api import Journals
-from weko_records.api import FeedbackMailList, RequestMailList, ItemTypeNames, ItemTypes, Mapping
+from weko_items_autofill.utils import get_doi_with_original
+from weko_records.api import FeedbackMailList, JsonldMapping, RequestMailList, ItemTypes, Mapping
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_full_mapping, get_mapping
 from weko_redis.redis import RedisConnection
 from weko_schema_ui.models import PublishStatus
-from weko_search_ui.mapper import BaseMapper, JPCOARV2Mapper
+from weko_search_ui.mapper import BaseMapper, JPCOARV2Mapper, JsonLdMapper
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.config import (
     IDENTIFIER_GRANT_LIST,
@@ -137,6 +138,8 @@ from .config import (
     WEKO_SEARCH_UI_BULK_EXPORT_TASK,
     WEKO_SEARCH_UI_BULK_EXPORT_URI,
     WEKO_SYS_USER,
+    SWORD_METADATA_FILE,
+    ROCRATE_METADATA_FILE
 )
 from .query import item_path_search_factory
 
@@ -546,6 +549,9 @@ def check_tsv_import_items(file, is_change_identifier: bool, is_gakuninrdm=False
         # current_app.logger.debug("list_record8: {}".format(list_record))
         # [{'pos_index': ['Index A'], 'publish_status': 'public', 'feedback_mail': ['wekosoftware@nii.ac.jp'], 'edit_mode': 'Keep', 'metadata': {'pubdate': '2021-03-19', 'item_1617186331708': [{'subitem_1551255647225': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'en_conference paperITEM00000001(public_open_access_simple)', 'subitem_1551255648112': 'en'}], 'item_1617186385884': [{'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'en'}, {'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'ja'}], 'item_1617186419668': [{'creatorAffiliations': [{'affiliationNameIdentifiers': [{'affiliationNameIdentifier': '0000000121691048', 'affiliationNameIdentifierScheme': 'ISNI', 'affiliationNameIdentifierURI': 'http://isni.org/isni/0000000121691048'}], 'affiliationNames': [{'affiliationName': 'University', 'affiliationNameLang': 'en'}]}], 'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': '4', 'nameIdentifierScheme': 'WEKO'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617349709064': [{'contributorMails': [{'contributorMail': 'wekosoftware@nii.ac.jp'}], 'contributorNames': [{'contributorName': '情報, 太郎', 'lang': 'ja'}, {'contributorName': 'ジョウホウ, タロウ', 'lang': 'ja-Kana'}, {'contributorName': 'Joho, Taro', 'lang': 'en'}], 'contributorType': 'ContactPerson', 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617186476635': {'subitem_1522299639480': 'open access', 'subitem_1600958577026': 'http://purl.org/coar/access_right/c_abf2'}, 'item_1617351524846': {'subitem_1523260933860': 'Unknown'}, 'item_1617186499011': [{'subitem_1522650717957': 'ja', 'subitem_1522650727486': 'http://localhost', 'subitem_1522651041219': 'Rights Information'}], 'item_1617610673286': [{'nameIdentifiers': [{'nameIdentifier': 'xxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}], 'rightHolderNames': [{'rightHolderLanguage': 'ja', 'rightHolderName': 'Right Holder Name'}]}], 'item_1617186609386': [{'subitem_1522299896455': 'ja', 'subitem_1522300014469': 'Other', 'subitem_1522300048512': 'http://localhost/', 'subitem_1523261968819': 'Sibject1'}], 'item_1617186626617': [{'subitem_description': 'Description\nDescription<br/>Description', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}, {'subitem_description': '概要\n概要\n概要\n概要', 'subitem_description_language': 'ja', 'subitem_description_type': 'Abstract'}], 'item_1617186643794': [{'subitem_1522300295150': 'en', 'subitem_1522300316516': 'Publisher'}], 'item_1617186660861': [{'subitem_1522300695726': 'Available', 'subitem_1522300722591': '2021-06-30'}], 'item_1617186702042': [{'subitem_1551255818386': 'jpn'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_1617349808926': {'subitem_1523263171732': 'Version'}, 'item_1617265215918': {'subitem_1522305645492': 'AO', 'subitem_1600292170262': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce'}, 'item_1617186783814': [{'subitem_identifier_type': 'URI', 'subitem_identifier_uri': 'http://localhost'}], 'item_1617353299429': [{'subitem_1522306207484': 'isVersionOf', 'subitem_1522306287251': {'subitem_1522306382014': 'arXiv', 'subitem_1522306436033': 'xxxxx'}, 'subitem_1523320863692': [{'subitem_1523320867455': 'en', 'subitem_1523320909613': 'Related Title'}]}], 'item_1617186859717': [{'subitem_1522658018441': 'en', 'subitem_1522658031721': 'Temporal'}], 'item_1617186882738': [{'subitem_geolocation_place': [{'subitem_geolocation_place_text': 'Japan'}]}], 'item_1617186901218': [{'subitem_1522399143519': {'subitem_1522399281603': 'ISNI', 'subitem_1522399333375': 'http://xxx'}, 'subitem_1522399412622': [{'subitem_1522399416691': 'en', 'subitem_1522737543681': 'Funder Name'}], 'subitem_1522399571623': {'subitem_1522399585738': 'Award URI', 'subitem_1522399628911': 'Award Number'}, 'subitem_1522399651758': [{'subitem_1522721910626': 'en', 'subitem_1522721929892': 'Award Title'}]}], 'item_1617186920753': [{'subitem_1522646500366': 'ISSN', 'subitem_1522646572813': 'xxxx-xxxx-xxxx'}], 'item_1617186941041': [{'subitem_1522650068558': 'en', 'subitem_1522650091861': 'Source Title'}], 'item_1617186959569': {'subitem_1551256328147': '1'}, 'item_1617186981471': {'subitem_1551256294723': '111'}, 'item_1617186994930': {'subitem_1551256248092': '12'}, 'item_1617187024783': {'subitem_1551256198917': '1'}, 'item_1617187045071': {'subitem_1551256185532': '3'}, 'item_1617187112279': [{'subitem_1551256126428': 'Degree Name', 'subitem_1551256129013': 'en'}], 'item_1617187136212': {'subitem_1551256096004': '2021-06-30'}, 'item_1617944105607': [{'subitem_1551256015892': [{'subitem_1551256027296': 'xxxxxx', 'subitem_1551256029891': 'kakenhi'}], 'subitem_1551256037922': [{'subitem_1551256042287': 'Degree Grantor Name', 'subitem_1551256047619': 'en'}]}], 'item_1617187187528': [{'subitem_1599711633003': [{'subitem_1599711636923': 'Conference Name', 'subitem_1599711645590': 'ja'}], 'subitem_1599711655652': '1', 'subitem_1599711660052': [{'subitem_1599711680082': 'Sponsor', 'subitem_1599711686511': 'ja'}], 'subitem_1599711699392': {'subitem_1599711704251': '2020/12/11', 'subitem_1599711712451': '1', 'subitem_1599711727603': '12', 'subitem_1599711731891': '2000', 'subitem_1599711735410': '1', 'subitem_1599711739022': '12', 'subitem_1599711743722': '2020', 'subitem_1599711745532': 'ja'}, 'subitem_1599711758470': [{'subitem_1599711769260': 'Conference Venue', 'subitem_1599711775943': 'ja'}], 'subitem_1599711788485': [{'subitem_1599711798761': 'Conference Place', 'subitem_1599711803382': 'ja'}], 'subitem_1599711813532': 'JPN'}], 'item_1617605131499': [{'accessrole': 'open_access', 'date': [{'dateType': 'Available', 'dateValue': '2021-07-12'}], 'displaytype': 'simple', 'filename': '1KB.pdf', 'filesize': [{'value': '1 KB'}], 'format': 'text/plain'}], 'item_1617620223087': [{'subitem_1565671149650': 'ja', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheading'}, {'subitem_1565671149650': 'en', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheding'}], 'path': [1031], 'feedback_mail_list': [{'email': 'wekosoftware@nii.ac.jp', 'author_id': ''}]}, 'file_path': ['file00000001/1KB.pdf', ''], 'item_type_name': 'デフォルトアイテムタイプ（フル）', 'item_type_id': 15, '$schema': 'https://localhost:8443/items/jsonschema/15', 'identifier_key': 'item_1617186819068', 'errors': None, 'status': 'new', 'id': None, 'item_title': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'filenames': [{'id': '.metadata.item_1617605131499[0].filename', 'filename': '1KB.pdf'}, {'id': '.metadata.item_1617605131499[1].filename', 'filename': ''}]}]
 
+        handle_check_authors_prefix(list_record)
+        handle_check_authors_affiliation(list_record)
+
         if not is_gakuninrdm:
             handle_check_cnri(list_record)
             handle_check_doi_indexes(list_record)
@@ -770,6 +776,303 @@ def generate_metadata_from_jpcoar(data_path: str, filenames: list, item_type_id:
 
     # current_app.logger.debug('list_record: {}'.format(list_record))
     return list_record
+
+def check_jsonld_import_items(
+        file,
+        packaging,
+        mapping_id,
+        shared_id=-1,
+        validate_bagit=True,
+        is_change_identifier=False):
+    """Check bagit import items.
+
+    Check that the actual file contents match the recorded hashes stored
+    in the manifest files and mapping metadata to the item type.
+
+    Args:
+        file (FileStorage | str): File object or file path.
+        packaging (str): Packaging type. SWORDBagIt or SimpleZip.
+        shared_id (int): Shared ID. Defaults to -1.
+        mapping_id (int): Mapping ID. Defaults to None.
+        validate_bagit (bool, optional):
+            Validate BagIt. Defaults to True.
+        is_change_identifier (bool, optional):
+            Change Identifier Mode. Defaults to False.
+
+    Returns:
+        dict: Result of mapping to item type
+
+    Example:
+
+    >>> check_bagit_import_items(file, "SimpleZip")
+    {
+        "data_path": "/tmp/xxxxx",
+        "list_record": [
+            # list of metadata
+        ]
+        "register_type": "Direct",
+        "item_type_id": 1,
+    } # Setiing is `Direct`
+
+    >>> check_bagit_import_items(file, "SimpleZip")
+    {
+        "data_path": "/tmp/xxxxx",
+        "list_record": [
+            # list of metadata
+        ]
+        "register_type": "Workflow",
+        "workflow_id": 1,
+        "item_type_id": 2,
+    } # Setting is `Workflow`
+    """
+    check_result = {}
+
+    if isinstance(file, str):
+        filename = os.path.basename(file)
+    else:
+        filename = file.filename
+
+    try:
+        data_path = os.path.join(
+            tempfile.gettempdir(),
+            current_app.config.get("WEKO_SEARCH_UI_IMPORT_TMP_PREFIX")
+                + datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")[:-3]
+        )
+
+        # Create temp dir for import data
+        os.mkdir(data_path)
+
+        # Extract zip file, Extracted files remain.
+        with zipfile.ZipFile(file) as zip_ref:
+            for info in zip_ref.infolist():
+                try:
+                    info.filename = info.orig_filename
+                    inf = chardet.detect(info.orig_filename)
+                    if inf['encoding'] is not None and inf['encoding'] == 'cp437':
+                        info.filename = info.orig_filename.encode("cp437").decode("cp932")
+                        if os.sep != "/" and os.sep in info.filename:
+                            info.filename = info.filename.replace(os.sep, "/")
+                except Exception:
+                    traceback.print_exc()
+            zip_ref.extractall(path=data_path)
+
+        check_result.update({
+            "data_path": data_path,
+            "weko_shared_id": shared_id
+        })
+
+        # metadata json file name
+        json_name = (
+            SWORD_METADATA_FILE if "SWORDBagIt" in packaging
+                else ROCRATE_METADATA_FILE
+        )
+
+        # Check if the bag is valid
+        if validate_bagit:
+            bag = bagit.Bag(data_path)
+            bag.validate()
+
+        json_mapping = JsonldMapping.get_mapping_by_id(mapping_id)
+        if json_mapping is None:
+            current_app.logger.error(f"Mapping not defined for sword client.")
+            raise Exception(
+                "Metadata mapping not defined for registration your item."
+            )
+
+        item_type = ItemTypes.get_by_id(json_mapping.item_type_id)
+        check_result.update({"item_type_id": item_type.id})
+
+        # TODO: validate mapping
+        mapping = json_mapping.mapping
+        mapper = JsonLdMapper(item_type.id, mapping)
+        with open(f"{data_path}/{json_name}", "r") as f:
+            json_ld = json.load(f)
+        item_metadatas, _ = mapper.to_item_metadata(json_ld)
+        list_record = [
+            {
+                "$schema": f"/items/jsonschema/{item_type.id}",
+                # if new item, must not exist "id"
+                **({"id": item_metadata["id"]} if "id" in item_metadata else {}),
+                "_id": item_metadata.id,
+                "metadata": item_metadata,
+                "item_type_name": item_type.item_type_name.name,
+                "item_type_id": item_type.id,
+                "publish_status": item_metadata.get("publish_status"),
+                "link_data": item_metadata.link_data,
+                "file_path": item_metadata.list_file,
+                "non_extract": item_metadata.non_extract,
+                "save_as_is": item_metadata.save_as_is,
+                "metadata_replace": item_metadata.metadata_replace,
+                "cnri": item_metadata.cnri,
+                "doi_ra": item_metadata.doi_ra,
+                "doi": item_metadata.doi,
+            } for item_metadata in item_metadatas
+        ]
+        data_path = os.path.join(data_path, "data")
+        list_record.sort(key=lambda x: get_priority(x['metadata'].link_data))
+        handle_save_bagit(list_record, file, data_path, filename)
+
+        handle_metadata_amend_by_doi(list_record)
+
+        handle_set_change_identifier_flag(list_record, is_change_identifier)
+        handle_fill_system_item(list_record)
+
+        list_record = handle_validate_item_import(list_record, item_type.schema)
+
+        list_record = handle_check_exist_record(list_record)
+        handle_item_title(list_record)
+        list_record = handle_check_date(list_record)
+        handle_check_id(list_record)
+        handle_check_and_prepare_index_tree(list_record, True, [])
+        handle_check_and_prepare_publish_status(list_record)
+
+        handle_check_file_metadata(list_record, data_path)
+
+        handle_check_authors_prefix(list_record)
+        handle_check_authors_affiliation(list_record)
+
+        check_result.update({"list_record": list_record})
+
+    except zipfile.BadZipFile as ex:
+        current_app.logger.error(
+            "An error occurred while extraction the file."
+        )
+        traceback.print_exc()
+        check_result.update({
+            "error": f"The format of the specified file {filename} dose not "
+            + "support import. Please specify a zip file."
+        })
+
+    except bagit.BagValidationError as ex:
+        current_app.logger.error("Bag validation failed.")
+        traceback.print_exc()
+        check_result.update({
+            "error": str(ex)
+        })
+
+    except (UnicodeDecodeError, UnicodeEncodeError) as ex:
+        current_app.logger.error(
+            "An error occurred while reading the file."
+        )
+        traceback.print_exc()
+        check_result.update({
+            "error": ex.reason
+        })
+
+    except Exception as ex:
+        msg = ""
+        if (
+            ex.args
+            and len(ex.args)
+            and isinstance(ex.args[0], dict)
+            and ex.args[0].get("error_msg")
+        ):
+            msg = ex.args[0].get("error_msg")
+            check_result.update({"error": msg})
+        else:
+            msg = str(ex)
+            check_result.update({"error": str(ex)})
+        current_app.logger.error(
+            f"Check items error: {msg}")
+        traceback.print_exc()
+
+    return check_result
+
+
+def handle_save_bagit(list_record, file, data_path, filename):
+    """Handle save bagit file as is.
+
+    Save the bagit file as is if the metadata has the save_as_is flag.
+    """
+    if len(list_record) > 2:
+        # item split flag takes precedence over save Bag flag
+        return
+
+    metadata = list_record[0].get("metadata")
+    if not list_record[0].get("save_as_is", False):
+        return
+
+    if isinstance(file, str):
+        shutil.copy(file, os.path.join(data_path, filename))
+    else:
+        file.seek(0, 0)
+        file.save(os.path.join(data_path, filename))
+
+    current_app.logger.info("Save the bagit file as is.")
+    list_record[0]["file_path"] = [filename] # for Direct registration
+
+    files_info = metadata.get("files_info")  # for Workflow registration
+    key = files_info[0].get("key")
+
+    dataset_info = {                         # replace metadata
+        "filesize": [
+            {
+                "value": str(os.path.getsize(
+                    os.path.join(data_path, filename))
+                ),
+            }
+        ],
+        "filename":  filename,
+        "format": "application/zip",
+        "url": {
+            "objectType": "dataset",
+            "label": filename
+        },
+    }
+    metadata[key] = [dataset_info]
+
+
+def get_priority(link_data):
+    """Determine the priority of link data based on specific conditions.
+
+    Args:
+        link_data (list): A list of dictionaries containing 'sele_id' and 'item_id'.
+
+    Returns:
+        int: The priority level (1 to 6) based on the conditions.
+    """
+    sele_ids = [link['sele_id'] for link in link_data]
+    item_ids = [link['item_id'] for link in link_data]
+
+    # Check conditions
+    all_is_supplement_to = all(
+        sele_id == 'isSupplementTo'
+        for sele_id in sele_ids
+        )
+    all_item_ids_not_numbers = all(
+        not item_id.isdigit()
+        for item_id in item_ids
+        )
+    has_item_ids_not_numbers = any(
+        not item_id.isdigit()
+        for item_id in item_ids
+        )
+    has_is_supplement_to_with_not_number = any(
+        link['sele_id'] == 'isSupplementTo' and not link['item_id'].isdigit()
+        for link in link_data
+    )
+    all_is_supplement_to_item_ids_are_numbers = all(
+        link['item_id'].isdigit() for link in link_data
+        if link['sele_id'] == 'isSupplementTo'
+    )
+    all_is_supplemented_by = all(
+        sele_id == 'isSupplementedBy'
+        for sele_id in sele_ids
+        )
+
+    # Determine priority
+    if all_is_supplement_to and all_item_ids_not_numbers:
+        return 1  # Highest priority
+    elif all_is_supplement_to and has_item_ids_not_numbers:
+        return 2  # Second priority
+    elif has_is_supplement_to_with_not_number:
+        return 3  # Third priority
+    elif all_is_supplement_to and all_is_supplement_to_item_ids_are_numbers:
+        return 4  # Fourth priority
+    elif all_is_supplemented_by:
+        return 5  # Lowest priority
+    else:
+        return 6  # Other cases
 
 
 def getEncode(filepath):
@@ -1498,6 +1801,9 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
     deposit['_deposit']['owners'] = [int(owner)]
     deposit['_deposit']['created_by'] = int(owner)
     deposit['owner'] = str(owner)
+
+    # to exclude from file text extraction
+    deposit.non_extract = item.get("non_extract")
     deposit.commit()
 
     feedback_mail_list = item["metadata"].get("feedback_mail_list")
@@ -1554,6 +1860,7 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
                 _draft_record = WekoDeposit.get_record(_draft_pid.object_uuid)
                 _draft_record["path"] = new_data.get("path")
                 _draft_deposit = WekoDeposit(_draft_record, _draft_record.model)
+                _draft_deposit.non_extract = item.get("non_extract")
                 _draft_deposit.merge_data_to_record_without_version(
                     pid, keep_version=True, is_import=True
                 )
@@ -1600,6 +1907,20 @@ def handle_workflow(item: dict):
             return
         else:
             create_work_flow(item.get("item_type_id"))
+
+def handle_doi(item: dict, doi: str):
+    """Handle doi.
+
+    :argument
+        item           -- {dict} item.
+        doi            -- {str} doi.
+    :return
+        return metadata with doi
+    """
+    metadata = item.get("metadata")
+    item_type_id = item.get("item_type_id")
+    doi_response = get_doi_with_original(doi, item_type_id, metadata)
+    return doi_response
 
 
 def create_work_flow(item_type_id):
@@ -1830,6 +2151,47 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
 
             return {"success": False, "error_id": error_id}
     return {"success": True, "recid": item["id"]}
+
+
+def import_items_to_activity(item, request_info):
+    workflow_id = request_info.get("workflow_id")
+    # when metadata format was XML, get id from admin setting
+    if workflow_id is None:
+        settings = AdminSettings.get("sword_api_setting", dict_to_object=False)
+        default_format = settings.get("default_format", "XML")
+        data_format = settings.get("data_format")
+        workflow_id = int(data_format.get(default_format, {}).get("workflow", "-1"))
+
+    metadata = item.get("metadata")
+    index = metadata.get("path")
+    files_info = metadata.pop("files_info", [{}])
+    files = [
+        os.path.join(item.get("root_path"), file_info.get("url", {}).get("label"))
+            for file_info
+            in files_info[0].get("items", {})
+    ]
+    comment = metadata.get("comment")
+    link_data = getattr(item["metadata"], "link_data", None)
+    grant_data = item.get("grant_data")
+
+    error = None
+    try:
+        from weko_workflow.headless.activity import HeadlessActivity
+        headless = HeadlessActivity()
+        url, current_action, recid = headless.auto(
+            user_id= request_info.get("user_id"), workflow_id=workflow_id,
+            index=index, metadata=metadata, files=files, comment=comment,
+            link_data=link_data, grant_data=grant_data,
+            non_extract=item.get("non_extract")
+        )
+    except Exception as ex:
+        traceback.print_exc()
+        url = headless.detail
+        recid = headless.recid
+        current_action = headless.current_action
+        error = True
+
+    return url, recid, current_action, error
 
 
 def handle_item_title(list_record):
@@ -4143,6 +4505,122 @@ def handle_check_thumbnail(record, data_path):
     return errors, warnings
 
 
+def handle_check_authors_prefix(list_record):
+    """Check authors prefix.
+
+    Each author's nameIdentifierScheme should be one of the schemes
+    in the AuthorsPrefixSettings table.
+    If not, add an error message to the record.
+
+    Args:
+        list_record (list[dict]): List record import.
+    """
+    settings = AuthorsPrefixSettings.query.all()
+    allowed_scheme = [setting.scheme for setting in settings]
+
+    for item in list_record:
+        errors = []
+        keys = set()
+        # find all keys that have "nameIdentifiers" in their values
+        # may be nested in a list
+        for k, v in item["metadata"].items():
+            if isinstance(v, dict):
+                if "nameIdentifiers" in v:
+                    keys |= {k}
+            elif isinstance(v, list):
+                keys |= {
+                    k for i in v if isinstance(i, dict) and "nameIdentifiers" in i
+                }
+
+        errors += [
+            f'"{scheme}" is not one of {allowed_scheme} in {key}'
+            for key in keys
+            for author in (
+                # author most likely be a list or a single object
+                item["metadata"].get(key)
+                if isinstance(item["metadata"][key], list)
+                else [item["metadata"].get(key, {})]
+            )
+            for id in author.get("nameIdentifiers", [])
+            for scheme in [id.get("nameIdentifierScheme")]
+            if scheme is not None and scheme not in allowed_scheme
+        ]
+
+        if errors:
+            item["errors"] = (
+                item["errors"] + errors if item.get("errors") else errors
+            )
+
+
+def handle_check_authors_affiliation(list_record):
+    """Check authors affiliation.
+
+    Each author's affiliationNameIdentifierScheme should be one of the schemes
+    in the AuthorsAffiliationSettings table.
+    If not, add an error message to the record.
+
+    Args:
+        list_record (list[dict]): List record import.
+    """
+    settings = AuthorsAffiliationSettings.query.all()
+    allowed_scheme = [setting.scheme for setting in settings]
+
+    for item in list_record:
+        errors = []
+        creator_keys = set()
+        contributor_keys = set()
+        # find all keys that have "affiliationNameIdentifiers"
+        for k, v in item["metadata"].items():
+            if isinstance(v, dict):
+                if "creatorAffiliations" in v:
+                    creator_keys |= {k}
+                if "contributorAffiliations" in v:
+                    contributor_keys |= {k}
+            elif isinstance(v, list):
+                creator_keys |= {
+                    k for i in v
+                    if isinstance(i, dict) and "creatorAffiliations" in i
+                }
+                contributor_keys |= {
+                    k for i in v
+                    if isinstance(i, dict) and "contributorAffiliations" in i
+                }
+
+        errors += [
+            f'"{scheme}" is not one of {allowed_scheme} in {key}'
+            for key in creator_keys
+            for creator in (
+                # creator most likely be a list or a single object
+                item["metadata"].get(key, [])
+                if isinstance(item["metadata"][key], list)
+                else [item["metadata"].get(key, {})]
+            )
+            for affiliation in creator.get("creatorAffiliations", [])
+            for id in affiliation.get("affiliationNameIdentifiers", [])
+            for scheme in [id.get("affiliationNameIdentifierScheme")]
+            if scheme is not None and scheme not in allowed_scheme
+        ]
+        errors += [
+            f'"{scheme}" is not one of {allowed_scheme} in {key}'
+            for key in contributor_keys
+            for contributor in (
+                # contributor most likely be a list or a single object
+                item["metadata"].get(key, [])
+                if isinstance(item["metadata"][key], list)
+                else [item["metadata"].get(key, {})]
+            )
+            for affiliation in contributor.get("contributorAffiliations", [])
+            for id in affiliation.get("affiliationNameIdentifiers", [])
+            for scheme in [id.get("affiliationNameIdentifierScheme")]
+            if scheme is not None and scheme not in allowed_scheme
+        ]
+
+        if errors:
+            item["errors"] = (
+                item["errors"] + errors if item.get("errors") else errors
+            )
+
+
 def get_key_by_property(record, item_map, item_property):
     """Get data by property text.
 
@@ -4349,3 +4827,21 @@ def create_tsv_row(dict, data_response):
         result_row[key] = data_response.get(dict[key], [None])[0]
 
     return result_row
+
+
+def handle_metadata_amend_by_doi(list_record):
+    """Amend metadata by using DOI.
+
+    Amend metadata, by using Web APIs, if DOI exists in the metadata.
+    The APIs used for this mehtod are set in weko_items_autofill/config.py >
+    WEKO_ITEMS_AUTOFILL_TO_BE_USED, priority order.
+
+    Args:
+        list_record (list[dict]): List record import.
+    """
+    for item in list_record:
+        metadata = item["metadata"]
+        doi = getattr(metadata, "doi_amend")
+        if doi is None:
+            continue
+        item["metadata"] = handle_doi(item, doi)

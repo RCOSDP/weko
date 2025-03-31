@@ -38,8 +38,8 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from weko_records.api import FeedbackMailList, RequestMailList, FilesMetadata, ItemLink, \
     ItemsMetadata, ItemTypeEditHistory, ItemTypeNames, ItemTypeProps, \
-    ItemTypes, Mapping, SiteLicense, RecordBase, WekoRecord
-from weko_records.models import ItemType, ItemTypeName, \
+    ItemTypes, Mapping, JsonldMapping, SiteLicense, RecordBase, WekoRecord
+from weko_records.models import ItemType, ItemTypeJsonldMapping, ItemTypeName, \
     SiteLicenseInfo, SiteLicenseIpAddress
 from jsonschema.validators import Draft4Validator
 from datetime import datetime
@@ -78,14 +78,14 @@ def test_recordbase(app, db):
     assert result["created"] == "yesterday"
     assert result["updated"] == "now"
     assert record.validate(validator=Draft4Validator)==None
-    
+
     schema = {
     'type': 'object',
     'properties': {
     'id': { 'type': 'integer' },
     'version_id': { 'type': 'integer' },
     'created': {'type': 'string' },
-    'updated': { 'type': 'string' },    
+    'updated': { 'type': 'string' },
     },
     'required': ['id']
     }
@@ -100,7 +100,7 @@ def test_recordbase(app, db):
     test_model.__getitem__.side_effect = data.__getitem__
     record = RecordBase(data)
     record.model = test_model
-    assert record.validate(validator=Draft4Validator) == None    
+    assert record.validate(validator=Draft4Validator) == None
     assert record.replace_refs()=={'id': 1, 'version_id': 10, 'created': 'yesterday', 'updated': 'now', '$schema': {'type': 'object', 'properties': {'id': {'type': 'integer'}, 'version_id': {'type': 'integer'}, 'created': {'type': 'string'}, 'updated': {'type': 'string'}}, 'required': ['id']}}
 
 # class ItemTypeNames(RecordBase):
@@ -148,6 +148,10 @@ def test_itemtypenames(app, db, item_type, item_type2):
     assert len(lst)==2
     lst = ItemTypeNames.get_all_by_id(ids=[1,2,3], with_deleted=True)
     assert len(lst)==3
+
+    # def get_name_and_id_all(cls):
+    lst = ItemTypeNames.get_name_and_id_all()
+    assert len(lst)>0
 
     # def delete(self, force=True):
     item_type_name = ItemTypeNames.get_record(3)
@@ -364,7 +368,7 @@ def test_itemtypes_update_item_type(app, db, location):
         filter_magicmock.all = all
 
         return filter_magicmock
-    
+
     def myfilter_2(item):
         def all_2():
             all2_magicmock = MagicMock()
@@ -403,7 +407,7 @@ def test_itemtypes_update_item_type(app, db, location):
                         result=item_type,
                         schema=_schema
                     ) != None
-                
+
             with patch("weko_records.api.db.session.query", return_value=data1):
                 assert test.update_item_type(
                     form=_form,
@@ -853,7 +857,7 @@ def test_itemtypes_restore(app, db):
 #     def revisions(self):
 def test_revision_ItemTypes(app):
     test = ItemTypes(data={})
-    
+
     # Exception coverage
     try:
         test.revisions()
@@ -861,7 +865,7 @@ def test_revision_ItemTypes(app):
         pass
 
     test.model = True
-    
+
     with patch('weko_records.api.RevisionsIterator', return_value=MagicMock()):
         assert test.revisions() != None
 
@@ -882,19 +886,19 @@ class TestItemTypes:
         TestCase().assertDictEqual(new_value, expected_dict)
 
     def test_update_attribute_options(app):
-        
+
         a = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報","isHide":True, "required": True, "isShowList": True, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDisplay": True, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": True}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
         b = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報", "isHide":True, "required": True, "isShowList": True, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDisplay": True, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": True}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
         expected_dict = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報", "isHide":True, "required": True, "isShowList": True, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDisplay": True, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": True}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
         ItemTypes.update_attribute_options(a,b,"None")
         TestCase().assertDictEqual(b, expected_dict)
-        
+
         a = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報","isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDisplay": False, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": False}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
         b = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報", "isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDisplay": False, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": False}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
         expected_dict = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報", "isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDisplay": False, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": False}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
         ItemTypes.update_attribute_options(a,b,"None")
         TestCase().assertDictEqual(b, expected_dict)
-        
+
         a = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報","title_i18n": {"en": "Version", "ja": "バージョン情報"},"title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
         b = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報","title_i18n": {"en": "Version", "ja": "バージョン情報"},"title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
         expected_dict = {"key": "key", "type": "fieldset", "items": [{"isHide": False,"isNonDisplay": False,"isShowList": False,"isSpecifyNewline": False,"required":False,"key": "key.subkey", "type": "text", "title": "バージョン情報", "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
@@ -912,7 +916,7 @@ class TestItemTypes:
         expected_dict = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "subkey","isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "subkey", "ja": "subkey"}, "isNonDisplay": True, "title_i18n_temp": {"en": "subkey", "ja": "subkey"}, "isSpecifyNewline": False,"items": [{"key": "key.subkey.subkey", "type": "text", "title": "subkey.subkey","isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "subkey.subkey", "ja": "subkey.subkey"}, "isNonDisplay": True, "title_i18n_temp": {"en": "subkey.subkey", "ja": "subkey.subkey"}, "isSpecifyNewline": False}]}], "title": "Version", "title_i18n": {"en": "key", "ja": "key"}}
         ItemTypes.update_attribute_options(a,b, "None")
         TestCase().assertDictEqual(b, expected_dict)
-        
+
         old_value = {"key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_language", "type": "select", "title": "言語", "titleMap": [{"name": "ja", "value": "ja"}, {"name": "en", "value": "en"}], "title_i18n": {"en": "Language", "ja": "言語"}, "title_i18n_temp": {"en": "Language", "ja": "言語"}}, {"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [{"name": "a", "value": "a"}, {"name": "b", "value": "b"}, {"name": "c", "value": "c"}, {"name": "d", "value": "d"}, {"name": "e", "value": "e"}, {"name": "f", "value": "f"}], "title_i18n": {"en": "Value", "ja": "値"}, "title_i18n_temp": {"en": "Value", "ja": "値"}}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""}}
         new_value = {"key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_language", "type": "select", "title": "言語", "titleMap": '', "title_i18n": {"en": "Language", "ja": "言語"}, "title_i18n_temp": {"en": "Language", "ja": "言語"}}, {"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [], "title_i18n": {"en": "Value", "ja": "値"}, "title_i18n_temp": {"en": "Value", "ja": "値"}}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""}}
         expected_dict = {"key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_language", "type": "select", "title": "言語", "titleMap": [{"name": "ja", "value": "ja"}, {"name": "en", "value": "en"}], "title_i18n": {"en": "Language", "ja": "言語"}, "title_i18n_temp": {"en": "Language", "ja": "言語"},'isHide': False,'isNonDisplay': False,'isShowList': False, 'isSpecifyNewline': False,'required': False}, {"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [{"name": "a", "value": "a"}, {"name": "b", "value": "b"}, {"name": "c", "value": "c"}, {"name": "d", "value": "d"}, {"name": "e", "value": "e"}, {"name": "f", "value": "f"}], "title_i18n": {"en": "Value", "ja": "値"}, "title_i18n_temp": {"en": "Value", "ja": "値"},'isHide': False,'isNonDisplay': False,'isShowList': False, 'isSpecifyNewline': False,'required': False}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""}}
@@ -943,7 +947,7 @@ class TestItemTypes:
         ItemTypes.update_attribute_options(old_value,new_value,"ALL")
         TestCase().assertDictEqual(new_value, expected_dict)
 
- 
+
 # class ItemTypeEditHistory(RecordBase):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_type_edit_history -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_item_type_edit_history(app, db, user):
@@ -1356,7 +1360,7 @@ def test_get_registered_item_metadata_ItemsMetadata(app):
         all_magicmock = MagicMock()
         all_magicmock.id = 1
         return [all_magicmock]
-    
+
     data1.query = MagicMock()
     data1.query.filter_by = MagicMock()
     data1.query.filter_by.all = all_func
@@ -1472,7 +1476,7 @@ def test_item_metadata_revert(app, db):
 #     def revisions(self):
 def test_revision_ItemsMetadata(app):
     test = ItemsMetadata(data={})
-    
+
     # Exception coverage
     try:
         test.revisions()
@@ -1508,7 +1512,7 @@ def test_files_metadata_create(app, db):
 def test_files_metadata_get_record(app, db):
     FilesMetadata.create(data={'data': 'test'}, pid=1, con=bytes('test content', 'utf-8'))
     FilesMetadata.create(data={})
-    
+
     record = FilesMetadata.get_record(1)
     assert record.id==1
     assert record.model.pid==1
@@ -1550,7 +1554,7 @@ def test_files_metadata_get_records(app, db):
 #     def patch(self, patch):
 def test_patch_FilesMetadata(app):
     test = FilesMetadata(data={})
-    
+
     with patch("weko_records.api.apply_patch", return_value=""):
         test.patch(patch="test")
 
@@ -1636,7 +1640,7 @@ def test_files_metadata_revert(app, db):
 #     def revisions(self):
 def test_revision_FilesMetadata(app):
     test = FilesMetadata(data={})
-    
+
     # Exception coverage
     try:
         test.revisions()
@@ -1644,7 +1648,7 @@ def test_revision_FilesMetadata(app):
         pass
 
     test.model = True
-    
+
     with patch('weko_records.api.RevisionsIterator', return_value=MagicMock()):
         assert test.revisions() != None
 
@@ -1754,7 +1758,7 @@ def test_pid_WekoRecord(app):
 #     def depid(self):
 def test_depid_WekoRecord(app):
     test = WekoRecord(data={})
-    
+
     with patch('weko_records.api.PersistentIdentifier', return_value=True):
         assert test.depid() != None
 
@@ -2066,3 +2070,139 @@ def test_item_link_bulk_delete(app, db, records):
     assert r[0]['item_links']=='3'
     assert r[0]['item_title']==records[2][1]['item_title']
     assert r[0]['value']=='HDL'
+
+
+# class JsonldMapping:
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestJsonldMapping -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+class TestJsonldMapping:
+    # def get_mapping_by_id(cls, id, ignore_deleted=True):
+    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestJsonldMapping::test_get_mapping_by_id -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+    def test_get_mapping_by_id(app, db, item_type):
+        obj = JsonldMapping.create(
+            name="test1",
+            mapping={"test": "test"},
+            item_type_id=item_type.model.id,
+        )
+        assert JsonldMapping.get_mapping_by_id(obj.id) is obj
+        assert JsonldMapping.get_mapping_by_id(obj.id).is_deleted is False
+
+        # not found
+        assert JsonldMapping.get_mapping_by_id(999) is None
+
+        # Retrieval with include_deleted=False
+        obj.is_deleted = True
+        db.session.commit()
+        mapping = JsonldMapping.get_mapping_by_id(obj.id, include_deleted=False)
+        assert mapping is None
+
+        # Retrieve with include_deleted=True
+        obj.is_deleted = True
+        db.session.commit()
+        mapping = JsonldMapping.get_mapping_by_id(obj.id, include_deleted=True)
+        assert mapping.id == obj.id
+        assert mapping.is_deleted is True
+
+    # def create(cls, name, mapping, item_type_id):
+    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestJsonldMapping::test_create -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+    def test_create(app, db, item_type):
+        # one
+        obj = JsonldMapping.create(
+            name="test1",
+            mapping={"test": "test"},
+            item_type_id=item_type[0]["item_type"].id,
+        )
+        assert obj.id == 1
+        assert (ItemTypeJsonldMapping.query.filter_by(id=obj.id).first()) == obj
+
+        # one more
+        obj = JsonldMapping.create(
+            name="test2",
+            mapping={"test": "test"},
+            item_type_id=item_type[0]["item_type"].id,
+        )
+        assert obj.id == 2
+        assert (ItemTypeJsonldMapping.query.filter_by(id=obj.id).first()) == obj
+
+        # occurs DB error. invalid item_type_id
+        with pytest.raises(SQLAlchemyError) as e:
+            JsonldMapping.create(
+                name="test2", mapping={"test": "test"}, item_type_id=999
+            )
+        assert isinstance(e.value, SQLAlchemyError)
+        assert ItemTypeJsonldMapping.query.filter_by(id=3).first() == None
+
+    # def update(cls, id, name=None, mapping=None, item_type_id=None):
+    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestJsonldMapping::test_update -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+    def test_update(app, db, item_type, sword_mapping):
+        obj = JsonldMapping.create(
+            name="test1",
+            mapping={"test": "test"},
+            item_type_id=item_type.model.id,
+        )
+
+        # Update Successful
+        obj = JsonldMapping.update(
+            id=obj.id,
+            name="test2",
+            mapping={"test2": "test2"},
+            item_type_id=item_type.model.id,
+        )
+
+        result = ItemTypeJsonldMapping.query.filter_by(id=obj.id).first()
+        assert result == obj
+        assert result.name == "test2"
+        assert result.mapping == obj.mapping
+        assert result.version_id == 2
+
+
+        obj = JsonldMapping.update(
+            name="test2", id=999, mapping=None, item_type_id=sword_mapping[0]["item_type_id"]
+        )
+        assert obj is None
+
+        # Update with invalid item_type_id
+        with pytest.raises(SQLAlchemyError) as e:
+            JsonldMapping.update(name="test2", id=sword_mapping[0]["id"], mapping=None, item_type_id=999)
+        assert isinstance(e.value, SQLAlchemyError)
+
+    # def versions()
+    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestJsonldMapping::test_versions -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+    def test_versions(app, db, item_type):
+
+        obj = JsonldMapping.create(
+            name="test1",
+            mapping={"test": "test"},
+            item_type_id=item_type.model.id,
+        )
+        obj.mapping = {"test2": "test2"}
+        db.session.commit()
+
+        versions = obj.versions.all()
+        assert len(versions) == 2
+        assert versions[0].id == obj.id
+        assert versions[1].id == obj.id
+        assert versions[0].mapping == {"test": "test"}
+        assert versions[1].mapping == obj.mapping
+        assert versions[0].version_id == 1
+        assert versions[1].version_id == 2
+
+    # delete(cls, id):
+    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestJsonldMapping::test_delete -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+    def test_delete(app, db, item_type):
+        obj = JsonldMapping.create(
+            name="test1",
+            mapping={"test": "test"},
+            item_type_id=item_type.model.id,
+        )
+        obj.is_deleted = True
+        db.session.commit()
+
+        # Successful delete
+        JsonldMapping.delete(id=obj.id)
+        assert (
+            ItemTypeJsonldMapping.query.filter_by(id=obj.id).first().is_deleted == True
+        )
+
+        # Delete with non-existent id
+        res = JsonldMapping.delete(id=999)
+        assert res == None
