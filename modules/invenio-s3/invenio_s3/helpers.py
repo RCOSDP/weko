@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2018 Esteban J. G. Gabancho.
+# Copyright (C) 2018, 2019 Esteban J. G. Gabancho.
 #
 # Invenio-S3 is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -8,24 +8,18 @@
 
 import mimetypes
 import unicodedata
-from time import time
-from flask import current_app, request
+
+from flask import current_app
 from invenio_files_rest.helpers import chunk_size_or_default, sanitize_mimetype
 from werkzeug.datastructures import Headers
 from werkzeug.urls import url_quote
 
 
-def redirect_stream(url,
+def redirect_stream(s3_url_builder,
                     filename,
-                    size,
-                    mtime,
                     mimetype=None,
                     restricted=True,
                     as_attachment=False,
-                    etag=None,
-                    content_md5=None,
-                    chunk_size=None,
-                    conditional=True,
                     trusted=False):
     """Redirect to URL to serve the file directly from there.
 
@@ -33,8 +27,6 @@ def redirect_stream(url,
 
     :return: Flaks response.
     """
-    chunk_size = chunk_size_or_default(chunk_size)
-
     # Guess mimetype from filename if not provided.
     if mimetype is None and filename:
         mimetype = mimetypes.guess_type(filename)[0]
@@ -43,11 +35,6 @@ def redirect_stream(url,
 
     # Construct headers
     headers = Headers()
-    headers['Content-Length'] = size
-    if content_md5:
-        headers['Content-MD5'] = content_md5
-    # Add redirect url as localtion
-    headers['Location'] = url
 
     if not trusted:
         # Sanitize MIME type
@@ -82,32 +69,26 @@ def redirect_stream(url,
     else:
         headers.add('Content-Disposition', 'inline')
 
+    url = s3_url_builder(
+        ResponseContentType=mimetype,
+        ResponseContentDisposition=headers.get('Content-Disposition'))
+    headers['Location'] = url
+
+    # TODO: Set cache-control
+    # if not restricted:
+    #     rv.cache_control.public = True
+    #     cache_timeout = current_app.get_send_file_max_age(filename)
+    #     if cache_timeout is not None:
+    #         rv.cache_control.max_age = cache_timeout
+    #         rv.expires = int(time() + cache_timeout)
     # Construct response object.
+
     rv = current_app.response_class(
         url,
         status=302,
-        mimetype=mimetype,
         headers=headers,
+        mimetype=mimetype,
         direct_passthrough=True,
     )
-
-    # Set etag if defined
-    if etag:
-        rv.set_etag(etag)
-
-    # Set last modified time
-    if mtime is not None:
-        rv.last_modified = int(mtime)
-
-    # Set cache-control
-    if not restricted:
-        rv.cache_control.public = True
-        cache_timeout = current_app.get_send_file_max_age(filename)
-        if cache_timeout is not None:
-            rv.cache_control.max_age = cache_timeout
-            rv.expires = int(time() + cache_timeout)
-
-    if conditional:
-        rv = rv.make_conditional(request)
 
     return rv
