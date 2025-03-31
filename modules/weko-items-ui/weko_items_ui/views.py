@@ -1219,7 +1219,10 @@ def prepare_delete_item(id=None, community=None):
 
         if rtn.action_id == 2:   # end_action
             soft_delete(pid_value)
-
+            
+        if url_redirect.startswith("/api/"):
+            url_redirect = url_redirect[4:]
+            
         return jsonify(
             code=0,
             msg='success',

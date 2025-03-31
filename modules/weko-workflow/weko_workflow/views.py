@@ -1731,7 +1731,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
             activity.update(
                 action_id=next_action_id,
                 action_version=next_flow_action[0].action_version,
-                item_id=delete_item_id,
+                item_id=current_pid.object_uuid,
                 action_order=next_action_order
             )
             work_activity.end_activity(activity)
