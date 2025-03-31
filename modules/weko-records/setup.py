@@ -98,6 +98,9 @@ setup(
         'invenio_i18n.translations': [
             'messages = weko_records',
         ],
+        'invenio_db.alembic': [
+            'weko_records = weko_records:alembic',
+        ],
         'invenio_config.module': [
             'weko_records = weko_records.config',
         ],

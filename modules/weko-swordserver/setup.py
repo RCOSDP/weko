@@ -87,6 +87,9 @@ setup(
         # 'invenio_base.api_blueprints': [],
         # 'invenio_base.blueprints': [],
         # 'invenio_celery.tasks': [],
+        'invenio_db.alembic': [
+            'weko_swordserver = weko_swordserver:alembic',
+        ],
         'invenio_db.models': [
             'weko_swordserver = weko_swordserver.models',
         ],
