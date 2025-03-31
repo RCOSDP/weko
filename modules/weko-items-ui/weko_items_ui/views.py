@@ -1026,7 +1026,7 @@ def prepare_edit_item(id=None, community=None):
 @blueprint_api.route('/prepare_delete_item', methods=['POST'])
 @login_required
 def prepare_delete_item(id=None, community=None):
-    """Prepare_edit_item.
+    """Prepare_delete_item.
 
     Host the api which provide 2 service:
         Check permission: check if user is owner/admin/shared user
