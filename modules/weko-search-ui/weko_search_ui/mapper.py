@@ -16,7 +16,7 @@ from functools import partial
 from rocrate.rocrate import ROCrate
 from rocrate.model.contextentity import ContextEntity
 
-from flask import current_app
+from flask import current_app, request
 
 from weko_records.api import Mapping, ItemTypes
 from weko_records.models import ItemType
@@ -2023,28 +2023,42 @@ class JsonLdMapper(JsonMapper):
             # TODO: mapping to ro-crate format
             _set_rocrate_metadata(rocrate.root_dataset, META_KEY, meta_props, PROP_PATH, prop_props, deconstructed)
 
-        rocrate.root_dataset["wk:index"] = metadata.get("path", [])
         # TODO: Add wk-context to ro-crate-metadata.json
-
         ### identifier ###
+        rocrate.root_dataset["identifier"] = metadata.id
 
         ### uri ###
+        rocrate.root_dataset["uri"] = request.host_url + "/records/" + metadata.id
+
+        ### get object_uuid
+        obj_uuid = {}  #仮置き
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid',
+            pid_value=recid
+        ).first()
+
+        ### wk:index ###
+        rocrate.root_dataset["wk:index"] = metadata.get("path", [])
 
         ### wk:publishStatus ###
         rocrate.root_dataset["wk:publishStatus"] = metadata.get("publish_status", "private")
 
         ### wk:feedbackMail (If exist) ###
-        feedback_mail_list = []  #TODO: implement feedback mail list
+        from weko_records.api import FeedbackMailList
+        feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(metadata.id)
         rocrate.root_dataset["wk:feedbackMail"] = feedback_mail_list
 
         ### wk:editMode (default: Keep) ###
-        rocrate.root_dataset["wk:editMode"] = metadata.get("edit_mode", "Keep")
+        edit_mode = "Keep"
+        rocrate.root_dataset["wk:editMode"] = edit_mode
 
         ### dc:type ###
 
         ### wk:textExtraction (If exist) ###
+        ## get by using elastic search
 
         ### wk:itemLinks.identifier ###
+        ### wk:itemLinks.identifier (urlでは？) ###
         ### wk:itemLinks.value ###
         linked_item_id = ""  #TODO: implement linked item id
         linked_value = ""
@@ -2053,7 +2067,17 @@ class JsonLdMapper(JsonMapper):
             "value": linked_value
         }
         add_list_entity(rocrate.root_dataset, "wk:itemLinks", ["_:itemLinks"], "PropertyValue", [dict_item_link])
-        ### wk:itemLinks.identifier (urlでは？) ###
 
         ### wk:metadataAutoFill ###
+        rocrate.root_dataset["wk:metadataAutoFill"] = False
+        if metadata.get("doi"):
+            rocrate.root_dataset["wk:metadataAutoFill"] = True
+            relation_type = "isVersionOf"
+            cite_as = metadata.get("doi")
+            dict_autofill_doi = {
+                "relationType": relation_type,
+                "cite-as": cite_as
+            }
+            add_list_entity(rocrate.root_dataset, "jpcoar:relation", ["_:Relation1"], "PropertyValue", [dict_autofill_doi])
+
         return rocrate
