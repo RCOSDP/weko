@@ -92,6 +92,9 @@ setup(
         # 'invenio_base.api_blueprints': [],
         # 'invenio_base.blueprints': [],
         # 'invenio_celery.tasks': [],
+        'invenio_db.alembic': [
+            'weko_notifications = weko_notifications:alembic',
+        ],
         'invenio_db.models': [
             'weko_notifications = weko_notifications.models',
         ],

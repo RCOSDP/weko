@@ -33,8 +33,8 @@ class NotificationsUserSettings(db.Model, Timestamp):
 
     user_id = db.Column(
         db.Integer,
-        db.ForeignKey(User.id),
-        primary_key=True,
+        db.ForeignKey(User.id, ondelete="CASCADE"),
+        primary_key=True
     )
     """Foreign key to :class:`~invenio_accounts.models.User`."""
 
