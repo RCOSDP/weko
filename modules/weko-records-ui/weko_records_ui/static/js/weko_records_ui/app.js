@@ -321,7 +321,11 @@
                                     }
                                 } else {
                                     // success callback
-                                    $window.location.href = response.data.data.redirect
+                                    if (response.data.data.redirect){
+                                        $window.location.href = response.data.data.redirect
+                                    }else{
+                                        $window.location.href = rdt
+                                    }
                                 }
                             },
                             function(response) {
