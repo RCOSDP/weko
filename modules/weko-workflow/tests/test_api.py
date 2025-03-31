@@ -1,6 +1,8 @@
 from flask_login.utils import login_user
+import json
 
 from weko_workflow.api import Flow, WorkActivity, _WorkFlow,WorkFlow
+from weko_workflow.models import Activity as _Activity
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_Flow_action -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_Flow_action(app, client, users, db, action_data):
@@ -95,6 +97,55 @@ def test_WorkActivity_filter_by_date(app, db):
     assert activity.filter_by_date('2022-01-01', '2022-01-02', query)
 
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_filter_by_action -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_WorkActivity_filter_by_action(app, db):
+    query = db.session.query(_Activity)
+    activity = WorkActivity()
+
+
+    # case: empty action
+    list_action = []
+    assert activity._WorkActivity__filter_by_action(query, list_action) == query
+
+
+    # case: single action, correct
+    list_action = ['start']
+    assert str(activity._WorkActivity__filter_by_action(query, list_action)) == str(query.filter(_Activity.action_id.in_([1])))
+
+    list_action = ['end']
+    assert str(activity._WorkActivity__filter_by_action(query, list_action)) == str(query.filter(_Activity.action_id.in_([2])))
+
+    list_action = ['itemregistration']
+    assert str(activity._WorkActivity__filter_by_action(query, list_action)) == str(query.filter(_Activity.action_id.in_([3])))
+
+    list_action = ['approval']
+    assert str(activity._WorkActivity__filter_by_action(query, list_action)) == str(query.filter(_Activity.action_id.in_([4])))
+
+    list_action = ['itemlink']
+    assert str(activity._WorkActivity__filter_by_action(query, list_action)) == str(query.filter(_Activity.action_id.in_([5])))
+
+    list_action = ['oapolicyconfirmation']
+    assert str(activity._WorkActivity__filter_by_action(query, list_action)) == str(query.filter(_Activity.action_id.in_([6])))
+
+    list_action = ['identifiergrant']
+    assert str(activity._WorkActivity__filter_by_action(query, list_action)) == str(query.filter(_Activity.action_id.in_([7])))
+
+
+    # case: single action, incorrect
+    list_action = ['invalid_action']
+    assert str(activity._WorkActivity__filter_by_action(query, list_action)) == str(query.filter(_Activity.action_id.in_([])))
+
+
+    # case: multiple actions, correct
+    list_action = ['start', 'itemregistration', 'approval', 'identifiergrant']
+    assert str(activity._WorkActivity__filter_by_action(query, list_action)) == str(query.filter(_Activity.action_id.in_([1, 3, 4, 7])))
+
+
+    # case: multiple actions, incorrect
+    list_action = ['invalid1', 'invalid2', 'invalid3']
+    assert str(activity._WorkActivity__filter_by_action(query, list_action)) == str(query.filter(_Activity.action_id.in_([])))
+
+
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_get_all_activity_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_WorkActivity_get_all_activity_list(app, client, users, db_register):
     with app.test_request_context():
@@ -156,3 +207,36 @@ def test_activity_request_mail_list_create_and_update(app, workflow, db, mocker)
     assert activity.get_activity_request_mail("1").request_maillist == _request_maillist2
     activity.create_or_update_activity_request_mail("1111111", _request_maillist1, "aaa")
     assert activity.get_activity_request_mail("1").request_maillist == _request_maillist2
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_get_non_extract_files -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_get_non_extract_files(app, mocker):
+    activity = WorkActivity()
+
+    # Mock the `get_activity_metadata` method
+    mocker.patch.object(activity, 'get_activity_metadata', return_value=json.dumps({
+        "files": [
+            {"filename": "file1.txt", "non_extract": True},
+            {"filename": "file2.txt", "non_extract": False},
+            {"filename": "file3.txt", "non_extract": True}
+        ]
+    }))
+
+    # metadata is available
+    result = activity.get_non_extract_files(activity_id=1)
+    assert result == ["file1.txt", "file3.txt"]
+
+    # metadata is None
+    mocker.patch.object(activity, 'get_activity_metadata', return_value=None)
+    result = activity.get_non_extract_files(activity_id=1)
+    assert result is None
+
+    # no files have "non_extract" set to True
+    mocker.patch.object(activity, 'get_activity_metadata', return_value=json.dumps({
+        "files": [
+            {"filename": "file1.txt", "non_extract": False},
+            {"filename": "file2.txt", "non_extract": False}
+        ]
+    }))
+    result = activity.get_non_extract_files(activity_id=1)
+    assert result == []
+

@@ -1552,16 +1552,43 @@ class JsonldMapping():
         return obj
 
     @classmethod
+    def get_by_itemtype_id(cls, item_type_id, include_deleted=False):
+        """Get mapping by itemtype_id.
+
+        Get mapping latest version by itemtype_id.
+        If include_deleted=False, return None if the mapping is deleted(default).
+        Specify include_deleted=True to get the mapping even if it is deleted.
+
+        Args:
+            item_type_id (int): Itemtype ID.
+            include_deleted (bool, optional):
+                Include deleted mapping. Default is False.
+
+        Returns:
+            ItemTypeJsonldMapping:
+            Mapping object. If not found or deleted, return `None`.
+        """
+        query = (
+            ItemTypeJsonldMapping.query
+            .filter_by(item_type_id=item_type_id)
+            .order_by(ItemTypeJsonldMapping.updated.desc())
+        )
+        if include_deleted:
+            query.filter_by(is_deleted=False)
+
+        return query.all()
+
+    @classmethod
     def get_all(cls, include_deleted=False):
         """Get all mapping.
-        
+
         Get all mapping. If include_deleted=False, return only active mapping.
         Specify include_deleted=True to get all mapping including deleted.
 
         Args:
             include_deleted (bool, optional):
                 Include deleted mapping. Default is False.
-        
+
         Returns:
             list[ItemTypeJsonldMapping]: List of mapping objects.
         """

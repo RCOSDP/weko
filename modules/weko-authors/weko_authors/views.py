@@ -34,6 +34,8 @@ from .config import WEKO_AUTHORS_IMPORT_KEY
 from .models import Authors, AuthorsAffiliationSettings, AuthorsPrefixSettings
 from .permissions import author_permission
 from .utils import get_author_prefix_obj, get_author_affiliation_obj, get_count_item_link
+from weko_logging.activity_logger import UserActivityLogger
+
 
 blueprint = Blueprint(
     'weko_authors',
@@ -94,9 +96,17 @@ def create():
             id=es_id,
             body=es_data,
         )
+        UserActivityLogger.info(
+            operation="AUTHOR_CREATE",
+            target_key=author_data["id"]
+        )
     except Exception as ex:
         session.rollback()
         current_app.logger.error(ex)
+        UserActivityLogger.error(
+            operation="AUTHOR_CREATE",
+            target_key=author_data["id"]
+        )
         return jsonify(msg=_('Failed')), 500
     return jsonify(msg=_('Success'))
 
@@ -119,7 +129,10 @@ def update_author():
             author_data.json = data
             db.session.merge(author_data)
         db.session.commit()
-        
+        UserActivityLogger.info(
+            operation="AUTHOR_UPDATE",
+            target_key=json.loads(json.dumps(data))["pk_id"]
+        )
         indexer = RecordIndexer()
         body = {'doc': data}
         indexer.client.update(
@@ -129,13 +142,17 @@ def update_author():
             body=body
         )
         from weko_deposit.tasks import update_items_by_authorInfo
-        
+
         update_items_by_authorInfo.delay(
             user_id,data, [json.loads(json.dumps(data))["pk_id"]], [json.loads(json.dumps(data))["id"]])
 
     except Exception as ex:
         db.session.rollback()
         current_app.logger.error(ex)
+        UserActivityLogger.error(
+            operation="AUTHOR_UPDATE",
+            target_key=json.loads(json.dumps(data))["pk_id"]
+        )
         return jsonify(msg=_('Failed')), 500
 
     return jsonify(msg=_('Success'))
@@ -164,6 +181,10 @@ def delete_author():
         author_data.json = json_data
         db.session.merge(author_data)
         db.session.commit()
+        UserActivityLogger.info(
+            operation="AUTHOR_DELETE",
+            target_key=json.loads(json.dumps(data))["pk_id"]
+        )
         RecordIndexer().client.update(
             id=json.loads(json.dumps(data))["Id"],
             index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
@@ -174,6 +195,10 @@ def delete_author():
     except Exception as ex:
         db.session.rollback()
         current_app.logger.error(ex)
+        UserActivityLogger.error(
+            operation="AUTHOR_DELETE",
+            target_key=json.loads(json.dumps(data))["pk_id"]
+        )
         return jsonify(msg=_('Failed')), 500
 
     return jsonify(msg=_('Success'))

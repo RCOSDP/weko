@@ -21,6 +21,7 @@
 """Module of weko-items-autofill utils.."""
 import copy
 from functools import wraps
+import json
 
 from flask import current_app
 from flask_babelex import gettext as _
@@ -28,8 +29,10 @@ from invenio_cache import current_cache
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
 from lxml import etree
+from weko_admin.utils import get_current_api_certification
 from weko_records.api import ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
+from weko_workflow.api import WorkActivity
 from weko_workflow.models import ActionJournal
 from weko_workflow.utils import MappingData
 
@@ -157,6 +160,163 @@ def get_title_pubdate_path(item_type_id):
                     break
     result['title'] = title
     return result
+
+
+def deep_merge(*dicts):
+    """Recursively merge multiple dictionaries, supporting deep list merging"""
+    merged_dict = {}
+    for d in dicts:
+        for key, value in d.items():
+            if key in merged_dict:
+                if isinstance(value, dict) and isinstance(merged_dict[key], dict):
+                    # Recursively merge sub-dictionaries
+                    merged_dict[key] = deep_merge(merged_dict[key], value)
+                elif isinstance(value, list) and isinstance(merged_dict[key], list):
+                    # Recursively merge elements in the list
+                    merged_dict[key] = merge_lists(merged_dict[key], value)
+                else:
+                    # Do not overwrite existing values
+                    pass
+            else:
+                # Directly add new value
+                merged_dict[key] = value
+    return merged_dict
+
+
+def merge_lists(list1, list2):
+    """Recursively merge dictionaries in the list and remove duplicates"""
+    merged_list = list1[:]
+
+    if (len(merged_list) != 1 or len(list2) != 1):
+        return merged_list + list2[:]
+
+    dict1, dict2 = merged_list[0], list2[0]
+    if all(not v for v in dict1.values()) and any(v for v in dict2.values()):
+        merged_list = list2[:]
+
+    return merged_list
+
+
+def list_to_dict(lst):
+    """If all elements in the list are dictionaries, merge them into a single dictionary"""
+    if isinstance(lst, list) and all(isinstance(item, dict) for item in lst):
+        merged_dict = {}
+        for item in lst:
+            merged_dict.update(item)  # Merge dictionaries
+        return merged_dict
+    return lst  # If the list does not meet the conditions, return
+
+
+def dict_to_list(d):
+    """Convert a dictionary to a list, with each key-value pair becoming a separate dictionary"""
+    if isinstance(d, dict):
+        return [{k: v} for k, v in d.items()]
+    return d  # If not a dictionary, return
+
+
+def get_jalc_record_data(doi, item_type_id):
+    """Get record data base on JaLC API. FIXME: delete after merge
+
+    :return: The record data
+    """
+    # result = []
+    result = [{"item_30001_title0": [{"subitem_title": "Identification of cDNA Sequences Encoding the Complement Components of Zebrafish (Danio rerio)", "subitem_title_language": "en"}]}, {"item_30001_creator2": [{"creatorNames": [{"creatorName": "Vo Kha Tam", "creatorNameLang": "en"}]}]}, {"item_30001_bibliographic_information17": {"bibliographic_titles": [{"bibliographic_title": "Journal of the Faculty of Agriculture, Kyushu University", "bibliographic_titleLang": "en"}]}}, {"item_30001_source_identifier16": [{"subitem_source_identifier": "0023-6152", "subitem_source_identifier_type": "ISSN"}]}, {"item_30001_bibliographic_information17": {"bibliographicVolumeNumber": "54"}}, {"item_30001_bibliographic_information17": {"bibliographicIssueNumber": "2"}}, {"item_30001_bibliographic_information17": {"bibliographicPageStart": "373"}}, {"item_30001_bibliographic_information17": {"bibliographicPageEnd": "387"}}, {"item_30001_bibliographic_information17": {"bibliographicIssueDates": {"bibliographicIssueDate": "2009", "bibliographicIssueDateType": "Issued"}}}, {"item_30001_relation14": [{"subitem_relation_type_id": {"subitem_relation_type_id_text": "10.5109/16119", "subitem_relation_type_select": "DOI"}}]}]
+    return result
+
+
+def get_ichushi_record_data(doi, item_type_id):
+    """
+    Get record data base on 医中誌 Web API. FIXME: delete after merge
+
+    :return: The record data
+    """
+    # result = []
+    result = [{"item_30001_title0": [{"subitem_title": "Identification of cDNA Sequences Encoding the Complement Components of Zebrafish (Danio rerio)", "subitem_title_language": "en"}]}, {"item_30001_creator2": [{"creatorNames": [{"creatorName": "Tsujikura Masakazu", "creatorNameLang": "en"}]}]}, {"item_30001_bibliographic_information17": {"bibliographic_titles": [{"bibliographic_title": "Journal of the Faculty of Agriculture, Kyushu University", "bibliographic_titleLang": "en"}]}}, {"item_30001_source_identifier16": [{"subitem_source_identifier": "0023-6152", "subitem_source_identifier_type": "ISSN"}]}, {"item_30001_bibliographic_information17": {"bibliographicVolumeNumber": "54"}}, {"item_30001_bibliographic_information17": {"bibliographicIssueNumber": "2"}}, {"item_30001_bibliographic_information17": {"bibliographicPageStart": "373"}}, {"item_30001_bibliographic_information17": {"bibliographicPageEnd": "387"}}, {"item_30001_bibliographic_information17": {"bibliographicIssueDates": {"bibliographicIssueDate": "2009", "bibliographicIssueDateType": "Issued"}}}, {"item_30001_relation14": [{"subitem_relation_type_id": {"subitem_relation_type_id_text": "10.5109/16119", "subitem_relation_type_select": "DOI"}}]}]
+    return result
+
+
+def get_crossref_record_data_without_pid(doi, item_type_id):
+    """
+    Get record data base on CrossRef without pid. FIXME: change after merge
+
+    :return: The record data
+    """
+    # FIXME: resurrect after merge
+    # pid_response = get_current_api_certification('crf')
+    # pid = pid_response['cert_data']
+    # result = get_crossref_record_data(pid, doi, item_type_id)
+    # FIXME: delete after merge
+    result = [{"item_30001_title0": [{"subitem_title": "Identification of cDNA Sequences Encoding the Complement Components of Zebrafish (Danio rerio)", "subitem_title_language": "en"}]}, {"item_30001_creator2": [{"creatorNames": [{"creatorName": "Somamoto Tomonori", "creatorNameLang": "en"}]}]}, {"item_30001_bibliographic_information17": {"bibliographic_titles": [{"bibliographic_title": "Journal of the Faculty of Agriculture, Kyushu University", "bibliographic_titleLang": "en"}]}}, {"item_30001_source_identifier16": [{"subitem_source_identifier": "0023-6152", "subitem_source_identifier_type": "ISSN"}]}, {"item_30001_bibliographic_information17": {"bibliographicVolumeNumber": "54"}}, {"item_30001_bibliographic_information17": {"bibliographicIssueNumber": "2"}}, {"item_30001_bibliographic_information17": {"bibliographicPageStart": "373"}}, {"item_30001_bibliographic_information17": {"bibliographicPageEnd": "387"}}, {"item_30001_bibliographic_information17": {"bibliographicIssueDates": {"bibliographicIssueDate": "2009", "bibliographicIssueDateType": "Issued"}}}, {"item_30001_relation14": [{"subitem_relation_type_id": {"subitem_relation_type_id_text": "10.5109/16119", "subitem_relation_type_select": "DOI"}}]}]
+    return result
+
+
+def get_datacite_record_data(doi, item_type_id):
+    """Get record data base on DataCite. FIXME: delete after merge
+
+    :return: The record data
+    """
+    # result = []
+    result = [{"item_30001_title0": [{"subitem_title": "Identification of cDNA Sequences Encoding the Complement Components of Zebrafish (Danio rerio)", "subitem_title_language": "en"}]}, {"item_30001_creator2": [{"creatorNames": [{"creatorName": "Nakano Miki", "creatorNameLang": "en"}]}]}, {"item_30001_bibliographic_information17": {"bibliographic_titles": [{"bibliographic_title": "Journal of the Faculty of Agriculture, Kyushu University", "bibliographic_titleLang": "en"}]}}, {"item_30001_source_identifier16": [{"subitem_source_identifier": "0023-6152", "subitem_source_identifier_type": "ISSN"}]}, {"item_30001_bibliographic_information17": {"bibliographicVolumeNumber": "54"}}, {"item_30001_bibliographic_information17": {"bibliographicIssueNumber": "2"}}, {"item_30001_bibliographic_information17": {"bibliographicPageStart": "373"}}, {"item_30001_bibliographic_information17": {"bibliographicPageEnd": "387"}}, {"item_30001_bibliographic_information17": {"bibliographicIssueDates": {"bibliographicIssueDate": "2009", "bibliographicIssueDateType": "Issued"}}}, {"item_30001_relation14": [{"subitem_relation_type_id": {"subitem_relation_type_id_text": "10.5109/16119", "subitem_relation_type_select": "DOI"}}]}]
+    return result
+
+
+def get_crossref_record_data_default_pid(doi, item_type_id):
+    """
+    Get record data base on CrossRef default pid.
+
+    :return: The record data
+    """
+    pid_response = get_current_api_certification("crf")
+    pid = pid_response["cert_data"]
+    return get_crossref_record_data(pid, doi, item_type_id)
+
+
+@cached_api_json(timeout=50, key_prefix="doi_data")
+def get_doi_record_data(doi, item_type_id, activity_id):
+    """Get record data base on DOI API.
+
+    :param naid: The DOI ID
+    :param item_type_id: The item type ID
+    :param activity_id: The activity ID
+    :return: The record data
+    """
+    activity = WorkActivity()
+    metadata = activity.get_activity_metadata(activity_id)
+    metainfo = json.loads(metadata).get("metainfo", {})
+    doi_with_original = get_doi_with_original(doi, item_type_id, metainfo)
+    doi_response = dict_to_list(doi_with_original)
+    return doi_response
+
+
+def get_doi_with_original(doi, item_type_id, original_metadeta=None):
+    """Get record data base on DOI API.
+
+    :param naid: The DOI ID
+    :param item_type_id: The item type ID
+    :param original_metadeta: The original metadata
+    :return: doi data
+    """
+    record_funcs_map = {
+        "JaLC API": get_jalc_record_data,
+        # "医中誌 Web API": get_ichushi_record_data, # FIXME: add after merge
+        "CrossRef": get_crossref_record_data_without_pid,
+        "DataCite": get_datacite_record_data,
+        "CiNii Research": get_cinii_record_data,
+    }
+
+    result_dict = {}
+    for key in current_app.config["WEKO_ITEMS_AUTOFILL_TO_BE_USED"]:
+        record_data_dict = {}
+        if key == "Original":
+            if original_metadeta is not None:
+                record_data_dict = original_metadeta
+            else:
+                continue
+        else:
+            record_data_list = record_funcs_map[key](doi, item_type_id)
+            record_data_dict = list_to_dict(record_data_list)
+        result_dict = deep_merge(result_dict, record_data_dict)
+    return result_dict
 
 
 @cached_api_json(timeout=50, key_prefix="crossref_data")
@@ -446,7 +606,7 @@ def get_cinii_product_identifier(data, type1, type2):
     _data = [item.get('identifier') for item in data]
     result = pack_data_with_multiple_type_cinii(_data, type1, type2)
     return result
-    
+
 def get_cinii_data_by_key(api, keyword):
     """Get data from CiNii based on keyword.
 

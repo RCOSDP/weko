@@ -1,0 +1,32 @@
+{#
+  Copyright (C) 2025 National Institute of Informatics.
+
+  WEKO-Notifications is free software; you can redistribute it and/or modify
+  it under the terms of the MIT License; see LICENSE file for more details.
+#}
+
+{% macro render_field(field, icon="", placeholder='', autofocus=False, readonly=False) %}
+  <div class="form-group {% if icon %} has-feedback{% endif %}{% if field.errors %} has-error{% endif %}">
+    {{ field.label }}
+    {%- set extras = dict(autofocus="",readonly=readonly) if autofocus else dict() %}
+    {%- if placeholder -%}
+      {{field(class_="form-control", placeholder=placeholder, **extras)}}
+    {%- else %}
+      {{field(class_="form-control", **extras)}}
+    {%- endif %}
+    {%- if icon %}
+    <i class="{{icon}} form-control-feedback" aria-hidden="true" ></i>
+    {%- endif %}
+    {%- if field.description %}
+    <span class="help-block"><small>{{ field.description }}</small></span>
+    {%- endif %}
+    {%- if field.errors %}
+    <div class="alert alert-danger alert-dismissible text-left" role="alert">
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    {%- for error in field.errors %}
+    <p>{{error}}</p>
+    {% endfor %}
+    </div>
+    {%- endif %}
+  </div>
+{% endmacro %}

@@ -722,6 +722,9 @@ msgstr "一括エクスポート"
 msgid "Admin menu_Items_Import"
 msgstr "インポート"
 
+msgid "Admin menu_Items_RO-Crate Import"
+msgstr "RO-Crate インポート"
+
 msgid "Admin menu_Index Tree_Edit Tree"
 msgstr "ツリー編集"
 
@@ -848,6 +851,11 @@ msgstr "ユーザープロファイル"
 msgid "Admin menu_Setting_Items"
 msgstr "アイテム表示"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Activity"
+msgstr "アクティビティ一覧表示"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Index Link"
 msgstr "インデックスリンク表示"
 
@@ -925,6 +933,14 @@ msgstr "ファセット検索"
 
 msgid "Other"
 msgstr "その他"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Logs"
+msgstr "ログ管理"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Logs_Export"
+msgstr "エクスポート"
 
 #: weko_admin/
 #: msgid "Maintenance"

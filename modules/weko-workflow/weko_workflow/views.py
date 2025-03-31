@@ -63,7 +63,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import cast
 from weko_redis import RedisConnection
 from weko_accounts.api import ShibUser
+from weko_accounts.models import User
 from weko_accounts.utils import login_required_customize
+from weko_admin.models import AdminSettings
 from weko_authors.models import Authors
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_deposit.links import base_factory
@@ -79,6 +81,7 @@ from weko_search_ui.utils import check_tsv_import_items, import_items_to_system
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
+from weko_user_profiles.models import UserProfile
 
 from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
@@ -234,6 +237,18 @@ def index():
         get_application_and_approved_date(activities, columns)
         get_workflow_item_type_names(activities)
 
+    settings = AdminSettings.get('activity_display_settings')
+
+    if settings:
+        activity_display_flg = settings.activity_display_flg
+    else:
+        activity_display_flg = current_app.config.get("WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE")
+
+    if 'approver_email' in columns and not activity_display_flg:
+        columns.remove('approver_email')
+    elif 'approver_email' not in columns and activity_display_flg:
+        columns.append('approver_email')
+
     from weko_user_profiles.config import WEKO_USERPROFILES_ADMINISTRATOR_ROLE
     admin_role = WEKO_USERPROFILES_ADMINISTRATOR_ROLE
     has_admin_role = False
@@ -242,6 +257,26 @@ def index():
             has_admin_role = True
             break
     send_mail = has_admin_role and send_mail
+
+    # Get Approver Info
+    for activitie in activities:
+        activitie.approver = []
+        activitie.approver_email = []
+        steps = activity.get_activity_steps(activitie.activity_id)
+        for step in steps:
+            if step['ActionName'] == 'Approval':
+                approver = User.query.filter_by(email=step['Author']).one_or_none()
+                if approver is not None:
+                    approver_id = approver.id
+                    approver_profile = UserProfile.get_by_userid(approver_id)
+                    if hasattr(approver_profile, '_displayname') and approver_profile._displayname:
+                        activitie.approver.append(approver_profile._displayname)
+                    else:
+                        # If the Author has not registered his/her name, use his/her email address. 
+                        activitie.approver.append(step['Author'])
+                else:
+                    activitie.approver.append(step['Author'])
+                activitie.approver_email.append(step['Author'])
 
     return render_template(
         'weko_workflow/activity_list.html',
@@ -1565,7 +1600,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
             items_display_settings = AdminSettings.get(name='items_display_settings',
                                         dict_to_object=False)
             if items_display_settings:
-                enable_request_maillist = items_display_settings.get('display_request_form', False)         
+                enable_request_maillist = items_display_settings.get('display_request_form', False)
 
             if activity_request_mail and activity_request_mail.request_maillist and enable_request_maillist:
                 RequestMailList.update_by_list_item_id(
@@ -1690,22 +1725,35 @@ def next_action(activity_id='0', action_id=0, json_data=None):
         comment='',
         action_order=action_order
     )
-    if 'end_action' == next_action_endpoint:
-        new_activity_id = None
-        new_activity_id = handle_finish_workflow(deposit,
-                                                 current_pid,
-                                                 recid)
-        if new_activity_id is None:
+    
+    if next_action_endpoint == "approval":
+        work_activity.notify_about_activity(activity_id, "request_approval")
+
+    if next_action_endpoint == "end_action":
+        non_extract = work_activity.get_non_extract_files(activity_id)
+        deposit.non_extract = non_extract
+        new_item_id = handle_finish_workflow(
+            deposit, current_pid, recid
+        )
+        if new_item_id is None:
             res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
             return jsonify(res.data), 500
 
         activity.update(
             action_id=next_action_id,
             action_version=next_flow_action[0].action_version,
-            item_id=new_activity_id,
+            item_id=new_item_id,
             action_order=next_action_order
         )
         work_activity.end_activity(activity)
+
+        if action_endpoint == "approval":
+            work_activity.notify_about_activity(activity_id, "approved")
+        else:
+            work_activity.notify_about_activity(activity_id, "registered")
+        if next_action_endpoint == "approval":
+            current_app.logger.info("next_action: request approval notification.")
+
         # Call signal to push item data to ES.
         try:
             if '.' not in current_pid.pid_value and has_request_context():
@@ -1898,7 +1946,7 @@ def previous_action(activity_id='0', action_id=0, req=0):
             db.session.delete(pid_identifier)
         db.session.commit()
     except PIDDoesNotExistError as pidNotEx:
-        current_app.logger.info(pidNotEx)
+        current_app.logger.info("doi does not exists.")
 
     if req == -1:
         pre_action = flow.get_item_registration_flow_action(
@@ -1951,6 +1999,10 @@ def previous_action(activity_id='0', action_id=0, req=0):
             res = ResponseMessageSchema().load({'code':-2,'msg':""})
             return jsonify(res.data), 500
     res = ResponseMessageSchema().load({'code':0,'msg':_('success')})
+
+    if action_id == 4:          # action_endpoint == "approval"
+        work_activity.notify_about_activity(activity_id, "rejected")
+
     return jsonify(res.data), 200
 
 

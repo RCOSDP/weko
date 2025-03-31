@@ -67,9 +67,23 @@ setup(
     entry_points={
         "invenio_base.apps": [
             "weko_logging_fs = weko_logging.fs:WekoLoggingFS",
+            "weko_logging_user_activity = weko_logging.audit:WekoLoggingUserActivity",
         ],
         "invenio_base.api_apps": [
             "weko_logging_fs = weko_logging.fs:WekoLoggingFS",
+            "weko_logging_user_activity = weko_logging.audit:WekoLoggingUserActivity",
+        ],
+        "invenio_admin.views": [
+            "weko_logging_admin_log_export = weko_logging.admin:log_export_admin_view",
+        ],
+        'invenio_db.models': [
+            'weko_logging = weko_logging.models',
+        ],
+        "invenio_assets.bundles": [
+            "weko_logging_export_css = "
+            "weko_logging.bundles:weko_logging_export_css",
+            "weko_logging_export_js = "
+            "weko_logging.bundles:weko_logging_export_js",
         ],
     },
     extras_require=extras_require,
