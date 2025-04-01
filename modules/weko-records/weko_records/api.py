@@ -1122,8 +1122,6 @@ class ItemTypes(RecordBase):
                             return ret
         return None
  
-            
-
 class ItemTypeEditHistory(object):
     """Define API for Itemtype Property creation and manipulation."""
 
