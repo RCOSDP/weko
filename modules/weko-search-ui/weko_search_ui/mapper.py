@@ -16,7 +16,7 @@ from functools import partial
 from rocrate.rocrate import ROCrate
 from rocrate.model.contextentity import ContextEntity
 
-from flask import current_app, request
+from flask import current_app, request, url_for
 
 from weko_records.api import Mapping, ItemTypes
 from weko_records.models import ItemType
@@ -1314,7 +1314,7 @@ class JsonMapper(BaseMapper):
             """DOI_RA for grant. .DOI_RA in tsv"""
             self.doi = ""
             """DOI for grant. .DOI in tsv"""
-            self.metadata_only = False
+            self.metadata_replace = False
             """Flag to save only metadata. for SWORD deposit."""
 
 
@@ -1401,6 +1401,16 @@ class JsonLdMapper(JsonMapper):
                 for prop_name, ld_key in self.json_mapping.items()
                 if prop_name in item_map
         }
+        
+        fixed_properties = {}
+        for k, v in properties_mapping.items():
+            if k.startswith("$") and "." in v:
+                key = v[:v.rfind(".")]
+                sub_key = v[v.rfind(".")+1:]
+                value = k[1:]
+                if key not in fixed_properties:
+                    fixed_properties[key] = {}
+                fixed_properties[key][sub_key] = value
 
         mapped_metadata = self._InformedMetadata()
         mapped_metadata.id = metadata.id
@@ -1414,15 +1424,16 @@ class JsonLdMapper(JsonMapper):
             if filename.startswith("data/")
         ]
         mapped_metadata.save_as_is = metadata.save_as_is
+        mapped_metadata.metadata_replace = metadata.metadata_replace
+        mapped_metadata.update({"id": metadata["id"]} if "id" in metadata else {})
+        mapped_metadata.update({"uri": metadata["uri"]} if "uri" in metadata else {})
         mapped_metadata.setdefault("publish_status", "private")
         mapped_metadata.setdefault("edit_mode", "Keep")
 
         missing_metadata = {}
 
-        def _empty_metadata():
-            return {
-                # TODO: FIXED VALUE
-            }
+        def _empty_metadata(parent_prop_key):
+            return fixed_properties.get(parent_prop_key, {})
 
         def _set_metadata(
             parent, META_KEY, meta_props, PROP_PATH, prop_props
@@ -1456,13 +1467,13 @@ class JsonLdMapper(JsonMapper):
                 # The corresponding layers are different,
                 # so the prop_path needs to progress to the lower layer.
                 if self._get_property_type(parent_prop_key) == "object":
-                    sub_prop_object = parent.get(prop_props[0], {
-                        # TODO: FIXED VALUE
-                    })
+                    sub_prop_object = parent.get(
+                        prop_props[0], {} # TODO: FIXED VALUE
+                    )
                     # FIXME: check sub_sub propaty type
-                    sub_sub_object = sub_prop_object.get(prop_props[1], {
-                        # TODO: FIXED VALUE
-                    })
+                    sub_sub_object = sub_prop_object.get(
+                        prop_props[1], {} # TODO: FIXED VALUE
+                    )
                     _set_metadata(
                         sub_sub_object, META_KEY, meta_props[1:],
                         PROP_PATH, prop_props[1:]
@@ -1473,13 +1484,12 @@ class JsonLdMapper(JsonMapper):
                     sub_prop_array = parent.get(prop_props[0], [])
                     index = 0 if index is None else index
                     if len(sub_prop_array) <= index:
-                        sub_prop_array.extend([{
-                            # TODO: FIXED VALUE
-                        } for _ in range(index - len(sub_prop_array) + 1)])
+                        sub_prop_array.extend([
+                            {} # TODO: FIXED VALUE
+                            for _ in range(index - len(sub_prop_array) + 1)
+                        ])
                     # FIXME: check sub_sub propaty type
-                    sub_sub_object = {
-                        # TODO: FIXED VALUE
-                    }
+                    sub_sub_object = {} # TODO: FIXED VALUE
                     _set_metadata(
                         sub_sub_object, META_KEY, meta_props,
                         PROP_PATH, prop_props[1:]
@@ -1488,9 +1498,9 @@ class JsonLdMapper(JsonMapper):
                     parent.update({prop_props[0]: sub_prop_array})
                 return
             if self._get_property_type(parent_prop_key) == "object":
-                sub_prop_object = parent.get(prop_props[0], {
-                    # TODO: FIXED VALUE
-                })
+                sub_prop_object = parent.get(
+                    prop_props[0], _empty_metadata(parent_prop_key)
+                )
                 if index is not None and index > 1:
                     return
                 _set_metadata(
@@ -1503,9 +1513,10 @@ class JsonLdMapper(JsonMapper):
                 sub_prop_array = parent.get(prop_props[0], [])
                 index = 0 if index is None else index
                 if len(sub_prop_array) <= index:
-                    sub_prop_array.extend([{
-                        # TODO: FIXED VALUE
-                    } for _ in range(index - len(sub_prop_array) + 1)])
+                    sub_prop_array.extend([
+                        _empty_metadata(parent_prop_key)
+                        for _ in range(index - len(sub_prop_array) + 1)
+                    ])
                 _set_metadata(
                     sub_prop_array[index], META_KEY, meta_props[1:],
                     PROP_PATH, prop_props[1:]
@@ -1527,7 +1538,7 @@ class JsonLdMapper(JsonMapper):
                 # TODO: implement handling author_id
                 feedback_mail_list = metadata.get("feedback_mail_list", [])
                 feedback_mail_list.append({
-                    "mail": metadata.get(META_KEY), "author_id": ""}
+                    "email": metadata.get(META_KEY), "author_id": ""}
                 )
                 mapped_metadata["feedback_mail_list"] = feedback_mail_list
             # TODO: implement request mail list
@@ -1696,6 +1707,14 @@ class JsonLdMapper(JsonMapper):
         list_deconstructed = []
         for extracted in list_extracted:
             metadata = cls._deconstruct_dict(extracted, cls._InformedMetadata())
+            metadata.update(
+                {"id": extracted["identifier"]}
+                if "identifier" in extracted else {}
+            )
+            metadata.update(
+                {"uri": extracted["uri"]}
+                if "uri" in extracted else {}
+            )
             metadata.id = extracted["@id"]
             metadata.link_data = [
                 {"item_id": link.get("identifier"), "sele_id" : link.get("value")}
@@ -1709,6 +1728,7 @@ class JsonLdMapper(JsonMapper):
                     if not file.get("wk:textExtraction", True)
             ]
             metadata.save_as_is = extracted.get("wk:saveAsIs", False)
+            metadata.metadata_replace = extracted.get("wk:metadataReplace", False)
             list_deconstructed.append(metadata)
 
         return list_deconstructed, format
@@ -1778,8 +1798,16 @@ class JsonLdMapper(JsonMapper):
         rocrate.name = metadata["title"][0]
         rocrate.description = metadata["item_title"]
         rocrate.datePublished = metadata["publish_date"]
+        rocrate.root_dataset["identifier"] = metadata["control_number"]
+        rocrate.root_dataset["uri"] = url_for(
+            "invenio_records_ui.recid",
+            pid_value=metadata["control_number"], _external=True
+        )
         rocrate.root_dataset["wk:publishStatus"] = (
             "public" if metadata["publish_status"] == "0" else "private")
+        rocrate.root_dataset["wk:index"] = metadata.get("path", [])
+        rocrate.root_dataset["wk:editMode"] = "Keep"
+
 
 
         entity_factory = lambda typename: type(typename, (ContextEntity,), {
