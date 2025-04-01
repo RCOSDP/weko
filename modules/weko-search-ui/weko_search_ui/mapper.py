@@ -1755,7 +1755,7 @@ class JsonLdMapper(JsonMapper):
 
         return return_data
 
-    def to_rocrate_metadata(self, metadata):
+    def to_rocrate_metadata(self, metadata, **kwargs):
         """Map to RO-Crate format.
 
         Args:
@@ -1870,7 +1870,7 @@ class JsonLdMapper(JsonMapper):
                 at_type (_type_): _description_
                 size (_type_): _description_
             """
-            if not hasattr(parent, key) or getattr(parent, key) is None:
+            if key not in parent or parent.get(key) is None:
                 parent[key] = []
 
             current_size = len(parent[key])
