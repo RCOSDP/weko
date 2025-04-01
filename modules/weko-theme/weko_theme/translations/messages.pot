@@ -297,6 +297,10 @@ msgid "Admin menu_Home"
 msgstr "Home"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_ホーム"
+msgstr "Home"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Item Types"
 msgstr "Item Types"
 

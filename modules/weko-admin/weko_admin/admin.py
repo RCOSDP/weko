@@ -73,7 +73,6 @@ from .utils import get_facet_search, get_item_mapping_list, \
 from .utils import get_user_report_data as get_user_report
 from .utils import package_reports, str_to_bool
 from .tasks import is_reindex_running ,reindex
-from flask_babelex import lazy_gettext as _
 
 class ReindexElasticSearchView(BaseView):
 
@@ -1391,20 +1390,19 @@ class SwordAPISettingsView(BaseView):
 
         if request.method == 'GET':
             # GET
-            default_sword_api = {"data_format":
-                                {PAGE_TSVCSV:
-                                {
-                                    "active": 'True',
-                                    "registration_type": "Direct",
-                                },
-                                PAGE_XML:
-                                {
-                                    "active": 'False',
-                                    "registration_type": "Workflow",
-                                    "workflow": "-1"
-                                }
-                                }
-                                }  # Default
+            default_sword_api = {
+                "data_format": {
+                    PAGE_TSVCSV: {
+                        "active": 'True',
+                        "registration_type": "Direct",
+                    },
+                    PAGE_XML: {
+                        "active": 'False',
+                        "registration_type": "Workflow",
+                        "workflow": "-1"
+                    }
+                }
+            }  # Default
             current_settings = AdminSettings.get(
                     name='sword_api_setting',
                     dict_to_object=False)
@@ -1423,20 +1421,19 @@ class SwordAPISettingsView(BaseView):
                     xml_workflow = settings.data_format['XML']['workflow']
                 else:
                     xml_workflow = ''
-                settings = {"data_format":
-                            {PAGE_TSVCSV:
-                            {
+                settings = {
+                    "data_format": {
+                        PAGE_TSVCSV: {
                             "active": 'True',
                             "registration_type": tsvcsv_registration_type,
-                            },
-                            PAGE_XML:
-                            {
+                        },
+                        PAGE_XML: {
                             "active": 'True',
                             "registration_type": xml_registration_type,
                             "workflow": xml_workflow
-                            }
-                            }
                         }
+                    }
+                }
                 AdminSettings.update('sword_api_setting', settings)
                 current_settings = AdminSettings.get(
                     name='sword_api_setting',
@@ -1494,33 +1491,31 @@ class SwordAPISettingsView(BaseView):
                 xml_active = settings.data_format[PAGE_XML]['active']
                 xml_registration_type = settings.data_format[PAGE_XML]['registration_type']
                 xml_workflow = settings.data_format[PAGE_XML]['workflow']
-                settings.data_format = {PAGE_TSVCSV:
-                                        {
-                                            "active": active,
-                                            "registration_type": registration_type,
-                                        },
-                                        PAGE_XML:
-                                        {
-                                            "active": xml_active,
-                                            "registration_type": xml_registration_type,
-                                            "workflow": xml_workflow
-                                        }
-                                        }
+                settings.data_format = {
+                    PAGE_TSVCSV: {
+                        "active": active,
+                        "registration_type": registration_type,
+                    },
+                    PAGE_XML: {
+                        "active": xml_active,
+                        "registration_type": xml_registration_type,
+                        "workflow": xml_workflow
+                    }
+                }
             else:
                 tsvcsv_active = settings.data_format[PAGE_TSVCSV]['active']
                 tsvcsv_registration_type = settings.data_format[PAGE_TSVCSV]['registration_type']
-                settings.data_format = {PAGE_TSVCSV:
-                                        {
-                                            "active": tsvcsv_active,
-                                            "registration_type": tsvcsv_registration_type,
-                                        },
-                                        PAGE_XML:
-                                        {
-                                            "active": active,
-                                            "registration_type": registration_type,
-                                            "workflow": workflow
-                                        }
-                                        }
+                settings.data_format = {
+                    PAGE_TSVCSV: {
+                        "active": tsvcsv_active,
+                        "registration_type": tsvcsv_registration_type,
+                    },
+                    PAGE_XML: {
+                        "active": active,
+                        "registration_type": registration_type,
+                        "workflow": workflow
+                    }
+                }
             AdminSettings.update('sword_api_setting',
                                     settings.__dict__)
             return jsonify(success=True),200
@@ -1644,28 +1639,27 @@ class SwordAPIJsonldSettingsView(ModelView):
         else:
             # POST
             try:
-                model = SwordClientModel()
-                model.client_id = request.json.get('application')
+                client_id = request.json.get('application')
                 if request.json.get('registration_type') == 'Direct':
-                    model.registration_type_id = model.RegistrationType.DIRECT
-                    model.workflow_id = None
+                    registration_type_id = SwordClientModel.RegistrationType.DIRECT
+                    workflow_id = None
                 else:
-                    model.registration_type_id = model.RegistrationType.WORKFLOW
-                    model.workflow_id = request.json.get('workflow_id')
-                model.mapping_id = request.json.get('mapping_id')
+                    registration_type_id = SwordClientModel.RegistrationType.WORKFLOW
+                    workflow_id = request.json.get('workflow_id')
+                mapping_id = request.json.get('mapping_id')
                 if request.json.get('active') == 'True':
-                    model.active = True
+                    active = True
                 else:
-                    model.active = False
-                model.meta_data_api = request.json.get('Meta_data_API_selected')
+                    active = False
+                meta_data_api = request.json.get('Meta_data_API_selected')
 
-                sword_client = SwordClient.register(
-                    client_id=model.client_id,
-                    registration_type_id=model.registration_type_id,
-                    mapping_id=model.mapping_id,
-                    workflow_id=model.workflow_id,
-                    active=model.active,
-                    meta_data_api=model.meta_data_api
+                SwordClient.register(
+                    client_id=client_id,
+                    registration_type_id=registration_type_id,
+                    mapping_id=mapping_id,
+                    workflow_id=workflow_id,
+                    active=active,
+                    meta_data_api=meta_data_api
                 )
                 return jsonify(results=True),200
 
