@@ -12,20 +12,23 @@ import traceback
 from hashlib import sha256
 from zipfile import ZipFile
 
-from flask import current_app
+from flask import current_app, request
 from sqlalchemy.exc import SQLAlchemyError
 
 from invenio_accounts.models import User
 from invenio_oauth2server.models import Token
+from invenio_pidstore.models import PersistentIdentifier
 from weko_accounts.models import ShibbolethUser
 from weko_admin.models import AdminSettings
+from weko_records.api import ItemTypes, ItemsMetadata
 from weko_search_ui.config import SWORD_METADATA_FILE, ROCRATE_METADATA_FILE
 from weko_search_ui.utils import (
     check_tsv_import_items,
     check_xml_import_items,
     check_jsonld_import_items
 )
-from weko_workflow.api import WorkFlow as WorkFlows
+from weko_workflow.api import WorkActivity, WorkFlow as WorkFlows
+from weko_workflow.headless import HeadlessActivity
 from weko_workflow.models import  WorkFlow
 
 from .api import SwordClient
@@ -61,6 +64,14 @@ def check_import_file_format(file, packaging):
     elif "SimpleZip" in packaging:
         if ROCRATE_METADATA_FILE in file_list:
             file_format = "JSON"
+        elif SWORD_METADATA_FILE in file_list:
+            current_app.logger.error(
+                "packaging format is SimpleZip, but sword.json is found."
+            )
+            raise WekoSwordserverException(
+                "packaging format is SimpleZip, but sword.json is found.",
+                ErrorType.MetadataFormatNotAcceptable
+                )
         elif any(ROCRATE_METADATA_FILE.split("/")[1] in filename
                 for filename in file_list
             ):
@@ -278,35 +289,24 @@ def update_item_ids(list_record, new_id):
     Raises:
         ValueError: If list_record is not a list.
     """
-    if not isinstance(list_record, list):
-        raise ValueError("list_record must be a list.")
-
     # Create a dictionary to map identifiers to their respective items
     identifier_to_item = {}
     for item in list_record:
         if not isinstance(item, dict):
             continue
 
-        metadata = item.get('metadata')
-        if not metadata or not hasattr(metadata, 'id'):
-            continue  # Skip if metadata is missing or doesn't have 'id'
+        metadata = item.get("metadata")
+        if not metadata or not item.get("_id"):
+            continue  # Skip if metadata is missing or doesn't have "_id"
 
-        current_identifier = getattr(metadata, 'id')
-        if current_identifier is not None:  # Skip if identifier is empty
-            identifier_to_item[current_identifier] = item
+        identifier_to_item[item["_id"]] = item
 
     # Iterate through each ITEM in list_record
     for item in list_record:
-        if not isinstance(item, dict):
-            continue
-
-        metadata = item.get('metadata')
-        if not metadata or not hasattr(metadata, 'link_data'):
-            continue  # Skip if metadata is missing or doesn't have 'link_data'
-
-        link_data = getattr(metadata, 'link_data', [])
-        if not isinstance(link_data, list):
-            continue
+        metadata = item.get("metadata")
+        if not metadata or not item.get("link_data"):
+            continue  # Skip if metadata is missing or doesn't have "link_data"
+        link_data = item.get("link_data")
 
         for link_item in link_data:
             if not isinstance(link_item, dict):
@@ -323,3 +323,121 @@ def update_item_ids(list_record, new_id):
                 )
 
     return list_record
+
+
+def delete_items_with_activity(item_id, request_info):
+    activity = WorkActivity()
+
+    workflow = activity.get_workflow_activity_by_item_id(item_id)
+    if workflow is None:
+        workflows = WorkFlows()
+        """get_workflow_activity_by_item_idで取得できなかったときにすること
+
+        from invenio_pidstore.models import PersistentIdentifier から itemidからobjectuuidを取得
+
+        ItemsMetadataでobjectuuidからitemtypeを取得
+
+        itemtypeでworkflow_idを取得"""
+        pid = PersistentIdentifier.query.filter_by(pid_value=item_id).one_or_none()
+        if pid is None:
+            raise WekoSwordserverException(
+                f"Item ID {item_id} not found.",
+                ErrorType.NotFound
+            )
+        object_uuid = pid.object_uuid
+
+        item_metadata = ItemsMetadata.get_by_object_id(object_uuid)
+        if item_metadata is None:
+            raise WekoSwordserverException(
+                f"Item metadata not found for item ID {item_id}.",
+                ErrorType.NotFound
+            )
+        item_type_id = item_metadata.item_type_id
+
+        workflow = workflows.get_workflow_by_itemtype_id(item_type_id)
+        if workflow is None:
+            raise WekoSwordserverException(
+                f"Workflow not found for item ID {item_id}.",
+                ErrorType.NotFound
+            )
+
+    workflow_id = workflow.id
+    user_id=request_info.get("user_id")
+    community_id=request_info.get("community_id")
+
+    try:
+        headless = HeadlessActivity()
+        url = headless.init_activity(
+            user_id=user_id, workflow_id=workflow_id, community_id=community_id,
+            item_id=item_id, for_delete=True
+        )
+        # headless.delete(item_id)
+
+    except Exception as ex:
+        traceback.print_exc()
+        raise WekoSwordserverException(
+            f"An error occurred while {headless.current_action}.",
+            ErrorType.ServerError
+        ) from ex
+
+    return url
+
+
+def get_register_format():
+    """Get register format and validate SWORD client.
+
+    Returns:
+        dict: A dictionary containing register_format, workflow_id, and item_type_id.
+
+    Raises:
+        WekoSwordserverException: If any validation fails.
+    """
+    client_id = request.oauth.client.client_id
+    sword_client, sword_mapping = get_record_by_client_id(client_id)
+    if sword_mapping is None:
+        current_app.logger.error(f"Mapping not defined for sword client.")
+        raise WekoSwordserverException(
+            "Metadata mapping not defined for registration your item.",
+            errorType=ErrorType.ServerError
+        )
+
+    # Check workflow and item type
+    register_format = sword_client.registration_type
+    workflow = None
+    delete_flow_id = None
+    if register_format == "Workflow":
+        workflow = WorkFlows().get_workflow_by_id(sword_client.workflow_id)
+        if workflow is None or workflow.is_deleted:
+            current_app.logger.error(f"Workflow not found for sword client.")
+            raise WekoSwordserverException(
+                "Workflow not found for registration your item.",
+                errorType=ErrorType.ServerError
+            )
+        # Check if workflow and item type match
+        if workflow.itemtype_id != sword_mapping.item_type_id:
+            current_app.logger.error(
+                "Item type and workflow do not match. "
+                f"ItemType ID must be {sword_mapping.item_type_id}, "
+                f"but the workflow's ItemType ID was {workflow.itemtype_id}.")
+            raise WekoSwordserverException(
+                "Item type and workflow do not match.",
+                errorType=ErrorType.ServerError
+            )
+
+        # Check if workflow has delete_flow_id
+        delete_flow_id = WorkFlow.query.filter_by(id=sword_client.workflow_id).one_or_none().delete_flow_id
+
+    item_type = ItemTypes.get_by_id(sword_mapping.item_type_id)
+    if item_type is None:
+        current_app.logger.error(f"Item type not found for sword client.")
+        raise WekoSwordserverException(
+            "Item type not found for registration your item.",
+            errorType=ErrorType.ServerError
+        )
+
+    return {
+        "register_format": register_format,
+        "workflow_id": sword_client.workflow_id,
+        "delete_flow_id": delete_flow_id,
+        "item_type_id": item_type.id
+    }

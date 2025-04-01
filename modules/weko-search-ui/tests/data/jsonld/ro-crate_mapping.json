@@ -11,7 +11,7 @@
   "File.本文URL.オブジェクトタイプ": "hasPart.url.value",
   "File.本文URL.ラベル": "hasPart.@id",
   "File.フォーマット": "hasPart.encodingFormat",
-  "File.アクセス": "hasPart.wk:accessMode",
+  "File.アクセス": "hasPart.accessMode",
   "File.公開日.公開日": "hasPart.datePublished",
   "Title": "dc:title",
   "Title.タイトル": "dc:title.value",
@@ -46,5 +46,13 @@
   "Contributor.寄与者所属.所属機関識別子.所属機関識別子": "contributor.affiliation.identifier.@id",
   "Contributor.寄与者別名": "contributor.alternateName",
   "Contributor.寄与者別名.別名": "contributor.alternateName.name",
-  "Contributor.寄与者別名.言語": "contributor.alternateName.language"
+  "Contributor.寄与者別名.言語": "contributor.alternateName.language",
+  "Relation": "jpcoar:relation",
+  "Relation.関連名称": "jpcoar:relation.jpcoar:relatedTitle",
+  "Relation.関連名称.関連名称": "jpcoar:relation.jpcoar:relatedTitle.value",
+  "Relation.関連名称.言語": "jpcoar:relation.jpcoar:relatedTitle.language",
+  "Relation.関連タイプ": "jpcoar:relation.relationType",
+  "Relation.関連識別子": "jpcoar:relation.jpcoar:relatedIdentifier",
+  "Relation.関連識別子.識別子タイプ": "$DOI",
+  "Relation.関連識別子.関連識別子": "jpcoar:relation.jpcoar:relatedIdentifier.identifier"
 }

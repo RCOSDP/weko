@@ -77,6 +77,8 @@ class Flow(object):
         """
         try:
             flow_name = flow.get('flow_name')
+            for_delete = flow.get('for_delete', False)
+            flow_type = 2 if for_delete else 1
             if not flow_name:
                 raise ValueError('Flow name cannot be empty.')
 
@@ -95,7 +97,8 @@ class Flow(object):
             _flow = _Flow(
                 flow_id=uuid.uuid4(),
                 flow_name=flow_name,
-                flow_user=current_user.get_id()
+                flow_user=current_user.get_id(),
+                flow_type=flow_type
             )
             _flowaction_start = _FlowAction(
                 flow_id=_flow.flow_id,
@@ -129,6 +132,8 @@ class Flow(object):
         """
         try:
             flow_name = flow.get('flow_name')
+            for_delete = flow.get('for_delete', False)
+            flow_type = 2 if for_delete else 1
             if not flow_name:
                 raise ValueError('Flow name cannot be empty.')
 
@@ -146,7 +151,9 @@ class Flow(object):
                     flow_id=flow_id).one_or_none()
                 if _flow:
                     _flow.flow_name = flow_name
+                    _flow.flow_type = flow_type
                     _flow.flow_user = current_user.get_id()
+                    _flow.flow_type = flow.flow_type
                     db.session.merge(_flow)
             db.session.commit()
             return _flow
@@ -693,6 +700,7 @@ class WorkActivity(object):
         :param activity:
         :param community_id:
         :param item_id:
+        :param for_delete:
         :return:
         """
         try:

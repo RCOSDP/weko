@@ -52,7 +52,7 @@
             <div class="checkbox">
               <label>
                 <div class="hide" id="message-for-delete-checked">{{_('Deletion flow activated.')}}</div>
-                <input type="checkbox" id="chk_for_delete" name="for_delete"  
+                <input type="checkbox" id="chk_for_delete" name="for_delete"
                 {% if actions and actions|length > 0 %} disabled {% endif %}
                 {% if flow and flow.flow_type == 2 %} checked {% endif %}> {{_('for delete')}}
               </label>
@@ -205,8 +205,8 @@
                           <input type="checkbox" class="pointer" id="td_action_approval_done_{{action.action_id}}" {% if action.send_mail_setting.inform_approval %}checked{% endif %}>
                           {{_('Approval Notification Email')}}</label>
                       </div>
-                    </div> 
-                  {% endif %}  
+                    </div>
+                  {% endif %}
 -->
               </td>
               <td class="hide">{{_(action.action_status.value)}}</td>
