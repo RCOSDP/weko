@@ -321,7 +321,7 @@
                                     }
                                 } else {
                                     // success callback
-                                    $window.location.href = rdt;
+                                    $window.location.href = response.data?.data?.redirect || rdt;
                                 }
                             },
                             function(response) {

@@ -847,6 +847,9 @@ def display_activity(activity_id="0", community_id=None):
                 error="can not get data required for rendering")
 
     activity = WorkActivity()
+    activity_detail = activity.get_activity_detail(activity_id)
+    for_delete = activity_detail.flow_define.flow_type == WEKO_WORKFLOW_DELETE_FLOW_TYPE
+    
     if "?" in activity_id:
         activity_id = activity_id.split("?")[0]
 
@@ -986,18 +989,19 @@ def display_activity(activity_id="0", community_id=None):
             activity_detail.item_id and \
             activity_detail.activity_status != ActivityStatusPolicy.ACTIVITY_CANCEL:
         try:
-            item_id = str(activity_detail.item_id)
-            # get record data for the first time access to editing item screen
-            recid, approval_record = get_pid_and_record(item_id)
-            files, files_thumbnail = get_files_and_thumbnail(activity_id, item_id)
+            if not for_delete:
+                item_id = str(activity_detail.item_id)
+                # get record data for the first time access to editing item screen
+                recid, approval_record = get_pid_and_record(item_id)
+                files, files_thumbnail = get_files_and_thumbnail(activity_id, item_id)
 
-            links = base_factory(recid)
+                links = base_factory(recid)
 
         except PIDDeletedError:
-            current_app.logger.debug("PIDDeletedError: {}".format(sys.exc_info()))
+            current_app.logger.error("PIDDeletedError: {}".format(sys.exc_info()))
             abort(404)
         except PIDDoesNotExistError:
-            current_app.logger.debug("PIDDoesNotExistError: {}".format(sys.exc_info()))
+            current_app.logger.error("PIDDoesNotExistError: {}".format(sys.exc_info()))
             abort(404)
         except Exception:
             current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
@@ -1056,22 +1060,23 @@ def display_activity(activity_id="0", community_id=None):
         ctx['item_link'] = item_link
 
     # Get item link info.
-    if activity_detail.activity_status != ActivityStatusPolicy.ACTIVITY_CANCEL:
-        record_detail_alt = get_main_record_detail(
-            activity_id, activity_detail, action_endpoint, item,
-            approval_record, files, files_thumbnail)
-        if not record_detail_alt:
-            current_app.logger.error("display_activity: bad value for record_detail_alt")
-            return render_template("weko_theme/error.html",
-                        error="can not get data required for rendering")
-
-        ctx.update(
-            dict(
-                record_org=record_detail_alt.get('record'),
-                files_org=record_detail_alt.get('files'),
-                thumbnails_org=record_detail_alt.get('files_thumbnail')
+    if not for_delete:
+        if activity_detail.activity_status != ActivityStatusPolicy.ACTIVITY_CANCEL:
+            record_detail_alt = get_main_record_detail(
+                activity_id, activity_detail, action_endpoint, item,
+                approval_record, files, files_thumbnail)
+            if not record_detail_alt:
+                current_app.logger.error("display_activity: bad value for record_detail_alt")
+                return render_template("weko_theme/error.html",
+                            error="can not get data required for rendering")
+                
+            ctx.update(
+                dict(
+                    record_org=record_detail_alt.get('record'),
+                    files_org=record_detail_alt.get('files'),
+                    thumbnails_org=record_detail_alt.get('files_thumbnail')
+                )
             )
-        )
 
     # Get email approval key
     approval_email_key = get_approval_keys()
@@ -1165,6 +1170,7 @@ def display_activity(activity_id="0", community_id=None):
         term_and_condition_content=term_and_condition_content,
         user_profile=user_profile,
         form=form,
+        for_delete=for_delete,
         **ctx
     )
 
@@ -1777,7 +1783,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
             activity.update(
                 action_id=next_action_id,
                 action_version=next_flow_action[0].action_version,
-                item_id=delete_item_id,
+                item_id=current_pid.object_uuid,
                 action_order=next_action_order
             )
             work_activity.end_activity(activity)
