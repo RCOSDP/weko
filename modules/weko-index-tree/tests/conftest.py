@@ -143,7 +143,7 @@ def base_app(instance_path):
             'S': 'Standard',
             'A': 'Archive',
         },
-        CACHE_REDIS_URL='redis://redis:6379/0',
+        CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
         CACHE_TYPE="redis",
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
@@ -745,6 +745,13 @@ def indices(app, db):
             id=45,
             position=1
         )
+        testIndexSix = Index(
+            index_name="testIndexSix",
+            browsing_role="1,2,3,4,-98,-99",
+            public_state=True,
+            id=66,
+            position=4
+        )
 
 
         db.session.add(testIndexOne)
@@ -753,7 +760,8 @@ def indices(app, db):
         db.session.add(testIndexThreeChild)
         db.session.add(testIndexMore)
         db.session.add(testIndexPrivate)
-        
+        db.session.add(testIndexSix)
+
     return {
         'index_dict': dict(testIndexThree),
         'index_non_dict': testIndexThree,

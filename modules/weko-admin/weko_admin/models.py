@@ -270,7 +270,7 @@ class AdminLangSettings(db.Model):
 
     __tablename__ = 'admin_lang_settings'
 
-    lang_code = db.Column(db.String(3), primary_key=True, nullable=False,
+    lang_code = db.Column(db.String(5), primary_key=True, nullable=False,
                           unique=True)
 
     lang_name = db.Column(db.String(30), nullable=False)
@@ -1330,12 +1330,6 @@ class SiteInfo(db.Model):
     )
     """tracking id."""
 
-    addthis_user_id = db.Column(
-        db.Text,
-        nullable=True
-    )
-    """add this id."""
-
     ogp_image = db.Column(
         db.Text,
         nullable=True
@@ -1404,8 +1398,6 @@ class SiteInfo(db.Model):
                 query_object.notify = notify
                 query_object.google_tracking_id_user = escape(site_info.get(
                     "google_tracking_id_user").strip())
-                query_object.addthis_user_id = escape(site_info.get(
-                    "addthis_user_id").strip())
                 ogp_image_data = site_info.get("ogp_image").strip()
                 if ogp_image_data and request.url_root not in ogp_image_data:
                     url_ogp_image = update_ogp_image(ogp_image_data,

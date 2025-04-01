@@ -54,11 +54,32 @@ def test_page_permission_factory(app, records, users,db_file_permission):
 
 # def file_permission_factory(record, *args, **kwargs):
 #    def can(self):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_get_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_file_permission_factory(app, records, users,db_file_permission):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_file_permission_factory -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_file_permission_factory(app, records, users, db_file_permission):
+    app.config['OAUTH2SERVER_JWT_AUTH_HEADER'] = 'Authorization'
     indexer, results = records
     record = results[0]["record"]
     assert file_permission_factory(record).can() == None
+
+    # check_file_download_permission returns True
+    with patch("weko_records_ui.permissions.check_file_download_permission", return_value=True):
+        assert file_permission_factory(record).can() == True
+
+    # check_file_download_permission returns False
+    with patch("weko_records_ui.permissions.check_file_download_permission", return_value=False):
+        assert file_permission_factory(record).can() == False
+
+    # with OAuth2
+    with app.test_request_context(headers={"Authorization": "Bearer testtoken"}):
+        with patch("weko_records_ui.permissions.check_file_download_permission", return_value=True), \
+             patch("weko_records_ui.permissions.require_api_auth", lambda: lambda f: f), \
+             patch("weko_records_ui.permissions.require_oauth_scopes", lambda x: lambda f: f):
+            assert file_permission_factory(record).can() == True
+
+        with patch("weko_records_ui.permissions.check_file_download_permission", return_value=False), \
+             patch("weko_records_ui.permissions.require_api_auth", lambda: lambda f: f), \
+             patch("weko_records_ui.permissions.require_oauth_scopes", lambda x: lambda f: f):
+            assert file_permission_factory(record).can() == False
 
 
 # def check_file_download_permission(record, fjson, is_display_file_info=False):
@@ -66,12 +87,13 @@ def test_file_permission_factory(app, records, users,db_file_permission):
 #    def get_email_list_by_ids(user_id_list):
 #    def __check_user_permission(user_id_list):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_file_download_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_check_file_download_permission(app, records, users,db_file_permission):
+def test_check_file_download_permission(app, records, users,db_file_permission, itemtypes):
     indexer, results = records
     record = results[0]["record"]
     fjson = {'url': {'url': 'https://weko3.example.org/record/11/files/001.jpg'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-27'}], 'format': 'image/jpeg', 'filename': 'helloworld.pdf', 'filesize': [{'value': '2.7 MB'}], 'accessrole': 'open_access', 'version_id': 'd73bd9cb-aa9e-4cd0-bf07-c5976d40bdde', 'displaytype': 'preview', 'is_thumbnail': False, 'future_date_message': '', 'download_preview_message': '', 'size': 2700000.0, 'mimetype': 'image/jpeg', 'file_order': 0}
     with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
         assert check_file_download_permission(record, fjson, True) == True
+        assert check_file_download_permission(record, fjson, True, item_type=itemtypes["item_type"]) == True
     
     with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
         assert check_file_download_permission(record, fjson, True) == True

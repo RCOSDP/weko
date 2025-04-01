@@ -176,20 +176,28 @@ class RecordSchemaCSLJSON(Schema):
 
     def get_issue_date(self, obj):
         """Get issue date."""
+        date_parts = [[]]
         metadata = get_data_from_mapping('datacite:date', obj)
         if not metadata:
             return missing
         if re.search("\d{4}-\d{2}-\d{2}",metadata):
             format = "%Y-%m-%d"
+            metadata = datetime.strptime(metadata, format)
+            date = from_isodate(metadata)
+            date_parts = [[date.year, date.month, date.day]]
         elif re.search("\d{4}-\d{2}",metadata):
             format = "%Y-%m"
+            metadata = datetime.strptime(metadata, format)
+            date = from_isodate(metadata)
+            date_parts = [[date.year, date.month]]
         elif re.search("\d{4}",metadata):
             format = "%Y"
+            metadata = datetime.strptime(metadata, format)
+            date = from_isodate(metadata)
+            date_parts = [[date.year]]
         else:
             raise ValidationError("Incorrect format")
-        metadata = datetime.strptime(metadata, format)
-        date = from_isodate(metadata)
-        date_parts = [[date.year, date.month, date.day]]
+        
         result = {'date-parts': date_parts}
         return result if date else missing
 

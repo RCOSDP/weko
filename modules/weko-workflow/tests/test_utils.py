@@ -21,7 +21,7 @@ from invenio_cache import current_cache
 from invenio_accounts.testutils import login_user_via_session as login
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from flask_login.utils import login_user,logout_user
-from tests.helpers import json_data
+from tests.helpers import json_data, create_activity
 from invenio_mail.models import MailConfig
 from weko_admin.models import SiteInfo, Identifier
 from weko_records_ui.models import FilePermission,FileOnetimeDownload
@@ -131,10 +131,14 @@ from weko_workflow.utils import (
     update_system_data_for_activity,
     prepare_doi_link_workflow,
     make_activitylog_tsv,
+    check_authority_by_admin,
+    validate_action_role_user,
     is_terms_of_use_only,
     grant_access_rights_to_all_open_restricted_files,
     delete_lock_activity_cache,
-    delete_user_lock_activity_cache
+    delete_user_lock_activity_cache,
+    check_an_item_is_locked,
+    bulk_check_an_item_is_locked,
 )
 from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
 from weko_workflow.models import Activity
@@ -186,27 +190,38 @@ def test_saving_doi_pidstore(db_records,item_type,mocker):#c
         "identifier_grant_jalc_dc_doi_link":"https://doi.org/3000/0000000001",
         "identifier_grant_ndl_jalc_doi_link":"https://doi.org/4000/0000000001"
     }
+    # jalc doi, tmp save
     mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
     result = saving_doi_pidstore(item_id,pid_without_ver,data,1,True)
     assert result == True
     mock_update.assert_has_calls([mocker.call("1000/0000000001","JaLC")])
     
+    # jalc crossref doi
     mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
     result = saving_doi_pidstore(item_id,pid_without_ver,data,2,False)
     assert result == True
     mock_update.assert_has_calls([mocker.call("2000/0000000001","Crossref")])
     
+    # jalc datacite doi
     with patch("weko_workflow.utils.IdentifierHandle.register_pidstore",return_value=True):
         mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
         result = saving_doi_pidstore(item_id,pid_without_ver,data,3,False)
         assert result == True
         mock_update.assert_has_calls([mocker.call("3000/0000000001","DataCite"),mocker.call("3000/0000000001","DataCite")])
     
+    with patch("weko_workflow.utils.IdentifierHandle.register_pidstore",return_value=False):
+        mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
+        result = saving_doi_pidstore(item_id,pid_without_ver,data,4,False)
+        mock_update.assert_has_calls([mocker.call("4000/0000000001","JaLC")])
+        assert result == True
+
+    # ndl jalc doi, raise exception
     with patch("weko_workflow.utils.IdentifierHandle.register_pidstore",side_effect=Exception):
         mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
         result = saving_doi_pidstore(item_id,pid_without_ver,data,4,False)
         assert result == False
 
+    # other doi
     mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
     result = saving_doi_pidstore(uuid.uuid4(),pid_without_ver,data,"wrong",False)
     assert result == False
@@ -1010,11 +1025,48 @@ def test_get_cache_data(client):
     current_cache.set(key, value)
     result = get_cache_data(key)
     assert result == value
+
+
 # def check_an_item_is_locked(item_id=None):
+# def bulk_check_an_item_is_locked(item_ids=[]):
 #     def check(workers):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_check_an_item_is_locked():
-    pass
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_check_an_item_is_locked -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_check_an_item_is_locked(app):
+    with app.app_context():
+        with patch("weko_workflow.utils.inspect") as mock_inspect:
+            mock_inspect_instance = mock_inspect.return_value
+            # inspect(timeout=_timeout).ping()
+            mock_inspect_instance.ping.return_value = True
+            # inspect(timeout=_timeout).active()
+            mock_inspect_instance.active.return_value = {
+                'worker1': [
+                    {'name': 'weko_search_ui.tasks.import_item', 'args': [{'id': '1'}]},
+                    {'name': 'weko_search_ui.tasks.import_item', 'args': [{'id': '2'}]},
+                ],
+                'worker2': [
+                    {'name': 'weko_search_ui.tasks.import_item', 'args': [{'id': '3'}, {'id': '99'}]},
+                ],
+            }
+            # inspect(timeout=_timeout).reserved()
+            mock_inspect_instance.reserved.return_value = {
+                'worker3': [
+                    {'name': 'weko_search_ui.tasks.import_item', 'args': [{'id': '4'}]},
+                    {'name': 'weko_search_ui.tasks.test_task', 'args': [{'id': '5'}]},
+                ],
+            }
+
+            item_ids = list(range(1,5))
+            result = []
+            for i in item_ids:
+                if check_an_item_is_locked(str(i)):
+                    result.append(str(i))
+
+            assert bulk_check_an_item_is_locked(item_ids) == result == ["1","2","3","4"]
+
+            assert check_an_item_is_locked() == False
+            assert bulk_check_an_item_is_locked() == []
+
+
 # def get_account_info(user_id):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_accoutn_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_accoutn_info(users):
@@ -2970,6 +3022,107 @@ def test_update_system_data_for_activity(db_register):
 
 # def check_authority_by_admin(activity):
 
+# def check_authority_by_admin(activity):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_check_authority_by_admin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_check_authority_by_admin(client, activity_acl, activity_acl_users):
+    users = activity_acl_users["users"]
+
+    # sysadmin user
+    login_user(users[0])
+    result = check_authority_by_admin(activity_acl[0])
+    assert result == True
+
+    # comadmin user, activity.item_id is None
+    login_user(users[3])
+    result = check_authority_by_admin(activity_acl[30])
+    assert result == False
+
+    # comadmin user, activity.item_id exist, path is not included in community index
+    login_user(users[3])
+    result = check_authority_by_admin(activity_acl[26])
+    assert result == False
+
+    # comadmin user, activity.item_id exist, path is included in community index
+    login_user(users[3])
+    result = check_authority_by_admin(activity_acl[21])
+    assert result == True
+    # not admin user
+    login_user(users[2])
+    result = check_authority_by_admin(activity_acl[21])
+    assert result == False
+        
+
+# def validate_action_role_user(activity_id, action_id, action_order):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_validate_action_role_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_validate_action_role_user(db, activity_acl_users,workflow_with_action_role):
+    users = activity_acl_users["users"]
+    workflow = workflow_with_action_role
+    login_user(users[2])
+    
+    # not set action role(user)
+    activity = create_activity(db,"not_set_action_role(user)",1,["4"],users[2],-1,workflow[0],'M',3)
+    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+    assert is_set == False
+    assert is_allow == False
+    assert is_deny == False
+    
+    # set action role as allow, self is include action role
+    activity = create_activity(db,"not_set_action_role(user)",2,["4"],users[2],-1,workflow[1],'M',3)
+    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+    assert is_set == True
+    assert is_allow == True
+    assert is_deny == False
+    
+    # set action role as allow, self is not include action role
+    activity = create_activity(db,"not_set_action_role(user)",3,["4"],users[2],-1,workflow[2],'M',3)
+    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+    assert is_set == True
+    assert is_allow == False
+    assert is_deny == True
+    
+    # set action role as deny, self is include action role
+    activity = create_activity(db,"not_set_action_role(user)",4,["4"],users[2],-1,workflow[3],'M',3)
+    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+    assert is_set == True
+    assert is_allow == False
+    assert is_deny == True
+    
+    # set action role as deny, self is not include action role
+    activity = create_activity(db,"not_set_action_role(user)",5,["4"],users[2],-1,workflow[4],'M',3)
+    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+    assert is_set == True
+    assert is_allow == False
+    assert is_deny == False
+    
+    # set action user as allow , self is include action user
+    activity = create_activity(db,"not_set_action_role(user)",6,["4"],users[2],-1,workflow[5],'M',3)
+    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+    assert is_set == True
+    assert is_allow == True
+    assert is_deny == False
+    
+    # set action user as allow , self is not include action user
+    activity = create_activity(db,"not_set_action_role(user)",7,["4"],users[2],-1,workflow[6],'M',3)
+    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+    assert is_set == True
+    assert is_allow == False
+    assert is_deny == True
+    
+    # set action user as deny , self is include action user
+    activity = create_activity(db,"not_set_action_role(user)",8,["4"],users[2],-1,workflow[7],'M',3)
+    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+    assert is_set == True
+    assert is_allow == False
+    assert is_deny == True
+    
+    # set action user as deny , self is not include action user
+    activity = create_activity(db,"not_set_action_role(user)",9,["4"],users[2],-1,workflow[8],'M',3)
+    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+    assert is_set == True
+    assert is_allow == False
+    assert is_deny == False
+    
+    
 # def get_record_first_version(deposit):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_record_first_version -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_record_first_version(db_register,db_records):
@@ -3243,6 +3396,7 @@ def test_delete_user_lock_activity_cache(client,users):
     # cur_locked_val is empty
     result = delete_user_lock_activity_cache(activity_id, data)
     assert result == "Not unlock"
+
     # cur_locked_val is not empty, is_opened is False
     current_cache.set(cache_key, activity_id)
     result = delete_user_lock_activity_cache(activity_id, data)
