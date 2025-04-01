@@ -1322,6 +1322,14 @@ class JsonMapper(BaseMapper):
 
 class JsonLdMapper(JsonMapper):
     """JsonLdMapper."""
+
+    AT_TYPE_MAP = {
+        "File": "File",
+        "Contributor": "Person",
+        "Creator": "Person",
+        "Publisher": "Organization"
+    }
+
     def __init__(self, itemtype_id, json_mapping):
         """Initilize JsonLdMapper.
 
@@ -2012,10 +2020,26 @@ class JsonLdMapper(JsonMapper):
                     list_index.insert(i, None)
             return list_index
 
-        def gen_type():
+        def gen_type(meta_path):
+            """Generate "@type" of entity by using AT_TYPE_MAP.
+
+            Args:
+                meta_path (str): Key of metadata.
+
+            Returns:
+                str: "@type" of entity.
+            """
+            for k, v in self.item_map.items():
+                if v == meta_path:
+                    meta_key = k
+                    break
+
+            for k, v in self.AT_TYPE_MAP.items():
+                if k in meta_key:
+                    return v
             return "PropertyValue"
 
-        def _set_rocrate_metadata(parent, META_KEY, meta_props, PROP_PATH, prop_props, deconstructed):
+        def _set_rocrate_metadata(parent, META_PATH, META_KEY, meta_props, PROP_PATH, prop_props, deconstructed):
             # Get list_index
             list_index = extract_list_indices(meta_props, prop_props, properties_mapping)
 
@@ -2046,19 +2070,18 @@ class JsonLdMapper(JsonMapper):
                 return
 
             _set_child_rocrate_metadata(
-                parent, META_KEY, meta_props, PROP_PATH, prop_props,
+                parent, META_PATH, META_KEY, meta_props, PROP_PATH, prop_props,
                 list_index, deconstructed
                 )
             return
 
-        def _set_child_rocrate_metadata(parent, META_KEY, meta_props, PROP_PATH, prop_props, list_index, deconstructed):
+        def _set_child_rocrate_metadata(parent, META_PATH, META_KEY, meta_props, PROP_PATH, prop_props, list_index, deconstructed):
             if len(prop_props) == 0:
                 raise Exception("prop_props is empty")
 
             prop = prop_props[0]
             index = list_index[0] if list_index else None
-            at_type = gen_type()
-            # at_type = type_map[prop] if prop in type_map else "PropertyValue"
+            at_type = gen_type(META_PATH)
 
             # dict
             if index is None:
@@ -2078,8 +2101,9 @@ class JsonLdMapper(JsonMapper):
                                 parent, prop, gen_id(meta_props[0]), at_type
                             )
                         _set_child_rocrate_metadata(
-                            parent[prop], META_KEY, meta_props[1:], PROP_PATH,
-                            prop_props[1:], list_index[1:], deconstructed
+                            parent[prop], META_PATH, META_KEY, meta_props[1:],
+                            PROP_PATH, prop_props[1:], list_index[1:],
+                            deconstructed
                         )
             # list
             else:
@@ -2099,9 +2123,9 @@ class JsonLdMapper(JsonMapper):
                     ensure_entity_list_size(parent, prop, at_type, index + 1)
                     if isinstance(parent[prop], list):
                         _set_child_rocrate_metadata(
-                            parent[prop][index], META_KEY, meta_props[1:],
-                            PROP_PATH, prop_props[1:], list_index[1:],
-                            deconstructed
+                            parent[prop][index], META_PATH, META_KEY,
+                            meta_props[1:], PROP_PATH, prop_props[1:],
+                            list_index[1:], deconstructed
                         )
                     else:
                         raise Exception(
@@ -2181,8 +2205,8 @@ class JsonLdMapper(JsonMapper):
             print(f"--- {META_KEY}: {deconstructed[record_key]}, {gen_id(meta_props[0])} ---")
 
             _set_rocrate_metadata(
-                rocrate.root_dataset, META_KEY, meta_props, PROP_PATH,
-                prop_props, deconstructed
+                rocrate.root_dataset, META_PATH, META_KEY, meta_props,
+                PROP_PATH, prop_props, deconstructed
             )
 
         # Extra
