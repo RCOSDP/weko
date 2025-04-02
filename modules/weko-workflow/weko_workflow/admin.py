@@ -204,14 +204,19 @@ class FlowSettingView(BaseView):
     @staticmethod
     def get_actions():
         """Get Actions info."""
+        def _set_available_for_delete(action):
+            action.available_for_delete = action.action_name in current_app.config[
+                "WEKO_WORKFLOW_DELETION_ACTIONS"
+            ]
+            return action
+
         actions = Action().get_action_list()
-        action_list = list()
-        for action in actions:
-            if action.action_name in current_app.config[
-                    'WEKO_WORKFLOW_ACTIONS']:
-                action.is_for_delete = action.action_name in current_app.config[
-                    'WEKO_WORKFLOW_DELETE_ACTIONS']
-                action_list.append(action)
+        action_list = [
+            _set_available_for_delete(action)
+            for action in actions
+            if action.action_name in current_app.config["WEKO_WORKFLOW_ACTIONS"]
+        ]
+
         return action_list
 
     @expose('/action/<string:flow_id>', methods=['POST'])

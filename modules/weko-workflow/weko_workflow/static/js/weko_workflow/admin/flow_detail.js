@@ -242,11 +242,9 @@ $(document).ready(function () {
         alert($('#message-for-delete-checked').text());
       }
       $('.action_normal').hide();
-      $('.action_delete').show();
     }
     else {
       $('.action_normal').show();
-      $('.action_delete').hide();
     }
   }
   filterActions(false);

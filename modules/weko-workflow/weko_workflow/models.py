@@ -37,6 +37,8 @@ from weko_groups.widgets import RadioGroupWidget
 from weko_records.models import ItemType
 from invenio_files_rest.models import Location
 
+from .config import WEKO_WORKFLOW_REGISTRATION_FLOW_TYPE
+
 
 class ActionStatusPolicy(object):
     """Action status policies."""
@@ -502,7 +504,10 @@ class FlowDefine(db.Model, TimestampMixin):
     is_deleted = db.Column(db.Boolean(name='is_deleted'), nullable=False, default=False)
     """flow define delete flag."""
 
-    flow_type = db.Column(db.SmallInteger(), nullable=False, default=1)
+    flow_type = db.Column(
+        db.SmallInteger(), nullable=False, default=WEKO_WORKFLOW_REGISTRATION_FLOW_TYPE
+    )
+    """flow type. 1: for registration, 2: for deletion."""
 
 
 class FlowAction(db.Model, TimestampMixin):
@@ -685,7 +690,7 @@ class WorkFlow(db.Model, TimestampMixin):
         Location,
         backref=db.backref('workflow', lazy='dynamic')
     )
-    
+
     is_gakuninrdm = db.Column(db.Boolean(name='is_gakuninrdm'), nullable=False, default=False)
     """GakuninRDM flag."""
 
@@ -973,8 +978,8 @@ class ActivityRequestMail(db.Model, TimestampMixin):
 
     display_request_button = db.Column(
         db.Boolean(name='display_request_button'),
-        nullable=False, 
-        default=False, 
+        nullable=False,
+        default=False,
         server_default='0')
     """If set to True, enable request mail """
 

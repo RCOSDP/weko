@@ -88,7 +88,7 @@ from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB, \
-    WEKO_WORKFLOW_DELETE_FLOW_TYPE
+    WEKO_WORKFLOW_DELETION_FLOW_TYPE
 from .errors import ActivityBaseRESTError, ActivityNotFoundRESTError, \
     DeleteActivityFailedRESTError, InvalidInputRESTError, \
     RegisteredActivityNotFoundRESTError
@@ -848,8 +848,8 @@ def display_activity(activity_id="0", community_id=None):
 
     activity = WorkActivity()
     activity_detail = activity.get_activity_detail(activity_id)
-    for_delete = activity_detail.flow_define.flow_type == WEKO_WORKFLOW_DELETE_FLOW_TYPE
-    
+    for_delete = activity_detail.flow_define.flow_type == WEKO_WORKFLOW_DELETION_FLOW_TYPE
+
     if "?" in activity_id:
         activity_id = activity_id.split("?")[0]
 
@@ -1069,7 +1069,7 @@ def display_activity(activity_id="0", community_id=None):
                 current_app.logger.error("display_activity: bad value for record_detail_alt")
                 return render_template("weko_theme/error.html",
                             error="can not get data required for rendering")
-                
+
             ctx.update(
                 dict(
                     record_org=record_detail_alt.get('record'),
@@ -1350,7 +1350,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
         current_app.logger.error("next_action: can not get activity_detail")
         res = ResponseMessageSchema().load({"code":-1, "msg":"can not get activity detail"})
         return jsonify(res.data), 500
-    for_delete = activity_detail.flow_define.flow_type == WEKO_WORKFLOW_DELETE_FLOW_TYPE
+    for_delete = activity_detail.flow_define.flow_type == WEKO_WORKFLOW_DELETION_FLOW_TYPE
     action_order = activity_detail.action_order
 
     try:
