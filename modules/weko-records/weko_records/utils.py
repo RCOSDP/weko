@@ -27,7 +27,9 @@ import xml.etree.ElementTree as ET
 from collections import OrderedDict
 
 import pytz
-from flask import current_app
+from flask import current_app, Flask
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore import current_pidstore
@@ -2640,3 +2642,8 @@ def replace_fqdn_of_file_metadata(file_metadata_lst: list, file_url: list = None
                 file["url"]["url"] = replace_fqdn(file["url"]["url"])
             elif isinstance(file_url, list):
                 file_url.append(file["url"]["url"])
+
+def create_limiter():
+    from .config import WEKO_RECORDS_API_LIMIT_RATE_DEFAULT
+    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_RECORDS_API_LIMIT_RATE_DEFAULT)
+
