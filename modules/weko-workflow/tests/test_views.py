@@ -4969,7 +4969,7 @@ def test_edit_item_direct_2(client, db_register2):
     assert res.status_code == 302
     assert res.location == 'http://TEST_SERVER.localdomain/login/?next=%2Fworkflow%2Fedit_item_direct_after_login%2F1'
 
-# .tox/c1/bin/pytest --cov=cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_01 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_01 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize(
     "users_index, status_code",
     [
@@ -4989,17 +4989,17 @@ def test_edit_item_direct_after_login_01(client, users, db_register, users_index
     assert res.status_code == status_code
     assert res.location == 'http://TEST_SERVER.localdomain/workflow/activity/detail/1'
 
-# .tox/c1/bin/pytest --cov=cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_02 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_02 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize(
     "users_index, status_code",
     [
-        (0, 200),
-        (1, 200),
-        (2, 200),
-        (3, 200),
-        (4, 200),
-        (5, 200),
-        (6, 200),
+        (0, 400),
+        (1, 400),
+        (2, 400),
+        (3, 400),
+        (4, 400),
+        (5, 400),
+        (6, 400),
     ],
 )
 def test_edit_item_direct_after_login_02(client, users, db_register, users_index, status_code, mocker):
@@ -5014,17 +5014,17 @@ def test_edit_item_direct_after_login_02(client, users, db_register, users_index
     mock_redis.exists.assert_called_once()
     assert res.status_code == status_code
 
-# .tox/c1/bin/pytest --cov=cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_03 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_03 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize(
     "users_index, status_code",
     [
-        (0, 200),
-        (1, 200),
-        (2, 200),
-        (3, 200),
-        (4, 200),
-        (5, 200),
-        (6, 200),
+        (0, 404),
+        (1, 404),
+        (2, 404),
+        (3, 404),
+        (4, 404),
+        (5, 404),
+        (6, 404),
     ],
 )
 def test_edit_item_direct_after_login_03(client, users, db_register, users_index, status_code, mocker):
@@ -5037,13 +5037,36 @@ def test_edit_item_direct_after_login_03(client, users, db_register, users_index
     mock_resolve.assert_called_once()
     assert res.status_code == status_code
 
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_04 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_03_2 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize(
     "users_index, status_code",
     [
-        (0, 200),
-        (4, 200),
-        (5, 200),
+        (0, 404),
+        (1, 404),
+        (2, 404),
+        (3, 404),
+        (4, 404),
+        (5, 404),
+        (6, 404),
+    ],
+)
+def test_edit_item_direct_after_login_03_2(client, users, db_register, users_index, status_code, mocker):
+    mock_render_template = mocker.patch('weko_workflow.views.render_template', return_value ='')
+    mock_resolve = mocker.patch.object(Resolver, 'resolve', side_effect=PIDDoesNotExistError(None, None))
+    login(client=client, email=users[users_index]["email"])
+    url = url_for("weko_workflow.edit_item_direct_after_login", pid_value="1")
+    res = client.get(url)
+    mock_render_template.assert_called_with("weko_theme/error.html", error="Record does not exist.")
+    mock_resolve.assert_called_once()
+    assert res.status_code == status_code
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_04 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "users_index, status_code",
+    [
+        (0, 400),
+        (4, 400),
+        (5, 400),
     ],
 )
 def test_edit_item_direct_after_login_04(client, users, db_register, users_index, status_code, mocker):
@@ -5054,14 +5077,14 @@ def test_edit_item_direct_after_login_04(client, users, db_register, users_index
     mock_render_template.assert_called_with("weko_theme/error.html", error="You are not allowed to edit this item.")
     assert res.status_code == status_code
 
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_05 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_05 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize(
     "users_index, status_code",
     [
-        (1, 200),
-        (2, 200),
-        (3, 200),
-        (6, 200),
+        (1, 400),
+        (2, 400),
+        (3, 400),
+        (6, 400),
     ],
 )
 def test_edit_item_direct_after_login_05(client, users, db_register, users_index, status_code, mocker):
@@ -5073,14 +5096,14 @@ def test_edit_item_direct_after_login_05(client, users, db_register, users_index
     mock_render_template.assert_called_with("weko_theme/error.html", error="You do not even have an ItemType.")
     assert res.status_code == status_code
 
-# .tox/c1/bin/pytest --cov=cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_06 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_06 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize(
     "users_index, status_code",
     [
-        (1, 200),
-        (2, 200),
-        (3, 200),
-        (6, 200),
+        (1, 400),
+        (2, 400),
+        (3, 400),
+        (6, 400),
     ],
 )
 def test_edit_item_direct_after_login_06(client, users, db_register, users_index, status_code, mocker):
@@ -5092,14 +5115,14 @@ def test_edit_item_direct_after_login_06(client, users, db_register, users_index
     mock_render_template.assert_called_with("weko_theme/error.html", error="Dependency ItemType not found.")
     assert res.status_code == status_code
 
-# .tox/c1/bin/pytest --cov=cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_07 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_07 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize(
     "users_index, status_code",
     [
-        (1, 200),
-        (2, 200),
-        (3, 200),
-        (6, 200),
+        (1, 400),
+        (2, 400),
+        (3, 400),
+        (6, 400),
     ],
 )
 def test_edit_item_direct_after_login_07(client, users, db_register, users_index, status_code, mocker):
@@ -5111,14 +5134,14 @@ def test_edit_item_direct_after_login_07(client, users, db_register, users_index
     mock_render_template.assert_called_with("weko_theme/error.html", error="Item cannot be edited because the import is in progress.")
     assert res.status_code == status_code
 
-# .tox/c1/bin/pytest --cov=cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_08 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_08 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize(
     "users_index, status_code",
     [
-        (1, 200),
-        (2, 200),
-        (3, 200),
-        (6, 200),
+        (1, 400),
+        (2, 400),
+        (3, 400),
+        (6, 400),
     ],
 )
 def test_edit_item_direct_after_login_08(client, users, db_register, users_index, status_code, mocker):
@@ -5131,14 +5154,14 @@ def test_edit_item_direct_after_login_08(client, users, db_register, users_index
     mock_render_template.assert_called_with("weko_theme/error.html", error="This Item is being edited.")
     assert res.status_code == status_code
 
-# .tox/c1/bin/pytest --cov=cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_09 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_09 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize(
     "users_index, status_code",
     [
-        (1, 200),
-        (2, 200),
-        (3, 200),
-        (6, 200),
+        (1, 400),
+        (2, 400),
+        (3, 400),
+        (6, 400),
     ],
 )
 def test_edit_item_direct_after_login_09(client, users, db_register, users_index, status_code, mocker):
@@ -5153,7 +5176,7 @@ def test_edit_item_direct_after_login_09(client, users, db_register, users_index
     mock_render_template.assert_called_with("weko_theme/error.html", error="Workflow setting does not exist.")
     assert res.status_code == status_code
 
-# .tox/c1/bin/pytest --cov=cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_10 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_10 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize(
     "users_index, status_code",
     [
@@ -5177,14 +5200,14 @@ def test_edit_item_direct_after_login_10(client, users, db_register, users_index
     assert res.status_code == status_code
     assert res.location == 'http://TEST_SERVER.localdomain/workflow/activity/detail/1'
 
-# .tox/c1/bin/pytest --cov=cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_11 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_11 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize(
     "users_index, status_code",
     [
-        (1, 200),
-        (2, 200),
-        (3, 200),
-        (6, 200),
+        (1, 500),
+        (2, 500),
+        (3, 500),
+        (6, 500),
     ],
 )
 def test_edit_item_direct_after_login_11(client, users, db_register, users_index, status_code, mocker):
@@ -5197,14 +5220,14 @@ def test_edit_item_direct_after_login_11(client, users, db_register, users_index
     mock_render_template.assert_called_with("weko_theme/error.html", error="An error has occurred.")
     assert res.status_code == status_code
 
-# .tox/c1/bin/pytest --cov=cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_12 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_12 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize(
     "users_index, status_code",
     [
-        (1, 200),
-        (2, 200),
-        (3, 200),
-        (6, 200),
+        (1, 500),
+        (2, 500),
+        (3, 500),
+        (6, 500),
     ],
 )
 def test_edit_item_direct_after_login_12(client, users, db_register, users_index, status_code, mocker):
