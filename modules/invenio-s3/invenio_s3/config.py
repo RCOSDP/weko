@@ -73,4 +73,11 @@ information.
 
 S3_DEFAULT_BLOCK_SIZE = 5 * 2**20
 """Default block size value used to send multi-part uploads to S3.
-Typically 5Mb is minimum allowed by the API."""
+Typically 5Mb is minimum allowed by the API.
+"""
+
+S3_SEND_FILE_DIRECTLY = True
+"""The flag to use when send file to the client.
+
+If this flag is false, system will redirects the file to the client.
+When redirecting, S3_ENDPOINT_URL need to be set except for US region."""

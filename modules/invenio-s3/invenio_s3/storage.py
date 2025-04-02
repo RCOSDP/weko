@@ -11,9 +11,11 @@ from functools import partial, wraps
 
 import s3fs
 from flask import current_app
+from invenio_files_rest.models import Location
 from invenio_files_rest.errors import StorageError
 from invenio_files_rest.storage import PyFSFileStorage, pyfs_storage_factory
 
+from .config import S3_SEND_FILE_DIRECTLY
 from .helpers import redirect_stream
 
 
@@ -58,8 +60,7 @@ class S3FSFileStorage(PyFSFileStorage):
         """Initialize file on storage and truncate to given size."""
         fs, path = self._get_fs()
 
-        if fs.exists(path):
-            fp = fs.rm(path)
+        self.remove(fs, path)
         fp = fs.open(path, mode='wb')
 
         try:
@@ -82,11 +83,18 @@ class S3FSFileStorage(PyFSFileStorage):
 
         return self.fileurl, size, None
 
+    def remove(self, fs, path):
+        """Delete a file with check FS."""
+        if fs.exists(path):
+            if isinstance(fs, s3fs.S3FileSystem):
+                fs.rm(path)
+            else:
+                fs.remove(path)
+
     def delete(self):
         """Delete a file."""
         fs, path = self._get_fs()
-        if fs.exists(path):
-            fs.rm(path)
+        self.remove(fs, path)
         return True
 
     @set_blocksize
@@ -153,6 +161,23 @@ class S3FSFileStorage(PyFSFileStorage):
         as_attachment=False,
     ):
         """Send the file to the client."""
+        s3_send_file_directly = current_app.config.get('S3_SEND_FILE_DIRECTLY', None)
+        default_location = Location.query.filter_by(default=True).first()
+
+        if default_location.type == 's3':
+            s3_send_file_directly = default_location.s3_send_file_directly
+
+        if s3_send_file_directly:
+            return super(S3FSFileStorage, self).send_file(
+                filename,
+                mimetype=mimetype,
+                restricted=restricted,
+                checksum=checksum,
+                trusted=trusted,
+                chunk_size=chunk_size,
+                as_attachment=as_attachment
+            )
+
         try:
             fs, path = self._get_fs()
             s3_url_builder = partial(
