@@ -20,12 +20,16 @@
 
 """Pytest configuration."""
 
+from datetime import datetime, timedelta
 import os
 import sys
 import shutil
 import uuid
 import json
 import tempfile
+from invenio_accounts.utils import jwt_create_token
+from invenio_oauth2server.ext import InvenioOAuth2Server, InvenioOAuth2ServerREST
+from invenio_oauth2server.models import Client, Token
 from mock import patch
 
 import pytest
@@ -63,7 +67,7 @@ from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, WEKO_PERMISS
 from weko_records import WekoRecords
 from weko_records.api import ItemTypes, Mapping
 from weko_records.config import WEKO_ITEMTYPE_EXCLUDED_KEYS
-from weko_records.models import ItemTypeName, SiteLicenseInfo, FeedbackMailList, ItemReference
+from weko_records.models import ItemTypeName, OaStatus, SiteLicenseInfo, FeedbackMailList, ItemReference
 
 from tests.helpers import json_data, create_record
 
@@ -109,6 +113,13 @@ def base_app(instance_path):
         EMAIL_DISPLAY_FLG=EMAIL_DISPLAY_FLG,
         WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME='jpcoar_mapping',
         WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE = {'e-Rad':'e-Rad_Researcher'},
+        WEKO_RECORDS_REST_ENDPOINTS = {
+            'oa_status_callback': {
+                'route': '/<string:version>/oa_status/callback',
+                'default_media_type': 'application/json',
+            }
+        },
+        WEKO_RECORDS_API_LIMIT_RATE_DEFAULT = ['100 per minute']
     )
 
     WekoRecords(app_)
@@ -123,6 +134,8 @@ def base_app(instance_path):
     InvenioPIDStore(app_)
     InvenioPIDRelations(app_)
     InvenioRecords(app_)
+    InvenioOAuth2Server(app_)
+    InvenioOAuth2ServerREST(app_)
     WekoDeposit(app_)
     WekoItemtypesUI(app_)
     WekoSearchUI(app_)
@@ -973,3 +986,56 @@ def meta01():
     with open(filepath, encoding="utf-8") as f:
             input_data = json.load(f)
     return input_data
+
+@pytest.fixture
+def db_OaStatus(db):
+    oa_status = OaStatus(
+        oa_article_id=1,
+        oa_status="Unprocessed",
+        weko_item_pid="20000001"
+    )
+    with db.session.begin_nested():
+        db.session.add(oa_status)
+
+    return oa_status
+
+@pytest.fixture
+def tokens(app,users,db):
+    scopes = [
+        "oa_status:update",
+        ""
+    ]
+    tokens = []
+
+    for i, scope in enumerate(scopes):
+        user = users[i]
+        user_id = str(user["id"])
+
+        test_client = Client(
+            client_id=f"dev{user_id}",
+            client_secret=f"dev{user_id}",
+            name="Test name",
+            description="test description",
+            is_confidential=False,
+            user_id=user_id,
+            _default_scopes="deposit:write"
+        )
+        test_token = Token(
+            client=test_client,
+            user_id=user_id,
+            token_type="bearer",
+            access_token=jwt_create_token(user_id=user_id),
+            expires=datetime.now() + timedelta(hours=10),
+            is_personal=False,
+            is_internal=True,
+            _scopes=scope
+        )
+
+        db.session.add(test_client)
+        db.session.add(test_token)
+
+        tokens.append({"token":test_token, "client":test_client, "scope":scope})
+
+    db.session.commit()
+
+    return tokens
