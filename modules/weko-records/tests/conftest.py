@@ -24,6 +24,7 @@ from datetime import datetime, timedelta
 import os
 import sys
 import shutil
+import uuid
 import json
 import tempfile
 from invenio_accounts.utils import jwt_create_token
