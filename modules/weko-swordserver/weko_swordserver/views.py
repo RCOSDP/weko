@@ -312,6 +312,17 @@ def post_service_document():
                 ErrorType.BadRequest,
             )
 
+        from weko_items_ui.utils import check_duplicate
+        result, list_id, list_url = check_duplicate(item["metadata"], is_item=True)
+        if result:
+            current_app.logger.error(
+                f"This item appears to be a duplicate: {list_id}"
+            )
+            raise WekoSwordserverException(
+                f"This item appears to be a duplicate: {list_url}",
+                ErrorType.BadRequest,
+            )
+
     # Prepare request information
     owner = -1
     if current_user.is_authenticated:
