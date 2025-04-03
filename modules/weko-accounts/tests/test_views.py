@@ -12,7 +12,8 @@ from weko_accounts.views import (
     _redirect_method,
     find_user_by_email
 )
-from weko_accounts.models import ShibbolethUser
+from weko_admin.models import AdminSettings
+
 def set_session(client,data):
     with client.session_transaction() as session:
         for k, v in data.items():
@@ -345,7 +346,7 @@ def test_shib_login(client,redis_connect,users,mocker):
         assert res.status_code == 400
 #def shib_sp_login():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_shib_sp_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_shib_sp_login(client, redis_connect,mocker):
+def test_shib_sp_login(client, redis_connect,mocker, db):
     mocker.patch("weko_accounts.views.RedisConnection.connection",return_value=redis_connect)
     url = url_for("weko_accounts.shib_sp_login")
     
@@ -368,11 +369,49 @@ def test_shib_sp_login(client, redis_connect,mocker):
         mock_flash = mocker.patch("weko_accounts.views.flash")
         client.post(url,data=form)
         mock_flash.assert_called_with("Missing SHIB_ATTRs!",category="error")
-        
+
+    # Check if shib_eppn is not included in the blocked user list
+    try:
+        db.session.add(AdminSettings(
+            id=6,
+            name="blocked_user_settings",
+            settings='{"blocked_ePPNs": ["ePPN1", "ePPN2", "ePPN3", "ePPN5", "ePPP*"]}'
+        ))
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        raise
+    finally:
+        db.session.remove()
+
+    # Match with blocked user
+    mock_flash = mocker.patch("weko_accounts.views.flash")
+    form = {
+        "SHIB_ATTR_SESSION_ID":"1111",
+        "SHIB_ATTR_EPPN":"ePPN3"
+    }
+    client.post(url,data=form)
+    mock_flash.assert_called_with("Failed to login.",category="error")
+    mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",return_value=make_response())
+
+    # Match found with a blocked user from the wildcard
+    mock_flash = mocker.patch("weko_accounts.views.flash")
+    form = {
+        "SHIB_ATTR_SESSION_ID":"1111",
+        "SHIB_ATTR_EPPN":"ePPP3"
+    }
+    client.post(url,data=form)
+    mock_flash.assert_called_with("Failed to login.",category="error")
+    mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",return_value=make_response())
+
+    # Not a blocked user
     form = {
         "SHIB_ATTR_SESSION_ID":"1111",
         "SHIB_ATTR_EPPN":"test_eppn"
     }
+    res = client.post(url,data=form)
+    assert res.status_code == 200
+
     # shib_user.get_relation_info is None
     with patch("weko_accounts.views.ShibUser.get_relation_info",return_value=None):
         res = client.post(url,data=form)
@@ -411,6 +450,9 @@ def test_shib_sp_login(client, redis_connect,mocker):
         mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",return_value=make_response())
         res = client.post(url,data={})
         mock_redirect_.assert_called_once()
+
+
+    
 #def shib_stub_login():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_shib_stub_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_shib_stub_login(client,mocker):
