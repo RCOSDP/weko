@@ -131,7 +131,7 @@ WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE = {
   'defaultRole': 'Community Administrator',
   'organizationName': []  
 } 
-"""Orthros (Outsite) Default role."""
+"""Orthros (Outside) Default role."""
 
 WEKO_ACCOUNTS_EXTRA_ROLE = {
   'defaultRole': 'None', # ロール無
@@ -186,3 +186,6 @@ WEKO_ACCOUNTS_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 
 WEKO_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 """Default rate limit per endpoint for one user in the WEKO API."""
+
+WEKO_ACCOUNTS_SKIP_CONFIRMATION_PAGE = False
+"""Skip shibboleth confirmation page."""

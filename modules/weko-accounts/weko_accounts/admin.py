@@ -33,7 +33,6 @@ from weko_accounts.models import ShibbolethUser, db
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
-
 class ShibSettingView(BaseView):
     """ShibSettingView."""
 
@@ -62,6 +61,7 @@ class ShibSettingView(BaseView):
                 'orthros_outside_role': default_roles.get('orthros_outside_role', current_app.config['WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE']['defaultRole']),
                 'extra_role': default_roles.get('extra_role', current_app.config['WEKO_ACCOUNTS_EXTRA_ROLE']['defaultRole'])
             }
+
 
             # 属性マッピング
             attribute_mappings = AdminSettings.get('attribute_mapping', dict_to_object=False)
@@ -112,9 +112,9 @@ class ShibSettingView(BaseView):
                             _('Blocked user list was updated.'),
                             category='success')
                         block_user_list = str(new_eppn_list).replace('"', '\\"')
-
+                               
             self.get_latest_current_app()
-                        
+
             return self.render(
                 current_app.config['WEKO_ACCOUNTS_SET_SHIB_TEMPLATE'],
                 shib_flg=shib_flg, set_language=set_language, role_list=role_list, attr_list=attr_list, block_user_list=block_user_list, enable_login_user_list=enable_login_user_list, **roles, **attributes )
@@ -131,7 +131,6 @@ class ShibSettingView(BaseView):
         _app.config['WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE']['defaultRole'] = default_roles['orthros_outside_role']
         _app.config['WEKO_ACCOUNTS_EXTRA_ROLE']['defaultRole'] = default_roles['extra_role']
         _app.config['WEKO_ACCOUNTS_ATTRIBUTE_MAP'] = AdminSettings.get('attribute_mapping', dict_to_object=False)
-
 
 shib_adminview = {
     'view_class': ShibSettingView,
