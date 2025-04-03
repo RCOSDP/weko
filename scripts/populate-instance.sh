@@ -437,6 +437,18 @@ ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
 ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
        5 "elastic_reindex_settings" \
        "{'has_errored': False}"
+${INVENIO_WEB_INSTANCE} admin_settings create_settings \
+       6 "blocked_user_settings" \
+       "{'blocked_ePPNs': []}"
+${INVENIO_WEB_INSTANCE} admin_settings create_settings \
+       7 "shib_login_enable" \
+       "{'shib_flg': False}"
+${INVENIO_WEB_INSTANCE} admin_settings create_settings \
+       8 "default_role_settings" \
+       "{'gakunin_role': '', 'orthros_outside_role': '', 'extra_role': ''}"
+${INVENIO_WEB_INSTANCE} admin_settings create_settings \
+       9 "attribute_mapping" \
+       "{'shib_eppn': '', 'shib_role_authority_name': '', 'shib_mail': '', 'shib_user_name': ''}"
 # create-admin-settings-end
 
 # create-default-authors-prefix-settings-begin
@@ -493,3 +505,14 @@ ${INVENIO_WEB_INSTANCE} facet_search_setting create \
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \
        "Data Type"	"デ一タタイプ"	"description.value"	"[{'agg_value': 'Other', 'agg_mapping': 'description.descriptionType'}]"	True   SelectBox     7      True
 # create-facet-search-setting-end
+
+# update-shib-admin-setting-begin
+${INVENIO_WEB_INSTANCE} shib_admin_setting update \
+       "shib_eppn" "eduPersonPrincipalName"
+${INVENIO_WEB_INSTANCE} shib_admin_setting update \
+       "shib_mail" "mail"      
+${INVENIO_WEB_INSTANCE} shib_admin_setting update \
+       "shib_user_name" "displayName"                         
+${INVENIO_WEB_INSTANCE} shib_admin_setting update \
+       "shib_role_authority_name" "eduPersonAffiliation"
+# update-shib-admin-setting-end

@@ -22,7 +22,13 @@
 {% block css %}
   {{ super() }}
   {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-{% endblock %}
+  {% assets "weko_accounts_shibuser_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% endblock css %}
+
+{%- block javascript %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/weko_accounts/shibuser.js') }}"></script>
+{%- endblock javascript %}
 
 {% from "weko_admin/settings/_macros.html" import render_field, form_errors %}
 
@@ -32,8 +38,9 @@
 {%- block body %}
 {%- set cur_lifetime = current_lifetime %}
 {%- set lifetime_map = map_lifetime %}
-<form method="POST" name="shib_form" action={{url_for('shibboleth.index')}}>
+<form method="POST" id="shib_form" name="shib_form" action={{url_for('shibboleth.index')}} data-value="{{set_language}}">
 {%- if shib_flg == '1' %}
+  <!-- Shibboleth Flag Settings True -->
   <div class="radio">
     <label>
       <input type="radio" name="shibbolethRadios" id="shibbolethRadios1" value="1" checked>
@@ -47,6 +54,7 @@
     </label>
   </div>
 {%- else %}
+  <!-- Shibboleth Flag Settings False -->
   <div class="radio">
     <label>
       <input type="radio" name="shibbolethRadios" id="shibbolethRadios1" value="1">
@@ -60,12 +68,65 @@
     </label>
   </div>
 {%- endif %}
-<div class="form-actions">
-<div class="col-sm-offset-2 col-sm-10">
-  <button type="submit" name="submit" value="shib_form" class="btn btn-primary">
-      <span class="glyphicon glyphicon-save"></span>&nbsp
-          {{ _('Save') }}</button>
-</div>
-</div>
+  <div class="form-actions">
+    <!-- Default Role Settings -->
+    <div id="default-role-list" data-value="{{role_list}}">
+      <label>{{_("Default Role")}}</label>
+      <div id="gakunin-role-list" data-value="{{gakunin_role}}">
+        <span class="select-list">{{_("Gakunin IdP")}}</span>
+      </div>
+      <div id="orthros-role-list" data-value="{{orthros_outside_role}}">
+        <span class="select-list">{{_("Outside Orthros")}}</span>
+      </div>
+      <div id="extra-role-list" data-value="{{extra_role}}">
+        <span class="select-list">{{_("Extra IdP")}}</span>
+      </div>
+    </div>
+    
+    <!-- Attiribute Mapping Settings -->
+    <div id="attr-list" data-value="{{attr_list}}">
+      <label>{{_("Attribute Mapping")}}</label>
+      <div id="eppn-attr-list" data-value="{{shib_eppn}}">
+        <span class="select-list">{{_("shib_eppn")}}</span>
+      </div>
+      <div id="role-authority-attr-list" data-value="{{shib_role_authority_name}}">
+        <span class="select-list">{{_("shib_role_authority_name")}}</span>
+      </div>
+      <div id="mail-attr-list" data-value="{{shib_mail}}">
+        <span class="select-list">{{_("shib_mail")}}</span>
+      </div>
+      <div id="user-attr-list" data-value="{{shib_user_name}}">
+        <span class="select-list">{{_("shib_user_name")}}</span>
+      </div>
+    </div>
+
+    <!-- Block User Settings -->
+    <div id="block-user-setting" data-value="{{enable_login_user_list}}">
+      <label>{{_("Block User")}}</label>
+      <div class="block-user-area">
+        <input type="text" id="block_eppn">
+        <button type="button" class="btn btn-success" id="btn_new_block_eppn" onclick="addBlockUser()">
+        <span class="glyphicon glyphicon-plus"></span>&nbsp;
+            {{_('Add')}}</button>
+      </div>
+
+      <div id="block-user-list" class="block-user-area" data-value="{{block_user_list}}">
+        <button type="button" class="btn btn-danger" id="btn_delete_block_eppn" onclick="deleteBlockUser()" >
+          <span class="glyphicon glyphicon-trash"></span>&nbsp;
+          {{ _('Delete') }}
+        </button>
+        <input type="hidden" id="block-eppn-option-list" name="block-eppn-option-list" value="">
+      </div>
+    </div>
+  </div>
+
+  <!-- Save Button -->
+  <div id="shib-save-button">
+    <button type="submit" name="submit" value="shib_form" class="btn btn-primary" >
+        <span class="glyphicon glyphicon-save"></span>&nbsp
+            {{ _('Save') }}
+    </button>
+  </div>
 </form>
+
 {%- endblock body %}
