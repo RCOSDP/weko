@@ -62,7 +62,6 @@ class ShibSettingView(BaseView):
                 'extra_role': default_roles.get('extra_role', current_app.config['WEKO_ACCOUNTS_EXTRA_ROLE']['defaultRole'])
             }
 
-
             # 属性マッピング
             attribute_mappings = AdminSettings.get('attribute_mapping', dict_to_object=False)
             attributes = {
@@ -90,12 +89,14 @@ class ShibSettingView(BaseView):
                         AdminSettings.update('shib_login_enable', {"shib_flg": (shib_flg == '1')})
                         flash(_('Shibboleth flag was updated.'), category='success')
 
+                    # デフォルトロールの更新
                     for key in roles:
                         if roles[key] != new_roles[key]:
                             roles[key] = new_roles[key]
                             flash(_(f'{key.replace("_", " ").title()} was updated.'), category='success')
                         AdminSettings.update('default_role_settings', roles)
                     
+                    # 属性マッピングの更新
                     for key in attributes:
                         if attributes[key] != new_attributes[key]:
                             attributes[key] = new_attributes[key]
@@ -125,7 +126,6 @@ class ShibSettingView(BaseView):
     
     def get_latest_current_app(self):
         _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] = AdminSettings.get('shib_login_enable', dict_to_object=False)['shib_flg']
-
         default_roles = AdminSettings.get('default_role_settings', dict_to_object=False)
         _app.config['WEKO_ACCOUNTS_GAKUNIN_ROLE']['defaultRole'] = default_roles['gakunin_role']
         _app.config['WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE']['defaultRole'] = default_roles['orthros_outside_role']
