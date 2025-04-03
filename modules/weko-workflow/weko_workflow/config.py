@@ -41,6 +41,9 @@ WEKO_WORKFLOW_MAX_ACTIVITY_ID = 99999
 WEKO_WORKFLOW_ACTIVITY_ID_FORMAT = 'A-{}-{}'
 """Activity Id's format (A-YYYYMMDD-NNNNN with NNNNN starts from 00001)."""
 
+WEKO_WORKFLOW_DELETION_ACTIVITY_ID_FORMAT = 'D-{}-{}'
+"""Deletion Activity Id's format (D-YYYYMMDD-NNNNN with NNNNN starts from 00001)."""
+
 WEKO_WORKFLOW_ACTION_ENDPOINTS = {
     'item_login': {
         'endpoint': 'weko_items_ui.index',

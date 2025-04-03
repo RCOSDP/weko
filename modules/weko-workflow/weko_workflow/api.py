@@ -26,7 +26,7 @@ from typing import List
 import urllib.parse
 import uuid
 import traceback
-from datetime import date,datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import os
 
 from flask import abort, current_app, request, session, url_for
@@ -49,8 +49,11 @@ from weko_schema_ui.models import PublishStatus
 from weko_index_tree.api import Indexes
 from weko_user_profiles.models import UserProfile
 
-from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
-    WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB
+from .config import (
+    IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD,
+    WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB,
+    WEKO_WORKFLOW_DELETION_FLOW_TYPE
+)
 from .models import Action as _Action
 from .models import ActionCommentPolicy, ActionFeedbackMail, ActivityRequestMail,\
     ActionIdentifier, ActionJournal, ActionStatusPolicy
@@ -757,8 +760,11 @@ class WorkActivity(object):
             else:
                 activity_update_user = current_user.get_id()
 
+            # 1: registration, 2: deletion
+            for_delete = flow_define.flow_type == WEKO_WORKFLOW_DELETION_FLOW_TYPE
+
             db_activity = _Activity(
-                activity_id=self.get_new_activity_id(),
+                activity_id=self.get_new_activity_id(for_delete),
                 item_id=item_id,
                 workflow_id=activity.get('workflow_id'),
                 flow_id=activity.get('flow_id'),
@@ -825,7 +831,7 @@ class WorkActivity(object):
             else:
                 return db_activity
 
-    def get_new_activity_id(self):
+    def get_new_activity_id(self, for_delete=False):
         """Get new an activity ID.
 
         :return: activity ID.
@@ -835,10 +841,11 @@ class WorkActivity(object):
             # Table lock for calculate new activity id
             if db.get_engine().driver!='pysqlite':
                 db.session.execute(
-                    'LOCK TABLE ' + ActivityCount.__tablename__ + ' IN EXCLUSIVE MODE')
+                    'LOCK TABLE ' + ActivityCount.__tablename__ + ' IN EXCLUSIVE MODE'
+                )
 
             # Calculate activity_id based on id
-            utc_now = datetime.utcnow()
+            utc_now = datetime.now(timezone.utc)
             current_date = utc_now.strftime("%Y-%m-%d")
             today_count = ActivityCount.query.filter_by(date=current_date).one_or_none()
             # Cannot use '.with_for_update()'. FOR UPDATE is not allowed
@@ -848,8 +855,10 @@ class WorkActivity(object):
                 # Calculate aid
                 number = today_count.activity_count + 1
                 if number > current_app.config['WEKO_WORKFLOW_MAX_ACTIVITY_ID']:
-                    raise IndexError('The number is out of range \
-                        (maximum is {}, current is {}'.format(current_app.config['WEKO_WORKFLOW_MAX_ACTIVITY_ID'],number))
+                    raise IndexError(
+                        'The number is out of range (maximum is {}, current is {}'
+                        .format(current_app.config['WEKO_WORKFLOW_MAX_ACTIVITY_ID'], number)
+                    )
                 today_count.activity_count = number
             else:
                 # The default activity Id of the current day
@@ -865,16 +874,19 @@ class WorkActivity(object):
             raise ex
 
         # Activity Id's format
-        activity_id_format = current_app.\
-            config['WEKO_WORKFLOW_ACTIVITY_ID_FORMAT']
+        activity_id_format = (
+            current_app.config["WEKO_WORKFLOW_ACTIVITY_ID_FORMAT"]
+            if not for_delete
+            else current_app.config["WEKO_WORKFLOW_DELETION_ACTIVITY_ID_FORMAT"]
+        )
 
         # A-YYYYMMDD-NNNNN (NNNNN starts from 00001)
         date_str = utc_now.strftime("%Y%m%d")
 
         # Define activity Id of day
         return activity_id_format.format(
-            date_str,
-            '{inc:05d}'.format(inc=number))
+            date_str, "{inc:05d}".format(inc=number)
+        )
 
     def upt_activity_agreement_step(self, activity_id, is_agree):
         """Update agreement step of activity.
