@@ -285,6 +285,62 @@ def confirm_user():
     return abort(400)
 
 
+@blueprint.route('/confim/user/skip', methods=['GET'])
+def confirm_user_without_page():
+    """Check weko user info without page.
+
+    :return:
+    """
+    try:
+        # get shib_session_id from session
+        shib_session_id = session['shib_session_id']
+        if not shib_session_id:
+            flash('shib_session_id', category='error')
+            return _redirect_method()
+
+        # get cache from redis
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+        cache_key = current_app.config[
+            'WEKO_ACCOUNTS_SHIB_CACHE_PREFIX'] + shib_session_id
+
+        # check cache
+        if not datastore.redis.exists(cache_key):
+            flash('cache_key', category='error')
+            return _redirect_method()
+
+        cache_val = datastore.get(cache_key)
+        if not cache_val:
+            flash('cache_val', category='error')
+            datastore.delete(cache_key)
+            return _redirect_method()
+
+        cache_val = json.loads(str(cache_val, encoding='utf-8'))
+        shib_user = ShibUser(cache_val)
+
+        # bind relation info
+        if not shib_user.bind_relation_info(cache_val.get('shib_mail')):
+            flash('FAILED bind_relation_info!', category='error')
+            datastore.delete(cache_key)
+            return _redirect_method()
+
+        # check in
+        error = shib_user.check_in()
+
+        if error:
+            datastore.delete(cache_key)
+            flash(error, category='error')
+            return _redirect_method()
+
+        if shib_user.shib_user:
+            shib_user.shib_user_login()
+        datastore.delete(cache_key)
+        return redirect(session['next'] if 'next' in session else '/')
+    except BaseException:
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
+    return abort(400)
+
+
 @blueprint.route('/shib/login', methods=['GET'])
 def shib_login():
     """Get shibboleth user login page.
@@ -323,10 +379,7 @@ def shib_login():
         csrf_random = generate_random_str(length=64)
         session['csrf_random'] = csrf_random
 
-        _datastore = LocalProxy(
-            lambda: current_app.extensions['security'].datastore)
-        user = _datastore.find_user(
-            email=cache_val.get('shib_mail'))
+        user = find_user_by_email(cache_val)
 
         return render_template(
             current_app.config['WEKO_ACCOUNTS_CONFIRM_USER_TEMPLATE'],
@@ -337,6 +390,13 @@ def shib_login():
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     return abort(400)
 
+def find_user_by_email(shib_attributes):
+    """Find user by email."""
+    _datastore = LocalProxy(
+            lambda: current_app.extensions['security'].datastore)
+    user = _datastore.find_user(email=shib_attributes.get('shib_mail'))
+        
+    return user
 
 @blueprint.route('/shib/login', methods=['POST'])
 def shib_sp_login():
@@ -400,8 +460,13 @@ def shib_sp_login():
         next_url = 'weko_accounts.shib_auto_login'
 
         if not rst:
-            # Relation is not existed, cache shibboleth info to redis.
-            next_url = 'weko_accounts.shib_login'
+            if current_app.config['WEKO_ACCOUNTS_SKIP_CONFIRMATION_PAGE']:
+                user = find_user_by_email(shib_attr)
+                if user:
+                    next_url = 'weko_accounts.confirm_user_without_page'
+            else:
+                # Relation is not existed, cache shibboleth info to redis.
+                next_url = 'weko_accounts.shib_login'
 
         query_string = {
             'SHIB_ATTR_SESSION_ID': shib_session_id,

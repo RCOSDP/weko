@@ -9,7 +9,8 @@ from weko_accounts.api import ShibUser
 from weko_accounts.views import (
     _has_admin_access,
     init_menu,
-    _redirect_method
+    _redirect_method,
+    find_user_by_email
 )
 from weko_admin.models import AdminSettings
 
@@ -216,6 +217,90 @@ def test_confirm_user(client,redis_connect,mocker):
         res = client.post(url,data=form)
         assert res.status_code == 400
 
+#def confirm_user_without_page():
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_confirm_user_without_page -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_confirm_user_without_page(client,redis_connect,mocker):
+    mocker.patch("weko_accounts.views.RedisConnection.connection",return_value=redis_connect)
+    mocker.patch("weko_accounts.views.ShibUser.shib_user_login")
+    url = url_for("weko_accounts.confirm_user_without_page")
+    
+    # not exist shib_session_id
+    set_session(client,{"shib_session_id":None})
+    mock_flash = mocker.patch("weko_accounts.views.flash")
+    client.get(url)
+    mock_flash.assert_called_with("shib_session_id",category="error")
+    
+    # not exist cache_key
+    set_session(client,{"shib_session_id":"2222"})
+    mock_flash = mocker.patch("weko_accounts.views.flash")
+    client.get(url)
+    mock_flash.assert_called_with("cache_key",category="error")
+    
+    set_session(client,{"shib_session_id":"1111"})
+    # not exist cache_value
+    redis_connect.put("Shib-Session-1111",bytes("","utf-8"))
+    mock_flash = mocker.patch("weko_accounts.views.flash")
+    client.get(url)
+    mock_flash.assert_called_with("cache_val",category="error")
+    assert redis_connect.redis.exists("Shib-Session-1111") is False
+    
+    redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
+    with patch("weko_accounts.views.ShibUser.check_weko_user",return_value=True):
+        # shib_user.bind_relation_info is false
+        with patch("weko_accounts.views.ShibUser.bind_relation_info",return_value=False):
+            redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
+            mock_flash = mocker.patch("weko_accounts.views.flash")
+            client.get(url)
+            mock_flash.assert_called_with("FAILED bind_relation_info!",category="error")
+            assert redis_connect.redis.exists("Shib-Session-1111") is False
+        with patch("weko_accounts.views.ShibUser.bind_relation_info",return_value=True):
+            # ShibUser.check_in is error
+            with patch("weko_accounts.views.ShibUser.check_in",return_value="test_error"):
+                redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
+                mock_flash = mocker.patch("weko_accounts.views.flash")
+                client.get(url)
+                mock_flash.assert_called_with("test_error",category="error")
+                assert redis_connect.redis.exists("Shib-Session-1111") is False
+            with patch("weko_accounts.views.ShibUser.check_in",return_value=None):
+                # ShibUser.shib_user is None,not exist next in session
+                redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
+                mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
+                client.get(url)
+                mock_redirect.assert_called_with("/")
+                assert redis_connect.redis.exists("Shib-Session-1111") is False
+                
+                # exist ShibUser.shib_user
+                set_session(client,{"shib_session_id":"1111"})
+                redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
+
+                shibuser = ShibUser({})
+                shibuser.shib_user = "test_user"
+                with patch("weko_accounts.views.ShibUser",return_value=shibuser):
+                    mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
+                    mock_flash = mocker.patch("weko_accounts.views.flash")
+                    client.get(url)
+                    mock_redirect.assert_called_with("/")
+                    assert redis_connect.redis.exists("Shib-Session-1111") is False
+                
+                # exist ShibUser.shib_user
+                set_session(client,{"shib_session_id":"1111","next":"/next_page"})
+                redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
+
+                shibuser = ShibUser({})
+                shibuser.shib_user = "test_user"
+                with patch("weko_accounts.views.ShibUser",return_value=shibuser):
+                    mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
+                    mock_flash = mocker.patch("weko_accounts.views.flash")
+                    client.get(url)
+                    mock_redirect.assert_called_with("/next_page")
+                    assert redis_connect.redis.exists("Shib-Session-1111") is False
+    
+    # raise BaseException
+    with patch("weko_accounts.views._redirect_method",side_effect=BaseException("test_error")):
+        res = client.get(url)
+        assert res.status_code == 400
+
+
 #def shib_login():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_shib_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_shib_login(client,redis_connect,users,mocker):
@@ -331,13 +416,35 @@ def test_shib_sp_login(client, redis_connect,mocker, db):
     with patch("weko_accounts.views.ShibUser.get_relation_info",return_value=None):
         res = client.post(url,data=form)
         assert res.status_code == 200
-        #assert res.url == "/weko/shib/login?SHIB_ATTR_SESSION_ID=1111&_method=GET"
+        assert res.data.decode() == "/weko/shib/login?SHIB_ATTR_SESSION_ID=1111&next=%2F"
     # shib_user.get_relation_info is not None
     with patch("weko_accounts.views.ShibUser.get_relation_info",return_value="chib_user"):
         res = client.post(url,data=form)
         assert res.status_code == 200
-        #assert res == "/weko/auto/login?SHIB_ATTR_SESSION_ID=1111&_method=GET"
-    
+        assert res.data.decode() == "/weko/auto/login?SHIB_ATTR_SESSION_ID=1111&next=%2F"
+
+    current_app.config.update(
+        WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED=True,
+        WEKO_ACCOUNTS_SKIP_CONFIRMATION_PAGE=True
+    )
+    # shib_user.get_relation_info is None
+    with patch("weko_accounts.views.ShibUser.get_relation_info",return_value=None):
+        with patch("weko_accounts.views.find_user_by_email",return_value="shib_user"):
+            res = client.post(url,data=form)
+            assert res.status_code == 200
+            assert res.data.decode() == "/weko/confim/user/skip?SHIB_ATTR_SESSION_ID=1111&next=%2F"
+
+        with patch("weko_accounts.views.find_user_by_email",return_value=None):
+            res = client.post(url,data=form)
+            assert res.status_code == 200
+            assert res.data.decode() == "/weko/auto/login?SHIB_ATTR_SESSION_ID=1111&next=%2F"
+
+    # shib_user.get_relation_info is not None
+    with patch("weko_accounts.views.ShibUser.get_relation_info",return_value="shib_user"):      
+        res = client.post(url,data=form)
+        assert res.status_code == 200
+        assert res.data.decode() == "/weko/auto/login?SHIB_ATTR_SESSION_ID=1111&next=%2F"
+
     # raise BaseException
     with patch("weko_accounts.views.flash",side_effect=BaseException("test_error")):
         mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",return_value=make_response())
@@ -377,3 +484,15 @@ def test_shib_logout(client, mocker):
     mocker.patch("weko_accounts.views.ShibUser.shib_user_logout")
     res = client.get(url_for("weko_accounts.shib_logout"))
     assert res.data == bytes("logout success","utf-8")
+
+# def find_user_by_email(shib_attributes):
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_find_user_by_email -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_find_user_by_email(app, users):
+    
+    with app.test_request_context():
+        user = find_user_by_email({"shib_mail": users[0].get("email")})
+        assert user.email == users[0].get("email")
+        assert user.id == users[0].get("id")
+
+        user = find_user_by_email({"shib_mail": "invalid.email@nii.ac.jp"})
+        assert user is None
