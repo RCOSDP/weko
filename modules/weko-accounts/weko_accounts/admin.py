@@ -76,19 +76,20 @@ class ShibSettingView(BaseView):
             block_user_settings = AdminSettings.get('blocked_user_settings', dict_to_object=False)
             block_user_list = block_user_settings.get('blocked_ePPNs', [])
 
-
             if request.method == 'POST':
                 # Process forms
                 form = request.form.get('submit', None)
                 new_shib_flg = request.form.get('shibbolethRadios', '0')
+                new_attributes = {key: request.form.get(f'attr-lists{i}', '0') for i, key in enumerate(attributes)}
                 new_roles = {key: request.form.get(f'role-lists{i}', '0') for i, key in enumerate(roles)}
                 new_block_user_list = request.form.get('block-eppn-option-list', '0')
 
                 if form == 'shib_form':
                     if shib_flg != new_shib_flg:
                         shib_flg = new_shib_flg
-                        _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] = (shib_flg == '1')
+                        AdminSettings.update('shib_login_enable', {"shib_flg": (shib_flg == '1')})
                         flash(_('Shibboleth flag was updated.'), category='success')
+
 
                     for key in roles:
                         if roles[key] != new_roles[key]:
@@ -96,6 +97,12 @@ class ShibSettingView(BaseView):
                             flash(_(f'{key.replace("_", " ").title()} was updated.'), category='success')
                         AdminSettings.update('default_role_settings', roles)
                         
+                    for key in attributes:
+                        if attributes[key] != new_attributes[key]:
+                            attributes[key] = new_attributes[key]
+                            flash(_(f'{key.replace("_", " ").title()} mapping was updated.'), category='success')
+                        AdminSettings.update('attribute_mapping', attributes)
+
                     # ブロックユーザーの更新    
                     if block_user_list != json.loads(new_block_user_list):
                         new_eppn_list = json.loads(new_block_user_list)
@@ -106,9 +113,6 @@ class ShibSettingView(BaseView):
                             _('Blocked user list was updated.'),
                             category='success')
                         block_user_list = str(new_eppn_list).replace('"', '\\"')
-                        
-                        flash(_('Shibboleth flag was updated.'), category='success')
-                    
             
             self.get_latest_current_app()
 
@@ -122,7 +126,6 @@ class ShibSettingView(BaseView):
     
     def get_latest_current_app(self):
         _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] = AdminSettings.get('shib_login_enable', dict_to_object=False)['shib_flg']
-
         default_roles = AdminSettings.get('default_role_settings', dict_to_object=False)
         _app.config['WEKO_ACCOUNTS_GAKUNIN_ROLE']['defaultRole'] = default_roles['gakunin_role']
         _app.config['WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE']['defaultRole'] = default_roles['orthros_outside_role']

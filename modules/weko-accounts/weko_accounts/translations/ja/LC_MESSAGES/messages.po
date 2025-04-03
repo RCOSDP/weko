@@ -28,6 +28,8 @@ msgid "Shibboleth flag was updated."
 msgstr "Shibboleth設定を更新しました"
 
 #: weko_accounts/admin.py:
+msgid "Shib User Name mapping was updated."
+msgstr "属性マッピング設定（shib_user_name）を更新しました"
 msgid "Gakunin Role was updated."
 msgstr "学認IdP のロール設定を更新しました"
 
@@ -38,6 +40,18 @@ msgstr "機関外のOrthros のロール設定を更新しました"
 #: weko_accounts/admin.py:
 msgid "Extra Role was updated."
 msgstr "その他 のロール設定を更新しました"
+
+#: weko_accounts/admin.py:
+msgid "Shib Eppn mapping was updated."
+msgstr "属性マッピング設定（shib_eppn）を更新しました"
+
+#: weko_accounts/admin.py:
+msgid "Shib Role Authority Name mapping was updated."
+msgstr "属性マッピング設定（shib_role_authority_name）を更新しました"
+
+#: weko_accounts/admin.py:
+msgid "Shib Mail mapping was updated."
+msgstr "属性マッピング設定（shib_mail）を更新しました"
 
 #: weko_accounts/admin.py:
 msgid "Blocked user list was updated."

@@ -75,28 +75,31 @@ WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP = {
 """IdP attribute map."""
 
 WEKO_ACCOUNTS_ATTRIBUTE_MAP = {
-    'shib_eppn': 'eduPersonPrincipalName',
+    'shib_eppn': 'eppn',
     'shib_role_authority_name': 'eduPersonAffiliation',
     'shib_mail': 'mail',
-    'shib_user_name': 'displayName'
+    'shib_user_name': 'DisplayName'
 }
 """IdP attribute map."""
 
 WEKO_ACCOUNTS_ATTRIBUTE_LIST = [
+    'eppn',
+    'DisplayName',
     'mail',
+    'eduPersonOrcid',
+    'jasn',
+    'jaGivenName',
+    'jaDisplayName',
+    'jao',
+    'jaou',
+    'isMemberOf',
     'sn',
     'o',
     'ou',
     'givenName',
-    'displayName',
     'eduPersonAffiliation',
-    'eduPersonPrincipalName',
-    'eduPersonEntitlement',
     'eduPersonScopedAffiliation',
-    'eduPersonTargetedID',
-    'eduPersonAssurance',
-    'eduPersonUniqueId',
-    'eduPersonOrcid'
+    'eduPersonTargetedID'
 ]
 """Attribute List."""
 

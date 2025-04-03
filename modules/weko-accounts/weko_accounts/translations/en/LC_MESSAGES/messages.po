@@ -40,6 +40,22 @@ msgid "Extra Role was updated."
 msgstr ""
 
 #: weko_accounts/admin.py:
+msgid "Shib Eppn mapping was updated."
+msgstr "Shibboleth Eppn mapping was updated."
+
+#: weko_accounts/admin.py:
+msgid "Shib Role Authority Name mapping was updated."
+msgstr "Shibboleth Role Authority Name mapping was updated."
+
+#: weko_accounts/admin.py:
+msgid "Shib Mail mapping was updated."
+msgstr "Shibboleth Mail mapping was updated."
+
+#: weko_accounts/admin.py:
+msgid "Shib User Name mapping was updated."
+msgstr "Shibboleth User Name mapping was updated."
+
+#: weko_accounts/admin.py:
 msgid "Blocked user list was updated."
 msgstr "Updated User Login Block settings"
 

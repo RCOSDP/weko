@@ -504,3 +504,14 @@ ${INVENIO_WEB_INSTANCE} facet_search_setting create \
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \
        "Data Type"	"デ一タタイプ"	"description.value"	"[{'agg_value': 'Other', 'agg_mapping': 'description.descriptionType'}]"	True   SelectBox     7      True
 # create-facet-search-setting-end
+
+# update-shib-admin-setting-begin
+${INVENIO_WEB_INSTANCE} shib_admin_setting update \
+       "shib_eppn" "eduPersonPrincipalName"
+${INVENIO_WEB_INSTANCE} shib_admin_setting update \
+       "shib_mail" "mail"      
+${INVENIO_WEB_INSTANCE} shib_admin_setting update \
+       "shib_user_name" "displayName"                         
+${INVENIO_WEB_INSTANCE} shib_admin_setting update \
+       "shib_role_authority_name" "eduPersonAffiliation"
+# update-shib-admin-setting-end
