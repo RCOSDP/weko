@@ -62,7 +62,6 @@ class ShibSettingView(BaseView):
                 'extra_role': default_roles.get('extra_role', current_app.config['WEKO_ACCOUNTS_EXTRA_ROLE']['defaultRole'])
             }
 
-
             # 属性マッピング
             attribute_mappings = AdminSettings.get('attribute_mapping', dict_to_object=False)
             attributes = {
@@ -75,14 +74,14 @@ class ShibSettingView(BaseView):
             # ブロックユーザー
             block_user_settings = AdminSettings.get('blocked_user_settings', dict_to_object=False)
             block_user_list = block_user_settings.get('blocked_ePPNs', [])
-
+            
             if request.method == 'POST':
                 # Process forms
                 form = request.form.get('submit', None)
                 new_shib_flg = request.form.get('shibbolethRadios', '0')
-                new_attributes = {key: request.form.get(f'attr-lists{i}', '0') for i, key in enumerate(attributes)}
-                new_roles = {key: request.form.get(f'role-lists{i}', '0') for i, key in enumerate(roles)}
-                new_block_user_list = request.form.get('block-eppn-option-list', '0')
+                new_roles = {key: request.form.get(f'role-lists{i}', []) for i, key in enumerate(roles)}
+                new_attributes = {key: request.form.get(f'attr-lists{i}', []) for i, key in enumerate(attributes)}
+                new_block_user_list = request.form.get('block-eppn-option-list', "[]")
 
                 if form == 'shib_form':
                     if shib_flg != new_shib_flg:
@@ -90,13 +89,14 @@ class ShibSettingView(BaseView):
                         AdminSettings.update('shib_login_enable', {"shib_flg": (shib_flg == '1')})
                         flash(_('Shibboleth flag was updated.'), category='success')
 
-
+                    # デフォルトロールの更新
                     for key in roles:
                         if roles[key] != new_roles[key]:
                             roles[key] = new_roles[key]
                             flash(_(f'{key.replace("_", " ").title()} was updated.'), category='success')
                         AdminSettings.update('default_role_settings', roles)
-                        
+                    
+                    # 属性マッピングの更新
                     for key in attributes:
                         if attributes[key] != new_attributes[key]:
                             attributes[key] = new_attributes[key]
@@ -113,7 +113,7 @@ class ShibSettingView(BaseView):
                             _('Blocked user list was updated.'),
                             category='success')
                         block_user_list = str(new_eppn_list).replace('"', '\\"')
-            
+                               
             self.get_latest_current_app()
 
             return self.render(

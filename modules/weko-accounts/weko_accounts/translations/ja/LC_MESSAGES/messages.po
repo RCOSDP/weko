@@ -30,6 +30,8 @@ msgstr "Shibboleth設定を更新しました"
 #: weko_accounts/admin.py:
 msgid "Shib User Name mapping was updated."
 msgstr "属性マッピング設定（shib_user_name）を更新しました"
+
+#: weko_accounts/admin.py:
 msgid "Gakunin Role was updated."
 msgstr "学認IdP のロール設定を更新しました"
 
