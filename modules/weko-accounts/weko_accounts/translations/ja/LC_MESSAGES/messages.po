@@ -28,6 +28,18 @@ msgid "Shibboleth flag was updated."
 msgstr "Shibboleth設定を更新しました"
 
 #: weko_accounts/admin.py:
+msgid "Gakunin Role was updated."
+msgstr "学認IdP のロール設定を更新しました"
+
+#: weko_accounts/admin.py:
+msgid "Orthros Outside Role was updated."
+msgstr "機関外のOrthros のロール設定を更新しました"
+
+#: weko_accounts/admin.py:
+msgid "Extra Role was updated."
+msgstr "その他 のロール設定を更新しました"
+
+#: weko_accounts/admin.py:
 msgid "Blocked user list was updated."
 msgstr "ユーザーログインブロック設定を更新しました"
 

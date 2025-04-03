@@ -28,6 +28,18 @@ msgid "Shibboleth flag was updated."
 msgstr "Updated Shibboleth settings"
 
 #: weko_accounts/admin.py:
+msgid "Gakunin Role was updated."
+msgstr ""
+
+#: weko_accounts/admin.py:
+msgid "Orthros Outside Role was updated."
+msgstr "Orthros Role was updated."
+
+#: weko_accounts/admin.py:
+msgid "Extra Role was updated."
+msgstr ""
+
+#: weko_accounts/admin.py:
 msgid "Blocked user list was updated."
 msgstr "Updated User Login Block settings"
 

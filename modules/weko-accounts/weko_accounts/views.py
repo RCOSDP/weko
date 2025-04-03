@@ -76,8 +76,7 @@ def init_menu():
         visible_when=_has_admin_access,
         order=100)
     
-    _adjust_shib_admin_DB()
-
+@blueprint.before_app_first_request
 def _adjust_shib_admin_DB():
     """
     Create or Update Shibboleth Admin database table.
@@ -106,72 +105,7 @@ def _adjust_shib_admin_DB():
             setting = AdminSettings.query.filter_by(name='shib_login_enable').first()
             setting.settings = {"shib_flg": _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']}
             db.session.commit()
-
-        if AdminSettings.query.filter_by(name='default_role_settings').first() is None:
-            max_id = db.session.query(db.func.max(AdminSettings.id)).scalar()
-            new_setting = AdminSettings(
-                id=max_id + 1,
-                name="default_role_settings",
-                settings={
-                    "gakunin_role": _app.config['WEKO_ACCOUNTS_GAKUNIN_ROLE']['defaultRole'],
-                    "orthros_outside_role": _app.config['WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE']['defaultRole'],
-                    "extra_role": _app.config['WEKO_ACCOUNTS_EXTRA_ROLE']['defaultRole']}
-            )
-            db.session.add(new_setting)
-            db.session.commit()
-        else:
-            setting = AdminSettings.query.filter_by(name='default_role_settings').first()
-            setting.settings = {
-                "gakunin_role": _app.config['WEKO_ACCOUNTS_GAKUNIN_ROLE']['defaultRole'],
-                "orthros_outside_role": _app.config['WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE']['defaultRole'],
-                "extra_role": _app.config['WEKO_ACCOUNTS_EXTRA_ROLE']['defaultRole']}
-            db.session.commit()
-
-        if AdminSettings.query.filter_by(name='attribute_mapping').first() is None:
-            max_id = db.session.query(db.func.max(AdminSettings.id)).scalar()
-            new_setting = AdminSettings(
-                id=max_id + 1,
-                name="attribute_mapping",
-                settings=_app.config['WEKO_ACCOUNTS_ATTRIBUTE_MAP']
-            )
-            db.session.add(new_setting)
-            db.session.commit()
-        else:
-            setting = AdminSettings.query.filter_by(name='attribute_mapping').first()
-            setting.settings = _app.config['WEKO_ACCOUNTS_ATTRIBUTE_MAP']
-            db.session.commit()
-
-    _adjust_shib_admin_DB()
-
-def _adjust_shib_admin_DB():
-    """
-    Create or Update Shibboleth Admin database table.
-    """
-    with _app.app_context():
-        if AdminSettings.query.filter_by(name='blocked_user_settings').first() is None:
-            max_id = db.session.query(db.func.max(AdminSettings.id)).scalar()
-            new_setting = AdminSettings(
-                id=max_id + 1,
-                name="blocked_user_settings",
-                settings={"blocked_ePPNs": []}
-            )
-            db.session.add(new_setting)
-            db.session.commit()
-
-        if AdminSettings.query.filter_by(name='shib_login_enable').first() is None:
-            max_id = db.session.query(db.func.max(AdminSettings.id)).scalar()
-            new_setting = AdminSettings(
-                id=max_id + 1,
-                name="shib_login_enable",
-                settings={"shib_flg": _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']}
-            )
-            db.session.add(new_setting)
-            db.session.commit()
-        else:
-            setting = AdminSettings.query.filter_by(name='shib_login_enable').first()
-            setting.settings = {"shib_flg": _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']}
-            db.session.commit()
-
+        
         if AdminSettings.query.filter_by(name='default_role_settings').first() is None:
             max_id = db.session.query(db.func.max(AdminSettings.id)).scalar()
             new_setting = AdminSettings(
