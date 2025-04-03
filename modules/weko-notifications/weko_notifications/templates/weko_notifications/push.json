@@ -1,0 +1,73 @@
+{
+  "registered": {
+    "name": "Registered",
+    "description": "Notification for new item registration",
+    "type": [
+      "Announce",
+      "coar-notify:IngestAction"
+    ],
+    "templates": {
+      "en": {
+        "title": "Your item is now registered",
+        "body": "\"{{ object_name }}\" has been registered by {{ actor_name }}."
+      },
+      "ja": {
+        "title": "アイテムが登録されました",
+        "body": "\"{{ object_name }}\" が {{ actor_name }} によって登録されました。"
+      }
+    }
+  },
+  "request_approval": {
+    "name": "Request_approval",
+    "description": "Notification for new item registration request received.",
+    "type": [
+      "Offer",
+      "coar-notify:EndorsementAction"
+    ],
+    "templates": {
+      "en": {
+        "title": "You have a new request for item registration",
+        "body": "\"{{ object_name }}\" has been requested for registration by {{ actor_name }}."
+      },
+      "ja": {
+        "title": "アイテム登録のリクエストが届きました",
+        "body": "\"{{ object_name }}\" の登録が {{ actor_name }} によってリクエストされました。"
+      }
+    }
+  },
+  "approved": {
+    "name": "Approved",
+    "description": "Notification for new item registration request approved.",
+    "type": [
+      "Announce",
+      "coar-notify:EndorsementAction"
+    ],
+    "templates": {
+      "en": {
+        "title": "Your item is now approved",
+        "body": "\"{{ object_name }}\" has been approved by {{ actor_name }}."
+      },
+      "ja": {
+        "title": "アイテムが承認されました",
+        "body": "\"{{ object_name }}\" が {{ actor_name }} によって承認されました。"
+      }
+    }
+  },
+  "rejected": {
+    "name": "Rejected",
+    "description": "Notification for new item registration request rejected.",
+    "type": [
+      "Reject"
+    ],
+    "templates": {
+      "en": {
+        "title": "Your item is now rejected",
+        "body": "\"{{ object_name }}\" has been rejected by {{ actor_name }}."
+      },
+      "ja": {
+        "title": "アイテムが却下されました",
+        "body": "\"{{ object_name }}\" が {{ actor_name }} によって却下されました。"
+      }
+    }
+  }
+}

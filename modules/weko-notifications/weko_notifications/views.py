@@ -23,7 +23,9 @@ from weko_user_profiles.utils import current_userprofile
 
 from .forms import NotificationsForm, handle_notifications_form
 from .models import NotificationsUserSettings
-from .utils import create_userprofile, inbox_url, create_subscription
+from .utils import (
+    create_userprofile, inbox_url, create_subscription, get_push_template
+)
 
 
 blueprint = Blueprint(
@@ -40,6 +42,28 @@ blueprint_ui = Blueprint(
     static_folder="static",
     url_prefix="/account/settings/notifications/"
 )
+
+@blueprint.before_app_first_request
+def init_push_templates():
+    """Initialize push template."""
+    templates = get_push_template()
+    if not templates:
+        return
+
+    for template in templates:
+        try:
+            requests.post(
+                inbox_url("/push-template"),
+                json=template
+            )
+        except requests.RequestException as ex:
+            traceback.print_exc()
+            current_app.logger.error(
+                f"Error updating push template. "
+            )
+            return
+    current_app.logger.info("Push templates updated successfully.")
+
 
 @blueprint_ui.route("/", methods=["GET", "POST"])
 @login_required
@@ -116,7 +140,7 @@ def notifications_form_factory():
 
     form = NotificationsForm(
         subscribe_webpush=False,
-        wwbpush_endpoint="",
+        webpush_endpoint="",
         webpush_expiration_time="",
         webpush_p256dh="",
         webpush_auth="",

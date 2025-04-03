@@ -7,7 +7,9 @@
 
 """Module of weko-notifications."""
 
+import os
 import re
+import json
 import pytz
 from datetime import datetime
 
@@ -106,3 +108,44 @@ def create_userprofile(userprofile):
     }
 
     return userprofile
+
+
+def get_push_template():
+    """Get the push template.
+
+    Returns:
+        dict: The push template.
+    """
+    template_path = current_app.config["WEKO_NOTIFICATIONS_PUSH_TEMPLATE_PATH"]
+    if (
+        not template_path
+        or not os.path.isfile(template_path)
+    ):
+        current_app.logger.error(
+            "Push template path is not set or file does not exist: {}"
+            .format(template_path)
+        )
+        return None
+
+    with open(template_path, "r", encoding="utf-8") as template_file:
+        template = json.load(template_file)
+
+    if not isinstance(template, dict):
+        current_app.logger.error(
+            "Push template is not a valid JSON object: {}".format(template_path)
+        )
+        return None
+
+    templates = [
+        {
+            "name": value.get("name"),
+            "description": value.get("description"),
+            "type": value.get("type"),
+            "language": lang,
+            "title": tpl.get("title"),
+            "body": tpl.get("body"),
+        }
+        for _, value in template.items()
+        for lang, tpl in value.get("templates", {}).items()
+    ]
+    return templates

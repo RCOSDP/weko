@@ -30,3 +30,6 @@ COAR_NOTIFY_CONTEXT = [
     "https://coar-notify.net"
 ]
 """COAR-Notify context."""
+
+WEKO_NOTIFICATIONS_PUSH_TEMPLATE_PATH = ""
+"""Path to the push template."""
