@@ -28,6 +28,7 @@ from weko_search_ui.utils import (
     check_jsonld_import_items
 )
 from weko_workflow.api import WorkActivity, WorkFlow as WorkFlows
+from weko_workflow.errors import WekoWorkflowException
 from weko_workflow.headless import HeadlessActivity
 from weko_workflow.models import  WorkFlow
 
@@ -43,7 +44,14 @@ def check_import_file_format(file, packaging):
         packaging (str): Packaging in request header
 
     Raises:
-        WekoSwordserverException: _description_
+        WekoSwordserverException:
+            - If packaging format is not SWORDBagIt or SimpleZip
+            - If metadata file is not found in SWORDBagIt
+            - If metadata file is not found in SimpleZip
+            - If packaging format is SimpleZip but sword.json is found
+            - If packaging format is SimpleZip but ro-crate-metadata.json is not found
+            - If packaging format is SimpleZip but other metadata file is not found
+            - If packaging format is not accept
 
     Returns:
         str: Import file format
@@ -114,8 +122,13 @@ def get_shared_id_from_on_behalf_of(on_behalf_of):
 
     Args:
         on_behalf_of (str): On-behalf-of in request
+
     Returns:
-        int: Shared ID
+        int: Shared user ID
+
+    Raises:
+        WekoSwordserverException:
+            If an error occurs while searching user by On-Behalf-Of.
     """
     shared_id = -1
     if on_behalf_of is None:
@@ -231,6 +244,12 @@ def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
         shared_id = kwargs.get("shared_id", -1)
 
         sword_client = SwordClient.get_client_by_id(client_id)
+        if sword_client is None:
+            current_app.logger.error(f"No setting foound for client ID: {client_id}")
+            raise WekoSwordserverException(
+                "No setting found for client ID that you are using.",
+                errorType=ErrorType.ServerError
+            )
         mapping_id = sword_client.mapping_id
         # Check workflow and item type
         register_type = sword_client.registration_type
@@ -250,6 +269,12 @@ def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
 
         if register_type == "Workflow":
             workflow = WorkFlows().get_workflow_by_id(sword_client.workflow_id)
+            if workflow is None or workflow.is_deleted:
+                current_app.logger.error(f"Workflow not found for client ID: {client_id}")
+                raise WekoSwordserverException(
+                    "Workflow not found for registration your item.",
+                    errorType=ErrorType.ServerError
+                )
             item_type_id = check_result.get("item_type_id")
             # Check if workflow and item type match
             if workflow.itemtype_id != item_type_id:
@@ -326,65 +351,41 @@ def update_item_ids(list_record, new_id):
 
 
 def delete_items_with_activity(item_id, request_info):
-    activity = WorkActivity()
+    """Delete items with activity.
 
-    workflow = activity.get_workflow_activity_by_item_id(item_id)
-    if workflow is None:
-        workflows = WorkFlows()
-        """get_workflow_activity_by_item_idで取得できなかったときにすること
+    Args:
+        item_id (str): Item ID.
+        request_info (dict): Request information.
 
-        from invenio_pidstore.models import PersistentIdentifier から itemidからobjectuuidを取得
+    Returns:
+        str: URL for deletion.
 
-        ItemsMetadataでobjectuuidからitemtypeを取得
-
-        itemtypeでworkflow_idを取得"""
-        pid = PersistentIdentifier.query.filter_by(pid_value=item_id).one_or_none()
-        if pid is None:
-            raise WekoSwordserverException(
-                f"Item ID {item_id} not found.",
-                ErrorType.NotFound
-            )
-        object_uuid = pid.object_uuid
-
-        item_metadata = ItemsMetadata.get_by_object_id(object_uuid)
-        if item_metadata is None:
-            raise WekoSwordserverException(
-                f"Item metadata not found for item ID {item_id}.",
-                ErrorType.NotFound
-            )
-        item_type_id = item_metadata.item_type_id
-
-        workflow = workflows.get_workflow_by_itemtype_id(item_type_id)
-        if workflow is None:
-            raise WekoSwordserverException(
-                f"Workflow not found for item ID {item_id}.",
-                ErrorType.NotFound
-            )
-
-    workflow_id = workflow.id
+    Raises:
+        WekoWorkflowException: If any error occurs during deletion.
+    """
     user_id=request_info.get("user_id")
     community_id=request_info.get("community_id")
 
     try:
         headless = HeadlessActivity()
         url = headless.init_activity(
-            user_id=user_id, workflow_id=workflow_id, community_id=community_id,
+            user_id=user_id, community_id=community_id,
             item_id=item_id, for_delete=True
         )
-        # headless.delete(item_id)
-
-    except Exception as ex:
+    except WekoWorkflowException as ex:
         traceback.print_exc()
-        raise WekoSwordserverException(
-            f"An error occurred while {headless.current_action}.",
-            ErrorType.ServerError
-        ) from ex
+        raise
 
     return url
 
 
-def get_register_format():
-    """Get register format and validate SWORD client.
+def get_deletion_type(client_id):
+    """Get deletion type.
+
+    Get deletion type for item deletion from client_id.
+
+    Args:
+        client_id (str): Client ID.
 
     Returns:
         dict: A dictionary containing register_format, workflow_id, and item_type_id.
@@ -393,19 +394,19 @@ def get_register_format():
         WekoSwordserverException: If any validation fails.
     """
     client_id = request.oauth.client.client_id
-    sword_client, sword_mapping = get_record_by_client_id(client_id)
-    if sword_mapping is None:
-        current_app.logger.error(f"Mapping not defined for sword client.")
+    sword_client = SwordClient.get_client_by_id(client_id)
+    if sword_client is None:
+        current_app.logger.error(f"No setting found for client ID: {client_id}")
         raise WekoSwordserverException(
-            "Metadata mapping not defined for registration your item.",
+            "No setting found for client ID that you are using.",
             errorType=ErrorType.ServerError
         )
 
-    # Check workflow and item type
-    register_format = sword_client.registration_type
+    register_type = sword_client.registration_type
+    deletion_type = "Direct"
     workflow = None
     delete_flow_id = None
-    if register_format == "Workflow":
+    if register_type == "Workflow":
         workflow = WorkFlows().get_workflow_by_id(sword_client.workflow_id)
         if workflow is None or workflow.is_deleted:
             current_app.logger.error(f"Workflow not found for sword client.")
@@ -413,31 +414,13 @@ def get_register_format():
                 "Workflow not found for registration your item.",
                 errorType=ErrorType.ServerError
             )
-        # Check if workflow and item type match
-        if workflow.itemtype_id != sword_mapping.item_type_id:
-            current_app.logger.error(
-                "Item type and workflow do not match. "
-                f"ItemType ID must be {sword_mapping.item_type_id}, "
-                f"but the workflow's ItemType ID was {workflow.itemtype_id}.")
-            raise WekoSwordserverException(
-                "Item type and workflow do not match.",
-                errorType=ErrorType.ServerError
-            )
 
         # Check if workflow has delete_flow_id
-        delete_flow_id = WorkFlow.query.filter_by(id=sword_client.workflow_id).one_or_none().delete_flow_id
-
-    item_type = ItemTypes.get_by_id(sword_mapping.item_type_id)
-    if item_type is None:
-        current_app.logger.error(f"Item type not found for sword client.")
-        raise WekoSwordserverException(
-            "Item type not found for registration your item.",
-            errorType=ErrorType.ServerError
-        )
+        delete_flow_id = workflow.delete_flow_id
+        deletion_type = "Workflow" if delete_flow_id else "Direct"
 
     return {
-        "register_format": register_format,
+        "deletion_type": deletion_type,
         "workflow_id": sword_client.workflow_id,
         "delete_flow_id": delete_flow_id,
-        "item_type_id": item_type.id
     }

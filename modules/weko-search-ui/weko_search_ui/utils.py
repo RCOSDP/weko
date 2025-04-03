@@ -2172,14 +2172,16 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
 
 
 def import_items_to_activity(item, request_info):
-    workflow_id = request_info.get("workflow_id")
-    # when metadata format was XML, get id from admin setting
-    if workflow_id is None:
-        settings = AdminSettings.get("sword_api_setting", dict_to_object=False)
-        default_format = settings.get("default_format", "XML")
-        data_format = settings.get("data_format")
-        workflow_id = int(data_format.get(default_format, {}).get("workflow", "-1"))
+    """Import items to activity.
 
+    Args:
+        item (dict): Item metadata.
+        request_info (dict): Information from request.
+
+    Returns:
+        tuple: URL, recid, current action, error message.
+    """
+    workflow_id = request_info.get("workflow_id")
     item_id = item.get("id")
     metadata = item.get("metadata")
     index = metadata.get("path")

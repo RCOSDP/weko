@@ -11,10 +11,9 @@ from __future__ import absolute_import, print_function
 
 import os
 import shutil
-import traceback
 from datetime import datetime, timedelta
 
-from flask import Blueprint, current_app, jsonify, request, url_for, abort
+from flask import Blueprint, current_app, jsonify, request, url_for, abort, Response
 from flask_login import current_user
 from flask_limiter.errors import RateLimitExceeded
 from sword3common import (
@@ -25,6 +24,7 @@ from werkzeug.http import parse_options_header
 
 from invenio_db import db
 from invenio_deposit.scopes import write_scope, actions_scope
+from invenio_files_rest.permissions import has_update_version_role
 from invenio_oaiserver.api import OaiIdentify
 from invenio_oauth2server.decorators import require_oauth_scopes
 from invenio_oauth2server.ext import verify_oauth_token_and_set_current_user
@@ -32,6 +32,8 @@ from invenio_oauth2server.provider import oauth2
 
 from weko_accounts.utils import roles_required
 from weko_admin.api import TempDirInfo
+from weko_deposit.api import WekoRecord
+from weko_items_ui.scopes import item_update_scope, item_delete_scope
 from weko_records.api import JsonldMapping
 from weko_records_ui.utils import get_record_permalink, soft_delete
 from weko_search_ui.utils import import_items_to_system, import_items_to_activity
@@ -47,7 +49,7 @@ from .utils import (
     is_valid_file_hash,
     check_import_items,
     delete_items_with_activity,
-    get_register_format,
+    get_deletion_type,
     update_item_ids,
     get_shared_id_from_on_behalf_of
 )
@@ -428,6 +430,7 @@ def post_service_document():
 @oauth2.require_oauth()
 @limiter.limit("")
 @require_oauth_scopes(write_scope.id)
+@require_oauth_scopes(item_update_scope.id)
 @roles_required(WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE)
 @check_on_behalf_of()
 @check_package_contents()
@@ -794,6 +797,10 @@ def _get_status_workflow_document(activity_id, recid):
 
 @blueprint.route("/deposit/<recid>", methods=["DELETE"])
 @oauth2.require_oauth()
+@limiter.limit("")
+@require_oauth_scopes(write_scope.id)
+@require_oauth_scopes(item_delete_scope.id)
+@roles_required(WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE)
 @check_on_behalf_of()
 def delete_item(recid):
     """ Delete the Object in its entirety from the server, along with all Metadata and Files. """
@@ -817,69 +824,49 @@ def delete_item(recid):
         * If the server does not allow this method in this context at this time, MAY respond with a 405 (MethodNotAllowed)
         * If the server does not support On-Behalf-Of deposit and the On-Behalf-Of header has been provided, MAY respond with a 412 (OnBehalfOfNotAllowed)
     """
-    # リクエストのアイテムIDがあるかのチェック
-    # Get status document
+    # check if the item exists
     _ = _get_status_document(recid)
+    has_update_version_role(current_user)
 
-    #  設定値を取ってきて、ダイレクトなのかワークフローなのかを判断するget_register_formatを使用
-    check_result = get_register_format()
+    record = WekoRecord.get_record_by_pid(recid)
+    if record.pid_doi:
+        current_app.logger.error(f"Cannot delete item with DOI; item id {recid}")
+        raise WekoSwordserverException(
+            "Cannot delete item with DOI.", ErrorType.BadRequest
+        )
 
-    register_format = check_result.get("register_format")
-    delete_flow_id = check_result.get("delete_flow_id")
-    # register_format = "Direct"
+    client_id = request.oauth.client.client_id
+    check_result = get_deletion_type(client_id)
 
-    # 設定値がworkflowの場合かつ削除用フローIDがある場合
-    if register_format == "Workflow" and delete_flow_id:
+    deletion_type = check_result.get("deletion_type")
 
-        # スコープのチェック
+    owner = -1
+    if current_user.is_authenticated:
+        owner = current_user.id
+    request_info = {
+        "remote_addr": request.remote_addr,
+        "referrer": request.referrer,
+        "hostname": request.host,
+        "user_id": owner,
+        "action": "DELETE"
+    }
+
+    response = {}
+    if deletion_type == "Workflow":
         required_scopes = set([activity_scope.id])
         token_scopes = set(request.oauth.access_token.scopes)
         if not required_scopes.issubset(token_scopes):
             abort(403)
 
-        try:
-            owner = -1
-            if current_user.is_authenticated:
-                owner = current_user.id
-            request_info = {
-                "user_id": owner,
-                "action": "DELETE"
-            }
-            url, _, _ = delete_items_with_activity(recid, request_info=request_info)
-            activity_id = url.split("/")[-1]
+        url = delete_items_with_activity(recid, request_info=request_info)
 
-            response = jsonify(_get_status_workflow_document(activity_id, recid))
+        response = Response(status=202, headers={"Location": url})
 
-            deletestatus = _soft_delete(recid)
-            status_code = deletestatus[1]
-            if status_code != 204:
-                current_app.logger.error("An error occurred while delete to activity")
-                raise WekoSwordserverException("An error occurred while delete to activity", ErrorType.ServerError)
-
-        except:
-            traceback.print_exc()
-            raise WekoSwordserverException("An error occurred while delete to activity", ErrorType.ServerError)
-
-        return response
-
-
-    # ダイレクトまたはワークフローだけど対象のワークフローに削除フラグIDがない場合
-    # ダイレクト処理
-    # else付けなくていいかもworkflowが通った後に削除する処理がないため
     else:
-        return _soft_delete(recid)
-
-def _soft_delete(recid):
-    try:
-        # delete item
         soft_delete(recid)
-        current_app.logger.debug("item deleted by sword (recid={})".format(recid))
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(e)
-        return ("", 500)
-    return ("", 204)
+        response = Response(status=204)
+
+    return response
 
 
 @blueprint.route("/all_mappings", methods=["GET"])
