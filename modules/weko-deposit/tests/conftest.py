@@ -194,6 +194,7 @@ def base_app(instance_path):
             "System Administrator",
             "Repository Administrator",
         ],
+        WEKO_DEPOSIT_MAX_BACK_OFF_TIME=2,
         WEKO_PERMISSION_ROLE_COMMUNITY=["Community Administrator"],
     )
     # with ESTestServer(timeout=30) as server:

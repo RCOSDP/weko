@@ -220,7 +220,7 @@ function getCaptcha() {
   dirtyAnswer.value = false;
   answeResult.value = false;
 
-  $fetch(appConf.wekoApi + '/captcha/image', {
+  $fetch('api/captcha/image', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
     headers: {
@@ -253,7 +253,7 @@ async function send() {
   let token;
 
   // 文字認証の照合
-  await $fetch(appConf.wekoApi + '/captcha/validate', {
+  await $fetch('api/captcha/validate', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'POST',
     headers: {
@@ -278,7 +278,7 @@ async function send() {
   if (answeResult && token) {
     emits('clickSend');
 
-    await $fetch(appConf.wekoApi + '/records/' + props.itemId + '/request-mail', {
+    await $fetch('api/captcha/' + props.itemId + '/request-mail', {
       timeout: useRuntimeConfig().public.apiTimeout,
       method: 'POST',
       headers: {

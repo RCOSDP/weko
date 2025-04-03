@@ -30,9 +30,11 @@ import shutil
 import sys
 import tempfile
 import traceback
+import unicodedata
 from collections import OrderedDict
 from datetime import date, datetime, timedelta
 from io import StringIO
+import secrets
 
 import bagit
 import redis
@@ -54,6 +56,11 @@ from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records.api import RecordBase
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.sql import func, cast, text
+from sqlalchemy.types import Text, String
+from sqlalchemy.orm import aliased
+from invenio_records.models import RecordMetadata
 from invenio_accounts.models import User
 from invenio_search import RecordsSearch
 from invenio_stats.utils import QueryRankingHelper, QuerySearchReportHelper
@@ -64,12 +71,13 @@ from invenio_stats import config
 from jsonschema import SchemaError, ValidationError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
+from weko_authors.api import WekoAuthors
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
 from weko_index_tree.utils import check_index_permissions, get_index_id, \
     get_user_roles
-from weko_records.api import FeedbackMailList, ItemTypes, Mapping
+from weko_records.api import FeedbackMailList, RequestMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
 from weko_records_ui.errors import AvailableFilesNotFoundRESTError
@@ -89,6 +97,7 @@ from weko_workflow.models import ActionStatusPolicy as ASP
 from weko_workflow.models import Activity, FlowAction, FlowActionRole, \
     FlowDefine
 from weko_workflow.utils import IdentifierHandle
+from weko_admin.models import ApiCertificate
 
 
 def get_list_username():
@@ -1996,6 +2005,22 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
 
             return self.attr_data['feedback_mail_list']['max_size']
 
+        def get_max_ins_request_mail(self):
+            """Get max data each request mail in all exporting records."""
+            largest_size = 1
+            self.attr_data['request_mail_list'] = {'max_size': 0}
+            for record_id, record in self.records.items():
+                if check_created_id(record):
+                    mail_list = RequestMailList.get_mail_list_by_item_id(
+                        record.id)
+                    self.attr_data['request_mail_list'][record_id] = [
+                        mail.get('email') for mail in mail_list]
+                    if len(mail_list) > largest_size:
+                        largest_size = len(mail_list)
+            self.attr_data['request_mail_list']['max_size'] = largest_size
+
+            return self.attr_data['request_mail_list']['max_size']
+
         def get_max_items(self, item_attrs):
             """Get max data each sub property in all exporting records."""
             max_length = 0
@@ -2185,6 +2210,11 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
         ret.append('.feedback_mail[{}]'.format(i))
         ret_label.append('.FEEDBACK_MAIL[{}]'.format(i))
 
+    max_request_mail = records.get_max_ins_request_mail()
+    for i in range(max_request_mail):
+        ret.append('.request_mail[{}]'.format(i))
+        ret_label.append('.REQUEST_MAIL[{}]'.format(i))
+
     ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
     ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
     has_pubdate = len([
@@ -2214,6 +2244,13 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
         records.attr_output[recid].extend(feedback_mail_list)
         records.attr_output[recid].extend(
             [''] * (max_feedback_mail - len(feedback_mail_list))
+        )
+
+        request_mail_list = records.attr_data['request_mail_list'] \
+            .get(recid, [])
+        records.attr_output[recid].extend(request_mail_list)
+        records.attr_output[recid].extend(
+            [''] * (max_request_mail - len(request_mail_list))
         )
 
         pid_cnri = record.pid_cnri
@@ -2303,7 +2340,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
     ret_system = []
     ret_option = []
     multiple_option = ['.metadata.path', '.pos_index',
-                       '.feedback_mail', '.file_path', '.thumbnail_path']
+                       '.feedback_mail', '.request_mail', '.file_path', '.thumbnail_path']
     meta_list = item_type.render.get('meta_list', {})
     meta_list.update(item_type.render.get('meta_fix', {}))
     form = item_type.render.get('table_row_map', {}).get('form', {})
@@ -3124,6 +3161,56 @@ def get_data_authors_affiliation_settings():
         current_app.logger.error(e)
         return None
 
+def get_weko_link(metadata):
+    """
+    メタデータからweko_idを取得し、weko_idに対応するpk_idと一緒に
+    weko_linkを作成します。
+    args
+        metadata: dict 
+        例：{
+                "metainfo": {
+                    "item_30002_creator2": [
+                        {
+                            "nameIdentifiers": [
+                                {
+                                    "nameIdentifier": "8",
+                                    "nameIdentifierScheme": "WEKO",
+                                    "nameIdentifierURI": ""
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "files": [],
+                "endpoints": {
+                    "initialization": "/api/deposits/items"
+                }
+            }
+    return
+        weko_link: dict
+        例：{"2": "10002"}
+    """
+    weko_link = {}
+    weko_id_list=[]
+    for x in metadata["metainfo"].values():
+        if not isinstance(x, list):
+            continue
+        for y in x:
+            if not isinstance(y, dict):
+                continue
+            for key, value in y.items():
+                if not key == "nameIdentifiers":
+                    continue
+                for z in value:
+                    if z.get("nameIdentifierScheme","") == "WEKO":
+                        if z.get("nameIdentifier","") not in weko_id_list:
+                            weko_id_list.append(z.get("nameIdentifier"))
+    weko_link = {}
+    for weko_id in weko_id_list:
+        pk_id = WekoAuthors.get_pk_id_by_weko_id(weko_id)
+        if int(pk_id) > 0:
+            weko_link[pk_id] = weko_id
+    return weko_link
 
 def hide_meta_data_for_role(record):
     """
@@ -3736,6 +3823,197 @@ def sanitize_input_data(data):
             else:
                 sanitize_input_data(data[i])
 
+def check_duplicate(data, is_item=True):
+    """
+    Check if a record or item is duplicate in records_metadata.
+
+    Parameters:
+    - data (dict or str): Metadata dictionary (or JSON string).
+    - is_item (bool): True if checking an item, False if checking a record.
+
+    Returns:
+    - bool: True if duplicate exists, False otherwise.
+    - list: List of duplicate record IDs.
+    - list: List of duplicate record URLs.
+    """
+    if isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except json.JSONDecodeError as e:
+            current_app.logger.error(f"[ERROR] JSON decode failed: {e}")
+            return False, [], []
+
+    if not isinstance(data, dict):
+        current_app.logger.error("The provided data is not a dictionary.")
+        return False, [], []
+
+    metadata = data if is_item else data.get("metainfo", {})
+    if not isinstance(metadata, dict):
+        current_app.logger.error("Metadata format is invalid.")
+        return False, [], []
+
+    identifier = title = resource_type = creator = ""
+    author_links = metadata.get("author_link", [])
+    host = request.host
+
+    # Fallback: extract author_links from nameIdentifiers
+    if not author_links:
+        for key, value in metadata.items():
+            if "creator" in key and isinstance(value, list):
+                for entry in value:
+                    if isinstance(entry, dict):
+                        name_ids = entry.get("nameIdentifiers", [])
+                        for nid in name_ids:
+                            if isinstance(nid, dict):
+                                author_id = nid.get("nameIdentifier")
+                                if author_id:
+                                    author_links.append(author_id)
+
+    # Extract other fields
+    for key, value in metadata.items():
+        if isinstance(value, dict) and "resourcetype" in value:
+            resource_type = value["resourcetype"]
+        if isinstance(value, list):
+            for v in value:
+                if isinstance(v, dict):
+                    if "subitem_identifier_uri" in v:
+                        identifier = v["subitem_identifier_uri"]
+                    if "subitem_title" in v:
+                        title = v["subitem_title"]
+                    if "creatorNames" in v:
+                        creator_info = v["creatorNames"][0] if v["creatorNames"] else {}
+                        creator = creator_info.get("creatorName", "")
+
+
+    # 1. Check identifier
+    if identifier:
+        query = text(f"""
+            SELECT COALESCE(CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 0)
+            FROM records_metadata
+            WHERE jsonb_path_exists(json, '$.**.subitem_identifier_uri ? (@ == "{identifier}")')
+        """)
+        result = db.session.execute(query).fetchall()
+        db.session.commit()
+        if result:
+            recid_list = [r[0] for r in result]
+            return True, recid_list, [f"https://{host}/records/{r}" for r in recid_list]
+
+    # 2. Normalize title
+    normalized_title = unicodedata.normalize("NFKC", title).lower()
+    normalized_title = re.sub(r'[\s,　]', '', normalized_title)
+
+    query = text("""
+        SELECT COALESCE(CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 0), json
+        FROM records_metadata
+        WHERE jsonb_path_exists(json, '$.**.subitem_title')
+    """)
+    result = db.session.execute(query).fetchall()
+    db.session.commit()
+
+    matched_recids = set()
+    for recid, json_obj in result:
+        json_str = json.dumps(json_obj, ensure_ascii=False)
+        titles = re.findall(r'"subitem_title"\s*:\s*"([^"]+)"', json_str)
+        for t in titles:
+            cleaned = unicodedata.normalize("NFKC", t).lower()
+            cleaned = re.sub(r'[\s,　]', '', cleaned)
+            if cleaned == normalized_title:
+                matched_recids.add(recid)
+                break
+
+    if not matched_recids:
+        return False, [], []
+
+    # 3. Match resource_type
+    query = text(f"""
+        SELECT COALESCE(CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 0)
+        FROM records_metadata
+        WHERE jsonb_path_exists(json, '$.**.resourcetype ? (@ == "{resource_type}")')
+    """)
+    result = db.session.execute(query).fetchall()
+    db.session.commit()
+    recids_resource = {r[0] for r in result}
+    matched_recids &= recids_resource
+    if not matched_recids:
+        return False, [], []
+
+    # 4. Author check (via author_link or creator)
+    final_matched = set()
+    if author_links:
+        # Get fullName(s) from authors table via author_link
+        placeholders = ','.join([f':aid{i}' for i in range(len(author_links))])
+        params = {f'aid{i}': aid for i, aid in enumerate(author_links)}
+        query = text(f"""
+            SELECT json FROM authors
+            WHERE jsonb_path_exists(json, '$.authorIdInfo[*].authorId')
+            AND jsonb_extract_path_text(json, 'authorIdInfo', '0', 'authorId') IN ({placeholders})
+        """)
+        result = db.session.execute(query, params).fetchall()
+        db.session.commit()
+
+        author_names = set()
+        for row in result:
+            json_obj = row[0]
+            name_info = json_obj.get("authorNameInfo", [])
+            for n in name_info:
+                full = n.get("fullName")
+                if full:
+                    cleaned = re.sub(r'[\s,　]', '', full)
+                    author_names.add(cleaned)
+
+        if author_names:
+            query = text("""
+                SELECT COALESCE(CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 0), json
+                FROM records_metadata
+                WHERE jsonb_path_exists(json, '$.**.creatorNames[*].creatorName')
+            """)
+            result = db.session.execute(query).fetchall()
+            db.session.commit()
+            for recid, json_obj in result:
+                json_str = json.dumps(json_obj, ensure_ascii=False)
+                creators = re.findall(r'"creatorName"\s*:\s*"([^"]+)"', json_str)
+                for name in creators:
+                    cleaned = re.sub(r'[\s,　]', '', name)
+                    if cleaned in author_names:
+                        final_matched.add(recid)
+                        break
+    else:
+        normalized_creator = re.sub(r'[\s,　]', '', creator)
+        query = text("""
+            SELECT COALESCE(CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 0), json
+            FROM records_metadata
+            WHERE jsonb_path_exists(json, '$.**.creatorNames[*].creatorName')
+        """)
+        result = db.session.execute(query).fetchall()
+        db.session.commit()
+        for recid, json_obj in result:
+            json_str = json.dumps(json_obj, ensure_ascii=False)
+            creators = re.findall(r'"creatorName"\s*:\s*"([^"]+)"', json_str)
+            for name in creators:
+                cleaned = re.sub(r'[\s,　]', '', name)
+                if cleaned == normalized_creator:
+                    final_matched.add(recid)
+                    break
+
+    final_matched &= matched_recids
+    if final_matched:
+        links = [f"https://{host}/records/{r}" for r in final_matched]
+        return True, list(final_matched), links
+
+    print("No duplicates found.")
+    return False, [], []
+
+
+
+def is_duplicate_item(metadata):
+    """Check if an item is duplicate in records_metadata."""
+    return check_duplicate(metadata, is_item=True)
+
+
+def is_duplicate_record(data):
+    """Check if a record is duplicate in records_metadata."""
+    return check_duplicate(data, is_item=False)
+
 
 def save_title(activity_id, request_data):
     """Save title.
@@ -4014,6 +4292,22 @@ def make_stats_file_with_permission(item_type_id, recids,
 
             return self.attr_data['feedback_mail_list']['max_size']
 
+        def get_max_ins_request_mail(self):
+            """Get max data each request mail in all exporting records."""
+            largest_size = 1
+            self.attr_data['request_mail_list'] = {'max_size': 0}
+            for record_id, record in self.records.items():
+                if permissions['check_created_id'](record):
+                    mail_list = RequestMailList.get_mail_list_by_item_id(
+                        record.id)
+                    self.attr_data['request_mail_list'][record_id] = [
+                        mail.get('email') for mail in mail_list]
+                    if len(mail_list) > largest_size:
+                        largest_size = len(mail_list)
+            self.attr_data['request_mail_list']['max_size'] = largest_size
+
+            return self.attr_data['request_mail_list']['max_size']
+
         def get_max_items(self, item_attrs):
             """Get max data each sub property in all exporting records."""
             max_length = 0
@@ -4203,6 +4497,11 @@ def make_stats_file_with_permission(item_type_id, recids,
         ret.append('.feedback_mail[{}]'.format(i))
         ret_label.append('.FEEDBACK_MAIL[{}]'.format(i))
 
+    max_request_mail = records.get_max_ins_request_mail()
+    for i in range(max_request_mail):
+        ret.append('.request_mail[{}]'.format(i))
+        ret_label.append('.REQUEST_MAIL[{}]'.format(i))
+
     ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
     ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
     ret.append('.metadata.pubdate')
@@ -4228,6 +4527,13 @@ def make_stats_file_with_permission(item_type_id, recids,
         records.attr_output[recid].extend(feedback_mail_list)
         records.attr_output[recid].extend(
             [''] * (max_feedback_mail - len(feedback_mail_list))
+        )
+
+        request_mail_list = records.attr_data['request_mail_list'] \
+            .get(recid, [])
+        records.attr_output[recid].extend(request_mail_list)
+        records.attr_output[recid].extend(
+            [''] * (max_request_mail - len(request_mail_list))
         )
 
         pid_cnri = record.pid_cnri
@@ -4321,7 +4627,7 @@ def make_stats_file_with_permission(item_type_id, recids,
     ret_system = []
     ret_option = []
     multiple_option = ['.metadata.path', '.pos_index',
-                       '.feedback_mail', '.file_path', '.thumbnail_path']
+                       '.feedback_mail', '.request_mail', '.file_path', '.thumbnail_path']
     meta_list = item_type.get('meta_list', {})
     meta_list.update(item_type.get('meta_fix', {}))
     form = item_type.get('table_row_map', {}).get('form', {})
@@ -4565,3 +4871,50 @@ def get_file_download_data(item_id, record, filenames, query_date=None, size=Non
         result['period'] = 'total'
 
     return result
+
+def get_access_token(api_code):
+    """
+    OAuth2 トークンを取得するメソッド。
+
+    パラメータ:
+        api_code (str): API認証コード
+
+    戻り値:
+        dict:
+            - 成功時: {"access_token": "トークン", "token_type": "Bearer", "expires_in": 秒数}
+            - 失敗時: {"error": "エラーメッセージ"}, HTTPステータスコード
+    """
+    try:
+        if not api_code:
+            return {"error": "invalid_request", "message": "Required API Code"}, 400
+
+        certificate = ApiCertificate.select_by_api_code(api_code)
+        if not certificate:
+            return {"error": "invalid_client"}, 401
+
+        token = certificate.get("cert_data", {}).get("token")
+        expires_at = certificate.get("cert_data", {}).get("expires_at")
+
+        if token and expires_at:
+            expires_at_dt = datetime.strptime(expires_at, "%Y-%m-%dT%H:%M:%S")
+            if expires_at_dt > datetime.now():
+                return {
+                    "access_token": token,
+                    "token_type": "Bearer",
+                    "expires_in": (expires_at_dt - datetime.now()).seconds
+                }
+
+        # 新しいトークンを発行
+        new_access_token = secrets.token_urlsafe(40)
+        expires_in = 3600 # 1時間
+        expires_at = (datetime.now() + timedelta(seconds=expires_in)).isoformat()
+
+        return {
+            "access_token": new_access_token,
+            "token_type": "Bearer",
+            "expires_in": expires_in
+        }
+
+    except Exception as e:
+        current_app.logger.error(f"AccessToken Error: {str(e)}")
+        return {"error": "Internal server error"}, 500

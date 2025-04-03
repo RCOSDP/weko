@@ -23,7 +23,7 @@
 
 {% extends config.SEARCH_UI_SEARCH_TEMPLATE %}
 
-{%- from "invenio_communities/macros.html" import community_header %}
+{%- from "invenio_communities/macros.html" import community_header with context  %}
 
 {% set title = community.title + " | " + config.THEME_SITENAME %}
 {% set search_hidden_params = {"communities": community.id} %}

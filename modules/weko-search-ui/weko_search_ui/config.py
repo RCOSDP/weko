@@ -469,7 +469,8 @@ WEKO_SYS_USER = "System Administrator"
 
 WEKO_REPO_USER = "Repository Administrator"
 
-WEKO_FLOW_DEFINE = {"flow_name": "Registration Flow"}
+WEKO_FLOW_DEFINE = {"flow_name": "Registration Flow",
+                    "repository_id": "Root Index",}
 
 WEKO_FLOW_DEFINE_LIST_ACTION = [
     {
@@ -546,6 +547,7 @@ WEKO_EXPORT_TEMPLATE_BASIC_ID = [
     ".pos_index[0]",
     ".publish_status",
     ".feedback_mail[0]",
+    ".request_mail[0]",
     ".cnri",
     ".doi_ra",
     ".doi",
@@ -558,6 +560,7 @@ WEKO_EXPORT_TEMPLATE_BASIC_NAME = [
     ".POS_INDEX[0]",
     ".PUBLISH_STATUS",
     ".FEEDBACK_MAIL[0]",
+    ".REQUEST_MAIL[0]",
     ".CNRI",
     ".DOI_RA",
     ".DOI",
@@ -569,6 +572,7 @@ WEKO_EXPORT_TEMPLATE_BASIC_OPTION = [
     "Allow Multiple",
     "Allow Multiple",
     "Required",
+    "Allow Multiple",
     "Allow Multiple",
     "",
     "",
@@ -708,7 +712,10 @@ WEKO_SEARCH_UI_TO_NUMBER_FORMAT = "99999999999999.99"
 WEKO_SEARCH_UI_BULK_EXPORT_RUN_MSG = "RUN_MSG_EXPORT_ALL"
 """Bulk export running message."""
 
-WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 3
+WEKO_SEARCH_UI_BULK_EXPORT_FILE_CREATE_RUN_MSG = "RUN_MSG_EXPORT_ALL_FILE_CREATE"
+"""Bulk export file create running message."""
+
+WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 1440
 """Template for the Admin Bulk Export page."""
 
 WEKO_SEARCH_UI_BULK_EXPORT_TASKID_EXPIRED_TIME = 1
@@ -735,6 +742,11 @@ CELERY_TASK_TRACK_STARTED=True
 WEKO_SEARCH_UI_FACET_LANG_DISP_FLG = False
 """ Enable the Facet Search specified language display feature. """
 
+CHILD_INDEX_THUMBNAIL_WIDTH = 100
+""" child index thumbnail width in result index serch"""
+
+CHILD_INDEX_THUMBNAIL_HEIGHT = 100
+""" child index thumbnail height in result index serch"""
 
 WEKO_SEARCH_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 

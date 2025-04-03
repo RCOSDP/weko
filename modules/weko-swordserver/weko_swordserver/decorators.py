@@ -10,7 +10,9 @@ import os
 from functools import wraps
 
 from flask import current_app, request
-from invenio_oauth2server.decorators import require_api_auth, require_oauth_scopes
+from invenio_oauth2server.decorators import (
+    require_api_auth, require_oauth_scopes
+)
 
 from .errors import ErrorType, WekoSwordserverException
 
@@ -30,7 +32,10 @@ def check_oauth(*scopes):
             authorization = request.headers.get("Authorization", None)
             if authorization is not None:
                 if not hasattr(request, 'oauth'):
-                    raise WekoSwordserverException('Authentication is failed.', ErrorType.AuthenticationFailed)
+                    raise WekoSwordserverException(
+                        "Authentication is failed.",
+                        ErrorType.AuthenticationFailed
+                    )
 
             if scopes:
                 return f_require_api_auth(*args, **kwargs)
@@ -45,10 +50,16 @@ def check_on_behalf_of():
         @wraps(f)
         def decorated(*args, **kwargs):
             # Check onBehalfOf
-            allowOnBehalfOf = current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_ON_BEHALF_OF']
+            allowOnBehalfOf = current_app.config.get(
+                "WEKO_SWORDSERVER_SERVICEDOCUMENT_ON_BEHALF_OF"
+            )
             onBehalfOf = request.headers.get("On-Behalf-Of", "")
-            if allowOnBehalfOf == False and onBehalfOf != "":
-                raise WekoSwordserverException("Not support On-Behalf-Of.", ErrorType.OnBehalfOfNotAllowed)
+            if not allowOnBehalfOf and onBehalfOf:
+                current_app.logger.error(
+                    "Not support On-Behalf-Of but request has it.")
+                raise WekoSwordserverException(
+                    "Not support On-Behalf-Of.", ErrorType.OnBehalfOfNotAllowed
+                )
 
             return f(*args, **kwargs)
         return decorated
@@ -60,26 +71,62 @@ def check_package_contents():
         @wraps(f)
         def decorated(*args, **kwargs):
             if 'file' not in request.files:
-                raise WekoSwordserverException("No file part.", ErrorType.ContentMalformed)
+                current_app.logger.error("No file part.")
+                raise WekoSwordserverException(
+                    "No file part.", ErrorType.ContentMalformed
+                )
             file = request.files['file']
             if file.filename == '':
-                raise WekoSwordserverException("No selected file.", ErrorType.ContentMalformed)
+                current_app.logger.error("No selected file.")
+                raise WekoSwordserverException(
+                    "No selected file.", ErrorType.ContentMalformed
+                )
 
             # Check Content-Length
-            maxUploadSize = current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE']
+            maxUploadSize = current_app.config.get(
+                "WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE"
+            )
             contentLength = request.headers.get("Content-Length", None)
-            if contentLength is None:
-                # Get length by file
-                file.seek(0, os.SEEK_END)
-                contentLength = file.tell()
-                file.seek(0, 0)
+            # Get length by real file
+            file.seek(0, os.SEEK_END)
+            real_contentLength = file.tell()
+            file.seek(0, 0)
+            if current_app.config.get("WEKO_SWORDSERVER_CONTENT_LENGTH"):
+                if contentLength is None:
+                    current_app.logger.error(
+                        "Content-Length is required, but not contained in request headers."
+                    )
+                    raise WekoSwordserverException(
+                        "Content-Length is required.",
+                        ErrorType.ContentMalformed
+                    )
+                if int(contentLength) != real_contentLength:
+                    current_app.logger.error(
+                        "Content-Length is not match. "
+                        + f"(request:{contentLength}, real:{real_contentLength})"
+                    )
+                    raise WekoSwordserverException(
+                        "Content-Length is not match. "
+                        + f"(request:{contentLength}, real:{real_contentLength})",
+                        ErrorType.ContentMalformed
+                    )
+            elif contentLength is None:
+                contentLength = real_contentLength
             if int(contentLength or '0') > maxUploadSize:
+                current_app.logger.error(
+                    "Content size is too large. "
+                    + f"(request:{contentLength}, maxUploadSize:{maxUploadSize})"
+                )
                 raise WekoSwordserverException(
-                    "Content size is too large. (request:{}, maxUploadSize:{})".format(
-                        contentLength, maxUploadSize), ErrorType.MaxUploadSizeExceeded)
+                    "Content size is too large. "
+                    + f"(request:{contentLength}, maxUploadSize:{maxUploadSize})",
+                    ErrorType.MaxUploadSizeExceeded
+                )
 
             # Check Content-Type
-            acceptArchiveFormat = current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT']
+            acceptArchiveFormat = current_app.config.get(
+                "WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT"
+            )
             reqContentType = request.headers.get("Content-Type", None)
             if reqContentType and (';' in reqContentType):
                 reqContentType = reqContentType.split(';')[0]
@@ -94,14 +141,26 @@ def check_package_contents():
                     if filesContentType in acceptArchiveFormat:
                         failedContentType = None
             if failedContentType is not None:
-                raise WekoSwordserverException("Not accept Content-Type: {0}".format(failedContentType), ErrorType.ContentTypeNotAcceptable)
+                current_app.logger.error(
+                    f"Not accept Content-Type: {failedContentType}"
+                )
+                raise WekoSwordserverException(
+                    f"Not accept Content-Type: {failedContentType}",
+                    ErrorType.ContentTypeNotAcceptable
+                )
 
             # Check Packaging
             packaging = request.headers.get("Packaging", None)
-            acceptPackaging = current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_PACKAGING']
+            acceptPackaging = current_app.config.get(
+                "WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_PACKAGING"
+            )
             if '*' not in acceptPackaging:
                 if packaging not in acceptPackaging:
-                    raise WekoSwordserverException("Not accept packaging: {0}".format(packaging), ErrorType.PackagingFormatNotAcceptable)
+                    current_app.logger.error(f"Not accept packaging: {packaging}")
+                    raise WekoSwordserverException(
+                        f"Not accept packaging: {packaging}",
+                        ErrorType.PackagingFormatNotAcceptable
+                    )
 
             return f(*args, **kwargs)
         return decorated

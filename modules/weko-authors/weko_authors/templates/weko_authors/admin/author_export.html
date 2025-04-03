@@ -36,15 +36,21 @@
 {%- block body %}
   <noscript>You need to enable JavaScript to run this app.</noscript>
   <div id="app-author-export"></div>
-  <input id="export_all" type="hidden" value="{{_('Export all creator')}}" />
+  <input id="export_target" type="hidden" value="{{_('Export target')}}" />
+  <input id="export_all" type="hidden" value="{{_('Export all')}}" />
+  <input id="author_db_label" type="hidden" value="{{_('Author DB')}}" />
+  <input id="id_prefix_label" type="hidden" value="{{_('ID Prefix')}}" />
+  <input id="affiliation_id_label" type="hidden" value="{{_('Affiliation ID')}}" />
   <input id="download_url" type="hidden" value="{{_('Download URL')}}" />
   <input id="export" type="hidden" value="{{_('Export')}}" />
-  <input id="export_message" type="hidden" value="{{_('Are you sure you want to export all creator?')}}" />
+  <input id="export_message" type="hidden" value="{{_('Are you sure you want to export all?')}}" />
   <input id="confirm_label" type="hidden" value="{{_('Confirm')}}" />
+  <input id="resume_label" type="hidden" value="{{_('Resume')}}" />
+  <input id="export_url_label" type="hidden" value="{{_('Author DB')}}" />
   <input id="run" type="hidden" value="{{_('Execute')}}" />
   <input id="cancel" type="hidden" value="{{_('Cancel')}}" />
   <input id="internal_server_error" type="hidden" value="{{_('Internal server error')}}" />
-  <input id="cancel_message" type="hidden" value="{{_('Are you sure you want to cancel process of exporting all creator?')}}" />
+  <input id="cancel_message" type="hidden" value="{{_('Are you sure you want to cancel process of exporting all?')}}" />
   <input id="is_exporting_error" type="hidden" value="{{_('Export is failed.')}}" />
   <input id="is_exporting_other_device_error" type="hidden" value="{{_('Export is in progress on another device.')}}" />
   <input id="cancel_export_error" type="hidden" value="{{_('Failed to cancel export.')}}" />

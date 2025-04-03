@@ -43,6 +43,7 @@
   {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_items_ui_feedback_maillist_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_items_ui_request_maillist_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
   {{ super() }}
   {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_items_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
@@ -236,7 +237,10 @@
               </invenio-records-form>
               {%- block feedback_mail_list %}
                 <div id="react"></div>
+                <div id="request-maillist"></div>
                 <input id="component-search-email-name" type="hidden" value="{{_('フィードバックメール送信先')}}" />
+                <input id="enable-request-email-checkbox-label" type="hidden" value="{{_('Display Request Mail Button')}}" />
+                <input id="request-email-list-label" type="hidden" value="{{_('Request Mail Destination')}}" />
                 <input id="search-button-name" type="hidden" value="{{_('From author DB')}}" />
                 <input id="delete-button-name" type="hidden" value="{{_('Delete')}}" />
                 <input id="input-text-placeholder" type="hidden" value="{{_('Input text')}}" />
@@ -311,6 +315,8 @@
           <input type="hidden" id="autofill_get_value" name="autofill_get_value" value="{{_('Get')}}">
           <input type="hidden" id="validate_error" name="validate_error"
             value="{{_('The following items is required. Please recheck and input.')}}">
+          <input type="hidden" id="duplicate_warning" name="duplicate_warning"
+            value="{{_('The same item may have been registered.')}}">
           <input type="hidden" id="duplicate_input_error" name="duplicate_input_error"
             value="{{_('The following items cannot have same value. Please recheck and re-input.')}}">
           <input type="hidden" id="ja_kana_error" name="ja_kana_error"

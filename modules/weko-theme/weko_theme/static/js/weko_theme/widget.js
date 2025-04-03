@@ -327,7 +327,7 @@ const PageBodyGrid = function () {
             },
             success: function(response) {
                 var endpoints = response.endpoints;
-                var repoHomeURL = (repoID === DEFAULT_REPOSITORY) ? '/' : ('/' + '?community=' + repoID);
+                var repoHomeURL = (repoID === DEFAULT_REPOSITORY) ? '/' : ('/' + '?c=' + repoID);
                 var navbarID = 'widgetNav_' + widgetID; // Re-use to build unique class ids
                 var navbarClass = settings.menu_orientation === 'vertical' ?
                     'nav nav-pills nav-stacked pull-left ' + navbarID : 'nav navbar-nav';
@@ -336,7 +336,8 @@ const PageBodyGrid = function () {
                 let navbarHeader = "";
                 for (let i in endpoints) {  // Create links
                   let liClass = '';
-                  let communityArgs = (repoID === DEFAULT_REPOSITORY) ? '' : '?community=' + repoID;
+                  let communityArgs = (repoID === DEFAULT_REPOSITORY) ? '' : '?c=' + repoID;
+                  let communityPath = (repoID === DEFAULT_REPOSITORY) ? '' : '/c/' + repoID + '/page';
                   let title = endpoints[i].title;
                   let endpointsURL = endpoints[i].url;
                   if (endpoints[i].is_main_layout) {
@@ -345,7 +346,20 @@ const PageBodyGrid = function () {
                     if (window.location.pathname === endpointsURL) {
                       liClass = 'class="active"';
                     }
-                    childNavBar += '<li ' + liClass + '><a href="' + endpointsURL + communityArgs + '">' + title + '</a></li>';
+                    if (endpointsURL.charAt(0) === '/'){
+                      if (communityPath === '') {
+                        childNavBar += '<li ' + liClass + '><a href="' + endpointsURL + communityArgs + '">' + title + '</a></li>';
+                      } else {
+                        let provisionalURL = endpointsURL.replace(communityPath, '')
+                        if (provisionalURL.charAt(0) === '/'){
+                          childNavBar += '<li ' + liClass + '><a href="' + endpointsURL + communityArgs + '">' + title + '</a></li>';
+                        } else {
+                          childNavBar += '<li ' + liClass + '><a href="' + provisionalURL + '">' + title + '</a></li>';
+                        }
+                      }
+                    } else {
+                      childNavBar += '<li ' + liClass + '><a href="' + endpointsURL + '">' + title + '</a></li>';
+                    }
                   }
                 }
 
@@ -411,7 +425,8 @@ const PageBodyGrid = function () {
     };
 
     this.widgetTemplate = function (node, index) {
-        let content = "";
+      let loginElement = "";
+      let content = "";
         let multiLangSetting = node.multiLangSetting;
         let languageDescription = "";
         let id = 'id="widget_body_' + index + '"';
@@ -448,6 +463,10 @@ const PageBodyGrid = function () {
           this.buildMenu(node.id, node.widget_id, innerID, menuSettings);
         } else if (node.type === HEADER_TYPE) {
             $("#community_header").attr("hidden", true);
+            let content_area = document.querySelector('.navbar-right');
+            if (content_area !== null) {
+              loginElement = content_area.cloneNode(true);
+            }
             if (!$.isEmptyObject(languageDescription)) {
                 content = languageDescription.description;
             }
@@ -475,7 +494,7 @@ const PageBodyGrid = function () {
             'body': content,
             'id': id
         };
-        return widgetTheme.buildTemplate(widget_data, node, dataTheme);
+        return widgetTheme.buildTemplate(widget_data, node, dataTheme, loginElement);
     };
 
     this.setAccessCounterValue = function () {
@@ -506,7 +525,7 @@ const PageBodyGrid = function () {
         }
         var currentTime = new Date().getTime();
         $.ajax({
-            url: '/api/admin/access_counter_record/' + repository_id + '/' + current_language, 
+            url: '/api/admin/access_counter_record/' + repository_id + '/' + current_language,
             method: 'GET',
             async: false,
             success: function(response) {
@@ -543,7 +562,7 @@ let WidgetTheme = function () {
         'scroll-bar': ''
     };
 
-    this.buildTemplate = function (widget_data, widget_settings, template) {
+    this.buildTemplate = function (widget_data, widget_settings, template, element) {
         if (!widget_data || !widget_settings) {
             return undefined;
         }
@@ -606,16 +625,33 @@ let WidgetTheme = function () {
             noAutoHeight = "no-auto-height";
             overflowY = "";
         }
-      return '<div class="grid-stack-item widget-resize">' +
+        if ( element == "") {
+          return '<div class="grid-stack-item widget-resize">' +
           '    <div class="' + setClass + '" style="' + borderStyle + '">' +
           header +
           '        <div class="' + panelClasses + ' ' + headerClass + ' ' + noAutoHeight + ' " style="padding-top: 0px; padding-bottom: 0!important;'
           + overflowY + overFlowX + this.buildCssText('background-color', backgroundColor) + ' "' + id + '>'
           + widget_data.body +
           '        </div>' +
-          '    </div>' +
+          '    </div>'+
           '</div>';
-    };
+        } else {
+          return '<div class="grid-stack-item widget-resize over">' +
+              '    <div class="' + setClass + '" style="' + borderStyle + '">' +
+              header +
+              '        <div class="' + panelClasses + ' ' + headerClass + ' ' + noAutoHeight + ' " style="padding-top: 0px; padding-bottom: 0!important;'
+              + overflowY + overFlowX + this.buildCssText('background-color', backgroundColor) + ' "' + id + '>'
+              + widget_data.body +
+              '        </div>' +
+              '    </div>' + element.outerHTML +
+              '</div>' +
+              '<style>' +
+              '.over{overflow: visible !important;}' +
+              '.grid-stack-item-content.panel.header-footer-type{ z-index: -1 !important }' +
+              '.navbar-right{ margin-right: 15px; }' +
+              '</style>';
+        }
+      };
 
   this.validateWidgetHeight = function (widgetType, widgetData) {
     if ([FREE_DESCRIPTION_TYPE, NOTICE_TYPE, HEADER_TYPE, FOOTER_TYPE].indexOf(widgetType) > -1) {

@@ -18,7 +18,7 @@
         v-if="modalShowFlag"
         class="mt-[-3px] pt-8 pb-8 md:mt-0 md:border-0 rounded-b-md px-2.5"
         @submit.prevent="filter">
-        <div class="modalForm overflow-y-auto scroll-smooth h-full">
+        <div class="modalForm h-full">
           <TransitionGroup name="list" tag="ul" class="h-full">
             <div v-for="column in filterColumn" :key="column.id">
               <!-- 項名 -->

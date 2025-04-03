@@ -83,7 +83,8 @@ def test_get_response_json(app,site_license,item_type):
              "domain_name":"test_domain",
              "mail_address":"test@mail.com",
              "organization_name":"test data",
-             "receive_mail_flag":"T"}
+             "receive_mail_flag":"T",
+             "repository_id":"Root Index",}
         ],
         "item_type":{"deny":[{"id":"2","name":"テストアイテムタイプ2"}],"allow":[{"id":"1","name":"テストアイテムタイプ1"}]}
     }
@@ -247,7 +248,7 @@ def test_get_unit_stats_report(statistic_target, statistic_unit):
 
 # def get_user_report_data():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_user_report_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-def test_get_user_report_data(users):
+def test_get_user_report_data(users, community):
     with patch("weko_admin.utils.func.count", side_effect=Exception("test_error")):
         result = get_user_report_data()
         assert result == {}
@@ -263,8 +264,11 @@ def test_get_user_report_data(users):
             {"role_name":"Registered Users","count":9}
         ],
     }
-    result = get_user_report_data()
+    result = get_user_report_data(repo_id="Root Index")
     assert result == test
+    
+    result = get_user_report_data(repo_id="comm1")
+    assert result == {'all': [{'role_name': 'Community Administrator', 'count': 1}, {'role_name': 'Registered Users', 'count': 1}]}
 
 
 # def package_reports(all_stats, year, month):
@@ -1091,21 +1095,22 @@ class TestFeedbackMail:
         ]
         is_sending_feedback = True
         root_url = "http://test_server"
+        repo_id = "Root Index"
         
         # exist error_message
         with patch("weko_admin.utils.FeedbackMail.validate_feedback_mail_setting",return_value="Duplicate Email Addresses."):
-            result = FeedbackMail.update_feedback_email_setting(data,is_sending_feedback,root_url)
+            result = FeedbackMail.update_feedback_email_setting(data,is_sending_feedback,root_url,repo_id)
             assert result == {"error":"Duplicate Email Addresses."}
         
         # len(current_setting) == 0
         with patch("weko_admin.utils.FeedbackMailSetting.get_all_feedback_email_setting",return_value=[]):
-            result = FeedbackMail.update_feedback_email_setting(data,is_sending_feedback,root_url)
+            result = FeedbackMail.update_feedback_email_setting(data,is_sending_feedback,root_url,repo_id)
             assert result == {"error":""}
 
-        result = FeedbackMail.update_feedback_email_setting(data,is_sending_feedback,root_url)
+        result = FeedbackMail.update_feedback_email_setting(data,is_sending_feedback,root_url,repo_id)
         assert result == {"error":""}
         
-        result = FeedbackMail.update_feedback_email_setting(None,False,root_url)
+        result = FeedbackMail.update_feedback_email_setting(None,False,root_url,repo_id)
         assert result == {"error":""}
 
         
@@ -1122,7 +1127,7 @@ class TestFeedbackMail:
             { "email": "not.author_id@test.org"}
         ]
         result = FeedbackMail.convert_feedback_email_data_to_string(data)
-        assert result == "1,2"
+        assert set(result.split(",")) == {"1", "2"}
 
 
 #     def get_list_manual_email(cls, data):
