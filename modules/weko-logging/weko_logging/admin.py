@@ -13,7 +13,6 @@ from flask.helpers import url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 
-from invenio_cache import current_cache
 from invenio_files_rest.models import FileInstance
 from weko_logging.utils import UserActivityLogUtils
 from weko_logging.tasks import export_all_user_activity_logs
@@ -21,20 +20,6 @@ from weko_search_ui.tasks import check_celery_is_run
 
 class ExportLogAdminView(BaseView):
     """Export user activity log view."""
-
-    def is_visible(self):
-        """Check if the view is visible.
-
-        :returns: This view is visible or not.
-        """
-        return True
-
-    def is_accessible(self):
-        """Check if the view is accessible.
-
-        :returns: This view is accessible or not.
-        """
-        return True
 
     @expose('/', methods=['GET'])
     def index(self):
@@ -81,8 +66,7 @@ class ExportLogAdminView(BaseView):
         status['celery_is_run'] = check
         if status and status.get('task_id'):
             task = export_all_user_activity_logs.AsyncResult(status.get('task_id'))
-            if status:
-                status['status'] = task.status
+            status['status'] = task.status
 
             if task.successful():
                 url_info = UserActivityLogUtils.get_export_url()
@@ -111,11 +95,13 @@ class ExportLogAdminView(BaseView):
         :returns: Responce (export cancel status.)
         """
         result = UserActivityLogUtils.cancel_export_log()
-        export_status, _, _, _, status = UserActivityLogUtils.get_export_task_status(current_cache)
+        task_status = UserActivityLogUtils.get_export_task_status()
+        status = task_status.get("status", "")
+        can_export = status not in ["PENDING", "STARTED"]
         return jsonify(data={
             "cancel_status": result,
-            "export_status":export_status,
-            "status":status
+            "export_status": can_export,
+            "status": status
         })
 
     @expose("/download", methods=['GET'])
