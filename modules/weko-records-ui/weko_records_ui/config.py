@@ -100,7 +100,7 @@ RECORDS_UI_ENDPOINTS = dict(
     recid_signposting=dict(
         pid_type='recid',
         route='/records/<pid_value>',
-        view_imp='weko_signpostingserver.api.requested_signposting',
+        view_imp='weko_signposting.api.requested_signposting',
         methods=['HEAD']
     ),
     recid=dict(
