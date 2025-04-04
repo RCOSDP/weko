@@ -4732,6 +4732,7 @@ class TestJsonLdMapper:
             assert item_metadata["files_info"][0]["items"][0]["url"]["label"] == "sample.rst"
             assert item_metadata["files_info"][0]["items"][1]["filename"] == "data.csv"
             assert item_metadata["files_info"][0]["items"][1]["url"]["label"] == "data.csv"
+            assert item_metadata["item_30001_relation14"][0]["subitem_relation_type_id"]["subitem_relation_type_select"] == "DOI"
 
             list_record = []
             list_record.append({

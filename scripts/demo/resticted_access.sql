@@ -86,8 +86,8 @@ COPY public.index (created, updated, id, parent, "position", index_name, index_n
 -- Data for Name: workflow_flow_define; Type: TABLE DATA; Schema: public; Owner: invenio
 --
 
-COPY public.workflow_flow_define (status, created, updated, id, flow_id, flow_name, flow_user, flow_status, is_deleted) FROM stdin;
-N	2021-03-20 07:30:09.519834	2021-03-20 07:30:16.883506	31001	cc3aa348-f0da-4cef-b404-ffaabb1d5894	利用報告/Data Usage Report	1	A	f
+COPY public.workflow_flow_define (status, created, updated, id, flow_id, flow_name, flow_user, flow_status, is_deleted, flow_type) FROM stdin;
+N	2021-03-20 07:30:09.519834	2021-03-20 07:30:16.883506	31001	cc3aa348-f0da-4cef-b404-ffaabb1d5894	利用報告/Data Usage Report	1	A   f   1
 \.
 
 

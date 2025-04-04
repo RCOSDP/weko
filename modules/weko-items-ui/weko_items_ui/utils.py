@@ -2789,7 +2789,7 @@ def export_rocrate(post_data):
                 raise Exception("No valid mapping found for item type")
 
             # Create RO-Crate info file
-            rocrate = mapper.to_rocrate_metadata(metadata, filenames)
+            rocrate = mapper.to_rocrate_metadata(metadata, extracted_files=filenames)
             rocrate_path = os.path.join(record_path, ROCRATE_METADATA_FILE)
             with open(rocrate_path, "w", encoding="utf8") as f:
                 # text garbling solves when using ensure_ascii=False
