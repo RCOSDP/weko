@@ -168,13 +168,13 @@ def test_page_size_url(app, client, admin_view, view_instance,
                         filters=None,
                         extra_args={})
     view.page_size = page_size
-    
+
     with patch("weko_gridlayout.admin.WidgetSettingView._get_list_extra_args", return_value=view_args):
         with patch("weko_gridlayout.admin.WidgetSettingView.get_list", return_value=(1, widget_item)):
             index_view_url = url_for("widgetitem.index_view")
             res = client.get(index_view_url)
             assert res.status_code == 200
-    
+
 
 def test_get_label_display_to_list_without_register_languages(admin_view, widget_items):
     res = WidgetSettingView.get_label_display_to_list(1)
@@ -226,7 +226,7 @@ def test_create_view_WidgetSettingView(i18n_app, view_instance):
         view_instance.admin = MagicMock()
         view_instance.admin.base_template = "weko_gridlayout/admin/widget_design.html"
         view_instance.can_create = can_create
-        
+
         assert view_instance.create_view()
 
 
@@ -244,11 +244,11 @@ def test_edit_view_WidgetSettingView(i18n_app, view_instance):
                 assert view_instance.edit_view()
             except:
                 pass
-        
+
         with patch("weko_gridlayout.admin.WidgetItemServices.get_locked_widget_info", return_value="locked_widget"):
             view_instance.admin = MagicMock()
             view_instance.admin.base_template = "weko_gridlayout/admin/edit_widget_settings.html"
-            
+
             with patch('weko_gridlayout.admin.WidgetSettingView.get_one', return_value=""):
                 with patch('weko_gridlayout.admin.convert_widget_data_to_dict', return_value=""):
                     with patch('weko_gridlayout.admin.convert_data_to_design_pack', return_value=""):
@@ -262,7 +262,7 @@ def test_edit_view_WidgetSettingView(i18n_app, view_instance):
                             assert view_instance.edit_view()
                         except:
                             pass
-        
+
         with patch("weko_gridlayout.admin.WidgetItemServices.get_locked_widget_info", return_value={}):
             with patch('weko_gridlayout.admin.WidgetSettingView.get_one', return_value=""):
                 with patch('weko_gridlayout.admin.convert_widget_data_to_dict', return_value=""):
@@ -294,12 +294,12 @@ def test_details_view_WidgetSettingView(i18n_app, view_instance):
         get_one_magic_mock = MagicMock()
         get_one_magic_mock.label = "label"
         get_one_magic_mock.id = 1
-        
+
         return get_one_magic_mock
 
     def can_view_details_T():
         return True
-    
+
     def can_view_details_F():
         return False
 
@@ -311,7 +311,7 @@ def test_details_view_WidgetSettingView(i18n_app, view_instance):
                 view_instance.admin = MagicMock()
                 view_instance.admin.base_template = "weko_gridlayout/admin/widget_design.html"
                 view_instance.can_view_details = can_view_details_F
-                
+
                 view_instance.can_view_details = can_view_details_F
                 assert view_instance.details_view()
 
@@ -348,7 +348,7 @@ def test_get_query_WidgetSettingView(i18n_app, view_instance, users, db_register
     with patch("flask_login.utils._get_user", return_value=users[2]['obj']):
         query = view_instance.get_query()
         assert query.count() == WidgetItem.query.count()
-    
+
     # comadmin role user
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         with patch("weko_gridlayout.admin.Community.get_repositories_by_user", return_value=[MagicMock(id="Root Index")]):
@@ -364,7 +364,7 @@ def test_get_count_query_WidgetSettingView(i18n_app, view_instance, users, db_re
     with patch("flask_login.utils._get_user", return_value=users[2]['obj']):
         query = view_instance.get_count_query()
         assert query.scalar() == WidgetItem.query.count()
-    
+
     # comadmin role user
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         with patch("weko_gridlayout.admin.Community.get_repositories_by_user", return_value=[MagicMock(id="Root Index")]):
@@ -379,7 +379,7 @@ def test_delete_model_WidgetSettingView(i18n_app, view_instance, widget_items, d
     model = widget_items[0]
     data = MagicMock()
     data.widget_id = 222
-    
+
     assert view_instance.delete_model(model, db.session) == True
     assert view_instance.delete_model(model) == True
 
@@ -393,11 +393,11 @@ def test_on_model_delete_WidgetSettingView(i18n_app, view_instance, widget_items
 
     def is_used_in_widget_design(item):
         return True
-    
+
     WidgetDesignServices = MagicMock()
     WidgetDesignServices.is_used_in_widget_design = is_used_in_widget_design
 
     with patch('weko_gridlayout.admin.WidgetDesignServices', WidgetDesignServices):
         assert view_instance.delete_model(model) == False
-    
+
     assert view_instance.delete_model(model) == True

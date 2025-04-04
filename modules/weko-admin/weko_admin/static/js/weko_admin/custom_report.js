@@ -67,7 +67,7 @@ class ComponentTableResult extends React.Component {
   }
 
   initPageButton(selectedPage) {
-    if(!selectedPage){
+    if (!selectedPage) {
       selectedPage = this.state.selectedPage
     }
     if (this.props.numPage != 1) {
@@ -76,17 +76,17 @@ class ComponentTableResult extends React.Component {
       let nextPage = Number(selectedPage) + 1;
       let innerHTML = [];
       let frontInnerHTML =
-      <li>
-        <a data-num-page={frontPage} onClick={this.handleClickEvent}>{frontPage}</a>
-      </li>;
+        <li>
+          <a data-num-page={frontPage} onClick={this.handleClickEvent}>{frontPage}</a>
+        </li>;
       let nextInnerHTML =
-      <li>
-        <a data-num-page={nextPage} onClick={this.handleClickEvent}>{nextPage}</a>
-      </li>;
+        <li>
+          <a data-num-page={nextPage} onClick={this.handleClickEvent}>{nextPage}</a>
+        </li>;
       let selectedInnerHTML =
-      <li className="active">
-        <a data-num-page={selectedPage} onClick={this.handleClickEvent}>{selectedPage}</a>
-      </li>;
+        <li className="active">
+          <a data-num-page={selectedPage} onClick={this.handleClickEvent}>{selectedPage}</a>
+        </li>;
       if (frontPage > 0) {
         innerHTML.push(frontInnerHTML);
       }
@@ -101,7 +101,7 @@ class ComponentTableResult extends React.Component {
       if (selectedPage != 1 && selectedPage > 0) {
         leftState = "";
       }
-      if(selectedPage != this.props.numPage && selectedPage < this.props.numPage) {
+      if (selectedPage != this.props.numPage && selectedPage < this.props.numPage) {
         rightState = "";
       }
 
@@ -111,7 +111,7 @@ class ComponentTableResult extends React.Component {
         pagingClassLeft: leftState,
         pagingClassRight: rightState
       });
-    }else {
+    } else {
       this.setState({
         pagingClassLeft: "hidden",
         pagingClassRight: "hidden",
@@ -314,11 +314,11 @@ class ComponentCombobox extends React.Component {
                 });
               }
             );
-        }else {
-        this.setState({
-          disabled: !props.disable
-        });
-      }
+        } else {
+          this.setState({
+            disabled: !props.disable
+          });
+        }
       }
     }
   }
@@ -381,27 +381,27 @@ class ComponentCombobox extends React.Component {
     this.props.getTableHidden(true);
     if (target == 0) {
       var modalcontent = "Target Report is required!";
-        $("#inputModal").html(modalcontent);
-        $("#allModal").modal("show");
+      $("#inputModal").html(modalcontent);
+      $("#allModal").modal("show");
     } else if (unit == 0) {
       var modalcontent = "Unit is required!";
-        $("#inputModal").html(modalcontent);
-        $("#allModal").modal("show");
+      $("#inputModal").html(modalcontent);
+      $("#allModal").modal("show");
     } else if (this.checkValidDate(startDate, endDate) == -1) {
       var modalcontent = "Date is not valid!";
-        $("#inputModal").html(modalcontent);
-        $("#allModal").modal("show");
+      $("#inputModal").html(modalcontent);
+      $("#allModal").modal("show");
     } else if (this.checkValidDate(startDate, endDate) == 0) {
       var modalcontent = "Start date is greater than End date!";
-        $("#inputModal").html(modalcontent);
-        $("#allModal").modal("show");
+      $("#inputModal").html(modalcontent);
+      $("#allModal").modal("show");
     } else {
       let requestParam = {
         start_date: startDate || '0',
         end_date: endDate || '0',
         unit: unit
       };
-      let request_url = '/api/stats/'+ target + '/' + requestParam['start_date'].replace(/\//g, '-') + '/' + requestParam['end_date'].replace(/\//g, '-') + '/' + unitText + '?p=1&repo=' + repository;
+      let request_url = '/api/stats/' + target + '/' + requestParam['start_date'].replace(/\//g, '-') + '/' + requestParam['end_date'].replace(/\//g, '-') + '/' + unitText + '?p=1&repo=' + repository;
       fetch(request_url)
         .then(res => res.json())
         .then((result) => {
@@ -412,7 +412,7 @@ class ComponentCombobox extends React.Component {
             if (!document.getElementById('pagination').classList.contains('hidden')) {
               document.getElementById('pagination').classList.add('hidden')
             }
-          }else {
+          } else {
             if (!document.getElementById('no_data').classList.contains('hidden')) {
               document.getElementById('no_data').classList.add('hidden')
             }
@@ -434,7 +434,7 @@ class ComponentCombobox extends React.Component {
           {this.props.name}
           <span style={this.required}>
             *
-              </span>
+          </span>
         </label>
         <div class="controls col-xs-5">
           <select className="form-control" id={this.props.id_component} disabled={this.state.disabled} onChange={this.handleChangeEvent}>
@@ -484,7 +484,7 @@ class ComponentDatePicker extends React.Component {
           defaultClass: "controls col-xs-5",
           errorMessageClass: "hidden"
         });
-      }else {
+      } else {
         this.setState({
           defaultClass: "controls col-xs-5 has-error",
           errorMessageClass: ""
@@ -504,7 +504,7 @@ class ComponentDatePicker extends React.Component {
         <label className="control-label col-xs-2 text-right" htmlFor={this.props.id_component} style={this.styleLabel}>{this.props.name}</label>
         <div class={this.state.defaultClass} id={this.props.date_picker_id}>
           <input className="form-control" onChange={this.handleChangeEvent} name={this.props.component_name} id={this.props.id_component} style={this.styleDatePicker} type="text" />
-          <div id={this.props.error_id} style={{color: 'red'}} className={this.state.errorMessageClass}>Format is incorrect!</div>
+          <div id={this.props.error_id} style={{ color: 'red' }} className={this.state.errorMessageClass}>Format is incorrect!</div>
         </div>
       </div>
     )
@@ -565,14 +565,14 @@ class MainLayout extends React.Component {
           <div className="col-md-11 pull-left">
             <h4>Custom Report</h4>
             <ComponentDatePicker component_name='start_date' name="Start Date" id_component="start_date" date_picker_id="start_date_picker"
-              error_id="start_error" getTableHidden={this.getTableHidden}/>
+              error_id="start_error" getTableHidden={this.getTableHidden} />
             <ComponentDatePicker component_name='end_date' name="End Date" id_component="end_date" date_picker_id="end_date_picker"
-              error_id="end_error" getTableHidden={this.getTableHidden}/>
+              error_id="end_error" getTableHidden={this.getTableHidden} />
             <ComponentCombobox name="Target Report" getValueOfField={this.getValueOfField} getTableHidden={this.getTableHidden}
               id_component="target" getUnitStatus={this.getUnitStatus} />
             <ComponentCombobox name="Unit" getValueOfField={this.getValueOfField} key_binding="result" id_component="unit"
-              disable={this.state.unitStatus} getTableHidden={this.getTableHidden} target={this.state.target} getNumPage={this.getNumPage}/>
-            <ComponentTableResult name="Result" data={this.state.result} hidden={this.state.tableHidden} numPage={this.state.numPage}/>
+              disable={this.state.unitStatus} getTableHidden={this.getTableHidden} target={this.state.target} getNumPage={this.getNumPage} />
+            <ComponentTableResult name="Result" data={this.state.result} hidden={this.state.tableHidden} numPage={this.state.numPage} />
           </div>
         </div>
       </div>
@@ -595,26 +595,26 @@ function initDatepicker() {
     autoclose: true,
     forceParse: false
   })
-  .on("changeDate", function(e) {
-    if (document.getElementById("start_date_picker").classList.contains('has-error')) {
-      document.getElementById("start_date_picker").classList.remove('has-error');
-    }
-    if (!document.getElementById("start_error").classList.contains('hidden')) {
-      document.getElementById("start_error").classList.add('hidden');
-    }
-  });
+    .on("changeDate", function (e) {
+      if (document.getElementById("start_date_picker").classList.contains('has-error')) {
+        document.getElementById("start_date_picker").classList.remove('has-error');
+      }
+      if (!document.getElementById("start_error").classList.contains('hidden')) {
+        document.getElementById("start_error").classList.add('hidden');
+      }
+    });
   $("#end_date").datepicker({
     format: "yyyy/mm/dd",
     todayBtn: "linked",
     autoclose: true,
     forceParse: false
   })
-  .on("changeDate", function(e) {
-    if (document.getElementById("end_date_picker").classList.contains('has-error')) {
-      document.getElementById("end_date_picker").classList.remove('has-error');
-    }
-    if (!document.getElementById("end_error").classList.contains('hidden')) {
-      document.getElementById("end_error").classList.add('hidden');
-    }
-  });
+    .on("changeDate", function (e) {
+      if (document.getElementById("end_date_picker").classList.contains('has-error')) {
+        document.getElementById("end_date_picker").classList.remove('has-error');
+      }
+      if (!document.getElementById("end_error").classList.contains('hidden')) {
+        document.getElementById("end_error").classList.add('hidden');
+      }
+    });
 }

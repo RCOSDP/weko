@@ -178,7 +178,7 @@ def test_get_user_ids_by_role_returns_user_ids(app):
     """Test get_user_ids_by_role."""
     with app.app_context():
         ds = app.extensions['invenio-accounts'].datastore
-        
+
         user1 = ds.create_user(email='test1@test.org', active=True)
         user2 = ds.create_user(email='test2@test.org', active=True)
         role = ds.create_role(name='superuser', description='1234')

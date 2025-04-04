@@ -121,6 +121,8 @@ setup(
         'invenio_oauth2server.scopes': [
             'weko_index_tree_create = weko_index_tree.scopes:create_index_scope',
             'weko_index_tree_read = weko_index_tree.scopes:read_index_scope',
+            'weko_index_tree_update = weko_index_tree.scopes:update_index_scope',
+            'weko_index_tree_delete = weko_index_tree.scopes:delete_index_scope',
         ],
     },
     extras_require=extras_require,

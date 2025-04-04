@@ -913,7 +913,7 @@ class StatisticsEmail(db.Model):
         """Get all recipient emails as a list."""
         all_objects = cls.query.all()
         return [row.email_address for row in all_objects]
-    
+
     @classmethod
     def get_emails_by_repo(cls, repository_id):
         """Get all recipient emails as a list."""
@@ -943,7 +943,7 @@ class StatisticsEmail(db.Model):
             db.session.rollback()
             raise ex
         return delete_all
-    
+
     @classmethod
     def delete_by_repo(cls, repository_id):
         """Delete all."""
@@ -1079,7 +1079,7 @@ class FeedbackMailSetting(db.Model, Timestamp):
         db.String(100)
     )
     """Store system root url."""
-    
+
     repository_id = db.Column(
         db.String(100),
         nullable=False,
@@ -1128,7 +1128,7 @@ class FeedbackMailSetting(db.Model, Timestamp):
                 return feedback_settings
         except Exception:
             return []
-        
+
     @classmethod
     def get_feedback_email_setting_by_repo(cls, repo_id):
         """Get all feedback email setting.
@@ -1537,7 +1537,7 @@ class FeedbackMailHistory(db.Model):
         db.Boolean(name='lastest'),
         nullable=False
     )
-    
+
     repository_id = db.Column(
         db.String(100),
         nullable=False,

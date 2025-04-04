@@ -428,7 +428,7 @@ def role_users(app, db):
         ds.add_role_to_user(originalroleuser, originalrole)
         ds.add_role_to_user(originalroleuser2, originalrole)
         ds.add_role_to_user(originalroleuser2, repoadmin_role)
-        
+
 
     return [
         {"email": contributor.email, "id": contributor.id, "obj": contributor},
@@ -492,7 +492,7 @@ class MockEs():
                 return False
         def flush(self,index):
             pass
-        
+
         def search(self,index,doc_type,body,**kwargs):
             pass
 
@@ -948,7 +948,7 @@ def stats_events_for_db(app, db):
             source=json.dumps({'test': 'test'}),
             date=datetime.datetime(2023, 1, 1, 1, 0, 0)
         )
-    
+
     try:
         with db.session.begin_nested():
             db.session.add(base_event(1, 'top-view'))

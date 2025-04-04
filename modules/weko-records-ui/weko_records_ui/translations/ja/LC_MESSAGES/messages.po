@@ -672,3 +672,48 @@ msgstr "画像の有効期限が切れています。再度計算結果を入力
 
 msgid "There is an error in the input item"
 msgstr "入力項目に誤りがあります"
+
+msgid "S3 setting none. Please check your profile."
+msgstr "S3に関する設定がありません。あなたのプロフィールを確認してください。"
+
+msgid "This file is not from institutional storage."
+msgstr "このファイルは機関ストレージのものではありません。"
+
+msgid "Getitng Bucket List failed."
+msgstr "バケットリストの取得に失敗しました。
+
+msgid "Creating Bucket failed."
+msgstr "バケットの作成に失敗しました。"
+
+msgid "Getting region failed."
+msgstr "リージョンの取得に失敗しました。"
+
+msgid "Uploading file failed."
+msgstr "ファイルのアップロードに失敗しました。"
+
+msgid "Chose bucket or input creating bucket name"
+msgstr "バケット名を選択するか、新規に作成するバケット名を入力してください。"
+
+msgid "Bucket"
+msgstr "バケット"
+
+msgid "New Creating Bucket Name"
+msgstr "新規作成バケット名"
+
+msgid "Copy Success. Take note of URL. This URL cannot be confirmed again once the screen is closed. If you have created a new bucket, please check that the bucket is set to public."
+msgstr "コピーに成功しました。URLを控えてください。この画面を閉じるとURLを再確認することはできません。バケットを新規作成した場合、該当のバケットが公開設定になっているかご確認ください。"
+
+msgid "Copy file to open bucket"
+msgstr "公開バケットにファイルをコピー"
+
+msgid "Replace the file content"
+msgstr "ファイルの実態を置き換え"
+
+msgid "Please select the same named file as the original file."
+msgstr "元のファイルと同じ名前のファイルを選択してください。"
+
+msgid "File replacement successful."
+msgstr "ファイルの置き換えに成功しました。"
+
+msgid "Unable to update as no suitable workflow is available."
+msgstr "適切なワークフローが存在しないため、更新できませんでした。"

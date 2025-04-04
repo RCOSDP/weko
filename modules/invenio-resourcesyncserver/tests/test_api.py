@@ -24,7 +24,7 @@ def sample_ResourceListHandler():
     test.created = "test"
     test.updated = "test"
     test.index = "test"
-    
+
     return test
 
 
@@ -51,7 +51,7 @@ def sample_ChangeListHandler(key):
             test = ChangeListHandler(
                 change_tracking_state=["test"]
             )
-        
+
         test.id = "test"
         test.status = "test"
         test.repository_id = "Root Index"
@@ -65,7 +65,7 @@ def sample_ChangeListHandler(key):
         test.interval_by_date = 2
 
         return test
-    
+
     return _func(key)
 
 
@@ -84,7 +84,7 @@ def test_to_dict_ResourceListHandler(i18n_app):
     data = MagicMock()
     data.index_name_english = "test"
     test.index = data
-    
+
     assert test.to_dict()
 
 
@@ -127,8 +127,8 @@ def test_get_resource_ResourceListHandler(i18n_app, db):
 
     assert test.get_resource(1)
     assert not test.get_resource("a")
-    
-    
+
+
 # .tox/c1/bin/pytest --cov=invenio_resourcesyncserver tests/test_api.py::test_get_list_resource_ResourceListHandler -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncserver/.tox/c1/tmp
 #     def get_list_resource(cls, type_result='obj'):
 def test_get_list_resource_ResourceListHandler(i18n_app, db, users):
@@ -142,20 +142,20 @@ def test_get_list_resource_ResourceListHandler(i18n_app, db, users):
     assert len(result)
     assert isinstance(result[0], ResourceListIndexes)
     assert result[0].id == 1
-    
+
     # no user
     result = test.get_list_resource()
     assert len(result) == 1
     assert isinstance(result[0], ResourceListHandler)
     assert result[0].id == 1
-    
+
     # super role user
     user = users[3]["obj"]
     result = test.get_list_resource(user=user)
     assert len(result) == 1
     assert isinstance(result[0], ResourceListHandler)
     assert result[0].id == 1
-    
+
     # comadmin role user with repository
     user = users[4]["obj"]
     mock_repo = Community(root_node_id=1)
@@ -165,12 +165,12 @@ def test_get_list_resource_ResourceListHandler(i18n_app, db, users):
             assert len(result) == 1
             assert isinstance(result[0], ResourceListHandler)
             assert result[0].id == 1
-    
+
     # comadmin role user with no repository
     with patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[]):
         result = test.get_list_resource(user=user)
         assert len(result) == 0
-    
+
     # comadmin role user with repository but no index
     user = users[4]["obj"]
     with patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[mock_repo]):
@@ -206,18 +206,18 @@ def test__validation_ResourceListHandler(i18n_app):
     with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=return_data):
         with patch("invenio_resourcesyncserver.utils.get_real_path", return_value=["33"]):
             assert test._validation(record_id=1) == True
-        
+
         with patch("invenio_resourcesyncserver.utils.get_real_path", return_value=[]):
             assert test._validation(record_id=1) == False
-    
-    assert test._validation() == True
-    
-    test.repository_id = "Root Index"
-    
-    assert test._validation() == True
-    
 
-#     def get_resource_list_xml(self, from_date=None, to_date=None): ERR ~ 
+    assert test._validation() == True
+
+    test.repository_id = "Root Index"
+
+    assert test._validation() == True
+
+
+#     def get_resource_list_xml(self, from_date=None, to_date=None): ERR ~
 def test_get_resource_list_xml_ResourceListHandler(i18n_app, indices):
     test = sample_ResourceListHandler()
     test.repository_id = "Root Index"
@@ -245,7 +245,7 @@ def test_get_resource_list_xml_ResourceListHandler(i18n_app, indices):
                         assert test.get_resource_list_xml(from_date=from_date, to_date=to_date)
 
 
-#     def get_resource_dump_xml(self, from_date=None, to_date=None): ERR ~ 
+#     def get_resource_dump_xml(self, from_date=None, to_date=None): ERR ~
 def test_get_resource_dump_xml_ResourceListHandler(i18n_app):
     test = sample_ResourceListHandler()
     test.repository_id = "Root Index"
@@ -310,7 +310,7 @@ def test_get_resource_dump_manifest_ResourceListHandler(i18n_app):
                 assert test.get_resource_dump_manifest(record_id)
             except:
                 pass
-    
+
 
 #     def get_record_content_file(self, record_id):
 def test_get_record_content_file_ResourceListHandler(i18n_app):
@@ -372,7 +372,7 @@ def test_save_ChangeListHandler(i18n_app):
 
     with patch("invenio_resourcesyncserver.api.ChangeListHandler.get_change_list_by_repo_id", return_value="test"):
         test_str.id = None
-        assert test_str.save()    
+        assert test_str.save()
 
 
 #     def get_change_list_content_xml(self, from_date,
@@ -399,7 +399,7 @@ def test_get_change_list_content_xml_ChangeListHandler(i18n_app, db, users):
     from_date_args = "2022/11/3 0:00:00"
     to_date_args = "2022/11/4 0:00:00"
     return_data = MagicMock()
-        
+
     with patch("invenio_resourcesyncserver.api.ChangeListHandler._validation", return_value=""):
         assert not test_str.get_change_list_content_xml(
             from_date=from_date,
@@ -423,7 +423,7 @@ def test_get_change_list_content_xml_ChangeListHandler(i18n_app, db, users):
                                 from_date=from_date,
                                 from_date_args=from_date_args,
                                 to_date_args=to_date_args
-                            ) 
+                            )
 
                         with patch("invenio_resourcesyncserver.api.PIDVersioning", return_value=return_data):
                             return_data.last_child = MagicMock()
@@ -438,7 +438,7 @@ def test_get_change_list_content_xml_ChangeListHandler(i18n_app, db, users):
 def test_get_change_list_index_ChangeListHandler(i18n_app):
     test_str = sample_ChangeListHandler("str")
     test_str.publish_date = datetime.datetime.now() - datetime.timedelta(hours=1)
-    
+
     with patch("invenio_resourcesyncserver.api.ChangeListHandler._validation", return_value=""):
         assert not test_str.get_change_list_index()
 
@@ -452,13 +452,13 @@ def test_get_change_dump_index_ChangeListHandler(i18n_app):
 
     def _validation():
         return True
-    
+
     def _not_validation():
         return False
 
     test_str._validation = _validation
     test_str.publish_date = datetime.datetime.now() - datetime.timedelta(hours=1)
-    
+
     assert test_str.get_change_dump_index()
 
     test_str._validation = _not_validation
@@ -470,11 +470,11 @@ def test_get_change_dump_index_ChangeListHandler(i18n_app):
 def test_get_change_dump_xml_ChangeListHandler(i18n_app):
     test_str = sample_ChangeListHandler("str")
     from_date = datetime.datetime.now() - datetime.timedelta(hours=1)
-    
+
 
     def _validation():
         return True
-    
+
     def _not_validation():
         return False
 
@@ -512,7 +512,7 @@ def test__validation_ChangeListHandler(i18n_app):
     assert test_str._validation()
 
     test_str.repository_id = None
-    
+
     assert test_str._validation()
 
     test_str.status = False
@@ -604,7 +604,7 @@ def test_get_change_list_ChangeListHandler(i18n_app, db):
 
     assert test_str.get_change_list(changelist_id, "modal")
     assert test_str.get_change_list(changelist_id)
-    
+
 
 #     def get_all(cls):
 #     def convert_modal_to_obj(cls, model=ChangeListIndexes()):
@@ -633,14 +633,14 @@ def test_get_all_ChangeListHandler(i18n_app, db, users):
     result = test_str.get_all()
     assert len(result) == 1
     assert result[0].id == test.id
-    
+
     # super role user
     user = users[3]["obj"]
     result = test_str.get_all(user=user)
     assert len(result) == 1
     assert isinstance(result[0], ChangeListHandler)
     assert result[0].id == test.id
-    
+
     # comadmin role user with repository
     user = users[4]["obj"]
     mock_repo = Community(root_node_id=1)
@@ -650,12 +650,12 @@ def test_get_all_ChangeListHandler(i18n_app, db, users):
             assert len(result) == 1
             assert isinstance(result[0], ChangeListHandler)
             assert result[0].id == test.id
-    
+
     # comadmin role user with no repository
     with patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[]):
         result = test_str.get_all(user=user)
         assert len(result) == 0
-    
+
     # comadmin role user with repository but no index
     with patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[mock_repo]):
         with patch("weko_index_tree.api.Indexes.get_child_list_recursive", return_value=[]):
@@ -698,7 +698,7 @@ def test__is_record_in_index_ChangeListHandler(i18n_app):
         with patch("weko_deposit.api.WekoRecord.get_record", return_value=MagicMock()):
             with patch("invenio_resourcesyncserver.utils.get_real_path", return_value=test_str.repository_id):
                 assert test_str._is_record_in_index(record_id)
-                
+
                 test_str.repository_id = "Index"
 
                 assert test_str._is_record_in_index(record_id)
@@ -715,7 +715,7 @@ def test_get_record_content_file_ChangeListHandler(i18n_app, es_records):
 
     def _is_record_in_index(key):
         return True
-    
+
     def _is_not_record_in_index(key):
         return False
 
@@ -780,7 +780,7 @@ def test__next_change_ChangeListHandler(i18n_app):
     assert test_str._next_change(data, [changes])
 
     changes["record_version"] = 1
-    
+
     assert not test_str._next_change(data, [changes])
 
 

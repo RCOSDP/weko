@@ -85,7 +85,7 @@ def test_Authors(app):
 
 
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestAuthorDBManagementAPI -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace -p no:warnings
- 
+
 class TestAuthorDBManagementAPI:
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
@@ -97,10 +97,10 @@ class TestAuthorDBManagementAPI:
         - 正常系: 検索パラメータごとに正しくデータが取得できるか確認
         - 異常系: 不正なパラメータや認証なしでのアクセス制御確認
         """
-        
+
         oauth2 = OAuth2Provider()
         oauth2.after_request(login_oauth2_user)
-        
+
         # 正常系テスト（検索条件ごとの動作確認）
         self.run_get_authors(app, client_api, auth_headers_sysadmin, {"fullname": "Test_1 User_1"}, 200, ['1'])  # フルネーム検索で特定の著者ID 1 が返ることを確認
         self.run_get_authors(app, client_api, auth_headers_sysadmin, {"fullname": "Test_1 "}, 200, ['1','2','3','4'])  # 部分一致検索で該当する複数の著者IDが返ることを確認
@@ -108,7 +108,7 @@ class TestAuthorDBManagementAPI:
         self.run_get_authors(app, client_api, auth_headers_sysadmin, {"familyname": "User_3"}, 200, ['3','4'])  # 姓（ファミリーネーム）で検索し、著者ID 3 のみが返ることを確認
         self.run_get_authors(app, client_api, auth_headers_sysadmin, {"idtype": "WEKO", "authorid": "1"}, 200, ['1'])  # ID タイプが WEKO で ID が 1 の著者が正しく取得できるか確認
         self.run_get_authors(app, client_api, auth_headers_sysadmin, {"idtype": "ORCID", "authorid": "1"}, 200, [])  # ID タイプが WEKO で ID が 1 の著者が正しく取得できるか確認
-        
+
         # 異常系テスト（不正なアクセスや無効なパラメータの確認）
         self.run_get_authors_unauthorized(app, client_api)  # 認証なしでのアクセスが 401（Unauthorized） となることを確認
         self.run_get_authors(app, client_api, auth_headers_sysadmin_without_scope, {"fullname": "Test_1 "}, 403, [])  # スコープ権限のないシステム管理者が検索した場合、403（Forbidden）となることを確認
@@ -116,13 +116,13 @@ class TestAuthorDBManagementAPI:
         self.run_get_authors(app, client_api, auth_headers_sysadmin, {"idtype": "ORCID"}, 400, [])  # Both 'idtype' and 'authorid' must be specified together or omitted.
         self.run_get_authors(app, client_api, auth_headers_sysadmin, {"idtype": "ORCID_wrong","authorid": "1"}, 400, [])  # ORCID というIDタイプでの検索が不正な場合、400（Bad Request）となることを確認
         self.run_get_authors(app, client_api, auth_headers_sysadmin, {"authorid": "https://orcid.org/##"}, 400, [])  # 無効な著者IDで検索した場合、400（Bad Request）となることを確認
-        
+
         with patch("weko_authors.utils.get_author_prefix_obj",side_effect={}):
             self.run_get_authors(app, client_api, auth_headers_sysadmin, {"fullname": "Test_1 User_1"}, 200, ['1'])  # フルネーム検索で特定の著者ID 1 が返ることを確認
         # システムエラーの確認
         with patch("invenio_search.current_search_client.search", side_effect=Exception):
             self.run_get_authors(app, client_api, auth_headers_sysadmin, {"firstname": "Test_2"}, 500, [])  # 検索時にエラーが発生した場合、500（Internal Server Error）となることを確認
-        
+
     def run_get_authors(self, app, client_api, user_role, query_params, expected_status, expected_ids):
         """
         著者情報取得APIのテスト
@@ -146,7 +146,7 @@ class TestAuthorDBManagementAPI:
                 if authorInfo.get("idType") == "WEKO"
             ]
             assert set(retrieved_ids) == set(expected_ids), f"取得した著者IDが想定外: {retrieved_ids}"
-    
+
     def run_get_authors_unauthorized(self, app, client_api):
         """
         認証なしで著者情報取得を試みるテスト
@@ -156,13 +156,13 @@ class TestAuthorDBManagementAPI:
         response = client_api.get(url, headers={})
         assert response.status_code == 401
         print(f"Unauthorizedアクセスエラー: {response.get_data(as_text=True)}")
-    
+
     def build_query_string(self, params):
         """
         クエリパラメータをURLエンコードするヘルパー関数
         """
         return "&".join(f"{key}={urllib.parse.quote(str(value))}" for key, value in params.items() if value)
-    
+
     # .tox/c1/bin/pytest --cov=weko_authors tests/test_rest.py::TestAuthorDBManagementAPI::test_post_v1 -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace | tee log.log
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
@@ -173,7 +173,7 @@ class TestAuthorDBManagementAPI:
         - 正常系: 正しく登録できるか確認
         - 異常系: 不正なリクエストや認証なしでのアクセス制御確認
         """
-        
+
         oauth2 = OAuth2Provider()
         oauth2.after_request(login_oauth2_user)
 
@@ -217,7 +217,7 @@ class TestAuthorDBManagementAPI:
         url = "v1/authors"
         response = client_api.post(url, json=request_data, headers=user_headers)
         assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
-        
+
         if expected_message:
             content_type = response.headers.get("Content-Type", "").lower()
             if "text/html" in content_type:
@@ -269,8 +269,8 @@ class TestAuthorDBManagementAPI:
                 }]
             }
         }
-        
-        
+
+
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
     )],indirect=['base_app'])
@@ -388,7 +388,7 @@ class TestAuthorDBManagementAPI:
             response = client_api.put(url, json=request_data, headers=user_headers)
         assert response.status_code == 500
         assert "Database error." in response.get_data(as_text=True)
-        
+
         with patch("weko_authors.rest.AuthorDBManagementAPI.get_all_schemes", side_effect=Exception):
             response = client_api.put(url, json=request_data, headers=user_headers)
         assert response.status_code == 500
@@ -411,7 +411,7 @@ class TestAuthorDBManagementAPI:
                 }]
             }
         }
-        
+
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
     )],indirect=['base_app'])
@@ -477,7 +477,7 @@ class TestAuthorDBManagementAPI:
 
         assert response.status_code == 500
         assert "Database error." in response.get_data(as_text=True)
-        
+
         with patch("weko_authors.models.db.session.commit", side_effect=Exception):
             response = client_api.delete(url, json=request_data, headers=user_headers)
 

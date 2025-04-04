@@ -21,6 +21,12 @@
 """Configuration for weko-items-ui."""
 from invenio_stats.queries import ESWekoRankingQuery
 
+WEKO_ITEMS_UI_OA_POLICY_API_URL = "/api/oa_policies"
+"""OA Policy Retrieve API"""
+
+WEKO_ITEMS_UI_OA_POLICY_API_CODE = "ooa"
+"""API Code to Retrieve OAuth token"""
+
 WEKO_WORKFLOW_BASE_TEMPLATE = 'weko_workflow/base.html'
 """Default base template for the demo page."""
 
@@ -56,6 +62,9 @@ WEKO_ITEMS_UI_JSTEMPLATE_EXPORT_LIST = 'templates/weko_items_ui/' \
 WEKO_ITEMS_UI_INDEX_URL = '/items/index/{pid_value}'
 
 WEKO_ITEMS_UI_RANKING_TEMPLATE = 'weko_items_ui/ranking.html'
+
+WEKO_ITEMS_UI_README_MD = 'templates/README.md'
+"""README.md for RO-Crate Export."""
 
 WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM = 100
 """Default max number of allowed to be exported."""

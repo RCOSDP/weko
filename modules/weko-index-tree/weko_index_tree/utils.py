@@ -109,6 +109,48 @@ def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
             reduce_index_by_role(tree, roles, groups)
         if not ignore_more:
             reduce_index_by_more(tree=tree, more_ids=more_ids)   
+            
+def can_user_access_index(lst):
+    """Check if the specified user has access to the index item.
+
+    This function determines access permissions based on the user's roles and groups.
+    It checks whether the user has viewing or editing rights for the index item.
+    It also considers the public state and public date of the index to evaluate accessibility.
+
+    Args:
+        lst (dict): Dictionary representing the index item.
+
+    Returns:
+        bool: True if the user has access, False otherwise.
+    """
+    from weko_records_ui.utils import is_future
+    
+    roles = get_user_roles(is_super_role=True)
+    
+    if roles[0]:
+        return True
+    groups = get_user_groups()
+
+    brw_role = lst.get('browsing_role', [])
+    brw_group = lst.get('browsing_group', [])
+    contribute_role = lst.get('contribute_role', [])
+    contribute_group = lst.get('contribute_group', [])
+    public_state = lst.get('public_state', False)
+    public_date = lst.get('public_date', None)
+
+    if isinstance(public_date, str):
+        public_date = str_to_datetime(public_date, "%Y-%m-%dT%H:%M:%S")
+
+    if check_roles(roles, brw_role) or check_groups(groups, brw_group):
+        if public_state and (public_date is None or not is_future(public_date)):
+            return True
+        else:
+            return False
+
+    if check_roles(roles, contribute_role) or check_groups(groups, contribute_group):
+        return True
+
+    return False
 
 def get_tree_json(index_list, root_id):
     """Get Tree Json.

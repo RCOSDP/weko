@@ -145,7 +145,7 @@ class Authors(ContentNegotiatedMethodView):
 class AuthorDBManagementAPI(ContentNegotiatedMethodView):
     """Author Database Management API."""
     view_name = '{0}_db_management_API'
-    def __init__(self, record_serializers=None, 
+    def __init__(self, record_serializers=None,
                 default_media_type=None, **kwargs):
         """Constructor."""
         super(AuthorDBManagementAPI, self).__init__(
@@ -161,7 +161,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
                 'POST': default_media_type,
                 'DELETE': default_media_type,
             },
-            default_media_type=default_media_type,        
+            default_media_type=default_media_type,
             **kwargs
         )
 
@@ -177,7 +177,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             return getattr(self, func_name)(**kwargs)
         else:
             raise VersionNotFoundRESTError()
-        
+
     @require_api_auth(allow_anonymous=False)
     @require_oauth_scopes(author_create_scope.id)
     @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,WEKO_ADMIN_PERMISSION_ROLE_REPO])
@@ -190,7 +190,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             return getattr(self, func_name)(**kwargs)
         else:
             raise VersionNotFoundRESTError()
-    
+
     @require_api_auth(allow_anonymous=False)
     @require_oauth_scopes(author_update_scope.id)
     @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,WEKO_ADMIN_PERMISSION_ROLE_REPO])
@@ -203,7 +203,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             return getattr(self, func_name)(**kwargs)
         else:
             raise VersionNotFoundRESTError()
-    
+
     @require_api_auth(allow_anonymous=False)
     @require_oauth_scopes(author_delete_scope.id)
     @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,WEKO_ADMIN_PERMISSION_ROLE_REPO])
@@ -239,11 +239,11 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
                 idtype_id = prefix_obj.id
 
             search_query = \
-            {"query": 
-                {"bool": 
+            {"query":
+                {"bool":
                     {"must": [
                         {"term": {"gather_flg": {"value": 0}}}
-                        ], 
+                        ],
                     "must_not": [{ "term": { "is_deleted": True}}]}
                 }
             }
@@ -275,14 +275,14 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
                     }
                 })
                 search_query["min_score"] = 100
-                
+
             search_index = current_app.config.get("WEKO_AUTHORS_ES_INDEX_NAME")
             search_results = current_search_client.search(index=search_index, body=search_query)
             if search_results["hits"]["total"]> 0:
                 search_results = [author.get("_source", {}) for author in search_results.get("hits", {}).get("hits", [])]
             else:
                 search_results = {}
-                
+
             search_results = [self.remove_filed_no_need(author) for author in search_results]
             search_results = [self.process_authors_data_after(author) for author in search_results]
 
@@ -297,7 +297,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
         except Exception as e:
             current_app.logger.error(traceback.format_exc())
             raise InternalServerError("Internal server error.")
-        
+
     def process_authors_data_before(self, author_data):
         from weko_authors.utils import get_author_prefix_obj,get_author_affiliation_obj
         # `authorIdInfo` (scheme -> id)
@@ -327,7 +327,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
                 if aff_obj:
                     identifier["affiliationIdType"] = aff_obj.scheme
         return author_data
-    
+
     def remove_filed_no_need(self,data):
         keys_to_keep = {"emailInfo", "authorIdInfo", "authorNameInfo", "affiliationInfo"}
         return {k: v for k, v in data.items() if k in keys_to_keep}
@@ -350,13 +350,13 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             author_data = data.get("author")
             if not author_data:
                 raise BadRequest("author can not be null.")
-            
+
             prefix_schemes,affiliation_schemes = self.get_all_schemes()
             if not self.validate_request_data(self.extract_data(author_data), lang_options_list, prefix_schemes, affiliation_schemes):
                 raise BadRequest("Invalid Author Data, 'idtype' or 'language' Not Allowed.")
 
             self.validate_author_data(author_data,author_data.get("pk_id"))
-            
+
             author_data = self.process_authors_data_before(author_data)
 
             self.handle_weko_id(author_data)
@@ -369,7 +369,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
                 author_data["pk_id"] = str(new_id)
                 author_record = Authors(id=new_id, json=author_data, is_deleted=False)
                 db.session.add(author_record)
-                
+
             author_data["gather_flg"] = 0
             author_data["is_deleted"] = False
             author_data.pop("id")
@@ -391,7 +391,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             current_app.logger.error(traceback.format_exc())
             raise InternalServerError("Internal server error.")
 
-    def validate_author_data(self, author_data, pk_id=None, is_update=False): 
+    def validate_author_data(self, author_data, pk_id=None, is_update=False):
         have_weko_id = False
         for auth_id in author_data.get("authorIdInfo", []):
             id_type = auth_id.get("idType")
@@ -492,13 +492,13 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             })
 
         author_data["authorIdInfo"] = author_id_info
-        
+
     def put_v1(self, **kwargs):
         """Handle PUT request for author update."""
         from weko_authors.models import Authors
         from weko_deposit.tasks import update_items_by_authorInfo
         from flask_login import current_user
-        
+
         search_index = current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"]
         lang_options_list = [
                 "ja", "ja-Kana", "en", "fr", "it", "de", "es",
@@ -517,15 +517,15 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
 
             es_id = data.get("id")
             pk_id = data.get("pk_id")
-            
+
             if pk_id:
                 if not pk_id.isdigit():
                     raise BadRequest("Invalid author ID.")
-            
+
             for data_filed in ["emailInfo","authorIdInfo","authorNameInfo","affiliationInfo"]:
                 if not author_data.get(data_filed,False):
                     author_data[data_filed] = []
-            
+
             prefix_schemes,affiliation_schemes = self.get_all_schemes()
             if not self.validate_request_data(self.extract_data(author_data), lang_options_list, prefix_schemes, affiliation_schemes):
                 raise BadRequest("Invalid Author Data, 'idtype' or 'language' Not Allowed.")
@@ -550,30 +550,30 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
 
             if not author_by_pk and not author_by_es:
                 raise NotFound("Specified author does not exist.")
-            
+
             if pk_id and es_id and (bool(author_by_pk) ^ bool(author_by_es)):
                 raise BadRequest("Parameters 'id' and 'pk_id' refer to different users.")
 
 
             if author_by_pk and author_by_es and str(author_by_pk.id) != str(author_by_es.get("pk_id")):
                 raise BadRequest("Parameters 'id' and 'pk_id' refer to different users.")
-            
+
             if author_by_pk and not es_id:
                 es_id = author_by_pk.json.get("id")
             if author_by_es and not pk_id:
                 pk_id = author_by_es.get("pk_id")
 
             self.validate_author_data(author_data, pk_id, is_update=True)
-            
+
             # scheme -> id
-            author_data = self.process_authors_data_before(author_data) 
-            
+            author_data = self.process_authors_data_before(author_data)
+
             # author_data['id'] = es_id
             author_data['pk_id'] = pk_id
             author_data['gather_flg'] = 0
-            
+
             WekoAuthors.update(pk_id,author_data,data.get("force_change",False))
-            
+
             doc = current_search_client.get(index=search_index, id=es_id, doc_type="_doc")
             result = doc.get("_source", {})
 
@@ -600,7 +600,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
         except Exception:
             current_app.logger.error(traceback.format_exc())
             raise InternalServerError("Internal server error.")
-        
+
     def extract_data(self, data):
         result = {
             "authorIdInfo_idType": [item["idType"] for item in data.get("authorIdInfo", []) if "idType" in item],
@@ -620,7 +620,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
         }
         print(f"extract_data:{result}")
         return result
-    
+
     def get_all_schemes(self):
         from .models import AuthorsPrefixSettings, AuthorsAffiliationSettings
         prefix_schemes = db.session.query(AuthorsPrefixSettings.scheme).distinct().all()
@@ -630,8 +630,8 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
         print(f"prefix_schemes:{prefix_schemes}")
         print(f"affiliation_schemes:{affiliation_schemes}")
         return prefix_schemes,affiliation_schemes
-        
-        
+
+
     def validate_request_data(self, extracted_data, lang_options_list, prefix_schemes, affiliation_schemes):
         if not all(lang in lang_options_list for lang in extracted_data["authorNameInfo_language"]):
             print("authorNameInfo_language")
@@ -662,7 +662,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
 
             if not es_id and not pk_id:
                 raise BadRequest("Either 'id' or 'pk_id' must be specified.")
-            
+
             author_by_pk = None
             author_by_es = None
             search_index = current_app.config.get("WEKO_AUTHORS_ES_INDEX_NAME")
@@ -678,7 +678,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
                 )
                 if search_results["hits"]["total"]> 0:
                     author_by_es = search_results["hits"]["hits"][0]["_source"]
-            
+
             if not author_by_pk and not author_by_es:
                 raise NotFound("Specified author does not exist.")
 
@@ -695,7 +695,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             if author_by_es and not pk_id:
                 pk_id = author_by_es.get("pk_id")
                 author_by_pk = Authors.query.filter_by(id=pk_id).first()
-                
+
             if author_by_pk and author_by_es and str(author_by_pk.id) != str(author_by_es.get("pk_id")):
                 raise BadRequest("Parameters 'id' and 'pk_id' refer to different users.")
 

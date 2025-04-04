@@ -117,8 +117,8 @@ class TestCommunityModelView():
             # role_idss is true
             result = view.role_query_cond([1,2])
             assert str(result) == "communities_community.group_id IN (:group_id_1, :group_id_2)"
-    
-    # def get_query(self): 
+
+    # def get_query(self):
     # .tox/c1/bin/pytest --cov=invenio_communities tests/test_admin.py::TestCommunityModelView::test_get_query -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
     def test_get_query(self,setup_view_community,users):
         _, _, _, user, view = setup_view_community

@@ -43,9 +43,10 @@ from weko_workflow.schema.utils import get_schema_action, type_null_check
 from marshmallow.exceptions import ValidationError
 
 from flask import Response, Blueprint, abort, current_app, has_request_context, \
-    jsonify, make_response, render_template, request, session, url_for, send_file
+    jsonify, make_response, render_template, request, session, url_for, send_file, redirect
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
+from flask_security import url_for_security
 from weko_admin.api import validate_csrf_header
 from flask_wtf import FlaskForm
 from invenio_accounts.models import Role, User, userrole
@@ -54,6 +55,7 @@ from invenio_files_rest.utils import remove_file_cancel_action
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
+from invenio_pidstore.resolver import Resolver
 from invenio_pidstore.errors import PIDDoesNotExistError,PIDDeletedError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_rest import ContentNegotiatedMethodView
@@ -63,15 +65,20 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import cast
 from weko_redis import RedisConnection
 from weko_accounts.api import ShibUser
+from weko_accounts.models import User
 from weko_accounts.utils import login_required_customize
+from weko_admin.models import AdminSettings
 from weko_authors.models import Authors
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_deposit.links import base_factory
 from weko_deposit.pidstore import get_record_identifier, \
     get_record_without_version
 from weko_deposit.signals import item_created
+from weko_index_tree.utils import get_user_roles
 from weko_items_ui.api import item_login
-from weko_records.api import FeedbackMailList, RequestMailList, ItemLink
+from weko_items_ui.utils import check_item_is_being_edit, get_workflow_by_item_type_id, \
+    get_current_user
+from weko_records.api import FeedbackMailList, RequestMailList, ItemLink, ItemTypes
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
@@ -79,11 +86,14 @@ from weko_search_ui.utils import check_tsv_import_items, import_items_to_system
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
+from weko_user_profiles.models import UserProfile
+from werkzeug.utils import import_string
 
 from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
-    IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
+    IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB, \
+    WEKO_WORKFLOW_DELETION_FLOW_TYPE
 from .errors import ActivityBaseRESTError, ActivityNotFoundRESTError, \
     DeleteActivityFailedRESTError, InvalidInputRESTError, \
     RegisteredActivityNotFoundRESTError
@@ -111,7 +121,8 @@ from .utils import IdentifierHandle, auto_fill_title, \
     send_usage_application_mail_for_guest_user, set_files_display_type, \
     update_approval_date, update_cache_data, validate_guest_activity_expired, \
     validate_guest_activity_token, make_activitylog_tsv, \
-    delete_lock_activity_cache, delete_user_lock_activity_cache
+    delete_lock_activity_cache, delete_user_lock_activity_cache, \
+    check_an_item_is_locked, prepare_edit_workflow
 
 workflow_blueprint = Blueprint(
     'weko_workflow',
@@ -234,6 +245,18 @@ def index():
         get_application_and_approved_date(activities, columns)
         get_workflow_item_type_names(activities)
 
+    settings = AdminSettings.get('activity_display_settings')
+
+    if settings:
+        activity_display_flg = settings.activity_display_flg
+    else:
+        activity_display_flg = current_app.config.get("WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE")
+
+    if 'approver_email' in columns and not activity_display_flg:
+        columns.remove('approver_email')
+    elif 'approver_email' not in columns and activity_display_flg:
+        columns.append('approver_email')
+
     from weko_user_profiles.config import WEKO_USERPROFILES_ADMINISTRATOR_ROLE
     admin_role = WEKO_USERPROFILES_ADMINISTRATOR_ROLE
     has_admin_role = False
@@ -242,6 +265,26 @@ def index():
             has_admin_role = True
             break
     send_mail = has_admin_role and send_mail
+
+    # Get Approver Info
+    for activitie in activities:
+        activitie.approver = []
+        activitie.approver_email = []
+        steps = activity.get_activity_steps(activitie.activity_id)
+        for step in steps:
+            if step['ActionName'] == 'Approval':
+                approver = User.query.filter_by(email=step['Author']).one_or_none()
+                if approver is not None:
+                    approver_id = approver.id
+                    approver_profile = UserProfile.get_by_userid(approver_id)
+                    if hasattr(approver_profile, '_displayname') and approver_profile._displayname:
+                        activitie.approver.append(approver_profile._displayname)
+                    else:
+                        # If the Author has not registered his/her name, use his/her email address.
+                        activitie.approver.append(step['Author'])
+                else:
+                    activitie.approver.append(step['Author'])
+                activitie.approver_email.append(step['Author'])
 
     return render_template(
         'weko_workflow/activity_list.html',
@@ -810,6 +853,9 @@ def display_activity(activity_id="0", community_id=None):
                 error="can not get data required for rendering")
 
     activity = WorkActivity()
+    activity_detail = activity.get_activity_detail(activity_id)
+    for_delete = activity_detail.flow_define.flow_type == WEKO_WORKFLOW_DELETION_FLOW_TYPE
+
     if "?" in activity_id:
         activity_id = activity_id.split("?")[0]
 
@@ -949,18 +995,19 @@ def display_activity(activity_id="0", community_id=None):
             activity_detail.item_id and \
             activity_detail.activity_status != ActivityStatusPolicy.ACTIVITY_CANCEL:
         try:
-            item_id = str(activity_detail.item_id)
-            # get record data for the first time access to editing item screen
-            recid, approval_record = get_pid_and_record(item_id)
-            files, files_thumbnail = get_files_and_thumbnail(activity_id, item_id)
+            if not for_delete:
+                item_id = str(activity_detail.item_id)
+                # get record data for the first time access to editing item screen
+                recid, approval_record = get_pid_and_record(item_id)
+                files, files_thumbnail = get_files_and_thumbnail(activity_id, item_id)
 
-            links = base_factory(recid)
+                links = base_factory(recid)
 
         except PIDDeletedError:
-            current_app.logger.debug("PIDDeletedError: {}".format(sys.exc_info()))
+            current_app.logger.error("PIDDeletedError: {}".format(sys.exc_info()))
             abort(404)
         except PIDDoesNotExistError:
-            current_app.logger.debug("PIDDoesNotExistError: {}".format(sys.exc_info()))
+            current_app.logger.error("PIDDoesNotExistError: {}".format(sys.exc_info()))
             abort(404)
         except Exception:
             current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
@@ -1019,22 +1066,23 @@ def display_activity(activity_id="0", community_id=None):
         ctx['item_link'] = item_link
 
     # Get item link info.
-    if activity_detail.activity_status != ActivityStatusPolicy.ACTIVITY_CANCEL:
-        record_detail_alt = get_main_record_detail(
-            activity_id, activity_detail, action_endpoint, item,
-            approval_record, files, files_thumbnail)
-        if not record_detail_alt:
-            current_app.logger.error("display_activity: bad value for record_detail_alt")
-            return render_template("weko_theme/error.html",
-                        error="can not get data required for rendering")
+    if not for_delete:
+        if activity_detail.activity_status != ActivityStatusPolicy.ACTIVITY_CANCEL:
+            record_detail_alt = get_main_record_detail(
+                activity_id, activity_detail, action_endpoint, item,
+                approval_record, files, files_thumbnail)
+            if not record_detail_alt:
+                current_app.logger.error("display_activity: bad value for record_detail_alt")
+                return render_template("weko_theme/error.html",
+                            error="can not get data required for rendering")
 
-        ctx.update(
-            dict(
-                record_org=record_detail_alt.get('record'),
-                files_org=record_detail_alt.get('files'),
-                thumbnails_org=record_detail_alt.get('files_thumbnail')
+            ctx.update(
+                dict(
+                    record_org=record_detail_alt.get('record'),
+                    files_org=record_detail_alt.get('files'),
+                    thumbnails_org=record_detail_alt.get('files_thumbnail')
+                )
             )
-        )
 
     # Get email approval key
     approval_email_key = get_approval_keys()
@@ -1128,6 +1176,7 @@ def display_activity(activity_id="0", community_id=None):
         term_and_condition_content=term_and_condition_content,
         user_profile=user_profile,
         form=form,
+        for_delete=for_delete,
         **ctx
     )
 
@@ -1307,6 +1356,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
         current_app.logger.error("next_action: can not get activity_detail")
         res = ResponseMessageSchema().load({"code":-1, "msg":"can not get activity detail"})
         return jsonify(res.data), 500
+    for_delete = activity_detail.flow_define.flow_type == WEKO_WORKFLOW_DELETION_FLOW_TYPE
     action_order = activity_detail.action_order
 
     try:
@@ -1496,7 +1546,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
             journal=post_json.get('journal')
         )
 
-    if action_endpoint == 'approval' and item_id:
+    if action_endpoint == 'approval' and item_id and not for_delete:
         last_idt_setting = work_activity.get_action_identifier_grant(
             activity_id=activity_id,
             action_id=get_actionid('identifier_grant'))
@@ -1565,7 +1615,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
             items_display_settings = AdminSettings.get(name='items_display_settings',
                                         dict_to_object=False)
             if items_display_settings:
-                enable_request_maillist = items_display_settings.get('display_request_form', False)         
+                enable_request_maillist = items_display_settings.get('display_request_form', False)
 
             if activity_request_mail and activity_request_mail.request_maillist and enable_request_maillist:
                 RequestMailList.update_by_list_item_id(
@@ -1671,6 +1721,11 @@ def next_action(activity_id='0', action_id=0, json_data=None):
                     action_id=action_id,
                     req=-1)
 
+    if next_action_endpoint == "end_action"  and for_delete:
+        delete_item_id = current_pid.pid_value.split('.')[0]
+        from weko_records_ui.views import soft_delete
+        soft_delete(delete_item_id)
+
     rtn = history.create_activity_history(activity, action_order)
     if not rtn:
         res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
@@ -1690,35 +1745,55 @@ def next_action(activity_id='0', action_id=0, json_data=None):
         comment='',
         action_order=action_order
     )
-    if 'end_action' == next_action_endpoint:
-        new_activity_id = None
-        new_activity_id = handle_finish_workflow(deposit,
-                                                 current_pid,
-                                                 recid)
-        if new_activity_id is None:
-            res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
-            return jsonify(res.data), 500
 
-        activity.update(
-            action_id=next_action_id,
-            action_version=next_flow_action[0].action_version,
-            item_id=new_activity_id,
-            action_order=next_action_order
-        )
-        work_activity.end_activity(activity)
-        # Call signal to push item data to ES.
-        try:
-            if '.' not in current_pid.pid_value and has_request_context():
-                user_id = activity_detail.activity_login_user if \
-                    activity and activity_detail.activity_login_user else -1
-                item_created.send(
-                    current_app._get_current_object(),
-                    user_id=user_id,
-                    item_id=current_pid,
-                    item_title=activity_detail.title
-                )
-        except BaseException:
-            abort(500, 'MAPPING_ERROR')
+    if next_action_endpoint == "approval":
+        work_activity.notify_about_activity(activity_id, "request_approval")
+
+    if next_action_endpoint == "end_action":
+        if not for_delete:
+            non_extract = work_activity.get_non_extract_files(activity_id)
+            deposit.non_extract = non_extract
+            new_item_id = handle_finish_workflow(
+                deposit, current_pid, recid
+            )
+            if new_item_id is None:
+                res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
+                return jsonify(res.data), 500
+
+            activity.update(
+                action_id=next_action_id,
+                action_version=next_flow_action[0].action_version,
+                item_id=new_item_id,
+                action_order=next_action_order
+            )
+            work_activity.end_activity(activity)
+
+            if action_endpoint == "approval":
+                work_activity.notify_about_activity(activity_id, "approved")
+            else:
+                work_activity.notify_about_activity(activity_id, "registered")
+
+            # Call signal to push item data to ES.
+            try:
+                if '.' not in current_pid.pid_value and has_request_context():
+                    user_id = activity_detail.activity_login_user if \
+                        activity and activity_detail.activity_login_user else -1
+                    item_created.send(
+                        current_app._get_current_object(),
+                        user_id=user_id,
+                        item_id=current_pid,
+                        item_title=activity_detail.title
+                    )
+            except BaseException:
+                abort(500, 'MAPPING_ERROR')
+        else:
+            activity.update(
+                action_id=next_action_id,
+                action_version=next_flow_action[0].action_version,
+                item_id=current_pid.object_uuid,
+                action_order=next_action_order
+            )
+            work_activity.end_activity(activity)
     else:
         flag = work_activity.upt_activity_action(
             activity_id=activity_id, action_id=next_action_id,
@@ -1898,7 +1973,7 @@ def previous_action(activity_id='0', action_id=0, req=0):
             db.session.delete(pid_identifier)
         db.session.commit()
     except PIDDoesNotExistError as pidNotEx:
-        current_app.logger.info(pidNotEx)
+        current_app.logger.info("doi does not exists.")
 
     if req == -1:
         pre_action = flow.get_item_registration_flow_action(
@@ -1951,6 +2026,10 @@ def previous_action(activity_id='0', action_id=0, req=0):
             res = ResponseMessageSchema().load({'code':-2,'msg':""})
             return jsonify(res.data), 500
     res = ResponseMessageSchema().load({'code':0,'msg':_('success')})
+
+    if action_id == 4:          # action_endpoint == "approval"
+        work_activity.notify_about_activity(activity_id, "rejected")
+
     return jsonify(res.data), 200
 
 
@@ -3520,3 +3599,155 @@ def dbsession_clean(exception):
         except:
             db.session.rollback()
     db.session.remove()
+
+
+@workflow_blueprint.route('/edit_item_direct/<string:pid_value>', methods=['GET'])
+def edit_item_direct(pid_value):
+    """edit_item_direct.
+
+    Check if you are logged in:
+        logged in: redirect to edit_item_direct_after_login
+        not logged in: redirect to login page
+
+    Args:
+        pid_value (str): The pid_value of the item to be edited.
+
+    return: The result json:
+        code: status code,
+        msg: meassage result,
+        data: url redirect
+    """
+
+    from flask_security import current_user
+
+    # ! Check if you are logged in
+    if not current_user.is_authenticated:
+        return redirect(url_for_security(
+            'login',
+            next="/workflow/edit_item_direct_after_login/" + pid_value))
+    else:
+        return redirect(url_for(".edit_item_direct_after_login", pid_value=pid_value))
+
+
+@workflow_blueprint.route('/edit_item_direct_after_login/<string:pid_value>', methods=['GET'])
+@login_required
+def edit_item_direct_after_login(pid_value):
+    """edit_item_direct_after_login.
+
+    Host the api which provide 2 service:
+        Check permission: check if user is owner/admin/shared user
+        Create new activity for editing flow
+
+    Args:
+        pid_value (str): The pid_value of the item to be edited.
+
+    return: The result json:
+        code: status code,
+        msg: meassage result,
+        data: url redirect
+    """
+
+    from flask_security import current_user
+
+    # Cache Storage
+    redis_connection = RedisConnection()
+    sessionstorage = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+    if sessionstorage.redis.exists("pid_{}_will_be_edit".format(pid_value)):
+        return render_template("weko_theme/error.html",
+                error="This Item is being edited."), 400
+    else:
+        sessionstorage.put(
+            "pid_{}_will_be_edit".format(pid_value),
+            str(current_user.get_id()).encode('utf-8'),
+            ttl_secs=3)
+
+    # ! Check if the record exists
+    try:
+        record_class = import_string('weko_deposit.api:WekoDeposit')
+        resolver = Resolver(pid_type='recid',
+                            object_type='rec',
+                            getter=record_class.get_record)
+        recid, deposit = resolver.resolve(pid_value)
+
+        if not deposit:
+            return render_template("weko_theme/error.html",
+                    error="Record does not exist."), 404
+    except PIDDoesNotExistError as ex:
+        return render_template("weko_theme/error.html",
+                error="Record does not exist."), 404
+
+    authenticators = [str(deposit.get('owner')),
+                      str(deposit.get('weko_shared_id'))]
+    user_id = str(get_current_user())
+    activity = WorkActivity()
+    latest_pid = PIDVersioning(child=recid).last_child
+
+    # ! Check User's Permissions
+    if user_id not in authenticators and not get_user_roles(is_super_role=True)[0]:
+        return render_template("weko_theme/error.html",
+                error="You are not allowed to edit this item."), 400
+
+    # ! Check dependency ItemType
+    if not ItemTypes.get_latest():
+        return render_template("weko_theme/error.html",
+                error="You do not even have an ItemType."), 400
+
+    item_type_id = deposit.get('item_type_id')
+    item_type = ItemTypes.get_by_id(item_type_id)
+    if not item_type:
+        return render_template("weko_theme/error.html",
+                error="Dependency ItemType not found."), 400
+
+    # Check Record is in import progress
+    if check_an_item_is_locked(pid_value):
+        return render_template("weko_theme/error.html",
+                error="Item cannot be edited because the import is in progress."), 400
+
+    # ! Check Record is being edit
+    item_uuid = latest_pid.object_uuid
+    post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
+
+    if post_workflow:
+        is_begin_edit = check_item_is_being_edit(recid, post_workflow, activity)
+        if is_begin_edit:
+            return render_template("weko_theme/error.html",
+                    error="This Item is being edited."), 400
+
+    post_activity = '{"workflow_id": 0, "flow_id": 0, ' \
+        '"itemtype_id": 0, "community": 0, "post_workflow": 0}'
+    post_activity = json.loads(post_activity)
+    if post_workflow:
+        post_activity['workflow_id'] = post_workflow.workflow_id
+        post_activity['flow_id'] = post_workflow.flow_id
+    else:
+        post_workflow = activity.get_workflow_activity_by_item_id(
+            recid.object_uuid
+        )
+        workflow = get_workflow_by_item_type_id(item_type.name_id,
+                                                item_type_id)
+        if not workflow:
+            return render_template("weko_theme/error.html",
+                    error="Workflow setting does not exist."), 400
+        post_activity['workflow_id'] = workflow.id
+        post_activity['flow_id'] = workflow.flow_id
+    post_activity['itemtype_id'] = item_type_id
+    post_activity['post_workflow'] = post_workflow
+
+    try:
+        rtn = prepare_edit_workflow(post_activity, recid, deposit)
+        db.session.commit()
+    except SQLAlchemyError as ex:
+        current_app.logger.error('sqlalchemy error: {}'.format(ex))
+        db.session.rollback()
+        return render_template("weko_theme/error.html",
+                error="An error has occurred."), 500
+    except BaseException as ex:
+        import traceback
+        current_app.logger.error(traceback.format_exc())
+        current_app.logger.error('Unexpected error: {}'.format(ex))
+        db.session.rollback()
+        return render_template("weko_theme/error.html",
+                error="An error has occurred."), 500
+
+    return redirect(url_for(
+        'weko_workflow.display_activity', activity_id=rtn.activity_id))

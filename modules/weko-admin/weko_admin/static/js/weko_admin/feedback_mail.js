@@ -1,4 +1,4 @@
-const { useState, useEffect  } = React;
+const { useState, useEffect } = React;
 
 const NUM_OF_RESULT = 10;
 const LIMIT_PAGINATION_NUMBER = 5;
@@ -35,289 +35,287 @@ const SEARCH_EMAIL_URL = "/api/admin/search_email";
 const GET_REPOSITORY_LIST_URL = "/api/admin/get_repository_list";
 
 class ComponentRepositorySelect extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            repositories: [],
-            selectedRepo: ""
-        };
-        this.handleChange = this.handleChange.bind(this);
-    }
+  constructor(props) {
+    super(props);
+    this.state = {
+      repositories: [],
+      selectedRepo: ""
+    };
+    this.handleChange = this.handleChange.bind(this);
+  }
 
-    componentDidMount() {
-        // リポジトリ一覧を取得
-        fetch(GET_REPOSITORY_LIST_URL)
-            .then(res => res.json())
-            .then(result => {
-                if (result.success) {
-                    this.setState({ repositories: result.repositories });
-                }
-            })
-            .catch(error => console.error(error));
-    }
+  componentDidMount() {
+    // リポジトリ一覧を取得
+    fetch(GET_REPOSITORY_LIST_URL)
+      .then(res => res.json())
+      .then(result => {
+        if (result.success) {
+          this.setState({ repositories: result.repositories });
+        }
+      })
+      .catch(error => console.error(error));
+  }
 
-    handleChange(event) {
-        const selectedRepo = event.target.value;
-        this.setState({ selectedRepo });
+  handleChange(event) {
+    const selectedRepo = event.target.value;
+    this.setState({ selectedRepo });
 
-        // 親コンポーネントにリポジトリ変更を通知
-        this.props.bindingValueOfComponent("selectedRepo", selectedRepo);
-    }
+    // 親コンポーネントにリポジトリ変更を通知
+    this.props.bindingValueOfComponent("selectedRepo", selectedRepo);
+  }
 
-    render() {
-        return (
-            <div className="form-group">
-                <span className="control-label col-xs-2">リポジトリ</span>
-                <div className="col-xs-10">
-                    <select className="form-control" value={this.state.selectedRepo} onChange={this.handleChange}>
-                        <option value="">選択してください</option>
-                        {this.state.repositories && this.state.repositories.map(repo => (
-                            <option key={repo.id} value={repo.id}>{repo.id}</option>
-                        ))}
-                    </select>
-                </div>
-            </div>
-        );
-    }
+  render() {
+    return (
+      <div className="form-group">
+        <span className="control-label col-xs-2">リポジトリ</span>
+        <div className="col-xs-10">
+          <select className="form-control" value={this.state.selectedRepo} onChange={this.handleChange}>
+            <option value="">選択してください</option>
+            {this.state.repositories && this.state.repositories.map(repo => (
+              <option key={repo.id} value={repo.id}>{repo.id}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+    );
+  }
 }
 
 
 class ComponentFeedbackMail extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-          flagSend: this.props.flagSend,
-        }
-        this.handleChangeSend = this.handleChangeSend.bind(this);
-        this.handleChangeNotSend = this.handleChangeNotSend.bind(this);
+  constructor(props) {
+    super(props);
+    this.state = {
+      flagSend: this.props.flagSend,
     }
+    this.handleChangeSend = this.handleChangeSend.bind(this);
+    this.handleChangeNotSend = this.handleChangeNotSend.bind(this);
+  }
 
-    static getDerivedStateFromProps(nextProps, prevState) {
-      if (nextProps.flagSend != prevState.flagSend)
-      {
-        return {
-          flagSend: nextProps.flagSend,
-        }
+  static getDerivedStateFromProps(nextProps, prevState) {
+    if (nextProps.flagSend != prevState.flagSend) {
+      return {
+        flagSend: nextProps.flagSend,
       }
-      return null;
     }
+    return null;
+  }
 
-    handleChangeSend(event){
-      this.setState({flagSend: true});
-      this.props.bindingValueOfComponent("flagSend", true);
-    }
+  handleChangeSend(event) {
+    this.setState({ flagSend: true });
+    this.props.bindingValueOfComponent("flagSend", true);
+  }
 
-    handleChangeNotSend(event){
-      this.setState({flagSend: false});
-      this.props.bindingValueOfComponent("flagSend", false);
-    }
+  handleChangeNotSend(event) {
+    this.setState({ flagSend: false });
+    this.props.bindingValueOfComponent("flagSend", false);
+  }
 
-    render() {
-        return (
-          <div className="form-group style-component">
-            <span className="control-label col-xs-2">{COMPONENT_SEND_NAME}</span>
-            <div class="controls col-xs-10">
-              <div className="form-group">
-                <span>
-                  <label class="radio-inline" for="feedback_mail_send_id">
-                    <input className= "style-radioBtn" type="radio" id="feedback_mail_send_id" name="feedback_mail" value="send" checked = {this.state.flagSend ? "checked" : ""} onChange= {this.handleChangeSend}/>
-                    {SEND_RADIO_BUTTON_NAME}
-                  </label>
-                </span>
-                <span  className = "margin-left">
-                  <label class="radio-inline" for="feedback_mail_not_send_id">
-                    <input className= "style-radioBtn" type="radio" id="feedback_mail_not_send_id" name="feedback_mail" value="not_send" checked = {this.state.flagSend ? "" : "checked"} onChange= {this.handleChangeNotSend}/>
-                    {NOT_SEND_RADIO_BUTTON_NAME}
-                  </label>
-                </span>
-              </div>
-            </div>
+  render() {
+    return (
+      <div className="form-group style-component">
+        <span className="control-label col-xs-2">{COMPONENT_SEND_NAME}</span>
+        <div class="controls col-xs-10">
+          <div className="form-group">
+            <span>
+              <label class="radio-inline" for="feedback_mail_send_id">
+                <input className="style-radioBtn" type="radio" id="feedback_mail_send_id" name="feedback_mail" value="send" checked={this.state.flagSend ? "checked" : ""} onChange={this.handleChangeSend} />
+                {SEND_RADIO_BUTTON_NAME}
+              </label>
+            </span>
+            <span className="margin-left">
+              <label class="radio-inline" for="feedback_mail_not_send_id">
+                <input className="style-radioBtn" type="radio" id="feedback_mail_not_send_id" name="feedback_mail" value="not_send" checked={this.state.flagSend ? "" : "checked"} onChange={this.handleChangeNotSend} />
+                {NOT_SEND_RADIO_BUTTON_NAME}
+              </label>
+            </span>
           </div>
-        )
-    }
+        </div>
+      </div>
+    )
+  }
 }
 
 class ComponentExclusionTarget extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-          listEmail: [],
-          selectedId: [],
-        }
-        this.deleteCommand = this.deleteCommand.bind(this);
-        this.searchCommand = this.searchCommand.bind(this);
-        this.handleKeyPress = this.handleKeyPress.bind(this);
-        this.generateSelectedBox = this.generateSelectedBox.bind(this);
-        this.setWrapperRef = this.setWrapperRef.bind(this);
-        this.setDeleteWrapperRef = this.setDeleteWrapperRef.bind(this);
-        this.handleClickOutside = this.handleClickOutside.bind(this);
-        this.handleClick = this.handleClick.bind(this);
+  constructor(props) {
+    super(props);
+    this.state = {
+      listEmail: [],
+      selectedId: [],
     }
+    this.deleteCommand = this.deleteCommand.bind(this);
+    this.searchCommand = this.searchCommand.bind(this);
+    this.handleKeyPress = this.handleKeyPress.bind(this);
+    this.generateSelectedBox = this.generateSelectedBox.bind(this);
+    this.setWrapperRef = this.setWrapperRef.bind(this);
+    this.setDeleteWrapperRef = this.setDeleteWrapperRef.bind(this);
+    this.handleClickOutside = this.handleClickOutside.bind(this);
+    this.handleClick = this.handleClick.bind(this);
+  }
 
-    componentDidMount(){
-      document.addEventListener('mousedown', this.handleClickOutside);
-      fetch(GET_FEEDBACK_MAIL_URL, { method: 'POST' })
-        .then(res => res.json())
-        .then((result) => {
-          let mailData = result.data || [];
-          let sendData = result.is_sending_feedback || false;
-          this.props.bindingValueOfComponent('listEmail', mailData);
-          this.props.bindingValueOfComponent('flagSend', sendData);
-        })
-        .catch(error => console.error(error));
-    }
+  componentDidMount() {
+    document.addEventListener('mousedown', this.handleClickOutside);
+    fetch(GET_FEEDBACK_MAIL_URL, { method: 'POST' })
+      .then(res => res.json())
+      .then((result) => {
+        let mailData = result.data || [];
+        let sendData = result.is_sending_feedback || false;
+        this.props.bindingValueOfComponent('listEmail', mailData);
+        this.props.bindingValueOfComponent('flagSend', sendData);
+      })
+      .catch(error => console.error(error));
+  }
 
-    componentWillUnmount() {
-      document.removeEventListener('mousedown', this.handleClickOutside);
-    }
+  componentWillUnmount() {
+    document.removeEventListener('mousedown', this.handleClickOutside);
+  }
 
-    setWrapperRef(node) {
-      this.wrapperRef = node;
-    }
+  setWrapperRef(node) {
+    this.wrapperRef = node;
+  }
 
-    setDeleteWrapperRef(node) {
-      this.deleteRef = node;
-    }
+  setDeleteWrapperRef(node) {
+    this.deleteRef = node;
+  }
 
-    static getDerivedStateFromProps(nextProps, prevState) {
-      if (nextProps.listEmail != prevState.listEmail)
-      {
-        return {
-          listEmail: nextProps.listEmail,
-        }
-      }
-      return null;
-    }
-
-    handleClickOutside(event) {
-      if (this.wrapperRef && this.deleteRef && !this.wrapperRef.contains(event.target) && !this.deleteRef.contains(event.target)) {
-        this.setState({ selectedId: [] });
+  static getDerivedStateFromProps(nextProps, prevState) {
+    if (nextProps.listEmail != prevState.listEmail) {
+      return {
+        listEmail: nextProps.listEmail,
       }
     }
+    return null;
+  }
 
-    handleClick(id) {
-      const selectedId = this.state.selectedId
-      if (id < 0) {
+  handleClickOutside(event) {
+    if (this.wrapperRef && this.deleteRef && !this.wrapperRef.contains(event.target) && !this.deleteRef.contains(event.target)) {
+      this.setState({ selectedId: [] });
+    }
+  }
+
+  handleClick(id) {
+    const selectedId = this.state.selectedId
+    if (id < 0) {
+      this.setState({
+        selectedId: []
+      });
+    } else {
+      if (!this.state.selectedId.includes(id)) {
+
+        selectedId.push(id);
         this.setState({
-          selectedId: []
+          selectedId: selectedId
         });
       } else {
-        if (!this.state.selectedId.includes(id)) {
+        this.setState({
+          selectedId: selectedId.filter(e => e !== id)
+        });
+      }
+    }
+  }
 
-          selectedId.push(id);
-          this.setState({
-            selectedId: selectedId
-          });
-        } else {
-          this.setState({
-            selectedId: selectedId.filter(e => e !== id)
-          });
+  validateEmail(email) {
+    var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(email).toLowerCase());
+  }
+
+  handleKeyPress(event) {
+    if (event.key == 'Enter') {
+      let new_email = {
+        author_id: "",
+        email: event.target.value.trim(),
+        name: ""
+      }
+      if (!this.validateEmail(new_email.email)) {
+        alert("Pleased input a valid email.");
+      }
+      else {
+        if (this.props.addEmailToList(new_email)) {
+          $('#custom_input_email').val('');
+          $('#sltBoxListEmail').animate({
+            scrollTop: $("#custom_input_email").offset().top
+          }, 1000);
         }
       }
     }
+  }
 
-    validateEmail(email) {
-      var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-      return re.test(String(email).toLowerCase());
-    }
-
-    handleKeyPress(event){
-      if (event.key =='Enter') {
-        let new_email = {
-          author_id: "",
-          email: event.target.value.trim(),
-          name: ""
-        }
-        if (!this.validateEmail(new_email.email)){
-          alert("Pleased input a valid email.");
-        }
-        else{
-          if (this.props.addEmailToList(new_email)) {
-            $('#custom_input_email').val('');
-            $('#sltBoxListEmail').animate({
-              scrollTop: $("#custom_input_email").offset().top
-            }, 1000);
-          }
-        }
+  generateSelectedBox(listEmail) {
+    let innerHTML = [];
+    for (let id in listEmail) {
+      if (listEmail[id].author_id) {
+        innerHTML.push(<a className={`list-group-item list-group-item-action ${this.state.selectedId.includes(id) ? 'active' : ''}`}
+          onClick={() => { this.handleClick(id) }}
+          key={id}
+          value={listEmail[id].author_id}>{listEmail[id].email}&nbsp;&nbsp;(Author&nbsp;ID:&nbsp;{listEmail[id].author_id})</a>);
+      } else {
+        innerHTML.push(<a className={`list-group-item list-group-item-action ${this.state.selectedId.includes(id) ? 'active' : ''}`}
+          onClick={() => { this.handleClick(id) }}
+          key={id}
+          value={listEmail[id].author_id}>{listEmail[id].email}</a>);
       }
     }
-
-    generateSelectedBox(listEmail) {
-      let innerHTML = [];
-      for (let id in listEmail) {
-        if (listEmail[id].author_id) {
-          innerHTML.push(<a className={`list-group-item list-group-item-action ${this.state.selectedId.includes(id) ? 'active' : ''}`}
-                        onClick={() => { this.handleClick(id) }}
-                        key={id}
-                        value={listEmail[id].author_id}>{listEmail[id].email}&nbsp;&nbsp;(Author&nbsp;ID:&nbsp;{listEmail[id].author_id})</a>);
-        } else {
-          innerHTML.push(<a className={`list-group-item list-group-item-action ${this.state.selectedId.includes(id) ? 'active' : ''}`}
-                        onClick={() => { this.handleClick(id) }}
-                        key={id}
-                        value={listEmail[id].author_id}>{listEmail[id].email}</a>);
-        }
-      }
-      return (
-        <div ref={this.setWrapperRef} class="list-group" className="style-selected-box" id="sltBoxListEmail">
-          {innerHTML}
-          <input class="list-group-item list-group-item-action style-full-size"
-          type ="text"
+    return (
+      <div ref={this.setWrapperRef} class="list-group" className="style-selected-box" id="sltBoxListEmail">
+        {innerHTML}
+        <input class="list-group-item list-group-item-action style-full-size"
+          type="text"
           id="custom_input_email"
           onKeyPress={(e) => this.handleKeyPress(e)}
-          />
-        </div>
-      )
-    }
+        />
+      </div>
+    )
+  }
 
-    deleteCommand(event) {
-      this.setState({selectedId: []})
-      this.props.removeEmailFromList(this.state.selectedId);
-    }
+  deleteCommand(event) {
+    this.setState({ selectedId: [] })
+    this.props.removeEmailFromList(this.state.selectedId);
+  }
 
-    searchCommand(){
-      this.props.bindingValueOfComponent("showModalSearch", true);
-    }
+  searchCommand() {
+    this.props.bindingValueOfComponent("showModalSearch", true);
+  }
 
-    render() {
-        return (
-            <div className="form-group style-component">
-                <span className="control-label col-xs-2">{COMPONENT_SEARCH_EMAIL_NAME}</span>
-                <div className="controls col-xs-10">
-                    <div>
-                        <ReactBootstrap.Button variant="primary" onClick={this.searchCommand}>
-                            <i className = "glyphicon glyphicon-search"></i>&nbsp;{OPEN_MODAL_SEARCH_BUTTON_NAME}
-                        </ReactBootstrap.Button>
-                    </div>
-                    <div className="style-full-size">
-                      {this.generateSelectedBox(this.state.listEmail)}
-                      <div className="button-container">
-                        <button ref={this.setDeleteWrapperRef} className="btn btn-danger style-deleteBtn" onClick={this.deleteCommand}>
-                            <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
-                            &nbsp;{DELETE_BUTTON_NAME}
-                        </button>
-                      </div>
-                    </div>
-                </div>
+  render() {
+    return (
+      <div className="form-group style-component">
+        <span className="control-label col-xs-2">{COMPONENT_SEARCH_EMAIL_NAME}</span>
+        <div className="controls col-xs-10">
+          <div>
+            <ReactBootstrap.Button variant="primary" onClick={this.searchCommand}>
+              <i className="glyphicon glyphicon-search"></i>&nbsp;{OPEN_MODAL_SEARCH_BUTTON_NAME}
+            </ReactBootstrap.Button>
+          </div>
+          <div className="style-full-size">
+            {this.generateSelectedBox(this.state.listEmail)}
+            <div className="button-container">
+              <button ref={this.setDeleteWrapperRef} className="btn btn-danger style-deleteBtn" onClick={this.deleteCommand}>
+                <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
+                &nbsp;{DELETE_BUTTON_NAME}
+              </button>
             </div>
-        )
-    }
+          </div>
+        </div>
+      </div>
+    )
+  }
 }
 
 class ModalMessageComponent extends React.Component {
   constructor(props) {
     super(props);
   }
-  render(){
-    return(
+  render() {
+    return (
       <div className="alert alert-info">
-          Sorry，No results.
+        Sorry，No results.
       </div>
     )
   }
 }
 
 class TableUserEmailComponent extends React.Component {
-  constructor(props){
+  constructor(props) {
     super(props);
     this.state = {
       listUser: this.props.listUser,
@@ -328,8 +326,7 @@ class TableUserEmailComponent extends React.Component {
   }
 
   static getDerivedStateFromProps(nextProps, prevState) {
-    if (nextProps.listUser != prevState.listUser)
-    {
+    if (nextProps.listUser != prevState.listUser) {
       return {
         listUser: nextProps.listUser,
         firstRender: false,
@@ -338,9 +335,8 @@ class TableUserEmailComponent extends React.Component {
     return null;
   }
 
-  generateBodyTableUser()
-  {
-    let tBodyElement = this.state.listUser.map((row) =>{
+  generateBodyTableUser() {
+    let tBodyElement = this.state.listUser.map((row) => {
       let name = "";
       if (row._source.authorNameInfo[0]) {
         name = row._source.authorNameInfo[0].fullName;
@@ -353,12 +349,12 @@ class TableUserEmailComponent extends React.Component {
       if (row._source.emailInfo.length >= 1) {
         let mailData = [];
         let mailList = [];
-        row._source.emailInfo.forEach(function(v, k) {
+        row._source.emailInfo.forEach(function (v, k) {
           mailData.push(<p>{v.email}</p>);
           mailList.push(v.email);
         });
         return (
-          <tr key = {row._source.pk_id.toString()}>
+          <tr key={row._source.pk_id.toString()}>
             <td>{name}</td>
             <td>{mailData}</td>
             <td className="text-right">
@@ -376,7 +372,7 @@ class TableUserEmailComponent extends React.Component {
             <td></td>
             <td className="text-right">
               <button disabled className="btn btn-info">
-                  &nbsp;&nbsp;{IMPORT_BUTTON_NAME}&nbsp;&nbsp;
+                &nbsp;&nbsp;{IMPORT_BUTTON_NAME}&nbsp;&nbsp;
               </button>
             </td>
           </tr>
@@ -390,48 +386,48 @@ class TableUserEmailComponent extends React.Component {
       </tbody>
     )
   }
-  importEmail(event, pk_id, emails){
-    event.target.disabled=true;
+  importEmail(event, pk_id, emails) {
+    event.target.disabled = true;
     var props = this.props;
-    emails.forEach(function(v, k) {
+    emails.forEach(function (v, k) {
       let data = {
-        "author_id" : pk_id,
-        "email" : v
+        "author_id": pk_id,
+        "email": v
       }
       props.addEmailToList(data);
     });
   }
-  render(){
+  render() {
     return (
       <div className="col-sm-12 col-md-12">
         <table className="table table-striped style-table-modal" id="table_data">
           <caption ></caption>
           <thead >
-            <tr  className="success">
-              <th  className="thWidth style-column">{NAME_LABEL}</th>
-              <th  className="thWidth style-column">{MAIL_ADDRESS_LABEL}</th>
-              <th  className="alignCenter" ></th>
+            <tr className="success">
+              <th className="thWidth style-column">{NAME_LABEL}</th>
+              <th className="thWidth style-column">{MAIL_ADDRESS_LABEL}</th>
+              <th className="alignCenter" ></th>
             </tr>
           </thead>
           {this.generateBodyTableUser()}
         </table>
-        {this.state.firstRender == false && this.state.listUser.length == 0 ? <ModalMessageComponent/> : ""}
+        {this.state.firstRender == false && this.state.listUser.length == 0 ? <ModalMessageComponent /> : ""}
       </div>
     )
   }
 }
 
 class SearchComponent extends React.Component {
-  constructor(props){
+  constructor(props) {
     super(props);
     this.state = {
-      searchKey : this.props.searchKey,
+      searchKey: this.props.searchKey,
     }
     this.searchEmail = this.searchEmail.bind(this);
     this.handleChange = this.handleChange.bind(this);
   }
 
-  searchEmail(){
+  searchEmail() {
     let request = {
       searchKey: this.state.searchKey,
       pageNumber: 1,
@@ -451,19 +447,19 @@ class SearchComponent extends React.Component {
       .catch(error => console.error(error));
   }
 
-  handleChange(event){
+  handleChange(event) {
     this.setState({ searchKey: event.target.value });
     this.props.getSearchKey(event.target.value);
     event.preventDefault();
   }
-  render(){
+  render() {
     return (
       <div>
         <div className="col-sm-5 col-md-5">
-          <input className="form-control" placeholder="" type="text" onChange={this.handleChange} value={this.state.searchKey}/>
+          <input className="form-control" placeholder="" type="text" onChange={this.handleChange} value={this.state.searchKey} />
         </div>
         <div className="col-sm-1 col-md-1">
-          <button class="btn btn-primary search-button" type="button" onClick = {this.searchEmail}>&nbsp;&nbsp;
+          <button class="btn btn-primary search-button" type="button" onClick={this.searchEmail}>&nbsp;&nbsp;
             <i class="fa fa-search-plus"></i>
             &nbsp;
             {SEARCH_BUTTON_NAME} &nbsp;&nbsp;
@@ -487,17 +483,15 @@ class Pagination extends React.Component {
     this.generatePagination = this.generatePagination.bind(this);
   }
   static getDerivedStateFromProps(nextProps, prevState) {
-    if (nextProps.numOfResult != prevState.numOfResult)
-    {
+    if (nextProps.numOfResult != prevState.numOfResult) {
       let pageCount = nextProps.numOfResult / NUM_OF_RESULT;
       pageCount = parseInt(pageCount);
-      if(nextProps.numOfResult % NUM_OF_RESULT != 0){
+      if (nextProps.numOfResult % NUM_OF_RESULT != 0) {
         pageCount += 1;
       }
       let endPage = pageCount;
       let startPage = 1;
-      if (pageCount > 5)
-      {
+      if (pageCount > 5) {
         endPage = 5;
       }
       return {
@@ -561,39 +555,39 @@ class Pagination extends React.Component {
       .catch(error => console.error(error));
   }
 
-  generatePagination(){
+  generatePagination() {
     let listPage = [];
-    for (let i = this.state.startPage; i <= this.state.endPage; i++){
+    for (let i = this.state.startPage; i <= this.state.endPage; i++) {
       listPage.push(
-        <li  key = {i.toString()} className = {this.state.currentPage == i ? 'active' : ''}>
-          <a  href="#" onClick = {() => this.locatePageResult(i)}>{i}</a>
+        <li key={i.toString()} className={this.state.currentPage == i ? 'active' : ''}>
+          <a href="#" onClick={() => this.locatePageResult(i)}>{i}</a>
         </li>
       )
     }
     return (
-      <ul  className="pagination">
+      <ul className="pagination">
         {this.state.numOfPage > LIMIT_PAGINATION_NUMBER ?
+          <li >
+            <a href="#" onClick={() => this.locatePageResult(1)} className={this.state.currentPage == 1 ? 'my-pagination-disabled' : ''}><span aria-hidden="true">&#8810;</span></a>
+          </li> : null}
         <li >
-          <a  href="#" onClick = {() => this.locatePageResult(1)} className = {this.state.currentPage == 1 ? 'my-pagination-disabled' : ''}><span  aria-hidden="true">&#8810;</span></a>
-        </li> : null }
-        <li >
-          <a  href="#" onClick = {() => this.locatePageResult(this.state.currentPage - 1)} className = {this.state.currentPage == 1 ? 'my-pagination-disabled' : ''}><span  aria-hidden="true">&lt;</span></a>
+          <a href="#" onClick={() => this.locatePageResult(this.state.currentPage - 1)} className={this.state.currentPage == 1 ? 'my-pagination-disabled' : ''}><span aria-hidden="true">&lt;</span></a>
         </li>
         {listPage}
         <li >
-          <a  href="#" onClick = {() => this.locatePageResult(this.state.currentPage + 1)} className = {this.state.currentPage == this.state.numOfPage ? 'my-pagination-disabled' : ''}><span  aria-hidden="true">&gt;</span></a>
+          <a href="#" onClick={() => this.locatePageResult(this.state.currentPage + 1)} className={this.state.currentPage == this.state.numOfPage ? 'my-pagination-disabled' : ''}><span aria-hidden="true">&gt;</span></a>
         </li>
         {this.state.numOfPage > LIMIT_PAGINATION_NUMBER ?
-        <li >
-          <a  href="#" onClick = {() => this.locatePageResult(this.state.numOfPage)} className = {this.state.currentPage == this.state.numOfPage ? 'my-pagination-disabled' : ''}><span  aria-hidden="true">&#8811;</span></a>
-        </li> : null }
+          <li >
+            <a href="#" onClick={() => this.locatePageResult(this.state.numOfPage)} className={this.state.currentPage == this.state.numOfPage ? 'my-pagination-disabled' : ''}><span aria-hidden="true">&#8811;</span></a>
+          </li> : null}
       </ul>
     )
   }
-  render () {
+  render() {
     return (
-      <div  className="row">
-        <div  className="col-sm-12 col-md-12 text-center">
+      <div className="row">
+        <div className="col-sm-12 col-md-12 text-center">
           {this.generatePagination()}
         </div>
       </div>
@@ -612,15 +606,14 @@ class ModalSearchBodyComponent extends React.Component {
     this.getListUser = this.getListUser.bind(this);
     this.getSearchKey = this.getSearchKey.bind(this);
   }
-  getListUser(data, count)
-  {
+  getListUser(data, count) {
     this.setState({
       listUser: data,
       numOfResult: count
     });
   }
-  getSearchKey(data){
-    this.setState({searchKey:data});
+  getSearchKey(data) {
+    this.setState({ searchKey: data });
   }
   render() {
     return (
@@ -629,13 +622,13 @@ class ModalSearchBodyComponent extends React.Component {
           <div className="col-sm-12 col-md-12 col-md-12">
             <div className="row">
               <div className="row">
-                <SearchComponent getListUser = {this.getListUser} searchKey = {this.state.searchKey} getSearchKey= {this.getSearchKey}/>
+                <SearchComponent getListUser={this.getListUser} searchKey={this.state.searchKey} getSearchKey={this.getSearchKey} />
               </div>
               <div className="row">
-                <TableUserEmailComponent listUser = {this.state.listUser} addEmailToList={this.props.addEmailToList}/>
+                <TableUserEmailComponent listUser={this.state.listUser} addEmailToList={this.props.addEmailToList} />
               </div>
-              <div className = "row">
-                <Pagination numOfResult = {this.state.numOfResult} searchKey = {this.state.searchKey} getListUser = {this.getListUser}/>
+              <div className="row">
+                <Pagination numOfResult={this.state.numOfResult} searchKey={this.state.searchKey} getListUser={this.getListUser} />
               </div>
             </div>
           </div>
@@ -645,19 +638,19 @@ class ModalSearchBodyComponent extends React.Component {
   }
 }
 class ModalFooterComponent extends React.Component {
-  constructor(props){
+  constructor(props) {
     super(props);
     this.handleClose = this.handleClose.bind(this);
   }
   handleClose() {
-      this.props.bindingValueOfComponent("showModalSearch", false);
+    this.props.bindingValueOfComponent("showModalSearch", false);
   }
-  render(){
+  render() {
     return (
-        <ReactBootstrap.Button className="btn-primary text-white" onClick={this.handleClose}>
-          <span className="glyphicon glyphicon-remove text-white"></span>
-          &nbsp;{CLOSE_BUTTON_NAME}
-        </ReactBootstrap.Button>
+      <ReactBootstrap.Button className="btn-primary text-white" onClick={this.handleClose}>
+        <span className="glyphicon glyphicon-remove text-white"></span>
+        &nbsp;{CLOSE_BUTTON_NAME}
+      </ReactBootstrap.Button>
     )
   }
 }
@@ -670,29 +663,28 @@ class ModalSearchComponent extends React.Component {
     };
   }
   static getDerivedStateFromProps(nextProps, prevState) {
-    if (nextProps.showModalSearch != prevState.showModalSearch)
-    {
+    if (nextProps.showModalSearch != prevState.showModalSearch) {
       return {
         show: nextProps.showModalSearch,
       }
     }
     return null;
   }
-  render(){
+  render() {
     return (
       <ReactBootstrap.Modal show={this.state.show} onHide={this.handleClose} dialogClassName="feedback-mail-modal">
         <ReactBootstrap.Modal.Body className="feedback-mail-modal-body">
-          <ModalSearchBodyComponent addEmailToList = {this.props.addEmailToList}/>
+          <ModalSearchBodyComponent addEmailToList={this.props.addEmailToList} />
         </ReactBootstrap.Modal.Body>
         <ReactBootstrap.Modal.Footer>
-          <ModalFooterComponent bindingValueOfComponent = {this.props.bindingValueOfComponent} modal = "modalSearch"/>
+          <ModalFooterComponent bindingValueOfComponent={this.props.bindingValueOfComponent} modal="modalSearch" />
         </ReactBootstrap.Modal.Footer>
       </ReactBootstrap.Modal>
     )
   }
 }
 
-const ModalFooterResendComponent = function(props){
+const ModalFooterResendComponent = function (props) {
   function handleClose() {
     props.bindingValueOfComponent("showModalResend", false);
   }
@@ -742,7 +734,7 @@ const ModalFooterResendComponent = function(props){
   )
 }
 
-const TableResendErrorComponent = function(props){
+const TableResendErrorComponent = function (props) {
   const [data, setData] = useState([]);
   const [numOfPage, setNumOfPage] = useState(1);
   const [currentIndex, setIndex] = useState(0);
@@ -765,22 +757,22 @@ const TableResendErrorComponent = function(props){
           setData(result.data);
         })
       .catch(error => console.error(error));
-  },[]);
+  }, []);
 
-  function getData(data){
+  function getData(data) {
     setData(data.data);
-    setIndex(data.selected_page-1);
+    setIndex(data.selected_page - 1);
     setNumOfPage(data.total_page);
   }
 
-  function generateBodyTableUser(){
+  function generateBodyTableUser() {
     let listRow = data.map((rowData, index) =>
-    <tr>
-      <td>{(currentIndex * 10) + index+1}</td>
-      <td>{rowData.name}</td>
-      <td>{rowData.mail}</td>
-    </tr>);
-    return(
+      <tr>
+        <td>{(currentIndex * 10) + index + 1}</td>
+        <td>{rowData.name}</td>
+        <td>{rowData.mail}</td>
+      </tr>);
+    return (
       <tbody>
         {listRow}
       </tbody>
@@ -791,51 +783,51 @@ const TableResendErrorComponent = function(props){
       <table class="table table-striped resend-mail-table">
         <thead>
           <tr>
-            <th className = "width-small">#</th>
-            <th className = "width-long">{NAME_LABEL}</th>
+            <th className="width-small">#</th>
+            <th className="width-long">{NAME_LABEL}</th>
             <th>{MAIL_ADDRESS_LABEL}</th>
           </tr>
         </thead>
         {generateBodyTableUser()}
       </table>
-      <div className = "row">
-        <PaginationResendLogsTable bindURL = {GET_FAILED_MAIL_URL} bindID = {props.bindID} bindNumOfPage = {numOfPage} bindGetData = {getData}/>
+      <div className="row">
+        <PaginationResendLogsTable bindURL={GET_FAILED_MAIL_URL} bindID={props.bindID} bindNumOfPage={numOfPage} bindGetData={getData} />
       </div>
     </div>
   )
 }
 
-const PaginationResendLogsTable = function(props){
-  const[numOfPage, setNumOfPage] = useState(props.bindNumOfPage);
-  const[startPage, setStartPage] = useState(1);
-  const[endPage, setEndPage] = useState(1);
-  const[currentPage, setCurrentPage] = useState(1);
+const PaginationResendLogsTable = function (props) {
+  const [numOfPage, setNumOfPage] = useState(props.bindNumOfPage);
+  const [startPage, setStartPage] = useState(1);
+  const [endPage, setEndPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     setNumOfPage(props.bindNumOfPage);
-    if(props.bindNumOfPage > 5){
+    if (props.bindNumOfPage > 5) {
       setEndPage(5);
     }
-    else{
+    else {
       setEndPage(props.bindNumOfPage);
     }
   }, [props.bindNumOfPage]);
 
-  function locatePageResult(pageNumber){
-    if(pageNumber < 1 || pageNumber > numOfPage){
+  function locatePageResult(pageNumber) {
+    if (pageNumber < 1 || pageNumber > numOfPage) {
       return;
     }
-    if (numOfPage > 5 ){
-      if(pageNumber > 2 && pageNumber < numOfPage -2){
+    if (numOfPage > 5) {
+      if (pageNumber > 2 && pageNumber < numOfPage - 2) {
         setEndPage(pageNumber + 2);
-        setStartPage(pageNumber -2);
+        setStartPage(pageNumber - 2);
       }
       else {
-        if(pageNumber < 3){
+        if (pageNumber < 3) {
           setStartPage(1);
           setEndPage(5);
         }
-        if (pageNumber >numOfPage -2){
+        if (pageNumber > numOfPage - 2) {
           setStartPage(numOfPage - 4);
           setEndPage(numOfPage);
         }
@@ -859,64 +851,64 @@ const PaginationResendLogsTable = function(props){
       .catch(error => console.error(error));
   }
 
-  function generatePagination(){
+  function generatePagination() {
     let listPage = [];
-    for (let i = startPage; i <= endPage; i++){
+    for (let i = startPage; i <= endPage; i++) {
       listPage.push(
-        <li  key = {i.toString()} className = {currentPage == i ? 'active' : ''}>
-          <a  href="#" onClick = {(e) => handleChangePage(e, i)}>{i}</a>
+        <li key={i.toString()} className={currentPage == i ? 'active' : ''}>
+          <a href="#" onClick={(e) => handleChangePage(e, i)}>{i}</a>
         </li>
       )
     }
 
-    function handleChangePage(event, pageNumber){
+    function handleChangePage(event, pageNumber) {
       event.preventDefault();
       locatePageResult(pageNumber);
     }
 
     return (
-      <ul  className="pagination">
+      <ul className="pagination">
         {numOfPage > LIMIT_PAGINATION_NUMBER ?
+          <li >
+            <a href="#" onClick={(e) => handleChangePage(e, 1)} className={currentPage == 1 ? 'my-pagination-disabled' : ''}><span aria-hidden="true">&#8810;</span></a>
+          </li> : null}
         <li >
-          <a href="#" onClick = {(e) => handleChangePage(e, 1)} className = {currentPage == 1 ? 'my-pagination-disabled' : ''}><span aria-hidden="true">&#8810;</span></a>
-        </li> : null }
-        <li >
-          <a href="#" onClick = {(e) => handleChangePage(e, currentPage - 1)} className = {currentPage == 1 ? 'my-pagination-disabled' : ''}><span aria-hidden="true">&lt;</span></a>
+          <a href="#" onClick={(e) => handleChangePage(e, currentPage - 1)} className={currentPage == 1 ? 'my-pagination-disabled' : ''}><span aria-hidden="true">&lt;</span></a>
         </li>
         {listPage}
         <li >
-          <a href="#" onClick = {(e) => handleChangePage(e, currentPage + 1)} className = {currentPage == numOfPage ? 'my-pagination-disabled' : ''}><span aria-hidden="true">&gt;</span></a>
+          <a href="#" onClick={(e) => handleChangePage(e, currentPage + 1)} className={currentPage == numOfPage ? 'my-pagination-disabled' : ''}><span aria-hidden="true">&gt;</span></a>
         </li>
         {numOfPage > LIMIT_PAGINATION_NUMBER ?
-        <li >
-          <a href="#" onClick = {(e) => handleChangePage(e, numOfPage)} className = {currentPage == numOfPage ? 'my-pagination-disabled' : ''}><span aria-hidden="true">&#8811;</span></a>
-        </li> : null }
+          <li >
+            <a href="#" onClick={(e) => handleChangePage(e, numOfPage)} className={currentPage == numOfPage ? 'my-pagination-disabled' : ''}><span aria-hidden="true">&#8811;</span></a>
+          </li> : null}
       </ul>
     )
   }
-  return(
-    <div  className="row">
-      <div  className="col-sm-12 col-md-12 text-center">
+  return (
+    <div className="row">
+      <div className="col-sm-12 col-md-12 text-center">
         {generatePagination()}
       </div>
     </div>
   )
 }
 
-const ModalResendBodyComponent = function(props) {
+const ModalResendBodyComponent = function (props) {
   return (
     <div>
-      <div className = "row">
+      <div className="row">
         <label className="label-resend-email">{TITLE_TABLE_RESEND_EMAIL}</label>
       </div>
-      <div className = "row">
-        <TableResendErrorComponent bindID = {props.bindID}/>
+      <div className="row">
+        <TableResendErrorComponent bindID={props.bindID} />
       </div>
     </div>
   )
 }
 
-const ModalResendComponent = function(props){
+const ModalResendComponent = function (props) {
   const [showModal, setShowModal] = useState(props.showModalResend)
 
   useEffect(() => {
@@ -930,74 +922,74 @@ const ModalResendComponent = function(props){
   return (
     <ReactBootstrap.Modal show={showModal} onHide={() => handleClose()} dialogClassName="resend-mail-modal">
       <ReactBootstrap.Modal.Body className="feedback-mail-modal-body">
-        <ModalResendBodyComponent bindID = {props.bindID}/>
+        <ModalResendBodyComponent bindID={props.bindID} />
       </ReactBootstrap.Modal.Body>
       <ReactBootstrap.Modal.Footer>
-        <ModalFooterResendComponent bindingValueOfComponent = {props.bindingValueOfComponent} bindID = {props.bindID}/>
+        <ModalFooterResendComponent bindingValueOfComponent={props.bindingValueOfComponent} bindID={props.bindID} />
       </ReactBootstrap.Modal.Footer>
     </ReactBootstrap.Modal>
   )
 }
 
 class ComponentButtonLayout extends React.Component {
-    constructor(props) {
-        super(props);
-        this.saveCommand = this.saveCommand.bind(this);
+  constructor(props) {
+    super(props);
+    this.saveCommand = this.saveCommand.bind(this);
+  }
+
+  saveCommand(event) {
+    let is_sending_feedback = this.props.flagSend;
+    let selectedRepo = this.props.selectedRepo;
+    let request_param = {
+      "data": this.props.listEmail,
+      "is_sending_feedback": is_sending_feedback,
+      "repo_id": selectedRepo
+    }
+    let requestInit = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(request_param)
     }
 
-    saveCommand(event) {
-      let is_sending_feedback = this.props.flagSend;
-      let selectedRepo = this.props.selectedRepo;
-      let request_param = {
-        "data": this.props.listEmail,
-        "is_sending_feedback": is_sending_feedback,
-        "repo_id": selectedRepo
-      }
-      let requestInit = {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(request_param)
-      }
+    fetch(UPDATE_FEEDBACK_MAIL_URL, requestInit)
+      .then(res => res.json())
+      .then((result) => {
+        let message = MESSAGE_SUCCESS;
+        let type = 0;
+        if (!result.success) {
+          message = result.error;
+          type = 1;
+        }
+        addAlert(message, type);
+      })
+      .catch(error => console.error(error));
+  }
 
-      fetch(UPDATE_FEEDBACK_MAIL_URL, requestInit)
-        .then(res => res.json())
-        .then((result) => {
-          let message = MESSAGE_SUCCESS;
-          let type = 0;
-          if (!result.success) {
-            message = result.error;
-            type = 1;
-          }
-          addAlert(message, type);
-        })
-        .catch(error => console.error(error));
-    }
-
-    render() {
-      return (
-        <div className="form-group style-component ">
-          <div className="col-xs-5">
-            <button className="btn btn-primary style-button" onClick={this.saveCommand}>
-              <span className="glyphicon glyphicon-saved"></span>
-              &nbsp;
-              {SAVE_BUTTON_NAME}
-            </button>
-          </div>
+  render() {
+    return (
+      <div className="form-group style-component ">
+        <div className="col-xs-5">
+          <button className="btn btn-primary style-button" onClick={this.saveCommand}>
+            <span className="glyphicon glyphicon-saved"></span>
+            &nbsp;
+            {SAVE_BUTTON_NAME}
+          </button>
         </div>
-      )
+      </div>
+    )
 
-    }
+  }
 }
 
-const ComponentLogsTable = function(props){
+const ComponentLogsTable = function (props) {
   const [data, setData] = useState(props.logsData || []);
   const [numOfPage, setNumOfPage] = useState(props.numOfPage || 1);
   const [currentIndex, setIndex] = useState(0);
   const [recordsPerPage, setRecordsPerPage] = useState(10);
 
-  function showErrorMail(id){
+  function showErrorMail(id) {
     props.bindingValueOfComponent("showModalResend", true)
     props.bindingValueOfComponent("mailId", id);
   }
@@ -1061,110 +1053,110 @@ const ComponentLogsTable = function(props){
   }
 
   return (
-    <div className = "form-group style-component">
+    <div className="form-group style-component">
       <div className="control-label col-xs-2">{SEND_LOGS_LABEL}</div>
-      <br/>
-      {!data.length ? <div className = "no-data-message">{NO_DATA_LABEL}</div> : null}
+      <br />
+      {!data.length ? <div className="no-data-message">{NO_DATA_LABEL}</div> : null}
       <table class="table table-striped style-table-send-logs">
         <thead>
           <tr>
-            <th className = "width-small">#</th>
-            <th className = "width-medium">リポジトリ</th>
-            <th className = "width-long">{START_TIME_LABEL}</th>
-            <th className = "width-long">{END_TIME_LABEL}</th>
-            <th className = "width-medium">{COUNTS_LABEL}</th>
-            <th className = "width-medium">{SUCCESS_LABEL}</th>
-            <th className = "width-medium">{ERROR_LABEL}</th>
+            <th className="width-small">#</th>
+            <th className="width-medium">リポジトリ</th>
+            <th className="width-long">{START_TIME_LABEL}</th>
+            <th className="width-long">{END_TIME_LABEL}</th>
+            <th className="width-medium">{COUNTS_LABEL}</th>
+            <th className="width-medium">{SUCCESS_LABEL}</th>
+            <th className="width-medium">{ERROR_LABEL}</th>
           </tr>
         </thead>
         {generateTableBody()}
       </table>
       {data.length ?
-      <div className = "row">
-        <PaginationResendLogsTable bindURL={GET_SEND_MAIL_HISTORY_URL} bindNumOfPage = {numOfPage} bindGetData = {getData}/>
-      </div> : null}
+        <div className="row">
+          <PaginationResendLogsTable bindURL={GET_SEND_MAIL_HISTORY_URL} bindNumOfPage={numOfPage} bindGetData={getData} />
+        </div> : null}
     </div>
   )
 }
 
 class MainLayout extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-          showModalSearch: false,
-          showModalResend: false,
-          listEmail: [],
-          flagSend: false,
-          mailId: "",
-          resendMail: false,
-          selectedRepo: "",
-          logsData: [],
-          numOfPage: 1,
-        }
-        this.bindingValueOfComponent = this.bindingValueOfComponent.bind(this);
-        this.addEmailToList = this.addEmailToList.bind(this);
-        this.removeEmailFromList = this.removeEmailFromList.bind(this);
+  constructor(props) {
+    super(props);
+    this.state = {
+      showModalSearch: false,
+      showModalResend: false,
+      listEmail: [],
+      flagSend: false,
+      mailId: "",
+      resendMail: false,
+      selectedRepo: "",
+      logsData: [],
+      numOfPage: 1,
     }
-    bindingValueOfComponent (key, value) {
-      switch (key) {
-        case "selectedRepo":
-            this.setState({ selectedRepo: value }, () => {
-                // 選択したリポジトリの ID を使って他の API を更新
-                this.loadFeedbackMails();
-                this.loadSendLogs();
-            });
-            break;
-        case "showModalSearch":
-          this.setState({showModalSearch: value});
-          break;
-        case "listEmail":
-            this.setState({listEmail: value});
-            break;
-        case "flagSend":
-            this.setState({flagSend: value});
-            break;
-        case "showModalResend":
-          this.setState({showModalResend: value})
-          break;
-        case "mailId":
-            this.setState({mailId: value})
-            break;
-        case "resendMail":
-            this.setState({resendMail: value})
-            break;
-      }
+    this.bindingValueOfComponent = this.bindingValueOfComponent.bind(this);
+    this.addEmailToList = this.addEmailToList.bind(this);
+    this.removeEmailFromList = this.removeEmailFromList.bind(this);
+  }
+  bindingValueOfComponent(key, value) {
+    switch (key) {
+      case "selectedRepo":
+        this.setState({ selectedRepo: value }, () => {
+          // 選択したリポジトリの ID を使って他の API を更新
+          this.loadFeedbackMails();
+          this.loadSendLogs();
+        });
+        break;
+      case "showModalSearch":
+        this.setState({ showModalSearch: value });
+        break;
+      case "listEmail":
+        this.setState({ listEmail: value });
+        break;
+      case "flagSend":
+        this.setState({ flagSend: value });
+        break;
+      case "showModalResend":
+        this.setState({ showModalResend: value })
+        break;
+      case "mailId":
+        this.setState({ mailId: value })
+        break;
+      case "resendMail":
+        this.setState({ resendMail: value })
+        break;
     }
-    addEmailToList(data){
-      let listUser = [];
-      $("#sltBoxListEmail > a").each(function(){
-        listUser.push(this.text);
-      });
-      let isExist = listUser.includes(data.email);
-      if(isExist){
-        alert(DUPLICATE_ERROR_MESSAGE);
-        return false;
-      }
-      let listEmail = this.state.listEmail;
-      listEmail.push(data);
-      this.setState({listEmail: listEmail})
-      return true;
+  }
+  addEmailToList(data) {
+    let listUser = [];
+    $("#sltBoxListEmail > a").each(function () {
+      listUser.push(this.text);
+    });
+    let isExist = listUser.includes(data.email);
+    if (isExist) {
+      alert(DUPLICATE_ERROR_MESSAGE);
+      return false;
     }
-    removeEmailFromList(listData){
-      listData.sort();
-      let listEmail = this.state.listEmail;
-      for (var i = listData.length -1; i >= 0; i--){
-        listEmail.splice(listData[i],1);
-      }
-      this.setState({listEmail: listEmail});
+    let listEmail = this.state.listEmail;
+    listEmail.push(data);
+    this.setState({ listEmail: listEmail })
+    return true;
+  }
+  removeEmailFromList(listData) {
+    listData.sort();
+    let listEmail = this.state.listEmail;
+    for (var i = listData.length - 1; i >= 0; i--) {
+      listEmail.splice(listData[i], 1);
     }
-    loadFeedbackMails() {
-      if (!this.state.selectedRepo) return;
+    this.setState({ listEmail: listEmail });
+  }
+  loadFeedbackMails() {
+    if (!this.state.selectedRepo) return;
 
-      fetch(GET_FEEDBACK_MAIL_URL, {
-        method: 'POST',
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ repo_id: this.state.selectedRepo })
-      })
+    fetch(GET_FEEDBACK_MAIL_URL, {
+      method: 'POST',
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ repo_id: this.state.selectedRepo })
+    })
       .then(res => res.json())
       .then(result => {
         let mailData = result.data || [];
@@ -1172,69 +1164,69 @@ class MainLayout extends React.Component {
         this.setState({ listEmail: mailData, flagSend: sendData });
       })
       .catch(error => console.error(error));
-    }
-    loadSendLogs() {
-      if (!this.state.selectedRepo) return;
-    
-      let url = `${GET_SEND_MAIL_HISTORY_URL}?repo_id=${this.state.selectedRepo}`;
-      fetch(url, {
-        method: 'GET',
-        headers: { "Content-Type": "application/json" },
-      })
+  }
+  loadSendLogs() {
+    if (!this.state.selectedRepo) return;
+
+    let url = `${GET_SEND_MAIL_HISTORY_URL}?repo_id=${this.state.selectedRepo}`;
+    fetch(url, {
+      method: 'GET',
+      headers: { "Content-Type": "application/json" },
+    })
       .then(res => res.json())
       .then(result => {
         if (result.error) {
           alert(result.error);
-            return;
-            }
-          this.setState({ numOfPage: result.total_page, logsData: result.data });
+          return;
+        }
+        this.setState({ numOfPage: result.total_page, logsData: result.data });
       })
       .catch(error => console.error(error));
-    }
-    render() {
-        return (
-            <div>
-                <div id="alerts"></div>
-                <div className="row">
-                    <ComponentRepositorySelect bindingValueOfComponent={this.bindingValueOfComponent}/>
-                 </div>
-                <div className="row">
-                  <ComponentFeedbackMail flagSend = {this.state.flagSend} bindingValueOfComponent = {this.bindingValueOfComponent}/>
-                </div>
-                <div className="row">
-                  <ComponentExclusionTarget bindingValueOfComponent = {this.bindingValueOfComponent} removeEmailFromList = {this.removeEmailFromList} listEmail={this.state.listEmail} addEmailToList= {this.addEmailToList}/>
-                </div>
-                <div className="row">
-                  <ComponentButtonLayout listEmail = {this.state.listEmail} flagSend={this.state.flagSend} selectedRepo={this.state.selectedRepo}/>
-                </div>
-                <div className = "row">
-                  <ComponentLogsTable bindingValueOfComponent = {this.bindingValueOfComponent} bindResendMail = {this.state.resendMail} logsData={this.state.logsData} numOfPage={this.state.numOfPage}/>
-                </div>
-                <div className="row">
-                  <ModalSearchComponent showModalSearch = {this.state.showModalSearch} bindingValueOfComponent = {this.bindingValueOfComponent} addEmailToList={this.addEmailToList}/>
-                </div>
-                <div className = "row">
-                  <ModalResendComponent showModalResend = {this.state.showModalResend} bindingValueOfComponent = {this.bindingValueOfComponent} bindID = {this.state.mailId}/>
-                </div>
-            </div>
-        )
-    }
+  }
+  render() {
+    return (
+      <div>
+        <div id="alerts"></div>
+        <div className="row">
+          <ComponentRepositorySelect bindingValueOfComponent={this.bindingValueOfComponent} />
+        </div>
+        <div className="row">
+          <ComponentFeedbackMail flagSend={this.state.flagSend} bindingValueOfComponent={this.bindingValueOfComponent} />
+        </div>
+        <div className="row">
+          <ComponentExclusionTarget bindingValueOfComponent={this.bindingValueOfComponent} removeEmailFromList={this.removeEmailFromList} listEmail={this.state.listEmail} addEmailToList={this.addEmailToList} />
+        </div>
+        <div className="row">
+          <ComponentButtonLayout listEmail={this.state.listEmail} flagSend={this.state.flagSend} selectedRepo={this.state.selectedRepo} />
+        </div>
+        <div className="row">
+          <ComponentLogsTable bindingValueOfComponent={this.bindingValueOfComponent} bindResendMail={this.state.resendMail} logsData={this.state.logsData} numOfPage={this.state.numOfPage} />
+        </div>
+        <div className="row">
+          <ModalSearchComponent showModalSearch={this.state.showModalSearch} bindingValueOfComponent={this.bindingValueOfComponent} addEmailToList={this.addEmailToList} />
+        </div>
+        <div className="row">
+          <ModalResendComponent showModalResend={this.state.showModalResend} bindingValueOfComponent={this.bindingValueOfComponent} bindID={this.state.mailId} />
+        </div>
+      </div>
+    )
+  }
 }
 
 $(function () {
-    ReactDOM.render(
-        <MainLayout/>,
-        document.getElementById('root')
-    )
+  ReactDOM.render(
+    <MainLayout />,
+    document.getElementById('root')
+  )
 });
 
 function addAlert(message, type) {
   let className = "alert alert-success alert-boder";
   let closeButton = '<button type="button" class="close" data-dismiss="alert">&times;</button>'
-  if(type==1){
+  if (type == 1) {
     className = "alert alert-danger alert-dismissable alert-boder";
   }
-  if(type==2){
+  if (type == 2) {
     className = "alert alert-info alert-dismissable alert-boder";
     closeButton = "";
   }
@@ -1243,6 +1235,6 @@ function addAlert(message, type) {
     + closeButton + message + '</div>');
 }
 
-function closeAlert(){
+function closeAlert() {
   $('#alerts').empty();
 }

@@ -1,5 +1,7 @@
 const ITEM_SAVE_URL = $("#item_save_uri").val();
 const ITEM_SAVE_FREQUENCY = $("#item_save_frequency").val();
+let isDuplicatePopupShown = false;
+let previousData = null;
 
 require([
   'jquery',
@@ -1495,7 +1497,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               break;
             case 'industrial design':
               resourceuri = "http://purl.org/coar/resource_type/JBNF-DYAD/";
-              break;  
+              break;
             case 'interactive resource':
               resourceuri = "http://purl.org/coar/resource_type/c_e9a0";
               break;
@@ -1581,7 +1583,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               break;
             case 'utility model':
               resourceuri = "http://purl.org/coar/resource_type/9DKX-KSAF/";
-              break; 
+              break;
             // lecture
             case 'lecture':
               resourceuri = "http://purl.org/coar/resource_type/c_8544";
@@ -2906,7 +2908,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           async: false,
           success: function (data, status) {
             date = data.year+"-"+("0"+data.month).slice(-2)+"-"+("0"+data.day).slice(-2)
-            
+
           },
           error: function (data, status) {
             date = new Date().toJSON().slice(0, 10)
@@ -3177,7 +3179,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let param = {
           api_type: autoFillID,
           search_data: $.trim(value),
-          item_type_id: itemTypeId
+          item_type_id: itemTypeId,
+          activity_id: $("#activity_id").text()
         }
         this.setRecordDataFromApi(param);
       }
@@ -3222,6 +3225,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
       }
 
+      // here
       $scope.setRecordDataFromApi = function (param) {
         let request = {
           url: '/api/autofill/get_auto_fill_record_data',
@@ -3717,6 +3721,45 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             $("#allModal").modal("show");
             return false;
           }
+
+          // duplicate check
+          let metainfo = { 'metainfo': $rootScope.recordsVM.invenioRecordsModel };
+          let isModified = !angular.equals(previousData, metainfo);
+          let isDuplicate = false;
+          $.ajax({
+            context: this,
+            headers: {
+            'Content-Type': 'application/json'
+            },
+            async: false,
+            dataType: "json",
+
+            url: "/items/iframe/model/save",
+            method: "POST",
+            data: JSON.stringify(metainfo),
+            success: function (response) {
+                if (response && response.is_duplicate) {
+                    if ((!isDuplicatePopupShown) || isModified) {
+                        this.check_duplicate_items(response);
+                        isDuplicatePopupShown = true;
+                        isDuplicate = true;
+                        previousData = angular.copy(metainfo);
+                    }
+                }
+            },
+            error: function (xhr) {
+                let response = xhr.responseJSON;
+                if (response && response.is_duplicate) {
+                    this.check_duplicate_items(response);
+                    isDuplicat = true;
+                }
+                showErrorMsg("An error occurred while saving the item.");
+            }
+          });
+          if (isDuplicate) {
+            return false;
+          }
+
           // Call API to validate input data base on json schema define
           let validateURL = '/api/items/validate';
           let isValid = false;
@@ -4139,7 +4182,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let listItemErrors = [];
         let eitherRequired = [];
         let noEitherError = $scope.checkEitherRequired();
-        
+
         if (noEitherError && $scope.error_list && $scope.error_list['either']) {
           eitherRequired = [];
           $scope.error_list['either'].forEach(function (group) {
@@ -4192,7 +4235,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           const blank_request_mail =$("#request-email-list-label").val();
           listItemErrors.push(blank_request_mail);
         }
-        
+
         if (listItemErrors.length > 0) {
           let message = $("#validate_error").val() + '<br/><br/>';
           message += listItemErrors[0];
@@ -4206,6 +4249,21 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
         return true;
       }
+
+      $scope.check_duplicate_items = function (response) {
+        if (response.duplicate_links && response.duplicate_links.length > 0) {
+            let message = $("#duplicate_warning").val() + '<br/><br/>';
+            response.duplicate_links.forEach(link => {
+                message += `<a href="${link}" target="_blank">${link}</a><br/>`;
+            });
+    
+            $("#inputModal").html(message);
+            $("#allModal").modal("show");
+            return false;
+        }
+        return true;
+      }
+
       $scope.UpdateApplicationDate = function () {
         var applicationDateKey = 'subitem_restricted_access_application_date';
         for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {

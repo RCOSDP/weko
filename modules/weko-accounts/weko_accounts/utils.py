@@ -159,7 +159,7 @@ def login_required_customize(func):
     return decorated_view
 
 
-def roles_required(roles):
+def roles_required(roles, allow_anonymous=False):
     """Roles required.
 
     Args:
@@ -178,6 +178,8 @@ def roles_required(roles):
                     return func(*args, **kwargs)
                 abort(401)
             else:
+                if allow_anonymous:
+                    return func(*args, **kwargs)
                 can = False
                 for role in current_user.roles:
                     if role and role.name in roles:

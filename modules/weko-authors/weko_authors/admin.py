@@ -128,10 +128,10 @@ class ExportView(BaseView):
     @expose('/check_status', methods=['GET'])
     def check_status(self):
         """Api check export status."""
-        
+
         # stop_pointを確認
         stop_point= current_cache.get(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"])
-        
+
         status = get_export_status()
         if not status:
             status = get_export_url()
@@ -185,10 +185,10 @@ class ExportView(BaseView):
             temp_folder_path = current_app.config.get("WEKO_AUTHORS_EXPORT_TEMP_FOLDER_PATH")
             os.makedirs(temp_folder_path, exist_ok=True)
             prefix = current_app.config["WEKO_AUTHORS_EXPORT_TMP_PREFIX"] + datetime.datetime.now().strftime("%Y%m%d%H%M")
-            
+
             with tempfile.NamedTemporaryFile(dir=temp_folder_path, prefix=prefix, suffix='.tsv', mode='w+', delete=False) as temp_file:
                 temp_file_path = temp_file.name
-            
+
             # redisに一時ファイルのパスを保存
             update_cache_data(
                 current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"],
@@ -215,7 +215,7 @@ class ExportView(BaseView):
                 temp_file_path=current_cache.get(\
                     current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"])
                 if temp_file_path:
-                    os.remove(temp_file_path)                    
+                    os.remove(temp_file_path)
                     current_cache.delete(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"])
             if status and status.get('task_id'):
                 revoke(status.get('task_id'), terminate=True)
@@ -239,7 +239,7 @@ class ExportView(BaseView):
         temp_folder_path = current_app.config.get("WEKO_AUTHORS_EXPORT_TEMP_FOLDER_PATH")
         os.makedirs(temp_folder_path, exist_ok=True)
         prefix = current_app.config["WEKO_AUTHORS_EXPORT_TMP_PREFIX"] + datetime.datetime.now().strftime("%Y%m%d%H%M")
-        
+
         with tempfile.NamedTemporaryFile(dir=temp_folder_path, prefix=prefix, suffix='.tsv', mode='w+', delete=False) as temp_file:
             temp_file_path = temp_file.name
         update_cache_data(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"],
@@ -271,12 +271,12 @@ class ImportView(BaseView):
             'group_task_id', type=str, default=None)
 
         return jsonify(check_is_import_available(group_task_id))
-    
+
     @author_permission.require(http_exception=403)
     @expose('/check_import_file', methods=['POST'])
     def check_import_file(self):
         """Validate author import."""
-        error = None  
+        error = None
         list_import_data = []
         json_data = request.get_json()
         counts = 0
@@ -299,7 +299,7 @@ class ImportView(BaseView):
                     temp_file_path = temp_file.name
                     temp_file.write(base64.b64decode(str(json_data.get('file').split(",")[-1])))
                     temp_file.flush()
-                
+
                 update_cache_data(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"],
                     temp_file_path,
                     current_app.config["WEKO_AUTHORS_CACHE_TTL"]
@@ -309,7 +309,7 @@ class ImportView(BaseView):
                 list_import_data = result.get('list_import_data')
                 counts = result.get("counts")
                 max_page = result.get("max_page")
-                
+
                 # インポートタブのチェック結果一時ファイルがあれば削除
                 band_file_path = current_cache.get(\
                     current_app.config["WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_USER_FILE_PATH_KEY"])
@@ -336,13 +336,13 @@ class ImportView(BaseView):
         temp_file_path = current_cache.get(\
                 current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"])
         temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
-        
+
         # checkファイルパスの作成
         base_file_name = os.path.splitext(os.path.basename(temp_file_path))[0]
         check_file_name = f"{base_file_name}-check"
         part_check_file_name = f"{check_file_name}-part{page_number}"
         check_file_part1_path = os.path.join(temp_folder_path, part_check_file_name)
-        
+
         with open(check_file_part1_path, "r", encoding="utf-8-sig") as check_part_file:
             result = json.load(check_part_file)
         return jsonify(result)
@@ -353,9 +353,9 @@ class ImportView(BaseView):
         """インポートチェック画面でダウンロード処理"""
         band_file_path = current_cache.get(\
             current_app.config["WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_USER_FILE_PATH_KEY"])
-        if not band_file_path:        
+        if not band_file_path:
             max_page = request.get_json().get("max_page")
-            band_file_path = band_check_file_for_user(max_page)                    
+            band_file_path = band_check_file_for_user(max_page)
         try:
             return send_file(band_file_path, as_attachment=True)
         except Exception as e:
@@ -373,13 +373,13 @@ class ImportView(BaseView):
         if not result_check['is_available']:
             return jsonify(result_check)
         force_change_mode = data.get("force_change_mode", False)
-        
+
         tasks = []
         records = [item for item in data.get(
             'records', []) if not item.get('errors')]
         group_tasks = []
         count=0
-        
+
         if is_target == "id_prefix":
             for id_prefix in records:
                 group_tasks.append(import_id_prefix.s(id_prefix))
@@ -418,20 +418,20 @@ class ImportView(BaseView):
                     current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"])
 
             max_page_for_import_tab = data.get("max_page")
-            
+
             # フロントの最大表示数分だけrecordsを確保
             records, reached_point, count = prepare_import_data(max_page_for_import_tab)
             task_ids =[]
-            
+
             for author in records:
                 group_tasks.append(import_author.s(author, force_change_mode))
         else:
             return jsonify({'status': 'fail', 'message': 'Invalid target'})
-        
+
         # handle import tasks
         import_task = group(group_tasks).apply_async()
         import_task.save()
-        
+
         if is_target == "id_prefix" or is_target == "affiliation_id":
             for idx, task in enumerate(import_task.children):
                 tasks.append({
@@ -451,7 +451,7 @@ class ImportView(BaseView):
                     'status': 'PENDING'
                 })
                 task_ids.append(task.task_id)
-            
+
             # WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYSを超えた分を別のタスクで処理
             if count > current_app.config.get("WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYS"):
                 update_cache_data(\
@@ -462,10 +462,10 @@ class ImportView(BaseView):
                 task = import_author_over_max.delay(reached_point ,task_ids, max_page_for_import_tab)
                 update_cache_data(\
                     current_app.config.get("WEKO_AUTHORS_IMPORT_CACHE_OVER_MAX_TASK_KEY"),
-                    task.id, 
+                    task.id,
                     current_app.config.get("WEKO_AUTHORS_CACHE_TTL")
                 )
-    
+
         response_data = {
             'group_task_id': import_task.id,
             "tasks": tasks
@@ -475,7 +475,7 @@ class ImportView(BaseView):
             {**response_data, **{'records': records}},
             0
         )
-        
+
         response_object = {
             "status": "success",
             "count": count,
@@ -484,7 +484,7 @@ class ImportView(BaseView):
         }
 
         return jsonify(response_object)
-    
+
     def get_task(self, target, task_id):
         tasks = {
             "id_prefix": import_id_prefix.AsyncResult,
@@ -501,7 +501,7 @@ class ImportView(BaseView):
         data = request.get_json() or {}
         success_count = 0
         failure_count = 0
-        
+
         target = data.get("isTarget","")
         if data and data.get('tasks'):
             for task_id in data.get('tasks'):
@@ -573,8 +573,8 @@ class ImportView(BaseView):
         except Exception as e:
             current_app.logger.error(e)
             return jsonify(msg=_('Failed')), 500
-        
-    
+
+
 authors_list_adminview = {
     'view_class': AuthorManagementView,
     'kwargs': {

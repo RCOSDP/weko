@@ -46,6 +46,7 @@ from weko_admin.models import SessionLifetime
 from weko_index_tree.models import Index
 from weko_records_ui import WekoRecordsUI
 from weko_redis.redis import RedisConnection
+from weko_search_ui import WekoSearchUI
 from weko_user_profiles import WekoUserProfiles
 
 from weko_accounts import WekoAccounts, WekoAccountsREST
@@ -102,13 +103,14 @@ def base_app(instance_path):
     WekoUserProfiles(app_)
     app_.register_blueprint(blueprint)
     WekoAccountsREST(app_)
+    WekoSearchUI(app_)
     return app_
 
 
 @pytest.yield_fixture()
 def app(base_app):
     """Flask application fixture."""
-    
+
     with base_app.app_context():
         yield base_app
 @pytest.yield_fixture()
@@ -125,7 +127,7 @@ def db(app):
     db_.session.remove()
     db_.drop_all()
     # drop_database(str(db_.engine.url))
-    
+
 @pytest.yield_fixture()
 def client(app,session_time):
     """make a test client.
@@ -136,7 +138,7 @@ def client(app,session_time):
     """
     with app.test_client() as client:
         yield client
-        
+
 
 @pytest.fixture()
 def users(app, db):
@@ -163,7 +165,7 @@ def users(app, db):
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
         student = User.query.filter_by(email='student@test.org').first()
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -189,7 +191,7 @@ def users(app, db):
     ds.add_role_to_user(generaluser, general_role)
     ds.add_role_to_user(originalroleuser, originalrole)
     ds.add_role_to_user(originalroleuser2, originalrole)
-    ds.add_role_to_user(originalroleuser2, repoadmin_role)
+    # ds.add_role_to_user(originalroleuser2, repoadmin_role)
     ds.add_role_to_user(student,studentrole)
 
     # Assign access authorization
@@ -274,10 +276,10 @@ def users(app, db):
 @pytest.fixture()
 def session_time(app,db):
     session_lifetime = SessionLifetime(lifetime=60,is_delete=False)
-    
+
     with db.session.begin_nested():
         db.session.add(session_lifetime)
-        
+
 @pytest.fixture
 def redis_connect(app):
     redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)

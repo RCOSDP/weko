@@ -159,7 +159,7 @@ from weko_theme.config import THEME_BODY_TEMPLATE, WEKO_THEME_ADMIN_ITEM_MANAGEM
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import Action, ActionStatus, ActionStatusPolicy, Activity, FlowAction, FlowDefine, WorkFlow
 from weko_search_ui import WekoSearchREST, WekoSearchUI
-from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX, WEKO_SEARCH_TYPE_DICT, WEKO_SEARCH_UI_BASE_TEMPLATE, WEKO_SEARCH_KEYWORDS_DICT, CHILD_INDEX_THUMBNAIL_WIDTH, CHILD_INDEX_THUMBNAIL_HEIGHT
+from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX, WEKO_SEARCH_TYPE_DICT, WEKO_SEARCH_UI_BASE_TEMPLATE, WEKO_SEARCH_KEYWORDS_DICT, CHILD_INDEX_THUMBNAIL_WIDTH, CHILD_INDEX_THUMBNAIL_HEIGHT, ROCRATE_METADATA_FILE, SWORD_METADATA_FILE
 from weko_search_ui.rest import create_blueprint
 from weko_search_ui.views import blueprint_api
 
@@ -682,6 +682,8 @@ def base_app(instance_path, search_class, request):
         WEKO_SEARCH_UI_TO_NUMBER_FORMAT="99999999999999.99",
         WEKO_SEARCH_UI_BASE_TEMPLATE=WEKO_SEARCH_UI_BASE_TEMPLATE,
         WEKO_SEARCH_KEYWORDS_DICT=WEKO_SEARCH_KEYWORDS_DICT,
+        SWORD_METADATA_FILE = SWORD_METADATA_FILE,
+        ROCRATE_METADATA_FILE = ROCRATE_METADATA_FILE,
         WEKO_ITEMS_UI_INDEX_PATH_SPLIT = '///',
         WEKO_SEARCH_UI_BULK_EXPORT_RETRY = 5,
         WEKO_SEARCH_UI_BULK_EXPORT_LIMIT = 100
@@ -1230,6 +1232,20 @@ def db_records2(db, instance_path, users):
     yield result
 
 
+@pytest.fixture()
+def db_records3(db):
+    record_data = json_data("data/test_records2.json")
+    item_data = json_data("data/test_items2.json")
+    record_num = len(record_data)
+    result = []
+    with db.session.begin_nested():
+        for d in range(record_num):
+            result.append(create_record(record_data[d], item_data[d]))
+    db.session.commit()
+
+    yield result
+
+
 @pytest.fixture
 def redis_connect(app):
     redis_connection = RedisConnection().connection(
@@ -1586,6 +1602,10 @@ def item_type2(app, db):
     return ItemTypes.create(
         name="test2", item_type_name=_item_type_name, schema={}, render=_render, tag=1
     )
+
+@pytest.fixture()
+def item_type_mapping2(app, db, item_type2):
+    return Mapping.create(item_type2.model.id, {})
 
 
 @pytest.fixture()
@@ -4058,7 +4078,7 @@ def test_indices(app, db):
             online_issn=online_issn,
             harvest_spec=harvest_spec
         )
-    
+
     with db.session.begin_nested():
         db.session.add(base_index(1, 0, 0, datetime(2022, 1, 1), True, True, True, True, True, '1234-5678'))
         db.session.add(base_index(2, 0, 1))
@@ -4366,7 +4386,7 @@ def reset_class_value():
     )
     BaseMapper.itemtype_map = {}
     BaseMapper.identifiers = []
-    
+
     DCMapper.itemtype_map = {}
     DCMapper.identifiers = []
     DDIMapper.itemtype_map = {}
@@ -4385,7 +4405,7 @@ def create_record(db, record_data, item_data):
         db.session.add(rel)
         parent=None
         doi = None
-        
+
         if '.' in record_data["recid"]:
             parent = PersistentIdentifier.get("recid",int(float(record_data["recid"])))
             recid_p = PIDRelation.get_child_relations(parent).one_or_none()
@@ -4407,7 +4427,7 @@ def create_record(db, record_data, item_data):
         deposit = WekoDeposit(record, record.model)
 
         deposit.commit()
-        
+
     return recid, depid, record, item, parent, doi, deposit
 
 @pytest.fixture()
@@ -4415,11 +4435,11 @@ def db_records(app,db):
     record_datas = list()
     with open("tests/data/test_record/record_metadata.json") as f:
         record_datas = json.load(f)
-    
+
     item_datas = list()
     with open("tests/data/test_record/item_metadata.json") as f:
         item_datas = json.load(f)
-        
+
     for i in range(len(record_datas)):
         recid, depid, record, item, parent, doi, deposit = create_record(db,record_datas[i],item_datas[i])
 
@@ -4435,7 +4455,7 @@ def mapper_jpcoar(db_itemtype_jpcoar):
         item_type_mapping = Mapping.get_record(item_type.id)
         item_map = get_full_mapping(item_type_mapping, "jpcoar_mapping")
         res = {"$schema":item_type.id,"pubdate": date.today()}
-        
+
         if not isinstance(tags[type],list):
             metadata = [tags[type]]
         else:

@@ -21,6 +21,7 @@
 """Views for weko-authors."""
 
 import re
+import traceback
 import uuid
 from flask import Response, Blueprint, current_app, json, jsonify, make_response, request
 from flask_babelex import gettext as _
@@ -34,8 +35,11 @@ from .config import WEKO_AUTHORS_IMPORT_KEY
 from .models import Authors, AuthorsAffiliationSettings, AuthorsPrefixSettings
 from .api import WekoAuthors
 from .permissions import author_permission
-from .utils import get_author_prefix_obj, get_author_affiliation_obj, get_count_item_link,\
+from .utils import (
+    get_author_prefix_obj, get_author_affiliation_obj, get_count_item_link,
     validate_weko_id, check_period_date
+)
+from weko_logging.activity_logger import UserActivityLogger
 
 blueprint = Blueprint(
     'weko_authors',
@@ -63,7 +67,7 @@ def create():
         return jsonify(msg=_('Header Error'))
 
     data = request.get_json()
-    
+
     # weko_idを取得する。
     author_id_info = data["authorIdInfo"]
     weko_id = None
@@ -72,7 +76,7 @@ def create():
             weko_id = i.get('authorId')
     if not weko_id:
         return jsonify(msg=_('Please set WEKO ID.')), 500
-    
+
     #weko_idのバリーデーションチェック
     try:
         result_weko_id_check = validate_weko_id(weko_id)
@@ -86,18 +90,20 @@ def create():
         current_app.logger.error(ex)
         return jsonify(msg=_('Failed')), 500
 
-    
+
     #periodのバリーデーションチェック
     result_period_check = check_period_date(data)
     if result_period_check[0] == False and result_period_check[1] == "not date format":
         return jsonify(msg=_('Please set the affiliation start date and end date in the format yyyy-MM-dd.')), 500
     elif result_period_check[0] == False and result_period_check[1] == "start is after end":
         return jsonify(msg=_('The end date must be after the start date.')), 500
-    
+
     try:
         WekoAuthors.create(data)
+
     except Exception as ex:
         current_app.logger.error(ex)
+        traceback.print_exc()
         return jsonify(msg=_('Failed')), 500
     return jsonify(msg=_('Success'))
 
@@ -122,7 +128,7 @@ def update_author():
     if not weko_id:
         return jsonify(msg=_('Please set WEKO ID.')), 500
     pk_id = data["pk_id"]
-    
+
     try:
         #weko_idのバリーデーションチェック
         result_weko_id_check = validate_weko_id(weko_id, pk_id)
@@ -133,7 +139,7 @@ def update_author():
         elif result_weko_id_check[0] == False and result_weko_id_check[1] == "already exists":
             # weko_idが既に存在する場合はエラーを返す
             return jsonify(msg=_('The value is already in use as WEKO ID.')), 500
-        
+
         #periodのバリーデーションチェック
         result_period_check = check_period_date(data)
         if result_period_check[0] == False and result_period_check[1] == "not date format":
@@ -142,9 +148,9 @@ def update_author():
             return jsonify(msg=_('The end date must be after the start date.')), 500
 
         WekoAuthors.update(pk_id, data, force_change_flag)
-
     except Exception as ex:
         current_app.logger.error(ex)
+        traceback.print_exc()
         return jsonify(msg=_('Failed')), 500
 
     return jsonify(msg=_('Success'))
@@ -173,16 +179,24 @@ def delete_author():
         author_data.json = json_data
         db.session.merge(author_data)
         db.session.commit()
+        UserActivityLogger.info(
+            operation="AUTHOR_DELETE",
+            target_key=json.loads(json.dumps(data))["pk_id"]
+        )
         RecordIndexer().client.update(
             id=json.loads(json.dumps(data))["Id"],
             index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
             doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
             body={'doc': {'is_deleted': 'true'}}
         )
-        
+
     except Exception as ex:
         db.session.rollback()
         current_app.logger.error(ex)
+        UserActivityLogger.error(
+            operation="AUTHOR_DELETE",
+            target_key=json.loads(json.dumps(data))["pk_id"]
+        )
         return jsonify(msg=_('Failed')), 500
 
     return jsonify(msg=_('Success'))

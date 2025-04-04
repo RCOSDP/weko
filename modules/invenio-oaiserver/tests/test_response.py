@@ -674,6 +674,12 @@ def test_listidentifiers(es_app,records,item_type,mock_execute,db,mocker):
                     assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[6]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[6][0])]
                     assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[6][@status="deleted"]', namespaces=NAMESPACES)) == 1
 
+                    with patch("invenio_oaiserver.response.is_deleted_workflow", return_value=False):
+                        with patch("invenio_oaiserver.response.is_private_workflow", return_value=False):
+                            with patch("invenio_oaiserver.response.is_pubdate_in_future", return_value=False):
+                                res=listidentifiers(**kwargs)
+                                assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header', namespaces=NAMESPACES)) == 6
+
                 # etree_reocrd.get("system_identifier_doi")
                 with patch("invenio_oaiserver.response.is_exists_doi",return_value=True):
                     res=listidentifiers(**kwargs)
@@ -697,6 +703,40 @@ def test_listidentifiers(es_app,records,item_type,mock_execute,db,mocker):
                     assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[5]/x:identifier/text()', namespaces=NAMESPACES) == []
                     assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[5][@status="deleted"]', namespaces=NAMESPACES)) == 0
 
+        # community id in set
+        with patch("invenio_oaiserver.response.get_records",return_value=MockPagenation(dummy_data)),\
+             patch("invenio_oaiserver.response.is_output_harvest",return_value=OUTPUT_HARVEST),\
+             patch("invenio_oaiserver.response.is_exists_doi",return_value=False):
+            # community id with prefix
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=OAISet(spec="user-test_comm")):
+                with patch("invenio_oaiserver.response.get_community_index_from_set",return_value="1557819692844"):
+                    kwargs_1 = dict(
+                        metadataPrefix='jpcoar_1.0',
+                        verb="ListIdentifiers",
+                        set="user-test_comm",
+                    )
+                    res=listidentifiers(**kwargs_1)
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header', namespaces=NAMESPACES)) == 6
+            # community id without prefix
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",side_effect=[None, OAISet(spec="user-test_comm")]):
+                with patch("invenio_oaiserver.response.get_community_index_from_set",return_value="1557819692844"):
+                    kwargs_1.update(set="test_comm")
+                    res=listidentifiers(**kwargs_1)
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header', namespaces=NAMESPACES)) == 6
+            # community id not found
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",side_effect=[None, None]):
+                res=listidentifiers(**kwargs_1)
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
+            # index id with ':'
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=OAISet(spec="123:1557819692844")):
+                kwargs_1.update(set="123:1557819692844")
+                res=listidentifiers(**kwargs_1)
+                assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header', namespaces=NAMESPACES)) == 6
+            # index id not found
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=None):
+                kwargs_1.update(set="123")
+                res=listidentifiers(**kwargs_1)
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
 
         # not identify
         with patch("invenio_oaiserver.response.OaiIdentify.get_all",return_value=None):
@@ -975,6 +1015,12 @@ def test_listrecords(es_app,records,item_type,mock_execute,db,mocker):
                     assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[6]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[6][0])]
                     assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[6]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
 
+                    with patch("invenio_oaiserver.response.is_deleted_workflow", return_value=False):
+                        with patch("invenio_oaiserver.response.is_private_workflow", return_value=False):
+                            with patch("invenio_oaiserver.response.is_pubdate_in_future", return_value=False):
+                                res=listrecords(**kwargs)
+                                assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record', namespaces=NAMESPACES)) == 6
+
                 # etree_reocrd.get("system_identifier_doi")
                 with patch("invenio_oaiserver.response.is_exists_doi",return_value=True):
                     res=listrecords(**kwargs)
@@ -998,6 +1044,40 @@ def test_listrecords(es_app,records,item_type,mock_execute,db,mocker):
                     assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[5]/x:header/x:identifier/text()', namespaces=NAMESPACES) == []
                     assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[5]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 0
 
+        # community id in set
+        with patch("invenio_oaiserver.response.get_records",return_value=MockPagenation(dummy_data)),\
+             patch("invenio_oaiserver.response.is_output_harvest",return_value=OUTPUT_HARVEST),\
+             patch("invenio_oaiserver.response.is_exists_doi",return_value=False):
+            # community id with prefix
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=OAISet(spec="user-test_comm")):
+                with patch("invenio_oaiserver.response.get_community_index_from_set",return_value="1557819692844"):
+                    kwargs_1 = dict(
+                        metadataPrefix='jpcoar_1.0',
+                        verb="ListRecords",
+                        set="user-test_comm",
+                    ) 
+                    res=listrecords(**kwargs_1)
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record', namespaces=NAMESPACES)) == 6
+            # community id without prefix
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",side_effect=[None, OAISet(spec="user-test_comm")]):
+                with patch("invenio_oaiserver.response.get_community_index_from_set",return_value="1557819692844"):
+                    kwargs_1.update(set="test_comm")
+                    res=listrecords(**kwargs_1)
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record', namespaces=NAMESPACES)) == 6
+            # community id not found
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",side_effect=[None, None]):
+                res=listrecords(**kwargs_1)
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
+            # index id with ':'
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=OAISet(spec="123:1557819692844")):
+                kwargs_1.update(set="123:1557819692844")
+                res=listrecords(**kwargs_1)
+                assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record', namespaces=NAMESPACES)) == 6
+            # index id not found
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=None):
+                kwargs_1.update(set="123")
+                res=listrecords(**kwargs_1)
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
 
         # not identify
         with patch("invenio_oaiserver.response.OaiIdentify.get_all",return_value=None):

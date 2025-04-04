@@ -219,13 +219,13 @@ class TestCommunity:
         result = Community.get_repositories_by_user(user)
         assert len(result) == 1
         assert result[0].id == comm.id
-        
+
         # non matching group_id
-        comm.group_id = user.roles[0].id + 1  
+        comm.group_id = user.roles[0].id + 1
         db.session.commit()
         result = Community.get_repositories_by_user(user)
         assert len(result) == 0
-        
+
         # user has no roles
         user.roles = []
         db.session.commit()

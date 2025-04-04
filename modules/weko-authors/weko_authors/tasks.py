@@ -140,18 +140,18 @@ def import_author_over_max(reached_point, task_ids ,max_part):
     先に行っているインポートタスクが終了次第、reached_pointから一時ファイルを用いて
     著者インポートを開始します。
     Args:
-        reached_point: 一時ファイルにおいてmax_displayに達した位置 
+        reached_point: 一時ファイルにおいてmax_displayに達した位置
                 part_numberが一時ファイルのpart数で、countが一時ファイルの再開位置
                 データ例:{"part_number": 101, "count": 3}
         task_ids: 先に行っているmax_diplay分のタスクID.
         max_part: パート数の最大値
     """
-    
+
     # task_idsの全てのtaskが終了するまで待つ
     check_task_end(task_ids)
     del task_ids
     gc.collect()
-    
+
     current_app.logger.info('import_author_over_max is start')
     result = {'start_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
     try:
@@ -174,12 +174,12 @@ def import_authors_from_temp_files(reached_point, max_part):
     """
     一時ファイルから著者データを読み込み、インポートする処理を行います。
     Args:
-        reached_point: 一時ファイルにおいてmax_displayに達した位置 
+        reached_point: 一時ファイルにおいてmax_displayに達した位置
                 part_numberが一時ファイルのpart数で、countが一時ファイルの再開位置
                 データ例:{"part_number": 101, "count": 3}
         max_part: インポートする最大のpart数
     """
-    
+
     # 結果ファイルのDL用に一時ファイルを作成
     temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
     result_file_download_name = "{}_{}.{}".format(
@@ -187,7 +187,7 @@ def import_authors_from_temp_files(reached_point, max_part):
         datetime.now().strftime("%Y%m%d%H%M"),
         "tsv"
     )
-    
+
     result_file_path = os.path.join(temp_folder_path, result_file_download_name)
     check_file_name = get_check_base_name()
     update_cache_data(
@@ -195,7 +195,7 @@ def import_authors_from_temp_files(reached_point, max_part):
         result_file_path,
         current_app.config["WEKO_AUTHORS_CACHE_TTL"]
     )
-    
+
     # すべてのtaskが終了したら、max_display以降のtaskを実行
     # part_numberから始めて、max_partまでのpartをインポートする。
     authors = []
@@ -203,7 +203,7 @@ def import_authors_from_temp_files(reached_point, max_part):
         part_check_file_name = f"{check_file_name}-part{i}"
         check_file_part_path = os.path.join(temp_folder_path, part_check_file_name)
         # iがreached_pointのpart_number以上の時にauthorsを追加
-        if i >= reached_point.get("part_number"):   
+        if i >= reached_point.get("part_number"):
             #一時ファイルからインポートできるファイルを取得
             with open(check_file_part_path, "r", encoding="utf-8-sig") as check_part_file:
                 data = json.load(check_part_file)
@@ -219,7 +219,7 @@ def import_authors_from_temp_files(reached_point, max_part):
         if len(authors) >= current_app.config.get("WEKO_AUTHORS_IMPORT_BATCH_SIZE"):
             import_authors_for_over_max(authors)
             authors = []
-        
+
         # 一時ファイルの削除
         try:
             os.remove(check_file_part_path)
@@ -231,7 +231,7 @@ def import_authors_from_temp_files(reached_point, max_part):
         import_authors_for_over_max(authors)
         authors = []
         gc.collect()
-    
+
 def import_authors_for_over_max(authors):
     group_tasks = []
     tasks = []
@@ -245,7 +245,7 @@ def import_authors_for_over_max(authors):
     # group_tasksを実行
     import_task = group(group_tasks).apply_async()
     import_task.save()
-    for idx, task in enumerate(import_task.children):                
+    for idx, task in enumerate(import_task.children):
         full_name_info =""
         # フルネーム生成
         for author_name_info in authors[idx].get("authorNameInfo", [{}]):
@@ -267,12 +267,12 @@ def import_authors_for_over_max(authors):
             'status': 'PENDING'
         })
         task_ids.append(task.task_id)
-        
+
     # task_idsの全てのtaskが終了するまで待つ
     check_task_end(task_ids)
     del task_ids
     gc.collect()
-    
+
     success_count = 0
     failure_count = 0
     result = []
@@ -314,9 +314,9 @@ def import_authors_for_over_max(authors):
     write_result_temp_file(result)
     # インポート結果をサマリーに追加する処理
     update_summary(success_count, failure_count)
-    
+
     del authors
-    del result    
+    del result
     gc.collect()
 
 def write_result_temp_file(result):
@@ -333,7 +333,7 @@ def write_result_temp_file(result):
             "status": SUCCESS,
             "error_id": "delete_author_link"
             }, ...]
-            
+
     """
     result_file_path = current_cache.get(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY"])
     try:
@@ -348,11 +348,11 @@ def write_result_temp_file(result):
                 type = res.get("type", "")
                 status = res.get("status", "")
                 error_id = res.get("error_id", "")
-                
+
                 msg = prepare_display_status(status, type, error_id)
                 writer.writerow(["", start_date, end_date, prev_weko_id, new_weko_id, full_name, msg])
-                
-                
+
+
     except Exception as e:
         current_app.logger.error(e)
         raise e
@@ -457,8 +457,8 @@ def check_tmp_file_time_for_author():
     author_import_temp_dirc_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
     author_export_temp_file_path = os.path.join(author_export_temp_dirc_path, "**")
     author_import_temp_file_path = os.path.join(author_import_temp_dirc_path, "**")
-    
-    now = datetime.now(timezone.utc) 
+
+    now = datetime.now(timezone.utc)
     # 著者エクスポートの一時ファイルの削除
     for d in glob.glob(author_export_temp_file_path):
         tLog = os.path.getmtime(d)
@@ -471,7 +471,7 @@ def check_tmp_file_time_for_author():
     if os.path.exists(author_export_temp_dirc_path) and \
         not os.listdir(author_export_temp_file_path):
         os.rmdir(author_export_temp_file_path)
-                
+
     # 著者インポートの一時ファイルの削除
     for d in glob.glob(author_import_temp_file_path):
         tLog = os.path.getmtime(d)

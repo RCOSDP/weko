@@ -62,7 +62,7 @@ class TestWekoAuthors:
                 assert author.json == test
                 res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
                 assert res["_source"]["pk_id"]==str(id)
-        
+
         id = 2
         es_id = uuid.uuid4()
         with patch("weko_authors.api.Authors.get_sequence",return_value=id):
@@ -71,12 +71,12 @@ class TestWekoAuthors:
                     with pytest.raises(Exception):
                         data = {"authorIdInfo":[]}
                         WekoAuthors.create(data)
-                        
+
                     author = Authors.query.filter_by(id=id).one_or_none()
                     assert author == None
                     with pytest.raises(NotFoundError):
                         res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
-            
+
 #     def update(cls, author_id, data):
 #         def update_es_data(data):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -91,11 +91,11 @@ class TestWekoAuthors:
             "emailInfo": [{"email": "example@com"}],
             "is_deleted":"false"
         }
-        
+
         author_id=1
         es_id = create_author(json.loads(json.dumps(test_data)), author_id)
-        
-        # is_deleted is false, 
+
+        # is_deleted is false,
         data={
             "authorNameInfo": [{"familyName": "テスト","firstName": "ハナコ","fullName": "","language": "ja-Kana","nameFormat": "familyNmAndNm","nameShowFlg": "true"}],
             "authorIdInfo": [{"idType": "2","authorId": "01234","authorIdShowFlg": "true"}],
@@ -122,7 +122,7 @@ class TestWekoAuthors:
         assert author.json["is_deleted"] == True
         res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
         assert res["_source"]["is_deleted"] == True
-        
+
         author_id=2
         es_id = create_author(json.loads(json.dumps(test_data)), author_id)
         with patch("weko_authors.api.db.session.merge",side_effect=Exception("test_error")):
@@ -133,7 +133,7 @@ class TestWekoAuthors:
             assert author.is_deleted==False
             res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
             assert res["_source"]["is_deleted"] == "false"
-                
+
         # not hit in es
         author_id=3
         es_id = str(uuid.uuid4())
@@ -161,7 +161,7 @@ class TestWekoAuthors:
         assert Authors.query.filter_by(id=author_id).one().is_deleted==True
         res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
         assert res["_source"]["is_deleted"] == True
-        
+
         # not es_id in data
         es_id1 = str(uuid.uuid4())
         es_id2 = str(uuid.uuid4())
@@ -196,7 +196,7 @@ class TestWekoAuthors:
         assert Authors.query.filter_by(id=author_id).one().is_deleted==True
         res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
         assert res["_source"]["is_deleted"] == True
-        
+
         # es_author['hits']['hits'][0].get('_id') == es_id is true
         test_data = {
             "authorNameInfo": [{"familyName": "テスト","firstName": "ハナコ","fullName": "","language": "ja-Kana","nameFormat": "familyNmAndNm","nameShowFlg": "true"}],
@@ -204,13 +204,13 @@ class TestWekoAuthors:
             "emailInfo": [{"email": "example@com"}],
             "is_deleted":"false"
         }
-        
+
         author_id=5
         es_id = create_author(json.loads(json.dumps(test_data)), author_id)
         author = Authors.query.filter_by(id=author_id).one()
         id = author.json["id"]
-        
-        # is_deleted is false, 
+
+        # is_deleted is false,
         data={
             "authorNameInfo": [{"familyName": "テスト","firstName": "ハナコ","fullName": "","language": "ja-Kana","nameFormat": "familyNmAndNm","nameShowFlg": "true"}],
             "authorIdInfo": [{"idType": "2","authorId": "01234","authorIdShowFlg": "true"}],
@@ -256,7 +256,7 @@ class TestWekoAuthors:
         assert author.json["is_deleted"] == False
         res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
         assert res["_source"]["is_deleted"] == False
-        
+
         # if es_author['hits']['total'] > 0 is false
         test_data = {
             "authorNameInfo": [{"familyName": "テスト","firstName": "ハナコ","fullName": "","language": "ja-Kana","nameFormat": "familyNmAndNm","nameShowFlg": "true"}],
@@ -264,11 +264,11 @@ class TestWekoAuthors:
             "emailInfo": [{"email": "example@com"}],
             "is_deleted":"false"
         }
-        
+
         author_id=6
         es_id = create_author(json.loads(json.dumps(test_data)), author_id)
-        
-        # is_deleted is false, 
+
+        # is_deleted is false,
         data={
             "authorNameInfo": [{"familyName": "テスト","firstName": "ハナコ","fullName": "","language": "ja-Kana","nameFormat": "familyNmAndNm","nameShowFlg": "true"}],
             "authorIdInfo": [{"idType": "2","authorId": "01234","authorIdShowFlg": "true"}],
@@ -292,7 +292,7 @@ class TestWekoAuthors:
         assert author.json["is_deleted"] == False
         res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
         assert res["_source"]["is_deleted"] == "false"
-        
+
 #     def get_all(cls, with_deleted=True, with_gather=True):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_all -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_get_all(self,app,authors):
@@ -317,12 +317,12 @@ class TestWekoAuthors:
         with pytest.raises(Exception):
             mocker.patch.object(Authors, 'id', return_value = "test_id")
             result = WekoAuthors.get_records_count(with_deleted=False, with_gather=True)
-        
+
 #     def get_author_for_validation(cls):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_author_for_validation -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_get_author_for_validation(self,authors,mocker):
         mocker.patch("weko_authors.api.WekoAuthors.get_all",return_value=authors)
-        
+
         authors_result, external_result = WekoAuthors.get_author_for_validation()
         assert authors_result == {"1":True,"2":True,"3":True,"4":False}
         assert external_result == {"1":{"1":["1"],"2":["2"]},"2":{"1234":["1"],"5678":["2"]},"3":{"12345":["1"]}}
@@ -357,7 +357,7 @@ class TestWekoAuthors:
         with patch("weko_authors.api.WekoAuthors.get_id_prefix_all", return_value=[]):
             results = WekoAuthors.get_scheme_of_id_prefix()
             assert results == []
-        
+
 
 
 #     def get_affiliation_id_all(cls):
@@ -369,7 +369,7 @@ class TestWekoAuthors:
         for result in results:
             result_list.append(result.id)
         assert result_list == test
-        
+
         AuthorsAffiliationSettings.query.delete()
         db.session.commit()
         result = WekoAuthors.get_affiliation_id_all()
@@ -409,19 +409,19 @@ class TestWekoAuthors:
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_prepare_export_prefix -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_prepare_export_prefix(self,authors_affiliation_settings,db,authors_prefix_settings):
         data = [
-            ['ORCID', 'ORCID', 'https://orcid.org/##'], 
-            ['CiNii', 'CiNii', 'https://ci.nii.ac.jp/author/##'], 
-            ['KAKEN2', 'KAKEN2', 'https://nrid.nii.ac.jp/nrid/##'], 
+            ['ORCID', 'ORCID', 'https://orcid.org/##'],
+            ['CiNii', 'CiNii', 'https://ci.nii.ac.jp/author/##'],
+            ['KAKEN2', 'KAKEN2', 'https://nrid.nii.ac.jp/nrid/##'],
             ['ROR', 'ROR', 'https://ror.org/##']
         ]
         tests = WekoAuthors.get_id_prefix_all()
         result = WekoAuthors.prepare_export_prefix('id_prefix', tests)
         assert result == data
-        
+
         data = [
-            ['ISNI', 'ISNI', 'http://www.isni.org/isni/##'], 
-            ['GRID', 'GRID', 'https://www.grid.ac/institutes/##'], 
-            ['Ringgold', 'Ringgold', None], 
+            ['ISNI', 'ISNI', 'http://www.isni.org/isni/##'],
+            ['GRID', 'GRID', 'https://www.grid.ac/institutes/##'],
+            ['Ringgold', 'Ringgold', None],
             ['kakenhi', 'kakenhi', None]
         ]
         tests = WekoAuthors.get_affiliation_id_all()
@@ -429,10 +429,10 @@ class TestWekoAuthors:
         assert result == data
 
         data = [
-            ['WEKO', 'WEKO', None], 
-            ['ORCID', 'ORCID', 'https://orcid.org/##'], 
-            ['CiNii', 'CiNii', 'https://ci.nii.ac.jp/author/##'], 
-            ['KAKEN2', 'KAKEN2', 'https://nrid.nii.ac.jp/nrid/##'], 
+            ['WEKO', 'WEKO', None],
+            ['ORCID', 'ORCID', 'https://orcid.org/##'],
+            ['CiNii', 'CiNii', 'https://ci.nii.ac.jp/author/##'],
+            ['KAKEN2', 'KAKEN2', 'https://nrid.nii.ac.jp/nrid/##'],
             ['ROR', 'ROR', 'https://ror.org/##']
         ]
         tests = WekoAuthors.get_id_prefix_all()
@@ -442,7 +442,7 @@ class TestWekoAuthors:
         test = []
         result = WekoAuthors.prepare_export_prefix('id_prefix', test)
         assert result == []
-        
+
 
 
 
@@ -458,7 +458,7 @@ class TestWekoAuthors:
         }
         result = WekoAuthors.get_identifier_scheme_info()
         assert result == test
-        
+
         AuthorsPrefixSettings.query.delete()
         db.session.commit()
         result = WekoAuthors.get_identifier_scheme_info()
@@ -481,7 +481,7 @@ class TestWekoAuthors:
         with pytest.raises(Exception):
             mocker.patch.object(Authors, 'id', return_value = None)
             WekoAuthors.get_by_range(0, 10, True, True)
-            
+
 #     def get_pk_id_by_weko_id(cls, weko_id):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_pk_id_by_weko_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     @pytest.mark.parametrize('base_app',[dict(
@@ -512,7 +512,7 @@ class TestWekoAuthors:
         assert result == "1"
         result = WekoAuthors.get_pk_id_by_weko_id("-1")
         assert result == -1
-        
+
 #     def get_weko_id_by_pk_id(cls, pk_id):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_weko_id_by_pk_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     @pytest.mark.parametrize('base_app',[dict(
@@ -530,7 +530,7 @@ class TestWekoAuthors:
         with pytest.raises(Exception):
             WekoAuthors.get_weko_id_by_pk_id("test_pk_id")
 
-  
+
 from sqlalchemy.exc import SQLAlchemyError
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsMappingMaxItem -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -540,21 +540,21 @@ class TestWekoAuthorsMappingMaxItem:
         mappings = [{'json_id': 'authorIdInfo', 'child': [{'json_id': 'idType'}, {'json_id': 'authorId'}]}]
         affiliation_mappings = {'json_id': 'affiliationInfo', 'child': [{'json_id': 'identifierInfo', 'child': [{'json_id': 'idType'}, {'json_id': 'affiliationId'}]}]}
         records_count = 2
-        
+
         result_mappings, result_affiliation_mappings = WekoAuthors.mapping_max_item(mappings, affiliation_mappings, records_count)
         assert result_mappings[0]['max'] > 1
         assert 'max' in result_affiliation_mappings
-        
+
         result_mappings, result_affiliation_mappings = WekoAuthors.mapping_max_item(mappings, None, records_count)
         assert result_mappings[0]['max'] > 1
         assert result_affiliation_mappings["max"]== [{'identifierInfo': 2, 'affiliationNameInfo': 1, 'affiliationPeriodInfo': 1}]
-        
+
         # Authors is None
         mocker.patch("weko_authors.api.WekoAuthors.get_by_range",return_value=[])
         result_mappings, result_affiliation_mappings = WekoAuthors.mapping_max_item(mappings, None, records_count)
         assert result_mappings[0]["max"] == 1
         assert result_affiliation_mappings["max"] == []
-        
+
         # Author dont has element
         author = {
             "authorIdInfo": [],
@@ -567,60 +567,60 @@ class TestWekoAuthorsMappingMaxItem:
         authors = [Authors(json=author)]
         mocker.patch("weko_authors.api.WekoAuthors.get_by_range",return_value=authors)
         result_mappings, result_affiliation_mappings = WekoAuthors.mapping_max_item(mappings, None, records_count)
-        
+
         assert result_mappings
         assert result_affiliation_mappings
-        
+
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsMappingMaxItem::test_mapping_max_item_sqlalchemy_error -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_mapping_max_item_sqlalchemy_error(self, app, db, authors):
         with patch('weko_authors.api.WekoAuthors.get_records_count', side_effect=SQLAlchemyError):
             with pytest.raises(SQLAlchemyError):
                 WekoAuthors.mapping_max_item(None, None, None)
-                    
+
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsMappingMaxItem::test_mapping_max_item_other_exception -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_mapping_max_item_other_exception(self, app, db, authors):
         with patch('weko_authors.api.WekoAuthors.get_records_count', side_effect=Exception):
             with pytest.raises(Exception):
                 WekoAuthors.mapping_max_item(None, None, None)
-                
+
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsMappingMaxItem::test_mapping_max_item_retry -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_mapping_max_item_retry(self, app, db, authors, mocker):
         mappings = [{'json_id': 'authorIdInfo', 'child': [{'json_id': 'idType'}, {'json_id': 'authorId'}]}]
         affiliation_mappings = {'json_id': 'affiliationInfo', 'child': [{'json_id': 'identifierInfo', 'child': [{'json_id': 'idType'}, {'json_id': 'affiliationId'}]}]}
         records_count = 2
-        
+
         # Mock get_by_range to return a fixed value
         mocker.patch("weko_authors.api.WekoAuthors.get_by_range", return_value=authors)
 
         # Mock db.session.rollback and sleep to verify retry mechanism
         with patch('weko_authors.api.db.session.rollback') as mock_rollback, \
                 patch('weko_authors.api.sleep') as mock_sleep:
-            
+
             # First call to mapping_max_item raises SQLAlchemyError, second call succeeds
             with patch("weko_authors.api.WekoAuthors.get_records_count", side_effect=[SQLAlchemyError, 2]):
                 result_mappings, result_affiliation_mappings = WekoAuthors.mapping_max_item(mappings, affiliation_mappings, None)
-                
+
                 # Verify that rollback and sleep were called
                 mock_rollback.assert_called_once()
                 mock_sleep.assert_called_once()
-                
+
                 # Verify the results
                 assert result_mappings
                 assert result_affiliation_mappings
-                
+
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsPrepareExport -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 class TestWekoAuthorsPrepareExport:
     # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsPrepareExport::test_prepare_export_data_full_data -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_prepare_export_data_full_data(self, app, db, authors_prefix_settings, authors_affiliation_settings, authors2, mocker):
         res_header, res_label_en, res_label_jp, res_row_data = WekoAuthors.prepare_export_data(None, None, None, None, None, 0, 2)
-        
+
         assert res_header
         assert res_label_en
         assert res_label_jp
         assert res_row_data == [['1', '1', 'テスト', '太郎', 'ja', 'familyNmAndNm', 'Y', 'ORCID', '1234', 'Y', 'CiNii', '12345', 'Y', 'test.taro@test.org', '', None, None, None, None, None, None, '', 'ja', 'Y', None, None, None, None, None, None, None, None, None, None, None, None, None], ['2', '2', 'test', 'smith', 'en', 'familyNmAndNm', 'Y', 'ORCID', '5678', 'Y', None, None, None, 'test.smith@test.org', '', 'ISNI', '1234', 'Y', 'GRID', '12345', 'Y', '', 'ja', 'Y', None, None, 'ISNI', '1234', 'Y', 'GRID', '12345', 'Y', '', 'ja', 'Y', None, None]]
-        
-    
+
+
     @pytest.fixture
     def mock_dependencies(self, app, db):
         """テストに必要な依存関係をモック化するフィクスチャ"""
@@ -629,14 +629,14 @@ class TestWekoAuthorsPrepareExport:
             patch('weko_authors.api.WekoAuthors.get_identifier_scheme_info') as mock_get_identifier_scheme_info, \
             patch('weko_authors.api.WekoAuthors.get_affiliation_identifier_scheme_info') as mock_get_affiliation_identifier_scheme_info, \
             patch('weko_authors.api.WekoAuthors.get_records_count') as mock_get_records_count:
-            
+
             # 各モックのデフォルト設定
             mock_mapping_max_item.return_value = ([], {})
             mock_get_by_range.return_value = []
             mock_get_identifier_scheme_info.return_value = {}
             mock_get_affiliation_identifier_scheme_info.return_value = {}
             mock_get_records_count.return_value = 0
-            
+
             yield {
                 'mock_mapping_max_item': mock_mapping_max_item,
                 'mock_get_by_range': mock_get_by_range,
@@ -660,7 +660,7 @@ class TestWekoAuthorsPrepareExport:
             {'json_id': 'masked_field', 'label_en': 'Masked Field', 'label_jp': 'マスクフィールド', 'mask': {'1': 'one', '2': 'two'}},
             {'json_id': 'weko_id', 'label_en': 'WEKO ID', 'label_jp': 'WEKO ID'}
         ]
-        
+
         affiliation_mappings = {
             'json_id': 'affiliationInfo',
             'child': [
@@ -676,7 +676,7 @@ class TestWekoAuthorsPrepareExport:
                 {'identifierInfo': 1, 'affiliationNameInfo': 2, 'affiliationPeriodInfo': 0}
             ]
         }
-        
+
         authors = [
             MagicMock(json={
                 'simple_field': 'simple value',
@@ -698,52 +698,52 @@ class TestWekoAuthorsPrepareExport:
                 ]
             })
         ]
-        
+
         schemes = {
             '1': {'scheme': 'WEKO', 'url': 'http://weko.example.com'},
             '2': {'scheme': 'ORCID', 'url': 'http://orcid.org'}
         }
-        
+
         aff_schemes = {
             '1': {'scheme': 'ROR', 'url': 'http://ror.org'}
         }
-        
+
         start = 0
         size = 10
-        
+
         # 関数実行
         result = WekoAuthors.prepare_export_data(
             mappings, affiliation_mappings, authors, schemes, aff_schemes, start, size
         )
-        
+
         # 結果検証
         row_header, row_label_en, row_label_jp, row_data = result
-        
+
         # ヘッダーと表示ラベルの検証
         assert row_header[0].startswith('#')
         assert row_label_en[0].startswith('#')
         assert row_label_jp[0].startswith('#')
-        
+
         # データ行の検証
         assert len(row_data) == 1  # 1件の著者データ
         author_row = row_data[0]
-        
+
         # 単純フィールドが正しく処理されていることを確認
         assert 'simple value' in author_row
-        
+
         # マスク処理が正しく適用されていることを確認
         assert 'one' in author_row
-        
+
         # WEKO IDが正しく抽出されていることを確認
         assert 'weko123' in author_row
-        
+
         # IDスキームが正しく変換されていることを確認
         assert 'ORCID' in author_row
-        
+
         # 所属情報が正しく処理されていることを確認
         assert 'University A' in author_row
         assert '英語' in author_row or 'en' in author_row
-        
+
         # モック関数が呼び出されていないことを確認（すべてのパラメータが提供されているため）
         mock_dependencies['mock_mapping_max_item'].assert_not_called()
         mock_dependencies['mock_get_by_range'].assert_not_called()
@@ -759,24 +759,24 @@ class TestWekoAuthorsPrepareExport:
         test_mappings = [{'json_id': 'test_field', 'label_en': 'Test', 'label_jp': 'テスト'}]
         test_aff_mappings = {'json_id': 'affiliationInfo', 'max': [], 'child': []}
         test_authors = [MagicMock(json={'test_field': 'test value'})]
-        
+
         mock_dependencies['mock_mapping_max_item'].return_value = (test_mappings, test_aff_mappings)
         mock_dependencies['mock_get_by_range'].return_value = test_authors
         mock_dependencies['mock_get_identifier_scheme_info'].return_value = {'1': {'scheme': 'TEST'}}
         mock_dependencies['mock_get_affiliation_identifier_scheme_info'].return_value = {'1': {'scheme': 'TEST_AFF'}}
-        
+
         # 関数実行（すべてNoneで渡す）
         result = WekoAuthors.prepare_export_data(None, None, None, None, None, 0, 10)
-        
+
         # 結果検証
         row_header, row_label_en, row_label_jp, row_data = result
-        
+
         # 各モックが正しく呼び出されたことを確認
         mock_dependencies['mock_mapping_max_item'].assert_called_once()
         mock_dependencies['mock_get_by_range'].assert_called_once_with(0, 10, False, False)
         mock_dependencies['mock_get_identifier_scheme_info'].assert_called_once()
         mock_dependencies['mock_get_affiliation_identifier_scheme_info'].assert_called_once()
-        
+
         # 返されたデータが期待通りであることを確認
         assert '#test_field' in row_header[0]
         assert '#Test' in row_label_en[0]
@@ -798,13 +798,13 @@ class TestWekoAuthorsPrepareExport:
                 {'json_id': 'sub_field2', 'label_en': 'Sub Field 2', 'label_jp': 'サブフィールド2'}
             ]}
         ]
-        
+
         affiliation_mappings = {
             'json_id': 'affiliationInfo',
             'child': [],
             'max': []
         }
-        
+
         authors = [
             MagicMock(json={
                 'simple_field': 'simple value',
@@ -815,25 +815,25 @@ class TestWekoAuthorsPrepareExport:
                 'affiliationInfo': []
             })
         ]
-        
+
         # 関数実行
         result = WekoAuthors.prepare_export_data(
             mappings, affiliation_mappings, authors, {}, {}, 0, 10
         )
-        
+
         # 結果検証
         row_header, row_label_en, row_label_jp, row_data = result
-        
+
         # ヘッダーに期待される項目が含まれていることを確認
         assert any('simple_field' in header for header in row_header)
         assert any('complex_field[0].sub_field1' in header for header in row_header)
         assert any('complex_field[1].sub_field2' in header for header in row_header)
-        
+
         # ラベルに期待される項目が含まれていることを確認
         assert any('Simple Field' in label for label in row_label_en)
         assert any('Sub Field 1[0]' in label for label in row_label_en)
         assert any('サブフィールド2[1]' in label for label in row_label_jp)
-        
+
         # データ行の値が正しいことを確認
         author_row = row_data[0]
         assert 'simple value' in author_row
@@ -852,13 +852,13 @@ class TestWekoAuthorsPrepareExport:
                 {'json_id': 'authorId', 'label_en': 'Author ID', 'label_jp': '著者ID'}
             ]}
         ]
-        
+
         affiliation_mappings = {
             'json_id': 'affiliationInfo',
             'child': [],
             'max': []
         }
-        
+
         authors = [
             MagicMock(json={
                 'authorIdInfo': [
@@ -869,24 +869,24 @@ class TestWekoAuthorsPrepareExport:
                 'affiliationInfo': []
             })
         ]
-        
+
         schemes = {
             '1': {'scheme': 'WEKO', 'url': 'http://weko.example.com'},
             '2': {'scheme': 'ORCID', 'url': 'http://orcid.org'},
             '3': {'scheme': 'Scopus', 'url': 'http://scopus.com'}
         }
-        
+
         # 関数実行
         result = WekoAuthors.prepare_export_data(
             mappings, affiliation_mappings, authors, schemes, {}, 0, 10
         )
-        
+
         # 結果検証
         row_header, row_label_en, row_label_jp, row_data = result
-        
+
         # IDが正しく処理されていることを確認
         author_row = row_data[0]
-        
+
         # WEKO ID（index 0）がスキップされ、index 1と2のデータが処理されていることを確認
         assert 'ORCID' in author_row
         assert 'orcid456' in author_row
@@ -1035,7 +1035,7 @@ class TestWekoAuthorsPrepareExport:
         }
 
 
-    def test_mask_processing(self, app, db, sample_mappings, sample_affiliation_mappings, sample_authors, 
+    def test_mask_processing(self, app, db, sample_mappings, sample_affiliation_mappings, sample_authors,
                             sample_schemes, sample_aff_schemes):
         """Test case 7: mask processing is correctly applied."""
         row_header, row_label_en, row_label_jp, row_data = WekoAuthors.prepare_export_data(
@@ -1047,17 +1047,17 @@ class TestWekoAuthorsPrepareExport:
             0,
             10
         )
-        
+
         # Check if mask processing was applied for gender
         assert row_data[0][2] == 'Male'  # The gender 'm' should be masked to 'Male'
-        
+
         # Check if mask processing was applied for affiliation language
         # Finding the index for affiliationInfo[0].affiliationNameInfo[0].language
         language_index = row_header.index('affiliationInfo[0].affiliationNameInfo[0].language')
         assert row_data[0][language_index] == 'English'  # 'en' should be masked to 'English'
 
 
-    def test_affiliation_info_processing(self, app, db, sample_mappings, sample_affiliation_mappings, sample_authors, 
+    def test_affiliation_info_processing(self, app, db, sample_mappings, sample_affiliation_mappings, sample_authors,
                                         sample_schemes, sample_aff_schemes):
         """Test case 8: affiliation information is correctly processed."""
         row_header, row_label_en, row_label_jp, row_data = WekoAuthors.prepare_export_data(
@@ -1069,20 +1069,20 @@ class TestWekoAuthorsPrepareExport:
             0,
             10
         )
-        
+
         # Check if affiliationIdType is correctly processed with scheme lookup
         # Find index for affiliationInfo[0].identifierInfo[0].affiliationIdType
         aff_id_type_index = row_header.index('affiliationInfo[0].identifierInfo[0].affiliationIdType')
         assert row_data[0][aff_id_type_index] == 'University ID'
-        
+
         # Check if affiliationId is correctly included
         aff_id_index = row_header.index('affiliationInfo[0].identifierInfo[0].affiliationId')
         assert row_data[0][aff_id_index] == 'UNI001'
-        
+
         # Check if affiliationName is correctly included
         aff_name_index = row_header.index('affiliationInfo[0].affiliationNameInfo[0].affiliationName')
         assert row_data[0][aff_name_index] == 'University A'
-        
+
         # Check if headers and labels are correctly formatted for nested structure
         assert 'affiliationInfo[0].identifierInfo[0].affiliationIdType' in row_header
         assert 'Affiliation ID Type[0][0]' in row_label_en
@@ -1119,13 +1119,13 @@ class TestWekoAuthorsPrepareExport:
                 }
             )
         ]
-        
+
         # Configure mocks to return our test data
         mock_map.return_value = (sample_mappings, sample_affiliation_mappings)
         mock_get.return_value = authors_with_missing
         mock_scheme.return_value = sample_schemes
         mock_aff_scheme.return_value = sample_aff_schemes
-        
+
         row_header, row_label_en, row_label_jp, row_data = WekoAuthors.prepare_export_data(
             None,  # Let the method fetch mappings
             None,  # Let the method fetch affiliation mappings
@@ -1135,19 +1135,19 @@ class TestWekoAuthorsPrepareExport:
             0,
             10
         )
-        
+
         # Check if missing affiliationIdType is correctly handled as None
         aff_id_type_index = row_header.index('affiliationInfo[0].identifierInfo[0].affiliationIdType')
         assert row_data[0][aff_id_type_index] is None
-        
+
         # Check if missing second affiliationNameInfo is correctly handled as None
         aff_name_index = row_header.index('affiliationInfo[0].affiliationNameInfo[1].affiliationName')
         assert row_data[0][aff_name_index] is None
-        
+
         # Verify all expected headers are present
         assert 'affiliationInfo[0].identifierInfo[1].affiliationId' in row_header
         assert 'affiliationInfo[0].affiliationNameInfo[0].language' in row_header
-        
+
         # Verify headers and labels match
         assert len(row_header) == len(row_label_en)
         assert len(row_header) == len(row_label_jp)
@@ -1170,7 +1170,7 @@ class TestWekoAuthorsGetUsedSchemeOfIdPrefix:
     def test_get_used_scheme_of_id_prefix_2(self, app, authors_prefix_settings):
         result = WekoAuthors.get_used_scheme_of_id_prefix()
         assert result == ([], {1: 'WEKO', 2: 'ORCID', 3: 'CiNii', 4: 'KAKEN2', 5: 'ROR'})
-        
+
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_used_scheme_of_id_prefix_3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
@@ -1182,11 +1182,11 @@ class TestWekoAuthorsGetUsedSchemeOfIdPrefix:
 #     def get_used_scheme_of_affiliation_id(cls):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsGetUsedSchemeOfAffiliationId -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 class TestWekoAuthorsGetUsedSchemeOfAffiliationId:
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_used_scheme_of_affiliation_id_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp 
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_used_scheme_of_affiliation_id_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
     )],indirect=['base_app'])
-    def test_get_used_scheme_of_affiliation_id_1(self, app, authors, authors_affiliation_settings):        
+    def test_get_used_scheme_of_affiliation_id_1(self, app, authors, authors_affiliation_settings):
         result = WekoAuthors.get_used_scheme_of_affiliation_id()
         assert result == (['ISNI', 'GRID'], {1: 'ISNI', 2: 'GRID', 3: 'Ringgold', 4: 'kakenhi'})
 
@@ -1194,10 +1194,10 @@ class TestWekoAuthorsGetUsedSchemeOfAffiliationId:
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
     )],indirect=['base_app'])
-    def test_get_used_scheme_of_affiliation_id_2(self, app, authors_affiliation_settings):        
+    def test_get_used_scheme_of_affiliation_id_2(self, app, authors_affiliation_settings):
         result = WekoAuthors.get_used_scheme_of_affiliation_id()
         assert result == ([], {1: 'ISNI', 2: 'GRID', 3: 'Ringgold', 4: 'kakenhi'})
-  
+
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_used_scheme_of_affiliation_id_3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True

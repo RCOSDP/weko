@@ -4,6 +4,7 @@ from collections import Iterable, OrderedDict
 from datetime import datetime
 from unittest.mock import MagicMock
 from time import sleep
+import requests
 
 import pytest
 from flask import Flask, json, jsonify, session, url_for, make_response
@@ -352,7 +353,7 @@ def test_iframe_save_model_error(app, client, db_itemtype, db_workflow, users, i
     ],
 )
 def test_iframe_save_model(
-    app, client, db_itemtype, db_workflow, users, id, status_code, mocker
+    app, client, db_itemtype, db_workflow, users, id, status_code, mocker, db_records3
 ):
     app.config["PRESERVE_CONTEXT_ON_EXCEPTION"] = False
     app.config["TESTING"] = True
@@ -442,6 +443,13 @@ def test_iframe_save_model(
             "action_status": "M",
             "commond": "",
         }
+    
+    res = client.post(url, json={})
+    assert res.status_code == 400
+    ret = json.loads(res.data)
+    assert ret["code"] == 1
+    assert ret["msg"] == "リクエストデータがありません"
+    
     res = client.post(url, json=data)
     assert res.status_code == status_code
     ret = json.loads(res.data)
@@ -479,7 +487,40 @@ def test_iframe_save_model(
     ret = json.loads(res.data)
     assert ret["code"] == 0
     assert ret["msg"].startswith("Model save success at") == True
+        
+    # is_duplicate True
+    data["metainfo"]["item_1617186419668"][0]["creatorNames"] = [{"creatorName":"情報, 太郎"}]
+    data["metainfo"]["item_1617258105262"]={}
+    with client.session_transaction() as session:
+        session["activity_info"] = {
+            "activity_id": None,
+            "action_id": 3,
+            "action_version": "1.0.1",
+            "action_status": "M",
+            "commond": "",
+        }
+    res = client.post(url, json=data)
+    assert res.status_code == 400
+    ret = json.loads(res.data)
+    assert ret["code"] == 1
+    assert ret["msg"] == "既に登録されているデータです"
     
+    # metainfo false
+    res = client.post(url, json={'data':1})
+    assert res.status_code == status_code
+    ret = json.loads(res.data)
+    assert ret["code"] == 0
+    assert ret["msg"].startswith("Model save success at") == True
+    
+    # Exception 
+    with patch("weko_items_ui.views.is_duplicate_record", side_effect=Exception("Mocked Exception")):
+        res = client.post(url, json=data)
+
+        assert res.status_code == 500
+        ret = json.loads(res.data)
+        assert ret["code"] == 1
+        assert ret["msg"] == "Model save error"
+
     with client.session_transaction() as session:
         session["activity_info"] = {
             "activity_id": "A-00000000-00000",
@@ -20333,13 +20374,13 @@ def test_iframe_items_index_get_error(app, client, db_itemtype, users, db_record
     mocker.patch("weko_items_ui.views.set_files_display_type")
     mocker.patch("weko_items_ui.views.get_thumbnails",return_value=[])
     mocker.patch("weko_items_ui.views.update_index_tree_for_record")
-    
+
     # pid_value == 0
     url = url_for("weko_items_ui.iframe_items_index", pid_value=str(0), _external=True)
     with patch("weko_items_ui.views.redirect",return_value=make_response()) as mock_redirect:
         res = client.get(url)
         mock_redirect.assert_called_with("/items/iframe")
-    
+
     url = url_for("weko_items_ui.iframe_items_index", pid_value=str(1), _external=True)
     # exist community
     with patch("weko_workflow.api.GetCommunity.get_community_by_id", return_value="c"):
@@ -20432,7 +20473,7 @@ def test_iframe_items_index_get(app, client, db_itemtype, users, db_records, db_
         session["itemlogin_histories"] = []
         session["itemlogin_res_check"] = None
         session["itemlogin_pid"] = recid
-    
+
     with patch("weko_deposit.api.WekoIndexer.upload_metadata", return_value=True):
         with patch("weko_workflow.utils.get_main_record_detail", return_value={"record": record, "files": [], "files_thumbnail": []}):
             with pytest.raises(Exception) as e:
@@ -20904,6 +20945,23 @@ def test_export_acl_nologin(client, users, db_oaischema):
         assert res.status_code == 200
 
 
+# def export():
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_export_rocrate -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_export_rocrate(client):
+    url = url_for("weko_items_ui.export", _external=True)
+    post_data = {
+        "export_format_radio": "ROCRATE",
+        "record_ids": "[2000001, 2000002]",
+        "invalid_record_ids": "[]",
+        "record_metadata": "",
+        "export_file_contents_radio": "True"
+    }
+    with patch("weko_items_ui.views.export_rocrate", return_value={}) as mock_export_rocrate:
+        res = client.post(url, data=post_data)
+        assert res.status_code == 200
+        mock_export_rocrate.assert_called_once()
+
+
 # def validate():
 @pytest.mark.parametrize(
     "id, status_code",
@@ -21071,3 +21129,100 @@ def test_check_record_doi_indexes(
 
     with pytest.raises(PIDDoesNotExistError):
         res = client_api.get("{}?doi=1".format(url))
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_oa_policy -vv -s  --cov-branch --cov-report=term --cov-report=html --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "user_id, params, status_code, expected_response",
+    [
+        # 正常系: issnを指定した場合
+        (0, {"issn": "1111-1111","eissn": "22222-2222","title": "3333-3333"}, 200, {"policy_url": "http://example.com/policy"}),
+        # 異常系: 必須パラメータなし (400)
+        (0, {}, 400, {"error": "Please enter ISSN, eISSN, or journal title"}),
+        # # 異常系: トークン取得失敗 (401)
+        (0, {"issn": "1234-5678"}, 401, {"error": "Authentication error occurred"}),
+        # 異常系: APIリクエストで404
+        (0, {"issn": "9999-9999"}, 404, {"error": "No matching policy"}),
+        # 異常系: APIリクエストで429
+        (0, {"issn": "1234-5678"}, 429, {"error": "Request limit exceeded"}),
+         # 異常系: APIリクエストで500
+        (0, {"issn": "1234-5678"}, 500, {"error": "Internal server error"}),
+         # 異常系: APIリクエストで502
+        (0, {"issn": "1234-5678"}, 502, {"error": "An unknown error occurred"}),
+    ],
+)
+def test_get_oa_policy(
+    client_api, users, user_id, params, status_code, expected_response
+):
+    """get_oa_policyエンドポイントの動作をテストする"""
+    # ユーザーログインをシミュレート
+    login_user_via_session(client=client_api, email=users[user_id]["email"])
+
+    # エンドポイントURLを生成（Blueprint名をweko_items_uiに仮定）
+    url = url_for("weko_items_ui.get_oa_policy", _external=True)
+
+    # get_access_tokenとrequests.getをモック化
+    with patch("weko_items_ui.views.get_access_token") as mock_get_token, patch(
+        "requests.get"
+    ) as mock_requests_get:
+        
+        # 各ケースに応じたモックの設定
+        if status_code == 401:
+            # トークン取得失敗ケース
+            mock_get_token.return_value = None
+        else:
+            # 正常なトークンを返す
+            mock_get_token.return_value = {"access_token": "mock_token"}
+
+        # requests.getのモックレスポンスを設定
+        if status_code == 200:
+            mock_requests_get.return_value.status_code = 200
+            mock_requests_get.return_value.json.return_value = {"url": "http://example.com/policy"}
+        elif status_code == 400:
+            mock_requests_get.return_value.status_code = 400
+        elif status_code == 401:
+            mock_requests_get.return_value.status_code = 401
+        elif status_code == 404:
+            mock_requests_get.return_value.status_code = 404
+        elif status_code == 429:
+            mock_requests_get.return_value.status_code = 429
+        elif status_code == 500:
+            mock_requests_get.return_value.status_code = 500
+        elif status_code == 502:
+            mock_requests_get.return_value.status_code = 502
+
+        # APIリクエストを送信
+        res = client_api.get(url, query_string=params)
+
+        # レスポンスの検証
+        if(status_code  == 502):
+            assert res.status_code == 500, f"ステータスコードが{status_code}であるべき"
+        else:
+            assert res.status_code == status_code, f"ステータスコードが{status_code}であるべき"
+            assert json.loads(res.data) == expected_response, "レスポンス内容が期待値と一致するべき"
+
+# 例外処理のテスト
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_oa_policy_exceptions -vv -s  --cov-branch --cov-report=term --cov-report=html --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_oa_policy_exceptions(client_api, users):
+    """get_oa_policyの例外処理をテストする"""
+    # ユーザーログインをシミュレート
+    login_user_via_session(client=client_api, email=users[0]["email"])
+
+    # エンドポイントURLを生成（Blueprint名をweko_items_uiに仮定）
+    url = url_for("weko_items_ui.get_oa_policy", _external=True)
+
+    # requests.exceptions.RequestExceptionをシミュレート
+    with patch("weko_items_ui.views.get_access_token", return_value={"access_token": "mock_token"}), patch(
+        "requests.get", side_effect=requests.exceptions.RequestException("API接続エラー")
+    ):
+        res = client_api.get(url, query_string={"issn": "1234-5678"})
+        assert res.status_code == 500, "リクエスト例外時に500が返るべき"
+        assert json.loads(res.data) == {"error": "API Request Failed"}
+
+    # 一般的な例外をシミュレート
+    with patch(
+        "weko_items_ui.views.get_access_token", side_effect=Exception("予期しないエラー")
+    ):
+        res = client_api.get(url, query_string={"issn": "1234-5678"})
+        assert res.status_code == 500, "一般的な例外時に500が返るべき"
+        assert "error" in json.loads(res.data)
+        assert "An unknown error occurred" in json.loads(res.data)["error"]

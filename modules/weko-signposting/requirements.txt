@@ -1,0 +1,258 @@
+setuptools==57.5.0 # https://github.com/tikitu/jsmin/issues/33
+alembic==0.9.6
+amqp>=2.6.0
+angular-gettext-babel==0.3
+aniso8601==8.0.0
+arrow==0.12.1
+asn1crypto==0.23.0
+Babel==2.5.1
+bagit==1.7.0
+beautifulsoup4==4.9.3
+billiard==3.6.3.0
+binaryornot==0.4.4
+bleach==3.1.0
+blinker==1.4
+cachelib==0.1
+captcha==0.4
+cchardet==2.1.1
+celery>=4.4.4
+certifi==2017.11.5
+cffi==1.11.2
+chardet==3.0.4
+citeproc-py==0.5.1
+citeproc-py-styles==0.1.2
+click>=6.7
+cookiecutter==1.6.0
+counter-robots==2018.6
+cryptography==2.1.4
+datacite==1.0.1
+decorator==4.1.2
+dictdiffer==0.7.0
+dojson==1.3.2
+elasticsearch==6.1.1
+# elasticsearch-dsl==6.1.0
+elasticsearch-dsl==6.4.0
+entrypoints==0.2.3
+Flask==1.0.4
+Flask-Admin==1.5.3
+Flask-Alembic==2.0.1
+Flask-Assets==0.12
+Flask-BabelEx==0.9.4
+Flask-Breadcrumbs==0.5.0
+Flask-Caching==1.3.3
+Flask-CeleryExt>=0.3.4
+Flask-Collect==1.2.2
+Flask-Cors==3.0.3
+Flask-KVSession==0.6.2
+Flask-Limiter==1.1.0
+Flask-Login==0.4.1
+Flask-Mail==0.9.1
+Flask-Menu==0.6.0
+Flask-OAuthlib==0.9.5
+Flask-Principal==0.4.0
+Flask-RESTful==0.3.8
+Flask-Security==3.0.0
+flask-shell-ipython==0.4.1
+Flask-SQLAlchemy==2.3.2
+flask-talisman==0.4.1
+Flask-WTF==0.14.3
+flask-sitemap==0.1.0
+Flask-IIIF==0.6.1
+Flask-DebugToolbar==0.11.0
+fs==0.5.4
+future==0.16.0
+html5lib==1.0.1
+idna==2.6
+infinity==1.4
+intervals==0.8.0
+ipaddress==1.0.19
+ipython==6.2.1
+ipython-genutils==0.2.0
+itsdangerous==0.24
+jedi==0.11.0
+Jinja2==2.10
+jinja2-cli==0.6.0
+jinja2-time==0.2.0
+jsmin==2.2.2
+jsonpatch==1.21
+jsonpointer==1.14
+jsonref==0.1
+jsonresolver==0.2.1
+jsonschema==2.6.0
+jsonpath_ng==1.5.2
+jupyter-client==5.2.2
+jupyter-core==4.4.0
+jsonpath-ng == 1.5.2
+-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu
+limits==1.2.1
+lxml==4.1.1
+Mako==1.0.7
+MarkupSafe==1.1.1
+marshmallow==2.20.1
+maxminddb==1.5.2
+maxminddb-geolite2==2017.803
+mistune==0.8.3
+more-itertools==8.10.0
+msgpack==0.6.2
+nbconvert==5.3.1
+nbformat==4.4.0
+node-semver==0.1.1
+oauthlib==2.1.0
+ordereddict==1.1
+pandocfilters==1.4.2
+parso==0.1.0
+passlib==1.7.1
+pexpect==4.3.0
+pickleshare==0.7.4
+pluggy>=0.11.0<1.0.0
+poyo==0.4.1
+prompt-toolkit==1.0.15
+psycopg2==2.7.3.2
+ptyprocess==0.5.2
+pycparser==2.18
+Pygments==2.2.0
+PyJWT==1.5.3
+#PyPDF2==1.26.0
+-e git+https://github.com/RCOSDP/PyPDF2.git@fix/nii#egg=PyPDF2
+pyPEG2==2.15.2
+python-dateutil==2.8.2
+python-editor==1.0.3
+python-geoip==1.2
+pytz==2017.3
+pyzmq==17.0.0
+redis==2.10.6
+requests==2.18.4
+requests-oauthlib==1.1.0
+rocrate==0.6.0
+Sickle==0.6.4
+simplegeneric==0.8.1
+simplejson==3.12.0
+simplekv==0.11.2
+six==1.12.0
+speaklater==1.3
+SQLAlchemy==1.2.19
+SQLAlchemy-Continuum==1.3.6
+SQLAlchemy-Utils==0.35.0
+testpath==0.3.1
+tornado==4.5.3
+traitlets==4.3.2
+ua-parser==0.7.3
+uritools==2.1.0
+urllib3==1.22
+validators==0.12.0
+vine==1.3.0
+wcwidth==0.1.7
+marshmallow==2.20.1
+Wand==0.6.1
+webargs==5.5.2
+webassets==0.12.1
+webencodings==0.5.1
+Werkzeug==0.15.2
+whichcraft==0.4.1
+WTForms==2.1
+WTForms-Alchemy==0.16.5
+WTForms-Components==0.10.3
+elementpath==1.0.6
+defusedxml==0.5.0
+xmlschema==0.9.30
+Flask-Plugins==1.6.1
+bibtexparser==1.0.1
+github3.py==1.1.0
+feedgen==0.7.0
+boto3==1.7.84
+s3fs==0.1.6
+#fpdf==1.7.2
+-e git+https://github.com/RCOSDP/pyfpdf.git@fix/nii#egg=fpdf
+Pillow==8.1.2
+Sickle==0.6.4
+Sphinx==1.8.4
+pytest>=4.2.0
+mock==3.0.5
+pytest-mock==3.6.1
+numpy==1.16.1
+xmltodict==0.12.0
+ftfy==4.4.3
+attrs==17.4.0
+b2handle==1.1.2
+resync==2.0.1
+email-validator==1.0.5
+iiif-prezi==0.3.0
+netaddr==0.8.0
+# for sentry
+# raven==6.10.0
+marshmallow-sqlalchemy==0.23.1
+flask-marshmallow==0.14.0
+#
+# packages-invenio.txt
+#
+invenio-access==1.1.0
+#invenio-accounts==1.1.4
+invenio-admin==1.1.2
+invenio-app==1.1.0
+invenio-assets==1.0.0
+invenio-base==1.0.2
+invenio-cache==1.0.0
+invenio-celery>=1.1.3
+invenio-config==1.0.0
+invenio-formatter==1.0.0b3
+invenio-i18n==1.0.0
+
+invenio-jsonschemas==1.0.0
+invenio-logging==1.0.0b3
+invenio-marc21==1.0.0a8
+invenio-oauthclient==1.0.0
+invenio-pidrelations==1.0.0a4
+invenio-pidstore==1.0.0
+invenio-query-parser==0.6.0
+invenio-records-files==1.0.0a10
+invenio-records-ui==1.0.0
+invenio-rest==1.1.2
+invenio-search==1.1.0
+invenio-search-ui==1.0.0a9
+invenio-theme==1.0.0b4
+invenio-csl-rest==1.0.0a1
+#
+# requirements-weko-modules.txt
+#
+-e ../invenio-files-rest
+-e ../invenio-s3
+-e ../invenio-oaiserver
+-e ../invenio-oaiharvester
+-e ../invenio-oauth2server
+-e ../invenio-records
+-e ../invenio-previewer
+-e ../invenio-stats
+-e ../invenio-records-rest
+-e ../invenio-communities
+-e ../invenio-mail
+-e ../invenio-indexer
+-e ../invenio-deposit
+-e ../invenio-resourcesyncserver
+-e ../invenio-resourcesyncclient
+-e ../invenio-queues
+-e ../invenio-db
+-e ../invenio-accounts
+-e ../weko-theme
+-e ../weko-itemtypes-ui
+-e ../weko-items-ui
+-e ../weko-accounts
+-e ../weko-admin
+-e ../weko-logging
+-e ../weko-gridlayout
+-e ../weko-groups
+-e ../weko-search-ui
+-e ../weko-records
+-e ../weko-records-ui
+-e ../weko-schema-ui
+-e ../weko-index-tree
+-e ../weko-user-profiles
+-e ../weko-deposit
+-e ../weko-authors
+-e ../weko-handle
+-e ../weko-workflow
+-e ../weko-indextree-journal
+-e ../weko-bulkupdate
+-e ../weko-items-autofill
+-e ../weko-sitemap
+-e ../invenio-iiif
+-e ../weko-redis

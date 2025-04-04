@@ -85,6 +85,9 @@ SEARCH_UI_JSTEMPLATE_SORT_ORDER = "templates/weko_search_ui/togglebutton.html"
 WEKO_ITEM_ADMIN_IMPORT_TEMPLATE = "weko_search_ui/admin/import.html"
 """import template for the import page."""
 
+WEKO_ITEM_ADMIN_ROCRATE_IMPORT_TEMPLATE = "weko_search_ui/admin/rocrate_import.html"
+"""import template for the rocrate import page."""
+
 WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE = "weko_search_ui/admin/export.html"
 """Template for the Admin Bulk Export page."""
 
@@ -729,6 +732,9 @@ WEKO_SEARCH_UI_BULK_EXPORT_RETRY = 5
 WEKO_SEARCH_UI_IMPORT_TMP_PREFIX = "weko_import_"
 """Import tmp prefix."""
 
+WEKO_SEARCH_UI_ROCRATE_IMPORT_TMP_PREFIX = "weko_rocrate_import_"
+"""RO-Crate Import tmp prefix."""
+
 WEKO_SEARCH_UI_IMPORT_UNUSE_FILES_URI = "import_unuse_files_uri_{}"
 """Cache key unuse file. uri."""
 
@@ -751,3 +757,9 @@ CHILD_INDEX_THUMBNAIL_HEIGHT = 100
 WEKO_SEARCH_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 
 WEKO_SEARCH_UI_RESULT_TMP_PREFIX = 'weko_search_result_list_'
+
+SWORD_METADATA_FILE = "metadata/sword.json"
+""" Metadata file name for SWORDBagIt. """
+
+ROCRATE_METADATA_FILE = "data/ro-crate-metadata.json"
+""" Metadata file name for RO-Crate+Bagit. """

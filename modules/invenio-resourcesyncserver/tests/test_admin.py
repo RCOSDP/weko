@@ -55,7 +55,7 @@ def test_create_AdminResourceListView(i18n_app):
 
     with patch("invenio_resourcesyncserver.api.ResourceListHandler.create", return_value=data):
         assert test_1.create()
-    
+
     assert test_1.create()
 
 #     def update(self, resource_id):
@@ -65,7 +65,7 @@ def test_update_AdminResourceListView(i18n_app, db):
         id=1,
         repository_id=2,
     )
-    
+
     db.session.add(test)
     db.session.commit()
 
@@ -86,7 +86,7 @@ def test_delete_AdminResourceListView(i18n_app, db):
         id=1,
         repository_id=2
     )
-    
+
     db.session.add(test)
     db.session.commit()
 
@@ -119,7 +119,7 @@ def test_get_change_list_AdminChangeListView(i18n_app, db):
         assert test_2.get_change_list(1)
 
 #     def create(self):
-def test_create_AdminChangeListView(i18n_app, db): 
+def test_create_AdminChangeListView(i18n_app, db):
     sample = MagicMock()
     def to_dict():
         return {"A": 1}
@@ -141,7 +141,7 @@ def test_create_AdminChangeListView(i18n_app, db):
         "success": 1,
         "message": "message"
     }
-    
+
     with patch("flask.request.get_json", return_value=data):
         data["data"] = sample
         with patch("invenio_resourcesyncserver.api.ChangeListHandler.save", return_value=data):
