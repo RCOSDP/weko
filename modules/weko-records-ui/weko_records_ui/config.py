@@ -20,6 +20,7 @@
 
 """Configuration for weko-records-ui."""
 import os
+from enum import Enum
 
 from flask_babelex import lazy_gettext as _
 
@@ -717,3 +718,27 @@ WEKO_RECORDS_UI_TSV_FIELD_NAMES_DEFAULT = ['Name', 'Size', 'License', 'Date', 'U
 WEKO_RECORDS_UI_TSV_FIELD_NAMES_EN = ['Name', 'Size', 'License', 'Date', 'URL']
 
 WEKO_RECORDS_UI_TSV_FIELD_NAMES_JA = ['名前', 'サイズ', 'ライセンス', '公開日', '格納場所']
+
+# The API URL to obtain a token for OA. example: "<OA URL>/oauth/token"
+WEKO_RECORDS_UI_OA_GET_TOKEN_URL = ""
+
+# The API URL to update the status of an OA article. example: "<OA URL>/api/articles/{}/status"
+WEKO_RECORDS_UI_OA_UPDATE_STATUS_URL = ""
+
+WEKO_RECORDS_UI_OA_API_RETRY_COUNT = 3
+
+WEKO_RECORDS_UI_OA_API_CODE = "oaa"
+
+class EXTERNAL_SYSTEM(Enum):
+    OA = "OA"
+
+class ITEM_ACTION(Enum):
+    CREATED = "created"
+    UPDATED = "updated"
+    DELETED = "deleted"
+
+class FILE_OPEN_STATUS(Enum):
+    PUBLIC = "public"
+    EMBARGO = "embargo"
+    PRIVATE = "private"
+    RESTRICTED = "restricted"

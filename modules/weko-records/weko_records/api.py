@@ -2391,7 +2391,7 @@ class FeedbackMailList(object):
         )
         
         if repo_id:
-            data.filter(_FeedbackMailList.repository_id == repo_id)
+            data = data.filter(_FeedbackMailList.repository_id == repo_id)
         data = data.all()
 
         # create return data

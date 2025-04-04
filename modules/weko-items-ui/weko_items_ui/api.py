@@ -17,6 +17,7 @@
 
 from flask import current_app, json, session, url_for
 from weko_accounts.utils import login_required_customize
+from weko_authors.utils import update_data_for_weko_link
 from weko_records.api import ItemTypes
 from weko_records.utils import find_items
 from weko_workflow.api import WorkActivity
@@ -73,7 +74,9 @@ def item_login(item_type_id: int = 0):
                     ]
                 if "endpoints" in item_json:
                     endpoints = item_json.get("endpoints")
-
+                if "weko_link" in item_json:
+                    weko_link = item_json.get("weko_link")
+                    update_data_for_weko_link(item_json.get("metainfo"), weko_link)
         need_file, need_billing_file = is_schema_include_key(item_type.schema)        
 
         if "subitem_thumbnail" in json.dumps(item_type.schema):

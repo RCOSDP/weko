@@ -59,9 +59,10 @@ from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
 from weko_records.api import FeedbackMailList, RequestMailList, ItemsMetadata, ItemTypeNames, \
     ItemTypes, Mapping
-from weko_records.models import ItemType
+from weko_records.models import ItemType, ItemReference
 from weko_records.serializers.utils import get_full_mapping, get_item_type_name
 from weko_records_ui.models import FilePermission
+from weko_records_ui.external import call_external_system
 from weko_redis import RedisConnection
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
@@ -1871,6 +1872,11 @@ def handle_finish_workflow(deposit, current_pid, recid):
         return None
 
     item_id = None
+    old_record = None
+    new_record = None
+    record_pid = None
+    old_item_reference_list = []
+    new_item_reference_list = []
     try:
         pid_without_ver = get_record_without_version(current_pid)
         if ".0" in current_pid.pid_value:
@@ -1905,6 +1911,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                 weko_record.update_item_link(current_pid.pid_value)
             updated_item.publish(deposit)
             updated_item.publish(ver_attaching_deposit)
+            record_pid = new_deposit.pid
         else:
             # update to record without version ID when editing
             if pid_without_ver:
@@ -1930,6 +1937,10 @@ def handle_finish_workflow(deposit, current_pid, recid):
                         maintain_record,
                         maintain_record.model)
                     maintain_deposit['path'] = deposit.get('path', [])
+                    record_pid = maintain_record.pid
+                    old_record = WekoRecord.get_record_by_pid(record_pid.pid_value)
+                    old_item_reference_list = ItemReference.get_src_references(record_pid.pid_value).all()
+                    old_item_reference_list = [deepcopy(item) for item in old_item_reference_list]
                     new_parent_record = maintain_deposit. \
                         merge_data_to_record_without_version(current_pid, True)
                     maintain_deposit.publish()
@@ -1948,6 +1959,10 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     draft_deposit = WekoDeposit.get_record(
                         draft_pid.object_uuid)
                     draft_deposit['path'] = deposit.get('path', [])
+                    record_pid = draft_pid
+                    old_record = WekoRecord.get_record_by_pid(record_pid.pid_value)
+                    old_item_reference_list = ItemReference.get_src_references(record_pid.pid_value).all()
+                    old_item_reference_list = [deepcopy(item) for item in old_item_reference_list]
                     new_draft_record = draft_deposit. \
                         merge_data_to_record_without_version(current_pid)
                     draft_deposit.publish()
@@ -1971,6 +1986,15 @@ def handle_finish_workflow(deposit, current_pid, recid):
                 else:
                     item_id = current_pid.object_uuid
                 db.session.commit()
+
+        if record_pid:
+            new_record = WekoRecord.get_record_by_pid(record_pid.pid_value)
+            new_item_reference_list = \
+                ItemReference.get_src_references(record_pid.pid_value).all()
+            call_external_system(old_record=old_record,
+                                 new_record=new_record,
+                                 old_item_reference_list=old_item_reference_list,
+                                 new_item_reference_list=new_item_reference_list)
 
         from invenio_oaiserver.tasks import update_records_sets
         update_records_sets.delay([str(pid_without_ver.object_uuid)])

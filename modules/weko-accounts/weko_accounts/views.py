@@ -61,7 +61,6 @@ def _has_admin_access():
     return current_user.is_authenticated and current_admin \
         .permission_factory(current_admin.admin.index_view).can()
 
-
 @blueprint.before_app_first_request
 def init_menu():
     """Initialize menu before first request."""
@@ -79,6 +78,9 @@ def _adjust_shib_admin_DB():
     """
     Create or Update Shibboleth Admin database table.
     """
+    if current_app.config.get('TESTING', False):  # テスト環境では何もしない
+        return
+
     with _app.app_context():
         if AdminSettings.query.filter_by(name='blocked_user_settings').first() is None:
             max_id = db.session.query(db.func.max(AdminSettings.id)).scalar()

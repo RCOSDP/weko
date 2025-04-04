@@ -412,17 +412,19 @@ class WekoIndexer(RecordIndexer):
             body=body
         )
 
-    def update_author_link(self, author_link):
+    def update_author_link_and_weko_link(self, link):
         """Update author_link info."""
         # current_app.logger.error("author_link:{}".format(author_link));
         self.get_es_index()
         pst = 'author_link'
-        body = {'doc': {pst: author_link.get('author_link')}}
+        pst2 = "weko_link"
+        body = {'doc': {pst: link.get('author_link'),
+                        pst2: link.get('weko_link')}}
         
         return self.client.update(
             index=self.es_index,
             doc_type=self.es_doc_type,
-            id=str(author_link.get('id')),
+            id=str(link.get('id')),
             body=body
         )
 
@@ -1683,7 +1685,7 @@ class WekoDeposit(Deposit):
                 pass
             raise PIDResolveRESTError(description='This item has been deleted')
 
-    def update_author_link(self, author_link):
+    def update_author_link_and_weko_link(self, author_link, weko_link):
         """Summary line.
 
     I   ndex author_link list.
@@ -1696,12 +1698,14 @@ class WekoDeposit(Deposit):
 
         """
         item_id = self.id
-        if author_link:
-            author_link_info = {
+        if author_link and weko_link:
+            link_info = {
                 "id": item_id,
-                "author_link": author_link
+                "author_link": author_link,
+                "weko_link": weko_link
+                
             }
-            self.indexer.update_author_link(author_link_info)
+            self.indexer.update_author_link_and_weko_link(link_info)
 
     def remove_feedback_mail(self):
         """ 

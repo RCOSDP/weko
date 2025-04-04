@@ -77,7 +77,7 @@ from invenio_deposit.config import (
     DEPOSIT_REST_ENDPOINTS,
 )
 from invenio_files_rest import InvenioFilesREST
-from invenio_files_rest.models import Bucket, Location, ObjectVersion
+from invenio_files_rest.models import Bucket, FileInstance, Location, ObjectVersion
 from invenio_files_rest.permissions import (
     bucket_listmultiparts_all,
     bucket_read_all,
@@ -141,9 +141,9 @@ from weko_index_tree.config import WEKO_INDEX_TREE_REST_ENDPOINTS as _WEKO_INDEX
 from weko_index_tree.models import Index, IndexStyle
 from weko_items_ui.config import WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT, WEKO_ITEMS_UI_MS_MIME_TYPE
 from weko_records import WekoRecords
-from weko_records.api import ItemsMetadata, ItemTypes, Mapping
+from weko_records.api import ItemsMetadata, ItemTypes, Mapping, ItemTypeNames
 from weko_records.config import WEKO_ITEMTYPE_EXCLUDED_KEYS
-from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
+from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, ItemMetadata
 from weko_records.serializers.utils import get_full_mapping
 from weko_records_ui.config import (
     EMAIL_DISPLAY_FLG,
@@ -681,7 +681,10 @@ def base_app(instance_path, search_class, request):
         WEKO_INDEX_TREE_API="/api/tree/index/",
         WEKO_SEARCH_UI_TO_NUMBER_FORMAT="99999999999999.99",
         WEKO_SEARCH_UI_BASE_TEMPLATE=WEKO_SEARCH_UI_BASE_TEMPLATE,
-        WEKO_SEARCH_KEYWORDS_DICT=WEKO_SEARCH_KEYWORDS_DICT
+        WEKO_SEARCH_KEYWORDS_DICT=WEKO_SEARCH_KEYWORDS_DICT,
+        WEKO_ITEMS_UI_INDEX_PATH_SPLIT = '///',
+        WEKO_SEARCH_UI_BULK_EXPORT_RETRY = 5,
+        WEKO_SEARCH_UI_BULK_EXPORT_LIMIT = 100
     )
     app_.url_map.converters["pid"] = PIDConverter
     app_.config["RECORDS_REST_ENDPOINTS"]["recid"]["search_class"] = search_class
@@ -1227,6 +1230,20 @@ def db_records2(db, instance_path, users):
     yield result
 
 
+@pytest.fixture()
+def db_records3(db):
+    record_data = json_data("data/test_records2.json")
+    item_data = json_data("data/test_items2.json")
+    record_num = len(record_data)
+    result = []
+    with db.session.begin_nested():
+        for d in range(record_num):
+            result.append(create_record(record_data[d], item_data[d]))
+    db.session.commit()
+
+    yield result
+
+
 @pytest.fixture
 def redis_connect(app):
     redis_connection = RedisConnection().connection(
@@ -1742,6 +1759,23 @@ def file_instance_mock(db):
 
     # db.session.add(file)
     # db.session.commit()
+
+@pytest.fixture
+def create_file_instance(db):
+    file_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "data",
+        "sample_file",
+        "sample_file.txt",
+    )
+
+    file = FileInstance(
+        id="deadbeef-65bd-4d9b-93e2-ec88cc59aec5", uri=file_path, size=4, updated=None
+    )
+
+    db.session.add(file)
+    db.session.commit()
+    return file_path
 
 
 @pytest.yield_fixture()
@@ -3940,7 +3974,7 @@ def make_itemtype(app,db):
     def factory(id,datas):
         result = dict()
         item_type_name = ItemTypeName(
-            id=id, name=datas["name"],has_site_license=True,is_active=True
+            name=datas["name"],has_site_license=True,is_active=True
         )
         item_type_schema=dict()
         with open(datas["schema"],"r") as f:
@@ -3953,10 +3987,12 @@ def make_itemtype(app,db):
         with open(datas["render"], "r") as f:
             item_type_render = json.load(f)
 
+        with db.session.begin_nested():
+            db.session.add(item_type_name)
+
 
         item_type = ItemType(
-            id=id,
-            name_id=id,
+            name_id=item_type_name.id,
             harvesting_type=True,
             schema=item_type_schema,
             form=item_type_form,
@@ -3974,7 +4010,6 @@ def make_itemtype(app,db):
             db.session.add(item_type_mapping)
             result["item_type_mapping"] = item_type_mapping
         with db.session.begin_nested():
-            db.session.add(item_type_name)
             db.session.add(item_type)
 
         db.session.commit()
@@ -3984,6 +4019,21 @@ def make_itemtype(app,db):
         return result
     return factory
 
+@pytest.fixture()
+def create_export_all_data(db):
+    indexer = WekoIndexer()
+    indexer.get_es_index()
+    filepath = "tests/data/helloworld.pdf"
+    filename = "helloworld.pdf"
+    mimetype = "application/pdf"
+    uuid_list = db.session.query(PersistentIdentifier.object_uuid).distinct(PersistentIdentifier.object_uuid).all()
+    uuid_list = [uuid[0] for uuid in uuid_list]
+    item_meta_data_list = ItemMetadata.query.filter(ItemMetadata.id.in_(uuid_list)).all()
+    for meta in item_meta_data_list:
+        meta.item_type_id = 1
+        db.session.merge(meta)
+    for i in range(1000, 1110):
+        make_record(db, indexer, i, filepath, filename, mimetype, '')
 
 @pytest.fixture
 def test_indices(app, db):

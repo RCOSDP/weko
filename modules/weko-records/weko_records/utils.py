@@ -27,7 +27,9 @@ import xml.etree.ElementTree as ET
 from collections import OrderedDict
 
 import pytz
-from flask import current_app
+from flask import current_app, json, Flask
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore import current_pidstore
@@ -40,10 +42,11 @@ from lxml import etree
 from weko_admin import config as ad_config
 from weko_admin.models import SearchManagement as sm
 from weko_schema_ui.schema import SchemaTree
-
+from weko_authors.api import WekoAuthors
+from weko_authors.utils import update_data_for_weko_link
 from .api import ItemTypes, Mapping
 from .config import COPY_NEW_FIELD, WEKO_TEST_FIELD
-
+from sqlalchemy import null
 
 def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True):
     """Convert the item data and mapping to jpcoar.
@@ -53,8 +56,19 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
     :param owner_id: record owner.
     :return: dc, jrc, is_edit
     """
+    # json_loader内でインポートしないと循環インポートになり、エラーが起きる。
+    from weko_workflow.models import Activity
+    activity = Activity.query.filter(
+        Activity.item_id == pid.object_uuid,
+        Activity.temp_data != null()
+    ).first()
+    if activity and activity.temp_data:
+        temp_data = json.loads(activity.temp_data)
+        if "weko_link" in temp_data and temp_data["weko_link"] != {}:
+            update_data_for_weko_link(data, temp_data["weko_link"])
+        
 
-    def _get_author_link(author_link, value):
+    def _get_author_link(author_link, weko_link, value):
         """Get author link data."""
         if isinstance(value, list):
             for v in value:
@@ -64,7 +78,11 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
                     and "nameIdentifierScheme" in v["nameIdentifiers"][0]
                     and v["nameIdentifiers"][0]["nameIdentifierScheme"] == "WEKO"
                 ):
-                    author_link.append(v["nameIdentifiers"][0]["nameIdentifier"])
+                    weko_id = v["nameIdentifiers"][0]["nameIdentifier"]
+                    pk_id = WekoAuthors.get_pk_id_by_weko_id(weko_id)
+                    if int(pk_id) > 0:
+                        author_link.append(pk_id)
+                        weko_link[str(pk_id)] = weko_id
         elif (
             isinstance(value, dict)
             and "nameIdentifiers" in value
@@ -72,8 +90,12 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
             and "nameIdentifierScheme" in value["nameIdentifiers"][0]
             and value["nameIdentifiers"][0]["nameIdentifierScheme"] == "WEKO"
         ):
-            author_link.append(value["nameIdentifiers"][0]["nameIdentifier"])
-
+            weko_id = value["nameIdentifiers"][0]["nameIdentifier"]
+            pk_id = WekoAuthors.get_pk_id_by_weko_id(weko_id)
+            if int(pk_id) > 0:
+                author_link.append(pk_id)
+                weko_link[str(pk_id)] = weko_id
+            
     def _set_shared_id(data):
         """set weko_shared_id from shared_user_id"""
         if data.get("weko_shared_id",-1)==-1:
@@ -115,6 +137,7 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
     mp = mjson.dumps()
     data.get("$schema")
     author_link = []
+    weko_link= {}
     for k, v in data.items():
         if k != "pubdate":
             if k == "$schema" or mp.get(k) is None:
@@ -161,14 +184,14 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
         if isinstance(v, list):
             if len(v) > 0 and isinstance(v[0], dict):
                 item["attribute_value_mlt"] = v
-                _get_author_link(author_link, v)
+                _get_author_link(author_link, weko_link, v)
             else:
                 item["attribute_value"] = v
         elif isinstance(v, dict):
             ar.append(v)
             item["attribute_value_mlt"] = ar
             ar = []
-            _get_author_link(author_link, v)
+            _get_author_link(author_link, weko_link, v)
         else:
             item["attribute_value"] = v
 
@@ -199,6 +222,7 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
         dc.update(dict(item_type_id=item_type_id))
         dc.update(dict(control_number=pid))
         dc.update(dict(author_link=author_link))
+        dc.update(dict(weko_link=weko_link))
 
         if COPY_NEW_FIELD:
             copy_field_test(dc, WEKO_TEST_FIELD, jrc)
@@ -247,6 +271,7 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
         jrc.update(dict(itemtype=ojson.model.item_type_name.name))
         jrc.update(dict(publish_date=pubdate))
         jrc.update(dict(author_link=author_link))
+        jrc.update(dict(weko_link=weko_link))
 
         # save items's creator to check permission
         if current_user:
@@ -2766,3 +2791,8 @@ def replace_fqdn_of_file_metadata(file_metadata_lst: list, file_url: list = None
                 file["url"]["url"] = replace_fqdn(file["url"]["url"])
             elif isinstance(file_url, list):
                 file_url.append(file["url"]["url"])
+
+def create_limiter():
+    from .config import WEKO_RECORDS_API_LIMIT_RATE_DEFAULT
+    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_RECORDS_API_LIMIT_RATE_DEFAULT)
+

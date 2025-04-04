@@ -479,7 +479,6 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
         and patch("weko_accounts.views._redirect_method",return_value=make_response()) as mock_redirect_:
         res = client.post(url,data={})
         mock_redirect_.assert_called_once()
-    
     # all attributes have value and some shibboleth_user records don't have target eppn
     current_app.config.update(
         WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED=True,

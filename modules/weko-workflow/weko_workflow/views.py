@@ -43,9 +43,10 @@ from weko_workflow.schema.utils import get_schema_action, type_null_check
 from marshmallow.exceptions import ValidationError
 
 from flask import Response, Blueprint, abort, current_app, has_request_context, \
-    jsonify, make_response, render_template, request, session, url_for, send_file
+    jsonify, make_response, render_template, request, session, url_for, send_file, redirect
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
+from flask_security import url_for_security
 from weko_admin.api import validate_csrf_header
 from flask_wtf import FlaskForm
 from invenio_accounts.models import Role, User, userrole
@@ -54,6 +55,7 @@ from invenio_files_rest.utils import remove_file_cancel_action
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
+from invenio_pidstore.resolver import Resolver
 from invenio_pidstore.errors import PIDDoesNotExistError,PIDDeletedError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_rest import ContentNegotiatedMethodView
@@ -70,8 +72,11 @@ from weko_deposit.links import base_factory
 from weko_deposit.pidstore import get_record_identifier, \
     get_record_without_version
 from weko_deposit.signals import item_created
+from weko_index_tree.utils import get_user_roles
 from weko_items_ui.api import item_login
-from weko_records.api import FeedbackMailList, RequestMailList, ItemLink
+from weko_items_ui.utils import check_item_is_being_edit, get_workflow_by_item_type_id, \
+    get_current_user
+from weko_records.api import FeedbackMailList, RequestMailList, ItemLink, ItemTypes
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
@@ -79,6 +84,7 @@ from weko_search_ui.utils import check_tsv_import_items, import_items_to_system
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
+from werkzeug.utils import import_string
 
 from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
@@ -111,7 +117,8 @@ from .utils import IdentifierHandle, auto_fill_title, \
     send_usage_application_mail_for_guest_user, set_files_display_type, \
     update_approval_date, update_cache_data, validate_guest_activity_expired, \
     validate_guest_activity_token, make_activitylog_tsv, \
-    delete_lock_activity_cache, delete_user_lock_activity_cache
+    delete_lock_activity_cache, delete_user_lock_activity_cache, \
+    check_an_item_is_locked, prepare_edit_workflow
 
 workflow_blueprint = Blueprint(
     'weko_workflow',
@@ -3520,3 +3527,155 @@ def dbsession_clean(exception):
         except:
             db.session.rollback()
     db.session.remove()
+
+
+@workflow_blueprint.route('/edit_item_direct/<string:pid_value>', methods=['GET'])
+def edit_item_direct(pid_value):
+    """edit_item_direct.
+
+    Check if you are logged in:
+        logged in: redirect to edit_item_direct_after_login
+        not logged in: redirect to login page
+
+    Args:
+        pid_value (str): The pid_value of the item to be edited.
+
+    return: The result json:
+        code: status code,
+        msg: meassage result,
+        data: url redirect
+    """
+
+    from flask_security import current_user
+
+    # ! Check if you are logged in
+    if not current_user.is_authenticated:
+        return redirect(url_for_security(
+            'login',
+            next="/workflow/edit_item_direct_after_login/" + pid_value))
+    else:
+        return redirect(url_for(".edit_item_direct_after_login", pid_value=pid_value))
+
+
+@workflow_blueprint.route('/edit_item_direct_after_login/<string:pid_value>', methods=['GET'])
+@login_required
+def edit_item_direct_after_login(pid_value):
+    """edit_item_direct_after_login.
+
+    Host the api which provide 2 service:
+        Check permission: check if user is owner/admin/shared user
+        Create new activity for editing flow
+
+    Args:
+        pid_value (str): The pid_value of the item to be edited.
+
+    return: The result json:
+        code: status code,
+        msg: meassage result,
+        data: url redirect
+    """
+
+    from flask_security import current_user
+
+    # Cache Storage
+    redis_connection = RedisConnection()
+    sessionstorage = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+    if sessionstorage.redis.exists("pid_{}_will_be_edit".format(pid_value)):
+        return render_template("weko_theme/error.html",
+                error="This Item is being edited."), 400
+    else:
+        sessionstorage.put(
+            "pid_{}_will_be_edit".format(pid_value),
+            str(current_user.get_id()).encode('utf-8'),
+            ttl_secs=3)
+
+    # ! Check if the record exists
+    try:
+        record_class = import_string('weko_deposit.api:WekoDeposit')
+        resolver = Resolver(pid_type='recid',
+                            object_type='rec',
+                            getter=record_class.get_record)
+        recid, deposit = resolver.resolve(pid_value)
+        
+        if not deposit:
+            return render_template("weko_theme/error.html",
+                    error="Record does not exist."), 404
+    except PIDDoesNotExistError as ex:
+        return render_template("weko_theme/error.html",
+                error="Record does not exist."), 404
+
+    authenticators = [str(deposit.get('owner')),
+                      str(deposit.get('weko_shared_id'))]
+    user_id = str(get_current_user())
+    activity = WorkActivity()
+    latest_pid = PIDVersioning(child=recid).last_child
+
+    # ! Check User's Permissions
+    if user_id not in authenticators and not get_user_roles(is_super_role=True)[0]:
+        return render_template("weko_theme/error.html",
+                error="You are not allowed to edit this item."), 400
+
+    # ! Check dependency ItemType
+    if not ItemTypes.get_latest():
+        return render_template("weko_theme/error.html",
+                error="You do not even have an ItemType."), 400
+
+    item_type_id = deposit.get('item_type_id')
+    item_type = ItemTypes.get_by_id(item_type_id)
+    if not item_type:
+        return render_template("weko_theme/error.html",
+                error="Dependency ItemType not found."), 400
+
+    # Check Record is in import progress
+    if check_an_item_is_locked(pid_value):
+        return render_template("weko_theme/error.html",
+                error="Item cannot be edited because the import is in progress."), 400
+
+    # ! Check Record is being edit
+    item_uuid = latest_pid.object_uuid
+    post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
+
+    if post_workflow:
+        is_begin_edit = check_item_is_being_edit(recid, post_workflow, activity)
+        if is_begin_edit:
+            return render_template("weko_theme/error.html",
+                    error="This Item is being edited."), 400
+
+    post_activity = '{"workflow_id": 0, "flow_id": 0, ' \
+        '"itemtype_id": 0, "community": 0, "post_workflow": 0}'
+    post_activity = json.loads(post_activity)
+    if post_workflow:
+        post_activity['workflow_id'] = post_workflow.workflow_id
+        post_activity['flow_id'] = post_workflow.flow_id
+    else:
+        post_workflow = activity.get_workflow_activity_by_item_id(
+            recid.object_uuid
+        )
+        workflow = get_workflow_by_item_type_id(item_type.name_id,
+                                                item_type_id)
+        if not workflow:
+            return render_template("weko_theme/error.html",
+                    error="Workflow setting does not exist."), 400
+        post_activity['workflow_id'] = workflow.id
+        post_activity['flow_id'] = workflow.flow_id
+    post_activity['itemtype_id'] = item_type_id
+    post_activity['post_workflow'] = post_workflow
+
+    try:
+        rtn = prepare_edit_workflow(post_activity, recid, deposit)
+        db.session.commit()
+    except SQLAlchemyError as ex:
+        current_app.logger.error('sqlalchemy error: {}'.format(ex))
+        db.session.rollback()
+        return render_template("weko_theme/error.html",
+                error="An error has occurred."), 500
+    except BaseException as ex:
+        import traceback
+        current_app.logger.error(traceback.format_exc())
+        current_app.logger.error('Unexpected error: {}'.format(ex))
+        db.session.rollback()
+        return render_template("weko_theme/error.html",
+                error="An error has occurred."), 500
+
+    return redirect(url_for(
+        'weko_workflow.display_activity', activity_id=rtn.activity_id))

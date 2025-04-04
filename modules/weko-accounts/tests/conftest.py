@@ -120,7 +120,6 @@ def request_context(app):
 @pytest.yield_fixture()
 def db(app):
     """Database fixture."""
-    print("Database fixture.")
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
     db_.create_all()
@@ -192,7 +191,7 @@ def users(app, db):
     ds.add_role_to_user(generaluser, general_role)
     ds.add_role_to_user(originalroleuser, originalrole)
     ds.add_role_to_user(originalroleuser2, originalrole)
-    ds.add_role_to_user(originalroleuser2, repoadmin_role)
+    # ds.add_role_to_user(originalroleuser2, repoadmin_role)
     ds.add_role_to_user(student,studentrole)
 
     # Assign access authorization

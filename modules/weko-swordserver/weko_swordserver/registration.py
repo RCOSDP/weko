@@ -117,7 +117,7 @@ def import_items_to_activity(item, data_path, request_info):
     index = metadata.get("path")
     files_info = metadata.pop("files_info", [{}])
     files = [
-        os.path.join(item.get("root_path"), file_info.get("url", {}).get("label"))
+        os.path.join(data_path, file_info.get("url", {}).get("label"))
             for file_info
             in files_info[0].get("items", {})
     ]
