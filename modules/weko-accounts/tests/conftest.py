@@ -120,7 +120,6 @@ def request_context(app):
 @pytest.yield_fixture()
 def db(app):
     """Database fixture."""
-    print("Database fixture.")
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
     db_.create_all()
