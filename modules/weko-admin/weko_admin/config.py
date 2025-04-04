@@ -1183,6 +1183,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'location',
     'facet-search',
     'community',
+    'workspaceworkflowsetting',
     'swordapi',
     'swordapi/jsonld',
     'jsonld-mapping',

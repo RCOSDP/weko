@@ -57,6 +57,10 @@ msgstr "ワークフロー一覧"
 msgid "Flow List"
 msgstr "フロー一覧"
 
+#: weko_workflow/admin.py:238
+msgid "WorkSpaceWorkFlow Setting"
+msgstr "ワークスペースワークフロー設定"
+
 #: weko_workflow/admin.py:603
 msgid "Activity"
 msgstr "アクティビティ一覧表示"
@@ -566,6 +570,18 @@ msgstr "閉じる"
 
 #~ msgid "Create WorkFlow"
 #~ msgstr "フロー作成"
+
+#~ msgid "Direct Registration"
+#~ msgstr "直接登録"
+
+#~ msgid "Item Type Select"
+#~ msgstr "アイテムタイプ選択"
+
+#~ msgid "Workflow Select"
+#~ msgstr "ワークフロー経由で登録"
+
+#~ msgid "Work Flow Select"
+#~ msgstr "ワークフロー選択"
 
 msgid "Terms and Conditions"
 msgstr "利用規約"

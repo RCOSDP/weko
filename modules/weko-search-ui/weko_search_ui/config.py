@@ -130,6 +130,13 @@ RECORDS_REST_ENDPOINTS["recid"]["record_serializers"] = {
     "text/x-bibliography": ("weko_records.serializers:citeproc_v1_response"),
 }
 
+# Workspace endpoint
+RECORDS_REST_ENDPOINTS["worksapce"] = pickle.loads(pickle.dumps(RECORDS_REST_ENDPOINTS["recid"], -1))
+RECORDS_REST_ENDPOINTS["worksapce"]["list_route"] = "/workspace/search"
+RECORDS_REST_ENDPOINTS["worksapce"]["search_serializers"] = {
+    "application/json": ("weko_records.serializers:opensearch_v1_search"),
+}
+
 # RECORDS_REST_ENDPOINTS['recid']['read_permission_factory_imp'] = allow_all
 
 INDEXER_DEFAULT_INDEX = "{}-weko-item-v1.0.0".format(index_prefix)  # Use direct index

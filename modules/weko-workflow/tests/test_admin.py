@@ -662,3 +662,83 @@ class TestActivitySettingsView:
 
 
 
+
+# class WorkSpaceWorkFlowSettingView(BaseView):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestWorkSpaceWorkFlowSettingView -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+class TestWorkSpaceWorkFlowSettingView:
+    #   def index(self):
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestWorkSpaceWorkFlowSettingView::test_index_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test_index_acl_guest(self,client,db_register2):
+        url = url_for('workspaceworkflowsetting.index',_external=True)
+        res =  client.get(url)
+        assert res.status_code == 302
+
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestWorkSpaceWorkFlowSettingView::test_index_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    @pytest.mark.parametrize('users_index, status_code', [
+        (0, 403),
+        (1, 200),
+        (2, 200),
+        (3, 403),
+        (4, 403),
+        (5, 403),
+        (6, 200),
+    ])
+    def test_index_acl(self,client,db_register2,users,users_index,status_code):
+        login(client=client, email=users[users_index]['email'])
+        url = url_for('workspaceworkflowsetting.index',_external=True)
+        res =  client.get(url)
+        assert res.status_code == status_code
+
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestWorkSpaceWorkFlowSettingView::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test_index(self,client,db,admin_settings,app,users,db_register2,mocker):
+        from invenio_accounts.testutils import login_user_via_session
+        from flask_wtf import FlaskForm,Form
+        login_user_via_session(client,email=users[2]["email"])
+        url = url_for('workspaceworkflowsetting.index')
+        res =  client.get(url)
+        assert res.status_code == 200
+
+        from flask_wtf import FlaskForm,Form
+        data = {"workFlow_select_flg":"1"}
+        from flask import current_app
+        login(client=client, email=users[2]['email'])
+        url = url_for('workspaceworkflowsetting.index')
+        app.config['WTF_CSRF_ENABLED'] = False
+        csrf_token = client.get(url).data.decode('utf-8')
+        data = {
+            'csrf_token': csrf_token,
+        }
+        res = client.post(url,data=json.dumps(data),headers={"content-type": "application/json"})
+        assert res.status_code == 200
+
+        data = {
+            "workFlow_select_flg":"1",
+            "submit":"set_workspace_workflow_setting_form"
+        
+        }
+        mock_render = mocker.patch("weko_workflow.admin.WorkSpaceWorkFlowSettingView.render",return_value=make_response())
+        from flask import abort, current_app, jsonify, flash, request
+        res = client.post(url,data=data)
+        assert res.status_code == 200
+
+        data = {
+            "registrationRadio":"1",
+            "submit":"set_workspace_workflow_setting_form"
+        
+        }
+        mock_render = mocker.patch("weko_workflow.admin.WorkSpaceWorkFlowSettingView.render",return_value=make_response())
+        from flask import abort, current_app, jsonify, flash, request
+        res = client.post(url,data=data)
+        assert res.status_code == 200
+
+        data = {
+            "registrationRadio":"1",
+            "submit":"set_workspace_workflow_setting_form"
+        
+        }
+        mock_render = mocker.patch("weko_workflow.admin.WorkSpaceWorkFlowSettingView.render",return_value=make_response())
+        from flask import abort, current_app, jsonify, flash, request
+        with patch('weko_records_ui.admin.db.session.commit') as m:
+            m.side_effect = Exception('')
+            res = client.post(url,data=data)
+            assert res.status_code == 400

@@ -505,7 +505,9 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
             pid = kwargs.get('pid_value')
 
             if pid:
-                if comm_id:
+                if pid == "item_registration":
+                    tree = self.record_class.get_browsing_tree()
+                elif comm_id:
                     comm = Community.get(comm_id)
                     tree = self.record_class.get_contribute_tree(
                         pid, int(comm.root_node_id))

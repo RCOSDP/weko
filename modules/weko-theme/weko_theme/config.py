@@ -492,6 +492,10 @@ WEKO_THEME_ADMIN_MENU = [
             {
                 'name': 'WorkFlow List',
                 'order': 2
+            },
+            {
+                'name': 'WorkSpaceWorkFlow Setting',
+                'order': 3
             }
         ]
     },
