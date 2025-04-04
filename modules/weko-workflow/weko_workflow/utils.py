@@ -29,6 +29,7 @@ from datetime import datetime, timedelta
 from typing import List, NoReturn, Optional, Tuple, Union
 import traceback
 
+import pytz
 import redis
 from redis import sentinel
 from celery.task.control import inspect
@@ -53,7 +54,7 @@ from passlib.handlers.oracle import oracle10
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
-from weko_admin.models import Identifier, SiteInfo
+from weko_admin.models import Identifier, SiteInfo, AdminSettings
 from weko_admin.utils import get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
@@ -1109,6 +1110,30 @@ def get_activity_id_of_record_without_version(pid_object=None):
             return None
 
 
+def get_non_extract_files_by_recid(recid):
+    """ Get extraction info from temp_data in activity.
+
+    Args:
+        recid (str): recid in deposit. "xxxxx" or "xxxxx.0"
+
+    Returns:
+        list[str]: list of non_extract filenames
+    """
+    pid = PersistentIdentifier.get('recid', recid)
+    work_activity = WorkActivity()
+    activity = work_activity.get_workflow_activity_by_item_id(pid.object_uuid)
+
+    if activity is not None and isinstance(activity.temp_data, str):
+        item_json = json.loads(activity.temp_data)
+        # Load files from temp_data.
+        files = item_json.get('files', [])
+        return [
+            file["filename"] for file in files if file.get("non_extract", False)
+        ]
+
+    return None
+
+
 def check_suffix_identifier(idt_regis_value, idt_list, idt_type_list):
     """Check prefix/suffix in Identifier Registration contain in Identifier.
 
@@ -1852,6 +1877,86 @@ def prepare_edit_workflow(post_activity, recid, deposit):
                 request_maillist=request_maillist,
                 is_display_request_button=True
             )
+
+    return rtn
+
+
+def prepare_delete_workflow(post_activity, recid, deposit):
+    """
+    Prepare Workflow Activity for draft record.
+
+    Check and create draft record with id is "x.0".
+    Create new workflow activity.
+    Clone Identifier and Feedbackmail relation to last activity.
+
+    parameter:
+        post_activity: latest activity information.
+        recid: current record id.
+        deposit: current deposit data.
+    return:
+        rtn: new activity
+
+    """
+    # ! Check pid's version
+    community = post_activity['community']
+    activity = WorkActivity()
+
+    draft_pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid',
+        pid_value="{}.0".format(recid.pid_value)
+    ).one_or_none()
+
+    if not draft_pid:
+        draft_record = deposit.prepare_draft_item(recid)
+        rtn = activity.init_activity(
+            post_activity, community, draft_record.model.id
+        )
+        # create item link info of draft record from parent record
+        weko_record = WekoRecord.get_record_by_pid(
+            draft_record.pid.pid_value
+        )
+        if weko_record:
+            weko_record.update_item_link(recid.pid_value)
+    else:
+        # Clone org bucket into draft record.
+        try:
+            _parent = WekoDeposit.get_record(recid.object_uuid)
+            _deposit = WekoDeposit.get_record(draft_pid.object_uuid)
+            _deposit['path'] = _parent.get('path')
+            _deposit.merge_data_to_record_without_version(recid, True)
+            _deposit.publish()
+            _bucket = Bucket.get(_deposit.files.bucket.id)
+
+            if not _bucket:
+                _bucket = Bucket.create(
+                    quota_size=current_app.config['WEKO_BUCKET_QUOTA_SIZE'],
+                    max_file_size=current_app.config['WEKO_MAX_FILE_SIZE'],
+                )
+                RecordsBuckets.create(record=_deposit.model, bucket=_bucket)
+                _deposit.files.bucket.id = _bucket
+
+            bucket = deposit.files.bucket
+
+            sync_bucket = RecordsBuckets.query.filter_by(
+                bucket_id=_deposit.files.bucket.id
+            ).first()
+
+            snapshot = bucket.snapshot(lock=False)
+            snapshot.locked = False
+            _bucket.locked = False
+
+            sync_bucket.bucket_id = snapshot.id
+            _deposit['_buckets']['deposit'] = str(snapshot.id)
+
+            db.session.add(sync_bucket)
+            _bucket.remove()
+
+        except SQLAlchemyError as ex:
+            raise ex
+
+        rtn = activity.init_activity(
+            post_activity, community, draft_pid.object_uuid
+        )
 
     return rtn
 
@@ -4515,3 +4620,94 @@ def check_pretty(pretty):
         current_app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
     else:
         current_app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+
+
+def convert_to_timezone(dt, user_timezone=None):
+    """
+    Convert a datetime object to the specified timezone.
+
+    Args:
+        dt (datetime): The datetime object to convert.
+        user_timezone (str): The timezone string (e.g., 'Asia/Tokyo').
+
+    Returns:
+        datetime: The converted datetime object.
+    """
+    if dt.tzinfo is None:
+        dt = pytz.utc.localize(dt)
+    if user_timezone:
+        timezone = pytz.timezone(user_timezone)
+        dt = dt.astimezone(timezone)
+    return dt
+
+
+def load_template(template_name, language=None):
+    """Load the specified email template.
+
+    Args:
+        template_name (str): The name of the template file.
+        language (str, optional): The language code for the template (e.g., 'en', 'ja').
+
+    Returns:
+        dict: A dictionary containing the email template with the following keys:
+            - 'subject' (str): The subject line of the email template.
+            - 'body' (str): The body content of the email template.
+
+    Raises:
+        FileNotFoundError: If the template file does not exist in the specified directory.
+    """
+    current_path = os.path.dirname(os.path.abspath(__file__))
+    folder_path = os.path.join(
+                    current_path,
+                    'templates',
+                    'weko_workflow',
+                    'email_templates')
+    if language is None:
+        language = "en"
+    template_path = os.path.join(folder_path, template_name.format(language=language))
+    if not os.path.exists(template_path):
+        template_path = os.path.join(folder_path, template_name.format(language="en"))
+    with open(template_path, "r") as file:
+        lines = file.readlines()
+    # The first line is the subject, and the rest is the body.
+    subject = lines[0].strip() if lines else ""
+    body = "".join(lines[1:]).strip() if len(lines) > 1 else ""
+    return {"subject": subject, "body": body}
+
+
+def fill_template(template, data):
+    """
+    Embed data into the template.
+
+    Args:
+        template (dict): email template with the following keys:
+            - 'subject' (str): The subject template of the email.
+            - 'body' (str): The body template of the email.
+        data (dict): data to replace placeholders in the template.
+
+    Returns:
+        dict: generated email content with the following keys:
+            - 'subject' (str): The subject of the email after embedding the data.
+            - 'body' (str): The body of the email after embedding the data.
+    """
+    subject = template["subject"]
+    body = template["body"]
+
+    for key, value in data.items():
+        subject = subject.replace(f"{{{{ {key} }}}}", str(value))
+        body = body.replace(f"{{{{ {key} }}}}", str(value))
+
+    return {"subject": subject, "body": body}
+
+
+def check_activity_settings(settings=None):
+    """Check activity setting."""
+    if settings is None:
+        settings = AdminSettings.get('activity_display_settings',dict_to_object=False)
+    if settings is not None:
+        if isinstance(settings,dict):
+            if 'activity_display_flg' in settings:
+                current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] = settings['activity_display_flg']
+        else:
+            if hasattr(settings,'activity_display_flg'):
+                current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] = settings.activity_display_flg

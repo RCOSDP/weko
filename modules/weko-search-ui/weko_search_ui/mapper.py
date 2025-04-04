@@ -18,7 +18,7 @@ from functools import partial
 from rocrate.rocrate import ROCrate
 from rocrate.model.contextentity import ContextEntity
 
-from flask import current_app, request, url_for
+from flask import current_app, url_for
 
 from weko_records.api import Mapping, ItemTypes, FeedbackMailList, ItemLink
 from weko_records.models import ItemType
@@ -1282,7 +1282,7 @@ class JsonMapper(BaseMapper):
         }
 
     def _get_required(self, schema, parent=None):
-        required = schema.get("required", [])
+        required = schema.get("required", []).copy()
         for k, v in schema.get("properties", {}).items():
             if v.get("type") == "object":
                 required.extend([
@@ -1834,6 +1834,9 @@ class JsonLdMapper(JsonMapper):
         )
         rocrate.root_dataset["wk:publishStatus"] = (
             "public" if metadata["publish_status"] == "0" else "private")
+        rocrate.root_dataset["wk:index"] = metadata.get("path", [])
+        rocrate.root_dataset["wk:editMode"] = "Keep"
+
 
         # wk:feedbackMail
         feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(
@@ -2039,7 +2042,9 @@ class JsonLdMapper(JsonMapper):
                     return v
             return "PropertyValue"
 
-        def _set_rocrate_metadata(parent, META_PATH, META_KEY, meta_props, PROP_PATH, prop_props, deconstructed):
+        def _set_rocrate_metadata(
+            parent, META_PATH, META_KEY, meta_props, PROP_PATH, prop_props, deconstructed
+        ):
             # Get list_index
             list_index = extract_list_indices(meta_props, prop_props, properties_mapping)
 
@@ -2075,7 +2080,9 @@ class JsonLdMapper(JsonMapper):
                 )
             return
 
-        def _set_child_rocrate_metadata(parent, META_PATH, META_KEY, meta_props, PROP_PATH, prop_props, list_index, deconstructed):
+        def _set_child_rocrate_metadata(
+            parent, META_PATH, META_KEY, meta_props, PROP_PATH, prop_props, list_index, deconstructed
+        ):
             if len(prop_props) == 0:
                 raise Exception("prop_props is empty")
 

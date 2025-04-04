@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-search-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2021-03-25 14:36+0900\n"
+"POT-Creation-Date: 2025-03-25 16:10+0900\n"
 "PO-Revision-Date: 2015-10-09 17:08+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -46,7 +46,11 @@ msgstr ""
 msgid "Import"
 msgstr ""
 
-#: weko_search_ui/admin.py:635
+#: weko_search_ui/admin.py:1278
+msgid "RO-Crate Import"
+msgstr ""
+
+#: weko_search_ui/admin.py:1287
 msgid "Bulk Export"
 msgstr ""
 
@@ -138,7 +142,9 @@ msgid "Title is required item."
 msgstr ""
 
 #: weko_search_ui/utils.py:2496
-msgid "One of the following required values ​​has not been registered.<br/>{}<br/>"
+msgid ""
+"One of the following required values ​​has not been "
+"registered.<br/>{}<br/>"
 msgstr ""
 
 #: weko_search_ui/utils.py:1276

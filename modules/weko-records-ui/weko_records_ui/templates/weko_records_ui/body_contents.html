@@ -377,7 +377,7 @@
                   <span class="glyphicon glyphicon-edit" aria-hidden="true"></span> {{_('Edit')}}</a>
                 <a class="btn btn-danger delete-button" id="btn_delete" ng-click="openConfirm(
                   'del_item',
-                  '{{'/records/soft_delete/'+ pid.pid_value}}',
+                  '/api/items/prepare_delete_item',
                   '{{url_for('weko_search_ui.search')}}',
                   '{{pid.pid_value}}')">
                   <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> {{_('Delete')}}</a>

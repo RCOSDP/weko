@@ -1450,7 +1450,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               break;
             case 'industrial design':
               resourceuri = "http://purl.org/coar/resource_type/JBNF-DYAD/";
-              break;  
+              break;
             case 'interactive resource':
               resourceuri = "http://purl.org/coar/resource_type/c_e9a0";
               break;
@@ -1536,7 +1536,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               break;
             case 'utility model':
               resourceuri = "http://purl.org/coar/resource_type/9DKX-KSAF/";
-              break; 
+              break;
             // lecture
             case 'lecture':
               resourceuri = "http://purl.org/coar/resource_type/c_8544";
@@ -2860,7 +2860,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           async: false,
           success: function (data, status) {
             date = data.year+"-"+("0"+data.month).slice(-2)+"-"+("0"+data.day).slice(-2)
-            
+
           },
           error: function (data, status) {
             date = new Date().toJSON().slice(0, 10)
@@ -3131,7 +3131,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let param = {
           api_type: autoFillID,
           search_data: $.trim(value),
-          item_type_id: itemTypeId
+          item_type_id: itemTypeId,
+          activity_id: $("#activity_id").text()
         }
         this.setRecordDataFromApi(param);
       }
@@ -3176,6 +3177,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
       }
 
+      // here
       $scope.setRecordDataFromApi = function (param) {
         let request = {
           url: '/api/autofill/get_auto_fill_record_data',
@@ -4093,7 +4095,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let listItemErrors = [];
         let eitherRequired = [];
         let noEitherError = $scope.checkEitherRequired();
-        
+
         if (noEitherError && $scope.error_list && $scope.error_list['either']) {
           eitherRequired = [];
           $scope.error_list['either'].forEach(function (group) {
@@ -4146,7 +4148,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           const blank_request_mail =$("#request-email-list-label").val();
           listItemErrors.push(blank_request_mail);
         }
-        
+
         if (listItemErrors.length > 0) {
           let message = $("#validate_error").val() + '<br/><br/>';
           message += listItemErrors[0];

@@ -29,7 +29,7 @@
   <script src="{{ url_for('static', filename='js/weko_records_ui/record_view_stats.js')}}"></script>
   {% assets "weko_records_ui_preview_carousel_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {%- set site_info = site_info|get_site_info %}
-  {%- set addthis_user_id = site_info.get("addthis_user_id",config.ADDTHIS_USER_ID) %}  
+  {%- set addthis_user_id = site_info.get("addthis_user_id",config.ADDTHIS_USER_ID) %}
   <!-- start demo block-->
   <script type="text/javascript">
     //see https://www.addthis.com/academy/the-addthis_config-variable/

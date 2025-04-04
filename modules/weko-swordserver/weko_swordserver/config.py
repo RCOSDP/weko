@@ -5,8 +5,6 @@
 # WEKO-SWORDServer is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
-import base64
-from weko_swordserver.models import SwordClientModel
 
 """Module of weko-swordserver."""
 
@@ -96,31 +94,11 @@ WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_ASSEMBLED_SIZE = 30000000000000
 WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_SEGMENTS = 1000
 """ Maximum number of segments that the server will accept for a single segmented upload, if segmented upload is supported. """
 
-WEKO_SWORDSERVER_REGISTRATION_TYPE = SwordClientModel.RegistrationType
-""" Enum class for registration type.
-
-    - `Direct` (1): Direct registration.
-    - `Workfolw` (2): Workflow registration.
-"""
-
-WEKO_SWORDSERVER_DATASET_PREFIX = "weko-"
-""" Prefix to be added to the dataset identifier. """
-
-WEKO_SWORDSERVER_DATASET_ROOT = {
-    "": "./",
-    "enc": base64.b64encode(
-        f"{WEKO_SWORDSERVER_DATASET_PREFIX}./".encode("utf-8")).decode("utf-8")
-}
-""" Dataset identifier replacement setting. """
-
 WEKO_SWORDSERVER_DIGEST_VERIFICATION = True
 """ Does the server require the client to send a digest? """
 
 WEKO_SWORDSERVER_CONTENT_LENGTH = False
 """ Does the server require a Content-Length header? """
-
-WEKO_SWORDSERVER_DEPOSIT_DATASET = False
-""" Does register the zip file of the dataset as an item?"""
 
 WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE = [
     "System Administrator",

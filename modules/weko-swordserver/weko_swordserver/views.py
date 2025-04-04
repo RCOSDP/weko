@@ -11,10 +11,9 @@ from __future__ import absolute_import, print_function
 
 import os
 import shutil
-import traceback
 from datetime import datetime, timedelta
 
-from flask import Blueprint, current_app, jsonify, request, url_for, abort
+from flask import Blueprint, current_app, jsonify, request, url_for, abort, Response
 from flask_login import current_user
 from flask_limiter.errors import RateLimitExceeded
 from sword3common import (
@@ -25,6 +24,7 @@ from werkzeug.http import parse_options_header
 
 from invenio_db import db
 from invenio_deposit.scopes import write_scope, actions_scope
+from invenio_files_rest.permissions import has_update_version_role
 from invenio_oaiserver.api import OaiIdentify
 from invenio_oauth2server.decorators import require_oauth_scopes
 from invenio_oauth2server.ext import verify_oauth_token_and_set_current_user
@@ -32,6 +32,8 @@ from invenio_oauth2server.provider import oauth2
 
 from weko_accounts.utils import roles_required
 from weko_admin.api import TempDirInfo
+from weko_deposit.api import WekoRecord
+from weko_items_ui.scopes import item_update_scope, item_delete_scope
 from weko_records.api import JsonldMapping
 from weko_records_ui.utils import get_record_permalink, soft_delete
 from weko_search_ui.utils import import_items_to_system, import_items_to_activity
@@ -46,6 +48,8 @@ from .utils import (
     check_import_file_format,
     is_valid_file_hash,
     check_import_items,
+    delete_items_with_activity,
+    get_deletion_type,
     update_item_ids,
     get_shared_id_from_on_behalf_of
 )
@@ -265,7 +269,16 @@ def post_service_document():
         data_path,
         {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")}
     )
+
     register_type = check_result.get("register_type")
+    if register_type == "Workflow":
+        # activity scope check
+        required_scopes = set([activity_scope.id])
+        token_scopes = set(request.oauth.access_token.scopes)
+        if not required_scopes.issubset(token_scopes):
+            abort(403)
+
+
     # Determine registration type
     if register_type is None:
         if os.path.exists(data_path):
@@ -299,6 +312,17 @@ def post_service_document():
                 ErrorType.BadRequest,
             )
 
+        from weko_items_ui.utils import check_duplicate
+        result, list_id, list_url = check_duplicate(item["metadata"], is_item=True)
+        if result:
+            current_app.logger.error(
+                f"This item appears to be a duplicate: {list_id}"
+            )
+            raise WekoSwordserverException(
+                f"This item appears to be a duplicate: {list_url}",
+                ErrorType.BadRequest,
+            )
+
     # Prepare request information
     owner = -1
     if current_user.is_authenticated:
@@ -323,6 +347,7 @@ def post_service_document():
         Returns:
             tuple: A tuple containing the response and the record ID.
         """
+        activity_id, recid, error = None, None, False
         try:
             if register_type == "Direct":
                 import_result = import_items_to_system(
@@ -332,30 +357,24 @@ def post_service_document():
                     current_app.logger.error(
                         f"Error in import_items_to_system: {item.get('error_id')}"
                     )
-                recid = import_result.get("recid")
-                return None, recid, None
+                    error = True
+                else:
+                    recid = import_result.get("recid")
 
             elif register_type == "Workflow":
-                required_scopes = set([activity_scope.id])
-                token_scopes = set(request.oauth.access_token.scopes)
-                if not required_scopes.issubset(token_scopes):
-                    abort(403)
-
                 url, recid, _ , error = import_items_to_activity(
                     item, request_info=request_info
                 )
                 activity_id = url.split("/")[-1]
-                return activity_id, recid, error
 
-        except WekoSwordserverException as e:
-            current_app.logger.error(f"Error in process_item: {str(e)}")
-            raise  # Re-raise the exception after logging
         except Exception as e:
             current_app.logger.error(f"Unexpected error in process_item: {str(e)}")
             raise WekoSwordserverException(
                 f"Unexpected error in process_item: {str(e)}",
                 ErrorType.ServerError
             ) from e
+        return activity_id, recid, error
+
 
     response = {}
     warns = []
@@ -370,12 +389,7 @@ def post_service_document():
                 warns.append((activity_id, recid))
             if file_format == "JSON":
                 update_item_ids(check_result["list_record"], recid)
-        except ValueError as e:
-            traceback.print_exc()
-            current_app.logger.error(f"Error in update_item_ids: {str(e)}")
-            continue  # Skip to the next iteration
         except Exception as e:
-            traceback.print_exc()
             current_app.logger.error(f"Unexpected error: {str(e)}")
             continue  # Skip to the next iteration
 
@@ -388,19 +402,23 @@ def post_service_document():
         f"Items imported by sword from {request.oauth.client.name}; item: {recid}"
     )
     if len(warns) > 0:
-        error_messages = "; ".join(
-            [
-                "An error occurred. Please open the following URL to continue "
-                "with the remaining operations.{url}: Item id: {recid}."
-                .format(
-                    url=url_for(
-                        "weko_workflow.display_activity",
-                        activity_id=activity_id, _external=True
-                    ),
-                    recid=recid)
-                for activity_id, recid in warns
-            ]
-        )
+        if register_type == "Direct":
+            raise WekoSwordserverException(
+                "An error occurred by importing Item!", ErrorType.ServerError)
+        else:
+            error_messages = "; ".join(
+                [
+                    "An error occurred. Please open the following URL to continue "
+                    "with the remaining operations.{url}: Item id: {recid}."
+                    .format(
+                        url=url_for(
+                            "weko_workflow.display_activity",
+                            activity_id=activity_id, _external=True
+                        ),
+                        recid=recid)
+                    for activity_id, recid in warns
+                ]
+            )
 
         response = jsonify(
             _create_error_document(
@@ -412,6 +430,193 @@ def post_service_document():
             response = jsonify(_get_status_document(recid))
         elif register_type == "Workflow":
             response = jsonify(_get_status_workflow_document(activity_id,recid))
+
+    return response
+
+@blueprint.route("/deposit/<recid>", methods=["PUT"])
+@oauth2.require_oauth()
+@limiter.limit("")
+@require_oauth_scopes(write_scope.id)
+@require_oauth_scopes(item_update_scope.id)
+@roles_required(WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE)
+@check_on_behalf_of()
+@check_package_contents()
+def put_object(recid):
+    """
+    Replace the Object on the server, sending a single Binary File.
+
+    Args:
+        recid (str): Record Identifier.
+
+    Returns:
+        Response: A response document.
+    """
+    content_disposition, content_disposition_options = parse_options_header(
+        request.headers.get("Content-Disposition") or ""
+    )
+
+    filename = content_disposition_options.get("filename")
+    if (content_disposition != "attachment"
+            or filename is None):
+        current_app.logger.error("Cannot get filename by Content-Disposition.")
+        raise WekoSwordserverException(
+            "Cannot get filename by Content-Disposition.",
+            ErrorType.BadRequest
+        )
+
+    # Check import item
+    file = None
+    for _, value in request.files.items():
+        if value.filename == filename:
+            file = value
+
+    if file is None:
+        current_app.logger.error(f"Not found {filename} in request body.")
+        raise WekoSwordserverException(
+            f"Not found {filename} in request body.", ErrorType.BadRequest
+        )
+
+    # check packaging, "SimpleZip" or "SWORDBagIt"
+    packaging = request.headers.get("Packaging")
+    file_format = check_import_file_format(file, packaging)
+
+    if file_format == "JSON":
+        digest = request.headers.get("Digest")
+        if current_app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"]:
+            if (
+                digest is None
+                or not digest.startswith("SHA-256=")
+                or not is_valid_file_hash(digest.split("SHA-256=")[-1], file)
+            ):
+                current_app.logger.error(
+                    "Request body and digest verification failed."
+                )
+                raise WekoSwordserverException(
+                    "Request body and digest verification failed.",
+                    ErrorType.DigestMismatch
+                )
+
+        client_id = request.oauth.client.client_id
+        on_behalf_of = request.headers.get("On-Behalf-Of")
+        shared_id = get_shared_id_from_on_behalf_of(on_behalf_of)
+        check_result = check_import_items(
+            file, file_format, packaging=packaging,
+            shared_id=shared_id, client_id=client_id
+        )
+
+    else:
+        check_result = check_import_items(file, file_format, False)
+
+    data_path = check_result.get("data_path","")
+    expire = datetime.now() + timedelta(days=1)
+    TempDirInfo().set(
+        data_path,
+        {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")}
+    )
+    register_type = check_result.get("register_type")
+    # Determine registration type
+    if register_type is None:
+        if os.path.exists(data_path):
+            shutil.rmtree(data_path)
+            TempDirInfo().delete(data_path)
+        raise WekoSwordserverException(
+            "Invalid register type in admin settings", ErrorType.ServerError
+        )
+
+    # only first item
+    item = check_result.get("list_record")[0]
+    if not item or item.get("errors"):
+        error_msg = (
+            ", ".join(item.get("errors"))
+            if item and item.get("errors")
+            else "item_missing"
+        )
+        current_app.logger.error(f"Error in check_import_items: {error_msg}")
+        raise WekoSwordserverException(
+            f"Error in check_import_items: {error_msg}",
+            ErrorType.ContentMalformed
+        )
+
+    if item.get("status") == "new":
+        current_app.logger.error(
+            f"This item is not registered yet: {item.get('item_title')}"
+        )
+        raise WekoSwordserverException(
+            f"This item is not registered yet: {item.get('item_title')}",
+            ErrorType.BadRequest,
+        )
+    if item.get("id") != recid:
+        current_app.logger.error(
+            f"Item id does not match: {item.get('id')}, {recid}"
+        )
+        raise WekoSwordserverException(
+            f"Item id does not match: {item.get('id')}, {recid}",
+            ErrorType.BadRequest,
+        )
+
+    item["root_path"] = os.path.join(data_path, "data")
+
+    # Prepare request information
+    owner = -1
+    if current_user.is_authenticated:
+        owner = current_user.id
+    request_info = {
+        "remote_addr": request.remote_addr,
+        "referrer": request.referrer,
+        "hostname": request.host,
+        "user_id": owner,
+        "action": "IMPORT",
+        "workflow_id": check_result.get("workflow_id"),
+    }
+    response = {}
+    if register_type == "Direct":
+        import_result = import_items_to_system(item, request_info=request_info)
+        if not import_result.get("success"):
+            current_app.logger.error(
+                f"Error in import_items_to_system: {item.get('error_id')}"
+            )
+            raise WekoSwordserverException(
+                f"Error in import_items_to_system: {import_result.get('error_id')}",
+                ErrorType.ServerError
+            )
+        response = jsonify(_get_status_document(recid))
+    elif register_type == "Workflow":
+        required_scopes = set([activity_scope.id])
+        token_scopes = set(request.oauth.access_token.scopes)
+        if not required_scopes.issubset(token_scopes):
+            abort(403)
+
+        url, _, _, error = import_items_to_activity(item, request_info=request_info)
+        activity_id = url.split("/")[-1]
+        if error and url:
+            raise WekoSwordserverException(
+                "Error: {error}. Please open the following URL to continue "
+                "with the remaining operations.{url}: Item id: {recid}."
+                .format(error=error, url=url, recid=recid),
+                ErrorType.ServerError
+            )
+        if error:
+            raise WekoSwordserverException(
+                f"Error: {error}. Please contact the administrator.",
+                ErrorType.ServerError
+            )
+        response = jsonify(_get_status_workflow_document(activity_id, recid))
+    else:
+        if os.path.exists(data_path):
+            shutil.rmtree(data_path)
+            TempDirInfo().delete(data_path)
+        raise WekoSwordserverException(
+            "Invalid register format has been set for admin setting",
+            ErrorType.ServerError
+        )
+
+    if os.path.exists(data_path):
+        shutil.rmtree(data_path)
+        TempDirInfo().delete(data_path)
+
+    current_app.logger.info(
+        f"item imported by sword from {request.oauth.client.name} (recid={recid})"
+    )
 
     return response
 
@@ -599,6 +804,10 @@ def _get_status_workflow_document(activity_id, recid):
 
 @blueprint.route("/deposit/<recid>", methods=["DELETE"])
 @oauth2.require_oauth()
+@limiter.limit("")
+@require_oauth_scopes(write_scope.id)
+@require_oauth_scopes(item_delete_scope.id)
+@roles_required(WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE)
 @check_on_behalf_of()
 def delete_item(recid):
     """ Delete the Object in its entirety from the server, along with all Metadata and Files. """
@@ -622,15 +831,67 @@ def delete_item(recid):
         * If the server does not allow this method in this context at this time, MAY respond with a 405 (MethodNotAllowed)
         * If the server does not support On-Behalf-Of deposit and the On-Behalf-Of header has been provided, MAY respond with a 412 (OnBehalfOfNotAllowed)
     """
-    try:
-        # delete item
+    # check if the item exists
+    _ = _get_status_document(recid)
+    has_update_version_role(current_user)
+
+    record = WekoRecord.get_record_by_pid(recid)
+    if record.pid_doi:
+        current_app.logger.error(f"Cannot delete item with DOI; item id {recid}")
+        raise WekoSwordserverException(
+            "Cannot delete item with DOI.", ErrorType.BadRequest
+        )
+
+    client_id = request.oauth.client.client_id
+    check_result = get_deletion_type(client_id)
+
+    deletion_type = check_result.get("deletion_type")
+
+    owner = -1
+    if current_user.is_authenticated:
+        owner = current_user.id
+    request_info = {
+        "remote_addr": request.remote_addr,
+        "referrer": request.referrer,
+        "hostname": request.host,
+        "user_id": owner,
+        "action": "DELETE"
+    }
+
+    response = {}
+    if deletion_type == "Workflow":
+        required_scopes = set([activity_scope.id])
+        token_scopes = set(request.oauth.access_token.scopes)
+        if not required_scopes.issubset(token_scopes):
+            abort(403)
+
+        url = delete_items_with_activity(recid, request_info=request_info)
+
+        response = Response(status=202, headers={"Location": url})
+
+    else:
         soft_delete(recid)
-        current_app.logger.debug("item deleted by sword (recid={})".format(recid))
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(e)
-    return ("", 204)
+        response = Response(status=204)
+
+    return response
+
+
+@blueprint.route("/all_mappings", methods=["GET"])
+def all_mappings():
+    """Get all SwordItemTypeMapping list.
+
+    Returns:
+        SwordItemTypeMappingModel: All SwordItemTypeMapping list.
+    """
+    def convert(item):
+        return {
+            "id": item.id,
+            "name": item.name,
+            "item_type_id": item.item_type_id,
+        }
+    mappings = list(map(convert, JsonldMapping.get_all()))
+    return jsonify(mappings)
+
 
 def _create_error_document(type, error):
     class Error(sword3commonError):

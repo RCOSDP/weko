@@ -23,6 +23,7 @@ const download = document.getElementById("download").value;
 const no = document.getElementById("no").value;
 const item_id = document.getElementById("item_id").value;
 const title = document.getElementById("title").value;
+const doi = document.getElementById("doi").value;
 const check_result = document.getElementById("check_result").value;
 const error = document.getElementById("error").value;
 const warning = document.getElementById("warning").value;
@@ -289,7 +290,8 @@ class MainLayout extends React.Component {
       type: 'POST',
       data: JSON.stringify({
         list_record: list_record.filter(item => !item.errors),
-        data_path
+        data_path,
+        list_doi: $('[name="list_doi"]:not(:disabled)').map((_, el) => $(el).val()).get()
       }),
       contentType: "application/json; charset=utf-8",
       dataType: "json",
@@ -854,7 +856,7 @@ class CheckComponent extends React.Component {
   create_errors(errors) {
     let result = "";
     if (errors[0]) {
-      
+
       for(let i = 0;i < errors.length; i++) {
         result += "ERRORS: " + errors[i];
         if (i != errors.length -1 ){
@@ -973,6 +975,7 @@ class CheckComponent extends React.Component {
                   <th><p className="item_type">{item_type}</p></th>
                   <th><p className="item_id">{item_id}</p></th>
                   <th>{title}</th>
+                  <th>{doi}</th>
                   <th><p className="check_result">{check_result}</p></th>
                 </tr>
               </thead>
@@ -993,6 +996,11 @@ class CheckComponent extends React.Component {
                             {item['item_title'] ? item['item_title'] : ''}
                           </p>
 
+                        </td>
+                        <td>
+                          <div class="form-inline">
+                            <input class="form-control" type="text" name="list_doi" disabled={item.errors && item.errors.length > 0} />
+                          </div>
                         </td>
                         <td>
                           {

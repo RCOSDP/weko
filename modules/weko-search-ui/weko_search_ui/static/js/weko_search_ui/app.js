@@ -163,7 +163,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
    * In this process, the search is reflected only in the search results,
    * but in the event [invenio.search.finished] after the search,
    * the search results are also reflected in the facet items.
-   * 
+   *
    * @param {URLSearchParams} search Search Conditions.
    */
   $rootScope.reSearchInvenio = (search) => {
@@ -174,7 +174,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     search.set('sort', $scope.vm.invenioSearchArgs.sort);
     search.set('timestamp',Date.now().toString());
     window.history.pushState(null,document.title,"/search?" + search);
-    
+
     let url = search.get('search_type') == 2 ? "/api/index/" : "/api/records/";
 
     $rootScope.$apply(function() {
@@ -414,7 +414,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
         }else {
           window.facetSearchFunctions.resetFacetData(evt.targetScope.vm.invenioSearchResults.aggregations);
         }
-        
+
     }
   });
 }
@@ -474,6 +474,25 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
     }
   }
 
+  $scope.selectedExportFormat = "JSON";
+  $scope.checkExportFormat = function () {
+    if (!$scope.enableContentsExporting) {
+      return;
+    }
+    if ($scope.selectedExportFormat === "ROCRATE") {
+      $("input#export_file_contents_radio_on").prop("checked", true);
+      $("input[name='export_file_contents_radio']").prop("disabled", true);
+      $("<input>").attr({
+        type: "hidden",
+        name: "export_file_contents_radio",
+        value: "True"
+      }).appendTo($("form#export_items_form"));
+    } else {
+      $("input[name='export_file_contents_radio']").prop("disabled", false);
+      $("input[name='export_file_contents_radio']:hidden").remove();
+    }
+  }
+
   $scope.exportItems = function () {
     if ($rootScope.item_export_checkboxes.length <= $rootScope.max_export_num) {
       records_metadata = $scope.getExportItemsMetadata();
@@ -482,7 +501,7 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
       let export_metadata = {}
       $rootScope.item_export_checkboxes.map(function(recid) {
         $.each(records_metadata, function (index, value) {
-          if (value.id == recid) {
+          if (value.id === recid) {
             export_metadata[recid] = value;
           }
         });
@@ -495,7 +514,11 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
           $scope.showErrMsgBibtex(invalidBibtexRecordIds);
         }
       }
-      $('#record_metadata').val(JSON.stringify(export_metadata));
+      if ($scope.selectedExportFormat !== "ROCRATE") {
+        $('#record_metadata').val(JSON.stringify(export_metadata));
+      } else {
+        $('#record_metadata').val("");
+      }
       $('#export_items_form').submit();  // Submit form and let controller handle file making
     }
     $('#item_export_button').attr("disabled", false);

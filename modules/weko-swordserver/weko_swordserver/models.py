@@ -43,9 +43,6 @@ class SwordClientModel(db.Model, Timestamp):
         WORKFLOW = 2
 
     __tablename__ = 'sword_clients'
-    # __table_args__ = (
-    #     db.Index("idx_client_id", "client_id"),
-    # )
 
     id = db.Column(
         db.Integer,
@@ -57,9 +54,10 @@ class SwordClientModel(db.Model, Timestamp):
 
     client_id = db.Column(
         db.String(255),
-        db.ForeignKey(Client.client_id),
+        db.ForeignKey(Client.client_id, ondelete="CASCADE"),
         unique=True,
-        nullable=False
+        nullable=False,
+        index=True
     )
     """Id of the clients. Foreign key from Client."""
 
@@ -85,7 +83,7 @@ class SwordClientModel(db.Model, Timestamp):
     """Workflow ID of the client. Foreign key from WorkFlow."""
 
     active = db.Column(
-        db.Boolean,
+        db.Boolean(name="active"),
         unique=False,
         nullable=True)
 
@@ -100,7 +98,7 @@ class SwordClientModel(db.Model, Timestamp):
             JSONType(),
             'mysql',
         ),
-        default=lambda: dict(),
+        default=lambda: {},
         nullable=True
     )
 

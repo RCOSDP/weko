@@ -19,19 +19,21 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
+import os
 import shutil
 from datetime import datetime, timedelta
 
 from celery import shared_task
 from celery.result import AsyncResult
 from celery.task.control import inspect
-from flask import current_app
+from flask import current_app, request
 from weko_admin.api import TempDirInfo
 from weko_admin.utils import get_redis_cache
 from weko_redis.redis import RedisConnection
 from invenio_db import db
 
 from .utils import (
+    check_jsonld_import_items,
     check_tsv_import_items,
     delete_exported,
     export_all,
@@ -51,6 +53,53 @@ def check_import_items_task(file_path, is_change_identifier: bool, host_url,
         check_result = check_tsv_import_items(file_path, is_change_identifier,
                                         all_index_permission=all_index_permission,
                                         can_edit_indexes=can_edit_indexes)
+    # remove zip file
+    shutil.rmtree("/".join(file_path.split("/")[:-1]))
+    data_path = check_result.get("data_path", "")
+    if check_result.get("error"):
+        remove_temp_dir_task.apply_async((data_path,))
+        result["error"] = check_result.get("error")
+    else:
+        list_record = check_result.get("list_record", [])
+        num_record_err = len([i for i in list_record if i.get("errors")])
+        if len(list_record) == num_record_err:
+            remove_temp_dir_task.apply_async((data_path,))
+        else:
+            expire = datetime.now() + timedelta(seconds=get_lifetime())
+            TempDirInfo().set(
+                data_path, {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")}
+            )
+        result["data_path"] = data_path
+        result["list_record"] = list_record
+
+    result["end_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return result
+
+
+@shared_task
+def check_rocrate_import_items_task(file_path, is_change_identifier: bool,
+                                host_url, packaging, mapping_id, lang="en"):
+    """Check RO-Crate import items.
+    Check the contents of an RO-Crate file and processes its metadata.
+
+    Args:
+        file_path (str): File path.
+        is_change_identifier (bool): Change identifier or not.
+        host_url (str): Host URL.
+        packaging (str): Packaging.
+        mapping_id (int): Mapping ID.
+        lang (str): Language code(default is "en").
+    Returns:
+        dict: Check Result.
+    """
+    result = {"start_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+    with current_app.test_request_context(
+        host_url, headers=[("Accept-Language", lang)]
+    ):
+        check_result = check_jsonld_import_items(file_path, packaging,
+                                        mapping_id,
+                                        -1,
+                                        is_change_identifier)
     # remove zip file
     shutil.rmtree("/".join(file_path.split("/")[:-1]))
     data_path = check_result.get("data_path", "")

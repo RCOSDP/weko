@@ -4,6 +4,7 @@ from flask import jsonify
 from flask_login.utils import login_user
 from unittest.mock import Mock, MagicMock, PropertyMock, patch, mock_open
 from sqlalchemy.exc import SQLAlchemyError
+import json
 
 from invenio_files_rest.errors import FileSizeError
 from invenio_files_rest.models import Bucket
@@ -262,12 +263,19 @@ class TestHeadlessActivity:
 
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_activity.py::TestHeadlessActivity::test__input_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test__input_metadata(self, app, db, workflow, users, client, mocker):
-        mocker.patch.object(HeadlessActivity, "_upload_files", return_value=[{"file_name": "test.txt", "file_id": "12345"}])
-        mocker.patch("weko_workflow.api.WorkActivity.upt_activity_metadata", return_value=None)
+        mock_upload = mocker.patch.object(
+                HeadlessActivity,
+                "_upload_files",
+                return_value=[
+                    {"filename": "test.txt", "file_id": "12345"},
+                    {"filename": "ignore.txt", "file_id": "67890"}
+                ]
+            )
+        mock_upt_meta = mocker.patch("weko_workflow.api.WorkActivity.upt_activity_metadata", return_value=None)
         mocker.patch("weko_workflow.headless.activity.get_workflow_journal", return_value=None)
         mocker.patch("weko_workflow.headless.activity.get_feedback_maillist", return_value=(MagicMock(json={"code": 1, "data": []}), None))
         mocker.patch("weko_workflow.headless.activity.get_mapping", return_value={"title.@value": "title"})
-        mocker.patch("weko_workflow.headless.activity.get_data_by_property", return_value=(["Test Title"], None))
+        mocker.patch("weko_search_ui.utils.get_data_by_property", return_value=(["Test Title"], None))
         mocker.patch("weko_workflow.headless.activity.current_pidstore.minters", {"weko_deposit_minter": lambda record_uuid, data: MagicMock(pid_value="200001")})
         mocker.patch("weko_workflow.headless.activity.WekoDeposit.create",return_value=MagicMock())
         mocker.patch("weko_workflow.headless.activity.WekoDeposit.update")
@@ -281,13 +289,30 @@ class TestHeadlessActivity:
             mock_get_new_activity_id.side_effect = [f"A-TEST-0000{i}" for i in range(1, 20)]
             login_user(users[1]["obj"])
             activity = HeadlessActivity()
-
+            files = ["test.txt", "ignore.txt"]
+            non_extract = ["ignore.txt"]
             activity.init_activity(users[1]["id"], workflow["workflow"].id, community="comm01")
 
             metadata = {"title": "Test Title", "pubdate": "2024-01-01", "shared_user_id": users[1]["id"]}
             files = []
-            recid = activity._input_metadata(metadata, files)
+            recid = activity._input_metadata(metadata, files,non_extract)
             assert recid == "200001"
+            # non_extractフラグの検証
+            args, _ = mock_upt_meta.call_args
+            updated_data = json.loads(args[1])
+            assert updated_data["files"][0].get("non_extract", False) is False  # test.txt
+            assert updated_data["files"][1]["non_extract"] is True  # ignore.txt
+
+            # non_extractがNoneの場合
+            mock_upload.return_value = [
+                {"filename": "test.txt", "file_id": "12345"},
+                {"filename": "ignore.txt", "file_id": "67890"}
+            ]
+            recid = activity._input_metadata(metadata, files, non_extract=None)
+            args, _ = mock_upt_meta.call_args
+            updated_data = json.loads(args[1])
+            assert updated_data["files"][0].get("non_extract", False) is False  # test.txt
+            assert updated_data["files"][1].get("non_extract", False) is False  # ignore.txt
 
             # files is None
             mocker.patch("weko_workflow.headless.activity.validate_form_input_data",

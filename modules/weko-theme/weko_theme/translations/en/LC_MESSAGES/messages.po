@@ -600,310 +600,396 @@ msgstr ""
 #~ msgstr ""
 
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Home"
 msgstr "Home"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_ホーム"
+msgstr ""
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Item Types"
 msgstr "Item Types"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Items"
 msgstr "Items"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Index Tree"
 msgstr "Index Tree"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Web Design"
 msgstr "Web Design"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Author Management"
 msgstr "Author Management"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Statistics"
 msgstr "Statistics"
 
-msgid "Admin menu_統計"
-msgstr "Statistics"
-
-msgid "Admin menu_統計_Feedback Mail"
-msgstr "Feedback Mail"
-
-msgid "Admin menu_統計_レポート"
-msgstr "Rankingeport"
-
-msgid "Admin menu_統計_サイトライセンス"
-msgstr "Site License"
-
-
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_WorkFlow"
 msgstr "WorkFlow"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Communities"
 msgstr "Communities"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_OAI-PMH"
 msgstr "OAI-PMH"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Resource Sync"
 msgstr "Resource Sync"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Records"
 msgstr "Records"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Files"
 msgstr "Files"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_User Management"
 msgstr "User Management"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting"
 msgstr "Setting"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Item Types_Metadata"
 msgstr "Metadata"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Item Types_Mapping"
 msgstr "Mapping"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Item Types_OAI Schema"
 msgstr "OAI Schema"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Item Types_Properties"
 msgstr "Properties"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Item Types_RO-Crate Mapping"
 msgstr "RO-Crate Mapping"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Items_Bulk Update"
 msgstr "Bulk Update"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Items_Bulk Delete"
 msgstr "Bulk Delete"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Items_Bulk Export"
 msgstr "Bulk Export"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Items_Import"
 msgstr "Import"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Items_RO-Crate Import"
+msgstr "RO-Crate Import"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Index Tree_Edit Tree"
 msgstr "Edit Tree"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Index Tree_Journal Information"
 msgstr "Journal Information"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Index Tree_Custom Sort"
 msgstr "Custom Sort"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Web Design_Widget"
 msgstr "Widget"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Web Design_Page Layout"
 msgstr "Page Layout"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Author Management_Edit"
 msgstr "Edit"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Author Management_Export"
 msgstr "Export"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Author Management_Import"
 msgstr "Import"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Statistics_Report"
 msgstr "Report"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Statistics_Feedback Mail"
 msgstr "Feedback Mail"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Statistics_Site License"
 msgstr "Site License"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_WorkFlow_Flow List"
 msgstr "Flow List"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_WorkFlow_WorkFlow List"
 msgstr "WorkFlow List"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Communities_Community"
 msgstr "Community"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Communities_Featured Community"
 msgstr "Featured Community"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Communities_Inclusion Request"
 msgstr "Inclusion Request"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_OAI-PMH_Harvesting"
 msgstr "Harvesting"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_OAI-PMH_Identify"
 msgstr "Identify"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_OAI-PMH_Sets"
 msgstr "Sets"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Resource Sync_Resource List"
 msgstr "Resource List"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Resource Sync_Change List"
 msgstr "Change List"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Resource Sync_Resync"
 msgstr "Resync"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Records_Persistent Identifier"
 msgstr "Persistent Identifier"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Records_Record Metadata"
 msgstr "Record Metadata"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Files_Bucket"
 msgstr "Bucket "
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Files_File Instance"
 msgstr "File Instance"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Files_Location"
 msgstr "Location"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Files_Multipart Object"
 msgstr "Multipart Object"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Files_Object Version"
 msgstr "Object Version"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_User Management_Access: Roles"
 msgstr "Access: Roles"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_User Management_Access: System Roles"
 msgstr "Access: System Roles"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_User Management_Access: Users"
 msgstr "Access: Users"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_User Management_Linked account identities"
 msgstr "Linked account identities"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_User Management_Linked account tokens"
 msgstr "Linked account tokens"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_User Management_Linked accounts"
 msgstr "Linked accounts"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_User Management_OAuth Application Tokens"
 msgstr "OAuth Application Tokens"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_User Management_OAuth Applications"
 msgstr "OAuth Applications"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_User Management_Role"
 msgstr "Role"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_User Management_Session Activity"
 msgstr "Session Activity"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_User Management_User"
 msgstr "User"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_User Management_User Profile"
 msgstr "User Profile"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Items"
 msgstr "Items"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Activity"
+msgstr "Activity"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Index Link"
 msgstr "Index Link"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Index Tree"
 msgstr "Index Tree"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Language"
 msgstr "Language"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_PDF Cover Page"
 msgstr "PDF Cover Page"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Ranking"
 msgstr "Ranking"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Stats"
 msgstr "Stats"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Style"
 msgstr "Style"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Identifier"
 msgstr "Identifier"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Item Export"
 msgstr "Item Export"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Log Analysis"
 msgstr "Log Analysis"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Search"
 msgstr "Search"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Site Info"
 msgstr "Site Info"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Site License"
 msgstr "Site License"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Sitemap"
 msgstr "Sitemap"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Mail"
 msgstr "Mail"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_WebAPI Account"
 msgstr "WebAPI Account"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_File Preview"
 msgstr "File Preview"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Shibboleth"
 msgstr "Shibboleth"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_SWORD API"
 msgstr "SWORD API"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_SWORD API_TSV/XML"
 msgstr "TSV/XML"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_SWORD API_JSON-LD"
 msgstr "JSON-LD"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Item Types_JSON-LD Mapping"
 msgstr "JSON-LD Mapping"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Others"
 msgstr "Others"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Restricted Access"
 msgstr "Restricted Access"
 
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Faceted Search"
 msgstr "Faceted Search"
 
-msgid "Other"
-msgstr ""
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Logs"
+msgstr "Logs"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Logs_Export"
+msgstr "Export"
 
 #: weko_admin/
 #: msgid "Maintenance"
 msgid "Admin menu_Maintenance"
 msgstr "Maintenance"
 
-msgid "Admin menu_メンテナンス"
-msgstr "Maintenance"
-
-msgid "Admin menu_メンテナンス_インデックス再作成"
-msgstr "Index Recreate"
-
 #: weko_admin/
-msgid "ElasticSearch Index"
-msgstr "ElasticSearch Index"
-
+#: msgid "ElasticSearch Index"
 msgid "Admin menu_Maintenance_ElasticSearch Index"
 msgstr "ElasticSearch Index"
-
