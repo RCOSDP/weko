@@ -1667,7 +1667,7 @@ def get_file_name(file_path):
     return file_path.split("/")[-1] if file_path.split("/")[-1] else ""
 
 
-def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
+def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, metadata_only=False):
     """Upload file content.
 
     :argument
@@ -1782,7 +1782,7 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
                 old_file_list.append(None)
 
     # set delete flag for file metadata if is empty.
-    # Check metadata_only flag
+    # Check metadata_replace flag
     if item.get("metadata_replace"):
         is_cleaned = False
         file_key = None
@@ -1997,7 +1997,7 @@ def send_item_created_event_to_es(item, request_info):
         )
 
 
-def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
+def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, metadata_only=False):
     """Validation importing zip file.
 
     :argument
@@ -2047,6 +2047,7 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                 )
 
             register_item_metadata(item, root_path, owner, is_gakuninrdm)
+
 
             if not is_gakuninrdm:
                 if current_app.config.get("WEKO_HANDLE_ALLOW_REGISTER_CNRI"):

@@ -8,14 +8,21 @@
 from __future__ import absolute_import, print_function
 
 import hashlib
+import os
+import shutil
+import tempfile
 
 import boto3
 import pytest
 from flask import Flask, current_app
 from invenio_app.factory import create_api
 from invenio_db import InvenioDB
+from invenio_db import db as db_
+from invenio_db.utils import drop_alembic_version_table
 from invenio_files_rest import InvenioFilesREST
+from invenio_files_rest.models import Location
 from moto import mock_s3
+from sqlalchemy_utils.functions import create_database, database_exists
 
 from invenio_s3 import InvenioS3, S3FSFileStorage
 
@@ -26,16 +33,95 @@ def app_config(app_config):
     app_config[
         'FILES_REST_STORAGE_FACTORY'] = 'invenio_s3.s3fs_storage_factory'
     app_config['S3_ENDPOINT_URL'] = None
+    
+    app_config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI',
+                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest')
+    app_config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+    app_config['TESTING'] = True
     app_config['S3_ACCESS_KEY_ID'] = 'test'
-    app_config['S3_SECRECT_ACCESS_KEY'] = 'test'
+    app_config['S3_SECRET_ACCESS_KEY'] = 'test'
     return app_config
 
 
 @pytest.fixture(scope='module')
 def create_app():
     """Application factory fixture."""
-    return create_api
+    def factory(**config):
+        app = Flask('testapp')
+        app.config.update(**config)
 
+        InvenioDB(app)
+        InvenioFilesREST(app)
+        InvenioS3(app)
+
+        return app
+
+    return factory
+
+@pytest.fixture(scope='module')
+def base_app():
+    """Flask application fixture."""
+    app = Flask('testapp')
+    
+    app.config.update(
+    FILES_REST_STORAGE_FACTORY='invenio_s3:s3_storage_factory',
+    S3_ENDPOINT_URL=None,
+    S3_ACCESS_KEY_ID= '',
+    S3_SECRET_ACCESS_KEY = '',
+    SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI',
+                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+    SQLALCHEMY_TRACK_MODIFICATIONS = True,
+    TESTING = True
+    )
+
+    InvenioDB(app)
+    InvenioFilesREST(app)
+    InvenioS3(app)
+
+    return app
+
+@pytest.yield_fixture(scope='module')
+def app(base_app):
+    """Flask application fixture."""
+    with base_app.app_context():
+        yield base_app
+
+
+@pytest.yield_fixture(scope='module')
+def database(app):
+    """Get setup database."""
+    if not database_exists(str(db_.engine.url)):
+        create_database(str(db_.engine.url))
+    db_.create_all()
+    yield db_
+    db_.session.remove()
+    db_.drop_all()
+    drop_alembic_version_table()
+
+@pytest.fixture(scope='module')
+def location_path():
+    """Temporary directory for location path."""
+    tmppath = tempfile.mkdtemp()
+    yield tmppath
+    shutil.rmtree(tmppath)
+
+
+@pytest.fixture(scope='module')
+def location(location_path, database):
+    """File system locations."""
+    loc = Location(
+        name='testloc',
+        uri=location_path,
+        default=True,
+        type='s3',
+        access_key='',
+        secret_key='',
+        s3_endpoint_url="",
+        s3_send_file_directly=True
+    )
+    database.session.add(loc)
+    database.session.commit()
+    return loc
 
 @pytest.fixture(scope='function')
 def s3_bucket(appctx):
@@ -44,7 +130,7 @@ def s3_bucket(appctx):
         session = boto3.Session(
             aws_access_key_id=current_app.config.get('S3_ACCESS_KEY_ID'),
             aws_secret_access_key=current_app.config.get(
-                'S3_SECRECT_ACCESS_KEY'),
+                'S3_SECRET_ACCESS_KEY'),
         )
         s3 = session.resource('s3')
         bucket = s3.create_bucket(Bucket='test_invenio_s3')

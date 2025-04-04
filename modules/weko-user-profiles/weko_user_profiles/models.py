@@ -124,6 +124,18 @@ class UserProfile(db.Model):
     """Affiliation institute position (n)"""
     institutePosition5 = db.Column('institutePosition5', db.String(255))
 
+    """s3_endpoint_url"""
+    s3_endpoint_url = db.Column('s3_endpoint_url', db.String(128))
+
+    """s3_region_name"""
+    s3_region_name = db.Column('s3_region_name', db.String(128))
+
+    """access_key"""
+    access_key = db.Column('access_key', db.String(128))
+
+    """secret_key"""
+    secret_key = db.Column('secret_key', db.String(128))
+
     @hybrid_property
     def username(self):
         """Get username."""
