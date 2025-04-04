@@ -1464,8 +1464,19 @@ class JsonLdMapper(JsonMapper):
             if len(prop_props) == 1:
                 meta_value = metadata.get(META_KEY)
                 if self._get_property_type(PROP_PATH) == "array":
-                    # TODO: value must be in {"interim", value}
-                    pass
+                    schema = self.itemtype.schema["properties"]
+                    for prop in PROP_PATH:
+                        schema = schema.get(prop)
+                    schema = schema.get("items").get("properties")
+                    interim = list(schema.keys())[0]
+                    if parent.get(prop_props[0]) is None:
+                        parent[prop_props[0]] = [
+                            {interim: meta_value}
+                        ]
+                    else:
+                        parent[prop_props[0]].append(
+                            {interim: meta_value}
+                        )
                 else:
                     parent.update({prop_props[0]: meta_value})
                 return
@@ -1570,16 +1581,17 @@ class JsonLdMapper(JsonMapper):
 
         # Check if "Extra" prepared in itemtype schema form item_map
         if "Extra" in item_map:
-            prop_type = self._get_property_type(item_map["Extra"])
-            if prop_type == "object":
-                # TODO: replace "subitem_text_value" with correct name
-                mapped_metadata[item_map.get("Extra")] = {
-                    "subitem_text_value": str(missing_metadata)
-                }
-            else:
+            extra_key = item_map["Extra"]
+            prop_type = self._get_property_type(extra_key)
+            if prop_type == "array":
+                extra_schema = self.itemtype.schema["properties"].get(
+                    extra_key).get("items").get("properties")
+                interim = list(extra_schema.keys())[0]
                 mapped_metadata[item_map.get("Extra")] = [
-                    {"subitem_text_value": str(missing_metadata)}
+                    {interim: str(missing_metadata)}
                 ]
+            else:
+                mapped_metadata[item_map.get("Extra")] = str(missing_metadata)
 
 
         files_info = []
