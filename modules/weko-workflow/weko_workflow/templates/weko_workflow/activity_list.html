@@ -19,7 +19,7 @@
 #}
 
 {%- extends config.WEKO_WORKFLOW_BASE_TEMPLATE %}
-{%- from "invenio_communities/macros.html" import community_header %}
+{%- from "invenio_communities/macros.html" import community_header with context %}
 
 {%- block css %}
 {{ super() }}
@@ -167,7 +167,7 @@
     {% set flag_1=True %}
     {%- for role in current_user.roles %}
        {%- if role in activitylog_roles and flag_1 == True %}
-          <button type="submit" id="filter_form_download" class="btn btn-primary">{{_('Download')}}</button>                           
+          <button type="submit" id="filter_form_download" class="btn btn-primary">{{_('Download')}}</button>
           <button type="submit" id="filter_form_clear" class="btn btn-danger">{{_('Clear')}} </button>
           <form method="GET" name="activitylog_file_form" id="activitylog_file_form" action={{url_for('weko_workflow.download_activitylog')}}>
           </form>

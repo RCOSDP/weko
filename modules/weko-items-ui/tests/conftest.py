@@ -28,7 +28,7 @@ import shutil
 import tempfile
 import uuid
 import time
-from datetime import datetime
+from datetime import datetime,timedelta
 from os.path import dirname, exists, join
 import copy
 import pytest
@@ -214,7 +214,7 @@ def base_app(instance_path):
         DEPOSIT_RECORDS_UI_ENDPOINTS=DEPOSIT_RECORDS_UI_ENDPOINTS,
         DEPOSIT_REST_ENDPOINTS=DEPOSIT_REST_ENDPOINTS,
         DEPOSIT_DEFAULT_STORAGE_CLASS=DEPOSIT_DEFAULT_STORAGE_CLASS,
-        
+
         WEKO_RECORDS_UI_LICENSE_DICT=WEKO_RECORDS_UI_LICENSE_DICT,
         INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format(
             'test'
@@ -248,7 +248,7 @@ def base_app(instance_path):
                          (4, 'NDL JaLC DOI', 'https://doi.org')
                          ]
     )
-    
+
     app_.config['WEKO_SEARCH_REST_ENDPOINTS']['recid']['search_index']='test-weko'
     app_.config['WEKO_ITEMS_UI_RANKING_DEFAULT_SETTINGS'] = {
     'is_show': True,
@@ -280,7 +280,7 @@ def base_app(instance_path):
     # InvenioOAIServer(app_)
 
     search = InvenioSearch(app_)
- 
+
     # WekoSchemaUI(app_)
     InvenioStats(app_)
 
@@ -525,7 +525,7 @@ def users(app, db):
         ds.add_role_to_user(originalroleuser, originalrole)
         ds.add_role_to_user(originalroleuser2, originalrole)
         ds.add_role_to_user(originalroleuser2, repoadmin_role)
-        
+
 
     return [
         {"email": contributor.email, "id": contributor.id, "obj": contributor},
@@ -833,44 +833,44 @@ def db_records(db,instance_path,users):
         index = Index.get_index_by_id(1)
         index.public_state = True
         index.harvest_public_state = True
-    
+
     index_metadata = {
             'id': 2,
             'parent': 0,
             'value': 'Index(public_state = True,harvest_public_state = False)',
         }
-    
+
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         Indexes.create(0, index_metadata)
         index = Index.get_index_by_id(2)
         index.public_state = True
         index.harvest_public_state = False
-    
+
     index_metadata = {
             'id': 3,
             'parent': 0,
             'value': 'Index(public_state = False,harvest_public_state = True)',
     }
-    
+
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         Indexes.create(0, index_metadata)
         index = Index.get_index_by_id(3)
         index.public_state = False
         index.harvest_public_state = True
-    
+
     index_metadata = {
             'id': 4,
             'parent': 0,
             'value': 'Index(public_state = False,harvest_public_state = False)',
     }
-    
+
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         Indexes.create(0, index_metadata)
         index = Index.get_index_by_id(4)
         index.public_state = False
         index.harvest_public_state = False
 
- 
+
     yield result
 
 @pytest.fixture()
@@ -883,7 +883,20 @@ def db_records2(db,instance_path,users):
         for d in range(record_num):
             result.append(create_record(record_data[d], item_data[d]))
     db.session.commit()
- 
+
+    yield result
+
+@pytest.fixture()
+def db_records3(db):
+    record_data = json_data("data/test_records3.json")
+    item_data = json_data("data/test_items3.json")
+    record_num = len(record_data)
+    result = []
+    with db.session.begin_nested():
+        for d in range(record_num):
+            result.append(create_record(record_data[d], item_data[d]))
+    db.session.commit()
+
     yield result
 
 @pytest.fixture()
@@ -908,7 +921,7 @@ def db_records_file(app,db,instance_path,users):
     with db.session.begin_nested():
         depid, recid,parent,doi,record, item=create_record(record_data, item_data)
     db.session.commit()
-    
+
     return depid, recid,parent,doi,record, item
 
 @pytest.fixture()
@@ -1121,7 +1134,7 @@ def db_author(db):
         db.session.add(affiliation_prefix3)
         db.session.add(affiliation_prefix4)
         db.session.add(author1)
-    
+
     return {"author_prefix":[prefix1,prefix2,prefix3,prefix4,prefix5],"affiliation_prefix":[affiliation_prefix1,affiliation_prefix2,affiliation_prefix3,affiliation_prefix4],"author":[author1]}
 
 @pytest.fixture()
@@ -23249,4 +23262,15 @@ def make_record(db, indexer, i, files, thumbnail=None):
         "record_data": record_data,
         "deposit": deposit,
         "files": files,
+    }
+
+
+@pytest.fixture
+def mock_certificate():
+    """ApiCertificateのモックデータを返すフィクスチャ"""
+    return {
+        "cert_data": {
+            "token": "valid_token",
+            "expires_at": (datetime.now() + timedelta(seconds=3600)).strftime("%Y-%m-%dT%H:%M:%S")
+        }
     }

@@ -164,3 +164,9 @@ COMMUNITIES_ALLOWED_ATTRS = {
 
 COMMUNITIES_LIMITED_ROLE_ACCESS_PERMIT = 2
 """Allowed Role's id higher than this number full access to list Indexes."""
+
+COMMUNITIES_LIST_THUMBNAIL_WIDTH = 256
+"""community thumbnail width in community list."""
+
+COMMUNITIES_LIST_THUMBNAIL_HEIGHT = 256
+"""community thumbnail height in community list."""

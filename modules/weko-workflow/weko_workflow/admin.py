@@ -30,6 +30,7 @@ from flask_login import current_user
 from flask_babelex import gettext as _
 from flask_wtf import FlaskForm
 from invenio_accounts.models import Role, User
+from invenio_communities.models import Community
 from invenio_db import db
 from invenio_files_rest.models import Location
 from invenio_i18n.ext import current_i18n
@@ -68,6 +69,11 @@ class FlowSettingView(BaseView):
         """
         users = User.query.filter_by(active=True).all()
         roles = Role.query.all()
+        if set(role.name for role in current_user.roles) & \
+                set(current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']):
+            repositories = [{"id": "Root Index"}] + Community.query.all()
+        else:
+            repositories = Community.get_repositories_by_user(current_user)
         actions = self.get_actions()
         if '0' == flow_id:
             flow = None
@@ -79,7 +85,8 @@ class FlowSettingView(BaseView):
                 users=users,
                 roles=roles,
                 actions=None,
-                action_list=actions
+                action_list=actions,
+                repositories=repositories
             )
         UUID_PATTERN = re.compile(r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$',
                                   re.IGNORECASE)
@@ -101,7 +108,8 @@ class FlowSettingView(BaseView):
             roles=roles,
             actions=flow.flow_actions,
             action_list=actions,
-            specifed_properties=specified_properties
+            specifed_properties=specified_properties,
+            repositories=repositories
         )
 
     @staticmethod
@@ -291,7 +299,7 @@ class WorkFlowSettingView(BaseView):
         :return:
         """
         workflow = WorkFlow()
-        workflows = workflow.get_workflow_list()
+        workflows = workflow.get_workflow_list(user=current_user)
         role = Role.query.all()
         for wf in workflows:
             index_tree = Index().get_index_by_id(wf.index_tree_id)
@@ -335,6 +343,11 @@ class WorkFlowSettingView(BaseView):
         display_label = self.get_language_workflows("display")
         hide_label = self.get_language_workflows("hide")
         display_hide = self.get_language_workflows("display_hide")
+        if set(role.name for role in current_user.roles) & \
+                set(current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']):
+            repositories = [{"id": "Root Index"}] + Community.query.all()
+        else:
+            repositories = Community.get_repositories_by_user(current_user)
 
         # the workflow that open_restricted is true can update by system administrator only
         is_sysadmin = False
@@ -358,6 +371,7 @@ class WorkFlowSettingView(BaseView):
                 hide_label=hide_label,
                 display_hide_label=display_hide,
                 is_sysadmin=is_sysadmin,
+                repositories=repositories
             )
 
         """Update the workflow info"""
@@ -388,7 +402,9 @@ class WorkFlowSettingView(BaseView):
             display_label=display_label,
             hide_label=hide_label,
             display_hide_label=display_hide,
-            is_sysadmin=is_sysadmin
+            is_sysadmin=is_sysadmin,
+            repositories=repositories
+            
         )
 
     @expose('/<string:workflow_id>', methods=['POST', 'PUT'])
@@ -410,7 +426,8 @@ class WorkFlowSettingView(BaseView):
             index_tree_id=json_data.get('index_id'),
             location_id=json_data.get('location_id'),
             open_restricted=json_data.get('open_restricted', False),
-            is_gakuninrdm=json_data.get('is_gakuninrdm')
+            is_gakuninrdm=json_data.get('is_gakuninrdm'),
+            repository_id=json_data.get('repository_id', None),
         )
         workflow = WorkFlow()
         try:
@@ -419,6 +436,8 @@ class WorkFlowSettingView(BaseView):
                 form_workflow.update(
                     flows_id=uuid.uuid4()
                 )
+                if form_workflow['repository_id'] == None:
+                    form_workflow.pop('repository_id')
                 workflow.create_workflow(form_workflow)
                 workflow_detail = workflow.get_workflow_by_flows_id(
                     form_workflow.get('flows_id'))

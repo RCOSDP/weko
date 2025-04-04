@@ -26,6 +26,7 @@ from mock import patch
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
+from weko_admin.models import ApiCertificate
 from weko_workflow.api import WorkActivity
 from weko_user_profiles.models import UserProfile
 from weko_admin.models import SessionLifetime,RankingSettings
@@ -128,8 +129,12 @@ from weko_items_ui.utils import (
     write_bibtex_files,
     write_files,
     get_file_download_data,
+    get_weko_link
+    get_access_token,
+    check_duplicate,
 )
 from weko_items_ui.config import WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM,WEKO_ITEMS_UI_MAX_EXPORT_NUM_PER_ROLE
+from invenio_indexer.api import RecordIndexer
 
 # def get_list_username():
 #  .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_list_username -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -10743,3 +10748,182 @@ def test_get_file_download_data(app, client, records):
         record = results[5]["record"]
         with pytest.raises(AvailableFilesNotFoundRESTError):
             get_file_download_data(record.id, record, filenames)
+            
+# def get_weko_link(metadata):
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_weko_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_weko_link(app, client, users, db_records, mocker):
+    mocker.patch("weko_items_ui.utils.WekoAuthors.get_pk_id_by_weko_id",side_effect=["2","0"])
+    res = get_weko_link(
+        {
+            "metainfo": {
+                "item_30002_creator2": [
+                    {
+                        "nameIdentifiers": [
+                            {
+                                "nameIdentifier": "8",
+                                "nameIdentifierScheme": "WEKO",
+                                "nameIdentifierURI": "",
+                            }
+                        ]
+                    }
+                ],
+                "item_30003_creator2": [
+                    {
+                        "nameIdentifiers": [
+                            {
+                                "nameIdentifier": "8",
+                                "nameIdentifierScheme": "WEKO",
+                                "nameIdentifierURI": "",
+                            }
+                        ]
+                    }
+                ],
+                "item_30004_creator2": [
+                    {
+                        "nameIdentifiers": [
+                            {
+                                "nameIdentifier": "12",
+                                "nameIdentifierScheme": "WEKO",
+                                "nameIdentifierURI": "",
+                            }
+                        ]
+                    }
+                ]
+            },
+            "files": [],
+            "endpoints": {"initialization": "/api/deposits/items"},
+        }
+    )
+    assert res == {"2": "8"}
+    res = get_weko_link(
+        {
+            "metainfo": {
+                "item_30002_creator2": [
+                    {
+                        "nameIdentifiers": [
+                            {
+                                "nameIdentifier": "8",
+                                "nameIdentifierScheme": "OTHER",
+                                "nameIdentifierURI": "",
+                            }
+                        ]
+                    }
+                ]
+            },
+            "files": [],
+            "endpoints": {"initialization": "/api/deposits/items"},
+        }
+    )
+    assert res == {}
+    
+    # not isinstance(x, list) is true
+    res = get_weko_link({"metainfo": {"field1": "string_value"}})
+    assert res == {}
+    
+    # not isinstance(y, dict) is true
+    res = get_weko_link({"metainfo": {"field1": ["string_value"]}})
+    assert res == {}
+    
+    # not key == "nameIdentifiers" is true
+    res = get_weko_link({"metainfo": {"field1": [{"field2": {}}]}})
+    assert res == {}
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_access_token -vv -s --cov-branch --cov-report=xml --cov-report=html --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_access_token(app, mock_certificate):
+    """get_access_tokenの全シナリオ（正常系と異常系）をテスト"""
+    with app.test_request_context():
+
+        # 1. api_codeが空の場合 (400)
+        result, status = get_access_token(None)
+        assert status == 400, "api_codeが空の場合、400が返るべき"
+        assert result == {"error": "invalid_request", "message": "Required API Code"}
+
+        # 2. 無効なapi_codeの場合 (401)
+        with patch.object(ApiCertificate, "select_by_api_code", return_value=None):
+            result, status = get_access_token("invalid_code")
+            assert status == 401, "無効なapi_codeの場合、401が返るべき"
+            assert result == {"error": "invalid_client"}
+
+        # 3. 有効な既存トークンが存在する場合 (200相当)
+        with patch.object(ApiCertificate, "select_by_api_code", return_value=mock_certificate):
+            result = get_access_token("valid_code")
+            assert "access_token" in result, "有効なトークンが返るべき"
+            assert result["access_token"] == "valid_token"
+            assert result["token_type"] == "Bearer"
+            assert isinstance(result["expires_in"], int)
+            assert result["expires_in"] > 0
+
+        # 4. 期限切れのトークンの場合 (新しいトークン発行)
+        expired_certificate = {
+            "cert_data": {
+                "token": "expired_token",
+                "expires_at": (datetime.now() - timedelta(seconds=3600)).strftime("%Y-%m-%dT%H:%M:%S")
+            }
+        }
+        with patch.object(ApiCertificate, "select_by_api_code", return_value=expired_certificate):
+            result = get_access_token("expired_code")
+            assert "access_token" in result, "新しいトークンが発行されるべき"
+            assert result["access_token"] != "expired_token"
+            assert result["token_type"] == "Bearer"
+            assert result["expires_in"] == 3600
+
+        # 5. 証明書にトークンがない場合 (新しいトークン発行)
+        no_token_certificate = {"cert_data": {}}
+        with patch.object(ApiCertificate, "select_by_api_code", return_value=no_token_certificate):
+            result = get_access_token("no_token_code")
+            assert "access_token" in result, "トークンがない場合、新しいトークンが発行されるべき"
+            assert len(result["access_token"]) == 54  # secrets.token_urlsafe(40)の長さ
+            assert result["token_type"] == "Bearer"
+            assert result["expires_in"] == 3600
+
+        # 6. 例外が発生した場合 (500)
+        with patch.object(ApiCertificate, "select_by_api_code", side_effect=Exception("テストエラー")):
+            result, status = get_access_token("error_code")
+            assert status == 500, "例外が発生した場合、500が返るべき"
+            assert result == {"error": "Internal server error"}
+# def check_duplicate(data, is_item=True):
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_check_duplicate -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_check_duplicate(app, users,db_records3):
+    # JSON format NG
+    res, [], [] =  check_duplicate('',True)
+    assert res == False
+
+    # data dict NG
+    res, [], [] =  check_duplicate(1,True)
+    assert res == False
+
+    # metadata format NG
+    res, [], [] =  check_duplicate({"metainfo":123},False)
+    assert res == False
+    
+    # first_item not dict
+    res, [], [] =  check_duplicate({"subitem_identifier_uri":[{"subitem_identifier_uri"}]},True)
+    assert res == False
+    
+    # subitem_identifier_uri NG
+    res, [], [] =  check_duplicate({"subitem_identifier_uri":[{"subitem_identifier_uri":"noexists"}]},True)
+    assert res == False
+    
+    # subitem_identifier_uri OK
+    res, recid_list, item_links =  check_duplicate({"subitem_identifier_uri":[{"subitem_identifier_uri":"http://localhost"}]},True)
+    assert recid_list[0] == 8
+    
+    # subitem_title NG
+    res, [], [] =  check_duplicate({"subitem_title":[{"subitem_title":"title"}]},True)
+    assert res == False
+    
+    # subitem_title:T  resource_type:T
+    res, [], [] =  check_duplicate({"subitem_title":[{"subitem_title":"タイトル"}],"resourcetype":{"resourcetype":"Resource Type"}},True)
+    assert res == False
+    
+    # creatorNames NG
+    res, [], [] =  check_duplicate({"creatorNames":[{"creatorNames":[{"creatorName":"test"}]}]},True)
+    assert res == False
+
+    # creatorNames OK
+    res, recid_list, item_links =  check_duplicate({"creatorNames":[{"creatorNames":[{"creatorName":"情報, 太郎"}]}]},True)
+    assert recid_list[0] == 8
+
+    # resourcetype
+    res, [], [] =  check_duplicate({"resourcetype":{"resourcetype":"test"}},True)
+    assert res == False

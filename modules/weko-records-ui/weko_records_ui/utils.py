@@ -30,6 +30,7 @@ from decimal import Decimal
 from typing import List, NoReturn, Optional, Tuple
 from urllib.parse import urlparse,quote
 from io import StringIO
+import copy
 
 from flask import abort, current_app, json, request, url_for, make_response, Flask
 from flask_babelex import get_locale
@@ -61,6 +62,7 @@ from weko_workflow.api import WorkActivity, WorkFlow, UpdateItem
 from weko_workflow.models import ActivityStatusPolicy
 
 from weko_records_ui.models import InstitutionName
+from weko_records_ui.external import call_external_system
 from weko_workflow.models import Activity
 
 from .models import FileOnetimeDownload, FilePermission, FileSecretDownload
@@ -281,6 +283,9 @@ def delete_version(recid):
     id_without_version = recid.split('.')[0]
     latest_version = get_latest_version(id_without_version)
     is_latest_version = recid == latest_version
+    old_record = WekoRecord.get_record_by_pid(id_without_version)
+    old_item_reference_list = ItemReference.get_src_references(id_without_version).all()
+    old_item_reference_list = [copy.deepcopy(item) for item in old_item_reference_list]
 
     # delete item version
     del_files = {}
@@ -362,6 +367,10 @@ def delete_version(recid):
             pid_without_ver.pid_value)
         if weko_record:
             weko_record.update_item_link(latest_pid.pid_value)
+        new_item_reference_list = ItemReference.get_src_references(id_without_version).all()
+        call_external_system(old_record=old_record, new_record=weko_record,
+                             old_item_reference_list=old_item_reference_list, new_item_reference_list=new_item_reference_list)
+
     # update draft item
     draft_pid = PersistentIdentifier.get(
         'recid',

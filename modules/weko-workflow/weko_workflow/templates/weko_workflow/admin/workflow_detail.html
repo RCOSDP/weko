@@ -107,6 +107,22 @@
           </div>
         </div>
       </div>
+      <div class="form-group">
+        <div class="col-sm-offset-2">
+          <label class="col-sm-2 control-label" for="txt_repo_id">Repository</label>
+          <div class="col-sm-8">
+            <select class="form-control" id="txt_repo_id">
+            {%- if repositories %}
+              {%- for repository in repositories if repository %}
+              <option value="{{repository.id}}" {%- if workflow.repository_id == repository.id %} selected {%- endif %}>{{repository.id}}</option>
+              {%- endfor %}
+            {%- else %}
+              <option value=""></option>
+            {%- endif %}
+            </select>
+          </div>
+        </div>
+      </div>
       {%- if is_sysadmin %}
         <div class="form-group">
           <div class="col-sm-offset-2">

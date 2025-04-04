@@ -620,6 +620,12 @@ class SiteLicenseInfo(db.Model, Timestamp):
         nullable=False
     )
 
+    repository_id = db.Column(
+        db.String(100),
+        nullable=False,
+        default='Root Index'
+    )
+
     # Relationships definitions
     addresses = db.relationship(
         'SiteLicenseIpAddress', backref='SiteLicenseInfo')
@@ -724,6 +730,12 @@ class FeedbackMailList(db.Model, Timestamp):
     )
     """Author identifier."""
 
+    repository_id = db.Column(
+        db.String(100),
+        nullable=False,
+        default='Root Index'
+    )
+
 class RequestMailList(db.Model, Timestamp):
     """Represent an request mail list.
 
@@ -813,6 +825,39 @@ class ItemReference(db.Model, Timestamp):
             dst_item_pid=dst_pid,
             reference_type=reference_type).count() > 0
 
+class OaStatus(db.Model, Timestamp):
+    """Model of OA status."""
+
+    __tablename__ = 'oa_status'
+
+    oa_article_id = db.Column(
+        db.Integer(),
+        primary_key=True
+    )
+    """article identifier in OA asist."""
+
+    oa_status = db.Column(
+        db.Text,
+        nullable=True
+    )
+    """OA status."""
+
+    weko_item_pid = db.Column(
+        db.String(255),
+        nullable=True
+    )
+    """WEKO item PID."""
+
+    @classmethod
+    def get_oa_status(cls, oa_article_id):
+        """Get OA status by article id."""
+        return cls.query.filter(cls.oa_article_id == oa_article_id).first() if oa_article_id else None
+
+    @classmethod
+    def get_oa_status_by_weko_item_pid(cls, weko_item_pid):
+        """Get OA status by weko item pid."""
+        return cls.query.filter(cls.weko_item_pid == weko_item_pid).first() if weko_item_pid else None
+
 
 __all__ = (
     'Timestamp',
@@ -826,5 +871,6 @@ __all__ = (
     'SiteLicenseInfo',
     'SiteLicenseIpAddress',
     'FeedbackMailList',
-    'ItemReference'
+    'ItemReference',
+    'OaStatus',
 )

@@ -1121,6 +1121,23 @@ WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
     'itemexportsettings',
     'items/import',
     'logs/export'
+    'items/bulk/update',
+    'items/bulk/delete',
+    'items/bulk-export',
+    'authors',
+    'authors/export',
+    'authors/import',
+    'feedbackmail',
+    'sitelicensesendmail',
+    'flowsetting',
+    'workflowsetting',
+    'community',
+    'user',
+    'resource_list',
+    'change_list',
+    'resync',
+    'sitelicensesettings',
+    'oaiset',
 ]
 """Classes Community Administrator can access."""
 
@@ -1169,6 +1186,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'swordapi',
     'swordapi/jsonld',
     'jsonld-mapping',
+    'shibboleth',
     # 'restricted_access'
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""

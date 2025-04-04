@@ -41,9 +41,15 @@ class WekoSwordMapper(JsonMapper):
         metadata = self._create_metadata(item_map)
 
         files_info = []
-        for k, v in self.itemtype.schema.get("properties").items():
-            if v.get("title") == "File":
-                files_info.append({"key": k, "items": metadata.get(k)})
+        for v in item_map.values():
+            if not v.endswith(".filename"):
+                continue
+            files_key = v.split(".")[0]
+            files_info.append({
+                "key": files_key,
+                "items": metadata.get(files_key, [])
+            })
+
         files_info = {"files_info": files_info}
 
         res = {**res, **files_info, **metadata}
@@ -66,7 +72,8 @@ class WekoSwordMapper(JsonMapper):
         # Create metadata for each item in json_map
         for k, v in self.json_map.items():
             json_value = self._get_json_metadata_value(v)
-            if json_value is None:
+            # if json_value is None:
+            if not isinstance(json_value, bool) and (json_value is None or ((len(json_value )> 0) and all(val is None for val in json_value))):
                 continue
             type_of_item_type_path = self._get_type_of_item_type_path(item_map[k])
             self._create_metadata_of_a_property(metadata, item_map[k], type_of_item_type_path, json_value)
@@ -316,12 +323,8 @@ class WekoSwordMapper(JsonMapper):
             if not executed:
                 # TODO: add warning
                 executed = True
-            json_value = json_value[0]
+            json_value = json_value[0] if not json_value == [] else None
             dim_json_value = self._get_dimensions(json_value)
-
-        # If num_array_type is bigger than  dim_json_value, only one {} created in array
-        # then, dicrease diff_array and do the same thing until diff_array is 0
-        diff_array = num_array_type - dim_json_value
 
         # If item_map_keys length is 1, it means that the item_map_keys contains only last key
         if len(item_map_keys) == 1:
@@ -341,34 +344,29 @@ class WekoSwordMapper(JsonMapper):
                 if not metadata.get(_item_map_key):
                     metadata[_item_map_key] = {}
                 metadata = metadata[_item_map_key]
-                self._create_child_metadata_of_a_property(diff_array, metadata, item_map_keys[1:], type_of_item_type_path[1:], json_value)
+                self._create_child_metadata_of_a_property(metadata, item_map_keys[1:], type_of_item_type_path[1:], json_value)
             # If _type is "array", do the following method
             else:
-                # If diff_array is bigger than 0, create [{}] in metadata
-                if diff_array > 0:
-                    if not metadata.get(_item_map_key):
-                        metadata[_item_map_key] = [{}]
-                    metadata = metadata[_item_map_key][0]
-                    diff_array -= 1
-                    self._create_child_metadata_of_a_property(diff_array, metadata, item_map_keys[1:], type_of_item_type_path[1:], json_value)
-                # If diff_array is 0, create [{}, {}, ...] in metadata
-                # The number of {} is equal to the length of json_value
-                else:
-                    if not metadata.get(_item_map_key):
-                        metadata[_item_map_key] = [{} for _ in range(len(json_value))]
-                    metadata = metadata[_item_map_key]
+                if not metadata.get(_item_map_key):
+                    metadata[_item_map_key] = [{} for _ in range(len(json_value) if isinstance(json_value, list) else 1)]
+                elif isinstance(json_value, list) and len(metadata[_item_map_key]) < len(json_value):
+                    metadata[_item_map_key].append({} for _ in range(len(json_value) - len(metadata[_item_map_key])))
+                metadata = metadata[_item_map_key]
 
-                    # Create nested metadata for each element of json_value
-                    for i in range(len(json_value)):
-                        self._create_child_metadata_of_a_property(diff_array, metadata[i], item_map_keys[1:], type_of_item_type_path[1:], json_value[i])
+                # Create nested metadata for each element of json_value
+                for i in range(len(metadata)):
+                    if isinstance(json_value, list):
+                        json_val = json_value[i]
+                    else:
+                        json_val = json_value
+                    self._create_child_metadata_of_a_property(metadata[i], item_map_keys[1:], type_of_item_type_path[1:], json_val)
         return
 
 
-    def _create_child_metadata_of_a_property(self, diff_array, child_metadata, item_map_keys, type_of_item_type_path, json_value):
+    def _create_child_metadata_of_a_property(self, child_metadata, item_map_keys, type_of_item_type_path, json_value):
         """Create child metadata of a property.
 
         Args:
-            diff_array (int): The number of "array" in type_of_item_type_path - the number of dimensions of json_value
             child_metadata (dict): Child metadata
             item_map_keys (list): List of keys in ItemType
             type_of_item_type_path (list): "type" of each key in ItemType, contains "value", "object", and "array"
@@ -389,26 +387,20 @@ class WekoSwordMapper(JsonMapper):
                 if not child_metadata.get(_item_map_key):
                     child_metadata[_item_map_key] = {}
                 child_metadata = child_metadata[_item_map_key]
-                self._create_child_metadata_of_a_property(diff_array, child_metadata, item_map_keys[1:], type_of_item_type_path[1:], json_value)
+                self._create_child_metadata_of_a_property(child_metadata, item_map_keys[1:], type_of_item_type_path[1:], json_value)
             # If _type is "array", do the following method
             else:
-                # If diff_array is bigger than 0, create [{}] in metadata
-                if diff_array > 0:
-                    if not child_metadata.get(_item_map_key):
-                        child_metadata[_item_map_key] = [{}]
-                    child_metadata = child_metadata[_item_map_key][0]
-                    diff_array -= 1
-                    self._create_child_metadata_of_a_property(diff_array, child_metadata, item_map_keys[1:], type_of_item_type_path[1:], json_value)
-                # If diff_array is 0, create [{}, {}, ...] in metadata
-                # The number of {} is equal to the length of json_value
-                else:
-                    if not child_metadata.get(_item_map_key):
-                        child_metadata[_item_map_key] = [{} for _ in range(len(json_value))]
-                    child_metadata = child_metadata[_item_map_key]
-
-                    # Create nested metadata for each element of json_value
-                    for i in range(len(json_value)):
-                        self._create_child_metadata_of_a_property(diff_array, child_metadata[i], item_map_keys[1:], type_of_item_type_path[1:], json_value[i])
+                if not child_metadata.get(_item_map_key):
+                    child_metadata[_item_map_key] = [{} for _ in range(len(json_value) if isinstance(json_value, list) else 1)]
+                elif isinstance(json_value, list) and len(child_metadata[_item_map_key]) < len(json_value):
+                    child_metadata[_item_map_key].append({} for _ in range(len(json_value) - len(child_metadata[_item_map_key])))
+                child_metadata = child_metadata[_item_map_key]
+                for i in range(len(child_metadata)):
+                    if isinstance(json_value, list):
+                        json_val = json_value[i]
+                    else:
+                        json_val = json_value
+                    self._create_child_metadata_of_a_property(child_metadata[i], item_map_keys[1:], type_of_item_type_path[1:], json_val)
         return
 
 

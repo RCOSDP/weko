@@ -41,27 +41,27 @@ class TestSessionLifetime:
         session_lifetime = SessionLifetime()
         session_lifetime = session_lifetime.create()
         SessionLifetime.query.filter_by().first().lifetime == 30
-        
+
         SessionLifetime.query.delete()
         db.session.commit()
-        
+
         session_lifetime = SessionLifetime()
         session_lifetime = session_lifetime.create(200)
         assert SessionLifetime.query.filter_by().first().lifetime == 200
-        
+
         # raise exception
         with patch("weko_admin.models.db.session.commit", side_effect=BaseException("test_error")):
             session_lifetime = SessionLifetime()
             with pytest.raises(BaseException):
                 session_lifetime = session_lifetime.create(100)
                 assert SessionLifetime.query.filter_by().first().lifetime == 200
-                
+
 #    def get_validtime(cls):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestSessionLifetime::test_create -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_get_validtime(self, session_lifetime):
         session_lifetime = SessionLifetime.get_validtime()
         session_lifetime.lifetime == 100
-        
+
 #    def is_anonymous(self):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestSessionLifetime::test_create -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_is_anonymous(self):
@@ -109,7 +109,7 @@ class TestSearchManagement:
         SearchManagement.create(data)
         result = SearchManagement.query.filter_by().first()
         assert result.default_dis_num == 20
-        
+
         with patch("weko_admin.models.db.session.commit", side_effect=BaseException("test_error")):
             with pytest.raises(BaseException):
                 SearchManagement.create(data)
@@ -161,7 +161,7 @@ class TestAdminLangSettings:
         )
         result = AdminLangSettings.query.filter_by().first()
         assert result.lang_code == "en"
-        
+
         with patch("weko_admin.models.db.session.commit", side_effect=BaseException("test_error")):
             with pytest.raises(BaseException):
                 AdminLangSettings.create(
@@ -182,13 +182,13 @@ class TestAdminLangSettings:
             sequence=3,
             is_active=False
         )
-        
+
         lang = AdminLangSettings.query.filter_by(lang_code="en").one()
         assert lang.lang_name == "english"
         assert lang.is_registered == False
         assert lang.sequence == 3
         assert lang.is_active == False
-        
+
         AdminLangSettings.update_lang(
             lang_code="ja"
         )
@@ -215,7 +215,7 @@ class TestApiCertificate:
     def test_update_cert_data(self, db):
         result = ApiCertificate.update_cert_data("crf","test.test@test.org")
         assert result == False
-        
+
         api = ApiCertificate(
             api_code="crf",
             api_name="CrossRef",
@@ -223,12 +223,12 @@ class TestApiCertificate:
         )
         db.session.add(api)
         db.session.commit()
-        
+
         result = ApiCertificate.update_cert_data("crf","new.test@test.org")
         assert result == True
         ac = ApiCertificate.query.filter_by(api_code="crf").one()
         assert ac.cert_data == "new.test@test.org"
-        
+
         with patch("weko_admin.models.db.session.commit", side_effect=Exception("test_error")):
             result = ApiCertificate.update_cert_data("crf","new.test@test.org")
             assert result == False
@@ -245,7 +245,7 @@ class TestApiCertificate:
         ac = ApiCertificate.query.filter_by(api_code="test_api").one()
         assert ac.api_name == "Test API"
         assert ac.cert_data == "test.test@test.org"
-        
+
         result = ApiCertificate.insert_new_api_cert(
             api_code=None,
             api_name=None,
@@ -259,7 +259,7 @@ class TestApiCertificate:
         # not exist api cert
         result = ApiCertificate.update_api_cert("test_api","Test API","test.test@test.org")
         assert result == False
-        
+
         api = ApiCertificate(
             api_code="test_api",
             api_name="CrossRef",
@@ -267,13 +267,13 @@ class TestApiCertificate:
         )
         db.session.add(api)
         db.session.commit()
-        
+
         result = ApiCertificate.update_api_cert("test_api","Test API","test.cert@test.org")
         assert result == True
         ac = ApiCertificate.query.filter_by(api_code="test_api").one()
         assert ac.api_name == "Test API"
         assert ac.cert_data == "test.cert@test.org"
-        
+
         with patch("weko_admin.models.db.session.commit",side_effect=Exception("test_error")):
             result = ApiCertificate.update_api_cert("test_api","Test API","test.cert@test.org")
             assert result == False
@@ -290,11 +290,11 @@ class TestStatisticUnit:
         su = StatisticUnit.query.filter_by().first()
         assert su.unit_id == "1"
         assert su.unit_name == "Day"
-        
+
         with patch("weko_admin.models.db.session.commit", side_effect=BaseException("test_error")):
             with pytest.raises(BaseException):
                 StatisticUnit.create("2","Week")
-        
+
 #class StatisticTarget(db.Model):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestStatisticTarget -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 class TestStatisticTarget:
@@ -313,7 +313,7 @@ class TestStatisticTarget:
         st = StatisticTarget.query.filter_by(target_id="1").one()
         assert st.target_name == "Item registration report"
         assert st.target_unit == "1,2,3,5"
-        
+
         with patch("weko_admin.models.db.session.commit", side_effect=BaseException("test_error")):
             with pytest.raises(BaseException):
                 StatisticTarget.create(
@@ -330,7 +330,7 @@ class TestLogAnalysisRestrictedIpAddress:
     def test_get_all(self,restricted_ip_addr):
         result = LogAnalysisRestrictedIpAddress.get_all()
         assert result[0].ip_address == "123.456.789.012"
-        
+
         with patch("flask_sqlalchemy._QueryProperty.__get__") as mock_query:
             mock_query.return_value.all.side_effect=Exception("test_error")
             with pytest.raises(Exception):
@@ -357,8 +357,8 @@ class TestLogAnalysisRestrictedIpAddress:
         for data in ip:
             assert data[0] == "ip_address"
             assert data[1] == "123.456.789.012"
-            
-            
+
+
 #class LogAnalysisRestrictedCrawlerList(db.Model):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestLogAnalysisRestrictedCrawlerList -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 class TestLogAnalysisRestrictedCrawlerList:
@@ -371,7 +371,7 @@ class TestLogAnalysisRestrictedCrawlerList:
         ]
         result = LogAnalysisRestrictedCrawlerList.get_all()
         assert [crawler.list_url for crawler in result] == test
-        
+
         with patch("weko_admin.models.asc", side_effect=Exception("test_error")):
             with pytest.raises(Exception):
                 result = LogAnalysisRestrictedCrawlerList.get_all()
@@ -385,14 +385,14 @@ class TestLogAnalysisRestrictedCrawlerList:
         )
         db.session.add(crawler3)
         db.session.commit()
-        
+
         test = [
             "https://bitbucket.org/niijp/jairo-crawler-list/raw/master/test_Crawler-List_ip_blacklist.txt",
             "https://bitbucket.org/niijp/jairo-crawler-list/raw/master/test_Crawler-List_useragent.txt"
         ]
         result = LogAnalysisRestrictedCrawlerList.get_all_active()
         assert [crawler.list_url for crawler in result] == test
-        
+
         with patch("weko_admin.models.func.length", side_effect=Exception("test_error")):
             with pytest.raises(Exception):
                 result = LogAnalysisRestrictedCrawlerList.get_all_active()
@@ -407,7 +407,7 @@ class TestLogAnalysisRestrictedCrawlerList:
         LogAnalysisRestrictedCrawlerList.add_list(data)
         result = LogAnalysisRestrictedCrawlerList.query.all()
         assert [crawler.list_url for crawler in result] == data
-        
+
         with patch("weko_admin.models.db.session.commit",side_effect=Exception("test_error")):
             with pytest.raises(Exception):
                 LogAnalysisRestrictedCrawlerList.add_list(data)
@@ -426,7 +426,7 @@ class TestLogAnalysisRestrictedCrawlerList:
         crawler3 = LogAnalysisRestrictedCrawlerList.query.filter_by(id=3).one()
         assert crawler3.list_url == "https://new_crawler"
         assert crawler3.is_active == True
-        
+
         with patch("weko_admin.models.db.session.commit",side_effect=BaseException("test_error")):
             with pytest.raises(BaseException):
                 LogAnalysisRestrictedCrawlerList.update_or_insert_list(data)
@@ -460,7 +460,7 @@ class TestBillingPermission:
         BillingPermission.activation(1,False)
         result = BillingPermission.query.filter_by(user_id=1).one()
         assert result.is_active == False
-        
+
         # not exist permission
         BillingPermission.activation(3,True)
         assert BillingPermission.query.filter_by(user_id=3).one()
@@ -474,7 +474,7 @@ class TestBillingPermission:
     def test_get_billing_information_by_id(self, billing_permissions):
         result = BillingPermission.get_billing_information_by_id(1)
         assert result.is_active == True
-        
+
         with patch("flask_sqlalchemy._QueryProperty.__get__") as mock_query:
             mock_query.return_value.\
                 filter_by.return_value.\
@@ -490,14 +490,14 @@ class TestStaticsEmail:
 #    def insert_email_address(cls, email_address):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestStaticsEmail::test_insert_email_address -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_insert_email_address(self, db):
-        StatisticsEmail.insert_email_address("test.address@test.org")
+        StatisticsEmail.insert_email_address("test.address@test.org", "Root Index")
         result = StatisticsEmail.query.filter_by(id=1).one()
         assert result.email_address == "test.address@test.org"
-        
+
         with patch("weko_admin.models.db.session.commit",side_effect=BaseException("test_error")):
             with pytest.raises(BaseException):
-                StatisticsEmail.insert_email_address("test.address@test.org")
-        
+                StatisticsEmail.insert_email_address("test.address@test.org", "Root Index")
+
 #    def get_all_emails(cls):
 
 #    def get_all(cls):
@@ -512,14 +512,14 @@ class TestStaticsEmail:
             with pytest.raises(Exception):
                 result = StatisticsEmail.get_all()
 
-    
+
 #    def delete_all_row(cls):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestStaticsEmail::test_delete_all_row -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_delete_all_row(self, statistic_email_addrs):
         StatisticsEmail.delete_all_row()
         result = StatisticsEmail.query.filter_by(id=1).one_or_none()
         assert result is None
-        
+
         with patch("weko_admin.models.db.session.commit",side_effect=Exception("test_error")):
             with pytest.raises(Exception) as e:
                 StatisticsEmail.delete_all_row()
@@ -540,7 +540,7 @@ class TestRankingSettings:
         db.session.commit()
         result = RankingSettings.query.first()
         assert result.rankings == {}
-        
+
 #    def get(cls, id=0):
 
 #    def update(cls, id=0, data=None):
@@ -557,7 +557,7 @@ class TestRankingSettings:
         result = RankingSettings.query.filter_by(id=0).one()
         assert result.is_show == False
         assert data.new_item_period == 10
-        
+
         # create
         data = RankingSettings()
         data.is_show = True
@@ -569,18 +569,18 @@ class TestRankingSettings:
         result = RankingSettings.query.filter_by(id=1).one()
         assert result
         assert result.new_item_period == 12
-        
+
         # raise exception
         with patch("weko_admin.models.db.session.commit",side_effect=BaseException("test_error")):
             with pytest.raises(BaseException) as e:
                 RankingSettings.update(id=0,data=data)
-        
+
 #    def delete(cls, id=0):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestRankingSettings::test_delete -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_delete(self, ranking_settings):
         RankingSettings.delete(id=0)
         assert RankingSettings.query.filter_by(id=0).one_or_none() is None
-        
+
         # raise exception
         with patch("weko_admin.models.db.session.commit",side_effect=BaseException("test_error")):
             with pytest.raises(BaseException) as e:
@@ -599,7 +599,7 @@ class TestFeedbackMailSetting:
         )
         db.session.add(fms)
         db.session.commit()
-        
+
         result = FeedbackMailSetting.query.first()
         assert result.manual_mail == {}
 
@@ -610,35 +610,48 @@ class TestFeedbackMailSetting:
             account_author="1,2",
             manual_mail={"email":["test.manual1@test.org","test.manual2@test.org"]},
             is_sending_feedback=True,
-            root_url="http://test_server"
+            root_url="http://test_server",
+            repo_id="Root Index"
         )
         assert result == True
         res = FeedbackMailSetting.query.filter_by(id=1).one()
         assert res.account_author == "1,2"
-        
+
         # raise exception
         with patch("weko_admin.models.db.session.commit",side_effect=BaseException("test_error")):
             result = FeedbackMailSetting.create(
                 account_author="1,2",
                 manual_mail={"email":["test.manual1@test.org","test.manual2@test.org"]},
                 is_sending_feedback=True,
-                root_url="http://test_server"
+                root_url="http://test_server",
+                repo_id="Root Index"
             )
             assert result == False
-            
+
 
 #    def get_all_feedback_email_setting(cls):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestFeedbackMailSetting::test_get_all_feedback_email_setting -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_get_all_feedback_email_setting(self,feedback_mail_settings):
         result = FeedbackMailSetting.get_all_feedback_email_setting()
         assert result[0].manual_mail=={"email":["test.manual1@test.org","test.manual2@test.org"]}
-        
+
         with patch("flask_sqlalchemy._QueryProperty.__get__") as mock_query:
             mock_query.return_value.\
                 all.side_effect = Exception("test_error")
             result = FeedbackMailSetting.get_all_feedback_email_setting()
             assert result == []
 
+#   def get_feedback_email_setting_by_repo(cls, repo_id):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestFeedbackMailSetting::test_get_feedback_email_setting_by_repo -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_get_feedback_email_setting_by_repo(self, feedback_mail_settings):
+        result = FeedbackMailSetting.get_feedback_email_setting_by_repo("Root Index")
+        assert result[0].manual_mail=={"email":["test.manual1@test.org","test.manual2@test.org"]}
+
+        with patch("flask_sqlalchemy._QueryProperty.__get__") as mock_query:
+            mock_query.return_value.filter_by.return_value.\
+                all.side_effect = Exception("test_error")
+            result = FeedbackMailSetting.get_feedback_email_setting_by_repo("Root Index")
+            assert result == []
 
 #    def update(cls, account_author,
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestFeedbackMailSetting::test_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -647,23 +660,25 @@ class TestFeedbackMailSetting:
             account_author="1",
             manual_mail={"email":[]},
             is_sending_feedback=False,
-            root_url="http://test_server2"
+            root_url="http://test_server2",
+            repo_id="Root Index"
         )
         assert result == True
         res = FeedbackMailSetting.query.filter_by(id=1).one()
         assert res.account_author == "1"
         assert res.manual_mail == {"email":[]}
-        
+
         # raise exception
         with patch("weko_admin.models.db.session.commit", side_effect=Exception("test_error")):
             result = FeedbackMailSetting.update(
                 account_author="1",
                 manual_mail={"email":[]},
                 is_sending_feedback=False,
-                root_url="http://test_server2"
+                root_url="http://test_server2",
+                repo_id="Root Index"
             )
             assert result == False
-        
+
 #    def delete(cls, id=1):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestFeedbackMailSetting::test_delete -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_delete(self, feedback_mail_settings):
@@ -671,12 +686,19 @@ class TestFeedbackMailSetting:
         assert result == True
         res = FeedbackMailSetting.query.filter_by(id=1).one_or_none()
         assert res is None
-        
+
         # raise exception
         with patch("weko_admin.models.db.session.commit", side_effect=Exception("test_error")):
             result = FeedbackMailSetting.delete()
             assert result == False
 
+#   def delete_by_repo(cls, repo_id):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestFeedbackMailSetting::test_delete_by_repo -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_delete_by_repo(self, feedback_mail_settings):
+        result = FeedbackMailSetting.delete_by_repo("Root Index")
+        assert result == True
+        res = FeedbackMailSetting.query.filter_by(id=1).one_or_none()
+        assert res is None
 
 #class AdminSettings(db.Model):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestAdminSettings -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -687,7 +709,7 @@ class TestAdminSettings:
         )
         db.session.add(ass)
         db.session.commit()
-        
+
         result = AdminSettings.query.first()
         assert result.settings == {}
 
@@ -701,13 +723,13 @@ class TestAdminSettings:
         result = AdminSettings.get("storage_check_settings",True)
         assert result.day == 0
         assert result.cycle == "weekly"
-        
+
         result = AdminSettings.get("storage_check_settings",False)
         assert result == {"day": 0, "cycle": "weekly", "threshold_rate": 80}
-        
+
         result = AdminSettings.get("not_exist_setting")
         assert result == None
-        
+
         with patch("weko_admin.models.AdminSettings.Dict2Obj.__init__", side_effect=Exception("test_error")):
             result = AdminSettings.get("storage_check_settings",True)
             assert result == None
@@ -722,7 +744,7 @@ class TestAdminSettings:
         )
         result = AdminSettings.query.filter_by(name="storage_check_settings").one()
         assert result.settings == {}
-        
+
         # create
         AdminSettings.update(
             name="new_setting",
@@ -732,14 +754,14 @@ class TestAdminSettings:
         result = AdminSettings.query.filter_by(id=10).one()
         assert result.name=="new_setting"
         assert result.settings=={"key":"value"}
-        
+
         with patch("weko_admin.models.db.session.commit", side_effect=BaseException("test_error")):
             with pytest.raises(BaseException):
                 AdminSettings.update(
                     name="storage_check_settings",
                     settings={}
                 )
-        
+
 
 #    def delete(cls, name):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestAdminSettings::test_delete -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -747,7 +769,7 @@ class TestAdminSettings:
         AdminSettings.delete("storage_check_settings")
         result = AdminSettings.query.filter_by(name="storage_check_settings").one_or_none()
         assert result is None
-        
+
         with patch("weko_admin.models.db.session.commit", side_effect=BaseException("test_error")):
             with pytest.raises(BaseException) as e:
                 AdminSettings.delete("items_display_settings")
@@ -766,7 +788,7 @@ class TestSiteInfo:
         )
         db.session.add(si)
         db.session.commit()
-        
+
         result = SiteInfo.query.first()
         assert result.site_name == {}
         assert result.notify == {}
@@ -782,18 +804,18 @@ class TestSiteInfo:
         db.session.commit()
         result = SiteInfo.get()
         assert result == {}
-        
+
         # raise exception
-        
+
         with patch("weko_admin.models.db.session.begin_nested",side_effect=SQLAlchemyError):
             result = SiteInfo.get()
             assert result == {}
         with patch("weko_admin.models.db.session.begin_nested",side_effect=Exception("test_error")):
             result = SiteInfo.get()
             assert result == {}
-        
+
         assert 1==2
-        
+
 #    def update(cls, site_info):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestSiteInfo::test_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_update(self, app, site_info, mocker):
@@ -889,8 +911,27 @@ class TestFeedbackMailHistory:
         mocker.patch("weko_admin.models.db.session.execute", side_effect=session.execute)
         result = FeedbackMailHistory.get_sequence(None)
         assert result == 3
-        
+
 #    def get_all_history(cls):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestFeedbackMailHistory::test_get_all_history -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_get_all_history(self, db):
+        FeedbackMailHistory.create(
+            session=db.session,
+            id=1,
+            start_time=datetime(2022,10,1,1,2,3,45678),
+            end_time=datetime(2022,10,1,2,3,4,56789),
+            stats_time="2022-10",
+            count=2,
+            error=0,
+            parent_id=1,
+            is_latest=True
+        )
+
+        result = FeedbackMailHistory.get_all_history()
+        assert result[0].stats_time == "2022-10"
+
+        result = FeedbackMailHistory.get_all_history(repo_id="Root Index")
+        assert result[0].stats_time == "2022-10"
 
 #    def create(cls,
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestFeedbackMailHistory::test_create -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -911,7 +952,7 @@ class TestFeedbackMailHistory:
         result = FeedbackMailHistory.query.filter_by(id=1).one()
         assert result.stats_time == "2022-10"
         assert result.parent_id == 1
-        
+
         FeedbackMailHistory.create(
             session=None,
             id=2,
@@ -925,7 +966,7 @@ class TestFeedbackMailHistory:
         result = FeedbackMailHistory.query.filter_by(id=2).one()
         assert result.stats_time == "2022-11"
         assert result.parent_id == None
-        
+
         with patch("weko_admin.models.db.session.commit", side_effect=BaseException("test_error")):
             FeedbackMailHistory.create(
                 session=None,
@@ -939,14 +980,14 @@ class TestFeedbackMailHistory:
             )
             result = FeedbackMailHistory.query.filter_by(id=3).one_or_none()
             assert result is None
-            
+
 #    def update_lastest_status(cls, id, status):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestFeedbackMailHistory::test_upate_lastest_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_upate_lastest_status(self, feedback_mail_histories):
         FeedbackMailHistory.update_lastest_status(1, False)
         result = FeedbackMailHistory.query.filter_by(id=1).one()
         assert result.is_latest == False
-        
+
         with patch("weko_admin.models.db.session.commit", side_effect=BaseException("test_error")):
             with pytest.raises(BaseException):
                 FeedbackMailHistory.update_lastest_status(1, False)
@@ -966,7 +1007,7 @@ class TestFeedbackMailFailed:
         FeedbackMailFailed.delete_by_history_id(session,1)
         result = FeedbackMailFailed.query.filter_by(id=1).one_or_none()
         assert result is None
-        
+
         failed1 = FeedbackMailFailed(
             history_id=1,
             author_id=1,
@@ -974,7 +1015,7 @@ class TestFeedbackMailFailed:
         )
         db.session.add(failed1)
         db.session.commit()
-        
+
         with patch("weko_admin.models.db.session.commit", side_effect=BaseException("test_error")):
             FeedbackMailFailed.delete_by_history_id(None,1)
             result = FeedbackMailFailed.query.filter_by(id=1).one_or_none()
@@ -993,7 +1034,7 @@ class TestFeedbackMailFailed:
         result = FeedbackMailFailed.query.filter_by(id=1).one()
         assert result
         assert result.mail == "test@test.org"
-        
+
         with patch("weko_admin.models.db.session.commit", side_effect=BaseException("test_error")):
             FeedbackMailFailed.create(
                 session=None,
@@ -1003,7 +1044,7 @@ class TestFeedbackMailFailed:
             )
             result = FeedbackMailFailed.query.filter_by(id=2).one_or_none()
             assert result is None
-            
+
 #class Identifier(db.Model):
 #    def __repr__(self):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::test_Identifier_repr -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -1030,7 +1071,7 @@ class TestFacetSearchSetting:
         )
         db.session.add(fss)
         db.session.commit()
-        
+
         result = FacetSearchSetting.query.first()
         assert result.aggregations == {}
 
@@ -1066,22 +1107,22 @@ class TestFacetSearchSetting:
         result = FacetSearchSetting.create(data)
         assert result.name_en == "test setting"
         assert result.aggregations == []
-        
+
         with patch("weko_admin.models.db.session.commit", side_effect=Exception("test_error")):
             result = FacetSearchSetting.create(data)
             assert result == None
-        
+
 #    def delete(cls, id):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestFacetSearchSetting::test_delete -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_delete(self,facet_search_settings):
         # id is None
         result = FacetSearchSetting.delete(None)
         assert result == False
-        
+
         # id is not None
         result = FacetSearchSetting.delete(1)
         assert result == True
-        
+
         # raise exception
         with patch("weko_admin.models.db.session.commit", side_effect=Exception("test_error")):
             result = FacetSearchSetting.delete(2)
@@ -1095,7 +1136,7 @@ class TestFacetSearchSetting:
         # facet_search is None
         result = FacetSearchSetting.update_by_id(100,{})
         assert result == False
-        
+
         # facet_search is not None
         data = {
             "name_en":"test setting",
@@ -1109,7 +1150,7 @@ class TestFacetSearchSetting:
         res = FacetSearchSetting.query.filter_by(id=1).one_or_none()
         assert res.name_en == "test setting"
         assert res.name_jp == "テスト設定"
-        
+
         # raise exception
         with patch("weko_admin.models.db.session.commit", side_effect=Exception("test_error")):
             result = FacetSearchSetting.update_by_id(2,data)

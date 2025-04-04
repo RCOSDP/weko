@@ -21,12 +21,15 @@
 """Weko Search-UI admin."""
 
 import csv
+import chardet
 import json
+import math
 import os
 import re
 import shutil
 import sys
 import pytz
+import bagit
 import tempfile
 import traceback
 import uuid
@@ -34,7 +37,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 import chardet
 import urllib
-import copy
+import gc
 from collections import Callable, OrderedDict
 from datetime import datetime, timezone
 from functools import partial, reduce, wraps
@@ -44,7 +47,6 @@ from operator import getitem
 from time import sleep
 import pickle
 
-import bagit
 import redis
 from redis import sentinel
 from celery.result import AsyncResult
@@ -85,11 +87,13 @@ from weko_index_tree.utils import (
     check_index_permissions,
     check_restrict_doi_with_indexes,
 )
+from weko_index_tree.models import Index
 from weko_indextree_journal.api import Journals
 from weko_items_autofill.utils import get_doi_with_original
 from weko_records.api import FeedbackMailList, JsonldMapping, RequestMailList, ItemTypes, Mapping
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_full_mapping, get_mapping
+from weko_records_ui.external import call_external_system
 from weko_redis.redis import RedisConnection
 from weko_schema_ui.models import PublishStatus
 from weko_search_ui.mapper import BaseMapper, JPCOARV2Mapper, JsonLdMapper
@@ -135,9 +139,9 @@ from .config import (
     WEKO_IMPORT_VALIDATE_MESSAGE,
     WEKO_REPO_USER,
     WEKO_SEARCH_TYPE_DICT,
-    WEKO_SEARCH_UI_BULK_EXPORT_LIMIT,
     WEKO_SEARCH_UI_BULK_EXPORT_MSG,
     WEKO_SEARCH_UI_BULK_EXPORT_RUN_MSG,
+    WEKO_SEARCH_UI_BULK_EXPORT_FILE_CREATE_RUN_MSG,
     WEKO_SEARCH_UI_BULK_EXPORT_TASK,
     WEKO_SEARCH_UI_BULK_EXPORT_URI,
     WEKO_SYS_USER,
@@ -303,7 +307,8 @@ def get_journal_info(index_id=0):
                         data = res[0]
                     val = title.get(cur_lang) + "{0}{1}".format(": ", data)
                     result.update({value["key"]: val})
-        open_search_uri = request.host_url + journal.get("title_url")
+        index = Index.get_index_by_id(index_id)
+        open_search_uri = index.index_url
         result.update({"openSearchUrl": open_search_uri})
 
     except BaseException:
@@ -470,6 +475,8 @@ def check_tsv_import_items(file, is_change_identifier: bool, is_gakuninrdm=False
         return       -- PID object if exist.
 
     """
+    from weko_items_ui.utils import is_duplicate_item
+
     if isinstance(file, str):
         filename = file.split("/")[-1]
     else:
@@ -523,6 +530,16 @@ def check_tsv_import_items(file, is_change_identifier: bool, is_gakuninrdm=False
             )
         if is_gakuninrdm:
             list_record = list_record[:1]
+
+        for item in list_record:
+            is_duplicate, recid_list, duplicate_links = is_duplicate_item(item.get("metadata", {}))
+            if is_duplicate:
+                duplicate_links = list(set(duplicate_links))
+                message = _('The same item may have been registered.') + '<br>'
+                for link in duplicate_links:
+                    message += f'<a href="{link}" target="_blank">{link}</a><br>'
+                item['warnings'].append(message)
+
         # current_app.logger.debug("list_record1: {}".format(list_record))
         # [{'pos_index': ['Index A'], 'publish_status': 'public', 'feedback_mail': ['wekosoftware@nii.ac.jp'], 'edit_mode': 'Keep', 'metadata': {'pubdate': '2021-03-19', 'item_1617186331708': [{'subitem_1551255647225': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'en_conference paperITEM00000001(public_open_access_simple)', 'subitem_1551255648112': 'en'}], 'item_1617186385884': [{'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'en'}, {'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'ja'}], 'item_1617186419668': [{'creatorAffiliations': [{'affiliationNameIdentifiers': [{'affiliationNameIdentifier': '0000000121691048', 'affiliationNameIdentifierScheme': 'ISNI', 'affiliationNameIdentifierURI': 'http://isni.org/isni/0000000121691048'}], 'affiliationNames': [{'affiliationName': 'University', 'affiliationNameLang': 'en'}]}], 'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': '4', 'nameIdentifierScheme': 'WEKO'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617349709064': [{'contributorMails': [{'contributorMail': 'wekosoftware@nii.ac.jp'}], 'contributorNames': [{'contributorName': '情報, 太郎', 'lang': 'ja'}, {'contributorName': 'ジョウホウ, タロウ', 'lang': 'ja-Kana'}, {'contributorName': 'Joho, Taro', 'lang': 'en'}], 'contributorType': 'ContactPerson', 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617186476635': {'subitem_1522299639480': 'open access', 'subitem_1600958577026': 'http://purl.org/coar/access_right/c_abf2'}, 'item_1617351524846': {'subitem_1523260933860': 'Unknown'}, 'item_1617186499011': [{'subitem_1522650717957': 'ja', 'subitem_1522650727486': 'http://localhost', 'subitem_1522651041219': 'Rights Information'}], 'item_1617610673286': [{'nameIdentifiers': [{'nameIdentifier': 'xxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}], 'rightHolderNames': [{'rightHolderLanguage': 'ja', 'rightHolderName': 'Right Holder Name'}]}], 'item_1617186609386': [{'subitem_1522299896455': 'ja', 'subitem_1522300014469': 'Other', 'subitem_1522300048512': 'http://localhost/', 'subitem_1523261968819': 'Sibject1'}], 'item_1617186626617': [{'subitem_description': 'Description\nDescription<br/>Description', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}, {'subitem_description': '概要\n概要\n概要\n概要', 'subitem_description_language': 'ja', 'subitem_description_type': 'Abstract'}], 'item_1617186643794': [{'subitem_1522300295150': 'en', 'subitem_1522300316516': 'Publisher'}], 'item_1617186660861': [{'subitem_1522300695726': 'Available', 'subitem_1522300722591': '2021-06-30'}], 'item_1617186702042': [{'subitem_1551255818386': 'jpn'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_1617349808926': {'subitem_1523263171732': 'Version'}, 'item_1617265215918': {'subitem_1522305645492': 'AO', 'subitem_1600292170262': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce'}, 'item_1617186783814': [{'subitem_identifier_type': 'URI', 'subitem_identifier_uri': 'http://localhost'}], 'item_1617353299429': [{'subitem_1522306207484': 'isVersionOf', 'subitem_1522306287251': {'subitem_1522306382014': 'arXiv', 'subitem_1522306436033': 'xxxxx'}, 'subitem_1523320863692': [{'subitem_1523320867455': 'en', 'subitem_1523320909613': 'Related Title'}]}], 'item_1617186859717': [{'subitem_1522658018441': 'en', 'subitem_1522658031721': 'Temporal'}], 'item_1617186882738': [{'subitem_geolocation_place': [{'subitem_geolocation_place_text': 'Japan'}]}], 'item_1617186901218': [{'subitem_1522399143519': {'subitem_1522399281603': 'ISNI', 'subitem_1522399333375': 'http://xxx'}, 'subitem_1522399412622': [{'subitem_1522399416691': 'en', 'subitem_1522737543681': 'Funder Name'}], 'subitem_1522399571623': {'subitem_1522399585738': 'Award URI', 'subitem_1522399628911': 'Award Number'}, 'subitem_1522399651758': [{'subitem_1522721910626': 'en', 'subitem_1522721929892': 'Award Title'}]}], 'item_1617186920753': [{'subitem_1522646500366': 'ISSN', 'subitem_1522646572813': 'xxxx-xxxx-xxxx'}], 'item_1617186941041': [{'subitem_1522650068558': 'en', 'subitem_1522650091861': 'Source Title'}], 'item_1617186959569': {'subitem_1551256328147': '1'}, 'item_1617186981471': {'subitem_1551256294723': '111'}, 'item_1617186994930': {'subitem_1551256248092': '12'}, 'item_1617187024783': {'subitem_1551256198917': '1'}, 'item_1617187045071': {'subitem_1551256185532': '3'}, 'item_1617187112279': [{'subitem_1551256126428': 'Degree Name', 'subitem_1551256129013': 'en'}], 'item_1617187136212': {'subitem_1551256096004': '2021-06-30'}, 'item_1617944105607': [{'subitem_1551256015892': [{'subitem_1551256027296': 'xxxxxx', 'subitem_1551256029891': 'kakenhi'}], 'subitem_1551256037922': [{'subitem_1551256042287': 'Degree Grantor Name', 'subitem_1551256047619': 'en'}]}], 'item_1617187187528': [{'subitem_1599711633003': [{'subitem_1599711636923': 'Conference Name', 'subitem_1599711645590': 'ja'}], 'subitem_1599711655652': '1', 'subitem_1599711660052': [{'subitem_1599711680082': 'Sponsor', 'subitem_1599711686511': 'ja'}], 'subitem_1599711699392': {'subitem_1599711704251': '2020/12/11', 'subitem_1599711712451': '1', 'subitem_1599711727603': '12', 'subitem_1599711731891': '2000', 'subitem_1599711735410': '1', 'subitem_1599711739022': '12', 'subitem_1599711743722': '2020', 'subitem_1599711745532': 'ja'}, 'subitem_1599711758470': [{'subitem_1599711769260': 'Conference Venue', 'subitem_1599711775943': 'ja'}], 'subitem_1599711788485': [{'subitem_1599711798761': 'Conference Place', 'subitem_1599711803382': 'ja'}], 'subitem_1599711813532': 'JPN'}], 'item_1617605131499': [{'accessrole': 'open_access', 'date': [{'dateType': 'Available', 'dateValue': '2021-07-12'}], 'displaytype': 'simple', 'filename': '1KB.pdf', 'filesize': [{'value': '1 KB'}], 'format': 'text/plain'}, {'filename': ''}], 'item_1617620223087': [{'subitem_1565671149650': 'ja', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheading'}, {'subitem_1565671149650': 'en', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheding'}]}, 'file_path': ['file00000001/1KB.pdf', ''], 'item_type_name': 'デフォルトアイテムタイプ（フル）', 'item_type_id': 15, '$schema': 'https://localhost:8443/items/jsonschema/15', 'identifier_key': 'item_1617186819068', 'errors': None}]
         list_record = handle_check_exist_record(list_record)
@@ -1101,27 +1118,10 @@ def getEncode(filepath):
     Returns:
         [type]: [description]
     """
-    encs = [
-        "iso-2022-jp",
-        "euc-jp",
-        "shift_jis",
-        "utf-8",
-        "utf-8-sig",
-        "utf-16be",
-        "utf-16le",
-        "utf-32be",
-        "utf-32le",
-        "",
-    ]
-    for enc in encs:
-        if enc != "":
-            with open(filepath, encoding=enc) as fr:
-                try:
-                    fr = fr.read()
-                except UnicodeDecodeError:
-                    continue
-            return enc
-    return enc
+    with open(filepath, mode='rb') as fr:
+        b = fr.read()
+    enc = chardet.detect(b)
+    return enc.get('encoding', 'utf-8-sig')
 
 
 def read_stats_file(file_path: str, file_name: str, file_format: str) -> dict:
@@ -2030,10 +2030,13 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, m
             # current_app.logger.debug("item: {0}".format(item))
             status = item.get("status")
             root_path = item.get("root_path", "")
+            old_record = None
+            record_pid = None
             if status == "new":
                 item_id = create_deposit(item.get("id"))
                 item["id"] = item_id["recid"]
                 item["pid"] = item_id.pid
+                record_pid = item_id.pid
             else:
                 handle_check_item_is_locked(item)
                 # cache ES data for rollback
@@ -2045,6 +2048,8 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, m
                 bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
                     PIDVersioning(child=pid).last_child.object_uuid
                 )
+                record_pid = pid
+                old_record = WekoRecord.get_record_by_pid(record_pid.pid_value)
 
             register_item_metadata(item, root_path, owner, is_gakuninrdm)
 
@@ -2062,6 +2067,8 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, m
                     # Send item_created event to ES.
                     send_item_created_event_to_es(item, request_info)
             db.session.commit()
+            new_record = WekoRecord.get_record_by_pid(record_pid.pid_value)
+            call_external_system(old_record=old_record, new_record=new_record)
 
             # clean unuse file content in keep mode if import success
             cache_key = current_app.config[
@@ -3903,15 +3910,18 @@ def handle_check_duplication_item_id(ids: list):
     return list(set(result))
 
 
-def export_all(root_url, user_id, data, timezone):
-    """Gather all the item data and export and return as a JSON or BIBTEX.
+def export_all(root_url, user_id, data, start_time):
+    """Prepare to gather all the item data and export and return as a JSON or BIBTEX.
 
     Parameter
-        path is the path if file temparory
-        post_data is the data items
-    :return: JSON, BIBTEX
+        root_url (str): this system's root url.
+        user_id (int): a user who processed file output.
+        data (json): export processing's status data.
+        start_time (str): processing start time.
     """
-    from weko_items_ui.utils import make_stats_file_with_permission, package_export_file
+    from weko_search_ui.tasks import write_files_task
+
+    current_app.logger.info("Bulk export all start at {}.".format(start_time))
 
     _cache_prefix = current_app.config["WEKO_ADMIN_CACHE_PREFIX"]
     _msg_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_MSG"]
@@ -3924,20 +3934,380 @@ def export_all(root_url, user_id, data, timezone):
         name=_run_msg_config,
         user_id=user_id
     )
-    _file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+    _file_create_config = \
+        current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_FILE_CREATE_RUN_MSG"]
+    _file_create_key = _cache_prefix.format(
+        name=_file_create_config,
+        user_id=user_id
+    )
 
     def _itemtype_name(name):
         """Check a list of allowed characters in filenames."""
         return re.sub(r'[\/:*"<>|\s]', "_", name)
 
-    def _write_files(item_datas, export_path):
-        """Write TSV/CSV data to files.
+    def _get_item_type_list(item_type_id):
+        """Get item type list."""
+        item_types = []
+        try:
+            # get all item type
+            if item_type_id == "-1":
+                item_type_all = ItemTypes.get_all()
+                item_types = [
+                    (str(it.id), _itemtype_name(it.item_type_name.name))
+                    for it in item_type_all
+                ]
+            else:
+                it = ItemTypes.get_by_id(item_type_id)
+                item_types = [(str(it.id), _itemtype_name(it.item_type_name.name))]
+        except Exception as ex:
+            current_app.logger.error(ex)
+        return item_types
 
-        @param item_datas:
-        @param export_path:
-        @param list_item_role:
-        @return:
-        """
+    def _get_index_id_list(user_id):
+        """Get index id list."""
+        from invenio_accounts.models import User
+        from invenio_communities.models import Community
+        from weko_index_tree.api import Indexes
+
+        if not user_id:
+            return []
+        user = User.query.get(user_id)
+        if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in user.roles):
+            return None
+        else:
+            index_id_list = []
+            repositories = Community.get_repositories_by_user(user)
+            for repository in repositories:
+                index = Indexes.get_child_list_recursive(repository.root_node_id)
+                index_id_list.extend(index)
+        return index_id_list
+
+    def _get_export_data(export_path, item_types, retrys, fromid="", toid="", retry_info={}, user_id=None):
+        try:
+            write_file_json = {
+                    'start_time': start_time,
+                    'finish_time': '',
+                    'export_path': export_path,
+                    'cancel_flg': False,
+                    'write_file_status': {}
+                }
+            reset_redis_cache(
+                    _file_create_key,
+                    json.dumps(write_file_json)
+                )
+
+            index_id_list = _get_index_id_list(user_id)
+
+            for it in item_types.copy():
+                item_type_id = it[0]
+                item_type_name = it[1]
+                item_datas = {}
+                pickle_file_name = ''
+                counter, file_part, from_pid = get_retry_info(
+                    item_type_id, retry_info, fromid)
+                current_app.logger.info(
+                    "Start bulk export of item type {}({}).".format(
+                        item_type_name, item_type_id
+                    )
+                )
+
+                recids = get_all_record_id(toid, from_pid, item_type_id)
+                current_app.logger.info("{}({}) get recids completed:{}".format(item_type_name, item_type_id, recids.count()))
+                if not recids:
+                    item_types.remove(it)
+                    continue
+                record_ids = get_record_ids(recids)
+
+                # recidsを削除
+                del recids
+                gc.collect()
+
+                file_count = math.ceil(len(record_ids) / current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_LIMIT"])
+                write_file_json = json.loads(get_redis_cache(_file_create_key))
+                for i in range(file_count):
+                    write_file_json['write_file_status'][item_type_id + '.' + str(i + 1)] = 'waiting'
+                reset_redis_cache(
+                    _file_create_key,
+                    json.dumps(write_file_json)
+                )
+
+                if index_id_list is None:
+                    record_ids = [(recid.pid_value, recid.object_uuid)
+                    for recid in recids if 'publish_status' in recid.json
+                    and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]]
+                else:
+                    record_ids = [(recid.pid_value, recid.object_uuid)
+                    for recid in recids if 'publish_status' in recid.json
+                    and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]
+                    and any(index in recid.json['path'] for index in  index_id_list)]
+
+                if len(record_ids) == 0:
+                    item_types.remove(it)
+                    continue
+
+                for recid, uuid in record_ids:
+                    if counter % current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_LIMIT"] == 0 and item_datas:
+                        # Create export info file
+                        item_datas["name"] = "{}.part{}".format(
+                            item_datas["name"], file_part
+                        )
+                        pickle_file_name = "{}.{}.part{}.pickle".format(
+                            user_id, item_type_id, file_part
+                        )
+                        with open(pickle_file_name, 'wb') as f:
+                            pickle.dump(item_datas, f)
+                        del item_datas
+                        gc.collect()
+                        write_files_task.apply_async(args=(export_path, pickle_file_name, user_id,))
+                        item_datas = {}
+                        file_part += 1
+                        retry_info[item_type_id] = {
+                            "part": file_part,
+                            "counter": counter,
+                            "max": recid,
+                        }
+
+                    record = WekoRecord.get_record_by_uuid(uuid)
+
+                    if not item_datas:
+                        item_datas = {
+                            "item_type_id": item_type_id,
+                            "name": "{}({})".format(item_type_name, item_type_id),
+                            "root_url": root_url,
+                            "jsonschema": "items/jsonschema/" + item_type_id,
+                            "keys": [],
+                            "labels": [],
+                            "recids": [],
+                            "data": {},
+                        }
+                        pickle_file_name = "{}.{}.pickle".format(user_id,item_type_id)
+
+                    item_datas["recids"].append(recid)
+                    item_datas["data"][recid] = record
+                    counter += 1
+                    del record
+                    gc.collect()
+
+                if file_part != 1:
+                    item_datas["name"] = "{}.part{}".format(
+                        item_datas["name"], file_part
+                    )
+                    pickle_file_name = "{}.{}.part{}.pickle".format(
+                        user_id, item_type_id,file_part
+                    )
+
+                with open(pickle_file_name, 'wb') as f:
+                    pickle.dump(item_datas, f)
+
+                del item_datas
+                gc.collect()
+
+                # Create export info file
+                write_files_task.apply_async(args=(export_path, pickle_file_name, user_id,))
+                item_types.remove(it)
+                current_app.logger.info(
+                    "Processed {} items of item type {}.".format(
+                        counter, item_type_name
+                    )
+                )
+            return True
+        except SQLAlchemyError as ex:
+            current_app.logger.error(ex)
+            _num_retry = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_RETRY"]
+            if retrys < _num_retry:
+                retrys += 1
+                current_app.logger.info("retry count: {}".format(retrys))
+                db.session.rollback()
+                sleep(5)
+                result = _get_export_data(
+                    export_path, item_types, retrys, fromid, toid, retry_info, user_id=user_id
+                )
+                return result
+            else:
+                return False
+
+    reset_redis_cache(_msg_key, "")
+    reset_redis_cache(_run_msg_key, "")
+    reset_redis_cache(_file_create_key, json.dumps({}))
+
+    temp_path = os.getenv('TMPDIR')
+    os.makedirs(temp_path, exist_ok=True)
+    try:
+        # Delete old file
+        _task_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_URI"]
+        _uri_key = _cache_prefix.format(
+            name=_task_config,
+            user_id=user_id
+        )
+        prev_uri = get_redis_cache(_uri_key)
+        if prev_uri:
+            delete_exported(prev_uri, _uri_key)
+
+        export_path = temp_path + "/" + datetime.utcnow().strftime("%Y%m%d%H%M%S%f")
+        os.makedirs(export_path, exist_ok=True)
+
+        item_type_id = data.get('item_type_id', "-1")
+        item_types = _get_item_type_list(item_type_id)
+        fromid = ""
+        toid = ""
+        item_id_range = data.get('item_id_range', "")
+        if item_id_range:
+            if "-" in item_id_range:
+                item_id_split = item_id_range.split("-")
+                fromid = item_id_split[0]
+                toid = item_id_split[1]
+            else:
+                fromid = item_id_range
+                toid = item_id_range
+
+        result = None
+        if not fromid or not toid or (fromid and toid and int(fromid) <= int(toid)):
+            result = _get_export_data(export_path, item_types, 0, fromid, toid, user_id=user_id)
+
+            if result:
+                db.session.commit()
+            else:
+                json_data = json.loads(get_redis_cache(_file_create_key))
+                json_data['cancel_flg'] = True
+                reset_redis_cache(_file_create_key, json.dumps(json_data))
+                reset_redis_cache(_msg_key, "Export failed.")
+        else:
+            reset_redis_cache(_msg_key, "Export failed. Please check item id range.")
+    except Exception as ex:
+        db.session.rollback()
+        current_app.logger.error(ex)
+        reset_redis_cache(_msg_key, "Export failed.")
+        reset_redis_cache(_run_msg_key, "")
+
+def get_all_record_id(toid, from_pid, item_type_id):
+    """Get all record id.
+
+    Args:
+        toid (str): The ending ID.
+        from_pid (str): The starting ID.
+        item_type_id (str): The item type ID.
+
+    Returns:
+        list: List of record IDs.
+    """
+
+    # get all record id
+    if toid:
+        recids = db.session.query(
+            PersistentIdentifier.pid_value,
+            PersistentIdentifier.object_uuid,
+            RecordMetadata.json
+        ).join(
+            ItemMetadata,
+            PersistentIdentifier.object_uuid == ItemMetadata.id,
+        ).join(
+            RecordMetadata,
+            PersistentIdentifier.object_uuid == RecordMetadata.id,
+        ).filter(
+            PersistentIdentifier.pid_type == "recid",
+            PersistentIdentifier.status == PIDStatus.REGISTERED,
+            PersistentIdentifier.pid_value.notlike("%.%"),
+            _func.to_number(
+                PersistentIdentifier.pid_value,
+                current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
+            ) >= from_pid,
+            _func.to_number(
+                PersistentIdentifier.pid_value,
+                current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
+            ) <= toid,
+            ItemMetadata.item_type_id == item_type_id
+        ).order_by(_func.to_number(
+            PersistentIdentifier.pid_value,
+            current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
+        )).yield_per(500)
+    else:
+        recids = db.session.query(
+            PersistentIdentifier.pid_value,
+            PersistentIdentifier.object_uuid,
+            RecordMetadata.json
+        ).join(
+            ItemMetadata,
+            PersistentIdentifier.object_uuid == ItemMetadata.id,
+        ).join(
+            RecordMetadata,
+            PersistentIdentifier.object_uuid == RecordMetadata.id,
+        ).filter(
+            PersistentIdentifier.pid_type == "recid",
+            PersistentIdentifier.status == PIDStatus.REGISTERED,
+            PersistentIdentifier.pid_value.notlike("%.%"),
+            _func.to_number(
+                PersistentIdentifier.pid_value,
+                current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
+            ) >= from_pid,
+            ItemMetadata.item_type_id == item_type_id
+        ).order_by(_func.to_number(
+            PersistentIdentifier.pid_value,
+            current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
+        )).yield_per(500)
+
+    return recids
+
+
+def get_retry_info(item_type_id, retry_info, fromid):
+    """Get retry information for item type.
+
+    Args:
+        item_type_id (str): The item type ID.
+        retry_info (dict): The retry information dictionary.
+        fromid (str): The starting ID.
+
+    Returns:
+        tuple: A tuple containing counter, file_part, and from_pid.
+    """
+    if item_type_id in retry_info:
+        counter = retry_info[item_type_id]["counter"]
+        file_part = retry_info[item_type_id]["part"]
+        from_pid = retry_info[item_type_id]["max"]
+    else:
+        counter = 0
+        file_part = 1
+        from_pid = fromid if fromid else "1"
+    return counter, file_part, from_pid
+
+
+def get_record_ids(recids):
+    """Get record ids.
+
+    Args:
+        recids (list): List of record ids.
+
+    Returns:
+        list: List of record ids.
+    """
+    record_ids = [(recid.pid_value, recid.object_uuid)
+        for recid in recids if recid.json and 'publish_status' in recid.json \
+        and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]]
+    return record_ids
+
+
+def write_files(item_datas, export_path, user_id, retrys):
+    """Write TSV/CSV data to files.
+    Args:
+        item_datas (json): data for file output
+        export_path (str): file creation destination
+        user_id (int): performing user id
+        retrys (int): retry time
+
+    Returns:
+        bool: task is success or failure.
+    """
+    from weko_items_ui.utils import make_stats_file_with_permission, \
+        package_export_file
+    _cache_prefix = current_app.config["WEKO_ADMIN_CACHE_PREFIX"]
+    _run_msg_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_RUN_MSG"]
+    _run_msg_key = _cache_prefix.format(
+        name=_run_msg_config,
+        user_id=user_id
+    )
+    _timezone = current_app.config.get("WEKO_INDEX_TREE_PUBLIC_DEFAULT_TIMEZONE")
+    _file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+
+    try:
         permissions = dict(
             permission_show_hide=lambda a: True,
             check_created_id=lambda a: True,
@@ -3960,252 +4330,46 @@ def export_all(root_url, user_id, data, timezone):
         item_datas["data"] = records
         item_type_data = item_datas
 
-        file_full_path = "{}/{}.{}".format(export_path, item_type_data.get("name"), _file_format)
+        os.makedirs(export_path, exist_ok=True)
+
+        file_full_path = "{}/{}.{}".format(
+            export_path,
+            item_type_data.get("name"),
+            _file_format
+        )
         with open(file_full_path, "w", encoding="utf-8-sig") as file:
             file_output = package_export_file(item_type_data)
             file.write(file_output.getvalue())
-
-    def _get_item_type_list(item_type_id):
-        """Get item type list."""
-        item_types = []
-        try:
-            # get all item type
-            if item_type_id == "-1":
-                item_type_all = ItemTypes.get_all()
-                item_types = [
-                    (str(it.id), _itemtype_name(it.item_type_name.name))
-                    for it in item_type_all
-                ]
-            else:
-                it = ItemTypes.get_by_id(item_type_id)
-                item_types = [(str(it.id), _itemtype_name(it.item_type_name.name))]
-        except Exception as ex:
-            current_app.logger.error(ex)
-        return item_types
-
-    def _get_export_data(export_path, item_types, retrys, fromid="", toid="", retry_info={}):
-        try:
-            for it in item_types.copy():
-                item_type_id = it[0]
-                item_type_name = it[1]
-                item_datas = {}
-                if item_type_id in retry_info:
-                    counter = retry_info[item_type_id]["counter"]
-                    file_part = retry_info[item_type_id]["part"]
-                    from_pid = retry_info[item_type_id]["max"]
-                else:
-                    counter = 0
-                    file_part = 1
-                    from_pid = fromid if fromid else "1"
-                current_app.logger.info(
-                    "Start processing item type {}({}).".format(
-                        item_type_name, item_type_id
-                    )
-                )
-                # get all record id
-                if toid:
-                    recids = db.session.query(
-                        PersistentIdentifier.pid_value,
-                        PersistentIdentifier.object_uuid,
-                        RecordMetadata.json
-                    ).join(
-                        ItemMetadata,
-                        PersistentIdentifier.object_uuid == ItemMetadata.id,
-                    ).join(
-                        RecordMetadata,
-                        PersistentIdentifier.object_uuid == RecordMetadata.id,
-                    ).filter(
-                        PersistentIdentifier.pid_type == "recid",
-                        PersistentIdentifier.status == PIDStatus.REGISTERED,
-                        PersistentIdentifier.pid_value.notlike("%.%"),
-                        _func.to_number(
-                            PersistentIdentifier.pid_value,
-                            current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
-                        ) >= from_pid,
-                        _func.to_number(
-                            PersistentIdentifier.pid_value,
-                            current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
-                        ) <= toid,
-                        ItemMetadata.item_type_id == item_type_id
-                    ).order_by(_func.to_number(
-                        PersistentIdentifier.pid_value,
-                        current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
-                    )).all()
-                else:
-                    recids = db.session.query(
-                        PersistentIdentifier.pid_value,
-                        PersistentIdentifier.object_uuid,
-                        RecordMetadata.json
-                    ).join(
-                        ItemMetadata,
-                        PersistentIdentifier.object_uuid == ItemMetadata.id,
-                    ).join(
-                        RecordMetadata,
-                        PersistentIdentifier.object_uuid == RecordMetadata.id,
-                    ).filter(
-                        PersistentIdentifier.pid_type == "recid",
-                        PersistentIdentifier.status == PIDStatus.REGISTERED,
-                        PersistentIdentifier.pid_value.notlike("%.%"),
-                        _func.to_number(
-                            PersistentIdentifier.pid_value,
-                            current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
-                        ) >= from_pid,
-                        ItemMetadata.item_type_id == item_type_id
-                    ).order_by(_func.to_number(
-                        PersistentIdentifier.pid_value,
-                        current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
-                    )).all()
-
-                if len(recids) == 0:
-                    item_types.remove(it)
-                    continue
-
-                record_ids = [(recid.pid_value, recid.object_uuid)
-                    for recid in recids if 'publish_status' in recid.json
-                    and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]]
-
-                if len(record_ids) == 0:
-                    item_types.remove(it)
-                    continue
-
-                for recid, uuid in record_ids:
-                    if counter % WEKO_SEARCH_UI_BULK_EXPORT_LIMIT == 0 and item_datas:
-                        # Create export info file
-                        item_datas["name"] = "{}.part{}".format(
-                            item_datas["name"], file_part
-                        )
-                        _write_files(item_datas, export_path)
-                        reset_redis_cache(
-                            _run_msg_key,
-                            "The latest {} file was created on {}.".format(
-                                _file_format,
-                                datetime.now(pytz.timezone(timezone)).strftime("%Y/%m/%d %H:%M:%S"))
-                            + " Number of retries: {} times.".format(retrys)
-                        )
-                        current_app.logger.info(
-                            "{}.{} has been created.".format(item_datas["name"], _file_format)
-                        )
-                        item_datas = {}
-                        file_part += 1
-                        retry_info[item_type_id] = {
-                            "part": file_part,
-                            "counter": counter,
-                            "max": recid,
-                        }
-
-                    record = WekoRecord.get_record_by_uuid(uuid)
-
-                    if not item_datas:
-                        item_datas = {
-                            "item_type_id": item_type_id,
-                            "name": "{}({})".format(item_type_name, item_type_id),
-                            "root_url": root_url,
-                            "jsonschema": "items/jsonschema/" + item_type_id,
-                            "keys": [],
-                            "labels": [],
-                            "recids": [],
-                            "data": {},
-                        }
-
-                    item_datas["recids"].append(recid)
-                    item_datas["data"][recid] = record
-                    counter += 1
-
-                if file_part != 1:
-                    item_datas["name"] = "{}.part{}".format(
-                        item_datas["name"], file_part
-                    )
-                # Create export info file
-                _write_files(item_datas, export_path)
-                reset_redis_cache(
-                    _run_msg_key,
-                    "The latest {} file was created on {}.".format(
-                        _file_format,
-                        datetime.now(pytz.timezone(timezone)).strftime("%Y/%m/%d %H:%M:%S"))
-                    + " Number of retries: {} times.".format(retrys)
-                )
-                item_types.remove(it)
-                current_app.logger.info(
-                    "{}.{} has been created.".format(item_datas["name"], _file_format)
-                )
-                current_app.logger.info(
-                    "Processed {} items of item type {}.".format(
-                        counter, item_type_name
-                    )
-                )
-            return True
-        except SQLAlchemyError as ex:
-            current_app.logger.error(ex)
-            _num_retry = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_RETRY"]
-            if retrys < _num_retry:
-                retrys += 1
-                current_app.logger.info("retry count: {}".format(retrys))
-                db.session.rollback()
-                sleep(5)
-                result = _get_export_data(
-                    export_path, item_types, retrys, fromid, toid, retry_info
-                )
-                return result
-            else:
-                return False
-
-    reset_redis_cache(_msg_key, "")
-    reset_redis_cache(_run_msg_key, "")
-    temp_path = tempfile.TemporaryDirectory(
-        prefix=current_app.config["WEKO_ITEMS_UI_EXPORT_TMP_PREFIX"]
-    )
-    try:
-        # Delete old file
-        _task_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_URI"]
-        _uri_key = _cache_prefix.format(
-            name=_task_config,
-            user_id=user_id
+            del file_output,item_type_data
+            gc.collect()
+        reset_redis_cache(
+            _run_msg_key,
+            "The latest {} file was created on {}.".format(
+                _file_format,
+                datetime.now(pytz.timezone(_timezone)).strftime("%Y/%m/%d %H:%M:%S"))
+            + " Number of retries: {} times.".format(retrys)
         )
-        prev_uri = get_redis_cache(_uri_key)
-        if prev_uri:
-            delete_exported(prev_uri, _uri_key)
-
-        export_path = temp_path.name + "/" + datetime.utcnow().strftime("%Y%m%d%H%M%S")
-        os.makedirs(export_path, exist_ok=True)
-
-        item_type_id = data.get('item_type_id', "-1")
-        item_types = _get_item_type_list(item_type_id)
-        fromid = ""
-        toid = ""
-        item_id_range = data.get('item_id_range', "")
-        if item_id_range:
-            if "-" in item_id_range:
-                item_id_split = item_id_range.split("-")
-                fromid = item_id_split[0]
-                toid = item_id_split[1]
-            else:
-                fromid = item_id_range
-                toid = item_id_range
-
-        result = None
-        if not fromid or not toid or (fromid and toid and int(fromid) <= int(toid)):
-            result = _get_export_data(export_path, item_types, 0, fromid, toid)
-
-            if result:
-                # Create bag
-                bagit.make_bag(export_path)
-                shutil.make_archive(export_path, "zip", export_path)
-                with open(export_path + ".zip", "rb") as file:
-                    src = FileInstance.create()
-                    src.set_contents(file, default_location=Location.get_default().uri)
-                db.session.commit()
-            else:
-                reset_redis_cache(_msg_key, "Export failed.")
-        else:
-            reset_redis_cache(_msg_key, "Export failed. Please check item id range.")
-        reset_redis_cache(_run_msg_key, "")
-        return src.uri if result and src else ""
-    except Exception as ex:
-        db.session.rollback()
+        current_app.logger.info(
+            "{}.{} has been created.".format(item_datas["name"], _file_format)
+        )
+        db.session.commit()
+        del item_datas, headers, records, keys, labels, is_systems, options,permissions
+        gc.collect()
+        return True
+    except SQLAlchemyError as ex:
         current_app.logger.error(ex)
-        reset_redis_cache(_msg_key, "Export failed.")
-        reset_redis_cache(_run_msg_key, "")
-        return ""
+        _num_retry = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_RETRY"]
+        if retrys < _num_retry:
+            retrys += 1
+            current_app.logger.info("retry count: {}".format(retrys))
+            db.session.rollback()
+            sleep(5)
+            result = write_files(
+                item_datas, export_path, user_id, retrys
+            )
+            return result
+        else:
+            return False
 
 
 def delete_exported(uri, cache_key):
@@ -4231,10 +4395,14 @@ def cancel_export_all():
         name=WEKO_SEARCH_UI_BULK_EXPORT_TASK,
         user_id=current_user.get_id()
     )
+    _file_create_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+        name=WEKO_SEARCH_UI_BULK_EXPORT_FILE_CREATE_RUN_MSG,
+        user_id=current_user.get_id()
+    )
     _expired_time=current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_TASKID_EXPIRED_TIME"]
     try:
         task_id = get_redis_cache(cache_key)
-        export_status, _, _, _, _ = get_export_status()
+        export_status, _, _, _, _, _, _ = get_export_status()
 
         if export_status:
             revoke(task_id, terminate=True)
@@ -4245,6 +4413,9 @@ def cancel_export_all():
                 ),
                 countdown=int(_expired_time) * 60
             )
+            json_data = json.loads(get_redis_cache(_file_create_key))
+            json_data['cancel_flg'] = True
+            reset_redis_cache(_file_create_key, json.dumps(json_data))
         return True
     except Exception as ex:
         current_app.logger.error(ex)
@@ -4257,6 +4428,8 @@ def get_export_status():
     Return:     True:   Otthers
                False:  Success / Failed / Revoked
     """
+    from weko_search_ui.tasks import delete_exported_task
+
     cache_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
         name=WEKO_SEARCH_UI_BULK_EXPORT_TASK,
         user_id=current_user.get_id()
@@ -4273,27 +4446,91 @@ def get_export_status():
         name=WEKO_SEARCH_UI_BULK_EXPORT_RUN_MSG,
         user_id=current_user.get_id()
     )
+    file_msg = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+        name=WEKO_SEARCH_UI_BULK_EXPORT_FILE_CREATE_RUN_MSG,
+        user_id=current_user.get_id()
+    )
+    _expired_time = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME"]
+
+    def _check_write_file_info(json):
+        status = json.get('write_file_status','before')
+        cancel_flg = json.get('cancel_flg', False)
+        if status == 'before':
+            return 'BEFORE'
+        elif status and ('waiting' not in status.values()) and ('started' not in status.values()):
+            if 'error' in status.values():
+                return ''
+            elif 'canceled' in status.values():
+                return 'REVOKED'
+            else:
+                return 'SUCCESS'
+        elif cancel_flg:
+            return 'REVOKED'
+        elif not status:
+            return 'SUCCESS'
+        else:
+            return 'STARTED'
+
     export_status = False
     download_uri = None
     message = None
     run_message = ""
     status = ""
+    start_time = ""
+    finish_time = ""
 
     try:
         task_id = get_redis_cache(cache_key)
         download_uri = get_redis_cache(cache_uri)
         message = get_redis_cache(cache_msg)
         run_message = get_redis_cache(run_msg)
+        write_file_info = get_redis_cache(file_msg)
         if task_id:
-            task = AsyncResult(task_id)
-            status_cond = task.successful() or task.failed() or task.state == "REVOKED"
-            status = task.state
-            export_status = True if not status_cond else False
+            write_file_data = json.loads(write_file_info)
+            if write_file_data:
+                write_file_status = _check_write_file_info(write_file_data)
+                task = AsyncResult(task_id)
+                status_cond = (task.successful() or task.failed() or task.state == "REVOKED") \
+                    and write_file_status != 'STARTED'
+                if not write_file_status == 'BEFORE':
+                    status = write_file_status
+                export_status = True if not status_cond else False
+                start_time = write_file_data.get("start_time")
+                finish_time = write_file_data.get("finish_time")
+                if status_cond and write_file_status == 'SUCCESS':
+                    export_path = write_file_data['export_path']
+                    is_dir = not os.path.isdir(os.path.join(export_path, 'data'))
+                    if is_dir:
+                        bagit.make_bag(export_path)
+                        shutil.make_archive(export_path, "zip", export_path)
+                        with open(export_path + ".zip", "rb") as file:
+                            src = FileInstance.create()
+                            src.set_contents(file, default_location=Location.get_default().uri)
+                        db.session.commit()
+                        download_uri = src.uri
+                        _timezone = current_app.config.get("WEKO_INDEX_TREE_PUBLIC_DEFAULT_TIMEZONE")
+                        finish_time = datetime.now(pytz.timezone(_timezone)).strftime('%Y/%m/%d %H:%M:%S')
+                        write_file_data = json.loads(get_redis_cache(file_msg))
+                        write_file_data["finish_time"] = finish_time
+                        current_app.logger.info("Bulk export all finished at {}.".format(finish_time))
+                        reset_redis_cache(file_msg, json.dumps(write_file_data))
+                        reset_redis_cache(cache_uri, download_uri)
+                        reset_redis_cache(run_msg, "")
+                        delete_exported_task.apply_async(
+                            args=(
+                                download_uri,
+                                cache_uri,
+                                cache_key,
+                                export_path
+                            ),
+                            countdown=int(_expired_time) * 60,
+                        )
+                        os.remove(export_path + ".zip")
     except Exception as ex:
         current_app.logger.error(ex)
         export_status = False
-    return export_status, download_uri, message, run_message, status
-
+    return export_status, download_uri, message, run_message, \
+        status, start_time, finish_time
 
 def handle_check_item_is_locked(item):
     """Check an item is being edit or deleted.

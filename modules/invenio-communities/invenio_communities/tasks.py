@@ -29,9 +29,11 @@ from __future__ import absolute_import, print_function
 from datetime import datetime
 
 from celery import shared_task
+from flask import current_app
 from invenio_db import db
 
 from .models import Community, InclusionRequest
+from weko_handle.api import Handle
 
 
 # @shared_task(ignore_result=True)
@@ -53,3 +55,12 @@ def delete_expired_requests():
         db.session.commit()
     except Exception as ex:
         db.session.rollback()
+
+@shared_task(ignore_result=True)
+def delete_handle(hdl):
+        weko_handle = Handle()
+        handle = weko_handle.delete_handle(hdl)
+        if handle:
+            current_app.logger.info(hdl + ' handle deleted successfully.')
+        else:
+            current_app.logger.info( hdl + " handle delete failed.")

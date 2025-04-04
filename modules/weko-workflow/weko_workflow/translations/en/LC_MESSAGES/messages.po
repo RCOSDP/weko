@@ -203,6 +203,38 @@ msgstr ""
 msgid "error"
 msgstr ""
 
+#: weko_workflow/views.py:3585 weko_workflow/views.py:3638
+msgid "This Item is being edited."
+msgstr ""
+
+#: weko_workflow/views.py:3601
+msgid "Record does not exist."
+msgstr ""
+
+#: weko_workflow/views.py:3612
+msgid "You are not allowed to edit this item."
+msgstr ""
+
+#: weko_workflow/views.py:3617
+msgid "You do not even have an ItemType."
+msgstr ""
+
+#: weko_workflow/views.py:3623
+msgid "Dependency ItemType not found."
+msgstr ""
+
+#: weko_workflow/views.py:3628
+msgid "Item cannot be edited because the import is in progress."
+msgstr ""
+
+#: weko_workflow/views.py:3654
+msgid "Workflow setting does not exist."
+msgstr ""
+
+#: weko_workflow/views.py:3667 weko_workflow/views.py:3674
+msgid "An error has occurred."
+msgstr ""
+
 #: weko_workflow/templates/weko_workflow/helpers.html:57
 #: weko_workflow/templates/weko_workflow/helpers.html:63
 msgid "Input Field"

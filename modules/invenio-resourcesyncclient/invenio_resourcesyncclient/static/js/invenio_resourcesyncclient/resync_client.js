@@ -20,6 +20,7 @@ const urlGetLogs = window.location.origin + "/admin/resync/get_logs";
 const urlSync = window.location.origin + "/admin/resync/run_sync";
 const urltoggleRunning = window.location.origin + "/admin/resync/toggle_auto";
 const urlGetTreeList = window.location.origin + "/api/tree";
+const urlGetRepositoryList = window.location.origin + "/admin/resync/get_repository";
 const status = JSON.parse($("#status").text())
 const resync_mode = JSON.parse($("#resync_mode").text())
 const saving_format = JSON.parse($("#saving_format").text())
@@ -37,17 +38,17 @@ const default_state = {
 };
 
 const default_label = {
-          repository_name: "Repository Name",
-          status: 'Status',
-          index_id: "Index Id",
-          index_name: "Index Name",
-          base_url: "Base Url",
-          resync_mode: "Mode",
-          saving_format: "Saving Format",
-          from_date:"From Date",
-          to_date: "To Date",
-          interval_by_day: "Interval by Day"
-        }
+  repository_name: "Repository Name",
+  status: 'Status',
+  index_id: "Index Id",
+  index_name: "Index Name",
+  base_url: "Base Url",
+  resync_mode: "Mode",
+  saving_format: "Saving Format",
+  from_date: "From Date",
+  to_date: "To Date",
+  interval_by_day: "Interval by Day"
+}
 
 class MainLayout extends React.Component {
   constructor(props) {
@@ -82,7 +83,7 @@ class MainLayout extends React.Component {
     this.handleChangeTab = this.handleChangeTab.bind(this);
   }
 
-  componentDidMount() {}
+  componentDidMount() { }
 
   handleChangeTab(select_tab, select_item = null) {
     const { tabs } = this.state;
@@ -338,8 +339,7 @@ class CreateResyncComponent extends React.Component {
     this.handleChangeState = this.handleChangeState.bind(this);
     this.handleChangeURL = this.handleChangeURL.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
-    this.generateTreeList = this.generateTreeList.bind(this);
-    this.getTreeList = this.getTreeList.bind(this);
+    this.getRepositoryList = this.getRepositoryList.bind(this);
   }
 
   handleChangeState(name, value) {
@@ -362,21 +362,21 @@ class CreateResyncComponent extends React.Component {
     const { repository_id } = state;
     const url_path = window.location.origin + "/resync/" + repository_id;
     this.handleChangeState("url_path", url_path);
-}
+  }
 
   handleSubmit(add_another) {
-    if((this.state.from_date || this.state.resync_mode === 'Incremental') && !moment(this.state.from_date,'YYYY/MM/DD', true).isValid()) {
+    if ((this.state.from_date || this.state.resync_mode === 'Incremental') && !moment(this.state.from_date, 'YYYY/MM/DD', true).isValid()) {
       alert(LABELS['lblResyncClientFromDate FormatErrorMsg']);
       return;
     }
-    if(this.state.to_date && !moment(this.state.to_date,'YYYY/MM/DD', true).isValid()) {
+    if (this.state.to_date && !moment(this.state.to_date, 'YYYY/MM/DD', true).isValid()) {
       alert(LABELS['lblResyncClientUntilDate FormatErrorMsg']);
       return;
     }
     const new_data = { ...this.state };
     delete new_data.tree_list;
-    const {mode} = this.props
-    const url = mode ==="edit" ? urlUpdate+"/"+new_data.id : urlCreate
+    const { mode } = this.props
+    const url = mode === "edit" ? urlUpdate + "/" + new_data.id : urlCreate
     fetch(url, {
       method: "POST",
       body: JSON.stringify(new_data),
@@ -387,7 +387,7 @@ class CreateResyncComponent extends React.Component {
       .then(res => res.json())
       .then(res => {
         if (res.success) {
-          if(add_another){
+          if (add_another) {
             this.setState({
               ...default_state
             })
@@ -401,8 +401,8 @@ class CreateResyncComponent extends React.Component {
       .catch(() => alert("Error in Create"));
   }
 
-  getTreeList() {
-    fetch(urlGetTreeList, {
+  getRepositoryList() {
+    fetch(urlGetRepositoryList, {
       method: "GET",
       headers: {
         "Content-Type": "application/json"
@@ -410,45 +410,27 @@ class CreateResyncComponent extends React.Component {
     })
       .then(res => res.json())
       .then(res => {
-        let treeList = [];
-        res.map(item => {
-          treeList = [...treeList, ...this.generateTreeList(item, "")];
-        });
+        const filteredList = res.filter(item => item.value !== "Root Index");
         this.setState({
-          tree_list: treeList
+          tree_list: filteredList
         });
       })
-      .catch(() => alert("Error in get Tree list"));
-  }
-
-  generateTreeList(item, path = "") {
-    const real_path = path
-      ? path + " / " + item.value + " <ID:" + item.id + ">"
-      : item.value + " <ID:" + item.id + ">";
-    if (!item.children.length) {
-      return [{ id: item.id, value: real_path }];
-    } else {
-      let result = [];
-      item.children.map(i => {
-        result = [...result, ...this.generateTreeList(i, real_path)];
-      });
-      return [{ id: item.id, value: real_path }, ...result];
-    }
+      .catch(() => alert("Error in get Repository list"));
   }
 
   componentDidMount() {
-    this.getTreeList();
-    const {mode} = this.props
+    this.getRepositoryList();
+    const { mode } = this.props
     initDatepicker();
-    this.state.from_date = this.state.from_date ? moment(this.state.from_date).format("YYYY/MM/DD"):"";
-    this.state.to_date = this.state.to_date ? moment(this.state.to_date).format("YYYY/MM/DD"):"";
+    this.state.from_date = this.state.from_date ? moment(this.state.from_date).format("YYYY/MM/DD") : "";
+    this.state.to_date = this.state.to_date ? moment(this.state.to_date).format("YYYY/MM/DD") : "";
     $("#from_date").val(this.state.from_date);
     $("#to_date").val(this.state.to_date);
   }
 
   render() {
     const { state } = this;
-    const {mode} = this.props
+    const { mode } = this.props
     return (
       <div className="create-resource">
 //repository_name
@@ -463,9 +445,9 @@ class CreateResyncComponent extends React.Component {
               value={state.repository_name}
               name="repository_name"
               onChange={e => {
-                      const value = e.target.value;
-                      this.handleChangeState("repository_name", value);
-                    }}
+                const value = e.target.value;
+                this.handleChangeState("repository_name", value);
+              }}
             ></input>
           </div>
         </div>
@@ -481,9 +463,9 @@ class CreateResyncComponent extends React.Component {
               value={state.base_url}
               name="base_url"
               onChange={e => {
-                      const value = e.target.value;
-                      this.handleChangeState("base_url", value);
-                    }}
+                const value = e.target.value;
+                this.handleChangeState("base_url", value);
+              }}
             ></input>
           </div>
         </div>
@@ -495,28 +477,28 @@ class CreateResyncComponent extends React.Component {
           </div>
           <div className="col-md-10">
             <div className="col-md-10">
-            <div className="row">
-            {
-              Object.keys(status).map((item, key) => {
-                return(
-                  <div className="col-md-2 flex">
-                    <input
-                    checked={state.status===status[item]}
-                    type="radio"
-                    name="status"
-                    value={status[item]}
-                    onChange={e => {
-                      const value = e.target.value;
-                      this.handleChangeState("status", value);
-                    }}
-                    ></input>
-                    <div className="p-l-10">{status[item]}</div>
-                  </div>
-                )
-              })
-            }
+              <div className="row">
+                {
+                  Object.keys(status).map((item, key) => {
+                    return (
+                      <div className="col-md-2 flex">
+                        <input
+                          checked={state.status === status[item]}
+                          type="radio"
+                          name="status"
+                          value={status[item]}
+                          onChange={e => {
+                            const value = e.target.value;
+                            this.handleChangeState("status", value);
+                          }}
+                        ></input>
+                        <div className="p-l-10">{status[item]}</div>
+                      </div>
+                    )
+                  })
+                }
+              </div>
             </div>
-          </div>
           </div>
         </div>
 //interval_by_day
@@ -535,7 +517,7 @@ class CreateResyncComponent extends React.Component {
                   name="interval_by_day"
                   onChange={e => {
                     let value = e.target.value;
-                    value  = value >=1 ? value : 1
+                    value = value >= 1 ? value : 1
                     this.handleChangeState("interval_by_day", parseInt(value));
                   }}
                 ></input>
@@ -646,33 +628,33 @@ class CreateResyncComponent extends React.Component {
         <div className="row form-group flex-baseline">
           <div className="col-md-2"></div>
           <div className="col-md-10">
-          {
-            mode === 'create' ? <span>
-              <button
-                className="btn btn-primary"
-                onClick={() => {
-                  this.handleSubmit();
-                }}
-              >
-                Create
-              </button>
-              <button className="btn btn-default" onClick={() => {
-                this.handleSubmit(true);
+            {
+              mode === 'create' ? <span>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    this.handleSubmit();
+                  }}
+                >
+                  Create
+                </button>
+                <button className="btn btn-default" onClick={() => {
+                  this.handleSubmit(true);
 
-              }}>
-                Create add Add Another
-              </button>
-            </span> : <span>
-              <button
-                className="btn btn-primary"
-                onClick={() => {
-                  this.handleSubmit();
-                }}
-              >
-                Edit
-              </button>
-            </span>
-          }
+                }}>
+                  Create add Add Another
+                </button>
+              </span> : <span>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    this.handleSubmit();
+                  }}
+                >
+                  Edit
+                </button>
+              </span>
+            }
             <button
               className="btn btn-danger"
               onClick={() => {
@@ -696,12 +678,12 @@ class DetailResourceComponent extends React.Component {
       ...props.select_item,
       logs: []
     }
-    this.state.from_date = this.state.from_date? moment(this.state.from_date).format("YYYY/MM/DD") : "";
-    this.state.to_date = this.state.to_date? moment(this.state.to_date).format("YYYY/MM/DD"): "";
+    this.state.from_date = this.state.from_date ? moment(this.state.from_date).format("YYYY/MM/DD") : "";
+    this.state.to_date = this.state.to_date ? moment(this.state.to_date).format("YYYY/MM/DD") : "";
   }
 
   handleSync() {
-    const {id} = this.props.select_item
+    const { id } = this.props.select_item
     const url = urlSync + "/" + id
     fetch(url, {
       method: "GET",
@@ -711,7 +693,7 @@ class DetailResourceComponent extends React.Component {
     })
       .then(res => res.json())
       .then(res => {
-        if (res.success){
+        if (res.success) {
           alert("Sync Success")
           this.handleGetLogs()
         }
@@ -720,8 +702,8 @@ class DetailResourceComponent extends React.Component {
   }
 
   handleImport() {
-    const {id} = this.props.select_item
-    const url = urlRunResync+"/"+id
+    const { id } = this.props.select_item
+    const url = urlRunResync + "/" + id
     fetch(url, {
       method: "GET",
       headers: {
@@ -737,39 +719,39 @@ class DetailResourceComponent extends React.Component {
   }
 
   handleGetLogs() {
-    const {id} = this.props.select_item
-    const url = urlGetLogs+"/"+id
+    const { id } = this.props.select_item
+    const url = urlGetLogs + "/" + id
     fetch(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json"
       }
-  })
-    .then(res => res.json())
-    .then(res => {
-      if (res.success){
-        this.setState({
-          logs: res.logs || []
-        })
-        const that = this
-        if (res.logs.filter(item => !item.end_time).length) {
-          setTimeout(function(){
-            that.handleGetLogs()
-          }, 3000);
-        }
-      }
-
     })
-    .catch(() => alert("Error in get logs"));
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          this.setState({
+            logs: res.logs || []
+          })
+          const that = this
+          if (res.logs.filter(item => !item.end_time).length) {
+            setTimeout(function () {
+              that.handleGetLogs()
+            }, 3000);
+          }
+        }
+
+      })
+      .catch(() => alert("Error in get logs"));
   }
 
   toggleRunning() {
-    const {id} = this.state;
-    const {is_running} = this.state;
-    const url =urltoggleRunning+"/"+id
+    const { id } = this.state;
+    const { is_running } = this.state;
+    const url = urltoggleRunning + "/" + id
     fetch(url, {
       method: "POST",
-      body: JSON.stringify({is_running: !is_running}),
+      body: JSON.stringify({ is_running: !is_running }),
       headers: {
         "Content-Type": "application/json"
       }
@@ -787,7 +769,7 @@ class DetailResourceComponent extends React.Component {
       .catch(() => alert("Error in Create"));
   }
 
-  componentDidMount(){
+  componentDidMount() {
     this.handleGetLogs()
   }
 
@@ -839,9 +821,9 @@ class DetailResourceComponent extends React.Component {
                   <tr>
                     <td><b>Running</b></td>
                     <td><button
-                      className={`btn ${this.state.is_running ? "btn-success": "btn-danger"}`}
-                      onClick={()=>{this.toggleRunning()}}
-                      >{this.state.is_running === true ? "ON" : "OFF"}</button></td>
+                      className={`btn ${this.state.is_running ? "btn-success" : "btn-danger"}`}
+                      onClick={() => { this.toggleRunning() }}
+                    >{this.state.is_running === true ? "ON" : "OFF"}</button></td>
                   </tr>
                 ) : (
                   <tr>
@@ -849,13 +831,13 @@ class DetailResourceComponent extends React.Component {
                     <td>
                       <button
                         className="btn btn-primary"
-                        onClick={()=>this.handleSync()}
+                        onClick={() => this.handleSync()}
                       >Sync</button>
                       {
                         this.state.resync_mode !== resync_mode.audit && <button
-                        className="btn btn-primary"
-                        onClick={()=>this.handleImport()}
-                       >Import</button>
+                          className="btn btn-primary"
+                          onClick={() => this.handleImport()}
+                        >Import</button>
                       }
 
                     </td>
@@ -866,53 +848,53 @@ class DetailResourceComponent extends React.Component {
             </tbody>
           </table>
           <h3>Running logs</h3>
-            <div className="content_table">
-              <table className="table table-hover table-bordered searchable">
-                <thead>
-                 <tr>
-                    <th>#</th>
-                    <th>{LABELS['lblResyncClientStart Time']}</th>
-                    <th>{LABELS['lblResyncClientEnd Time']}</th>
-                    <th>{LABELS['lblResyncClientStatus']}</th>
-                    <th>{LABELS['lblResyncClientLog Type']}</th>
-                    <th>{LABELS['lblResyncClientProcessed Items']}</th>
-                    <th>{LABELS['lblResyncClientCreated Items']}</th>
-                    <th>{LABELS['lblResyncClientUpdated Items']}</th>
-                    <th>{LABELS['lblResyncClientDeleted Items']}</th>
-                    <th>{LABELS['lblResyncClientError Items']}</th>
-                    <th>Error Message, Url</th>
-                 </tr>
-                </thead>
-                <tbody>
-                    {
-                      this.state.logs.map((item,key) => {
-                        return (
-                          <tr key={key}>
-                            <td>{key+1}</td>
-                            <td>{item.start_time}</td>
-                            <td>{item.end_time}</td>
-                            <td>{item.status}</td>
-                            <td>{item.log_type}</td>
-                            <td>{item.counter.processed_items}</td>
-                            <td>{item.counter.created_items}</td>
-                            <td>{item.counter.updated_items}</td>
-                            <td>{item.counter.deleted_items}</td>
-                            <td>{item.counter.error_items}</td>
-                            <td>{item.errmsg}</td>
-                         </tr>
-                        )
-                      })
-                    }
-                </tbody>
-              </table>
-            </div>
+          <div className="content_table">
+            <table className="table table-hover table-bordered searchable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>{LABELS['lblResyncClientStart Time']}</th>
+                  <th>{LABELS['lblResyncClientEnd Time']}</th>
+                  <th>{LABELS['lblResyncClientStatus']}</th>
+                  <th>{LABELS['lblResyncClientLog Type']}</th>
+                  <th>{LABELS['lblResyncClientProcessed Items']}</th>
+                  <th>{LABELS['lblResyncClientCreated Items']}</th>
+                  <th>{LABELS['lblResyncClientUpdated Items']}</th>
+                  <th>{LABELS['lblResyncClientDeleted Items']}</th>
+                  <th>{LABELS['lblResyncClientError Items']}</th>
+                  <th>Error Message, Url</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  this.state.logs.map((item, key) => {
+                    return (
+                      <tr key={key}>
+                        <td>{key + 1}</td>
+                        <td>{item.start_time}</td>
+                        <td>{item.end_time}</td>
+                        <td>{item.status}</td>
+                        <td>{item.log_type}</td>
+                        <td>{item.counter.processed_items}</td>
+                        <td>{item.counter.created_items}</td>
+                        <td>{item.counter.updated_items}</td>
+                        <td>{item.counter.deleted_items}</td>
+                        <td>{item.counter.error_items}</td>
+                        <td>{item.errmsg}</td>
+                      </tr>
+                    )
+                  })
+                }
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     );
   }
 }
 
-$(function() {
+$(function () {
   ReactDOM.render(<MainLayout />, document.getElementById("root"));
 });
 
@@ -933,24 +915,24 @@ class ComponentDatePicker extends React.Component {
     }
   }
 
-  componentDidMount(){
+  componentDidMount() {
     const that = this
-    const {props} = this
-    $("#"+this.props.id_component).change(
-      function(event) {
-          const value = event.target.value;
-          that.props.onChange(that.props.name,value)
-        }
+    const { props } = this
+    $("#" + this.props.id_component).change(
+      function (event) {
+        const value = event.target.value;
+        that.props.onChange(that.props.name, value)
+      }
     )
   }
 
-  componentWillUnmount(){
-    const {props} = this
-    $("#"+props.id_component).off('change');
+  componentWillUnmount() {
+    const { props } = this
+    $("#" + props.id_component).off('change');
   }
 
   render() {
-    const {props} = this
+    const { props } = this
     return (
       <div style={this.styleContainer}>
         <div class={this.state.defaultClass}>
@@ -959,12 +941,12 @@ class ComponentDatePicker extends React.Component {
             name={props.component_name}
             id={props.id_component}
             type="text"
-            />
+          />
           <div
             id={props.error_id}
-            style={{color: 'red'}}
+            style={{ color: 'red' }}
             className={this.state.errorMessageClass}
-            >Format is incorrect!</div>
+          >Format is incorrect!</div>
         </div>
       </div>
     )
@@ -977,13 +959,13 @@ function initDatepicker() {
     autoclose: true,
     forceParse: false
   })
-  .on("changeDate", function(e) {
-  });
+    .on("changeDate", function (e) {
+    });
   $("#to_date").datepicker({
     format: "yyyy/mm/dd",
     autoclose: true,
     forceParse: false
   })
-  .on("changeDate", function(e) {
-  });
+    .on("changeDate", function (e) {
+    });
 }

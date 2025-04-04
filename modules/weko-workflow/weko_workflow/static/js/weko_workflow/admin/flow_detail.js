@@ -147,6 +147,7 @@ $(document).ready(function () {
   $('#btn-new-flow').on('click', function () {
     let flow_name = $('#txt_flow_name').val();
     let for_delete = $('#chk_for_delete').is(':checked');
+    let repository_id = $('#txt_repo_id').val();
     if (flow_name.length == 0) {
       $('#div_flow_name').addClass('has-error');
       $('#txt_flow_name').focus();
@@ -157,7 +158,11 @@ $(document).ready(function () {
       method: 'POST',
       async: true,
       contentType: 'application/json',
-      data: JSON.stringify({ 'flow_name': flow_name, 'for_delete': for_delete }),
+      data: JSON.stringify({
+        'flow_name': flow_name,
+        'for_delete': for_delete,
+        'repository_id': repository_id
+      }),
       success: function (data, status) {
         if (data.code == 0) {
           document.location.href = data.data.redirect;
@@ -177,6 +182,7 @@ $(document).ready(function () {
   $('#btn-upt-flow').on('click', function () {
     let flow_name = $('#txt_flow_name').val();
     let for_delete = $('#chk_for_delete').is(':checked');
+    let repository_id = $('#txt_repo_id').val();
     if (flow_name.length == 0) {
       $('#div_flow_name').addClass('has-error');
       $('#txt_flow_name').focus();
@@ -187,7 +193,11 @@ $(document).ready(function () {
       method: 'POST',
       async: true,
       contentType: 'application/json',
-      data: JSON.stringify({ 'flow_name': flow_name, 'for_delete': for_delete }),
+      data: JSON.stringify({
+        'flow_name': flow_name,
+        'for_delete': for_delete,
+        'repository_id': repository_id
+      }),
       success: function (data, status) {
         document.querySelectorAll('#inputModal').forEach(element => {
           element.innerHTML = data.msg

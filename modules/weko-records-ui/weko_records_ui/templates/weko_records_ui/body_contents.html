@@ -383,14 +383,14 @@
                   <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> {{_('Delete')}}</a>
               {% endif %}
               {% if active_versions|length > 1 %}
-                {%- if not pid | pid_value_version %} 
+                {%- if not pid | pid_value_version %}
                   <a class="btn btn-danger delete-button" style="width: 180px" id="btn_ver_delete" ng-click="openConfirm(
                     'del_ver',
                     '{{'/records/soft_delete/del_ver_'+ all_versions[-1].pid_value}}',
                     '{{url_for('weko_search_ui.search')}}',
                     '{{all_versions[-1].pid_value}}')">
                     <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> {{_('Delete this version')}}</a>
-                {%- else -%} 
+                {%- else -%}
                     <a class="btn btn-danger delete-button" style="width: 180px" id="btn_ver_delete" ng-click="openConfirm(
                       'del_ver',
                       '{{'/records/soft_delete/del_ver_'+ pid.pid_value}}',
@@ -443,6 +443,9 @@
           {% endif %}
 		  {% if config.WEKO_RECORDS_UI_DISPLAY_EXPORT_BOX_FLG %}
               {%- include "weko_records_ui/box/export.html" %}
+		  {% endif %}
+		  {% if config.WEKO_RECORDS_UI_DISPLAY_COMMUNITIES_BOX_FLG %}
+             {%- include "weko_records_ui/box/communities.html" %}
 		  {% endif %}
           <!-- end demo block -->
         </div>

@@ -4,6 +4,94 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from flask_login.utils import login_user
 import json
+import uuid
+
+from flask_login.utils import login_user
+import pytest
+from unittest.mock import patch
+
+from weko_workflow.api import Flow, WorkActivity, WorkFlow, GetCommunity
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_Flow_create_flow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_Flow_create_flow(app, client, users, db, action_data):
+    with app.test_request_context():
+        _flow = Flow()
+
+        flow = _flow.create_flow({'flow_name': 'create_flow_test_root', 'repository_id': 'Root Index'})
+        assert flow.flow_name == 'create_flow_test_root'
+        assert flow.repository_id == 'Root Index'
+
+        flow = _flow.create_flow({'flow_name': 'create_flow_test_1', 'repository_id': 'comm01'})
+        assert flow.flow_name == 'create_flow_test_1'
+        assert flow.repository_id == 'comm01'
+
+        with pytest.raises(ValueError, match='Flow name cannot be empty.'):
+            _flow.create_flow({'flow_name': '', 'repository_id': 'com1'})
+
+        with pytest.raises(ValueError, match='Repository cannot be empty.'):
+            _flow.create_flow({'flow_name': 'test_flow'})
+
+        with pytest.raises(ValueError, match='Flow name is already in use.'):
+            _flow.create_flow({'flow_name': 'create_flow_test_root', 'repository_id': 'Root Index'})
+
+        with pytest.raises(ValueError, match='Repository is not found.'):
+            _flow.create_flow({'flow_name': 'test_flow', 'repository_id': '999'})
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_Flow_upt_flow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_Flow_upt_flow(app, client, users, db, action_data):
+    with app.test_request_context():
+        _flow = Flow()
+        flow = _flow.create_flow({'flow_name': 'upt_flow_test', 'repository_id': 'Root Index'})
+
+        flow = _flow.upt_flow(flow.flow_id, {'flow_name': 'upt_flow_test_1', 'repository_id': 'Root Index'})
+        assert flow.flow_name == 'upt_flow_test_1'
+        assert flow.repository_id == 'Root Index'
+
+        flow = _flow.upt_flow(flow.flow_id, {'flow_name': 'upt_flow_test_1', 'repository_id': 'comm01'})
+        assert flow.flow_name == 'upt_flow_test_1'
+        assert flow.repository_id == 'comm01'
+
+        with pytest.raises(ValueError, match='Flow name cannot be empty.'):
+            _flow.upt_flow(flow.flow_id, {'flow_name': '', 'repository_id': 'Root Index'})
+
+        with pytest.raises(ValueError, match='Repository cannot be empty.'):
+            _flow.upt_flow(flow.flow_id, {'flow_name': 'upt_flow_test_1', 'repository_id': ''})
+
+        flow1 = _flow.create_flow({'flow_name': 'upt_flow_test', 'repository_id': 'comm01'})
+        db.session.add(flow)
+        db.session.add(flow1)
+        db.session.commit()
+        with pytest.raises(ValueError, match='Flow name is already in use.'):
+            _flow.upt_flow(flow.flow_id, {'flow_name': 'upt_flow_test', 'repository_id': 'Root Index'})
+
+        with pytest.raises(ValueError, match='Repository is not found.'):
+            _flow.upt_flow(flow.flow_id, {'flow_name': 'test_flow', 'repository_id': '999'})
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_Flow_get_flow_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_Flow_get_flow_list(app, client, users, db, action_data):
+    with app.test_request_context():
+        _flow = Flow()
+        flow = _flow.create_flow({'flow_name': 'get_flow_list_test', 'repository_id': 'Root Index'})
+        db.session.add(flow)
+        db.session.commit()
+
+        login_user(users[2]["obj"])
+        res = _flow.get_flow_list()
+        assert len(res) == 1
+        assert res[0] == flow
+
+        login_user(users[3]["obj"])
+        res = _flow.get_flow_list()
+        assert len(res) == 0
+
+        flow_com = _flow.create_flow({'flow_name': 'flow_comm01', 'repository_id': 'comm01'})
+        db.session.add(flow_com)
+        db.session.commit()
+
+        res = _flow.get_flow_list()
+        assert len(res) == 1
+        assert res[0] == flow_com
+
 
 from weko_workflow.api import Flow, WorkActivity, _WorkFlow,WorkFlow
 
@@ -14,7 +102,7 @@ def test_Flow_action(app, client, users, db, action_data):
     with app.test_request_context():
         login_user(users[2]["obj"])
         _flow = Flow()
-        flow = _flow.create_flow({'flow_name': 'create_flow_test'})
+        flow = _flow.create_flow({'flow_name': 'create_flow_test', 'repository_id': 'Root Index'})
         assert flow.flow_name == 'create_flow_test'
 
         _flow_data = [
@@ -94,6 +182,52 @@ def test_Flow_get_flow_action_list(db,workflow):
 def test_WorkActivity_count_waiting_approval_by_workflow_id(app, db, db_register):
     activity = WorkActivity()
     assert activity.count_waiting_approval_by_workflow_id(1) == 0
+
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkFlow_upt_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_WorkFlow_upt_workflow(app, db, workflow):
+    w = workflow["workflow"]
+    _workflow = WorkFlow()
+    data = dict(flows_id=w.flows_id,
+                flows_name='test workflow01',
+                itemtype_id=1,
+                flow_id=1,
+                index_tree_id=None,
+                open_restricted=False,
+                location_id=None,
+                is_gakuninrdm=False,
+                repository_id='Root Index')
+
+    res = _workflow.upt_workflow(data)
+    for key in data:
+        assert getattr(res, key) == data[key]
+
+    res = _workflow.upt_workflow({'flows_id': uuid.uuid4()})
+    assert res is None
+
+    with pytest.raises(AssertionError):
+        _workflow.upt_workflow(None)
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkFlow_get_workflow_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_WorkFlow_get_workflow_list(app, db, workflow, users):
+    w = workflow["workflow"]
+    _workflow = WorkFlow()
+    res = _workflow.get_workflow_list()
+    assert len(res) == 1
+
+    user = users[2]["obj"]
+    res = _workflow.get_workflow_list(user=user)
+    assert len(res) == 1
+
+    user = users[3]["obj"]
+    res = _workflow.get_workflow_list(user=user)
+    assert len(res) == 0
+
+    w.repository_id = "comm01"
+    db.session.commit()
+    user = users[3]["obj"]
+    res = _workflow.get_workflow_list(user=user)
+    assert len(res) == 1
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_filter_by_date -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_WorkActivity_filter_by_date(app, db):
@@ -196,6 +330,11 @@ def test_WorkActivity_get_corresponding_usage_activities(app, db_register):
     assert usage_application_list == {'activity_data_type': {}, 'activity_ids': []}
     assert output_report_list == {'activity_data_type': {}, 'activity_ids': []}
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_GetCommunity_get_community_by_root_node_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_GetCommunity_get_community_by_root_node_id(db):
+    communities = GetCommunity.get_community_by_root_node_id(1738541618993)
+    assert communities is not None
+
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_get_deleted_workflow_list -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_deleted_workflow_list(app,db,workflow):
     res = WorkFlow().get_deleted_workflow_list()
@@ -225,33 +364,33 @@ def test_workactivity_notify_about_activity(app, db, db_register, mocker):
     mock_send_mail_request_approval = mocker.patch.object(activity, "send_mail_request_approval")
     mock_send_mail_item_approved = mocker.patch.object(activity, "send_mail_item_approved")
     mock_send_mail_item_rejected = mocker.patch.object(activity, "send_mail_item_rejected")
-    
+
     # with WEKO_NOTIFICATIONS is True
     app.config["WEKO_NOTIFICATIONS"] = True
     activity1 = db_register["activities"][0]
-    
+
     activity.notify_about_activity(activity1.activity_id, 'registered')
     mock_notify_item_registered.assert_called_once_with(activity1)
     mock_send_mail_item_registered.assert_called_once_with(activity1)
-    
+
     activity.notify_about_activity(activity1.activity_id, 'request_approval')
     mock_notify_request_approval.assert_called_once_with(activity1)
     mock_send_mail_request_approval.assert_called_once_with(activity1)
-    
+
     activity.notify_about_activity(activity1.activity_id, 'approved')
     mock_notify_item_approved.assert_called_once_with(activity1)
     mock_send_mail_item_approved.assert_called_once_with(activity1)
-    
+
     activity.notify_about_activity(activity1.activity_id, 'rejected')
     mock_notify_item_rejected.assert_called_once_with(activity1)
     mock_send_mail_item_rejected.assert_called_once_with(activity1)
-    
+
     mock_notify_item_rejected.reset_mock()
     mock_send_mail_item_rejected.reset_mock()
     activity.notify_about_activity(activity1.activity_id, 'invalid_case')
     mock_notify_item_rejected.assert_not_called()
     mock_send_mail_item_rejected.assert_not_called()
-    
+
     # with WEKO_NOTIFICATIONS is False
     mock_notify_item_registered.reset_mock()
     mock_send_mail_item_registered.reset_mock()
@@ -259,7 +398,7 @@ def test_workactivity_notify_about_activity(app, db, db_register, mocker):
     assert activity.notify_about_activity(activity1.activity_id, 'registered') == None
     mock_notify_item_registered.assert_not_called()
     mock_send_mail_item_registered.assert_not_called()
-    
+
     # with restricted workflow
     activity1.workflow.open_restricted = True
     app.config["WEKO_NOTIFICATIONS"] = True
@@ -268,8 +407,8 @@ def test_workactivity_notify_about_activity(app, db, db_register, mocker):
     assert activity.notify_about_activity(activity1.activity_id, 'registered') == None
     mock_notify_item_registered.assert_not_called()
     mock_send_mail_item_registered.assert_not_called()
-    
-    
+
+
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_send_mail_item_registered -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_workactivity_send_mail_item_registered(app, users, mocker):
     mock_activity1 = MagicMock(
@@ -307,18 +446,18 @@ def test_workactivity_send_mail_item_registered(app, users, mocker):
     assert args[3] == {}  # profiles_dict
     assert args[4] == 'email_nortification_item_registered_{language}.tpl'  # template_file
     assert callable(args[5])  # data_callback
-    
+
     mock_target = MagicMock(email="test@example.com")
     mock_profile = MagicMock(username="test_user", timezone="Asia/Tokyo")
     result = args[5](mock_activity1, mock_target, mock_profile)
     assert result["item_title"] == "Test Item"
     assert result["submitter_name"] == "test_user"
     assert "record_url" in result
-    
+
     activity.send_mail_item_registered(mock_activity2)
     args, kwargs = mock_send_notification_email.call_args
     assert args[1] == []
-    
+
     mocker.patch("weko_workflow.api.PersistentIdentifier.get_by_object", side_effect=SQLAlchemyError)
     res = activity.send_mail_item_registered(mock_activity2)
     assert res is None
@@ -376,25 +515,25 @@ def test_workactivity_send_mail_request_approval(app, users, db, db_register, mo
         mock_send_notification_email.assert_called_once()
         args, kwargs = mock_send_notification_email.call_args
         assert callable(args[5])  # data_callback
-        
+
         mock_target = MagicMock(email="test@example.com")
         mock_profile = MagicMock(username="test_user", timezone="Asia/Tokyo")
         result = args[5](mock_activity1, mock_target, mock_profile)
         assert result["item_title"] == "Test Item"
         assert result["approver_name"] == "test_user"
         assert "approval_url" in result
-        
+
         # self request
         activity.send_mail_request_approval(mock_activity2)
         args, kwargs = mock_send_notification_email.call_args
         assert users[0]["obj"] not in args[1]
-        
+
         # with community admin
         with patch("weko_workflow.api.GetCommunity.get_community_by_id", return_value=MagicMock(id_role=4)):
             activity.send_mail_request_approval(mock_activity3)
             args, kwargs = mock_send_notification_email.call_args
             assert users[3]["obj"] in args[1]
-        
+
         # with action_user
         flow_action = FlowAction(status='N',
                      flow_id=flow_define.flow_id,
@@ -417,7 +556,7 @@ def test_workactivity_send_mail_request_approval(app, users, db, db_register, mo
         activity.send_mail_request_approval(mock_activity2)
         args, kwargs = mock_send_notification_email.call_args
         assert users[7]["obj"] in args[1]
-        
+
         # with action_user_exclude
         flow_action_role.action_role_exclude = True
         flow_action_role.action_role = 1
@@ -427,7 +566,7 @@ def test_workactivity_send_mail_request_approval(app, users, db, db_register, mo
         activity.send_mail_request_approval(mock_activity2)
         args, kwargs = mock_send_notification_email.call_args
         assert users[6]["obj"] not in args[1]
-        
+
         # invalid action_user type
         flow_action_role.action_user = 1.0
         for action in flow_define.flow_actions:
@@ -436,7 +575,7 @@ def test_workactivity_send_mail_request_approval(app, users, db, db_register, mo
         activity.send_mail_request_approval(mock_activity2)
         args, kwargs = mock_send_notification_email.call_args
         assert args[1] == [users[1]["obj"], users[6]["obj"]]
-        
+
         # exception
         mocker.patch("weko_workflow.api.PersistentIdentifier.get_by_object", side_effect=SQLAlchemyError)
         res = activity.send_mail_request_approval(mock_activity1)
@@ -480,18 +619,18 @@ def test_workactivity_send_mail_item_approved(app, users, mocker):
     assert args[3] == {}  # profiles_dict
     assert args[4] == 'email_nortification_item_approved_{language}.tpl'  # template_file
     assert callable(args[5])  # data_callback
-    
+
     mock_target = MagicMock(email="test@example.com")
     mock_profile = MagicMock(username="test_user", timezone="Asia/Tokyo")
     result = args[5](mock_activity1, mock_target, mock_profile)
     assert result["item_title"] == "Test Item"
     assert result["submitter_name"] == "test_user"
     assert "record_url" in result
-    
+
     activity.send_mail_item_approved(mock_activity2)
     args, kwargs = mock_send_notification_email.call_args
     assert args[1] == []  # targets
-    
+
     mocker.patch("weko_workflow.api.PersistentIdentifier.get_by_object", side_effect=SQLAlchemyError)
     res = activity.send_mail_item_approved(mock_activity2)
     assert res is None
@@ -534,18 +673,18 @@ def test_workactivity_send_mail_item_rejected(app, users, mocker):
     assert args[3] == {}  # profiles_dict
     assert args[4] == 'email_nortification_item_rejected_{language}.tpl'  # template_file
     assert callable(args[5])  # data_callback
-    
+
     mock_target = MagicMock(email="test@example.com")
     mock_profile = MagicMock(username="test_user", timezone="Asia/Tokyo")
     result = args[5](mock_activity1, mock_target, mock_profile)
     assert result["item_title"] == "Test Item"
     assert result["submitter_name"] == "test_user"
     assert "url" in result
-    
+
     activity.send_mail_item_rejected(mock_activity2)
     args, kwargs = mock_send_notification_email.call_args
     assert args[1] == []  # targets
-    
+
     mocker.patch("weko_workflow.api.PersistentIdentifier.get_by_object", side_effect=SQLAlchemyError)
     res = activity.send_mail_item_rejected(mock_activity2)
     assert res is None
@@ -569,7 +708,7 @@ def test_send_notification_email(app, mocker):
     mock_load_template.assert_called_once_with(mock_template, "en")
     mock_fill_template.assert_called_once_with("template_content", mock_data_callback.return_value)
     mock_send_mail.assert_called_once_with("Test Subject", "test@example.com", "Test Body")
-    
+
     mock_settings_false = {1: MagicMock(subscribe_email=False)}
     mock_send_mail.reset_mock()
     activity.send_notification_email(mock_activity, [mock_target], mock_settings_false, mock_profiles, mock_template, mock_data_callback)
@@ -579,7 +718,7 @@ def test_send_notification_email(app, mocker):
     mock_send_mail.reset_mock()
     activity.send_notification_email(mock_activity, [mock_target_false], mock_settings, mock_profiles, mock_template, mock_data_callback)
     mock_send_mail.assert_not_called()
-    
+
     mock_logger = mocker.patch("weko_workflow.api.current_app.logger.error")
     mock_fill_template = mocker.patch("weko_workflow.utils.fill_template", side_effect=Exception("Template error"))
     activity.send_notification_email(mock_activity, [mock_target], mock_settings, mock_profiles, mock_template, mock_data_callback)

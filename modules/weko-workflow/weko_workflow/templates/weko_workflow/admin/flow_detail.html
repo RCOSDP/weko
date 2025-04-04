@@ -60,6 +60,20 @@
             </div>
           </div>
         </div>
+        <div class="form-group" id="div_repo_id">
+          <label for="txt_repo_id" class="col-sm-4 control-label">Repository</label>
+          <div class="col-sm-8">
+            {%- if repositories %}
+              <select class="form-control" id="txt_repo_id">
+                {%- for repository in repositories if repository %}
+                  <option value="{{repository.id}}" {%- if flow.repository_id == repository.id %} selected {%- endif %}>{{repository.id}}</option>
+                {%- endfor %}
+              </select>
+            {%-else %}
+              <option value=""></option>
+            {%- endif %}
+          </div>
+        </div>
       </div>
     </div>
     <div class="col-sm-4">

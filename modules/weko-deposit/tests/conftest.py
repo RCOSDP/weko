@@ -196,6 +196,7 @@ def base_app(instance_path):
             "System Administrator",
             "Repository Administrator",
         ],
+        WEKO_DEPOSIT_MAX_BACK_OFF_TIME=2,
         WEKO_PERMISSION_ROLE_COMMUNITY=["Community Administrator"],
         WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES = _WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES,
         WEKO_MIMETYPE_WHITELIST_FOR_ES = _WEKO_MIMETYPE_WHITELIST_FOR_ES

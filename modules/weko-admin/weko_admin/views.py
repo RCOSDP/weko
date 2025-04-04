@@ -44,8 +44,8 @@ from werkzeug.local import LocalProxy
 
 from .api import send_site_license_mail
 from .config import WEKO_ADMIN_PERMISSION_ROLE_REPO, \
-    WEKO_ADMIN_PERMISSION_ROLE_SYSTEM
-from .models import FacetSearchSetting, SessionLifetime, SiteInfo
+    WEKO_ADMIN_PERMISSION_ROLE_SYSTEM, WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY
+from .models import FacetSearchSetting, SessionLifetime, SiteInfo, AdminSettings
 from .utils import FeedbackMail, StatisticMail, UsageReport, \
     format_site_info_data, get_admin_lang_setting, \
     get_api_certification_type, get_current_api_certification, \
@@ -222,7 +222,7 @@ def save_lang_list():
     from weko_index_tree.utils import delete_index_trees_from_redis
     for lang_code in [lang["lang_code"] for lang in data if not lang["is_registered"]]:
         delete_index_trees_from_redis(lang_code)
-        
+
     try:
         update_admin_lang_setting(data)
         db.session.commit()
@@ -363,10 +363,39 @@ def get_email_author():
     return jsonify(result)
 
 
+@blueprint_api.route('/get_repository_list', methods=['GET'])
+def get_repository_list():
+    """API to get the list of repositories.
+
+    Returns:
+        json -- response result
+    """
+    from invenio_communities.models import Community
+    result = {
+        'success': False,
+        'repositories': [],
+        'error': ''
+    }
+    try:
+        if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles):
+            repositories = Community.query.all()
+            repository_ids = [{'id': 'Root Index'}] + [{'id': repo.id} for repo in repositories]
+        else:
+            repositories = Community.get_repositories_by_user(current_user)
+            repository_ids = [{'id': repo.id} for repo in repositories]
+        result['repositories'] = repository_ids
+        result['success'] = True
+    except Exception as e:
+        result['error'] = str(e)
+
+    return jsonify(result)
+
+
 @blueprint_api.route('/update_feedback_mail', methods=['POST'])
 @login_required
 @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
-                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO,
+                 WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
 def update_feedback_mail():
     """API allow to save feedback mail setting.
 
@@ -384,7 +413,8 @@ def update_feedback_mail():
     response = FeedbackMail.update_feedback_email_setting(
         data.get('data', ''),
         data.get('is_sending_feedback', False),
-        root_url)
+        root_url,
+        repo_id=data.get('repo_id', None))
 
     if not response.get('error'):
         result['success'] = True
@@ -397,7 +427,8 @@ def update_feedback_mail():
 
 @blueprint_api.route('/get_feedback_mail', methods=['POST'])
 @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
-                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO,
+                 WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
 def get_feedback_mail():
     """API allow get feedback email setting.
 
@@ -410,13 +441,16 @@ def get_feedback_mail():
         'is_sending_feedback': '',
         'error': ''
     }
-
-    data = FeedbackMail.get_feed_back_email_setting()
-    if data.get('error'):
-        result['error'] = data.get('error')
+    data = request.get_json()
+    if not data:
         return jsonify(result)
-    result['data'] = data.get('data')
-    result['is_sending_feedback'] = data.get('is_sending_feedback')
+    repo_id = data.get('repo_id')
+    responce = FeedbackMail.get_feed_back_email_setting(repo_id)
+    if responce.get('error'):
+        result['error'] = responce.get('error')
+        return jsonify(result)
+    result['data'] = responce.get('data')
+    result['is_sending_feedback'] = responce.get('is_sending_feedback')
     return jsonify(result)
 
 
@@ -434,7 +468,8 @@ def get_send_mail_history():
     except Exception as ex:
         current_app.logger.debug("Cannot convert parameter: {}".format(ex))
         page = 1
-    result = FeedbackMail.load_feedback_mail_history(page)
+    repo_id = data.get('repo_id', None)
+    result = FeedbackMail.load_feedback_mail_history(page, repo_id)
     return jsonify(result)
 
 
@@ -449,7 +484,7 @@ def get_failed_mail():
 
     """
     try:
-        data = request.form
+        data = request.get_json()
         page = int(data.get('page'))
         history_id = int(data.get('id'))
     except Exception as ex:
@@ -477,9 +512,10 @@ def resend_failed_mail():
     }
     try:
         mail_data = FeedbackMail.get_mail_data_by_history_id(history_id)
-        StatisticMail.send_mail_to_all(
+        StatisticMail.send_mail_to_one(
             mail_data.get('data'),
-            mail_data.get('stats_date')
+            mail_data.get('stats_date'),
+            repo=mail_data.get('repository_id')
         )
         FeedbackMail.update_history_after_resend(history_id)
     except Exception as ex:
@@ -493,10 +529,14 @@ def resend_failed_mail():
                      methods=['POST'])
 @login_required
 @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
-                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
-def manual_send_site_license_mail(start_month, end_month):
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO,
+                 WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
+def manual_send_site_license_mail(start_month, end_month, repo_id=None):
     """Send site license mail by manual."""
-    send_list = SiteLicenseInfo.query.filter_by(receive_mail_flag='T').all()
+    if not repo_id:
+        repo_id = request.form.get('repo_id')
+    send_list = SiteLicenseInfo.query.filter_by(receive_mail_flag='T').filter_by(
+        repository_id=repo_id).all()
     if send_list:
         start_date = start_month + '-01'
         _, lastday = calendar.monthrange(int(end_month[:4]),
@@ -507,7 +547,8 @@ def manual_send_site_license_mail(start_month, end_month):
             end_month.replace('-', '.')
         res = QueryCommonReportsHelper.get(start_date=start_date,
                                            end_date=end_date,
-                                           event='site_access')
+                                           event='site_access',
+                                           repository_id=repo_id)
         for s in send_list:
             mail_list = s.mail_address.split('\n')
             send_flag = False
@@ -528,6 +569,35 @@ def manual_send_site_license_mail(start_month, end_month):
         return 'finished'
 
 
+@blueprint_api.route('/get_site_license_send_mail_settings',
+                     methods=['GET'])
+def get_site_license_send_mail_settings():
+    repo_id = request.args.get('repo_id')
+
+    sitelicenses = SiteLicenseInfo.query.filter_by(repository_id=repo_id).order_by(
+        SiteLicenseInfo.organization_id).all()
+    settings = AdminSettings.get('site_license_mail_settings', dict_to_object=False)
+    if settings:
+        setting = settings.get(repo_id, {'auto_send_flag': False})
+    else:
+        setting = {'auto_send_flag': False}
+
+    sitelicenses_data = [
+        {
+            'organization_id': s.organization_id,
+            'organization_name': s.organization_name,
+            'receive_mail_flag': s.receive_mail_flag,
+            'mail_address': s.mail_address,
+        }
+        for s in sitelicenses
+    ]
+
+    return jsonify({
+        'sitelicenses': sitelicenses_data,
+        'auto_send': setting["auto_send_flag"],
+    })
+
+
 @blueprint_api.route('/update_site_info', methods=['POST'])
 @login_required
 @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
@@ -541,7 +611,7 @@ def update_site_info():
     site_info = request.get_json()
     format_data = format_site_info_data(site_info)
     validate = validation_site_info(format_data)
-    
+
     if validate.get('error'):
         return jsonify(validate)
     else:
@@ -582,13 +652,13 @@ def get_site_info():
     result['notify'] = site_info.notify
     result['google_tracking_id_user'] = site_info.google_tracking_id_user
     result['addthis_user_id'] = site_info.addthis_user_id
-    
+
     if site_info.ogp_image and site_info.ogp_image_name:
         ts = time.time()
         result['ogp_image'] = request.host_url + \
             'api/admin/ogp_image'
         result['ogp_image_name'] = site_info.ogp_image_name
-    
+
     return jsonify(result)
 
 

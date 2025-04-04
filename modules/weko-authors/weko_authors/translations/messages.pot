@@ -74,7 +74,7 @@ msgid "{} should be set by one of {}."
 msgstr ""
 
 #: weko_authors/utils.py:462
-msgid "Specified WEKO ID does not exist."
+msgid "Specified Author ID does not exist."
 msgstr ""
 
 #: weko_authors/utils.py:470 weko_authors/views.py:140

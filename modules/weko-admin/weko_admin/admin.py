@@ -332,8 +332,27 @@ class ReportView(BaseView):
         from invenio_stats.utils import get_aggregations
         from weko_index_tree.api import Indexes
 
+        is_super = any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles)
+        if is_super:
+            repositories = [{"id": "Root Index"}] + \
+                [com.to_dict() for com in Community.query.all()]
+        else:
+            repositories = [com.to_dict() for com in Community.get_repositories_by_user(current_user)]
+
+        repo_id = request.args.get('repo_id')
+        if repo_id:
+            if repo_id not in [r.get("id") for r in repositories]:
+                abort(403)
+        else:
+            repo_id = repositories[0]["id"] if repositories else None
+
         try:
             indexes = Indexes.get_public_indexes_list()
+            if repo_id and repo_id != "Root Index":
+                repository = Community.query.get(repo_id)
+                community_indexes = Indexes.get_child_list_recursive(repository.root_node_id)
+                indexes = list(set(indexes) & set(community_indexes))
+
             indexes_query = []
 
             if indexes:
@@ -411,6 +430,10 @@ class ReportView(BaseView):
                 }
             }
 
+            if repo_id and repo_id != "Root Index":
+                aggs_query["query"]["bool"]["should"] = {"terms": {"path": community_indexes}}
+                aggs_query["query"]["bool"]["minimum_should_match"] = 1
+
             aggs_results = get_aggregations(
                 current_app.config['SEARCH_UI_SEARCH_INDEX'], aggs_query)
 
@@ -429,14 +452,18 @@ class ReportView(BaseView):
                 result['private'] = result['total'] - result['open']
 
 
-            current_schedule = AdminSettings.get(
+            settings = AdminSettings.get(
                 name='report_email_schedule_settings',
                 dict_to_object=False)
-            current_schedule = current_schedule if current_schedule else \
-                current_app.config['WEKO_ADMIN_REPORT_DELIVERY_SCHED']
+            current_schedule = None
+            if settings:
+                current_schedule = settings.get(repo_id)
+            if not current_schedule:
+                current_schedule = current_app.config['WEKO_ADMIN_REPORT_DELIVERY_SCHED']
 
             # Emails to send reports to
-            all_email_address = StatisticsEmail().get_all()
+            all_email_address = StatisticsEmail.query.filter_by(repository_id=repo_id).all()
+
             return self.render(
                 current_app.config['WEKO_ADMIN_REPORT_TEMPLATE'],
                 result=result,
@@ -447,7 +474,10 @@ class ReportView(BaseView):
                               _('Sunday')],
                 current_schedule=current_schedule,
                 frequency_options=current_app.config[
-                    'WEKO_ADMIN_REPORT_FREQUENCIES'])
+                    'WEKO_ADMIN_REPORT_FREQUENCIES'],
+                repositories=repositories,
+                selected_repo_id=repo_id
+            )
         except Exception as e:
             current_app.logger.error("Unexpected error: {}".format(e))
         return abort(400)
@@ -500,7 +530,8 @@ class ReportView(BaseView):
     @expose('/user_report_data', methods=['GET'])
     def get_user_report_data(self):
         """Get user report data from db and modify."""
-        return jsonify(get_user_report())
+        repository_id = request.args.get('repository_id')
+        return jsonify(get_user_report(repo_id=repository_id))
 
     @expose('/set_email_schedule', methods=['POST'])
     def set_email_schedule(self):
@@ -524,7 +555,12 @@ class ReportView(BaseView):
         }
 
         try:
-            AdminSettings.update('report_email_schedule_settings', schedule)
+            repository_id = request.form.get('repository_select')
+            settings = AdminSettings.get('report_email_schedule_settings', False)
+            if not settings:
+                settings = {}
+            settings[repository_id] = schedule
+            AdminSettings.update('report_email_schedule_settings', settings)
             flash(_('Successfully Changed Schedule.'), 'error')
         except Exception:
             flash(_('Could Not Save Changes.'), 'error')
@@ -534,7 +570,8 @@ class ReportView(BaseView):
     def get_email_address(self):
         """Save Email Address."""
         input_email = request.form.getlist('inputEmail')
-        StatisticsEmail.delete_all_row()
+        repo_select = request.form.get('repository_select')
+        StatisticsEmail.delete_by_repo(repo_select)
         alert_msg = 'Successfully saved email addresses.'
         category = 'info'
         for input in input_email:
@@ -542,7 +579,7 @@ class ReportView(BaseView):
                 match = re.match(r'^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+('
                                  r'\.[a-z0-9-]+)*(\.[a-z]{2,4})$', input)
                 if match:
-                    StatisticsEmail.insert_email_address(input)
+                    StatisticsEmail.insert_email_address(input, repo_select)
                 else:
                     alert_msg = 'Please check email input fields.'
                     category = 'error'
@@ -879,7 +916,7 @@ class SiteLicenseSettingsView(BaseView):
 
         try:
             # site license list
-            result_list = SiteLicense.get_records()
+            result_list = SiteLicense.get_records(user=current_user)
             # item types list
             n_lst = ItemTypes.get_latest()
             result = get_response_json(result_list, n_lst)
@@ -896,12 +933,15 @@ class SiteLicenseSendMailSettingsView(BaseView):
 
     @expose('/', methods=['GET', 'POST'])
     def index(self):
+        repository_id = None
         if request.method == 'POST':
             data = request.get_json()
-            settings = AdminSettings.get('site_license_mail_settings')
-            settings.auto_send_flag = data['auto_send_flag']
+            settings = AdminSettings.get('site_license_mail_settings', False)
+            new_settings = settings.copy()
+            repository_id = data['repository_id']
+            new_settings[repository_id]={'auto_send_flag': data['auto_send_flag']}
             AdminSettings.update('site_license_mail_settings',
-                                 settings.__dict__)
+                                 new_settings)
             for name in data['checked_list']:
                 sitelicense = SiteLicenseInfo.query.filter_by(
                     organization_name=name).first()
@@ -913,18 +953,31 @@ class SiteLicenseSendMailSettingsView(BaseView):
                         db.session.rollback()
                         current_app.logger.error(e)
 
-        sitelicenses = SiteLicenseInfo.query.order_by(
-            SiteLicenseInfo.organization_id).all()
-        settings = AdminSettings.get('site_license_mail_settings')
+        if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles):
+            repositories = [{"id": "Root Index"}] + Community.query.all()
+            if repository_id is None:
+                repository_id = "Root Index"
+        else:
+            repositories = Community.get_repositories_by_user(current_user)
+            if repository_id is None:
+                repository_id = repositories[0].id if repositories else None
+
+        sitelicenses = SiteLicenseInfo.query.filter_by(repository_id=repository_id).order_by(
+                    SiteLicenseInfo.organization_id).all()
+        settings = AdminSettings.get('site_license_mail_settings', False)
+        setting = settings.get(repository_id) if settings else {}
+        auto_send = setting.get("auto_send_flag", False) if setting else False
+
         now = datetime.utcnow()
         last_month = (now.replace(day=1) - timedelta(days=1)).replace(day=1)
 
         return self.render(
             current_app.config['WEKO_ADMIN_SITE_LICENSE_SEND_MAIL_TEMPLATE'],
             sitelicenses=sitelicenses,
-            auto_send=settings.auto_send_flag,
+            auto_send=auto_send,
             now=now,
-            last_month=last_month
+            last_month=last_month,
+            repositories=repositories
         )
 
 

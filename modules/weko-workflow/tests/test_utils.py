@@ -5,9 +5,8 @@ import pytest
 import uuid
 import json
 from os.path import dirname, join
-from mock import patch
+from mock import patch, MagicMock
 
-import copy
 import datetime
 import base64
 import flask
@@ -17,7 +16,6 @@ from flask import current_app,session
 from flask_babelex import gettext as _
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
-from mock import MagicMock
 from weko_deposit.pidstore import get_record_without_version
 from weko_deposit.api import WekoRecord, WekoDeposit
 from invenio_records_files.models import RecordsBuckets
@@ -1030,11 +1028,11 @@ def test_handle_finish_workflow(workflow, db_records, mocker, db_itemtype2):
     assert result
 
     with patch('weko_deposit.api.WekoIndexer.update_es_data'):
-        with patch("weko_workflow.utils.RequestMailList.update" )as update_request:
+        with patch("weko_workflow.utils.RequestMailList.update") as update_request:
             result = handle_finish_workflow(deposit,current_pid,recid)
             assert result
             update_request.assert_not_called()
-        with patch("weko_workflow.utils.RequestMailList.update" )as update_request:
+        with patch("weko_workflow.utils.RequestMailList.update") as update_request:
             result = handle_finish_workflow(deposit,current_pid,None)
             assert result
             update_request.assert_not_called()
@@ -1049,6 +1047,47 @@ def test_handle_finish_workflow(workflow, db_records, mocker, db_itemtype2):
             result = handle_finish_workflow(deposit,current_pid,None)
             assert result
             update_request.assert_not_called()
+
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_handle_finish_workflow_external_system -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_handle_finish_workflow_external_system(workflow, db_records, mocker):
+    record = WekoRecord.get_record_by_pid("1")
+    deposit = WekoDeposit(record, record.model)
+    mocker.patch("weko_deposit.api.WekoDeposit.publish")
+    mocker.patch("weko_workflow.utils.UpdateItem.publish")
+    mocker.patch("invenio_oaiserver.tasks.update_records_sets.delay")
+    mocker.patch("weko_workflow.utils.WekoRecord.get_record_by_pid", return_value=record)
+    mocker.patch("weko_deposit.api.WekoDeposit.newversion", MagicMock())
+    mocker.patch("weko_workflow.utils.ItemReference.get_src_references", return_value=MagicMock())
+
+    current_pid = PersistentIdentifier.get("recid", "1")
+    with patch('weko_workflow.utils.call_external_system') as mock_external:
+        handle_finish_workflow(deposit, current_pid, current_pid.pid_value)
+        mock_external.assert_called()
+        assert mock_external.call_args[1]["old_record"] is None
+        assert mock_external.call_args[1]["new_record"] is not None
+
+    current_pid = PersistentIdentifier.get("recid", "1.0")
+    with patch('weko_workflow.utils.call_external_system') as mock_external:
+        handle_finish_workflow(deposit, current_pid, None)
+        mock_external.assert_called()
+        assert mock_external.call_args[1]["old_record"] is not None
+        assert mock_external.call_args[1]["new_record"] is not None
+
+    current_pid = PersistentIdentifier.get("recid", "1.1")
+    with patch('weko_workflow.utils.call_external_system') as mock_external:
+        handle_finish_workflow(deposit, record.pid, None)
+        mock_external.assert_called()
+        assert mock_external.call_args[1]["old_record"] is not None
+        assert mock_external.call_args[1]["new_record"] is not None
+
+    current_pid = PersistentIdentifier.get("recid", "1")
+    with patch("weko_deposit.pidstore.get_record_without_version",
+               return_value=None):
+        with patch('weko_workflow.utils.call_external_system') as mock_external:
+            handle_finish_workflow(deposit, current_pid, None)
+            mock_external.assert_not_called()
+
 
 # def delete_cache_data(key: str):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_delete_cache_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -3328,6 +3367,7 @@ def test_delete_user_lock_activity_cache(client,users):
 
     current_cache.delete(cache_key)
 
+
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_convert_to_timezone -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_convert_to_timezone():
     # UTC datetime
@@ -3349,25 +3389,25 @@ def test_load_template(mocker):
     expected_result = {"subject": "Test Subject", "body": "This is a test email."}
     result = load_template("test_template_{language}.txt", "en")
     assert result == expected_result
-    
+
     mocker.patch("os.path.exists", side_effect=lambda path: "test_template_ja.txt" in path)
     mocker.patch("builtins.open", mocker.mock_open(read_data="テスト件名\nこれはテストメールです。"))
     expected_result = {"subject": "テスト件名", "body": "これはテストメールです。"}
     result = load_template("test_template_{language}.txt", "ja")
     assert result == expected_result
-    
+
     mocker.patch("os.path.exists", side_effect=lambda path: "test_template_en.txt" in path)
     mocker.patch("builtins.open", mocker.mock_open(read_data="Default Subject\nDefault body."))
     expected_result = {"subject": "Default Subject", "body": "Default body."}
     result = load_template("test_template_{language}.txt", "fr")
     assert result == expected_result
-    
+
     mocker.patch("os.path.exists", side_effect=lambda path: "test_template_en.txt" in path)
     mocker.patch("builtins.open", mocker.mock_open(read_data="Default Subject\nDefault body."))
     expected_result = {"subject": "Default Subject", "body": "Default body."}
     result = load_template("test_template_{language}.txt")
     assert result == expected_result
-        
+
     mocker.patch("os.path.exists", return_value=False)
     mocker.patch("builtins.open", side_effect=FileNotFoundError)
     with pytest.raises(FileNotFoundError):

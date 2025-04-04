@@ -27,21 +27,25 @@ from datetime import date, datetime, timezone
 from functools import partial
 from socketserver import DatagramRequestHandler
 
+from b2handle.clientcredentials import PIDClientCredentials
 from redis.exceptions import RedisError
-from flask import current_app, json
+from flask import current_app, json, request
 from flask_babelex import gettext as _
 from flask_login import current_user
-from invenio_accounts.models import Role
-from invenio_db import db
-from invenio_i18n.ext import current_i18n
-from invenio_indexer.api import RecordIndexer
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import case, func, literal_column, and_
+
+from invenio_accounts.models import Role
+from invenio_db import db
+from invenio_i18n.ext import current_i18n
+from invenio_indexer.api import RecordIndexer
+
 from weko_groups.api import Group
 from weko_redis.redis import RedisConnection
 from weko_logging.activity_logger import UserActivityLogger
+from weko_handle.api import Handle
 
 from .models import Index
 from .utils import cached_index_tree_json, check_doi_in_index, \
@@ -61,6 +65,10 @@ class Indexes(object):
         :param indexes: the index information.
         :returns: The :class:`Index` instance lists or None.
         """
+
+        # delay import
+        from weko_workflow.config import WEKO_SERVER_CNRI_HOST_LINK
+
         def _add_index(data):
             with db.session.begin_nested():
                 index = Index(**data)
@@ -95,7 +103,7 @@ class Indexes(object):
 
             data["coverpage_state"] = False
             data["recursive_coverpage_check"] = False
-            
+
             group_list = ''
             groups = Group.query.all()
             for group in groups:
@@ -107,7 +115,15 @@ class Indexes(object):
             data["browsing_group"] = group_list
             data["contribute_group"] = group_list
 
-            
+            """register handle if ALLOW"""
+            if current_app.config.get("WEKO_HANDLE_ALLOW_REGISTER_CNRI"):
+                handle, index_url = cls.get_handle_index_url(cid)
+
+                if handle is None:
+                    raise Exception("Handle registration failed")
+                data["cnri"] = WEKO_SERVER_CNRI_HOST_LINK + handle
+                data["index_url"] = index_url
+
             if int(pid) == 0:
                 pid_info = cls.get_root_index_count()
                 data["position"] = 0 if not pid_info else \
@@ -212,6 +228,32 @@ class Indexes(object):
                     if "have_children" in k:
                         continue
                     setattr(index, k, v)
+
+                # browsing_group と contribute_group の allow リストから "gr" を削除して browsing_role と contribute_role に追加
+                browsing_group_allow = data.get("browsing_group", {}).get("allow", [])
+                contribute_group_allow = data.get("contribute_group", {}).get("allow", [])
+
+                browsing_role_ids = [str(group["id"]).replace("gr", "") for group in browsing_group_allow if "gr" in str(group["id"])]
+                contribute_role_ids = [str(group["id"]).replace("gr", "") for group in contribute_group_allow if "gr" in str(group["id"])]
+
+                # 現在の browsing_role と contribute_role に追加
+                current_browsing_role = index.browsing_role.split(",") if index.browsing_role else []
+                current_contribute_role = index.contribute_role.split(",") if index.contribute_role else []
+
+                updated_browsing_role = list(set(current_browsing_role + browsing_role_ids))
+                updated_contribute_role = list(set(current_contribute_role + contribute_role_ids))
+
+                index.browsing_role = ",".join(updated_browsing_role)
+                index.contribute_role = ",".join(updated_contribute_role)
+
+                # browsing_group と contribute_group の allow リストから "gr" を除外
+                updated_browsing_group_allow = [group for group in browsing_group_allow if "gr" not in str(group["id"])]
+                updated_contribute_group_allow = [group for group in contribute_group_allow if "gr" not in str(group["id"])]
+
+                # 更新された browsing_group と contribute_group をインデックスに設定
+                index.browsing_group = ",".join([str(group["id"]) for group in updated_browsing_group_allow])
+                index.contribute_group = ",".join([str(group["id"]) for group in updated_contribute_group_allow])
+
                 recs_group = {
                     'recursive_coverpage_check': partial(
                         cls.set_coverpage_state_resc, index_id,
@@ -276,7 +318,7 @@ class Indexes(object):
                     Index.parent == index_id)
                 obj_list = query.all()
                 updated = datetime.now(timezone.utc)
-                dct = query.update(
+                query.update(
                     {
                         Index.parent: slf.parent,
                         Index.owner_user_id: current_user.get_id(),
@@ -324,7 +366,7 @@ class Indexes(object):
                     while e <= len(p_lst):
                         s = e
                         e = e + batch
-                        dct = db.session.query(Index). \
+                        db.session.query(Index). \
                             filter(Index.id.in_(p_lst[s:e])). \
                             update(
                                 {
@@ -339,6 +381,7 @@ class Indexes(object):
                     target_key=index_id
                 )
                 return p_lst
+
         return 0
 
     @classmethod
@@ -709,12 +752,42 @@ class Indexes(object):
         return obj
 
     @classmethod
+    def filter_roles(cls, roles):
+        """特定の条件に基づいてロールをフィルタリングします。
+
+        Args:
+            roles (list): フィルタリング対象のロールのリスト。
+
+        Returns:
+            tuple: 2つのリストを含むタプル。
+                - filtered_roles: 特定の条件を満たすロールのリスト。
+                - excluded_roles: 特定の条件を満たさないロールのリスト。
+        """
+        if not isinstance(roles, list):
+            raise TypeError("roles must be a list")
+
+        roles_gakunin_map_group = []
+        other_roles = []
+
+        gakunin_map_prefix = current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT']['prefix']
+        role_keyword = current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT']['role_keyword']
+        default_weko_role_names = current_app.config['WEKO_PERMISSION_ROLE_USER'] + ['Authenticated User', 'Guest']
+        for role in roles:
+            # ロール名が設定されたキーワードに含まれていない、かつロール名が設定されたプレフィックスに含まれていない、かつロール名が'WEKO_PERMISSION_ROLE_USER','Authenticated User','Guest'のいずれでもないことを確認します。
+            if not (role["name"].startswith(gakunin_map_prefix) and role_keyword in role["name"]) and \
+                    role["name"] not in default_weko_role_names:
+                roles_gakunin_map_group.append({'id': role['id'], 'name': role['name']})
+            else:
+                other_roles.append({'id': role['id'], 'name': role['name']})
+        return roles_gakunin_map_group, other_roles
+
+    @classmethod
     def get_index_with_role(cls, index_id):
         """Get Index with role."""
         def _get_allow_deny(allow, role, browse_flag=False):
             alw = []
             deny = []
-            if isinstance(role, list):
+            if role:
                 while role:
                     tmp = role.pop(0)
                     if tmp["name"] not in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
@@ -737,36 +810,76 @@ class Indexes(object):
 
             return allow, deny
 
+        def _get_firter_gakuni_map_groups_allow_deny(filtered_role_ids=[], filtered_roles=[]):
+            """
+            フィルタリングされたロールIDとロールリストに基づいて、許可リストと拒否リストを生成します。
+
+            :param filtered_role_ids: 許可リストに含めるロールIDのリスト。
+            :param filtered_roles: フィルタリングされたロールのリスト。各ロールは辞書またはオブジェクトとして表されます。
+            :return: 許可リストと拒否リストを含むタプル。各リストの要素は辞書形式で、'id' と 'name' を含みます。
+            """
+            allow = []
+            deny = []
+            if not filtered_roles:
+                return allow, deny
+            for group in filtered_roles:
+                group_id = str(group['id']) if isinstance(group, dict) else str(group.id)
+                group_name = group['name'] if isinstance(group, dict) else group.name
+                if group_id in filtered_role_ids:
+                    allow.append({'id': group_id + "gr", 'name': group_name})
+                else:
+                    deny.append({'id': group_id + "gr", 'name': group_name})
+            return allow, deny
+
         index = dict(cls.get_index(index_id))
 
-        role = cls.get_account_role()
-        allow = index["browsing_role"].split(',') \
-            if len(index["browsing_role"]) else []
-        allow, deny = _get_allow_deny(allow, pickle.loads(pickle.dumps(role, -1)), True)
-        index["browsing_role"] = dict(allow=allow, deny=deny)
+        roles = cls.get_account_role()
+        roles_gakunin_map_group, other_roles = cls.filter_roles(roles)
 
-        allow = index["contribute_role"].split(',') \
+        # browsing_role の処理に excluded_roles を使用
+        allow_browsing_roles_ids = index["browsing_role"].split(',') \
+            if len(index["browsing_role"]) else []
+        allow_browsing_roles, deny_browsing_roles = _get_allow_deny(allow_browsing_roles_ids, pickle.loads(pickle.dumps(other_roles, -1)), True)
+        index["browsing_role"] = dict(allow=allow_browsing_roles, deny=deny_browsing_roles)
+
+        # contribute_role の処理に excluded_roles を使用
+        allow_contribute_role_ids = index["contribute_role"].split(',') \
             if len(index["contribute_role"]) else []
-        allow, deny = _get_allow_deny(allow, role)
-        index["contribute_role"] = dict(allow=allow, deny=deny)
+        allow_contribute_roles, deny_contribute_roles = _get_allow_deny(allow_contribute_role_ids, other_roles)
+        index["contribute_role"] = dict(allow=allow_contribute_roles, deny=deny_contribute_roles)
 
         if index["public_date"]:
             index["public_date"] = index["public_date"].strftime('%Y%m%d')
 
         group_list = Group.query.all()
-
-        allow_group_id = index["browsing_group"].split(',') \
+        #browsing_groupとcontribute_groupの値を取得して、browsing_groupとcontribute_groupの辞書の値を保持します。
+        allow_browsing_group_ids = index["browsing_group"].split(',') \
             if len(index["browsing_group"]) else []
-        allow_group, deny_group = _get_group_allow_deny(allow_group_id,
+        allow_browsing_groups, deny_browsing_groups = _get_group_allow_deny(allow_browsing_group_ids,
                                                         pickle.loads(pickle.dumps(group_list, -1)))
-        index["browsing_group"] = dict(allow=allow_group, deny=deny_group)
+        browsing_group = dict(allow=allow_browsing_groups, deny=deny_browsing_groups)
 
-        allow_group_id = index["contribute_group"].split(',') \
+        # _get_group_allow_deny_2の結果をbrowsing_groupに追加
+        allow_browsing_map_groups, deny_browsing_map_groups = _get_firter_gakuni_map_groups_allow_deny(allow_browsing_roles_ids, roles_gakunin_map_group)
+        browsing_group["allow"].extend(allow_browsing_map_groups)
+        browsing_group["deny"].extend(deny_browsing_map_groups)
+
+        index["browsing_group"] = browsing_group
+
+
+        # contribute_groupの値を取得して、辞書の値を保持します。
+        allow_contribute_group_ids = index["contribute_group"].split(',') \
             if len(index["contribute_group"]) else []
-        allow_group, deny_group = _get_group_allow_deny(allow_group_id,
+        allow_contribute_groups, deny_contributes_groups = _get_group_allow_deny(allow_contribute_group_ids,
                                                         pickle.loads(pickle.dumps(group_list, -1)))
-        index["contribute_group"] = dict(allow=allow_group, deny=deny_group)
+        contribute_group = dict(allow=allow_contribute_groups, deny=deny_contributes_groups)
 
+        # _get_group_allow_deny_2の結果をcontribute_groupに追加
+        allow_contribute_map_groups, deny_contribute_map_groups = _get_firter_gakuni_map_groups_allow_deny(allow_browsing_roles_ids, roles_gakunin_map_group)
+        contribute_group["allow"].extend(allow_contribute_map_groups)
+        contribute_group["deny"].extend(deny_contribute_map_groups)
+
+        index["contribute_group"] = contribute_group
         return index
 
     @classmethod
@@ -1904,8 +2017,9 @@ class Indexes(object):
         if action == 'move':  # move items to parent index
             pass
         else:  # delete all index
-            from .tasks import delete_oaiset_setting
+            from .tasks import delete_oaiset_setting, delete_index_handle
             delete_oaiset_setting.delay(id_list)
+            delete_index_handle.delay(id_list)
 
     @classmethod
     def get_public_indexes_list(cls, with_deleted=False):
@@ -1955,3 +2069,20 @@ class Indexes(object):
             for idx in indexes:
                 ids.append(str(idx[0]))
         return ids
+
+    @classmethod
+    def get_handle_index_url(cls, indexid):
+        """register Handle and get index_url
+
+        :param indexid: index id.
+        :return: cnri, index_url
+        """
+        index_url = request.url.split('/admin/')[0] + '/index/' + str(indexid)
+        credential = PIDClientCredentials.load_from_JSON(
+            current_app.config.get('WEKO_HANDLE_CREDS_JSON_PATH')
+        )
+        hdl = credential.get_prefix() + '/index/' + str(indexid)
+        weko_handle = Handle()
+
+        handle = weko_handle.register_handle(location=index_url, hdl=hdl)
+        return handle, index_url

@@ -52,6 +52,7 @@ from invenio_access.models import ActionUsers, ActionRoles
 from invenio_access import InvenioAccess
 from invenio_admin import InvenioAdmin
 from invenio_cache import InvenioCache
+from invenio_communities.models import Community
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_files_rest import InvenioFilesREST
@@ -72,6 +73,7 @@ from weko_authors.models import Authors
 from weko_index_tree import WekoIndexTree
 from weko_index_tree.models import Index, IndexStyle
 from weko_records_ui import WekoRecordsUI
+from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER
 from weko_records import WekoRecords
 from weko_records.models import SiteLicenseInfo, SiteLicenseIpAddress,ItemType,ItemTypeName,ItemTypeJsonldMapping
 from weko_redis.redis import RedisConnection
@@ -80,6 +82,7 @@ from weko_schema_ui import WekoSchemaUI
 from weko_search_ui import WekoSearchUI
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import Action, ActionStatus,FlowDefine,FlowAction,WorkFlow,Activity,ActivityAction
+
 
 from weko_admin import WekoAdmin
 from weko_admin.models import SessionLifetime,SiteInfo,SearchManagement,\
@@ -163,6 +166,7 @@ def base_app(instance_path, cache_config,request ,search_class):
         WEKO_THEME_INSTANCE_DATA_DIR="data",
         SEARCH_INDEX_PREFIX="test-",
         INDEXER_DEFAULT_DOC_TYPE="item-v1.0.0",
+        WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER
     )
     app_.testing = True
     app_.login_manager = dict(_login_disabled=True)
@@ -657,7 +661,8 @@ def feedback_mail_settings(db,authors):
         account_author="{},{},".format(authors[0].id,authors[1].id),
         manual_mail={"email":["test.manual1@test.org","test.manual2@test.org"]},
         is_sending_feedback=True,
-        root_url="http://test_server"
+        root_url="http://test_server",
+        repository_id="Root Index"
     )
     db.session.add(setting)
     db.session.commit()
@@ -665,7 +670,8 @@ def feedback_mail_settings(db,authors):
         account_author="{}".format(authors[1].id),
         manual_mail={"email":[]},
         is_sending_feedback=True,
-        root_url="http://test_server"
+        root_url="http://test_server",
+        repository_id="Root Index"
     )
     return [setting, setting_not_manual]
 
@@ -751,7 +757,7 @@ def admin_settings(db):
     settings = list()
     settings.append(AdminSettings(id=1,name='items_display_settings',settings={"items_display_email": False, "items_search_author": "name", "item_display_open_date": False}))
     settings.append(AdminSettings(id=2,name='storage_check_settings',settings={"day": 0, "cycle": "weekly", "threshold_rate": 80}))
-    settings.append(AdminSettings(id=3,name='site_license_mail_settings',settings={"auto_send_flag": False}))
+    settings.append(AdminSettings(id=3,name='site_license_mail_settings',settings={"Root Index": {"auto_send_flag": False}}))
     settings.append(AdminSettings(id=4,name='default_properties_settings',settings={"show_flag": True}))
     settings.append(AdminSettings(id=5,name='item_export_settings',settings={"allow_item_exporting": True, "enable_contents_exporting": True}))
     settings.append(AdminSettings(id=6,name="restricted_access",settings={"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": []}))
@@ -1201,3 +1207,17 @@ def facet_search_setting(db):
         settings.append(FacetSearchSetting(**datas[setting]))
     with db.session.begin_nested():
         db.session.add_all(settings)
+
+@pytest.fixture()
+def community(db, users, indexes):
+    user1 = users[2]["obj"]
+    index = indexes[0]
+    db.session.commit()
+    comm1 = Community.create(community_id='comm1', role_id=user1.roles[0].id,
+                             id_user=user1.id, title='Title1',
+                             description='Description1',
+                             root_node_id=index.id,
+                             group_id=user1.roles[0].id)
+    db.session.add(comm1)
+    db.session.commit()
+    return comm1

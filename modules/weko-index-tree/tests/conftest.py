@@ -449,7 +449,8 @@ def base_app(instance_path):
         WEKO_INDEX_TREE_INDEX_ADMIN_TEMPLATE = 'weko_index_tree/admin/index_edit_setting.html',
         WEKO_INDEX_TREE_LIST_API = "/api/tree",
         WEKO_INDEX_TREE_API = "/api/tree/index/",
-        WEKO_THEME_INSTANCE_DATA_DIR="data"
+        WEKO_THEME_INSTANCE_DATA_DIR="data",
+        WEKO_HANDLE_ALLOW_REGISTER_CNRI=False,
     )
     app_.url_map.converters['pid'] = PIDConverter
 
@@ -1084,7 +1085,8 @@ def db_register(app, db):
                         is_deleted=False,
                         open_restricted=False,
                         location_id=None,
-                        is_gakuninrdm=False)
+                        is_gakuninrdm=False,
+                        repository_id=1)
 
     activity = Activity(activity_id='1',workflow_id=1, flow_id=flow_define.id,
                     action_id=1, activity_login_user=1,

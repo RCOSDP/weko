@@ -1,0 +1,268 @@
+{
+  "_id": "1",
+  "_version": "1",
+  "_source":{
+    "pid": "1",
+    "_created": "2021-09-01",
+    "_updated": "2021-10-26",
+    "_oai": {
+      "id": "0001"
+    },
+    "itemtype": "test",
+    "_item_metadata":{
+      "pubdate": {
+        "attribute_name": "PubDate",
+        "attribute_value": "2021-10-26"
+      },
+      "path": [1],
+      "control_number": "1",
+      "item_type_id":"1",
+      "item_test1_1":{
+        "attribute_name":"Test Item1-1",
+        "attribute_value_mlt":[
+          {
+            "test_item_lang1":"en",
+            "test_value1":"this is test item1-1"
+          }
+        ]
+      },
+      "item_test1_2":{
+        "attribute_name":"Test Item1-2",
+        "attribute_value_mlt":[
+          {
+            "test_item_lang1":"en"
+          }
+        ]
+      },
+      "item_test1_3":{
+        "attribute_name":"Test Item1-3",
+        "attribute_value_mlt":[
+          {
+            "test_value1":"this is test item1-3"
+          }
+        ]
+      },
+      "item_test1_4":{
+        "attrinute_name":"Test Item1-4",
+        "attribute_value_mlt":[
+          {
+            "test_value1":""
+          }
+        ]
+      },
+      "item_test1_5":{
+        "attribute_name":"Test Item1-5",
+        "attribute_value_mlt":[
+          {
+            "test_item_lang1":"en",
+            "test_value1":""
+          }
+        ]
+      },
+      "item_test2_title":{
+        "attribute_name":"Title",
+        "attribute_value_mlt":[
+          {
+            "test_title":"this is test item title",
+            "test_title_lang":"en"
+          }
+        ]
+      },
+      "item_test3_file":{
+        "attribute_name":"File",
+        "attribute_type":"file",
+        "attribute_value_mlt":[
+          {
+            "url":{
+              "label":"open and exist label"
+            },
+            "accessrole":"open_restricted",
+            "format": "application/pdf"
+          },
+          {
+            "url":{
+              "test":"open and not exist label"
+            },
+            "accessrole":"open_restricted",
+            "format": "application/pdf"
+          },
+          {
+            "url":{
+              "url":"not label, but version_id"
+            },
+            "version_id":"1.0",
+            "filename":"test.txt",
+            "format": "application/pdf"
+          },
+          {
+            "url":{
+              "label":"not file url"
+            },
+            "version_id":"1.0",
+            "filename":"test_not_extension",
+            "format": "application/pdf"
+          },
+          {
+            "url":{
+              "test":"not open and not label"
+            },
+            "format": "application/pdf"
+          }
+        ]
+      },
+      "item_resource_type": {
+        "attribute_name": "Resource Type",
+        "attribute_value_mlt": [{
+          "resourcetype": "test type",
+          "resourceuri": "http://nii.co.jp/resource_type/01"
+        }]
+      },
+      "item_description": {
+        "attribute_name": "Description",
+        "attribute_value_mlt": [{
+          "subitem_description_value": "test description",
+          "subitem_description_lang": "en"
+        }]
+      },
+      "item_date": {
+        "attribute_name": "Date",
+        "attribute_value_mlt": [
+          {
+            "subitem_date_value": "2021-10-26",
+            "subitem_date_type": "Available"
+          },
+          {
+            "subitem_date_value": "2021-10-26",
+            "subitem_date_type": "Issued"
+          }
+        ]
+      },
+      "item_publisher":{
+        "attribute_name":"Publisher",
+        "attribute_value_mlt":[
+          {
+            "subitem_publisher": "takeshi",
+            "subitem_publisherLang":"en"
+          }
+        ]
+      },
+      "item_source_ids":{
+        "attribute_name":"Source Identifier",
+        "attribute_value_mlt":[
+          {
+            "subitem_source_id": "123",
+            "subitem_source_id_type":"ISSN"
+          }
+        ]
+      },
+      "item_version":{
+        "attribute_name":"Version",
+        "attribute_value_mlt":[
+          {
+            "subitem_version": "1.0.0"
+          }
+        ]
+      },
+      "item_test4_thumbnail":{
+        "attribute_name":"thumbnail",
+        "attribute_type":"thumbnail",
+        "attribute_value_mlt":[
+          {
+            "subitem_thumbnail":[
+            ]
+          }
+        ]
+      },
+      "item_test4_2_thumbnail":{
+        "attribute_name":"thumbnail2",
+        "attribute_type":"thumbnail",
+        "attribute_value_mlt":[
+          {
+            "subitem_thumbnail":[
+              {"thumbnail_label":"サムネイルラベル"}
+            ]
+          }
+        ]
+      },
+      "item_test5_creator":{
+        "attribute_name":"creator",
+        "attribute_type":"creator",
+        "attribute_value_mlt":[
+          {
+            "nameIdentifierURI":[
+              {
+                "nameIdentifierURI":""
+              }
+            ]
+          }
+        ]
+      },
+      "item_test8_not_mlt":{
+        "attribute_type":"test"
+      },
+      "item_test9":{
+        "attribute_value_mlt":{
+          "item_test9_dict":{
+            "item_test9_dict_value":"value9_dict"
+          },
+          "item_test9_list":[
+            [
+              "item_test9_list_value"
+            ]
+          ]
+        }
+      },
+      "item_test11":{
+        "attribute_value_mlt":"str_attribute_value_mlt"
+      },
+      "item_test12.indot_item":{
+        "attribute_value_mlt":{
+          "value":"value"
+        }
+      },
+      "item_test20_description":{
+        "attribute_name":"Description",
+        "attribute_type":"Description",
+        "attribute_value_mlt":[
+          {
+            "subitem_description_type": "Abstract"
+          }
+        ]
+      },
+      "item_test21_relation":{
+        "attribute_name":"Relation",
+        "attribute_type":"Relation",
+        "attribute_value_mlt":[
+          {
+            "subitem_relation_type": "isVersionOf"
+          }
+        ]
+      },
+      "item_test22_date":{
+        "attribute_name":"Date",
+        "attribute_type":"Date",
+        "attribute_value_mlt":[
+          {
+            "subitem_date_issued_type": "Accepted",
+            "subitem_date_issued_datetime": "2025-02-03"
+          },
+          {
+              "subitem_date_issued_type": "Available",
+              "subitem_date_issued_datetime": "2025-02-04"
+          },
+          {
+              "subitem_date_issued_type": "Collected",
+              "subitem_date_issued_datetime": "2025-02-05"
+          }
+        ]
+      }
+    },
+    "file": {
+      "URI": [{"value": "http://localhost/records/1/file"}]
+    },
+    "title":[
+      "this is dummy title",
+      "this is test item title"
+    ]
+  }
+}
