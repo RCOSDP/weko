@@ -337,13 +337,11 @@ def post_service_document():
     }
 
     # Define a nested function to process a single item
-    def process_item(item, data_path, request_info):
+    def process_item(item, request_info):
         """Process a single item for import.
 
         Args:
             item (dict): The item to process.
-            data_path (str): The path to the data directory.
-            register_type (str): The registration type (Direct or Workflow).
             request_info (dict): Information about the request.
 
         Returns:
@@ -386,9 +384,7 @@ def post_service_document():
     for item in check_result["list_record"]:
         item["root_path"] = os.path.join(data_path, "data")
         try:
-            activity_id, recid, error = process_item(
-                item, data_path, request_info
-            )
+            activity_id, recid, error = process_item(item, request_info)
             if error:
                 warns.append((activity_id, recid))
             if file_format == "JSON":
