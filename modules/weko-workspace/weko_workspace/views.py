@@ -272,7 +272,7 @@ def get_workspace_itemlist():
             else False
         )
 
-        if userNm in workspaceItem["authorlist"]:
+        if workspaceItem["authorlist"] and userNm in workspaceItem["authorlist"]:
             workspaceItem["fbEmailSts"] = True
 
         # "connectionToPaperSts": None,  # 論文への関連チェック状況
