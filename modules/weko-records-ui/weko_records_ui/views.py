@@ -992,8 +992,10 @@ def soft_delete(recid):
         if recid.startswith('del_ver_'):
             recid = recid.replace('del_ver_', '')
             delete_version(recid)
+            current_app.logger.info(f"Delete version: {recid}")
         else:
             soft_delete_imp(recid)
+            current_app.logger.info(f"Delete item: {recid}")
         db.session.commit()
         return make_response('PID: ' + str(recid) + ' DELETED', 200)
     except Exception as ex:

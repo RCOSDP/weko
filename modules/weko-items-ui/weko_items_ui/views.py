@@ -23,6 +23,7 @@
 import json
 import os
 import sys
+import traceback
 from copy import deepcopy
 from datetime import date, datetime, timedelta
 
@@ -51,11 +52,12 @@ from weko_index_tree.utils import check_index_permissions, get_index_id, \
 from weko_records.api import ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
+from weko_records_ui.views import soft_delete
 from weko_redis.redis import RedisConnection
-from weko_workflow.api import GetCommunity, WorkActivity, WorkFlow
+from weko_workflow.api import GetCommunity, WorkActivity, WorkFlow as WorkFlows
 from weko_workflow.utils import check_an_item_is_locked, \
     get_record_by_root_ver, get_thumbnails, prepare_edit_workflow, \
-    set_files_display_type
+    set_files_display_type, prepare_delete_workflow
 from weko_schema_ui.models import PublishStatus
 from werkzeug.utils import import_string
 from webassets.exceptions import BuildError
@@ -470,7 +472,7 @@ def iframe_items_index(pid_value='0'):
             if cur_activity is None:
                 abort(400)
 
-            workflow = WorkFlow()
+            workflow = WorkFlows()
             workflow_detail = workflow.get_workflow_by_id(
                 cur_activity.workflow_id)
 
@@ -847,7 +849,7 @@ def get_current_login_user_id():
 
 @blueprint_api.route('/prepare_edit_item', methods=['POST'])
 @login_required
-def prepare_edit_item():
+def prepare_edit_item(id=None, community=None):
     """Prepare_edit_item.
 
     Host the api which provide 2 service:
@@ -857,28 +859,35 @@ def prepare_edit_item():
         header: Content type must be json
         data:
             pid_value: pid_value
+    Args:
+        id: pid_value
     return: The result json:
         code: status code,
         msg: meassage result,
         data: url redirect
     """
-    err_code = current_app.config.get('WEKO_ITEMS_UI_API_RETURN_CODE_ERROR',
-                                      -1)
-    if request.headers['Content-Type'] != 'application/json':
-        """Check header of request"""
-        return jsonify(
-            code=err_code,
-            msg=_('Header Error')
-        )
+    err_code = current_app.config.get(
+        'WEKO_ITEMS_UI_API_RETURN_CODE_ERROR', -1
+    )
 
-    post_activity = request.get_json()
-    getargs = request.args
-    pid_value = post_activity.get('pid_value')
-    community = getargs.get('community', None)
+    if not id and request:
+        if request.headers['Content-Type'] != 'application/json':
+            """Check header of request"""
+            return jsonify(
+                code=err_code,
+                msg=_('Header Error')
+            )
+
+    post_activity = request.get_json() or {}
+    getargs = request.args if request else {}
+    pid_value = id or post_activity.get('pid_value')
+    community = community or getargs.get('community', None)
 
     # Cache Storage
     redis_connection = RedisConnection()
-    sessionstorage = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+    sessionstorage = redis_connection.connection(
+        db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True
+    )
     if sessionstorage.redis.exists("pid_{}_will_be_edit".format(pid_value)):
         return jsonify(
             code=err_code,
@@ -896,8 +905,10 @@ def prepare_edit_item():
                             object_type='rec',
                             getter=record_class.get_record)
         recid, deposit = resolver.resolve(pid_value)
-        authenticators = [str(deposit.get('owner')),
-                          str(deposit.get('weko_shared_id'))]
+        authenticators = [
+            str(deposit.get('owner')),
+            str(deposit.get('weko_shared_id'))
+        ]
         user_id = str(get_current_user())
         activity = WorkActivity()
         latest_pid = PIDVersioning(child=recid).last_child
@@ -1000,6 +1011,218 @@ def prepare_edit_item():
             url_redirect = url_for('weko_workflow.display_activity',
                                    activity_id=rtn.activity_id)
 
+        return jsonify(
+            code=0,
+            msg='success',
+            data=dict(redirect=url_redirect)
+        )
+
+    return jsonify(
+        code=err_code,
+        msg=_('An error has occurred.')
+    )
+
+
+@blueprint_api.route('/prepare_delete_item', methods=['POST'])
+@login_required
+def prepare_delete_item(id=None, community=None):
+    """Prepare_delete_item.
+
+    Host the api which provide 2 service:
+        Check permission: check if user is owner/admin/shared user
+        Create new activity for editing flow
+    request:
+        header: Content type must be json
+        data:
+            pid_value: pid_value
+
+    return: The result json:
+        code: status code,
+        msg: meassage result,
+        data: url redirect
+
+    Check delete item.
+
+    direct or workflow
+
+    return: delete_type(direct or workflow)
+            workflow_id
+            flow_id
+    """
+    err_code = current_app.config.get(
+        'WEKO_ITEMS_UI_API_RETURN_CODE_ERROR', -1
+    )
+
+    if not id and request:
+        if request.headers['Content-Type'] != 'application/json':
+            """Check header of request"""
+            return jsonify(
+                code=err_code,
+                msg=_('Header Error')
+            )
+
+    post_activity = request.get_json() or {}
+    getargs = request.args if request else {}
+    pid_value = id or post_activity.get('pid_value')
+    community = community or getargs.get('community', None)
+
+    # Cache Storage
+    redis_connection = RedisConnection()
+    sessionstorage = redis_connection.connection(
+        db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True
+    )
+    if sessionstorage.redis.exists("pid_{}_will_be_edit".format(pid_value)):
+        return jsonify(
+            code=err_code,
+            msg=_('This Item is being edited.')
+        )
+    else:
+        sessionstorage.put(
+            "pid_{}_will_be_edit".format(pid_value),
+            str(current_user.get_id()).encode('utf-8'),
+            ttl_secs=3
+        )
+
+    if pid_value:
+        record_class = import_string('weko_deposit.api:WekoDeposit')
+        resolver = Resolver(
+            pid_type='recid', object_type='rec',
+            getter=record_class.get_record
+        )
+        recid, deposit = resolver.resolve(pid_value)
+        authenticators = [
+            str(deposit.get('owner')), str(deposit.get('weko_shared_id'))
+        ]
+        user_id = str(current_user.get_id())
+        work_activity = WorkActivity()
+        latest_pid = PIDVersioning(child=recid).last_child
+
+        # ! Check User's Permissions
+        if user_id not in authenticators and not get_user_roles(is_super_role=True)[0]:
+            return jsonify(
+                code=err_code,
+                msg=_("You are not allowed to edit this item.")
+            )
+
+        # ! Check dependency ItemType
+        if not ItemTypes.get_latest():
+            return jsonify(
+                code=err_code,
+                msg=_("You do not even have an ItemType.")
+            )
+
+        item_type_id = deposit.get('item_type_id')
+        item_type = ItemTypes.get_by_id(item_type_id)
+        if not item_type:
+            return jsonify(
+                code=err_code,
+                msg=_("Dependency ItemType not found.")
+            )
+
+        if not deposit:
+            return jsonify(
+                code=err_code,
+                msg=_('Record does not exist.')
+            )
+
+        # Check Record is in import progress
+        if check_an_item_is_locked(pid_value):
+            return jsonify(
+                code=err_code,
+                msg=_('Item cannot be edited because the import is in progress.')
+            )
+
+        # ! Check Record is being edit
+        item_uuid = latest_pid.object_uuid
+        latest_activity = work_activity.get_workflow_activity_by_item_id(item_uuid)
+
+        if latest_activity:
+            is_begin_edit = check_item_is_being_edit(recid, latest_activity, work_activity)
+            if is_begin_edit:
+                return jsonify(
+                    code=err_code,
+                    msg=_('This Item is being edited.'),
+                    activity_id=is_begin_edit
+                )
+
+        if latest_activity:
+            post_activity['workflow_id'] = latest_activity.workflow_id
+        else:
+            latest_activity = work_activity.get_workflow_activity_by_item_id(
+                recid.object_uuid
+            )
+            workflow = get_workflow_by_item_type_id(
+                item_type.name_id, item_type_id
+            )
+            if not workflow:
+                return jsonify(
+                    code=err_code,
+                    msg=_('Workflow setting does not exist.')
+                )
+            post_activity['workflow_id'] = workflow.id
+        post_activity['itemtype_id'] = item_type_id
+        post_activity['community'] = community
+        post_activity['post_workflow'] = latest_activity
+
+        workflows = WorkFlows()
+        workflow_detail = workflows.get_workflow_by_id(post_activity['workflow_id'])
+
+        if workflow_detail.delete_flow_id is None:
+            soft_delete(pid_value)
+            return jsonify(
+                code=0,
+                msg="success",
+            )
+
+        post_activity['flow_id'] = workflow_detail.delete_flow_id
+
+        try:
+            rtn = prepare_delete_workflow(post_activity, recid, deposit)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.error('sqlalchemy error: {}'.format(ex))
+            traceback.format_exc()
+            db.session.rollback()
+            return jsonify(
+                code=err_code,
+                msg=_('An error has occurred.')
+            )
+        except Exception as ex:
+            current_app.logger.error('Unexpected error: {}'.format(ex))
+            traceback.format_exc()
+            db.session.rollback()
+            return jsonify(
+                code=err_code,
+                msg=_('An error has occurred.')
+            )
+
+        err_code = current_app.config.get('WEKO_ITEMS_UI_API_RETURN_CODE_ERROR',
+                                        -1)
+        if request.headers['Content-Type'] != 'application/json':
+            """Check header of request"""
+            return jsonify(
+                code=err_code,
+                msg=_('Header Error')
+            )
+
+        if community:
+            comm = GetCommunity.get_community_by_id(community)
+            url_redirect = url_for(
+                'weko_workflow.display_activity',
+                activity_id=rtn.activity_id, community=comm.id
+            )
+        else:
+            url_redirect = url_for(
+                'weko_workflow.display_activity',
+                activity_id=rtn.activity_id
+            )
+
+        if rtn.action_id == 2:   # end_action
+            soft_delete(pid_value)
+            
+        if url_redirect.startswith("/api/"):
+            url_redirect = url_redirect[4:]
+            
         return jsonify(
             code=0,
             msg='success',

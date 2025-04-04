@@ -41,7 +41,6 @@ services:
       net.core.somaxconn: 1024
     command: bash /code/scripts/entrypoint_web.sh
     environment:
-      - NGINX_HOST=nginx
       - PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       - VIRTUALENVWRAPPER_PYTHON=/home/invenio/.virtualenvs/invenio/bin/python
       - INVENIO_WEB_HOST=127.0.0.1

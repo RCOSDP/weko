@@ -12,20 +12,24 @@ import traceback
 from hashlib import sha256
 from zipfile import ZipFile
 
-from flask import current_app
+from flask import current_app, request
 from sqlalchemy.exc import SQLAlchemyError
 
 from invenio_accounts.models import User
 from invenio_oauth2server.models import Token
+from invenio_pidstore.models import PersistentIdentifier
 from weko_accounts.models import ShibbolethUser
 from weko_admin.models import AdminSettings
+from weko_records.api import ItemTypes, ItemsMetadata
 from weko_search_ui.config import SWORD_METADATA_FILE, ROCRATE_METADATA_FILE
 from weko_search_ui.utils import (
     check_tsv_import_items,
     check_xml_import_items,
     check_jsonld_import_items
 )
-from weko_workflow.api import WorkFlow as WorkFlows
+from weko_workflow.api import WorkActivity, WorkFlow as WorkFlows
+from weko_workflow.errors import WekoWorkflowException
+from weko_workflow.headless import HeadlessActivity
 from weko_workflow.models import  WorkFlow
 
 from .api import SwordClient
@@ -40,7 +44,14 @@ def check_import_file_format(file, packaging):
         packaging (str): Packaging in request header
 
     Raises:
-        WekoSwordserverException: _description_
+        WekoSwordserverException:
+            - If packaging format is not SWORDBagIt or SimpleZip
+            - If metadata file is not found in SWORDBagIt
+            - If metadata file is not found in SimpleZip
+            - If packaging format is SimpleZip but sword.json is found
+            - If packaging format is SimpleZip but ro-crate-metadata.json is not found
+            - If packaging format is SimpleZip but other metadata file is not found
+            - If packaging format is not accept
 
     Returns:
         str: Import file format
@@ -61,6 +72,14 @@ def check_import_file_format(file, packaging):
     elif "SimpleZip" in packaging:
         if ROCRATE_METADATA_FILE in file_list:
             file_format = "JSON"
+        elif SWORD_METADATA_FILE in file_list:
+            current_app.logger.error(
+                "packaging format is SimpleZip, but sword.json is found."
+            )
+            raise WekoSwordserverException(
+                "packaging format is SimpleZip, but sword.json is found.",
+                ErrorType.MetadataFormatNotAcceptable
+                )
         elif any(ROCRATE_METADATA_FILE.split("/")[1] in filename
                 for filename in file_list
             ):
@@ -103,8 +122,13 @@ def get_shared_id_from_on_behalf_of(on_behalf_of):
 
     Args:
         on_behalf_of (str): On-behalf-of in request
+
     Returns:
-        int: Shared ID
+        int: Shared user ID
+
+    Raises:
+        WekoSwordserverException:
+            If an error occurs while searching user by On-Behalf-Of.
     """
     shared_id = -1
     if on_behalf_of is None:
@@ -220,6 +244,12 @@ def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
         shared_id = kwargs.get("shared_id", -1)
 
         sword_client = SwordClient.get_client_by_id(client_id)
+        if sword_client is None:
+            current_app.logger.error(f"No setting foound for client ID: {client_id}")
+            raise WekoSwordserverException(
+                "No setting found for client ID that you are using.",
+                errorType=ErrorType.ServerError
+            )
         mapping_id = sword_client.mapping_id
         # Check workflow and item type
         register_type = sword_client.registration_type
@@ -239,6 +269,12 @@ def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
 
         if register_type == "Workflow":
             workflow = WorkFlows().get_workflow_by_id(sword_client.workflow_id)
+            if workflow is None or workflow.is_deleted:
+                current_app.logger.error(f"Workflow not found for client ID: {client_id}")
+                raise WekoSwordserverException(
+                    "Workflow not found for registration your item.",
+                    errorType=ErrorType.ServerError
+                )
             item_type_id = check_result.get("item_type_id")
             # Check if workflow and item type match
             if workflow.itemtype_id != item_type_id:
@@ -278,35 +314,24 @@ def update_item_ids(list_record, new_id):
     Raises:
         ValueError: If list_record is not a list.
     """
-    if not isinstance(list_record, list):
-        raise ValueError("list_record must be a list.")
-
     # Create a dictionary to map identifiers to their respective items
     identifier_to_item = {}
     for item in list_record:
         if not isinstance(item, dict):
             continue
 
-        metadata = item.get('metadata')
-        if not metadata or not hasattr(metadata, 'id'):
-            continue  # Skip if metadata is missing or doesn't have 'id'
+        metadata = item.get("metadata")
+        if not metadata or not item.get("_id"):
+            continue  # Skip if metadata is missing or doesn't have "_id"
 
-        current_identifier = getattr(metadata, 'id')
-        if current_identifier is not None:  # Skip if identifier is empty
-            identifier_to_item[current_identifier] = item
+        identifier_to_item[item["_id"]] = item
 
     # Iterate through each ITEM in list_record
     for item in list_record:
-        if not isinstance(item, dict):
-            continue
-
-        metadata = item.get('metadata')
-        if not metadata or not hasattr(metadata, 'link_data'):
-            continue  # Skip if metadata is missing or doesn't have 'link_data'
-
-        link_data = getattr(metadata, 'link_data', [])
-        if not isinstance(link_data, list):
-            continue
+        metadata = item.get("metadata")
+        if not metadata or not item.get("link_data"):
+            continue  # Skip if metadata is missing or doesn't have "link_data"
+        link_data = item.get("link_data")
 
         for link_item in link_data:
             if not isinstance(link_item, dict):
@@ -323,3 +348,79 @@ def update_item_ids(list_record, new_id):
                 )
 
     return list_record
+
+
+def delete_items_with_activity(item_id, request_info):
+    """Delete items with activity.
+
+    Args:
+        item_id (str): Item ID.
+        request_info (dict): Request information.
+
+    Returns:
+        str: URL for deletion.
+
+    Raises:
+        WekoWorkflowException: If any error occurs during deletion.
+    """
+    user_id=request_info.get("user_id")
+    community_id=request_info.get("community_id")
+
+    try:
+        headless = HeadlessActivity()
+        url = headless.init_activity(
+            user_id=user_id, community_id=community_id,
+            item_id=item_id, for_delete=True
+        )
+    except WekoWorkflowException as ex:
+        traceback.print_exc()
+        raise
+
+    return url
+
+
+def get_deletion_type(client_id):
+    """Get deletion type.
+
+    Get deletion type for item deletion from client_id.
+
+    Args:
+        client_id (str): Client ID.
+
+    Returns:
+        dict: A dictionary containing register_format, workflow_id, and item_type_id.
+
+    Raises:
+        WekoSwordserverException: If any validation fails.
+    """
+    client_id = request.oauth.client.client_id
+    sword_client = SwordClient.get_client_by_id(client_id)
+    if sword_client is None:
+        current_app.logger.error(f"No setting found for client ID: {client_id}")
+        raise WekoSwordserverException(
+            "No setting found for client ID that you are using.",
+            errorType=ErrorType.ServerError
+        )
+
+    register_type = sword_client.registration_type
+    deletion_type = "Direct"
+    workflow = None
+    delete_flow_id = None
+    if register_type == "Workflow":
+        workflow = WorkFlows().get_workflow_by_id(sword_client.workflow_id)
+        if workflow is None or workflow.is_deleted:
+            current_app.logger.error(f"Workflow not found for sword client.")
+            raise WekoSwordserverException(
+                "Workflow not found for registration your item.",
+                errorType=ErrorType.ServerError
+            )
+
+        # Check if workflow has delete_flow_id
+        delete_flow_id = workflow.delete_flow_id
+        deletion_type = "Workflow" if delete_flow_id else "Direct"
+
+    return {
+        "deletion_type": deletion_type,
+        "workflow_id": sword_client.workflow_id,
+        "delete_flow_id": delete_flow_id,
+    }

@@ -91,6 +91,14 @@
           "@id": "https://doi.org/10.1234/5678"
         }
       ],
+      "jpcoar:relation": [
+        {
+          "@id": "_:Relation1"
+        },
+        {
+          "@id": "_:Relation2"
+        }
+      ],
       "wk:saveAsIs": false
     },
     {
@@ -238,7 +246,7 @@
       },
       "version": "1.0",
       "wk:textExtraction": true,
-      "wk:accessMode": "open_access"
+      "accessMode": "open_access"
     },
     {
       "@id": "data/data.csv",
@@ -254,7 +262,7 @@
       },
       "version": "1.0",
       "wk:textExtraction": false,
-      "wk:accessMode": "open_date",
+      "accessMode": "open_date",
       "datePublished": "2024-11-22"
     },
     {
@@ -290,6 +298,37 @@
       "@type": "Organization",
       "name": "University of Manchester",
       "url": "https://www.manchester.ac.uk/"
+    },
+    {
+      "@id": "_:Relation1",
+      "relationType": "isPartOf",
+      "jpcoar:relatedIdentifier": {
+        "@id": "https://doi.org/10.1234/5678"
+      },
+      "jpcoar:relatedTitle": {
+        "@id": "_:title_1"
+      }
+    },
+    {
+      "@id": "https://doi.org/10.1234/5678",
+      "@type": "URL",
+      "identifier": "10.1234/5678"
+    },
+    {
+      "@id": "_:Relation2",
+      "relationType": "isVersionOf",
+      "jpcoar:relatedIdentifier": {
+        "@id": "https://doi.org/10.3456/7890"
+      },
+      "jpcoar:relatedTitle": {
+        "@id": "_:title_2"
+      }
+    },
+    {
+      "@id": "https://doi.org/10.3456/7890",
+      "@type": "URL",
+      "identifier": "10.3456/7890",
+      "identifierType": "DOI"
     }
   ]
 }
