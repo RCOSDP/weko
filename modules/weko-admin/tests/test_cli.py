@@ -17,7 +17,8 @@ from weko_admin.cli import (
     create_settings,
     create_default_settings,
     create_default_affiliation_settings,
-    insert_facet_search_to_db
+    insert_facet_search_to_db,
+    update_attribute_mapping
 )
 from weko_admin.models import AdminLangSettings,ApiCertificate,StatisticUnit,\
                             StatisticTarget,BillingPermission,AdminSettings,FacetSearchSetting
@@ -225,5 +226,42 @@ def test_insert_facet_search_to_db(db, script_info):
     
     with patch("weko_admin.cli.FacetSearchSetting.create",side_effect=Exception("test_error")):
         result = runner.invoke(insert_facet_search_to_db,["Data Language","データの言語","language","[]","True","SelectBox","1","True","OR"],obj=script_info)
+        assert result.exit_code == 0
+        assert result.output == "test_error\n"
+
+#def admin_settings():
+#def update_attribute_mapping(shib_eppn, shib_role_authority_name, shib_mail, shib_user_name):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_cli.py::test_update_attribute_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_update_attribute_mapping(db, script_info):
+    runner = CliRunner()
+
+    try:
+        db.session.add(AdminSettings(
+            id=9,
+            name="attribute_mapping",
+            settings='{"shib_eppn": "eduPersonPrincipalName", "shib_mail": "mail", "shib_user_name": "displayName", "shib_role_authority_name": "eduPersonAffiliation"}'
+        ))
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        raise
+    finally:
+        db.session.remove()
+
+    # テスト用引数をオプション形式で定義
+    args = [
+        '--shib_eppn', 'o',
+        '--shib_role_authority_name', None,
+        '--shib_mail', 'o',
+        '--shib_user_name', None
+    ]
+        
+    result = runner.invoke(update_attribute_mapping, args=args, obj=script_info)
+
+    assert result.exit_code == 0  
+    assert result.output.strip() == "Mapping and update were successful."
+
+    with patch("weko_admin.cli.AdminSettings.update",side_effect=Exception("test_error")):
+        result = runner.invoke(update_attribute_mapping, args=args, obj=script_info)
         assert result.exit_code == 0
         assert result.output == "test_error\n"

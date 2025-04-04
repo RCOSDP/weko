@@ -68,7 +68,8 @@ from weko_schema_ui.models import OAIServerSchema
 from weko_theme import WekoTheme
 from weko_deposit import WekoDeposit
 from weko_records import WekoRecords
-from weko_records.api import ItemsMetadata 
+from weko_records.api import ItemsMetadata
+from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER
 
 
 from invenio_oaiharvester import InvenioOAIHarvester
@@ -121,7 +122,8 @@ def base_app(instance_path):
         },
         DEPOSIT_DEFAULT_JSONSCHEMA='deposits/deposit-v1.0.0.json',
         WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME='jpcoar_v1_mapping',
-        WEKO_SCHEMA_DDI_SCHEMA_NAME='ddi_mapping'
+        WEKO_SCHEMA_DDI_SCHEMA_NAME='ddi_mapping',
+        WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER,
     )
     FlaskCeleryExt(app_)
     InvenioAccounts(app_)
@@ -211,7 +213,7 @@ def users(app, db):
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
         student = User.query.filter_by(email='student@test.org').first()
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -347,7 +349,7 @@ def test_indices(app, db):
             online_issn=online_issn,
             harvest_spec=harvest_spec
         )
-    
+
     with db.session.begin_nested():
         db.session.add(base_index(1, 0, 0, datetime(2022, 1, 1), True, True, True, True, True, '1234-5678'))
         db.session.add(base_index(2, 0, 1))
@@ -808,7 +810,7 @@ def reset_class_value():
     )
     BaseMapper.itemtype_map = {}
     BaseMapper.identifiers = []
-    
+
     DCMapper.itemtype_map = {}
     DCMapper.identifiers = []
     DDIMapper.itemtype_map = {}
@@ -827,7 +829,7 @@ def create_record(db, record_data, item_data):
         db.session.add(rel)
         parent=None
         doi = None
-        
+
         if '.' in record_data["recid"]:
             parent = PersistentIdentifier.get("recid",int(float(record_data["recid"])))
             recid_p = PIDRelation.get_child_relations(parent).one_or_none()
@@ -849,7 +851,7 @@ def create_record(db, record_data, item_data):
         deposit = WekoDeposit(record, record.model)
 
         deposit.commit()
-        
+
     return recid, depid, record, item, parent, doi, deposit
 
 @pytest.fixture()
@@ -857,11 +859,10 @@ def db_records(app,db):
     record_datas = list()
     with open("tests/data/test_record/record_metadata.json") as f:
         record_datas = json.load(f)
-    
+
     item_datas = list()
     with open("tests/data/test_record/item_metadata.json") as f:
         item_datas = json.load(f)
-        
+
     for i in range(len(record_datas)):
         recid, depid, record, item, parent, doi, deposit = create_record(db,record_datas[i],item_datas[i])
-        

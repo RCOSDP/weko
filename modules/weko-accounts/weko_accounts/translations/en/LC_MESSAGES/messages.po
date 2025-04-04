@@ -19,9 +19,45 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_accounts/admin.py:56
+#: weko_accounts/admin.py:46
+msgid "language"
+msgstr "en"
+
+#: weko_accounts/admin.py:
 msgid "Shibboleth flag was updated."
 msgstr "Updated Shibboleth settings"
+
+#: weko_accounts/admin.py:
+msgid "Gakunin Role was updated."
+msgstr ""
+
+#: weko_accounts/admin.py:
+msgid "Orthros Outside Role was updated."
+msgstr "Orthros Role was updated."
+
+#: weko_accounts/admin.py:
+msgid "Extra Role was updated."
+msgstr ""
+
+#: weko_accounts/admin.py:
+msgid "Shib Eppn mapping was updated."
+msgstr "Shibboleth Eppn mapping was updated."
+
+#: weko_accounts/admin.py:
+msgid "Shib Role Authority Name mapping was updated."
+msgstr "Shibboleth Role Authority Name mapping was updated."
+
+#: weko_accounts/admin.py:
+msgid "Shib Mail mapping was updated."
+msgstr "Shibboleth Mail mapping was updated."
+
+#: weko_accounts/admin.py:
+msgid "Shib User Name mapping was updated."
+msgstr "Shibboleth User Name mapping was updated."
+
+#: weko_accounts/admin.py:
+msgid "Blocked user list was updated."
+msgstr "Updated User Login Block settings"
 
 #: weko_accounts/admin.py:69
 msgid "Setting"
@@ -101,8 +137,48 @@ msgstr "Enable Shibboleth Authentication"
 msgid "Deny shibboleth user"
 msgstr "Disable Shibboleth Authentication"
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:68
-msgid "Update"
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:71
+msgid "Default Role"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:73
+msgid "Gakunin IdP"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:76
+msgid "Outside Orthros"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:79
+msgid "Extra IdP"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:84
+msgid "Attribute Mapping"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:86
+msgid "shib_eppn"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:89
+msgid "shib_role_authority_name"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:92
+msgid "shib_mail"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:95
+msgid "shib_user_name"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:100
+msgid "Block User"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:120
+msgid "Save"
 msgstr ""
 
 #~ msgid "%(module_name)s"
@@ -126,7 +202,7 @@ msgstr ""
 
 #: weko_accounts/templates/weko_accounts/login_shibuser_pattern_1.html
 msgid "Users who belongs to institution outside Japan, please choose your institution's location."
-msgstr "Users who belongs to institution outside Japan, please choose your institution\'s location."
+msgstr "Users who belongs to institution outside Japan, please choose your institution's location."
 
 #: weko_accounts/templates/weko_accounts/login_shibuser_pattern_2.html
 msgid "Select Institution"

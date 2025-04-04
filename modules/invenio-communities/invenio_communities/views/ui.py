@@ -194,6 +194,18 @@ def view(community):
     )
 
 
+@blueprint.route('/<string:community_id>/content_policy/', methods=['GET'])
+@pass_community
+def content_policy(community):
+    """Display the content policy of a community."""
+    ctx = {'community': community}
+    community_id = community.id
+    return render_template(
+        'invenio_communities/content_policy.html',
+        community_id=community_id, ** ctx
+    )
+
+
 # @blueprint.route('/<string:community_id>/detail/', methods=['GET'])
 # @pass_community
 # def detail(community):
@@ -699,6 +711,7 @@ def community_list():
         'invenio_communities/communities_list.html',
         page=render_page,
         render_widgets=render_widgets,
+        communityModel = Community,
         **ctx)
 
 @blueprint.teardown_request

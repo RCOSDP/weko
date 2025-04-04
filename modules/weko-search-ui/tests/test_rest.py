@@ -1,9 +1,10 @@
 """
 /index/:post, get
 """
-import json
+import json, copy
 import pytest
 from mock import patch, MagicMock
+from unittest.mock import ANY
 from flask import Response, current_app
 from flask_babelex import get_locale
 from elasticsearch_dsl import response, Search
@@ -15,7 +16,7 @@ from invenio_rest import ContentNegotiatedMethodView
 
 from weko_records.api import ItemTypes
 from weko_search_ui.rest import create_blueprint, IndexSearchResource, get_heading_info
-
+from weko_search_ui.query import default_search_factory
 
 def url(root, kwargs={}):
     args = ["{key}={value}".format(key=key, value=value) for key, value in kwargs.items()]
@@ -84,14 +85,14 @@ test_patterns =[
      "execute_result01_02_03.json"
      ),
     ({"size":1,"page":2,"q":"1557820086539","Access":"open access"},
-     "facet.json", 
+     "facet.json",
      {"next":"?page=3&q=1557820086539&size=1","prev":"?page=1&q=1557820086539&size=1","self":"?page=2&q=1557820086539&size=1"},
      [[mock_path(**path2),mock_path(**path1)]], # path not in agp
      "rd_result01_02_03.json",
      "execute_result01_02_03.json")
     ]
 @pytest.mark.parametrize("params, facet_file, links, paths, rd_file, execute", test_patterns)
-def test_IndexSearchResource_get(client_rest, users, item_type, record, facet_search_setting, index, mock_es_execute, 
+def test_IndexSearchResource_get(client_rest, users, item_type, record, facet_search_setting, index, mock_es_execute,
                                  params, facet_file, links, paths, rd_file, execute):
     sname = current_app.config["SERVER_NAME"]
     facet = json_data("tests/data/search/"+facet_file)
@@ -117,7 +118,7 @@ def test_IndexSearchResource_get_Exception(client_rest, db, users, item_type, db
     #with db.session.begin_nested():
     #    db.session.add_all(indexes)
     #db.session.commit()
-    
+
     def dummy_response(data):
         if isinstance(data, str):
             data = json_data(data)
@@ -196,7 +197,7 @@ def test_IndexSearchResource_get(app,i18n_app, users, client_request_args):
     return_data_2.name = "test"
 
     with patch("invenio_pidstore.current_pidstore.fetchers", return_value=1):
-    
+
         def search_class():
             search_class_data = MagicMock()
 
@@ -254,7 +255,7 @@ def test_IndexSearchResource_get(app,i18n_app, users, client_request_args):
 
         def make_response(pid_fetcher, search_result, links, item_links_factory):
             return (pid_fetcher, search_result, links, item_links_factory)
-        
+
 
         ctx = {
             "pid_fetcher": "",
@@ -267,8 +268,8 @@ def test_IndexSearchResource_get(app,i18n_app, users, client_request_args):
 
         test = IndexSearchResource(
             ctx=ctx,
-            search_serializers=None, 
-            record_serializers=None, 
+            search_serializers=None,
+            record_serializers=None,
             default_media_type=None
         )
 
@@ -387,6 +388,84 @@ def test_IndexSearchResourceAPI(client_rest, db_register2, db_rocrate_mapping):
         param = {'sort': '-controlnumber'}
         res = client_rest.get(url('/v1/records', param))
         assert res.status_code == 200
+        param = {'sort': 'wtl'}
+        res = client_rest.get(url('/v1/records', param))
+        assert res.status_code == 200
+
+        headers = {'Accept-Language': 'ja'}
+        res = client_rest.get('/v1/records', headers=headers)
+        assert res.status_code == 200
+
+        with patch('weko_search_ui.rest.SearchSetting.get_sort_key', return_value=False):
+            res = client_rest.get('/v1/records')
+            assert res.status_code == 200
+
+        with patch('weko_search_ui.rest.SearchSetting.get_sort_key', return_value=True):
+            param = {'sort': 'wtl'}
+            res = client_rest.get(url('/v1/records', param))
+            assert res.status_code == 200
+
+        target_url = url('/v1/records')
+
+        with patch('weko_records_ui.models.RocrateMapping.query') as query:
+            query.all = lambda: []
+            res = client_rest.get(url(target_url, param))
+            assert res.status_code == 200
+
+        # exact title match parameter test
+        with patch('weko_search_ui.rest.default_search_factory',
+                    MagicMock(wraps=default_search_factory)) as mock_search_factory:
+            param = {'exact_title_match': 'true'}
+            res = client_rest.get(url(target_url, param))
+            assert res.status_code == 200
+            mock_search_factory.assert_called_with(ANY, ANY, additional_params={'itemtype': 'test item type', 'exact_title_match': True})
+
+            param = {'exact_title_match': 'false'}
+            res = client_rest.get(url(target_url, param))
+            assert res.status_code == 200
+            mock_search_factory.assert_called_with(ANY, ANY, additional_params={'itemtype': 'test item type', 'exact_title_match': False})
+
+            param = {'exact_title_match': None}
+            res = client_rest.get(url(target_url, param))
+            assert res.status_code == 200
+            mock_search_factory.assert_called_with(ANY, ANY, additional_params={'itemtype': 'test item type', 'exact_title_match': False})
+
+    # facet search query test
+    with patch('weko_search_ui.rest.default_search_factory') as mock_search_factory:
+        with open('tests/data/rocrate/search_result.json', 'r') as f:
+            search_result = json.load(f)
+        search = MagicMock()
+        search.execute = lambda: DummySearchResult(search_result)
+        mock_search_factory.return_value = (search, '')
+        with patch('weko_search_ui.rest.get_facet_search_query') as mock_get_facet_search_query:
+            search.aggs = {}
+            mock_get_facet_search_query.return_value = {"test-weko": {"aggs": {"Data Type": {"filter": {}} }}}
+            res = client_rest.get(target_url)
+            assert res.status_code == 200
+            assert search.aggs == {'Data Type': {'filter': {}}}
+
+            search.aggs = {}
+            mock_get_facet_search_query.return_value = {}
+            res = client_rest.get(target_url)
+            assert res.status_code == 200
+            assert search.aggs == {}
+
+    modified_result = copy.deepcopy(search_result)
+    modified_result['hits']['hits'][-1].pop('sort')
+    with patch('invenio_search.api.RecordsSearch.execute', return_value=DummySearchResult(modified_result)):
+        res = client_rest.get(target_url)
+        assert res.status_code == 200
+
+    modified_result = copy.deepcopy(search_result)
+    modified_result['aggregations'] = {"Data Type": ""}
+    with patch('invenio_search.api.RecordsSearch.execute', return_value=DummySearchResult(modified_result)):
+        res = client_rest.get(target_url)
+        assert res.status_code == 200
+
+    modified_result= {"hits": {"hits":"", "total": ""} }
+    with patch('invenio_search.api.RecordsSearch.execute', return_value=DummySearchResult(modified_result)):
+        res = client_rest.get(target_url)
+        assert res.status_code == 200
 
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResourceAPI_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
@@ -449,6 +528,46 @@ def test_IndexSearchResultList(client_rest, db_register2, db_rocrate_mapping):
         res = client_rest.post(target_url, json=valid_json, headers=headers)
         assert get_locale().language == 'en'
 
+        # exact title match parameter test
+        with patch('weko_search_ui.rest.default_search_factory',
+                    MagicMock(wraps=default_search_factory)) as mock_search_factory:
+            param = {'exact_title_match': 'true'}
+            res = client_rest.post(url(target_url, param), json=valid_json)
+            assert res.status_code == 200
+            mock_search_factory.assert_called_with(ANY, ANY, additional_params={'itemtype': 'test item type', 'exact_title_match': True})
+
+            param = {'exact_title_match': 'false'}
+            res = client_rest.post(url(target_url, param), json=valid_json)
+            assert res.status_code == 200
+            mock_search_factory.assert_called_with(ANY, ANY, additional_params={'itemtype': 'test item type', 'exact_title_match': False})
+
+            param = {'exact_title_match': None}
+            res = client_rest.post(url(target_url, param), json=valid_json)
+            assert res.status_code == 200
+            mock_search_factory.assert_called_with(ANY, ANY, additional_params={'itemtype': 'test item type', 'exact_title_match': False})
+
+        with patch('weko_records_ui.models.RocrateMapping.query') as query:
+            query.all = lambda: []
+            res = client_rest.post(url(target_url, param), json=valid_json)
+            assert res.status_code == 200
+
+        param = {'sort': 'controlnumber'}
+        res = client_rest.post(url('/v1/records/list', param), json=valid_json )
+        assert res.status_code == 200
+        param = {'sort': '-controlnumber'}
+        res = client_rest.post(url('/v1/records/list', param), json=valid_json )
+        assert res.status_code == 200
+
+        with patch('weko_search_ui.rest.SearchSetting.get_sort_key', return_value=True):
+            param = {'sort': 'wtl'}
+            res = client_rest.post(url('/v1/records/list', param), json=valid_json )
+            assert res.status_code == 200
+
+        with patch('weko_search_ui.rest.SearchSetting.get_sort_key', return_value=False):
+            param = {'sort': 'wtl'}
+            res = client_rest.post(url('/v1/records/list', param), json=valid_json )
+            assert res.status_code == 200
+
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResultList_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_IndexSearchResultList_error(client_rest, db_register2, db_rocrate_mapping):
@@ -485,3 +604,19 @@ def test_IndexSearchResultList_error(client_rest, db_register2, db_rocrate_mappi
         # 8 Invalid version
         res = client_rest.post(url('/v0/records/list'), json=valid_json)
         assert res.status_code == 400
+
+        invalid_json = [{"name": "", "roCrateKey": ""}]
+        res = client_rest.post(target_url, json=invalid_json)
+        assert res.status_code == 400
+
+        invalid_json = {}
+        res = client_rest.post(target_url, json=invalid_json)
+        assert res.status_code == 400
+
+    with patch('invenio_search.api.RecordsSearch.execute', side_effect=ElasticsearchException()):
+        res = client_rest.post(target_url, json=valid_json)
+        assert res.status_code == 500
+
+    with patch('invenio_search.api.RecordsSearch.execute', side_effect=Exception()):
+        res = client_rest.post(target_url, json=valid_json)
+        assert res.status_code == 500

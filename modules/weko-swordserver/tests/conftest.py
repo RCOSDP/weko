@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2022 National Institute of Informatics.
+# Copyright (C) 2024 National Institute of Informatics.
 #
 # WEKO-SWORDServer is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -18,11 +18,12 @@ import json
 import subprocess
 import tempfile
 import os
+import uuid
 from os.path import join, dirname
 from io import BytesIO
 import uuid
 from zipfile import ZipFile, ZIP_DEFLATED
-import datetime
+from datetime import datetime, timedelta
 
 from invenio_theme import InvenioTheme
 import pytest
@@ -60,6 +61,7 @@ from invenio_records import InvenioRecords
 from invenio_records_ui import InvenioRecordsUI
 from invenio_search import InvenioSearch, current_search_client
 
+from weko_accounts import WekoAccounts
 from weko_admin import WekoAdmin
 from weko_admin.models import AdminSettings, Identifier,SessionLifetime
 from weko_authors import WekoAuthors
@@ -68,17 +70,17 @@ from weko_deposit.api import WekoIndexer
 from weko_index_tree.ext import WekoIndexTree
 from weko_index_tree.models import Index
 from weko_items_ui.ext import WekoItemsUI
-from weko_records.models import ItemTypeName, ItemType,ItemTypeMapping
+from weko_records.models import ItemTypeName, ItemType,ItemTypeMapping, ItemTypeJsonldMapping
 from weko_schema_ui.ext import WekoSchemaUI
 from weko_search_ui import WekoSearchUI
+from weko_swordserver.models import SwordClientModel
 from weko_theme.ext import WekoTheme
 from weko_workflow import WekoWorkflow
-
+from weko_workflow.models import Action, ActionStatus, FlowAction, FlowDefine, WorkFlow
 from weko_swordserver import WekoSWORDServer
 from weko_swordserver.views import blueprint as weko_swordserver_blueprint
 
-from tests.helpers import json_data, create_record
-from weko_workflow.models import Action, ActionStatus, FlowAction, FlowDefine, WorkFlow
+from .helpers import json_data, create_record
 
 @pytest.yield_fixture()
 def instance_path():
@@ -99,10 +101,9 @@ def base_app(instance_path):
         TESTING=True,
         SECRET_KEY='testing_key',
         SERVER_NAME='TEST_SERVER.localdomain',
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-        # SQLALCHEMY_DATABASE_URI=os.environ.get(
-        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        SQLALCHEMY_DATABASE_URI=os.getenv(
+            'SQLALCHEMY_DATABASE_URI',
+            'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         OAUTH2_CACHE_TYPE='simple',
         OAUTHLIB_INSECURE_TRANSPORT=True,
         SEARCH_ELASTIC_HOSTS=os.environ.get("SEARCH_ELASTIC_HOSTS", "elasticsearch"),
@@ -161,6 +162,7 @@ def base_app(instance_path):
     InvenioTheme(app_)
     InvenioPIDRelations(app_)
     InvenioPIDStore(app_)
+    WekoAccounts(app_)
     WekoSearchUI(app_)
     WekoWorkflow(app_)
     WekoAdmin(app_)
@@ -173,8 +175,6 @@ def base_app(instance_path):
 
     # InvenioCommunities(app_)
     app_.register_blueprint(invenio_communities_blueprint)
-    WekoSWORDServer(app_)
-    app_.register_blueprint(weko_swordserver_blueprint)
 
     current_assets = LocalProxy(lambda: app_.extensions["invenio-assets"])
     current_assets.collect.collect()
@@ -184,6 +184,8 @@ def base_app(instance_path):
 @pytest.yield_fixture()
 def app(base_app):
     """Flask application"""
+    WekoSWORDServer(base_app)
+    base_app.register_blueprint(weko_swordserver_blueprint)
     with base_app.app_context():
         yield base_app
 
@@ -245,35 +247,47 @@ def db(app):
 
 @pytest.fixture
 def tokens(app,users,db):
-    user = str(users[0]["id"])
-    test_client = Client(client_id="dev",
-                    client_secret="dev",
-                    name="Test name",
-                    description="test description",
-                    is_confidential=False,
-                    user_id=user,
-                    _default_scopes="deposit:write")
-    test_token = Token(client=test_client,
-                  user_id=user,
-                  token_type="bearer",
-                  access_token=jwt_create_token(user_id=user),
-                  expires=datetime.datetime.now() + datetime.timedelta(hours=10),
-                  is_personal=False,
-                  is_internal=True,
-                  _scopes="deposit:write")
-    import_token = Token(client=test_client,
-                  user_id=user,
-                  token_type="bearer",
-                  access_token=jwt_create_token(user_id=user),
-                  expires=datetime.datetime.now() + datetime.timedelta(hours=10),
-                  is_personal=False,
-                  is_internal=True,
-                  _scopes="deposit:write user:activity")
-    db.session.add(test_client)
-    db.session.add(test_token)
-    db.session.add(import_token)
+    scopes = [
+        "deposit:write deposit:actions",
+        "deposit:write deposit:actions user:activity",
+        "deposit:write user:activity",
+        ""
+    ]
+    tokens = []
+
+    for i, scope in enumerate(scopes):
+        user = users[i]
+        user_id = str(user["id"])
+
+        test_client = Client(
+            client_id=f"dev{user_id}",
+            client_secret=f"dev{user_id}",
+            name="Test name",
+            description="test description",
+            is_confidential=False,
+            user_id=user_id,
+            _default_scopes="deposit:write"
+        )
+        test_token = Token(
+            client=test_client,
+            user_id=user_id,
+            token_type="bearer",
+            access_token=jwt_create_token(user_id=user_id),
+            expires=datetime.now() + timedelta(hours=10),
+            is_personal=False,
+            is_internal=True,
+            _scopes=scope
+        )
+
+        db.session.add(test_client)
+        db.session.add(test_token)
+
+        tokens.append({"token":test_token, "client":test_client, "scope":scope})
+
     db.session.commit()
-    return {"token":test_token, "import_token": import_token, "client":test_client}
+
+    return tokens
+
 
 @pytest.fixture()
 def users(app, db):
@@ -300,7 +314,7 @@ def users(app, db):
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
         student = User.query.filter_by(email='student@test.org').first()
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -410,39 +424,63 @@ def users(app, db):
 
 @pytest.fixture()
 def item_type(app, db):
-    
+
     item_type_name = ItemTypeName(id=1,
         name="デフォルトアイテムタイプ（フル）", has_site_license=True, is_active=True
     )
-    item_type_schema = json_data("data/item_type/schema_1.json")
 
-    item_type_form = json_data("data/item_type/form_1.json") 
-    
-    item_type_render = json_data("data/item_type/render_1.json")
-
-    item_type_mapping = json_data("data/item_type/mapping_1.json")
-    
     item_type = ItemType(
         id=1,
         name_id=1,
         harvesting_type=True,
-        schema=item_type_schema,
-        form=item_type_form,
-        render=item_type_render,
+        schema=json_data("data/item_type/schema_1.json"),
+        form=json_data("data/item_type/form_1.json"),
+        render=json_data("data/item_type/render_1.json"),
         tag=1,
         version_id=1,
         is_deleted=False,
     )
-    item_type_mapping = ItemTypeMapping(id=1,item_type_id=1, mapping=item_type_mapping)
-    
+    item_type_mapping = ItemTypeMapping(
+        id=1,
+        item_type_id=1,
+        mapping=json_data("data/item_type/mapping_1.json")
+    )
+
+    item_type_name_2 = ItemTypeName(id=2,
+        name="デフォルトアイテムタイプ（SWORD）", has_site_license=True, is_active=True
+    )
+
+    item_type_2 = ItemType(
+        id=2,
+        name_id=2,
+        harvesting_type=True,
+        schema=json_data("data/item_type/schema_2.json"),
+        form=json_data("data/item_type/form_2.json"),
+        render=json_data("data/item_type/render_2.json"),
+        tag=2,
+        version_id=1,
+        is_deleted=False,
+    )
+    item_type_mapping_2 = ItemTypeMapping(
+        id=2,
+        item_type_id=2,
+        mapping=json_data("data/item_type/mapping_2.json")
+    )
+
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
         db.session.add(item_type_mapping)
-    
+        db.session.add(item_type_name_2)
+        db.session.add(item_type_2)
+        db.session.add(item_type_mapping_2)
+
     db.session.commit()
-    
-    return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
+
+    return [
+        {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping},
+        {"item_type_name": item_type_name_2, "item_type": item_type_2, "item_type_mapping":None}
+    ]
 
 @pytest.fixture()
 def doi_identifier(app, db):
@@ -458,9 +496,9 @@ def doi_identifier(app, db):
         jalc_datacite_doi="3456",
         ndl_jalc_doi="4567",
         created_userId=1,
-        created_date=datetime.datetime.now(),
+        created_date=datetime.now(),
         updated_userId=1,
-        updated_date=datetime.datetime.now()
+        updated_date=datetime.now()
     )
     db.session.add(identifier)
     db.session.commit()
@@ -469,7 +507,7 @@ def doi_identifier(app, db):
 
 @pytest.fixture()
 def index(app, db):
-    index_ = Index(
+    index_1 = Index(
         id=1234567891011,
         parent=0,
         position=11,
@@ -483,7 +521,22 @@ def index(app, db):
         image_name="",
         public_state=False,
     )
-    db.session.add(index_)
+    index_2 = Index(
+        id=1623632832836,
+        parent=0,
+        position=12,
+        index_name="test_index_ld",
+        index_name_english="test_index_ld",
+        index_link_name_english="New Index LD",
+        index_link_enabled=False,
+        more_check=False,
+        display_no=5,
+        harvest_public_state=True,
+        image_name="",
+        public_state=False,
+    )
+    db.session.add(index_1)
+    db.session.add(index_2)
     db.session.commit()
 
 @pytest.fixture()
@@ -507,85 +560,6 @@ def records(db,location):
         result.append(create_record(record_data[d], item_data[d]))
         db.session.commit()
     return result
-
-@pytest.fixture()
-def workflow(db, users, item_type):
-    action_datas = dict()
-    with open("tests/data/workflow_data/actions.json", "r") as f:
-        action_datas = json.load(f)
-    actions_db = list()
-    with db.session.begin_nested():
-        for data in action_datas:
-            actions_db.append(Action(**data))
-        db.session.add_all(actions_db)
-
-    actionstatus_datas = dict()
-    with open("tests/data/workflow_data/action_status.json", 'r') as f:
-        actionstatus_datas = json.load(f)
-    actionstatus_db = list()
-    with db.session.begin_nested():
-        for data in actionstatus_datas:
-            actionstatus_db.append(ActionStatus(**data))
-        db.session.add_all(actionstatus_db)
-
-    flow_id = uuid.uuid4()
-    sys_user = users[0]['obj']
-    flow_define = FlowDefine(id=1, flow_id=flow_id, flow_name="Registration Flow", flow_user=sys_user.id, flow_status="A")
-    flow_action1 = FlowAction(
-        status="N",
-        flow_id=flow_id,
-        action_id=1,
-        action_version="1.0.0",
-        action_order=1,
-        action_condition="",
-        action_status="A",
-        action_date=datetime.datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
-        send_mail_setting={},
-    )
-    flow_action2 = FlowAction(
-        status="N",
-        flow_id=flow_id,
-        action_id=3,
-        action_version="1.0.0",
-        action_order=2,
-        action_condition="",
-        action_status="A",
-        action_date=datetime.datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
-        send_mail_setting={},
-    )
-    flow_action3 = FlowAction(
-        status="N",
-        flow_id=flow_id,
-        action_id=5,
-        action_version="1.0.0",
-        action_order=3,
-        action_condition="",
-        action_status="A",
-        action_date=datetime.datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
-        send_mail_setting={},
-    )
-    def_workflow = WorkFlow(
-        id=-1,
-        flows_id=flow_id,
-        flows_name="test workflow1",
-        itemtype_id=item_type["item_type"].id,
-        index_tree_id=None,
-        flow_id=flow_define.id,
-        is_deleted=False,
-        open_restricted=False,
-        location_id=None,
-        is_gakuninrdm=False,
-    )
-
-    with db.session.begin_nested():
-        db.session.add(flow_define)
-        db.session.add(flow_action1)
-        db.session.add(flow_action2)
-        db.session.add(flow_action3)
-        db.session.add(def_workflow)
-
-    return def_workflow
-
 
 @pytest.fixture()
 def admin_settings(db):
@@ -642,6 +616,34 @@ def make_zip():
     return factory
 
 @pytest.fixture()
+def make_crate():
+    def factory():
+        temp_dir = tempfile.mkdtemp()
+        zip_path = os.path.join(temp_dir, "crate.zip")
+        shutil.make_archive(zip_path.replace(".zip", ""), 'zip', "tests/data/zip_crate/")
+        file_size = os.path.getsize(zip_path)
+        with open(zip_path, 'rb') as f:
+            fp = BytesIO(f.read())
+        shutil.rmtree(temp_dir)
+        fp.seek(0)
+        return fp, file_size
+    return factory
+
+@pytest.fixture()
+def make_crate2():
+    def factory():
+        temp_dir = tempfile.mkdtemp()
+        zip_path = os.path.join(temp_dir, "crate.zip")
+        shutil.make_archive(zip_path.replace(".zip", ""), 'zip', "tests/data/zip_crate2/")
+        file_size = os.path.getsize(zip_path)
+        with open(zip_path, 'rb') as f:
+            fp = BytesIO(f.read())
+        shutil.rmtree(temp_dir)
+        fp.seek(0)
+        return fp, file_size
+    return factory
+
+@pytest.fixture()
 def install_node_module(app):
     current_path = os.getcwd()
     os.chdir(app.instance_path+'/static')
@@ -656,3 +658,294 @@ def indexer(app):
     # before_record_index.connect(record_indexer_receiver, sender=app)
     app.extensions['invenio-indexer'] = WekoIndexer()
     yield WekoIndexer()
+
+@pytest.fixture()
+def action_data(db):
+    action_datas={}
+    with open('tests/data/actions.json', 'r') as f:
+        action_datas = json.load(f)
+    actions_db = []
+    with db.session.begin_nested():
+        for data in action_datas:
+            actions_db.append(Action(**data))
+        db.session.add_all(actions_db)
+    db.session.commit()
+
+    actionstatus_datas = {}
+    with open('tests/data/action_status.json') as f:
+        actionstatus_datas = json.load(f)
+    actionstatus_db = []
+    with db.session.begin_nested():
+        for data in actionstatus_datas:
+            actionstatus_db.append(ActionStatus(**data))
+        db.session.add_all(actionstatus_db)
+    db.session.commit()
+    return actions_db, actionstatus_db
+
+
+@pytest.fixture()
+def workflow(app, db, item_type, action_data, users):
+    flow_define = FlowDefine(
+        id=1,
+        flow_id=uuid.uuid4(),
+        flow_name="Registration Flow",
+        flow_user=users[0]["obj"].id,
+        flow_status="A"
+    )
+
+    flow_define_2 = FlowDefine(
+        id=2,
+        flow_id=uuid.uuid4(),
+        flow_name='Registration Flow with approval',
+        flow_user=users[0]["obj"].id,
+        flow_status="A"
+    )
+    with db.session.begin_nested():
+        db.session.add(flow_define)
+        db.session.add(flow_define_2)
+    db.session.commit()
+
+    # setting flow action(start, item register, item link, end)
+    flow_actions = []
+    # start
+    flow_actions.append(FlowAction(
+        status='N',
+        flow_id=flow_define.flow_id,
+        action_id=1,
+        action_version='1.0.0',
+        action_order=1,
+        action_condition='',
+        action_status='A',
+        action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+        send_mail_setting={}
+    ))
+    # item register
+    flow_actions.append(FlowAction(
+        status='N',
+        flow_id=flow_define.flow_id,
+        action_id=3,
+        action_version='1.0.0',
+        action_order=2,
+        action_condition='',
+        action_status='A',
+        action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+        send_mail_setting={}
+    ))
+    # item link
+    flow_actions.append(FlowAction(
+        status='N',
+        flow_id=flow_define.flow_id,
+        action_id=5,
+        action_version='1.0.0',
+        action_order=3,
+        action_condition='',
+        action_status='A',
+        action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+        send_mail_setting={}
+    ))
+    # end
+    flow_actions.append(FlowAction(
+        status='N',
+        flow_id=flow_define.flow_id,
+        action_id=2,
+        action_version='1.0.0',
+        action_order=4,
+        action_condition='',
+        action_status='A',
+        action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+        send_mail_setting={}
+    ))
+    with db.session.begin_nested():
+        db.session.add_all(flow_actions)
+    db.session.commit()
+
+    # setting flow action(start, item register, oa policy, item link, identifier grant, approval, end)
+    flow_actions_2 = []
+    # start
+    flow_actions_2.append(FlowAction(
+        status='N',
+        flow_id=flow_define_2.flow_id,
+        action_id=1,
+        action_version='1.0.0',
+        action_order=1,
+        action_condition='',
+        action_status='A',
+        action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+        send_mail_setting={}
+    ))
+    # item register
+    flow_actions_2.append(FlowAction(
+        status='N',
+        flow_id=flow_define_2.flow_id,
+        action_id=3,
+        action_version='1.0.0',
+        action_order=2,
+        action_condition='',
+        action_status='A',
+        action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+        send_mail_setting={}
+    ))
+    # oa policy
+    flow_actions_2.append(FlowAction(
+        status='N',
+        flow_id=flow_define_2.flow_id,
+        action_id=6,
+        action_version='1.0.0',
+        action_order=3,
+        action_condition='',
+        action_status='A',
+        action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+        send_mail_setting={}
+    ))
+    # item link
+    flow_actions_2.append(FlowAction(
+        status='N',
+        flow_id=flow_define_2.flow_id,
+        action_id=5,
+        action_version='1.0.0',
+        action_order=4,
+        action_condition='',
+        action_status='A',
+        action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+        send_mail_setting={}
+    ))
+    # identifier grant
+    flow_actions_2.append(FlowAction(
+        status='N',
+        flow_id=flow_define_2.flow_id,
+        action_id=7,
+        action_version='1.0.0',
+        action_order=5,
+        action_condition='',
+        action_status='A',
+        action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+        send_mail_setting={}
+    ))
+    # approval
+    flow_actions_2.append(FlowAction(
+        status='N',
+        flow_id=flow_define_2.flow_id,
+        action_id=4,
+        action_version='1.0.0',
+        action_order=6,
+        action_condition='',
+        action_status='A',
+        action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+        send_mail_setting={}
+    ))
+    # end
+    flow_actions_2.append(FlowAction(
+        status='N',
+        flow_id=flow_define_2.flow_id,
+        action_id=2,
+        action_version='1.0.0',
+        action_order=7,
+        action_condition='',
+        action_status='A',
+        action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+        send_mail_setting={}
+    ))
+    with db.session.begin_nested():
+        db.session.add_all(flow_actions_2)
+    db.session.commit()
+
+    # setting workflow
+    workflow = WorkFlow(
+        flows_id=uuid.uuid4(),
+        flows_name='test workflow01',
+        itemtype_id=item_type[0]["item_type"].id,
+        index_tree_id=None,
+        flow_id=1,
+        is_deleted=False,
+        open_restricted=False,
+        location_id=None,
+        is_gakuninrdm=False
+    )
+    workflow_2 = WorkFlow(
+        flows_id=uuid.uuid4(),
+        flows_name='test workflow02',
+        itemtype_id=item_type[1]["item_type"].id,
+        index_tree_id=1623632832836,
+        flow_id=2,
+        is_deleted=False,
+        open_restricted=False,
+        location_id=None,
+        is_gakuninrdm=False
+    )
+    with db.session.begin_nested():
+        db.session.add(workflow)
+        db.session.add(workflow_2)
+    db.session.commit()
+
+    return [
+        {"flow": flow_define, "flow_action": flow_actions, "workflow": workflow},
+        {"flow": flow_define_2, "flow_action": flow_actions_2, "workflow": workflow_2}
+        ]
+
+
+@pytest.fixture
+def sword_mapping(db, item_type):
+    sword_mapping = []
+    for i in range(1, 4):
+        obj = ItemTypeJsonldMapping(
+            name=f"test{i}",
+            mapping=json_data("data/jsonld/ro-crate_mapping.json"),
+            item_type_id=item_type[1]["item_type"].id,
+            is_deleted=False
+        )
+        with db.session.begin_nested():
+            db.session.add(obj)
+
+        sword_mapping.append({
+            "id": obj.id,
+            "sword_mapping": obj,
+            "name": obj.name,
+            "mapping": obj.mapping,
+            "item_type_id": obj.item_type_id,
+            "version_id": obj.version_id,
+            "is_deleted": obj.is_deleted
+        })
+
+    db.session.commit()
+
+    return sword_mapping
+
+@pytest.fixture
+def sword_client(db, tokens, sword_mapping, workflow):
+    client = tokens[0]["client"]
+    sword_client1 = SwordClientModel(
+        client_id=client.client_id,
+        registration_type_id=SwordClientModel.RegistrationType.DIRECT,
+        mapping_id=sword_mapping[0]["sword_mapping"].id,
+        active=False,
+        meta_data_api=[],
+    )
+    client = tokens[1]["client"]
+    sword_client2 = SwordClientModel(
+        client_id=client.client_id,
+        registration_type_id=SwordClientModel.RegistrationType.WORKFLOW,
+        mapping_id=sword_mapping[1]["sword_mapping"].id,
+        workflow_id=workflow[1]["workflow"].id,
+        active=False,
+        meta_data_api=[],
+    )
+    client = tokens[2]["client"]
+    sword_client3 = SwordClientModel(
+        client_id=client.client_id,
+        registration_type_id=SwordClientModel.RegistrationType.DIRECT,
+        mapping_id=sword_mapping[0]["sword_mapping"].id,
+        active=False,
+        meta_data_api=[],
+    )
+
+    with db.session.begin_nested():
+        db.session.add(sword_client1)
+        db.session.add(sword_client2)
+        db.session.add(sword_client3)
+    db.session.commit()
+
+    return [
+        {"sword_client": sword_client1},
+        {"sword_client": sword_client2},
+        {"sword_client": sword_client3}
+        ]

@@ -61,6 +61,10 @@ msgstr "フロー一覧"
 msgid "WorkSpaceWorkFlow Setting"
 msgstr "ワークスペースワークフロー設定"
 
+#: weko_workflow/admin.py:603
+msgid "Activity"
+msgstr "アクティビティ一覧表示"
+
 #: weko_workflow/api.py:1130 weko_workflow/views.py:219
 msgid "End"
 msgstr "終了"
@@ -239,6 +243,38 @@ msgstr "このDOIは他のアイテムで既に使用されているため、他
 #: weko_workflow/views.py:844
 msgid "This DOI was withdrawn. Please input another DOI."
 msgstr "このDOIは取り下げられたため、他のDOIを入力してください"
+
+#: weko_workflow/views.py:3585 weko_workflow/views.py:3638
+msgid "This Item is being edited."
+msgstr "編集中のワークフローがあります"
+
+#: weko_workflow/views.py:3601
+msgid "Record does not exist."
+msgstr "レコードが存在しません"
+
+#: weko_workflow/views.py:3612
+msgid "You are not allowed to edit this item."
+msgstr "このアイテムを編集することは許可されていません"
+
+#: weko_workflow/views.py:3617
+msgid "You do not even have an ItemType."
+msgstr "No itemtype"
+
+#: weko_workflow/views.py:3623
+msgid "Dependency ItemType not found."
+msgstr "このアイテムタイプは見つかりませんでした"
+
+#: weko_workflow/views.py:3628
+msgid "Item cannot be edited because the import is in progress."
+msgstr "インポートを実行中のためアイテムの編集はできません。"
+
+#: weko_workflow/views.py:3654
+msgid "Workflow setting does not exist."
+msgstr "レコードが存在しません"
+
+#: weko_workflow/views.py:3667 weko_workflow/views.py:3674
+msgid "An error has occurred."
+msgstr "エラーが発生しました"
 
 #: weko_workflow/templates/weko_workflow/helpers.html:57
 #: weko_workflow/templates/weko_workflow/helpers.html:63
@@ -694,6 +730,9 @@ msgstr "プロパティを指定する"
 msgid "Specify property"
 msgstr "プロパティを指定"
 
+msgid "Request mail"
+msgstr "リクエスト送信先"
+
 msgid "Approval Request Notification Email"
 msgstr "承認依頼通知メール"
 
@@ -720,3 +759,7 @@ msgstr "選択したアクティビティを削除してもよろしいですか
 
 msgid "Clear Confirm"
 msgstr "削除の確認"
+
+# weko-workflow/weko_workflow/templates/weko_workflow/admin/flow_detail.html:54
+msgid "Deletion flow activated."
+msgstr "削除用のフローに設定されました。"

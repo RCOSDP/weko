@@ -19,7 +19,7 @@
  #}
 
 {%- extends config.WEKO_WORKFLOW_BASE_TEMPLATE %}
-{%- from "invenio_communities/macros.html" import community_header %}
+{%- from "invenio_communities/macros.html" import community_header with context %}
 
 {%- block css %}
   {{ super() }}
@@ -368,7 +368,8 @@
     {%- else %}
        <button class="btn btn-info pull-left back-button" onClick="window.location.href='{{url_for('weko_workflow.index')}}'; $(this).prop('disabled', true)">
          <span class="glyphicon glyphicon-chevron-left"></span> {{_('Back')}}</button>
-         {%- if 'F' == activity.activity_status %}
+         <div class="hide" id="for_delete">{{for_delete}}</div>
+         {%- if 'F' == activity.activity_status and not for_delete %}
          <button class="btn btn-info pull-right back-button" onClick="window.location.href='/records/{{ _id }}' ;$(this).prop('disabled', true)">
           Access</button>
 

@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2018 Esteban J. G. Gabancho.
+# Copyright (C) 2018, 2019 Esteban J. G. Gabancho.
 #
 # Invenio-S3 is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 """S3 file storage support for Invenio."""
 
 from __future__ import absolute_import, print_function
+
+import warnings
 
 import boto3
 from flask import current_app
@@ -25,25 +27,60 @@ class InvenioS3(object):
             self.init_app(app)
 
     @cached_property
-    def init_s3f3_info(self):
+    def init_s3fs_info(self, location):
         """Gather all the information needed to start the S3FSFileSystem."""
+        if 'S3_ACCCESS_KEY_ID' in current_app.config:
+            current_app.config['S3_ACCESS_KEY_ID'] = current_app.config[
+                'S3_ACCCESS_KEY_ID']
+            warnings.warn(
+                'Key S3_ACCCESS_KEY_ID contained a typo and has been '
+                'corrected to S3_ACCESS_KEY_ID, support for the '
+                'flawed version will be removed.',
+                DeprecationWarning
+            )
+
+        if 'S3_SECRECT_ACCESS_KEY' in current_app.config:
+            current_app.config['S3_SECRET_ACCESS_KEY'] = current_app.config[
+                'S3_SECRECT_ACCESS_KEY']
+            warnings.warn(
+                'Key S3_SECRECT_ACCESS_KEY contained a typo and has been '
+                'corrected to S3_SECRET_ACCESS_KEY, support for the '
+                'flawed version will be removed.',
+                DeprecationWarning
+            )
+
         info = dict(
-            key=current_app.config.get('S3_ACCCESS_KEY_ID', ''),
-            secret=current_app.config.get('S3_SECRECT_ACCESS_KEY', ''),
+            key=current_app.config.get('S3_ACCESS_KEY_ID', ''),
+            secret=current_app.config.get('S3_SECRET_ACCESS_KEY', ''),
             client_kwargs={},
+            config_kwargs={
+                's3': {
+                    'addressing_style': 'path',
+                },
+                'signature_version': current_app.config.get(
+                    'S3_SIGNATURE_VERSION', 's3v4'
+                ),
+            },
         )
-        s3_endpoint_url = current_app.config.get('S3_ENDPOINT_URL', None)
-        if s3_endpoint_url:
-            info['client_kwargs']['endpoint_url'] = s3_endpoint_url
-        default_location = Location.query.filter_by(default=True).first()
-        if default_location.type == 's3':
-            if default_location.access_key != '':
-                info['key'] = default_location.access_key
-            if default_location.secret_key != '':
-                info['secret'] = default_location.secret_key
-            if default_location.s3_endpoint_url != '':
-                info['client_kwargs']['endpoint_url'] = default_location.s3_endpoint_url
-                
+
+        s3_endpoint = current_app.config.get('S3_ENDPOINT_URL', None)
+        if s3_endpoint:
+            info['client_kwargs']['endpoint_url'] = s3_endpoint
+
+        region_name = current_app.config.get('S3_REGION_NAME', None)
+        if region_name:
+            info['client_kwargs']['region_name'] = region_name
+
+        if location.type == current_app.config.get('S3_LOCATION_TYPE_S3_PATH_VALUE') or \
+            location.type == current_app.config.get('S3_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE'):
+            info['key'] = location.access_key
+            info['secret'] = location.secret_key
+            info['client_kwargs']['endpoint_url'] = location.s3_endpoint_url
+            region_name = location.s3_region_name
+            if region_name:
+                info['client_kwargs']['region_name'] = region_name
+            info['config_kwargs']['signature_version'] = location.s3_signature_version
+
         return info
 
     def init_app(self, app):

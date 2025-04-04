@@ -1,7 +1,7 @@
 <template>
   <div class="relative flex flex-col justify-center h-screen bg-miby-dark-blue">
-    <div class="w-full m-auto mb-5 flex justify-center">
-      <NuxtLink to="/">
+    <div class="w-full m-auto mb-5 flex justify-center cursor-pointer">
+      <NuxtLink to="" event="" @click="throughDblClick">
         <img class="scale-150" src="/img/logo/logo_w.svg" alt="AMS Logo" />
       </NuxtLink>
     </div>
@@ -23,7 +23,7 @@
         <div class="pt-2">
           <button
             class="btn w-48 ml-5 font-medium text-lg text-white bg-gray-400 hover:bg-gray-700"
-            @click="$router.go(-1)">
+            @click="$router.back()">
             {{ $t('cancel') }}
           </button>
         </div>
@@ -35,7 +35,7 @@
       <div class="mt-5">
         <button
           class="btn btn-block font-medium text-lg text-white bg-gray-400 hover:bg-gray-700"
-          @click="navigateTo('/')">
+          @click="throughDblClick">
           {{ $t('returnToTop') }}
         </button>
       </div>
@@ -64,9 +64,19 @@ function logout() {
       localStorage.removeItem('token:refresh');
       localStorage.removeItem('token:expires');
       localStorage.removeItem('token:issue');
+      sessionStorage.removeItem('login:state');
       isLogout.value = true;
     }
   });
+}
+
+/**
+ * ダブルクリックを制御する
+ */
+function throughDblClick() {
+  if (location.pathname !== '/') {
+    navigateTo('/');
+  }
 }
 
 /* ///////////////////////////////////

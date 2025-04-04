@@ -1,7 +1,7 @@
 <template>
   <div class="relative flex flex-col justify-center h-screen bg-miby-dark-blue">
-    <div class="w-full m-auto mb-5 flex justify-center">
-      <NuxtLink to="/">
+    <div class="w-full m-auto mb-5 flex justify-center cursor-pointer">
+      <NuxtLink to="" event="" @click="throughDblClick">
         <img class="scale-150" src="/img/logo/logo_w.svg" alt="AMS Logo" />
       </NuxtLink>
     </div>
@@ -259,6 +259,15 @@ function checkPassword(value: any) {
     return 'message.alert.requiredPass';
   }
   return true;
+}
+
+/**
+ * ダブルクリックを制御する
+ */
+function throughDblClick() {
+  if (location.pathname !== '/') {
+    navigateTo('/');
+  }
 }
 
 /* ///////////////////////////////////

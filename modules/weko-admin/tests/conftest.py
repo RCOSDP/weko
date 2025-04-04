@@ -52,6 +52,7 @@ from invenio_access.models import ActionUsers, ActionRoles
 from invenio_access import InvenioAccess
 from invenio_admin import InvenioAdmin
 from invenio_cache import InvenioCache
+from invenio_communities.models import Community
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_files_rest import InvenioFilesREST
@@ -65,20 +66,23 @@ from invenio_oaiserver.ext import InvenioOAIServer
 from invenio_records.ext import InvenioRecords
 from invenio_records.models import RecordMetadata
 from invenio_pidstore.models import PersistentIdentifier
+from invenio_oauth2server.models import Client
 
 from weko_authors import WekoAuthors
 from weko_authors.models import Authors
 from weko_index_tree import WekoIndexTree
 from weko_index_tree.models import Index, IndexStyle
 from weko_records_ui import WekoRecordsUI
+from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER
 from weko_records import WekoRecords
-from weko_records.models import SiteLicenseInfo, SiteLicenseIpAddress,ItemType,ItemTypeName
+from weko_records.models import SiteLicenseInfo, SiteLicenseIpAddress,ItemType,ItemTypeName,ItemTypeJsonldMapping
 from weko_redis.redis import RedisConnection
 from weko_theme import WekoTheme
 from weko_schema_ui import WekoSchemaUI
 from weko_search_ui import WekoSearchUI
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import Action, ActionStatus,FlowDefine,FlowAction,WorkFlow,Activity,ActivityAction
+
 
 from weko_admin import WekoAdmin
 from weko_admin.models import SessionLifetime,SiteInfo,SearchManagement,\
@@ -130,10 +134,10 @@ def base_app(instance_path, cache_config,request ,search_class):
         SERVER_NAME='test_server',
         ACCOUNTS_USE_CELERY=False,
         SECRET_KEY='SECRET_KEY',
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        #SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-        #                                   'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #      'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         SEARCH_ELASTIC_HOSTS=os.environ.get(
             'SEARCH_ELASTIC_HOSTS', None),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
@@ -162,6 +166,7 @@ def base_app(instance_path, cache_config,request ,search_class):
         WEKO_THEME_INSTANCE_DATA_DIR="data",
         SEARCH_INDEX_PREFIX="test-",
         INDEXER_DEFAULT_DOC_TYPE="item-v1.0.0",
+        WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER
     )
     app_.testing = True
     app_.login_manager = dict(_login_disabled=True)
@@ -184,7 +189,7 @@ def base_app(instance_path, cache_config,request ,search_class):
     WekoRecordsUI(app_)
     WekoIndexTree(app_)
     WekoTheme(app_)
-    
+
     FlaskCeleryExt(app_)
     WekoSearchUI(app_)
     WekoSchemaUI(app_)
@@ -199,7 +204,7 @@ def base_app(instance_path, cache_config,request ,search_class):
 @pytest.yield_fixture()
 def app(base_app):
     """Flask application fixture."""
-    
+
     with base_app.app_context():
         yield base_app
 
@@ -263,8 +268,10 @@ def admin_app(instance_path):
         SECRET_KEY='SECRET KEY',
         SESSION_TYPE='memcached',
         SERVER_NAME='test_server',
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         WEKO_ADMIN_FACET_SEARCH_SETTING={"name_en": "","name_jp": "","mapping": "","active": True,"aggregations": [],"display_number": 5,"is_open": True,"search_condition": "OR","ui_type": "CheckboxList"},
         WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE="weko_admin/admin/facet_search_setting.html"
     )
@@ -272,10 +279,10 @@ def admin_app(instance_path):
     InvenioDB(base_app)
     InvenioAccounts(base_app)
     InvenioAccess(base_app)
-    
+
     with base_app.app_context():
         yield base_app
-        
+
 @pytest.yield_fixture()
 def admin_db(admin_app):
     if not database_exists(str(db_.engine.url)):
@@ -319,7 +326,7 @@ def users(app, db):
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
         student = User.query.filter_by(email='student@test.org').first()
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -444,7 +451,7 @@ def site_info(db):
         ogp_image_name="test ogp image name1"
     )
     db.session.add(siteinfo1)
-    
+
     siteinfos.append(siteinfo1)
     siteinfo2 = SiteInfo(
         copy_right="test_copy_right2",
@@ -523,7 +530,7 @@ def item_type(db):
     with db.session.begin_nested():
         db.session.add(item_type1)
         db.session.add(item_type2)
-    
+
     return [{"obj":item_type1,"name":item_type_name1},{"obj":item_type2,"name":item_type_name2}]
 
 @pytest.fixture()
@@ -629,7 +636,7 @@ def location(app, db, instance_path):
 def records(db,location):
     record_data = json_data("data/test_records.json")
     item_data = json_data("data/test_items.json")
-    
+
     record_num = len(record_data)
     result = []
     for d in range(record_num):
@@ -654,7 +661,8 @@ def feedback_mail_settings(db,authors):
         account_author="{},{},".format(authors[0].id,authors[1].id),
         manual_mail={"email":["test.manual1@test.org","test.manual2@test.org"]},
         is_sending_feedback=True,
-        root_url="http://test_server"
+        root_url="http://test_server",
+        repository_id="Root Index"
     )
     db.session.add(setting)
     db.session.commit()
@@ -662,7 +670,8 @@ def feedback_mail_settings(db,authors):
         account_author="{}".format(authors[1].id),
         manual_mail={"email":[]},
         is_sending_feedback=True,
-        root_url="http://test_server"
+        root_url="http://test_server",
+        repository_id="Root Index"
     )
     return [setting, setting_not_manual]
 
@@ -687,7 +696,7 @@ def site_infos(db):
 
 @pytest.fixture()
 def feedback_mail_histories(db):
-    
+
     history1 = FeedbackMailHistory(
         start_time=datetime(2022,10,1,1,2,3,45678),
         end_time=datetime(2022,10,1,2,3,4,56789),
@@ -697,7 +706,7 @@ def feedback_mail_histories(db):
         is_latest=True
     )
     db.session.add(history1)
-    
+
     history2 = FeedbackMailHistory(
         start_time=datetime(2022,10,1,1,2,3,45678),
         end_time=datetime(2022,10,1,2,3,4,56789),
@@ -748,7 +757,7 @@ def admin_settings(db):
     settings = list()
     settings.append(AdminSettings(id=1,name='items_display_settings',settings={"items_display_email": False, "items_search_author": "name", "item_display_open_date": False}))
     settings.append(AdminSettings(id=2,name='storage_check_settings',settings={"day": 0, "cycle": "weekly", "threshold_rate": 80}))
-    settings.append(AdminSettings(id=3,name='site_license_mail_settings',settings={"auto_send_flag": False}))
+    settings.append(AdminSettings(id=3,name='site_license_mail_settings',settings={"Root Index": {"auto_send_flag": False}}))
     settings.append(AdminSettings(id=4,name='default_properties_settings',settings={"show_flag": True}))
     settings.append(AdminSettings(id=5,name='item_export_settings',settings={"allow_item_exporting": True, "enable_contents_exporting": True}))
     settings.append(AdminSettings(id=6,name="restricted_access",settings={"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": []}))
@@ -761,21 +770,36 @@ def admin_settings(db):
     return settings
 
 @pytest.fixture()
+def oauth2server_client(db):
+    oauth2server_clients = list()
+    oauth2server_clients.append(Client(name=1,description=1,website=1,user_id=1,client_id="1",client_secret="KDjy6ntGKUX",is_confidential=True,is_internal=False,_redirect_uris="https://" ,_default_scopes="NULL"))
+    oauth2server_clients.append(Client(name=2,description=2,website=2,user_id=2,client_id="2",client_secret="KDjy6ntGKUX",is_confidential=True,is_internal=False,_redirect_uris="https://" ,_default_scopes="NULL"))
+
+@pytest.fixture()
+def sword_item_type_mappings(db, item_type):
+    sword_item_type_mappings = list()
+    sword_item_type_mappings.append(ItemTypeJsonldMapping(id=1,name="sample1",mapping="{data:{}}",item_type_id=item_type[0]["obj"].id,version_id=6,is_deleted=False))
+    sword_item_type_mappings.append(ItemTypeJsonldMapping(id=2,name="sample2",mapping="{data:{}}",item_type_id=item_type[0]["obj"].id,version_id=6,is_deleted=False))
+    db.session.add_all(sword_item_type_mappings)
+    db.session.commit()
+    return sword_item_type_mappings
+
+@pytest.fixture()
 def actions(db):
     action_datas = json_data("data/actions.json")
     action_db = list()
     for data in action_datas:
         action_db.append(Action(**data))
     db.session.add_all(action_db)
-    
+
     status_datas = json_data("data/action_status.json")
     status_db = list()
     for data in status_datas:
         status_db.append(ActionStatus(**data))
     db.session.add_all(status_db)
-    
+
     db.session.commit()
-    
+
     return action_db, status_db
 
 @pytest.fixture()
@@ -871,7 +895,7 @@ def activities(db,flows,records,users):
                     title='test item1', shared_user_id=-1, extra_info={"is_guest":True,"guest_mail":"test.guest@test.org","file_name":"test_file"},
                     action_order=1,
                     )
-    
+
     db.session.add(activity_item_guest)
     activity_usage = Activity(activity_id='3',item_id=records[0][2].id,workflow_id=flows["workflow"][0].id, flow_id=flows["flow"].id,
                     action_id=1, activity_login_user=users[3]["id"],
@@ -879,7 +903,7 @@ def activities(db,flows,records,users):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item1', shared_user_id=-1, 
+                    title='test item1', shared_user_id=-1,
                     extra_info={"usage_activity_id":"3","usage_application_record_data":{"subitem_restricted_access_name":"test_access_name",}},
                     action_order=1,
                     )
@@ -897,9 +921,9 @@ def activities(db,flows,records,users):
     db.session.add(activity_action1_1)
     db.session.add(activity_action1_2)
     db.session.add(activity_action1_3)
-    
+
     db.session.commit()
-    
+
     return [activity_item1, activity_31001, activity_item_guest, activity_usage]
 
 @pytest.fixture()
@@ -938,7 +962,7 @@ def facet_search_settings(db):
         is_open=True,
         search_condition='AND'
     )
-    
+
     fields_raw = FacetSearchSetting(
         name_en="raw_test",
         name_jp="raw_test",
@@ -950,7 +974,7 @@ def facet_search_settings(db):
         is_open=True,
         search_condition='AND'
     )
-        
+
     temporal = FacetSearchSetting(
         name_en="Time Period(s)",
         name_jp="対象時期",
@@ -994,7 +1018,7 @@ def log_crawler_list(db):
         list_url="https://bitbucket.org/niijp/jairo-crawler-list/raw/master/test_Crawler-List_useragent.txt",
         is_active=True
     )
-    
+
     db.session.add(crawler1)
     db.session.add(crawler2)
     db.session.commit()
@@ -1044,7 +1068,7 @@ def mail_config(db):
     )
     db.session.add(config)
     db.session.commit()
-    
+
     return config
 
 @pytest.fixture()
@@ -1123,7 +1147,7 @@ class MockEs():
         #     pass
         def put_mapping(self,index="",doc_type="", body={}, ignore=""):
             pass
-        
+
     class MockCluster():
         def __init__(self,**kwargs):
             pass
@@ -1183,3 +1207,17 @@ def facet_search_setting(db):
         settings.append(FacetSearchSetting(**datas[setting]))
     with db.session.begin_nested():
         db.session.add_all(settings)
+
+@pytest.fixture()
+def community(db, users, indexes):
+    user1 = users[2]["obj"]
+    index = indexes[0]
+    db.session.commit()
+    comm1 = Community.create(community_id='comm1', role_id=user1.roles[0].id,
+                             id_user=user1.id, title='Title1',
+                             description='Description1',
+                             root_node_id=index.id,
+                             group_id=user1.roles[0].id)
+    db.session.add(comm1)
+    db.session.commit()
+    return comm1

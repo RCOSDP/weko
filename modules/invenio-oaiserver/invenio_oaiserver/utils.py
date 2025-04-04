@@ -254,3 +254,20 @@ def is_output_harvest(path_list, index_state):
         index_id = path.split('/')[-1]
         result = max([result, _check(index_id)])
     return result if result != 0 else HARVEST_PRIVATE
+
+
+def get_community_index_from_set(set):
+    """Get community index from set.
+    
+    Args:
+        set (str): Set string.
+    
+    Returns:
+        str: index_id of community.
+    """
+    from invenio_communities.models import Community
+    com_prefix = current_app.config['COMMUNITIES_OAI_FORMAT'].replace(
+        '{community_id}', '')
+    com_id = set.replace(com_prefix, '')
+    com = Community.query.filter_by(id=com_id).first()
+    return str(com.root_node_id) if com else None

@@ -46,6 +46,10 @@ msgstr ""
 msgid "WorkSpaceWorkFlow Setting"
 msgstr ""
 
+#: weko_workflow/admin.py:603
+msgid "Activity"
+msgstr ""
+
 #: weko_workflow/api.py:2056 weko_workflow/utils.py:3062
 msgid "End"
 msgstr ""

@@ -2,6 +2,8 @@ import json
 from mock import patch, MagicMock
 from flask import Blueprint, Response
 import pytest
+from pytest import fail
+from redis import RedisError
 
 from invenio_deposit.utils import check_oauth2_scope_write, \
     check_oauth2_scope_write_elasticsearch
@@ -13,6 +15,7 @@ from weko_records_ui.rest import (
     create_blueprint,
     WekoRecordsCitesResource,
 )
+from weko_redis.redis import RedisConnection
 
 
 blueprint = Blueprint(
@@ -100,6 +103,43 @@ def test_WekoRecordsResource(app, records_rest, db_rocrate_mapping):
         data = json.loads(res.get_data())
         assert data['rocrate']['@graph'][0]['name'][0] == 'test data'
 
+        with patch('weko_records_ui.rest.RequestMailList.get_mail_list_by_item_id', return_value=['']):
+            res = client.get('/v1/records/1')
+            assert res.status_code == 200
+            data = json.loads(res.get_data())
+            assert data['metadata']['hasRequestmailAddress'] == True
+
+        with patch('weko_records_ui.rest.RequestMailList.get_mail_list_by_item_id', return_value=[]):
+            res = client.get('/v1/records/1')
+            assert res.status_code == 200
+            data = json.loads(res.get_data())
+            assert data['metadata']['hasRequestmailAddress'] == False
+
+        with patch('weko_records_ui.rest.RequestMailList.get_mail_list_by_item_id', return_value=None):
+            res = client.get('/v1/records/1')
+            assert res.status_code == 200
+            data = json.loads(res.get_data())
+            assert data['metadata']['hasRequestmailAddress'] == False
+
+        with patch('weko_records_ui.rest.RequestMailList.get_mail_list_by_item_id', return_value=1):
+            res = client.get('/v1/records/1')
+            assert res.status_code == 200
+            data = json.loads(res.get_data())
+            assert data['metadata']['hasRequestmailAddress'] == False
+
+        with patch('weko_records_ui.config.WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE', False):
+            headers = {}
+            headers['Accept-Language'] = 'ja'
+            res = client.get('/v1/records/1', headers=headers)
+            assert res.status_code == 200
+            data = json.loads(res.get_data())
+            assert data.get("metadata").get("アイテムタイプ") is None
+
+        headers = {}
+        headers['Accept-Language'] = 'en'
+        res = client.get('/v1/records/1', headers=headers)
+        assert res.status_code == 200
+
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoRecordsResource_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_WekoRecordsResource_error(app, records_rest, db_rocrate_mapping):
@@ -143,6 +183,14 @@ def test_WekoRecordsResource_error(app, records_rest, db_rocrate_mapping):
             url = '/v1/records/1'
             res = client.get(url)
             assert res.status_code == 500
+
+        with patch('weko_records_ui.rest.WekoRecord.get_record') as mock_get_record:
+            mock_get_record.return_value = {'path': [''], 'item_type_id': -1}
+            with patch('weko_records_ui.rest.page_permission_factory') as mock_page_permission_factory:
+                mock_page_permission_factory.return_value.can = lambda : True
+                url = '/v1/records/1'
+                res = client.get(url)
+                assert res.status_code == 500
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoRecordsStats -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
@@ -459,3 +507,303 @@ def test_WekoFileListGetSelected_error(app, records):
             # 9 Unspecified request body
             res = client.post(url, json=None)
             assert res.status_code == 400
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_RequestMail_post_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_RequestMail_post_v1(app, client, db, make_request_maillist, users):
+    """Test GetFileTerms.post_v1 method."""
+
+    app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_REST_ENDPOINTS']))
+
+    version = 'v1'
+    invalid_version = 'v0'
+
+    correct_request_body = {
+        "key": "test_key",
+        "from":"test1@example.com",
+        "subject":"test_subject",
+        "message":"test_message",
+        "authorization_token": 'token',
+    }
+
+    correct_pid_value = 1000
+    wrong_pid_value = 1000000
+
+    # TestCase: invalid version
+    try:
+        res = client.post(
+            f'/{invalid_version}/records/{correct_pid_value}/request-mail',
+            headers = "",
+            json = correct_request_body,
+            content_type='application/json',
+        )
+    except:
+        fail()
+    assert res.status_code == 400
+
+    # TestCase: record not found
+    try:
+        res = client.post(
+            f'/{version}/records/{wrong_pid_value}/request-mail',
+            headers = "",
+            json = correct_request_body,
+            content_type='application/json',
+        )
+    except:
+        fail()
+    assert res.status_code == 404
+
+    # TestCase: 'key' not found
+    try:
+        res = client.post(
+            f'/{version}/records/{correct_pid_value}/request-mail',
+            headers = "",
+            json = {
+                "from":"test1@example.com",
+                "subject":"test_subject",
+                "message":"test_message",
+                "authorization_token": 'token',
+            },
+            content_type='application/json',
+        )
+    except:
+        fail()
+    assert res.status_code == 400
+
+    # TestCase: 'key' value is empty
+    try:
+        res = client.post(
+            f'/{version}/records/{correct_pid_value}/request-mail',
+            headers = "",
+            json = {
+                "key": '',
+                "from":"test1@example.com",
+                "subject":"test_subject",
+                "message":"test_message",
+                "authorization_token": 'token',
+            },
+            content_type='application/json',
+        )
+    except:
+        fail()
+    assert res.status_code == 400
+    # TestCase: 'from' not found
+    try:
+        res = client.post(
+            f'/{version}/records/{correct_pid_value}/request-mail',
+            headers = "",
+            json = {
+                "key": "test_key",
+                "subject":"test_subject",
+                "message":"test_message",
+                "authorization_token": 'token',
+            },
+            content_type='application/json',
+        )
+    except:
+        fail()
+    assert res.status_code == 400
+
+    # TestCase: 'from' value is empty
+    try:
+       res = client.post(
+            f'/{version}/records/{correct_pid_value}/request-mail',
+            headers = "",
+            json = {
+                "key": "test_key",
+                'from': '',
+                "subject":"test_subject",
+                "message":"test_message",
+                "authorization_token": 'token',
+            },
+            content_type='application/json',
+        )
+    except:
+        fail()
+    assert res.status_code == 400
+
+    # TestCase: 'authorization_token' is not correct
+    try:
+        res = client.post(
+            f'/{version}/records/{correct_pid_value}/request-mail',
+            headers = "",
+            json = {
+                "key": "test_key",
+                "from":"test1@example.com",
+                "subject":"test_subject",
+                "message":"test_message",
+                "authorization_token": 'token1',
+            },
+            content_type='application/json',
+        )
+    except:
+        fail()
+    assert res.status_code == 401
+
+    # TestCase: send mail success
+    res_test = {"from":"test1@example.com","subject":"test_subject","message":"test_message"}
+    with patch("weko_records_ui.rest.send_request_mail", return_value=(True,res_test)):
+        try:
+            res = client.post(
+                f'/{version}/records/{correct_pid_value}/request-mail',
+                json = correct_request_body,
+                content_type='application/json',
+            )
+        except:
+            fail()
+        assert res.status_code == 200
+
+    # TestCase: send mail success
+    res_test = {"from":"test1@example.com","subject":"test_subject","message":"test_message"}
+    with patch("weko_records_ui.rest.send_request_mail", return_value=(True,res_test)):
+        try:
+            res = client.post(
+                f'/{version}/records/{correct_pid_value}/request-mail',
+                json = correct_request_body,
+                headers = [("Accept-Language", "jpn")],
+                content_type='application/json',
+            )
+        except:
+            fail()
+        assert res.status_code == 200
+
+    # TestCase: server error
+    with patch('weko_records_ui.rest.send_request_mail', side_effect=SQLAlchemyError):
+        try:
+            res = client.post(
+                f'/{version}/records/{correct_pid_value}/request-mail',
+                headers = "",
+                json = correct_request_body,
+                content_type='application/json',
+            )
+        except:
+            fail()
+        assert res.status_code == 500
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_CaptchaAnswerValidation_post_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_CaptchaAnswerValidation_post_v1(app, client, db):
+
+    app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_REST_ENDPOINTS']))
+
+    version = 'v1'
+    invalid_version = 'v0'
+    res = None
+
+    correct_body = {
+        "key": "test_key",
+        "calculation_result": 100
+    }
+
+    redis_connection = RedisConnection()
+    datastore = redis_connection.connection(db=app.config['CACHE_REDIS_DB'])
+
+    datastore.hmset(b'test_key',{b'calculation_result':b'100'})
+
+    # TestCase: invalid api version
+    try:
+        res = client.post(
+            f'/{invalid_version}/captcha/validate',
+            json = correct_body,
+            content_type='application/json',
+        )
+    except:
+        fail()
+    assert res.status_code == 400
+
+    # TestCase: captcha result validation success
+    datastore.hmset(b'test_key',{b'calculation_result':b'100'})
+    try:
+        res = client.post(
+            f'/{version}/captcha/validate',
+            json = correct_body,
+            content_type='application/json',
+        )
+    except:
+        fail()
+    assert res.status_code == 200
+    assert 'authorization_token' in json.loads(res.get_data()).keys()
+
+    # TestCase: internal server error
+    with patch('weko_records_ui.rest.validate_captcha_answer', side_effect=RedisError()):
+        try:
+            res = client.post(
+                f'/{version}/captcha/validate',
+                json = correct_body,
+                content_type='application/json',
+            )
+        except:
+            fail()
+        assert res.status_code == 500
+
+    # TestCase: validate captcha if language is Japanese
+    datastore.hmset(b'test_key',{b'calculation_result':b'100'})
+    try:
+        res = client.post(
+            f'/{version}/captcha/validate',
+            headers = [("Accept-Language", "ja")],
+            json = correct_body,
+            content_type='application/json',
+        )
+    except:
+        fail()
+    assert res.status_code == 200
+
+    # TestCase: validate captcha if language is Japanese
+    datastore.hmset(b'test_key',{b'calculation_result':b'100'})
+    try:
+        res = client.post(
+            f'/{version}/captcha/validate',
+            headers = [("Accept-Language", "jpn")],
+            json = correct_body,
+            content_type='application/json',
+        )
+    except:
+        fail()
+    assert res.status_code == 200
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_CreateCaptchaImage_get_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_CreateCaptchaImage_get_v1(app, client, db):
+
+    app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_REST_ENDPOINTS']))
+
+    version = 'v1'
+    invalid_version = 'v0'
+    res = None
+
+    # TestCase: invalid api version
+    try:
+        res= client.get(f'/{invalid_version}/captcha/image')
+    except:
+        fail()
+    assert res.status_code == 400
+
+    # TestCase: create captcha image success
+    try:
+        res = client.get(f'/{version}/captcha/image')
+    except:
+        fail()
+    assert res.status_code == 200
+    assert 'key' in json.loads(res.get_data()).keys()
+    assert 'image' in json.loads(res.get_data()).keys()
+    assert 'ttl' in json.loads(res.get_data()).keys()
+
+    # TestCase: internal server error
+    with patch('weko_records_ui.rest.create_captcha_image', return_value = ("","")):
+        try:
+            res = client.get(f'/{version}/captcha/image')
+        except:
+            fail()
+        assert res.status_code == 500
+
+    # TestCase: create captcha image if language is Japanese
+    try:
+        res = client.get(f'/{version}/captcha/image', headers = [("Accept-Language", "ja")])
+    except:
+        fail()
+    assert res.status_code == 200
+
+    # TestCase: create captcha image if language is not en, ja
+    try:
+        res = client.get(f'/{version}/captcha/image', headers = [("Accept-Language", "jpn")])
+    except:
+        fail()
+    assert res.status_code == 200

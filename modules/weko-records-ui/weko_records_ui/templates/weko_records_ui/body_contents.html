@@ -377,20 +377,20 @@
                   <span class="glyphicon glyphicon-edit" aria-hidden="true"></span> {{_('Edit')}}</a>
                 <a class="btn btn-danger delete-button" id="btn_delete" ng-click="openConfirm(
                   'del_item',
-                  '{{'/records/soft_delete/'+ pid.pid_value}}',
+                  '/api/items/prepare_delete_item',
                   '{{url_for('weko_search_ui.search')}}',
                   '{{pid.pid_value}}')">
                   <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> {{_('Delete')}}</a>
               {% endif %}
               {% if active_versions|length > 1 %}
-                {%- if not pid | pid_value_version %} 
+                {%- if not pid | pid_value_version %}
                   <a class="btn btn-danger delete-button" style="width: 180px" id="btn_ver_delete" ng-click="openConfirm(
                     'del_ver',
                     '{{'/records/soft_delete/del_ver_'+ all_versions[-1].pid_value}}',
                     '{{url_for('weko_search_ui.search')}}',
                     '{{all_versions[-1].pid_value}}')">
                     <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> {{_('Delete this version')}}</a>
-                {%- else -%} 
+                {%- else -%}
                     <a class="btn btn-danger delete-button" style="width: 180px" id="btn_ver_delete" ng-click="openConfirm(
                       'del_ver',
                       '{{'/records/soft_delete/del_ver_'+ pid.pid_value}}',
@@ -432,6 +432,9 @@
               {% endif %}
             {% endif %}
           {% endif %}
+          {% if is_display_request_form %}
+            {%- include "weko_records_ui/box/request.html" %}
+          {% endif %}
 		  {% if config.WEKO_RECORDS_UI_DISPLAY_VERSION_BOX_FLG %}
              {%- include "weko_records_ui/box/versions.html" %}
 		  {% endif %}
@@ -440,6 +443,9 @@
           {% endif %}
 		  {% if config.WEKO_RECORDS_UI_DISPLAY_EXPORT_BOX_FLG %}
               {%- include "weko_records_ui/box/export.html" %}
+		  {% endif %}
+		  {% if config.WEKO_RECORDS_UI_DISPLAY_COMMUNITIES_BOX_FLG %}
+             {%- include "weko_records_ui/box/communities.html" %}
 		  {% endif %}
           <!-- end demo block -->
         </div>

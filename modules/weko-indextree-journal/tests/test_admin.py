@@ -34,7 +34,7 @@ class TestIndexJournalSettingView:
         login_user_via_session(client=client_rest, email=users[0]["email"])
         from weko_indextree_journal.models import Journal
         template = 'weko_indextree_journal/admin/index.html'
-        
+
         url = url_for("indexjournal.index")
         # not lists
         mock_render = mocker.patch("weko_indextree_journal.admin.IndexJournalSettingView.render",return_value=make_response())
@@ -42,7 +42,7 @@ class TestIndexJournalSettingView:
         assert res.status_code == 200
         args, _ = mock_render.call_args
         assert args[0] == "weko_items_ui/error.html"
-        
+
         itemtype_name = ItemTypeName(id=1,name="test_itemtype")
         itemtype = ItemType(
             id=1, name_id=1,tag=1
@@ -51,7 +51,7 @@ class TestIndexJournalSettingView:
             db.session.add(itemtype_name)
             db.session.add(itemtype)
         db.session.commit()
-        
+
         # index_id <= 0
         mock_render = mocker.patch("weko_indextree_journal.admin.IndexJournalSettingView.render",return_value=make_response())
         res = client_rest.get(url)
@@ -71,7 +71,7 @@ class TestIndexJournalSettingView:
         assert kwargs["index_id"] == 0
         assert kwargs["journal_id"] == None
         assert kwargs["lang_code"] == "en"
-        
+
         # journal is not None
         url = url_for("indexjournal.index",index_id="1")
         mock_render = mocker.patch("weko_indextree_journal.admin.IndexJournalSettingView.render",return_value=make_response())
@@ -82,7 +82,7 @@ class TestIndexJournalSettingView:
         assert kwargs['lists'][0].id == 1
         assert kwargs['index_id'] == 1
         assert kwargs['journal_id'] == 1
-        
+
         # journal is None(raise error in get_journal_by_index_id)
         with patch("weko_indextree_journal.admin.Journals.get_journal_by_index_id",return_value=None):
             url = url_for("indexjournal.index",index_id="1000")
@@ -95,7 +95,7 @@ class TestIndexJournalSettingView:
             assert kwargs['lists'][0].id == 1
             assert kwargs['index_id'] == 1000
             assert kwargs['journal_id'] == None
-        
+
         # WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API != "/admin/indexjournal/jsonschema",WEKO_INDEXTREE_JOURNAL_FORM_JSON_API != "/admin/indexjournal/schemaform"
         url = url_for("indexjournal.index")
         app.config.update(
@@ -124,12 +124,12 @@ class TestIndexJournalSettingView:
     def test_get_journal_by_index_id_acl(self, app, db, client_rest, users, test_indices, id, is_permission):
         login_user_via_session(client=client_rest, email=users[id]["email"])
         res = client_rest.get(url_for("indexjournal.get_journal_by_index_id", index_id=1))
-        
+
         if is_permission:
             assert res.status_code == 200
         else:
             assert res.status_code != 200
-        
+
     # .tox/c1/bin/pytest --cov=weko_indextree_journal tests/test_admin.py::TestIndexJournalSettingView::test_get_journal_by_index_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-indextree-journal/.tox/c1/tmp
     def test_get_journal_by_index_id(self,app,db,client_rest,users, test_indices, test_journals):
         login_user_via_session(client=client_rest, email=users[0]["email"])
@@ -137,16 +137,16 @@ class TestIndexJournalSettingView:
         url = url_for("indexjournal.get_journal_by_index_id",index_id = 0)
         res = client_rest.get(url)
         assert json.loads(res.data) == '{}'
-        
+
         url = url_for("indexjournal.get_journal_by_index_id",index_id = 1)
         res = client_rest.get(url)
-        assert json.loads(res.data) == {'access_type': 'F', 'coverage_depth': 'abstract', 'coverage_notes': '', 'date_first_issue_online': '2022-01-01', 'date_last_issue_online': '2022-01-01', 'date_monograph_published_online': '', 'date_monograph_published_print': '', 'deleted': '', 'embargo_info': '', 'first_author': '', 'first_editor': '', 'ichushi_code': '', 'id': 1, 'index_id': 1, 'is_output': True, 'jstage_code': '', 'language': 'en', 'monograph_edition': '', 'monograph_volume': '', 'ncid': '', 'ndl_bibid': '', 'ndl_callno': '', 'num_first_issue_online': '', 'num_first_vol_online': '', 'num_last_issue_online': '', 'num_last_vol_online': '', 'online_identifier': '', 'owner_user_id': 0, 'parent_publication_title_id': '', 'preceding_publication_title_id': '', 'print_identifier': '', 'publication_title': 'test journal 1', 'publication_type': 'serial', 'publisher_name': '', 'title_alternative': '', 'title_id': 1, 'title_transcription': '', 'title_url': 'search?search_type=2&q=1'}
-        
+        assert json.loads(res.data) == {'access_type': 'F', 'coverage_depth': 'abstract', 'coverage_notes': '', 'date_first_issue_online': '2022-01-01', 'date_last_issue_online': '2022-01-01', 'date_monograph_published_online': '', 'date_monograph_published_print': '', 'deleted': '', 'embargo_info': '', 'first_author': '', 'first_editor': '', 'ichushi_code': '', 'id': 1, 'index_id': 1, 'is_output': True, 'jstage_code': '', 'language': 'en', 'monograph_edition': '', 'monograph_volume': '', 'ncid': '', 'ndl_bibid': '', 'ndl_callno': '', 'num_first_issue_online': '', 'num_first_vol_online': '', 'num_last_issue_online': '', 'num_last_vol_online': '', 'online_identifier': '', 'owner_user_id': 0, 'parent_publication_title_id': '', 'preceding_publication_title_id': '', 'print_identifier': '', 'publication_title': 'test journal 1', 'publication_type': 'serial', 'publisher_name': '', 'title_alternative': '', 'title_id': 1, 'title_transcription': '', 'title_url': 'search?search_type=2&q=1', 'abstract':'', 'code_issnl':''}
+
         with patch("weko_indextree_journal.admin.Journals.get_journal_by_index_id",side_effect=BaseException("test_error")):
             res = client_rest.get(url)
             assert res.status_code == 400
-        
-        
+
+
     # .tox/c1/bin/pytest --cov=weko_indextree_journal tests/test_admin.py::TestIndexJournalSettingView::test_get_json_schema_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-indextree-journal/.tox/c1/tmp
     user_results = [
         (0, True),
@@ -164,7 +164,7 @@ class TestIndexJournalSettingView:
                 assert res.status_code == 200
             else:
                 assert res.status_code != 200
-                
+
     # .tox/c1/bin/pytest --cov=weko_indextree_journal tests/test_admin.py::TestIndexJournalSettingView::test_get_json_schema -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-indextree-journal/.tox/c1/tmp
     def test_get_json_schema(self, i18n_app, db, users,test_indices):
         with i18n_app.test_client() as client:
@@ -180,13 +180,13 @@ class TestIndexJournalSettingView:
             res = client.get(url)
             assert res.status_code == 200
             assert json.loads(res.data) == {}
-            # raise Exception, 
+            # raise Exception,
             i18n_app.config.update(
                 WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE="../tests/data/schemas/not_exist_file.json",
             )
             res = client.get(url)
             assert res.status_code == 500
-        
+
     # .tox/c1/bin/pytest --cov=weko_indextree_journal tests/test_admin.py::TestIndexJournalSettingView::test_get_schema_form_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-indextree-journal/.tox/c1/tmp
     user_results = [
         (0, True),
@@ -213,7 +213,7 @@ class TestIndexJournalSettingView:
         res = client_rest.get(url)
         assert res.status_code == 200
         assert json.loads(res.data) == test
-        
+
         app.config.update(
             WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE="../tests/data/schemas/schemaform.json"
         )
@@ -221,14 +221,14 @@ class TestIndexJournalSettingView:
         res = client_rest.get(url,headers={"Accept-Language":"ja"})
         assert res.status_code == 200
         assert json.loads(res.data) == test
-        
+
         app.config.update(
             WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE="../tests/data/schemas/schemaform_empty.json"
         )
         res = client_rest.get(url,headers={"Accept-Language":"ja"})
         assert res.status_code == 200
         assert json.loads(res.data) == ["*"]
-        
+
         # raise Exception
         app.config.update(
             WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE="../tests/data/schemas/not_exist_file.json"

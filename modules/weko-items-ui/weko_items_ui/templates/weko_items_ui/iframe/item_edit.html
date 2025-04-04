@@ -43,9 +43,12 @@
     <!--<script src="https://unpkg.com/axios/dist/axios.min.js"></script>-->
 
     <script src="{{ url_for('static', filename='js/weko_items_ui/item.autofill.js') }}" type="text/babel"></script>
+    <script src="{{ url_for('static', filename='js/weko_items_ui/oapolicy.js') }}"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
     {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
     {% assets "weko_items_ui_feedback_maillist_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+    {% assets "weko_items_ui_request_maillist_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
     {{ super() }}
     {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
     {%- if need_thumbnail %}
@@ -277,9 +280,46 @@
                     form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
                     template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
                   </invenio-records-form>
+                    <!-- OA Policy リンク取得 -->
+                  <div class="form-group row">
+                    <!-- ラベル -->
+                    <label for="policy" class="col-sm-3 col-form-label text-right">
+                      {{ _('oa_policy_label') }}
+                    </label>
+
+                    <!-- ボタン + URL + エラーメッセージ -->
+                    <div class="col-sm-9">
+                      <div class="input-group">
+                        <!-- Policy 取得ボタン -->
+                        <button type="button" class="btn btn-primary" id="oapolicyurl">
+                          {{ _('oa_policy_export') }}
+                        </button>
+                        <!-- URL 表示 -->
+                        <a id="oaPolicyUrl" href="#" target="_blank" class="ml-2 d-none">
+                          <span id="oaPolicyText"></span>
+                        </a>
+
+                        <!-- エラーメッセージ -->
+                        <span id="oaPolicyError" class="text-danger ml-2" aria-live="polite"></span>
+                      </div>
+
+                      <!-- エラーメッセージ（翻訳適用） -->
+                      <input type="hidden" id="error_missing_input" value="{{ _('Please enter ISSN, eISSN, or journal title') }}">
+                      <input type="hidden" id="error_no_policy_found" value="{{ _('No Policy Information found') }}">
+                      <input type="hidden" id="error_api_400" value="{{ _('Invalid parameters') }}">
+                      <input type="hidden" id="error_api_401" value="{{ _('Authentication error occurred') }}">
+                      <input type="hidden" id="error_api_404" value="{{ _('No matching policy') }}">
+                      <input type="hidden" id="error_api_429" value="{{ _('Request limit exceeded') }}">
+                      <input type="hidden" id="error_api_500" value="{{ _('Internal server error') }}">
+                      <input type="hidden" id="error_api_generic" value="{{ _('An unknown error occurred') }}">
+                    </div>
+                  </div>
                   {%- block feedback_mail_list %}
                     <div id="react"></div>
+                    <div id="request-maillist"></div>
                     <input id="component-search-email-name" type="hidden" value="{{_('Feedback Mail Destination')}}" />
+                    <input id="enable-request-email-checkbox-label" type="hidden" value="{{_('Display Request Mail Button')}}" />
+                    <input id="request-email-list-label" type="hidden" value="{{_('Request Mail Destination')}}" />
                     <input id="open-modal-search-button-name" type="hidden" value="{{_('From author DB')}}" />
                     <input id="delete-button-name" type="hidden" value="{{_('Delete')}}" />
                     <input id="input-text-placeholder" type="hidden" value="{{_('Input text')}}" />
@@ -328,13 +368,13 @@
                         {%- endif %}
                         <button ng-disabled="recordsVM.invenioRecordsLoading"
                                 class="btn btn-primary save-button"
-                                ng-click="saveActivityData('{{item_save_uri}}',{{action_id}},'{{enable_contributor}}','{{enable_feedback_maillist}}', true, false);">
+                                ng-click="saveActivityData('{{item_save_uri}}',{{action_id}},'{{enable_contributor}}','{{enable_feedback_maillist}}', '{{enable_request_maillist}}', true, false);">
                               <span class="glyphicon glyphicon-saved"></span>&nbsp
                               {{_('Save')}}
                         </button>
                         <button ng-disabled="recordsVM.invenioRecordsLoading"
                                 class="btn btn-info next-button"
-                                ng-click="updateDataJson('{{activity_id}}',{{steps}},'{{item_save_uri}}',{{action_id}},'{{is_auto_set_index_action}}','{{enable_contributor}}','{{enable_feedback_maillist}}')"> {{_('Next')}}&nbsp
+                                ng-click="updateDataJson('{{activity_id}}',{{steps}},'{{item_save_uri}}',{{action_id}},'{{is_auto_set_index_action}}','{{enable_contributor}}','{{enable_feedback_maillist}}', '{{enable_request_maillist}}')"> {{_('Next')}}&nbsp
                         <span class="glyphicon glyphicon-chevron-right"></span>
                         </button>
                       </div>
@@ -448,6 +488,7 @@
           <input type="hidden" id="list_license_data" name="list_license_data" value='{{ list_license_data }}'>
           <input type="hidden" id="application_item_type" name="application_item_type" value='{{application_item_type}}'>
           <input type="hidden" id="enable_feedback_maillist" name="enable_feedback_maillist" value='{{enable_feedback_maillist}}'>
+          <input type="hidden" id="enable_request_maillist" name="enable_request_maillist" value='{{enable_request_maillist}}'/>
           {% set position_err_msg = "Position is being inputted (Only input when selecting 'Others')" %}
           <input type="hidden" id="err_input_other_position" name="err_input_other_position" value='{{_(position_err_msg)}}'>
           <input type="hidden" id="err_position_not_provided" name="err_position_not_provided" value='{{_("Position not provided.")}}'>
@@ -458,6 +499,8 @@
           <input type="hidden" id="autofill_get_value" name="autofill_get_value" value="{{_('Get')}}">
           <input type="hidden" id="validate_error" name="validate_error"
               value="{{_('The following items is required. Please recheck and input.')}}">
+          <input type="hidden" id="duplicate_warning" name="duplicate_warning"
+              value="{{_('The same item may have been registered.')}}">
           <input type="hidden" id="duplicate_input_error" name="duplicate_input_error"
               value="{{_('The following items cannot have same value. Please recheck and re-input.')}}">
           <input type="hidden" id="ja_kana_error" name="ja_kana_error"
@@ -524,4 +567,3 @@
     </div><!-- /.modal-dialog -->
   </div><!-- /.modal -->
   {%- endblock page_body %}
-

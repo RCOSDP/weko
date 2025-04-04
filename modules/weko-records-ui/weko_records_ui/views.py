@@ -24,6 +24,7 @@ from datetime import datetime
 import re
 import os
 import uuid
+import copy
 
 import six
 import werkzeug
@@ -53,7 +54,7 @@ from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
-from weko_records.api import ItemLink, Mapping, ItemTypes
+from weko_records.api import ItemLink, Mapping, ItemTypes, RequestMailList
 from weko_records.serializers import citeproc_v1
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import custom_record_medata_for_export, \
@@ -65,6 +66,7 @@ from weko_workflow.api import WorkFlow
 
 from weko_records_ui.fd import add_signals_info
 from weko_records_ui.utils import check_items_settings, get_file_info_list
+from weko_records_ui.external import call_external_system
 from weko_workflow.utils import get_item_info, process_send_mail, set_mail_info
 
 from .ipaddr import check_site_license_permission
@@ -78,6 +80,7 @@ from .utils import create_secret_url, get_billing_file_download_permission, \
     delete_version, is_show_email_of_creator,hide_by_itemtype
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
+from .api import get_s3_bucket_list, copy_bucket_to_s3, replace_file_bucket
 
 
 blueprint = Blueprint(
@@ -140,6 +143,7 @@ def publish(pid, record, template=None, **kwargs):
 
     pid_ver = PIDVersioning(child=pid)
     last_record = WekoRecord.get_record_by_pid(pid_ver.last_child.pid_value)
+    old_record = copy.deepcopy(last_record)
 
     if not publish_status:
         record.update({'publish_status': (status or PublishStatus.PUBLIC.value)})
@@ -155,6 +159,7 @@ def publish(pid, record, template=None, **kwargs):
     indexer = WekoIndexer()
     indexer.update_es_data(record, update_revision=False, field='publish_status')
     indexer.update_es_data(last_record, update_revision=False, field='publish_status')
+    call_external_system(old_record=old_record, new_record=last_record)
 
     return redirect(url_for('.recid', pid_value=pid.pid_value))
 
@@ -285,8 +290,8 @@ def check_file_permission(record, fjson):
     Args:
         record (weko_deposit.api.WekoRecord): _description_
         fjson (dict): _description_
-    
-    """    
+
+    """
     return check_file_download_permission(record, fjson)
 
 
@@ -457,7 +462,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         if hasattr(current_user, 'site_license_flag') else False
     send_info['site_license_name'] = current_user.site_license_name \
         if hasattr(current_user, 'site_license_name') else ''
-    
+
     record_viewed.send(
         current_app._get_current_object(),
         pid=pid,
@@ -488,7 +493,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         record["relation"] = res
     else:
         record["relation"] = {}
-    
+
     recstr = etree.tostring(
         getrecord(
             identifier=record['_oai'].get('id'),
@@ -499,7 +504,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     et=etree.fromstring(recstr)
     google_scholar_meta = get_google_scholar_meta(record,record_tree=et)
     google_dataset_meta = get_google_detaset_meta(record,record_tree=et)
-    
+
     current_lang = current_i18n.language \
         if hasattr(current_i18n, 'language') else None
     # get title name
@@ -612,7 +617,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         display_stats = display_setting.get('display_stats')
     else:
         display_stats = True
-    
+
     items_display_settings = AdminSettings.get(name='items_display_settings',
                                         dict_to_object=False)
     if items_display_settings:
@@ -657,7 +662,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         # list_hidden = get_ignore_item(record['item_type_id'])
         # record = hide_by_itemtype(record, list_hidden)
         record = hide_by_email(record, item_type=item_type)
-    
+
     # Remove hide item
     from weko_items_ui.utils import get_ignore_item
     list_hidden = []
@@ -692,6 +697,29 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     if file_order >= 0 and files and files[file_order].get('url') and files[file_order]['url'].get('url'):
         file_url = files[file_order]['url']['url']
 
+    # Get communities info
+    belonging_community = []
+    for navi in record.navi:
+        path_arr = navi.path.split('/')
+        for path in path_arr:
+            index = Indexes.get_index(index_id=path)
+            from weko_workflow.api import GetCommunity
+            communities = GetCommunity.get_community_by_root_node_id(index.id)
+            if communities is not None:
+                for comm in communities:
+                    belonging_community.append(comm)
+
+    # Get Settings
+    enable_request_maillist = False
+    items_display_settings = AdminSettings.get(name='items_display_settings',
+                                        dict_to_object=False)
+    if items_display_settings:
+        enable_request_maillist = items_display_settings.get('display_request_form', False)
+
+    # Get request recipients
+    request_recipients = RequestMailList.get_mail_list_by_item_id(pid.object_uuid)
+    is_display_request_form = enable_request_maillist and (True if request_recipients else False)
+
     return render_template(
         template,
         pid=pid,
@@ -702,6 +730,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         files=files,
         file_url=file_url,
         display_stats=display_stats,
+        is_display_request_form = is_display_request_form,
         filename=filename,
         can_download_original_pdf=can_download_original,
         is_logged_in=current_user and current_user.is_authenticated,
@@ -734,16 +763,17 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
         search_author_flg=search_author_flg,
         show_secret_URL=_get_show_secret_url_button(record,filename),
+        belonging_community=belonging_community,
         **ctx,
         **kwargs
     )
 
 
 def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord, filename:str, **kwargs) -> str:
-    """on click button 'Secret URL' 
+    """on click button 'Secret URL'
     generate secret URL and send mail.
     about entrypoint settings, see at .config RECORDS_UI_ENDPOINTS.recid_secret_url
-    
+
     Args:
         pid: PID object.
         record: Record object.
@@ -767,7 +797,7 @@ def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord,
 
     #generate url and regist db(FileSecretDownload)
     result = create_secret_url(pid.pid_value,filename,current_user.email , restricted_fullname , restricted_data_name)
-    
+
     #send mail
     mail_pattern_name:str = current_app.config.get('WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_URL')
 
@@ -779,7 +809,7 @@ def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord,
         abort(500)
 
 def _get_show_secret_url_button(record : WekoRecord, filename :str) -> bool:
-    """ 
+    """
         Args:
             WekoRecord : records_metadata for target item
             str : target content name
@@ -792,7 +822,7 @@ def _get_show_secret_url_button(record : WekoRecord, filename :str) -> bool:
     if not restricted_access:
         restricted_access = current_app.config[
             'WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
-        
+
     enable:bool = restricted_access.get('secret_URL_file_download',{}).get('secret_enable',False)
 
     #2.check the user has permittion
@@ -804,7 +834,7 @@ def _get_show_secret_url_button(record : WekoRecord, filename :str) -> bool:
         current_user.id in owner_user_id + shared_user_id:
         has_parmission = True
     # Super users
-    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] 
+    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
     for role in list(current_user.roles or []):
         if role.name in supers:
             has_parmission = True
@@ -919,7 +949,7 @@ def set_pdfcoverpage_header():
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(e)
-    
+
     return redirect('/admin/pdfcoverpage')
 
 
@@ -977,12 +1007,19 @@ def soft_delete(recid):
     try:
         if not has_update_version_role(current_user):
             abort(403)
+        starts_with_del_ver = True
         if recid.startswith('del_ver_'):
             recid = recid.replace('del_ver_', '')
             delete_version(recid)
+            current_app.logger.info(f"Delete version: {recid}")
         else:
             soft_delete_imp(recid)
+            current_app.logger.info(f"Delete item: {recid}")
+            starts_with_del_ver = False
         db.session.commit()
+        if not starts_with_del_ver:
+            old_record = WekoRecord.get_record_by_pid(recid)
+            call_external_system(old_record=old_record)
         return make_response('PID: ' + str(recid) + ' DELETED', 200)
     except Exception as ex:
         db.session.rollback()
@@ -1105,14 +1142,14 @@ def get_uri():
     """_summary_
     ---
       post:
-        description: 
+        description:
         requestBody:
             required: true
             content:
             application/json: {"uri":"https://localhost/record/1/files/001.jpg","pid_value":"1","accessrole":"1"}
         responses:
           200:
-    """  
+    """
     data = request.get_json()
     uri = data.get('uri')
     pid_value = data.get('pid_value')
@@ -1145,3 +1182,36 @@ def dbsession_clean(exception):
         except:
             db.session.rollback()
     db.session.remove()
+
+
+@blueprint.route("/records/get_bucket_list", methods=['GET'])
+def get_bucket_list():
+    bucket_list = get_s3_bucket_list()
+    return jsonify(bucket_list)
+
+@blueprint.route("/records/copy_bucket", methods=['POST'])
+def copy_bucket():
+    data = request.get_json()
+    pid = data.get('pid')
+    filename = data.get('filename')
+    bucket_id = data.get('bucket_id')
+    checked = data.get('checked')
+    bucket_name = data.get('bucket_name')
+    try:
+        uri = copy_bucket_to_s3(pid, filename, bucket_id, checked=checked, bucket_name=bucket_name)
+        return jsonify(uri)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+
+@blueprint.route("/records/replace_file", methods=['POST'])
+def replace_file():
+    pid = request.form.get('pid')
+    bucket_id = request.form.get('bucket_id')
+    file = request.files['file']
+
+    try:
+        uri = replace_file_bucket(pid, bucket_id, file)
+        return jsonify(uri)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400

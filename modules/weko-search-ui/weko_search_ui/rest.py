@@ -57,7 +57,9 @@ from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.views import create_api_errorhandler
 from webargs import fields
 from webargs.flaskparser import use_kwargs
+from weko_accounts.utils import limiter
 from weko_admin.models import SearchManagement as sm
+from weko_admin.utils import get_facet_search_query
 from werkzeug.http import generate_etag
 from werkzeug.exceptions import NotFound
 from weko_index_tree.api import Indexes
@@ -70,9 +72,6 @@ from werkzeug.utils import secure_filename
 from .error import InvalidRequestError, VersionNotFoundRESTError, InternalServerError
 from .api import SearchSetting
 from .query import default_search_factory
-from .utils import create_limiter
-
-limiter = create_limiter()
 
 
 def create_blueprint(app, endpoints):
@@ -373,6 +372,9 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     "date_range": {"pub_cnt": 0, "un_pub_cnt": 0},
                     "rss_status": rss_status,
                     "comment": p.comment,
+                    "image_name": index_info.image_name,
+                    "image_width": current_app.config['CHILD_INDEX_THUMBNAIL_WIDTH'],
+                    "image_height": current_app.config['CHILD_INDEX_THUMBNAIL_HEIGHT'],
                 }
                 current_idx = nd
                 for _path in is_perm_paths:
@@ -411,6 +413,9 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                         "date_range": {"pub_cnt": 0, "un_pub_cnt": 0},
                         "rss_status": rss_status,
                         "comment": p.comment,
+                        "image_name": index_info.image_name,
+                        "image_width": current_app.config['CHILD_INDEX_THUMBNAIL_WIDTH'],
+                        "image_height": current_app.config['CHILD_INDEX_THUMBNAIL_HEIGHT'],
                     }
                     current_idx = nd
                 _child_indexes = []
@@ -617,11 +622,16 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
             item_type_ids = [x.item_type_id for x in mapping]
             item_types = ItemTypes.get_records(item_type_ids)
             additional_params = {
-                'itemtype': ','.join([x.model.item_type_name.name for x in item_types])
+                'itemtype': ','.join([x.model.item_type_name.name for x in item_types]),
+                'exact_title_match': request.args.get('exact_title_match') == 'true'
             }
 
             # Query Generate
             search, qs_kwargs = self.search_factory(self, search, additional_params=additional_params)
+
+            # search only if mapping exists
+            if len(item_type_ids) == 0:
+                search = search.query('match_none')
 
             # Sort Setting
             sort = request.values.get('sort')
@@ -645,27 +655,17 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
 
             if not is_id_sort:
                 sort_element = {}
-                sort_element['controlnumber'] = {'order': 'asc', 'unmapped_type': 'long'}
+                sort_element['control_number'] = {'order': 'asc', 'unmapped_type': 'long'}
                 sort_query.append(sort_element)
 
             search._sort = sort_query
 
             # Facet Setting
-            # from weko_admin.models import FacetSearchSetting
-            # from weko_admin.utils import get_facet_search_query
-            # params = {}
-            # facets = get_facet_search_query()
-            # search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
-            # if facets and search_index and 'post_filters' in facets[search_index]:
-            #     post_filters = facets[search_index]['post_filters']
-            #     for param in post_filters:
-            #         value = request.args.getlist(param)
-            #         if value:
-            #             params[param] = value
-            # weko_faceted_search_mapping = FacetSearchSetting.get_activated_facets_mapping()
-            # for param in params:
-            #     query_key = weko_faceted_search_mapping[param]
-            #     search = search.post_filter({'terms': {query_key: params[param]}})
+            facets = get_facet_search_query(has_permission=False)
+            search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
+            aggs = facets.get(search_index, {}).get('aggs', {})
+            for name, agg in aggs.items():
+                search.aggs[name] = agg
 
             # Execute search
             search_results = search.execute()
@@ -694,6 +694,14 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
                 if sort_key:
                     cursor = sort_key[0]
 
+            # Create facet result
+            facet_list = {}
+            dic = search_results.get('aggregations', {})
+            for k, v in dic.items():
+                if isinstance(v, dict) and k in v and 'buckets' in v[k]:
+                    facet_list[k] = {}
+                    facet_list[k]['buckets'] = v[k]['buckets']
+
             # Create result
             result = {
                 'total_results': search_results['hits']['total'],
@@ -701,6 +709,7 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
                 'cursor': cursor,
                 'page': page,
                 'search_results': rocrate_list,
+                'aggregations' : facet_list
             }
             res = Response(
                 response=json.dumps(result, indent=indent),
@@ -801,11 +810,16 @@ class IndexSearchResultList(ContentNegotiatedMethodView):
             item_type_ids = [x.item_type_id for x in mapping]
             item_types = ItemTypes.get_records(item_type_ids)
             additional_params = {
-                'itemtype': ','.join([x.model.item_type_name.name for x in item_types])
+                'itemtype': ','.join([x.model.item_type_name.name for x in item_types]),
+                'exact_title_match': request.args.get('exact_title_match') == 'true'
             }
 
             # Query Generate
             search, qs_kwargs = self.search_factory(self, search, additional_params=additional_params)
+
+            # search only if mapping exists
+            if len(item_type_ids) == 0:
+                search = search.query('match_none')
 
             # Sort Setting
             sort = request.values.get('sort')
@@ -829,7 +843,7 @@ class IndexSearchResultList(ContentNegotiatedMethodView):
 
             if not is_id_sort:
                 sort_element = {}
-                sort_element['controlnumber'] = {'order': 'asc', 'unmapped_type': 'long'}
+                sort_element['control_number'] = {'order': 'asc', 'unmapped_type': 'long'}
                 sort_query.append(sort_element)
 
             search._sort = sort_query

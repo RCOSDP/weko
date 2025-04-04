@@ -284,6 +284,29 @@ class Client(db.Model):
         ).count()
         return no_users
 
+    @classmethod
+    def get_client_id_by_user_id(cls, user_id):
+        """Get client_id, name by user_id. """
+        query = db.session.query(cls).with_entities(cls.client_id, cls.name).filter(cls.user_id == user_id)
+        return query.all()
+
+    @classmethod
+    def get_client_id_all(cls):
+        """Get client_id all. """
+        query = db.session.query(cls).with_entities(cls.client_id, cls.name)
+        return query.all()
+
+    @classmethod
+    def get_name_by_client_id(cls, client_id):
+        """Get name by client_id. """
+        query = db.session.query(cls).with_entities(cls.name).filter(cls.client_id == client_id)
+        return query.first()
+
+    @classmethod
+    def get_user_id_by_client_id(cls, client_id):
+        """Get user_id by client_id. """
+        query = db.session.query(cls).with_entities(cls.user_id).filter(cls.client_id == client_id)
+        return query.first()
 
 class Token(db.Model):
     """A bearer token is the final token that can be used by the client."""

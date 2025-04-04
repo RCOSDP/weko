@@ -43,8 +43,10 @@ from invenio_db import db
 from invenio_rest.views import create_api_errorhandler
 from invenio_stats.views import QueryRecordViewCount, QueryFileStatsCount
 from sqlalchemy.exc import SQLAlchemyError
+from weko_accounts.utils import limiter
 from weko_deposit.api import WekoRecord
 from weko_records.serializers import citeproc_v1
+from weko_records.api import RequestMailList
 from weko_records_ui.api import create_captcha_image, send_request_mail, validate_captcha_answer
 from weko_items_ui.scopes import item_read_scope
 from weko_workflow.utils import  check_pretty
@@ -54,9 +56,7 @@ from .permissions import page_permission_factory, file_permission_factory
 from .errors import AvailableFilesNotFoundRESTError, ContentsNotFoundError, InvalidRequestError, VersionNotFoundRESTError, InternalServerError, \
     RecordsNotFoundRESTError, PermissionError, DateFormatRESTError, FilesNotFoundRESTError, ModeNotFoundRESTError, RequiredItemNotExistError
 from .scopes import file_read_scope
-from .utils import create_limiter
 
-limiter = create_limiter()
 
 
 def create_error_handlers(blueprint):
@@ -367,11 +367,17 @@ class WekoRecordsResource(ContentNegotiatedMethodView):
             # Check pretty
             indent = 4 if request.args.get('pretty') == 'true' else None
 
+            # Check presence of requestmail address
+            metadata = self._convert_metadata(record, language)
+            mail_list = RequestMailList.get_mail_list_by_item_id(pid.object_uuid)
+            mail_list_len = len(mail_list) if isinstance(mail_list, list) else 0
+            metadata['hasRequestmailAddress'] = mail_list_len > 0
+
             # Create Response
             res_json = {
                 'index': indexId,
                 'rocrate': rocrate,
-                'metadata': self._convert_metadata(record, language),
+                'metadata': metadata
             }
             res = Response(
                 response=json.dumps(res_json, indent=indent),

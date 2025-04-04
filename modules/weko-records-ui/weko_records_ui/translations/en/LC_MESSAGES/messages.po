@@ -1385,3 +1385,63 @@ msgstr ""
 
 msgid "Success Secret URL Generate"
 msgstr "Success: Secret URL Generate is succeed. Sent the URL to your email adress."
+
+msgid "Please enter the calculation result"
+msgstr ""
+
+msgid "The calculation results are different."
+msgstr ""
+
+msgid "Email sent successfully"
+msgstr ""
+
+msgid "The image has expired. Please enter the calculation result again."
+msgstr ""
+
+msgid "There is an error in the input item"
+msgstr ""
+
+msgid "S3 setting none. Please check your profile."
+msgstr ""
+
+msgid "This file is not from institutional storage."
+msgstr ""
+
+msgid "Getitng Bucket List failed."
+msgstr ""
+
+msgid "Creating Bucket failed."
+msgstr ""
+
+msgid "Getting region failed."
+msgstr ""
+
+msgid "Uploading file failed."
+msgstr ""
+
+msgid "Chose bucket or input creating bucket name"
+msgstr ""
+
+msgid "Bucket"
+msgstr ""
+
+msgid "New Creating Bucket Name"
+msgstr ""
+
+msgid "Copy Success. Take note of URL. This URL cannot be confirmed again once the screen is closed. If you have created a new bucket, please check that the bucket is set to public."
+msgstr ""
+
+msgid "Copy file to open bucket"
+msgstr ""
+
+msgid "Replace the file content"
+msgstr ""
+
+msgid "Please select the same named file as the original file."
+msgstr ""
+
+msgid "File replacement successful."
+msgstr ""
+
+msgid "Unable to update as no suitable workflow is available."
+msgstr ""

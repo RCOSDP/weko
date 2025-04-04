@@ -62,7 +62,7 @@ class InvalidCaptchaError(RESTException):
     """Invalid CAPTCHA calculation result error."""
 
     code = 400
-    description = _('Invalid CAPTCHA')
+    description = _('The calculation results are different.')
 
 class InvalidRequestError(RESTException):
     """Invalid Request error."""

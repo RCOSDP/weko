@@ -19,7 +19,7 @@
 #}
 
 {%- extends config.WEKO_WORKFLOW_BASE_TEMPLATE %}
-{%- from "invenio_communities/macros.html" import community_header %}
+{%- from "invenio_communities/macros.html" import community_header with context %}
 
 {%- block css %}
 {{ super() }}
@@ -103,6 +103,10 @@
             <li>
               <a href="javascript:void(0)" class="filter_option" id="status" data-name="status">{{_('Status')}}</a>
             </li>
+          {%- elif filter == "action" %}
+            <li>
+              <a href="javascript:void(0)" class="filter_option" id="action" data-name="action">{{_('Action')}}</a>
+            </li>
           {%- endif %}
         {%- endfor %}
       </ul>
@@ -138,11 +142,20 @@
       </div>
       <div id="status_group">
       </div>
+      <div id="action_group">
+      </div>
     </div>
   </form>
   <input type="hidden" id="action_doing" name="action_doing" value="{{_('action_doing')}}">
   <input type="hidden" id="action_done" name="action_done" value="{{_('action_done')}}">
   <input type="hidden" id="action_cancel" name="action_cancel" value="{{_('action_canceled')}}">
+  <input type="hidden" id="action_start" name="action_start" value="{{_('Start')}}">
+  <input type="hidden" id="action_end" name="action_end" value="{{_('End')}}">
+  <input type="hidden" id="action_item_registration" name="action_item_registration" value="{{_('Item Registration')}}">
+  <input type="hidden" id="action_approval" name="action_approval" value="{{_('Approval')}}">
+  <input type="hidden" id="action_item_link" name="action_item_link" value="{{_('Item Link')}}">
+  <input type="hidden" id="action_oa_policy_confirmation" name="action_oa_policy_confirmation" value="{{_('OA Policy Confirmation')}}">
+  <input type="hidden" id="action_identifier_grant" name="action_identifier_grant" value="{{_('Identifier Grant')}}">
   {%-if name_param != '' %}
   <input type="hidden" id="change_page_param" value="{{name_param}}">
   {%- endif%}
@@ -154,7 +167,7 @@
     {% set flag_1=True %}
     {%- for role in current_user.roles %}
        {%- if role in activitylog_roles and flag_1 == True %}
-          <button type="submit" id="filter_form_download" class="btn btn-primary">{{_('Download')}}</button>                           
+          <button type="submit" id="filter_form_download" class="btn btn-primary">{{_('Download')}}</button>
           <button type="submit" id="filter_form_clear" class="btn btn-danger">{{_('Clear')}} </button>
           <form method="GET" name="activitylog_file_form" id="activitylog_file_form" action={{url_for('weko_workflow.download_activitylog')}}>
           </form>
@@ -201,6 +214,10 @@
                 <th>{{ _('Status') }}</th>
               {%- elif column == "email" %}
                 <th>{{ _('User') }}</th>
+              {%- elif column == "approver" %}
+                <th>{{ _('Approver') }}</th>
+              {%- elif column == "approver_email" %}
+                <th>{{ _('Approver E-Mail') }}</th>
               {%- endif %}
             {%- endfor %}
           </tr>
@@ -226,6 +243,12 @@
                     <td>{{ activity[column].strftime('%Y-%m-%d') }}</td>
                   {%-elif column == "StatusDesc" %}
                     <td>{{ _(activity[column]) }}</td>
+                  {%-elif column == "approver" or column == "approver_email" %}
+                  <td>
+                    {%- for approver in activity[column] %}
+                      {{ approver }}{%- if not loop.last %}<br>{%- endif %}
+                    {%- endfor %}
+                  </td>
                   {%- else %}
                     <td>{{ activity[column] }}</td>
                   {%- endif %}

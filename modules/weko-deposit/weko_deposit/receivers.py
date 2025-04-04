@@ -12,6 +12,7 @@ from flask import current_app
 from invenio_pidstore.models import PIDStatus
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records.models import RecordMetadata
+from weko_records.api import RequestMailList
 from weko_records.utils import json_loader
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -61,6 +62,13 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         ps = dict(publish_status=dep.get('publish_status'))
         dep.jrc.update(ps)
         json.update(dep.jrc)
+
+        request_mail_list = RequestMailList.get_mail_list_by_item_id(record.id)
+        if request_mail_list:
+            request_mail = {
+                'request_mail_list': request_mail_list
+            }
+            json.update(request_mail)
 
         current_app.logger.info('FINISHED reindex record: {0}'.format(
             im['control_number']))

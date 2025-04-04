@@ -24,7 +24,7 @@ import codecs
 import json
 import os
 import tempfile
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
 import pickle
 
@@ -50,6 +50,8 @@ from weko_index_tree.utils import (
 )
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkFlow
+from weko_records_ui.external import call_external_system
+from weko_deposit.api import WekoRecord
 
 from weko_search_ui.api import get_search_detail_keyword
 
@@ -60,11 +62,14 @@ from .config import (
     WEKO_IMPORT_CHECK_LIST_NAME,
     WEKO_IMPORT_LIST_NAME,
     WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
+    WEKO_ITEM_ADMIN_ROCRATE_IMPORT_TEMPLATE,
     WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE,
 )
 from .tasks import (
     check_celery_is_run,
+    check_session_lifetime,
     check_import_items_task,
+    check_rocrate_import_items_task,
     export_all_task,
     import_item,
     is_import_running,
@@ -82,6 +87,7 @@ from .utils import (
     get_root_item_option,
     get_sub_item_option,
     get_tree_items,
+    handle_doi,
     handle_get_all_sub_id_and_name,
     handle_workflow,
     make_stats_file,
@@ -113,7 +119,7 @@ class ItemManagementBulkDelete(BaseView):
                         edt_items = get_editing_items_in_index(q, recursively)
                         ignore_items = list(set(doi_items + edt_items))
                         # Delete items in current_tree
-                        delete_records(current_tree.id, ignore_items)
+                        delete_record_list = delete_records(current_tree.id, ignore_items)
 
                         # If recursively, then delete items of child indices
                         if recursively:
@@ -124,12 +130,16 @@ class ItemManagementBulkDelete(BaseView):
                                     child_tree = Indexes.get_index(obj[1])
 
                                     # Do delete items in child_tree
-                                    delete_records(child_tree.id, ignore_items)
+                                    child_delete_record_list = delete_records(child_tree.id, ignore_items)
+                                    delete_record_list.extend(child_delete_record_list)
                                     # Add the level 1 child into the current_tree
                                     if obj[0] == current_tree.id:
                                         direct_child_trees.append(child_tree.id)
 
                         db.session.commit()
+                        for recid in delete_record_list:
+                            record = WekoRecord.get_record_by_pid(recid)
+                            call_external_system(old_record=record)
                         if ignore_items:
                             msg = "{}<br/>".format(
                                 _("The following item(s) cannot be deleted.")
@@ -334,7 +344,7 @@ class ItemImportView(BaseView):
         workflow = WorkFlow()
         workflows = workflow.get_workflow_list()
         workflows_js = [get_content_workflow(item) for item in workflows]
-        
+
         form =FlaskForm(request.form)
 
         return self.render(
@@ -347,9 +357,9 @@ class ItemImportView(BaseView):
     @expose("/check", methods=["POST"])
     def check(self) -> jsonify:
         """Validate item import."""
-        
+
         validate_csrf_header(request)
-        
+
         data = request.form
         file = request.files["file"] if request.files else None
 
@@ -456,13 +466,17 @@ class ItemImportView(BaseView):
         list_record = [
             item for item in data.get("list_record", []) if not item.get("errors")
         ]
+        list_doi = data.get("list_doi")
         if list_record:
             group_tasks = []
-            for item in list_record:
+            for idx, item in enumerate(list_record):
                 try:
                     item["root_path"] = data_path + "/data"
                     create_flow_define()
                     handle_workflow(item)
+                    if (list_doi[idx]):
+                        metadata_doi = handle_doi(item, list_doi[idx])
+                        item["metadata"] = metadata_doi
                     group_tasks.append(import_item.s(item, request_info))
                     db.session.commit()
                 except Exception as e:
@@ -721,7 +735,441 @@ class ItemImportView(BaseView):
                     "error_id": check,
                 }
             )
-            
+
+        else:
+            return jsonify({"is_available": True})
+
+
+class ItemRocrateImportView(BaseView):
+    """BaseView for Admin RO-Crate Import."""
+
+    @expose("/", methods=["GET"])
+    def index(self):
+        """Renders an item rocrate import view.
+
+        :return: The rendered template.
+        """
+        workflow = WorkFlow()
+        workflows = workflow.get_workflow_list()
+        workflows_js = [get_content_workflow(item) for item in workflows]
+
+        form =FlaskForm(request.form)
+
+        return self.render(
+            WEKO_ITEM_ADMIN_ROCRATE_IMPORT_TEMPLATE,
+            workflows=json.dumps(workflows_js),
+            file_format=current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'json').lower(),
+            form=form
+        )
+
+    @expose("/check", methods=["POST"])
+    def check(self) -> jsonify:
+        """Validate item import.
+
+        :return: The result of the validation.
+        """
+
+        validate_csrf_header(request)
+
+        data = request.form
+        file = request.files["file"] if request.files else None
+        packaging = request.headers.get("Packaging")
+        mapping_id = data.get("mapping_id")
+
+        role_ids = []
+        can_edit_indexes = []
+        if current_user and current_user.is_authenticated:
+            for role in current_user.roles:
+                if role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
+                    role_ids = []
+                    can_edit_indexes = [0]
+                    break
+                else:
+                    role_ids.append(role.id)
+        if role_ids:
+            from invenio_communities.models import Community
+            comm_data = Community.query.filter(
+                Community.id_role.in_(role_ids)
+            ).all()
+            for comm in comm_data:
+                can_edit_indexes += [i.cid for i in Indexes.get_self_list(comm.root_node_id)]
+            can_edit_indexes = list(set(can_edit_indexes))
+        if data and file:
+            temp_path = (
+                tempfile.gettempdir()
+                + "/"
+                + current_app.config["WEKO_SEARCH_UI_ROCRATE_IMPORT_TMP_PREFIX"]
+                + datetime.now(timezone.utc).strftime(r"%Y%m%d%H%M%S%f")
+            )
+            os.mkdir(temp_path)
+            file_path = temp_path + "/" + file.filename
+            file.save(file_path)
+            task = check_rocrate_import_items_task.apply_async(
+                (
+                    file_path,
+                    data.get("is_change_identifier") == "true",
+                    request.host_url,
+                    packaging,
+                    mapping_id,
+                    current_i18n.language,
+                ),
+            )
+        return jsonify(code=1, check_rocrate_import_task_id=task.task_id)
+
+    @expose("/get_check_status", methods=["POST"])
+    def get_check_status(self) -> jsonify:
+        """Validate item import.
+
+        :return: check status.
+        """
+        data = request.get_json()
+        print(f"data812: {data}")
+        result = {}
+
+        if data and data.get("task_id"):
+            task = import_item.AsyncResult(data.get("task_id"))
+            if task and isinstance(task.result, dict):
+                start_date = task.result.get("start_date")
+                end_date = task.result.get("end_date")
+                result.update(
+                    {"start_date": start_date, "end_date": end_date, **task.result}
+                )
+            elif task and task.status != "PENDING":
+                result["error"] = _("Internal server error")
+        return jsonify(**result)
+
+    @expose("/download_check", methods=["POST"])
+    def download_check(self):
+        """Download report check result.
+
+        :return: The response of the download.
+        """
+        data = request.get_json()
+        now = str(datetime.date(datetime.now()))
+        file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+
+        file_name = "check_{}.{}".format(now, file_format)
+        if data:
+            output_file = make_stats_file(
+                data.get("list_result"), WEKO_IMPORT_CHECK_LIST_NAME
+            )
+            return Response(
+                output_file.getvalue(),
+                mimetype="text/{}".format(file_format),
+                headers={"Content-disposition": "attachment; filename=" + file_name},
+            )
+        else:
+            return Response(
+                [],
+                mimetype="text/{}".format(file_format),
+                headers={"Content-disposition": "attachment; filename=" + file_name},
+            )
+
+    @expose("/import", methods=["POST"])
+    def import_items(self) -> jsonify:
+        """Import item into System.
+
+        :return: The response of the import.
+        """
+        data = request.get_json() or {}
+        data_path = data.get("data_path")
+        user_id = current_user.get_id() if current_user else -1
+        request_info = {
+            "remote_addr": request.remote_addr,
+            "referrer": request.referrer,
+            "hostname": request.host,
+            "user_id": user_id,
+            "action": "IMPORT"
+        }
+        # update temp dir expire to 1 day from now
+        expire = datetime.now() + timedelta(days=1)
+        TempDirInfo().set(data_path, {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")})
+
+        tasks = []
+        list_record = [
+            item for item in data.get("list_record", []) if not item.get("errors")
+        ]
+        if list_record:
+            group_tasks = []
+            for item in list_record:
+                try:
+                    item["root_path"] = data_path + "/data"
+                    create_flow_define()
+                    handle_workflow(item)
+                    group_tasks.append(import_item.s(item, request_info))
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    current_app.logger.error(e)
+
+            # handle import tasks
+            import_task = chord(group_tasks)(remove_temp_dir_task.si(data_path))
+            for idx, task in enumerate(import_task.parent.results):
+                tasks.append(
+                    {
+                        "task_id": task.task_id,
+                        "item_id": list_record[idx].get("id"),
+                    }
+                )
+
+        response_object = {
+            "status": "success",
+            "data": {"tasks": tasks},
+        }
+        return jsonify(response_object)
+
+    @expose("/check_status", methods=["POST"])
+    def get_status(self):
+        """Get status of import process.
+
+        :return: check status.
+        """
+        data = request.get_json()
+        result = []
+        if data and data.get("tasks"):
+            status = "done"
+            for task_item in data.get("tasks"):
+                task_id = task_item.get("task_id")
+                task = import_item.AsyncResult(task_id)
+                start_date = (
+                    task.result.get("start_date")
+                    if task and isinstance(task.result, dict)
+                    else ""
+                )
+                end_date = (
+                    datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    if task.successful() or task.failed()
+                    else ""
+                )
+                item_id = task_item.get("item_id", None)
+                if not item_id and task.result:
+                    item_id = task.result.get("recid", None)
+                result.append(
+                    dict(
+                        **{
+                            "task_status": task.status,
+                            "task_result": task.result,
+                            "start_date": start_date,
+                            "end_date": task_item.get("end_date") or end_date,
+                            "task_id": task_id,
+                            "item_id": item_id,
+                        }
+                    )
+                )
+                status = (
+                    "doing"
+                    if not (task.successful() or task.failed()) or status == "doing"
+                    else "done"
+                )
+            response_object = {"status": status, "result": result}
+        else:
+            response_object = {"status": "error", "result": result}
+        return jsonify(response_object)
+
+    @expose("/export_import", methods=["POST"])
+    def download_import(self):
+        """Download import result.
+
+        :return: The response of the download.
+        """
+        data = request.get_json()
+        now = str(datetime.date(datetime.now()))
+
+        file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+        file_name = "List_Download {}.{}".format(now, file_format)
+        if data:
+            output_file = make_stats_file(data.get("list_result"), WEKO_IMPORT_LIST_NAME)
+            return Response(
+                output_file.getvalue(),
+                mimetype="text/{}".format(file_format),
+                headers={"Content-disposition": "attachment; filename=" + file_name},
+            )
+        else:
+            return Response(
+                [],
+                mimetype="text/{}".format(file_format),
+                headers={"Content-disposition": "attachment; filename=" + file_name},
+            )
+
+    @expose("/get_disclaimer_text", methods=["GET"])
+    def get_disclaimer_text(self):
+        """Get disclaimer text.
+
+        :return: The disclaimer text.
+        """
+        data = get_change_identifier_mode_content()
+        return jsonify(code=1, data=data)
+
+    @expose("/export_template", methods=["POST"])
+    def export_template(self):
+        """Download item type template.
+
+        :return: The response of the download.
+        """
+        file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+        file_name = None
+        output_file = None
+        data = request.get_json()
+        if data:
+            item_type_id = int(data.get("item_type_id", 0))
+            if item_type_id > 0:
+                item_type = ItemTypes.get_by_id(id_=item_type_id, with_deleted=True)
+                if item_type:
+                    file_name = "{}({}).{}".format(
+                        item_type.item_type_name.name, item_type.id, file_format
+                    )
+                    item_type_line = [
+                        "#ItemType",
+                        "{}({})".format(item_type.item_type_name.name, item_type.id),
+                        "{}items/jsonschema/{}".format(request.url_root, item_type.id),
+                    ]
+                    ids_line = pickle.loads(pickle.dumps(WEKO_EXPORT_TEMPLATE_BASIC_ID, -1))
+                    names_line = pickle.loads(pickle.dumps(WEKO_EXPORT_TEMPLATE_BASIC_NAME, -1))
+                    systems_line = ["#"] + ["" for _ in range(len(ids_line) - 1)]
+                    options_line = pickle.loads(pickle.dumps(WEKO_EXPORT_TEMPLATE_BASIC_OPTION, -1))
+
+                    item_type = item_type.render
+                    meta_list = {
+                        **item_type.get("meta_fix", {}),
+                        **item_type.get("meta_list", {}),
+                    }
+                    meta_system = [key for key in item_type.get("meta_system", {})]
+                    schema = (
+                        item_type.get("table_row_map", {})
+                        .get("schema", {})
+                        .get("properties", {})
+                    )
+                    form = item_type.get("table_row_map", {}).get("form", [])
+
+                    count_file = 0
+                    count_thumbnail = 0
+                    for key in ["pubdate", *item_type.get("table_row", [])]:
+                        if key in meta_system:
+                            continue
+
+                        item = schema.get(key)
+                        item_option = meta_list.get(key) if meta_list.get(key) else item
+                        sub_form = next(
+                            (x for x in form if key == x.get("key")), {"title_i18n": {}}
+                        )
+                        root_id, root_name, root_option = get_root_item_option(
+                            key, item_option, sub_form
+                        )
+                        # have not sub item
+                        if not (item.get("properties") or item.get("items")):
+                            ids_line.append(root_id)
+                            names_line.append(root_name)
+                            systems_line.append("")
+                            options_line.append(", ".join(root_option))
+                        else:
+                            # have sub item
+                            sub_items = (
+                                item.get("properties")
+                                if item.get("properties")
+                                else item.get("items").get("properties")
+                            )
+                            _ids, _names = handle_get_all_sub_id_and_name(
+                                sub_items, root_id, root_name, sub_form.get("items", [])
+                            )
+                            _options = []
+                            for _id in _ids:
+                                if "filename" in _id:
+                                    ids_line.append(".file_path[{}]".format(count_file))
+                                    file_path_name = (
+                                        "File Path"
+                                        if current_i18n.language == "en"
+                                        else "ファイルパス"
+                                    )
+                                    names_line.append(
+                                        ".{}[{}]".format(file_path_name, count_file)
+                                    )
+                                    systems_line.append("")
+                                    options_line.append("Allow Multiple")
+                                    count_file += 1
+                                if "thumbnail_label" in _id:
+                                    thumbnail_path_name = (
+                                        "Thumbnail Path"
+                                        if current_i18n.language == "en"
+                                        else "サムネイルパス"
+                                    )
+                                    if item.get("items"):
+                                        ids_line.append(
+                                            ".thumbnail_path[{}]".format(
+                                                count_thumbnail
+                                            )
+                                        )
+                                        names_line.append(
+                                            ".{}[{}]".format(
+                                                thumbnail_path_name, count_thumbnail
+                                            )
+                                        )
+                                        options_line.append("Allow Multiple")
+                                        count_thumbnail += 1
+                                    else:
+                                        ids_line.append(".thumbnail_path")
+                                        names_line.append(
+                                            ".{}".format(thumbnail_path_name)
+                                        )
+                                        options_line.append("")
+                                    systems_line.append("")
+
+                                clean_key = _id.replace(".metadata.", "").replace(
+                                    "[0]", "[]"
+                                )
+                                _options.append(
+                                    get_sub_item_option(clean_key, form) or []
+                                )
+                                systems_line.append(
+                                    "System"
+                                    if check_sub_item_is_system(clean_key, form)
+                                    else ""
+                                )
+
+                            ids_line += _ids
+                            names_line += _names
+                            for _option in _options:
+                                options_line.append(
+                                    ", ".join(list(set(root_option + _option)))
+                                )
+                    output_file = make_file_by_line(
+                        [
+                            item_type_line,
+                            ids_line,
+                            names_line,
+                            systems_line,
+                            options_line,
+                        ]
+                    )
+        return Response(
+            []
+            if not output_file
+            else codecs.BOM_UTF8.decode("utf8")
+            + codecs.BOM_UTF8.decode()
+            + output_file.getvalue(),
+            mimetype="text/{}".format(file_format),
+            headers={
+                "Content-type": "text/{}; charset=utf-8".format(file_format),
+                "Content-disposition": "attachment; "
+                + (
+                    "filename=" if not file_name else urlencode({"filename": file_name})
+                ),
+            },
+        )
+
+    @expose("/check_import_is_available", methods=["GET"])
+    def check_import_available(self):
+        """Check import is available.
+
+        :return: check result.
+        """
+        check = is_import_running()
+        if check:
+            return jsonify(
+                {
+                    "is_available": False,
+                    "error_id": check,
+                }
+            )
         else:
             return jsonify({"is_available": True})
 
@@ -755,40 +1203,53 @@ class ItemBulkExport(BaseView):
             name=_task_config,
             user_id=user_id
         )
-        export_status, download_uri, message, run_message, _ = get_export_status()
-        timezone = str(current_app.config["STATS_WEKO_DEFAULT_TIMEZONE"]())
+        export_status, download_uri, message, run_message, \
+            _, _, _ = get_export_status()
+        start_time = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
 
         if not export_status:
-            export_task = export_all_task.apply_async(args=(request.url_root, user_id, data, timezone))
+            export_task = export_all_task.apply_async(
+                args=(request.url_root, user_id, data, start_time)
+            )
             reset_redis_cache(_cache_key, str(export_task.task_id))
 
         # return Response(status=200)
-        check = check_celery_is_run()
-        export_status, download_uri, message, run_message, status = get_export_status()
+        check_celery = check_celery_is_run()
+        check_life_time = check_session_lifetime()
+        export_status, download_uri, message, run_message, \
+            status, start_time, finish_time = get_export_status()
         return jsonify(
             data={
                 "export_status": export_status,
                 "uri_status": True if download_uri else False,
-                "celery_is_run": check,
+                "celery_is_run": check_celery,
+                "is_lifetime": check_life_time,
                 "error_message": message,
                 "export_run_msg": run_message,
-                "status": status
+                "status": status,
+                "start_time": start_time,
+                "finish_time": finish_time
             }
         )
 
     @expose("/check_export_status", methods=["GET"])
     def check_export_status(self):
         """Check export status."""
-        check = check_celery_is_run()
-        export_status, download_uri, message, run_message, status = get_export_status()
+        check_celery = check_celery_is_run()
+        check_life_time = check_session_lifetime()
+        export_status, download_uri, message, run_message, \
+            status, start_time, finish_time = get_export_status()
         return jsonify(
             data={
                 "export_status": export_status,
                 "uri_status": True if download_uri else False,
-                "celery_is_run": check,
+                "celery_is_run": check_celery,
+                "is_lifetime": check_life_time,
                 "error_message": message,
                 "export_run_msg": run_message,
-                "status": status
+                "status": status,
+                "start_time": start_time,
+                "finish_time": finish_time
             }
         )
 
@@ -796,7 +1257,7 @@ class ItemBulkExport(BaseView):
     def cancel_export(self):
         """Check export status."""
         result = cancel_export_all()
-        export_status, _, _, _, status = get_export_status()
+        export_status, _, _, _, status, _, _ = get_export_status()
         return jsonify(data={"cancel_status": result, "export_status":export_status, "status":status})
 
     @expose("/download", methods=["GET"])
@@ -805,7 +1266,8 @@ class ItemBulkExport(BaseView):
 
         path: it was load from FileInstance
         """
-        export_status, download_uri, message, run_message, _ = get_export_status()
+        export_status, download_uri, message, run_message, \
+            _, _, _ = get_export_status()
         if not export_status and download_uri is not None:
             file_instance = FileInstance.get_by_uri(download_uri)
             return file_instance.send_file(
@@ -846,7 +1308,21 @@ item_management_custom_sort_adminview = {
 
 item_management_import_adminview = {
     "view_class": ItemImportView,
-    "kwargs": {"category": _("Items"), "name": _("Import"), "endpoint": "items/import"},
+    "kwargs": {
+        "category": _("Items"),
+        "name": _("Import"),
+        "endpoint": "items/import",
+    },
+}
+
+item_management_rocrate_import_adminview = {
+    "view_class": ItemRocrateImportView,
+    "kwargs": {
+        "category": _("Items"),
+        "name": _("RO-Crate Import"),
+        "endpoint": "items/rocrate_import",
+    },
+
 }
 
 item_management_export_adminview = {
@@ -863,5 +1339,6 @@ __all__ = (
     "item_management_bulk_search_adminview",
     "item_management_custom_sort_adminview",
     "item_management_import_adminview",
+    "item_management_rocrate_import_adminview",
     "item_management_export_adminview",
 )

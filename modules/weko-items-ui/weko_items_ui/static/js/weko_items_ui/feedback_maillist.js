@@ -79,7 +79,7 @@ class ComponentExclusionTarget extends React.Component {
         email: event.target.value.trim()
       }
       if (this.props.addEmailToList(new_email)) {
-        $('#custom_input_email').val('');
+        $('div#sltBoxListEmail>input#custom_input_email').val('');
         $('#sltBoxListEmail').animate({
           scrollTop: $("#custom_input_email").offset().top
         }, 1000);

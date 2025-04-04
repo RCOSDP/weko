@@ -1,5 +1,7 @@
 const ITEM_SAVE_URL = $("#item_save_uri").val();
 const ITEM_SAVE_FREQUENCY = $("#item_save_frequency").val();
+let isDuplicatePopupShown = false;
+let previousData = null;
 
 require([
   'jquery',
@@ -591,6 +593,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.usage_report_activity_id = '';
       $scope.is_item_owner = false;
       $scope.feedback_emails = [];
+      $scope.request_emails = [];
       $scope.render_requirements = false;
       $scope.error_list = [];
       $scope.required_list = [];
@@ -598,6 +601,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.outputapplication_keys = [];
       $scope.authors_keys = [];
       $scope.data_author = [];
+      $scope.data_affiliation = [];
       $scope.sub_item_keys = ['nameIdentifiers', 'creatorAffiliations', 'contributorAffiliations'];
       $scope.scheme_uri_mapping = [
         {
@@ -952,6 +956,20 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         });
       }
 
+      /* Get data for affiliation*/
+      $scope.initAffiliationList = function () {
+        $.ajax({
+          url: '/api/items/author_affiliation_settings',
+          method: 'GET',
+          async: false,
+          success: function (data, status) {
+            $scope.data_affiliation = data;
+          },
+          error: function (data, status) {
+          }
+        });
+      }
+
       /**
        * Disable Name Identifier when schema is WEKO.
        */
@@ -1015,10 +1033,10 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
 
 
       $scope.addSchemeToSelectForm = function(author_form, author_schema) {
-           for (let searchTitleMap in author_form.items) {
+            for (let searchTitleMap in author_form.items) {
+              var numberTitleMap = searchTitleMap;
+              var author_form_key = author_form.items[searchTitleMap].key
                 if (author_form.items[searchTitleMap].hasOwnProperty('titleMap')) {
-                  var numberTitleMap = searchTitleMap;
-                  var author_form_key = author_form.items[searchTitleMap].key
                   // Only clear and do logic for "Scheme" field
                   $scope.sub_item_scheme.map(function (scheme) {
                       if (author_form_key.indexOf(scheme) != -1) {
@@ -1050,7 +1068,37 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                         })
                       }
                   })
+          } else if (author_form.items[searchTitleMap].hasOwnProperty("items")) { //check affiliation
+            for (let sTM in author_form.items[searchTitleMap].items) {
+              let grandChildOfItems = author_form.items[searchTitleMap].items[sTM]
+              // let childOfAuthorScheme = author_schema.properties[]
+              author_form_key = grandChildOfItems.key
+              if (grandChildOfItems.hasOwnProperty('titleMap') &&
+              $scope.scheme_affiliation_mapping.some(mapping => author_form_key.indexOf(mapping) >= 0)){
+                $scope.sub_item_scheme.map(function (scheme) {
+                  if (author_form_key.indexOf(scheme) != -1) {
+                    for (let index in author_schema.properties){
+                      let childSchema = author_schema.properties[index].items
+                      if (childSchema.properties[scheme]) {
+                        grandChildOfItems.titleMap = [];
+                        childSchema.properties[scheme]['enum'] = [];
+                        childSchema.properties[scheme]['enum'].push(null);
+                        $scope.data_affiliation.forEach(function (value_scheme) {
+                          if (childSchema.properties[scheme]) {
+                            childSchema.properties[scheme]['enum'].push(value_scheme['scheme']);
+                            grandChildOfItems.titleMap.push({
+                              name: value_scheme['name'],
+                              value: value_scheme['scheme']
+                            });
+                          }
+                        });
+                      }
+                    }
+                  }
+                });
               }
+            }
+          }
               // set read only Creator Name Identifier URI
               $scope.sub_item_uri.map(function(item) {
                 let identifier_uri_form = get_subitem(author_form.items, item)
@@ -1449,7 +1497,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               break;
             case 'industrial design':
               resourceuri = "http://purl.org/coar/resource_type/JBNF-DYAD/";
-              break;  
+              break;
             case 'interactive resource':
               resourceuri = "http://purl.org/coar/resource_type/c_e9a0";
               break;
@@ -1535,7 +1583,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               break;
             case 'utility model':
               resourceuri = "http://purl.org/coar/resource_type/9DKX-KSAF/";
-              break; 
+              break;
             // lecture
             case 'lecture':
               resourceuri = "http://purl.org/coar/resource_type/c_8544";
@@ -2541,6 +2589,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         $scope.initCorrespondingIdList();
         $scope.autoTitleData();
         $scope.initAuthorList();
+        $scope.initAffiliationList();
         $scope.getDataAuthors();
         $scope.updateNumFiles();
         $scope.editModeHandle();
@@ -2859,7 +2908,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           async: false,
           success: function (data, status) {
             date = data.year+"-"+("0"+data.month).slice(-2)+"-"+("0"+data.day).slice(-2)
-            
+
           },
           error: function (data, status) {
             date = new Date().toJSON().slice(0, 10)
@@ -3130,7 +3179,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let param = {
           api_type: autoFillID,
           search_data: $.trim(value),
-          item_type_id: itemTypeId
+          item_type_id: itemTypeId,
+          activity_id: $("#activity_id").text()
         }
         this.setRecordDataFromApi(param);
       }
@@ -3175,6 +3225,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
       }
 
+      // here
       $scope.setRecordDataFromApi = function (param) {
         let request = {
           url: '/api/autofill/get_auto_fill_record_data',
@@ -3568,6 +3619,37 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         return invalid_emails;
       }
 
+      $scope.getRequestMailList = function() {
+        const emais_info = $scope.getMailList('#sltBoxListRequestEmail');
+        $scope.request_emails = emais_info['valid_emails'];
+        return emais_info['invalid_emails'];
+      }
+
+      $scope.getMailList = function(list_id) {
+        const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        let mails_info = {
+          'valid_emails': [],
+          'invalid_emails': []
+        }
+        let emails = $(list_id).children('a');
+        if (emails.length === 0) {
+          return mails_info;
+        }
+        emails.each(function (idx) {
+          const email = emails[idx]
+          const result = re.test(String(email.text).toLowerCase());
+          if (result) {
+            mails_info['valid_emails'].push({
+              "author_id": email.attributes[1]['value'],
+              "email": email.text
+            })
+          } else {
+            mails_info['invalid_emails'].push(email.text);
+          }
+        });
+        return mails_info;
+      }
+
       $scope.getItemsDictionary = function (item) {
         let result = {};
         if (item.hasOwnProperty('items')) {
@@ -3639,6 +3721,45 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             $("#allModal").modal("show");
             return false;
           }
+
+          // duplicate check
+          let metainfo = { 'metainfo': $rootScope.recordsVM.invenioRecordsModel };
+          let isModified = !angular.equals(previousData, metainfo);
+          let isDuplicate = false;
+          $.ajax({
+            context: this,
+            headers: {
+            'Content-Type': 'application/json'
+            },
+            async: false,
+            dataType: "json",
+
+            url: "/items/iframe/model/save",
+            method: "POST",
+            data: JSON.stringify(metainfo),
+            success: function (response) {
+                if (response && response.is_duplicate) {
+                    if ((!isDuplicatePopupShown) || isModified) {
+                        this.check_duplicate_items(response);
+                        isDuplicatePopupShown = true;
+                        isDuplicate = true;
+                        previousData = angular.copy(metainfo);
+                    }
+                }
+            },
+            error: function (xhr) {
+                let response = xhr.responseJSON;
+                if (response && response.is_duplicate) {
+                    this.check_duplicate_items(response);
+                    isDuplicat = true;
+                }
+                showErrorMsg("An error occurred while saving the item.");
+            }
+          });
+          if (isDuplicate) {
+            return false;
+          }
+
           // Call API to validate input data base on json schema define
           let validateURL = '/api/items/validate';
           let isValid = false;
@@ -4061,7 +4182,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let listItemErrors = [];
         let eitherRequired = [];
         let noEitherError = $scope.checkEitherRequired();
-        
+
         if (noEitherError && $scope.error_list && $scope.error_list['either']) {
           eitherRequired = [];
           $scope.error_list['either'].forEach(function (group) {
@@ -4108,7 +4229,13 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             $("#react-component-version").addClass("has-error");
           }
         }
-        
+
+        const emais_info = $scope.getMailList('#sltBoxListRequestEmail');
+        if($("#display_request_btn_checkbox").prop('checked') == true && (emais_info['valid_emails'] == "") ){
+          const blank_request_mail =$("#request-email-list-label").val();
+          listItemErrors.push(blank_request_mail);
+        }
+
         if (listItemErrors.length > 0) {
           let message = $("#validate_error").val() + '<br/><br/>';
           message += listItemErrors[0];
@@ -4122,6 +4249,21 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
         return true;
       }
+
+      $scope.check_duplicate_items = function (response) {
+        if (response.duplicate_links && response.duplicate_links.length > 0) {
+            let message = $("#duplicate_warning").val() + '<br/><br/>';
+            response.duplicate_links.forEach(link => {
+                message += `<a href="${link}" target="_blank">${link}</a><br/>`;
+            });
+    
+            $("#inputModal").html(message);
+            $("#allModal").modal("show");
+            return false;
+        }
+        return true;
+      }
+
       $scope.UpdateApplicationDate = function () {
         var applicationDateKey = 'subitem_restricted_access_application_date';
         for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
@@ -4133,13 +4275,13 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           }
         }
       }
-      $scope.updateDataJson = function (activityId, steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail) {
+      $scope.updateDataJson = function (activityId, steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail, enableRequestMail) {
           if (!validateSession()) {
           return;
         }
         $scope.startLoading();
         let currActivityId = $("#activity_id").text();
-        if (!$scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail, true)) {
+        if (!$scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail, enableRequestMail, true)) {
           return;
         }
         $scope.UpdateApplicationDate();
@@ -4149,7 +4291,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           $("#allModal").modal("show");
           $scope.endLoading();
           return false;
-        } else if (enableFeedbackMail === 'True' && $scope.getFeedbackMailList().length > 0) {
+        } else if ((enableFeedbackMail === 'True' && $scope.getFeedbackMailList().length > 0)
+          || (enableRequestMail === 'True' && $scope.getRequestMailList().length > 0)) {
           let modalcontent = $('#invalid-email-format').val();
           $("#inputModal").html(modalcontent);
           $("#allModal").modal("show");
@@ -4361,8 +4504,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         sessionStorage.removeItem(key);
       }
 
-      $scope.saveActivityData = function(item_save_uri, currActivityId, enableContributor,enableFeedbackMail,startLoading,sessionValid) {
-        if (!$scope.saveDataJson(item_save_uri, currActivityId, enableContributor,enableFeedbackMail,startLoading,sessionValid)){
+      $scope.saveActivityData = function(item_save_uri, currActivityId, enableContributor,enableFeedbackMail, enableRequestMail,startLoading,sessionValid) {
+        if (!$scope.saveDataJson(item_save_uri, currActivityId, enableContributor,enableFeedbackMail, enableRequestMail,startLoading,sessionValid)){
           return;
         }
         $scope.genTitleAndPubDate();
@@ -4372,7 +4515,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         return true
       }
 
-      $scope.saveDataJson = function (item_save_uri, currentActionId, enableContributor, enableFeedbackMail, startLoading,sessionValid) {
+      $scope.saveDataJson = function (item_save_uri, currentActionId, enableContributor, enableFeedbackMail, enableRequestMail, startLoading,sessionValid) {
         //When press 'Next' or 'Save' button, setting data for model.
         //This function is called in updataDataJson function.
         if(!sessionValid){
@@ -4405,7 +4548,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               permission = true;
             }
             if (permission) {
-              if ($scope.getFeedbackMailList().length > 0) {
+              if (($scope.getFeedbackMailList().length > 0) || ($scope.getRequestMailList().length > 0)) {
                 let modalcontent = $('#invalid-email-format').val();
                 $("#inputModal").html(modalcontent);
                 $("#allModal").modal("show");
@@ -4413,6 +4556,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               }
               this.saveDataJsonCallback(item_save_uri, startLoading);
               this.saveFeedbackMailListCallback(currentActionId);
+              this.saveRequestMailListCallback(currentActionId);
             }
           } else {
             this.saveDataJsonCallback(item_save_uri, startLoading);
@@ -4507,6 +4651,41 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           },
           error: function(data, status) {
             var modalcontent =  "Cannot save Feedback-Mail list!";
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
+            result = false;
+          }
+        });
+        return result;
+      };
+
+      $scope.saveRequestMailListCallback = function (cur_action_id) {
+        const activityID = $("#activity_id").text();
+        const actionID = cur_action_id;
+        const display_request_btn = $("#display_request_btn_checkbox").prop('checked');
+        const emails = $scope.request_emails;
+
+        let result = true;
+        if ($.isEmptyObject(emails)) {
+          return result;
+        }
+        let request_body = {
+          'is_display_request_button': display_request_btn,
+          'request_maillist': emails
+        }
+        $.ajax({
+          url: '/workflow/save_request_maillist' + '/' + activityID + '/' + actionID,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          method: 'POST',
+          async: false,
+          data: JSON.stringify(request_body),
+          dataType: "json",
+          success: function(data, stauts) {
+          },
+          error: function(data, status) {
+            var modalcontent =  "Cannot save Request-Mail list!";
             $("#inputModal").html(modalcontent);
             $("#allModal").modal("show");
             result = false;

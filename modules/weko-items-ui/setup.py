@@ -110,13 +110,17 @@ setup(
             'weko_items_ui.bundles:feedback_maillist_js',
             'weko_items_ui_feedback_maillist_css = '
             'weko_items_ui.bundles:feedback_maillist_css',
+            'weko_items_ui_request_maillist_js = '
+            'weko_items_ui.bundles:request_maillist_js',
         ],
         'invenio_access.actions': [
             'item_access = weko_items_ui.permissions:action_item_access',
         ],
         'invenio_oauth2server.scopes': [
             'item_read_scope = weko_items_ui.scopes:item_read_scope',
-            'ranking_read_scope = weko_items_ui.scopes:ranking_read_scope',
+            'item_update_scope = weko_items_ui.scopes:item_update_scope',
+            'item_delete_scope = weko_items_ui.scopes:item_delete_scope',
+            'ranking_read_scope = weko_items_ui.scopes:ranking_read_scope'
         ],
     },
     extras_require=extras_require,

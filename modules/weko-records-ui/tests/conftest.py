@@ -33,6 +33,7 @@ from datetime import datetime
 from collections import OrderedDict
 from unittest.mock import patch
 from datetime import timedelta
+from invenio_mail import InvenioMail
 
 import pytest
 from elasticsearch import Elasticsearch
@@ -105,7 +106,7 @@ from weko_items_ui import WekoItemsUI
 from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE,WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
 from weko_records import WekoRecords
 from weko_records.api import ItemsMetadata, FilesMetadata
-from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLicenseInfo, FeedbackMailList,SiteLicenseIpAddress
+from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLicenseInfo, FeedbackMailList,SiteLicenseIpAddress, RequestMailList
 from weko_records.utils import get_options_and_order_list
 from weko_records_ui.config import WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,RECORDS_UI_ENDPOINTS,WEKO_RECORDS_UI_SECRET_KEY,WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN
 from weko_records_ui.models import PDFCoverPageSettings,FileOnetimeDownload, FilePermission, RocrateMapping
@@ -135,6 +136,11 @@ from weko_records_ui.config import (
     RECORDS_UI_EXPORT_FORMATS,
     WEKO_PERMISSION_ROLE_COMMUNITY,
     WEKO_RECORDS_UI_EMAIL_ITEM_KEYS,
+    WEKO_RECORDS_UI_OA_API_RETRY_COUNT,
+    WEKO_RECORDS_UI_OA_API_CODE,
+    EXTERNAL_SYSTEM,
+    ITEM_ACTION,
+    FILE_OPEN_STATUS
 )
 from weko_search_ui import WekoSearchUI
 from weko_search_ui.config import WEKO_SEARCH_MAX_RESULT
@@ -271,7 +277,14 @@ def base_app(instance_path):
             'INVENIO_ROLE_SYSTEM',
             'INVENIO_ROLE_REPOSITORY',
             'INVENIO_ROLE_COMMUNITY'
-        ]
+        ],
+        WEKO_RECORDS_UI_OA_GET_TOKEN_URL = "<OA URL>/oauth/token",
+        WEKO_RECORDS_UI_OA_UPDATE_STATUS_URL = "<OA URL>/api/articles/{}/status",
+        WEKO_RECORDS_UI_OA_API_RETRY_COUNT = WEKO_RECORDS_UI_OA_API_RETRY_COUNT,
+        WEKO_RECORDS_UI_OA_API_CODE = WEKO_RECORDS_UI_OA_API_CODE,
+        EXTERNAL_SYSTEM = EXTERNAL_SYSTEM,
+        ITEM_ACTION = ITEM_ACTION,
+        FILE_OPEN_STATUS = FILE_OPEN_STATUS
     )
     # with ESTestServer(timeout=30) as server:
     Babel(app_)
@@ -297,6 +310,7 @@ def base_app(instance_path):
     InvenioPIDRelations(app_)
     InvenioI18N(app_)
     InvenioTheme(app_)
+    InvenioMail(app_)
     WekoRecords(app_)
     WekoItemsUI(app_)
     WekoRecordsUI(app_)
@@ -2727,10 +2741,10 @@ def records_restricted(app, db, workflows_restricted,records ,users):
     filepath = "tests/data/helloworld.pdf"
     wf1 :WorkFlow = workflows_restricted.get("workflow_workflow1")
     wf2 :WorkFlow = workflows_restricted.get("workflow_workflow2")
-    results.append(make_record_restricted(db, indexer, i, filepath, filename, mimetype 
+    results.append(make_record_restricted(db, indexer, i, filepath, filename, mimetype
                                         ,"none_loggin" ,wf2.id))
     i = i + 1
-    results.append(make_record_restricted(db, indexer, i, filepath, filename, mimetype 
+    results.append(make_record_restricted(db, indexer, i, filepath, filename, mimetype
                                         ,str(users[0]["id"]) #contributer
                                         ,wf1.id))
 
@@ -3923,24 +3937,24 @@ def workflows_restricted(db ,itemtypes,users, records):
         db.session.add_all([workflow_workflow1, workflow_workflow2, workflow_workflow3, workflow_workflow4])
 
     workflows.update({
-		"flow_define1"       : flow_define1      
-		,"flow_define2"       : flow_define2      
-		,"flow_define3"       : flow_define3      
-		,"flow_define4"       : flow_define4      
-		,"flow_action1_1"     : flow_action1_1    
-		,"flow_action1_2"     : flow_action1_2    
-		,"flow_action1_3"     : flow_action1_3    
-		,"flow_action2_1"     : flow_action2_1    
-		,"flow_action2_2"     : flow_action2_2    
-		,"flow_action3_1"     : flow_action3_1    
-		,"flow_action3_2"     : flow_action3_2    
-		,"flow_action3_3"     : flow_action3_3    
-		,"flow_action3_4"     : flow_action3_4    
-		,"flow_action4_1"     : flow_action4_1    
-		,"flow_action4_2"     : flow_action4_2    
-		,"flow_action4_3"     : flow_action4_3    
-		,"flow_action4_4"     : flow_action4_4    
-		,"flow_action4_5"     : flow_action4_5    
+		"flow_define1"       : flow_define1
+		,"flow_define2"       : flow_define2
+		,"flow_define3"       : flow_define3
+		,"flow_define4"       : flow_define4
+		,"flow_action1_1"     : flow_action1_1
+		,"flow_action1_2"     : flow_action1_2
+		,"flow_action1_3"     : flow_action1_3
+		,"flow_action2_1"     : flow_action2_1
+		,"flow_action2_2"     : flow_action2_2
+		,"flow_action3_1"     : flow_action3_1
+		,"flow_action3_2"     : flow_action3_2
+		,"flow_action3_3"     : flow_action3_3
+		,"flow_action3_4"     : flow_action3_4
+		,"flow_action4_1"     : flow_action4_1
+		,"flow_action4_2"     : flow_action4_2
+		,"flow_action4_3"     : flow_action4_3
+		,"flow_action4_4"     : flow_action4_4
+		,"flow_action4_5"     : flow_action4_5
 		,"workflow_workflow1" : workflow_workflow1
 		,"workflow_workflow2" : workflow_workflow2
 		,"workflow_workflow3" : workflow_workflow3
@@ -3972,7 +3986,7 @@ def site_license_info(app, db):
 @pytest.fixture()
 def site_license_ipaddr(app, db,site_license_info):
     record1 = SiteLicenseIpAddress(organization_id=1,organization_no=1,start_ip_address="192.168.0.0",finish_ip_address="192.168.0.255")
-    # record2 = SiteLicenseIpAddress(organization_id=1,start_ip_address="192.168.1.0",finish_ip_address="192.168.2.255")   
+    # record2 = SiteLicenseIpAddress(organization_id=1,start_ip_address="192.168.1.0",finish_ip_address="192.168.2.255")
     with db.session.begin_nested():
         db.session.add(record1)
         # db.session.add(record2)
@@ -3999,7 +4013,7 @@ def db_file_permission(app, db,users,records):
     record0 = FilePermission(
         user_id=1, record_id=recid0.pid_value, file_name=filename0,
         usage_application_activity_id="usage_application_activity_id_dummy1",
-        usage_report_activity_id=None, status=1, 
+        usage_report_activity_id=None, status=1,
     )
     recid1 = results[1]["recid"]
     filename1 = results[1]["filename"]
@@ -4049,7 +4063,7 @@ def db_FileOneTimeDownload(app, db):
         db.session.add(file_one_time_download)
     return file_one_time_download
 
-    
+
 @pytest.fixture()
 def db_admin_settings(db):
     with db.session.begin_nested():
@@ -4132,3 +4146,30 @@ def db_rocrate_mapping(db):
     with db.session.begin_nested():
         db.session.add(rocrate_mapping)
     db.session.commit()
+
+@pytest.fixture()
+def make_request_maillist(db):
+    rec_id_1 = 1000
+    rec_id_2 = 2000
+    item_id_1 = uuid.uuid4()
+    item_id_2 = uuid.uuid4()
+    mail_list_1 = [{"email": "author1@example.com", "author_id": "1"}]
+    mail_list_2 = []
+
+    request_maillist_1 = RequestMailList(id = 1, item_id = item_id_1, mail_list = mail_list_1)
+    request_maillist_2 = RequestMailList(id = 2, item_id = item_id_2, mail_list = mail_list_2)
+
+    recid1_test = PersistentIdentifier.create('recid', str(rec_id_1), object_type='rec', object_uuid=item_id_1, status=PIDStatus.REGISTERED)
+    recid2_test = PersistentIdentifier.create('recid', str(rec_id_2), object_type='rec', object_uuid=item_id_2, status=PIDStatus.REGISTERED)
+
+    with db.session.begin_nested():
+        db.session.add(request_maillist_1)
+        db.session.add(request_maillist_2)
+        db.session.add(recid1_test)
+        db.session.add(recid2_test)
+    db.session.commit()
+
+    return [
+        item_id_1,
+        item_id_2
+        ]
