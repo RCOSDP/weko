@@ -33,6 +33,8 @@ import uuid
 import xml.etree.ElementTree as ET
 import zipfile
 import chardet
+import urllib
+import copy
 from collections import Callable, OrderedDict
 from datetime import datetime, timezone
 from functools import partial, reduce, wraps
@@ -924,6 +926,7 @@ def check_jsonld_import_items(
         handle_save_bagit(list_record, file, data_path, filename)
 
         handle_metadata_amend_by_doi(list_record)
+        handle_flatten_data_encode_filename(list_record, data_path)
 
         handle_set_change_identifier_flag(list_record, is_change_identifier)
         handle_fill_system_item(list_record)
@@ -2187,7 +2190,7 @@ def import_items_to_activity(item, request_info):
     index = metadata.get("path")
     files_info = metadata.pop("files_info", [{}])
     files = [
-        os.path.join(item.get("root_path"), file_info.get("url", {}).get("label"))
+        os.path.join(item.get("root_path"), file_info.get("filename"))
             for file_info
             in files_info[0].get("items", {})
     ]
@@ -4872,3 +4875,42 @@ def handle_metadata_amend_by_doi(list_record):
         if doi is None:
             continue
         item["metadata"] = handle_doi(item, doi)
+
+
+def handle_flatten_data_encode_filename(list_record, data_path):
+    """Flatten data folder and encode filename.
+
+    Args:
+        list_record (list[dict]): List record import.
+        data_path (str): Paths of file content, including data folder.
+    """
+    for item in list_record:
+        metadata = item.get("metadata")
+        files_info = metadata.get("files_info")
+        item["filepath"] = []
+
+        # get filename from metadata
+        for file_info in files_info:
+            key = file_info.get("key")
+            metadata[key] = []
+
+            for file in file_info["items"]:
+                filename = file.get("filename")
+
+                # encode filename
+                encoded_filename = urllib.parse.quote(filename, safe='')
+                file["filename"] = encoded_filename
+
+                # copy file in directory to root under data_path
+                if not os.path.exists(encoded_filename):
+                    shutil.copy(
+                        os.path.join(data_path, filename),
+                        os.path.join(data_path, encoded_filename)
+                    )
+                current_app.logger.info(f"flattened and encoded file: {filename}")
+
+                # for Direct registration
+                item["filepath"].append(encoded_filename)
+
+                # for Workflow registration
+                metadata[key].append(file)  # replace metadata

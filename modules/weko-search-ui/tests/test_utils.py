@@ -109,6 +109,7 @@ from weko_search_ui.utils import (
     handle_set_change_identifier_flag,
     handle_validate_item_import,
     handle_workflow,
+    handle_flatten_data_encode_filename,
     import_items_to_system,
     make_file_by_line,
     make_stats_file,
@@ -3385,6 +3386,42 @@ def test_create_tsv_row(app):
             'Title': 'メタボリックシンドロームモデルマウスの多臓器遺伝子発現量データ',
             'Field': '生物学'
         }
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_flatten_data_encode_filename -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_flatten_data_encode_filename(tmpdir):
+    # Arrange
+    def _create_files_from_files_info(list_record, data_path):
+        for item in list_record:
+            metadata = item.get("metadata")
+            files_info = metadata.get("files_info")
+            for file_info in files_info:
+                for item in file_info["items"]:
+                    filename = item["filename"]
+                    # get file directory
+                    file_dir = os.path.join(data_path, os.path.dirname(filename))
+                    # create directory if not exists
+                    os.makedirs(file_dir, exist_ok=True)
+                    # create file
+                    file_path = os.path.join(data_path, filename)
+                    with open(file_path, "w") as f:
+                        f.write(f"This is a placeholder for {filename}")
+
+    data_path = tmpdir.mkdir("data")
+    with open("tests/data/list_records/list_record_handle_flatten_data_encode_filename.json", "r") as json_file:
+        list_record = json.load(json_file)
+    with open("tests/data/list_records/list_record_handle_flatten_data_encode_filename_expected.json", "r") as json_file:
+        expected_list_record = json.load(json_file)
+
+    # Create files from files_info
+    _create_files_from_files_info(list_record, data_path)
+
+    # Act
+    with patch("weko_search_ui.utils.current_app.logger") as mock_logger:
+        handle_flatten_data_encode_filename(list_record, data_path)
+
+    # Assert
+    assert list_record == expected_list_record
 
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_get_priority -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
