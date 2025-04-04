@@ -1,0 +1,97 @@
+# Translations template for weko-notifications.
+# Copyright (C) 2025 National Institute of Informatics
+# This file is distributed under the same license as the weko-notifications
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: weko-notifications 1.0.0.dev20250000\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2025-03-31 22:34+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.5.1\n"
+
+#: weko_notifications/forms.py:35
+msgid "Email notifications require a confirmed email address."
+msgstr ""
+
+#: weko_notifications/forms.py:44
+msgid "Notifications settings updated."
+msgstr ""
+
+#: weko_notifications/forms.py:47
+msgid "There was an error updating your notifications settings."
+msgstr ""
+
+#. NOTE: Form field label
+#: weko_notifications/forms.py:57
+msgid "Web push"
+msgstr ""
+
+#. NOTE: Form field help text
+#: weko_notifications/forms.py:59
+msgid "Receive notifications via web push."
+msgstr ""
+
+#: weko_notifications/forms.py:63
+msgid "Web push endpoint"
+msgstr ""
+
+#: weko_notifications/forms.py:66
+msgid "Web push expiration time"
+msgstr ""
+
+#: weko_notifications/forms.py:69
+msgid "Web push p256dh"
+msgstr ""
+
+#: weko_notifications/forms.py:72
+msgid "Web push auth"
+msgstr ""
+
+#: weko_notifications/forms.py:75
+msgid "Email"
+msgstr ""
+
+#: weko_notifications/forms.py:76
+msgid "Receive notifications via email."
+msgstr ""
+
+#: weko_notifications/views.py:48
+#, python-format
+msgid "%(icon)s Notifications"
+msgstr ""
+
+#: weko_notifications/templates/weko_notifications/settings/notifications.html:25
+#: weko_notifications/views.py:52
+msgid "Notifications"
+msgstr ""
+
+#: weko_notifications/views.py:98
+msgid "Failed to update push subscription."
+msgstr ""
+
+#: weko_notifications/templates/weko_notifications/index.html:12
+#, python-format
+msgid "Welcome to %(module_name)s"
+msgstr ""
+
+#: weko_notifications/templates/weko_notifications/settings/notifications.html:30
+msgid "Receive notifications."
+msgstr ""
+
+#: weko_notifications/templates/weko_notifications/settings/notifications.html:43
+msgid "Cancel"
+msgstr ""
+
+#: weko_notifications/templates/weko_notifications/settings/notifications.html:47
+msgid "Update"
+msgstr ""
+

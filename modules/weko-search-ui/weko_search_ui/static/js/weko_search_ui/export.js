@@ -171,7 +171,7 @@ class ExportComponent extends React.Component {
       url: urlCancelExport,
       success: function (response) {
         if (response.data) {
-          if (!response.data.cancel_status){
+          if (!response.data.cancel_status) {
             me.setState({
               isDisableExport: true,
               isDisableCancel: false
@@ -267,11 +267,11 @@ class ExportComponent extends React.Component {
               '&times;</button>' + lifetime_not_one_day + '</div>');
           }
           if (response.data.error_message) {
-            if(response.data.error_message.length>0){
-            $('#errors').append(
-              '<div class="alert alert-danger alert-dismissable">' +
-              '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
-              '&times;</button>' + response.data.error_message + '</div>');
+            if (response.data.error_message.length > 0) {
+              $('#errors').append(
+                '<div class="alert alert-danger alert-dismissable">' +
+                '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
+                '&times;</button>' + response.data.error_message + '</div>');
             }
           }
         }
@@ -325,7 +325,7 @@ class ExportComponent extends React.Component {
                 <label>{last_item_id_label}: {last_item_id}</label>
               </div>
             </div>
-            <br/>
+            <br />
             <div className="row">
               <div className="col-xs-12">
                 <label>{add_filter_label}</label>
@@ -337,7 +337,7 @@ class ExportComponent extends React.Component {
                   <label>{item_type_label}: </label>
                   <select disabled={isDisableExport} class="form-control" onChange={this.SelectItemTypeChange}>{select_options}</select>&nbsp;
                   <label>{item_id_label}: </label>
-                  <input disabled={isDisableExport} class="form-control" type="text" id="item_id_range" pattern="[0-9]*-[0-9]*" onChange={this.InputItemIdChange} value={item_id_range} placeholder="e.g.: 50 or 1-100 or 1- or -100"/>
+                  <input disabled={isDisableExport} class="form-control" type="text" id="item_id_range" pattern="[0-9]*-[0-9]*" onChange={this.InputItemIdChange} value={item_id_range} placeholder="e.g.: 50 or 1-100 or 1- or -100" />
                 </div>
               </div>
             </div>

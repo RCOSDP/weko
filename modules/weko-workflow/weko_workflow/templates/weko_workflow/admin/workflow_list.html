@@ -38,6 +38,7 @@
           <tr>
             <th>{{_('No.')}}</th>
             <th>{{_('WorkFlow')}}</th>
+            <th>{{_('For Delete')}}</th>
             <th>{{_('Item Type')}}</th>
             <th>{{_('Flow')}}</th>
             <th>{{_('Restricted Access Flag')}}</th>
@@ -57,6 +58,15 @@
             <tr>
               <th scope="row">{{loop.index}}</th>
               <td><a href="{{url_for('workflowsetting.workflow_detail', workflow_id=workflow.flows_id)}}">{{workflow.flows_name}}</a></td>
+              <td>
+                {% if workflow.delete_flow_define %}
+                <a href="{{ url_for('flowsetting.flow_detail', flow_id=workflow.delete_flow_define.flow_id) }}">
+                    {{ workflow.delete_flow_define.flow_name }}
+                  </a>
+                {% else %}
+                  None
+                {% endif %}
+              </td>
               <td>{{_(workflow.itemtype.item_type_name.name)}}</td>
               <td>{{_(workflow.flow_define.flow_name)}}</td>
               <td>

@@ -80,6 +80,7 @@ from .utils import create_secret_url, get_billing_file_download_permission, \
     delete_version, is_show_email_of_creator,hide_by_itemtype
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
+from .api import get_s3_bucket_list, copy_bucket_to_s3, replace_file_bucket
 
 
 blueprint = Blueprint(
@@ -1010,8 +1011,10 @@ def soft_delete(recid):
         if recid.startswith('del_ver_'):
             recid = recid.replace('del_ver_', '')
             delete_version(recid)
+            current_app.logger.info(f"Delete version: {recid}")
         else:
             soft_delete_imp(recid)
+            current_app.logger.info(f"Delete item: {recid}")
             starts_with_del_ver = False
         db.session.commit()
         if not starts_with_del_ver:
@@ -1179,3 +1182,36 @@ def dbsession_clean(exception):
         except:
             db.session.rollback()
     db.session.remove()
+
+
+@blueprint.route("/records/get_bucket_list", methods=['GET'])
+def get_bucket_list():
+    bucket_list = get_s3_bucket_list()
+    return jsonify(bucket_list)
+
+@blueprint.route("/records/copy_bucket", methods=['POST'])
+def copy_bucket():
+    data = request.get_json()
+    pid = data.get('pid')
+    filename = data.get('filename')
+    bucket_id = data.get('bucket_id')
+    checked = data.get('checked')
+    bucket_name = data.get('bucket_name')
+    try:
+        uri = copy_bucket_to_s3(pid, filename, bucket_id, checked=checked, bucket_name=bucket_name)
+        return jsonify(uri)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+
+@blueprint.route("/records/replace_file", methods=['POST'])
+def replace_file():
+    pid = request.form.get('pid')
+    bucket_id = request.form.get('bucket_id')
+    file = request.files['file']
+
+    try:
+        uri = replace_file_bucket(pid, bucket_id, file)
+        return jsonify(uri)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400

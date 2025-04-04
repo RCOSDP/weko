@@ -1,16 +1,16 @@
 (function (angular) {
   // Bootstrap it!
-  angular.element(document).ready(function() {
-  angular.module('wekoRecords.controllers', []);
+  angular.element(document).ready(function () {
+    angular.module('wekoRecords.controllers', []);
 
-  function WekoRecordsCtrl($scope, $rootScope, $modal, InvenioRecordsAPI){
-    $rootScope.$on('invenio.records.loading.stop', function (ev) {
-      setTimeout(function () {
-        let model = $rootScope.recordsVM.invenioRecordsModel;
-        CustomBSDatePicker.setDataFromFieldToModel(model, true);
-      }, 1000);
-    });
-    $scope.saveData = function(){
+    function WekoRecordsCtrl($scope, $rootScope, $modal, InvenioRecordsAPI) {
+      $rootScope.$on('invenio.records.loading.stop', function (ev) {
+        setTimeout(function () {
+          let model = $rootScope.recordsVM.invenioRecordsModel;
+          CustomBSDatePicker.setDataFromFieldToModel(model, true);
+        }, 1000);
+      });
+      $scope.saveData = function () {
 
         const form1Data = new FormData(document.getElementsByClassName('admin-form form-horizontal')[0]);
 
@@ -19,12 +19,12 @@
         form2Data.append('catalog_data', JSON.stringify(metainfo));
 
         for (const [key, value] of form2Data) {
-            form1Data.append(key, value);
+          form1Data.append(key, value);
         }
 
         fetch('', {
-            method: 'POST',
-            body: form1Data,
+          method: 'POST',
+          body: form1Data,
         }).then(response => {
           if (response.ok) {
             const url = new URL(response.url);
@@ -42,52 +42,52 @@
           }
         }).catch(error => {
           alert("An error has occurred. : " + error.message); // エラーメッセージを表示
-      });
+        });
+      }
     }
-  }
 
-  // Inject depedencies
-  WekoRecordsCtrl.$inject = [
-    '$scope',
-    '$rootScope',
-    '$modal',
-    'InvenioRecordsAPI',
-  ];
-  angular.module('wekoRecords.controllers')
-    .controller('WekoRecordsCtrl', WekoRecordsCtrl);
+    // Inject depedencies
+    WekoRecordsCtrl.$inject = [
+      '$scope',
+      '$rootScope',
+      '$modal',
+      'InvenioRecordsAPI',
+    ];
+    angular.module('wekoRecords.controllers')
+      .controller('WekoRecordsCtrl', WekoRecordsCtrl);
 
-  var ModalInstanceCtrl = function($scope, $modalInstance, items) {
-    $scope.items = items;
-    $scope.searchKey = '';
-    $scope.selected = {
-      item : $scope.items[0]
+    var ModalInstanceCtrl = function ($scope, $modalInstance, items) {
+      $scope.items = items;
+      $scope.searchKey = '';
+      $scope.selected = {
+        item: $scope.items[0]
+      };
+      $scope.ok = function () {
+        $modalInstance.close($scope.selected);
+      };
+      $scope.cancel = function () {
+        $modalInstance.dismiss('cancel');
+      };
+      $scope.search = function () {
+        $scope.items.push($scope.searchKey);
+      }
     };
-    $scope.ok = function() {
-      $modalInstance.close($scope.selected);
-    };
-    $scope.cancel = function() {
-      $modalInstance.dismiss('cancel');
-    };
-    $scope.search = function() {
-      $scope.items.push($scope.searchKey);
-    }
-  };
 
-  angular.module('wekoRecords', [
-    'invenioRecords',
-    'wekoRecords.controllers',
-  ]);
+    angular.module('wekoRecords', [
+      'invenioRecords',
+      'wekoRecords.controllers',
+    ]);
 
-  angular.bootstrap(
-    document.getElementById('weko-records'), [
+    angular.bootstrap(
+      document.getElementById('weko-records'), [
       'wekoRecords', 'invenioRecords', 'schemaForm', 'mgcrea.ngStrap',
       'mgcrea.ngStrap.modal', 'pascalprecht.translate', 'ui.sortable',
       'ui.select', 'mgcrea.ngStrap.select', 'mgcrea.ngStrap.datepicker',
       'mgcrea.ngStrap.helpers.dateParser', 'mgcrea.ngStrap.tooltip',
       'invenioFiles'
     ]
-  );
-});
+    );
+  });
 })(angular);
 
 
@@ -240,7 +240,7 @@ var CustomBSDatePicker = {
   * @param  {[object]}  element is date input control.
   */
   initAttributeForModel: function (model, element) {
-    if($(element).val().length == 0) return;
+    if ($(element).val().length == 0) return;
     let ng_model = $(element).attr('ng-model').replace(/']/g, '');
     let arr = ng_model.split("['");
     //Init attribute of model object if them undefine.
@@ -306,16 +306,16 @@ var CustomBSDatePicker = {
    * If input empty, this attribute delete.
    * Fix bug: not enter data for date field.
   */
-  removeLastAttr: function(model){
+  removeLastAttr: function (model) {
     let cls = CustomBSDatePicker.option.cls;
     let element_arr = $('.' + cls);
     $.each(element_arr, function (ind, val) {
-      if($(val).val().length > 0){
+      if ($(val).val().length > 0) {
         CustomBSDatePicker.initAttributeForModel(model, val);
         let ng_model = $(val).attr('ng-model');
         let last_index = ng_model.lastIndexOf('[');
         let previous_attr = ng_model.substring(0, last_index);
-        let str_code = "if("+ng_model+"==''){"+previous_attr+"={}}";
+        let str_code = "if(" + ng_model + "==''){" + previous_attr + "={}}";
         eval(str_code);
       }
     });

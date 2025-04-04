@@ -1,15 +1,15 @@
 # Translations template for weko-search-ui.
-# Copyright (C) 2021 National Institute of Informatics
+# Copyright (C) 2025 National Institute of Informatics
 # This file is distributed under the same license as the weko-search-ui
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: weko-search-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2021-03-25 14:36+0900\n"
+"POT-Creation-Date: 2025-03-25 16:10+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -45,7 +45,11 @@ msgstr ""
 msgid "Import"
 msgstr ""
 
-#: weko_search_ui/admin.py:635
+#: weko_search_ui/admin.py:1278
+msgid "RO-Crate Import"
+msgstr ""
+
+#: weko_search_ui/admin.py:1287
 msgid "Bulk Export"
 msgstr ""
 

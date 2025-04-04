@@ -30,10 +30,10 @@ function printCatalogInfo(data) {
         if ("contributor_names" in contributor) {
           contributor.contributor_names.forEach(name => {
             if ("contributor_name" in name) {
-              string_contributors +=  ", " + name.contributor_name;
+              string_contributors += ", " + name.contributor_name;
             }
             if ("contributor_name_language" in name) {
-              string_contributors +=  ", " + name.contributor_name_language;
+              string_contributors += ", " + name.contributor_name_language;
             }
           });
         }

@@ -98,6 +98,7 @@ setup(
         'invenio_admin.views': [
             'weko_workflow = weko_workflow.admin:workflow_adminview',
             'weko_flow = weko_workflow.admin:flow_adminview',
+            'weko_activity_settings = weko_workflow.admin:activity_settings_adminview',
         ],
         'invenio_assets.bundles': [
             'workflow_js = weko_workflow.bundles:js_workflow',

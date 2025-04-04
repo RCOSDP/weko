@@ -27,22 +27,25 @@ from datetime import date, datetime, timezone
 from functools import partial
 from socketserver import DatagramRequestHandler
 
+from b2handle.clientcredentials import PIDClientCredentials
 from redis.exceptions import RedisError
 from flask import current_app, json, request
 from flask_babelex import gettext as _
 from flask_login import current_user
-from invenio_accounts.models import Role
-from invenio_db import db
-from invenio_i18n.ext import current_i18n
-from invenio_indexer.api import RecordIndexer
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import case, func, literal_column, and_
+
+from invenio_accounts.models import Role
+from invenio_db import db
+from invenio_i18n.ext import current_i18n
+from invenio_indexer.api import RecordIndexer
+
 from weko_groups.api import Group
 from weko_redis.redis import RedisConnection
+from weko_logging.activity_logger import UserActivityLogger
 from weko_handle.api import Handle
-from b2handle.clientcredentials import PIDClientCredentials
 
 from .models import Index
 from .utils import cached_index_tree_json, check_doi_in_index, \
@@ -62,7 +65,7 @@ class Indexes(object):
         :param indexes: the index information.
         :returns: The :class:`Index` instance lists or None.
         """
-        
+
         # delay import
         from weko_workflow.config import WEKO_SERVER_CNRI_HOST_LINK
 
@@ -162,7 +165,14 @@ class Indexes(object):
                 else:
                     return
             _add_index(data)
+            UserActivityLogger.info(
+                operation="INDEX_CREATE",
+                target_key=data["id"]
+            )
         except IntegrityError as ie:
+            UserActivityLogger.error(
+                operation="INDEX_CREATE",
+            )
             if 'uix_position' in ''.join(ie.args):
                 try:
                     pid_info = cls.get_index(pid, with_count=True)
@@ -207,7 +217,7 @@ class Indexes(object):
                             continue
                     if isinstance(v, dict):
                         v = ",".join(map(lambda x: str(x["id"]), v["allow"]))
-                    if "public_date" in k:
+                    if isinstance(v, str) and "public_date" in k:
                         if len(v) > 0:
                             v = datetime.strptime(v, '%Y%m%d')
                         else:
@@ -276,9 +286,17 @@ class Indexes(object):
                 db.session.merge(index)
             db.session.commit()
             cls.update_set_info(index)
+            UserActivityLogger.info(
+                operation="INDEX_UPDATE",
+                target_key=index_id
+            )
             return index
         except Exception as ex:
             current_app.logger.debug(ex)
+            UserActivityLogger.error(
+                operation="INDEX_UPDATE",
+                target_key=index_id
+            )
             db.session.rollback()
         return
 
@@ -311,6 +329,10 @@ class Indexes(object):
                 slf.is_deleted = True
                 p_lst = [o.id for o in obj_list]
                 cls.delete_set_info('move', index_id, p_lst)
+                UserActivityLogger.info(
+                    operation="INDEX_DELETE",
+                    target_key=index_id
+                )
                 return p_lst
         else:
             with db.session.no_autoflush:
@@ -354,6 +376,10 @@ class Indexes(object):
                                 synchronize_session='fetch'
                             )
                 cls.delete_set_info('delete', index_id, p_lst)
+                UserActivityLogger.info(
+                    operation="INDEX_DELETE",
+                    target_key=index_id
+                )
                 return p_lst
 
         return 0

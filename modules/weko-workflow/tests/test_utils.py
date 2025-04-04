@@ -1,19 +1,21 @@
 from unittest import mock
+from unittest.mock import mock_open
 from urllib.parse import parse_qs
 import pytest
 import uuid
+import json
 from os.path import dirname, join
-from mock import patch
-import copy
+from mock import patch, MagicMock
+
 import datetime
 import base64
 import flask
+import pytz
 from werkzeug.datastructures import MultiDict
 from flask import current_app,session
 from flask_babelex import gettext as _
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
-from mock import MagicMock
 from weko_deposit.pidstore import get_record_without_version
 from weko_deposit.api import WekoRecord, WekoDeposit
 from invenio_records_files.models import RecordsBuckets
@@ -135,7 +137,12 @@ from weko_workflow.utils import (
     is_terms_of_use_only,
     grant_access_rights_to_all_open_restricted_files,
     delete_lock_activity_cache,
-    delete_user_lock_activity_cache
+    delete_user_lock_activity_cache,
+    convert_to_timezone,
+    load_template,
+    fill_template,
+    get_non_extract_files_by_recid,
+    check_activity_settings
 )
 from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
 from weko_workflow.models import Activity
@@ -3359,3 +3366,163 @@ def test_delete_user_lock_activity_cache(client,users):
     assert current_cache.get(cache_key) == None
 
     current_cache.delete(cache_key)
+
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_convert_to_timezone -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_convert_to_timezone():
+    # UTC datetime
+    dt_utc = datetime.datetime(2025, 3, 28, 12, 0, 0, tzinfo=pytz.utc)
+    assert convert_to_timezone(dt_utc).strftime("%Y-%m-%d %H:%M:%S %Z") == "2025-03-28 12:00:00 UTC"
+
+    # UTC -> Asia/Tokyo
+    assert convert_to_timezone(dt_utc, "Asia/Tokyo").strftime("%Y-%m-%d %H:%M:%S %Z") == "2025-03-28 21:00:00 JST"
+
+    # naive datetime を Asia/Tokyo に変換
+    dt_naive = datetime.datetime(2025, 3, 28, 12, 0, 0)
+    converted_dt = convert_to_timezone(dt_naive, "Asia/Tokyo")
+    assert converted_dt.strftime("%Y-%m-%d %H:%M:%S %Z") == "2025-03-28 21:00:00 JST"
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_load_template -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_load_template(mocker):
+    mocker.patch("os.path.exists", side_effect=lambda path: "test_template_en.txt" in path)
+    mocker.patch("builtins.open", mocker.mock_open(read_data="Test Subject\nThis is a test email."))
+    expected_result = {"subject": "Test Subject", "body": "This is a test email."}
+    result = load_template("test_template_{language}.txt", "en")
+    assert result == expected_result
+
+    mocker.patch("os.path.exists", side_effect=lambda path: "test_template_ja.txt" in path)
+    mocker.patch("builtins.open", mocker.mock_open(read_data="テスト件名\nこれはテストメールです。"))
+    expected_result = {"subject": "テスト件名", "body": "これはテストメールです。"}
+    result = load_template("test_template_{language}.txt", "ja")
+    assert result == expected_result
+
+    mocker.patch("os.path.exists", side_effect=lambda path: "test_template_en.txt" in path)
+    mocker.patch("builtins.open", mocker.mock_open(read_data="Default Subject\nDefault body."))
+    expected_result = {"subject": "Default Subject", "body": "Default body."}
+    result = load_template("test_template_{language}.txt", "fr")
+    assert result == expected_result
+
+    mocker.patch("os.path.exists", side_effect=lambda path: "test_template_en.txt" in path)
+    mocker.patch("builtins.open", mocker.mock_open(read_data="Default Subject\nDefault body."))
+    expected_result = {"subject": "Default Subject", "body": "Default body."}
+    result = load_template("test_template_{language}.txt")
+    assert result == expected_result
+
+    mocker.patch("os.path.exists", return_value=False)
+    mocker.patch("builtins.open", side_effect=FileNotFoundError)
+    with pytest.raises(FileNotFoundError):
+        load_template("test_template_{language}.txt", "fr")
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_fill_template -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_fill_template():
+    # Embed name into the template
+    template = {"subject": "Hello, {{ name }}!", "body": "Dear {{ name }}, welcome!"}
+    data = {"name": "Alice"}
+    expected_result = {"subject": "Hello, Alice!", "body": "Dear Alice, welcome!"}
+    result = fill_template(template, data)
+    assert result == expected_result
+
+    # Replace multiple placeholders
+    template = {"subject": "{{ user }}'s Order", "body": "Hi {{ user }}, your order #{{ order }} is ready."}
+    data = {"user": "Bob", "order": "12345"}
+    expected_result = {"subject": "Bob's Order", "body": "Hi Bob, your order #12345 is ready."}
+    result = fill_template(template, data)
+    assert result == expected_result
+
+    # Missing data for some placeholders
+    template = {"subject": "Hello, {{ name }}!", "body": "Dear {{ name }}, your age is {{ age }}."}
+    data = {"name": "Charlie"}
+    expected_result = {"subject": "Hello, Charlie!", "body": "Dear Charlie, your age is {{ age }}."}
+    result = fill_template(template, data)
+    assert result == expected_result
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_non_extract_files_by_recid -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_get_non_extract_files_by_recid(db_register, mocker):
+    # Mock PersistentIdentifier.get
+    mock_pid = mocker.patch("weko_workflow.utils.PersistentIdentifier.get")
+    mock_pid.return_value = mocker.Mock(object_uuid="test_uuid")
+
+    # Mock WorkActivity.get_workflow_activity_by_item_id
+    mock_activity = mocker.patch("weko_workflow.utils.WorkActivity.get_workflow_activity_by_item_id")
+
+    # Activity is None
+    mock_activity.return_value = None
+    result = get_non_extract_files_by_recid("12345")
+    assert result is None
+
+    # Activity has temp_data as a valid JSON string with non-extract files
+    mock_activity.return_value = mocker.Mock(temp_data=json.dumps({
+        "files": [
+            {"filename": "file1.txt", "non_extract": True},
+            {"filename": "file2.txt", "non_extract": False},
+            {"filename": "file3.txt", "non_extract": True},
+        ]
+    }))
+    result = get_non_extract_files_by_recid("12345")
+    assert result == ["file1.txt", "file3.txt"]
+
+    # Activity has temp_data as a valid JSON string with no non-extract files
+    mock_activity.return_value = mocker.Mock(temp_data=json.dumps({
+        "files": [
+            {"filename": "file1.txt", "non_extract": False},
+            {"filename": "file2.txt", "non_extract": False},
+        ]
+    }))
+    result = get_non_extract_files_by_recid("12345")
+    assert result == []
+
+    # Activity has temp_data as an invalid JSON string
+    mock_activity.return_value = mocker.Mock(temp_data="invalid_json")
+    with pytest.raises(json.JSONDecodeError):
+        get_non_extract_files_by_recid("12345")
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_check_activity_settings -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_check_activity_settings(app):
+    # case: dict type settings
+    mock_settings = {'activity_display_flg': True}
+
+    true_dict_settings = {'activity_display_flg': True}
+    false_dict_settings = {'activity_display_flg': False}
+    other_dict_settings = {'other_flg': True}
+
+    from types import SimpleNamespace
+    true_obj_settings = SimpleNamespace(activity_display_flg=True)
+    false_obj_settings = SimpleNamespace(activity_display_flg=False)
+    other_obj_settings = SimpleNamespace(other_flg=True)
+
+    with patch('weko_workflow.utils.AdminSettings.get', return_value=mock_settings):
+        # mock current_app.config
+        with app.app_context():
+            # reset current_app.config before test
+            current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] = None
+
+
+
+            # check settings
+            # case: settings is None
+            check_activity_settings()
+            assert current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] == True
+
+            # case: dict type settings(True)
+            check_activity_settings(true_dict_settings)
+            assert current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] == True
+
+            # case: dict type settings(False)
+            check_activity_settings(false_dict_settings)
+            assert current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] == False
+
+            # case: dict type settings(Other), no changes from (case: dict type settings(False))
+            check_activity_settings(other_dict_settings)
+            assert current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] == False
+
+            # case: object type settings(True)
+            check_activity_settings(true_obj_settings)
+            assert current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] == True
+
+            # case: object type settings(False)
+            check_activity_settings(false_obj_settings)
+            assert current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] == False
+
+            # case: object type settings(Other), no changes from (case: object type settings(False))
+            check_activity_settings(other_obj_settings)
+            assert current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] == False

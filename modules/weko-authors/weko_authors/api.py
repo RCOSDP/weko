@@ -31,6 +31,7 @@ from sqlalchemy.sql.functions import func
 from sqlalchemy.exc import SQLAlchemyError
 from time import sleep
 
+from weko_logging.activity_logger import UserActivityLogger
 
 from .models import Authors, AuthorsPrefixSettings, AuthorsAffiliationSettings
 
@@ -56,9 +57,18 @@ class WekoAuthors(object):
                 data['id'] = es_id
                 author = Authors(id=new_id, json=data)
                 session.add(author)
+
+            UserActivityLogger.info(
+                operation="AUTHOR_CREATE",
+                target_key=new_id
+            )
         except Exception as ex:
             session.rollback()
-            raise ex
+            UserActivityLogger.error(
+            operation="AUTHOR_CREATE",
+            target_key=None
+            )
+            raise
         else:
             RecordIndexer().client.index(
                 index=config_index,
@@ -88,7 +98,7 @@ class WekoAuthors(object):
             if es_author['hits']['total'] > 0:
                 if es_author['hits']['hits'][0].get('_id') == es_id:
                     exist_flg = True
-                    
+
             if exist_flg:
                 RecordIndexer().client.update(
                     index=config_index,
@@ -105,7 +115,7 @@ class WekoAuthors(object):
                     body=data
                 )
                 return True
-            
+
         es_id = None
         config_index = current_app.config['WEKO_AUTHORS_ES_INDEX_NAME']
         config_doc_type = current_app.config['WEKO_AUTHORS_ES_DOC_TYPE']
@@ -122,9 +132,18 @@ class WekoAuthors(object):
                 data['id'] = es_id
                 author.json = data
                 db.session.merge(author)
+
+            UserActivityLogger.info(
+                operation="AUTHOR_UPDATE",
+                target_key=author_id
+            )
         except Exception as ex:
             db.session.rollback()
-            raise ex
+            UserActivityLogger.error(
+                operation="AUTHOR_UPDATE",
+                target_key=author_id
+            )
+            raise
         else:
             update_es_data(es_data, es_id)
         from weko_deposit.tasks import update_items_by_authorInfo
@@ -132,7 +151,7 @@ class WekoAuthors(object):
             user_id = None
         else:
             user_id = current_user.get_id()
-        
+
         update_items_by_authorInfo.delay(
             user_id, data, [author_id], [data["id"]], force_change=force_change)
 
@@ -168,7 +187,7 @@ class WekoAuthors(object):
         except Exception as ex:
             current_app.logger.error(ex)
             raise ex
-        
+
     @classmethod
     def get_records_count(cls, with_deleted=True, with_gather=True):
         """Get authors's count."""
@@ -185,7 +204,7 @@ class WekoAuthors(object):
         except Exception as ex:
             current_app.logger.error(ex)
             raise ex
-    
+
 
     @classmethod
     def get_author_for_validation(cls):
@@ -235,7 +254,7 @@ class WekoAuthors(object):
             index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
             body=query
         )
-    
+
         for res in result['hits']['hits']:
             author_id_info_from_es = res['_source']['authorIdInfo']
             for info in author_id_info_from_es:
@@ -254,7 +273,7 @@ class WekoAuthors(object):
             pk_id (str): pk_id
 
         Returns:
-            weko_id :str 
+            weko_id :str
         """
         try:
             with db.session.begin_nested():
@@ -287,7 +306,7 @@ class WekoAuthors(object):
                     and idtype_and_scheme.get(int(idType)) not in used_external_id_prefix:
                     used_external_id_prefix.append(idtype_and_scheme.get(int(idType)))
         return used_external_id_prefix, idtype_and_scheme
-    
+
     @classmethod
     def get_used_scheme_of_affiliation_id(cls):
         """get used scheme of affiliation id."""
@@ -306,9 +325,9 @@ class WekoAuthors(object):
                         and idtype_and_scheme.get(int(idType)) not in used_external_id:
                         used_external_id.append(idtype_and_scheme.get(int(idType)))
         return used_external_id, idtype_and_scheme
-    
 
-    
+
+
     @classmethod
     def get_id_prefix_all(cls):
         """Get all id_prefix."""
@@ -317,7 +336,7 @@ class WekoAuthors(object):
             query = query.order_by(AuthorsPrefixSettings.id)
 
             return query.all()
-        
+
     @classmethod
     def get_scheme_of_id_prefix(cls):
         """Get all _id_prefix scheme."""
@@ -327,7 +346,7 @@ class WekoAuthors(object):
             for id_prefix in id_prefixes:
                 result.append(id_prefix.scheme)
         return result
-    
+
     @classmethod
     def get_identifier_scheme_info(cls):
         """Get all Author Identifier Scheme informations."""
@@ -340,7 +359,7 @@ class WekoAuthors(object):
                     result[str(scheme.id)] = dict(
                         scheme=scheme.scheme, url=scheme.url)
         return result
-    
+
     @classmethod
     def get_affiliation_id_all(cls):
         """Get all affiliation_id."""
@@ -349,7 +368,7 @@ class WekoAuthors(object):
             query = query.order_by(AuthorsAffiliationSettings.id)
 
             return query.all()
-        
+
     @classmethod
     def get_scheme_of_affiliaiton_id(cls):
         """Get all affiliation_id scheme."""
@@ -375,7 +394,7 @@ class WekoAuthors(object):
     @classmethod
     def mapping_max_item(cls, mappings, affiliation_mappings, records_count, retrys=0):
         """Mapping max item of multiple case."""
-        try: 
+        try:
             size = current_app.config["WEKO_AUTHORS_EXPORT_BATCH_SIZE"]
             if not mappings:
                 mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING"])
@@ -385,7 +404,7 @@ class WekoAuthors(object):
                 records_count = cls.get_records_count(False, False)
             # 削除されておらず、統合されていない著者の合計を取得
             affiliation_mappings["max"] = []
-            
+
             # AUTHOR_EXPORT_BATCH_SIZE分の数だけauthorを取得して、maxを計算する
             for i in range(0, records_count, size):
                 authors = cls.get_by_range(i, size, False, False)
@@ -403,7 +422,7 @@ class WekoAuthors(object):
                                 )
                             if mapping['max'] == 0:
                                 mapping['max'] = 1
-                
+
                 # 所属情報のマッピングの処理
                 mapping_max = affiliation_mappings["max"]
                 # 著者DBの所属情報の最大値をそれぞれとる
@@ -429,12 +448,12 @@ class WekoAuthors(object):
                             child_length = len(affiliation.get(child["json_id"], []))
                             if child_length > mapping_max[index][child["json_id"]]:
                                 mapping_max[index][child["json_id"]] = child_length
-            
+
             # 最後にWEKOIDの分を最大値から引く
             for mapping in mappings:
                 if mapping['json_id'] == 'authorIdInfo':
                     if mapping['max'] > 1:
-                        mapping['max'] -= 1           
+                        mapping['max'] -= 1
 
         except SQLAlchemyError as ex:
             current_app.logger.error(ex)
@@ -464,7 +483,7 @@ class WekoAuthors(object):
         row_label_en = []
         row_label_jp = []
         row_data = []
-       
+
         if not mappings or not affiliation_mappings:
             mappings, affiliation_mappings = WekoAuthors.mapping_max_item(\
                 deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING"]),
@@ -492,7 +511,7 @@ class WekoAuthors(object):
                 row_header.append(mapping['json_id'])
                 row_label_en.append(mapping['label_en'])
                 row_label_jp.append(mapping['label_jp'])
-                
+
         # 所属情報のマッピングの処理
         aff_mapping_max = affiliation_mappings["max"]
         # tsv用に修正
@@ -508,7 +527,7 @@ class WekoAuthors(object):
                             '{}[{}][{}]'.format(c['label_en'], index, i))
                         row_label_jp.append(
                             '{}[{}][{}]'.format(c['label_jp'], index, i))
-                        
+
         row_header[0] = '#' + row_header[0]
         row_label_en[0] = '#' + row_label_en[0]
         row_label_jp[0] = '#' + row_label_jp[0]
@@ -558,7 +577,7 @@ class WekoAuthors(object):
                         )
                     elif mapping["json_id"] == "weko_id":
                         id_info = json_data["authorIdInfo"][0]
-                        if id_info["idType"] == "1": 
+                        if id_info["idType"] == "1":
                             row.append(id_info["authorId"])
                         else:
                             row.append(None)

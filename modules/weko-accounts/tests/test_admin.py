@@ -9,7 +9,7 @@ from sqlalchemy.orm.session import object_session
 
 
 class TestShibSettingView:
-    
+
     def test_index_acl_guest(self,client,session_time):
         url = url_for("shibboleth.index",_external=True)
         res = client.get(url)
@@ -108,8 +108,8 @@ class TestShibSettingView:
             roles = {
                 "gakunin_role": "Repository Administrator",
                 "orthros_outside_role": "None",
-                "extra_role": "Contributor"}  
-            
+                "extra_role": "Contributor"}
+
             for i, (_, value) in enumerate(roles.items()):
                 data[f"role-lists{i}"] = value
 
@@ -137,8 +137,8 @@ class TestShibSettingView:
                 "shib_eppn": "eduPersonAffiliation",
                 "shib_role_authority_name": "eppn",
                 "shib_mail": "DisplayName",
-                "shib_user_name": "sn"}  
-            
+                "shib_user_name": "sn"}
+
             for i, (_, value) in enumerate(attributes.items()):
                 data[f"attr-lists{i}"] = value
 
@@ -163,7 +163,7 @@ class TestShibSettingView:
 
             # ブロックユーザーを変更
             mock_render = mocker.patch("weko_accounts.admin.ShibSettingView.render",return_value=make_response())
-            block_user_list = ['test1','test2','test3'] 
+            block_user_list = ['test1','test2','test3']
             data["block-eppn-option-list"] = json.dumps(block_user_list)
 
             res = client.post(url, data=data)
@@ -182,12 +182,12 @@ class TestShibSettingView:
                 **roles,
                 **attributes
             )
-            
+
             # raise BaseException
             with patch("weko_accounts.admin.ShibSettingView.render",side_effect=BaseException):
                 res = client.post(url)
                 assert res.status_code == 400
-            
+
             # method is GET
             mock_render = mocker.patch("weko_accounts.admin.ShibSettingView.render",return_value=make_response())
             res = client.get(url)

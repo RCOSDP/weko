@@ -42,7 +42,7 @@ class MainLayout extends React.Component {
     this.handleChangeTab = this.handleChangeTab.bind(this);
   }
 
-  componentDidMount() {}
+  componentDidMount() { }
 
   handleChangeTab(select_tab, select_item = {}) {
     const { tabs } = this.state;
@@ -305,7 +305,7 @@ class CreateResourceComponent extends React.Component {
       .then(res => res.json())
       .then(res => {
         if (res.success) {
-          if(add_another){
+          if (add_another) {
             this.setState({
               ...default_state
             })
@@ -349,37 +349,37 @@ class CreateResourceComponent extends React.Component {
           </div>
           <div className="col-md-10">
             <div className="col-md-10">
-            <div className="row">
-              <div className="col-md-2 flex">
-                <input
-                checked={state.status===true}
-                type="radio"
-                name="status"
-                value="Publish"
-                onChange={e => {
-                  const value = e.target.value;
-                  this.handleChangeState("status", value==="Publish");
-                }}
-                ></input>
-                <div className="p-l-10">Publish</div>
-              </div>
-              <div className="col-md-2 flex">
-                <input
-                  checked={state.status===false}
-                  type="radio"
-                  name="status"
-                  value="Private"
-                  onChange={e => {
-                    const value = e.target.value;
-                    this.handleChangeState("status", value==="Publish");
-                  }}
+              <div className="row">
+                <div className="col-md-2 flex">
+                  <input
+                    checked={state.status === true}
+                    type="radio"
+                    name="status"
+                    value="Publish"
+                    onChange={e => {
+                      const value = e.target.value;
+                      this.handleChangeState("status", value === "Publish");
+                    }}
+                  ></input>
+                  <div className="p-l-10">Publish</div>
+                </div>
+                <div className="col-md-2 flex">
+                  <input
+                    checked={state.status === false}
+                    type="radio"
+                    name="status"
+                    value="Private"
+                    onChange={e => {
+                      const value = e.target.value;
+                      this.handleChangeState("status", value === "Publish");
+                    }}
                   ></input>
                   <div className="p-l-10">Private</div>
+                </div>
+
+
               </div>
-
-
             </div>
-          </div>
           </div>
         </div>
 
@@ -500,7 +500,7 @@ class EditResourceComponent extends React.Component {
       {
         ...state,
         [name]: value
-      },() => {
+      }, () => {
         if (name === "repository_id") {
           this.handleChangeURL();
         }
@@ -573,16 +573,16 @@ class EditResourceComponent extends React.Component {
             <div className="row">
               <div className="col-md-2 flex">
                 <input
-                checked={state.status}
-                type="radio"
-                name="status"
-                value="Publish"
-                onChange={e => {
-                  const value = e.target.value;
-                  this.handleChangeState("status", value==="Publish");
-                }}
-              ></input>
-              <div className="p-l-10">Publish</div>
+                  checked={state.status}
+                  type="radio"
+                  name="status"
+                  value="Publish"
+                  onChange={e => {
+                    const value = e.target.value;
+                    this.handleChangeState("status", value === "Publish");
+                  }}
+                ></input>
+                <div className="p-l-10">Publish</div>
               </div>
               <div className="col-md-2 flex">
                 <input
@@ -592,10 +592,10 @@ class EditResourceComponent extends React.Component {
                   value="Private"
                   onChange={e => {
                     const value = e.target.value;
-                    this.handleChangeState("status", value==="Publish");
+                    this.handleChangeState("status", value === "Publish");
                   }}
-                  ></input>
-                  <div className="p-l-10">Private</div>
+                ></input>
+                <div className="p-l-10">Private</div>
               </div>
 
 
@@ -703,6 +703,6 @@ class DetailResourceComponent extends React.Component {
     return <div>Deatil ne</div>;
   }
 }
-$(function() {
+$(function () {
   ReactDOM.render(<MainLayout />, document.getElementById("root"));
 });

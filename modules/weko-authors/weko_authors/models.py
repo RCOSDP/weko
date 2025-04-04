@@ -74,7 +74,7 @@ class Authors(db.Model, Timestamp):
         nullable=True
     )
     """json for author info"""
-    
+
     repository_id = db.Column(
         db.JSON().with_variant(
             postgresql.JSONB(none_as_null=True),
@@ -173,7 +173,7 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
         default=datetime.utcnow,
         onupdate=datetime.utcnow)
     """ Updated date."""
-    
+
     repository_id = db.Column(
         db.JSON().with_variant(
             postgresql.JSONB(none_as_null=True),
@@ -266,7 +266,7 @@ class AuthorsAffiliationSettings(db.Model, Timestamp):
         default=datetime.utcnow,
         onupdate=datetime.utcnow)
     """ Updated date."""
-    
+
     repository_id = db.Column(
         db.JSON().with_variant(
             postgresql.JSONB(none_as_null=True),

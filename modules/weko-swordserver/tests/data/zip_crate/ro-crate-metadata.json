@@ -1,39 +1,10 @@
 {
-  "@context": "https://w3id.org/ro/crate/1.1/context",
+  "@context": [
+    "http://www.w3.org/ns/odrl.jsonld",
+    "http://localhost:8080/wk/0.1/context.jsonld",
+    "https://w3id.org/ro/crate/1.1/context"
+  ],
   "@graph": [
-    {
-      "@id": "./",
-      "@type": "Dataset",
-      "author": {
-        "@id": "http://orcid.org/0000-0002-1825-0097"
-      },
-      "contributor": [
-        {
-          "@id": "http://orcid.org/0000-0002-1825-0085"
-        }
-      ],
-      "creator": {
-        "@id": "http://orcid.org/0000-0002-1825-0097"
-      },
-      "datePublished": "2024/11/15T01:59:48Z",
-      "accessMode": "public",
-      "description": "A simple example for swordserver.",
-      "isPartOf": {
-        "@id": "https://example.org/project/123",
-        "@type": "Project",
-        "name": "Project XYZ",
-        "sameAs": "https://192.168.56.101/tree/index/1623632832836"
-      },
-      "hasPart": [
-        {
-          "@id": "data/sample.rst"
-        }
-      ],
-      "name": "The Sample",
-      "Resource Type": {
-        "@id": "#resourcetype"
-      }
-    },
     {
       "@id": "ro-crate-metadata.json",
       "@type": "CreativeWork",
@@ -45,113 +16,280 @@
       }
     },
     {
-      "@id": "#resourcetype",
-      "type": "other",
-      "uri": ""
-    },
-    {
-      "@id": "#summary",
-      "@type": "Thing",
-      "summary": "the sample of simple itemtype"
-    },
-    {
-      "@id": "#datetime",
-      "@type": "DateTime",
-      "date": "2023-01-18",
-      "type": "Created"
-    },
-    {
-      "@id": "data/sample.rst",
-      "@type": "File",
-      "contentSize": "333",
-      "datetime": {
-        "@id": "#datetime"
+      "@id": "./",
+      "@type": [
+        "Dataset",
+        "rdm:Dataset"
+      ],
+      "name": "The Sample Dataset for WEKO",
+      "description": "This is a sample dataset for WEKO in order to demonstrate the RO-Crate metadata.",
+      "dc:title": [
+        {
+          "@id": "_:title_1"
+        },
+        {
+          "@id": "_:title_2"
+        }
+      ],
+      "author": [
+        {
+          "@id": "_:Organization_1"
+        }
+      ],
+      "creator": [
+        {
+          "@id": "http://orcid.org/0000-0002-1825-0097"
+        }
+      ],
+      "contributor": [
+        {
+          "@id": "http://orcid.org/0000-0002-1825-0085"
+        }
+      ],
+      "datePublished": "2021-10-15",
+      "license": {
+        "@id": "https://creativecommons.org/licenses/by-nc-sa/3.0/au/"
       },
-      "encodingFormat": "text/x-rst",
-      "identifier": {
-        "@id": "https://example.org/data/sample.rst",
-        "label": "sample.rst",
-        "type": "fulltext"
+      "rdm:inProject": [
+        {
+          "@id": "_:Project_1"
+        }
+      ],
+      "hasPart": [
+        {
+          "@id": "data/sample.rst"
+        },
+        {
+          "@id": "data/data.csv"
+        }
+      ],
+      "hasPolicy": [
+        {
+          "@id": "_:Policy1"
+        },
+        {
+          "@id": "_:Policy2"
+        }
+      ],
+      "wk:feedbackMail": [
+        "wekosoftware@nii.ac.jp"
+      ],
+      "identifier": "https://example.repo.nii.ac.jp/records/123456789",
+      "wk:index": [
+        "1623632832836"
+      ],
+      "wk:publishStatus": "public",
+      "wk:editMode": "Keep",
+      "dc:type": {
+        "@id": "http://purl.org/coar/resource_type/c_6501"
       },
-      "name": "sample.rst",
-      "version": "1.0"
+      "wk:grant": [
+        {
+          "@id": "https://hdl.handle.net/1234/5678"
+        },
+        {
+          "@id": "https://doi.org/10.1234/5678"
+        }
+      ],
+      "wk:saveAsIs": false
+    },
+    {
+      "@id": "_:title_1",
+      "@type": "PropertyValue",
+      "name": "title",
+      "value": "The Sample Dataset for WEKO",
+      "language": "en"
+    },
+    {
+      "@id": "_:title_2",
+      "@type": "PropertyValue",
+      "name": "title",
+      "value": "WEKO用サンプルデータセット",
+      "language": "ja"
+    },
+    {
+      "@id": "https://creativecommons.org/licenses/by-nc-sa/3.0/au/",
+      "@type": "CreativeWork",
+      "description": "This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Australia License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/3.0/au/ or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.",
+      "identifier": "https://creativecommons.org/licenses/by-nc-sa/3.0/au/",
+      "name": "Attribution-NonCommercial-ShareAlike 3.0 Australia (CC BY-NC-SA 3.0 AU)"
     },
     {
       "@id": "http://orcid.org/0000-0002-1825-0097",
       "@type": "Person",
-      "identifier": {
-        "@id": "https://orcid.org/0000-0002-1234-5678",
-        "scheme": "https://orcid.org",
-        "uri": "https://orcid.org/0000-0002-1234-5678"
-      },
-      "name": "Egon Willighagen"
+      "name": "John Doe",
+      "language": "en",
+      "affiliation": {
+        "@id": "_:Organization_2"
+      }
     },
     {
       "@id": "http://orcid.org/0000-0002-1825-0085",
-      "@type": "DataCurator",
-      "affiliation": {
-        "@id": "#affiliation"
-      },
-      "alternateName": {
-        "@id": "#alternateName"
-      },
-      "contributorType": "Researcher",
-      "email": "contributor@example.org",
-      "familyName": {
-        "@id": "#familyName"
-      },
-      "fullname": "Stian Soiland-Reyes",
-      "givenName": {
-        "@id": "#givenName"
-      },
-      "identifier": {
-        "@id": "https://orcid.org/0000-0002-1234-5679",
-        "scheme": "https://orcid.org",
-        "uri": "https://orcid.org/0000-0002-1234-5679"
-      },
-      "language": "en",
-      "nametype": "Personal"
+      "@type": "Person",
+      "name": "Kenji Ichikawa",
+      "language": "en"
     },
     {
-      "@id": "#alternateName",
-      "@type": "Thing",
-      "language": "en",
-      "name": "Stian S.R."
+      "@id": "http://purl.org/coar/resource_type/c_6501",
+      "@type": "Concept",
+      "name": "journal article"
     },
     {
-      "@id": "#givenName",
-      "@type": "Thing",
-      "language": "en",
-      "name": "Stian"
+      "@id": "_:Project_1",
+      "@type": [
+        "Project",
+        "rdm:Project"
+      ],
+      "name": [
+        {
+          "@id": "_:Project_name"
+        }
+      ],
+      "rdm:name": [
+        {
+          "@id": "_:Project_name"
+        }
+      ]
     },
     {
-      "@id": "#familyName",
-      "@type": "Thing",
-      "language": "en",
-      "name": "Soiland-Reyes"
+      "@id": "_:Project_name",
+      "@type": "Project",
+      "value": "MS2合原PJ|MS2 Aihara PJ",
+      "language": "ja"
     },
     {
-      "@id": "#affiliation",
+      "@id": "_:Policy1",
+      "@type": "Policy",
+      "name": "許諾が必要|Permission required",
+      "permission": [
+        {
+          "@id": "_:Permission1"
+        }
+      ]
+    },
+    {
+      "@id": "_:Policy2",
+      "@type": "Policy",
+      "name": "連絡が必要|Contact required",
+      "permission": [
+        {
+          "@id": "_:Permission2"
+        }
+      ]
+    },
+    {
+      "@id": "_:Permission1",
+      "@type": "Permission",
+      "target": "https://doi.org/10.xxxx/12345",
+      "action": "use",
+      "assignee": "http://example.org/user",
+      "duty": [
+        {
+          "@id": "_:Duty1"
+        }
+      ]
+    },
+    {
+      "@id": "_:Permission2",
+      "@type": "Permission",
+      "target": "https://doi.org/10.xxxx/12345",
+      "action": "use",
+      "assignee": "http://example.org/user",
+      "duty": [
+        {
+          "@id": "_:Duty2"
+        }
+      ]
+    },
+    {
+      "@id": "_:Duty1",
+      "@type": "Duty",
+      "action": "obtainConsent",
+      "assignee": "http://example.org/rightsholder"
+    },
+    {
+      "@id": "_:Duty2",
+      "@type": "Duty",
+      "action": "notify",
+      "assignee": "http://example.org/rightsholder"
+    },
+    {
+      "@id": "https://hdl.handle.net/1234/5678",
+      "@type": "URL",
+      "jpcoar:identifier": "HDL"
+    },
+    {
+      "@id": "https://doi.org/10.1234/5678",
+      "@type": "URL",
+      "jpcoar:identifier": "DOI",
+      "jpcoar:identifierRegistration": "DataCite"
+    },
+    {
+      "@id": "data/sample.rst",
+      "@type": "File",
+      "name": "sample.rst",
+      "contentSize": "333 B",
+      "dateCreated": {
+        "@id": "_:date_1"
+      },
+      "encodingFormat": "text/x-rst",
+      "url": {
+        "@id": "https://example.repo.nii.ac.jp/records/123456789/files/sample.rst"
+      },
+      "version": "1.0",
+      "wk:textExtraction": true,
+      "wk:accessMode": "open_access"
+    },
+    {
+      "@id": "data/data.csv",
+      "@type": "File",
+      "name": "data.csv",
+      "contentSize": "475 B",
+      "dateCreated": {
+        "@id": "_:date_2"
+      },
+      "encodingFormat": "text/csv",
+      "url": {
+        "@id": "https://example.repo.nii.ac.jp/records/123456789/files/data.csv"
+      },
+      "version": "1.0",
+      "wk:textExtraction": false,
+      "wk:accessMode": "open_date",
+      "datePublished": "2024-11-22"
+    },
+    {
+      "@id": "_:date_1",
+      "@type": "PropertyValue",
+      "name": "Created",
+      "value": "2021-10-15"
+    },
+    {
+      "@id": "_:date_2",
+      "@type": "PropertyValue",
+      "name": "Created",
+      "value": "2021-10-15"
+    },
+    {
+      "@id": "https://example.repo.nii.ac.jp/records/123456789/files/sample.rst",
+      "@type": "URL",
+      "value": "abstract"
+    },
+    {
+      "@id": "https://example.repo.nii.ac.jp/records/123456789/files/data.csv",
+      "@type": "URL",
+      "value": "dataset"
+    },
+    {
+      "@id": "_:Organization_1",
       "@type": "Organization",
-      "identifier": {
-        "@id": "https://example.org/affiliation",
-        "scheme": "GRID",
-        "uri": "https://example.org/affiliation"
-      },
-      "language": "en",
-      "name": "University of Manchester"
+      "name": "National Institute of Informatics",
+      "url": "https://www.nii.ac.jp/"
     },
     {
-      "@id": "#title",
-      "@type": "Thing",
-      "language": "ja",
-      "name": "サンプルアイテム"
-    },
-    {
-      "@id": "#subtitle",
-      "@type": "Thing",
-      "language": "ja",
-      "name": "試しに作ってみた"
+      "@id": "_:Organization_2",
+      "@type": "Organization",
+      "name": "University of Manchester",
+      "url": "https://www.manchester.ac.uk/"
     }
   ]
 }

@@ -32,8 +32,9 @@ import tempfile
 import traceback
 import unicodedata
 from collections import OrderedDict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from io import StringIO
+import zipfile
 import secrets
 
 import bagit
@@ -77,14 +78,15 @@ from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
 from weko_index_tree.utils import check_index_permissions, get_index_id, \
     get_user_roles
-from weko_records.api import FeedbackMailList, RequestMailList, ItemTypes, Mapping
+from weko_records.api import FeedbackMailList, JsonldMapping, RequestMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
 from weko_records_ui.errors import AvailableFilesNotFoundRESTError
 from weko_records_ui.permissions import check_created_id, \
     check_file_download_permission, check_publish_status
 from weko_redis.redis import RedisConnection
-from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
+from weko_search_ui.config import ROCRATE_METADATA_FILE, WEKO_IMPORT_DOI_TYPE
+from weko_search_ui.mapper import JsonLdMapper
 from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
     get_root_item_option, get_sub_item_option
@@ -2493,6 +2495,44 @@ def write_files(item_types_data, export_path, list_item_role):
             file.write(file_output.getvalue())
 
 
+# def write_rocrate_files(item_types_data, export_path, list_item_role):
+#     """Write TSV/CSV data to files.
+
+#     @param item_types_data:
+#     @param export_path:
+#     @param list_item_role:
+#     @return:
+#     """
+#     current_app.logger.debug("item_types_data:{}".format(item_types_data))
+#     current_app.logger.debug("export_path:{}".format(export_path))
+#     current_app.logger.debug("list_item_role:{}".format(list_item_role))
+#     file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+#     for item_type_id in item_types_data:
+#         current_app.logger.debug("item_type_id:{}".format(item_type_id))
+#         current_app.logger.debug("item_types_data[item_type_id]['recids']:{}".format(item_types_data[item_type_id]['recids']))
+#         headers, records = make_stats_file(
+#             item_type_id,
+#             item_types_data[item_type_id]['recids'],
+#             list_item_role,
+#             export_path)
+#         current_app.logger.debug("headers:{}".format(headers))
+#         current_app.logger.debug("records:{}".format(records))
+#         keys, labels, is_systems, options = headers
+#         item_types_data[item_type_id]['recids'].sort()
+#         item_types_data[item_type_id]['keys'] = keys
+#         item_types_data[item_type_id]['labels'] = labels
+#         item_types_data[item_type_id]['is_systems'] = is_systems
+#         item_types_data[item_type_id]['options'] = options
+#         item_types_data[item_type_id]['data'] = records
+#         item_type_data = item_types_data[item_type_id]
+#         with open('{}/{}.{}'.format(export_path,
+#                                     item_type_data.get('name'),
+#                                     file_format),
+#                                     'w', encoding="utf-8-sig") as file:
+#             file_output = package_export_file(item_type_data)
+#             file.write(file_output.getvalue())
+
+
 def check_item_type_name(name):
     """Check a list of allowed characters in filenames.
 
@@ -2592,6 +2632,244 @@ def export_items(post_data):
     os.remove(zip_path+".zip")
     return resp
 
+
+def bagify(
+    bag_dir, bag_info=None, processes=1, checksums=None, encoding="utf-8"
+):
+    """ Give manifests and tag files to an existing directory.
+
+    This is a modified version of the make_bag function from the bagit library.
+    Give tag files and manifests to an existing directory.
+    It is required that the given directory contains data in data/.
+    If the directory does not have data/, use the bagit.make_bag function.
+
+    Args:
+        bag_dir (str): The directory to bag.
+        bag_info (dict): A dictionary of tag file values.
+        processes (int): The number of processes to use when creating manifests.
+        checksums (list of str): The checksum algorithms to use when creating manifests.
+        encoding (str): The encoding to use when creating tag files.
+
+    Returns:
+        Bag: The bag created from the given directory.
+    """
+
+    if checksums is None:
+        checksums = bagit.DEFAULT_CHECKSUMS
+
+    bag_dir = os.path.abspath(bag_dir)
+    cwd = os.path.abspath(os.path.curdir)
+
+    if cwd.startswith(bag_dir) and cwd != bag_dir:
+        raise RuntimeError(
+            "Bagging a parent of the current directory is not supported"
+        )
+
+    current_app.logger.info(f"Creating tag for directory {bag_dir}")
+
+    if not os.path.isdir(bag_dir):
+        current_app.logger.error(f"Bag directory {bag_dir} does not exist")
+        raise RuntimeError(f"Bag directory {bag_dir} does not exist")
+
+    old_dir = os.path.abspath(os.path.curdir)
+
+    if not os.path.exists(os.path.join(bag_dir, "data")):
+        current_app.logger.error(f"Bag directory {bag_dir} does not contain a data directory")
+        raise RuntimeError(f"Bag directory {bag_dir} does not contain a data directory")
+
+    try:
+        unbaggable = bagit._can_bag(bag_dir)
+
+        if unbaggable:
+            current_app.logger.error(
+                f"Unable to write to the following directories and files: {unbaggable}"
+            )
+            raise bagit.BagError("Missing permissions to move all files and directories")
+
+        unreadable_dirs, unreadable_files = bagit._can_read(bag_dir)
+
+        if unreadable_dirs or unreadable_files:
+            if unreadable_dirs:
+                current_app.logger.error(
+                    f"The following directories do not have read permissions: {unreadable_dirs}"
+                )
+            if unreadable_files:
+                current_app.logger.error(
+                    f"The following files do not have read permissions: {unreadable_files}"
+                )
+            raise bagit.BagError(
+                "Read permissions are required to calculate file fixities"
+            )
+        else:
+            current_app.logger.info(_("Creating data directory"))
+
+            os.chdir(bag_dir)
+            cwd = os.getcwd()
+
+            # permissions for the payload directory should match those of the
+            # original directory
+            os.chmod("data", os.stat(cwd).st_mode)
+
+            total_bytes, total_files = bagit.make_manifests(
+                "data", processes, algorithms=checksums, encoding=encoding
+            )
+
+            current_app.logger.info("Creating bagit.txt")
+            txt = """BagIt-Version: 0.97\nTag-File-Character-Encoding: UTF-8\n"""
+            with bagit.open_text_file("bagit.txt", "w") as bagit_file:
+                bagit_file.write(txt)
+
+            current_app.logger.info(_("Creating bag-info.txt"))
+            if bag_info is None:
+                bag_info = {}
+
+            # allow 'Bagging-Date' and 'Bag-Software-Agent' to be overidden
+            if "Bagging-Date" not in bag_info:
+                bag_info["Bagging-Date"] = date.strftime(date.today(), "%Y-%m-%d")
+            if "Bag-Software-Agent" not in bag_info:
+                bag_info["Bag-Software-Agent"] = "bagit.py v%s <%s>" % (
+                    bagit.VERSION,
+                    bagit.PROJECT_URL,
+                )
+
+            bag_info["Payload-Oxum"] = "%s.%s" % (total_bytes, total_files)
+            bagit._make_tag_file("bag-info.txt", bag_info)
+
+            for c in checksums:
+                bagit._make_tagmanifest_file(c, bag_dir, encoding="utf-8")
+    except Exception:
+        current_app.logger.exception(f"An error occurred creating a bag in {bag_dir}")
+        raise
+    finally:
+        os.chdir(old_dir)
+
+    return bagit.Bag(bag_dir)
+
+
+def export_rocrate(post_data):
+    """Gather all the item data and export and return as a Crate BagIt.
+
+    :param post_data: Post Data
+    :return: Crate BagIt
+    """
+    current_app.logger.debug("post_data:{}".format(post_data))
+    record_ids = json.loads(post_data["record_ids"])
+    invalid_record_ids = json.loads(post_data["invalid_record_ids"])
+    if isinstance(invalid_record_ids,dict) or isinstance(invalid_record_ids,list):
+        invalid_record_ids = [int(i) for i in invalid_record_ids]
+    else:
+        invalid_record_ids = [invalid_record_ids]
+    # Remove all invalid records
+    record_ids = list(set(record_ids) - set(invalid_record_ids))
+    if len(record_ids) > _get_max_export_items():
+        return abort(400)
+    elif len(record_ids) == 0:
+        return "", 204
+
+    # Get Metadata from ElasticSearch
+    metadata_dict = _get_metadata_dict_in_es(record_ids)
+
+    # Create temporary directory
+    temp_path = tempfile.TemporaryDirectory(
+            prefix=current_app.config["WEKO_ITEMS_UI_EXPORT_TMP_PREFIX"])
+
+    try:
+        # Set export folder
+        datetime_now = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+        export_path = os.path.join(temp_path.name, datetime_now)
+
+        # Outer zip file path
+        outer_zip_path = os.path.join(export_path, "out_zip")
+        for record_id in record_ids:
+            record_path = os.path.join(export_path, f"recid_{record_id}")
+            data_path = os.path.join(record_path, "data")
+            os.makedirs(data_path, exist_ok=True)
+            _export_file(record_id, data_path)
+            # Metadata
+            metadata, filenames = metadata_dict.get(str(record_id), ({}, []))
+            item_type_id = metadata.get("item_type_id")
+            mappings = JsonldMapping.get_by_itemtype_id(item_type_id)
+            mapper = JsonLdMapper(item_type_id, None)
+            for m in mappings:
+                mapper.json_mapping = m
+                if mapper.is_valid:
+                    break
+            if mapper.json_mapping is None:
+                raise Exception("No valid mapping found for item type")
+
+            # Create RO-Crate info file
+            rocrate = mapper.to_rocrate_metadata(metadata, extracted_files=filenames)
+            rocrate_path = os.path.join(record_path, ROCRATE_METADATA_FILE)
+            with open(rocrate_path, "w", encoding="utf8") as f:
+                # text garbling solves when using ensure_ascii=False
+                json.dump(rocrate, f, indent=2, sort_keys=True,
+                    ensure_ascii=False)
+            # Create bag
+            bagify(record_path, checksums=["sha256"])
+            # Create individual zip file
+            inner_zip_path = os.path.join(outer_zip_path, f"recid_{record_id}")
+            shutil.make_archive(inner_zip_path, "zip", record_path)
+        # Create README.md file
+        readme_path = os.path.join(outer_zip_path, "README.md")
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        source_path = current_app.config["WEKO_ITEMS_UI_README_MD"]
+        src_readme_path = os.path.join(current_dir, source_path)
+        with open(readme_path, "w", encoding="utf8") as dest_readme,\
+                    open(src_readme_path, "r", encoding="utf8") as src_readme:
+                dest_readme.write(src_readme.read())
+        # Create download file
+        zip_path = os.path.join(
+            export_path, f"{os.path.basename(temp_path.name)}-{datetime_now}"
+        )
+        shutil.make_archive(zip_path, 'zip', outer_zip_path)
+        resp = send_file(
+            f"{zip_path}.zip",
+            as_attachment = True,
+            attachment_filename = "export.zip"
+        )
+        return resp
+    except Exception as ex:
+        current_app.logger.error("-" * 60)
+        current_app.logger.error(ex)
+        traceback.print_exc(file=sys.stdout)
+        flash(_("Error occurred during item export."), "error")
+        return redirect(url_for("weko_items_ui.export"))
+    finally:
+        temp_path.cleanup()
+
+
+def _get_metadata_dict_in_es(record_ids):
+    """Get metadata by record id from ElasticSearch.
+
+    :param record_ids: Record IDs
+    :return: Metadata
+    """
+    metadata_dict = {}
+    try:
+        # Get metadata from ElasticSearch
+        search = RecordsSearch(
+            index=current_app.config["SEARCH_UI_SEARCH_INDEX"])
+        search = search.filter("terms", control_number=record_ids)
+        search = search.filter("term", relation_version_is_last=True)
+        search = search.sort("control_number")
+        search = search.source(["_item_metadata", "content"])
+        search = search.params(from_=0, size=100)
+        search_result = search.execute().to_dict()
+        record_list = search_result.get("hits", {}).get("hits", [])
+        for record in record_list:
+            [key] = record.get("sort")
+            metadata = record.get("_source", {}).get("_item_metadata", {})
+            content = record.get("_source", {}).get("content", [])
+            extraction_file_list = [
+                file_content.get("filename") for file_content in content
+            ]
+            metadata_dict.update({key: (metadata, extraction_file_list)})
+    except NotFoundError as e:
+        current_app.logger.debug("Index do not exist yet: ", str(e))
+
+    current_app.logger.debug("metadata_dict:{}".format(metadata_dict))
+
+    return metadata_dict
 
 
 def _get_max_export_items():
@@ -2709,6 +2987,38 @@ def _export_item(record_id,
                             temp_file.close()
 
     return exported_item, list_item_role
+
+
+def _export_file(record_id, data_path=None):
+    """Exports files for record according to view permissions.
+
+    :param record_id: Record ID
+    :param data_path: Data Path. Defaults to None.
+    """
+    record = WekoRecord.get_record_by_pid(record_id)
+    if record:
+        # Get files
+        for file in record.files:
+            if check_file_download_permission(record, file.info()):
+                accessrole = file.info().get("accessrole")
+                if accessrole == "open_restricted":
+                    continue
+                if accessrole == "open_date":
+                    file_date = file.info().get("date", {})
+                    date_value = (
+                        file_date[0].get("dateValue")
+                            if isinstance(file_date, list) and file_date
+                        else file_date.get("dateValue")
+                            if isinstance(file_date, dict)
+                        else None
+                    )
+                    open_date = datetime.strptime(date_value, "%Y-%m-%d")
+                    if open_date.date() > datetime.now().date():
+                        continue
+                with file.obj.file.storage().open() as file_buffered:
+                    tmp_path = os.path.join(data_path, file.obj.basename)
+                    with open(tmp_path, "wb") as temp_file:
+                        temp_file.write(file_buffered.read())
 
 
 def _custom_export_metadata(record_metadata: dict, hide_item: bool = True,
@@ -3166,7 +3476,7 @@ def get_weko_link(metadata):
     メタデータからweko_idを取得し、weko_idに対応するpk_idと一緒に
     weko_linkを作成します。
     args
-        metadata: dict 
+        metadata: dict
         例：{
                 "metainfo": {
                     "item_30002_creator2": [

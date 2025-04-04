@@ -134,12 +134,12 @@ function addBlockUser() {
     enableLoginUserValue === "[]"
       ? []
       : (() => {
-          try {
-            return JSON.parse(enableLoginUserValue.replace(/'/g, '"'));
-          } catch (e) {
-            return [];
-          }
-        })();
+        try {
+          return JSON.parse(enableLoginUserValue.replace(/'/g, '"'));
+        } catch (e) {
+          return [];
+        }
+      })();
 
   if (newBlockePPN) {
     const optionValues = select
@@ -165,18 +165,18 @@ function addBlockUser() {
           const message =
             setLanguage === "ja"
               ? "以下の登録済みユーザーのログインをブロックします\nユーザーのePPN:" +
-                matches
+              matches
               : "Block login for the following registered users\nUser's ePPN:" +
-                matches;
+              matches;
           alert(message);
         }
       } else if (enableLoginUserList.includes(newBlockePPN)) {
         const message =
           setLanguage === "ja"
             ? "以下の登録済みユーザーのログインをブロックします\nユーザーのePPN:" +
-              newBlockePPN
+            newBlockePPN
             : "Block login for the following registered users\nUser's ePPN:" +
-              newBlockePPN;
+            newBlockePPN;
         alert(message);
       }
     }

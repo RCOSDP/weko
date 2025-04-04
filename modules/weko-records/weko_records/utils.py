@@ -66,7 +66,7 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
         temp_data = json.loads(activity.temp_data)
         if "weko_link" in temp_data and temp_data["weko_link"] != {}:
             update_data_for_weko_link(data, temp_data["weko_link"])
-        
+
 
     def _get_author_link(author_link, weko_link, value):
         """Get author link data."""
@@ -95,7 +95,7 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
             if int(pk_id) > 0:
                 author_link.append(pk_id)
                 weko_link[str(pk_id)] = weko_id
-            
+
     def _set_shared_id(data):
         """set weko_shared_id from shared_user_id"""
         if data.get("weko_shared_id",-1)==-1:

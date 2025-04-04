@@ -141,19 +141,19 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     let search = new URLSearchParams(window.location.search);
     search.set('size', $rootScope.vm.invenioSearchArgs.size);
     search.set('page', 1);
-    if(window.invenioSearchFunctions) {
-      window.history.pushState(null,document.title,window.location.pathname + '?' + search);
-      if($rootScope.vm.invenioSearchHiddenParams.size) {
+    if (window.invenioSearchFunctions) {
+      window.history.pushState(null, document.title, window.location.pathname + '?' + search);
+      if ($rootScope.vm.invenioSearchHiddenParams.size) {
         $rootScope.vm.invenioSearchHiddenParams.size = $rootScope.vm.invenioSearchArgs.size;
-      }else {
+      } else {
         $rootScope.vm.invenioSearchCurrentArgs.params.size = $rootScope.vm.invenioSearchArgs.size;
       }
-    }else{
+    } else {
       window.location.href = "/search?" + search;
     }
   }
   function onCurrentPageSizeChange(newValue, oldValue) {
-    if(newValue) $rootScope.vm.invenioPageSize = parseInt(newValue);
+    if (newValue) $rootScope.vm.invenioPageSize = parseInt(newValue);
   }
   $rootScope.$watch('vm.invenioSearchArgs.size', onCurrentPageSizeChange);
 
@@ -168,15 +168,15 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   $rootScope.reSearchInvenio = (search) => {
 
     //TODO PAGE と TimeStampを入れ替える。
-    search.set('page','1');
+    search.set('page', '1');
     search.set('size', $scope.vm.invenioSearchArgs.size);
     search.set('sort', $scope.vm.invenioSearchArgs.sort);
-    search.set('timestamp',Date.now().toString());
-    window.history.pushState(null,document.title,"/search?" + search);
+    search.set('timestamp', Date.now().toString());
+    window.history.pushState(null, document.title, "/search?" + search);
 
     let url = search.get('search_type') == 2 ? "/api/index/" : "/api/records/";
 
-    $rootScope.$apply(function() {
+    $rootScope.$apply(function () {
       $rootScope.vm.invenioSearchCurrentArgs.url = url;
       $rootScope.vm.invenioSearchArgs.page = 1;
       $rootScope.vm.invenioSearchLoading = true;
@@ -187,10 +187,10 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   $rootScope.getSettingDefault = function () {
     let data = null;
     $.ajax({
-        async: false,
-        method: 'GET',
-        url: '/get_search_setting',
-        headers: { 'Content-Type': 'application/json' },
+      async: false,
+      method: 'GET',
+      url: '/get_search_setting',
+      headers: { 'Content-Type': 'application/json' },
     }).then(function successCallback(response) {
       if (response.status === 1) {
         data = response.data;
@@ -213,7 +213,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
           };
 
           // fetch_select
-          if(response.enable_fetch_select) {
+          if (response.enable_fetch_select) {
             window.invenioSearchFunctions = {};
             window.invenioSearchFunctions.reSearchInvenio = $scope.reSearchInvenio;
           }
@@ -230,7 +230,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
         }
       }
     }, function errorCallback(error) {
-        console.log(error);
+      console.log(error);
     });
   }
   $rootScope.getSettingDefault();
@@ -246,8 +246,8 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   $rootScope.collapse_flg = true;
   $rootScope.journal_title = $("#journal_title_i18n").val();
   $rootScope.journal_details = $("#journal_details_i18n").val();
-  $rootScope.typeIndexList = function() {
-    var url = new URL(window.location.href );
+  $rootScope.typeIndexList = function () {
+    var url = new URL(window.location.href);
     var q = url.searchParams.get("q");
     let result = 'item';
     if (q === "0") {
@@ -256,8 +256,8 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     return result;
   }
 
-  $rootScope.isCommunityRootIndex = function() {
-    let url = new URL(window.location.href );
+  $rootScope.isCommunityRootIndex = function () {
+    let url = new URL(window.location.href);
     let community = url.searchParams.get("community");
     let rootIndexTree = url.searchParams.get("root_index");
     return !!community && !!rootIndexTree;
@@ -290,11 +290,11 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
 
   $scope.itemManagementSave = function () {
     var data = $scope.vm.invenioSearchResults.hits.hits
-    var custom_sort_list =[]
+    var custom_sort_list = []
     for (var x in data) {
-      var sub = {"id":"", "custom_sort":""}
-      sub.id= data[x].id;
-      sub.custom_sort=data[x].metadata.custom_sort;
+      var sub = { "id": "", "custom_sort": "" }
+      sub.id = data[x].id;
+      sub.custom_sort = data[x].metadata.custom_sort;
       custom_sort_list.push(sub);
     }
     var post_data = { "q_id": $rootScope.index_id_q, "sort": custom_sort_list, "es_data": data }
@@ -347,14 +347,14 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   // Get child id list.
   let child_list = []
   const currentTime = new Date().getTime();
-  $scope.getChildList = function() {
+  $scope.getChildList = function () {
     if (!$rootScope.index_id_q) {
       return;
     }
     $http({
       method: 'GET',
       url: '/get_child_list/' + $rootScope.index_id_q,
-      headers: {'Content-Type': 'application/json'},
+      headers: { 'Content-Type': 'application/json' },
     }).then(function successCallback(response) {
       child_list = response.data;
     }, function errorCallback(error) {
@@ -392,7 +392,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     $http({
       method: 'GET',
       url: '/get_path_name_dict/' + path_str,
-      headers: {'Content-Type': 'application/json'},
+      headers: { 'Content-Type': 'application/json' },
     }).then(function successCallback(response) {
       $rootScope.vm.invenioSearchResults.aggregations.path.buckets[0][0]['path_name_dict'] = response.data;
     }, function errorCallback(error) {
@@ -404,15 +404,15 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   $scope.$on('invenio.search.finished', function (evt) {
     $scope.getPathName();
     $rootScope.display_comment_jounal();
-    if(window.location.pathname != '/' &&
+    if (window.location.pathname != '/' &&
       window.facetSearchFunctions && window.facetSearchFunctions.useFacetSearch()) {
-        // Apply the search results to faceted items except for the first search result.
-        let search = new URLSearchParams(window.location.search);
-        if(search.get('search_type') == 2){
-          window.facetSearchFunctions.resetFacetData(evt.targetScope.vm.invenioSearchResults.aggregations.aggregations[0]);
-        }else {
-          window.facetSearchFunctions.resetFacetData(evt.targetScope.vm.invenioSearchResults.aggregations);
-        }
+      // Apply the search results to faceted items except for the first search result.
+      let search = new URLSearchParams(window.location.search);
+      if (search.get('search_type') == 2) {
+        window.facetSearchFunctions.resetFacetData(evt.targetScope.vm.invenioSearchResults.aggregations.aggregations[0]);
+      } else {
+        window.facetSearchFunctions.resetFacetData(evt.targetScope.vm.invenioSearchResults.aggregations);
+      }
 
     }
   });
@@ -428,11 +428,11 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
 
 
   // Check if current hits in selected array
-  $scope.checkIfAllInArray = function() {
+  $scope.checkIfAllInArray = function () {
     all_in_array = true;
-    angular.forEach($scope.vm.invenioSearchResults.hits.hits, function(record) {
+    angular.forEach($scope.vm.invenioSearchResults.hits.hits, function (record) {
       item_index = $rootScope.item_export_checkboxes.indexOf(record.id);
-      if(item_index == -1) {
+      if (item_index == -1) {
         all_in_array = false;
       }
     });
@@ -473,15 +473,34 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
     }
   }
 
+  $scope.selectedExportFormat = "JSON";
+  $scope.checkExportFormat = function () {
+    if (!$scope.enableContentsExporting) {
+      return;
+    }
+    if ($scope.selectedExportFormat === "ROCRATE") {
+      $("input#export_file_contents_radio_on").prop("checked", true);
+      $("input[name='export_file_contents_radio']").prop("disabled", true);
+      $("<input>").attr({
+        type: "hidden",
+        name: "export_file_contents_radio",
+        value: "True"
+      }).appendTo($("form#export_items_form"));
+    } else {
+      $("input[name='export_file_contents_radio']").prop("disabled", false);
+      $("input[name='export_file_contents_radio']:hidden").remove();
+    }
+  }
+
   $scope.exportItems = function () {
     if ($rootScope.item_export_checkboxes.length <= $rootScope.max_export_num) {
       records_metadata = $scope.getExportItemsMetadata();
       $('#record_ids').val(JSON.stringify($rootScope.item_export_checkboxes));
       $('#invalid_record_ids').val(JSON.stringify([]));
       let export_metadata = {}
-      $rootScope.item_export_checkboxes.map(function(recid) {
+      $rootScope.item_export_checkboxes.map(function (recid) {
         $.each(records_metadata, function (index, value) {
-          if (value.id == recid) {
+          if (value.id === recid) {
             export_metadata[recid] = value;
           }
         });
@@ -494,7 +513,11 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
           $scope.showErrMsgBibtex(invalidBibtexRecordIds);
         }
       }
-      $('#record_metadata').val(JSON.stringify(export_metadata));
+      if ($scope.selectedExportFormat !== "ROCRATE") {
+        $('#record_metadata').val(JSON.stringify(export_metadata));
+      } else {
+        $('#record_metadata').val("");
+      }
       $('#export_items_form').submit();  // Submit form and let controller handle file making
     }
     $('#item_export_button').attr("disabled", false);
@@ -525,7 +548,7 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
   $scope.showErrMsgBibtex = function (invalidRecordIds) {
     var errMsg = getMessage('bibtex_err');
     invalidRecordIds.forEach(function (recordId) {
-      document.getElementById('bibtex_err_' + recordId).textContent=errMsg;
+      document.getElementById('bibtex_err_' + recordId).textContent = errMsg;
     });
   }
 
@@ -608,7 +631,7 @@ angular.module('invenioSearch')
   }])
   .filter("escapeTitle", function () {
     return function (data) {
-      if (data){
+      if (data) {
         data = escapeString(data);
       }
       return data;

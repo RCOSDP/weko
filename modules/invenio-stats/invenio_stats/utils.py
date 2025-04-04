@@ -218,14 +218,14 @@ def is_valid_access():
 def chunk_list(iterable, size):
     """
     Split a List into chunks of a specified size.
-    
+
     Args:
         iterable (list): The List to be split.
         size (int): The size of each chunk.
-    
+
     Yields:
         list: A chunk of the original List with the specified size.
-    
+
     """
     it = iter(iterable)
     while True:
@@ -291,7 +291,7 @@ class QueryFileReportsHelper(object):
                 group_list = i['user_group_names']
                 data['group_counts'] = cls.calc_per_group_counts(
                     group_list, data['group_counts'], count)
-            
+
             # Keep track of groups seen
             all_groups.update(data['group_counts'].keys())
 
@@ -338,7 +338,7 @@ class QueryFileReportsHelper(object):
         year = kwargs.get('year')
         month = kwargs.get('month')
         repository_id = kwargs.get('repository_id')
-        
+
         if repository_id and repository_id != 'Root Index':
             repository = Community.query.get(repository_id)
             index_list = get_descendant_index_names(repository.root_node_id) if repository else []
@@ -500,7 +500,7 @@ class QuerySearchReportHelper(object):
                 current_report['search_key'] = report['search_key']
                 current_report['count'] = report['count']
                 all.append(current_report)
-            all = sorted(all, key=lambda x:x['count'], reverse=True) 
+            all = sorted(all, key=lambda x:x['count'], reverse=True)
             result['all'] = all
         except es_exceptions.NotFoundError as e:
             current_app.logger.debug(
@@ -818,8 +818,8 @@ class QueryRecordViewReportHelper(object):
     @classmethod
     def Calculation(cls, res, data_list):
         """Create response object."""
-        for item in res['buckets']: 
-            data = { 
+        for item in res['buckets']:
+            data = {
                 'record_id': item['record_id'],
                 'record_name': item['record_name'],
                 'index_names': item['record_index_names'],
@@ -985,7 +985,7 @@ class QueryItemRegReportHelper(object):
                                       int(getattr(config, 'REPORTS_PER_PAGE')))
         # get page_index from request params
         page_index = kwargs.get('page_index', 0)
-        
+
         repository_id = kwargs.get('repository_id')
         if repository_id and repository_id != 'Root Index':
             repository = Community.query.get(repository_id)
@@ -1353,8 +1353,8 @@ class QueryRankingHelper(object):
     @classmethod
     def Calculation(cls, res, data_list):
         """Create response object."""
-        for item in res['aggregations']['my_buckets']['buckets']: 
-            data = { 
+        for item in res['aggregations']['my_buckets']['buckets']:
+            data = {
                 'key': item['key'],
                 'count': int(item['my_sum']['value'])
             }

@@ -43,6 +43,7 @@ from invenio_db import db
 from invenio_rest.views import create_api_errorhandler
 from invenio_stats.views import QueryRecordViewCount, QueryFileStatsCount
 from sqlalchemy.exc import SQLAlchemyError
+from weko_accounts.utils import limiter
 from weko_deposit.api import WekoRecord
 from weko_records.serializers import citeproc_v1
 from weko_records.api import RequestMailList
@@ -55,9 +56,7 @@ from .permissions import page_permission_factory, file_permission_factory
 from .errors import AvailableFilesNotFoundRESTError, ContentsNotFoundError, InvalidRequestError, VersionNotFoundRESTError, InternalServerError, \
     RecordsNotFoundRESTError, PermissionError, DateFormatRESTError, FilesNotFoundRESTError, ModeNotFoundRESTError, RequiredItemNotExistError
 from .scopes import file_read_scope
-from .utils import create_limiter
 
-limiter = create_limiter()
 
 
 def create_error_handlers(blueprint):

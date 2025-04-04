@@ -256,10 +256,10 @@ class Community(db.Model, Timestamp):
         nullable=False
     )
     """Id of Root Node"""
-    
+
     content_policy = db.Column(db.Text, nullable=True, default='')
     """Community content policy."""
-    
+
     group_id = db.Column(
         db.Integer,
         db.ForeignKey(Role.id),
@@ -284,7 +284,7 @@ class Community(db.Model, Timestamp):
                             backref='index',
                             foreign_keys=[root_node_id])
     """Relation to the owner (Index) of the community."""
-    
+
     group = db.relationship(Role, backref='group',
                             foreign_keys=[group_id])
 
@@ -371,7 +371,7 @@ class Community(db.Model, Timestamp):
         else:
             query = query.order_by(db.desc(cls.ranking))
         return query
-    
+
     @classmethod
     def get_repositories_by_user(cls, user):
         """Get repository ids for user."""
@@ -468,7 +468,7 @@ class Community(db.Model, Timestamp):
 
     def to_dict(self):
         """Convert the Community object to a dictionary.
-        
+
         Returns:
             dict: Dictionary representation of the Community object.
         """

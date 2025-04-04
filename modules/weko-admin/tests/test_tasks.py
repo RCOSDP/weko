@@ -36,40 +36,40 @@ def test_send_all_reports(app, users, statistic_email_addrs,mocker):
     args, kwargs = mock_mail.call_args
     assert args == (subject, target_email)
     assert kwargs["html"] == "test_html"
-    
+
     # report_type is not None
     mock_mail = mocker.patch("weko_admin.tasks.send_mail")
     send_all_reports("fiile_download")
     args, kwargs = mock_mail.call_args
     assert args == (subject, target_email)
     assert kwargs["html"] == "test_html"
-    
+
     # raise Exception
     mock_mail = mocker.patch("weko_admin.tasks.send_mail", side_effect=Exception("test_error"))
     send_all_reports("file_download")
     args, kwargs = mock_mail.call_args
     assert args == (subject, target_email)
     assert kwargs["html"] == "test_html"
-    
+
 # def check_send_all_reports():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_tasks.py::test_check_send_all_reports -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_check_send_all_reports(app, admin_settings, mocker):
     mock_send = mocker.patch("weko_admin.tasks.send_all_reports.delay")
     check_send_all_reports()
     mock_send.assert_not_called()
-    
+
     AdminSettings.update("report_email_schedule_settings", {"Root Index": {"details":"","enabled":True,"frequency":"daily"}})
     mock_send = mocker.patch("weko_admin.tasks.send_all_reports.delay")
     check_send_all_reports()
     mock_send.assert_called()
     args, kwargs = mock_send.call_args
     assert kwargs["repository_id"] == "Root Index"
-    
+
     AdminSettings.update("report_email_schedule_settings", {"Root Index": {"details":"","enabled":False,"frequency":"daily"}})
     mock_send = mocker.patch("weko_admin.tasks.send_all_reports.delay")
     check_send_all_reports()
     mock_send.assert_not_called()
-    
+
 
 # def send_feedback_mail():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_tasks.py::test_send_feedback_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -77,7 +77,7 @@ def test_send_feedback_mail(app, mocker):
     mock_send = mocker.patch("weko_admin.tasks.StatisticMail.send_mail_to_all")
     send_feedback_mail()
     mock_send.assert_called()
-    
+
 
 # def _due_to_run(schedule):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_tasks.py::test_due_to_run -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -85,7 +85,7 @@ def test_due_to_run():
     schedule = {"details":"","enabled":False,"frequency":"daily"}
     result = _due_to_run(schedule)
     assert result == False
-    
+
     schedule = {"details":"","enabled":True,"frequency":"daily"}
     result = _due_to_run(schedule)
     assert result == True
@@ -96,13 +96,13 @@ def test_check_send_site_access_report(client, admin_settings, mocker):
 
     # site_license_mail_setting.auto_send_flag is False
     check_send_site_access_report()
-    
+
     # site_license_mail_setting.auto_send_flag is True
     AdminSettings.update("site_license_mail_settings", {"Root Index": {"auto_send_flag": True}})
     mock_send = mocker.patch("weko_admin.tasks.manual_send_site_license_mail")
     check_send_site_access_report()
     mock_send.assert_called()
-    
+
 # def clean_temp_info():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_tasks.py::test_clean_temp_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_clean_temp_info(instance_path, mocker):
@@ -168,7 +168,7 @@ def test_is_reindex_running_waiting(i18n_app):
                 assert is_reindex_running()==False
 
 def test_reindex_EStoES(i18n_app,mocker,admin_settings):
-    
+
     return_value = Mock(spec=Response)
     return_value.text = "test_mock"
     return_value.status_code = 200
@@ -181,7 +181,7 @@ def test_reindex_EStoES(i18n_app,mocker,admin_settings):
 
 
 def test_reindex_DBtoES(i18n_app,mocker,admin_settings,reindex_settings):
-    
+
     return_value = Mock(spec=Response)
     return_value.text = "test_mock"
     return_value.status_code = 200

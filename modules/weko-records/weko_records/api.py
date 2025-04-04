@@ -50,12 +50,14 @@ from weko_authors.models import Authors
 
 
 from .fetchers import weko_record_fetcher
-from .models import FeedbackMailList as _FeedbackMailList
-from .models import RequestMailList as _RequestMailList
-from .models import FileMetadata, ItemMetadata, ItemReference, ItemType
-from .models import ItemTypeEditHistory as ItemTypeEditHistoryModel
-from .models import ItemTypeMapping, ItemTypeName, ItemTypeProperty, \
-    SiteLicenseInfo, SiteLicenseIpAddress
+from .models import (
+    FeedbackMailList as _FeedbackMailList,
+    RequestMailList as _RequestMailList,
+    FileMetadata, ItemMetadata, ItemReference, ItemType,
+    ItemTypeEditHistory as ItemTypeEditHistoryModel,
+    ItemTypeMapping, ItemTypeName, ItemTypeProperty,
+    ItemTypeJsonldMapping, SiteLicenseInfo, SiteLicenseIpAddress
+)
 
 
 _records_state = LocalProxy(
@@ -157,7 +159,7 @@ class RecordBase(dict):
             raises a :class:`jsonschema.exceptions.ValidationError`.
         """
         if '$schema' in self and self['$schema'] is not None:
-            kwargs['cls'] = kwargs.pop('validator', None)   
+            kwargs['cls'] = kwargs.pop('validator', None)
             _records_state.validate(self, self['$schema'], **kwargs)
 
     def replace_refs(self):
@@ -219,6 +221,12 @@ class ItemTypeNames(RecordBase):
             if not with_deleted:
                 query = query.filter_by(is_active=True)  # noqa
             return query.one_or_none()
+
+    @classmethod
+    def get_name_and_id_all(cls):
+        """get name and id all."""
+        query = db.session.query(ItemTypeName).with_entities(ItemTypeName.name, ItemTypeName.id)
+        return query.all()
 
     def delete(self, force=False):
         """Delete an item type name.
@@ -805,7 +813,7 @@ class ItemTypes(RecordBase):
             # flag_modified(self.model, 'schema')
             # flag_modified(self.model, 'form')
             # flag_modified(self.model, 'render')
-            
+
             db.session.merge(self.model)
 
         after_record_update.send(
@@ -930,7 +938,7 @@ class ItemTypes(RecordBase):
         result = {"msg":"Update ItemType({})".format(itemtype_id),"code":0}
         item_type = ItemTypes.get_by_id(itemtype_id)
         data = pickle.loads(pickle.dumps(item_type.render, -1))
-        
+
         pat1 = re.compile(r'cus_(\d+)')
         for idx, i in enumerate(data['table_row_map']['form']):
             if isinstance(i,dict) and 'key' in i:
@@ -957,8 +965,8 @@ class ItemTypes(RecordBase):
                                     data['table_row_map']['schema']['properties'][_prop_id].pop('properties')
                                 if 'format' in data['table_row_map']['schema']['properties'][_prop_id]:
                                     data['table_row_map']['schema']['properties'][_prop_id].pop('format')
-                                
-                                tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))                            
+
+                                tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))
                                 _forms = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.forms, -1))).replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_forms, -1))
                                 cls.update_attribute_options(tmp_data, data['table_row_map']['form'][idx], renew_value)
@@ -971,24 +979,24 @@ class ItemTypes(RecordBase):
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_form, -1))
                                 cls.update_attribute_options(tmp_data, data['table_row_map']['form'][idx], renew_value)
                                 cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'][_prop_id],data['table_row_map']['schema']['properties'][_prop_id])
-                                                                               
+
         from weko_itemtypes_ui.utils import fix_json_schema,update_required_schema_not_exist_in_form, update_text_and_textarea
-        
+
         table_row_map = data.get('table_row_map')
         json_schema = fix_json_schema(table_row_map.get('schema'))
-        
+
         json_form = table_row_map.get('form')
         json_schema = update_required_schema_not_exist_in_form(
             json_schema, json_form)
-        
+
         if itemtype_id != 0:
             json_schema, json_form = update_text_and_textarea(
                 itemtype_id, json_schema, json_form)
-        
+
         if 'schemaeditor' in data:
             if 'schema' in data['schemaeditor']:
                 data['schemaeditor']['schema'] = json_schema
-        
+
         # item_type_mapping = (
         #             ItemTypeMapping.query.filter(ItemTypeMapping.item_type_id == itemtype_id)
         #             .order_by(desc(ItemTypeMapping.created))
@@ -999,7 +1007,7 @@ class ItemTypes(RecordBase):
         # current_app.logger.error("Update ItemType({})".format(itemtype_id))
         # current_app.logger.error("Update data({})".format(data))
         # current_app.logger.error("Update json_schema({})".format(json_schema))
-        
+
         # print(data)
 
         record = cls.update(id_=itemtype_id,
@@ -1015,14 +1023,14 @@ class ItemTypes(RecordBase):
                 flag_modified(mapping.model, 'mapping')
                 db.session.add(mapping.model)
                 result['msg'] = "Fix ItemType({}) mapping".format(itemtype_id)
-                result['code'] = 0  
-        
+                result['code'] = 0
+
         ItemTypeEditHistory.create_or_update(
             item_type_id=record.model.id,
             user_id=1,
             notes=data.get('edit_notes', {})
         )
-            
+
         return result
 
     @classmethod
@@ -1055,12 +1063,12 @@ class ItemTypes(RecordBase):
         managed_key_list = current_app.config.get("WEKO_RECORDS_MANAGED_KEYS")
         if isinstance(old_value, list):
            for i in old_value:
-               cls.update_attribute_options(i, new_value, renew_value)     
-        elif isinstance(old_value, dict): 
+               cls.update_attribute_options(i, new_value, renew_value)
+        elif isinstance(old_value, dict):
             if "key" in old_value:
                 key = old_value["key"]
                 new_item = cls.getItemByItemsKey(new_value,key)
-                if new_item is not None:    
+                if new_item is not None:
                     isHide = False
                     isShowList = False
                     isNonDisplay = False
@@ -1070,7 +1078,7 @@ class ItemTypes(RecordBase):
                     title_i18n_temp = None
                     titleMap = None
                     title = None
-                    
+
                     if "title" in old_value:
                         title = old_value["title"]
                     if "isHide" in old_value:
@@ -1090,7 +1098,7 @@ class ItemTypes(RecordBase):
                         title_i18n_temp = old_value["title_i18n_temp"]
                     if ("titleMap" in old_value and key.split(".")[-1] not in managed_key_list) or ("titleMap" in old_value and renew_value not in ["ALL", "VAL"]) :
                         titleMap = old_value["titleMap"]
-                    
+
                     new_item["isHide"] = isHide
                     new_item["isShowList"] = isShowList
                     new_item["isNonDisplay"] = isNonDisplay
@@ -1126,8 +1134,8 @@ class ItemTypes(RecordBase):
                         if ret is not None:
                             return ret
         return None
- 
-            
+
+
 
 class ItemTypeEditHistory(object):
     """Define API for Itemtype Property creation and manipulation."""
@@ -1421,6 +1429,174 @@ class Mapping(RecordBase):
             return [cls(obj.mapping, model=obj) for obj in query.all()]
 
 
+class JsonldMapping():
+    @classmethod
+    def create(cls, name, mapping, item_type_id):
+        """Create mapping.
+
+        Create new mapping for item type. ID is autoincremented.
+        mapping dict is dumped to JSON format.
+
+        Args:
+            name (str): Name of the mapping.
+            mapping (dict): Mapping in JSON format.
+            item_type_id (str): Target itemtype of the mapping.
+
+        Returns:
+            ItemTypeJsonldMapping: Created mapping object.
+
+        Raises:
+            SQLAlchemyError: An error occurred while creating the mapping.
+        """
+        obj = ItemTypeJsonldMapping(
+            name=name,
+            mapping=mapping or {},
+            item_type_id=item_type_id,
+        )
+
+        try:
+            with db.session.begin_nested():
+                db.session.add(obj)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            db.session.rollback()
+            raise
+
+        return obj
+
+
+    @classmethod
+    def update(cls, id, name, mapping, item_type_id):
+        """Update mapping.
+
+        Update mapping by ID. Specify the value to be updated.
+        The verion_id is incremented and the previousmapping moves to
+        the history table.
+
+        Args:
+            id (int): Mapping ID.
+            name (str, optional): Name of the mapping. Not required.
+            mapping (dict, optional): Mapping in JSON format. Not required.
+            item_type_id (str, optional):
+                Target itemtype of the mapping. Not required.
+
+        Returns:
+            ItemTypeJsonldMapping: Updated mapping object.
+
+        Raises:
+            WekoSwordserverException: When mapping not found.
+            SQLAlchemyError: An error occurred while updating the mapping.
+        """
+        obj = JsonldMapping.get_mapping_by_id(id)
+        if obj is None:
+            return None
+
+        obj.name = name
+        obj.mapping = mapping or {}
+        obj.item_type_id = item_type_id
+
+        try:
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            db.session.rollback()
+            raise
+
+        return obj
+
+
+    @classmethod
+    def delete(cls, id):
+        """Delete mapping.
+
+        Soft-delete mapping by ID.
+
+        Args:
+            id (int): Mapping ID.
+
+        Returns:
+            ItemTypeJsonldMapping: Deleted mapping object.
+        """
+        obj = JsonldMapping.get_mapping_by_id(id)
+        if obj is not None:
+            obj.is_deleted = True
+            db.session.commit()
+        return obj
+
+
+    @classmethod
+    def get_mapping_by_id(cls, id, include_deleted=False):
+        """Get mapping by mapping_id.
+
+        Get mapping latest version by mapping_id.
+        If include_deleted=False, return None if the mapping is deleted(default).
+        Specify include_deleted=True to get the mapping even if it is deleted.
+
+        Args:
+            id (int): Mapping ID.
+            include_deleted (bool, optional):
+                Include deleted mapping. Default is False.
+
+        Returns:
+            ItemTypeJsonldMapping:
+            Mapping object. If not found or deleted, return `None`.
+        """
+
+        obj = (
+            ItemTypeJsonldMapping.query
+            .filter_by(id=id)
+            .first()
+        )
+
+        if not include_deleted and obj is not None and obj.is_deleted:
+            return None
+        return obj
+
+    @classmethod
+    def get_by_itemtype_id(cls, item_type_id, include_deleted=False):
+        """Get mapping by itemtype_id.
+
+        Get mapping latest version by itemtype_id.
+        If include_deleted=False, return None if the mapping is deleted(default).
+        Specify include_deleted=True to get the mapping even if it is deleted.
+
+        Args:
+            item_type_id (int): Itemtype ID.
+            include_deleted (bool, optional):
+                Include deleted mapping. Default is False.
+
+        Returns:
+            ItemTypeJsonldMapping:
+            Mapping object. If not found or deleted, return `None`.
+        """
+        query = (
+            ItemTypeJsonldMapping.query
+            .filter_by(item_type_id=item_type_id)
+            .order_by(ItemTypeJsonldMapping.updated.desc())
+        )
+        if include_deleted:
+            query.filter_by(is_deleted=False)
+
+        return query.all()
+
+    @classmethod
+    def get_all(cls, include_deleted=False):
+        """Get all mapping.
+
+        Get all mapping. If include_deleted=False, return only active mapping.
+        Specify include_deleted=True to get all mapping including deleted.
+
+        Args:
+            include_deleted (bool, optional):
+                Include deleted mapping. Default is False.
+
+        Returns:
+            list[ItemTypeJsonldMapping]: List of mapping objects.
+        """
+        query = ItemTypeJsonldMapping.query
+        if not include_deleted:
+            query = query.filter_by(is_deleted=False)
+        return query.all()
+
 class ItemTypeProps(RecordBase):
     """Define API for Itemtype Property creation and manipulation."""
 
@@ -1517,7 +1693,7 @@ class ItemTypeProps(RecordBase):
                 query = ItemTypeProperty.query.filter_by(delflg=False)
 
             return query.all()
-        
+
     @property
     def revisions(self):
         """Get revisions iterator."""
@@ -2107,7 +2283,7 @@ class SiteLicense(RecordBase):
                     sl_obj = SiteLicenseInfo.query.filter(SiteLicenseInfo.repository_id.in_(repository_ids)).order_by(
                         SiteLicenseInfo.organization_id).all()
             return [cls(dict(obj)) for obj in sl_obj]
-    
+
     @classmethod
     def update(cls, obj):
         """Update method."""
@@ -2121,18 +2297,18 @@ class SiteLicense(RecordBase):
             if repositories:
                 return [repository.id for repository in repositories]
             raise Exception("No repository found for the user")
-    
+
         def get_existing_entries(repository_ids):
             """Get existing site license entries for the repository."""
             if "Root Index" in repository_ids:
                 return {info.organization_name: info for info in SiteLicenseInfo.query.all()}
             return {info.organization_name: info for info in SiteLicenseInfo.query.filter(SiteLicenseInfo.repository_id.in_(repository_ids)).all()}
-    
+
         def get_addr(lst, organization_id):
             """Convert address list to SiteLicenseIpAddress instances."""
             if not lst or not isinstance(lst, list):
                 return []
-            
+
             return [
                 SiteLicenseIpAddress(
                     organization_id=organization_id,
@@ -2145,30 +2321,30 @@ class SiteLicense(RecordBase):
         # update has_site_license field on item type name tbl
         ItemTypeNames.update(obj.get('item_type'))
         repository_ids = get_repository_ids()
-        
+
         site_license = obj.get('site_license')
         if not isinstance(site_license, list):
             return
-        
+
         existing_entries = get_existing_entries(repository_ids)
         new_entries = {}
-        
+
         for lst in site_license:
             org_name = lst.get('organization_name')
             receive_mail_flag = lst.get('receive_mail_flag', 'F') if lst.get('mail_address') else 'F'
-            
+
             if org_name in existing_entries:
                 # Update existing entry
                 slif = existing_entries[org_name]
                 slif.receive_mail_flag = receive_mail_flag
                 slif.mail_address = lst.get('mail_address')
                 slif.domain_name = lst.get('domain_name')
-                
+
                 # Update addresses
                 for addr in slif.addresses:
                     db.session.delete(addr)
                 new_addresses = get_addr(lst.get('addresses'), slif.organization_id)
-                slif.addresses = new_addresses    
+                slif.addresses = new_addresses
 
                 new_entries[org_name] = slif
             else:
@@ -2389,7 +2565,7 @@ class FeedbackMailList(object):
             PersistentIdentifier.status == PIDStatus.REGISTERED,
             PersistentIdentifier.pid_value.notlike("%.%")
         )
-        
+
         if repo_id:
             data = data.filter(_FeedbackMailList.repository_id == repo_id)
         data = data.all()
@@ -2706,74 +2882,215 @@ class ItemLink(object):
     def update(self, items):
         """Update list item link of current record.
 
-        :param items: List record_d and relation type.
-        :return: Error or not.
+        This method updates the relationships between the current item (self.org_item_id)
+        and a list of destination items (items). It handles creation, updating, and deletion
+        of relationships, including special logic for supplement relationships.
+
+        :param items: List of dictionaries containing 'item_id' and 'sele_id' (relationship type).
+        :return: Error message if any, otherwise None.
         """
-        dst_relations = ItemReference.get_src_references(
-            self.org_item_id).all()
-        dst_ids = [dst_item.dst_item_pid for dst_item in dst_relations]
+        # Fetch all existing relationships where the current item is the source
+        dst_relations = ItemReference.get_src_references(self.org_item_id).all()
+        # Create a set of destination item IDs for quick lookup
+        dst_ids = {dst_item.dst_item_pid for dst_item in dst_relations}
+        # Initialize lists to track changes:
+        # - updated: Items whose relationship type has changed
+        # - updated_deleted_supplement: Items with supplement relationships that need to be deleted
+        # - created: New items to be added
+        # - created_supplement: New supplement relationships to be created
         updated = []
+        updated_deleted_supplement = []
         created = []
+        created_supplement = []
+        supplement_key = current_app.config["WEKO_RECORDS_REFERENCE_SUPPLEMENT"]
+        # Iterate through each item in the input list
         for item in items:
             item_id = item['item_id']
+            if item_id and not item_id.isdigit():
+                continue
+            sele_id = item['sele_id']
+
+            # Check if the item already has a relationship with the current item
             if item_id in dst_ids:
-                updated.extend(item for dst_item in dst_relations if
-                               dst_item.reference_type != item['sele_id'])
+                # Find the corresponding destination item in the existing relationships
+                dst_item = next(
+                    (d for d in dst_relations if d.dst_item_pid == item_id),
+                    None
+                )
+                # If the relationship type has changed, handle the update
+                if dst_item and dst_item.reference_type != sele_id:
+                    # If the old relationship was a supplement type, mark it for deletion
+                    if dst_item.reference_type in (
+                        supplement_key[0],
+                        supplement_key[1]
+                    ):
+                        updated_deleted_supplement.append(item_id)
+                itemtmp = item.copy()
+                if sele_id == supplement_key[1]:
+                    itemtmp['sele_id'] = supplement_key[0]
+                    if self.bulk_select(itemtmp) == False:
+                        created_supplement.append({
+                            'item_id': item_id,
+                            'dst_item_id': self.org_item_id,
+                            'sele_id': supplement_key[0]
+                        })
+                elif sele_id == supplement_key[0]:
+                    itemtmp['sele_id'] = supplement_key[1]
+                    if self.bulk_select(itemtmp) == False:
+                        created_supplement.append({
+                            'item_id': item_id,
+                            'dst_item_id': self.org_item_id,
+                            'sele_id': supplement_key[1]
+                        })
+                # Mark the item as updated
+                updated.append(item)
+                # Remove the item from the set of existing relationships
                 dst_ids.remove(item_id)
             else:
-                created.append(item)
+                # If the item is new, add it to the created list
+                created.append({
+                            'item_id': self.org_item_id,
+                            'dst_item_id': item['item_id'],
+                            'sele_id': item['sele_id']
+                        })
+                # If the new relationship is a supplement type,
+                # create the inverse relationship
+                if sele_id == supplement_key[1]:
+                    item['sele_id'] = supplement_key[0]
+                    if self.bulk_select(item) == False:
+                        created_supplement.append({
+                            'item_id': item_id,
+                            'dst_item_id': self.org_item_id,
+                            'sele_id':  supplement_key[0]
+                        })
+                elif sele_id ==  supplement_key[0]:
+                    item['sele_id'] = supplement_key[1]
+                    if self.bulk_select(item) == False:
+                        created_supplement.append({
+                            'item_id': item_id,
+                            'dst_item_id': self.org_item_id,
+                            'sele_id': supplement_key[1]
+                        })
 
-        deleted = dst_ids
-
+        deleted = list(dst_ids)
+        if created_supplement:
+            created.extend(created_supplement)
         try:
+            # Perform all database operations within a nested transaction
             with db.session.begin_nested():
-                if created:
-                    self.bulk_create(created)
-                if updated:
-                    self.bulk_update(updated)
+                # Delete relationships for removed items
                 if deleted:
                     self.bulk_delete(deleted)
+                    # Delete supplement relationships for deleted items
+                    self.bulk_delete_supplement(deleted)
+                # Create new relationships
+                # Update existing relationships
+                if updated:
+                    # Delete old supplement relationships for updated items
+                    self.bulk_delete_supplement(updated_deleted_supplement)
+                    self.bulk_update(updated)
+                if created:
+                    self.bulk_create(created)
+
+            # Commit the transaction if all operations succeed
             db.session.commit()
         except IntegrityError as ex:
-            current_app.logger.error(ex.orig)
-            db.session.rollback()
-            return str(ex.orig)
-        except SQLAlchemyError as ex:
+            # Log and handle integrity errors (e.g., duplicate entries)
             current_app.logger.error(ex)
             db.session.rollback()
             return str(ex)
+        except SQLAlchemyError as ex:
+            # Log and handle other SQLAlchemy errors
+            current_app.logger.error(ex)
+            db.session.rollback()
+            return str(ex)
+        # Return None if no errors occurred
         return None
 
-    def bulk_create(self, dst_items):
-        """Create list of item links.
 
-        :param dst_items: List items.
+    def bulk_select(self, item) :
+        """select a list of item links in bulk.
         """
-        objects = [ItemReference(
-            src_item_pid=self.org_item_id,
-            dst_item_pid=cr['item_id'],
-            reference_type=cr['sele_id']) for cr in dst_items]
+        return ItemReference.query.filter_by(
+            src_item_pid=item['item_id'],
+            dst_item_pid=self.org_item_id.split(".")[0],
+            reference_type=item['sele_id']).count() > 0
+
+    def bulk_create(self, dst_items):
+        """Create a list of item links in bulk.
+
+        :param dst_items: List of dictionaries containing 'item_id' and 'sele_id'.
+        """
+        # Create a list of ItemReference objects for bulk insertion
+        objects = [
+            ItemReference(
+                src_item_pid=item['item_id'],
+                dst_item_pid=item['dst_item_id'],
+                reference_type=item['sele_id']
+            ) for item in dst_items
+        ]
+        # Save all objects in a single database operation
         db.session.bulk_save_objects(objects)
 
     def bulk_update(self, dst_items):
-        """Update list of item links.
+        """Update a list of item links in bulk.
 
-        :param dst_items: List items.
+        :param dst_items: List of dictionaries containing 'item_id' and 'sele_id'.
         """
-        objects = [ItemReference(
-            src_item_pid=self.org_item_id,
-            dst_item_pid=cr['item_id'],
-            reference_type=cr['sele_id']) for cr in dst_items]
-        for obj in objects:
-            db.session.merge(obj)
+        # Update each item relationship by merging changes into the database
+        for item in dst_items:
+            db.session.merge(ItemReference(
+                src_item_pid=self.org_item_id,
+                dst_item_pid=item['item_id'],
+                reference_type=item['sele_id']
+            ))
+
+    def bulk_create_supplement(self, dst_items):
+        """Create a list of supplement item links in bulk.
+
+        Args:
+            dst_items (list of dict): List of dictionaries containing 'src_item_id', 'dst_item_id', and 'sele_id'.
+                Each dictionary represents a supplement item link with the source item ID, destination item ID, and reference type.
+
+        Returns:
+            None
+        """
+        # Create a list of ItemReference objects for bulk insertion
+        objects = [
+            ItemReference(
+                src_item_pid=item['src_item_id'],
+                dst_item_pid=item['dst_item_id'],
+                reference_type=item['sele_id']
+            ) for item in dst_items
+        ]
+        # Save all objects in a single database operation
+        db.session.bulk_save_objects(objects)
 
     def bulk_delete(self, dst_item_ids):
-        """Delete list of item links.
+        """Delete a list of item links in bulk.
 
-        :param dst_item_ids: List items.
+        :param dst_item_ids: List of destination item IDs to delete.
         """
-        for dst_item_id in dst_item_ids:
-            db.session.query(ItemReference).filter(
-                ItemReference.src_item_pid == self.org_item_id,
-                ItemReference.dst_item_pid == dst_item_id
-            ).delete(synchronize_session='fetch')
+        db.session.query(ItemReference).filter(
+            ItemReference.src_item_pid == self.org_item_id,
+            ItemReference.dst_item_pid.in_(dst_item_ids)
+        ).delete(synchronize_session='fetch')
+
+    def bulk_delete_supplement(self, dst_item_ids):
+        """Delete a list of supplement item links in bulk.
+
+        Args:
+            dst_item_ids (list of int): List of destination item IDs to delete from the ItemReference table.
+                These IDs will be matched against the source item ID in the query.
+
+        Returns:
+            None
+
+        """
+        db.session.query(ItemReference).filter(
+            ItemReference.src_item_pid.in_(dst_item_ids),
+            ItemReference.dst_item_pid == self.org_item_id,
+            ItemReference.reference_type.in_(
+                current_app.config["WEKO_RECORDS_REFERENCE_SUPPLEMENT"]
+            )
+        ).delete(synchronize_session='fetch')

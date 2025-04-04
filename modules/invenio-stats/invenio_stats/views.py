@@ -114,7 +114,7 @@ class QueryRecordViewCount(WekoQuery):
 
     def _get_data(self, record_id, query_date=None, get_period=False):
         """Get data."""
-        
+
         result = {}
         period = []
         country = {}
@@ -143,7 +143,7 @@ class QueryRecordViewCount(WekoQuery):
             query_total = query_total_cfg.query_class(
                 **query_total_cfg.query_config)
             res_total = query_total.run(**params)
-            
+
             result['total'] = res_total['count']
             for d in res_total['buckets']:
                 country[d['key']] = d['count']

@@ -5,7 +5,7 @@ import os
 from datetime import datetime, timedelta
 from io import StringIO
 from collections import OrderedDict
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, Mock, mock_open
 import copy
 import tempfile
 from uuid import UUID
@@ -14,6 +14,7 @@ from elasticsearch import exceptions as es_exceptions
 import uuid
 
 import pytest
+from elasticsearch.exceptions import NotFoundError
 from flask_security.utils import login_user
 from invenio_stats.errors import UnknownQueryError
 from weko_records_ui.errors import AvailableFilesNotFoundRESTError
@@ -44,6 +45,7 @@ from weko_workflow.schema.marshmallow import ActivitySchema, ResponseMessageSche
 from weko_items_ui.utils import (
     __sanitize_string,
     _custom_export_metadata,
+    _export_file,
     _export_item,
     _get_max_export_items,
     check_approval_email,
@@ -52,6 +54,7 @@ from weko_items_ui.utils import (
     check_item_is_deleted,
     check_item_type_name,
     export_items,
+    export_rocrate,
     find_hidden_items,
     get_permission_record,
     get_current_user,
@@ -8176,6 +8179,157 @@ def test_export_items_issue32943(app,db_itemtype,db_itemtype2,db_records,users,d
         with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
             res = export_items(post_data)
             assert res.status_code == 200
+
+
+# def _export_file(record_id, data_path=None):
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test__export_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test__export_file(app,db_records,mocker):
+    _, _, _, _, record, _ = db_records[0]
+    data_path= "./tests/"
+    with app.test_request_context():
+        record_return_data = MagicMock()
+        record_data_1 = MagicMock()
+        record_data_1.info.return_value = {"accessrole": "close_restricted"}
+        # Mock file.obj.file.storage()
+        storage_mock = MagicMock()
+        record_data_1.obj.file.storage.return_value = storage_mock
+        record_data_1.obj.basename = "test.txt"
+        # Mock open()
+        open_mock = MagicMock()
+        open_mock.read.return_value = b"mocked file content"
+        storage_mock.open.return_value.__enter__.return_value = open_mock
+
+        record_return_data.files = [record_data_1]
+        mocker.patch("weko_items_ui.utils.WekoRecord.get_record_by_pid", return_value=record_return_data)
+        with patch("weko_items_ui.utils.check_file_download_permission", return_value=True):
+            with patch("builtins.open", mock_open(read_data="data")) as mock_file:
+                mock_file.return_value = MagicMock()
+                mock_file.return_value.write.return_value = "data"
+                _export_file(record.id, data_path)
+                mock_file.assert_called_once_with("./tests/test.txt", "wb")
+
+        with patch("weko_items_ui.utils.check_file_download_permission", return_value=False):
+            with patch("builtins.open", mock_open(read_data="data")) as mock_file:
+                mock_file.return_value = MagicMock()
+                mock_file.return_value.write.return_value = "data"
+                _export_file(record.id, data_path)
+                mock_file.assert_not_called()
+
+        record_data_2 = MagicMock()
+        record_data_2.info.return_value = {"accessrole": "open_restricted"}
+        record_return_data.files = [record_data_2]
+        with patch("weko_items_ui.utils.check_file_download_permission", return_value=True):
+            with patch("builtins.open", mock_open(read_data="data")) as mock_file:
+                mock_file.return_value = MagicMock()
+                mock_file.return_value.write.return_value = "data"
+                _export_file(record.id, data_path)
+                mock_file.assert_not_called()
+
+# def export_rocrate(post_data):
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_export_rocrate -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_export_rocrate(app,client,db_itemtype,db_records,users,mocker):
+    app.config["WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM"] = 0
+
+    post_data = {
+        "export_format_radio": "ROCRATE",
+        "record_ids": "[2000002]",
+        "invalid_record_ids": "[]",
+        "record_metadata": "",
+        "export_file_contents_radio": "True"
+    }
+    with app.test_request_context():
+        from werkzeug.exceptions import BadRequest
+        with pytest.raises(BadRequest) as ex:
+            export_rocrate(post_data)
+        assert ex.value.code == 400
+
+    post_data = {
+        "export_format_radio": "ROCRATE",
+        "record_ids": "[]",
+        "invalid_record_ids": "[]",
+        "record_metadata": "",
+        "export_file_contents_radio": "True"
+    }
+    app.config["WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM"] = 100
+    with app.test_request_context():
+        res = export_rocrate(post_data)
+        print(f"res: {res}")
+        assert res == ("", 204)
+
+    post_data = {
+        "export_format_radio": "ROCRATE",
+        "record_ids": "[2000002]",
+        "invalid_record_ids": "[]",
+        "record_metadata": "",
+        "export_file_contents_radio": "True"
+    }
+    metadata_dict = {"2000002": ({"owner": "1", "item_30002_file35": {"attribute_name": "File", "attribute_type": "file", "attribute_value_mlt": [{"date": [{"dateValue": "2025-03-09", "dateType": "Available"}], "accessrole": "open_access", "filename": "weko-logo.png", "format": "image/png", "mimetype": "image/png", "filesize": [{"value": "72 KB"}], "version_id": "451897d0-ec99-4a9c-9e9d-8126f420c80b", "url": {"url": "https://weko3.example.org/record/2000002/files/weko-logo.png"}}]}, "item_type_id": "30002", "title": ["weko-logo"], "item_30002_title0": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_title": "weko-logo", "subitem_title_language": "ja"}]}, "author_link": [], "path": ["1623632832836"], "control_number": "2000002", "weko_shared_id": -1, "relation_version_is_last": True, "item_30002_resource_type13": {"attribute_name": "item_30002_resource_type13", "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_c513", "resourcetype": "image"}]}, "item_title": "weko-logo", "publish_date": "2025-03-09", "publish_status": "0", "pubdate": {"attribute_name": "PubDate", "attribute_value": "2025-03-09"}}, ["weko-logo.png"])}
+    with app.test_request_context():
+        with patch("weko_items_ui.utils._get_metadata_dict_in_es", return_value=metadata_dict):
+            mocker.patch("weko_items_ui.utils._export_file")
+            mocker.patch("weko_items_ui.utils.open")
+            mocker.patch("weko_items_ui.utils.json.dump")
+            mocker.patch("weko_items_ui.utils.bagify")
+            mocker.patch("shutil.make_archive")
+            mocker.patch("weko_items_ui.utils.send_file", return_value=Mock(status_code=200))
+            mocker.patch("weko_items_ui.utils.os.remove")
+            res = export_rocrate(post_data)
+            assert res.status_code == 200
+
+    with app.test_request_context():
+        mock_records_search = MagicMock()
+        mocker.patch("weko_items_ui.utils.RecordsSearch", return_value=mock_records_search)
+        with patch("weko_items_ui.utils.RecordsSearch.execute", side_effect=Exception) as mock_execute:
+            with pytest.raises(Exception) as ex:
+                export_rocrate(post_data)
+                mock_execute.assert_called_once()
+                mock_records_search.assert_called_once()
+            # print(f"ex: {ex}")
+            # print(f"ex.value: {ex.value}")
+
+    with app.test_request_context():
+        with patch("weko_items_ui.utils._get_metadata_dict_in_es", side_effect=NotFoundError("es_error")):
+            with pytest.raises(NotFoundError) as ex:
+                export_rocrate(post_data)
+                assert ex.value.message == "es_error"
+
+
+# def _get_max_export_items():
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test__get_metadata_dict_in_es -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test__get_metadata_dict_in_es(app,users,mocker):
+
+    post_data = {
+        "export_format_radio": "ROCRATE",
+        "record_ids": "[2000002]",
+        "invalid_record_ids": "[]",
+        "record_metadata": "",
+        "export_file_contents_radio": "True"
+    }
+    metadata_dict = {"2000002": ({"owner": "1", "item_30002_file35": {"attribute_name": "File", "attribute_type": "file", "attribute_value_mlt": [{"date": [{"dateValue": "2025-03-09", "dateType": "Available"}], "accessrole": "open_access", "filename": "weko-logo.png", "format": "image/png", "mimetype": "image/png", "filesize": [{"value": "72 KB"}], "version_id": "451897d0-ec99-4a9c-9e9d-8126f420c80b", "url": {"url": "https://weko3.example.org/record/2000002/files/weko-logo.png"}}]}, "item_type_id": "30002", "title": ["weko-logo"], "item_30002_title0": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_title": "weko-logo", "subitem_title_language": "ja"}]}, "author_link": [], "path": ["1623632832836"], "control_number": "2000002", "weko_shared_id": -1, "relation_version_is_last": True, "item_30002_resource_type13": {"attribute_name": "item_30002_resource_type13", "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_c513", "resourcetype": "image"}]}, "item_title": "weko-logo", "publish_date": "2025-03-09", "publish_status": "0", "pubdate": {"attribute_name": "PubDate", "attribute_value": "2025-03-09"}}, ["weko-logo.png"])}
+
+    with app.test_request_context():
+        mock_records_search = MagicMock()
+        mocker.patch("weko_items_ui.utils.RecordsSearch", return_value=mock_records_search)
+        with patch("weko_items_ui.utils.RecordsSearch.execute", side_effect=Exception) as mock_execute:
+            with pytest.raises(Exception) as ex:
+                export_rocrate(post_data)
+                mock_execute.assert_called_once()
+                mock_records_search.assert_called_once()
+            # print(f"ex: {ex}")
+            # print(f"ex.value: {ex.value}")
+
+    with app.test_request_context():
+        with patch("weko_items_ui.utils._get_metadata_dict_in_es", side_effect=NotFoundError("es_error")):
+            with pytest.raises(NotFoundError) as ex:
+                export_rocrate(post_data)
+                assert ex.value.message == "es_error"
+
+
+
+
+
+
+
 
 
 # def _get_max_export_items():

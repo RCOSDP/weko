@@ -72,14 +72,14 @@ def init_menu():
         _('%(icon)s Administration', icon='<i class="fa fa-cogs fa-fw"></i>'),
         visible_when=_has_admin_access,
         order=100)
-    
+
 @blueprint.before_app_first_request
 def _adjust_shib_admin_DB():
     """
     Create or Update Shibboleth Admin database table.
     """
-    if current_app.config.get('TESTING', False):  # テスト環境では何もしない	
-        return	
+    if current_app.config.get('TESTING', False):  # テスト環境では何もしない
+        return
 
     with _app.app_context():
         if AdminSettings.query.filter_by(name='blocked_user_settings').first() is None:
@@ -105,7 +105,7 @@ def _adjust_shib_admin_DB():
             setting = AdminSettings.query.filter_by(name='shib_login_enable').first()
             setting.settings = {"shib_flg": _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']}
             db.session.commit()
-        
+
         if AdminSettings.query.filter_by(name='default_role_settings').first() is None:
             max_id = db.session.query(db.func.max(AdminSettings.id)).scalar()
             new_setting = AdminSettings(
@@ -395,7 +395,7 @@ def find_user_by_email(shib_attributes):
     _datastore = LocalProxy(
             lambda: current_app.extensions['security'].datastore)
     user = _datastore.find_user(email=shib_attributes.get('shib_mail'))
-        
+
     return user
 
 @blueprint.route('/shib/login', methods=['POST'])
@@ -440,9 +440,9 @@ def shib_sp_login():
             def _wildcard_to_regex(pattern):
                 regex_pattern = pattern.replace("*", ".*")
                 return re.compile(f"^{regex_pattern}$")
-            
+
             blocked = any(_wildcard_to_regex(pattern).match(shib_eppn) or pattern == shib_eppn for pattern in block_user_list)
-        
+
             if blocked:
                 flash(_("Failed to login."), category='error')
                 return _redirect_method()
@@ -500,11 +500,11 @@ def shib_stub_login():
     sp_entityID = "https://" + current_app.config["WEB_HOST_NAME"]+"/shibboleth-sp"
     if 'SP_ENTITYID' in current_app.config:
         sp_entityID = current_app.config['SP_ENTITYID']
-    
+
     sp_handlerURL = "https://" + current_app.config["WEB_HOST_NAME"]+"/Shibboleth.sso"
     if 'SP_HANDLERURL' in current_app.config:
         sp_handlerURL = current_app.config['SP_HANDLERURL']
-    
+
     # LOGIN USING JAIROCLOUD PAGE
     if current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED']:
         return redirect(_shib_login_url.format(request.url_root)+ '?next=' + request.args.get('next', '/'))

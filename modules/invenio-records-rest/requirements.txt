@@ -161,7 +161,7 @@ Flask-Plugins==1.6.1
 bibtexparser==1.0.1
 github3.py==1.1.0
 feedgen==0.7.0
-boto3==1.7.84
+boto3==1.9.83
 s3fs==0.1.6
 #fpdf==1.7.2
 -e git+https://github.com/RCOSDP/pyfpdf.git@fix/nii#egg=fpdf

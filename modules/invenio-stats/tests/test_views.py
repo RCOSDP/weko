@@ -135,7 +135,7 @@ class mockPIDVersioning:
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_views.py::test_query_record_view_count -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_query_record_view_count(client, db, es, records):
     _uuid = str(records[0][0].object_uuid)
-    
+
     # get
     res = client.get(
         url_for('invenio_stats.get_record_view_count', record_id=_uuid))
@@ -273,7 +273,7 @@ def test_query_item_reg_report(client, role_users, id, status_code):
         url_for('invenio_stats.get_item_registration_report',
                 target_report='1', start_date='0', end_date='0', unit='Year', p='A'))
     assert res.status_code==status_code
-    
+
     res = client.get(
         url_for('invenio_stats.get_item_registration_report',
                 target_report='1', start_date='0', end_date='0', unit='Year', repo='comm1'))
@@ -297,7 +297,7 @@ def test_query_record_view_report(client, role_users, id, status_code):
     res = client.get(
         url_for('invenio_stats.get_record_view_report', year=2022, month=9))
     assert res.status_code==status_code
-    
+
     res = client.get(
         url_for('invenio_stats.get_record_view_report', year=2022, month=9, repository_id='comm1'))
     assert res.status_code==status_code
@@ -321,7 +321,7 @@ def test_query_record_view_per_index_report(client, role_users, id, status_code)
     res = client.get(
         url_for('invenio_stats.get_record_view_per_index_report', year=2022, month=9))
     assert res.status_code==status_code
-    
+
     res = client.get(
         url_for('invenio_stats.get_record_view_per_index_report', year=2022, month=9, repository_id='comm1'))
     assert res.status_code==status_code
@@ -345,7 +345,7 @@ def test_query_file_reports(client, role_users, id, status_code):
     res = client.get(
         url_for('invenio_stats.get_file_reports', event='file_download', year=2022, month=9))
     assert res.status_code==status_code
-    
+
     res = client.get(
         url_for('invenio_stats.get_file_reports', event='file_download', year=2022, month=9, repository_id='comm1'))
     assert res.status_code==status_code
@@ -358,7 +358,7 @@ def test_query_common_reports(client):
     res = client.get(
         url_for('invenio_stats.get_common_report', event='top_page_access', year=2022, month=9))
     assert res.status_code==200
-    
+
     res = client.get(
         url_for('invenio_stats.get_common_report', event='top_page_access', year=2022, month=9, repository_id='comm1'))
     assert res.status_code==200
@@ -421,7 +421,7 @@ def test_query_search_report(client, role_users, id, status_code):
     res = client.get(
         url_for('invenio_stats.get_search_report', year=2022, month=9))
     assert res.status_code==status_code
-    
+
     res = client.get(
         url_for('invenio_stats.get_search_report', year=2022, month=9, repository_id='comm1'))
     assert res.status_code==status_code

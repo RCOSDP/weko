@@ -24,7 +24,7 @@ from mock import patch
 import json
 
 from weko_authors.models import (
-    Authors, 
+    Authors,
     AuthorsPrefixSettings,
     AuthorsAffiliationSettings
 )
@@ -37,7 +37,7 @@ class TestAuthors:
         author = Authors()
         db.session.add(author)
         db.session.commit()
-        
+
         result = Authors.query.first()
         assert result.id == 1
         assert result.json == {}
@@ -56,7 +56,7 @@ class TestAuthors:
         # session is not None
         result = Authors.get_sequence(session)
         assert result == 2
-        
+
         # session is None
         with patch("weko_authors.models.db.session.execute", side_effect=session.execute):
             result = Authors.get_sequence(None)
@@ -66,11 +66,11 @@ class TestAuthors:
         # not find author
         result = Authors.get_first_email_by_id(1000)
         assert result == None
-        
+
         # find author
         result = Authors.get_first_email_by_id(1)
         assert result == "test.taro@test.org"
-        
+
         # raise Exception
         with patch("flask_sqlalchemy._QueryProperty.__get__") as mock_query:
             mock_query.return_value.filter_by.return_value.one_or_none.side_effect=Exception("test_error")
@@ -84,15 +84,15 @@ class TestAuthors:
         )
         db.session.add(author)
         db.session.commit()
-        
+
         # not find author
         result = Authors.get_author_by_id(1000)
         assert result == None
-        
+
         # find author
         result = Authors.get_author_by_id(1)
         assert result == {"test_data":"value"}
-        
+
         # raise Exception
         with patch("flask_sqlalchemy._QueryProperty.__get__") as mock_query:
             mock_query.return_value.filter_by.return_value.one_or_none.side_effect=Exception("test_error")
@@ -111,7 +111,7 @@ class TestAuthorsPrefixSettings:
         result = AuthorsPrefixSettings.query.filter_by(name="ORCID").one()
         assert result
         assert result.scheme == "ORCID"
-        
+
         # scheme is none
         AuthorsPrefixSettings.create(
             name="CiNii",
@@ -121,7 +121,7 @@ class TestAuthorsPrefixSettings:
         result = AuthorsPrefixSettings.query.filter_by(name="CiNii").one()
         assert result
         assert result.scheme == None
-        
+
         # raise Exception
         with patch("weko_authors.models.db.session.commit", side_effect=BaseException("test_error")):
             with pytest.raises(BaseException):
@@ -132,7 +132,7 @@ class TestAuthorsPrefixSettings:
                 )
             result = AuthorsPrefixSettings.query.filter_by(name="WEKO").one_or_none()
             assert result is None
-            
+
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_models.py::TestAuthorsPrefixSettings::test_update -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_update(self,authors_prefix_settings):
         AuthorsPrefixSettings.update(
@@ -144,7 +144,7 @@ class TestAuthorsPrefixSettings:
         result = AuthorsPrefixSettings.query.filter_by(id=1).one()
         assert result.name == "WEKO3"
         assert result.scheme == "WEKO3"
-        
+
         # scheme is none
         AuthorsPrefixSettings.update(
             id=1,
@@ -155,7 +155,7 @@ class TestAuthorsPrefixSettings:
         result = AuthorsPrefixSettings.query.filter_by(id=1).one()
         assert result.name == "WEKO2"
         assert result.scheme == "WEKO3"
-        
+
         # raise Exception
         with patch("weko_authors.models.db.session.commit", side_effect=BaseException("test_error")):
             with pytest.raises(BaseException):
@@ -174,7 +174,7 @@ class TestAuthorsPrefixSettings:
         AuthorsPrefixSettings.delete(1)
         result = AuthorsPrefixSettings.query.filter_by(id=1).one_or_none()
         assert result is None
-        
+
         # raise Exception
         with patch("weko_authors.models.db.session.commit", side_effect=BaseException("test_error")):
             with pytest.raises(BaseException):
@@ -195,7 +195,7 @@ class TestAuthorsAffiliationSettings:
         result = AuthorsAffiliationSettings.query.filter_by(name="ORCID").one()
         assert result
         assert result.scheme == "ORCID"
-        
+
         # scheme is none
         AuthorsAffiliationSettings.create(
             name="CiNii",
@@ -205,7 +205,7 @@ class TestAuthorsAffiliationSettings:
         result = AuthorsAffiliationSettings.query.filter_by(name="CiNii").one()
         assert result
         assert result.scheme == None
-        
+
         # raise Exception
         with patch("weko_authors.models.db.session.commit", side_effect=BaseException("test_error")):
             with pytest.raises(BaseException):
@@ -216,7 +216,7 @@ class TestAuthorsAffiliationSettings:
                 )
             result = AuthorsAffiliationSettings.query.filter_by(name="WEKO").one_or_none()
             assert result is None
-            
+
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_models.py::TestAuthorsAffiliationSettings::test_update -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_update(self,authors_affiliation_settings):
         AuthorsAffiliationSettings.update(
@@ -228,7 +228,7 @@ class TestAuthorsAffiliationSettings:
         result = AuthorsAffiliationSettings.query.filter_by(id=1).one()
         assert result.name == "WEKO3"
         assert result.scheme == "WEKO3"
-        
+
         # scheme is none
         AuthorsAffiliationSettings.update(
             id=1,
@@ -239,7 +239,7 @@ class TestAuthorsAffiliationSettings:
         result = AuthorsAffiliationSettings.query.filter_by(id=1).one()
         assert result.name == "WEKO2"
         assert result.scheme == "WEKO3"
-        
+
         # raise Exception
         with patch("weko_authors.models.db.session.commit", side_effect=BaseException("test_error")):
             with pytest.raises(BaseException):
@@ -258,7 +258,7 @@ class TestAuthorsAffiliationSettings:
         AuthorsAffiliationSettings.delete(1)
         result = AuthorsAffiliationSettings.query.filter_by(id=1).one_or_none()
         assert result is None
-        
+
         # raise Exception
         with patch("weko_authors.models.db.session.commit", side_effect=BaseException("test_error")):
             with pytest.raises(BaseException):

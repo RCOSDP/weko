@@ -20374,13 +20374,13 @@ def test_iframe_items_index_get_error(app, client, db_itemtype, users, db_record
     mocker.patch("weko_items_ui.views.set_files_display_type")
     mocker.patch("weko_items_ui.views.get_thumbnails",return_value=[])
     mocker.patch("weko_items_ui.views.update_index_tree_for_record")
-    
+
     # pid_value == 0
     url = url_for("weko_items_ui.iframe_items_index", pid_value=str(0), _external=True)
     with patch("weko_items_ui.views.redirect",return_value=make_response()) as mock_redirect:
         res = client.get(url)
         mock_redirect.assert_called_with("/items/iframe")
-    
+
     url = url_for("weko_items_ui.iframe_items_index", pid_value=str(1), _external=True)
     # exist community
     with patch("weko_workflow.api.GetCommunity.get_community_by_id", return_value="c"):
@@ -20473,7 +20473,7 @@ def test_iframe_items_index_get(app, client, db_itemtype, users, db_records, db_
         session["itemlogin_histories"] = []
         session["itemlogin_res_check"] = None
         session["itemlogin_pid"] = recid
-    
+
     with patch("weko_deposit.api.WekoIndexer.upload_metadata", return_value=True):
         with patch("weko_workflow.utils.get_main_record_detail", return_value={"record": record, "files": [], "files_thumbnail": []}):
             with pytest.raises(Exception) as e:
@@ -20943,6 +20943,23 @@ def test_export_acl_nologin(client, users, db_oaischema):
     with patch("flask.templating._render", return_value=""):
         res = client.get(url)
         assert res.status_code == 200
+
+
+# def export():
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_export_rocrate -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_export_rocrate(client):
+    url = url_for("weko_items_ui.export", _external=True)
+    post_data = {
+        "export_format_radio": "ROCRATE",
+        "record_ids": "[2000001, 2000002]",
+        "invalid_record_ids": "[]",
+        "record_metadata": "",
+        "export_file_contents_radio": "True"
+    }
+    with patch("weko_items_ui.views.export_rocrate", return_value={}) as mock_export_rocrate:
+        res = client.post(url, data=post_data)
+        assert res.status_code == 200
+        mock_export_rocrate.assert_called_once()
 
 
 # def validate():

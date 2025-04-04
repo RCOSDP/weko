@@ -161,7 +161,7 @@ class ShibUser(object):
             self.user = User.query.filter_by(email=account).first()
             shib_username_config = current_app.config[
                 'WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN']
-            
+
             with db.session.begin_nested():
                 self.user.email = self.shib_attr['shib_mail']
 
@@ -332,7 +332,7 @@ class ShibUser(object):
                 raise ex
 
         return shib_attr_is_member_of
-    
+
     def _find_organization_name(self, group_ids):
         """
         事前に各ロールにorganization_nameが登録されていた場合、そのロールを割り当てる
@@ -342,7 +342,7 @@ class ShibUser(object):
                 for group in group_ids:
                     group_id = urllib.parse.quote(group)
                     organization_name = self.get_organization_from_api(group_id)
-                    
+
                     setting_role = ""
                     if organization_name in current_app.config["WEKO_ACCOUNTS_GAKUNIN_ROLE"]["organizationName"]:
                         setting_role = current_app.config["WEKO_ACCOUNTS_GAKUNIN_ROLE"]["defaultRole"].replace(" ", "_")
@@ -352,20 +352,20 @@ class ShibUser(object):
                         setting_role = current_app.config["WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE"]["defaultRole"].replace(" ", "_")
                     elif organization_name in current_app.config["WEKO_ACCOUNTS_EXTRA_ROLE"]["organizationName"]:
                         setting_role = current_app.config["WEKO_ACCOUNTS_EXTRA_ROLE"]["defaultRole"].replace(" ", "_")
-                    
+
                     if len(setting_role) > 0:
                         role = Role.query.filter_by(name=setting_role).one_or_none()
                         _datastore.add_role_to_user(self.user, role)
                         self.shib_user.shib_roles.append(role)
                         return True
-                        
+
                 db.session.commit()
                 return False
         except Exception as ex:
                 current_app.logger.error(f"Error assigning roles: {ex}")
                 db.session.rollback()
                 raise ex
-        
+
 
     def _assign_roles_to_user(self, map_group_names):
         try:
@@ -416,7 +416,7 @@ class ShibUser(object):
         headers = {
             'Content-Type': 'application/json',
         }
-        
+
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             data = response.json()

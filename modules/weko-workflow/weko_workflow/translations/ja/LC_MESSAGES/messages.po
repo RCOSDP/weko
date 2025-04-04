@@ -57,6 +57,10 @@ msgstr "ワークフロー一覧"
 msgid "Flow List"
 msgstr "フロー一覧"
 
+#: weko_workflow/admin.py:603
+msgid "Activity"
+msgstr "アクティビティ一覧表示"
+
 #: weko_workflow/api.py:1130 weko_workflow/views.py:219
 msgid "End"
 msgstr "終了"
@@ -739,3 +743,7 @@ msgstr "選択したアクティビティを削除してもよろしいですか
 
 msgid "Clear Confirm"
 msgstr "削除の確認"
+
+# weko-workflow/weko_workflow/templates/weko_workflow/admin/flow_detail.html:54
+msgid "Deletion flow activated."
+msgstr "削除用のフローに設定されました。"

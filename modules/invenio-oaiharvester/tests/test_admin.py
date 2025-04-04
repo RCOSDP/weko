@@ -26,7 +26,7 @@ from invenio_oaiharvester.models import HarvestSettings,HarvestLogs
 
 def test_admin(app, db):
     """Test Flask-Admin interace."""
-    
+
     admin = Admin(app, name='Test')
 
     assert 'model' in harvest_admin_view
@@ -148,17 +148,17 @@ def test_run_stats(app,db):
     class MockM:
         def __init__(self,id):
             self.id=id
-    
+
     test_func = run_stats()
     result = test_func(None,None,MockM(1),None)
     assert result == "Harvesting is not running"
-    
+
     result = test_func(None,None,MockM(2),None)
     assert result == "Harvesting is paused with resumption token: test_token"
-    
+
     result = test_func(None,None,MockM(3),None)
     assert result == "Harvesting is running at task id:test_task</br>1 items processed"
-    
+
 
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_admin.py::test_control_btns -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
 def test_control_btns(app,db):
@@ -169,7 +169,7 @@ def test_control_btns(app,db):
     model = copy_adminview.pop('model')
     view = copy_adminview.pop('modelview')
     admin.add_view(view(model, db.session, **copy_adminview))
-    
+
     index = Index()
     db.session.add(index)
     db.session.commit()
@@ -200,21 +200,21 @@ def test_control_btns(app,db):
     )
     db.session.add_all([not_task,resumption,task])
     db.session.commit()
-    
+
     class MockM:
         def __init__(self,id):
             self.id=id
-    
+
     test_func = control_btns()
     # task_id is None, resumption_token is None
     result = test_func(None,None,MockM(1),None)
     assert result == '<a id="hvt-btn" class="btn btn-primary" href="http://test_server/admin/harvestsettings/run/?id=1">Run</a>'
-    
+
     # task_id is None, resumption_token is not None
     result = test_func(None,None,MockM(2),None)
     assert result == '<a id="resume-btn" class="btn btn-primary" href="http://test_server/admin/harvestsettings/run/?id=2">Resume</a>'\
                      '<a id="clear-btn" class="btn btn-danger" href="http://test_server/admin/harvestsettings/clear/?id=2">Clear</a>'
-    
+
     # task_id is not None, resumption_token is not None
     result = test_func(None,None,MockM(3),None)
     assert result == '<a id="pause-btn" class="btn btn-warning" href="http://test_server/admin/harvestsettings/pause/?id=3">Pause</a>'
@@ -282,7 +282,7 @@ class TestHarvestSettingView:
             assert res.status_code == 200
             mock_revoke.assert_called_with("test_task",terminate=True)
             mock_redirect.assert_called_with("/admin/harvestsettings/details/?id=1")
-    
+
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_admin.py::TestHarvestSettingView::test_clear -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
     def test_clear(self,app,db,setup_admin,mocker):
         url = url_for("harvestsettings.clear",id=1)
@@ -303,9 +303,9 @@ class TestHarvestSettingView:
         )
         db.session.add(logs)
         db.session.commit()
-        
+
         mocker.patch("invenio_oaiharvester.admin.send_run_status_mail")
-        
+
         with app.test_client() as client:
             mock_redirect = mocker.patch("invenio_oaiharvester.admin.redirect",return_value=make_response())
             res = client.get(url)
@@ -315,7 +315,7 @@ class TestHarvestSettingView:
             assert harvesting.task_id == None
             logs = HarvestLogs.query.filter_by(id=1).first()
             assert logs.status == "Cancel"
-    
+
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_admin.py::TestHarvestSettingView::test_get_logs -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
     def test_get_logs(self,app,db,setup_admin):
         url = url_for("harvestsettings.get_logs",id=1)
@@ -330,7 +330,7 @@ class TestHarvestSettingView:
         )
         db.session.add_all([logs1,logs2])
         db.session.commit()
-        
+
         with app.test_client() as client:
             test = [
                 {"counter":{},"end_time":None,"errmsg":None,"harvest_setting_id":1,"id":2,"requrl":None,"setting":{},"start_time":"2021-01-10T20:22:33+09:00","status":"Running"},
@@ -373,7 +373,7 @@ class TestHarvestSettingView:
         db.session.commit()
 
         with app.test_client() as client:
-            
+
             data = {
                 "dis_enable_schedule":"True",
                 "frequency":"daily"
@@ -399,7 +399,7 @@ class TestHarvestSettingView:
             assert setting.schedule_enable == False
             assert setting.schedule_frequency == "weekly"
             assert setting.schedule_details == 1
-            
+
             data = {
                 "dis_enable_schedule":"True",
                 "frequency":"monthly",
@@ -420,7 +420,7 @@ class TestHarvestSettingView:
         model = copy_adminview.pop('model')
         view = copy_adminview.pop('modelview')
         view = view(model, db.session, **copy_adminview)
-        
+
         index = Index()
         db.session.add(index)
         db.session.commit()
@@ -434,14 +434,14 @@ class TestHarvestSettingView:
         )
         db.session.add(setting)
         db.session.commit()
-        
+
         # super role user
         user = users[0]["obj"]
         mocker.patch("flask_login.utils._get_user",return_value=user)
         query = view.get_query()
         assert query.count() == 1
         assert query.first() == setting
-        
+
         # community role user with repository
         user = users[2]["obj"]
         repository = Community(root_node_id=index.id)
@@ -451,25 +451,25 @@ class TestHarvestSettingView:
         query = view.get_query()
         assert query.count() == 1
         assert query.first() == setting
-        
+
         # community role user with no repository
         mocker.patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[])
         query = view.get_query()
         assert query.count() == 0
-        
+
         # community role user with repository but no index
         mocker.patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[repository])
         mocker.patch("weko_index_tree.api.Indexes.get_child_list_recursive", return_value=[])
         query = view.get_query()
         assert query.count() == 0
-    
+
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_admin.py::TestHarvestSettingView::test_get_count_query -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
     def test_get_count_query(self,app,db,users,mocker):
         copy_adminview = copy.deepcopy(harvest_admin_view)
         model = copy_adminview.pop('model')
         view = copy_adminview.pop('modelview')
         view = view(model, db.session, **copy_adminview)
-        
+
         index = Index()
         db.session.add(index)
         db.session.commit()
@@ -483,13 +483,13 @@ class TestHarvestSettingView:
         )
         db.session.add(setting)
         db.session.commit()
-        
+
         # super role user
         user = users[0]["obj"]
         mocker.patch("flask_login.utils._get_user",return_value=user)
         query = view.get_count_query()
         assert query.scalar() == 1
-        
+
         # community role user with repository
         user = users[2]["obj"]
         repository = Community(root_node_id=index.id)
@@ -498,12 +498,12 @@ class TestHarvestSettingView:
         mocker.patch("weko_index_tree.api.Indexes.get_child_list_recursive", return_value=[index.id])
         query = view.get_count_query()
         assert query.scalar() == 1
-        
+
         # community role user with no repository
         mocker.patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[])
         query = view.get_count_query()
         assert query.scalar() == 0
-        
+
         # community role user with repository but no index
         mocker.patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[repository])
         mocker.patch("weko_index_tree.api.Indexes.get_child_list_recursive", return_value=[])
@@ -519,7 +519,7 @@ def test_index_query(app, db, users, mocker):
         db.session.add(index1)
         db.session.add(index2)
         db.session.commit()
-        
+
         # super role user
         user = users[0]["obj"]
         mocker.patch("flask_login.utils._get_user",return_value=user)
@@ -527,7 +527,7 @@ def test_index_query(app, db, users, mocker):
         assert len(result) == 2
         assert index1 in result
         assert index2 in result
-        
+
         # community role user with repository
         repository = Community(root_node_id=index1.id)
         user = users[2]["obj"]
@@ -537,24 +537,24 @@ def test_index_query(app, db, users, mocker):
         result = index_query()
         assert len(result) == 1
         assert index1 in result
-        
+
         # community role user with no repository
         mocker.patch("invenio_communities.models.Community.get_repositories_by_user",return_value=[])
         result = index_query()
         assert len(result) == 0
 
-        
+
         # community role user with repository but no index
         mocker.patch("invenio_communities.models.Community.get_repositories_by_user",return_value=[repository])
         mocker.patch("weko_index_tree.api.Indexes.get_child_list_recursive", return_value=[])
         result = index_query()
         assert len(result) == 0
-        
+
         # get_repositories_by_user raise exception
         mocker.patch("invenio_communities.models.Community.get_repositories_by_user",side_effect=Exception)
         with pytest.raises(Exception):
             result = index_query()
-        
+
         # get_child_list_recursive raise exception
         mocker.patch("weko_index_tree.api.Indexes.get_child_list_recursive",side_effect=Exception)
         with pytest.raises(Exception):

@@ -230,7 +230,7 @@ require([
       let locationParam = window.location.search.split('?')[1].split('&');
       for (let key in locationParam) {
         let param = {};
-        let listParamName = ['createdfrom', 'createdto', 'workflow', 'user', 'item', 'status'];
+        let listParamName = ['createdfrom', 'createdto', 'workflow', 'user', 'item', 'status', 'action'];
         param = locationParam[key].split('=');
         if (param[0].split('_')[1] >= 0) {
           let paramName = param[0].split('_')[0];
@@ -248,6 +248,11 @@ require([
               if (paramName == 'status') {
                 if ($('#status_id').length != 1) {
                   addFilterRow($('#status').text(), paramName, '');
+                }
+                $("#" + paramValue).prop('checked', true);
+              } else if (paramName == 'action') {
+                if ($('#action_id').length != 1) {
+                  addFilterRow($('#action').text(), paramName, '');
                 }
                 $("#" + paramValue).prop('checked', true);
               } else {
@@ -271,6 +276,18 @@ require([
         + '<label class="checkbox-inline"><input type="checkbox" name="status" value="doing" id="doing">' + $('#action_doing').val() + '</label>'
         + '<label class="checkbox-inline"><input type="checkbox" name="status" value="done" id="done">' + $('#action_done').val() + '</label>'
         + '<label class="checkbox-inline"><input type="checkbox" name="status" value="actioncancel" id="actioncancel">' + $('#action_cancel').val() + '</label>'
+        + '</div>';
+    } else if (name == 'action') {
+      if ($('#action_id').length == 1) return;
+      newRow = $('<div id="action_id" class="form-group">');
+      cols += '<div class="col-sm-7">'
+        + '<label class="checkbox-inline"><input type="checkbox" name="action" value="start" id="start">' + $('#action_start').val() + '</label>'
+        + '<label class="checkbox-inline"><input type="checkbox" name="action" value="end" id="end">' + $('#action_end').val() + '</label>'
+        + '<label class="checkbox-inline"><input type="checkbox" name="action" value="itemregistration" id="itemregistration">' + $('#action_item_registration').val() + '</label>'
+        + '<label class="checkbox-inline"><input type="checkbox" name="action" value="approval" id="approval">' + $('#action_approval').val() + '</label>'
+        + '<label class="checkbox-inline"><input type="checkbox" name="action" value="itemlink" id="itemlink">' + $('#action_item_link').val() + '</label>'
+        + '<label class="checkbox-inline"><input type="checkbox" name="action" value="oapolicyconfirmation" id="oapolicyconfirmation">' + $('#action_oa_policy_confirmation').val() + '</label>'
+        + '<label class="checkbox-inline"><input type="checkbox" name="action" value="identifiergrant" id="identifiergrant">' + $('#action_identifier_grant').val() + '</label>'
         + '</div>';
     } else {
       newRow = $('<div class="form-group">');

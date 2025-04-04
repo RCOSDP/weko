@@ -414,7 +414,7 @@ def get_last_item_id():
     result = {"last_id": ""}
     try:
         is_super = any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles)
-        
+
         if is_super:
             data = db.session.query(
                 func.max(
@@ -438,7 +438,7 @@ def get_last_item_id():
             for repository in repositories:
                 index = Indexes.get_child_list_recursive(repository.root_node_id)
                 index_id_list.extend(index)
-            
+
             index = current_app.config['SEARCH_UI_SEARCH_INDEX']
             query = {
                 "query": {

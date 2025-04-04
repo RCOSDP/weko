@@ -404,7 +404,7 @@ class WidgetSettingView(ModelView):
             return self.session.query(func.count('*')).filter(
                 self.model.is_deleted == 'False').filter(
                     self.model.repository_id.in_(repository_ids))
-        
+
 
     def delete_model(self, model, session=None):
         """Delete model.

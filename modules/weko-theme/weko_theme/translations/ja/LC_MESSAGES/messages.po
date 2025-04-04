@@ -243,7 +243,6 @@ msgid "Log out"
 msgstr "ログアウト"
 
 #: weko_theme/templates/weko_theme/page_setting.html:33
-#, fuzzy
 msgid "Settings"
 msgstr "会議発表用資料"
 
@@ -260,7 +259,6 @@ msgid "Custom Sort"
 msgstr "カスタムソート"
 
 #: weko_theme/templates/weko_theme/macros/item_management_tabs_selector.html:23
-#, fuzzy
 msgid "Bulk Update"
 msgstr "一括更新"
 
@@ -408,9 +406,6 @@ msgstr "ランキング"
 
 #~ msgid "Scival"
 #~ msgstr ""
-
-msgid "Other"
-msgstr "その他"
 
 #~ msgid "Description"
 #~ msgstr "内容記述"
@@ -641,8 +636,13 @@ msgstr "その他"
 #~ msgstr "任意"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Home"
+msgstr ""
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_ホーム"
 msgstr "ホーム"
+
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Item Types"
@@ -735,6 +735,10 @@ msgstr "一括エクスポート"
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Items_Import"
 msgstr "インポート"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Items_RO-Crate Import"
+msgstr "RO-Crate インポート"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Index Tree_Edit Tree"
@@ -905,6 +909,10 @@ msgid "Admin menu_Setting_Items"
 msgstr "アイテム表示"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Activity"
+msgstr "アクティビティ一覧表示"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Index Link"
 msgstr "インデックスリンク表示"
 
@@ -977,8 +985,20 @@ msgid "Admin menu_Setting_Shibboleth"
 msgstr "Shibboleth"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
-msgid "Admin menu_Setting_SWORD API"
+msgid "Admin menu_SWORD API"
 msgstr "SWORD API"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_SWORD API_TSV/XML"
+msgstr "TSV/XML"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_SWORD API_JSON-LD"
+msgstr "JSON-LD"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Item Types_JSON-LD Mapping"
+msgstr "JSON-LDマッピング"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Others"
@@ -991,6 +1011,14 @@ msgstr "制限公開"
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Faceted Search"
 msgstr "ファセット検索"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Logs"
+msgstr "ログ管理"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Logs_Export"
+msgstr "エクスポート"
 
 #: weko_admin/
 #: msgid "Maintenance"

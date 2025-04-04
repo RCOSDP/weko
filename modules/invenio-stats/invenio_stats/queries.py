@@ -567,7 +567,7 @@ class ESWekoTermsQuery(ESTermsQuery):
                 agg_query = agg_query.filter('bool', should=should_clauses, minimum_should_match=1)
             else:
                 agg_query = agg_query.filter('terms', **kwargs.get('agg_filter'))
-            
+
         if kwargs.get('wildcard'):
             agg_query = agg_query.filter('wildcard', **kwargs.get('wildcard'))
 
@@ -628,7 +628,7 @@ class ESWekoRankingQuery(ESTermsQuery):
         agg_query = self.build_query(**kwargs)
 
         query_result = agg_query.execute().to_dict()
-        
+
         return query_result
 
 

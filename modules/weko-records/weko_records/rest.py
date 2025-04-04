@@ -115,7 +115,7 @@ class OaStatusCallback(ContentNegotiatedMethodView):
         request_body = request.get_json(force=True, silent=True)
         if not request_body or not isinstance(request_body, dict) or not request_body.get('articles'):
             raise InvalidRequestError()
-        
+
         try:
             articles = request_body.get('articles', [])
             for article in articles:
@@ -128,7 +128,7 @@ class OaStatusCallback(ContentNegotiatedMethodView):
                 weko_url = article.get('weko_url', None)
                 if weko_url:
                     weko_item_pid = weko_url.rstrip('/').split('/')[-1]
-                
+
                 oa_status = OaStatus.get_oa_status(oa_article_id=id)
                 if oa_status:
                     # Update

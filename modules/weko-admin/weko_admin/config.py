@@ -54,6 +54,12 @@ WEKO_ADMIN_SITE_LICENSE_SEND_MAIL_TEMPLATE = 'weko_admin/admin/site_license_send
 WEKO_ADMIN_SWORD_API_TEMPLATE = 'weko_admin/admin/sword_api_settings.html'
 """SWORD API template."""
 
+WEKO_ADMIN_SWORD_API_JSONLD_TEMPLATE = 'weko_admin/admin/sword_api_jsonld_settings.html'
+"""SWORD API JSONLD template."""
+
+WEKO_ADMIN_SWORD_API_JSONLD_MAPPING_TEMPLATE = 'weko_admin/admin/sword_api_jsonld_mapping_settings.html'
+"""SWORD API JSONLD template."""
+
 WEKO_ADMIN_BlOCK_STYLE_TEMPLATE = 'weko_admin/admin/block_style.html'
 """Block-style template."""
 
@@ -1114,6 +1120,7 @@ WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
     'report',
     'itemexportsettings',
     'items/import',
+    'logs/export'
     'items/bulk/update',
     'items/bulk/delete',
     'items/bulk-export',
@@ -1176,6 +1183,9 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'location',
     'facet-search',
     'community',
+    'swordapi',
+    'swordapi/jsonld',
+    'jsonld-mapping',
     'shibboleth',
     # 'restricted_access'
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
@@ -1312,6 +1322,9 @@ WEKO_ADMIN_FACET_SEARCH_SETTING_QUERY_KEY_NO_PERMISSION = 'facet_search_query_no
 
 WEKO_ADMIN_FACET_SEARCH_SETTING_BUCKET_SIZE = 1000
 """Default Facet Search bucket size."""
+
+WEKO_ADMIN_SWORD_API_JSON_LD_FULL_AUTHORITY_ROLE = 1
+"""Allowed Role id, full access to list JSON_LD."""
 
 WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT = 'cache::temp_dir_info'
 """Default Cache Temporary Directory Information Key."""

@@ -55,6 +55,10 @@ msgstr "Workflow List"
 msgid "Flow List"
 msgstr ""
 
+#: weko_workflow/admin.py:603
+msgid "Activity"
+msgstr ""
+
 #: weko_workflow/api.py:998 weko_workflow/views.py:171
 msgid "End"
 msgstr ""
@@ -677,4 +681,8 @@ msgid "Are you sure you want to delete the filtered activity?"
 msgstr ""
 
 msgid "Clear Confirm"
+msgstr ""
+
+# weko-workflow/weko_workflow/templates/weko_workflow/admin/flow_detail.html:54
+msgid "Deletion flow activated."
 msgstr ""

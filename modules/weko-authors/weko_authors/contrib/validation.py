@@ -213,7 +213,7 @@ def validate_affiliation_period_end(item, values=[]):
                 continue
             reduce_keys = val['reduce_keys']
             uplevel_data = reduce(getitem, reduce_keys[:-1], item)
-            period_start = uplevel_data["periodStart"] 
+            period_start = uplevel_data["periodStart"]
             if period_start:
                 try:
                     period_start = datetime.strptime(period_start, "%Y-%m-%d")
