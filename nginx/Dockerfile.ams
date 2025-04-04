@@ -66,6 +66,7 @@ ADD nginx.conf /etc/nginx/nginx.conf
 ADD ./keys/server.crt /etc/nginx/server.crt
 ADD ./keys/server.key /etc/nginx/server.key
 ADD ./idp-metadata.xml /etc/shibboleth/idp-metadata.xml
+ADD ./orthros-idp-metadata.xml /etc/shibboleth/orthros-idp-metadata.xml
 ADD ./htpasswd /etc/nginx/.htpasswd
 ADD ./htdigest /etc/nginx/.htdigest
 ADD redirect_list.map /etc/nginx/redirect_list.map

@@ -46,6 +46,7 @@ from weko_admin.models import SessionLifetime
 from weko_index_tree.models import Index
 from weko_records_ui import WekoRecordsUI
 from weko_redis.redis import RedisConnection
+from weko_search_ui import WekoSearchUI
 from weko_user_profiles import WekoUserProfiles
 
 from weko_accounts import WekoAccounts, WekoAccountsREST
@@ -102,6 +103,7 @@ def base_app(instance_path):
     WekoUserProfiles(app_)
     app_.register_blueprint(blueprint)
     WekoAccountsREST(app_)
+    WekoSearchUI(app_)
     return app_
 
 
@@ -189,7 +191,7 @@ def users(app, db):
     ds.add_role_to_user(generaluser, general_role)
     ds.add_role_to_user(originalroleuser, originalrole)
     ds.add_role_to_user(originalroleuser2, originalrole)
-    ds.add_role_to_user(originalroleuser2, repoadmin_role)
+    # ds.add_role_to_user(originalroleuser2, repoadmin_role)
     ds.add_role_to_user(student,studentrole)
 
     # Assign access authorization
