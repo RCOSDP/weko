@@ -19,9 +19,45 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_accounts/admin.py:56
+#: weko_accounts/admin.py:46
+msgid "language"
+msgstr "ja"
+
+#: weko_accounts/admin.py:
 msgid "Shibboleth flag was updated."
 msgstr "Shibboleth設定を更新しました"
+
+#: weko_accounts/admin.py:
+msgid "Shib User Name mapping was updated."
+msgstr "属性マッピング設定（shib_user_name）を更新しました"
+
+#: weko_accounts/admin.py:
+msgid "Gakunin Role was updated."
+msgstr "学認IdP のロール設定を更新しました"
+
+#: weko_accounts/admin.py:
+msgid "Orthros Outside Role was updated."
+msgstr "機関外のOrthros のロール設定を更新しました"
+
+#: weko_accounts/admin.py:
+msgid "Extra Role was updated."
+msgstr "その他 のロール設定を更新しました"
+
+#: weko_accounts/admin.py:
+msgid "Shib Eppn mapping was updated."
+msgstr "属性マッピング設定（shib_eppn）を更新しました"
+
+#: weko_accounts/admin.py:
+msgid "Shib Role Authority Name mapping was updated."
+msgstr "属性マッピング設定（shib_role_authority_name）を更新しました"
+
+#: weko_accounts/admin.py:
+msgid "Shib Mail mapping was updated."
+msgstr "属性マッピング設定（shib_mail）を更新しました"
+
+#: weko_accounts/admin.py:
+msgid "Blocked user list was updated."
+msgstr "ユーザーログインブロック設定を更新しました"
 
 #: weko_accounts/admin.py:69
 msgid "Setting"
@@ -101,7 +137,47 @@ msgstr "Shibbolethを有効にする"
 msgid "Deny shibboleth user"
 msgstr "Shibbolethを無効にする"
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:68
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:71
+msgid "Default Role"
+msgstr "既定のロール"
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:73
+msgid "Gakunin IdP"
+msgstr "学認IdP"
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:76
+msgid "Outside Orthros"
+msgstr "機関外のOrthros"
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:79
+msgid "Extra IdP"
+msgstr "上記以外のIdP"
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:84
+msgid "Attribute Mapping"
+msgstr "属性マッピング"
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:86
+msgid "shib_eppn"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:89
+msgid "shib_role_authority_name"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:92
+msgid "shib_mail"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:95
+msgid "shib_user_name"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:100
+msgid "Block User"
+msgstr "ブロックユーザー"
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:120
 msgid "Save"
 msgstr "保存"
 
@@ -114,7 +190,7 @@ msgid "Invalid attribute."
 msgstr "属性値が不正です。"
 
 #: weko_accounts/api.py:223
-msgid "Invalid attribute."
+msgid "Failed to login."
 msgstr "ログインに失敗しました。"
 
 #: weko_accounts/templates/weko_accounts/login_shibuser_pattern_1.html
