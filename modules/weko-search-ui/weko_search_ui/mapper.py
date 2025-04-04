@@ -2164,7 +2164,7 @@ class JsonLdMapper(JsonMapper):
                 "value": str_extra_dict
             }
             add_entity(
-                rocrate.root_dataset, "wk:extra", gen_id("extra"),
+                rocrate.root_dataset, "additionalProperty", gen_id("extra"),
                 "PropertyValue", extra_entity
             )
 
