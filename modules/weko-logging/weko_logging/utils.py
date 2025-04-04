@@ -70,6 +70,8 @@ class UserActivityLogUtils:
                 )
             else:
                 file = FileInstance.get_by_uri(cache_url['file_uri'])
+                if not file:
+                    raise Exception("FileInstance record not found.")
                 file.writable = True
                 file.set_contents(reader)
 
@@ -91,10 +93,9 @@ class UserActivityLogUtils:
         :returns: True if success, False if failed.
         """
 
-        _expired_time=current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_TASKID_EXPIRED_TIME"]
+        # _expired_time=current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_TASKID_EXPIRED_TIME"]
         try:
             export_status = cls.get_export_task_status()
-
             if export_status:
                 task_id = export_status.get("task_id")
                 revoke(task_id, terminate=True)

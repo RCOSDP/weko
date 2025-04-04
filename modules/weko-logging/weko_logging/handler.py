@@ -46,9 +46,13 @@ class UserActivityLogHandler(logging.Handler):
         # get operation_type_id, operation_id, target from config "WEKO_LOGGING_OPERATION_MASTER"
         operation_type_id, operation_id, target = self._get_target_from_operation_id(operation)
 
+        if operation_type_id is None or operation_id is None:
+            current_app.logger.error(f"Invalid operation: {operation}")
+            raise ValueError(f"Invalid operation: {operation}")
+
         # get log group uuid
         parent_id = None
-        if hasattr(record, "parend_id"):
+        if hasattr(record, "parent_id"):
             parent_id = record.parent_id or None
 
         # get user_id from current_user
@@ -64,20 +68,31 @@ class UserActivityLogHandler(logging.Handler):
                     eppn = shib_user.shib_eppn
 
         # get source, ip_address and client_id from request
-        ip_address = request.remote_addr
-        if request.headers.getlist("X-Forwarded-For"):
-            ip_address = request.headers.getlist("X-Forwarded-For")[0]
-        source = request.path
-
-        # get client id from request oauth
+        ip_address = None
+        source = None
         client_id = None
-        if hasattr(request, "oauth") and request.oauth:
-            client_id = request.oauth.client.client_id
+        if request is not None:
+            # ip address
+            if hasattr(request, "remote_addr") and request.remote_addr:
+                ip_address = request.remote_addr
+            if request.headers.getlist("X-Forwarded-For"):
+                ip_address = request.headers.getlist("X-Forwarded-For")[0]
+
+            # source
+            if hasattr(request, "path") and request.path:
+                source = request.path
+
+            # get client id from request oauth
+            if hasattr(request, "oauth") and request.oauth:
+                client_id = request.oauth.client.client_id
 
         # get other values from record
-        target_key = None
-        if target is not None:
-            target_key = record.target_key if hasattr(record, "target_key") else None
+        target_key = record.target_key if hasattr(record, "target_key") else None
+
+        if (not target and target_key) or (target and not target_key):
+            current_app.logger.error("target and target_key must be set together")
+            raise ValueError("target and target_key must be set together")
+
         remarks = record.remarks if hasattr(record, "remarks") else None
 
         # get community id from request
@@ -126,8 +141,10 @@ class UserActivityLogHandler(logging.Handler):
     def get_community_id_from_path(cls):
         """Get community id from request path.
 
-        :return: The community id.
+        :return: The community id if community id exists else None.
         """
+        if request is None or not request.path:
+            return None
         community_id = None
         path_info = urllib.parse.urlparse(request.path)
         if "/c/" in path_info.path:
@@ -144,7 +161,7 @@ class UserActivityLogHandler(logging.Handler):
         :return: The user id.
         """
         user_id = None
-        if current_user.is_authenticated and hasattr(current_user, "id"):
+        if current_user and current_user.is_authenticated and hasattr(current_user, "id"):
             user_id = current_user.id
         return user_id
 

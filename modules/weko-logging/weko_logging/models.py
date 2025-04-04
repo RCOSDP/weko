@@ -99,7 +99,7 @@ class UserActivityLog(db.Model):
             'id': self.id,
             'date': self.date,
             'user_id': self.user_id if self.user_id else "",
-            'community_id': self.community_id,
+            'community_id': self.community_id if self.community_id else "",
             'parent_id': self.parent_id if self.parent_id else "",
             'log': self.log,
             'remarks': self.remarks
