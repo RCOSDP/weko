@@ -78,6 +78,9 @@ def _adjust_shib_admin_DB():
     """
     Create or Update Shibboleth Admin database table.
     """
+    if current_app.config.get('TESTING', False):  # テスト環境では何もしない	
+        return	
+
     with _app.app_context():
         if AdminSettings.query.filter_by(name='blocked_user_settings').first() is None:
             max_id = db.session.query(db.func.max(AdminSettings.id)).scalar()
