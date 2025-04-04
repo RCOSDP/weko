@@ -24,9 +24,10 @@ from flask_babelex import gettext as _
 from invenio_db import db
 from sqlalchemy.dialects import postgresql
 from sqlalchemy_utils.types import JSONType
+from sqlalchemy_utils.models import Timestamp
 
 
-class WorkspaceDefaultConditions(db.Model):
+class WorkspaceDefaultConditions(db.Model, Timestamp):
     """define WorkspaceDefaultConditions."""
 
     __tablename__ = "workspace_default_conditions"
@@ -52,14 +53,8 @@ class WorkspaceDefaultConditions(db.Model):
     )
     """the name of WorkspaceDefaultConditions."""
 
-    created = db.Column(db.DateTime, nullable=False)
-    """the create date of WorkspaceDefaultConditions."""
 
-    updated = db.Column(db.DateTime, nullable=False)
-    """the update date of WorkspaceDefaultConditions."""
-
-
-class WorkspaceStatusManagement(db.Model):
+class WorkspaceStatusManagement(db.Model, Timestamp):
     """define WorkspaceStatusManagement."""
 
     __tablename__ = "workspace_status_management"
@@ -77,9 +72,3 @@ class WorkspaceStatusManagement(db.Model):
 
     is_read = db.Column(db.Boolean(name="is_read"), nullable=False, default=False)
     """is_read of WorkspaceStatusManagement."""
-
-    created = db.Column(db.DateTime, nullable=False)
-    """the create date of WorkspaceStatusManagement."""
-
-    updated = db.Column(db.DateTime, nullable=False)
-    """the update date of WorkspaceStatusManagement."""
