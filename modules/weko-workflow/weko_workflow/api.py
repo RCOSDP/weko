@@ -2644,16 +2644,16 @@ class WorkActivity(object):
         if activity.workflow.open_restricted:
             return
 
-        if case == 'registered':
+        if case == "registered":
             self.notify_item_registered(activity)
             self.send_mail_item_registered(activity)
-        elif case == 'request_approval':
+        elif case == "request_approval":
             self.notify_request_approval(activity)
             self.send_mail_request_approval(activity)
-        elif case == 'approved':
+        elif case == "approved":
             self.notify_item_approved(activity)
             self.send_mail_item_approved(activity)
-        elif case == 'rejected':
+        elif case == "rejected":
             self.notify_item_rejected(activity)
             self.send_mail_item_rejected(activity)
 
@@ -2933,7 +2933,7 @@ class WorkActivity(object):
                 set_target_id = {activity.activity_login_user}
                 is_shared = activity.shared_user_id != -1
                 if is_shared:
-                    set_target_id.append(activity.shared_user_id)
+                    set_target_id.add(activity.shared_user_id)
 
                 recid = (
                     PersistentIdentifier
@@ -2956,6 +2956,7 @@ class WorkActivity(object):
                 f"parameters for activity: {activity.activity_id}"
             )
             traceback.print_exc()
+            return
 
         for target_id in set_target_id:
             try:

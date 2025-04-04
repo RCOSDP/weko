@@ -7,7 +7,10 @@
 
 """Module of weko-notifications."""
 
+import traceback
+from flask import current_app
 from sqlalchemy_utils import Timestamp
+from sqlalchemy.exc import SQLAlchemyError
 
 from invenio_accounts.models import User
 from invenio_db import db
@@ -33,8 +36,8 @@ class NotificationsUserSettings(db.Model, Timestamp):
 
     user_id = db.Column(
         db.Integer,
-        db.ForeignKey(User.id),
-        primary_key=True,
+        db.ForeignKey(User.id, ondelete="CASCADE"),
+        primary_key=True
     )
     """Foreign key to :class:`~invenio_accounts.models.User`."""
 
@@ -111,7 +114,11 @@ class NotificationsUserSettings(db.Model, Timestamp):
             with db.session.begin_nested():
                 db.session.add(settings)
             db.session.commit()
-        except Exception:
+        except SQLAlchemyError:
+            current_app.logger.error(
+                f"Error creating/updating notifications settings. user_id={user_id}"
+            )
+            traceback.print_exc()
             db.session.rollback()
             raise
 
