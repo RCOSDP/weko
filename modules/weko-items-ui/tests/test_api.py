@@ -111,6 +111,20 @@ def test_item_login(app,client,db_itemtype,db_itemtype2,db_itemtype3,db_itemtype
                         session['activity_info'] = {'activity_id': 'A-20220818-00001', 'action_id': 3, 'action_version': '1.0.1', 'action_status': 'M', 'commond': ''}    
                     res =client.get("/test_itemlogin/1")
                     assert res.status_code==200
+                    
+    with open('tests/data/temp_data.json', 'r') as f:
+        tmp = json.load(f)
+        tmp.pop("weko_link")
+        temp_data = json.dumps(tmp)
+        
+    with app.test_request_context():
+        with patch('weko_workflow.api.WorkActivity.get_activity_metadata',return_value=temp_data):
+            with patch('flask.templating._render', return_value=''):
+                with app.test_client() as client:
+                    with client.session_transaction() as session:
+                        session['activity_info'] = {'activity_id': 'A-20220818-00001', 'action_id': 3, 'action_version': '1.0.1', 'action_status': 'M', 'commond': ''}    
+                    res =client.get("/test_itemlogin/1")
+                    assert res.status_code==200
 
     with open('tests/data/temp_data.json', 'r') as f:
         tmp = json.load(f)

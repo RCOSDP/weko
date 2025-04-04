@@ -14,6 +14,7 @@ from weko_accounts.views import (
     _has_admin_access,
     init_menu,
     _redirect_method,
+    find_user_by_email
     shib_sp_login,
     find_user_by_email
 )
@@ -479,7 +480,7 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
         and patch("weko_accounts.views._redirect_method",return_value=make_response()) as mock_redirect_:
         res = client.post(url,data={})
         mock_redirect_.assert_called_once()
-    
+
     # all attributes have value and some shibboleth_user records don't have target eppn
     current_app.config.update(
         WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED=True,
@@ -656,6 +657,7 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
     res = client.post(url, data=form, headers=headers)
     assert res.status_code == 302
     assert res.headers['Location'] == 'http://{}/login/'.format(current_app.config["SERVER_NAME"])
+
 
 #def shib_stub_login():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_shib_stub_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp

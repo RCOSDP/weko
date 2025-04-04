@@ -187,6 +187,11 @@ msgstr "Get"
 msgid "The following items is required. Please recheck and input."
 msgstr "The following items is required. Please recheck and input."
 
+#: weko_items_ui/templates/weko_items_ui/edit.html:316
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:464
+msgid "The same item may have been registered."
+msgstr "The same item may have been registered."
+
 #: weko_items_ui/templates/weko_items_ui/edit.html:315
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:462
 msgid ""
@@ -610,4 +615,44 @@ msgid "Request Mail Destination"
 msgstr ""
 
 msgid "Display Request Mail Button"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:290
+msgid "oa_policy_label"
+msgstr "OA policy Information:"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:298
+msgid "oa_policy_export"
+msgstr "OA Policy"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:311
+msgid "Please enter ISSN, eISSN, or journal title"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:312
+msgid "No Policy Information found"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:313
+msgid "Invalid parameters"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:314
+msgid "Authentication error occurred"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:315
+msgid "No matching policy"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:316
+msgid "Request limit exceeded"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:317
+msgid "Internal server error"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:318
+msgid "An unknown error occurred"
 msgstr ""

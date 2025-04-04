@@ -187,6 +187,10 @@ WEKO_ACCOUNTS_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 WEKO_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 """Default rate limit per endpoint for one user in the WEKO API."""
 
+
+WEKO_ACCOUNTS_SKIP_CONFIRMATION_PAGE = False
+"""Skip shibboleth confirmation page."""
+
 WEKO_ACCOUNTS_IDP_ENTITY_ID = ''
 """IdP entity ID that institution owned."""
 
@@ -217,5 +221,3 @@ WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION =False
 WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSION = False
 """投稿権限のデフォルト権限を設定する"""
 
-WEKO_ACCOUNTS_SKIP_CONFIRMATION_PAGE = False
-"""Skip shibboleth confirmation page."""

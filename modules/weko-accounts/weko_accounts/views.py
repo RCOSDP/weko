@@ -61,7 +61,6 @@ def _has_admin_access():
     return current_user.is_authenticated and current_admin \
         .permission_factory(current_admin.admin.index_view).can()
 
-
 @blueprint.before_app_first_request
 def init_menu():
     """Initialize menu before first request."""

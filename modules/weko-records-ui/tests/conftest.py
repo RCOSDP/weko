@@ -136,6 +136,11 @@ from weko_records_ui.config import (
     RECORDS_UI_EXPORT_FORMATS,
     WEKO_PERMISSION_ROLE_COMMUNITY,
     WEKO_RECORDS_UI_EMAIL_ITEM_KEYS,
+    WEKO_RECORDS_UI_OA_API_RETRY_COUNT,
+    WEKO_RECORDS_UI_OA_API_CODE,
+    EXTERNAL_SYSTEM,
+    ITEM_ACTION,
+    FILE_OPEN_STATUS
 )
 from weko_search_ui import WekoSearchUI
 from weko_search_ui.config import WEKO_SEARCH_MAX_RESULT
@@ -272,7 +277,14 @@ def base_app(instance_path):
             'INVENIO_ROLE_SYSTEM',
             'INVENIO_ROLE_REPOSITORY',
             'INVENIO_ROLE_COMMUNITY'
-        ]
+        ],
+        WEKO_RECORDS_UI_OA_GET_TOKEN_URL = "<OA URL>/oauth/token",
+        WEKO_RECORDS_UI_OA_UPDATE_STATUS_URL = "<OA URL>/api/articles/{}/status",
+        WEKO_RECORDS_UI_OA_API_RETRY_COUNT = WEKO_RECORDS_UI_OA_API_RETRY_COUNT,
+        WEKO_RECORDS_UI_OA_API_CODE = WEKO_RECORDS_UI_OA_API_CODE,
+        EXTERNAL_SYSTEM = EXTERNAL_SYSTEM,
+        ITEM_ACTION = ITEM_ACTION,
+        FILE_OPEN_STATUS = FILE_OPEN_STATUS
     )
     # with ESTestServer(timeout=30) as server:
     Babel(app_)

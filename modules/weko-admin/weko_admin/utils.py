@@ -596,6 +596,10 @@ class StatisticMail:
         if not setting.get('is_sending_feedback') and not stats_date:
             return
         banned_mail = cls.get_banned_mail(setting.get('data'))
+        if repo != "Root Index":
+            root_setting = FeedbackMail.get_feed_back_email_setting(repo_id='Root Index')
+            root_banned_mail= cls.get_banned_mail(root_setting.get('data'))
+            banned_mail = list(set(banned_mail + root_banned_mail))
 
         session = db.session
         id = FeedbackMailHistory.get_sequence(session)
@@ -981,7 +985,7 @@ class StatisticMail:
                 result += '[閲覧回数] : ' + str(
                     cls.convert_download_count_to_int(
                         item['detail_view'])) + '\n'
-                result += '[ファイルダウンロード回数] : ' + file_down_str
+                result += '[ファイルダウンロード回数] : \n' + file_down_str
 
             else:
                 result += '[Title] : ' + item['title'] + '\n'

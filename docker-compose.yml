@@ -212,6 +212,7 @@ services:
       - INVENIO_DB_POOL_CLASS=NullPool
       - GOOGLE_TRACKING_ID_SYSTEM=UA-86504114-1
       - GOOGLE_TRACKING_ID_USER=
+      - TMPDIR=/var/tmp
     volumes:
       - weko3_data:/var/tmp
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static

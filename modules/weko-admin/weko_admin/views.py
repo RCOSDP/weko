@@ -578,7 +578,7 @@ def get_site_license_send_mail_settings():
         SiteLicenseInfo.organization_id).all()
     settings = AdminSettings.get('site_license_mail_settings', dict_to_object=False)
     if settings:    
-        setting = settings.get(repo_id)
+        setting = settings.get(repo_id, {'auto_send_flag': False})
     else:
         setting = {'auto_send_flag': False}
     
