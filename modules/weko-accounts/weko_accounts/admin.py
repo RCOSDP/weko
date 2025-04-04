@@ -95,7 +95,7 @@ class ShibSettingView(BaseView):
                             roles[key] = new_roles[key]
                             flash(_(f'{key.replace("_", " ").title()} was updated.'), category='success')
                         AdminSettings.update('default_role_settings', roles)
-                    
+
                     # 属性マッピングの更新
                     for key in attributes:
                         if attributes[key] != new_attributes[key]:
@@ -113,7 +113,7 @@ class ShibSettingView(BaseView):
                             _('Blocked user list was updated.'),
                             category='success')
                         block_user_list = str(new_eppn_list).replace('"', '\\"')
-                               
+
             self.get_latest_current_app()
 
             return self.render(

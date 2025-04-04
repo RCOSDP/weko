@@ -16,6 +16,7 @@ from weko_accounts.views import (
     _redirect_method,
     find_user_by_email
     shib_sp_login,
+    find_user_by_email
 )
 from weko_admin.models import AdminSettings
 
@@ -379,7 +380,7 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
     # Check if shib_eppn is not included in the blocked user list
     try:
         db.session.add(AdminSettings(
-            id=6,
+            id=11,
             name="blocked_user_settings",
             settings='{"blocked_ePPNs": ["ePPN1", "ePPN2", "ePPN3", "ePPN5", "ePPP*"]}'
         ))

@@ -27,6 +27,10 @@ from werkzeug.local import LocalProxy
 from .models import ShibbolethUser
 from weko_index_tree.models import Index
 
+import urllib.parse
+import requests
+
+
 _datastore = LocalProxy(lambda: current_app.extensions['security'].datastore)
 
 
@@ -287,7 +291,8 @@ class ShibUser(object):
         try:
             if current_app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS']:
                 roles_add = self._get_roles_to_add()
-                self._assign_roles_to_user(roles_add)
+                if not self._find_organization_name(roles_add):
+                    self._assign_roles_to_user(roles_add)
         except Exception as ex:
             return str(ex)
 
@@ -327,6 +332,40 @@ class ShibUser(object):
                 raise ex
 
         return shib_attr_is_member_of
+    
+    def _find_organization_name(self, group_ids):
+        """
+        事前に各ロールにorganization_nameが登録されていた場合、そのロールを割り当てる
+        """
+        try:
+            with db.session.begin_nested():
+                for group in group_ids:
+                    group_id = urllib.parse.quote(group)
+                    organization_name = self.get_organization_from_api(group_id)
+                    
+                    setting_role = ""
+                    if organization_name in current_app.config["WEKO_ACCOUNTS_GAKUNIN_ROLE"]["organizationName"]:
+                        setting_role = current_app.config["WEKO_ACCOUNTS_GAKUNIN_ROLE"]["defaultRole"].replace(" ", "_")
+                    elif organization_name in current_app.config["WEKO_ACCOUNTS_ORTHROS_INSIDE_ROLE"]["organizationName"]:
+                        setting_role = current_app.config["WEKO_ACCOUNTS_ORTHROS_INSIDE_ROLE"]["defaultRole"].replace(" ", "_")
+                    elif organization_name in current_app.config["WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE"]["organizationName"]:
+                        setting_role = current_app.config["WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE"]["defaultRole"].replace(" ", "_")
+                    elif organization_name in current_app.config["WEKO_ACCOUNTS_EXTRA_ROLE"]["organizationName"]:
+                        setting_role = current_app.config["WEKO_ACCOUNTS_EXTRA_ROLE"]["defaultRole"].replace(" ", "_")
+                    
+                    if len(setting_role) > 0:
+                        role = Role.query.filter_by(name=setting_role).one_or_none()
+                        _datastore.add_role_to_user(self.user, role)
+                        self.shib_user.shib_roles.append(role)
+                        return True
+                        
+                db.session.commit()
+                return False
+        except Exception as ex:
+                current_app.logger.error(f"Error assigning roles: {ex}")
+                db.session.rollback()
+                raise ex
+        
 
     def _assign_roles_to_user(self, map_group_names):
         try:
@@ -371,6 +410,27 @@ class ShibUser(object):
             current_app.logger.error(f"Error assigning roles: {ex}")
             db.session.rollback()
             raise ex
+
+    def get_organization_from_api(self, group_id):
+        url = f"https://cg.gakunin.jp/api/people/@me/{group_id}"
+        headers = {
+            'Content-Type': 'application/json',
+        }
+        
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            data = response.json()
+            entries = data.get("entry", [])
+            for entry in entries:
+                organizations = entry.get("organizations", [])
+                for organization in organizations:
+                    if organization.get("type") == "organization":
+                        return organization.get("value", {}).get("name")
+            raise ValueError(f"Organization not found in response: {data}")
+        else:
+            raise ValueError(f"API returned error: {response.status_code}")
+
+
 
     # ! NEED RELATION SHIB_ATTR
     # check_license, error = self.valid_site_license()

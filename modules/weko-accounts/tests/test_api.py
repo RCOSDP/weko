@@ -347,6 +347,9 @@ class TestShibUser:
         shibuser.user.roles = MagicMock()
 
         with app.app_context():
+            # テストでは_find_organization_nameは常にFalseを返すようにモック化
+            mocker.patch.object(shibuser, '_find_organization_name', return_value=False) 
+
             # assign_user_roleがFalseを返す場合のテスト
             mocker.patch.object(shibuser, 'assign_user_role', return_value=(False, "test_error"))
             result = shibuser.check_in()
@@ -450,6 +453,58 @@ class TestShibUser:
             app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = None
             with pytest.raises(KeyError, match='WEKO_ACCOUNTS_IDP_ENTITY_ID is missing in config'):
                 shibuser._get_roles_to_add()
+
+#.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUser::test_find_organization_name -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test_find_organization_name(self, shib_user_a, app, mocker):
+        with app.app_context():
+            with patch('weko_accounts.api.db.session') as mock_db_session, \
+                patch('weko_accounts.api.current_app') as mock_current_app:
+
+                mock_current_app.config = {
+                    "WEKO_ACCOUNTS_GAKUNIN_ROLE": {
+                        'defaultRole': 'Contributor',
+                        'organizationName': ['Gakunin', 'Gakunin2']
+                    },
+                    "WEKO_ACCOUNTS_ORTHROS_INSIDE_ROLE": {
+                        'defaultRole': 'Repository Administrator',
+                        'organizationName': ['Orthros']
+                    },
+                    "WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE": {
+                        'defaultRole': 'Community Administrator',
+                        'organizationName': ['OutsideOrthros']
+                    },
+                    "WEKO_ACCOUNTS_EXTRA_ROLE": {
+                        'defaultRole': 'None',
+                        'organizationName': ['Extra']
+                    }
+                }
+
+                group_ids = ['test_group_id']
+
+                # 学認IdPのorganizationNameに登録がある場合のテスト
+                mocker.patch("weko_accounts.api.ShibUser.get_organization_from_api", return_value="Gakunin2")
+                result = shib_user_a._find_organization_name(group_ids)
+                assert result == True
+
+                # 機関内のOrthrosのorganizationNameに登録がある場合のテスト
+                mocker.patch("weko_accounts.api.ShibUser.get_organization_from_api", return_value="Orthros")
+                result = shib_user_a._find_organization_name(group_ids)
+                assert result == True
+
+                # 機関外のOrthrosのorganizationNameに登録がある場合のテスト
+                mocker.patch("weko_accounts.api.ShibUser.get_organization_from_api", return_value="OutsideOrthros")
+                result = shib_user_a._find_organization_name(group_ids)
+                assert result == True
+
+                # その他のorganizationNameに登録がある場合のテスト
+                mocker.patch("weko_accounts.api.ShibUser.get_organization_from_api", return_value="Extra")
+                result = shib_user_a._find_organization_name(group_ids)
+                assert result == True
+                
+                # organizationNameに登録がない場合のテスト
+                mocker.patch("weko_accounts.api.ShibUser.get_organization_from_api", return_value="invalid")
+                result = shib_user_a._find_organization_name(group_ids)
+                assert result == False
 
 #.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUser::test_assign_roles_to_user -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_assign_roles_to_user(self, shib_user_a, app, mocker):
@@ -557,6 +612,37 @@ class TestShibUser:
                 assert mock_datastore.add_role_to_user.call_count == 0
                 assert mock_db_session.commit.call_count == 1
                 assert mock_db_session.rollback.call_count == 1
+    
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUser::test_get_ouganization_from_api -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test_get_ouganization_from_api(self, app):
+        """
+        PeopleAPIからorganization_nameを取得するメソッドテスト
+        """
+        test_response = {
+            "entry": [
+                {
+                    "organizations": [
+                        {"type": "organization", "value": {
+                                "name": "Orthros"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+        group_id = "test_group_id"
+        shibuser = ShibUser({})
+        with app.app_context():
+            with patch('requests.get') as mock_get, \
+                patch('weko_accounts.api.current_app') as mock_current_app:
+                    # モックが返すレスポンスを設定
+                    mock_get.return_value.status_code = 200
+                    mock_get.return_value.json = lambda: test_response
+
+                    # ShibUserクラスのメソッドを呼び出し、結果を確認
+                    result = shibuser.get_organization_from_api(group_id)
+                    assert result == "Orthros"  # 期待値を比較
+
 
 #    @classmethod
 #    def shib_user_logout(cls):
