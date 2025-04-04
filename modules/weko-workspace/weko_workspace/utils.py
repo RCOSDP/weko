@@ -105,10 +105,11 @@ def get_es_itemlist():
 
     try:
         response = requests.get(base_url + invenio_api_path, headers=headers)
-        response.raise_for_status() 
+        response.raise_for_status()
         size = response.json()["hits"]["total"]
+        size_param = "?size=" + str(size) if size else ""
 
-        response = requests.get(base_url + invenio_api_path + "?size=" + str(size), headers=headers)
+        response = requests.get(base_url + invenio_api_path + size_param, headers=headers)
         response.raise_for_status()
         records_data = response.json()
         return records_data
