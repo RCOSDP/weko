@@ -1653,7 +1653,7 @@ def get_file_name(file_path):
     return file_path.split("/")[-1] if file_path.split("/")[-1] else ""
 
 
-def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
+def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, metadata_only=False):
     """Upload file content.
 
     :argument
@@ -1768,7 +1768,13 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
                 old_file_list.append(None)
 
     # set delete flag for file metadata if is empty.
-    new_data, is_cleaned, file_key = clean_file_metadata(item["item_type_id"], new_data)
+    # Check metadata_only flag
+    if metadata_only:
+        is_cleaned = False
+        file_key = None
+    else:
+        new_data, is_cleaned, file_key = clean_file_metadata(item["item_type_id"], new_data)
+
     # progress upload file, replace file contents.
     file_size_dict = up_load_file(item, root_path, deposit, not is_cleaned, old_file_list)
     new_data = autofill_thumbnail_metadata(item["item_type_id"], new_data)
@@ -1977,7 +1983,7 @@ def send_item_created_event_to_es(item, request_info):
         )
 
 
-def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
+def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, metadata_only=False):
     """Validation importing zip file.
 
     :argument
@@ -2026,7 +2032,8 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                     PIDVersioning(child=pid).last_child.object_uuid
                 )
 
-            register_item_metadata(item, root_path, owner, is_gakuninrdm)
+            register_item_metadata(item, root_path, owner, is_gakuninrdm, metadata_only)
+
             if not is_gakuninrdm:
                 if current_app.config.get("WEKO_HANDLE_ALLOW_REGISTER_CNRI"):
                     register_item_handle(item)

@@ -4,6 +4,7 @@
 #
 # Invenio-S3 is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
+
 """File serving helpers for S3 files."""
 
 import mimetypes
@@ -12,8 +13,7 @@ import unicodedata
 from flask import current_app
 from invenio_files_rest.helpers import chunk_size_or_default, sanitize_mimetype
 from werkzeug.datastructures import Headers
-from werkzeug.urls import url_quote
-
+from urllib.parse import quote as url_quote
 
 def redirect_stream(s3_url_builder,
                     filename,
@@ -25,7 +25,7 @@ def redirect_stream(s3_url_builder,
 
     :param url: redirection URL
 
-    :return: Flaks response.
+    :return: Flask response.
     """
     # Guess mimetype from filename if not provided.
     if mimetype is None and filename:

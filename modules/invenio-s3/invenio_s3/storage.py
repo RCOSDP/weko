@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2018, 2019, 2020 Esteban J. G. Gabancho.
+# Copyright (C) 2018, 2019, 2020, 2021 Esteban J. G. Gabancho.
 #
 # Invenio-S3 is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
+
 """S3 file storage interface."""
-from __future__ import absolute_import, division, print_function
 
 from functools import partial, wraps
+from math import ceil
 
 import s3fs
 from flask import current_app
@@ -17,19 +18,26 @@ from invenio_files_rest.storage import PyFSFileStorage, pyfs_storage_factory
 
 from .config import S3_SEND_FILE_DIRECTLY
 from .helpers import redirect_stream
-
+from .ext import InvenioS3
 
 def set_blocksize(f):
     """Decorator to set the correct block size according to file size."""
     @wraps(f)
     def inner(self, *args, **kwargs):
         size = kwargs.get('size', None)
+
         block_size = (
             size // current_app.config['S3_MAXIMUM_NUMBER_OF_PARTS']  # Integer
             if size
             else current_app.config['S3_DEFAULT_BLOCK_SIZE']
         )
-
+        if self.location:
+            if self.location.type != None:
+                block_size = (
+                    ceil(size / self.location.s3_maximum_number_of_parts)
+                    if size
+                    else self.location.s3_default_block_size
+                )
         if block_size > self.block_size:
             self.block_size = block_size
         return f(self, *args, **kwargs)
@@ -40,20 +48,37 @@ def set_blocksize(f):
 class S3FSFileStorage(PyFSFileStorage):
     """File system storage using Amazon S3 API for accessing files."""
 
-    def __init__(self, fileurl, **kwargs):
+    def __init__(self, fileurl, size, modified, clean_dir, location):
         """Storage initialization."""
         self.block_size = current_app.config['S3_DEFAULT_BLOCK_SIZE']
-        super(S3FSFileStorage, self).__init__(fileurl, **kwargs)
+        if location:
+            if location.type != None:
+                self.block_size = location.s3_default_block_size
+        super(S3FSFileStorage, self).__init__(fileurl, size, modified, clean_dir, location)
 
     def _get_fs(self, *args, **kwargs):
         """Get PyFilesystem instance and S3 real path."""
-        if not self.fileurl.startswith('s3://'):
+        if self.location.type == None:
             return super(S3FSFileStorage, self)._get_fs(*args, **kwargs)
 
-        info = current_app.extensions['invenio-s3'].init_s3fs_info
+        url = self.fileurl
+        if self.location.type == current_app.config.get('S3_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE'):
+            if url.startswith('https://s3'):
+                # ex: https://s3.amazonaws.com/bucket_name/file_name
+                parts = url.split('/')
+                url = 's3://' + '/'.join(parts[3:])
+                self.location.s3_endpoint_url = parts[0] + '//' + parts[2]
+            else:
+                # ex: https://bucket_name.s3.us-east-1.amazonaws.com/file_name
+                parts = url.split('/')
+                sub_parts = parts[2].split('.')
+                url = 's3://' + sub_parts[0] + '/' + '/'.join(parts[3:])
+                self.location.s3_endpoint_url = parts[0] + '//' + parts[2]
+
+        info = current_app.extensions['invenio-s3'].init_s3fs_info(location=self.location)
         fs = s3fs.S3FileSystem(default_block_size=self.block_size, **info)
 
-        return (fs, self.fileurl)
+        return (fs, url)
 
     @set_blocksize
     def initialize(self, size=0):
@@ -183,6 +208,11 @@ class S3FSFileStorage(PyFSFileStorage):
             s3_url_builder = partial(
                 fs.url, path, expires=current_app.config['S3_URL_EXPIRATION']
             )
+            if self.location:
+                if self.location.type != None:
+                    s3_url_builder = partial(
+                        fs.url, path, expires=self.location.s3_url_expiration
+                    )
 
             return redirect_stream(
                 s3_url_builder,
@@ -202,10 +232,15 @@ class S3FSFileStorage(PyFSFileStorage):
         If the source is an S3 stored object the copy process happens on the S3
         server side, otherwise we use the normal ``FileStorage`` copy method.
         """
-        if src.fileurl.startswith('s3://'):
-            fs, path = self._get_fs()
-            fs.copy(src.fileurl, path)
+        if self.location:
+            if self.location.type != None:
+                fs, path = self._get_fs()
+                fs.copy(src.fileurl, path)
+            else:
+            # institutional repository
+                super(S3FSFileStorage, self).copy(src, *args, **kwargs)
         else:
+        # institutional repository
             super(S3FSFileStorage, self).copy(src, *args, **kwargs)
 
     @set_blocksize

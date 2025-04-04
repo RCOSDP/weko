@@ -71,7 +71,7 @@ async function saveDataFormat(type) {
 
   const name_value = document.getElementById("name").value;
   const item_type_id_value = document.getElementById("item_type").value;
-  const mapping_value = document.getElementById("mapping").value;
+  let mapping_value = document.getElementById("mapping").value;
 
   //Validate
   // required check
@@ -88,12 +88,19 @@ async function saveDataFormat(type) {
     NGList.push('Mapping');
     return showMsg(item_required_alert + NGList , false);
   }
+  try {
+    mapping_value = JSON.parse(mapping_value);
+  } catch (error) {
+      alert('Invalid JSON:', error);
+      return;
+  }
 
   // mapping check
   const data = {
     'mapping_id': mapping_value,
     'itemtype_id': item_type_id_value,
   }
+  let check = true;
   url ="/sword/validate_mapping";
   await fetch(url ,{method:'POST' ,headers:{'Content-Type':'application/json'} ,credentials:"include", body: JSON.stringify(data)})
   .then(res => {
@@ -113,9 +120,13 @@ async function saveDataFormat(type) {
     }
   })
   .catch(error => {
-    alert('validation check error');
-    return;
+    alert('validation check error' + error.message);
+    check = false;
   });
+
+  if (check === false){
+    return;
+  }
 
   const form = {
     'name': name_value
@@ -127,7 +138,6 @@ async function saveDataFormat(type) {
   } else {
     url ="/admin/jsonld-mapping/edit/" + current_model_json["id"] + "/?url=%2Fadmin%2ItemType%2Fjsonld-mapping%2F";
   }
-  console.log(url);
   fetch(url ,{method:'POST' ,headers:{'Content-Type':'application/json'} ,credentials:"include", body: JSON.stringify(form)})
   .then(res => {
     if(!res.ok){
