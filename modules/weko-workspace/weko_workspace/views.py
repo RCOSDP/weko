@@ -141,24 +141,15 @@ def get_workspace_itemlist():
             defaultconditions=changeLang(lang, jsonCondition),
         )
 
-    # ログインユーザーのIDとロールを取得
-    recordsDataList = recordsData["hits"]["hits"]
-    rolelist = []
-    for role in current_user.roles:
-        rolelist.append(role.id)
-    # リポジトリ管理者の場合、全てのアイテムを表示
-    if 2 in rolelist:
-        pass
-    # 登録者の場合、自分のアイテムのみ表示
-    elif 3 in rolelist:
-        recordsDataList = [hit for hit in recordsDataList if hit["metadata"]["weko_creator_id"] == str(current_user.id)]
-    else:
-        return render_template(
-            current_app.config["WEKO_WORKSPACE_BASE_TEMPLATE"],
-            username=userNm,
-            workspaceItemList=[],
-            defaultconditions=changeLang(lang, jsonCondition),
-        )
+    # Get items owned by this user.
+    recordsDataList = []
+    for item in recordsData["hits"]["hits"]:
+        metadata = item.get("metadata", {})
+        if (
+            metadata.get("weko_creator_id") == str(current_user.id)
+            or metadata.get("weko_shared_id") == current_user.id
+        ):
+            recordsDataList.append(item)
 
     # →ループ処理
     for hit in recordsDataList:
