@@ -32,6 +32,7 @@ from flask import (
 )
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
+from flask_menu import register_menu
 from weko_records.api import FeedbackMailList
 from invenio_db import db
 from sqlalchemy.exc import SQLAlchemyError
@@ -98,6 +99,10 @@ blueprint_itemapi = Blueprint(
 # 2.1. アイテム一覧情報取得API
 @workspace_blueprint.route("/", methods=["GET", "POST"])
 @login_required
+@register_menu(
+    workspace_blueprint, 'settings.workspace',
+    _('%(icon)s Workspace', icon='<i class="fa fa-list-alt"></i>'),
+    order=101) # after 'settings.admin'
 def get_workspace_itemlist():
     """
     Retrieves the list of items in the workspace and applies filters based on default conditions and user input.
@@ -136,24 +141,15 @@ def get_workspace_itemlist():
             defaultconditions=changeLang(lang, jsonCondition),
         )
 
-    # ログインユーザーのIDとロールを取得
-    recordsDataList = recordsData["hits"]["hits"]
-    rolelist = []
-    for role in current_user.roles:
-        rolelist.append(role.id)
-    # リポジトリ管理者の場合、全てのアイテムを表示
-    if 2 in rolelist:
-        pass
-    # 登録者の場合、自分のアイテムのみ表示
-    elif 3 in rolelist:
-        recordsDataList = [hit for hit in recordsDataList if hit["metadata"]["weko_creator_id"] == str(current_user.id)]
-    else:
-        return render_template(
-            current_app.config["WEKO_WORKSPACE_BASE_TEMPLATE"],
-            username=userNm,
-            workspaceItemList=[],
-            defaultconditions=changeLang(lang, jsonCondition),
-        )
+    # Get items owned by this user.
+    recordsDataList = []
+    for item in recordsData["hits"]["hits"]:
+        metadata = item.get("metadata", {})
+        if (
+            metadata.get("weko_creator_id") == str(current_user.id)
+            or metadata.get("weko_shared_id") == current_user.id
+        ):
+            recordsDataList.append(item)
 
     # →ループ処理
     for hit in recordsDataList:
@@ -965,3 +961,25 @@ def item_register_save():
             result['error'] = str(e)
         return result
 
+@workspace_blueprint.teardown_request
+@blueprint_itemapi.teardown_request
+def dbsession_clean(exception):
+    """
+    Cleans up the database session after each request.
+
+    Args:
+        exception (Exception): The exception that occurred during the request.
+
+    Returns:
+        None
+
+    Raises:
+        None
+    """
+    current_app.logger.debug("weko_workspace dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

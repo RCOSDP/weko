@@ -19,6 +19,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
+
+msgid "Workspace"
+msgstr ""
+
 #: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
 msgid "Filter Display"
 msgstr ""

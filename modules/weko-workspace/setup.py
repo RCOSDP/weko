@@ -54,7 +54,6 @@ setup_requires = [
     'pytest-runner>=3.0.0,<5',
 ]
 
-# weko groupsを参照して以下のように修正した。
 install_requires = [
     'Flask-BabelEx>=0.9.2',
     'Flask-Menu>=0.4.0',
@@ -97,8 +96,14 @@ setup(
         'invenio_base.apps': [
             'weko_workspace = weko_workspace:WekoWorkspace',
         ],
+        'invenio_base.blueprints': [
+            'weko_workspace = weko_workspace.views:workspace_blueprint',
+        ],
         'invenio_base.api_apps': [
-            'weko_workspace_rest = weko_workspace:WekoWorkspace',
+            'weko_workspace_api = weko_workspace:WekoWorkspace',
+        ],
+        'invenio_base.api_blueprints': [
+            'weko_workspace_api = weko_workspace.views:blueprint_itemapi',
         ],
         'invenio_assets.bundles': [
             'workspace_item_list_js = weko_workspace.bundles:js_item_list',
