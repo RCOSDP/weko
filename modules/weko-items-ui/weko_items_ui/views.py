@@ -52,7 +52,6 @@ from weko_index_tree.utils import check_index_permissions, get_index_id, \
 from weko_records.api import ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
-from weko_records_ui.views import soft_delete
 from weko_redis.redis import RedisConnection
 from weko_workflow.api import GetCommunity, WorkActivity, WorkFlow as WorkFlows
 from weko_workflow.utils import check_an_item_is_locked, \
@@ -1167,6 +1166,7 @@ def prepare_delete_item(id=None, community=None):
         workflows = WorkFlows()
         workflow_detail = workflows.get_workflow_by_id(post_activity['workflow_id'])
 
+        from weko_records_ui.views import soft_delete
         if workflow_detail.delete_flow_id is None:
             soft_delete(pid_value)
             return jsonify(
@@ -1219,10 +1219,10 @@ def prepare_delete_item(id=None, community=None):
 
         if rtn.action_id == 2:   # end_action
             soft_delete(pid_value)
-            
+
         if url_redirect.startswith("/api/"):
             url_redirect = url_redirect[4:]
-            
+
         return jsonify(
             code=0,
             msg='success',

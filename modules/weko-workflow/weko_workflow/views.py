@@ -77,7 +77,6 @@ from weko_records.api import FeedbackMailList, RequestMailList, ItemLink
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
-from weko_records_ui.views import soft_delete
 from weko_search_ui.utils import check_tsv_import_items, import_items_to_system
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
@@ -1717,6 +1716,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
 
     if next_action_endpoint == "end_action"  and for_delete:
         delete_item_id = current_pid.pid_value.split('.')[0]
+        from weko_records_ui.views import soft_delete
         soft_delete(delete_item_id)
 
     rtn = history.create_activity_history(activity, action_order)
