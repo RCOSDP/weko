@@ -3,7 +3,8 @@
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
         <h4 class="modal-title" id="myModalHeader">{{_('Action List')}}</h4>
       </div>
       <div class="modal-body" id="myModalBody">
@@ -22,8 +23,8 @@
                 </tr>
               </thead>
               <tbody>
-              {%- for action in action_list %}
-                <tr class="test {% if action.is_for_delete %}action_delete{% else %}action_normal{% endif %}">
+                {%- for action in action_list %}
+                <tr class="test {% if action.available_for_delete %}action_delete{% else %}action_normal{% endif %}">
                   <th scope="row" rowspan="2">{{loop.index}}</th>
                   <td><span id="action_name_{{action.id}}">{{action.action_name}}</span></td>
                   <td>{{action.action_desc}}</td>
@@ -32,25 +33,28 @@
                   <td><span id="flow_action_ver_{{action.id}}"></span></td>
                   <td><span id="flow_action_date_{{action.id}}"></span></td>
                 </tr>
-                <tr class="test {% if action.is_for_delete %}action_delete{% else %}action_normal{% endif %}">
+                <tr class="test {% if action.available_for_delete %}action_delete{% else %}action_normal{% endif %}">
                   <td colspan="6">
                     <div>
-                      <button class="btn btn-primary btn_apply" id="btn_apply_{{action.id}}" data-action-id="{{action.id}}">
-                          <i class="fa fa-bell"></i>&nbsp
-                            {{_('Apply')}}
+                      <button class="btn btn-primary btn_apply" id="btn_apply_{{action.id}}"
+                        data-action-id="{{action.id}}">
+                        <i class="fa fa-bell"></i>&nbsp
+                        {{_('Apply')}}
                       </button>
-                      <button class="btn btn-warning btn_unusable" id="btn_unusable_{{action.id}}" data-action-id="{{action.id}}" disabled>
-                              <i class="fa fa-bell-slash"> </i>&nbsp
-                            {{_('Unusable')}}
+                      <button class="btn btn-warning btn_unusable" id="btn_unusable_{{action.id}}"
+                        data-action-id="{{action.id}}" disabled>
+                        <i class="fa fa-bell-slash"> </i>&nbsp
+                        {{_('Unusable')}}
                       </button>
-                      <button class="btn btn-primary btn_update" id="btn_update_{{action.id}}" data-action-id="{{action.id}}">
-                           <span class="glyphicon glyphicon-save"></span>&nbsp
-                            {{_('Update')}}
+                      <button class="btn btn-primary btn_update" id="btn_update_{{action.id}}"
+                        data-action-id="{{action.id}}">
+                        <span class="glyphicon glyphicon-save"></span>&nbsp
+                        {{_('Update')}}
                       </button>
                     </div>
                   </td>
                 </tr>
-              {%- endfor %}
+                {%- endfor %}
               </tbody>
             </table>
           </div>
@@ -71,7 +75,8 @@
   <div class="modal-dialog modal-sm" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
         <h4 class="modal-title" id="myModalHeader">{{_('Specify Property')}}</h4>
       </div>
       <div class="modal-body" id="myModalBody">
@@ -80,7 +85,7 @@
             <div class="hide my-modal-action-user action-order"></div>
             <select id="cbxActionUser" class="form-control" size="10">
               {%- for sp in specifed_properties %}
-                <option value="{{sp.value}}">{{sp.text}}</option>
+              <option value="{{sp.value}}">{{sp.text}}</option>
               {%- endfor %}
             </select>
           </div>

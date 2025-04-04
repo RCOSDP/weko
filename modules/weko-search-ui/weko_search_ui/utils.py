@@ -33,6 +33,8 @@ import uuid
 import xml.etree.ElementTree as ET
 import zipfile
 import chardet
+import urllib
+import copy
 from collections import Callable, OrderedDict
 from datetime import datetime, timezone
 from functools import partial, reduce, wraps
@@ -92,6 +94,7 @@ from weko_redis.redis import RedisConnection
 from weko_schema_ui.models import PublishStatus
 from weko_search_ui.mapper import BaseMapper, JPCOARV2Mapper, JsonLdMapper
 from weko_workflow.api import Flow, WorkActivity
+from weko_workflow.errors import WekoWorkflowException
 from weko_workflow.config import (
     IDENTIFIER_GRANT_LIST,
     IDENTIFIER_GRANT_SELECT_DICT,
@@ -882,22 +885,32 @@ def check_jsonld_import_items(
         item_type = ItemTypes.get_by_id(json_mapping.item_type_id)
         check_result.update({"item_type_id": item_type.id})
 
-        # TODO: validate mapping
         mapping = json_mapping.mapping
         mapper = JsonLdMapper(item_type.id, mapping)
+        if not mapper.is_valid:
+            current_app.logger.info(
+                f"Mapping is invalid for item type {item_type.item_type_name.name}."
+            )
+            raise Exception(
+                f"Mapping is invalid for item type {item_type.item_type_name.name}."
+            )
+
         with open(f"{data_path}/{json_name}", "r") as f:
             json_ld = json.load(f)
         item_metadatas, _ = mapper.to_item_metadata(json_ld)
         list_record = [
             {
                 "$schema": f"/items/jsonschema/{item_type.id}",
-                # if new item, must not exist "id"
-                **({"id": item_metadata["id"]} if "id" in item_metadata else {}),
+                # if new item, must not exist "id" and "uri"
+                **({"id": item_metadata.pop("id")} if "id" in item_metadata else {}),
+                **({"uri": item_metadata.pop("uri")} if "uri" in item_metadata else {}),
                 "_id": item_metadata.id,
                 "metadata": item_metadata,
                 "item_type_name": item_type.item_type_name.name,
                 "item_type_id": item_type.id,
                 "publish_status": item_metadata.get("publish_status"),
+                **({"edit_mode": item_metadata.get("edit_mode")}
+                    if "edit_mode" in item_metadata else {}),
                 "link_data": item_metadata.link_data,
                 "file_path": item_metadata.list_file,
                 "non_extract": item_metadata.non_extract,
@@ -909,10 +922,11 @@ def check_jsonld_import_items(
             } for item_metadata in item_metadatas
         ]
         data_path = os.path.join(data_path, "data")
-        list_record.sort(key=lambda x: get_priority(x['metadata'].link_data))
+        list_record.sort(key=lambda x: get_priority(x["link_data"]))
         handle_save_bagit(list_record, file, data_path, filename)
 
         handle_metadata_amend_by_doi(list_record)
+        handle_flatten_data_encode_filename(list_record, data_path)
 
         handle_set_change_identifier_flag(list_record, is_change_identifier)
         handle_fill_system_item(list_record)
@@ -1456,7 +1470,7 @@ def handle_check_exist_record(list_record) -> list:
         if item_id and item_id is not "":
             system_url = request.host_url + "records/" + str(item_id)
             if item.get("uri") != system_url:
-                errors.append(_("Specified URI and system" " URI do not match."))
+                errors.append(_("Specified URI and system URI do not match."))
                 item["status"] = None
             else:
                 item_exist = None
@@ -1768,8 +1782,8 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, metadata
                 old_file_list.append(None)
 
     # set delete flag for file metadata if is empty.
-    # Check metadata_only flag
-    if metadata_only:
+    # Check metadata_replace flag
+    if item.get("metadata_replace"):
         is_cleaned = False
         file_key = None
     else:
@@ -2032,7 +2046,8 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, m
                     PIDVersioning(child=pid).last_child.object_uuid
                 )
 
-            register_item_metadata(item, root_path, owner, is_gakuninrdm, metadata_only)
+            register_item_metadata(item, root_path, owner, is_gakuninrdm)
+
 
             if not is_gakuninrdm:
                 if current_app.config.get("WEKO_HANDLE_ALLOW_REGISTER_CNRI"):
@@ -2161,42 +2176,51 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, m
 
 
 def import_items_to_activity(item, request_info):
-    workflow_id = request_info.get("workflow_id")
-    # when metadata format was XML, get id from admin setting
-    if workflow_id is None:
-        settings = AdminSettings.get("sword_api_setting", dict_to_object=False)
-        default_format = settings.get("default_format", "XML")
-        data_format = settings.get("data_format")
-        workflow_id = int(data_format.get(default_format, {}).get("workflow", "-1"))
+    """Import items to activity.
 
+    Args:
+        item (dict): Item metadata.
+        request_info (dict): Information from request.
+
+    Returns:
+        tuple: URL, recid, current action, error message.
+    """
+    workflow_id = request_info.get("workflow_id")
+    item_id = item.get("id")
     metadata = item.get("metadata")
     index = metadata.get("path")
     files_info = metadata.pop("files_info", [{}])
     files = [
-        os.path.join(item.get("root_path"), file_info.get("url", {}).get("label"))
+        os.path.join(item.get("root_path"), file_info.get("filename"))
             for file_info
             in files_info[0].get("items", {})
     ]
     comment = metadata.get("comment")
     link_data = getattr(item["metadata"], "link_data", None)
     grant_data = item.get("grant_data")
+    metadata_replace = item.get("metadata_replace", False)
 
     error = None
     try:
         from weko_workflow.headless.activity import HeadlessActivity
-        headless = HeadlessActivity()
+        headless = HeadlessActivity(_metadata_replace=metadata_replace)
         url, current_action, recid = headless.auto(
-            user_id= request_info.get("user_id"), workflow_id=workflow_id,
-            index=index, metadata=metadata, files=files, comment=comment,
-            link_data=link_data, grant_data=grant_data,
+            user_id=request_info.get("user_id"),
+            workflow_id=workflow_id, item_id=item_id,
+            index=index, metadata=metadata, files=files,
+            comment=comment, link_data=link_data, grant_data=grant_data,
             non_extract=item.get("non_extract")
         )
-    except Exception as ex:
+    except WekoWorkflowException as ex:
+        current_app.logger.error(
+            "Error occurred while importing item to activity: {}"
+            .format(headless.activity_id)
+        )
         traceback.print_exc()
         url = headless.detail
         recid = headless.recid
         current_action = headless.current_action
-        error = True
+        error = str(ex)
 
     return url, recid, current_action, error
 
@@ -4852,3 +4876,42 @@ def handle_metadata_amend_by_doi(list_record):
         if doi is None:
             continue
         item["metadata"] = handle_doi(item, doi)
+
+
+def handle_flatten_data_encode_filename(list_record, data_path):
+    """Flatten data folder and encode filename.
+
+    Args:
+        list_record (list[dict]): List record import.
+        data_path (str): Paths of file content, including data folder.
+    """
+    for item in list_record:
+        metadata = item.get("metadata")
+        files_info = metadata.get("files_info")
+        item["filepath"] = []
+
+        # get filename from metadata
+        for file_info in files_info:
+            key = file_info.get("key")
+            metadata[key] = []
+
+            for file in file_info["items"]:
+                filename = file.get("filename")
+
+                # encode filename
+                encoded_filename = urllib.parse.quote(filename, safe='')
+                file["filename"] = encoded_filename
+
+                # copy file in directory to root under data_path
+                if not os.path.exists(encoded_filename):
+                    shutil.copy(
+                        os.path.join(data_path, filename),
+                        os.path.join(data_path, encoded_filename)
+                    )
+                current_app.logger.info(f"flattened and encoded file: {filename}")
+
+                # for Direct registration
+                item["filepath"].append(encoded_filename)
+
+                # for Workflow registration
+                metadata[key].append(file)  # replace metadata

@@ -77,6 +77,7 @@ from weko_records.api import FeedbackMailList, RequestMailList, ItemLink
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
+from weko_records_ui.views import soft_delete
 from weko_search_ui.utils import check_tsv_import_items, import_items_to_system
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
@@ -86,7 +87,8 @@ from weko_user_profiles.models import UserProfile
 from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
-    IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
+    IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB, \
+    WEKO_WORKFLOW_DELETION_FLOW_TYPE
 from .errors import ActivityBaseRESTError, ActivityNotFoundRESTError, \
     DeleteActivityFailedRESTError, InvalidInputRESTError, \
     RegisteredActivityNotFoundRESTError
@@ -272,7 +274,7 @@ def index():
                     if hasattr(approver_profile, '_displayname') and approver_profile._displayname:
                         activitie.approver.append(approver_profile._displayname)
                     else:
-                        # If the Author has not registered his/her name, use his/her email address. 
+                        # If the Author has not registered his/her name, use his/her email address.
                         activitie.approver.append(step['Author'])
                 else:
                     activitie.approver.append(step['Author'])
@@ -845,6 +847,9 @@ def display_activity(activity_id="0", community_id=None):
                 error="can not get data required for rendering")
 
     activity = WorkActivity()
+    activity_detail = activity.get_activity_detail(activity_id)
+    for_delete = activity_detail.flow_define.flow_type == WEKO_WORKFLOW_DELETION_FLOW_TYPE
+
     if "?" in activity_id:
         activity_id = activity_id.split("?")[0]
 
@@ -984,18 +989,19 @@ def display_activity(activity_id="0", community_id=None):
             activity_detail.item_id and \
             activity_detail.activity_status != ActivityStatusPolicy.ACTIVITY_CANCEL:
         try:
-            item_id = str(activity_detail.item_id)
-            # get record data for the first time access to editing item screen
-            recid, approval_record = get_pid_and_record(item_id)
-            files, files_thumbnail = get_files_and_thumbnail(activity_id, item_id)
+            if not for_delete:
+                item_id = str(activity_detail.item_id)
+                # get record data for the first time access to editing item screen
+                recid, approval_record = get_pid_and_record(item_id)
+                files, files_thumbnail = get_files_and_thumbnail(activity_id, item_id)
 
-            links = base_factory(recid)
+                links = base_factory(recid)
 
         except PIDDeletedError:
-            current_app.logger.debug("PIDDeletedError: {}".format(sys.exc_info()))
+            current_app.logger.error("PIDDeletedError: {}".format(sys.exc_info()))
             abort(404)
         except PIDDoesNotExistError:
-            current_app.logger.debug("PIDDoesNotExistError: {}".format(sys.exc_info()))
+            current_app.logger.error("PIDDoesNotExistError: {}".format(sys.exc_info()))
             abort(404)
         except Exception:
             current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
@@ -1054,22 +1060,23 @@ def display_activity(activity_id="0", community_id=None):
         ctx['item_link'] = item_link
 
     # Get item link info.
-    if activity_detail.activity_status != ActivityStatusPolicy.ACTIVITY_CANCEL:
-        record_detail_alt = get_main_record_detail(
-            activity_id, activity_detail, action_endpoint, item,
-            approval_record, files, files_thumbnail)
-        if not record_detail_alt:
-            current_app.logger.error("display_activity: bad value for record_detail_alt")
-            return render_template("weko_theme/error.html",
-                        error="can not get data required for rendering")
+    if not for_delete:
+        if activity_detail.activity_status != ActivityStatusPolicy.ACTIVITY_CANCEL:
+            record_detail_alt = get_main_record_detail(
+                activity_id, activity_detail, action_endpoint, item,
+                approval_record, files, files_thumbnail)
+            if not record_detail_alt:
+                current_app.logger.error("display_activity: bad value for record_detail_alt")
+                return render_template("weko_theme/error.html",
+                            error="can not get data required for rendering")
 
-        ctx.update(
-            dict(
-                record_org=record_detail_alt.get('record'),
-                files_org=record_detail_alt.get('files'),
-                thumbnails_org=record_detail_alt.get('files_thumbnail')
+            ctx.update(
+                dict(
+                    record_org=record_detail_alt.get('record'),
+                    files_org=record_detail_alt.get('files'),
+                    thumbnails_org=record_detail_alt.get('files_thumbnail')
+                )
             )
-        )
 
     # Get email approval key
     approval_email_key = get_approval_keys()
@@ -1163,6 +1170,7 @@ def display_activity(activity_id="0", community_id=None):
         term_and_condition_content=term_and_condition_content,
         user_profile=user_profile,
         form=form,
+        for_delete=for_delete,
         **ctx
     )
 
@@ -1342,6 +1350,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
         current_app.logger.error("next_action: can not get activity_detail")
         res = ResponseMessageSchema().load({"code":-1, "msg":"can not get activity detail"})
         return jsonify(res.data), 500
+    for_delete = activity_detail.flow_define.flow_type == WEKO_WORKFLOW_DELETION_FLOW_TYPE
     action_order = activity_detail.action_order
 
     try:
@@ -1531,7 +1540,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
             journal=post_json.get('journal')
         )
 
-    if action_endpoint == 'approval' and item_id:
+    if action_endpoint == 'approval' and item_id and not for_delete:
         last_idt_setting = work_activity.get_action_identifier_grant(
             activity_id=activity_id,
             action_id=get_actionid('identifier_grant'))
@@ -1706,6 +1715,10 @@ def next_action(activity_id='0', action_id=0, json_data=None):
                     action_id=action_id,
                     req=-1)
 
+    if next_action_endpoint == "end_action"  and for_delete:
+        delete_item_id = current_pid.pid_value.split('.')[0]
+        soft_delete(delete_item_id)
+
     rtn = history.create_activity_history(activity, action_order)
     if not rtn:
         res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
@@ -1725,48 +1738,55 @@ def next_action(activity_id='0', action_id=0, json_data=None):
         comment='',
         action_order=action_order
     )
-    
+
     if next_action_endpoint == "approval":
         work_activity.notify_about_activity(activity_id, "request_approval")
 
     if next_action_endpoint == "end_action":
-        non_extract = work_activity.get_non_extract_files(activity_id)
-        deposit.non_extract = non_extract
-        new_item_id = handle_finish_workflow(
-            deposit, current_pid, recid
-        )
-        if new_item_id is None:
-            res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
-            return jsonify(res.data), 500
+        if not for_delete:
+            non_extract = work_activity.get_non_extract_files(activity_id)
+            deposit.non_extract = non_extract
+            new_item_id = handle_finish_workflow(
+                deposit, current_pid, recid
+            )
+            if new_item_id is None:
+                res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
+                return jsonify(res.data), 500
 
-        activity.update(
-            action_id=next_action_id,
-            action_version=next_flow_action[0].action_version,
-            item_id=new_item_id,
-            action_order=next_action_order
-        )
-        work_activity.end_activity(activity)
+            activity.update(
+                action_id=next_action_id,
+                action_version=next_flow_action[0].action_version,
+                item_id=new_item_id,
+                action_order=next_action_order
+            )
+            work_activity.end_activity(activity)
 
-        if action_endpoint == "approval":
-            work_activity.notify_about_activity(activity_id, "approved")
+            if action_endpoint == "approval":
+                work_activity.notify_about_activity(activity_id, "approved")
+            else:
+                work_activity.notify_about_activity(activity_id, "registered")
+
+            # Call signal to push item data to ES.
+            try:
+                if '.' not in current_pid.pid_value and has_request_context():
+                    user_id = activity_detail.activity_login_user if \
+                        activity and activity_detail.activity_login_user else -1
+                    item_created.send(
+                        current_app._get_current_object(),
+                        user_id=user_id,
+                        item_id=current_pid,
+                        item_title=activity_detail.title
+                    )
+            except BaseException:
+                abort(500, 'MAPPING_ERROR')
         else:
-            work_activity.notify_about_activity(activity_id, "registered")
-        if next_action_endpoint == "approval":
-            current_app.logger.info("next_action: request approval notification.")
-
-        # Call signal to push item data to ES.
-        try:
-            if '.' not in current_pid.pid_value and has_request_context():
-                user_id = activity_detail.activity_login_user if \
-                    activity and activity_detail.activity_login_user else -1
-                item_created.send(
-                    current_app._get_current_object(),
-                    user_id=user_id,
-                    item_id=current_pid,
-                    item_title=activity_detail.title
-                )
-        except BaseException:
-            abort(500, 'MAPPING_ERROR')
+            activity.update(
+                action_id=next_action_id,
+                action_version=next_flow_action[0].action_version,
+                item_id=current_pid.object_uuid,
+                action_order=next_action_order
+            )
+            work_activity.end_activity(activity)
     else:
         flag = work_activity.upt_activity_action(
             activity_id=activity_id, action_id=next_action_id,

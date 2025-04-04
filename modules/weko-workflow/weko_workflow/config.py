@@ -41,6 +41,9 @@ WEKO_WORKFLOW_MAX_ACTIVITY_ID = 99999
 WEKO_WORKFLOW_ACTIVITY_ID_FORMAT = 'A-{}-{}'
 """Activity Id's format (A-YYYYMMDD-NNNNN with NNNNN starts from 00001)."""
 
+WEKO_WORKFLOW_DELETION_ACTIVITY_ID_FORMAT = 'D-{}-{}'
+"""Deletion Activity Id's format (D-YYYYMMDD-NNNNN with NNNNN starts from 00001)."""
+
 WEKO_WORKFLOW_ACTION_ENDPOINTS = {
     'item_login': {
         'endpoint': 'weko_items_ui.index',
@@ -56,7 +59,7 @@ IDENTIFIER_GRANT_LIST = [(0, 'Not Grant', ''),
                          ]
 """Options list for Identifier Grant action."""
 
-IDENTIFIER_GRANT_SUFFIX_METHOD = 0 
+IDENTIFIER_GRANT_SUFFIX_METHOD = 0
 """
     Suffix input method for Identifier Grant action
 
@@ -324,7 +327,7 @@ WEKO_WORKFLOW_ACTIONS = [
     WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT
 ]
 
-WEKO_WORKFLOW_DELETE_ACTIONS= [
+WEKO_WORKFLOW_DELETION_ACTIONS= [
     WEKO_WORKFLOW_ACTION_START,
     WEKO_WORKFLOW_ACTION_END,
     WEKO_WORKFLOW_ACTION_APPROVAL
@@ -558,3 +561,10 @@ WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS = [
     'action_name',
     'role_name'
 ]
+
+
+WEKO_WORKFLOW_REGISTRATION_FLOW_TYPE = 1
+"""Registration flow type"""
+
+WEKO_WORKFLOW_DELETION_FLOW_TYPE = 2
+"""Deletion flow type"""

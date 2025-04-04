@@ -175,7 +175,7 @@ class FlowSettingView(BaseView):
         if '0' == flow_id:
             return jsonify(code=500, msg='No data to delete.',
                            data={'redirect': url_for('flowsetting.index')})
-        
+
         if not self._check_auth(flow_id) :
             abort(403)
 
@@ -204,14 +204,19 @@ class FlowSettingView(BaseView):
     @staticmethod
     def get_actions():
         """Get Actions info."""
+        def _set_available_for_delete(action):
+            action.available_for_delete = action.action_name in current_app.config[
+                "WEKO_WORKFLOW_DELETION_ACTIONS"
+            ]
+            return action
+
         actions = Action().get_action_list()
-        action_list = list()
-        for action in actions:
-            if action.action_name in current_app.config[
-                    'WEKO_WORKFLOW_ACTIONS']:
-                action.is_for_delete = action.action_name in current_app.config[
-                    'WEKO_WORKFLOW_DELETE_ACTIONS']
-                action_list.append(action)
+        action_list = [
+            _set_available_for_delete(action)
+            for action in actions
+            if action.action_name in current_app.config["WEKO_WORKFLOW_ACTIONS"]
+        ]
+
         return action_list
 
     @expose('/action/<string:flow_id>', methods=['POST'])
@@ -242,8 +247,8 @@ class FlowSettingView(BaseView):
 
     @staticmethod
     def _check_auth(flow_id:str ):
-        """  
-        if the flow is used in open_restricted workflow , 
+        """
+        if the flow is used in open_restricted workflow ,
         the flow can Update by System Administrator.
 
         Args FlowDefine
@@ -367,7 +372,7 @@ class WorkFlowSettingView(BaseView):
         else:
             display = role
             hide = []
-        
+
         if workflows.open_restricted and not is_sysadmin:
             abort(403)
 
@@ -398,7 +403,10 @@ class WorkFlowSettingView(BaseView):
             flows_name=json_data.get('flows_name', None),
             itemtype_id=json_data.get('itemtype_id', 0),
             flow_id=json_data.get('flow_id', 0),
-            delete_flow_id=json_data.get('delete_flow_id') if json_data.get('delete_flow_id') else None,
+            delete_flow_id=(
+                json_data.get('delete_flow_id')
+                if json_data.get('delete_flow_id') else None
+            ),
             index_tree_id=json_data.get('index_id'),
             location_id=json_data.get('location_id'),
             open_restricted=json_data.get('open_restricted', False),
@@ -476,7 +484,7 @@ class WorkFlowSettingView(BaseView):
         :param list_hide:
 
         :return: displays, hides.
-        """        
+        """
         displays = []
         hides = []
         if isinstance(role, list):
@@ -533,8 +541,8 @@ class WorkFlowSettingView(BaseView):
         cur_language = current_i18n.language
         language = cur_language if cur_language in ['en', 'ja'] else "en"
         return cls.MULTI_LANGUAGE[key].get(language)
-    
-        
+
+
 class ActivitySettingsView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
@@ -566,7 +574,7 @@ class ActivitySettingsView(BaseView):
 
                     AdminSettings.update('activity_display_settings', settings)
                     flash(_('Activity setting was updated.'), category='success')
-            
+
             return self.render(config.WEKO_ADMIN_ACTIVITY_SETTINGS_TEMPLATE,
                                activity_display_flg=activity_display_flg,
                                form=form)
