@@ -1411,7 +1411,7 @@ class JsonLdMapper(JsonMapper):
                 for prop_name, ld_key in self.json_mapping.items()
                 if prop_name in item_map
         }
-        
+
         fixed_properties = {}
         for k, v in properties_mapping.items():
             if k.startswith("$") and "." in v:
@@ -2133,63 +2133,6 @@ class JsonLdMapper(JsonMapper):
                         )
             return
 
-        def _restore_extra_metadata(parent, extra_props, extra_value):
-            """Restore extra metadata.
-
-            Args:
-                parent (dict): parent metadata.
-                extra_props (list[str]): extra metadata properties.
-                extra_value (any): extra metadata value.
-            """
-            prop = re.sub(r"\[\d+\]", "", extra_props[0])
-            m = re.search(r"\[(\d+)\]", extra_props[0])
-            index = int(m.group(1)) if m else None
-            at_type = gen_type()
-
-            if index is None:
-                if len(extra_props) == 1:
-                    if prop == "@id":
-                        pass
-                    else:
-                        parent[prop] = extra_value
-                        rocrate.add(parent)
-                else:
-                    if "@id" in prop_props:
-                        at_id = extra_value
-                        add_entity(parent, prop, at_id, at_type)
-                    else:
-                        if prop not in parent:
-                            add_entity(
-                                parent, prop, gen_id(prop), at_type
-                            )
-                        _restore_extra_metadata(
-                            parent[prop], extra_props[1:], extra_value
-                        )
-            else:
-                if len(extra_props) == 1:
-                    if prop not in parent:
-                        list_val = ["" for _ in range(index + 1)]
-                    else:
-                        list_val = parent[prop]
-                    if len(list_val) <= index:
-                        list_val.extend(
-                            ["" for _ in range(index - len(list_val) + 1)]
-                        )
-                    list_val[index] = extra_value
-                    parent[prop] = list_val
-                    rocrate.add(parent)
-                else:
-                    ensure_entity_list_size(parent, prop, at_type, index + 1)
-                    if isinstance(parent[prop], list):
-                        _restore_extra_metadata(
-                            parent[prop][index], extra_props[1:], extra_value
-                        )
-                    else:
-                        raise Exception(
-                            f"Unexpected structure for prop {prop} at index {index}"
-                        )
-            return
-
         deconstructed = self._deconstruct_dict(metadata)
 
         for record_key in deconstructed:
@@ -2216,11 +2159,13 @@ class JsonLdMapper(JsonMapper):
                 str_extra_dict = extra_field.get("subitem_text_value")
             else:
                 str_extra_dict = extra_field[0].get("subitem_text_value")
-            extra_dict = json.loads(str_extra_dict)
-            for extra_key, extra_value in extra_dict.items():
-                extra_props = extra_key.split(".")
-                _restore_extra_metadata(
-                    rocrate.root_dataset, extra_props, extra_value
-                )
+            extra_entity = {
+                "description": "Metadata which is not able to be mapped",
+                "value": str_extra_dict
+            }
+            add_entity(
+                rocrate.root_dataset, "wk:extra", gen_id("extra"),
+                "PropertyValue", extra_entity
+            )
 
         return rocrate
