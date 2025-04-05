@@ -17,7 +17,7 @@ from sqlalchemy_utils.types import JSONType
 revision = "ce82f0d78dcb"
 down_revision = "05683afc0320"
 branch_labels = ()
-depends_on = ["invenio_oauth2server", "weko_records", "weko_workflow"]
+depends_on = ["invenio_oauth2server", "weko_records"]
 
 
 def upgrade():
