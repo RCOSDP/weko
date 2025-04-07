@@ -1,45 +1,31 @@
-from datetime import datetime
 import os
 import random
 import string
-import boto3
-import uuid
 import json
-import subprocess
-import requests
+import hashlib
 import traceback
+from datetime import datetime
+
+import boto3
 from email_validator import validate_email
-from flask import current_app, url_for
+from flask import current_app
 from flask_login import current_user
 from flask_mail import Message
-import hashlib
-from invenio_mail.admin import _load_mail_cfg_from_db, _set_flask_mail_cfg
 from flask_babelex import lazy_gettext as _
-from invenio_db import db
 
-from weko_records.api import RequestMailList, ItemsMetadata
+from invenio_mail.admin import _load_mail_cfg_from_db, _set_flask_mail_cfg
+from invenio_files_rest.models import Bucket, ObjectVersion, FileInstance
+from invenio_pidstore.models import PersistentIdentifier
+from invenio_records.api import Record
+from weko_records.api import RequestMailList
 from weko_records_ui.captcha import get_captcha_info
-from weko_records_ui.errors import AuthenticationRequiredError, ContentsNotFoundError, InternalServerError, InvalidCaptchaError, InvalidEmailError, RequiredItemNotExistError
+from weko_records_ui.errors import (
+    AuthenticationRequiredError, ContentsNotFoundError, InternalServerError,
+    InvalidCaptchaError, InvalidEmailError, RequiredItemNotExistError
+)
 from weko_redis.redis import RedisConnection
 from weko_user_profiles.models import UserProfile
-from weko_deposit.api import WekoDeposit, WekoRecord
-from invenio_files_rest.models import Bucket, ObjectVersion, FileInstance
-from invenio_files_rest.errors import FileSizeError
-from invenio_files_rest.tasks import remove_file_data
-from invenio_files_rest.utils import _location_has_quota, delete_file_instance
-from invenio_pidstore.models import PersistentIdentifier
-from werkzeug.utils import import_string
-from invenio_pidstore.resolver import Resolver
-from sqlalchemy.exc import SQLAlchemyError
-from weko_workflow.utils import prepare_edit_workflow, handle_finish_workflow
-from weko_items_ui.views import prepare_edit_item
-from weko_deposit.pidstore import get_record_identifier
 from weko_workflow.headless import HeadlessActivity
-from weko_deposit.api import WekoIndexer
-from weko_swordserver.errors import ErrorType, WekoSwordserverException
-from invenio_records.api import Record
-from invenio_pidrelations.contrib.versioning import PIDVersioning
-from weko_workflow.api import WorkActivity, WorkFlow as WorkFlows
 from weko_workflow.errors import WekoWorkflowException
 
 def send_request_mail(item_id, mail_info):
@@ -293,9 +279,6 @@ def copy_bucket_to_s3(pid, filename, org_bucket_id, checked, bucket_name):
         raise Exception(_('Uploading file failed.') + str(e))
 
 def replace_file_bucket(org_pid, org_bucket_id, file):
-    print('置き換え本処理')
-    from weko_workflow.api import WorkActivity
-
     item_id = org_pid
 
     pid = PersistentIdentifier.query.filter_by(
@@ -360,13 +343,11 @@ def replace_file_bucket(org_pid, org_bucket_id, file):
             link_data=None, grant_data=None
         )
     except WekoWorkflowException as ex:
-        current_app.logger.exception(_('Unable to update as no suitable workflow is available.'))
-        raise Exception(_('Unable to update as no suitable workflow is available.'))
+        current_app.logger.errer(_('Unable to update as no suitable workflow is available.'))
+        raise Exception(_('Unable to update as no suitable workflow is available.')) from ex
     except Exception as ex:
+        current_app.logger.error('f"An error occurred while {headless.current_action}.')
         traceback.print_exc()
-        raise WekoSwordserverException(
-            f"An error occurred while {headless.current_action}.",
-            ErrorType.ServerError
-        ) from ex
+        raise
 
     return True

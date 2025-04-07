@@ -4310,7 +4310,7 @@ def check_duplicate(data, is_item=True):
         links = [f"https://{host}/records/{r}" for r in final_matched]
         return True, list(final_matched), links
 
-    print("No duplicates found.")
+    current_app.logger.info("No duplicates found.")
     return False, [], []
 
 

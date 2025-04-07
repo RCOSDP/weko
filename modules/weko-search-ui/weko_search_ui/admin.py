@@ -823,7 +823,6 @@ class ItemRocrateImportView(BaseView):
         :return: check status.
         """
         data = request.get_json()
-        print(f"data812: {data}")
         result = {}
 
         if data and data.get("task_id"):
@@ -835,6 +834,7 @@ class ItemRocrateImportView(BaseView):
                     {"start_date": start_date, "end_date": end_date, **task.result}
                 )
             elif task and task.status != "PENDING":
+                current_app.logger.error(f"Task {task.id} failed")
                 result["error"] = _("Internal server error")
         return jsonify(**result)
 
@@ -845,7 +845,7 @@ class ItemRocrateImportView(BaseView):
         :return: The response of the download.
         """
         data = request.get_json()
-        now = str(datetime.date(datetime.now()))
+        now = datetime.now().strftime("%Y-%m-%d")
         file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
 
         file_name = "check_{}.{}".format(now, file_format)
@@ -973,7 +973,7 @@ class ItemRocrateImportView(BaseView):
         :return: The response of the download.
         """
         data = request.get_json()
-        now = str(datetime.date(datetime.now()))
+        now = datetime.now().strftime("%Y-%m-%d")
 
         file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
         file_name = "List_Download {}.{}".format(now, file_format)
