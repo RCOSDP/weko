@@ -1,8 +1,8 @@
+# -*- coding: utf-8 -*-
 #
-# This file is part of Invenio.
-# Copyright (C) 2016-2018 CERN.
+# Copyright (C) 2022 National Institute of Informatics.
 #
-# Invenio is free software; you can redistribute it and/or modify it
+# WEKO-Records is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """Add server_deafult to repository_id"""
