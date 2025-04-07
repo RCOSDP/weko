@@ -1,14 +1,17 @@
 from unittest import mock
+from unittest.mock import mock_open
 from urllib.parse import parse_qs
 import pytest
 import uuid
 import json
 from os.path import dirname, join
 from mock import patch
+
 import copy
 import datetime
 import base64
 import flask
+import pytz
 from werkzeug.datastructures import MultiDict
 from flask import current_app,session
 from flask_babelex import gettext as _
@@ -137,6 +140,9 @@ from weko_workflow.utils import (
     grant_access_rights_to_all_open_restricted_files,
     delete_lock_activity_cache,
     delete_user_lock_activity_cache,
+    convert_to_timezone,
+    load_template,
+    fill_template,
     get_non_extract_files_by_recid,
     check_activity_settings
 )
@@ -3321,6 +3327,74 @@ def test_delete_user_lock_activity_cache(client,users):
     assert current_cache.get(cache_key) == None
 
     current_cache.delete(cache_key)
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_convert_to_timezone -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_convert_to_timezone():
+    # UTC datetime
+    dt_utc = datetime.datetime(2025, 3, 28, 12, 0, 0, tzinfo=pytz.utc)
+    assert convert_to_timezone(dt_utc).strftime("%Y-%m-%d %H:%M:%S %Z") == "2025-03-28 12:00:00 UTC"
+
+    # UTC -> Asia/Tokyo
+    assert convert_to_timezone(dt_utc, "Asia/Tokyo").strftime("%Y-%m-%d %H:%M:%S %Z") == "2025-03-28 21:00:00 JST"
+
+    # naive datetime を Asia/Tokyo に変換
+    dt_naive = datetime.datetime(2025, 3, 28, 12, 0, 0)
+    converted_dt = convert_to_timezone(dt_naive, "Asia/Tokyo")
+    assert converted_dt.strftime("%Y-%m-%d %H:%M:%S %Z") == "2025-03-28 21:00:00 JST"
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_load_template -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_load_template(mocker):
+    mocker.patch("os.path.exists", side_effect=lambda path: "test_template_en.txt" in path)
+    mocker.patch("builtins.open", mocker.mock_open(read_data="Test Subject\nThis is a test email."))
+    expected_result = {"subject": "Test Subject", "body": "This is a test email."}
+    result = load_template("test_template_{language}.txt", "en")
+    assert result == expected_result
+    
+    mocker.patch("os.path.exists", side_effect=lambda path: "test_template_ja.txt" in path)
+    mocker.patch("builtins.open", mocker.mock_open(read_data="テスト件名\nこれはテストメールです。"))
+    expected_result = {"subject": "テスト件名", "body": "これはテストメールです。"}
+    result = load_template("test_template_{language}.txt", "ja")
+    assert result == expected_result
+    
+    mocker.patch("os.path.exists", side_effect=lambda path: "test_template_en.txt" in path)
+    mocker.patch("builtins.open", mocker.mock_open(read_data="Default Subject\nDefault body."))
+    expected_result = {"subject": "Default Subject", "body": "Default body."}
+    result = load_template("test_template_{language}.txt", "fr")
+    assert result == expected_result
+    
+    mocker.patch("os.path.exists", side_effect=lambda path: "test_template_en.txt" in path)
+    mocker.patch("builtins.open", mocker.mock_open(read_data="Default Subject\nDefault body."))
+    expected_result = {"subject": "Default Subject", "body": "Default body."}
+    result = load_template("test_template_{language}.txt")
+    assert result == expected_result
+        
+    mocker.patch("os.path.exists", return_value=False)
+    mocker.patch("builtins.open", side_effect=FileNotFoundError)
+    with pytest.raises(FileNotFoundError):
+        load_template("test_template_{language}.txt", "fr")
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_fill_template -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_fill_template():
+    # Embed name into the template
+    template = {"subject": "Hello, {{ name }}!", "body": "Dear {{ name }}, welcome!"}
+    data = {"name": "Alice"}
+    expected_result = {"subject": "Hello, Alice!", "body": "Dear Alice, welcome!"}
+    result = fill_template(template, data)
+    assert result == expected_result
+
+    # Replace multiple placeholders
+    template = {"subject": "{{ user }}'s Order", "body": "Hi {{ user }}, your order #{{ order }} is ready."}
+    data = {"user": "Bob", "order": "12345"}
+    expected_result = {"subject": "Bob's Order", "body": "Hi Bob, your order #12345 is ready."}
+    result = fill_template(template, data)
+    assert result == expected_result
+
+    # Missing data for some placeholders
+    template = {"subject": "Hello, {{ name }}!", "body": "Dear {{ name }}, your age is {{ age }}."}
+    data = {"name": "Charlie"}
+    expected_result = {"subject": "Hello, Charlie!", "body": "Dear Charlie, your age is {{ age }}."}
+    result = fill_template(template, data)
+    assert result == expected_result
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_non_extract_files_by_recid -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_non_extract_files_by_recid(db_register, mocker):

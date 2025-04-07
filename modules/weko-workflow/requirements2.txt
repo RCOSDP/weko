@@ -273,6 +273,7 @@ webencodings==0.5.1
 -e ../weko-theme
 -e ../weko-user-profiles
 -e ../weko-workflow
+-e ../weko-notifications
 Werkzeug==0.15.2
 whichcraft==0.4.1
 WTForms==2.1
@@ -282,3 +283,4 @@ xmlschema==0.9.30
 xmltodict==0.12.0
 zipp==3.6.0
 zope.interface==5.5.2
+py-ldnlib==0.1.3

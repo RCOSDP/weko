@@ -1881,6 +1881,86 @@ def prepare_edit_workflow(post_activity, recid, deposit):
     return rtn
 
 
+def prepare_delete_workflow(post_activity, recid, deposit):
+    """
+    Prepare Workflow Activity for draft record.
+
+    Check and create draft record with id is "x.0".
+    Create new workflow activity.
+    Clone Identifier and Feedbackmail relation to last activity.
+
+    parameter:
+        post_activity: latest activity information.
+        recid: current record id.
+        deposit: current deposit data.
+    return:
+        rtn: new activity
+
+    """
+    # ! Check pid's version
+    community = post_activity['community']
+    activity = WorkActivity()
+
+    draft_pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid',
+        pid_value="{}.0".format(recid.pid_value)
+    ).one_or_none()
+
+    if not draft_pid:
+        draft_record = deposit.prepare_draft_item(recid)
+        rtn = activity.init_activity(
+            post_activity, community, draft_record.model.id
+        )
+        # create item link info of draft record from parent record
+        weko_record = WekoRecord.get_record_by_pid(
+            draft_record.pid.pid_value
+        )
+        if weko_record:
+            weko_record.update_item_link(recid.pid_value)
+    else:
+        # Clone org bucket into draft record.
+        try:
+            _parent = WekoDeposit.get_record(recid.object_uuid)
+            _deposit = WekoDeposit.get_record(draft_pid.object_uuid)
+            _deposit['path'] = _parent.get('path')
+            _deposit.merge_data_to_record_without_version(recid, True)
+            _deposit.publish()
+            _bucket = Bucket.get(_deposit.files.bucket.id)
+
+            if not _bucket:
+                _bucket = Bucket.create(
+                    quota_size=current_app.config['WEKO_BUCKET_QUOTA_SIZE'],
+                    max_file_size=current_app.config['WEKO_MAX_FILE_SIZE'],
+                )
+                RecordsBuckets.create(record=_deposit.model, bucket=_bucket)
+                _deposit.files.bucket.id = _bucket
+
+            bucket = deposit.files.bucket
+
+            sync_bucket = RecordsBuckets.query.filter_by(
+                bucket_id=_deposit.files.bucket.id
+            ).first()
+
+            snapshot = bucket.snapshot(lock=False)
+            snapshot.locked = False
+            _bucket.locked = False
+
+            sync_bucket.bucket_id = snapshot.id
+            _deposit['_buckets']['deposit'] = str(snapshot.id)
+
+            db.session.add(sync_bucket)
+            _bucket.remove()
+
+        except SQLAlchemyError as ex:
+            raise ex
+
+        rtn = activity.init_activity(
+            post_activity, community, draft_pid.object_uuid
+        )
+
+    return rtn
+
+
 def handle_finish_workflow(deposit, current_pid, recid):
     """
     Get user information by email.
