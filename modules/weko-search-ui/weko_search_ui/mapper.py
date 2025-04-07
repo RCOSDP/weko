@@ -1464,8 +1464,19 @@ class JsonLdMapper(JsonMapper):
             if len(prop_props) == 1:
                 meta_value = metadata.get(META_KEY)
                 if self._get_property_type(PROP_PATH) == "array":
-                    # TODO: value must be in {"interim", value}
-                    pass
+                    schema = self.itemtype.schema["properties"]
+                    for prop in PROP_PATH:
+                        schema = schema.get(prop)
+                    schema = schema.get("items").get("properties")
+                    interim = list(schema.keys())[0]
+                    if parent.get(prop_props[0]) is None:
+                        parent[prop_props[0]] = [
+                            {interim: meta_value}
+                        ]
+                    else:
+                        parent[prop_props[0]].append(
+                            {interim: meta_value}
+                        )
                 else:
                     parent.update({prop_props[0]: meta_value})
                 return
@@ -1570,16 +1581,17 @@ class JsonLdMapper(JsonMapper):
 
         # Check if "Extra" prepared in itemtype schema form item_map
         if "Extra" in item_map:
-            prop_type = self._get_property_type(item_map["Extra"])
-            if prop_type == "object":
-                # TODO: replace "subitem_text_value" with correct name
-                mapped_metadata[item_map.get("Extra")] = {
-                    "subitem_text_value": str(missing_metadata)
-                }
-            else:
+            extra_key = item_map["Extra"]
+            prop_type = self._get_property_type(extra_key)
+            if prop_type == "array":
+                extra_schema = self.itemtype.schema["properties"].get(
+                    extra_key).get("items").get("properties")
+                interim = list(extra_schema.keys())[0]
                 mapped_metadata[item_map.get("Extra")] = [
-                    {"subitem_text_value": str(missing_metadata)}
+                    {interim: str(missing_metadata)}
                 ]
+            else:
+                mapped_metadata[item_map.get("Extra")] = str(missing_metadata)
 
 
         files_info = []
@@ -2152,7 +2164,6 @@ class JsonLdMapper(JsonMapper):
             meta_props = META_KEY.split(".")
             PROP_PATH = properties_mapping[META_PATH] # attribute_value
             prop_props = PROP_PATH.split(".")
-            print(f"--- {META_KEY}: {deconstructed[record_key]}, {gen_id(meta_props[0])} ---")
 
             _set_rocrate_metadata(
                 rocrate.root_dataset, META_PATH, META_KEY, meta_props,
@@ -2160,12 +2171,16 @@ class JsonLdMapper(JsonMapper):
             )
 
         # Extra
-        extra_field = deconstructed.get(item_map["Extra"], None)
-        if extra_field:
-            if isinstance(extra_field, dict):
-                str_extra_dict = extra_field.get("subitem_text_value")
-            else:
-                str_extra_dict = extra_field[0].get("subitem_text_value")
+        if "Extra" in item_map:
+            extra_key = item_map["Extra"]
+            # case: "Extra" is list
+            # If not list, pass this process.
+            if not deconstructed.get(extra_key):
+                extra_schema = self.itemtype.schema["properties"].get(
+                    extra_key).get("items").get("properties")
+                interim = list(extra_schema.keys())[0]
+                extra_key = extra_key + "[0]." + interim
+            str_extra_dict = deconstructed.get(extra_key)
             extra_entity = {
                 "description": "Metadata which is not able to be mapped",
                 "value": str_extra_dict
