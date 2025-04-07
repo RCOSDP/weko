@@ -14,9 +14,8 @@ from weko_accounts.views import (
     _has_admin_access,
     init_menu,
     _redirect_method,
-    find_user_by_email
+    find_user_by_email,
     shib_sp_login,
-    find_user_by_email
 )
 from weko_admin.models import AdminSettings
 
