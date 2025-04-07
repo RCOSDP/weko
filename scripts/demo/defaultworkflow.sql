@@ -40,8 +40,8 @@ INSERT INTO public.workflow_flow_action (status, created, updated, id, flow_id, 
 -- Data for Name: workflow_workflow; Type: TABLE DATA; Schema: public; Owner: invenio
 --
 
-INSERT INTO public.workflow_workflow (status, created, updated, id, flows_id, flows_name, itemtype_id, index_tree_id, flow_id, is_deleted, open_restricted, location_id, is_gakuninrdm) VALUES ('N', '2024-06-12 21:33:29.550958', '2024-06-12 21:33:29.550985', 1, '4bb9d036-fc1e-4eab-a7de-cffed26a2bb4', 'デフォルトアイテムタイプ（フル）', 15, NULL, 1, false, false, NULL, false);
-INSERT INTO public.workflow_workflow (status, created, updated, id, flows_id, flows_name, itemtype_id, index_tree_id, flow_id, is_deleted, open_restricted, location_id, is_gakuninrdm) VALUES ('N', '2024-06-12 21:33:55.106678', '2024-06-12 21:33:55.106704', 2, 'bbbb1d7f-2e3a-4bb2-945c-d71b221cb068', 'デフォルトアイテムタイプ（シンプル）', 16, NULL, 1, false, false, NULL, false);
+INSERT INTO public.workflow_workflow (status, created, updated, id, flows_id, flows_name, itemtype_id, index_tree_id, flow_id, is_deleted, open_restricted, location_id, is_gakuninrdm) VALUES ('N', '2024-06-12 21:33:29.550958', '2024-06-12 21:33:29.550985', 1, '4bb9d036-fc1e-4eab-a7de-cffed26a2bb4', 'デフォルトアイテムタイプ（フル）', 30002, NULL, 1, false, false, NULL, false);
+INSERT INTO public.workflow_workflow (status, created, updated, id, flows_id, flows_name, itemtype_id, index_tree_id, flow_id, is_deleted, open_restricted, location_id, is_gakuninrdm) VALUES ('N', '2024-06-12 21:33:55.106678', '2024-06-12 21:33:55.106704', 2, 'bbbb1d7f-2e3a-4bb2-945c-d71b221cb068', 'デフォルトアイテムタイプ（シンプル）', 30001, NULL, 1, false, false, NULL, false);
 
 
 --

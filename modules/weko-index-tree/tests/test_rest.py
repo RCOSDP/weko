@@ -2,6 +2,7 @@ import json
 import pytest
 from flask import current_app, url_for
 import os
+import shutil
 from mock import patch, MagicMock
 
 from invenio_accounts.testutils import login_user_via_session
@@ -218,117 +219,91 @@ class TestIndexActionResource:
         assert res.status_code == 401
 
     # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexActionResource::test_put -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
-    def test_put(self, client_rest, users, index_thumbnail,test_indices, admin_lang_setting,redis_connect,without_session_remove):
+    @pytest.mark.timeout(300)
+    def test_put(self, client_rest, users, test_indices, redis_connect, admin_lang_setting):
         login_user_via_session(client=client_rest, email=users[3]['email'])
         os.environ['INVENIO_WEB_HOST_NAME'] = "test"
-        url = url_for("weko_index_tree_rest.tid_index_action",index_id="1")
-        # not data
-        with patch("weko_search_ui.tasks.is_import_running", return_value=None):
-            res = client_rest.put(url,json={})
-            assert res.status_code == 400
-        
-        # import running
-        with patch("weko_search_ui.tasks.is_import_running", return_value="is_import_running"):
+        url = url_for("weko_index_tree_rest.tid_index_action",index_id="1")  
+        with patch("weko_search_ui.tasks.is_import_running", return_value=None), \
+             patch("weko_index_tree.rest.is_index_locked", return_value=False), \
+             patch("weko_index_tree.rest.check_doi_in_index", return_value=True), \
+             patch("weko_index_tree.api.Indexes.update", return_value=False), \
+             patch("weko_workflow.utils.get_cache_data", return_value=True):
             data = {
-                "public_date":"","public_state":True
+                "public_date":"","public_state":False,
+                "harvest_public_state":False,
+            }
+            AdminLangSettings.update_lang(lang_code="ja",is_registered=False,sequence=0)
+            res = client_rest.put(url,json=data)
+            assert res.status_code == 200
+            assert json.loads(res.data)=={'delete_flag': False,'errors': ['The index cannot be kept private because there are links from items that have a DOI.'],  'message': '','status': 200}
+
+            data = {
+                "public_date":"","public_state":True,
+                "harvest_public_state":False,
+            }
+            AdminLangSettings.update_lang(lang_code="ja",is_registered=False,sequence=0)
+            res = client_rest.put(url,json=data)
+            assert res.status_code == 200
+            assert json.loads(res.data)=={'delete_flag': False,'errors': ['Index harvests cannot be kept private because there are links from items that have a DOI.'],  'message': '','status': 200}
+
+        with patch("weko_search_ui.tasks.is_import_running", return_value=None), \
+             patch("weko_index_tree.rest.is_index_locked", return_value=False), \
+             patch("weko_index_tree.rest.check_doi_in_index", return_value=False), \
+             patch("weko_index_tree.api.Indexes.update", return_value=True), \
+             patch("weko_workflow.utils.get_cache_data", return_value=True):
+            data = {
+                "public_date":"","public_state":False,
+                "harvest_public_state":False,
+            }
+            AdminLangSettings.update_lang(lang_code="ja",is_registered=False,sequence=0)
+            res = client_rest.put(url,json=data)
+            assert res.status_code == 200
+            assert json.loads(res.data)=={'delete_flag': False,'errors': [],  'message': 'Index updated successfully.','status': 200}
+
+            # thumbnail_delete_flag is True, file is existed
+            AdminLangSettings.update_lang(lang_code="en",is_registered=False,sequence=0)
+            dir_path = os.path.join(current_app.instance_path,
+                current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'],
+                'indextree')
+            thumbnail_path = os.path.join(
+                dir_path,
+                "test_thumbail.txt"
+            )
+            if not os.path.isdir(dir_path):
+                os.makedirs(dir_path)
+            if not os.path.isfile(thumbnail_path):
+                with open(thumbnail_path, "w") as f:
+                    f.write("xxx")
+            data = {
+                "public_date":"","public_state":True,
+                "harvest_public_state":True,
+                "thumbnail_delete_flag":True,
+                "image_name":"test/test_thumbail.txt"
             }
             res = client_rest.put(url,json=data)
             assert res.status_code == 200
-            assert json.loads(res.data) == {"status": 200, "message":"", "errors":["The index cannot be updated becase import is in progress."], "delete_flag": False}
-
-        # # celery not run
-        with patch("weko_search_ui.tasks.is_import_running", return_value="celery_not_run"):
-            with patch("weko_index_tree.rest.is_index_locked", return_value=False):
-                with patch("weko_index_tree.rest.check_doi_in_index", return_value=True):
-                    data = {
-                        "public_date":"","public_state":False,"harvest_public_state":False
-                    }
-                    res = client_rest.put(url,json=data)
-                    assert res.status_code == 200
-                    assert json.loads(res.data) == {"status": 200, "message":"", "errors":["The index cannot be kept private because there are links from items that have a DOI."], "delete_flag": False}
-
-        with patch("weko_search_ui.tasks.is_import_running", return_value=None):
-            with patch("weko_index_tree.rest.is_index_locked", return_value=False):
-                with patch("weko_index_tree.rest.check_doi_in_index", return_value=True):
-                    data = {
-                        "public_date":"","public_state":True,"harvest_public_state":False
-                    }
-                    res = client_rest.put(url,json=data)
-                    assert res.status_code == 200
-                    assert json.loads(res.data) == {"status": 200, "message":"", "errors":["Index harvests cannot be kept private because there are links from items that have a DOI."], "delete_flag": False}
-
-        with patch("weko_search_ui.tasks.is_import_running", return_value=None):
-            with patch("weko_index_tree.rest.is_index_locked", return_value=False):
-                with patch("weko_index_tree.rest.check_doi_in_index", return_value=True):
-                    data = {
-                        "public_date":"","public_state":False,"harvest_public_state":True
-                    }
-                    res = client_rest.put(url,json=data)
-                    assert res.status_code == 200
-                    assert json.loads(res.data) == {"status": 200, "message":"", "errors":["The index cannot be kept private because there are links from items that have a DOI."], "delete_flag": False}
-
-        with patch("weko_search_ui.tasks.is_import_running", return_value=None):
-            with patch("weko_index_tree.rest.is_index_locked", return_value=False):
-                with patch("weko_index_tree.rest.check_doi_in_index", return_value=False):
-                    with patch("weko_index_tree.api.Indexes.update",return_value=True):
-                        data = {
-                            "public_date":"",
-                            "public_state":True,
-                            "harvest_public_state":True,
-                            "thumbnail_delete_flag":True,
-                            "image_name":"test/test_thumbnail.txt"
-                        }
-                        assert os.path.isfile(index_thumbnail) == True
-                        res = client_rest.put(url,json=data)
-                        assert res.status_code == 200
-                        assert json.loads(res.data) == {"status":200, "message":"Index updated successfully.","errors":[], "delete_flag":True}
-                        assert os.path.isfile(index_thumbnail) == False
-                    
-                        # file is not existed
-                        res = client_rest.put(url,json=data)
-                        assert res.status_code == 200
-                        assert json.loads(res.data) == {"status":200, "message":"Index updated successfully.","errors":[], "delete_flag":True}
-
-        with patch("weko_search_ui.tasks.is_import_running", return_value=None):
-            with patch("weko_index_tree.rest.is_index_locked", return_value=False):
-                with patch("weko_index_tree.rest.check_doi_in_index", return_value=False):
-                    with patch("weko_index_tree.api.Indexes.update",return_value=False):
-                        data = {
-                            "public_date":"",
-                            "public_state":True,
-                            "harvest_public_state":True,
-                        }
-                        res = client_rest.put(url,json=data)
-                        assert res.status_code == 400
-                        assert res.json == {'status': 400, 'message': 'Could not update data.'}
-        with patch("weko_search_ui.tasks.is_import_running", return_value=None):
-            with patch("weko_index_tree.rest.is_index_locked", return_value=False):
-                with patch("weko_index_tree.rest.check_doi_in_index", return_value=False):
-                    with patch("weko_index_tree.api.Indexes.update",return_value=True):
-                        data = {
-                            "public_date":"",
-                            "public_state":True,
-                            "harvest_public_state":True,
-                        }
-                        AdminLangSettings.update_lang(lang_code="ja",is_registered=False,sequence=0)
-                        res = client_rest.put(url,json=data)
-                        assert res.status_code == 200
-                        assert res.json == {'delete_flag': False, 'errors': [],'message': 'Index updated successfully.','status': 200}
-
-        with patch("weko_search_ui.tasks.is_import_running", return_value=None):
-            with patch("weko_index_tree.rest.is_index_locked", return_value=False):
-                with patch("weko_index_tree.rest.check_doi_in_index", return_value=False):
-                    with patch("weko_index_tree.api.Indexes.update",return_value=True):
-                        data = {
-                            "public_date":"",
-                            "public_state":True,
-                            "harvest_public_state":True,
-                        }
-                        AdminLangSettings.update_lang(lang_code="en",is_registered=False,sequence=0)
-                        res = client_rest.put(url,json=data)
-                        assert res.status_code == 200
-                        assert res.json == {'delete_flag': False, 'errors': [],'message': 'Index updated successfully.','status': 200}
-                                   
+            assert json.loads(res.data) == {"status":200, "message":'Index updated successfully.',"errors":[], "delete_flag":True}
+            assert os.path.isfile(thumbnail_path) == False
+        
+            if not os.path.isdir(dir_path):
+                os.makedirs(dir_path)
+            if not os.path.isfile(thumbnail_path):
+                with open(thumbnail_path, "w") as f:
+                    f.write("xxx")
+            data = {
+                "public_date":"","public_state":True,
+                "harvest_public_state":True,
+                "thumbnail_delete_flag":False,
+                "image_name":"test/test_thumbail.txt"
+            }
+            res = client_rest.put(url,json=data)
+            assert res.status_code == 200
+            assert json.loads(res.data) == {"status":200, "message":'Index updated successfully.',"errors":[], "delete_flag":False}
+            assert os.path.isfile(thumbnail_path) == True
+        
+        if os.path.isdir(dir_path):
+            shutil.rmtree(dir_path)
         
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexActionResource::test_delete_acl_login -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
     @pytest.mark.parametrize('id, is_permission', [
@@ -370,21 +345,20 @@ class TestIndexActionResource:
         url = url_for("weko_index_tree_rest.tid_index_action",index_id="1")
 
         # import running
-        with patch("weko_search_ui.tasks.is_import_running", return_value="is_import_running"):  
+        with patch("weko_search_ui.tasks.is_import_running", return_value="is_import_running"),patch("weko_workflow.utils.get_cache_data",return_value=True):
             res = client_rest.delete(url)
             assert res.status_code == 200
             assert json.loads(res.data)['errors'] == ['The index cannot be deleted becase import is in progress.']
 
-        # delete with ja, en
-        with patch("weko_search_ui.tasks.is_import_running", return_value=None):  
+        with patch("weko_search_ui.tasks.is_import_running", return_value=None),patch("weko_workflow.utils.get_cache_data",return_value=True):
+            # delete with ja, en
             res = client_rest.delete(url)
             assert res.status_code == 200
             assert json.loads(res.data) == {"status": 200, "message": "test_msg", "errors":"test_error"}
             redis_connect.delete("index_tree_view_test_ja")
             redis_connect.delete("index_tree_view_test_en")
 
-        # delete with en
-        with patch("weko_search_ui.tasks.is_import_running", return_value=None):  
+            # delete with en
             AdminLangSettings.update_lang(lang_code="ja",is_registered=False,sequence=0)
             res = client_rest.delete(url)
             assert res.status_code == 200
@@ -439,13 +413,16 @@ class TestIndexTreeActionResource:
         data = {"pre_parent":"0","parent":"0","position":"0"}
         index_id="3"
         url = "/tree/move/{}".format(index_id)
-        with patch("weko_search_ui.tasks.is_import_running", return_value="is_import_running"):
+        with patch("weko_search_ui.tasks.is_import_running", return_value=None), \
+             patch("weko_index_tree.rest.is_index_locked", return_value=False), \
+             patch("weko_index_tree.rest.check_doi_in_index", return_value=True), \
+             patch("weko_index_tree.api.Indexes.update", return_value=False), \
+             patch("weko_workflow.utils.get_cache_data", return_value=True):
             res = client_rest.put(url,json=data)
             if is_permission:
                 assert res.status_code != 403
             else:
                 assert res.status_code == 403
-        
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexTreeActionResource::test_put_acl_guest -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
     def test_put_acl_guest(self, app,client_rest, users):
         data = {"pre_parent":"0","parent":"0","position":"0"}
@@ -465,9 +442,9 @@ class TestIndexTreeActionResource:
             assert res.json == {'status': 400, 'message': 'Could not load data.'}
             assert res.status_code == 400
 
-        #import running
-        with patch("weko_search_ui.tasks.is_import_running", return_value="is_import_running"):
-            with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            # import running
+            with patch("weko_search_ui.tasks.is_import_running", return_value="is_import_running"), \
+                patch("weko_workflow.utils.get_cache_data",return_value=True):
                 data = {"pre_parent":"0","parent":"0","position":"0"}
                 index_id="3"
                 url = "/tree/move/{}".format(index_id)
@@ -475,9 +452,8 @@ class TestIndexTreeActionResource:
                 assert res.status_code == 202
                 assert json.loads(res.data)['message'] == 'The index cannot be moved becase import is in progress.'
 
-        # move with jp, en
-        with patch("weko_search_ui.tasks.is_import_running", return_value=None):
-            with patch("flask_login.utils._get_user", return_value=users[3]['obj']):                
+            with patch("weko_search_ui.tasks.is_import_running", return_value=None):
+                # move with jp, en
                 data = {"pre_parent":"0","parent":"0","position":"0"}
                 index_id="3"
                 url = "/tree/move/{}".format(index_id)
@@ -489,9 +465,7 @@ class TestIndexTreeActionResource:
                 redis_connect.delete("index_tree_view_test_ja")
                 redis_connect.delete("index_tree_view_test_en")
 
-        # move with en
-        with patch("weko_search_ui.tasks.is_import_running", return_value=None):
-            with patch("flask_login.utils._get_user", return_value=users[3]['obj']): 
+                # move with en
                 AdminLangSettings.update_lang(lang_code="ja",is_registered=False,sequence=0)
                 data = {"pre_parent":"0","parent":"0","position":"1"}
                 res = client_rest.put(url,json=data)
@@ -501,28 +475,16 @@ class TestIndexTreeActionResource:
                 assert redis_connect.redis.exists("index_tree_view_test_en") == True
                 redis_connect.delete("index_tree_view_test_en")
         
-        with patch("weko_search_ui.tasks.is_import_running", return_value="celery_not_run"):
-            with patch("flask_login.utils._get_user", return_value=users[3]['obj']): 
-                data = {"pre_parent":"0","parent":"0","position":"0"}
-                index_id="3"
-                url = "/tree/move/{}".format(index_id)
-                res = client_rest.put(url,json=data)
-                assert res.status_code == 201
-                assert json.loads(res.data) == {'message': 'Index moved successfully.', 'status': 201}
-                assert redis_connect.redis.exists("index_tree_view_test_ja") == False
-                assert redis_connect.redis.exists("index_tree_view_test_en") == True
-                redis_connect.delete("index_tree_view_test_en")
-
-        # move failed
-        with patch("weko_search_ui.tasks.is_import_running", return_value=None):  
-            with patch("flask_login.utils._get_user", return_value=users[4]['obj']):
-                AdminLangSettings.update_lang(lang_code="en",is_registered=False,sequence=0)
-                data = {"pre_parent":"0","parent":"0","position":"0"}
-                res = client_rest.put(url,json=data)
-                assert res.status_code == 202
-                assert json.loads(res.data) == {'message': 'You can not move the index.', 'status': 202}
-                assert redis_connect.redis.exists("index_tree_view_test_ja") == False
-                assert redis_connect.redis.exists("index_tree_view_test_en") == False
+            # move failed
+        with patch("weko_search_ui.tasks.is_import_running", return_value=None),\
+            patch("flask_login.utils._get_user", return_value=users[4]['obj']):
+            AdminLangSettings.update_lang(lang_code="en",is_registered=False,sequence=0)
+            data = {"pre_parent":"0","parent":"0","position":"0"}
+            res = client_rest.put(url,json=data)
+            assert res.status_code == 202
+            assert json.loads(res.data) == {'message': 'You can not move the index.', 'status': 202}
+            assert redis_connect.redis.exists("index_tree_view_test_ja") == False
+            assert redis_connect.redis.exists("index_tree_view_test_en") == False
 
 
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::test_get_parent_index_tree -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace

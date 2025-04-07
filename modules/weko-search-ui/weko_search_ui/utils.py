@@ -21,6 +21,7 @@
 """Weko Search-UI admin."""
 
 import csv
+import chardet
 import json
 import os
 import re
@@ -31,6 +32,7 @@ import tempfile
 import traceback
 import uuid
 import zipfile
+import chardet
 from collections import Callable, OrderedDict
 from datetime import datetime
 from functools import partial, reduce, wraps
@@ -124,6 +126,7 @@ from .config import (
     WEKO_IMPORT_VALIDATE_MESSAGE,
     WEKO_REPO_USER,
     WEKO_SEARCH_TYPE_DICT,
+    WEKO_SEARCH_MAX_RESULT,
     WEKO_SEARCH_UI_BULK_EXPORT_LIMIT,
     WEKO_SEARCH_UI_BULK_EXPORT_MSG,
     WEKO_SEARCH_UI_BULK_EXPORT_RUN_MSG,
@@ -195,7 +198,48 @@ class DefaultOrderedDict(OrderedDict):
         )
 
 
-def get_tree_items(index_tree_id):
+def execute_search_with_pagination(
+        search_instance,
+        max_result_size=WEKO_SEARCH_MAX_RESULT
+):
+    """Execute search with pagination.
+
+    @param search_instance: search instance
+    @param max_result_size: maximum number of records to get
+                            if < 0, get all records
+    @return: search result
+    """
+    if max_result_size < 0:
+        search_size = 10000
+    else:
+        search_size = min(max_result_size, 10000)
+        max_result_size -= search_size
+
+    search_instance = search_instance.extra(size=search_size)
+    search_result = search_instance.execute()
+    records = search_result.to_dict().get('hits', {}).get('hits', [])
+    result = records
+
+    while len(records) == 10000 and max_result_size != 0:
+        if max_result_size < 0:
+            search_size = 10000
+        else:
+            search_size = min(max_result_size, 10000)
+            max_result_size -= search_size
+
+        search_after = records[-1]['sort']
+        search_instance = search_instance.extra(
+            size=search_size,
+            search_after=search_after
+        )
+        search_result = search_instance.execute()
+        records = search_result.to_dict().get('hits', {}).get('hits', [])
+        result.extend(records)
+
+    return result
+
+
+def get_tree_items(index_tree_id, max_result_size=WEKO_SEARCH_MAX_RESULT):
     """Get tree items."""
     records_search = RecordsSearch()
     records_search = records_search.with_preference_param().params(version=False)
@@ -203,14 +247,12 @@ def get_tree_items(index_tree_id):
     search_instance, _ = item_path_search_factory(
         None, records_search, index_id=index_tree_id
     )
-    search_result = search_instance.execute()
-    rd = search_result.to_dict()
-    return rd.get("hits").get("hits")
+    return execute_search_with_pagination(search_instance, max_result_size)
 
 
 def delete_records(index_tree_id, ignore_items):
     """Bulk delete records."""
-    hits = get_tree_items(index_tree_id)
+    hits = get_tree_items(index_tree_id, max_result_size=-1)
     result = []
 
     for hit in hits:
@@ -475,13 +517,15 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
     try:
         # Create temp dir for import data
         os.mkdir(data_path)
-
         with zipfile.ZipFile(file) as z:
             for info in z.infolist():
                 try:
-                    info.filename = info.orig_filename.encode("cp437").decode("cp932")
-                    if os.sep != "/" and os.sep in info.filename:
-                        info.filename = info.filename.replace(os.sep, "/")
+                    info.filename = info.orig_filename
+                    inf = chardet.detect(info.orig_filename)                    
+                    if inf['encoding'] is not None and inf['encoding'] == 'cp437':
+                        info.filename = info.orig_filename.encode("cp437").decode("cp932")
+                        if os.sep != "/" and os.sep in info.filename:
+                            info.filename = info.filename.replace(os.sep, "/")
                 except Exception:
                     current_app.logger.warning("-" * 60)
                     traceback.print_exc(file=sys.stdout)
@@ -625,27 +669,10 @@ def getEncode(filepath):
     Returns:
         [type]: [description]
     """
-    encs = [
-        "iso-2022-jp",
-        "euc-jp",
-        "shift_jis",
-        "utf-8",
-        "utf-8-sig",
-        "utf-16be",
-        "utf-16le",
-        "utf-32be",
-        "utf-32le",
-        "",
-    ]
-    for enc in encs:
-        if enc != "":
-            with open(filepath, encoding=enc) as fr:
-                try:
-                    fr = fr.read()
-                except UnicodeDecodeError:
-                    continue
-            return enc
-    return enc
+    with open(filepath, mode='rb') as fr:
+        b = fr.read()
+    enc = chardet.detect(b)
+    return enc.get('encoding', 'utf-8-sig')
 
 
 def read_stats_file(file_path: str, file_name: str, file_format: str) -> dict:
@@ -1634,10 +1661,20 @@ def handle_item_title(list_record):
         
     for item in list_record:
         error = None
-        meta_option, item_type_mapping = get_options_and_order_list(item["item_type_id"])
-        hide_list = get_hide_list_by_schema_form(item["item_type_id"])
-        item_map = get_mapping(item["item_type_id"], "jpcoar_mapping")
-        # current_app.logger.debug("item_type_mapping: {}".format(item_type_mapping))
+        item_type_id = item["item_type_id"]
+
+        item_type = ItemTypes.get_by_id(item_type_id)
+        hide_list = []
+        if item_type:
+            meta_option = get_options_and_order_list(
+                item_type_id,
+                item_type_data=ItemTypes(item_type.schema, model=item_type),
+                mapping_flag=False)
+            hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+        else:
+            meta_option = get_options_and_order_list(item_type_id, mapping_flag=False)
+        item_map = get_mapping(item_type_id, 'jpcoar_mapping', item_type=item_type)
+
         # current_app.logger.debug("item_map: {}".format(item_map))
         title_data, _title_key = get_data_by_property(
             item["metadata"], item_map, "title.@value"
@@ -1667,7 +1704,7 @@ def handle_item_title(list_record):
                     ):
                         title_val = check_info_in_metadata(
                             lang_key, val_key, title_lang_data[0], item["metadata"]
-                        )
+                        )                        
                         item["item_title"] = title_val
                 if title_val:
                     break
@@ -1998,7 +2035,7 @@ def handle_check_doi_ra(list_record):
             current_app.logger.debug("item_id:{0} doi_ra:{1}".format(item_id, doi_ra))
             current_app.logger.debug("doi_type:{0} _value:{1}".format(doi_type, _value))
 
-            if doi_type and doi_type[0] != doi_ra:
+            if doi_type and doi_type[0] != doi_ra and (doi_ra != 'NDL JaLC' or doi_type[0] != 'JaLC'):
                 error = _("Specified {} is different from " + "existing {}.").format(
                     "DOI_RA", "DOI_RA"
                 )
@@ -2364,7 +2401,7 @@ def register_item_doi(item):
                 data,
                 WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1
             )
-        elif doi_ra == "NDL JaLC" and doi:
+        elif doi_ra == "NDL JaLC" and doi and not pid_doi:
             data = {
                 "identifier_grant_jalc_doi_link": IDENTIFIER_GRANT_LIST[1][2]
                 + "/"
@@ -2702,7 +2739,7 @@ def get_list_key_of_iso_date(schemaform):
     keys = []
     for item in schemaform:
         if not item.get("items"):
-            if item.get("templateUrl", "") == DATE_ISO_TEMPLATE_URL:
+            if (item.get("templateUrl", "") == DATE_ISO_TEMPLATE_URL) or ("dateValue" in item.get("key","")):
                 keys.append(item.get("key").replace("[]", ""))
         else:
             keys.extend(get_list_key_of_iso_date(item.get("items")))
@@ -2998,6 +3035,8 @@ def handle_fill_system_item(list_record):
                 elif is_ndl:
                     item["doi_ra"] = item_doi_ra
 
+            item_doi_ra = "JaLC" if item_doi_ra == "NDL JaLC" else item_doi_ra
+            registerd_doi_ra = "JaLC" if registerd_doi_ra == "NDL JaLC" else registerd_doi_ra
             if identifierRegistration_key in item["metadata"]:
                 if existed_doi and checked_registerd_doi_ra and checked_item_doi_ra:
                     if 'subitem_identifier_reg_type' in item["metadata"][identifierRegistration_key]:
@@ -3090,6 +3129,8 @@ def get_thumbnail_key(item_type_id=0):
         item_type = item_type.render
         schema = item_type.get("schemaeditor", {}).get("schema", {})
         for key, item in schema.items():
+            if not isinstance(item, dict):
+                continue
             if item.get("properties") and item["properties"].get("subitem_thumbnail"):
                 return key
 
@@ -3423,6 +3464,11 @@ def export_all(root_url, user_id, data, timezone):
                 record_ids = [(recid.pid_value, recid.object_uuid) 
                     for recid in recids if 'publish_status' in recid.json 
                     and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]]
+                
+                if len(record_ids) == 0:
+                    item_types.remove(it)
+                    continue
+                
                 for recid, uuid in record_ids:
                     if counter % WEKO_SEARCH_UI_BULK_EXPORT_LIMIT == 0 and item_datas:
                         # Create export info file
@@ -3923,13 +3969,13 @@ def get_data_by_property(item_metadata, item_map, mapping_key):
         return None, None
     for key in key_list.split(","):
         attribute = item_metadata.get(key.split(".")[0])
-        if not attribute:
-            return None, key_list
-        else:
+        if attribute:
             data_result = get_sub_item_value(attribute, key.split(".")[-1])
             if data_result:
                 for value in data_result:
                     data.append(value)
+    if data == []:
+        data = None
     return data, key_list
 
 

@@ -889,7 +889,7 @@ class CheckComponent extends React.Component {
       contentType: "application/json; charset=utf-8",
       success: function (response) {
         const date = moment()
-        const fileName = 'check_' + date.format("YYYY-DD-MM") + '.' + file_format;
+        const fileName = 'check_' + date.format("YYYY-MM-DD") + '.' + file_format;
 
         const blob = new Blob([response], { type: 'text/' + file_format });
         if (window.navigator && window.navigator.msSaveOrOpenBlob) {
@@ -1054,7 +1054,7 @@ class ResultComponent extends React.Component {
       contentType: "application/json; charset=utf-8",
       success: function (response) {
         const date = moment()
-        const fileName = 'List_Download_' + date.format("YYYY-DD-MM") + '.' + file_format;
+        const fileName = 'List_Download_' + date.format("YYYY-MM-DD") + '.' + file_format;
 
         const blob = new Blob([response], { type: 'text/' + file_format });
         if (window.navigator && window.navigator.msSaveOrOpenBlob) {

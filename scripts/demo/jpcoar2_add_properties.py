@@ -771,7 +771,7 @@ jpcoar_holding_agent_schema: dict = {
             "type": "object",
             "format": "object",
             "properties": {
-                "subitem_holding_agent_name_idenfitier_holding_agent_name_idenfitier": {
+                "subitem_holding_agent_name_identifier_holding_agent_name_identifier": {
                     "type": "string",
                     "format": "text",
                     "title": "Holding Agent Name Identifier",
@@ -780,14 +780,14 @@ jpcoar_holding_agent_schema: dict = {
                         "en": ""
                     }
                 },
-                "subitem_holding_agent_name_idenfitier_scheme": {
+                "subitem_holding_agent_name_identifier_scheme": {
                     "type": "string",
                     "format": "select",
                     "enum": jpcoar_holding_agent_scheme,
                     "currentEnum": jpcoar_holding_agent_scheme,
                     "title": "Holding Agent Name Identifier Scheme"
                 },
-                "subitem_holding_agent_name_idenfitier_uri": {
+                "subitem_holding_agent_name_identifier_uri": {
                     "type": "string",
                     "format": "text",
                     "title": "Holding Agent Name Identifier URI",
@@ -827,18 +827,18 @@ jpcoar_holding_agent_form: dict = {
             "title": "Holding Agent Name Identifier",
             "items": [
                 {
-                    "key": "parentkey.subitem_holding_agent_name_identifier.subitem_holding_agent_name_idenfitier_holding_agent_name_idenfitier",
+                    "key": "parentkey.subitem_holding_agent_name_identifier.subitem_holding_agent_name_identifier_holding_agent_name_identifier",
                     "type": "text",
                     "title": "Holding Agent Name Identifier"
                 },
                 {
-                    "key": "parentkey.subitem_holding_agent_name_identifier.subitem_holding_agent_name_idenfitier_scheme",
+                    "key": "parentkey.subitem_holding_agent_name_identifier.subitem_holding_agent_name_identifier_scheme",
                     "type": "select",
                     "title": "Holding Agent Name Identifier Scheme",
                     "titleMap": list_to_list_of_dict(jpcoar_holding_agent_scheme)
                 },
                 {
-                    "key": "parentkey.subitem_holding_agent_name_identifier.subitem_holding_agent_name_idenfitier_uri",
+                    "key": "parentkey.subitem_holding_agent_name_identifier.subitem_holding_agent_name_identifier_uri",
                     "type": "text",
                     "title": "Holding Agent Name Identifier URI"
                 },
@@ -874,18 +874,18 @@ jpcoar_holding_agent_forms: dict = {
             "title": "Holding Agent Name Identifier",
             "items": [
                 {
-                    "key": "parentkey[].subitem_holding_agent_name_identifier.subitem_holding_agent_name_idenfitier_holding_agent_name_idenfitier",
+                    "key": "parentkey[].subitem_holding_agent_name_identifier.subitem_holding_agent_name_identifier_holding_agent_name_identifier",
                     "type": "text",
                     "title": "Holding Agent Name Identifier"
                 },
                 {
-                    "key": "parentkey[].subitem_holding_agent_name_identifier.subitem_holding_agent_name_idenfitier_scheme",
+                    "key": "parentkey[].subitem_holding_agent_name_identifier.subitem_holding_agent_name_identifier_scheme",
                     "type": "select",
                     "title": "Holding Agent Name Identifier Scheme",
                     "titleMap": list_to_list_of_dict(jpcoar_holding_agent_scheme)
                 },
                 {
-                    "key": "parentkey[].subitem_holding_agent_name_identifier.subitem_holding_agent_name_idenfitier_uri",
+                    "key": "parentkey[].subitem_holding_agent_name_identifier.subitem_holding_agent_name_identifier_uri",
                     "type": "text",
                     "title": "Holding Agent Name Identifier URI"
                 },

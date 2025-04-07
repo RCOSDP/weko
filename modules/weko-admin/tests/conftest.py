@@ -60,7 +60,7 @@ from invenio_i18n import InvenioI18N
 from invenio_mail.models import MailConfig
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_pidstore import InvenioPIDStore
-from invenio_search import RecordsSearch,InvenioSearch
+from invenio_search import RecordsSearch,InvenioSearch,current_search_client
 from invenio_oaiserver.ext import InvenioOAIServer
 from invenio_records.ext import InvenioRecords
 from invenio_records.models import RecordMetadata
@@ -134,8 +134,9 @@ def base_app(instance_path, cache_config,request ,search_class):
              'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         #SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
         #                                   'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-        SEARCH_ELASTIC_HOSTS=os.environ.get(
-            'SEARCH_ELASTIC_HOSTS', None),
+        #SEARCH_ELASTIC_HOSTS=os.environ.get(
+        #    'SEARCH_ELASTIC_HOSTS', None),
+        SEARCH_ELASTIC_HOSTS=os.environ.get("SEARCH_ELASTIC_HOSTS", "elasticsearch"),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         SQLALCHEMY_ECHO=False,
         TEST_USER_EMAIL='test_user@example.com',
@@ -145,7 +146,7 @@ def base_app(instance_path, cache_config,request ,search_class):
         GOOGLE_TRACKING_ID_USER="test_google_tracking_id",
         ADDTHIS_USER_ID="test_addthis_user_id",
         I18N_LANGUAGES=[("ja","Japanese"), ("en","English")],
-        CACHE_REDIS_URL='redis://redis:6379/0',
+        CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
         REDIS_PORT='6379',
@@ -188,8 +189,9 @@ def base_app(instance_path, cache_config,request ,search_class):
     FlaskCeleryExt(app_)
     WekoSearchUI(app_)
     WekoSchemaUI(app_)
-    search = InvenioSearch(app_, client=MockEs())
-    search.register_mappings(search_class.Meta.index, 'tests.mock_module.mappings')
+    #search = InvenioSearch(app_, client=MockEs())
+    InvenioSearch(app_)
+    #search.register_mappings(search_class.Meta.index, 'tests.mock_module.mappings')
     InvenioIndexer(app_)
     InvenioRecords(app_, client=MockEs())
     InvenioOAIServer(app_)
@@ -284,6 +286,31 @@ def admin_db(admin_app):
     yield db_
     db_.session.remove()
     db_.drop_all()
+
+
+@pytest.fixture()
+def esindex(app):
+    current_search_client.indices.delete(index="test-*")
+    with open("tests/data/item-v1.0.0.json","r") as f:
+        mapping = json.load(f)
+    
+    try:
+        current_search_client.indices.create(
+            app.config["INDEXER_DEFAULT_INDEX"], body=mapping
+        )
+        current_search_client.indices.put_alias(
+            index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko"
+        )
+    except:
+        current_search_client.indices.create("test-weko-items", body=mapping)
+        current_search_client.indices.put_alias(
+            index="test-weko-items", name="test-weko"
+        )
+    
+    try:
+        yield current_search_client
+    finally:
+        current_search_client.indices.delete(index="test-*")
 
 @pytest.fixture
 def script_info(app):
@@ -439,7 +466,6 @@ def site_info(db):
         site_name=[{"name":"name11"}],
         notify={"name":"notify11"},
         google_tracking_id_user="11",
-        addthis_user_id="12",
         ogp_image="/var/tmp/test_dir",
         ogp_image_name="test ogp image name1"
     )
@@ -755,6 +781,7 @@ def admin_settings(db):
     settings.append(AdminSettings(id=7,name="display_stats_settings",settings={"display_stats":False}))
     settings.append(AdminSettings(id=8,name='convert_pdf_settings',settings={"path":"/tmp/file","pdf_ttl":1800}))
     settings.append(AdminSettings(id=9,name="elastic_reindex_settings",settings={"has_errored": False}))
+    settings.append(AdminSettings(id=10,name="report_email_schedule_settings",settings={"details":"","enabled":False,"frequency":"daily"}))
     db.session.add_all(settings)
     db.session.commit()
     return settings

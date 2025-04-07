@@ -408,26 +408,16 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
 
   $scope.exportItems = function () {
     if ($rootScope.item_export_checkboxes.length <= $rootScope.max_export_num) {
-      records_metadata = $scope.getExportItemsMetadata();
       $('#record_ids').val(JSON.stringify($rootScope.item_export_checkboxes));
       $('#invalid_record_ids').val(JSON.stringify([]));
-      let export_metadata = {}
-      $rootScope.item_export_checkboxes.map(function(recid) {
-        $.each(records_metadata, function (index, value) {
-          if (value.id == recid) {
-            export_metadata[recid] = value;
-          }
-        });
-      })
       let exportBibtex = document.getElementById("export_format_radio_bibtex").checked
       if (exportBibtex) {
-        let invalidBibtexRecordIds = $scope.validateBibtexExport(Object.keys(export_metadata));
+        let invalidBibtexRecordIds = $scope.validateBibtexExport($rootScope.item_export_checkboxes.map(String));
         if (invalidBibtexRecordIds.length > 0) {
           $('#invalid_record_ids').val(JSON.stringify(invalidBibtexRecordIds));
           $scope.showErrMsgBibtex(invalidBibtexRecordIds);
         }
       }
-      $('#record_metadata').val(JSON.stringify(export_metadata));
       $('#export_items_form').submit();  // Submit form and let controller handle file making
     }
     $('#item_export_button').attr("disabled", false);
@@ -460,44 +450,6 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
     invalidRecordIds.forEach(function (recordId) {
       document.getElementById('bibtex_err_' + recordId).textContent=errMsg;
     });
-  }
-
-  $scope.getExportItemsMetadata = function () {
-    let cur_url = new URL(window.location.href);
-    let q = cur_url.searchParams.get("q");
-    let search_type = cur_url.searchParams.get("search_type");
-    const currentTime = new Date().getTime();
-    let request_url = '';
-
-    if (search_type == "2") {
-      request_url = '/api/index/?page=1&size=9999&search_type=' + search_type + '&q=' + q;
-    } else {
-      if (search_type === null) {
-        search_type = "0";
-      }
-      if (q === null) {
-        q = "";
-      }
-      request_url = '/api/records/?page=1&size=9999&search_type=' + search_type + '&q=' + q;
-    }
-
-    let search_results = []
-    $('#item_export_button').attr("disabled", true);
-    $.ajax({
-      method: 'GET',
-      url: request_url,
-      async: false,
-      contentType: 'application/json',
-      dataType: 'json',
-      success: function (data, status) {
-        search_results = data.hits.hits;
-      },
-      error: function (status, error) {
-        console.log(error);
-      }
-    });
-
-    return search_results;
   }
 
   $scope.checkForRestrictedContent = function (record_id) {

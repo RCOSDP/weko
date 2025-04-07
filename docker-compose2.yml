@@ -321,7 +321,7 @@ services:
 
   redis:
     restart: "always"
-    image: redis
+    image: redis:7.4.1
     ports:
       - "26301:6379"
     deploy:
@@ -344,7 +344,7 @@ services:
 
   rabbitmq:
     restart: "always"
-    image: rabbitmq
+    image: rabbitmq:4.0.2 
     ports:
       - "24301:4369"
       - "45601:25672"
