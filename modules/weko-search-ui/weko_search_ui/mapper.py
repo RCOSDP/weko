@@ -1819,6 +1819,29 @@ class JsonLdMapper(JsonMapper):
         Returns:
             dict: metadata with RO-Crate format.
         """
+
+        def add_list_entity(parent, key, list_at_id, at_type, list_data=None):
+            """
+            Args:
+                parent (dict): parent entity
+                key (str): the key vocabulary to assign to the entity.
+                list_at_id (list[str]):
+                    list of identifier of entity. "@id" in entity.
+                at_type (str): type of entity. "@type" in entity.
+                list_data (list[dict] | None):
+                    metadata of entity. Defaults to None.
+            Returns:
+                list[ContextEntity]: created entities.
+            """
+            list_data = list_data or [{} for _ in list_at_id]
+            entities = [
+                entity_factory(at_type)(rocrate, at_id, params)
+                for at_id, params in zip(list_at_id, list_data)
+            ]
+            parent[key] = entities
+            rocrate.add(*entities)
+            return entities
+
         item_map = self._create_item_map(detail=True)
             # e.g. { "Title.タイトル": "item_30001_title0.subitem_title" }
         properties_mapping = {
@@ -1924,28 +1947,6 @@ class JsonLdMapper(JsonMapper):
             rocrate.add(entity)
             return entity
 
-        def add_list_entity(parent, key, list_at_id, at_type, list_data=None):
-            """
-            Args:
-                parent (dict): parent entity
-                key (str): the key vocabulary to assign to the entity.
-                list_at_id (list[str]):
-                    list of identifier of entity. "@id" in entity.
-                at_type (str): type of entity. "@type" in entity.
-                list_data (list[dict] | None):
-                    metadata of entity. Defaults to None.
-            Returns:
-                list[ContextEntity]: created entities.
-            """
-            list_data = list_data or [{} for _ in list_at_id]
-            entities = [
-                entity_factory(at_type)(rocrate, at_id, params)
-                for at_id, params in zip(list_at_id, list_data)
-            ]
-            parent[key] = entities
-            rocrate.add(*entities)
-            return entities
-
         def append_entity(parent, key, at_id, at_type, data=None, **kwargs):
             """
             Args:
@@ -2035,7 +2036,7 @@ class JsonLdMapper(JsonMapper):
                     list_index.insert(i, None)
             return list_index
 
-        def gen_type(self, meta_path):
+        def gen_type(meta_path):
             """Generate "@type" of entity by using AT_TYPE_MAP.
 
             Args:
@@ -2087,7 +2088,7 @@ class JsonLdMapper(JsonMapper):
                 return
 
             _set_child_rocrate_metadata(
-                parent, META_PATH, META_KEY, meta_props, PROP_PATH, prop_props,
+                parent, record_key, META_PATH, META_KEY, meta_props, PROP_PATH, prop_props,
                 list_index, deconstructed
                 )
             return
@@ -2120,7 +2121,7 @@ class JsonLdMapper(JsonMapper):
                                 parent, prop, gen_id(meta_props[0]), at_type
                             )
                         _set_child_rocrate_metadata(
-                            parent[prop], META_PATH, META_KEY, meta_props[1:],
+                            parent[prop], record_key, META_PATH, META_KEY, meta_props[1:],
                             PROP_PATH, prop_props[1:], list_index[1:],
                             deconstructed
                         )
@@ -2142,7 +2143,7 @@ class JsonLdMapper(JsonMapper):
                     ensure_entity_list_size(parent, prop, at_type, index + 1)
                     if isinstance(parent[prop], list):
                         _set_child_rocrate_metadata(
-                            parent[prop][index], META_PATH, META_KEY,
+                            parent[prop][index], record_key, META_PATH, META_KEY,
                             meta_props[1:], PROP_PATH, prop_props[1:],
                             list_index[1:], deconstructed
                         )
@@ -2162,6 +2163,8 @@ class JsonLdMapper(JsonMapper):
                 ".attribute_value_mlt", "").replace(".attribute_value", "")
             META_PATH = re.sub(r"\[\d+\]", "", META_KEY)
             meta_props = META_KEY.split(".")
+            if META_PATH not in properties_mapping:
+                continue
             PROP_PATH = properties_mapping[META_PATH] # attribute_value
             prop_props = PROP_PATH.split(".")
 
