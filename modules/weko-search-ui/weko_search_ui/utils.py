@@ -5141,7 +5141,7 @@ def handle_flatten_data_encode_filename(list_record, data_path):
                 file["filename"] = encoded_filename
 
                 # copy file in directory to root under data_path
-                if not os.path.exists(encoded_filename):
+                if not os.path.exists(os.path.join(data_path, encoded_filename)):
                     shutil.copy(
                         os.path.join(data_path, filename),
                         os.path.join(data_path, encoded_filename)
