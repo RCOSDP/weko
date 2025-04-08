@@ -1389,16 +1389,21 @@ class JsonLdMapper(JsonMapper):
             list[dict]: list of mapped metadata.
         """
         metadatas, format = self._deconstruct_json_ld(json_ld)
-        list_items = [ self._map_to_item(metadata) for metadata in metadatas ]
+        list_items = [
+            self._map_to_item(metadata, info) for metadata, info in metadatas
+        ]
 
         return list_items, format
 
-    def _map_to_item(self, metadata):
+    def _map_to_item(self, metadata, system_info):
         """Map json-ld to item type metadata.
 
         Args:
-            metadata (_InformedMetadata):
+            metadata (dict):
                 metadata with deconstructed json-ld format.
+            system_info (dict):
+                others system information. <br>
+                e.g. {"id": 123, "cnri": "1234/5678"}
         Returns:
             dict: mapped metadata.
         """
@@ -1422,21 +1427,17 @@ class JsonLdMapper(JsonMapper):
                     fixed_properties[key] = {}
                 fixed_properties[key][sub_key] = value
 
-        mapped_metadata = self._InformedMetadata()
-        mapped_metadata.id = metadata.id
-        mapped_metadata.link_data = metadata.link_data
-        mapped_metadata.list_file = [
-            filename[5:] for filename in metadata.list_file
+        mapped_metadata = {}
+        system_info = {**system_info}
+        system_info["list_file"] = [
+            filename[5:] for filename in system_info["list_file"]
             if filename.startswith("data/")
         ]
-        mapped_metadata.non_extract = [
-            filename[5:] for filename in metadata.non_extract
+        system_info["non_extract"] = [
+            filename[5:] for filename in system_info["non_extract"]
             if filename.startswith("data/")
         ]
-        mapped_metadata.save_as_is = metadata.save_as_is
-        mapped_metadata.metadata_replace = metadata.metadata_replace
-        mapped_metadata.update({"id": metadata["id"]} if "id" in metadata else {})
-        mapped_metadata.update({"uri": metadata["uri"]} if "uri" in metadata else {})
+
         mapped_metadata.setdefault("publish_status", "private")
         mapped_metadata.setdefault("edit_mode", "Keep")
 
@@ -1476,13 +1477,13 @@ class JsonLdMapper(JsonMapper):
             if not parent_prop_key in properties_mapping.values():
                 # The corresponding layers are different,
                 # so the prop_path needs to progress to the lower layer.
+                sub_prop_key = parent_prop_key + "." + prop_props[1]
                 if self._get_property_type(parent_prop_key) == "object":
                     sub_prop_object = parent.get(
-                        prop_props[0], {} # TODO: FIXED VALUE
+                        prop_props[0], _empty_metadata(parent_prop_key)
                     )
-                    # FIXME: check sub_sub propaty type
                     sub_sub_object = sub_prop_object.get(
-                        prop_props[1], {} # TODO: FIXED VALUE
+                        prop_props[1], _empty_metadata(sub_prop_key)
                     )
                     _set_metadata(
                         sub_sub_object, META_KEY, meta_props[1:],
@@ -1495,11 +1496,10 @@ class JsonLdMapper(JsonMapper):
                     index = 0 if index is None else index
                     if len(sub_prop_array) <= index:
                         sub_prop_array.extend([
-                            {} # TODO: FIXED VALUE
+                            _empty_metadata(parent_prop_key)
                             for _ in range(index - len(sub_prop_array) + 1)
                         ])
-                    # FIXME: check sub_sub propaty type
-                    sub_sub_object = {} # TODO: FIXED VALUE
+                    sub_sub_object = _empty_metadata(sub_prop_key)
                     _set_metadata(
                         sub_sub_object, META_KEY, meta_props,
                         PROP_PATH, prop_props[1:]
@@ -1552,9 +1552,6 @@ class JsonLdMapper(JsonMapper):
                 )
                 mapped_metadata["feedback_mail_list"] = feedback_mail_list
             # TODO: implement request mail list
-            elif "wk:grant" in META_PATH:
-                # TODO: implement grant mapping
-                pass
             elif META_PATH not in properties_mapping:
                 missing_metadata[META_KEY] = metadata[META_KEY]
             else:
@@ -1611,7 +1608,7 @@ class JsonLdMapper(JsonMapper):
         #     "item_1617258105262": {...},
         #     ...
         # }
-        return mapped_metadata
+        return mapped_metadata, system_info
 
     @classmethod
     def _deconstruct_json_ld(cls, json_ld):
@@ -1671,7 +1668,6 @@ class JsonLdMapper(JsonMapper):
         format = ""
         # Check if the json-ld context is valid
         if "https://swordapp.github.io/swordv3/swordv3.jsonld" in context:
-            # TODO: support SWORD json-ld format
             format = "sword-bagit"
             extracted = json_ld
         elif (
@@ -1730,35 +1726,48 @@ class JsonLdMapper(JsonMapper):
 
         list_deconstructed = []
         for extracted in list_extracted:
-            metadata = cls._deconstruct_dict(extracted, cls._InformedMetadata())
-            metadata.update(
+            metadata = cls._deconstruct_dict(extracted)
+            system_info = {}
+            system_info.update(
                 {"id": extracted["identifier"]}
                 if "identifier" in extracted else {}
             )
-            metadata.update(
+            system_info.update(
                 {"uri": extracted["uri"]}
                 if "uri" in extracted else {}
             )
-            metadata.id = extracted["@id"]
-            metadata.link_data = [
+
+            for grant in extracted.get("wk:grant", []):
+                if grant.get("jpcoar:identifier") == "HDL":
+                    system_info["cnri"] = grant.get("@id")
+                    break
+            for grant in extracted.get("wk:grant", []):
+                if grant.get("jpcoar:identifier") == "DOI":
+                    system_info["doi"] = grant.get("@id")
+                    system_info["doi_ra"] = grant.get("jpcoar:identifierRegistration")
+                    break
+
+            system_info["_id"] = extracted["@id"]
+            system_info["link_data"] = [
                 {"item_id": link.get("identifier"), "sele_id" : link.get("value")}
                     for link in extracted.get("wk:itemLinks", [])
             ]
-            metadata.list_file = [
+            system_info["list_file"] = [
                 file["@id"] for file in extracted.get("hasPart", [])
             ]
-            metadata.non_extract = [
+            system_info["non_extract"] = [
                 file["@id"] for file in extracted.get("hasPart", [])
                     if not file.get("wk:textExtraction", True)
             ]
-            metadata.save_as_is = extracted.get("wk:saveAsIs", False)
-            metadata.metadata_replace = extracted.get("wk:metadataReplace", False)
-            list_deconstructed.append(metadata)
+            system_info["save_as_is"] = extracted.get("wk:saveAsIs", False)
+            system_info["metadata_replace"] = extracted.get("wk:metadataReplace", False)
+            # TODO: system_info["amend_doi"] = 
+            list_deconstructed.append((metadata, system_info))
 
         return list_deconstructed, format
 
     @classmethod
-    def _deconstruct_dict(cls, dict_data, return_data=None):
+    def _deconstruct_dict(cls, dict_data):
         """Deconstruct dictioanry data.
 
         Deconstructing dictionary hierarchy. <br>
@@ -1767,9 +1776,7 @@ class JsonLdMapper(JsonMapper):
 
         Args:
             dict_data (dict): dictionary data.
-            return_data (dict | None):
-                return data. Defaults to None. <br>
-                if specified, return data is updated with deconstructed data.
+
         Returns:
             dict: deconstructed dictionary data.
         """
@@ -1793,7 +1800,7 @@ class JsonLdMapper(JsonMapper):
                 key_name = key if parent == "" else f"{parent}.{key}"
                 metadata[key_name] = value
 
-        return_data = {} if return_data is None else return_data
+        return_data = {}
         for key, value in dict_data.items():
             _deconstructer(return_data, "", key, value)
 
