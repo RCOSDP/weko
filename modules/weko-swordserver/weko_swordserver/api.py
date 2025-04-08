@@ -19,8 +19,10 @@ from .models import SwordClientModel
 class SwordClient():
 
     @classmethod
-    def register(cls, client_id, registration_type_id,
-                        mapping_id, active, meta_data_api, workflow_id=None):
+    def register(
+        cls, client_id, registration_type_id, mapping_id,
+        workflow_id=None, active=True, duplicate_check=False, meta_data_api=None
+    ):
         """Register client.
 
         Make ralaion between client, mapping, and workflow.
@@ -31,6 +33,12 @@ class SwordClient():
             mapping_id (int): Mapping ID.
             workflow_id (int, optional):
                 Workflow ID. Required when registration_type is workflow.
+            active (bool, optional):
+                Active status of the client. Default is False.
+            duplicate_check (bool, optional):
+                Duplicate check status. Default is None.
+            meta_data_api (dict, optional):
+                Priority of use for metadata collection web API.
 
         Returns:
             SwordClient: Created client object.
@@ -40,9 +48,10 @@ class SwordClient():
                 even if the registration type is workflow.
             SQLAlchemyError: An error occurred while creating the client.
         """
-        if registration_type_id is current_app.config.get(
-            'WEKO_SWORDSERVER_REGISTRATION_TYPE'
-        ).WORKFLOW and  workflow_id is None:
+        if (
+            registration_type_id == SwordClientModel.RegistrationType.WORKFLOW
+            and workflow_id is None
+        ):
             current_app.logger.error(
                 "Workflow ID is required for workflow registration."
             )
@@ -53,11 +62,12 @@ class SwordClient():
 
         obj = SwordClientModel(
             client_id=client_id,
+            active=active,
             registration_type_id=registration_type_id,
             mapping_id=mapping_id,
             workflow_id=workflow_id,
-            active=active,
-            meta_data_api=meta_data_api
+            duplicate_check=duplicate_check,
+            meta_data_api=meta_data_api or []
         )
 
         try:
@@ -72,8 +82,10 @@ class SwordClient():
 
 
     @classmethod
-    def update(cls, client_id, registration_type_id,
-                mapping_id, workflow_id=None):
+    def update(
+        cls, client_id, registration_type_id, mapping_id,
+        workflow_id=None, active=True, duplicate_check=False, meta_data_api=None
+    ):
         """Update client.
 
         Update relation between client, mapping, and workflow.
@@ -112,9 +124,12 @@ class SwordClient():
                 errorType=ErrorType.BadRequest
             )
 
+        obj.active = active
         obj.registration_type_id = registration_type_id
         obj.mapping_id = mapping_id
         obj.workflow_id = workflow_id
+        obj.duplicate_check = duplicate_check
+        obj.meta_data_api = meta_data_api or []
 
         try:
             db.session.commit()

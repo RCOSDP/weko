@@ -61,6 +61,13 @@ class SwordClientModel(db.Model, Timestamp):
     )
     """Id of the clients. Foreign key from Client."""
 
+    active = db.Column(
+        db.Boolean(name="active"),
+        unique=False,
+        nullable=True
+    )
+    """Active status of the application."""
+
     registration_type_id = db.Column(
         db.SmallInteger,
         unique=False,
@@ -82,10 +89,12 @@ class SwordClientModel(db.Model, Timestamp):
         nullable=True)
     """Workflow ID of the client. Foreign key from WorkFlow."""
 
-    active = db.Column(
-        db.Boolean(name="active"),
+    duplicate_check = db.Column(
+        db.Boolean(name="duplicate_check"),
         unique=False,
-        nullable=True)
+        nullable=False
+    )
+    """Duplicate check status of the application."""
 
     meta_data_api = db.Column(
         db.JSON().with_variant(
@@ -101,6 +110,7 @@ class SwordClientModel(db.Model, Timestamp):
         default=lambda: {},
         nullable=True
     )
+    """Priority of use for metadata collection web API."""
 
     @property
     def registration_type(self):
