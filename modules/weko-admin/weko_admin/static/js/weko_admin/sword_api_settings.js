@@ -57,15 +57,15 @@ function changeRegistrationType(value) {
   } else if (value === "Workflow") {
     workflowMenu.removeAttribute("disabled");
     workflowMenu.setAttribute("required", true);
-    if (isDeletedWorkflow(settings["data_format"]["XML"]["workflow"])) {
+    if (isDeletedWorkflow(settings["XML"]["workflow"])) {
       workflowOption.value = "deleted_workflow";
-      workflowOption.textContent = deleted_workflows_name[settings["data_format"]["XML"]["workflow"]] + "(削除済みワークフロー)";
+      workflowOption.textContent = deleted_workflows_name[settings["XML"]["workflow"]] + "(削除済みワークフロー)";
       workflowOption.selected = true;
       workflowOption.setAttribute("hidden", "hidden");
       workflowMenu.appendChild(workflowOption);
       return showMsg(workflow_deleted_alert, false);
     } else {
-      workflowMenu.value = settings["data_format"]["XML"]["workflow"];
+      workflowMenu.value = settings["XML"]["workflow"];
     }
   } else {
     workflowOption.removeAttribute("disabled");
@@ -107,13 +107,13 @@ function saveDataFormat(page_type) {
     return showMsg(workflow_deleted_alert, false);
   }
 
-  let active_value = "False";
-  let duplicate_check_value = "False";
+  let active_value = false;
+  let duplicate_check_value = false;
   if (active.checked) {
-    active_value = "True";
+    active_value = true;
   }
   if (duplicate_check.checked) {
-    duplicate_check_value = "True";
+    duplicate_check_value = true;
   }
 
   const form = {

@@ -200,18 +200,20 @@ def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
     Returns:
         dict: Result of the check.
     """
-    settings = AdminSettings.get(
-        "sword_api_setting", dict_to_object=False
-    ) or {}
-    settings = settings.get("data_format", {})
-    register_type = (
-        settings.get(file_format, {}).get("registration_type", "Direct")
+    settings = AdminSettings.get("sword_api_setting", False) or {}
+    register_type = settings.get(file_format, {}).get(
+        "registration_type", "Direct"
     )
-    check_result = {}
-    check_result.update({"register_type": register_type})
+    duplicate_check = settings.get(file_format, {}).get(
+        "duplicate_check", False
+    )
     is_active = settings.get(file_format, {}).get(
         "active", file_format != "XML"
     )
+
+    check_result = {}
+    check_result.update({"register_type": register_type})
+    check_result.update({"duplicate_check": duplicate_check})
     if not is_active:
         current_app.logger.error(f"{file_format} metadata import is not enabled.")
         raise WekoSwordserverException(

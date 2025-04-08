@@ -1430,73 +1430,62 @@ class FacetSearchSettingView(ModelView):
 
 class SwordAPISettingsView(BaseView):
 
-    @expose('/', methods=['GET','POST'])
+    @expose("/", methods=["GET","POST"])
     def index(self):
-        PAGE_TSVCSV = 'TSV/CSV'
-        PAGE_XML = 'XML'
-        tab_value = request.args.get('tab')
-        template = current_app.config['WEKO_ADMIN_SWORD_API_TEMPLATE']
-        if tab_value == 'xml':
+        PAGE_TSVCSV = "TSV/CSV"
+        PAGE_XML = "XML"
+        page_type = PAGE_TSVCSV
+        if request.args.get("tab") == "xml":
             page_type = PAGE_XML
-        else:
-            page_type = PAGE_TSVCSV
 
-        if request.method == 'GET':
+        template = current_app.config["WEKO_ADMIN_SWORD_API_TEMPLATE"]
+
+        if request.method == "GET":
             # GET
-            default_sword_api = {
-                "data_format": {
+            default_settings = {
+                PAGE_TSVCSV: {
+                    "active": True,
+                    "registration_type": "Direct",
+                    "duplicate_check": False,
+                },
+                PAGE_XML: {
+                    "active": False,
+                    "registration_type": "Workflow",
+                    "workflow": "-1",
+                    "duplicate_check": False,
+                }
+            }  # Default
+            current_settings = AdminSettings.get("sword_api_setting", False)
+            if not current_settings:
+                AdminSettings.update("sword_api_setting", default_settings)
+                current_settings = default_settings
+                current_app.logger.info(
+                    "Create default settings for sword_api_setting"
+                )
+
+            current_settings_json = json.dumps(current_settings)
+            if "default_format" in current_settings:
+                # old format fix
+                current_settings = AdminSettings.get("sword_api_setting", False)
+                tsvcsv_registration_type = current_settings["data_format"]["TSV"]["register_format"]
+                xml_registration_type = current_settings["data_format"]["XML"]["register_format"]
+                xml_workflow = current_settings["data_format"]["XML"]["workflow"]
+
+                new_settings = {
                     PAGE_TSVCSV: {
-                        "active": 'True',
-                        "registration_type": "Direct",
+                        "active": True,
+                        "registration_type": tsvcsv_registration_type,
                         "duplicate_check": False,
                     },
                     PAGE_XML: {
-                        "active": 'False',
-                        "registration_type": "Workflow",
-                        "workflow": "-1",
+                        "active": False,
+                        "registration_type": xml_registration_type,
+                        "workflow": xml_workflow,
                         "duplicate_check": False,
                     }
                 }
-            }  # Default
-            current_settings = AdminSettings.get(
-                name='sword_api_setting',
-                dict_to_object=False
-            )
-            if not current_settings:
-                AdminSettings.update('sword_api_setting', default_sword_api)
-                current_settings = AdminSettings.get(
-                    name='sword_api_setting',
-                    dict_to_object=False
-                )
-            current_settings_json = json.dumps(current_settings)
-            if 'default_format' in current_settings_json:
-                # old format fix
-                settings = AdminSettings.get('sword_api_setting')
-                tsvcsv_registration_type = settings.data_format['TSV']['register_format']
-                xml_registration_type = settings.data_format['XML']['register_format']
-                if 'workflow' in settings.data_format['XML']:
-                    xml_workflow = settings.data_format['XML']['workflow']
-                else:
-                    xml_workflow = ''
-                settings = {
-                    "data_format": {
-                        PAGE_TSVCSV: {
-                            "active": 'True',
-                            "registration_type": tsvcsv_registration_type,
-                            "duplicate_check": False,
-                        },
-                        PAGE_XML: {
-                            "active": 'True',
-                            "registration_type": xml_registration_type,
-                            "workflow": xml_workflow,
-                            "duplicate_check": False,
-                        }
-                    }
-                }
-                AdminSettings.update('sword_api_setting', settings)
-                current_settings = AdminSettings.get(
-                    name='sword_api_setting',
-                    dict_to_object=False)
+                AdminSettings.update("sword_api_setting", new_settings)
+                current_settings = new_settings
                 current_settings_json = json.dumps(current_settings)
 
 
@@ -1506,29 +1495,31 @@ class SwordAPISettingsView(BaseView):
             workflows = workflow.get_workflows_by_roles(workflow_list)
             deleted_workflows = workflow.get_deleted_workflow_list()
             deleted_workflow_name_dict = {}
-            for deleted_workflow in deleted_workflows:
-                deleted_workflow_name_dict[deleted_workflow.id] = deleted_workflow.flows_name
+            deleted_workflow_name_dict = {
+                deleted_workflow.id: deleted_workflow.flows_name
+                for deleted_workflow in deleted_workflows
+            }
+
             # Process exclude workflows
             from weko_workflow.utils import exclude_admin_workflow
             exclude_admin_workflow(workflows)
 
-            settings = AdminSettings.get('sword_api_setting')
             active_value = ""
             workflow_value = ""
             duplicate_check_value = ""
             if page_type == PAGE_XML:
-                if settings.data_format[PAGE_XML]['active'] == 'True':
-                    active_value = 'checked'
-                registration_type_value = settings.data_format[PAGE_XML]['registration_type']
-                workflow_value = settings.data_format[PAGE_XML]['workflow']
-                if settings.data_format[PAGE_XML]['duplicate_check'] == "True":
-                    duplicate_check_value = 'checked'
+                if current_settings[PAGE_XML]["active"] == True:
+                    active_value = "checked"
+                registration_type_value = current_settings[PAGE_XML]["registration_type"]
+                workflow_value = current_settings[PAGE_XML]["workflow"]
+                if current_settings[PAGE_XML]["duplicate_check"] == True:
+                    duplicate_check_value = "checked"
             else:
-                if settings.data_format[PAGE_TSVCSV]['active'] == 'True':
-                    active_value = 'checked'
-                registration_type_value = settings.data_format[PAGE_TSVCSV]['registration_type']
-                if settings.data_format[PAGE_TSVCSV]['duplicate_check'] == "True":
-                    duplicate_check_value = 'checked'
+                if current_settings[PAGE_TSVCSV]["active"] == True:
+                    active_value = "checked"
+                registration_type_value = current_settings[PAGE_TSVCSV]["registration_type"]
+                if current_settings[PAGE_TSVCSV]["duplicate_check"] == True:
+                    duplicate_check_value = "checked"
 
             return self.render(template,
                 current_settings = current_settings,
@@ -1544,20 +1535,19 @@ class SwordAPISettingsView(BaseView):
             )
         else:
             # POST
-            settings = AdminSettings.get('sword_api_setting')
+            current_settings = AdminSettings.get("sword_api_setting", False)
 
-            current_app.logger.info(f"POST: {request.json}")
-            active = request.json.get('active')
-            registration_type = request.json.get('registration_type')
-            workflow = request.json.get('workflow')
-            duplicate_check = request.json.get('duplicate_check')
+            active = request.json.get("active")
+            registration_type = request.json.get("registration_type")
+            workflow = request.json.get("workflow")
+            duplicate_check = request.json.get("duplicate_check")
 
             if page_type == PAGE_TSVCSV:
-                xml_active = settings.data_format[PAGE_XML]['active']
-                xml_registration_type = settings.data_format[PAGE_XML]['registration_type']
-                xml_workflow = settings.data_format[PAGE_XML]['workflow']
-                xml_duplicate_check = settings.data_format[PAGE_XML]['duplicate_check']
-                settings.data_format = {
+                xml_active = current_settings[PAGE_XML]["active"]
+                xml_registration_type = current_settings[PAGE_XML]["registration_type"]
+                xml_workflow = current_settings[PAGE_XML]["workflow"]
+                xml_duplicate_check = current_settings[PAGE_XML]["duplicate_check"]
+                current_settings = {
                     PAGE_TSVCSV: {
                         "active": active,
                         "registration_type": registration_type,
@@ -1571,10 +1561,10 @@ class SwordAPISettingsView(BaseView):
                     }
                 }
             else:
-                tsvcsv_active = settings.data_format[PAGE_TSVCSV]['active']
-                tsvcsv_registration_type = settings.data_format[PAGE_TSVCSV]['registration_type']
-                tsvcsv_duplicate_check = settings.data_format[PAGE_TSVCSV]['duplicate_check']
-                settings.data_format = {
+                tsvcsv_active = current_settings[PAGE_TSVCSV]["active"]
+                tsvcsv_registration_type = current_settings[PAGE_TSVCSV]["registration_type"]
+                tsvcsv_duplicate_check = current_settings[PAGE_TSVCSV]["duplicate_check"]
+                current_settings = {
                     PAGE_TSVCSV: {
                         "active": tsvcsv_active,
                         "registration_type": tsvcsv_registration_type,
@@ -1587,8 +1577,7 @@ class SwordAPISettingsView(BaseView):
                         "duplicate_check": duplicate_check
                     }
                 }
-            AdminSettings.update('sword_api_setting',
-                                    settings.__dict__)
+            AdminSettings.update("sword_api_setting", current_settings)
             return jsonify(success=True),200
 
 class SwordAPIJsonldSettingsView(ModelView):
