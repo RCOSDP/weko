@@ -919,24 +919,24 @@ def check_jsonld_import_items(
             {
                 "$schema": f"/items/jsonschema/{item_type.id}",
                 # if new item, must not exist "id" and "uri"
-                **({"id": item_metadata.pop("id")} if "id" in item_metadata else {}),
-                **({"uri": item_metadata.pop("uri")} if "uri" in item_metadata else {}),
-                "_id": item_metadata.id,
+                **({"id": system_info.get("id")} if "id" in system_info else {}),
+                **({"uri": system_info.get("uri")} if "uri" in system_info else {}),
+                "_id": system_info.get("_id"),
                 "metadata": item_metadata,
                 "item_type_name": item_type.item_type_name.name,
                 "item_type_id": item_type.id,
                 "publish_status": item_metadata.get("publish_status"),
                 **({"edit_mode": item_metadata.get("edit_mode")}
                     if "edit_mode" in item_metadata else {}),
-                "link_data": item_metadata.link_data,
-                "file_path": item_metadata.list_file,
-                "non_extract": item_metadata.non_extract,
-                "save_as_is": item_metadata.save_as_is,
-                "metadata_replace": item_metadata.metadata_replace,
-                "cnri": item_metadata.cnri,
-                "doi_ra": item_metadata.doi_ra,
-                "doi": item_metadata.doi,
-            } for item_metadata in item_metadatas
+                "link_data": system_info.get("link_data", []),
+                "file_path": system_info.get("list_file", []),
+                "non_extract": system_info.get("non_extract", []),
+                "save_as_is": system_info.get("save_as_is", False),
+                "metadata_replace": system_info.get("metadata_replace", False),
+                "cnri": system_info.get("cnri"),
+                "doi_ra": system_info.get("doi_ra"),
+                "doi": system_info.get("doi")
+            } for item_metadata, system_info in item_metadatas
         ]
         data_path = os.path.join(data_path, "data")
         list_record.sort(key=lambda x: get_priority(x["link_data"]))

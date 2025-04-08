@@ -4704,10 +4704,13 @@ class TestJsonLdMapper:
             mapper = JsonLdMapper(item_type2.model.id, json_mapping)
             item_metadatas, format = mapper.to_item_metadata(json_ld)
 
-            item_metadata = item_metadatas[0]
+            item_metadata, system_info = item_metadatas[0]
             assert format == "ro-crate"
-            assert item_metadata.non_extract == ["data.csv"]
-            assert item_metadata.save_as_is == False
+            assert system_info["cnri"] == "1234/5678"
+            assert system_info["doi_ra"] == "DataCite"
+            assert system_info["doi"] == "10.1234/5678"
+            assert system_info["non_extract"] == ["data.csv"]
+            assert system_info["save_as_is"] == False
             assert item_metadata["pubdate"] == "2021-10-15"
             assert item_metadata["path"] == [1623632832836]
             assert item_metadata["publish_status"] == "public"
@@ -4755,12 +4758,11 @@ class TestJsonLdMapper:
 
             assert format == "ro-crate"
             assert len(item_metadatas) == 2
-            thesis = item_metadatas[0]
-            evidence = item_metadatas[1]
+            thesis, system_info = item_metadatas[0]
 
-            assert thesis.id == "_:JournalPaper1"
-            assert thesis.link_data[0]["item_id"] == "_:EvidenceData1"
-            assert thesis.link_data[0]["sele_id"] == "isSupplementedBy"
+            assert system_info["_id"] == "_:JournalPaper1"
+            assert system_info["link_data"][0]["item_id"] == "_:EvidenceData1"
+            assert system_info["link_data"][0]["sele_id"] == "isSupplementedBy"
             assert thesis["pubdate"] == "2021-10-15"
             assert thesis["path"] == [1623632832836]
             assert thesis["item_30001_title0"][0]["subitem_title"] == "The Sample Dataset for WEKO"
@@ -4769,10 +4771,11 @@ class TestJsonLdMapper:
             assert thesis["files_info"][0]["items"][0]["filename"] == "sample.rst"
             assert thesis["files_info"][0]["items"][0]["url"]["label"] == "sample.rst"
 
-            assert evidence.id == "_:EvidenceData1"
-            assert evidence.link_data[0]["item_id"] == "_:JournalPaper1"
-            assert evidence.link_data[0]["sele_id"] == "isSupplementTo"
-            assert evidence.non_extract == ["data.csv"]
+            evidence, system_info = item_metadatas[1]
+            assert system_info["_id"] == "_:EvidenceData1"
+            assert system_info["link_data"][0]["item_id"] == "_:JournalPaper1"
+            assert system_info["link_data"][0]["sele_id"] == "isSupplementTo"
+            assert system_info["non_extract"] == ["data.csv"]
             assert evidence["pubdate"] == "2021-10-15"
             assert evidence["path"] == [1623632832836]
             assert evidence["item_30001_title0"][0]["subitem_title"] == "The Sample Dataset for WEKO, evidence part"
@@ -4787,7 +4790,7 @@ class TestJsonLdMapper:
                     "item_type_name": item_type2.model.item_type_name.name,
                     "item_type_id": item_type2.model.id,
                     "publish_status": item_metadata.get("publish_status"),
-                } for item_metadata in item_metadatas
+                } for item_metadata, system_info in item_metadatas
             ]
             list_record = handle_validate_item_import(list_record, schema)
 
@@ -4801,11 +4804,14 @@ class TestJsonLdMapper:
 
         json_ld = json_data("data/jsonld/ro-crate-metadata.json")
         deconstructed_metadata, format = JsonLdMapper._deconstruct_json_ld(json_ld)
-        metadata =  deconstructed_metadata[0]
+        metadata, system_info =  deconstructed_metadata[0]
 
         assert format == "ro-crate"
-        assert metadata.non_extract == ["data/data.csv"]
-        assert metadata.save_as_is == False
+        assert system_info["cnri"] == "1234/5678"
+        assert system_info["doi_ra"] == "DataCite"
+        assert system_info["doi"] == "10.1234/5678"
+        assert system_info["non_extract"] == ["data/data.csv"]
+        assert system_info["save_as_is"] == False
         assert metadata["@id"] == "./"
         assert metadata["name"] == "The Sample Dataset for WEKO"
         assert metadata["description"] == "This is a sample dataset for WEKO in order to demonstrate the RO-Crate metadata."
@@ -4824,25 +4830,26 @@ class TestJsonLdMapper:
 
         json_ld = json_data("data/jsonld/ro-crate-metadata2.json")
         deconstructed_metadata, format = JsonLdMapper._deconstruct_json_ld(json_ld)
-        thesis =  deconstructed_metadata[0]
-        evidence = deconstructed_metadata[1]
+        thesis, system_info =  deconstructed_metadata[0]
 
         assert format == "ro-crate"
-        assert thesis.id == "_:JournalPaper1"
-        assert thesis.link_data[0]["item_id"] == "_:EvidenceData1"
-        assert thesis.link_data[0]["sele_id"] == "isSupplementedBy"
-        assert thesis.link_data[1]["item_id"] == "https://example.repo.nii.ac.jp/records/123456789"
-        assert thesis.link_data[1]["sele_id"] == "isSupplementedBy"
+        assert system_info["_id"] == "_:JournalPaper1"
+        assert system_info["link_data"][0]["item_id"] == "_:EvidenceData1"
+        assert system_info["link_data"][0]["sele_id"] == "isSupplementedBy"
+        assert system_info["link_data"][1]["item_id"] == "https://example.repo.nii.ac.jp/records/123456789"
+        assert system_info["link_data"][1]["sele_id"] == "isSupplementedBy"
         assert thesis["@id"] == "_:JournalPaper1"
         assert thesis["dc:title[0].value"] == "The Sample Dataset for WEKO"
         assert thesis["dc:title[1].value"] == "WEKO用サンプルデータセット"
         assert thesis["hasPart[0].wk:textExtraction"] == True
         assert thesis["dc:type.@id"] == "http://purl.org/coar/resource_type/c_6501"
 
-        assert evidence.id == "_:EvidenceData1"
-        assert evidence.link_data[0]["item_id"] == "_:JournalPaper1"
-        assert evidence.link_data[0]["sele_id"] == "isSupplementTo"
-        assert evidence.non_extract == ["data/data.csv"]
+        evidence, system_info = deconstructed_metadata[1]
+
+        assert system_info["_id"] == "_:EvidenceData1"
+        assert system_info["link_data"][0]["item_id"] == "_:JournalPaper1"
+        assert system_info["link_data"][0]["sele_id"] == "isSupplementTo"
+        assert system_info["non_extract"] == ["data/data.csv"]
         assert evidence["@id"] == "_:EvidenceData1"
         assert evidence["dc:title[0].value"] == "The Sample Dataset for WEKO, evidence part"
         assert evidence["dc:title[1].value"] == "WEKO用サンプルデータセットのエビデンス部分"
