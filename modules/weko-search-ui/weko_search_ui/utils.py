@@ -1928,20 +1928,6 @@ def handle_workflow(item: dict):
         else:
             create_work_flow(item.get("item_type_id"))
 
-def handle_doi(item: dict, doi: str):
-    """Handle doi.
-
-    :argument
-        item           -- {dict} item.
-        doi            -- {str} doi.
-    :return
-        return metadata with doi
-    """
-    metadata = item.get("metadata")
-    item_type_id = item.get("item_type_id")
-    doi_response = get_doi_with_original(doi, item_type_id, metadata)
-    return doi_response
-
 
 def create_work_flow(item_type_id):
     """Handle create work flow.
@@ -5097,6 +5083,21 @@ def create_tsv_row(dict, data_response):
     return result_row
 
 
+def handle_metadata_by_doi(item, doi):
+    """Handle doi.
+
+    Args:
+        item (dict): Item metadata.
+        doi (str): DOI.
+    :return
+        doi_response (dict): Metadata complemented by DOI.
+    """
+    metadata = item.get("metadata")
+    item_type_id = item.get("item_type_id")
+    doi_response = get_doi_with_original(doi, item_type_id, metadata)
+    return doi_response
+
+
 def handle_metadata_amend_by_doi(list_record):
     """Amend metadata by using DOI.
 
@@ -5109,10 +5110,10 @@ def handle_metadata_amend_by_doi(list_record):
     """
     for item in list_record:
         metadata = item["metadata"]
-        doi = getattr(metadata, "doi_amend")
+        doi = item.get("amend_doi")
         if doi is None:
             continue
-        item["metadata"] = handle_doi(item, doi)
+        item["metadata"] = handle_metadata_by_doi(item, doi)
 
 
 def handle_flatten_data_encode_filename(list_record, data_path):

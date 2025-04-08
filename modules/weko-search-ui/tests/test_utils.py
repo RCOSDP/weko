@@ -108,7 +108,7 @@ from weko_search_ui.utils import (
     handle_check_authors_prefix,
     handle_check_authors_affiliation,
     handle_convert_validate_msg_to_jp,
-    handle_doi,
+    handle_metadata_by_doi,
     handle_doi_required_check,
     handle_fill_system_item,
     handle_generate_key_path,
@@ -1036,13 +1036,13 @@ def test_handle_workflow(i18n_app, es_item_file_pipeline, es_records, db):
         assert not handle_workflow(item)
 
 
-# def handle_doi(item: dict):
+# def handle_metadata_by_doi(item: dict):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_handle_doi():
+def test_handle_metadata_by_doi():
     item = {"metadata": {"test": "test"}, "item_type_id": 1}
     doi = "test"
     with patch("weko_search_ui.utils.get_doi_with_original", return_value=item["metadata"]):
-        metadata = handle_doi(item, doi)
+        metadata = handle_metadata_by_doi(item, doi)
         assert metadata == item["metadata"]
 
 

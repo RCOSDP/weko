@@ -87,7 +87,7 @@ from .utils import (
     get_root_item_option,
     get_sub_item_option,
     get_tree_items,
-    handle_doi,
+    handle_metadata_by_doi,
     handle_get_all_sub_id_and_name,
     handle_workflow,
     make_stats_file,
@@ -475,7 +475,7 @@ class ItemImportView(BaseView):
                     create_flow_define()
                     handle_workflow(item)
                     if (list_doi[idx]):
-                        metadata_doi = handle_doi(item, list_doi[idx])
+                        metadata_doi = handle_metadata_by_doi(item, list_doi[idx])
                         item["metadata"] = metadata_doi
                     group_tasks.append(import_item.s(item, request_info))
                     db.session.commit()

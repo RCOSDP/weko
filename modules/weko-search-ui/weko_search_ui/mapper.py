@@ -1389,7 +1389,7 @@ class JsonLdMapper(JsonMapper):
             list[dict]: list of mapped metadata.
         """
         metadatas, format = self._deconstruct_json_ld(json_ld)
-        list_items = [ 
+        list_items = [
             self._map_to_item(metadata, info) for metadata, info in metadatas
         ]
 
@@ -1726,7 +1726,7 @@ class JsonLdMapper(JsonMapper):
 
         list_deconstructed = []
         for extracted in list_extracted:
-            metadata = cls._deconstruct_dict(extracted, cls._InformedMetadata())
+            metadata = cls._deconstruct_dict(extracted)
             system_info = {}
             system_info.update(
                 {"id": extracted["identifier"]}
@@ -1761,12 +1761,13 @@ class JsonLdMapper(JsonMapper):
             ]
             system_info["save_as_is"] = extracted.get("wk:saveAsIs", False)
             system_info["metadata_replace"] = extracted.get("wk:metadataReplace", False)
+            # TODO: system_info["amend_doi"] = 
             list_deconstructed.append((metadata, system_info))
 
         return list_deconstructed, format
 
     @classmethod
-    def _deconstruct_dict(cls, dict_data, return_data=None):
+    def _deconstruct_dict(cls, dict_data):
         """Deconstruct dictioanry data.
 
         Deconstructing dictionary hierarchy. <br>
@@ -1775,9 +1776,7 @@ class JsonLdMapper(JsonMapper):
 
         Args:
             dict_data (dict): dictionary data.
-            return_data (dict | None):
-                return data. Defaults to None. <br>
-                if specified, return data is updated with deconstructed data.
+
         Returns:
             dict: deconstructed dictionary data.
         """
@@ -1801,7 +1800,7 @@ class JsonLdMapper(JsonMapper):
                 key_name = key if parent == "" else f"{parent}.{key}"
                 metadata[key_name] = value
 
-        return_data = {} if return_data is None else return_data
+        return_data = {}
         for key, value in dict_data.items():
             _deconstructer(return_data, "", key, value)
 
