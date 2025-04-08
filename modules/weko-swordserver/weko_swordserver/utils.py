@@ -244,7 +244,7 @@ def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
         shared_id = kwargs.get("shared_id", -1)
 
         sword_client = SwordClient.get_client_by_id(client_id)
-        if sword_client is None:
+        if sword_client is None or not sword_client.active:
             current_app.logger.error(f"No setting foound for client ID: {client_id}")
             raise WekoSwordserverException(
                 "No setting found for client ID that you are using.",
@@ -257,7 +257,8 @@ def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
 
         check_result.update({
             "register_type": register_type,
-            "workflow_id": sword_client.workflow_id
+            "workflow_id": sword_client.workflow_id,
+            "duplicate_check": sword_client.duplicate_check,
         })
 
         check_result.update(

@@ -18,27 +18,27 @@ function closeError() {
 }
 
 /** show ErrorMessage */
-function showMsg(msg , success=false) {
+function showMsg(msg, success = false) {
   $('#errors').append(
-      '<div class="alert ' + (success? "alert-success":"alert-danger") + ' alert-dismissable">' +
-      '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
-      '&times;</button>' + msg + '</div>');
+    '<div class="alert ' + (success ? "alert-success" : "alert-danger") + ' alert-dismissable">' +
+    '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
+    '&times;</button>' + msg + '</div>');
 }
 
 function componentDidMount() {
   /** set errorMessage Area */
   const header = document.getElementsByClassName('content-header')[0];
   if (header) {
-      const errorElement = document.createElement('div');
-      errorElement.setAttribute('id', 'errors');
-      header.insertBefore(errorElement, header.firstChild);
+    const errorElement = document.createElement('div');
+    errorElement.setAttribute('id', 'errors');
+    header.insertBefore(errorElement, header.firstChild);
   }
 }
 
-function isDeletedWorkflow(value){
+function isDeletedWorkflow(value) {
   let is_deleted = false;
   let keys = Object.keys(deleted_workflows_name)
-  if(keys.includes(value)){
+  if (keys.includes(value)) {
     is_deleted = true;
   }
   return is_deleted;
@@ -51,32 +51,32 @@ function changeRegistrationType(value) {
   if (value === "empty") {
     workflowMenu.disabled = true;
     workflowMenu.value = "empty";
-  } else if(value === "Direct"){
+  } else if (value === "Direct") {
     workflowMenu.value = "";
     workflowMenu.disabled = true;
-  } else if(value === "Workflow"){
+  } else if (value === "Workflow") {
     workflowMenu.removeAttribute("disabled");
-    workflowMenu.setAttribute("required",true);
-      if(isDeletedWorkflow(settings["data_format"]["XML"]["workflow"])){
-        workflowOption.value = "deleted_workflow";
-        workflowOption.textContent = deleted_workflows_name[settings["data_format"]["XML"]["workflow"]] + "(削除済みワークフロー)";
-        workflowOption.selected = true;
-        workflowOption.setAttribute("hidden","hidden");
-        workflowMenu.appendChild(workflowOption);
-        return showMsg(workflow_deleted_alert, false);
-      }else{
-        workflowMenu.value = settings["data_format"]["XML"]["workflow"];
-      }
-  }else{
+    workflowMenu.setAttribute("required", true);
+    if (isDeletedWorkflow(settings["data_format"]["XML"]["workflow"])) {
+      workflowOption.value = "deleted_workflow";
+      workflowOption.textContent = deleted_workflows_name[settings["data_format"]["XML"]["workflow"]] + "(削除済みワークフロー)";
+      workflowOption.selected = true;
+      workflowOption.setAttribute("hidden", "hidden");
+      workflowMenu.appendChild(workflowOption);
+      return showMsg(workflow_deleted_alert, false);
+    } else {
+      workflowMenu.value = settings["data_format"]["XML"]["workflow"];
+    }
+  } else {
     workflowOption.removeAttribute("disabled");
-    workflowMenu.setAttribute("required",true);
+    workflowMenu.setAttribute("required", true);
   }
 }
 
-function isEmpty(value){
-  if (!value){
+function isEmpty(value) {
+  if (!value) {
     return true;
-  }else{
+  } else {
     return false;
   }
 }
@@ -84,8 +84,10 @@ function isEmpty(value){
 function saveDataFormat(page_type) {
   const active = document.getElementById("active");
   const registration_type = document.getElementsByName("registration_type");
-  for (let i = 0; i < registration_type.length; i++){
-    if (registration_type[i].checked){
+  const duplicate_check = document.getElementById("duplicate_check");
+  let registration_type_save_value = "";
+  for (let i = 0; i < registration_type.length; i++) {
+    if (registration_type[i].checked) {
       registration_type_save_value = registration_type[i].value;
     }
   }
@@ -94,59 +96,62 @@ function saveDataFormat(page_type) {
 
   //Validate
   // required check
-  NGList = [];
-  if(page_type === "XML"){
-    if(registration_type_save_value === "Workflow" && workflowMenu.value === ''){
+  let NGList = [];
+  if (page_type === "XML") {
+    if (registration_type_save_value === "Workflow" && workflowMenu.value === '') {
       NGList.push('Workflow');
-      return showMsg(item_required_alert + NGList , false);
+      return showMsg(item_required_alert + NGList, false);
     }
   }
-  if(workflowMenu.value === "deleted_workflow") {
+  if (workflowMenu.value === "deleted_workflow") {
     return showMsg(workflow_deleted_alert, false);
   }
 
+  let active_value = "False";
+  let duplicate_check_value = "False";
   if (active.checked) {
     active_value = "True";
-  } else {
-    active_value = "False";
+  }
+  if (duplicate_check.checked) {
+    duplicate_check_value = "True";
   }
 
   const form = {
-    'active': active_value
-    ,'registration_type':registration_type_save_value
-    ,'workflow':workflowMenu.value
+    'active': active_value,
+    'registration_type': registration_type_save_value,
+    'workflow': workflowMenu.value,
+    'duplicate_check': duplicate_check_value
   }
 
+  let url = "/admin/swordapi/";
   if (page_type === "XML") {
-    url ="/admin/swordapi/?tab=xml";
-  } else {
-    url ="/admin/swordapi/";
+    url = "/admin/swordapi/?tab=xml";
   }
-  fetch(url ,{method:'POST' ,headers:{'Content-Type':'application/json'} ,credentials:"include", body: JSON.stringify(form)})
-  .then(res => {
-    if(!res.ok){
-      console.log(etext);
-  }
-    showMsg(Successfully_Changed , true);
-  })
-  .catch(error => {
-    console.log(error);
-    showMsg(Failed_Changed , false);
-  });
+  fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: "include", body: JSON.stringify(form) })
+    .then(res => {
+      if (!res.ok) {
+        console.log(etext);
+      }
+      showMsg(Successfully_Changed, true);
+    })
+    .catch(error => {
+      console.log(error);
+      showMsg(Failed_Changed, false);
+    });
 }
 
-window.onload = function() {
+window.onload = function () {
   const registration_type = document.getElementsByName("registration_type");
-  for (let i = 0; i < registration_type.length; i++){
-    if (registration_type[i].value === registration_type_value){
+  for (let i = 0; i < registration_type.length; i++) {
+    if (registration_type[i].value === registration_type_value) {
       registration_type[i].checked = true;
       changeRegistrationType(registration_type_value);
     }
   }
   if (page_type_value === "TSV/CSV") {
-    document.getElementById("workflow_div").style.display =  'none';
+    document.getElementById("workflow_div").style.display = 'none';
   }
-  if (workflow_value !== ''){
+  if (workflow_value !== '') {
     const select = document.getElementById("workflow");
     const options = select.options;
     for (let i = 0; i < options.length; i++) {
@@ -157,8 +162,8 @@ window.onload = function() {
     }
   }
   if (page_type_value === "XML") {
-    for (let i = 0; i < registration_type.length; i++){
-      if (registration_type[i].value === "Direct"){
+    for (let i = 0; i < registration_type.length; i++) {
+      if (registration_type[i].value === "Direct") {
         registration_type[i].disabled = true;
       }
     }

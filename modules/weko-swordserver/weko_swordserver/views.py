@@ -314,7 +314,7 @@ def post_service_document():
 
         from weko_items_ui.utils import check_duplicate
         result, list_id, list_url = check_duplicate(item["metadata"], is_item=True)
-        if result:
+        if check_result.get("duplicate_check", False) and result:
             current_app.logger.error(
                 f"This item appears to be a duplicate: {list_id}"
             )
