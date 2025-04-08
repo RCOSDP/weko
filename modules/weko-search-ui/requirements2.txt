@@ -17,7 +17,7 @@ binaryornot==0.4.4
 bleach==3.1.0
 blinker==1.4
 boto3==1.9.83
-botocore==1.12.209
+botocore
 cachelib==0.1
 captcha==0.4
 cachetools==4.2.4
@@ -275,6 +275,7 @@ webencodings==0.5.1
 -e ../weko-theme
 -e ../weko-user-profiles
 -e ../weko-workflow
+-e ../weko-notifications
 Werkzeug==0.15.2
 whichcraft==0.4.1
 WTForms==2.1

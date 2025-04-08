@@ -3751,7 +3751,7 @@ def test_create_tsv_row(app):
 
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_flatten_data_encode_filename -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_handle_flatten_data_encode_filename(tmpdir):
+def test_handle_flatten_data_encode_filename(app, tmpdir):
     # Arrange
     def _create_files_from_files_info(list_record, data_path):
         for item in list_record:
@@ -3784,6 +3784,8 @@ def test_handle_flatten_data_encode_filename(tmpdir):
 
     # Assert
     assert list_record == expected_list_record
+    for filepath in list_record[0].get("filepath"):
+        assert os.path.exists(os.path.join(data_path, filepath))
 
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_get_priority -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
