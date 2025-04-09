@@ -57,7 +57,7 @@ WEKO_ADMIN_SWORD_API_TEMPLATE = 'weko_admin/admin/sword_api_settings.html'
 WEKO_ADMIN_SWORD_API_JSONLD_TEMPLATE = 'weko_admin/admin/sword_api_jsonld_settings.html'
 """SWORD API JSONLD template."""
 
-WEKO_ADMIN_SWORD_API_JSONLD_MAPPING_TEMPLATE = 'weko_admin/admin/sword_api_jsonld_mapping_settings.html'
+WEKO_ADMIN_SWORD_API_JSONLD_MAPPING_TEMPLATE = 'weko_admin/admin/jsonld_mapping_settings.html'
 """SWORD API JSONLD template."""
 
 WEKO_ADMIN_BlOCK_STYLE_TEMPLATE = 'weko_admin/admin/block_style.html'
