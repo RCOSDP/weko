@@ -1364,13 +1364,13 @@ class JsonLdMapper(JsonMapper):
         required_map = self.required_properties()
 
         errors += [
-            _("{key} is required", key=k.replace(".", ">"))
+            _("{key} is required").format(key=k.replace(".", " > "))
             for k in required_map
             if k not in self.json_mapping
         ]
 
         errors += [
-            _("{key} is not in itemtype", key=k.replace(".", ">"))
+            _("{key} is not in itemtype").format(key=k.replace(".", " > "))
             for k in self.json_mapping.keys()
             if k not in item_map
         ]

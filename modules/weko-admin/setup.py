@@ -163,6 +163,7 @@ setup(
             'weko_admin_admin_lte_js_dependecies = weko_admin.bundles:admin_lte_js_dependecies',
             'weko_admin_admin_lte_js = weko_admin.bundles:admin_lte_js',
             'weko_admin_angular_js = weko_admin.bundles:angular_js',
+            'weko_admin_jsonld_js = weko_admin.bundles:weko_admin_jsonld_js',
             'weko_admin_site_info = weko_admin.bundles:weko_admin_site_info_js',
             'weko_admin_site_info_css = weko_admin.bundles:weko_admin_site_info_css',
             'weko_admin_ng_js_tree = weko_admin.bundles:weko_admin_ng_js_tree_js',

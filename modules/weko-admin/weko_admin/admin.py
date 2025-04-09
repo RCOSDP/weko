@@ -26,6 +26,7 @@ import json
 import os
 import re
 import sys
+import traceback
 import unicodedata
 import ipaddress
 from datetime import datetime, timedelta
@@ -52,6 +53,7 @@ from weko_records.api import ItemTypes, SiteLicense, ItemTypeNames, JsonldMappin
 from weko_records.models import SiteLicenseInfo, ItemTypeJsonldMapping
 from weko_records_ui.utils import check_items_settings
 from weko_schema_ui.models import PublishStatus
+from weko_search_ui.mapper import JsonLdMapper
 from weko_swordserver.models import SwordClientModel
 from weko_swordserver.api import SwordClient
 from weko_workflow.api import WorkFlow, WorkActivity
@@ -1578,6 +1580,9 @@ class SwordAPISettingsView(BaseView):
                     }
                 }
             AdminSettings.update("sword_api_setting", current_settings)
+            current_app.logger.info(
+                "Update settings for Sword API: {}".format(page_type)
+            )
             return jsonify(success=True),200
 
 class SwordAPIJsonldSettingsView(ModelView):
@@ -1827,7 +1832,7 @@ class SwordAPIJsonldSettingsView(ModelView):
                 return jsonify({"error": str(e)}), 400
 
 
-class SwordAPIJsonldMappingView(ModelView):
+class JsonldMappingView(ModelView):
     """Pidstore Identifier admin view."""
     form_base_class = Form
 
@@ -1840,15 +1845,15 @@ class SwordAPIJsonldMappingView(ModelView):
     edit_template = WEKO_ADMIN_SWORD_API_JSONLD_MAPPING_TEMPLATE
 
     column_filters = (
-        'id',
-        'name',
+        "id",
+        "name",
     )
 
     column_list = (
-        'id',
-        'name',
-        'item_type',
-        'updated',
+        "id",
+        "name",
+        "item_type",
+        "updated",
     )
 
     def _item_type_name(view, context, model, name):
@@ -1856,31 +1861,34 @@ class SwordAPIJsonldMappingView(ModelView):
         return result.name
 
     column_formatters = {
-        'item_type': _item_type_name,
+        "item_type": _item_type_name,
     }
-    column_searchable_list = ('id', 'name', 'item_type_id')
+    column_searchable_list = ("id", "name", "item_type_id")
 
     def get_query(self):
-        return super(SwordAPIJsonldMappingView, self).get_query().filter(
+        return super(JsonldMappingView, self).get_query().filter(
             ItemTypeJsonldMapping.is_deleted == False
         )
 
-    @expose('/new/', methods=['GET', 'POST'])
+    @expose("/new/", methods=["GET", "POST"])
     def create_view(self):
 
-        if request.method == 'GET':
+        if request.method == "GET":
             # GET
             form = FlaskForm(request.form)
 
             # GET ItemType
             itemtypes = ItemTypes.get_latest_with_item_type()
-            item_types = [{'id': itemtype.id, 'item_type_name': itemtype.name} for itemtype in itemtypes]
+            item_types = [
+                {"id": itemtype.id, "item_type_name": itemtype.name}
+                for itemtype in itemtypes
+            ]
 
             return self.render(
                 self.create_template,
                 form=form,
-                return_url = request.args.get('url'),
-                current_page_type='new',
+                return_url = request.args.get("url"),
+                current_page_type="new",
                 item_types=item_types,
                 current_name=None,
                 current_mapping=None,
@@ -1888,60 +1896,66 @@ class SwordAPIJsonldMappingView(ModelView):
                 current_model_json=None,
                 exist_Waiting_approval_workflow=False,
                 id=None,
-                )
+            )
         else:
             # POST
+            name = request.json.get("name")
+            item_type_id = request.json.get("item_type_id")
+            mapping = request.json.get("mapping")
+
             try:
-                model = ItemTypeJsonldMapping()
-                model.name = request.json.get('name')
-                model.item_type_id = request.json.get('item_type_id')
-                model.mapping = json.loads(request.json.get('mapping'))
+                JsonldMapping.create(name, mapping, item_type_id)
+                current_app.logger.info(f"new jsonld mapping created: {name}")
+                return jsonify(results=True), 200
 
-                sword_item_type_mapping = JsonldMapping.create(
-                    name=model.name,
-                    mapping=model.mapping,
-                    item_type_id=model.item_type_id,
-                )
-                return jsonify(results=True),200
+            except Exception as ex:
+                msg = f"Failed to create jsonld mapping: {name}"
+                current_app.logger.error(msg)
+                traceback.print_exc()
+                return jsonify({"error": msg}), 500
 
-            except Exception as e:
-                return jsonify({"error": str(e)}), 400
-
-    @expose('/edit/<string:id>/', methods=['GET', 'POST'])
+    @expose("/edit/<string:id>/", methods=["GET", "POST"])
     def edit_view(self, id):
         model = self.get_one(id)
         if model is None:
             abort(404)
 
-        if request.method == 'GET':
+        if request.method == "GET":
             # GET
             form = FlaskForm(request.form)
 
             # GET ItemType
             itemtypes = ItemTypes.get_latest_with_item_type()
-            item_types = [{'id': itemtype.id, 'item_type_name': itemtype.name} for itemtype in itemtypes]
+            item_types = [
+                {"id": itemtype.id, "item_type_name": itemtype.name}
+                for itemtype in itemtypes
+            ]
 
             current_model_json = {
-                'id': model.id,
-                'name': model.name,
-                'mapping': model.mapping,
-                'item_type_id': model.item_type_id,
+                "id": model.id,
+                "name": model.name,
+                "mapping": model.mapping,
+                "item_type_id": model.item_type_id,
             }
 
             # GET activity Waiting approval workflow
             exist_Waiting_approval_workflow = False
-            workflows = WorkFlow.get_workflow_by_itemtype_id(WorkFlow, item_type_id=model.item_type_id)
+            workflows = WorkFlow().get_workflow_by_itemtype_id(model.item_type_id)
             workflow_ids = [workflow.id for workflow in workflows]
             for workflow_id in workflow_ids:
-                count = WorkActivity.count_waiting_approval_by_workflow_id(WorkActivity, workflow_id)
+                count = WorkActivity().count_waiting_approval_by_workflow_id(workflow_id)
                 if count > 0:
                     exist_Waiting_approval_workflow = True
+            if exist_Waiting_approval_workflow:
+                current_app.logger.info(
+                    f"There is a workflow awaiting approval that uses mapping {model.name}."
+                )
 
             return self.render(
                 self.edit_template,
                 form=form,
-                return_url = request.args.get('url'),
-                current_page_type='edit',
+                return_url = request.args.get("url"),
+                current_page_type="edit",
                 item_types=item_types,
                 current_name=model.name,
                 current_mapping=model.mapping,
@@ -1949,34 +1963,50 @@ class SwordAPIJsonldMappingView(ModelView):
                 current_model_json=current_model_json,
                 exist_Waiting_approval_workflow=exist_Waiting_approval_workflow,
                 id=id,
-                )
+            )
         else:
             # POST
             try:
                 model.id = id
-                model.name = request.json.get('name')
-                model.mapping = request.json.get('mapping')
-                model.item_type_id = json.loads(request.json.get('item_type_id'))
+                model.name = request.json.get("name")
+                model.mapping = request.json.get("mapping")
+                model.item_type_id = request.json.get("item_type_id")
 
                 db.session.commit()
                 return jsonify(results=True),200
 
             except Exception as e:
                 db.session.rollback()
-                return jsonify({"error": str(e)}), 400
+                msg = f"Failed to update jsonld mapping: {model.name}"
+                current_app.logger.error(msg)
+                traceback.print_exc()
+                return jsonify({"error": msg}), 400
 
-    @expose('/delete/<string:id>/', methods=['POST'])
+    @expose("/delete/<string:id>/", methods=["POST"])
     def delte_data(self, id):
             try:
-                JsonldMapping.delete(id)
-                return jsonify(results=True),200
+                obj = JsonldMapping.delete(id)
+                current_app.logger.info(f"jsonld mapping deleted: {obj.name}")
+                return jsonify(results=True), 200
 
             except Exception as e:
                 db.session.rollback()
-                return jsonify({"error": str(e)}), 400
+                msg = f"Failed to delete jsonld mapping: {id}"
+                current_app.logger.error(msg)
+                traceback.print_exc()
+                return jsonify({"error": msg}), 400
 
+    @expose("/validate", methods=["POST"])
+    def valedate_mapping(self):
+        data = request.get_json()
+        itemtype_id = data.get('itemtype_id')
+        mapping_id = data.get('mapping_id')
+        mapping = data.get('mapping')
 
+        if mapping is None:
+            mapping = JsonldMapping.get_mapping_by_id(mapping_id).mapping
 
+        return jsonify(JsonLdMapper(itemtype_id, mapping).validate())
 
 
 style_adminview = {
@@ -2155,7 +2185,7 @@ sword_api_settings_jsonld_adminview = dict(
 )
 
 sword_api_jsonld_mapping_adminview = dict(
-    modelview=SwordAPIJsonldMappingView,
+    modelview=JsonldMappingView,
     model=ItemTypeJsonldMapping,
     category=_('Item Types'),
     name=_('JSON-LD Mapping'),

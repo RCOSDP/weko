@@ -28,7 +28,7 @@ from invenio_communities.models import Community
 from weko_index_tree.models import IndexStyle,Index
 from weko_admin.admin import StyleSettingView,LogAnalysisSettings,ItemExportSettingsView,IdentifierSettingView,\
     identifier_adminview,facet_search_adminview,FacetSearchSettingView,SwordAPISettingsView, SwordAPIJsonldSettingsView,\
-    SwordAPIJsonldMappingView
+    JsonldMappingView
 from weko_admin.models import AdminSettings,StatisticsEmail,LogAnalysisRestrictedCrawlerList,\
                                 RankingSettings,SearchManagement, Identifier,FacetSearchSetting
 from weko_records.models import ItemTypeJsonldMapping
@@ -2253,9 +2253,9 @@ class TestSwordAPIJsonldSettingsView:
 
 
 
-#class SwordAPIJsonldMappingView(ModelView):
+#class JsonldMappingView(ModelView):
 #
-class TestSwordAPIJsonldMappingView:
+class TestJsonldMappingView:
 
     def test_create_view(self, client, users, item_type, db, mocker):
         url = url_for("jsonld-mapping.create_view")
@@ -2271,7 +2271,7 @@ class TestSwordAPIJsonldMappingView:
 
         # get
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        mock_render = mocker.patch("weko_admin.admin.SwordAPIJsonldMappingView.render", return_value=make_response())
+        mock_render = mocker.patch("weko_admin.admin.JsonldMappingView.render", return_value=make_response())
         res = client.get(url)
         assert res.status_code == 200
 
@@ -2314,7 +2314,7 @@ class TestSwordAPIJsonldMappingView:
         # model_none
         url_none = url_for("jsonld-mapping.edit_view", id=999)
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        mock_render = mocker.patch("weko_admin.admin.SwordAPIJsonldMappingView.render", return_value=make_response())
+        mock_render = mocker.patch("weko_admin.admin.JsonldMappingView.render", return_value=make_response())
         res = client.get(url_none)
         assert res.status_code == 404
 
@@ -2330,7 +2330,7 @@ class TestSwordAPIJsonldMappingView:
         db.session.add_all(settings)
         db.session.commit()
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        mock_render = mocker.patch("weko_admin.admin.SwordAPIJsonldMappingView.render", return_value=make_response())
+        mock_render = mocker.patch("weko_admin.admin.JsonldMappingView.render", return_value=make_response())
         deleted_workflow = WorkFlow(
             id = "1",
             flows_name = "test_workflow"
@@ -2400,4 +2400,4 @@ class TestSwordAPIJsonldMappingView:
 
     def test_get_query(self, client, users, db, mocker):
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        SwordAPIJsonldMappingView.get_query(SwordAPIJsonldMappingView)
+        JsonldMappingView.get_query(JsonldMappingView)
