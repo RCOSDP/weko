@@ -1434,23 +1434,23 @@ class SwordAPISettingsView(BaseView):
 
     @expose("/", methods=["GET","POST"])
     def index(self):
-        PAGE_TSVCSV = "TSV/CSV"
-        PAGE_XML = "XML"
-        page_type = PAGE_TSVCSV
+        TSVCSV = "TSV/CSV"
+        XML = "XML"
+        page_type = TSVCSV
         if request.args.get("tab") == "xml":
-            page_type = PAGE_XML
+            page_type = XML
 
         template = current_app.config["WEKO_ADMIN_SWORD_API_TEMPLATE"]
 
         if request.method == "GET":
             # GET
             default_settings = {
-                PAGE_TSVCSV: {
+                TSVCSV: {
                     "active": True,
                     "registration_type": "Direct",
                     "duplicate_check": False,
                 },
-                PAGE_XML: {
+                XML: {
                     "active": False,
                     "registration_type": "Workflow",
                     "workflow": "-1",
@@ -1462,7 +1462,7 @@ class SwordAPISettingsView(BaseView):
                 AdminSettings.update("sword_api_setting", default_settings)
                 current_settings = default_settings
                 current_app.logger.info(
-                    "Create default settings for sword_api_setting"
+                    "Create default settings for SWORD API settings."
                 )
 
             current_settings_json = json.dumps(current_settings)
@@ -1474,12 +1474,12 @@ class SwordAPISettingsView(BaseView):
                 xml_workflow = current_settings["data_format"]["XML"]["workflow"]
 
                 new_settings = {
-                    PAGE_TSVCSV: {
+                    TSVCSV: {
                         "active": True,
                         "registration_type": tsvcsv_registration_type,
                         "duplicate_check": False,
                     },
-                    PAGE_XML: {
+                    XML: {
                         "active": False,
                         "registration_type": xml_registration_type,
                         "workflow": xml_workflow,
@@ -1487,6 +1487,9 @@ class SwordAPISettingsView(BaseView):
                     }
                 }
                 AdminSettings.update("sword_api_setting", new_settings)
+                current_app.logger.info(
+                    "Update SWORD API settings to new format."
+                )
                 current_settings = new_settings
                 current_settings_json = json.dumps(current_settings)
 
@@ -1496,7 +1499,6 @@ class SwordAPISettingsView(BaseView):
             workflow_list = workflow.get_workflow_list()
             workflows = workflow.get_workflows_by_roles(workflow_list)
             deleted_workflows = workflow.get_deleted_workflow_list()
-            deleted_workflow_name_dict = {}
             deleted_workflow_name_dict = {
                 deleted_workflow.id: deleted_workflow.flows_name
                 for deleted_workflow in deleted_workflows
@@ -1509,18 +1511,18 @@ class SwordAPISettingsView(BaseView):
             active_value = ""
             workflow_value = ""
             duplicate_check_value = ""
-            if page_type == PAGE_XML:
-                if current_settings[PAGE_XML]["active"] == True:
+            if page_type == XML:
+                if current_settings[XML]["active"] == True:
                     active_value = "checked"
-                registration_type_value = current_settings[PAGE_XML]["registration_type"]
-                workflow_value = current_settings[PAGE_XML]["workflow"]
-                if current_settings[PAGE_XML]["duplicate_check"] == True:
+                registration_type_value = current_settings[XML]["registration_type"]
+                workflow_value = current_settings[XML]["workflow"]
+                if current_settings[XML]["duplicate_check"] == True:
                     duplicate_check_value = "checked"
             else:
-                if current_settings[PAGE_TSVCSV]["active"] == True:
+                if current_settings[TSVCSV]["active"] == True:
                     active_value = "checked"
-                registration_type_value = current_settings[PAGE_TSVCSV]["registration_type"]
-                if current_settings[PAGE_TSVCSV]["duplicate_check"] == True:
+                registration_type_value = current_settings[TSVCSV]["registration_type"]
+                if current_settings[TSVCSV]["duplicate_check"] == True:
                     duplicate_check_value = "checked"
 
             return self.render(template,
@@ -1544,41 +1546,14 @@ class SwordAPISettingsView(BaseView):
             workflow = request.json.get("workflow")
             duplicate_check = request.json.get("duplicate_check")
 
-            if page_type == PAGE_TSVCSV:
-                xml_active = current_settings[PAGE_XML]["active"]
-                xml_registration_type = current_settings[PAGE_XML]["registration_type"]
-                xml_workflow = current_settings[PAGE_XML]["workflow"]
-                xml_duplicate_check = current_settings[PAGE_XML]["duplicate_check"]
-                current_settings = {
-                    PAGE_TSVCSV: {
-                        "active": active,
-                        "registration_type": registration_type,
-                        "duplicate_check": duplicate_check
-                    },
-                    PAGE_XML: {
-                        "active": xml_active,
-                        "registration_type": xml_registration_type,
-                        "workflow": xml_workflow,
-                        "duplicate_check": xml_duplicate_check
-                    }
+            current_settings.update({
+                page_type: {
+                    "active": active,
+                    "registration_type": registration_type,
+                    "workflow": workflow,
+                    "duplicate_check": duplicate_check
                 }
-            else:
-                tsvcsv_active = current_settings[PAGE_TSVCSV]["active"]
-                tsvcsv_registration_type = current_settings[PAGE_TSVCSV]["registration_type"]
-                tsvcsv_duplicate_check = current_settings[PAGE_TSVCSV]["duplicate_check"]
-                current_settings = {
-                    PAGE_TSVCSV: {
-                        "active": tsvcsv_active,
-                        "registration_type": tsvcsv_registration_type,
-                        "duplicate_check": tsvcsv_duplicate_check
-                    },
-                    PAGE_XML: {
-                        "active": active,
-                        "registration_type": registration_type,
-                        "workflow": workflow,
-                        "duplicate_check": duplicate_check
-                    }
-                }
+            })
             AdminSettings.update("sword_api_setting", current_settings)
             current_app.logger.info(
                 "Update settings for Sword API: {}".format(page_type)
@@ -1598,13 +1573,14 @@ class SwordAPIJsonldSettingsView(ModelView):
     edit_template = WEKO_ADMIN_SWORD_API_JSONLD_TEMPLATE
 
     column_list = (
-        'application',
-        'active',
-        'creator',
-        'registration_type',
-        'input_support',
+        "application",
+        "active",
+        "creator",
+        "registration_type",
+        "input_support",
+        "duplicate_check"
     )
-    column_searchable_list = ('id', 'registration_type_id', 'client_id', 'workflow_id')
+    column_searchable_list = ("registration_type_id", "client_id", "workflow_id")
 
 
     def _format_application_name(view, context, model, name):
@@ -1612,59 +1588,74 @@ class SwordAPIJsonldSettingsView(ModelView):
         return result.name
     def _format_active(view, context, model, name):
         if model.active:
-            return _('Active Message')
+            return _("Active Message")
         else:
-            return _('Inactive Message')
+            return _("Inactive Message")
     def _format_creator(view, context, model, name):
         client = Client.get_user_id_by_client_id(model.client_id)
         result = User.get_email_by_id(client.user_id)
         return result.email
     def _format_registration_type(view, context, model, name):
         if model.registration_type_id == 1:
-            return 'Direct'
+            return "Direct"
         else:
-            return 'Workflow'
+            return "Workflow"
     def _format_input_support(view, context, model, name):
         if len(model.meta_data_api) > 0:
-            return 'ON'
+            return "ON"
         else:
-            return 'OFF'
+            return "OFF"
+
+    def _format_duplicate_check(view, context, model, name):
+        if model.duplicate_check:
+            return _("Active Message")
+        else:
+            return _("Inactive Message")
 
     column_formatters = {
-        'application': _format_application_name,
-        'active': _format_active,
-        'creator': _format_creator,
-        'registration_type': _format_registration_type,
-        'input_support': _format_input_support,
+        "application": _format_application_name,
+        "active": _format_active,
+        "creator": _format_creator,
+        "registration_type": _format_registration_type,
+        "input_support": _format_input_support,
+        "duplicate_check": _format_duplicate_check,
     }
 
     def get_query(self):
-        role_ids = [role.id for role in current_user.roles]
-        if current_app.config['WEKO_ADMIN_SWORD_API_JSON_LD_FULL_AUTHORITY_ROLE'] in role_ids:
+        list_role = [role.name for role in current_user.roles]
+        if current_app.config["WEKO_ADMIN_PERMISSION_ROLE_SYSTEM"] in list_role:
             return super(SwordAPIJsonldSettingsView, self).get_query()
         else:
-            return super(SwordAPIJsonldSettingsView, self).get_query().outerjoin(Client) \
-                .filter(Client.client_id == SwordClientModel.client_id) \
+            return (
+                super(SwordAPIJsonldSettingsView, self).get_query()
+                .join(Client)
+                .filter(Client.client_id == SwordClientModel.client_id)
                 .filter(Client.user_id == current_user.get_id())
+            )
 
-    @expose('/add/', methods=['GET', 'POST'])
+    @expose("/add/", methods=["GET", "POST"])
     def create_view(self):
 
-        if request.method == 'GET':
+        if request.method == "GET":
             # GET
             form = FlaskForm(request.form)
 
             # GET client
-            result = Client.get_client_id_by_user_id(current_user.get_id())
-            tmp_client_list = [{'name': client.name, 'client_id': client.client_id} for client in result]
-            result = SwordClient.get_client_id_all()
-            sword_clients_client_id_list = [{'client_id': client.client_id} for client in result]
-            client_list = [client for client in tmp_client_list if client['client_id'] not in [sword_client['client_id'] for sword_client in sword_clients_client_id_list]]
+            current_user_clients = Client.get_client_id_by_user_id(current_user.get_id())
+            list_sword_clients = [
+                client.client_id for client in SwordClient.get_client_id_all()
+            ]
+            client_list = [
+                client for client in current_user_clients
+                if client.client_id not in list_sword_clients
+            ]
 
             # GET metadata api
             metadata_api = []
-            metadata_api = WEKO_ITEMS_AUTOFILL_API_LIST.copy()
-            metadata_api.append('Original')
+            metadata_api.extend(
+                current_app.config.get("WEKO_ITEMS_AUTOFILL_API_LIST", []).copy()
+            )
+            metadata_api.append("Original")
 
             # GET workflow
             workflow = WorkFlow()
@@ -1678,80 +1669,96 @@ class SwordAPIJsonldSettingsView(ModelView):
             from weko_workflow.utils import exclude_admin_workflow
             exclude_admin_workflow(workflows)
 
-            # Get mapping
-            result = JsonldMapping.get_all()
-            sword_item_type_mappings = [{'id': mapping.id, 'name': mapping.name, 'item_type_id': mapping.item_type_id} for mapping in result]
+            # All mapping
+            jsonld_mappings = [
+                {
+                    "id": mapping.id,
+                    "name": mapping.name,
+                    "item_type_id": mapping.item_type_id
+                } for mapping in JsonldMapping.get_all()
+            ]
 
-            # Get ItemTypeNames
-            result = ItemTypeNames.get_name_and_id_all()
-            item_type_names = [{'id': item_type.id, 'name': item_type.name} for item_type in result]
+            # All ItemTypeNames
+            item_type_names = [
+                {"id": item_type.id, "name": item_type.name}
+                for item_type in ItemTypeNames.get_name_and_id_all()
+            ]
 
             return self.render(
                 self.create_template,
                 form=form,
                 client_list=client_list,
+                active_value="checked",
                 metadata_api=metadata_api,
                 deleted_workflow_name_dict=json.dumps(deleted_workflow_name_dict),
                 workflows=workflows,
-                sword_item_type_mappings=sword_item_type_mappings,
-                return_url = request.args.get('url'),
-                current_page_type='add',
+                sword_item_type_mappings=jsonld_mappings,
+                return_url = request.args.get("url"),
+                current_page_type="add",
                 current_client_name=None,
                 current_model_json=None,
                 exist_Waiting_approval_workflow=False,
                 item_type_names=item_type_names,
-                )
+            )
         else:
             # POST
             try:
-                client_id = request.json.get('application')
-                if request.json.get('registration_type') == 'Direct':
+                client_id = request.json.get("application")
+                if request.json.get("registration_type") == "Direct":
                     registration_type_id = SwordClientModel.RegistrationType.DIRECT
                     workflow_id = None
                 else:
                     registration_type_id = SwordClientModel.RegistrationType.WORKFLOW
-                    workflow_id = request.json.get('workflow_id')
-                mapping_id = request.json.get('mapping_id')
-                if request.json.get('active') == 'True':
-                    active = True
-                else:
-                    active = False
-                meta_data_api = request.json.get('Meta_data_API_selected')
+                    workflow_id = request.json.get("workflow_id")
+                mapping_id = request.json.get("mapping_id")
+                active = request.json.get("active") == "True"
+                duplicate_check = request.json.get("duplicate_check") == "True"
+                meta_data_api = request.json.get("Meta_data_API_selected")
 
-                SwordClient.register(
+                obj = SwordClient.register(
                     client_id=client_id,
                     registration_type_id=registration_type_id,
                     mapping_id=mapping_id,
                     workflow_id=workflow_id,
                     active=active,
+                    duplicate_check=duplicate_check,
                     meta_data_api=meta_data_api
                 )
-                return jsonify(results=True),200
+                current_app.logger.info(
+                    f"Create settings for Sword API: {obj.oauth_client.name}"
+                )
+                return jsonify(results=True), 200
 
             except Exception as e:
-                return jsonify({"error": str(e)}), 400
+                msg = "Failed to create application settings."
+                current_app.logger.error(msg)
+                traceback.print_exc()
+                return jsonify({"error": msg}), 400
 
-    @expose('/edit/<string:id>/', methods=['GET', 'POST'])
+    @expose("/edit/<string:id>/", methods=["GET", "POST"])
     def edit_view(self, id):
         model = self.get_one(id)
         if model is None:
             abort(404)
 
-        if request.method == 'GET':
+        if request.method == "GET":
             # GET
             form = FlaskForm(request.form)
 
             # GET client
-            result = Client.get_client_id_all()
-            tmp_client_list = [{'name': client.name, 'client_id': client.client_id} for client in result]
-            result = SwordClient.get_client_id_all()
-            sword_clients_client_id_list = [{'client_id': client.client_id} for client in result]
-            client_list = [client for client in tmp_client_list if client['client_id'] not in [sword_client['client_id'] for sword_client in sword_clients_client_id_list]]
+            all_clients =  Client.get_client_id_all()
+            list_sword_clients = [
+                client.client_id for client in SwordClient.get_client_id_all()
+            ]
+            client_list = [
+                client for client in all_clients
+                if client.client_id not in list_sword_clients
+            ]
 
             # GET metadata api
             metadata_api = []
             metadata_api = WEKO_ITEMS_AUTOFILL_API_LIST.copy()
-            metadata_api.append('Original')
+            metadata_api.append("Original")
 
             # GET workflow
             workflow = WorkFlow()
@@ -1766,31 +1773,45 @@ class SwordAPIJsonldSettingsView(ModelView):
             exclude_admin_workflow(workflows)
 
             # GET activity Waiting approval workflow
-            exist_Waiting_approval_workflow = False
+            exist_waiting_approval_activity = False
             if model.workflow_id is not None:
-                count = WorkActivity.count_waiting_approval_by_workflow_id(WorkActivity,model.workflow_id)
+                count = WorkActivity().count_waiting_approval_by_workflow_id(model.workflow_id)
                 if count > 0:
-                    exist_Waiting_approval_workflow = True
+                    exist_waiting_approval_activity = True
+            if exist_waiting_approval_activity:
+                current_app.logger.info()
 
-            # Get mapping
-            result = JsonldMapping.get_all()
-            sword_item_type_mappings = [{'id': mapping.id, 'name': mapping.name, 'item_type_id': mapping.item_type_id} for mapping in result]
+            # All mapping
+            jsonld_mappings = [
+                {
+                    "id": mapping.id,
+                    "name": mapping.name,
+                    "item_type_id": mapping.item_type_id
+                } for mapping in JsonldMapping.get_all()
+            ]
 
-            current_model = model
-            current_client_name = next((client['name'] for client in tmp_client_list if client['client_id'] == current_model.client_id), None)
+            current_client_name = next((
+                client.name for client in all_clients
+                    if client.client_id == model.client_id
+                ),
+                None
+            )
             current_model_json = {
-                'id': current_model.id,
-                'client_id': current_model.client_id,
-                'registration_type_id': current_model.registration_type_id,
-                'mapping_id': current_model.mapping_id,
-                'workflow_id': current_model.workflow_id,
-                'active': current_model.active,
-                'meta_data_api': current_model.meta_data_api
+                "id": model.id,
+                "client_id": model.client_id,
+                "registration_type_id": model.registration_type_id,
+                "mapping_id": model.mapping_id,
+                "workflow_id": model.workflow_id,
+                "active": model.active,
+                "duplicate_check": model.duplicate_check,
+                "meta_data_api": model.meta_data_api
             }
 
-            # Get ItemTypeNames
-            result = ItemTypeNames.get_name_and_id_all()
-            item_type_names = [{'id': item_type.id, 'name': item_type.name} for item_type in result]
+            # All ItemTypeNames
+            item_type_names = [
+                {"id": item_type.id, "name": item_type.name}
+                for item_type in ItemTypeNames.get_name_and_id_all()
+            ]
 
             return self.render(
                 self.edit_template,
@@ -1799,37 +1820,47 @@ class SwordAPIJsonldSettingsView(ModelView):
                 metadata_api=metadata_api,
                 deleted_workflow_name_dict=json.dumps(deleted_workflow_name_dict),
                 workflows=workflows,
-                sword_item_type_mappings=sword_item_type_mappings,
-                return_url = request.args.get('url'),
-                current_page_type='edit',
+                sword_item_type_mappings=jsonld_mappings,
+                return_url = request.args.get("url"),
+                current_page_type="edit",
                 current_client_name=current_client_name,
                 current_model_json=current_model_json,
-                exist_Waiting_approval_workflow=exist_Waiting_approval_workflow,
+                exist_Waiting_approval_workflow=exist_waiting_approval_activity,
                 item_type_names=item_type_names,
-                )
+            )
         else:
             # POST
             try:
-                model.id = id
-                if request.json.get('registration_type') == 'Direct':
-                    model.registration_type_id = model.RegistrationType.DIRECT
-                    model.workflow_id = None
+                if request.json.get("registration_type") == "Direct":
+                    registration_type_id = SwordClientModel.RegistrationType.DIRECT
+                    workflow_id = None
                 else:
-                    model.registration_type_id = model.RegistrationType.WORKFLOW
-                    model.workflow_id = request.json.get('workflow_id')
-                model.mapping_id = request.json.get('mapping_id')
-                if request.json.get('active') == 'True':
-                    model.active = True
-                else:
-                    model.active = False
-                model.meta_data_api = request.json.get('Meta_data_API_selected')
+                    registration_type_id = SwordClientModel.RegistrationType.WORKFLOW
+                    workflow_id = request.json.get("workflow_id")
+                mapping_id = request.json.get("mapping_id")
+                active = request.json.get("active") == "True"
+                duplicate_check = request.json.get("duplicate_check") == "True"
+                meta_data_api = request.json.get("Meta_data_API_selected")
 
-                db.session.commit()
-                return jsonify(results=True),200
+                SwordClient.update(
+                    client_id=model.client_id,
+                    registration_type_id=registration_type_id,
+                    mapping_id=mapping_id,
+                    workflow_id=workflow_id,
+                    active=active,
+                    duplicate_check=duplicate_check,
+                    meta_data_api=meta_data_api
+                )
+                current_app.logger.info(
+                    f"Update settings for Sword API: {model.oauth_client.name}"
+                )
+                return jsonify(results=True), 200
 
             except Exception as e:
-                db.session.rollback()
-                return jsonify({"error": str(e)}), 400
+                msg = f"Failed to update application settings: {model.oauth_client.name}"
+                current_app.logger.error(msg)
+                traceback.print_exc()
+                return jsonify({"error": msg}), 400
 
 
 class JsonldMappingView(ModelView):
@@ -1939,16 +1970,17 @@ class JsonldMappingView(ModelView):
             }
 
             # GET activity Waiting approval workflow
-            exist_Waiting_approval_workflow = False
+            exist_waiting_approval_activity = False
             workflows = WorkFlow().get_workflow_by_itemtype_id(model.item_type_id)
             workflow_ids = [workflow.id for workflow in workflows]
             for workflow_id in workflow_ids:
                 count = WorkActivity().count_waiting_approval_by_workflow_id(workflow_id)
                 if count > 0:
-                    exist_Waiting_approval_workflow = True
-            if exist_Waiting_approval_workflow:
+                    exist_waiting_approval_activity = True
+            if exist_waiting_approval_activity:
                 current_app.logger.info(
-                    f"There is a workflow awaiting approval that uses mapping {model.name}."
+                    "There are some activities awaiting approval that use mapping {}."
+                    .format(model.name)
                 )
 
             return self.render(
@@ -1961,22 +1993,20 @@ class JsonldMappingView(ModelView):
                 current_mapping=model.mapping,
                 current_item_type_id=model.item_type_id,
                 current_model_json=current_model_json,
-                exist_Waiting_approval_workflow=exist_Waiting_approval_workflow,
+                exist_Waiting_approval_workflow=exist_waiting_approval_activity,
                 id=id,
             )
         else:
             # POST
             try:
-                model.id = id
-                model.name = request.json.get("name")
-                model.mapping = request.json.get("mapping")
-                model.item_type_id = request.json.get("item_type_id")
-
-                db.session.commit()
+                name = request.json.get("name")
+                mapping = request.json.get("mapping")
+                item_type_id = request.json.get("item_type_id")
+                JsonldMapping.update(id, name, mapping, item_type_id)
+                current_app.logger.info(f"jsonld mapping updated: {name}")
                 return jsonify(results=True),200
 
             except Exception as e:
-                db.session.rollback()
                 msg = f"Failed to update jsonld mapping: {model.name}"
                 current_app.logger.error(msg)
                 traceback.print_exc()
@@ -1999,9 +2029,9 @@ class JsonldMappingView(ModelView):
     @expose("/validate", methods=["POST"])
     def valedate_mapping(self):
         data = request.get_json()
-        itemtype_id = data.get('itemtype_id')
-        mapping_id = data.get('mapping_id')
-        mapping = data.get('mapping')
+        itemtype_id = data.get("itemtype_id")
+        mapping_id = data.get("mapping_id")
+        mapping = data.get("mapping")
 
         if mapping is None:
             mapping = JsonldMapping.get_mapping_by_id(mapping_id).mapping

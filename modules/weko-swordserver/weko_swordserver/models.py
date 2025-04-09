@@ -61,6 +61,11 @@ class SwordClientModel(db.Model, Timestamp):
     )
     """Id of the clients. Foreign key from Client."""
 
+    oauth_client = db.relationship(
+        Client, backref=db.backref("sword_client", lazy="dynamic")
+    )
+    """OAuth client of the client. Foreign key from Client."""
+
     active = db.Column(
         db.Boolean(name="active"),
         unique=False,

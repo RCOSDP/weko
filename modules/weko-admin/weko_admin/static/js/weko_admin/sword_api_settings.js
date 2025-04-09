@@ -130,12 +130,11 @@ function saveDataFormat(page_type) {
   fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: "include", body: JSON.stringify(form) })
     .then(res => {
       if (!res.ok) {
-        console.log(etext);
+        throw new Error('');
       }
       showMsg(Successfully_Changed, true);
     })
     .catch(error => {
-      console.log(error);
       showMsg(Failed_Changed, false);
     });
 }

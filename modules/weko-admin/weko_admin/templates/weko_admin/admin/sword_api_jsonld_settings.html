@@ -24,13 +24,13 @@
 {{ super() }}
 {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {% assets "weko_theme_css_bootstrap" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}<!-- New -->
-<link href="{{ url_for('static', filename='css/weko_admin/quill.snow.css') }}" rel="stylesheet">
+{% assets "weko_admin_quill_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 <link href="{{ url_for('static', filename='css/weko_admin/language.css') }}" rel="stylesheet">
 {% endblock %}
 
 {%- block javascript %}
 {{ super() }}
-<script src="{{ url_for('static', filename='js/weko_admin/sword_api_jsonld_setting.js') }}"></script>
+{% assets "weko_admin_sword_api_jsonld_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block body %}
@@ -156,6 +156,16 @@
       <div class="col-sm-8" id="mapping-check" style="font-size: 12px;"></div>
     </div>
   </div>
+
+  <div class="row form-group">
+    <div class="col-sm-2 text-left">
+      <label>{{_('Duplicate Check')}}</label>
+    </div>
+    <div class="col-sm-6">
+      <input type="checkbox" id="duplicate_check" name="duplicate_check" {{duplicate_check_value}} />
+    </div>
+  </div>
+
   <div class="row">
     <div class="col-sm-2 text-left">
       <label for="mapping_list">{{_('Meta data API')}}</label>

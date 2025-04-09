@@ -174,9 +174,9 @@ class SwordClient():
         obj = SwordClientModel.query.filter_by(client_id=client_id).one_or_none()
         return obj
 
+
     @classmethod
     def get_client_id_all(cls):
         """Get client_id all. """
-        model = SwordClientModel
-        query = model.query.with_entities(model.client_id)
+        query = db.session.query(SwordClientModel.client_id).distinct()
         return query.all()

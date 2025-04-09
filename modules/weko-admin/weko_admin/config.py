@@ -1324,8 +1324,6 @@ WEKO_ADMIN_FACET_SEARCH_SETTING_QUERY_KEY_NO_PERMISSION = 'facet_search_query_no
 WEKO_ADMIN_FACET_SEARCH_SETTING_BUCKET_SIZE = 1000
 """Default Facet Search bucket size."""
 
-WEKO_ADMIN_SWORD_API_JSON_LD_FULL_AUTHORITY_ROLE = 1
-"""Allowed Role id, full access to list JSON_LD."""
 
 WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT = 'cache::temp_dir_info'
 """Default Cache Temporary Directory Information Key."""
