@@ -920,14 +920,6 @@ def _create_error_document(type, error):
     }
     return Error(raw_data).data
 
-@blueprint.route("/validate_mapping", methods=['POST'])
-def valedate_mapping():
-    data = request.get_json()
-    itemtype_id = data.get('itemtype_id')
-    mapping_id = data.get('mapping_id')
-    obj = JsonldMapping.get_mapping_by_id(mapping_id)
-
-    return jsonify(JsonLdMapper(itemtype_id, obj.mapping).validate())
 
 @blueprint.errorhandler(401)
 def handle_unauthorized(ex):

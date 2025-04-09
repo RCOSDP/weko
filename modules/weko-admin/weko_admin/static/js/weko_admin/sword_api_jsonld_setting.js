@@ -1,4 +1,3 @@
-
 $(document).ready(function () {
 
   const moveRight = $('#moveRight');
@@ -185,6 +184,51 @@ function isEmpty(value){
   }
 }
 
+function handleMappingChange() {
+  // save button enable
+  save_button_state_change();
+
+  // mapping check
+  let mapping_val = $('#mapping').val();
+  if (mapping_val !== '') {
+    mapping_val = Number(mapping_val);
+    let result = sword_item_type_mappings.find(data => data.id === mapping_val);
+    let item_type_id = result['item_type_id'];
+    result = item_type_names.find(data => data.id === item_type_id);
+    let item_type_name = result['name'];
+
+    const url = `/admin/swordapi/jsonld/validate/${mapping_val}/`;
+    fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    })
+      .then(res => {
+        if (!res.ok) {
+          throw new Error('Validation request failed');
+        }
+        return res.json();
+      })
+      .then(result => {
+        if (result.results) {
+          $('#mapping-check').empty();
+          $('#mapping-check').append('Item type : ' + item_type_name + '<span class="text-success">✓</span>');
+          $('#save_button').prop('disabled', false);
+        } else {
+          $('#mapping-check').empty();
+          $('#mapping-check').append('Item type:' + item_type_name + '<span class="text-danger">✘</span>');
+          $('#save_button').prop('disabled', true);
+        }
+      })
+      .catch(error => {
+        showMsg(Failed_Changed, false);
+        return;
+      });
+  } else {
+    $('#mapping-check').empty();
+  }
+}
+
 $('#workflow').change(function(){
   // mapping set
   const selectedOption = $(this).find('option:selected');
@@ -201,52 +245,7 @@ $('#workflow').change(function(){
   save_button_state_change();
 });
 
-$('#mapping').change(async function(){
-  // save button enable
-  save_button_state_change();
-
-  // mapping check
-  mapping_val = $(this).val();
-  if ( mapping_val !== '' ){
-    mapping_val = Number(mapping_val);
-    let result = sword_item_type_mappings.find(data => data.id === mapping_val);
-    item_type_id = result['item_type_id'];
-    result = item_type_names.find(data => data.id === item_type_id);
-    item_type_name = result['name'];
-
-
-    const form = {
-      'mapping_id': mapping_val,
-      'itemtype_id': item_type_id,
-    }
-    url ='/sword/validate_mapping';
-    await fetch(url ,{method:'POST' ,headers:{'Content-Type':'application/json'} ,credentials:'include', body: JSON.stringify(form)})
-    .then(res => {
-      if (!res.ok) {
-        return res.json().then(errorData => {
-            throw new Error(errorData.error);
-        });
-      }
-      return res.json();
-    })
-    .then(result => {
-      if (result === null) {
-        $('#mapping-check').empty();
-        $('#mapping-check').append('Item type : ' + item_type_name + '<span class="text-success">✓</span>');
-        $('#save_button').prop('disabled', false);
-      } else{
-        $('#mapping-check').append('Item type:' + item_type_name + '<span class="text-danger">✘</span>');
-      }
-    })
-    .catch(error => {
-      alert('validation check error');
-      return;
-    });
-
-  } else {
-    $('#mapping-check').empty();
-  }
-});
+$('#mapping').change(handleMappingChange);
 
 function save_button_state_change() {
   if ( $('#mapping').val() !== '' ) {
@@ -425,6 +424,7 @@ window.onload = function () {
       $('#rightSelect').prop('disabled', true);
     }
   }
+  handleMappingChange();
 };
 
 

@@ -1364,13 +1364,13 @@ class JsonLdMapper(JsonMapper):
         required_map = self.required_properties()
 
         errors += [
-            _("{key} is required").format(key=k.replace(".", " > "))
+            _('"{key}" is required.').format(key=k)
             for k in required_map
             if k not in self.json_mapping
         ]
 
         errors += [
-            _("{key} is not in itemtype").format(key=k.replace(".", " > "))
+            _('"{key}" is not in itemtype.').format(key=k)
             for k in self.json_mapping.keys()
             if k not in item_map
         ]
@@ -1773,7 +1773,11 @@ class JsonLdMapper(JsonMapper):
             ]
             system_info["save_as_is"] = extracted.get("wk:saveAsIs", False)
             system_info["metadata_replace"] = extracted.get("wk:metadataReplace", False)
-            # TODO: system_info["amend_doi"] = 
+
+            for relation in extracted.get("jpcoar:relation", []):
+                if relation.get("relationType") == "isVersionOf":
+                    system_info["amend_doi"] = relation.get("cite-as")
+                    break
             list_deconstructed.append((metadata, system_info))
 
         return list_deconstructed, format

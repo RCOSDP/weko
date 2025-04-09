@@ -1715,6 +1715,19 @@ class SwordAPIJsonldSettingsView(ModelView):
                 duplicate_check = request.json.get("duplicate_check") == "True"
                 meta_data_api = request.json.get("Meta_data_API_selected")
 
+                obj = JsonldMapping.get_mapping_by_id(mapping_id)
+                itemtype_id = obj.item_type_id
+                try:
+                    if not JsonLdMapper(itemtype_id, obj.mapping).is_valid:
+                        msg = f"Invalid jsonld mapping."
+                        current_app.logger.error(msg)
+                        return jsonify({"error": msg}), 400
+                except Exception as ex:
+                    msg = f"Failed to validate jsonld mapping."
+                    current_app.logger.error(msg)
+                    traceback.print_exc()
+                    return jsonify({"error": msg}), 400
+
                 obj = SwordClient.register(
                     client_id=client_id,
                     registration_type_id=registration_type_id,
@@ -1842,6 +1855,19 @@ class SwordAPIJsonldSettingsView(ModelView):
                 duplicate_check = request.json.get("duplicate_check") == "True"
                 meta_data_api = request.json.get("Meta_data_API_selected")
 
+                obj = JsonldMapping.get_mapping_by_id(mapping_id)
+                itemtype_id = obj.item_type_id
+                try:
+                    if not JsonLdMapper(itemtype_id, obj.mapping).is_valid:
+                        msg = f"Invalid jsonld mapping."
+                        current_app.logger.error(msg)
+                        return jsonify({"error": msg}), 400
+                except Exception as ex:
+                    msg = f"Failed to validate jsonld mapping."
+                    current_app.logger.error(msg)
+                    traceback.print_exc()
+                    return jsonify({"error": msg}), 400
+
                 SwordClient.update(
                     client_id=model.client_id,
                     registration_type_id=registration_type_id,
@@ -1861,6 +1887,18 @@ class SwordAPIJsonldSettingsView(ModelView):
                 current_app.logger.error(msg)
                 traceback.print_exc()
                 return jsonify({"error": msg}), 400
+
+    @expose("/validate/<string:id>/", methods=["GET"])
+    def valedate_mapping(self, id):
+        obj = JsonldMapping.get_mapping_by_id(id)
+        itemtype_id = obj.item_type_id
+        try:
+            return jsonify(results=JsonLdMapper(itemtype_id, obj.mapping).is_valid), 200
+        except Exception as ex:
+            msg = f"Failed to validate jsonld mapping."
+            current_app.logger.error(msg)
+            traceback.print_exc()
+            return jsonify({"error": msg}), 400
 
 
 class JsonldMappingView(ModelView):
