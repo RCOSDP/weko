@@ -25,15 +25,11 @@ WEKO_ITEMS_AUTOFILL_API_LIST = [
 """API list"""
 
 WEKO_ITEMS_AUTOFILL_TO_BE_USED = [
-    "Original",
-    # "医中誌 Web API", TODO: add after weko-workspace implemented
     "JaLC API",
-    "CrossRef",
-    "DataCite",
     "医中誌 Web API",
-    "JaLC API",
     "CrossRef",
     "DataCite",
+    "CiNii Research",
     "Original",
 ]
 """API list to be used"""

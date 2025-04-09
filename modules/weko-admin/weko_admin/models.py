@@ -21,6 +21,7 @@
 """Database models for weko-admin."""
 
 from datetime import datetime
+import traceback
 
 from flask import current_app, escape, request
 from invenio_db import db
@@ -1270,7 +1271,7 @@ class AdminSettings(db.Model):
                 else:
                     return admin_setting_object.settings
         except Exception as ex:
-            current_app.logger.debug('dict to object')
+            traceback.print_exc()
             current_app.logger.error(ex)
         return None
 
