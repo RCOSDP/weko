@@ -20,8 +20,10 @@
 
 """WEKO3 module docstring."""
 
+import traceback
 import requests
 import urllib.parse
+from flask import current_app
 from . import config
 
 
@@ -100,7 +102,10 @@ class JamasURL:
             result = self._do_http_request()
             if result.status_code == 200:
                 response['response'] = result.text
+                current_app.logger.debug(f"jamas result: {response['response']}")
         except Exception as e:
+            current_app.logger.error(e)
+            current_app.logger.error(traceback.format_exc())
             response['error'] = str(e)
         return response
 
@@ -176,7 +181,10 @@ class CiNiiURL:
             result = self._do_http_request()
             if result.status_code == 200:
                 response['response'] = result.json()
+            current_app.logger.debug(f"cinii result: {response['response']}")
         except Exception as e:
+            current_app.logger.error(e)
+            current_app.logger.error(traceback.format_exc())
             response['error'] = str(e)
         return response
 
@@ -248,7 +256,10 @@ class JALCURL:
             result = self._do_http_request()
             if result.status_code == 200:
                 response['response'] = result.json()
+                current_app.logger.debug(f"jalc result: {response['response']}")
         except Exception as e:
+            current_app.logger.error(e)
+            current_app.logger.error(traceback.format_exc())
             response['error'] = str(e)
         return response
 
@@ -320,6 +331,9 @@ class DATACITEURL:
             result = self._do_http_request()
             if result.status_code == 200:
                 response['response'] = result.json()
+                current_app.logger.debug(f"Datacite result: {response['response']}")
         except Exception as e:
+            current_app.logger.error(e)
+            current_app.logger.error(traceback.format_exc())
             response['error'] = str(e)
         return response
