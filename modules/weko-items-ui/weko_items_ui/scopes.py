@@ -37,6 +37,13 @@ item_read_scope = Scope(
 )
 """Scope to protect item."""
 
+item_create_scope = Scope(
+    id_='item:create',
+    group='item',
+    help_text=_('Allow create item.'),
+)
+"""Scope to create item."""
+
 item_update_scope = Scope(
     id_='item:update',
     group='item',

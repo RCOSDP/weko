@@ -118,6 +118,7 @@ setup(
         ],
         'invenio_oauth2server.scopes': [
             'item_read_scope = weko_items_ui.scopes:item_read_scope',
+            'item_create_scope = weko_items_ui.scopes:item_create_scope',
             'item_update_scope = weko_items_ui.scopes:item_update_scope',
             'item_delete_scope = weko_items_ui.scopes:item_delete_scope',
             'ranking_read_scope = weko_items_ui.scopes:ranking_read_scope'
