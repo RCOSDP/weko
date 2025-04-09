@@ -638,12 +638,12 @@ def get_jamas_title_data(data):
         for title in data:
             new_data = dict()
             new_data['@value'] = title
-            new_data['@language'] = data['dc:language'] if data['dc:language'] else default_language
+            new_data['@language'] = data.get('dc:language') if data.get('dc:language', None) else default_language
             result.append(new_data)
     else:
         new_data = dict()
         new_data['@value'] = data
-        new_data['@language'] = data['dc:language'] if data['dc:language'] else default_language
+        new_data['@language'] = data.get('dc:language') if data.get('dc:language', None) else default_language
         result.append(new_data)
     return result
 
@@ -1450,7 +1450,6 @@ def get_jalc_data_by_key(api, keyword):
     elif keyword == 'creator' and data['data']['creator_list']:
         result[keyword] = get_jalc_creator_data(data['data']['creator_list'])
     elif keyword == 'sourceTitle' and data['data']['journal_title_name_list']:
-
         result[keyword] = get_jalc_subject_data(data['data']['journal_title_name_list'])
     elif keyword == 'volume' and data['data'].get('volume'):
         result[keyword] = pack_single_value_as_dict(data['data'].get('volume'))
@@ -1498,8 +1497,8 @@ def get_jalc_publisher_data(data):
     default_language = 'en'
     for item in data:
         new_data = dict()
-        new_data['@value'] = item['publisher_name']
-        new_data['@language'] = item['lang'] if item['lang'] else default_language
+        new_data['@value'] = item.get('publisher_name')
+        new_data['@language'] = item.get('lang') if item.get('lang', None) else default_language
         result.append(new_data)
 
 
@@ -1518,8 +1517,8 @@ def get_jalc_title_data(data):
     result = list()
     default_language = 'en'
     new_data = dict()
-    new_data['@value'] = data['title']
-    new_data['@language'] = data['lang'] if data['lang'] else default_language
+    new_data['@value'] = data.get('title')
+    new_data['@language'] = data.get('lang') if data.get('lang', None) else default_language
     result.append(new_data)
     return result
 
@@ -1544,9 +1543,9 @@ def get_jalc_creator_data(data):
             result_creator = []
             for name_entry in item['names']:
                 new_data = dict()
-                full_name = name_entry['last_name'] + ' ' + name_entry['first_name']
+                full_name = name_entry.get('last_name',"") + ' ' + name_entry.get('first_name',"")
                 new_data['@value'] = full_name
-                new_data['@language'] = name_entry['lang'] if name_entry['lang'] else default_language
+                new_data['@language'] = name_entry.get('lang') if name_entry.get('lang', None) else default_language
                 result_creator.append(new_data)
             result.append(result_creator)
     return result
@@ -1615,9 +1614,9 @@ def get_jalc_subject_data(data):
     default_language = 'ja'
     for sub in data:
         new_data = dict()
-        new_data["@type"] = sub['type']
-        new_data["@value"] = sub['journal_title_name']
-        new_data['@language'] = sub['lang'] if sub['lang'] else default_language
+        new_data["@type"] = sub.get('type')
+        new_data["@value"] = sub.get('journal_title_name')
+        new_data['@language'] = sub.get('lang') if sub.get('lang', None) else default_language
         result.append(new_data)
     return result
 
@@ -1637,7 +1636,7 @@ def get_jalc_page_data(data):
         result = int(data)
         return pack_single_value_as_dict(str(result))
     except Exception as e:
-        current_app.logger.debug(e)
+        current_app.logger.error(e)
         return pack_single_value_as_dict(None)
 
 
@@ -1657,7 +1656,7 @@ def get_jalc_numpage(startingPage, endingPage):
             num_pages = end - start + 1
             return pack_single_value_as_dict(str(num_pages))
         except Exception as e:
-            current_app.logger.debug(e)
+            current_app.logger.error(e)
             return pack_single_value_as_dict(None)
     return {"@value": None}
 
@@ -1703,8 +1702,8 @@ def pack_data_with_multiple_type_jalc(data):
 
     for sub in data:
         new_data = dict()
-        new_data["@type"] = sub['type']
-        new_data["@value"] = sub['journal_id']
+        new_data["@type"] = sub.get('type')
+        new_data["@value"] = sub.get('journal_id')
         result.append(new_data)
     return result
 
@@ -1823,8 +1822,7 @@ def get_datacite_title_data(data):
     default_language = 'ja'
     for title in data:
         new_data = dict()
-        new_data["@value"] = title['title']
-        
+        new_data["@value"] = title.get('title')
         new_data['@language'] = title.get('lang', default_language)
         
         result.append(new_data)
@@ -1849,7 +1847,7 @@ def get_datacite_creator_data(data):
         if 'name' in item:
             result_creator = list()
             new_data = dict()
-            new_data['@value'] = item['name']
+            new_data['@value'] = item.get('name')
             new_data['@language'] = default_language
             
             result_creator.append(new_data)
@@ -1875,7 +1873,7 @@ def get_datacite_contributor_data(data):
         if 'name' in item:
             result_creator = list()
             new_data = dict()
-            new_data['@value'] = item['name']
+            new_data['@value'] = item.get('name')
             new_data['@language'] = default_language
             
             result_creator.append(new_data)
@@ -1903,7 +1901,7 @@ def get_datacite_description_data(data):
         if 'description' in item:
             result_creator = list()
             new_data = dict()
-            new_data['@value'] = item['description']
+            new_data['@value'] = item.get('description')
             new_data['@language'] = default_language
             
             result_creator.append(new_data)
@@ -1931,8 +1929,8 @@ def get_datacite_subject_data(data):
         if 'subject' in sub: 
             result_creator = list()
             new_data = dict()
-            new_data['@value'] = sub['subject'] 
-            new_data['@subjectScheme'] = sub['subjectScheme']
+            new_data['@value'] = sub.get('subject') 
+            new_data['@subjectScheme'] = sub.get('subjectScheme')
             
             result_creator.append(new_data)
             result.append(result_creator)
