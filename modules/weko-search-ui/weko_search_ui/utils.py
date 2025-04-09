@@ -919,24 +919,25 @@ def check_jsonld_import_items(
             {
                 "$schema": f"/items/jsonschema/{item_type.id}",
                 # if new item, must not exist "id" and "uri"
-                **({"id": item_metadata.pop("id")} if "id" in item_metadata else {}),
-                **({"uri": item_metadata.pop("uri")} if "uri" in item_metadata else {}),
-                "_id": item_metadata.id,
+                **({"id": system_info.get("id")} if "id" in system_info else {}),
+                **({"uri": system_info.get("uri")} if "uri" in system_info else {}),
+                "_id": system_info.get("_id"),
                 "metadata": item_metadata,
                 "item_type_name": item_type.item_type_name.name,
                 "item_type_id": item_type.id,
                 "publish_status": item_metadata.get("publish_status"),
                 **({"edit_mode": item_metadata.get("edit_mode")}
                     if "edit_mode" in item_metadata else {}),
-                "link_data": item_metadata.link_data,
-                "file_path": item_metadata.list_file,
-                "non_extract": item_metadata.non_extract,
-                "save_as_is": item_metadata.save_as_is,
-                "metadata_replace": item_metadata.metadata_replace,
-                "cnri": item_metadata.cnri,
-                "doi_ra": item_metadata.doi_ra,
-                "doi": item_metadata.doi,
-            } for item_metadata in item_metadatas
+                "link_data": system_info.get("link_data", []),
+                "file_path": system_info.get("list_file", []),
+                "non_extract": system_info.get("non_extract", []),
+                "save_as_is": system_info.get("save_as_is", False),
+                "metadata_replace": system_info.get("metadata_replace", False),
+                "cnri": system_info.get("cnri"),
+                "doi_ra": system_info.get("doi_ra"),
+                "doi": system_info.get("doi"),
+                "amend_doi": system_info.get("amend_doi"),
+            } for item_metadata, system_info in item_metadatas
         ]
         data_path = os.path.join(data_path, "data")
         list_record.sort(key=lambda x: get_priority(x["link_data"]))
@@ -1927,20 +1928,6 @@ def handle_workflow(item: dict):
             return
         else:
             create_work_flow(item.get("item_type_id"))
-
-def handle_doi(item: dict, doi: str):
-    """Handle doi.
-
-    :argument
-        item           -- {dict} item.
-        doi            -- {str} doi.
-    :return
-        return metadata with doi
-    """
-    metadata = item.get("metadata")
-    item_type_id = item.get("item_type_id")
-    doi_response = get_doi_with_original(doi, item_type_id, metadata)
-    return doi_response
 
 
 def create_work_flow(item_type_id):
@@ -5097,6 +5084,21 @@ def create_tsv_row(dict, data_response):
     return result_row
 
 
+def handle_metadata_by_doi(item, doi):
+    """Handle doi.
+
+    Args:
+        item (dict): Item metadata.
+        doi (str): DOI.
+    :return
+        doi_response (dict): Metadata complemented by DOI.
+    """
+    metadata = item.get("metadata")
+    item_type_id = item.get("item_type_id")
+    doi_response = get_doi_with_original(doi, item_type_id, metadata)
+    return doi_response
+
+
 def handle_metadata_amend_by_doi(list_record):
     """Amend metadata by using DOI.
 
@@ -5109,10 +5111,10 @@ def handle_metadata_amend_by_doi(list_record):
     """
     for item in list_record:
         metadata = item["metadata"]
-        doi = getattr(metadata, "doi_amend")
+        doi = item.get("amend_doi")
         if doi is None:
             continue
-        item["metadata"] = handle_doi(item, doi)
+        item["metadata"] = handle_metadata_by_doi(item, doi)
 
 
 def handle_flatten_data_encode_filename(list_record, data_path):
@@ -5140,7 +5142,7 @@ def handle_flatten_data_encode_filename(list_record, data_path):
                 file["filename"] = encoded_filename
 
                 # copy file in directory to root under data_path
-                if not os.path.exists(encoded_filename):
+                if not os.path.exists(os.path.join(data_path, encoded_filename)):
                     shutil.copy(
                         os.path.join(data_path, filename),
                         os.path.join(data_path, encoded_filename)
