@@ -22,6 +22,7 @@
 
 import copy
 from datetime import datetime,timezone
+import traceback
 
 from flask import (
     Blueprint,
@@ -101,7 +102,7 @@ blueprint_itemapi = Blueprint(
 @login_required
 @register_menu(
     workspace_blueprint, 'settings.workspace',
-    _('%(icon)s Workspace', icon='<i class="fa fa-list-alt"></i>'),
+    _('%(icon)s Workspace', icon='<i class="fa fa-list-alt fa-fw"></i>'),
     order=101) # after 'settings.admin'
 def get_workspace_itemlist():
     """
@@ -744,6 +745,8 @@ def get_auto_fill_record_data_jamasapi():
             search_data, item_type_id)
         result['result'] = api_response
     except Exception as e:
+        current_app.logger.error(e)
+        current_app.logger.error(traceback.format_exc())
         result['error'] = str(e)
     return jsonify(result)
 
@@ -774,6 +777,8 @@ def get_auto_fill_record_data_ciniiapi():
             search_data, item_type_id)
         result['result'] = api_response
     except Exception as e:
+        current_app.logger.error(e)
+        current_app.logger.error(traceback.format_exc())
         result['error'] = str(e)
     return jsonify(result)
 
@@ -803,6 +808,8 @@ def get_auto_fill_record_data_jalcapi():
             search_data, item_type_id)
         result['result'] = api_response
     except Exception as e:
+        current_app.logger.error(e)
+        current_app.logger.error(traceback.format_exc())
         result['error'] = str(e)
     return jsonify(result)
 
@@ -833,6 +840,8 @@ def get_auto_fill_record_data_dataciteapi():
 
         result['result'] = api_response
     except Exception as e:
+        current_app.logger.error(e)
+        current_app.logger.error(traceback.format_exc())
         result['error'] = str(e)
     return jsonify(result)
 
@@ -900,7 +909,8 @@ def item_register_save():
 
             result['result'] = api_response
         except Exception as e:
-            current_app.logger.info('item_register_save', str(e))
+            current_app.logger.error(e)
+            current_app.logger.error(traceback.format_exc())
             result['error'] = str(e)
         return jsonify(result)
     else:
@@ -957,7 +967,8 @@ def item_register_save():
                 result['error'] = "Error in import_items_to_system"
             result['result'] = register_result.get("recid")
         except Exception as e:
-            current_app.logger.info('item_register_save', str(e))
+            current_app.logger.error(e)
+            current_app.logger.error(traceback.format_exc())
             result['error'] = str(e)
         return result
 

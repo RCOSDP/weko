@@ -19,7 +19,9 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
+import traceback
 import requests
+from flask import current_app
 
 from . import config
 
@@ -106,7 +108,10 @@ class CrossRefOpenURL:
             result = self._do_http_request()
             if result.status_code == 200:
                 response['response'] = result.text
+                current_app.logger.debug(f"CrossRef result: {response['response']}")
         except Exception as e:
+            current_app.logger.error(e)
+            current_app.logger.error(traceback.format_exc())
             response['error'] = str(e)
         return response
 
