@@ -1820,6 +1820,13 @@ class JsonLdMapper(JsonMapper):
             dict: metadata with RO-Crate format.
         """
 
+        entity_factory = lambda typename: type(typename, (ContextEntity,), {
+            "_empty": lambda self: {
+                "@id": self.id,
+                "@type": typename
+            }
+        })
+
         def add_list_entity(parent, key, list_at_id, at_type, list_data=None):
             """
             Args:
@@ -1915,15 +1922,6 @@ class JsonLdMapper(JsonMapper):
 
         # wk:metadaAutoFill
         rocrate.root_dataset["wk:metadataAutoFill"] = False
-
-
-
-        entity_factory = lambda typename: type(typename, (ContextEntity,), {
-            "_empty": lambda self: {
-                "@id": self.id,
-                "@type": typename
-            }
-        })
 
         def add_entity(parent, key, at_id, at_type, data=None, **kwargs):
             """
@@ -2178,11 +2176,13 @@ class JsonLdMapper(JsonMapper):
             extra_key = item_map["Extra"]
             # case: "Extra" is list
             # If not list, pass this process.
+            extra_key_head = item_map["Extra"]
+            extra_key = extra_key + ".attribute_value"
             if not deconstructed.get(extra_key):
                 extra_schema = self.itemtype.schema["properties"].get(
-                    extra_key).get("items").get("properties")
+                    extra_key_head).get("items").get("properties")
                 interim = list(extra_schema.keys())[0]
-                extra_key = extra_key + "[0]." + interim
+                extra_key = extra_key_head + ".attribute_value_mlt[0]." + interim
             str_extra_dict = deconstructed.get(extra_key)
             extra_entity = {
                 "description": "Metadata which is not able to be mapped",
