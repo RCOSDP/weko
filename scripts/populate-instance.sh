@@ -373,6 +373,7 @@ ${INVENIO_WEB_INSTANCE} roles add \
 
 # sphinxdoc-set-web-api-account-combobox-begin
 ${INVENIO_WEB_INSTANCE} cert insert crf CrossRef
+${INVENIO_WEB_INSTANCE} cert insert oaa "OAアシスト"
 # sphinxdoc-set-web-api-account-combobox-end
 
 #### sphinxdoc-create-widget_type-data-begin
