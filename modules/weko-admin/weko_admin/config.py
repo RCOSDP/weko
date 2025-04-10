@@ -1120,6 +1120,7 @@ WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
     'report',
     'itemexportsettings',
     'items/import',
+    'items/rocrate_import',
     'logs/export'
     'items/bulk/update',
     'items/bulk/delete',
