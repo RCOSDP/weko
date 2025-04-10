@@ -202,6 +202,7 @@
                   <input type="hidden" value="{{_('Copy Success. Take note of URL. This URL cannot be confirmed again once the screen is closed. If you have created a new bucket, please check that the bucket is set to public.')}}" id="copy_success_message"/>
                   <input type="hidden" value="{{_('Please select the same named file as the original file.')}}" id="select_same_named_message"/>
                   <input type="hidden" value="{{_('File replacement successful.')}}" id="file_replacement_successful"/>
+                  <input type="hidden" value="{{_('Replacing file failed.')}}" id="replacing_file_failed"/>
                   <input type="hidden" value="{{ record_url }}" id="txt_record_url"/>
                   <input type="hidden" value="{{ pid.pid_value }}" id="pid"/>
                   <input type="hidden" value="{{filename}}" id="txt_filename"/>
@@ -289,6 +290,9 @@
       </div>
     </div>
   </div>
+  <div id="loading" >
+    <h2>uploading...</h2>
+  </div>
 </div>
 
 <!-- Bucket Copy Modal -->
@@ -356,5 +360,17 @@
   }
   .options-list li:hover {
       background-color: #f0f0f0;
+  }
+  #loading {
+      display: none; /* 初期状態では非表示 */
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.8);
+      z-index: 1999;
+      text-align: center;
+      padding-top: 20%;
   }
 </style>

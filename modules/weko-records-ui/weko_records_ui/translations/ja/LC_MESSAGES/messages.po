@@ -673,6 +673,9 @@ msgstr "画像の有効期限が切れています。再度計算結果を入力
 msgid "There is an error in the input item"
 msgstr "入力項目に誤りがあります"
 
+msgid "Replacing file failed."
+msgstr "ファイルの置き換えに失敗しました。"
+
 msgid "S3 setting none. Please check your profile."
 msgstr "S3に関する設定がありません。あなたのプロフィールを確認してください。"
 
