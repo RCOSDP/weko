@@ -42,3 +42,9 @@ suggest_js = NpmBundle(
     'js/weko_accounts/suggest.js',
     output="gen/weko_accounts_suggest.js",
 )
+
+shibuser_css = Bundle(
+    'css/weko_accounts/styles.bundle.css',
+    filters='cleancss',
+    output='gen/weko_accounts_styles.%(version)s.css',
+)

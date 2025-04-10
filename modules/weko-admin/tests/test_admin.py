@@ -186,7 +186,7 @@ class TestStyleSettingView:
 class TestReportView:
 #    def index(self):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestReportView::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-    def test_index(self,client,indexes,users,admin_settings,statistic_email_addrs,mocker):
+    def test_index(self,db,client,indexes,users,admin_settings,statistic_email_addrs,mocker):
         login_user_via_session(client,email=users[0]["email"])
         url = url_for("report.index")
         agg={
@@ -223,12 +223,70 @@ class TestReportView:
         assert kwargs["result"] == test
         assert [email.email_address for email in kwargs["emails"]] == ["test.taro@test.org"]
         assert kwargs["current_schedule"] == {'frequency': 'daily', 'details': '', 'enabled': False}
+        assert kwargs["repositories"] == [{"id": "Root Index"}]
+
+        client.get(url, query_string={"repo_id": "comm1"})
+        args,kwargs = mock_render.call_args
+        assert args[0] == "weko_admin/admin/report.html"
+        assert kwargs["result"] == test
+
+        result = client.get(url, query_string={"repo_id": "invalid_id"})
+        assert result.status_code == 403
+
+        setting = AdminSettings(id=10,name='report_email_schedule_settings',settings={"Root Index": {"details": "", "enabled": False, "frequency": "daily"}})
+        db.session.add(setting)
+        db.session.commit()
+        client.get(url, query_string={"repo_id": "comm1"})
+        args,kwargs = mock_render.call_args
+        assert args[0] == "weko_admin/admin/report.html"
+        assert kwargs["current_schedule"] == {"details": "", "enabled": False, "frequency": "daily"}
+
 
         with patch("weko_index_tree.api.Indexes.get_public_indexes_list",return_value=[]):
             with patch("invenio_stats.utils.get_aggregations",return_value={}):
                 with patch("weko_admin.admin.ReportView.render",side_effect=Exception("test_error")):
                     result = client.get(url)
                     assert result.status_code == 400
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestReportView::test_index_comadmin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_index_comadmin(self,client,indexes,users,admin_settings,statistic_email_addrs,community, mocker):
+        login_user_via_session(client,email=users[2]["email"])
+        url = url_for("report.index")
+        agg={
+            "took": 274,
+            "timed_out": False,
+            "_shards": {
+                "total": 1,
+                "successful": 1,
+                "skipped": 0,
+                "failed": 0
+            },
+            "hits": {
+                "total": 2,
+                "max_score": 0.0,
+                "hits": [
+                ]
+            },
+            "aggregations": {
+                "aggs_public": {
+                    "doc_count": 1
+                }
+            }
+        }
+        mocker.patch("invenio_stats.utils.get_aggregations",return_value=agg)
+        mock_render = mocker.patch("weko_admin.admin.ReportView.render",return_value=make_response())
+        test = {
+            "total":2,
+            "open":1,
+            "private":1
+        }
+        client.get(url, data={'repo_id': "Root Index"})
+        args,kwargs = mock_render.call_args
+        assert args[0] == "weko_admin/admin/report.html"
+        assert kwargs["result"] == test
+        assert [email.email_address for email in kwargs["emails"]] == []
+        assert kwargs["current_schedule"] == {'frequency': 'daily', 'details': '', 'enabled': False}
+        assert kwargs["repositories"][0]["id"] == "comm1"
 
 #    def get_file_stats_output(self):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestReportView::test_get_file_stats_output -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -395,27 +453,27 @@ class TestReportView:
 
         # frequency is daily
         data = {
-            "frequency":"daily","monthly_details":"1","weekly_details":"0","dis_enable_schedule":"False"
+            "frequency":"daily","monthly_details":"1","weekly_details":"0","dis_enable_schedule":"False","repository_select":"Root Index"
         }
-        test = {"frequency":"daily","details":"","enabled":False}
+        test = {"Root Index": {"frequency":"daily","details":"","enabled":False}}
         result = client.post(url,data=data)
         assert result.status_code == 200
         assert AdminSettings.query.filter_by(name="report_email_schedule_settings").one_or_none().settings == test
 
         # frequency is weekly
         data = {
-            "frequency":"weekly","monthly_details":"1","weekly_details":"0","dis_enable_schedule":"True"
+            "frequency":"weekly","monthly_details":"1","weekly_details":"0","dis_enable_schedule":"True","repository_select":"Root Index"
         }
-        test = {"frequency":"weekly","details":"0","enabled":True}
+        test = {"Root Index": {"frequency":"weekly","details":"0","enabled":True}}
         result = client.post(url,data=data)
         assert result.status_code == 200
         assert AdminSettings.query.filter_by(name="report_email_schedule_settings").one_or_none().settings == test
 
         # frequency is monthly
         data = {
-            "frequency":"monthly","monthly_details":"1","weekly_details":"0","dis_enable_schedule":"True"
+            "frequency":"monthly","monthly_details":"1","weekly_details":"0","dis_enable_schedule":"True","repository_select":"Root Index"
         }
-        test = {"frequency":"monthly","details":"1","enabled":True}
+        test = {"Root Index": {"frequency":"monthly","details":"1","enabled":True}}
         result = client.post(url,data=data)
         assert result.status_code == 200
         assert AdminSettings.query.filter_by(name="report_email_schedule_settings").one_or_none().settings == test
@@ -432,7 +490,7 @@ class TestReportView:
     def test_get_email_address(self,client,users,statistic_email_addrs,mocker):
         login_user_via_session(client,email=users[0]["email"])
         url = url_for("report.get_email_address")
-        data = {"inputEmail":["test.smith@test.org","","not_correct_email_address"]}
+        data = {"inputEmail":["test.smith@test.org","","not_correct_email_address"], "repository_select": "Root Index"}
 
         mocker.patch("weko_admin.admin.redirect",return_value=make_response())
         mock_flash = mocker.patch("weko_admin.admin.flash")
@@ -920,7 +978,11 @@ def test_SiteLicenseSettingsView_index(client,users,item_type,site_license,mocke
 #class SiteLicenseSendMailSettingsView(BaseView):
 #    def index(self):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::test_SiteLicenseSendMailSettingsView_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-def test_SiteLicenseSendMailSettingsView_index(client,users,admin_settings,site_license,mocker):
+def test_SiteLicenseSendMailSettingsView_index(client, db, users,site_license,mocker):
+    setting = AdminSettings(id=3,name='site_license_mail_settings',settings={"Root Index": {"auto_send_flag": False}})
+    db.session.add(setting)
+    db.session.commit()
+
     login_user_via_session(client,email=users[0]["email"])
     url = url_for("sitelicensesendmail.index")
 
@@ -933,22 +995,32 @@ def test_SiteLicenseSendMailSettingsView_index(client,users,admin_settings,site_
     assert kwargs["auto_send"] == False
     assert kwargs["sitelicenses"][0].organization_name == "test data"
 
+    login_user_via_session(client,email=users[2]["email"])
+    mocker.patch("weko_admin.admin.Community.get_repositories_by_user",return_value=[MagicMock(id="Root Index")])
+    res = client.get(url)
+    assert res.status_code == 200
+
     # post
+    login_user_via_session(client,email=users[0]["email"])
     data = {
         "auto_send_flag": True,
         "checked_list": {
             "test data": "F",
             "other data": "T"
-        }
+        },
+        "repository_id": "Root Index"
     }
     mock_render = mocker.patch("weko_admin.admin.SiteLicenseSendMailSettingsView.render",return_value = make_response())
-    res = client.post(url,json=data)
+    res = client.post(url, json=data)
     assert res.status_code == 200
     args, kwargs = mock_render.call_args
     assert args[0] == "weko_admin/admin/site_license_send_mail_settings.html"
     assert kwargs["auto_send"] == True
     assert kwargs["sitelicenses"][0].receive_mail_flag == "F"
 
+    login_user_via_session(client,email=users[2]["email"])
+    res = client.post(url, json=data)
+    assert res.status_code == 200
 
 #class FilePreviewSettingsView(BaseView):
 #    def index(self):

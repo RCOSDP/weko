@@ -24,6 +24,10 @@ import json
 from flask import current_app, jsonify, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
+from flask_login import current_user
+from invenio_communities.models import Community
+from weko_index_tree.api import Indexes
+
 
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -64,7 +68,7 @@ class AdminResyncClient(BaseView):
     @expose('/get_list', methods=['GET'])
     def get_list(self):
         """Get list."""
-        result = ResyncHandler.get_list_resync()
+        result = ResyncHandler.get_list_resync(user=current_user)
         result = list(map(lambda item: item.to_dict(), result))
         return jsonify(data=result)
 
@@ -193,6 +197,36 @@ class AdminResyncClient(BaseView):
                 success=False,
                 errmsg=["Resync is not automatic"]
             )
+
+    @expose("/get_repository", methods=['GET'])
+    def get_repository(self):
+        """Get the list of repositories based on user role."""
+        def generate_repository_list(index, path=""):
+            real_path = f"{path} / {index.get('name')} <ID:{index.get('id')}>" \
+                if path else f"{index.get('name')} <ID:{index.get('id')}>"
+            if not index.get("children"):
+                return [{"id": index.get('id'), "value": real_path}]
+            else:
+                result = []
+                for child in index.get("children"):
+                    result.extend(generate_repository_list(child, real_path))
+                return [{"id": index.get('id'), "value": real_path}] + result
+
+        if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles):
+            tree = Indexes.get_index_tree()
+            repository_list = [{"id": 0, "value": "Root Index"}]
+        else:
+            repositories = Community.get_repositories_by_user(current_user)
+            check_list = []
+            tree = []
+            for repository in repositories:
+                if repository.root_node_id not in check_list:
+                    tree += Indexes.get_index_tree(repository.root_node_id)
+                    check_list.append(repository.root_node_id)
+            repository_list = []
+        for idx in tree:
+            repository_list += generate_repository_list(idx)
+        return jsonify(repository_list)
 
 
 invenio_admin_resync_client = {

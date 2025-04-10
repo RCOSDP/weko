@@ -95,6 +95,9 @@ setup(
         'invenio_base.apps': [
             'weko_records = weko_records:WekoRecords',
         ],
+        'invenio_base.api_apps': [
+            'weko_records_rest = weko_records.ext:WekoRecordsREST',
+        ],
         'invenio_i18n.translations': [
             'messages = weko_records',
         ],
@@ -103,6 +106,15 @@ setup(
         ],
         'invenio_config.module': [
             'weko_records = weko_records.config',
+        ],
+        'invenio_db.alembic': [ 
+            'weko_records = weko_records:alembic',
+        ],
+        'invenio_db.models': [
+            'weko_records = weko_records.models',
+        ],
+        'invenio_oauth2server.scopes': [
+            'oa_status_update_scope = weko_records.scopes:oa_status_update_scope',
         ],
     },
     extras_require=extras_require,

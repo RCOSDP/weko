@@ -43,6 +43,7 @@ from weko_redis.redis import RedisConnection
 from weko_records.models import ItemTypeProperty
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from weko_records.api import Mapping
+from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER
 from weko_index_tree.models import Index
 from weko_gridlayout import WekoGridLayout
 #from weko_admin import WekoAdmin
@@ -110,6 +111,7 @@ def base_app(instance_path):
         FILES_REST_DEFAULT_QUOTA_SIZE=None,
         FILES_REST_DEFAULT_MAX_FILE_SIZE=None,
         FILES_REST_OBJECT_KEY_MAX_LEN=255,
+        WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER
     )
     Babel(app_)
     InvenioDB(app_)
@@ -449,7 +451,7 @@ def indices(app, db):
 
         db.session.add(testIndexThree)
         db.session.add(testIndexThreeChild)
-        
+
     return {
         'index_dict': dict(testIndexThree),
         'index_non_dict': testIndexThree,
@@ -540,11 +542,11 @@ def widget_upload(app,db,location):
                             location=location,
                             default_storage_class=storage_class)
     db.session.add(bucket)
-    
-            
+
+
     img = Image.new("L", (128, 128))
     img_bytes = io.BytesIO()
-    
+
     key = "{0}_{1}".format(0,"test.png")
     img.save(img_bytes, format='PNG')
     img_bytes.seek(0)
@@ -555,4 +557,3 @@ def widget_upload(app,db,location):
     db.session.add(obj)
     db.session.commit()
     return {"obj":obj,"key":key}
-                

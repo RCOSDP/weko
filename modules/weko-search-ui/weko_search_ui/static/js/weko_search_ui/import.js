@@ -19,6 +19,7 @@ const total_label = document.getElementById("total").value;
 const new_item_label = document.getElementById("new_item").value;
 const update_item_label = document.getElementById("update_item").value;
 const check_error_label = document.getElementById("check_error").value;
+const waring_item_label = document.getElementById("warning").value;
 const download = document.getElementById("download").value;
 const no = document.getElementById("no").value;
 const item_id = document.getElementById("item_id").value;
@@ -179,12 +180,12 @@ class MainLayout extends React.Component {
     closeError();
     this.setState({ isChecking: true });
 
-    var  csrf_token=$('#csrf_token').val();
+    var csrf_token = $('#csrf_token').val();
     $.ajaxSetup({
-      beforeSend: function(xhr, settings) {
-         if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain){
-             xhr.setRequestHeader("X-CSRFToken", csrf_token);
-         }
+      beforeSend: function (xhr, settings) {
+        if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+          xhr.setRequestHeader("X-CSRFToken", csrf_token);
+        }
       }
     });
 
@@ -815,6 +816,7 @@ class CheckComponent extends React.Component {
       new_item: 0,
       update_item: 0,
       check_error: 0,
+      warning_item: 0,
       list_record: []
     }
     this.handleGenerateData = this.handleGenerateData.bind(this)
@@ -836,12 +838,16 @@ class CheckComponent extends React.Component {
     const update_item = list_record.filter((item) => {
       return item.status && (item.status === 'keep' || item.status === 'upgrade')
     }).length
+    const warning_item = list_record.filter((item) => {
+      return item.warnings && item.warnings.length > 0
+    }).length
 
     this.setState({
       total: list_record.length,
       check_error: check_error,
       new_item: new_item,
       update_item: update_item,
+      warning_item: warning_item,
       list_record: list_record
     })
   }
@@ -857,13 +863,13 @@ class CheckComponent extends React.Component {
     let result = "";
     if (errors[0]) {
 
-      for(let i = 0;i < errors.length; i++) {
+      for (let i = 0; i < errors.length; i++) {
         result += "ERRORS: " + errors[i];
-        if (i != errors.length -1 ){
+        if (i != errors.length - 1) {
           result += "; ";
         }
       }
-    }else{
+    } else {
       result = "ERRORS";
     }
     return result
@@ -891,7 +897,7 @@ class CheckComponent extends React.Component {
       contentType: "application/json; charset=utf-8",
       success: function (response) {
         const date = moment()
-        const fileName = 'check_' + date.format("YYYY-DD-MM") + '.' + file_format;
+        const fileName = 'check_' + date.format("YYYY-MM-DD") + '.' + file_format;
 
         const blob = new Blob([response], { type: 'text/' + file_format });
         if (window.navigator && window.navigator.msSaveOrOpenBlob) {
@@ -919,7 +925,7 @@ class CheckComponent extends React.Component {
   }
 
   render() {
-    const { total, list_record, update_item, new_item, check_error } = this.state
+    const { total, list_record, update_item, new_item, check_error, warning_item } = this.state
     const { is_import, isShowMessage } = this.props
     return (
       <div className="check-component">
@@ -955,6 +961,10 @@ class CheckComponent extends React.Component {
                 <div className="flex-box">
                   <div>{check_error_label}:</div>
                   <div>{check_error}</div>
+                </div>
+                <div className="flex-box">
+                  <div>{waring_item_label}:</div>
+                  <div>{warning_item}</div>
                 </div>
               </div>
               <div className="col-lg-10 col-md-9 text-align-right">
@@ -1062,7 +1072,7 @@ class ResultComponent extends React.Component {
       contentType: "application/json; charset=utf-8",
       success: function (response) {
         const date = moment()
-        const fileName = 'List_Download_' + date.format("YYYY-DD-MM") + '.' + file_format;
+        const fileName = 'List_Download_' + date.format("YYYY-MM-DD") + '.' + file_format;
 
         const blob = new Blob([response], { type: 'text/' + file_format });
         if (window.navigator && window.navigator.msSaveOrOpenBlob) {

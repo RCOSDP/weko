@@ -301,19 +301,18 @@ class TestWekoIndexer:
         assert ret == {'_index': 'test-weko-item-v1.0.0', '_type': 'item-v1.0.0', '_id': '{}'.format(record.id), '_version': 3, 'result': 'updated', '_shards': {'total': 2, 'successful': 1, 'failed': 0}, '_seq_no': 9, '_primary_term': 1}
 
 
-    #     def update_author_link(self, author_link):
-    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoIndexer::test_update_author_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_update_author_link(self,es_records):
+    #     def update_author_link_and_weko_link(self, author_link):
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoIndexer::test_update_author_link_and_weko_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_update_author_link_and_weko_link(self,es_records):
         indexer, records = es_records
         record = records[0]['record']
         author_link_info = {
                 "id": record.id,
-                "author_link": ['1']
+                "author_link": ['1'],
+                "weko_link": {"1":"13"}
             }
-        ret = indexer.update_author_link(author_link_info)
-        assert ret == {'_index': 'test-weko-item-v1.0.0', '_type': 'item-v1.0.0', '_id': '{}'.format(record.id), '_version': 3, 'result': 'updated', '_shards': {'total': 2, 'successful': 1, 'failed': 0}, '_seq_no': 9, '_primary_term': 1}
-
-
+        ret = indexer.update_author_link_and_weko_link(author_link_info)
+        assert ret == {'_index': 'test-weko-item-v1.0.0', '_type': 'item-v1.0.0', '_id': str(record.id), '_version': 2, 'result': 'updated', '_shards': {'total': 2, 'successful': 1, 'failed': 0}, '_seq_no': 12, '_primary_term': 1}
 
     #     def update_jpcoar_identifier(self, dc, item_id):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoIndexer::test_update_jpcoar_identifier -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -997,13 +996,19 @@ class TestWekoDeposit:
         db.session.commit()
         deposit.delete_es_index_attempt(deposit.pid)
 
-    # def update_author_link(self, author_link):
-    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_update_author_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_update_author_link(sel,app,db,location,es_records):
-        indexer, records = es_records
-        record = records[0]
-        deposit = record['deposit']
-        assert deposit.update_author_link({})==None
+    # def update_author_link_and_weko_link(self, author_link):
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_update_author_link_and_weko_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_update_author_link_and_weko_link(sel,app,db,location,es_records, mocker):
+        with patch("weko_deposit.api.WekoIndexer.update_author_link_and_weko_link") as mocker_indexer_update:
+            indexer, records = es_records
+            record = records[0]
+            deposit = record['deposit']
+            assert deposit.update_author_link_and_weko_link([], {"1":"123"})==None
+            mocker_indexer_update.assert_not_called()
+            assert deposit.update_author_link_and_weko_link(["1"], {})==None
+            mocker_indexer_update.assert_not_called()
+            assert deposit.update_author_link_and_weko_link(["1"], {"1":"123"})==None
+            mocker_indexer_update.assert_called()
 
 
     # def remove_feedback_mail(self):

@@ -141,7 +141,7 @@ services:
       - /code/modules/weko-sitemap/weko_sitemap.egg-info
       - /code/modules/invenio-iiif/invenio_iiif.egg-info
       - /code/modules/weko-swordserver/weko_swordserver.egg-info
-      - /code/modules/weko-signpostingserver/weko_signpostingserver.egg-info
+      - /code/modules/weko-signposting/weko_signposting.egg-info
       - /code/modules/weko-notifications/weko_notifications.egg-info
     user: invenio
     links:
@@ -217,6 +217,7 @@ services:
       - GOOGLE_TRACKING_ID_SYSTEM=UA-86504114-1
       - GOOGLE_TRACKING_ID_USER=
       - TIKA_JAR_FILE_PATH=/code/tika/tika-app-2.6.0.jar
+      - TMPDIR=/var/tmp
     volumes:
       - weko3_data:/var/tmp
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
@@ -269,7 +270,7 @@ services:
       - /code/modules/weko-sitemap/weko_sitemap.egg-info
       - /code/modules/invenio-iiif/invenio_iiif.egg-info
       - /code/modules/weko-swordserver/weko_swordserver.egg-info
-      - /code/modules/weko-signpostingserver/weko_signpostingserver.egg-info
+      - /code/modules/weko-signposting/weko_signposting.egg-info
       - /code/modules/weko-notifications/weko_notifications.egg-info
     user: invenio
     links:

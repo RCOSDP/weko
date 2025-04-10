@@ -413,20 +413,67 @@ def get_last_item_id():
     """Get last item id."""
     result = {"last_id": ""}
     try:
-        data = db.session.query(
-            func.max(
-                func.to_number(
-                    PersistentIdentifier.pid_value,
-                    current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
+        is_super = any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles)
+
+        if is_super:
+            data = db.session.query(
+                func.max(
+                    func.to_number(
+                        PersistentIdentifier.pid_value,
+                        current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
+                    )
                 )
-            )
-        ).filter(
-            PersistentIdentifier.status == PIDStatus.REGISTERED,
-            PersistentIdentifier.pid_type == 'recid',
-            PersistentIdentifier.pid_value.notlike("%.%")
-        ).one_or_none()
-        if data[0]:
-            result["last_id"] = str(data[0])
+            ).filter(
+                PersistentIdentifier.status == PIDStatus.REGISTERED,
+                PersistentIdentifier.pid_type == 'recid',
+                PersistentIdentifier.pid_value.notlike("%.%")
+            ).one_or_none()
+            if data[0]:
+                result["last_id"] = str(data[0])
+        else:
+            from invenio_indexer.api import RecordIndexer
+            from invenio_communities.models import Community
+            index_id_list = []
+            repositories = Community.get_repositories_by_user(current_user)
+            for repository in repositories:
+                index = Indexes.get_child_list_recursive(repository.root_node_id)
+                index_id_list.extend(index)
+
+            index = current_app.config['SEARCH_UI_SEARCH_INDEX']
+            query = {
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "bool": {
+                                    "must_not": {
+                                        "regexp": {
+                                            "control_number": ".*\\..*"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "terms": {
+                                    "path": index_id_list
+                                }
+                            }
+                        ]
+                    }
+                },
+                "size": 1,
+                "_source": False,
+                "sort": [
+                    {
+                        "control_number": {
+                            "order": "desc"
+                        }
+                    }
+                ]
+            }
+            results = RecordIndexer().client.search(index=index, body=query)
+            if "hits" in results and "hits" in results["hits"] and results["hits"]["hits"]:
+                result["last_id"] = results["hits"]["hits"][0].get("sort", [])
     except Exception as ex:
         current_app.logger.error(ex)
     return jsonify(data=result), 200

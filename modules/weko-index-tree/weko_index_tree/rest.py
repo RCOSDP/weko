@@ -546,7 +546,7 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                 if role_ids:
                     from invenio_communities.models import Community
                     comm_list = Community.query.filter(
-                        Community.id_role.in_(role_ids)
+                        Community.group_id.in_(role_ids)
                     ).all()
                     check_list = []
                     for comm in comm_list:

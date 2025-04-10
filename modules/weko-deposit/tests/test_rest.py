@@ -20,14 +20,16 @@
 
 """Module tests."""
 import json
+import uuid
+import copy
 import pytest
-from mock import patch
+from mock import patch, MagicMock
 import redis
 
 from elasticsearch import ElasticsearchException
 from sqlalchemy.exc import SQLAlchemyError
 from flask import url_for
-from weko_deposit.api import WekoDeposit
+from weko_deposit.api import WekoDeposit, WekoRecord
 from invenio_accounts.testutils import login_user_via_session
 
 
@@ -80,7 +82,7 @@ def test_publish_users(client, users, deposit, index, status_code):
     res = client.put(url, data=json.dumps(input),
                      content_type='application/json')
     assert res.status_code == status_code
-    
+
     with patch("weko_deposit.rest.WekoDeposit",side_effect=BaseException("test_error")):
         res = client.put(url, data=json.dumps(input),
                      content_type='application/json')
@@ -140,7 +142,7 @@ def test_depid_item_put_acl_users(client, users, deposit, index, status_code):
     res = client.put(url, data=json.dumps(input),
                      content_type='application/json')
     assert res.status_code == status_code
-    
+
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_depid_item_put -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 def test_depid_item_put(client, users,es_records):
     login_user_via_session(client=client, email=users[2]['email'])
@@ -151,14 +153,14 @@ def test_depid_item_put(client, users,es_records):
     url = url_for('weko_deposit_rest.depid_item',
                   pid_value=kwargs['pid_value'])
     input = {
-        "item_1617186331708": [{"subitem_1551255647225": "tetest","subitem_1551255648112": "en"}], 
+        "item_1617186331708": [{"subitem_1551255647225": "tetest","subitem_1551255648112": "en"}],
         "pubdate": "2021-01-01",
         "item_1617258105262": {
             "resourcetype": "conference paper",
             "resourceuri": "http://purl.org/coar/resource_type/c_5794"
         },
-        "shared_user_id": -1, 
-        "title": "tetest", 
+        "shared_user_id": -1,
+        "title": "tetest",
         "lang": "en",
         "deleted_items": ["item_1617186385884", "item_1617186419668",
                           "approval1", "approval2"],
@@ -168,16 +170,16 @@ def test_depid_item_put(client, users,es_records):
                      content_type='application/json')
     assert res.status_code == 200
     assert json.loads(res.data) == {"status":"success"}
-    
+
     input = {
-        "item_1617186331708": [{"subitem_1551255647225": "tetest","subitem_1551255648112": "en"}], 
+        "item_1617186331708": [{"subitem_1551255647225": "tetest","subitem_1551255648112": "en"}],
         "pubdate": "2021-01-01",
         "item_1617258105262": {
             "resourcetype": "conference paper",
             "resourceuri": "http://purl.org/coar/resource_type/c_5794"
         },
-        "shared_user_id": -1, 
-        "title": "tetest", 
+        "shared_user_id": -1,
+        "title": "tetest",
         "lang": "en",
         "deleted_items": ["item_1617186385884", "item_1617186419668",
                           "approval1", "approval2"],
@@ -188,13 +190,13 @@ def test_depid_item_put(client, users,es_records):
                      content_type='application/json')
     assert res.status_code == 200
     assert json.loads(res.data) == {"status":"success"}
-    
+
     with patch("weko_deposit.rest.PersistentIdentifier.get",side_effect=SQLAlchemyError("test_sql_error")):
         res = client.put(url, data=json.dumps(input),
                      content_type='application/json')
         assert res.status_code == 400
         assert "Failed to register item!" in res.data.decode("utf-8")
-    
+
     with patch("weko_deposit.rest.PersistentIdentifier.get",side_effect=ElasticsearchException("test_es_error")):
         res = client.put(url, data=json.dumps(input),
                      content_type='application/json')
@@ -259,3 +261,40 @@ def test_depid_item_post_users(client, users, deposit, index, status_code):
                       data=json.dumps(input),
                       content_type='application/json')
     assert res.status_code == status_code
+
+
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_put -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+def test_put(app, client, records):
+    headers = {'content-type': 'application/json'}
+    version = MagicMock()
+    version.model.id = uuid.uuid4()
+    version.pid.pid_value = "1.1"
+    with patch("weko_deposit.rest.WekoDeposit.newversion", return_value=version):
+        record_1 = WekoRecord.get_record_by_pid("1")
+        record_1_1 = copy.deepcopy(record_1)
+        record_1_1["recid"] = "1.1"
+        mock_record = MagicMock()
+        mock_record = lambda x: record_1_1 if x == "1.1" else record_1
+        with patch("weko_deposit.rest.WekoRecord.get_record_by_pid", mock_record):
+            with patch("weko_deposit.rest.call_external_system") as mock_external:
+                with patch("weko_deposit.rest.PersistentIdentifier.get",
+                           return_value=record_1.pid):
+                    data = {'edit_mode': 'upgrade'}
+                    res = client.put("/deposits/redirect/1.0",
+                                    data=json.dumps(data), headers=headers)
+                    assert res.status_code == 200
+                    mock_external.assert_not_called()
+            with patch("weko_deposit.rest.call_external_system") as mock_external:
+                data = {'edit_mode': 'upgrade'}
+                res = client.put("/deposits/redirect/1",
+                                data=json.dumps(data), headers=headers)
+                assert res.status_code == 200
+                mock_external.assert_called_once()
+                assert mock_external.call_args[1]["old_record"]["recid"] == "1"
+                assert mock_external.call_args[1]["new_record"]["recid"] == "1.1"
+            with patch("weko_deposit.rest.call_external_system") as mock_external:
+                data = {'edit_mode': "keep"}
+                res = client.put("/deposits/redirect/1",
+                                data=json.dumps(data), headers=headers)
+                assert res.status_code == 200
+                mock_external.assert_not_called()

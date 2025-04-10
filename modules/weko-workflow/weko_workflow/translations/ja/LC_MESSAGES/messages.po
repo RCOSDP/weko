@@ -240,6 +240,38 @@ msgstr "このDOIは他のアイテムで既に使用されているため、他
 msgid "This DOI was withdrawn. Please input another DOI."
 msgstr "このDOIは取り下げられたため、他のDOIを入力してください"
 
+#: weko_workflow/views.py:3585 weko_workflow/views.py:3638
+msgid "This Item is being edited."
+msgstr "編集中のワークフローがあります"
+
+#: weko_workflow/views.py:3601
+msgid "Record does not exist."
+msgstr "レコードが存在しません"
+
+#: weko_workflow/views.py:3612
+msgid "You are not allowed to edit this item."
+msgstr "このアイテムを編集することは許可されていません"
+
+#: weko_workflow/views.py:3617
+msgid "You do not even have an ItemType."
+msgstr "No itemtype"
+
+#: weko_workflow/views.py:3623
+msgid "Dependency ItemType not found."
+msgstr "このアイテムタイプは見つかりませんでした"
+
+#: weko_workflow/views.py:3628
+msgid "Item cannot be edited because the import is in progress."
+msgstr "インポートを実行中のためアイテムの編集はできません。"
+
+#: weko_workflow/views.py:3654
+msgid "Workflow setting does not exist."
+msgstr "レコードが存在しません"
+
+#: weko_workflow/views.py:3667 weko_workflow/views.py:3674
+msgid "An error has occurred."
+msgstr "エラーが発生しました"
+
 #: weko_workflow/templates/weko_workflow/helpers.html:57
 #: weko_workflow/templates/weko_workflow/helpers.html:63
 msgid "Input Field"

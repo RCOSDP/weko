@@ -258,3 +258,14 @@ COPY_NEW_FIELD = True
 
 WEKO_RECORDS_SYSTEM_COMMA = "-,-"
 """The system comma used to break metadata subitems."""
+
+WEKO_RECORDS_REST_ENDPOINTS = {
+    'oa_status_callback': {
+        'route': '/<string:version>/oa_status/callback',
+        'default_media_type': 'application/json',
+    }
+}
+"""REST endpoints."""
+
+WEKO_RECORDS_API_LIMIT_RATE_DEFAULT = ['100 per minute']
+"""API rate limit."""

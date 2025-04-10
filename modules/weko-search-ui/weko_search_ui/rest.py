@@ -372,6 +372,9 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     "date_range": {"pub_cnt": 0, "un_pub_cnt": 0},
                     "rss_status": rss_status,
                     "comment": p.comment,
+                    "image_name": index_info.image_name,
+                    "image_width": current_app.config['CHILD_INDEX_THUMBNAIL_WIDTH'],
+                    "image_height": current_app.config['CHILD_INDEX_THUMBNAIL_HEIGHT'],
                 }
                 current_idx = nd
                 for _path in is_perm_paths:
@@ -410,6 +413,9 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                         "date_range": {"pub_cnt": 0, "un_pub_cnt": 0},
                         "rss_status": rss_status,
                         "comment": p.comment,
+                        "image_name": index_info.image_name,
+                        "image_width": current_app.config['CHILD_INDEX_THUMBNAIL_WIDTH'],
+                        "image_height": current_app.config['CHILD_INDEX_THUMBNAIL_HEIGHT'],
                     }
                     current_idx = nd
                 _child_indexes = []

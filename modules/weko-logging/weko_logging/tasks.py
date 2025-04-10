@@ -34,5 +34,8 @@ def export_all_user_activity_logs():
 @shared_task(ignore_results=True)
 def delete_log():
     """Delete logs task."""
-    with current_app.app_context():
-        delete_log()
+    try:
+        UserActivityLogUtils.delete_log()
+    except Exception as ex:
+        current_app.logger.error(ex)
+        raise

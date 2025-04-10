@@ -2263,62 +2263,110 @@ class SiteLicense(RecordBase):
     """Define API for SiteLicense creation and manipulation."""
 
     @classmethod
-    def get_records(cls):
+    def get_records(cls, user=None):
         """Retrieve multiple records.
 
         :returns: A list of :class:`Record` instances.
         """
+        from invenio_communities.models import Community
         with db.session.no_autoflush:
-            sl_obj = SiteLicenseInfo.query.order_by(
-                SiteLicenseInfo.organization_id).all()
+            if not user:
+                sl_obj = SiteLicenseInfo.query.order_by(
+                    SiteLicenseInfo.organization_id).all()
+            else:
+                if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in user.roles):
+                    sl_obj = SiteLicenseInfo.query.order_by(
+                        SiteLicenseInfo.organization_id).all()
+                else:
+                    repositories = Community.get_repositories_by_user(user)
+                    repository_ids = [repository.id for repository in repositories]
+                    sl_obj = SiteLicenseInfo.query.filter(SiteLicenseInfo.repository_id.in_(repository_ids)).order_by(
+                        SiteLicenseInfo.organization_id).all()
             return [cls(dict(obj)) for obj in sl_obj]
 
     @classmethod
     def update(cls, obj):
         """Update method."""
-        def get_addr(lst, id_):
-            if lst and isinstance(lst, list):
-                sld = []
-                for j in range(len(lst)):
-                    sl = SiteLicenseIpAddress(
-                        organization_id=id_,
-                        organization_no=j + 1,
-                        start_ip_address='.'.join(
-                            lst[j].get('start_ip_address')),
-                        finish_ip_address='.'.join(
-                            lst[j].get('finish_ip_address'))
-                    )
-                    sld.append(sl)
-                return sld
+        def get_repository_ids():
+            """Get repository ID based on user's roles."""
+            from flask_login import current_user
+            from invenio_communities.models import Community
+            if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles):
+                return ["Root Index"]
+            repositories = Community.get_repositories_by_user(current_user)
+            if repositories:
+                return [repository.id for repository in repositories]
+            raise Exception("No repository found for the user")
 
+        def get_existing_entries(repository_ids):
+            """Get existing site license entries for the repository."""
+            if "Root Index" in repository_ids:
+                return {info.organization_name: info for info in SiteLicenseInfo.query.all()}
+            return {info.organization_name: info for info in SiteLicenseInfo.query.filter(SiteLicenseInfo.repository_id.in_(repository_ids)).all()}
+
+        def get_addr(lst, organization_id):
+            """Convert address list to SiteLicenseIpAddress instances."""
+            if not lst or not isinstance(lst, list):
+                return []
+
+            return [
+                SiteLicenseIpAddress(
+                    organization_id=organization_id,
+                    organization_no=j + 1,
+                    start_ip_address='.'.join(item.get('start_ip_address')),
+                    finish_ip_address='.'.join(item.get('finish_ip_address'))
+                )
+                for j, item in enumerate(lst)
+            ]
         # update has_site_license field on item type name tbl
         ItemTypeNames.update(obj.get('item_type'))
+        repository_ids = get_repository_ids()
+
         site_license = obj.get('site_license')
-        if isinstance(site_license, list):
-            # delete all rows first
-            SiteLicenseIpAddress.query.delete()
-            SiteLicenseInfo.query.delete()
-            # add new rows
-            if site_license:
-                sif = []
-                for i in range(len(site_license)):
-                    lst = site_license[i]
-                    if lst.get('mail_address'):
-                        receive_mail_flag = lst.get('receive_mail_flag')
-                    else:
-                        receive_mail_flag = 'F'
-                    slif = SiteLicenseInfo(
-                        organization_id=i + 1,
-                        organization_name=lst.get('organization_name'),
-                        receive_mail_flag=receive_mail_flag,
-                        mail_address=lst.get('mail_address'),
-                        domain_name=lst.get('domain_name'),
-                        addresses=get_addr(
-                            lst.get('addresses'),
-                            i))
-                    sif.append(slif)
-                # add new rows
-                db.session.add_all(sif)
+        if not isinstance(site_license, list):
+            return
+
+        existing_entries = get_existing_entries(repository_ids)
+        new_entries = {}
+
+        for lst in site_license:
+            org_name = lst.get('organization_name')
+            receive_mail_flag = lst.get('receive_mail_flag', 'F') if lst.get('mail_address') else 'F'
+
+            if org_name in existing_entries:
+                # Update existing entry
+                slif = existing_entries[org_name]
+                slif.receive_mail_flag = receive_mail_flag
+                slif.mail_address = lst.get('mail_address')
+                slif.domain_name = lst.get('domain_name')
+
+                # Update addresses
+                for addr in slif.addresses:
+                    db.session.delete(addr)
+                new_addresses = get_addr(lst.get('addresses'), slif.organization_id)
+                slif.addresses = new_addresses
+
+                new_entries[org_name] = slif
+            else:
+                # Create new entry
+                slif = SiteLicenseInfo(
+                    organization_name=org_name,
+                    receive_mail_flag=receive_mail_flag,
+                    mail_address=lst.get('mail_address'),
+                    domain_name=lst.get('domain_name'),
+                    repository_id=lst.get('repository_id') if lst.get('repository_id') else repository_ids[0]
+                )
+                slif.addresses = get_addr(lst.get('addresses'), slif.organization_id)
+                new_entries[org_name] = slif
+                db.session.add(slif)
+
+        # Remove obsolete entries
+        obsolete_entries = set(existing_entries.keys()) - set(new_entries.keys())
+        for org_name in obsolete_entries:
+            target = existing_entries[org_name]
+            for addr in target.addresses:
+                db.session.delete(addr)
+            db.session.delete(target)
 
 
 class RevisionsIterator(object):
@@ -2415,6 +2463,7 @@ class FeedbackMailList(object):
         :param feedback_maillist: list mail feedback
         :return boolean: True if success
         """
+        from invenio_communities.utils import get_repository_id_by_item_id
         with db.session.begin_nested():
             query_object = _FeedbackMailList.query.filter_by(
                 item_id=item_id).one_or_none()
@@ -2431,7 +2480,8 @@ class FeedbackMailList(object):
                 query_object = _FeedbackMailList(
                     item_id=item_id,
                     mail_list=mail_list,
-                    account_author=",".join(list(account_author_set))
+                    account_author=",".join(list(account_author_set)),
+                    repository_id=get_repository_id_by_item_id(item_id)
                 )
                 db.session.add(query_object)
             else:
@@ -2499,7 +2549,7 @@ class FeedbackMailList(object):
             return []
 
     @classmethod
-    def get_feedback_mail_list(cls):
+    def get_feedback_mail_list(cls, repo_id=None):
         """Get feedback mail list for send mail."""
         mail_list = {}
         checked_author_id = {}
@@ -2514,7 +2564,11 @@ class FeedbackMailList(object):
             PersistentIdentifier.pid_type == 'recid',
             PersistentIdentifier.status == PIDStatus.REGISTERED,
             PersistentIdentifier.pid_value.notlike("%.%")
-        ).all()
+        )
+
+        if repo_id:
+            data = data.filter(_FeedbackMailList.repository_id == repo_id)
+        data = data.all()
 
         # create return data
         for d in data:

@@ -155,6 +155,9 @@ setup(
             'invenio_communities_featured = '
             'invenio_communities.admin:featured_adminview',
         ],
+        'invenio_celery.tasks': [
+            'invenio_communities = invenio_communities.tasks',
+        ],
         'invenio_assets.bundles': [
             'invenio_communities_js = invenio_communities.bundles:js',
             'invenio_communities_js_tree = invenio_communities.bundles:js_tree',

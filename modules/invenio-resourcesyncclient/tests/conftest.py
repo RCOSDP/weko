@@ -58,6 +58,7 @@ from weko_index_tree.models import Index
 from weko_deposit import WekoDeposit
 from weko_records import WekoRecords
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
+from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER
 from weko_search_ui import WekoSearchUI
 from weko_schema_ui.models import OAIServerSchema
 
@@ -131,6 +132,7 @@ def base_app(instance_path):
         DEPOSIT_RECORDS_UI_ENDPOINTS=DEPOSIT_RECORDS_UI_ENDPOINTS,
         DEPOSIT_REST_ENDPOINTS=DEPOSIT_REST_ENDPOINTS,
         DEPOSIT_DEFAULT_STORAGE_CLASS=DEPOSIT_DEFAULT_STORAGE_CLASS,
+        WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER
     )
 
     Babel(app_)

@@ -13,7 +13,7 @@ import datetime
 import pytest
 import json
 import copy
-from mock import patch
+from mock import patch, MagicMock
 
 from invenio_stats.aggregations import filter_robots
 from invenio_stats.contrib.registrations import register_queries
@@ -45,10 +45,11 @@ def test_query(app):
 
 # class ESDateHistogramQuery(ESQuery):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_queries.py::test_date_histogram_query -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_date_histogram_query(app):
+def test_date_histogram_query(app, mocker):
     config_num = 8      # query_name='bucket-file-download-histogram'
     query_configs = register_queries()
     histogram_config = query_configs[config_num]['query_config']
+    app.config['STATS_WEKO_DEFAULT_TIMEZONE'] = MagicMock(return_value='Asia/Tokyo')
     # __init__
     with pytest.raises(ValueError):
         ESDateHistogramQuery(
@@ -77,6 +78,8 @@ def test_date_histogram_query(app):
     assert query.build_query('month', datetime.date(2023, 1, 1), None).to_dict() == {'query': {'bool': {'filter': [{'range': {'timestamp': {'gte': '2023-01-01'}}}]}}, 'aggs': {'histogram': {'date_histogram': {'field': 'timestamp', 'interval': 'month', 'time_zone': 'Asia/Tokyo'}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'top_hit': {'top_hits': {'size': 1, 'sort': {'timestamp': 'desc'}}}}}}, 'from': 0, 'size': 0}
     assert query.build_query('month', None, datetime.date(2023, 1, 1)).to_dict() == {'query': {'bool': {'filter': [{'range': {'timestamp': {'lte': '2023-01-01'}}}]}}, 'aggs': {'histogram': {'date_histogram': {'field': 'timestamp', 'interval': 'month', 'time_zone': 'Asia/Tokyo'}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'top_hit': {'top_hits': {'size': 1, 'sort': {'timestamp': 'desc'}}}}}}, 'from': 0, 'size': 0}
     assert query.build_query('month', None, None, file_key='test_key').to_dict() == {'query': {'bool': {'filter': [{'term': {'file_key': 'test_key'}}]}}, 'aggs': {'histogram': {'date_histogram': {'field': 'timestamp', 'interval': 'month', 'time_zone': 'Asia/Tokyo'}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'top_hit': {'top_hits': {'size': 1, 'sort': {'timestamp': 'desc'}}}}}}, 'from': 0, 'size': 0}
+    assert query.build_query('month', None, None, file_key=['key1', 'key2']).to_dict() == {'query': {'bool': {'filter': [{'terms': {'file_key': ['key1', 'key2']}}]}}, 'aggs': {'histogram': {'date_histogram': {'field': 'timestamp', 'interval': 'month', 'time_zone': 'Asia/Tokyo'}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'top_hit': {'top_hits': {'size': 1, 'sort': {'timestamp': 'desc'}}}}}}, 'from': 0, 'size': 0}
+    assert query.build_query('month', None, None, file_key=['key1', 'key2', 'key3', 'key4']).to_dict() == {'query': {'bool': {'filter': [{'bool': {'should': [{'terms': {'file_key': ['key1', 'key2', 'key3']}}, {'terms': {'file_key': ['key4']}}]}}]}}, 'aggs': {'histogram': {'date_histogram': {'field': 'timestamp', 'interval': 'month', 'time_zone': 'Asia/Tokyo'}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'top_hit': {'top_hits': {'size': 1, 'sort': {'timestamp': 'desc'}}}}}}, 'from': 0, 'size': 0}
 
     query = ESDateHistogramQuery(
         query_name='test_total_count',
@@ -161,7 +164,7 @@ def test_date_histogram_query(app):
                          [(["tests/data/ESTermsQuery_execute01.json"],
                            1,
                            "tests/data/ESTermsQuery_result01.json"),
-                          (["tests/data/ESTermsQuery_execute02.json", 
+                          (["tests/data/ESTermsQuery_execute02.json",
                             "tests/data/ESTermsQuery_execute01.json"],
                            1,
                            "tests/data/ESTermsQuery_result02.json"),
@@ -189,7 +192,8 @@ def test_terms_query2(app):
     config_num = 0        # query_name='get-celery-task-report'
     query_configs = register_queries()
     terms_config = query_configs[config_num]['query_config']
-    
+    app.config['STATS_WEKO_DEFAULT_TIMEZONE'] = MagicMock(return_value='Asia/Tokyo')
+
     # validate_arguments
     query = ESTermsQuery(
         query_name='test_total_count',
@@ -214,6 +218,9 @@ def test_terms_query2(app):
         **test_config
     )
     assert query.build_query(None, datetime.datetime(2023, 1, 1)).to_dict() == {'query': {'bool': {'filter': [{'range': {'timestamp': {'lte': '2023-01-01T00:00:00', 'time_zone': 'Asia/Tokyo'}}}]}}, 'aggs': {'value': {'sum': {'field': 'count'}}}, 'from': 0, 'size': 0}
+    assert query.build_query(None, None, task_name='task1').to_dict() == {'query': {'bool': {'filter': [{'term': {'task_name': 'task1'}}]}}, 'aggs': {'value': {'sum': {'field': 'count'}}}, 'from': 0, 'size': 0}
+    assert query.build_query(None, None, task_name=['task1', 'task2']).to_dict() == {'query': {'bool': {'filter': [{'terms': {'task_name': ['task1', 'task2']}}]}}, 'aggs': {'value': {'sum': {'field': 'count'}}}, 'from': 0, 'size': 0}
+    assert query.build_query(None, None, task_name=['task1', 'task2', 'task3', 'task4']).to_dict() == {'query': {'bool': {'filter': [{'bool': {'should': [{'terms': {'task_name': ['task1', 'task2', 'task3']}}, {'terms': {'task_name': ['task4']}}]}}]}}, 'aggs': {'value': {'sum': {'field': 'count'}}}, 'from': 0, 'size': 0}
 
     # process_query_result
     _res = {
@@ -302,6 +309,7 @@ def test_weko_terms_query(app):
     config_num = 1        # query_name='get-search-report'
     query_configs = register_queries()
     weko_terms_config = query_configs[config_num]['query_config']
+    app.config['STATS_WEKO_DEFAULT_TIMEZONE'] = MagicMock(return_value='Asia/Tokyo')
 
     # build_query
     test_config = copy.deepcopy(weko_terms_config)
@@ -324,6 +332,9 @@ def test_weko_terms_query(app):
         **test_config
     )
     assert query.build_query(None, datetime.datetime(2023, 1, 1), after_key='test_key', required1='v1', agg_filter={'agg': 'agg1'}).to_dict() == {'query': {'bool': {'filter': [{'range': {'timestamp': {'lte': '2023-01-01T00:00:00', 'time_zone': 'Asia/Tokyo'}}}, {'term': {'required1': 'v1'}}, {'terms': {'agg': 'agg1'}}]}}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'my_buckets': {'composite': {'size': 6000, 'sources': [{'search_key': {'terms': {'field': 'search_key'}}}, {'count': {'terms': {'field': 'count'}}}], 'after': 'test_key'}}}, 'from': 0, 'size': 0}
+    assert query.build_query(None, None, agg_filter={'agg': ['agg1']}).to_dict() == {'query': {'bool': {'filter': [{'bool': {'should': [{'terms': {'agg': ['agg1']}}], 'minimum_should_match': 1}}]}}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'my_buckets': {'composite': {'size': 6000, 'sources': [{'search_key': {'terms': {'field': 'search_key'}}}, {'count': {'terms': {'field': 'count'}}}]}}}, 'from': 0, 'size': 0}
+    assert query.build_query(None, None, agg_filter={'agg': ['agg1', 'agg2', 'agg3', 'agg4']}).to_dict() == {'query': {'bool': {'filter': [{'bool': {'should': [{'terms': {'agg': ['agg1', 'agg2', 'agg3']}}, {'terms': {'agg': ['agg4']}}], 'minimum_should_match': 1}}]}}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'my_buckets': {'composite': {'size': 6000, 'sources': [{'search_key': {'terms': {'field': 'search_key'}}}, {'count': {'terms': {'field': 'count'}}}]}}}, 'from': 0, 'size': 0}
+    assert query.build_query(None, None, wildcard={'key': 'value'}).to_dict() == {'query': {'bool': {'filter': [{'wildcard': {'key': 'value'}}]}}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'my_buckets': {'composite': {'size': 6000, 'sources': [{'search_key': {'terms': {'field': 'search_key'}}}, {'count': {'terms': {'field': 'count'}}}]}}}, 'from': 0, 'size': 0}
 
 
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_queries.py::test_ESWekoFileRankingQuery -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-stats/.tox/c1/tmp

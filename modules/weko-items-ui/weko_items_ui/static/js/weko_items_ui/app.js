@@ -1,5 +1,7 @@
 const ITEM_SAVE_URL = $("#item_save_uri").val();
 const ITEM_SAVE_FREQUENCY = $("#item_save_frequency").val();
+let isDuplicatePopupShown = false;
+let previousData = null;
 
 require([
   'jquery',
@@ -599,6 +601,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.outputapplication_keys = [];
       $scope.authors_keys = [];
       $scope.data_author = [];
+      $scope.data_affiliation = [];
       $scope.sub_item_keys = ['nameIdentifiers', 'creatorAffiliations', 'contributorAffiliations'];
       $scope.scheme_uri_mapping = [
         {
@@ -953,6 +956,20 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         });
       }
 
+      /* Get data for affiliation*/
+      $scope.initAffiliationList = function () {
+        $.ajax({
+          url: '/api/items/author_affiliation_settings',
+          method: 'GET',
+          async: false,
+          success: function (data, status) {
+            $scope.data_affiliation = data;
+          },
+          error: function (data, status) {
+          }
+        });
+      }
+
       /**
        * Disable Name Identifier when schema is WEKO.
        */
@@ -1016,10 +1033,10 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
 
 
       $scope.addSchemeToSelectForm = function(author_form, author_schema) {
-           for (let searchTitleMap in author_form.items) {
+            for (let searchTitleMap in author_form.items) {
+              var numberTitleMap = searchTitleMap;
+              var author_form_key = author_form.items[searchTitleMap].key
                 if (author_form.items[searchTitleMap].hasOwnProperty('titleMap')) {
-                  var numberTitleMap = searchTitleMap;
-                  var author_form_key = author_form.items[searchTitleMap].key
                   // Only clear and do logic for "Scheme" field
                   $scope.sub_item_scheme.map(function (scheme) {
                       if (author_form_key.indexOf(scheme) != -1) {
@@ -1051,7 +1068,37 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                         })
                       }
                   })
+          } else if (author_form.items[searchTitleMap].hasOwnProperty("items")) { //check affiliation
+            for (let sTM in author_form.items[searchTitleMap].items) {
+              let grandChildOfItems = author_form.items[searchTitleMap].items[sTM]
+              // let childOfAuthorScheme = author_schema.properties[]
+              author_form_key = grandChildOfItems.key
+              if (grandChildOfItems.hasOwnProperty('titleMap') &&
+              $scope.scheme_affiliation_mapping.some(mapping => author_form_key.indexOf(mapping) >= 0)){
+                $scope.sub_item_scheme.map(function (scheme) {
+                  if (author_form_key.indexOf(scheme) != -1) {
+                    for (let index in author_schema.properties){
+                      let childSchema = author_schema.properties[index].items
+                      if (childSchema.properties[scheme]) {
+                        grandChildOfItems.titleMap = [];
+                        childSchema.properties[scheme]['enum'] = [];
+                        childSchema.properties[scheme]['enum'].push(null);
+                        $scope.data_affiliation.forEach(function (value_scheme) {
+                          if (childSchema.properties[scheme]) {
+                            childSchema.properties[scheme]['enum'].push(value_scheme['scheme']);
+                            grandChildOfItems.titleMap.push({
+                              name: value_scheme['name'],
+                              value: value_scheme['scheme']
+                            });
+                          }
+                        });
+                      }
+                    }
+                  }
+                });
               }
+            }
+          }
               // set read only Creator Name Identifier URI
               $scope.sub_item_uri.map(function(item) {
                 let identifier_uri_form = get_subitem(author_form.items, item)
@@ -2542,6 +2589,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         $scope.initCorrespondingIdList();
         $scope.autoTitleData();
         $scope.initAuthorList();
+        $scope.initAffiliationList();
         $scope.getDataAuthors();
         $scope.updateNumFiles();
         $scope.editModeHandle();
@@ -3673,6 +3721,45 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             $("#allModal").modal("show");
             return false;
           }
+
+          // duplicate check
+          let metainfo = { 'metainfo': $rootScope.recordsVM.invenioRecordsModel };
+          let isModified = !angular.equals(previousData, metainfo);
+          let isDuplicate = false;
+          $.ajax({
+            context: this,
+            headers: {
+            'Content-Type': 'application/json'
+            },
+            async: false,
+            dataType: "json",
+
+            url: "/items/iframe/model/save",
+            method: "POST",
+            data: JSON.stringify(metainfo),
+            success: function (response) {
+                if (response && response.is_duplicate) {
+                    if ((!isDuplicatePopupShown) || isModified) {
+                        this.check_duplicate_items(response);
+                        isDuplicatePopupShown = true;
+                        isDuplicate = true;
+                        previousData = angular.copy(metainfo);
+                    }
+                }
+            },
+            error: function (xhr) {
+                let response = xhr.responseJSON;
+                if (response && response.is_duplicate) {
+                    this.check_duplicate_items(response);
+                    isDuplicat = true;
+                }
+                showErrorMsg("An error occurred while saving the item.");
+            }
+          });
+          if (isDuplicate) {
+            return false;
+          }
+
           // Call API to validate input data base on json schema define
           let validateURL = '/api/items/validate';
           let isValid = false;
@@ -4162,6 +4249,21 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
         return true;
       }
+
+      $scope.check_duplicate_items = function (response) {
+        if (response.duplicate_links && response.duplicate_links.length > 0) {
+            let message = $("#duplicate_warning").val() + '<br/><br/>';
+            response.duplicate_links.forEach(link => {
+                message += `<a href="${link}" target="_blank">${link}</a><br/>`;
+            });
+    
+            $("#inputModal").html(message);
+            $("#allModal").modal("show");
+            return false;
+        }
+        return true;
+      }
+
       $scope.UpdateApplicationDate = function () {
         var applicationDateKey = 'subitem_restricted_access_application_date';
         for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {

@@ -55,6 +55,8 @@ from weko_records_ui.models import FileOnetimeDownload, FilePermission
 from weko_records.models import ItemMetadata, ItemReference
 from invenio_records.models import RecordMetadata
 from tests.helpers import create_record
+from invenio_pidstore.resolver import Resolver
+from weko_redis import RedisConnection
 
 
 
@@ -4947,3 +4949,298 @@ def test_ActivityActionResource_post(client, db_register , users):
     login(client=client, email=users[2]['email'])
     res = client.get(url)
     assert res.status_code == 400
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 302),
+    (1, 302),
+    (2, 302),
+    (3, 302),
+    (4, 302),
+    (5, 302),
+    (6, 302),
+])
+def test_edit_item_direct_1(client, users, users_index, status_code):
+    login(client=client, email=users[users_index]['email'])
+    url = url_for("weko_workflow.edit_item_direct", pid_value="1")
+    res = client.get(url)
+    assert res.status_code == 302
+    assert res.location == 'http://TEST_SERVER.localdomain/workflow/edit_item_direct_after_login/1'
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_edit_item_direct_2(client, db_register2):
+    url = url_for("weko_workflow.edit_item_direct", pid_value="1")
+    res = client.get(url)
+    assert res.status_code == 302
+    assert res.location == 'http://TEST_SERVER.localdomain/login/?next=%2Fworkflow%2Fedit_item_direct_after_login%2F1'
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_01 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "users_index, status_code",
+    [
+        (1, 302),
+        (2, 302),
+        (3, 302),
+        (6, 302),
+    ],
+)
+def test_edit_item_direct_after_login_01(client, users, db_register, users_index, status_code, mocker):
+    mocker.patch('celery.task.control.inspect.ping', return_value="")
+    return_data = MagicMock(activity_id=1)
+    mocker.patch("weko_workflow.views.prepare_edit_workflow", return_value=return_data)
+    login(client=client, email=users[users_index]["email"])
+    url = url_for("weko_workflow.edit_item_direct_after_login", pid_value="1")
+    res = client.get(url)
+    assert res.status_code == status_code
+    assert res.location == 'http://TEST_SERVER.localdomain/workflow/activity/detail/1'
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_02 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "users_index, status_code",
+    [
+        (0, 400),
+        (1, 400),
+        (2, 400),
+        (3, 400),
+        (4, 400),
+        (5, 400),
+        (6, 400),
+    ],
+)
+def test_edit_item_direct_after_login_02(client, users, db_register, users_index, status_code, mocker):
+    mock_render_template = mocker.patch('weko_workflow.views.render_template', return_value ='')
+    mock_redis = MagicMock(exists=MagicMock(return_value=True))
+    mock_sessionstorage = MagicMock(redis=mock_redis)
+    mocker.patch.object(RedisConnection, 'connection', return_value = mock_sessionstorage)
+    login(client=client, email=users[users_index]["email"])
+    url = url_for("weko_workflow.edit_item_direct_after_login", pid_value="1")
+    res = client.get(url)
+    mock_render_template.assert_called_with("weko_theme/error.html", error="This Item is being edited.")
+    mock_redis.exists.assert_called_once()
+    assert res.status_code == status_code
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_03 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "users_index, status_code",
+    [
+        (0, 404),
+        (1, 404),
+        (2, 404),
+        (3, 404),
+        (4, 404),
+        (5, 404),
+        (6, 404),
+    ],
+)
+def test_edit_item_direct_after_login_03(client, users, db_register, users_index, status_code, mocker):
+    mock_render_template = mocker.patch('weko_workflow.views.render_template', return_value ='')
+    mock_resolve = mocker.patch.object(Resolver, 'resolve', return_value = (None, None))
+    login(client=client, email=users[users_index]["email"])
+    url = url_for("weko_workflow.edit_item_direct_after_login", pid_value="1")
+    res = client.get(url)
+    mock_render_template.assert_called_with("weko_theme/error.html", error="Record does not exist.")
+    mock_resolve.assert_called_once()
+    assert res.status_code == status_code
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_03_2 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "users_index, status_code",
+    [
+        (0, 404),
+        (1, 404),
+        (2, 404),
+        (3, 404),
+        (4, 404),
+        (5, 404),
+        (6, 404),
+    ],
+)
+def test_edit_item_direct_after_login_03_2(client, users, db_register, users_index, status_code, mocker):
+    mock_render_template = mocker.patch('weko_workflow.views.render_template', return_value ='')
+    mock_resolve = mocker.patch.object(Resolver, 'resolve', side_effect=PIDDoesNotExistError(None, None))
+    login(client=client, email=users[users_index]["email"])
+    url = url_for("weko_workflow.edit_item_direct_after_login", pid_value="1")
+    res = client.get(url)
+    mock_render_template.assert_called_with("weko_theme/error.html", error="Record does not exist.")
+    mock_resolve.assert_called_once()
+    assert res.status_code == status_code
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_04 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "users_index, status_code",
+    [
+        (0, 400),
+        (4, 400),
+        (5, 400),
+    ],
+)
+def test_edit_item_direct_after_login_04(client, users, db_register, users_index, status_code, mocker):
+    mock_render_template = mocker.patch('weko_workflow.views.render_template', return_value ='')
+    login(client=client, email=users[users_index]["email"])
+    url = url_for("weko_workflow.edit_item_direct_after_login", pid_value="1")
+    res = client.get(url)
+    mock_render_template.assert_called_with("weko_theme/error.html", error="You are not allowed to edit this item.")
+    assert res.status_code == status_code
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_05 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "users_index, status_code",
+    [
+        (1, 400),
+        (2, 400),
+        (3, 400),
+        (6, 400),
+    ],
+)
+def test_edit_item_direct_after_login_05(client, users, db_register, users_index, status_code, mocker):
+    mock_render_template = mocker.patch('weko_workflow.views.render_template', return_value ='')
+    mocker.patch('weko_records.api.ItemTypes.get_latest', return_value=None)
+    login(client=client, email=users[users_index]["email"])
+    url = url_for("weko_workflow.edit_item_direct_after_login", pid_value="1")
+    res = client.get(url)
+    mock_render_template.assert_called_with("weko_theme/error.html", error="You do not even have an ItemType.")
+    assert res.status_code == status_code
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_06 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "users_index, status_code",
+    [
+        (1, 400),
+        (2, 400),
+        (3, 400),
+        (6, 400),
+    ],
+)
+def test_edit_item_direct_after_login_06(client, users, db_register, users_index, status_code, mocker):
+    mock_render_template = mocker.patch('weko_workflow.views.render_template', return_value ='')
+    mocker.patch('weko_records.api.ItemTypes.get_by_id', return_value=None)
+    login(client=client, email=users[users_index]["email"])
+    url = url_for("weko_workflow.edit_item_direct_after_login", pid_value="1")
+    res = client.get(url)
+    mock_render_template.assert_called_with("weko_theme/error.html", error="Dependency ItemType not found.")
+    assert res.status_code == status_code
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_07 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "users_index, status_code",
+    [
+        (1, 400),
+        (2, 400),
+        (3, 400),
+        (6, 400),
+    ],
+)
+def test_edit_item_direct_after_login_07(client, users, db_register, users_index, status_code, mocker):
+    mock_render_template = mocker.patch('weko_workflow.views.render_template', return_value ='')
+    mocker.patch('weko_workflow.views.check_an_item_is_locked', return_value = True)
+    login(client=client, email=users[users_index]["email"])
+    url = url_for("weko_workflow.edit_item_direct_after_login", pid_value="1")
+    res = client.get(url)
+    mock_render_template.assert_called_with("weko_theme/error.html", error="Item cannot be edited because the import is in progress.")
+    assert res.status_code == status_code
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_08 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "users_index, status_code",
+    [
+        (1, 400),
+        (2, 400),
+        (3, 400),
+        (6, 400),
+    ],
+)
+def test_edit_item_direct_after_login_08(client, users, db_register, users_index, status_code, mocker):
+    mock_render_template = mocker.patch('weko_workflow.views.render_template', return_value ='')
+    mocker.patch('celery.task.control.inspect.ping', return_value="")
+    mocker.patch('weko_workflow.views.check_item_is_being_edit', return_value = "1")
+    login(client=client, email=users[users_index]["email"])
+    url = url_for("weko_workflow.edit_item_direct_after_login", pid_value="1")
+    res = client.get(url)
+    mock_render_template.assert_called_with("weko_theme/error.html", error="This Item is being edited.")
+    assert res.status_code == status_code
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_09 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "users_index, status_code",
+    [
+        (1, 400),
+        (2, 400),
+        (3, 400),
+        (6, 400),
+    ],
+)
+def test_edit_item_direct_after_login_09(client, users, db_register, users_index, status_code, mocker):
+    mock_render_template = mocker.patch('weko_workflow.views.render_template', return_value ='')
+    mocker.patch('celery.task.control.inspect.ping', return_value='')
+    mock_get_workflow_activity_by_item_id = mocker.patch.object(WorkActivity, 'get_workflow_activity_by_item_id', return_value = None)
+    mocker.patch('weko_workflow.views.get_workflow_by_item_type_id', return_value=None)
+    login(client=client, email=users[users_index]["email"])
+    url = url_for("weko_workflow.edit_item_direct_after_login", pid_value="1")
+    res = client.get(url)
+    assert mock_get_workflow_activity_by_item_id.call_count == 2
+    mock_render_template.assert_called_with("weko_theme/error.html", error="Workflow setting does not exist.")
+    assert res.status_code == status_code
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_10 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "users_index, status_code",
+    [
+        (1, 302),
+        (2, 302),
+        (3, 302),
+        (6, 302),
+    ],
+)
+def test_edit_item_direct_after_login_10(client, users, db_register, users_index, status_code, mocker):
+    mocker.patch('celery.task.control.inspect.ping', return_value="")
+    mock_get_workflow_activity_by_item_id = mocker.patch.object(WorkActivity, 'get_workflow_activity_by_item_id', return_value = None)
+    return_data_1 = MagicMock(id="1", flow_id="1")
+    mocker.patch('weko_workflow.views.get_workflow_by_item_type_id', return_value=return_data_1)
+    return_data_2 = MagicMock(activity_id=1)
+    mocker.patch("weko_workflow.views.prepare_edit_workflow", return_value=return_data_2)
+    login(client=client, email=users[users_index]["email"])
+    url = url_for("weko_workflow.edit_item_direct_after_login", pid_value="1")
+    res = client.get(url)
+    assert mock_get_workflow_activity_by_item_id.call_count == 2
+    assert res.status_code == status_code
+    assert res.location == 'http://TEST_SERVER.localdomain/workflow/activity/detail/1'
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_11 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "users_index, status_code",
+    [
+        (1, 500),
+        (2, 500),
+        (3, 500),
+        (6, 500),
+    ],
+)
+def test_edit_item_direct_after_login_11(client, users, db_register, users_index, status_code, mocker):
+    mock_render_template = mocker.patch('weko_workflow.views.render_template', return_value ='')
+    mocker.patch('celery.task.control.inspect.ping', return_value="")
+    mocker.patch("weko_workflow.views.prepare_edit_workflow", side_effect=SQLAlchemyError)
+    login(client=client, email=users[users_index]["email"])
+    url = url_for("weko_workflow.edit_item_direct_after_login", pid_value="1")
+    res = client.get(url)
+    mock_render_template.assert_called_with("weko_theme/error.html", error="An error has occurred.")
+    assert res.status_code == status_code
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_12 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "users_index, status_code",
+    [
+        (1, 500),
+        (2, 500),
+        (3, 500),
+        (6, 500),
+    ],
+)
+def test_edit_item_direct_after_login_12(client, users, db_register, users_index, status_code, mocker):
+    mock_render_template = mocker.patch('weko_workflow.views.render_template', return_value ='')
+    mocker.patch('celery.task.control.inspect.ping', return_value="")
+    mocker.patch("weko_workflow.views.prepare_edit_workflow", side_effect=BaseException)
+    login(client=client, email=users[users_index]["email"])
+    url = url_for("weko_workflow.edit_item_direct_after_login", pid_value="1")
+    res = client.get(url)
+    mock_render_template.assert_called_with("weko_theme/error.html", error="An error has occurred.")
+    assert res.status_code == status_code

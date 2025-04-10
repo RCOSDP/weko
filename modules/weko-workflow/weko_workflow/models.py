@@ -503,6 +503,9 @@ class FlowDefine(db.Model, TimestampMixin):
 
     is_deleted = db.Column(db.Boolean(name='is_deleted'), nullable=False, default=False)
     """flow define delete flag."""
+    
+    repository_id = db.Column(db.String(100), nullable=False, default="Root Index")
+    """the repository id of flow."""
 
     flow_type = db.Column(
         db.SmallInteger(), nullable=False, default=WEKO_WORKFLOW_REGISTRATION_FLOW_TYPE
@@ -693,6 +696,9 @@ class WorkFlow(db.Model, TimestampMixin):
 
     is_gakuninrdm = db.Column(db.Boolean(name='is_gakuninrdm'), nullable=False, default=False)
     """GakuninRDM flag."""
+    
+    repository_id = db.Column(db.String(100), nullable=False, default="Root Index")
+    """the repository id of workflow."""
 
 
 class Activity(db.Model, TimestampMixin):

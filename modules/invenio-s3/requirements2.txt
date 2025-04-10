@@ -31,7 +31,7 @@ citeproc-py-styles==0.1.2
 click==6.7
 cookiecutter==1.6.0
 counter-robots==2018.6
-cryptography==2.3.0
+cryptography==2.1.4
 datacite==1.0.1
 DateTime==4.9
 decorator==4.1.2
@@ -39,6 +39,7 @@ defusedxml==0.5.0
 dictdiffer==0.7.0
 distlib==0.3.6
 dnspython==2.2.1
+docutils==0.18.1
 dojson==1.3.2
 elasticsearch==6.1.1
 elasticsearch-dsl==6.4.0
@@ -162,7 +163,6 @@ maxminddb-geolite2==2017.803
 mistune==0.8.3
 more-itertools==8.10.0
 mock==5.0.2
-moto==1.3.7
 msgpack==0.6.2
 nbconvert==5.3.1
 nbformat==4.4.0
@@ -194,9 +194,8 @@ PyLD==2.0.3
 pyparsing==3.1.0
 -e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2
 pyPEG2==2.15.2
-pytest==4.2.0
-pytest-mock
-pytest-invenio==1.2.1
+pytest>=4.2.0
+pytest-mock==3.6.1
 python-dateutil==2.8.2
 python-editor==1.0.3
 python-geoip==1.2
@@ -276,7 +275,6 @@ webencodings==0.5.1
 -e ../weko-theme
 -e ../weko-user-profiles
 -e ../weko-workflow
--e ../weko-notifications
 Werkzeug==0.15.2
 whichcraft==0.4.1
 WTForms==2.1

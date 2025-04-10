@@ -70,7 +70,7 @@ class UserActivityLogger:
         })
 
     @classmethod
-    def get_next_parent_id(session):
+    def get_next_parent_id(cls, session):
         """Get next parent id.
 
         :param session: The database session.

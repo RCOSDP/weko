@@ -26,6 +26,7 @@ import sys
 import traceback
 from copy import deepcopy
 from datetime import date, datetime, timedelta
+import requests
 
 import redis
 from redis import sentinel
@@ -52,9 +53,9 @@ from weko_index_tree.utils import check_index_permissions, get_index_id, \
 from weko_records.api import ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
-from weko_records_ui.views import soft_delete
 from weko_redis.redis import RedisConnection
 from weko_workflow.api import GetCommunity, WorkActivity, WorkFlow as WorkFlows
+from .utils import is_duplicate_record
 from weko_workflow.utils import check_an_item_is_locked, \
     get_record_by_root_ver, get_thumbnails, prepare_edit_workflow, \
     set_files_display_type, prepare_delete_workflow
@@ -75,7 +76,7 @@ from .utils import _get_max_export_items, check_item_is_being_edit, \
     translate_validation_message, update_index_tree_for_record, \
     update_json_schema_by_activity_id, update_schema_form_by_activity_id, \
     update_sub_items_by_user_role, validate_form_input_data, validate_user, \
-    validate_user_mail_and_index
+    validate_user_mail_and_index, get_weko_link, get_access_token
 from .config import WEKO_ITEMS_UI_FORM_TEMPLATE,WEKO_ITEMS_UI_ERROR_TEMPLATE
 from weko_theme.config import WEKO_THEME_DEFAULT_COMMUNITY
 
@@ -96,6 +97,63 @@ blueprint_api = Blueprint(
     static_folder='static',
     url_prefix="/items",
 )
+
+#  OAポリシー取得エンドポイント
+@blueprint.route("/api/oa_policies", methods=["GET"])
+@login_required
+def get_oa_policy():
+    """
+    OAポリシー情報を取得するAPIエンドポイント。
+
+    リクエストパラメータ:
+        - issn (str): ISSN番号
+        - eissn (str): eISSN番号
+        - title (str): 雑誌名
+
+    レスポンス:
+        - 成功時: {"policy_url": "取得したポリシーURL"}
+        - 失敗時: {"error": "エラーメッセージ"}, HTTPステータスコード
+    """
+    try:
+        issn = request.args.get("issn", "").strip()
+        eissn = request.args.get("eissn", "").strip()
+        title = request.args.get("title", "").strip()
+
+        if not issn and not eissn and not title:
+            return jsonify({"error": "Please enter ISSN, eISSN, or journal title"}), 400
+
+        api_url = current_app.config.get("WEKO_ITEMS_UI_OA_POLICY_API_URL")
+        api_code = current_app.config.get("WEKO_ITEMS_UI_OA_POLICY_API_CODE")
+
+        # アクセストークンを取得
+        token_info = get_access_token(api_code)
+
+        if not token_info or "access_token" not in token_info:
+            return jsonify({"error": "Authentication error occurred"}), 401
+
+        token = token_info["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+        params = {"issn": issn, "eissn": eissn, "title": title}
+
+        # APIリクエスト送信
+        response = requests.get(api_url, headers=headers, params=params)
+
+        if response.status_code == 200:
+            data = response.json()
+            return jsonify({"policy_url": data.get("url", "No Policy Information found")})
+        elif response.status_code == 404:
+            return jsonify({"error": "No matching policy"}), 404
+        elif response.status_code == 429:
+            return jsonify({"error": "Request limit exceeded"}), 429
+        elif response.status_code == 500:
+            return jsonify({"error": "Internal server error"}), 500
+        else:
+            return jsonify({"error": "An unknown error occurred"}), 500
+
+    except requests.exceptions.RequestException:
+        return jsonify({"error": "API Request Failed"}), 500
+    except Exception as e:
+        return jsonify({"error": f"An unknown error occurred: {str(e)}"}), 500
 
 @blueprint.route('/', methods=['GET'])
 @blueprint.route('/<int:item_type_id>', methods=['GET'])
@@ -228,28 +286,45 @@ def iframe_save_model():
     """
     try:
         data = request.get_json()
-        # remove either check temp data
+
+        if not data:
+            return jsonify(code=1, msg="リクエストデータがありません"), 400
+
+        is_duplicate, recid_list, recid_links = is_duplicate_record(data)
+        if is_duplicate:
+            return jsonify({
+                "code": 1,
+                "msg": _('The same item may have been registered.'),
+                "recid_list": recid_list,
+                "duplicate_links": recid_links,
+                "is_duplicate": is_duplicate,
+            })
+
         if data and data.get('metainfo'):
             metainfo = deepcopy(data.get('metainfo'))
-            for key in metainfo.keys():
+            for key in list(metainfo.keys()):
                 if key.startswith('either_valid_'):
                     del data['metainfo'][key]
 
-        # activity_session = session['activity_info']
-        activity_session = session.get('activity_info',{})
+        # セッション取得
+        activity_session = session.get('activity_info', {})
         activity_id = activity_session.get('activity_id', None)
         if activity_id:
             sanitize_input_data(data)
             save_title(activity_id, data)
+            # メタデータからweko_linkを作成します。
+            weko_link = get_weko_link(data)
+            data["weko_link"] = weko_link
             activity = WorkActivity()
             activity.upt_activity_metadata(activity_id, json.dumps(data))
             db.session.commit()
     except Exception as ex:
         db.session.rollback()
         current_app.logger.exception("{}".format(ex))
-        return jsonify(code=1, msg='Model save error')
-    return jsonify(code=0, msg='Model save success at {} (utc)'.format(
-        datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
+        return jsonify(code=1, msg='Model save error'), 500  # HTTP 500 エラーを返す
+
+    return jsonify(code=0, msg='Model save success at {} (UTC)'.format(
+        datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'))), 200
 
 
 @blueprint.route('/iframe/success', methods=['GET'])
@@ -1167,6 +1242,7 @@ def prepare_delete_item(id=None, community=None):
         workflows = WorkFlows()
         workflow_detail = workflows.get_workflow_by_id(post_activity['workflow_id'])
 
+        from weko_records_ui.views import soft_delete
         if workflow_detail.delete_flow_id is None:
             soft_delete(pid_value)
             return jsonify(
@@ -1219,10 +1295,10 @@ def prepare_delete_item(id=None, community=None):
 
         if rtn.action_id == 2:   # end_action
             soft_delete(pid_value)
-            
+
         if url_redirect.startswith("/api/"):
             url_redirect = url_redirect[4:]
-            
+
         return jsonify(
             code=0,
             msg='success',
@@ -1491,9 +1567,11 @@ def get_authors_affiliation_settings():
     if author_affiliation_settings is not None:
         results = []
         for affiliation in author_affiliation_settings:
+            name = affiliation.name
             scheme = affiliation.scheme
             url = affiliation.url
             result = dict(
+                name=name,
                 scheme=scheme,
                 url=url
             )

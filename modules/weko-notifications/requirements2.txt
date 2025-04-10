@@ -194,8 +194,8 @@ PyLD==2.0.3
 pyparsing==3.1.0
 -e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2
 pyPEG2==2.15.2
-pytest==4.2.0
-pytest-mock
+pytest>=4.2.0
+pytest-mock==3.6.1
 python-dateutil==2.8.2
 python-editor==1.0.3
 python-geoip==1.2

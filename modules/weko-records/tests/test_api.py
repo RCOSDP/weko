@@ -26,6 +26,7 @@ import pytest
 from unittest import TestCase
 import json
 from elasticsearch.exceptions import RequestError
+from flask_login.utils import login_user
 from invenio_records.api import Record
 from invenio_records.errors import MissingModelError
 from invenio_pidstore.models import PersistentIdentifier
@@ -1663,8 +1664,24 @@ def test_revision_FilesMetadata(app):
 # class SiteLicense(RecordBase):
 #     def get_records(cls):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_site_license_get_records -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_site_license_get_records(app, db, site_license_info):
+def test_site_license_get_records(app, db, site_license_info, users):
     records = SiteLicense.get_records()
+    assert len(records)==1
+    assert records[0]['organization_name']=='test'
+    assert records[0]['domain_name']=='domain'
+    assert records[0]['mail_address']=='nii@nii.co.jp'
+    assert records[0]['addresses']==[]
+    
+    records = SiteLicense.get_records(users[0]['obj'])
+    assert len(records)==1
+    assert records[0]['organization_name']=='test'
+    assert records[0]['domain_name']=='domain'
+    assert records[0]['mail_address']=='nii@nii.co.jp'
+    assert records[0]['addresses']==[]
+    
+    site_license_info.repository_id = "comm01"
+    db.session.commit()
+    records = SiteLicense.get_records(users[2]['obj'])
     assert len(records)==1
     assert records[0]['organization_name']=='test'
     assert records[0]['domain_name']=='domain'
@@ -1674,7 +1691,7 @@ def test_site_license_get_records(app, db, site_license_info):
 # class SiteLicense(RecordBase):
 #     def update(cls, obj):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_site_license_update -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_site_license_update(app, db, site_license_info):
+def test_site_license_update(app, db, site_license_info, users):
     _none_obj = {}
     _no_data_obj = {
         'item_type': {},
@@ -1697,7 +1714,8 @@ def test_site_license_update(app, db, site_license_info):
             }
         ]
     }
-
+    user = users[0]["obj"]
+    login_user(user)
     SiteLicense.update(_none_obj)
     db.session.commit()
     records = SiteLicense.get_records()
@@ -1711,6 +1729,17 @@ def test_site_license_update(app, db, site_license_info):
     SiteLicense.update(_test_obj)
     db.session.commit()
     records = SiteLicense.get_records()
+    assert len(records)==1
+    assert records[0]['organization_name']=='test1'
+    assert records[0]['domain_name']=='domain1'
+    assert records[0]['mail_address']=='nii@nii.co.jp'
+    assert records[0]['addresses']==[{'finish_ip_address': '255.255.255.255', 'start_ip_address': '0.0.0.0'}]
+    
+    user = users[2]["obj"]
+    login_user(user)
+    SiteLicense.update(_test_obj)
+    db.session.commit()
+    records = SiteLicense.get_records(user)
     assert len(records)==1
     assert records[0]['organization_name']=='test1'
     assert records[0]['domain_name']=='domain1'
@@ -1772,6 +1801,7 @@ def test_depid_WekoRecord(app):
 #     def update_by_list_item_id(cls, item_ids, feedback_maillist):
 #     def get_mail_list_by_item_id(cls, item_id):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_feedback_mail_list_create_and_update -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+@patch('invenio_communities.utils.get_repository_id_by_item_id', return_value='Root Index')
 def test_feedback_mail_list_create_and_update(app, db):
     _item_id0 = uuid.uuid4()
     _item_id1 = uuid.uuid4()
@@ -1805,6 +1835,7 @@ def test_feedback_mail_list_create_and_update(app, db):
 # class FeedbackMailList(object):
 #     def get_feedback_mail_list(cls):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_get_feedback_mail_list -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+@patch('invenio_communities.utils.get_repository_id_by_item_id', return_value='Root Index')
 def test_get_feedback_mail_list(app, db):
     def _create_pid(id, uuid):
         pid = PersistentIdentifier()
@@ -1837,6 +1868,9 @@ def test_get_feedback_mail_list(app, db):
         data = FeedbackMailList.get_feedback_mail_list()
         assert data=={'nii0@nii.co.jp': {'items': [str(_item_id0), str(_item_id2)], 'author_id': ''},
                       'nii1@nii.co.jp': {'items': [str(_item_id1), str(_item_id2)], 'author_id': '1'}}
+        data = FeedbackMailList.get_feedback_mail_list(repo_id='Root Index')
+        assert data=={'nii0@nii.co.jp': {'items': [str(_item_id0), str(_item_id2)], 'author_id': ''},
+                      'nii1@nii.co.jp': {'items': [str(_item_id1), str(_item_id2)], 'author_id': '1'}}
 
 
 # class FeedbackMailList(object):
@@ -1844,12 +1878,13 @@ def test_get_feedback_mail_list(app, db):
 #     def delete_without_commit(cls, item_id):
 #     def delete_by_list_item_id(cls, item_ids):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_feedback_mail_list_delete -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+@patch('invenio_communities.utils.get_repository_id_by_item_id', return_value='Root Index')
 def test_feedback_mail_list_delete(app, db):
     _item_id1 = uuid.uuid4()
     _item_id2 = uuid.uuid4()
     _item_id3 = uuid.uuid4()
     _item_id4 = uuid.uuid4()
-    _feedback_maillist = ['nii@nii.co.jp']
+    _feedback_maillist = [{'email': 'nii0@nii.co.jp'}]
     FeedbackMailList.update_by_list_item_id([_item_id1, _item_id2, _item_id3, _item_id4], _feedback_maillist)
 
     flag = FeedbackMailList.delete(1)

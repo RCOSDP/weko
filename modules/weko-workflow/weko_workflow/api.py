@@ -34,6 +34,7 @@ from flask_login import current_user
 from marshmallow import ValidationError
 from requests import HTTPError
 from invenio_accounts.models import Role, User, userrole
+from invenio_communities.models import Community
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from sqlalchemy import and_, asc, desc, func, or_
@@ -85,6 +86,10 @@ class Flow(object):
             if not flow_name:
                 raise ValueError('Flow name cannot be empty.')
 
+            repository_id = flow.get('repository_id')
+            if not repository_id:
+                raise ValueError('Repository cannot be empty.')
+
             with db.session.no_autoflush:
                 cur_names = map(
                     lambda flow: flow.flow_name,
@@ -93,14 +98,21 @@ class Flow(object):
                 if flow_name in cur_names:
                     raise ValueError('Flow name is already in use.')
 
+                if repository_id != "Root Index":
+                    repository = Community.query.filter_by(id=repository_id).one_or_none()
+                    if not repository:
+                        raise ValueError('Repository is not found.')
+
                 action_start = _Action.query.filter_by(
                     action_endpoint='begin_action').one_or_none()
                 action_end = _Action.query.filter_by(
                     action_endpoint='end_action').one_or_none()
+
             _flow = _Flow(
                 flow_id=uuid.uuid4(),
                 flow_name=flow_name,
                 flow_user=current_user.get_id(),
+                repository_id=repository_id,
                 flow_type=flow_type
             )
             _flowaction_start = _FlowAction(
@@ -140,6 +152,10 @@ class Flow(object):
             if not flow_name:
                 raise ValueError('Flow name cannot be empty.')
 
+            repository_id = flow.get('repository_id')
+            if not repository_id:
+                raise ValueError('Repository cannot be empty.')
+
             with db.session.begin_nested():
                 # Get all names but the one being updated
                 cur_names = map(
@@ -150,13 +166,18 @@ class Flow(object):
                 if flow_name in cur_names:
                     raise ValueError('Flow name is already in use.')
 
+                if repository_id != "Root Index":
+                    repository = Community.query.filter_by(id=repository_id).one_or_none()
+                    if not repository:
+                        raise ValueError('Repository is not found.')
+
                 _flow = _Flow.query.filter_by(
                     flow_id=flow_id).one_or_none()
                 if _flow:
                     _flow.flow_name = flow_name
-                    _flow.flow_type = flow_type
                     _flow.flow_user = current_user.get_id()
-                    _flow.flow_type = flow.flow_type
+                    _flow.flow_type = flow_type
+                    _flow.repository_id = repository_id
                     db.session.merge(_flow)
             db.session.commit()
             return _flow
@@ -171,8 +192,13 @@ class Flow(object):
         :return:
         """
         with db.session.no_autoflush:
-            query = _Flow.query.filter_by(
-                is_deleted=False).order_by(asc(_Flow.flow_id))
+            query = _Flow.query.filter_by(is_deleted=False)
+            if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles):
+                query = query.order_by(asc(_Flow.flow_id))
+            else:
+                role_ids = [role.id for role in current_user.roles]
+                repository_ids = [community.id for community in Community.query.filter(Community.group_id.in_(role_ids)).all()]
+                query = query.filter(_Flow.repository_id.in_(repository_ids)).order_by(asc(_Flow.flow_id))
             return query.all()
 
     def get_flow_detail(self, flow_id):
@@ -431,6 +457,7 @@ class WorkFlow(object):
                     _workflow.open_restricted = workflow.get('open_restricted')
                     _workflow.location_id = workflow.get('location_id')
                     _workflow.is_gakuninrdm = workflow.get('is_gakuninrdm')
+                    _workflow.repository_id = workflow.get('repository_id') if workflow.get('repository_id') else _workflow.repository_id
                     db.session.merge(_workflow)
             db.session.commit()
             return _workflow
@@ -439,14 +466,21 @@ class WorkFlow(object):
             current_app.logger.exception(str(ex))
             return None
 
-    def get_workflow_list(self):
+    def get_workflow_list(self, user=None):
         """Get workflow list info.
 
         :return:
         """
         with db.session.no_autoflush:
-            query = _WorkFlow.query.filter_by(
-                is_deleted=False).order_by(asc(_WorkFlow.flows_id))
+            query = _WorkFlow.query.filter_by(is_deleted=False)
+            if not user:
+                return query.order_by(asc(_WorkFlow.flows_id)).all()
+            if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in user.roles):
+                query = query.order_by(asc(_WorkFlow.flows_id))
+            else:
+                role_ids = [role.id for role in user.roles]
+                repository_ids = [community.id for community in Community.query.filter(Community.group_id.in_(role_ids)).all()]
+                query = query.filter(_WorkFlow.repository_id.in_(repository_ids)).order_by(asc(_WorkFlow.flows_id))
             return query.all()
 
     def get_deleted_workflow_list(self):
@@ -1502,7 +1536,7 @@ class WorkActivity(object):
             query = query.filter(
                 _Activity.activity_status.in_(list_status))
         return query
-    
+
     @staticmethod
     def __filter_by_action(query, action):
         """Filter by activity action.
@@ -3012,10 +3046,10 @@ class WorkActivity(object):
             profiles_dict (dict): A dictionary of user profiles.
             template_file (str): The name of the template file to be used for the email.
             data_callback (function): A callback function to generate data for the email template.
-        
+
         Returns:
             None
-        
+
         Raises:
             Exception: If an unexpected error occurs during the email sending process.
         """
@@ -3055,7 +3089,7 @@ class WorkActivity(object):
 
         Args:
             activity (Activity): Activity object.
-        
+
         Returns:
             None
 
@@ -3086,7 +3120,7 @@ class WorkActivity(object):
                 if not is_shared:
                     # if self registration, not notify
                     set_target_id.discard(actor_id)
-                    
+
                 targets = User.query.filter(User.id.in_(list(set_target_id))).all()
                 settings = NotificationsUserSettings.query.filter(
                     NotificationsUserSettings.user_id.in_(list(set_target_id))
@@ -3127,7 +3161,7 @@ class WorkActivity(object):
                 "registration_date": registration_date.strftime("%Y-%m-%d %H:%M:%S"),
                 "record_url": url
             }
-        
+
         template_file = 'email_nortification_item_registered_{language}.tpl'
         self.send_notification_email(activity, targets, settings_dict, profiles_dict, template_file, item_registered_data)
         current_app.logger.info(
@@ -3140,10 +3174,10 @@ class WorkActivity(object):
 
         Send mail to user when request approval.
         Users with the authority to approve will be notified.
-        
+
         Args:
             activity (Activity): Activity object.
-        
+
         Returns:
             None
 
@@ -3240,7 +3274,7 @@ class WorkActivity(object):
                 if not is_shared:
                     # if self request, not notify
                     set_target_id.discard(actor_id)
-                
+
                 targets = User.query.filter(User.id.in_(list(set_target_id))).all()
                 settings = NotificationsUserSettings.query.filter(
                     NotificationsUserSettings.user_id.in_(list(set_target_id))
@@ -3249,8 +3283,8 @@ class WorkActivity(object):
                 user_profiles = UserProfile.query.filter(
                     UserProfile.user_id.in_(list(set_target_id))
                 ).all()
-                profiles_dict = {profile.user_id: profile for profile in user_profiles}    
-                actor = User.query.filter_by(id=actor_id).one_or_none()            
+                profiles_dict = {profile.user_id: profile for profile in user_profiles}
+                actor = User.query.filter_by(id=actor_id).one_or_none()
 
         except SQLAlchemyError as ex:
             current_app.logger.error(
@@ -3259,7 +3293,7 @@ class WorkActivity(object):
             )
             traceback.print_exc()
             return
-        
+
         from .utils import convert_to_timezone
         def request_approval_data(activity, target, profile):
             """
@@ -3299,7 +3333,7 @@ class WorkActivity(object):
 
         Args:
             activity (Activity): Activity object.
-        
+
         Returns:
             None
 
@@ -3329,7 +3363,7 @@ class WorkActivity(object):
                 if not is_shared:
                     # if self approval, not notify
                     set_target_id.discard(actor_id)
-                
+
                 targets = User.query.filter(User.id.in_(list(set_target_id))).all()
                 settings = NotificationsUserSettings.query.filter(
                     NotificationsUserSettings.user_id.in_(list(set_target_id))
@@ -3338,7 +3372,7 @@ class WorkActivity(object):
                 user_profiles = UserProfile.query.filter(
                     UserProfile.user_id.in_(list(set_target_id))
                 ).all()
-                profiles_dict = {profile.user_id: profile for profile in user_profiles} 
+                profiles_dict = {profile.user_id: profile for profile in user_profiles}
 
         except SQLAlchemyError as ex:
             current_app.logger.error(
@@ -3370,7 +3404,7 @@ class WorkActivity(object):
                 "approval_date": approval_date.strftime("%Y-%m-%d %H:%M:%S"),
                 "record_url": url
             }
-            
+
         template_file = 'email_nortification_item_approved_{language}.tpl'
         self.send_notification_email(activity, targets, settings_dict, profiles_dict, template_file, item_approved_data)
         current_app.logger.info(
@@ -3387,7 +3421,7 @@ class WorkActivity(object):
 
         Args:
             activity (Activity): Activity object.
-        
+
         Returns:
             None
 
@@ -3417,7 +3451,7 @@ class WorkActivity(object):
                 if not is_shared:
                     # if self reject, not notify
                     set_target_id.discard(actor_id)
-                
+
                 targets = User.query.filter(User.id.in_(list(set_target_id))).all()
                 settings = NotificationsUserSettings.query.filter(
                     NotificationsUserSettings.user_id.in_(list(set_target_id))
@@ -3426,7 +3460,7 @@ class WorkActivity(object):
                 user_profiles = UserProfile.query.filter(
                     UserProfile.user_id.in_(list(set_target_id))
                 ).all()
-                profiles_dict = {profile.user_id: profile for profile in user_profiles} 
+                profiles_dict = {profile.user_id: profile for profile in user_profiles}
         except SQLAlchemyError as ex:
             current_app.logger.error(
                 "Error had orrured in database during getting notification "
@@ -3434,7 +3468,7 @@ class WorkActivity(object):
             )
             traceback.print_exc()
             return
-        
+
         from .utils import convert_to_timezone
         def item_rejected_data(activity, target, profile):
             """
@@ -3448,7 +3482,7 @@ class WorkActivity(object):
             Returns:
                 dict: A dictionary containing the data to be used in the email template.
             """
-            timezone = profile.timezone if profile else None   
+            timezone = profile.timezone if profile else None
             rejected_date = convert_to_timezone(activity.updated, timezone)
             url = request.host_url + f"workflow/activity/detail/{activity.activity_id}"
             return {
@@ -3735,4 +3769,11 @@ class GetCommunity(object):
         """Get Community by ID."""
         from invenio_communities.models import Community
         c = Community.get(community_id)
+        return c
+
+    @classmethod
+    def get_community_by_root_node_id(cls, root_node_id):
+        """Get Community by ID."""
+        from invenio_communities.models import Community
+        c = Community.get_by_root_node_id(root_node_id)
         return c

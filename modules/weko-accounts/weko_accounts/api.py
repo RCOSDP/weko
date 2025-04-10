@@ -8,18 +8,28 @@
 
 """Shibboleth User API."""
 
+import re
 from datetime import datetime
+from urllib.parse import urlparse
 
-from flask import current_app, session
+import redis
+from flask import current_app, request, session
 from flask_babelex import gettext as _
 from flask_login import current_user, user_logged_in, user_logged_out
 from flask_security.utils import hash_password, verify_password
+
 from invenio_accounts.models import Role, User
 from invenio_db import db
+from weko_redis.redis import RedisConnection
 from weko_user_profiles.models import UserProfile
 from werkzeug.local import LocalProxy
 
 from .models import ShibbolethUser
+from weko_index_tree.models import Index
+
+import urllib.parse
+import requests
+
 
 _datastore = LocalProxy(lambda: current_app.extensions['security'].datastore)
 
@@ -151,7 +161,7 @@ class ShibUser(object):
             self.user = User.query.filter_by(email=account).first()
             shib_username_config = current_app.config[
                 'WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN']
-            
+
             with db.session.begin_nested():
                 self.user.email = self.shib_attr['shib_mail']
 
@@ -272,16 +282,161 @@ class ShibUser(object):
         :return:
 
         """
+        #ログインユーザーのロールをクリアする
+        self.user.roles.clear()
         check_role, error = self.assign_user_role()
         if not check_role:
             return error
 
-        # ! NEED RELATION SHIB_ATTR
-        # check_license, error = self.valid_site_license()
-        # if not check_license:
-        #     return error
+        try:
+            if current_app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS']:
+                roles_add = self._get_roles_to_add()
+                if not self._find_organization_name(roles_add):
+                    self._assign_roles_to_user(roles_add)
+        except Exception as ex:
+            return str(ex)
 
         return None
+
+    def _get_roles_to_add(self):
+        """
+        Get roles to add based on Shibboleth attributes.
+
+        Shibboleth属性に基づいて追加するロールを取得します。
+        具体的には、WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS設定がTrueの場合に、
+        WEKO_SHIB_ATTR_IS_MEMBER_OF属性またはWEKO_ACCOUNTS_IDP_ENTITY_ID属性に基づいて
+        追加するロールを決定します。
+
+        :return: Set of roles to add
+        """
+        shib_attr_is_member_of = []
+
+        if current_app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS']:
+            try:
+                # get shibboleth attributes (isMemberOf)
+                shib_attr_is_member_of = self.shib_attr.get('isMemberOf', [])
+
+                # check isMemberOf is a list
+                if not isinstance(shib_attr_is_member_of, list):
+                    raise ValueError('isMemberOf is not a list')
+
+                # check isMemberOf is empty
+                if not shib_attr_is_member_of:
+                    idp_entity_id = current_app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID']
+                    if not idp_entity_id:
+                        raise KeyError('WEKO_ACCOUNTS_IDP_ENTITY_ID is missing in config')
+
+                    shib_attr_is_member_of = current_app.config['WEKO_ACCOUNTS_GAKUNIN_DEFAULT_GROUP_MAPPING'].get(idp_entity_id, [])
+            except Exception as ex:
+                current_app.logger.error(f"Unexpected error: {ex}")
+                raise ex
+
+        return shib_attr_is_member_of
+
+    def _find_organization_name(self, group_ids):
+        """
+        事前に各ロールにorganization_nameが登録されていた場合、そのロールを割り当てる
+        """
+        try:
+            with db.session.begin_nested():
+                for group in group_ids:
+                    group_id = urllib.parse.quote(group)
+                    organization_name = self.get_organization_from_api(group_id)
+
+                    setting_role = ""
+                    if organization_name in current_app.config["WEKO_ACCOUNTS_GAKUNIN_ROLE"]["organizationName"]:
+                        setting_role = current_app.config["WEKO_ACCOUNTS_GAKUNIN_ROLE"]["defaultRole"].replace(" ", "_")
+                    elif organization_name in current_app.config["WEKO_ACCOUNTS_ORTHROS_INSIDE_ROLE"]["organizationName"]:
+                        setting_role = current_app.config["WEKO_ACCOUNTS_ORTHROS_INSIDE_ROLE"]["defaultRole"].replace(" ", "_")
+                    elif organization_name in current_app.config["WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE"]["organizationName"]:
+                        setting_role = current_app.config["WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE"]["defaultRole"].replace(" ", "_")
+                    elif organization_name in current_app.config["WEKO_ACCOUNTS_EXTRA_ROLE"]["organizationName"]:
+                        setting_role = current_app.config["WEKO_ACCOUNTS_EXTRA_ROLE"]["defaultRole"].replace(" ", "_")
+
+                    if len(setting_role) > 0:
+                        role = Role.query.filter_by(name=setting_role).one_or_none()
+                        _datastore.add_role_to_user(self.user, role)
+                        self.shib_user.shib_roles.append(role)
+                        return True
+
+                db.session.commit()
+                return False
+        except Exception as ex:
+                current_app.logger.error(f"Error assigning roles: {ex}")
+                db.session.rollback()
+                raise ex
+
+
+    def _assign_roles_to_user(self, map_group_names):
+        try:
+            # WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT設定を取得
+            config = current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT']
+            prefix = config['prefix']
+            role_keyword = config['role_keyword']
+            role_mapping = config['role_mapping']
+
+            with db.session.begin_nested():
+                for map_group_name in map_group_names:
+                    # ロール名が指定されたプレフィックスで始まるか確認
+                    pattern = prefix + r'_[A-Za-z_]_' + role_keyword + r'_[A-Za-z_]+'
+                    if re.match(pattern, map_group_name):
+                        # The map_group_name matches the pattern
+                        suffix = map_group_name.split(role_keyword + "_")[-1]
+                        weko_role_name = role_mapping.get(suffix)
+                        if weko_role_name:
+                            role = Role.query.filter_by(name=weko_role_name).one_or_none()
+                            if role and role not in self.user.roles:
+                                _datastore.add_role_to_user(self.user, role)
+                                self.shib_user.shib_roles.append(role)
+                    elif map_group_name == config["sysadm_group"]:
+                        # システム管理者のロールを追加
+                        sysadm_name = current_app.config['WEKO_ADMIN_PERMISSION_ROLE_SYSTEM']
+                        role = Role.query.filter_by(name=sysadm_name).one()
+                        if role and role not in self.user.roles:
+                            _datastore.add_role_to_user(self.user, role)
+                            self.shib_user.shib_roles.append(role)
+
+                    # マッピングされたロール名をデータベースでロールを確認
+                    role = Role.query.filter_by(name=map_group_name).one_or_none()
+                    # ロールが存在し、かつユーザーにまだそのロールが割り当てられていない場合
+                    if role and role not in self.user.roles:
+                        # ユーザーにロールを追加
+                        _datastore.add_role_to_user(self.user, role)
+                        # Shibbolethユーザーのロールリストに追加
+                        self.shib_user.shib_roles.append(role)
+
+                db.session.commit()
+        except Exception as ex:
+            current_app.logger.error(f"Error assigning roles: {ex}")
+            db.session.rollback()
+            raise ex
+
+    def get_organization_from_api(self, group_id):
+        url = f"https://cg.gakunin.jp/api/people/@me/{group_id}"
+        headers = {
+            'Content-Type': 'application/json',
+        }
+
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            data = response.json()
+            entries = data.get("entry", [])
+            for entry in entries:
+                organizations = entry.get("organizations", [])
+                for organization in organizations:
+                    if organization.get("type") == "organization":
+                        return organization.get("value", {}).get("name")
+            raise ValueError(f"Organization not found in response: {data}")
+        else:
+            raise ValueError(f"API returned error: {response.status_code}")
+
+
+
+    # ! NEED RELATION SHIB_ATTR
+    # check_license, error = self.valid_site_license()
+    # if not check_license:
+    #     return error
+
 
     @classmethod
     def shib_user_logout(cls):
@@ -299,3 +454,131 @@ def get_user_info_by_role_name(role_name):
     """Get user info by role name."""
     role = Role.query.filter_by(name=role_name).first()
     return User.query.filter(User.roles.contains(role)).all()
+
+
+def sync_shib_gakunin_map_groups():
+    """Handle SHIB_BIND_GAKUNIN_MAP_GROUPS logic."""
+    try:
+        # Entity ID → Redisのキーに変換
+        idp_entity_id = request.form.get('WEKO_ACCOUNTS_IDP_ENTITY_ID')
+        if not idp_entity_id:
+            raise KeyError('WEKO_ACCOUNTS_IDP_ENTITY_ID is missing in config')
+
+        parsed_url = urlparse(idp_entity_id)
+        fqdn = parsed_url.netloc.split(":")[0].replace('.', '_').replace('-', '_')
+        suffix = current_app.config.get('WEKO_ACCOUNTS_GAKUNIN_GROUP_SUFFIX', '')
+
+        # create Redis key
+        redis_key = fqdn + suffix
+        datastore = RedisConnection().connection(db=current_app.config['CACHE_REDIS_DB'], kv=True)
+        map_group_list = set(datastore.lrange(redis_key, 0, -1))
+
+        # get roles
+        roles = Role.query.all()
+        role_names = set({role.name for role in Role.query.all()})
+
+        if map_group_list != role_names:
+            update_roles(map_group_list, roles)
+    except KeyError as ke:
+        current_app.logger.error(f"Missing key in request headers: {ke}")
+        raise ke
+    except redis.ConnectionError as rce:
+        current_app.logger.error(f"Redis connection error: {rce}")
+        raise rce
+    except Exception as ex:
+        current_app.logger.error(f"Unexpected error: {ex}")
+        raise ex
+
+
+def update_roles(map_group_list, roles):
+    """Update roles based on map group list."""
+    role_names = set({role.name for role in roles})
+
+    with db.session.begin_nested():
+        # add new roles
+        for map_group_name in map_group_list:
+            if not map_group_name or map_group_name in role_names:
+                continue
+            new_role = Role(name=map_group_name, description="")
+            db.session.add(new_role)
+            db.session.flush()  # new_role.idを取得するためにフラッシュ
+
+            # WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSIONがTrueの場合、Indexクラスのbrowsing_roleに追加
+            if current_app.config.get('WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION', False):
+                index = Index.query.filter_by(id=new_role.id).one_or_none()
+                if index:
+                    update_browsing_role(new_role.id)
+                    db.session.add(index)
+
+            # WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSIONがTrueの場合、Indexクラスのcontribute_roleに追加
+            if current_app.config.get('WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSION', False):
+                index = Index.query.filter_by(id=new_role.id).one_or_none()
+                if index:
+                    update_contribute_role(new_role.id)
+                    db.session.add(index)
+
+
+        # delete roles that are not in map_group_list
+        for role_name in role_names:
+            if role_name in map_group_list:
+                continue
+            role_to_remove = Role.query.filter_by(name=role_name).one()
+            db.session.delete(role_to_remove)
+
+            # WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSIONがTrueの場合、Indexクラスのbrowsing_roleから削除
+            if current_app.config.get('WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION', False):
+                index = Index.query.filter_by(id=role_to_remove.id).one_or_none()
+                if index:
+                    remove_browsing_role(index,role_to_remove.id)
+                    db.session.add(index)
+
+            # WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSIONがTrueの場合、Indexクラスのcontribute_roleから削除
+            if current_app.config.get('WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSION', False):
+                index = Index.query.filter_by(id=role_to_remove.id).one_or_none()
+                if index:
+                    remove_contribute_role(index,role_to_remove.id)
+                    db.session.add(index)
+
+    db.session.commit()
+
+def update_browsing_role(self, role_id):
+        """Update browsing_role with the given role_id."""
+        if self.browsing_role:
+            browsing_roles = set(self.browsing_role.split(','))
+        else:
+            browsing_roles = set()
+
+        # Add the new role_id
+        browsing_roles.add(str(role_id))
+
+        # Update the browsing_role column
+        self.browsing_role = ','.join(browsing_roles)
+
+def remove_browsing_role(self, role_id):
+    """Remove the given role_id from browsing_role."""
+    if self.browsing_role:
+        browsing_roles = set(self.browsing_role.split(','))
+        if str(role_id) in browsing_roles:
+            browsing_roles.remove(str(role_id))
+            self.browsing_role = ','.join(browsing_roles)
+
+def update_contribute_role(self, role_id):
+        """Update contribute_role with the given role_id."""
+        if self.contribute_role:
+            contribute_roles = set(self.contribute_role.split(','))
+        else:
+            contribute_roles = set()
+
+        # Add the new role_id
+        contribute_roles.add(str(role_id))
+
+        # Update the contribute_role column
+        self.contribute_role = ','.join(contribute_roles)
+
+def remove_contribute_role(self, role_id):
+    """Remove the given role_id from contribute_role."""
+    if self.contribute_role:
+        contribute_roles = set(self.contribute_role.split(','))
+        if str(role_id) in contribute_roles:
+            contribute_roles.remove(str(role_id))
+            self.contribute_role = ','.join(contribute_roles)

@@ -24,6 +24,7 @@ from datetime import datetime
 import re
 import os
 import uuid
+import copy
 
 import six
 import werkzeug
@@ -65,6 +66,7 @@ from weko_workflow.api import WorkFlow
 
 from weko_records_ui.fd import add_signals_info
 from weko_records_ui.utils import check_items_settings, get_file_info_list
+from weko_records_ui.external import call_external_system
 from weko_workflow.utils import get_item_info, process_send_mail, set_mail_info
 
 from .ipaddr import check_site_license_permission
@@ -141,6 +143,7 @@ def publish(pid, record, template=None, **kwargs):
 
     pid_ver = PIDVersioning(child=pid)
     last_record = WekoRecord.get_record_by_pid(pid_ver.last_child.pid_value)
+    old_record = copy.deepcopy(last_record)
 
     if not publish_status:
         record.update({'publish_status': (status or PublishStatus.PUBLIC.value)})
@@ -156,6 +159,7 @@ def publish(pid, record, template=None, **kwargs):
     indexer = WekoIndexer()
     indexer.update_es_data(record, update_revision=False, field='publish_status')
     indexer.update_es_data(last_record, update_revision=False, field='publish_status')
+    call_external_system(old_record=old_record, new_record=last_record)
 
     return redirect(url_for('.recid', pid_value=pid.pid_value))
 
@@ -693,6 +697,18 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     if file_order >= 0 and files and files[file_order].get('url') and files[file_order]['url'].get('url'):
         file_url = files[file_order]['url']['url']
 
+    # Get communities info
+    belonging_community = []
+    for navi in record.navi:
+        path_arr = navi.path.split('/')
+        for path in path_arr:
+            index = Indexes.get_index(index_id=path)
+            from weko_workflow.api import GetCommunity
+            communities = GetCommunity.get_community_by_root_node_id(index.id)
+            if communities is not None:
+                for comm in communities:
+                    belonging_community.append(comm)
+
     # Get Settings
     enable_request_maillist = False
     items_display_settings = AdminSettings.get(name='items_display_settings',
@@ -747,6 +763,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
         search_author_flg=search_author_flg,
         show_secret_URL=_get_show_secret_url_button(record,filename),
+        belonging_community=belonging_community,
         **ctx,
         **kwargs
     )
@@ -990,12 +1007,19 @@ def soft_delete(recid):
     try:
         if not has_update_version_role(current_user):
             abort(403)
+        starts_with_del_ver = True
         if recid.startswith('del_ver_'):
             recid = recid.replace('del_ver_', '')
             delete_version(recid)
         else:
             soft_delete_imp(recid)
+            current_app.logger.info(f"Delete item: {recid}")
+            starts_with_del_ver = False
+
         db.session.commit()
+        if not starts_with_del_ver:
+            old_record = WekoRecord.get_record_by_pid(recid)
+            call_external_system(old_record=old_record)
         return make_response('PID: ' + str(recid) + ' DELETED', 200)
     except Exception as ex:
         db.session.rollback()
