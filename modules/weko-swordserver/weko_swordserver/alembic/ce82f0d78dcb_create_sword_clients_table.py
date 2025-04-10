@@ -28,10 +28,11 @@ def upgrade():
         sa.Column("updated", sa.DateTime(), nullable=False),
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("client_id", sa.String(length=255), nullable=False),
+        sa.Column("active", sa.Boolean(name="active")),
         sa.Column("registration_type_id", sa.SmallInteger(), nullable=False),
         sa.Column("mapping_id", sa.Integer(), nullable=False),
         sa.Column("workflow_id", sa.Integer()),
-        sa.Column("active", sa.Boolean(name="active")),
+        sa.Column("duplicate_check", sa.Boolean(name="duplicate_check")),
         sa.Column(
             "meta_data_api",
             sa.JSON().with_variant(

@@ -59,13 +59,16 @@ class TestSwordClient:
             client_id=client.client_id,
             registration_type_id=SwordClientModel.RegistrationType.DIRECT,
             mapping_id=sword_mapping[0]["sword_mapping"].id,
-            active=False,
-            meta_data_api=[],
         )
-        assert result.client_id == client.client_id
-        assert result.registration_type == "Direct"
-        assert result.mapping_id == sword_mapping[0]["sword_mapping"].id
-        assert result.workflow_id == None
+        obj = SwordClientModel.query.filter_by(client_id=client.client_id).first()
+        assert obj == result
+        assert obj.client_id == client.client_id
+        assert obj.active == True
+        assert obj.registration_type == "Direct"
+        assert obj.mapping_id == sword_mapping[0]["sword_mapping"].id
+        assert obj.workflow_id == None
+        assert obj.duplicate_check == False
+        assert obj.meta_data_api == []
 
         # direct with non-existent client_id
         with pytest.raises(SQLAlchemyError) as e:
@@ -82,16 +85,22 @@ class TestSwordClient:
         client = tokens[1]["client"]
         result = SwordClient.register(
             client_id=client.client_id,
+            active=False,
             registration_type_id=SwordClientModel.RegistrationType.WORKFLOW,
             mapping_id=sword_mapping[1]["sword_mapping"].id,
             workflow_id=workflow[1]["workflow"].id,
-            active=False,
-            meta_data_api=[],
+            duplicate_check=False,
+            meta_data_api=["CrossRef"]
         )
-        assert result.client_id == client.client_id
-        assert result.registration_type == "Workflow"
-        assert result.mapping_id == sword_mapping[1]["sword_mapping"].id
-        assert result.workflow_id == workflow[1]["workflow"].id
+        obj = SwordClientModel.query.filter_by(client_id=client.client_id).first()
+        assert obj == result
+        assert obj.client_id == client.client_id
+        assert obj.active == False
+        assert obj.registration_type == "Workflow"
+        assert obj.mapping_id == sword_mapping[1]["sword_mapping"].id
+        assert obj.workflow_id == workflow[1]["workflow"].id
+        assert obj.duplicate_check == False
+        assert obj.meta_data_api == ["CrossRef"]
 
         # workflow with non-existent workflow_id
         client = tokens[1]["client"]
@@ -125,18 +134,25 @@ class TestSwordClient:
 
         # Successful update workflow to direct
         client = sword_client[1]["sword_client"]
-        obj = SwordClient.update(
+        result = SwordClient.update(
             client_id=client.client_id,
+            active=False,
             registration_type_id=SwordClientModel.RegistrationType.DIRECT,
             mapping_id=sword_mapping[0]["sword_mapping"].id,
+            duplicate_check=True,
+            meta_data_api=["CrossRef"]
         )
-        assert (
-            obj == SwordClientModel.query.filter_by(client_id=client.client_id).first()
-        )
+
+        obj = SwordClientModel.query.filter_by(client_id=client.client_id).first()
+
+        assert obj == result
         assert obj.client_id == client.client_id
-        assert obj.registration_type_id == SwordClientModel.RegistrationType.DIRECT
+        assert obj.active == False
+        assert obj.registration_type == "Direct"
         assert obj.mapping_id == sword_mapping[0]["sword_mapping"].id
         assert obj.workflow_id == None
+        assert obj.duplicate_check == True
+        assert obj.meta_data_api == ["CrossRef"]
 
         # Update workflow to direct with non-existent client_id
         client = sword_client[0]["sword_client"]
@@ -172,15 +188,15 @@ class TestSwordClient:
 
         # Successful update direct to workflow
         client = sword_client[0]["sword_client"]
-        obj = SwordClient.update(
+        result = SwordClient.update(
             client_id=client.client_id,
             registration_type_id=SwordClientModel.RegistrationType.WORKFLOW,
             mapping_id=sword_mapping[1]["sword_mapping"].id,
             workflow_id=workflow[1]["workflow"].id,
         )
-        assert (
-            obj == SwordClientModel.query.filter_by(client_id=client.client_id).first()
-        )
+
+        obj = SwordClientModel.query.filter_by(client_id=client.client_id).first()
+        assert obj == result
         assert obj.client_id == client.client_id
         assert obj.registration_type_id == SwordClientModel.RegistrationType.WORKFLOW
         assert obj.mapping_id == sword_mapping[1]["sword_mapping"].id

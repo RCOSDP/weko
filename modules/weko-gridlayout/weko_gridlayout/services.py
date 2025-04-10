@@ -442,6 +442,7 @@ class WidgetDesignServices:
                     community_result['title'] = community.title
                     result['repositories'].append(community_result)
         except Exception as e:
+            current_app.logger.error(f"Error getting repository list: {e}")
             result['error'] = str(e)
 
         return result

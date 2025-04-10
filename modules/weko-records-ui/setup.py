@@ -111,6 +111,7 @@ setup(
             'weko_records_ui_js = weko_records_ui.bundles:js',
             'weko_records_ui_preview_carousel_js = weko_records_ui.bundles:preview_carousel',
             'weko_records_ui_file_action_js = weko_records_ui.bundles:file_action_js',
+            'weko_records_ui_bucket_js = weko_records_ui.bundles:bucket_js',
             'weko_records_ui_bootstrap_popover_js = weko_records_ui.bundles:bootstrap_popover_js',
             'weko_records_ui_bootstrap_popover_css = weko_records_ui.bundles:bootstrap_popover_css',
         ],

@@ -23,6 +23,7 @@ import csv
 import json
 import math
 import os
+import traceback
 import zipfile
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
@@ -327,7 +328,7 @@ def get_user_report_data(repo_id=None):
                     .group_by(Role.id).all()
     except Exception as e:
         current_app.logger.error('Could not retrieve user report data: ')
-        current_app.logger.error(e)
+        traceback.print_exc()
         return {}
 
     role_counts = [dict(role_name=name, count=count)
@@ -666,6 +667,7 @@ class StatisticMail:
                     failed_mail += 1
         except Exception as ex:
             current_app.logger.error('Error has occurred: {}'.format(ex))
+            traceback.print_exc()
         end_time = datetime.now()
         FeedbackMailHistory.create(
             session,
@@ -1342,6 +1344,7 @@ class FeedbackMail:
                 config.WEKO_ADMIN_NUMBER_OF_SEND_MAIL_HISTORY
             return result
         except Exception as ex:
+            traceback.print_exc()
             result['error'] = 'Cannot get data. Detail: ' + str(ex)
             return result
 

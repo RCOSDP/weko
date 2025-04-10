@@ -915,26 +915,29 @@ def sword_client(db, tokens, sword_mapping, workflow):
     client = tokens[0]["client"]
     sword_client1 = SwordClientModel(
         client_id=client.client_id,
+        active=True,
         registration_type_id=SwordClientModel.RegistrationType.DIRECT,
         mapping_id=sword_mapping[0]["sword_mapping"].id,
-        active=False,
+        duplicate_check=False,
         meta_data_api=[],
     )
     client = tokens[1]["client"]
     sword_client2 = SwordClientModel(
         client_id=client.client_id,
+        active=True,
         registration_type_id=SwordClientModel.RegistrationType.WORKFLOW,
         mapping_id=sword_mapping[1]["sword_mapping"].id,
         workflow_id=workflow[1]["workflow"].id,
-        active=False,
+        duplicate_check=True,
         meta_data_api=[],
     )
     client = tokens[2]["client"]
     sword_client3 = SwordClientModel(
         client_id=client.client_id,
+        active=False,
         registration_type_id=SwordClientModel.RegistrationType.DIRECT,
         mapping_id=sword_mapping[0]["sword_mapping"].id,
-        active=False,
+        duplicate_check=False,
         meta_data_api=[],
     )
 

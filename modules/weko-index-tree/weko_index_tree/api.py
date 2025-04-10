@@ -26,6 +26,7 @@ from copy import deepcopy
 from datetime import date, datetime, timezone
 from functools import partial
 from socketserver import DatagramRequestHandler
+import traceback
 
 from b2handle.clientcredentials import PIDClientCredentials
 from redis.exceptions import RedisError
@@ -170,6 +171,7 @@ class Indexes(object):
                 target_key=data["id"]
             )
         except IntegrityError as ie:
+            current_app.logger.error(f"Error occurred while creating index: {cid}")
             UserActivityLogger.error(
                 operation="INDEX_CREATE",
             )
@@ -181,14 +183,16 @@ class Indexes(object):
                          if pid_info.position_max is not None else 0)
                     _add_index(data)
                 except SQLAlchemyError as ex:
+                    current_app.logger.error(ex)
+                    traceback.print_exc()
                     is_ok = False
-                    current_app.logger.debug(ex)
             else:
                 is_ok = False
-                current_app.logger.debug(ie)
+                current_app.logger.error(ie)
         except Exception as ex:
             is_ok = False
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
+            traceback.print_exc()
         finally:
             del data
             if not is_ok:
@@ -292,12 +296,15 @@ class Indexes(object):
             )
             return index
         except Exception as ex:
-            current_app.logger.debug(ex)
+            db.session.rollback()
+            current_app.logger.error(
+                f"Error occurred while updating index: {index_id}"
+            )
+            traceback.print_exc()
             UserActivityLogger.error(
                 operation="INDEX_UPDATE",
                 target_key=index_id
             )
-            db.session.rollback()
         return
 
     @classmethod

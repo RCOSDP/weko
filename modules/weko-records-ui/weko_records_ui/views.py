@@ -23,6 +23,7 @@
 from datetime import datetime
 import re
 import os
+import traceback
 import uuid
 import copy
 
@@ -80,7 +81,7 @@ from .utils import create_secret_url, get_billing_file_download_permission, \
     delete_version, is_show_email_of_creator,hide_by_itemtype
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
-from .api import get_s3_bucket_list, copy_bucket_to_s3, replace_file_bucket
+from .api import get_s3_bucket_list, copy_bucket_to_s3, replace_file_bucket, get_file_place_info
 
 
 blueprint = Blueprint(
@@ -1011,11 +1012,11 @@ def soft_delete(recid):
         if recid.startswith('del_ver_'):
             recid = recid.replace('del_ver_', '')
             delete_version(recid)
-            current_app.logger.info(f"Delete version: {recid}")
         else:
             soft_delete_imp(recid)
             current_app.logger.info(f"Delete item: {recid}")
             starts_with_del_ver = False
+
         db.session.commit()
         if not starts_with_del_ver:
             old_record = WekoRecord.get_record_by_pid(recid)
@@ -1201,17 +1202,63 @@ def copy_bucket():
         uri = copy_bucket_to_s3(pid, filename, bucket_id, checked=checked, bucket_name=bucket_name)
         return jsonify(uri)
     except Exception as e:
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 400
 
+
+@blueprint.route("/records/get_file_place", methods=['POST'])
+def get_file_place():
+    pid = request.form.get('pid')
+    bucket_id = request.form.get('bucket_id')
+    file_name = request.form.get('file_name')
+    content_type = request.form.get('content_type')
+
+    try:
+        file_place, uri, new_bucket_id, new_version_id = get_file_place_info(pid, bucket_id, file_name, content_type)
+        result = {
+            'file_place': file_place,
+            'uri': uri,
+            'bucket_id': new_bucket_id,
+            'version_id': new_version_id
+        }
+        return jsonify(result)
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 400
 
 @blueprint.route("/records/replace_file", methods=['POST'])
 def replace_file():
-    pid = request.form.get('pid')
-    bucket_id = request.form.get('bucket_id')
-    file = request.files['file']
+    return_file_place = request.form.get('return_file_place')
 
-    try:
-        uri = replace_file_bucket(pid, bucket_id, file)
-        return jsonify(uri)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
+    if (return_file_place == 'S3'):
+
+        pid = request.form.get('pid')
+        bucket_id = request.form.get('bucket_id')
+        file_name = request.form.get('file_name')
+        file_size = int(request.form.get('file_size'))
+        file_checksum = request.form.get('file_checksum')
+        new_bucket_id = request.form.get('new_bucket_id')
+        new_version_id = request.form.get('new_version_id')
+        try:
+            result = replace_file_bucket(pid, bucket_id, file_name=file_name,
+                                      file_size=file_size, new_bucket_id=new_bucket_id,
+                                      file_checksum=file_checksum,
+                                      new_version_id=new_version_id)
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({'error': str(e)}), 400
+
+    else:
+        pid = request.form.get('pid')
+        bucket_id = request.form.get('bucket_id')
+        file = request.files['file']
+        file_name = request.form.get('file_name')
+        file_size = int(request.form.get('file_size'))
+
+        try:
+            result = replace_file_bucket(pid, bucket_id, file=file, file_name=file_name,
+                                      file_size=file_size)
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({'error': str(e)}), 400
+
