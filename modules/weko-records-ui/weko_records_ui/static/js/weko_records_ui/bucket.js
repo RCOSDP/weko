@@ -115,25 +115,35 @@ function replaceFile() {
   document.getElementById('fileInput').click();
 }
 document.getElementById('fileInput').addEventListener('change', async function(event) {
+  $('#loading').show();
+
   const file = event.target.files[0];
   document.getElementById('fileInput').click();
   const pid = document.getElementById('pid').value
-  const bucket_id = document.getElementById('bucket_id_value').value
-  const txt_filename = document.getElementById('txt_filename').value
-  const select_same_named_message = document.getElementById('select_same_named_message').value
-  const record_url = document.getElementById('txt_record_url').value
-  const file_replacement_successful_message = document.getElementById('file_replacement_successful').value
+  const bucket_id = document.getElementById('bucket_id_value').value;
+  const txt_filename = document.getElementById('txt_filename').value;
+  const select_same_named_message = document.getElementById('select_same_named_message').value;
+  const record_url = document.getElementById('txt_record_url').value;
+  const file_replacement_successful_message = document.getElementById('file_replacement_successful').value;
+  const replacing_file_failed = document.getElementById('replacing_file_failed').value;
+
+  let return_file_place = null;
+  let return_s3_uri = null;
+  let return_bucket_id = null;
+  let return_version_id = null;
 
   if (file) {
     if (file.name !== txt_filename) {
       alert(select_same_named_message);
+      $('#loading').hide();
       return;
     }
     const formData = new FormData();
     formData.append('pid', pid);
     formData.append('bucket_id', bucket_id);
-    formData.append('file', file);
-    url ="/records/replace_file";
+    formData.append('file_name', file.name);
+    formData.append('content_type', file.type);
+    url ="/records/get_file_place";
 
     await fetch(url ,{method:'POST', credentials:"include", body: formData})
     .then(res => {
@@ -145,12 +155,114 @@ document.getElementById('fileInput').addEventListener('change', async function(e
       return res.json();
     })
     .then(result => {
-      alert(file_replacement_successful_message);
-      window.location = record_url;
+      console.log(result);
+      return_file_place = result.file_place
+      return_s3_uri = result.uri;
+      return_bucket_id = result.bucket_id;
+      return_version_id = result.version_id;
     })
     .catch(error => {
-      alert(error.message);
+      alert(replacing_file_failed + error.message);
+      $('#loading').hide();
+      return;
     });
-  }
 
+    console.log('return_file_place:', return_file_place);
+    const formData_second = new FormData();
+    url ="/records/replace_file";
+
+    if(return_file_place == "S3"){
+      // S3 strage
+      const signedUrl = return_s3_uri; // サーバーサイドで生成された署名付きURL
+      await uploadFileToS3(file, signedUrl);
+
+      const checksum = await calculateChecksum(file);
+      formData_second.append('return_file_place', return_file_place);
+      formData_second.append('pid', pid);
+      formData_second.append('bucket_id', bucket_id);
+      formData_second.append('file_name', file.name);
+      formData_second.append('file_size', file.size);
+      formData_second.append('file_checksum', checksum);
+      formData_second.append('new_bucket_id', return_bucket_id);
+      formData_second.append('new_version_id', return_version_id);
+
+      await fetch(url ,{method:'POST', credentials:"include", body: formData_second})
+      .then(res => {
+        if (!res.ok) {
+          return res.json().then(errorData => {
+              throw new Error(errorData.error);
+          });
+        }
+        return res.json();
+      })
+      .then(result => {
+        alert(file_replacement_successful_message);
+        window.location = record_url;
+      })
+      .catch(error => {
+        alert(replacing_file_failed + error.message);
+        $('#loading').hide();
+      });
+
+    } else {
+      // weko local strage
+      formData_second.append('return_file_place', return_file_place);
+      formData_second.append('pid', pid);
+      formData_second.append('bucket_id', bucket_id);
+      formData_second.append('file', file);
+      formData_second.append('file_name', file.name);
+      formData_second.append('file_size', file.size);
+
+      await fetch(url ,{method:'POST', credentials:"include", body: formData_second})
+      .then(res => {
+        if (!res.ok) {
+          return res.json().then(errorData => {
+              throw new Error(errorData.error);
+          });
+        }
+        return res.json();
+      })
+      .then(result => {
+        alert(file_replacement_successful_message);
+        window.location = record_url;
+      })
+      .catch(error => {
+        alert(replacing_file_failed + error.message);
+        $('#loading').hide();
+      });
+    }
+  }
 });
+
+async function calculateChecksum(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => ('00' + b.toString(16)).slice(-2)).join('');
+  return hashHex;
+}
+
+// XMLHttpRequestをPromiseでラップする関数
+function uploadFileToS3(file, signedUrl) {
+  return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', signedUrl, true);
+      xhr.setRequestHeader('Content-Type', 'binary/octet-stream');
+
+      xhr.onload = () => {
+          if (xhr.status === 200) {
+              console.log('File uploaded successfully');
+              resolve();
+          } else {
+              console.error('Error uploading file:', xhr.statusText);
+              alert(replacing_file_failed);
+              reject(new Error(xhr.statusText));
+          }
+      };
+
+      xhr.onerror = () => {
+          reject(new Error('Network error'));
+      };
+      xhr.send(file);
+  });
+}
