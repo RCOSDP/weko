@@ -1759,6 +1759,14 @@ msgstr "入力タイプを選択してください"
 msgid "CrossRef Query Services Account"
 msgstr "Crossrefクエリサービスアカウント"
 
+#: weko_admin/templates/weko_admin/admin/web_api_account.html:54
+msgid "OA assist API Client ID"
+msgstr "OAアシストAPIクライアントID"
+
+#: weko_admin/templates/weko_admin/admin/web_api_account.html:60
+msgid "OA assist API Client Secret"
+msgstr "OAアシストAPIクライアントシークレット"
+
 #: weko_admin/templates/weko_admin/email_templates/report.html:1
 msgid "The report logs have been sent."
 msgstr "レポートログが送信されました"

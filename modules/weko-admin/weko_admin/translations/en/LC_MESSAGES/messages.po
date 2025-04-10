@@ -1773,6 +1773,14 @@ msgstr ""
 msgid "CrossRef Query Services Account"
 msgstr "Crossref Query Services Account"
 
+#: weko_admin/templates/weko_admin/admin/web_api_account.html:54
+msgid "OA assist API Client ID"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/web_api_account.html:60
+msgid "OA assist API Client Secret"
+msgstr ""
+
 #: weko_admin/templates/weko_admin/email_templates/report.html:1
 msgid "The report logs have been sent."
 msgstr ""
