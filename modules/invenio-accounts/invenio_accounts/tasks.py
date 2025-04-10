@@ -14,9 +14,10 @@ from celery import shared_task
 from flask import current_app
 from flask_mail import Message
 from invenio_db import db
+from invenio_mail.models import MailConfig
+from invenio_mail.admin import _set_flask_mail_cfg
 
 from .models import SessionActivity
-from .proxies import current_accounts
 from .sessions import delete_session
 
 
@@ -26,6 +27,8 @@ def send_security_email(data):
 
     :param data: Contains the email data.
     """
+    mail_cfg = MailConfig.get_config()
+    _set_flask_mail_cfg(mail_cfg)
     msg = Message()
     msg.__dict__.update(data)
     current_app.extensions['mail'].send(msg)

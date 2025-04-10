@@ -31,8 +31,6 @@ from sqlalchemy.sql.functions import func
 from sqlalchemy.exc import SQLAlchemyError
 from time import sleep
 
-from weko_logging.activity_logger import UserActivityLogger
-
 from .models import Authors, AuthorsPrefixSettings, AuthorsAffiliationSettings
 
 
@@ -58,6 +56,7 @@ class WekoAuthors(object):
                 author = Authors(id=new_id, json=data)
                 session.add(author)
 
+            from weko_logging.activity_logger import UserActivityLogger
             UserActivityLogger.info(
                 operation="AUTHOR_CREATE",
                 target_key=new_id
@@ -133,6 +132,7 @@ class WekoAuthors(object):
                 author.json = data
                 db.session.merge(author)
 
+            from weko_logging.activity_logger import UserActivityLogger
             UserActivityLogger.info(
                 operation="AUTHOR_UPDATE",
                 target_key=author_id

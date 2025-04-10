@@ -87,7 +87,7 @@ from .utils import (
     get_root_item_option,
     get_sub_item_option,
     get_tree_items,
-    handle_doi,
+    handle_metadata_by_doi,
     handle_get_all_sub_id_and_name,
     handle_workflow,
     make_stats_file,
@@ -475,7 +475,7 @@ class ItemImportView(BaseView):
                     create_flow_define()
                     handle_workflow(item)
                     if (list_doi[idx]):
-                        metadata_doi = handle_doi(item, list_doi[idx])
+                        metadata_doi = handle_metadata_by_doi(item, list_doi[idx])
                         item["metadata"] = metadata_doi
                     group_tasks.append(import_item.s(item, request_info))
                     db.session.commit()
@@ -823,7 +823,6 @@ class ItemRocrateImportView(BaseView):
         :return: check status.
         """
         data = request.get_json()
-        print(f"data812: {data}")
         result = {}
 
         if data and data.get("task_id"):
@@ -835,6 +834,7 @@ class ItemRocrateImportView(BaseView):
                     {"start_date": start_date, "end_date": end_date, **task.result}
                 )
             elif task and task.status != "PENDING":
+                current_app.logger.error(f"Task {task.id} failed")
                 result["error"] = _("Internal server error")
         return jsonify(**result)
 
@@ -845,7 +845,7 @@ class ItemRocrateImportView(BaseView):
         :return: The response of the download.
         """
         data = request.get_json()
-        now = str(datetime.date(datetime.now()))
+        now = datetime.now().strftime("%Y-%m-%d")
         file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
 
         file_name = "check_{}.{}".format(now, file_format)
@@ -973,7 +973,7 @@ class ItemRocrateImportView(BaseView):
         :return: The response of the download.
         """
         data = request.get_json()
-        now = str(datetime.date(datetime.now()))
+        now = datetime.now().strftime("%Y-%m-%d")
 
         file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
         file_name = "List_Download {}.{}".format(now, file_format)

@@ -23,7 +23,9 @@
 import sys
 import re
 import uuid
+import json
 
+from flask_wtf import FlaskForm
 from flask import abort, current_app, flash, jsonify, request, url_for
 from flask_admin import BaseView, expose
 from flask_login import current_user
@@ -38,6 +40,7 @@ from weko_admin.models import AdminSettings
 from weko_index_tree.models import Index
 from weko_records.api import ItemTypes
 from weko_records.models import ItemTypeProperty
+from weko_admin.models import AdminSettings
 
 from . import config
 from .api import Action, Flow, WorkActivity, WorkFlow
@@ -607,6 +610,60 @@ class ActivitySettingsView(BaseView):
             )
         return abort(400)
 
+class WorkSpaceWorkFlowSettingView(BaseView):
+    """WorkSpace WorkFlow setting view."""
+
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        """Index."""
+        default_workspace_workflowselect_api = { "item_type_id": "30002",
+                            "work_flow_id": "1", "workFlow_select_flg":"1"}  # Default
+
+        current_settings = AdminSettings.get(
+                name='workspace_workflow_settings',
+                dict_to_object=False)
+
+        if not current_settings:  
+            AdminSettings.update('workspace_workflow_settings', default_workspace_workflowselect_api)
+            current_settings = AdminSettings.get(
+                name='workspace_workflow_settings',
+                dict_to_object=False)
+
+        try:
+            form = FlaskForm(request.form)
+            item_type_list = ItemTypes.get_latest_with_item_type(True)
+
+            item_type_list = [item for item in item_type_list if item[3] != True]
+            workflow = WorkFlow()
+            workflows = workflow.get_workflow_list()
+
+            if request.method == 'POST' and form.validate():
+                # Process forms
+                form = request.form.get('submit', None)
+                if form == 'set_workspace_workflow_setting_form':
+                    workFlow_select_flg = request.form.get('registrationRadio', '')
+
+                    # Direct registration
+                    if workFlow_select_flg == '1':
+                        current_settings["workFlow_select_flg"] = '1'
+                        current_settings["item_type_id"] = request.form.get('itemType', '')
+                    else:
+                        # Registration with workflow
+                        current_settings["workFlow_select_flg"] = '0'
+                        current_settings["work_flow_id"] = request.form.get('workFlow', '')
+
+                    AdminSettings.update('workspace_workflow_settings',
+                                         current_settings)
+                    flash(_('WorkSpace WorkFlow Setting was updated.'), category='success')
+
+            return self.render('weko_workflow/admin/workspace_workflow_setting.html',
+                               item_type_list=item_type_list,
+                               work_flow_list=workflows,
+                               form=form)
+        except BaseException:
+            current_app.logger.error(
+                'Unexpected error: {}'.format(sys.exc_info()))
+        return abort(400)
 
 workflow_adminview = {
     'view_class': WorkFlowSettingView,
@@ -614,6 +671,15 @@ workflow_adminview = {
         'category': _('WorkFlow'),
         'name': _('WorkFlow List'),
         'endpoint': 'workflowsetting'
+    }
+}
+
+workspace_workflow_adminview = {
+    'view_class': WorkSpaceWorkFlowSettingView,
+    'kwargs': {
+        'category': _('WorkFlow'),
+        'name': _('WorkSpaceWorkFlow Setting'),
+        'endpoint': 'workspaceworkflowsetting'
     }
 }
 
@@ -639,4 +705,5 @@ __all__ = (
     'flow_adminview',
     'workflow_adminview',
     'activity_settings_adminview',
+    'workspace_workflow_adminview',
 )

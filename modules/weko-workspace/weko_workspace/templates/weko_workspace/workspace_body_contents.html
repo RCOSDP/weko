@@ -1,0 +1,137 @@
+{#
+  # This file is part of WEKO3.
+  # Copyright (C) 2017 National Institute of Informatics.
+  #
+  # WEKO3 is free software; you can redistribute it
+  # and/or modify it under the terms of the GNU General Public License as
+  # published by the Free Software Foundation; either version 2 of the
+  # License, or (at your option) any later version.
+  #
+  # WEKO3 is distributed in the hope that it will be
+  # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  # General Public License for more details.
+  #
+  # You should have received a copy of the GNU General Public License
+  # along with WEKO3; if not, write to the
+  # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+  # MA 02111-1307, USA.
+  #}
+  
+  <div id="search" class="workspace-body-contents">
+    <div id="search_res">
+      <div class="panel panel-default">
+        <div role="navigation" style="display: flex; flex-direction: column; width: 300px;">
+          <input type="button" id="btn_export" value="{{_('Export Items')}}"
+            style="margin-bottom: 10px; width: 50%; text-align: left;" />
+            <input id="Option_Label" type="hidden" value="{{_('Please select the following option:')}}" />
+            <input id="Item_Selected" type="hidden" value="{{_('Selected Items')}}" />
+            <input id="Item_All" type="hidden" value="{{_('All Items')}}" />
+            <input id="Item_Cancel" type="hidden" value="{{_('Cancel')}}" />
+            <input id="No_Items" type="hidden" value="{{_('Error: There is no Selected items. Please check the item you want to export')}}" />
+          <div id="search-container"></div>
+          <input type="hidden" id="placeholder" value="{{_('Please press Enter after inputting to search.')}}" />
+            <input type="hidden" id="showNoResultsMsg" value="{{_('No results found matching your search criteria.')}}" />
+          </div>
+          <span><strong>{{username}}</strong></span>
+        </div>
+        <div id="search-result-body" class="panel-body">
+          <div id="index_item_list">
+            <div class="form-inline flow-root">
+              <div class="pull-left">
+                <div class="form-group">
+                  <input type="checkbox" id="check_all">
+                  <a href="{{ url_for('weko_workspace.itemregister') }}" class="btn btn-primary">
+                    <i class="bi bi-folder-plus" style="font-size: 20px;"></i>
+                  </a>
+                </div>
+              </div>
+              <div class="pull-right">
+                <div class="form-group">
+                  <a href="javascript:void(0)" class="btn btn-primary" id="groupYearicon">
+                    <i class="bi bi-diagram-3" style="font-size: 20px;"></i>
+                  </a>
+                  <a id="toggleButton" class="btn btn-primary" data-toggle="dropdown" href="javascript:void(0)" aria-expanded="false">{{_('Filter Display')}}<strong class="caret"></strong></a>
+                  <select class="form-control" id="sort_item">
+                    <option value="1" selected="selected">{{_('Publication Date')}}</option>
+                    <option value="2">{{_('Title')}}</option>
+                    <option value="3">{{_('Number of accesses')}}</option>
+                    <option value="4">{{_('Number of downloads')}}</option>
+                  </select>
+                  <select class="form-control" id="sort_order">
+                    <option value="1">asc</option>
+                    <option value="2">desc</option>
+                  </select>
+                  <select class="form-control" id="items_per_page">
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                  </select>
+                </div>
+              </div>
+              <div style="clear: both;"></div>
+              <div id="filter-content" style="display: none;">
+                <div class="row row-4">
+                  <div class="panel panel-default">
+                    <div class="panel-body">
+                      <div id="savaResult-success" class="alert alert-success" style="display: none;"></div>
+                      <div id="savaResult-fail" class="alert alert-danger" style="display: none;"></div>
+                      <div id="filter-container" class="container testimonial-group"></div>
+                      <input type="hidden" id="remindMsg" value="{{_('※This item is excluded from the default condition save target.')}}" />
+                      <input type="hidden" id="confirmDeleteMsg" value="{{_('Would you like to remove the filter conditions?')}}" />
+                      <div class="button-group">
+                        <button id="detail-search-btn" type="button" class="btn btn-primary">
+                          <span class="glyphicon glyphicon-search"></span>
+                          {{_('Filter')}}
+                        </button>
+                        <button id="clear-search-btn" type="button" class="btn btn-default">
+                          <span class="glyphicon glyphicon-remove"></span>
+                          {{_('Clear')}}
+                        </button>
+                        <button id="save-search-btn" type="button" class="btn btn-primary">
+                          <span class="glyphicon glyphicon-save"></span>
+                          {{_('Save')}}
+                        </button>
+                        <button id="reset-search-btn" type="button" class="btn btn-default">
+                          <span class="glyphicon glyphicon-remove"></span>
+                          {{_('Reset')}}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="list-content" style="display: block;">
+                <div class="panel-group m-top-5">
+                  <div class="row row-10">
+                    <div class="col-xs-12 col-md-12">
+                      <div class="panel panel-default panel-default-2">
+                        <div class="panel-body" style="display: flex; flex-direction: column; align-items: left;">
+                          <div id="itemListContainer">
+                            {% for item in items %}
+                            <div class="item">
+                              <input type="checkbox" class="item-checkbox" value="{{ item.id }}">
+                              <span>{{ item.title }}</span>
+                            </div>
+                            {% endfor %}
+                          </div>
+                          <input type="hidden" id="relation" value="{{_('Relation')}}" />
+                          <input type="hidden" id="documentfile" value="{{_('Document file')}}" />
+                          <input type="hidden" id="published" value="{{_('Published')}}" />
+                          <input type="hidden" id="embargo" value="{{_('Embargo')}}" />
+                          <input type="hidden" id="restricted" value="{{_('Restricted')}}" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="text-center">
+                    <ul class="pagination"></ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  

@@ -197,6 +197,10 @@ DEPOSIT_UI_JSTEMPLATE_FORM = \
     'templates/invenio_deposit/form.html'
 """Template for <invenio-records-form> defined by `invenio-records-js`."""
 
+DEPOSIT_UI_JSTEMPLATE_WORKSPACE_FORM = \
+    'templates/invenio_deposit/workspace_form.html'
+"""Template for <invenio-records-form> defined by `invenio-records-js`."""
+
 DEPOSIT_UI_SEARCH_INDEX = 'deposits'
 """Search index name for the deposit."""
 
@@ -209,7 +213,22 @@ DEPOSIT_REGISTER_SIGNALS = True
 DEPOSIT_FORM_TEMPLATES_BASE = 'templates/invenio_deposit/decorators'
 """Angular Schema Form temmplates location."""
 
+DEPOSIT_FORM_TEMPLATES_WORKSPACE_BASE = 'templates/invenio_deposit/decorators_workspace'
+"""Angular Schema Form temmplates location."""
+
 DEPOSIT_FORM_TEMPLATES = {
+    'default': 'default.html',
+    'fieldset': 'fieldset.html',
+    'array': 'array.html',
+    'radios_inline': 'radios_inline.html',
+    'radios': 'radios.html',
+    'select': 'select.html',
+    'button': 'button.html',
+    'textarea': 'textarea.html'
+}
+"""Templates for Angular Schema Form."""
+
+DEPOSIT_FORM_TEMPLATES_WORKSPACE = {
     'default': 'default.html',
     'fieldset': 'fieldset.html',
     'array': 'array.html',

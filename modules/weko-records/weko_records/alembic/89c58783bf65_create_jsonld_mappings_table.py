@@ -15,7 +15,7 @@ from sqlalchemy_utils.types import JSONType
 
 # revision identifiers, used by Alembic.
 revision = "89c58783bf65"
-down_revision = "1a120f8b96a7"
+down_revision = "4d2556236060"
 branch_labels = ()
 depends_on = None
 

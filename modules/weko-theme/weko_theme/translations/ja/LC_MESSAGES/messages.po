@@ -244,7 +244,7 @@ msgstr "ログアウト"
 
 #: weko_theme/templates/weko_theme/page_setting.html:33
 msgid "Settings"
-msgstr "会議発表用資料"
+msgstr "設定"
 
 #: weko_theme/templates/weko_theme/macros/edit_tree_tabs_selector.html:22
 msgid "Index Edit"
@@ -791,6 +791,10 @@ msgstr "フロー"
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_WorkFlow_WorkFlow List"
 msgstr "ワークフロー"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_WorkFlow_WorkSpaceWorkFlow Setting"
+msgstr "ワークスペースワークフロー設定"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Communities_Community"

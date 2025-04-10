@@ -618,7 +618,6 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
                 if "affiliationNameLang" in name_info
             ]
         }
-        print(f"extract_data:{result}")
         return result
 
     def get_all_schemes(self):
@@ -627,23 +626,21 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
         affiliation_schemes = db.session.query(AuthorsAffiliationSettings.scheme).distinct().all()
         prefix_schemes = [scheme[0] for scheme in prefix_schemes]
         affiliation_schemes = [scheme[0] for scheme in affiliation_schemes]
-        print(f"prefix_schemes:{prefix_schemes}")
-        print(f"affiliation_schemes:{affiliation_schemes}")
         return prefix_schemes,affiliation_schemes
 
 
     def validate_request_data(self, extracted_data, lang_options_list, prefix_schemes, affiliation_schemes):
         if not all(lang in lang_options_list for lang in extracted_data["authorNameInfo_language"]):
-            print("authorNameInfo_language")
+            current_app.logger.error("Invalid authorNameInfo_language.")
             return False
         if not all(lang in lang_options_list for lang in extracted_data["affiliationInfo_affiliationNameLang"]):
-            print("affiliationInfo_affiliationNameLang")
+            current_app.logger.error("Invalid affiliationInfo_affiliationNameLang.")
             return False
         if not all(scheme in prefix_schemes for scheme in extracted_data["authorIdInfo_idType"]):
-            print("authorIdInfo_idType")
+            current_app.logger.error("Invalid authorIdInfo_idType.")
             return False
         if not all(scheme in affiliation_schemes for scheme in extracted_data["affiliationInfo_affiliationIdType"]):
-            print("affiliationInfo_affiliationIdType")
+            current_app.logger.error("Invalid affiliationInfo_affiliationIdType.")
             return False
         return True
 

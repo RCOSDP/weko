@@ -1,0 +1,79 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+
+{% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% endblock %}
+
+{%- block body %}
+<input id="lang-code" type="hidden" value="{{lang_code}}" />
+<form class="form-inline" method="POST" name="set_workspace_workflow_setting_form" action={{url_for('workspaceworkflowsetting.index')}}>
+  {{ form.csrf_token }}
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="form-inline col-sm-12">
+        <div class="form-group col-sm-12">
+          <div>
+            <label class="radio-inline col-sm-12" style="display: inline-block;"><input type="radio" name="registrationRadio" value="1" checked>{{_('Direct Registration')}}</label><br><br>
+          </div>
+          <div class="panel panel-info  gray-color-class">
+            <div class="panel-body">
+              <label class="col-sm-2" for="item-type-lists">{{_('Item Type Select')}}</label>
+              <select class="col-sm-8"  name="itemType" style="display: inline-block;" id="item-type-lists">
+                <option value=""></option>
+                {% for item_type in item_type_list %}
+                <option value="{{ item_type.id }}"
+                        class="{% if item_type.normal_type %}normal_type{% endif %}" {% if item_type.id == id %}selected{% endif %}>{{ item_type.name }}({{ item_type.tag }})</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div><br><br>
+          <div>
+            <label class="radio-inline col-sm-12"><input type="radio" name="registrationRadio" value="0">{{_('Workflow Select')}}</label><br><br>
+          </div>
+          <div class="panel panel-info  gray-color-class">
+            <div class="panel-body">
+              <label class="col-sm-2">{{_('Work Flow Select')}}</label>
+              <select class="col-sm-8" id="work-flow-lists"  name="workFlow" >
+                <option value=""></option>
+                {% for work_flow in work_flow_list %}
+                <option value="{{ work_flow.id }}"
+                        class="{}" {% if work_flow.id == id %}selected{% endif %}>{{ work_flow.flows_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="form-actions">
+    <div class="col-sm-offset-3 col-sm-10">
+      <button type="submit" name="submit" value="set_workspace_workflow_setting_form"
+          class="btn btn-primary ten-pixel-margin">
+        <span class="glyphicon glyphicon-save"></span>&nbsp
+            {{ _('Save') }}
+      </button>
+    </div>
+  </div>
+</form>
+{%- endblock %}

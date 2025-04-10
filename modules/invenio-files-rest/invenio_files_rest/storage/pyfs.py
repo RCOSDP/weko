@@ -231,10 +231,6 @@ def pyfs_storage_factory(fileinstance=None, default_location=None,
         if location is None:
             location = next((loc for loc in locationList if str(loc.uri) in str(fileurl)), None)
 
-    print(locationList)
-    print(fileurl)
-    print('取得元')
-    print(location)
     return filestorage_class(
         fileurl, size=size, modified=modified, clean_dir=clean_dir, location=location)
 

@@ -2,21 +2,29 @@ from datetime import datetime, timezone
 import os
 import random
 import string
+import json
+import hashlib
+import traceback
 import boto3
 import tempfile
 import shutil
 from email_validator import validate_email
-from flask import current_app, request
+from flask import current_app
+
 from flask_login import current_user
 from flask_mail import Message
-import hashlib
-from invenio_mail.admin import _load_mail_cfg_from_db, _set_flask_mail_cfg
 from flask_babelex import lazy_gettext as _
-from invenio_db import db
 
+from invenio_mail.admin import _load_mail_cfg_from_db, _set_flask_mail_cfg
+from invenio_files_rest.models import Bucket, ObjectVersion, FileInstance
+from invenio_pidstore.models import PersistentIdentifier
+from invenio_records.api import Record
 from weko_records.api import RequestMailList
 from weko_records_ui.captcha import get_captcha_info
-from weko_records_ui.errors import AuthenticationRequiredError, ContentsNotFoundError, InternalServerError, InvalidCaptchaError, InvalidEmailError, RequiredItemNotExistError
+from weko_records_ui.errors import (
+    AuthenticationRequiredError, ContentsNotFoundError, InternalServerError,
+    InvalidCaptchaError, InvalidEmailError, RequiredItemNotExistError
+)
 from weko_redis.redis import RedisConnection
 from weko_user_profiles.models import UserProfile
 from invenio_files_rest.models import Bucket, ObjectVersion, FileInstance
@@ -450,6 +458,7 @@ def replace_file_bucket(org_pid, org_bucket_id, file=None,
         current_app.logger.exception(_('Cannot update because the corresponding item is being edited.'))
         raise Exception(_('Cannot update because the corresponding item is being edited.'))
 
+
     pid = PersistentIdentifier.query.filter_by(
         pid_type="recid", pid_value=org_pid
     ).first()
@@ -763,4 +772,3 @@ def replace_file_bucket(org_pid, org_bucket_id, file=None,
         result = True
 
     return result
-

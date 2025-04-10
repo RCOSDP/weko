@@ -96,6 +96,16 @@
       <div class="col-sm-8">{{_('WorkFlow Cautionary Note')}}</div>
     </div>
   </div>
+
+  <div class="row form-group">
+    <div class="col-sm-2 text-left">
+        <label>{{_('Duplicate Check')}}</label>
+    </div>
+    <div class="col-sm-6">
+      <input type="checkbox" id="duplicate_check" name="duplicate_check" {{duplicate_check_value}} />
+    </div>
+  </div>
+
   <div class="row form-group">
     <div className="pull-right" style="margin-right: 15px;">
         <button type="button" name="submit" class="btn btn-primary pull-right" value={{page_type}} onclick="saveDataFormat(value)">

@@ -85,10 +85,10 @@
       },
       "wk:grant": [
         {
-          "@id": "https://hdl.handle.net/1234/5678"
+          "@id": "1234/5678"
         },
         {
-          "@id": "https://doi.org/10.1234/5678"
+          "@id": "10.1234/5678"
         }
       ],
       "jpcoar:relation": [
@@ -222,12 +222,12 @@
       "assignee": "http://example.org/rightsholder"
     },
     {
-      "@id": "https://hdl.handle.net/1234/5678",
+      "@id": "1234/5678",
       "@type": "URL",
       "jpcoar:identifier": "HDL"
     },
     {
-      "@id": "https://doi.org/10.1234/5678",
+      "@id": "10.1234/5678",
       "@type": "URL",
       "jpcoar:identifier": "DOI",
       "jpcoar:identifierRegistration": "DataCite"

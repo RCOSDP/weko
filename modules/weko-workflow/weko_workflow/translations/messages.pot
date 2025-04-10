@@ -42,6 +42,10 @@ msgstr ""
 msgid "Flow List"
 msgstr ""
 
+#: weko_workflow/admin.py:473
+msgid "WorkSpaceWorkFlow Setting"
+msgstr ""
+
 #: weko_workflow/admin.py:603
 msgid "Activity"
 msgstr ""

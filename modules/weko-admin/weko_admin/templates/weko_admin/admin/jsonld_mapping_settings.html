@@ -24,13 +24,13 @@
 {{ super() }}
 {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {% assets "weko_theme_css_bootstrap" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}<!-- New -->
-<link href="{{ url_for('static', filename='css/weko_admin/quill.snow.css') }}" rel="stylesheet">
+{% assets "weko_admin_quill_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 <link href="{{ url_for('static', filename='css/weko_admin/language.css') }}" rel="stylesheet">
 {% endblock %}
 
 {%- block javascript %}
 {{ super() }}
-<script src="{{ url_for('static', filename='js/weko_admin/sword_api_jsonld_mapping_setting.js') }}"></script>
+{% assets "weko_admin_jsonld_mapping_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block body %}
@@ -116,7 +116,7 @@
 
   <div class="row form-group">
     <div className="pull-right" style="margin-right: 15px;">
-      <button type="button" id="save_button" name="submit" class="btn btn-primary pull-right" value="{{ current_page_type }}" onclick="saveDataFormat(value)">
+      <button type="button" id="save_button" name="submit" class="btn btn-primary pull-right" value="{{ current_page_type }}" onclick="saveDataFormat(event, this.value)">
           <span class="glyphicon glyphicon-save"></span>&nbsp
           {{_('Save')}}
       </button>
@@ -140,7 +140,7 @@
         <h4 class="modal-title">WEKO</h4>
       </div>
       <div class="modal-body">
-        <p class="text-center" id="modal-message"></p>
+        <div class="text-center" id="modal-message"></div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-info close-button" data-dismiss="modal">

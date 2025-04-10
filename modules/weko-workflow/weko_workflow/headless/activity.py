@@ -294,7 +294,8 @@ class HeadlessActivity(WorkActivity):
                 self.item_registration(
                     params.get("metadata"), params.get("files"),
                     params.get("index"), params.get("comment"),
-                    params.get("non_extract")
+                    params.get("non_extract"),
+                    params.get("workspace_register")
                 )
             elif self.current_action == "item_link":
                 self.item_link(params.get("link_data"))
@@ -315,8 +316,7 @@ class HeadlessActivity(WorkActivity):
 
 
     def item_registration(
-            self, metadata, files=None, index=None, comment=None, non_extract=None
-    ):
+            self, metadata, files=None, index=None, comment=None, non_extract=None, workspace_register=None):
         """Manual action for item registration.
 
         Note:
@@ -341,14 +341,14 @@ class HeadlessActivity(WorkActivity):
             # it contains ""
             raise WekoWorkflowException(error)
 
-        self.recid = self._input_metadata(metadata, files, non_extract)
+        self.recid = self._input_metadata(metadata, files, non_extract, workspace_register)
         self._designate_index(index)
         self._comment(comment)
 
         return self.detail
 
 
-    def _input_metadata(self, metadata, files=None, non_extract=None):
+    def _input_metadata(self, metadata, files=None, non_extract=None, workspace_register=None):
         """input metadata."""
         locked_value = self._activity_lock()
 
@@ -439,6 +439,10 @@ class HeadlessActivity(WorkActivity):
             for file in data["files"]:
                 if file["filename"] in non_extract:
                     file["non_extract"] = True
+          
+            if workspace_register:
+                data_without_outer_list = data["files"][0]
+                data["files"] = data_without_outer_list
 
             data["endpoint"].update(base_factory(pid))
             self.upt_activity_metadata(self.activity_id, json.dumps(data))
@@ -515,6 +519,8 @@ class HeadlessActivity(WorkActivity):
                 size = os.path.getsize(file)
                 with open(file, "rb") as f:
                     file_info = upload(os.path.basename(file), f, size)
+            elif isinstance(file, dict):
+                file_info = files
             else:
                 """werkzeug.datastructures.FileStorage"""
 

@@ -33,7 +33,7 @@ from invenio_oauth2server.provider import oauth2
 from weko_accounts.utils import roles_required
 from weko_admin.api import TempDirInfo
 from weko_deposit.api import WekoRecord
-from weko_items_ui.scopes import item_update_scope, item_delete_scope
+from weko_items_ui.scopes import item_create_scope, item_update_scope, item_delete_scope
 from weko_records.api import JsonldMapping
 from weko_records_ui.utils import get_record_permalink, soft_delete
 from weko_search_ui.utils import import_items_to_system, import_items_to_activity
@@ -156,6 +156,7 @@ def get_service_document():
 @oauth2.require_oauth()
 @limiter.limit("")
 @require_oauth_scopes(write_scope.id)
+@require_oauth_scopes(item_create_scope.id)
 @roles_required(WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE)
 @check_on_behalf_of()
 @check_package_contents()
@@ -314,7 +315,7 @@ def post_service_document():
 
         from weko_items_ui.utils import check_duplicate
         result, list_id, list_url = check_duplicate(item["metadata"], is_item=True)
-        if result:
+        if check_result.get("duplicate_check", False) and result:
             current_app.logger.error(
                 f"This item appears to be a duplicate: {list_id}"
             )
@@ -919,14 +920,6 @@ def _create_error_document(type, error):
     }
     return Error(raw_data).data
 
-@blueprint.route("/validate_mapping", methods=['POST'])
-def valedate_mapping():
-    data = request.get_json()
-    itemtype_id = data.get('itemtype_id')
-    mapping_id = data.get('mapping_id')
-    obj = JsonldMapping.get_mapping_by_id(mapping_id)
-
-    return jsonify(JsonLdMapper(itemtype_id, obj.mapping).validate())
 
 @blueprint.errorhandler(401)
 def handle_unauthorized(ex):

@@ -126,6 +126,8 @@ from invenio_stats.contrib.event_builders import (
     build_record_unique_id,
     file_download_event_builder,
 )
+from invenio_records_ui import InvenioRecordsUI
+from invenio_records_ui.config import RECORDS_UI_ENDPOINTS
 
 from weko_admin import WekoAdmin
 from weko_admin.config import WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS, WEKO_ADMIN_MANAGEMENT_OPTIONS
@@ -686,7 +688,8 @@ def base_app(instance_path, search_class, request):
         ROCRATE_METADATA_FILE = ROCRATE_METADATA_FILE,
         WEKO_ITEMS_UI_INDEX_PATH_SPLIT = '///',
         WEKO_SEARCH_UI_BULK_EXPORT_RETRY = 5,
-        WEKO_SEARCH_UI_BULK_EXPORT_LIMIT = 100
+        WEKO_SEARCH_UI_BULK_EXPORT_LIMIT = 100,
+        RECORDS_UI_ENDPOINTS = RECORDS_UI_ENDPOINTS
     )
     app_.url_map.converters["pid"] = PIDConverter
     app_.config["RECORDS_REST_ENDPOINTS"]["recid"]["search_class"] = search_class
@@ -729,6 +732,7 @@ def base_app(instance_path, search_class, request):
     InvenioPIDStore(app_)
     InvenioFilesREST(app_)
     InvenioDeposit(app_)
+    InvenioRecordsUI(app_)
     WekoRecords(app_)
     WekoSearchUI(app_)
     WekoWorkflow(app_)

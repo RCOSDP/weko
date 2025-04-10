@@ -35,6 +35,10 @@ msgstr ""
 msgid "Approval by Advisor action is not in the right order."
 msgstr ""
 
+#: weko_workflow/admin.py:238
+msgid "WorkSpaceWorkFlow Setting"
+msgstr "WorkSpace WorkFlow Setting"
+
 #: weko_workflow/admin.py:152
 msgid "Approval by Guarantor action is not in the right order."
 msgstr ""
@@ -516,6 +520,18 @@ msgstr "DOI not provided"
 #~ msgstr "Update"
 
 #~ msgid "Create WorkFlow"
+#~ msgstr ""
+
+#~ msgid "Direct Registration"
+#~ msgstr ""
+
+#~ msgid "Item Type Select"
+#~ msgstr ""
+
+#~ msgid "Work Flow Select"
+#~ msgstr ""
+
+#~ msgid "Work Flow Select"
 #~ msgstr ""
 
 #~ msgid "Update flow successfully."

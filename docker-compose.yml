@@ -141,6 +141,7 @@ services:
       - /code/modules/weko-sitemap/weko_sitemap.egg-info
       - /code/modules/invenio-iiif/invenio_iiif.egg-info
       - /code/modules/weko-swordserver/weko_swordserver.egg-info
+      - /code/modules/weko-workspace/weko_workspace.egg-info
       - /code/modules/weko-signposting/weko_signposting.egg-info
       - /code/modules/weko-notifications/weko_notifications.egg-info
     user: invenio
@@ -270,6 +271,7 @@ services:
       - /code/modules/weko-sitemap/weko_sitemap.egg-info
       - /code/modules/invenio-iiif/invenio_iiif.egg-info
       - /code/modules/weko-swordserver/weko_swordserver.egg-info
+      - /code/modules/weko-workspace/weko_workspace.egg-info
       - /code/modules/weko-signposting/weko_signposting.egg-info
       - /code/modules/weko-notifications/weko_notifications.egg-info
     user: invenio
