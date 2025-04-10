@@ -903,10 +903,10 @@ class StatisticsEmail(db.Model):
                 data_obj.repository_id = repository_id
                 db.session.add(data_obj)
             db.session.commit()
-        except BaseException as ex:
+        except Exception as ex:
             db.session.rollback()
-            current_app.logger.debug(ex)
-            raise ex
+            current_app.logger.error(ex)
+            raise
         return cls
 
     @classmethod
@@ -940,7 +940,7 @@ class StatisticsEmail(db.Model):
                 delete_all = cls.query.delete()
             db.session.commit()
         except Exception as ex:
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
             db.session.rollback()
             raise ex
         return delete_all
@@ -953,9 +953,9 @@ class StatisticsEmail(db.Model):
                 delete_by_repo = cls.query.filter_by(repository_id=repository_id).delete()
             db.session.commit()
         except Exception as ex:
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
             db.session.rollback()
-            raise ex
+            raise
         return delete_by_repo
 
 
@@ -1110,8 +1110,9 @@ class FeedbackMailSetting(db.Model, Timestamp):
                 new_record.repository_id = repo_id
                 db.session.add(new_record)
             db.session.commit()
-        except BaseException:
+        except Exception as ex:
             db.session.rollback()
+            current_app.logger.error(ex)
             return False
         return True
 
@@ -1144,7 +1145,8 @@ class FeedbackMailSetting(db.Model, Timestamp):
             with db.session.no_autoflush:
                 feedback_settings = cls.query.filter_by(repository_id=repo_id).all()
                 return feedback_settings
-        except Exception:
+        except Exception as ex:
+            current_app.logger.error(ex)
             return []
 
     @classmethod
@@ -1218,7 +1220,7 @@ class FeedbackMailSetting(db.Model, Timestamp):
             return True
         except BaseException as ex:
             db.session.rollback()
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
             return False
 
 

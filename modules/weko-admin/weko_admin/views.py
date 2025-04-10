@@ -25,6 +25,7 @@ import json
 import sys
 import time
 from datetime import timedelta, datetime
+import traceback
 
 from flask import Blueprint, Response, abort, current_app, flash, json, \
     jsonify, render_template, request
@@ -386,6 +387,8 @@ def get_repository_list():
         result['repositories'] = repository_ids
         result['success'] = True
     except Exception as e:
+        current_app.logger_error(f"Error getting repository list: {e}")
+        traceback.print_exc()
         result['error'] = str(e)
 
     return jsonify(result)
@@ -488,7 +491,7 @@ def get_failed_mail():
         page = int(data.get('page'))
         history_id = int(data.get('id'))
     except Exception as ex:
-        current_app.logger.debug("Cannot convert parameter: {}".format(ex))
+        current_app.logger.error("Cannot convert parameter: {}".format(ex))
         page = 1
         history_id = 1
     result = FeedbackMail.load_feedback_failed_mail(history_id, page)
@@ -519,7 +522,7 @@ def resend_failed_mail():
         )
         FeedbackMail.update_history_after_resend(history_id)
     except Exception as ex:
-        current_app.logger.debug("Cannot resend mail:{}".format(ex))
+        current_app.logger.error("Cannot resend mail:{}".format(ex))
         result['success'] = False
         result['error'] = 'Request package is invalid'
     return jsonify(result)

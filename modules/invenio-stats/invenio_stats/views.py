@@ -7,6 +7,7 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """InvenioStats views."""
+import traceback
 import uuid
 
 import calendar
@@ -407,7 +408,8 @@ class QueryItemRegReport(WekoQuery):
         try:
             page_index = int(request.args.get('p', 1)) - 1
         except Exception as e:
-            current_app.logger.debug(e)
+            traceback.print_exc()
+            current_app.logger.error(e)
 
         repository_id = request.args.get('repo')
         if repository_id:

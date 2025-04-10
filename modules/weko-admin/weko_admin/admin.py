@@ -100,7 +100,6 @@ class ReindexElasticSearchView(BaseView):
                 ,disabled_Btn=disabled_btn
             )
         except BaseException:
-            import traceback
             estr = traceback.format_exc()
             current_app.logger.error('Unexpected error: {}'.format( estr ))
             return abort(500)
@@ -143,7 +142,6 @@ class ReindexElasticSearchView(BaseView):
             return jsonify({"responce" : _('completed')}), 200
 
         except BaseException:
-            import traceback
             estr = traceback.format_exc()
             current_app.logger.error('Unexpected error: {}'.format( estr ))
             AdminSettings.update(current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS']
@@ -167,7 +165,6 @@ class ReindexElasticSearchView(BaseView):
         try:
             return jsonify(self._check_reindex_is_running())
         except BaseException:
-            import traceback
             estr = traceback.format_exc()
             current_app.logger.error('Unexpected error: {}'.format( estr ))
             return abort(500)
@@ -481,6 +478,7 @@ class ReportView(BaseView):
                 selected_repo_id=repo_id
             )
         except Exception as e:
+            traceback.print_exc()
             current_app.logger.error("Unexpected error: {}".format(e))
         return abort(400)
 
@@ -564,7 +562,8 @@ class ReportView(BaseView):
             settings[repository_id] = schedule
             AdminSettings.update('report_email_schedule_settings', settings)
             flash(_('Successfully Changed Schedule.'), 'error')
-        except Exception:
+        except Exception as ex:
+            traceback.print_exc()
             flash(_('Could Not Save Changes.'), 'error')
         return redirect(url_for('report.index'))
 
@@ -585,6 +584,7 @@ class ReportView(BaseView):
                 else:
                     alert_msg = 'Please check email input fields.'
                     category = 'error'
+                    current_app.logger.error(alert_msg)
         flash(_(alert_msg), category=category)
         return redirect(url_for("report.index"))
 
@@ -903,15 +903,17 @@ class SiteLicenseSettingsView(BaseView):
                                     # break for addresses
                                     break
                         if err_addr:
+                            current_app.logger.error("IP Address is incorrect")
                             raise ValueError('IP Address is incorrect')
 
                 SiteLicense.update(data)
                 db.session.commit()
                 jfy['status'] = 201
                 jfy['message'] = 'Site license was successfully updated.'
-            except BaseException as ex:
+            except Exception as ex:
                 db.session.rollback()
                 current_app.logger.error('Failed to update site license: {}'.format(ex))
+                traceback.print_exc()
                 jfy['status'] = 500
                 jfy['message'] = 'Failed to update site license.'
             return make_response(jsonify(jfy), jfy['status'])
