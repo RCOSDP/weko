@@ -4913,8 +4913,9 @@ class TestJsonLdMapper:
                 "attribute_value_mlt": [
                 {
                     "url": {
-                    "url": "https://weko3.example.org/record/2000007/files/sample.rst",
-                    "objectType": "abstract"
+                        "url": "https://weko3.example.org/record/2000007/files/sample.rst",
+                        "objectType": "abstract",
+                        "label": "sample.rst"
                     },
                     "date": [
                     {
@@ -4936,8 +4937,9 @@ class TestJsonLdMapper:
                 },
                 {
                     "url": {
-                    "url": "https://weko3.example.org/record/2000007/files/data.csv",
-                    "objectType": "dataset"
+                        "url": "https://weko3.example.org/record/2000007/files/data.csv",
+                        "objectType": "dataset",
+                        "label": "data.csv"
                     },
                     "date": [
                     {

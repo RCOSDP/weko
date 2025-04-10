@@ -1869,7 +1869,8 @@ class JsonLdMapper(JsonMapper):
                 for k, v in properties_mapping.items():
                     if v == key:
                         at_id = self._deconstruct_dict(metadata).get(
-                            f"{k}[{index}].url.label"
+                            f"{k}.attribute_value_mlt[{index}].url.label",
+                            gen_id(key)
                         )
                         break
             else:
@@ -2169,18 +2170,20 @@ class JsonLdMapper(JsonMapper):
             )
 
         # wk:textExtraction
+        list_k_file = None
         for k, v in properties_mapping.items():
             if k.endswith(".filename"):
                 list_k_file = v.split(".")[1:]
                 break
 
-        extracted_files = kwargs.get("extracted_files", [])
-        for file in rocrate.root_dataset.get("hasPart", []):
-            for k_file in list_k_file[:-1]:
-                file = file[k_file]
-            if file[list_k_file[-1]] not in extracted_files:
-                file["wk:textExtraction"] = False
-                rocrate.add(file)
+        if list_k_file is not None:
+            extracted_files = kwargs.get("extracted_files", [])
+            for file in rocrate.root_dataset.get("hasPart", []):
+                for k_file in list_k_file[:-1]:
+                    file = file[k_file]
+                if file[list_k_file[-1]] not in extracted_files:
+                    file["wk:textExtraction"] = False
+                    rocrate.add(file)
 
         # Extra
         if "Extra" in item_map:
