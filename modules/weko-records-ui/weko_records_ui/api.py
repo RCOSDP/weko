@@ -1,15 +1,12 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 import random
 import string
 import boto3
-import uuid
-import json
-import subprocess
-import requests
-import traceback
+import tempfile
+import shutil
 from email_validator import validate_email
-from flask import current_app, url_for
+from flask import current_app, request
 from flask_login import current_user
 from flask_mail import Message
 import hashlib
@@ -17,30 +14,23 @@ from invenio_mail.admin import _load_mail_cfg_from_db, _set_flask_mail_cfg
 from flask_babelex import lazy_gettext as _
 from invenio_db import db
 
-from weko_records.api import RequestMailList, ItemsMetadata
+from weko_records.api import RequestMailList
 from weko_records_ui.captcha import get_captcha_info
 from weko_records_ui.errors import AuthenticationRequiredError, ContentsNotFoundError, InternalServerError, InvalidCaptchaError, InvalidEmailError, RequiredItemNotExistError
 from weko_redis.redis import RedisConnection
 from weko_user_profiles.models import UserProfile
-from weko_deposit.api import WekoDeposit, WekoRecord
 from invenio_files_rest.models import Bucket, ObjectVersion, FileInstance
-from invenio_files_rest.errors import FileSizeError
-from invenio_files_rest.tasks import remove_file_data
-from invenio_files_rest.utils import _location_has_quota, delete_file_instance
 from invenio_pidstore.models import PersistentIdentifier
 from werkzeug.utils import import_string
 from invenio_pidstore.resolver import Resolver
-from sqlalchemy.exc import SQLAlchemyError
-from weko_workflow.utils import prepare_edit_workflow, handle_finish_workflow
-from weko_items_ui.views import prepare_edit_item
-from weko_deposit.pidstore import get_record_identifier
-from weko_workflow.headless import HeadlessActivity
-from weko_deposit.api import WekoIndexer
-from weko_swordserver.errors import ErrorType, WekoSwordserverException
 from invenio_records.api import Record
 from invenio_pidrelations.contrib.versioning import PIDVersioning
-from weko_workflow.api import WorkActivity, WorkFlow as WorkFlows
-from weko_workflow.errors import WekoWorkflowException
+from weko_workflow.api import WorkFlow
+from weko_items_ui.utils import get_workflow_by_item_type_id
+from weko_records.api import ItemTypes
+from invenio_files_rest.models import Location
+from weko_search_ui.utils import handle_check_item_is_locked, check_replace_file_import_items, import_items_to_system
+from invenio_records_files.models import RecordsBuckets
 
 def send_request_mail(item_id, mail_info):
 
@@ -292,11 +282,173 @@ def copy_bucket_to_s3(pid, filename, org_bucket_id, checked, bucket_name):
         current_app.logger.exception(_('Uploading file failed.') + str(e))
         raise Exception(_('Uploading file failed.') + str(e))
 
-def replace_file_bucket(org_pid, org_bucket_id, file):
-    print('置き換え本処理')
+
+def get_file_place_info(org_pid, org_bucket_id, file_name, content_type=None):
+
+    file_place = None
+    url = None
+    new_bucket_id = None
+    new_version_id = None
+
+    # check item locked
+    try:
+        item = {"id": org_pid}
+        handle_check_item_is_locked(item)
+    except Exception as e:
+        current_app.logger.exception(_('Cannot update because the corresponding item is being edited.'))
+        raise Exception(_('Cannot update because the corresponding item is being edited.'))
+
     from weko_workflow.api import WorkActivity
 
-    item_id = org_pid
+    # get workflow
+    pid_value = org_pid
+    record_class = import_string('weko_deposit.api:WekoDeposit')
+    resolver = Resolver(pid_type='recid',
+                        object_type='rec',
+                        getter=record_class.get_record)
+    recid, deposit = resolver.resolve(pid_value)
+    activity = WorkActivity()
+    latest_pid = PIDVersioning(child=recid).last_child
+    item_uuid = latest_pid.object_uuid
+    item_type_id = deposit.get('item_type_id')
+    item_type = ItemTypes.get_by_id(item_type_id)
+
+    post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
+
+    if post_workflow:
+        workflow = WorkFlow().get_workflow_by_id(workflow_id=post_workflow.workflow_id)
+
+    else:
+        post_workflow = activity.get_workflow_activity_by_item_id(
+            recid.object_uuid
+        )
+        workflow = get_workflow_by_item_type_id(item_type.name_id,
+                                                item_type_id)
+
+    if workflow is None:
+        location_id = None
+    else:
+        location_id = workflow.location_id
+
+    if location_id is None:
+        location = Location.get_default()
+    else:
+        location = Location.query.get(location_id)
+
+
+    org_bucket = Bucket.query.get(org_bucket_id)
+    org_obj = ObjectVersion.get(bucket=org_bucket, key=file_name)
+    org_fileinstance = FileInstance.get(org_obj.file_id)
+
+    if location.type is None:
+    # weko local strage
+        file_place = 'local'
+    else:
+    # S3 strage
+        print('S3')
+        file_place = 'S3'
+
+        new_bucket = Bucket.create(location=location, storage_class=current_app.config[
+                'DEPOSIT_DEFAULT_STORAGE_CLASS'
+            ])
+        org_bucket.sync(new_bucket)
+        current_obj = ObjectVersion.get(bucket=new_bucket, key=file_name)
+        current_fileinstance = FileInstance.get(current_obj.file_id)
+
+        new_obj = ObjectVersion.create(bucket=new_bucket, key=file_name)
+        new_fileinstance = FileInstance.create()
+        new_obj.file_id = new_fileinstance.id
+        new_obj.root_file_id = new_fileinstance.id
+
+        current_obj.remove()
+
+        new_bucket_id = str(new_bucket.id)
+        new_version_id = str(new_obj.version_id)
+        uuid_str = str(new_fileinstance.id)
+        uuid_lst = list(uuid_str)
+        directory_path = "".join(uuid_lst[0:2]) + "/" + "".join(uuid_lst[2:4]) + "/" + "".join(uuid_lst[4:])
+
+
+        # AWSクライアントの設定
+        if location.type == "s3":
+            endpoint_url_list = location.s3_endpoint_url.split('/')
+            detail_endpoint_url_list = endpoint_url_list[2].split('.')
+            region = detail_endpoint_url_list[2]
+            uri_list = location.uri.split('/')
+            bucket_name = uri_list[2]
+            if len(uri_list) >= 4:
+                pre = '/'.join(uri_list[3:]) + '/' * (not '/'.join(uri_list[3:]).endswith('/'))
+                directory_path = pre + directory_path
+        else:
+            endpoint_url_list = location.s3_endpoint_url.split('/')
+            detail_endpoint_url_list = endpoint_url_list[2].split('.')
+            region = detail_endpoint_url_list[2]
+            if location.uri.startswith('https://s3'):
+                # ex: https://s3.amazonaws.com/bucket_name/file_name
+                parts = location.uri.split('/')
+                bucket_name = parts[3]
+                if len(parts) >= 5:
+                    pre = '/'.join(parts[4:]) + '/' * (not '/'.join(parts[4:]).endswith('/'))
+                    directory_path = pre + directory_path
+            else:
+                # ex: https://bucket_name.s3.us-east-1.amazonaws.com/file_name
+                parts = url.split('/')
+                sub_parts = parts[2].split('.')
+                bucket_name = sub_parts[0]
+                if len(sub_parts) >= 3:
+                    pre = '/'.join(parts[3:]) + '/' * (not '/'.join(parts[3:]).endswith('/'))
+                    directory_path = pre + directory_path
+
+        s3 = boto3.client('s3',
+                        aws_access_key_id=location.access_key,
+                        aws_secret_access_key=location.secret_key,
+                        region_name=region,)
+
+        try:
+            # 署名付きURLの生成
+            url = s3.generate_presigned_url(  ClientMethod = 'put_object',
+                                                Params = {'Bucket' : bucket_name,
+                                                        'Key' : directory_path + "/" + 'data',
+                                                        'ContentType' : 'binary/octet-stream'},
+                                                ExpiresIn = 300,
+                                                HttpMethod = 'PUT')
+        except Exception as e:
+            current_app.logger.exception(str(e))
+            raise Exception(str(e))
+
+    return file_place, url, new_bucket_id, new_version_id
+
+
+def replace_file_bucket(org_pid, org_bucket_id, file=None,
+                        file_name=None, file_size=None,
+                        file_checksum=None,
+                        new_bucket_id=None, new_version_id=None):
+    # need for weko strage: file, file_name, file_size
+    # need for S3 strage: file_name, file_size,
+    #                     file_checksum,
+    #                     new_bucket_id, new_version_id
+
+    result = False
+
+    # get workflow
+    pid_value = org_pid
+    record_class = import_string('weko_deposit.api:WekoDeposit')
+    resolver = Resolver(pid_type='recid',
+                        object_type='rec',
+                        getter=record_class.get_record)
+    recid, deposit = resolver.resolve(pid_value)
+    latest_pid = PIDVersioning(child=recid).last_child
+    item_uuid = latest_pid.object_uuid
+    item_type_id = deposit.get('item_type_id')
+    item_type = ItemTypes.get_by_id(item_type_id)
+
+    # check item locked
+    try:
+        item = {"id": org_pid}
+        handle_check_item_is_locked(item)
+    except Exception as e:
+        current_app.logger.exception(_('Cannot update because the corresponding item is being edited.'))
+        raise Exception(_('Cannot update because the corresponding item is being edited.'))
 
     pid = PersistentIdentifier.query.filter_by(
         pid_type="recid", pid_value=org_pid
@@ -304,69 +456,311 @@ def replace_file_bucket(org_pid, org_bucket_id, file):
     metadata = Record.get_record(pid.object_uuid)
 
     # ファイルサイズ取得
-    file.seek(0, 2) # ストリームの末尾に移動
-    size = file.tell() # 現在の位置はファイルサイズ
-    file.seek(0) # ストリームの位置を戻す
+    size = file_size
     units = ['B', 'KB', 'MB', 'GB', 'TB']
     idx = 0
+
     # 1KB = 1024B なので、sizeを1024で割りながら単位を進める
     while size >= 1024 and idx < len(units) - 1:
         size /= 1024.0
         idx += 1
-    file_size_str = f"{size:.0f} {units[idx]}"
+
+    # 中間のファイルサイズを表示する際の条件を追加
+    if size < 1024:
+        file_size_str = f"{size:.0f} {units[idx]}"
+    else:
+        file_size_str = f"{size:.1f} {units[idx]}"
+
 
     # 整形されたデータを格納するための辞書
     formatted_data = {}
     file_matadata_key = None
-    # 各属性を処理
-    for key, value in metadata.items():
-        # "attribute_name"を含む場合、属性を省いて値をセット
-        if isinstance(value, dict) and 'attribute_name' in value:
-            if 'attribute_value' in value:
-                formatted_data[key] = value['attribute_value']
-            elif '_resource_type' in key: # 'key' が '_resource_type' を含む場合
-                formatted_data[key] = value['attribute_value_mlt'][0]
-            elif 'attribute_value_mlt' in value:
-                formatted_data[key] = value['attribute_value_mlt']
+    if new_bucket_id is None:
+        # 機関にファイル情報とアップ
+        # 各属性を処理
+        for key, value in metadata.items():
+            # "attribute_name"を含む場合、属性を省いて値をセット
+            if isinstance(value, dict) and 'attribute_name' in value:
+                if 'attribute_value' in value:
+                    formatted_data[key] = value['attribute_value']
+                elif 'attribute_value_mlt' in value:
+                    print(value['attribute_value_mlt'][0])
+                    if (
+                        len(value['attribute_value_mlt']) > 0
+                        and 'resourcetype' in value['attribute_value_mlt'][0]
+                    ):
+                        formatted_data[key] = value['attribute_value_mlt'][0]
+                    else:
+                        formatted_data[key] = value['attribute_value_mlt']
+                else:
+                    formatted_data[key] = value
+                if (
+                    isinstance(formatted_data[key], list)
+                    and len(formatted_data[key]) > 0
+                    and 'filename' in formatted_data[key][0]
+                ):
+                    file_matadata_key = key
             else:
                 formatted_data[key] = value
-            if (
-                isinstance(formatted_data[key], list)
-                and len(formatted_data[key]) > 1
-                and 'filename' in formatted_data[key][0]
-            ):
-                file_matadata_key = key
-        else:
-            formatted_data[key] = value
-    if file_matadata_key is not None:
-        for filedata in formatted_data[file_matadata_key]:
+        if file_matadata_key is not None:
+            for filedata in formatted_data[file_matadata_key]:
 
-            if filedata['filename'] == file.filename:
-                filedata.get('url', {}).pop('url', None)
-                filedata['filesize'] = [{"value": file_size_str}]
-    current_app.logger.info(f'フォーマットデータ{formatted_data[file_matadata_key]}')
+                if filedata['filename'] == file_name:
+                    filedata.get('url', {}).pop('url', None)
+                    filedata['filesize'] = [{"value": file_size_str}]
+    else:
+        # ファイルはアップ済み
+        # メタデータ更新
+        # 各属性を処理
+        for key, value in metadata.items():
+            # "attribute_name"を含む場合、属性を省いて値をセット
+            if isinstance(value, dict) and 'attribute_name' in value:
+                if 'attribute_value' in value:
+                    formatted_data[key] = value['attribute_value']
+                elif 'attribute_value_mlt' in value:
+                    if (
+                        len(value['attribute_value_mlt']) > 0
+                        and 'resourcetype' in value['attribute_value_mlt'][0]
+                    ):
+                        formatted_data[key] = value['attribute_value_mlt'][0]
+                    else:
+                        formatted_data[key] = value['attribute_value_mlt']
+                else:
+                    formatted_data[key] = value
+                if (
+                    isinstance(formatted_data[key], list)
+                    and len(formatted_data[key]) > 0
+                    and 'filename' in formatted_data[key][0]
+                ):
+                    file_matadata_key = key
+            else:
+                if isinstance(value, dict) and 'deposit' in value:
+                    formatted_data[key]  = {"deposit":new_bucket_id}
+                else:
+                    formatted_data[key] = value
+        if file_matadata_key is not None:
+            for filedata in formatted_data[file_matadata_key]:
+                if filedata['filename'] == file_name:
+                    filedata.get('url', {}).pop('url', None)
+                    filedata['filesize'] = [{"value": file_size_str}]
+                    filedata['version_id'] = new_version_id
 
-
-    # 整形されたデータを出力
-    result_json_string = json.dumps(formatted_data, ensure_ascii=False)
-
-    try:
-        headless = HeadlessActivity(True)
-        url, current_action, recid = headless.auto(
-            user_id=current_user.get_id(), item_id=item_id,
-            # index=None, metadata={file_matadata_key: formatted_data[file_matadata_key]},
-            index=None, metadata=formatted_data,
-            files=[file], comment=None,
-            link_data=None, grant_data=None
+    if new_bucket_id is None:
+        # weko local strage
+        # ファイルの仮保存
+        temp_path = os.path.join(
+            tempfile.gettempdir(),
+            current_app.config.get("WEKO_SEARCH_UI_IMPORT_TMP_PREFIX")
+                    + datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")[:-3]
         )
-    except WekoWorkflowException as ex:
-        current_app.logger.exception(_('Unable to update as no suitable workflow is available.'))
-        raise Exception(_('Unable to update as no suitable workflow is available.'))
-    except Exception as ex:
-        traceback.print_exc()
-        raise WekoSwordserverException(
-            f"An error occurred while {headless.current_action}.",
-            ErrorType.ServerError
-        ) from ex
+        os.mkdir(temp_path)
+        file_path = temp_path + "/" + file_name
+        file.save(file_path)
 
-    return True
+
+        try:
+            # list_recordの作成
+            formatted_data.pop("item_title")
+            formatted_data.pop("owner")
+            formatted_data.pop("title")
+
+            list_record = [
+                {
+                    "$schema": f"/items/jsonschema/{item_type.id}",
+                    "id": org_pid,
+                    "uri": request.host_url + "records/" + str(org_pid),
+                    "_id": org_pid,
+                    "metadata": formatted_data,
+                    "item_type_name": item_type.item_type_name.name,
+                    "item_type_id": item_type.id,
+                    "publish_status": "public" if formatted_data.get("publish_status") == "0" else "private",
+                    "edit_mode": "upgrade",
+                    "link_data": {},
+                    "file_path": [file_path],
+                }
+            ]
+
+            check_result = check_replace_file_import_items(list_record, temp_path)
+            current_app.logger.info(f'チェック結果{check_result}')
+            if check_result.get("error"):
+                current_app.logger.info(f'エラー{check_result.get("error")}')
+                raise Exception(f'{check_result.get("error")}')
+            else:
+                item = check_result.get("list_record")[0]
+                if not item or item.get("errors"):
+                    error_msg = (
+                        ", ".join(item.get("errors"))
+                        if item and item.get("errors")
+                        else "item_missing"
+                    )
+                    current_app.logger.error(f"Error in check_import_items: {error_msg}")
+                import_result = import_items_to_system(item)
+                if not import_result.get("success"):
+                    current_app.logger.error(
+                        f"Error in import_items_to_system: {item.get('error_id')}"
+                    )
+                    raise Exception(f"Error in import_items_to_system: {item.get('error_id')}")
+                result = True
+
+        except Exception as e:
+            # エラー処理
+            current_app.logger.error(f"エラーが発生しました: {e}")
+            raise Exception(f"{e}")
+
+        finally:
+            # ディレクトリを削除
+            if os.path.exists(temp_path):
+                shutil.rmtree(temp_path)
+    else:
+        # S3 strage
+        # list_recordの作成
+        formatted_data.pop("item_title")
+        formatted_data.pop("owner")
+        formatted_data.pop("title")
+
+        list_record = [
+            {
+                "$schema": f"/items/jsonschema/{item_type.id}",
+                "id": org_pid,
+                "uri": request.host_url + "records/" + str(org_pid),
+                "_id": org_pid,
+                "metadata": formatted_data,
+                "item_type_name": item_type.item_type_name.name,
+                "item_type_id": item_type.id,
+                "publish_status": "public" if formatted_data.get("publish_status") == "0" else "private",
+                "edit_mode": "upgrade",
+                "link_data": {},
+            }
+        ]
+
+        try:
+            check_result = check_replace_file_import_items(list_record)
+            current_app.logger.info(f'チェック結果{check_result}')
+            if check_result.get("error"):
+                current_app.logger.info(f'エラー{check_result.get("error")}')
+                raise Exception(f'{check_result.get("error")}')
+            else:
+                item = check_result.get("list_record")[0]
+                if not item or item.get("errors"):
+                    error_msg = (
+                        ", ".join(item.get("errors"))
+                        if item and item.get("errors")
+                        else "item_missing"
+                    )
+                    current_app.logger.error(f"Error in check_import_items: {error_msg}")
+                import_result = import_items_to_system(item)
+                if not import_result.get("success"):
+                    current_app.logger.error(
+                        f"Error in import_items_to_system: {item.get('error_id')}"
+                    )
+                    raise Exception(f"Error in import_items_to_system: {item.get('error_id')}")
+        except Exception as e:
+            # エラー処理
+            current_app.logger.error(f"エラーが発生しました: {e}")
+            raise Exception(f"{e}")
+
+        # records_bucketsの更新
+        recid, deposit = resolver.resolve(pid_value)
+        latest_pid = PIDVersioning(child=recid).last_child
+        item_uuid = latest_pid.object_uuid
+
+        records_buckets = RecordsBuckets.query.filter_by(
+            record_id=item_uuid).first()
+        records_buckets.bucket_id = new_bucket_id
+        pid = PersistentIdentifier.get('recid', pid_value)
+        org_records_buckets = RecordsBuckets.query.filter_by(
+            record_id=pid.object_uuid).first()
+        org_records_buckets.bucket_id = new_bucket_id
+
+        # fileinstanceの更新
+        before_bucket = Bucket.query.get(new_bucket_id)
+        before_obj = ObjectVersion.get(bucket=before_bucket, key=file_name)
+        before_fileinstance = FileInstance.get(before_obj.file_id)
+
+        after_bucket = Bucket.query.get(new_bucket_id)
+        after_obj = ObjectVersion.get(bucket=after_bucket, key=file_name)
+        after_fileinstance = FileInstance.get(after_obj.file_id)
+        location = Location.query.get(after_bucket.default_location)
+        uuid_str = str(after_fileinstance.id)
+        uuid_lst = list(uuid_str)
+        directory_path = "".join(uuid_lst[0:2]) + "/" + "".join(uuid_lst[2:4]) + "/" + "".join(uuid_lst[4:])
+        file_uri = location.uri + directory_path + "/" + 'data'
+        after_fileinstance.set_uri(uri=file_uri, size=file_size, checksum='sha256:' + file_checksum, )
+
+        before_json = before_fileinstance.json
+        after_json = {}
+        for key, value in before_json:
+            if key == 'url':
+                after_json[key] = { "url": file_uri}
+            elif key == 'filesize':
+                after_json[key] = [{ "value": file_size_str}]
+            elif key == 'version_id':
+                after_json[key] = new_version_id
+            else:
+                after_json[key] = value
+        after_fileinstance.json = after_json
+        db.session.commit()
+
+        # version:Keepで再更新
+        # list_recordの作成
+        list_record = [
+            {
+                "$schema": f"/items/jsonschema/{item_type.id}",
+                "id": org_pid,
+                "uri": request.host_url + "records/" + str(org_pid),
+                "_id": org_pid,
+                "metadata": formatted_data,
+                "item_type_name": item_type.item_type_name.name,
+                "item_type_id": item_type.id,
+                "publish_status": "public" if formatted_data.get("publish_status") == "0" else "private",
+                "edit_mode": "keep",
+                "link_data": {},
+            }
+        ]
+
+        try:
+            check_result = check_replace_file_import_items(list_record)
+            current_app.logger.info(f'チェック結果{check_result}')
+            if check_result.get("error"):
+                current_app.logger.info(f'エラー{check_result.get("error")}')
+                raise Exception(f'{check_result.get("error")}')
+            else:
+                item = check_result.get("list_record")[0]
+                if not item or item.get("errors"):
+                    error_msg = (
+                        ", ".join(item.get("errors"))
+                        if item and item.get("errors")
+                        else "item_missing"
+                    )
+                    current_app.logger.error(f"Error in check_import_items: {error_msg}")
+                import_result = import_items_to_system(item)
+                if not import_result.get("success"):
+                    current_app.logger.error(
+                        f"Error in import_items_to_system: {item.get('error_id')}"
+                    )
+                    raise Exception(f"Error in import_items_to_system: {item.get('error_id')}")
+        except Exception as e:
+            # エラー処理
+            current_app.logger.error(f"エラーが発生しました: {e}")
+            raise Exception(f"{e}")
+
+        # record_metadata update
+        metadata = Record.get_record(pid.object_uuid)
+        for key, value in metadata.items():
+            if isinstance(value, dict) and 'attribute_name' in value:
+                if 'attribute_value_mlt' in value:
+                    if (
+                        len(value['attribute_value_mlt']) > 0
+                        and 'url' in value['attribute_value_mlt'][0]
+                    ):
+                        for file_list in value['attribute_value_mlt']:
+                            if file_list['filename'] == file_name:
+                                file_list['version_id'] = new_version_id
+            else:
+                if isinstance(value, dict) and 'deposit' in value:
+                    value['deposit'] = new_bucket_id
+        metadata.commit()
+        result = True
+
+    return result
+
