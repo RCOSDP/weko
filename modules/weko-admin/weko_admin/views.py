@@ -326,7 +326,9 @@ def save_api_cert_data():
     if not cert_data:
         result['error'] = _(
             'Account information is invalid. Please check again.')
-    elif validate_certification(cert_data):
+    elif api_code == "crf" and validate_certification(cert_data):
+        result = save_api_certification(api_code, cert_data)
+    elif api_code == "oaa":
         result = save_api_certification(api_code, cert_data)
     else:
         result['error'] = _(
