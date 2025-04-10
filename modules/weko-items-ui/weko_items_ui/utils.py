@@ -2802,7 +2802,7 @@ def export_rocrate(post_data):
             rocrate_path = os.path.join(record_path, ROCRATE_METADATA_FILE)
             with open(rocrate_path, "w", encoding="utf8") as f:
                 # text garbling solves when using ensure_ascii=False
-                json.dump(rocrate, f, indent=2, sort_keys=True,
+                json.dump(rocrate.metadata.generate(), f, indent=2, sort_keys=True,
                     ensure_ascii=False)
             # Create bag
             bagify(record_path, checksums=["sha256"])

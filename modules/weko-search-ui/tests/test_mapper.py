@@ -2,7 +2,7 @@ import pytest
 import xmltodict
 import dateutil
 from datetime import date
-from mock import patch
+from mock import patch, Mock
 from collections import OrderedDict
 
 from weko_records.api import Mapping
@@ -4920,8 +4920,9 @@ class TestJsonLdMapper:
                 "attribute_value_mlt": [
                 {
                     "url": {
-                    "url": "https://weko3.example.org/record/2000007/files/sample.rst",
-                    "objectType": "abstract"
+                        "url": "https://weko3.example.org/record/2000007/files/sample.rst",
+                        "objectType": "abstract",
+                        "label": "sample.rst"
                     },
                     "date": [
                     {
@@ -4943,8 +4944,9 @@ class TestJsonLdMapper:
                 },
                 {
                     "url": {
-                    "url": "https://weko3.example.org/record/2000007/files/data.csv",
-                    "objectType": "dataset"
+                        "url": "https://weko3.example.org/record/2000007/files/data.csv",
+                        "objectType": "dataset",
+                        "label": "data.csv"
                     },
                     "date": [
                     {
@@ -5110,15 +5112,246 @@ class TestJsonLdMapper:
                 }
                 ]
             }
-            }
+        }
 
+        # case without Extra
         schema = json_data("data/jsonld/item_type_schema.json")
         item_type2.model.schema = schema
         mapping = json_data("data/jsonld/item_type_mapping.json")
         item_type_mapping2.model.mapping = mapping
         db.session.commit()
         json_mapping = json_data("data/jsonld/ro-crate_mapping.json")
-        print("")
-        rocrate = JsonLdMapper(item_type2.model.id, json_mapping).to_rocrate_metadata(metadata)
+
+        rocrate = JsonLdMapper(
+            item_type2.model.id, json_mapping).to_rocrate_metadata(metadata)
         ro_crate_metadata = rocrate.metadata.generate()
-        print(f"rocrate metadata: {ro_crate_metadata}")
+
+        # mapped metadata
+        graph = ro_crate_metadata["@graph"][0]
+        assert graph["datePublished"] == metadata["pubdate"]["attribute_value"]
+        assert graph["name"] == metadata["item_title"]
+        assert graph["identifier"] == metadata["recid"]
+
+        # wk-context
+        assert "wk:publishStatus" in graph
+        assert "wk:index" in graph
+        assert "wk:editMode" in graph
+        assert "wk:feedbackMail" in graph
+        assert "wk:itemLinks" in graph
+        assert "wk:metadataAutoFill" in graph
+        assert graph["wk:index"] == metadata["path"]
+        if metadata.get("publish_status") == "0":
+            assert graph["wk:publishStatus"] == "public"
+        elif metadata.get("publish_status") == "1":
+            assert graph["wk:publishStatus"] == "private"
+
+        # files
+        haspart_0 = graph["hasPart"][0]["@id"]
+        file_0 = None
+        haspart_1 = graph["hasPart"][1]["@id"]
+        file_1 = None
+        for item in ro_crate_metadata["@graph"]:
+            if item.get("@id") == haspart_0:
+                file_0 = item
+            elif item.get("@id") == haspart_1:
+                file_1 = item
+        assert file_0["name"] == "sample.rst"
+        assert file_1["name"] == "data.csv"
+
+        # case no filename mapping
+        json_mapping_no_filename = json_data(
+            "data/jsonld/ro-crate_mapping_no_filename.json")
+
+        rocrate = JsonLdMapper(
+            item_type2.model.id, json_mapping_no_filename
+        ).to_rocrate_metadata(metadata)
+        ro_crate_metadata = rocrate.metadata.generate()
+
+        # mapped metadata
+        graph = ro_crate_metadata["@graph"][0]
+        assert graph["datePublished"] == metadata["pubdate"]["attribute_value"]
+        assert graph["name"] == metadata["item_title"]
+        assert graph["identifier"] == metadata["recid"]
+
+        # wk-context
+        assert "wk:publishStatus" in graph
+        assert "wk:index" in graph
+        assert "wk:editMode" in graph
+        assert "wk:feedbackMail" in graph
+        assert "wk:itemLinks" in graph
+        assert "wk:metadataAutoFill" in graph
+        assert graph["wk:index"] == metadata["path"]
+        if metadata.get("publish_status") == "0":
+            assert graph["wk:publishStatus"] == "public"
+        elif metadata.get("publish_status") == "1":
+            assert graph["wk:publishStatus"] == "private"
+
+        # files
+        haspart_0 = graph["hasPart"][0]["@id"]
+        file_0 = None
+        haspart_1 = graph["hasPart"][1]["@id"]
+        file_1 = None
+        for item in ro_crate_metadata["@graph"]:
+            if item.get("@id") == haspart_0:
+                file_0 = item
+            elif item.get("@id") == haspart_1:
+                file_1 = item
+        assert "name" not in file_0
+        assert "name" not in file_1
+
+        # case item_link
+        mock_item_link_info = [
+            Mock(item_links="link_1", value="value_1"),
+            Mock(item_links="link_2", value="value_2")
+        ]
+        with patch(
+            "weko_search_ui.mapper.ItemLink.get_item_link_info",
+            return_value=mock_item_link_info):
+
+            rocrate = JsonLdMapper(
+                item_type2.model.id, json_mapping).to_rocrate_metadata(metadata)
+            ro_crate_metadata = rocrate.metadata.generate()
+
+            # mapped metadata
+            graph = ro_crate_metadata["@graph"][0]
+            assert graph["datePublished"] == metadata["pubdate"]["attribute_value"]
+            assert graph["name"] == metadata["item_title"]
+            assert graph["identifier"] == metadata["recid"]
+
+            # wk-context
+            assert "wk:publishStatus" in graph
+            assert "wk:index" in graph
+            assert "wk:editMode" in graph
+            assert "wk:feedbackMail" in graph
+            assert "wk:itemLinks" in graph
+            assert "wk:metadataAutoFill" in graph
+            assert graph["wk:index"] == metadata["path"]
+            if metadata.get("publish_status") == "0":
+                assert graph["wk:publishStatus"] == "public"
+            elif metadata.get("publish_status") == "1":
+                assert graph["wk:publishStatus"] == "private"
+            assert len(graph["wk:itemLinks"]) == 2
+
+            # files
+            haspart_0 = graph["hasPart"][0]["@id"]
+            file_0 = None
+            haspart_1 = graph["hasPart"][1]["@id"]
+            file_1 = None
+            for item in ro_crate_metadata["@graph"]:
+                if item.get("@id") == haspart_0:
+                    file_0 = item
+                elif item.get("@id") == haspart_1:
+                    file_1 = item
+            assert file_0["name"] == "sample.rst"
+            assert file_1["name"] == "data.csv"
+
+        # case Extra(attribute_value_mlt)
+        key = "item_1744171568909"
+        multi_metadata = {
+            "attribute_name": "Extra",
+            "attribute_value_mlt": [
+                {
+                    "interim": "エクストラ_multi"
+                }
+            ]
+        }
+        schema = json_data("data/jsonld/item_type_schema_multi.json")
+        item_type2.model.schema = schema
+        db.session.commit()
+        metadata.update(**{key:multi_metadata})
+
+        rocrate = JsonLdMapper(
+            item_type2.model.id, json_mapping).to_rocrate_metadata(metadata)
+        ro_crate_metadata = rocrate.metadata.generate()
+
+        # mapped metadata
+        graph = ro_crate_metadata["@graph"][0]
+        assert graph["datePublished"] == metadata["pubdate"]["attribute_value"]
+        assert graph["name"] == metadata["item_title"]
+        assert graph["identifier"] == metadata["recid"]
+
+        # wk-context
+        assert "wk:publishStatus" in graph
+        assert "wk:index" in graph
+        assert "wk:editMode" in graph
+        assert "wk:feedbackMail" in graph
+        assert "wk:itemLinks" in graph
+        assert "wk:metadataAutoFill" in graph
+        assert graph["wk:index"] == metadata["path"]
+        if metadata.get("publish_status") == "0":
+            assert graph["wk:publishStatus"] == "public"
+        elif metadata.get("publish_status") == "1":
+            assert graph["wk:publishStatus"] == "private"
+
+        # files, extra
+        haspart_0 = graph["hasPart"][0]["@id"]
+        file_0 = None
+        haspart_1 = graph["hasPart"][1]["@id"]
+        file_1 = None
+        extra_key = graph["additionalProperty"]["@id"]
+        extra = None
+        for item in ro_crate_metadata["@graph"]:
+            if item.get("@id") == haspart_0:
+                file_0 = item
+            elif item.get("@id") == haspart_1:
+                file_1 = item
+            elif item.get("@id") == extra_key:
+                extra = item
+
+        assert file_0["name"] == "sample.rst"
+        assert file_1["name"] == "data.csv"
+        # Extra
+        assert extra["value"] == multi_metadata["attribute_value_mlt"][0]['interim']
+
+        # case Extra(attribute_value)
+        single_metadata = {
+            "attribute_name": "extra_field",
+            "attribute_value": "エクストラ_single"
+        }
+        metadata.update(**{key:single_metadata})
+        schema = json_data("data/jsonld/item_type_schema_multi.json")
+        item_type2.model.schema = schema
+        db.session.commit()
+
+        rocrate = JsonLdMapper(
+            item_type2.model.id, json_mapping).to_rocrate_metadata(metadata)
+        ro_crate_metadata = rocrate.metadata.generate()
+
+        # mapped metadata
+        graph = ro_crate_metadata["@graph"][0]
+        assert graph["datePublished"] == metadata["pubdate"]["attribute_value"]
+        assert graph["name"] == metadata["item_title"]
+        assert graph["identifier"] == metadata["recid"]
+
+        # wk-context
+        assert "wk:publishStatus" in graph
+        assert "wk:index" in graph
+        assert "wk:editMode" in graph
+        assert "wk:feedbackMail" in graph
+        assert "wk:itemLinks" in graph
+        assert "wk:metadataAutoFill" in graph
+        assert graph["wk:index"] == metadata["path"]
+        if metadata.get("publish_status") == "0":
+            assert graph["wk:publishStatus"] == "public"
+        elif metadata.get("publish_status") == "1":
+            assert graph["wk:publishStatus"] == "private"
+
+        # files, extra
+        haspart_0 = graph["hasPart"][0]["@id"]
+        file_0 = None
+        haspart_1 = graph["hasPart"][1]["@id"]
+        file_1 = None
+        extra_key = graph["additionalProperty"]["@id"]
+        extra = None
+        for item in ro_crate_metadata["@graph"]:
+            if item.get("@id") == haspart_0:
+                file_0 = item
+            elif item.get("@id") == haspart_1:
+                file_1 = item
+            elif item.get("@id") == extra_key:
+                extra = item
+
+        assert file_0["name"] == "sample.rst"
+        assert file_1["name"] == "data.csv"
+        # Extra(attribute_value)
+        assert extra["value"] == single_metadata["attribute_value"]

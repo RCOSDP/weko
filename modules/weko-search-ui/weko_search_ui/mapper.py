@@ -1831,6 +1831,13 @@ class JsonLdMapper(JsonMapper):
             dict: metadata with RO-Crate format.
         """
 
+        entity_factory = lambda typename: type(typename, (ContextEntity,), {
+            "_empty": lambda self: {
+                "@id": self.id,
+                "@type": typename
+            }
+        })
+
         def add_list_entity(parent, key, list_at_id, at_type, list_data=None):
             """
             Args:
@@ -1868,6 +1875,19 @@ class JsonLdMapper(JsonMapper):
         _sequential = (id_template.format(i=i, s="{s}") for i in itertools.count())
         gen_id = lambda key: next(_sequential).format(s=key)
 
+        def get_at_id(key, index):
+            if key == "hasPart" and index is not None:
+                for k, v in properties_mapping.items():
+                    if v == key:
+                        at_id = self._deconstruct_dict(metadata).get(
+                            f"{k}.attribute_value_mlt[{index}].url.label",
+                            gen_id(key)
+                        )
+                        break
+            else:
+                at_id = gen_id(key)
+            return at_id
+
         rocrate = ROCrate()
 
         rocrate.name = metadata["title"][0]
@@ -1892,20 +1912,6 @@ class JsonLdMapper(JsonMapper):
         rocrate.root_dataset["wk:index"] = metadata.get("path", [])
         rocrate.root_dataset["wk:editMode"] = "Keep"
 
-        # wk:textExtraction
-        for k, v in properties_mapping.items():
-            if k.endswith(".filename"):
-                list_k_file = v.split(".")[1:]
-                break
-
-        extracted_files = kwargs.get("extracted_files", [])
-        for file in rocrate.root_dataset.get("hasPart", []):
-            for k_file in list_k_file[:-1]:
-                file = file[k_file]
-            if file[list_k_file[-1]] not in extracted_files:
-                file["wk:textExtraction"] = False
-                rocrate.add(file)
-
         # wk:itemLinks
         list_item_link_info = ItemLink.get_item_link_info(
             metadata["control_number"]
@@ -1926,15 +1932,6 @@ class JsonLdMapper(JsonMapper):
 
         # wk:metadaAutoFill
         rocrate.root_dataset["wk:metadataAutoFill"] = False
-
-
-
-        entity_factory = lambda typename: type(typename, (ContextEntity,), {
-            "_empty": lambda self: {
-                "@id": self.id,
-                "@type": typename
-            }
-        })
 
         def add_entity(parent, key, at_id, at_type, data=None, **kwargs):
             """
@@ -1982,10 +1979,6 @@ class JsonLdMapper(JsonMapper):
             rocrate.add(entity)
             return entity
 
-        def add_property(parent, key, value):
-            parent[key] = value
-            return parent
-
         def ensure_entity_list_size(parent, key, at_type, size):
             """Ensure list size including empty entity.
 
@@ -2000,7 +1993,8 @@ class JsonLdMapper(JsonMapper):
 
             current_size = len(parent[key])
             for i in range(current_size, size):
-                append_entity(parent, key, gen_id(key), at_type)
+                at_id = get_at_id(key, i)
+                append_entity(parent, key, at_id, at_type)
             return
 
         def extract_list_indices(meta_props, prop_props, property_map):
@@ -2128,8 +2122,9 @@ class JsonLdMapper(JsonMapper):
                         add_entity(parent, prop, at_id, at_type)
                     else:
                         if prop not in parent:
+                            at_id = get_at_id(prop, index)
                             add_entity(
-                                parent, prop, gen_id(meta_props[0]), at_type
+                                parent, prop, at_id, at_type
                             )
                         _set_child_rocrate_metadata(
                             parent[prop], record_key, META_PATH, META_KEY, meta_props[1:],
@@ -2166,6 +2161,7 @@ class JsonLdMapper(JsonMapper):
 
         deconstructed = self._deconstruct_dict(metadata)
 
+        # Main mapping
         for record_key in deconstructed:
             if "attribute_value" not in record_key:
                 continue
@@ -2184,16 +2180,34 @@ class JsonLdMapper(JsonMapper):
                 meta_props, PROP_PATH, prop_props, deconstructed
             )
 
+        # wk:textExtraction
+        list_k_file = None
+        for k, v in properties_mapping.items():
+            if k.endswith(".filename"):
+                list_k_file = v.split(".")[1:]
+                break
+
+        if list_k_file is not None:
+            extracted_files = kwargs.get("extracted_files", [])
+            for file in rocrate.root_dataset.get("hasPart", []):
+                for k_file in list_k_file[:-1]:
+                    file = file[k_file]
+                if file[list_k_file[-1]] not in extracted_files:
+                    file["wk:textExtraction"] = False
+                    rocrate.add(file)
+
         # Extra
         if "Extra" in item_map:
             extra_key = item_map["Extra"]
             # case: "Extra" is list
             # If not list, pass this process.
+            extra_key_head = item_map["Extra"]
+            extra_key = extra_key + ".attribute_value"
             if not deconstructed.get(extra_key):
                 extra_schema = self.itemtype.schema["properties"].get(
-                    extra_key).get("items").get("properties")
+                    extra_key_head).get("items").get("properties")
                 interim = list(extra_schema.keys())[0]
-                extra_key = extra_key + "[0]." + interim
+                extra_key = extra_key_head + ".attribute_value_mlt[0]." + interim
             str_extra_dict = deconstructed.get(extra_key)
             extra_entity = {
                 "description": "Metadata which is not able to be mapped",
