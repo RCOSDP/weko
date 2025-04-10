@@ -23,6 +23,7 @@
 from datetime import datetime
 import re
 import os
+import traceback
 import uuid
 import copy
 
@@ -1201,6 +1202,7 @@ def copy_bucket():
         uri = copy_bucket_to_s3(pid, filename, bucket_id, checked=checked, bucket_name=bucket_name)
         return jsonify(uri)
     except Exception as e:
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 400
 
 
@@ -1214,4 +1216,5 @@ def replace_file():
         uri = replace_file_bucket(pid, bucket_id, file)
         return jsonify(uri)
     except Exception as e:
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 400
