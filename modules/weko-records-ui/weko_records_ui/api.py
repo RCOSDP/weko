@@ -8,7 +8,7 @@ import boto3
 import tempfile
 import shutil
 from email_validator import validate_email
-from flask import current_app
+from flask import current_app, request
 
 from flask_login import current_user
 from flask_mail import Message
