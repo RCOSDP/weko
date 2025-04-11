@@ -1279,9 +1279,6 @@ async def sort_meta_data_by_options(
         return ret
 
 
-
-
-
     def get_file_comments(record, files):
         """Check and get file info."""
 

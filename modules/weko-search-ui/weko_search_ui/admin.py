@@ -25,6 +25,7 @@ import json
 import os
 import tempfile
 from datetime import datetime, timedelta, timezone
+import traceback
 from urllib.parse import urlencode
 import pickle
 
@@ -87,7 +88,7 @@ from .utils import (
     get_root_item_option,
     get_sub_item_option,
     get_tree_items,
-    handle_doi,
+    handle_metadata_by_doi,
     handle_get_all_sub_id_and_name,
     handle_workflow,
     make_stats_file,
@@ -475,7 +476,7 @@ class ItemImportView(BaseView):
                     create_flow_define()
                     handle_workflow(item)
                     if (list_doi[idx]):
-                        metadata_doi = handle_doi(item, list_doi[idx])
+                        metadata_doi = handle_metadata_by_doi(item, list_doi[idx])
                         item["metadata"] = metadata_doi
                     group_tasks.append(import_item.s(item, request_info))
                     db.session.commit()
@@ -753,7 +754,7 @@ class ItemRocrateImportView(BaseView):
         workflows = workflow.get_workflow_list()
         workflows_js = [get_content_workflow(item) for item in workflows]
 
-        form =FlaskForm(request.form)
+        form = FlaskForm(request.form)
 
         return self.render(
             WEKO_ITEM_ADMIN_ROCRATE_IMPORT_TEMPLATE,
@@ -763,7 +764,7 @@ class ItemRocrateImportView(BaseView):
         )
 
     @expose("/check", methods=["POST"])
-    def check(self) -> jsonify:
+    def check(self):
         """Validate item import.
 
         :return: The result of the validation.
@@ -795,14 +796,13 @@ class ItemRocrateImportView(BaseView):
                 can_edit_indexes += [i.cid for i in Indexes.get_self_list(comm.root_node_id)]
             can_edit_indexes = list(set(can_edit_indexes))
         if data and file:
-            temp_path = (
-                tempfile.gettempdir()
-                + "/"
-                + current_app.config["WEKO_SEARCH_UI_ROCRATE_IMPORT_TMP_PREFIX"]
-                + datetime.now(timezone.utc).strftime(r"%Y%m%d%H%M%S%f")
+            temp_path = os.path.join(
+                tempfile.gettempdir(),
+                current_app.config["WEKO_SEARCH_UI_ROCRATE_IMPORT_TMP_PREFIX"]
+                    + datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")[:-3]
             )
             os.mkdir(temp_path)
-            file_path = temp_path + "/" + file.filename
+            file_path = os.path.join(temp_path, file.filename)
             file.save(file_path)
             task = check_rocrate_import_items_task.apply_async(
                 (
@@ -866,7 +866,7 @@ class ItemRocrateImportView(BaseView):
             )
 
     @expose("/import", methods=["POST"])
-    def import_items(self) -> jsonify:
+    def import_items(self):
         """Import item into System.
 
         :return: The response of the import.
@@ -893,7 +893,7 @@ class ItemRocrateImportView(BaseView):
             group_tasks = []
             for item in list_record:
                 try:
-                    item["root_path"] = data_path + "/data"
+                    item["root_path"] = os.path.join(data_path + "data")
                     create_flow_define()
                     handle_workflow(item)
                     group_tasks.append(import_item.s(item, request_info))
@@ -901,6 +901,7 @@ class ItemRocrateImportView(BaseView):
                 except Exception as e:
                     db.session.rollback()
                     current_app.logger.error(e)
+                    traceback.print_exc()
 
             # handle import tasks
             import_task = chord(group_tasks)(remove_temp_dir_task.si(data_path))

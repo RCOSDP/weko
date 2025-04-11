@@ -18,6 +18,7 @@ import re
 from base64 import b64encode
 from datetime import datetime, timedelta
 from math import ceil
+import traceback
 from typing import Generator, NoReturn, Union
 
 import click
@@ -388,7 +389,8 @@ class QueryFileReportsHelper(object):
                 open_access_res = open_access.run(**params)
                 cls.Calculation(open_access_res, open_access_list)
         except Exception as e:
-            current_app.logger.debug(e)
+            current_app.logger.error(e)
+            traceback.print_exc()
 
         result['date'] = query_month
         result['all'] = all_list
@@ -431,7 +433,8 @@ class QueryFileReportsHelper(object):
             cls.Calculation(all_res, all_list)
 
         except Exception as e:
-            current_app.logger.debug(e)
+            current_app.logger.error(e)
+            traceback.print_exc()
 
         result['date'] = query_month
         result['all'] = all_list
@@ -806,7 +809,8 @@ class QueryRecordViewPerIndexReportHelper(object):
                 count += cls.parse_bucket_response(aggs, result)
 
         except Exception as e:
-            current_app.logger.debug(e)
+            current_app.logger.error(e)
+            traceback.print_exc()
             return {}
 
         return result
@@ -926,10 +930,12 @@ class QueryRecordViewReportHelper(object):
             cls.Calculation(all_res, all_list)
 
         except es_exceptions.NotFoundError as e:
-            current_app.logger.debug(e)
+            current_app.logger.error(e)
+            traceback.print_exc()
             result['all'] = []
         except Exception as e:
-            current_app.logger.debug(e)
+            current_app.logger.error(e)
+            traceback.print_exc()
 
         result['date'] = query_date
         result['all'] = all_list
@@ -1315,10 +1321,12 @@ class QueryItemRegReportHelper(object):
                 else:
                     result = []
             except es_exceptions.NotFoundError as e:
-                current_app.logger.debug(e)
+                current_app.logger.error(e)
+                traceback.print_exc()
                 result = []
             except Exception as e:
-                current_app.logger.debug(e)
+                current_app.logger.error(e)
+                traceback.print_exc()
 
         response = {
             'num_page': ceil(float(total_results) / reports_per_page),

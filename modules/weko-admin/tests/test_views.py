@@ -295,12 +295,18 @@ def test_save_api_cert_data(api, users):
     res = api.post(url,json=data)
     assert response_data(res) == {"error":"Account information is invalid. Please check again."}
 
-    # validate_certification is True
+    # api_code is 'crf' and validate_certification is True
     with patch("weko_admin.views.validate_certification",return_value=True):
         with patch("weko_admin.views.save_api_certification",return_value={"results":"success","error":""}):
-            data = {"api_code":"","cert_data":"test_cert_data"}
+            data = {"api_code":"crf","cert_data":"test_cert_data"}
             res = api.post(url,json=data)
             assert response_data(res) == {"results":"success","error":""}
+    
+    # api_code is 'oaa'
+    with patch("weko_admin.views.save_api_certification",return_value={"results":"success","error":""}):
+        data = {"api_code":"oaa","cert_data":"test_cert_data"}
+        res = api.post(url,json=data)
+        assert response_data(res) == {"results":"success","error":""}
 
     # else
     with patch("weko_admin.views.validate_certification",return_value=False):

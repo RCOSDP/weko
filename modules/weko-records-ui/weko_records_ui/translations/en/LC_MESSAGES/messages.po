@@ -1404,21 +1404,6 @@ msgstr ""
 msgid "Replacing file failed."
 msgstr ""
 
-msgid "Please enter the calculation result"
-msgstr ""
-
-msgid "The calculation results are different."
-msgstr ""
-
-msgid "Email sent successfully"
-msgstr ""
-
-msgid "The image has expired. Please enter the calculation result again."
-msgstr ""
-
-msgid "There is an error in the input item"
-msgstr ""
-
 msgid "S3 setting none. Please check your profile."
 msgstr ""
 

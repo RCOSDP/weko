@@ -134,8 +134,9 @@ class Flow(object):
             db.session.commit()
             return _flow
         except Exception as ex:
-            current_app.logger.exception(str(ex))
             db.session.rollback()
+            current_app.logger.error(str(ex))
+            traceback.print_exc()
             raise
 
     def upt_flow(self, flow_id, flow):
@@ -182,8 +183,9 @@ class Flow(object):
             db.session.commit()
             return _flow
         except Exception as ex:
-            current_app.logger.exception(str(ex))
             db.session.rollback()
+            current_app.logger.error(str(ex))
+            traceback.print_exc()
             raise
 
     def get_flow_list(self):

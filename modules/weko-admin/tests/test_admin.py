@@ -28,7 +28,7 @@ from invenio_communities.models import Community
 from weko_index_tree.models import IndexStyle,Index
 from weko_admin.admin import StyleSettingView,LogAnalysisSettings,ItemExportSettingsView,IdentifierSettingView,\
     identifier_adminview,facet_search_adminview,FacetSearchSettingView,SwordAPISettingsView, SwordAPIJsonldSettingsView,\
-    SwordAPIJsonldMappingView
+    JsonldMappingView
 from weko_admin.models import AdminSettings,StatisticsEmail,LogAnalysisRestrictedCrawlerList,\
                                 RankingSettings,SearchManagement, Identifier,FacetSearchSetting
 from weko_records.models import ItemTypeJsonldMapping
@@ -1937,18 +1937,19 @@ class TestSwordAPISettingsView:
             with patch("weko_admin.admin.WorkFlow.get_deleted_workflow_list", return_value=[deleted_workflow]):
              res = client.get(url)
         assert res.status_code == 200
-        current_settings = \
-        {'data_format':
-         {'TSV/CSV': {'active': 'True', 'registration_type': 'Direct'},
-          'XML': {'active': 'True', 'registration_type': 'Workflow', 'workflow': '31001'}
-          }
-          }
+        current_settings = {
+            'TSV/CSV': {'active': True, 'registration_type': 'Direct', 'duplicate_check': False},
+            'XML': {'active': False, 'registration_type': 'Workflow', 'workflow': '31001', 'duplicate_check': False}
+        }
+
         args, kwargs = mock_render.call_args
         assert args[0] == "weko_admin/admin/sword_api_settings.html"
         assert kwargs["current_settings"] == current_settings
         assert json.loads(kwargs["current_settings_json"]) == current_settings
+        assert kwargs["active_value"] == "checked"
         assert kwargs["deleted_workflow_name_dict"] == '{"1": "test_workflow"}'
         assert kwargs["workflows"] == ["workflow 1"]
+        assert kwargs["duplicate_check_value"] == ""
 
         # xml get
         # old_format exit and xml setting is workflow
@@ -1962,104 +1963,45 @@ class TestSwordAPISettingsView:
             with patch("weko_admin.admin.WorkFlow.get_deleted_workflow_list", return_value=[deleted_workflow]):
              res = client.get(url_xml)
         assert res.status_code == 200
-        current_settings = \
-        {'data_format':
-         {'TSV/CSV': {'active': 'True', 'registration_type': 'Direct'},
-          'XML': {'active': 'True', 'registration_type': 'Workflow', 'workflow': '31001'}
-          }
-          }
+        current_settings = {
+            'TSV/CSV': {'active': True, 'registration_type': 'Direct', 'duplicate_check': False},
+            'XML': {'active': False, 'registration_type': 'Workflow', 'workflow': '31001', 'duplicate_check': False}
+        }
+
         args, kwargs = mock_render.call_args
         assert args[0] == "weko_admin/admin/sword_api_settings.html"
         assert kwargs["current_settings"] == current_settings
         assert json.loads(kwargs["current_settings_json"]) == current_settings
+        assert kwargs["active_value"] == ""
         assert kwargs["deleted_workflow_name_dict"] == '{"1": "test_workflow"}'
         assert kwargs["workflows"] == ["workflow 1"]
-
-
-        # tsv/csv get
-        # old_format exit and xml setting is direct
-        AdminSettings.query.filter_by(name="sword_api_setting").delete()
-        settings = list()
-        settings.append(AdminSettings(id=10,name="sword_api_setting",settings={ "default_format": "TSV","data_format":{ "TSV":{"register_format": "Direct"},"XML":{"register_format": "Direct"}}}))
-        db.session.add_all(settings)
-        db.session.commit()
-        login_user_via_session(client,email=users[0]["email"])# sysadmin
-        deleted_workflow = WorkFlow(
-            id = "1",
-            flows_name = "test_workflow"
-        )
-        mock_render = mocker.patch("weko_admin.admin.SwordAPISettingsView.render", return_value=make_response())
-        with patch("weko_admin.admin.WorkFlow.get_workflows_by_roles", return_value=["workflow 1"]):
-            with patch("weko_admin.admin.WorkFlow.get_deleted_workflow_list", return_value=[deleted_workflow]):
-             res = client.get(url)
-        assert res.status_code == 200
-        current_settings = \
-        {'data_format':
-         {'TSV/CSV': {'active': 'True', 'registration_type': 'Direct'},
-          'XML': {'active': 'True', 'registration_type': 'Direct', 'workflow': ''}
-          }
-          }
-        args, kwargs = mock_render.call_args
-        assert args[0] == "weko_admin/admin/sword_api_settings.html"
-        assert kwargs["current_settings"] == current_settings
-        assert json.loads(kwargs["current_settings_json"]) == current_settings
-        assert kwargs["deleted_workflow_name_dict"] == '{"1": "test_workflow"}'
-        assert kwargs["workflows"] == ["workflow 1"]
-
-        # xml get
-        # old_format exit and xml setting is direct
-        login_user_via_session(client,email=users[0]["email"])# sysadmin
-        deleted_workflow = WorkFlow(
-            id = "1",
-            flows_name = "test_workflow"
-        )
-        mock_render = mocker.patch("weko_admin.admin.SwordAPISettingsView.render", return_value=make_response())
-        with patch("weko_admin.admin.WorkFlow.get_workflows_by_roles", return_value=["workflow 1"]):
-            with patch("weko_admin.admin.WorkFlow.get_deleted_workflow_list", return_value=[deleted_workflow]):
-             res = client.get(url_xml)
-        assert res.status_code == 200
-        current_settings = \
-        {'data_format':
-         {'TSV/CSV': {'active': 'True', 'registration_type': 'Direct'},
-          'XML': {'active': 'True', 'registration_type': 'Direct', 'workflow': ''}
-          }
-          }
-        args, kwargs = mock_render.call_args
-        assert args[0] == "weko_admin/admin/sword_api_settings.html"
-        assert kwargs["current_settings"] == current_settings
-        assert json.loads(kwargs["current_settings_json"]) == current_settings
-        assert kwargs["deleted_workflow_name_dict"] == '{"1": "test_workflow"}'
-        assert kwargs["workflows"] == ["workflow 1"]
-
+        assert kwargs["duplicate_check_value"] == ""
 
         # tsv/csv get
         # new_format exit
         AdminSettings.query.filter_by(name="sword_api_setting").delete()
-        settings = list()
-        settings.append(AdminSettings(id=10,name="sword_api_setting",settings={'data_format':
-             {'TSV/CSV': {'active': 'False', 'registration_type': 'Direct'},
-              'XML': {'active': 'False', 'registration_type': 'Direct', 'workflow': '31001'}
-              }
-            }))
-        db.session.add_all(settings)
+        setting = AdminSettings(
+            id=10, name="sword_api_setting",
+            settings={
+                'TSV/CSV': {'active': False, 'registration_type': 'Direct', 'duplicate_check': True},
+                'XML': {'active': True, 'registration_type': 'Direct', 'workflow': '31001', 'duplicate_check': True}
+            })
+        db.session.add(setting)
         db.session.commit()
         mock_render = mocker.patch("weko_admin.admin.SwordAPISettingsView.render", return_value=make_response())
         with patch("weko_admin.admin.WorkFlow.get_workflows_by_roles", return_value=["workflow 1"]):
             with patch("weko_admin.admin.WorkFlow.get_deleted_workflow_list", return_value=[deleted_workflow]):
              res = client.get(url)
         assert res.status_code == 200
-        current_settings = \
-        {'data_format':
-             {'TSV/CSV': {'active': 'False', 'registration_type': 'Direct'},
-              'XML': {'active': 'False', 'registration_type': 'Direct', 'workflow': '31001'}
-              }
-            }
+        current_settings = setting.settings
         args, kwargs = mock_render.call_args
         assert args[0] == "weko_admin/admin/sword_api_settings.html"
         assert kwargs["current_settings"] == current_settings
         assert json.loads(kwargs["current_settings_json"]) == current_settings
+        assert kwargs["active_value"] == ""
         assert kwargs["deleted_workflow_name_dict"] == '{"1": "test_workflow"}'
         assert kwargs["workflows"] == ["workflow 1"]
+        assert kwargs["duplicate_check_value"] == "checked"
 
         # xml get
         # new_format exit
@@ -2068,35 +2010,31 @@ class TestSwordAPISettingsView:
             with patch("weko_admin.admin.WorkFlow.get_deleted_workflow_list", return_value=[deleted_workflow]):
              res = client.get(url_xml)
         assert res.status_code == 200
-        current_settings = \
-        {'data_format':
-             {'TSV/CSV': {'active': 'False', 'registration_type': 'Direct'},
-              'XML': {'active': 'False', 'registration_type': 'Direct', 'workflow': '31001'}
-              }
-            }
         args, kwargs = mock_render.call_args
         assert args[0] == "weko_admin/admin/sword_api_settings.html"
         assert kwargs["current_settings"] == current_settings
         assert json.loads(kwargs["current_settings_json"]) == current_settings
+        assert kwargs["active_value"] == "checked"
         assert kwargs["deleted_workflow_name_dict"] == '{"1": "test_workflow"}'
         assert kwargs["workflows"] == ["workflow 1"]
+        assert kwargs["duplicate_check_value"] == "checked"
 
 
         # not exist admin_settings
-        default_settings = {"data_format":
-                                {'TSV/CSV':
-                                {
-                                    "active": 'True',
-                                    "registration_type": "Direct",
-                                },
-                                'XML':
-                                {
-                                    "active": 'True',
-                                    "registration_type": "Workflow",
-                                    "workflow": "-1"
-                                }
-                                }
-                                }
+        default_settings = {
+            'TSV/CSV': {
+                "active": True,
+                "registration_type": "Direct",
+                "duplicate_check": False,
+            },
+            'XML': {
+                "active": False,
+                "registration_type": "Workflow",
+                "workflow": "-1",
+                "duplicate_check": False,
+            }
+        }
+
         AdminSettings.query.filter_by(name="sword_api_setting").delete()
         db.session.commit()
         mock_render = mocker.patch("weko_admin.admin.SwordAPISettingsView.render", return_value = make_response())
@@ -2112,16 +2050,18 @@ class TestSwordAPISettingsView:
         # success
         login_user_via_session(client,email=users[0]["email"])# sysadmin
         res = client.post(url,
-            data=json.dumps({'active': 'True', 'registration_type': 'Direct', 'workflow': ''}),
-            content_type='application/json')
+            data=json.dumps({'active': True, 'registration_type': 'Direct', 'workflow': '', 'duplicate_check': False}),
+            content_type='application/json'
+        )
         assert res.status_code == 200
 
         # xml post
         # success
         login_user_via_session(client,email=users[0]["email"])# sysadmin
         res = client.post(url_xml,
-            data=json.dumps({'active': 'True', 'registration_type': 'Direct', 'workflow': '31001'}),
-            content_type='application/json')
+            data=json.dumps({'active': True, 'registration_type': 'Direct', 'workflow': '31001', 'duplicate_check': False}),
+            content_type='application/json'
+        )
         assert res.status_code == 200
 
 
@@ -2313,9 +2253,9 @@ class TestSwordAPIJsonldSettingsView:
 
 
 
-#class SwordAPIJsonldMappingView(ModelView):
+#class JsonldMappingView(ModelView):
 #
-class TestSwordAPIJsonldMappingView:
+class TestJsonldMappingView:
 
     def test_create_view(self, client, users, item_type, db, mocker):
         url = url_for("jsonld-mapping.create_view")
@@ -2331,7 +2271,7 @@ class TestSwordAPIJsonldMappingView:
 
         # get
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        mock_render = mocker.patch("weko_admin.admin.SwordAPIJsonldMappingView.render", return_value=make_response())
+        mock_render = mocker.patch("weko_admin.admin.JsonldMappingView.render", return_value=make_response())
         res = client.get(url)
         assert res.status_code == 200
 
@@ -2374,7 +2314,7 @@ class TestSwordAPIJsonldMappingView:
         # model_none
         url_none = url_for("jsonld-mapping.edit_view", id=999)
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        mock_render = mocker.patch("weko_admin.admin.SwordAPIJsonldMappingView.render", return_value=make_response())
+        mock_render = mocker.patch("weko_admin.admin.JsonldMappingView.render", return_value=make_response())
         res = client.get(url_none)
         assert res.status_code == 404
 
@@ -2390,7 +2330,7 @@ class TestSwordAPIJsonldMappingView:
         db.session.add_all(settings)
         db.session.commit()
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        mock_render = mocker.patch("weko_admin.admin.SwordAPIJsonldMappingView.render", return_value=make_response())
+        mock_render = mocker.patch("weko_admin.admin.JsonldMappingView.render", return_value=make_response())
         deleted_workflow = WorkFlow(
             id = "1",
             flows_name = "test_workflow"
@@ -2460,4 +2400,4 @@ class TestSwordAPIJsonldMappingView:
 
     def test_get_query(self, client, users, db, mocker):
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        SwordAPIJsonldMappingView.get_query(SwordAPIJsonldMappingView)
+        JsonldMappingView.get_query(JsonldMappingView)

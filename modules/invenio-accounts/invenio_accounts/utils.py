@@ -97,4 +97,5 @@ def get_user_ids_by_role(role_id):
     Returns:
         list: A list of user IDs associated with the given role.
     """
-    return [str(user.id) for user in User.query.join(userrole).join(Role).filter(Role.id == role_id).all()]
+    query = User.query.join(userrole).join(Role).filter(Role.id == role_id)
+    return [str(user.id) for user in query.all()]

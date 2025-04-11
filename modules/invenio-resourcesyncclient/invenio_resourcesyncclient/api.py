@@ -336,7 +336,8 @@ class ResyncHandler(object):
                 else:
                     return resyncs
         except Exception as ex:
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
+            traceback.print_exc()
             return False
 
     def get_logs(self):

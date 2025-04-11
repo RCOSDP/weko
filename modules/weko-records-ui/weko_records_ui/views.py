@@ -23,6 +23,7 @@
 from datetime import datetime
 import re
 import os
+import traceback
 import uuid
 import copy
 
@@ -1011,11 +1012,11 @@ def soft_delete(recid):
         if recid.startswith('del_ver_'):
             recid = recid.replace('del_ver_', '')
             delete_version(recid)
-            current_app.logger.info(f"Delete version: {recid}")
         else:
             soft_delete_imp(recid)
             current_app.logger.info(f"Delete item: {recid}")
             starts_with_del_ver = False
+
         db.session.commit()
         if not starts_with_del_ver:
             old_record = WekoRecord.get_record_by_pid(recid)
@@ -1205,7 +1206,7 @@ def copy_bucket():
         uri = copy_bucket_to_s3(pid, filename, bucket_id, checked=checked, bucket_name=bucket_name)
         return jsonify(uri)
     except Exception as e:
-        current_app.logger.info(str(e))
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 400
 
 
@@ -1226,7 +1227,7 @@ def get_file_place():
         }
         return jsonify(result)
     except Exception as e:
-        current_app.logger.info(str(e))
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 400
 
 @blueprint.route("/records/replace_file", methods=['POST'])

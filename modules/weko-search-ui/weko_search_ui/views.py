@@ -21,6 +21,7 @@
 """Blueprint for weko-search-ui."""
 
 import time
+import traceback
 from xml.etree import ElementTree
 
 from blinker import Namespace
@@ -476,12 +477,13 @@ def get_last_item_id():
                 result["last_id"] = results["hits"]["hits"][0].get("sort", [])
     except Exception as ex:
         current_app.logger.error(ex)
+        traceback.print_exc()
     return jsonify(data=result), 200
 
 @blueprint.teardown_request
 @blueprint_api.teardown_request
 def dbsession_clean(exception):
-    current_app.logger.debug("weko_search_ui dbsession_clean: {}".format(exception))
+    current_app.logger.error("weko_search_ui dbsession_clean: {}".format(exception))
     if exception is None:
         try:
             db.session.commit()

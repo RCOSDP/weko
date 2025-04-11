@@ -22,7 +22,6 @@
 
 from flask_babelex import gettext as _
 from flask_login import user_logged_in, user_logged_out
-from weko_admin.models import AdminSettings, db
 
 from . import config
 

@@ -1,14 +1,15 @@
-import os
 from datetime import datetime, timezone
 import os
 import random
 import string
 import hashlib
+import traceback
 import boto3
 import tempfile
 import shutil
 from email_validator import validate_email
-from flask import current_app, request
+from flask import current_app
+
 from flask_login import current_user
 from flask_mail import Message
 from flask_babelex import lazy_gettext as _
@@ -456,6 +457,7 @@ def replace_file_bucket(org_pid, org_bucket_id, file=None,
         current_app.logger.exception(_('Cannot update because the corresponding item is being edited.'))
         raise Exception(_('Cannot update because the corresponding item is being edited.'))
 
+
     pid = PersistentIdentifier.query.filter_by(
         pid_type="recid", pid_value=org_pid
     ).first()
@@ -769,4 +771,3 @@ def replace_file_bucket(org_pid, org_bucket_id, file=None,
         result = True
 
     return result
-

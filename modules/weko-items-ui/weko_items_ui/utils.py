@@ -2495,44 +2495,6 @@ def write_files(item_types_data, export_path, list_item_role):
             file.write(file_output.getvalue())
 
 
-# def write_rocrate_files(item_types_data, export_path, list_item_role):
-#     """Write TSV/CSV data to files.
-
-#     @param item_types_data:
-#     @param export_path:
-#     @param list_item_role:
-#     @return:
-#     """
-#     current_app.logger.debug("item_types_data:{}".format(item_types_data))
-#     current_app.logger.debug("export_path:{}".format(export_path))
-#     current_app.logger.debug("list_item_role:{}".format(list_item_role))
-#     file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
-#     for item_type_id in item_types_data:
-#         current_app.logger.debug("item_type_id:{}".format(item_type_id))
-#         current_app.logger.debug("item_types_data[item_type_id]['recids']:{}".format(item_types_data[item_type_id]['recids']))
-#         headers, records = make_stats_file(
-#             item_type_id,
-#             item_types_data[item_type_id]['recids'],
-#             list_item_role,
-#             export_path)
-#         current_app.logger.debug("headers:{}".format(headers))
-#         current_app.logger.debug("records:{}".format(records))
-#         keys, labels, is_systems, options = headers
-#         item_types_data[item_type_id]['recids'].sort()
-#         item_types_data[item_type_id]['keys'] = keys
-#         item_types_data[item_type_id]['labels'] = labels
-#         item_types_data[item_type_id]['is_systems'] = is_systems
-#         item_types_data[item_type_id]['options'] = options
-#         item_types_data[item_type_id]['data'] = records
-#         item_type_data = item_types_data[item_type_id]
-#         with open('{}/{}.{}'.format(export_path,
-#                                     item_type_data.get('name'),
-#                                     file_format),
-#                                     'w', encoding="utf-8-sig") as file:
-#             file_output = package_export_file(item_type_data)
-#             file.write(file_output.getvalue())
-
-
 def check_item_type_name(name):
     """Check a list of allowed characters in filenames.
 
@@ -2738,7 +2700,7 @@ def bagify(
             for c in checksums:
                 bagit._make_tagmanifest_file(c, bag_dir, encoding="utf-8")
     except Exception:
-        current_app.logger.exception(f"An error occurred creating a bag in {bag_dir}")
+        current_app.logger.error(f"An error occurred creating a bag in {bag_dir}")
         raise
     finally:
         os.chdir(old_dir)
@@ -2802,7 +2764,7 @@ def export_rocrate(post_data):
             rocrate_path = os.path.join(record_path, ROCRATE_METADATA_FILE)
             with open(rocrate_path, "w", encoding="utf8") as f:
                 # text garbling solves when using ensure_ascii=False
-                json.dump(rocrate, f, indent=2, sort_keys=True,
+                json.dump(rocrate.metadata.generate(), f, indent=2, sort_keys=True,
                     ensure_ascii=False)
             # Create bag
             bagify(record_path, checksums=["sha256"])
@@ -2829,9 +2791,8 @@ def export_rocrate(post_data):
         )
         return resp
     except Exception as ex:
-        current_app.logger.error("-" * 60)
-        current_app.logger.error(ex)
-        traceback.print_exc(file=sys.stdout)
+        current_app.logger.error("Error occurred during item export.")
+        traceback.print_exc()
         flash(_("Error occurred during item export."), "error")
         return redirect(url_for("weko_items_ui.export"))
     finally:
@@ -2865,9 +2826,7 @@ def _get_metadata_dict_in_es(record_ids):
             ]
             metadata_dict.update({key: (metadata, extraction_file_list)})
     except NotFoundError as e:
-        current_app.logger.debug("Index do not exist yet: ", str(e))
-
-    current_app.logger.debug("metadata_dict:{}".format(metadata_dict))
+        current_app.logger.error("Index do not exist yet: ", str(e))
 
     return metadata_dict
 
