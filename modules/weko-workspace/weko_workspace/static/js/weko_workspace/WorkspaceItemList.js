@@ -356,7 +356,7 @@ document.addEventListener('DOMContentLoaded', function () {
       );
     };
 
-    const generateJsonTemplate = () => {
+    const generateJsonTemplate = (is_save=false) => {
       const currentSelections = selectionsRef.current;
       const result = {};
       for (const key of filterOrder) {
@@ -364,7 +364,7 @@ document.addEventListener('DOMContentLoaded', function () {
           if (singleSelectFilters.includes(key)) {
             const selection = currentSelections[key] || [];
             result[key] = selection.includes('Yes') ? true : selection.includes('No') ? false : null;
-          } else if (alwaysEmptyFilters.includes(key)) {
+          } else if (is_save && alwaysEmptyFilters.includes(key)) {
             result[key] = [];
           } else {
             result[key] = currentSelections[key] || [];
@@ -441,7 +441,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const handleSave = async (e) => {
         e.preventDefault();
-        const jsonTemplate = generateJsonTemplate();
+        const jsonTemplate = generateJsonTemplate(true);
         try {
           const data = await fetchJsonResponse('/workspace/save_filters', 'POST', jsonTemplate);
           alert(data.message);
