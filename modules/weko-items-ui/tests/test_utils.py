@@ -9712,8 +9712,8 @@ def test_save_title(app, db_itemtype, db_workflow, db_records, users):
     db_activity = activity.get_activity_detail("A-00000000-00000")
     assert db_activity.title == "タイトル"
 
-    request_data["metainfo"]["item_1617186331708"]["attribute_value_mlt"][0].pop("subitem_1551255648112")
-    request_data["metainfo"]["item_1617186331708"]["attribute_value_mlt"][1].pop("subitem_1551255648112")
+    request_data["metainfo"]["item_1617186331708"][0].pop("subitem_1551255648112")
+    request_data["metainfo"]["item_1617186331708"][1].pop("subitem_1551255648112")
     save_title("A-00000000-00000", request_data)
     db_activity = activity.get_activity_detail("A-00000000-00000")
     assert db_activity.title == "タイトル"
@@ -9737,12 +9737,28 @@ def test_save_title(app, db_itemtype, db_workflow, db_records, users):
     db_activity = activity.get_activity_detail("A-00000000-00000")
     assert db_activity.title == "タイトル-2"
 
-    request_data["metainfo"]["item_1617186331709"]["attribute_value_mlt"][0].pop("subitem_1551255648113")
-    request_data["metainfo"]["item_1617186331709"]["attribute_value_mlt"][1].pop("subitem_1551255648113")
+    request_data["metainfo"]["item_1617186331709"][0].pop("subitem_1551255648113")
+    request_data["metainfo"]["item_1617186331709"][1].pop("subitem_1551255648113")
     save_title("A-00000000-00000", request_data)
     db_activity = activity.get_activity_detail("A-00000000-00000")
     assert db_activity.title == "タイトル-2"
-
+    
+    with patch("weko_items_ui.utils.get_key_title_in_item_type_mapping") as mock_get_key:
+        mock_get_key.return_value = (None, "subitem_1551255647225")
+        dummy_request_data = request_data.copy()
+        dummy_request_data["metainfo"]["item_1617186331709"] = [
+            {
+                "subitem_1551255647226": "タイトル-dummy",
+                "subitem_1551255648113": "ja",
+            },
+            {
+                "subitem_1551255647226": "title-dummy",
+                "subitem_1551255648113": "en",
+            },
+        ]
+        save_title("A-00000000-00000", dummy_request_data)
+        db_activity = activity.get_activity_detail("A-00000000-00000")
+        assert db_activity.title == "タイトル-2"
 
 # def get_key_title_in_item_type_mapping(item_type_mapping):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_key_title_in_item_type_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -10208,8 +10224,39 @@ def test_get_title_in_request():
         ],
         "endpoints": {"initialization": "/api/deposits/redirect/1.0"},
     }
-    
-    assert get_title_in_request(request_data,'item_1617186331708', 'subitem_1551255647225')=='ja_conference paperITEM00000001(public_open_access_open_access_simple)'
+    key_list = ['item_1617186331708', 'item_1617186331709']
+    key_child_dict = {'item_1617186331708': 'subitem_1551255647225', 'item_1617186331709': 'subitem_1551255647226'}
+    assert get_title_in_request(request_data, key_list, key_child_dict) == 'ja_conference paperITEM00000001(public_open_access_open_access_simple)'
+
+    # Test Case: title value type is dict
+    request_data2 = request_data.copy()
+    request_data2["metainfo"]["item_1617186331708"] = {
+        "subitem_1551255647225": "dict_title",
+        "subitem_1551255648112": "ja",
+    }
+    assert get_title_in_request(request_data2, key_list, key_child_dict) == "dict_title"
+
+    # Test Case: title value type is not dict or list
+    request_data3 = request_data.copy()
+    request_data3["metainfo"]["item_1617186331708"] = ("subitem_1551255647225", "tuple_title")
+    assert get_title_in_request(request_data3, key_list, key_child_dict) == ""
+
+    # Test Case: title value type is list but not includes key_child
+    request_data4 = request_data.copy()
+    request_data4["metainfo"]["item_1617186331708"] = [
+        {
+            "subitem_1551255648112": "ja",
+        },
+        {
+            "subitem_1551255647225": "en_conference paperITEM00000001(public_open_access_simple)",
+            "subitem_1551255648112": "en",
+        },
+    ]
+    assert get_title_in_request(request_data4, key_list, key_child_dict) == ""
+
+    # Test Case: key_list is None (exception occured)
+    assert get_title_in_request(request_data, None, key_child_dict) == ""
+        
 
 
 # def hide_form_items(item_type, schema_form):

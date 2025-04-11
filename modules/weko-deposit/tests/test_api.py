@@ -1075,7 +1075,49 @@ class TestWekoRecord:
             data = [{"title":"en_title","language":"en"},{"title":"title"}]
             result = record.switching_language(data)
             assert result == "en_title"
-            
+
+
+    # def __get_titles_key(self):
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_get_titles_key -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_get_titles_key(self,app,es_records,db_itemtype,db_oaischema):
+        parent_key = ['item_1617186331708', 'item_1617186331709']
+        title_key = {'item_1617186331708': 'subitem_1551255647225', 'item_1617186331709': 'subitem_1551255647226'}
+        language_key = {'item_1617186331708': 'subitem_1551255648112', 'item_1617186331709': 'subitem_1551255648113'}
+        
+        item_type = db_itemtype["item_type"]
+        item_type_mapping = db_itemtype["item_type_mapping"]
+        
+        mapping = item_type_mapping.mapping
+        render = item_type.render
+        meta_options = {**render["meta_fix"], **render["meta_list"], **render["meta_system"]}
+        
+        record = WekoRecord({})
+        # Test Case 1: No hide list
+        actual = record._WekoRecord__get_titles_key(mapping, meta_options, [])
+        assert actual[0] == parent_key
+        assert actual[1] == title_key
+        assert actual[2] == language_key
+
+        # Test Case 2: With hide list (title_key)
+        hide_list = ["item_1617186331708.subitem_1551255647225"]
+        actual = record._WekoRecord__get_titles_key(mapping, meta_options, hide_list)
+        assert actual[0] == ['item_1617186331709']
+        assert actual[1] == {'item_1617186331709': 'subitem_1551255647226'}
+        assert actual[2] == {'item_1617186331709': 'subitem_1551255648113'}
+
+        # Test Case 3: With hide list (language_key)
+        hide_list = ["item_1617186331708.subitem_1551255648112"]
+        actual = record._WekoRecord__get_titles_key(mapping, meta_options, hide_list)
+        assert actual[0] == ['item_1617186331708', 'item_1617186331709']
+        assert actual[1] == {'item_1617186331708': 'subitem_1551255647225', 'item_1617186331709': 'subitem_1551255647226'}
+        assert actual[2] == {'item_1617186331708': None, 'item_1617186331709': 'subitem_1551255648113'}
+
+        # Test Case 4: With hide list (both title_key and language_key)
+        # hide_list = ["item_1617186331708.subitem_1551255647225", "item_1617186331709.subitem_1551255648113"]
+        # actual = record._WekoRecord__get_titles_key(mapping, meta_options, hide_list)
+        # assert actual[0] == ['item_1617186331709']
+        # assert actual[1] == {'item_1617186331709': 'subitem_1551255647226'}
+        # assert actual[2] == {'item_1617186331709': None}
 
     #     def __get_titles_key(item_type_mapping):
     #     def get_titles(self):

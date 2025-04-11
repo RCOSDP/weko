@@ -1170,6 +1170,20 @@ def test_selected_value_by_language(app, meta):
     res = selected_value_by_language([], [], '', '', None, {})
     record = meta[0]
     assert res==None
+    _val_id = 'item_1551264308487.subitem_1551255647225'
+    res = selected_value_by_language([], [], '', _val_id, None, {}, hide_list=['invalid_subitem_key'])
+    record = meta[0]
+    assert res==None
+
+    _val_id = 'item_1551264308487.subitem_1551255647225'
+    res = selected_value_by_language([], [], '', _val_id, 'en', {}, hide_list=['item_1551264308487.subitem_1551255647225'])
+    record = meta[0]
+    assert res==None
+
+    _val_id = 'item_1551264308487.subitem_1551255647225'
+    res = selected_value_by_language([], ['タイトル日本語', 'Title'], '', _val_id, 'en', {}, hide_list=['invalid_subitem_key'])
+    record = meta[0]
+    assert res==None
     _lang_id = 'item_1551264308487.subitem_1551255648112'
     _val_id = 'item_1551264308487.subitem_1551255647225'
     res = selected_value_by_language(['ja', 'en'], ['タイトル日本語', 'Title'], _lang_id, _val_id, 'en', record)
@@ -1179,6 +1193,15 @@ def test_selected_value_by_language(app, meta):
     _val_id = 'item_1551264340087.subitem_1551255898956.subitem_1551255905565'
     res = selected_value_by_language(['ja'], ['作者'], _lang_id, _val_id, 'en', record)
     assert res=='Creator'
+
+    with patch("weko_records.utils.check_info_in_metadata", return_value="Mocked Value"): 
+        res = selected_value_by_language(['ja'], ['作者'], _lang_id, _val_id, 'en', record)
+        assert res=='Mocked Value'
+
+    with patch("weko_records.utils.check_info_in_metadata", return_value='Creator'):
+        res = selected_value_by_language(['en'], ['作者'], _lang_id, _val_id, 'en', record)
+        assert res=='Creator'
+
     app.config['WEKO_RECORDS_UI_LANG_DISP_FLG'] = True
     res = selected_value_by_language(['ja'], ['作者'], _lang_id, _val_id, 'en', record)
     assert res=='Creator'
@@ -1213,6 +1236,10 @@ def test_selected_value_by_language(app, meta):
     record.pop("item_1551264308487")
     res = selected_value_by_language(['ja', 'en'], ['タイトル日本語-2', 'Title-2'], _lang_id, _val_id, 'en', record)
     assert res=='Title-2'
+
+    with patch("weko_records.utils.check_info_in_metadata", return_value='Creator'):
+            res = selected_value_by_language(['en'], ['作者'], _lang_id, _val_id, 'en', record, hide_list=['en'])
+            assert res=='Creator'
 
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_selected_value_by_language_2 -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_selected_value_by_language_2(app, meta):
