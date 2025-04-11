@@ -81,8 +81,6 @@ class InvenioS3(object):
                 info['client_kwargs']['region_name'] = region_name
             info['config_kwargs']['signature_version'] = location.s3_signature_version
 
-        print(info)
-
         return info
 
     def init_app(self, app):
