@@ -9,7 +9,8 @@ from weko_accounts.api import ShibUser
 from weko_accounts.views import (
     _has_admin_access,
     init_menu,
-    _redirect_method
+    _redirect_method,
+    urlencode,
 )
 def set_session(client,data):
     with client.session_transaction() as session:
@@ -334,3 +335,12 @@ def test_shib_logout(client, mocker):
     mocker.patch("weko_accounts.views.ShibUser.shib_user_logout")
     res = client.get(url_for("weko_accounts.shib_logout"))
     assert res.data == bytes("logout success","utf-8")
+
+# def urlencode(value):
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_urlencode -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
+def test_urlencode(app):
+    app.jinja_env.filters["urlencode"] = urlencode
+    # test urlencode
+    template = app.jinja_env.from_string('{{"http://localhost:5000/weko/accounts/shib/login?SHIB_ATTR_SESSION_ID=1111&next=/next_page"|urlencode}}')
+    actual = template.render()
+    assert actual == "http%3A%2F%2Flocalhost%3A5000%2Fweko%2Faccounts%2Fshib%2Flogin%3FSHIB_ATTR_SESSION_ID%3D1111%26next%3D%2Fnext_page"
