@@ -263,6 +263,12 @@ ${INVENIO_WEB_INSTANCE} access \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 
 ${INVENIO_WEB_INSTANCE} access \
+       allow "files-rest-object-read-version" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} access \
        allow "search-access" \
        role "${INVENIO_ROLE_REPOSITORY}" \
        role "${INVENIO_ROLE_COMMUNITY}" \
@@ -311,7 +317,10 @@ ${INVENIO_WEB_INSTANCE} language create \
         --active --registered "en" "English" 001
 
 ${INVENIO_WEB_INSTANCE} language create \
-        --active "zh" "中文" 000
+        --active "zh-cn" "中文 (簡体)" 000
+
+${INVENIO_WEB_INSTANCE} language create \
+        --active "zh-tw" "中文 (繁体)" 000
 
 ${INVENIO_WEB_INSTANCE} language create \
         --active "id" "Indonesia" 000
@@ -449,6 +458,14 @@ ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "KAKEN2" "KAKEN2" "https://nrid.nii.ac.jp/nrid/##"
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "ROR" "ROR" "https://ror.org/##"
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "ISNI" "ISNI" "http://www.isni.org/isni/##"
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "VIAF" "VIAF" "https://viaf.org/viaf/##"
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "AID" "AID" ""
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "e-Rad_Researcher" "e-Rad_Researcher" ""
 # create-default-authors-prefix-settings-end
 
 # create-default-authors-affiliation-settings-begin
@@ -460,6 +477,8 @@ ${INVENIO_WEB_INSTANCE} authors_affiliation default_settings \
        "Ringgold" "Ringgold" ""
 ${INVENIO_WEB_INSTANCE} authors_affiliation default_settings \
        "kakenhi" "kakenhi" ""
+${INVENIO_WEB_INSTANCE} authors_affiliation default_settings \
+       "ROR" "ROR" "https://ror.org/##"
 # create-default-authors-affiliation-settings-end
 
 # create-widget-bucket-begin

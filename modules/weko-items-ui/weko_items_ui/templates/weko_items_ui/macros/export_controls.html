@@ -31,11 +31,11 @@
       <p class="col-xs-2">{{_('Export Format')}}</p>
       <div class="col-xs-3">
         <div class="form-group">
-          <label class="radio-inline" for="export_format_radio_json">
+          <label class="radio-inline" for="export_format_radio_tsv">
             <input type="radio" name="export_format_radio"
-              id="export_format_radio_json" value="JSON"
+              id="export_format_radio_tsv" value="TSV"
               {{ 'checked' if  True else '' }}>
-            {{_('JSON')}}
+            {{_('TSV')}}
           </label>
           <label class="radio-inline" for="export_format_radio_bibtex">
             <input type="radio" name="export_format_radio"
@@ -48,7 +48,6 @@
     </div>
     <input type="hidden" id="record_ids" name="record_ids" value="">
     <input type="hidden" id="invalid_record_ids" name="invalid_record_ids" value="">
-    <input type="hidden" id="record_metadata" name="record_metadata" value="">
   </form>
   <div class="col-xs-8 col-xs-offset-4">
     <div class="col-xs-4 text-center">

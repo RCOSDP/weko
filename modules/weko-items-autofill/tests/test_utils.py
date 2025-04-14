@@ -236,7 +236,7 @@ def test_get_title_pubdate_path(app, itemtypes):
     }
 
     # not reached break
-    all_false_mapping = {"test1": {}, "test2": {}}
+    all_false_mapping = {"test1": {}, "test2": {}, "test3":""}
     with patch(
         "weko_items_autofill.utils.Mapping.get_record", return_value=all_false_mapping
     ):
@@ -479,6 +479,8 @@ def test_pack_data_with_multiple_type_cinii():
     assert result == [
         {"@value": "13402625", "@type": "PISSN"},
     ]
+    result = pack_data_with_multiple_type_cinii(data, "test_type1", "test_type2")
+    assert result == []
 
 
 # def get_cinii_creator_data(data):
@@ -487,10 +489,14 @@ def test_get_cinii_creator_data():
     data = json_data("data/cinii_response_sample1.json")['response']['creator']
     result = get_cinii_creator_data(data)
     test = [
-        {"@value":"テスト 太郎", "@language":"ja"},
-        {"@value":"TEST Taro", "@language":"en"},
-        {"@value":"テスト 三郎", "@language":"ja"},
-        {"@value":"TEST Saburo", "@language":"en"},
+        [
+            {"@value":"テスト 太郎", "@language":"ja"},
+            {"@value":"TEST Taro", "@language":"en"}
+        ],
+        [
+            {"@value":"テスト 三郎", "@language":"ja"},
+            {"@value":"TEST Saburo", "@language":"en"}
+        ],
     ]
     assert result == test
 
@@ -499,10 +505,14 @@ def test_get_cinii_creator_data():
 def test_get_cinii_contributor_data():
     data = json_data("data/cinii_response_sample1.json")['response']["contributor"]
     test = [
-        {"@value": "テスト 次郎", "@language": "ja"},
-        {"@value": "TEST Ziro", "@language": "en"},
-        {"@value": "テスト 花子", "@language": "ja"},
-        {"@value": "TEST Hanako", "@language": "en"},
+        [
+            {"@value": "テスト 次郎", "@language": "ja"},
+            {"@value": "TEST Ziro", "@language": "en"}
+        ],
+        [
+            {"@value": "テスト 花子", "@language": "ja"},
+            {"@value": "TEST Hanako", "@language": "en"}
+        ],
     ]
     result = get_cinii_contributor_data(data)
     assert result == test
@@ -623,6 +633,10 @@ def test_get_cinii_data_by_key(app):
     result = get_cinii_data_by_key(api, "key")
     assert result == {}
 
+    api = {"response": None}
+    result = get_cinii_data_by_key(api, "key")
+    assert result == {}
+
     api = json_data("data/cinii_response_sample1.json")
     test = {
         "title": [
@@ -635,16 +649,24 @@ def test_get_cinii_data_by_key(app):
             {"@value": "別タイトル", "@language": "ja"},
         ],
         "creator": [
-            {"@value": "テスト 太郎", "@language": "ja"},
-            {"@value": "TEST Taro", "@language": "en"},
-            {"@value": "テスト 三郎", "@language": "ja"},
-            {"@value": "TEST Saburo", "@language": "en"},
+            [
+                {"@value": "テスト 太郎", "@language": "ja"},
+                {"@value": "TEST Taro", "@language": "en"}
+            ],
+            [
+                {"@value": "テスト 三郎", "@language": "ja"},
+                {"@value": "TEST Saburo", "@language": "en"}
+            ],
         ],
         "contributor": [
-            {"@value": "テスト 次郎", "@language": "ja"},
-            {"@value": "TEST Ziro", "@language": "en"},
-            {"@value": "テスト 花子", "@language": "ja"},
-            {"@value": "TEST Hanako", "@language": "en"}
+            [
+                {"@value": "テスト 次郎", "@language": "ja"},
+                {"@value": "TEST Ziro", "@language": "en"}
+            ],
+            [
+                {"@value": "テスト 花子", "@language": "ja"},
+                {"@value": "TEST Hanako", "@language": "en"}
+            ],
         ],
         "description": [
             {"@value": "this is test abstract.", "@type": "Abstract", "@language": "en"},
@@ -1688,11 +1710,11 @@ def test_get_workflow_journal(app, db, actions):
     db.session.commit()
 
     # not exist journal
-    result = get_workflow_journal(100)
+    result = get_workflow_journal(str(100))
     assert result == None
 
     # exist journal
-    result = get_workflow_journal(1)
+    result = get_workflow_journal(str(1))
     assert result == {"key": "value"}
 
 

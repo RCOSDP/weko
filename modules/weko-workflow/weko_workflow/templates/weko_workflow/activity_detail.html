@@ -195,7 +195,7 @@
             </div>
             <div class="col-xs-11 col-md-11 col-lg-11">
               {%- if is_enable_item_name_link -%}
-                <a href="#" id="link_record_detail">{{ item.get('title_ja', item.get('title')) if item }}</a>
+                <a href="#" id="link_record_detail">{{ activity.title if activity.title }}</a>
               {%- endif -%}
             </div>
           </div>
@@ -269,11 +269,12 @@
               {%- elif 'identifier_grant' == cur_step %}
                 {%- include 'weko_workflow/identifier_grant.html' %}
                 {%- include "weko_workflow/modal_quit_confirmation.html" %}
-              {%- elif 'approval' == cur_step or 'approval_advisor' == cur_step or 'approval_guarantor' == cur_step or 'approval_administrator' == cur_step %}
-                {%- with preview_carousel_id='preview_carousel' %}
-                  {% include 'weko_workflow/record_after_update.html' %}
-                {%- endwith %}
               {%- else %}
+                {%- if 'approval' == cur_step or 'approval_advisor' == cur_step or 'approval_guarantor' == cur_step or 'approval_administrator' == cur_step %}
+                  {%- with preview_carousel_id='preview_carousel' %}
+                    {% include 'weko_workflow/record_after_update.html' %}
+                  {%- endwith %}
+                {%- endif -%}
                 <div class="form-group">
                   <label class="sr-only" for="input-comment">{{_('Comment')}}</label>
                   <div class="input-group">

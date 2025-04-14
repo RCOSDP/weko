@@ -20,6 +20,8 @@
 
 """Flask extension for weko-records-ui."""
 
+from invenio_oauth2server.ext import verify_oauth_token_and_set_current_user
+
 from . import config
 from .rest import create_blueprint
 from .views import blueprint
@@ -44,6 +46,7 @@ class WekoRecordsUI(object):
         self.init_config(app)
         app.register_blueprint(blueprint)
         app.extensions['weko-records-ui'] = self
+        app.before_request(verify_oauth_token_and_set_current_user)
 
     def init_config(self, app):
         """Initialize configuration.

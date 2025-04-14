@@ -56,11 +56,7 @@
                     obj_of_condition.key_options = $scope.detail_search_key;
                     obj_of_condition.key_value = angular.copy(db_data[item.inx]);
                     if (db_data[item.inx].inputType == 'checkbox_list'){
-                        if (db_data[item.inx].check_val.length>$scope.load_delimiter){
-                            obj_of_condition.key_value.limit=$scope.load_delimiter;
-                        }else{
-                            obj_of_condition.key_value.limit=db_data[item.inx].check_val.length;
-                        }
+                        $scope.generate_check_box_list_check_val(item, db_data, obj_of_condition)
                     }
                     $scope.condition_data.push(obj_of_condition)
                 });
@@ -103,11 +99,7 @@
                         obj_of_condition.key_options = $scope.detail_search_key;
                         obj_of_condition.key_value = angular.copy(db_data[$scope.detail_search_key[sub_detail].inx]);
                         if (db_data[$scope.detail_search_key[sub_detail].inx].inputType == 'checkbox_list'){
-                            if (db_data[$scope.detail_search_key[sub_detail].inx].check_val.length>$scope.load_delimiter){
-                                obj_of_condition.key_value.limit=$scope.load_delimiter;
-                            }else{
-                                obj_of_condition.key_value.limit=db_data[$scope.detail_search_key[sub_detail].inx].check_val.length;
-                            }
+                            $scope.generate_check_box_list_check_val($scope.detail_search_key[sub_detail],db_data,obj_of_condition)
                         }
                         $scope.condition_data.push(obj_of_condition)
                         break;
@@ -380,11 +372,7 @@
                     obj_of_condition.key_options = $scope.detail_search_key;
                     obj_of_condition.key_value = angular.copy(db_data[item.inx]);
                     if (db_data[item.inx].inputType == 'checkbox_list'){
-                        if (db_data[item.inx].check_val.length>$scope.load_delimiter){
-                            obj_of_condition.key_value.limit=$scope.load_delimiter;
-                        }else{
-                            obj_of_condition.key_value.limit=db_data[item.inx].check_val.length;
-                        }
+                        $scope.generate_check_box_list_check_val(item, db_data, obj_of_condition)
                     }
                     $scope.condition_data.push(obj_of_condition);
                 });
@@ -399,7 +387,32 @@
                 }else{
                     next = now + $scope.load_delimiter;
                 }
+                $scope.unescape_check_val($scope.condition_data[index].key_value.check_val,next,now)
                 $scope.condition_data[index].key_value.limit = next;
+            }
+            $scope.generate_check_box_list_check_val = function (target, db_data, obj_of_condition) {
+                if (db_data[target.inx].check_val.length>$scope.load_delimiter){
+                    obj_of_condition.key_value.limit=$scope.load_delimiter;
+                }else{
+                    obj_of_condition.key_value.limit=db_data[target.inx].check_val.length;
+                }
+                $scope.unescape_check_val(obj_of_condition.key_value.check_val,obj_of_condition.key_value.limit)
+            }
+
+            $scope.unescape_check_val = function(check_val, to, from=0){
+                for (var i=from; i<to; i++){
+                    item = check_val[i]
+                    if(typeof item.contents === "string"){
+                        ele = document.createElement("div")
+                        ele.innerHTML = item.contents
+                        item.contents = ele.textContent
+                    }
+                    if(typeof item.id === "string"){
+                        ele = document.createElement("div")
+                        ele.innerHTML = item.id
+                        item.id = ele.textContent
+                    }
+                }
             }
             // set search options
             $scope.get_search_key = function (search_key) {
@@ -416,11 +429,7 @@
                         obj_of_condition.key_options = $scope.detail_search_key;
                         obj_of_condition.key_value = angular.copy(db_data[$scope.detail_search_key[sub_default_key].inx]);
                         if (db_data[$scope.detail_search_key[sub_default_key].inx].inputType == 'checkbox_list'){
-                            if (db_data[$scope.detail_search_key[sub_default_key].inx].check_val.length>$scope.load_delimiter){
-                                obj_of_condition.key_value.limit=$scope.load_delimiter;
-                            }else{
-                                obj_of_condition.key_value.limit=db_data[$scope.detail_search_key[sub_default_key].inx].check_val.length;
-                            }
+                            $scope.generate_check_box_list_check_val($scope.detail_search_key[sub_default_key],db_data, obj_of_condition)
                         }
                         break;
                     }
@@ -457,8 +466,6 @@
                 }
             }
             $scope.validateDate = function (event) {
-                console.log("called")
-                console.log(event)
                 let target = event.target
                 var elem = document.getElementById(target.id);
                 // 13はエンターキー

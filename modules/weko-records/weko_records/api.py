@@ -471,7 +471,7 @@ class ItemTypes(RecordBase):
             result = []
             for key in _delete_list:
                 prop_mapping = item_type_mapping.get(key, {}).get("jpcoar_mapping", {})
-                if prop_mapping:
+                if prop_mapping and isinstance(prop_mapping, dict):
                     result.extend(list(prop_mapping.keys()))
             return result
 
@@ -585,17 +585,14 @@ class ItemTypes(RecordBase):
         :param item_type_name: Item Type Name.
         :return: Record list.
         """
-        name = urllib.parse.quote_plus(item_type_name)
-        query_string = "itemtype:{}".format(
-            name)
+        from weko_search_ui.utils import execute_search_with_pagination
         result = []
         try:
             search = RecordsSearch(
                 index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
-            search = search.query(QueryString(query=query_string))
+            search = search.query('term', **{"itemtype.keyword": item_type_name})
             search = search.sort('-publish_date', '-_updated')
-            search_result = search.execute().to_dict()
-            result = search_result.get('hits', {}).get('hits', [])
+            result = execute_search_with_pagination(search, -1)
         except NotFoundError as e:
             current_app.logger.debug("Indexes do not exist yet: ", str(e))
         return result
@@ -942,7 +939,7 @@ class ItemTypes(RecordBase):
                         _prop = ItemTypeProps.get_record(_tmp)
                         if _prop:
                             # data['meta_list'][_prop_id] = json.loads('{"input_maxItems": "9999","input_minItems": "1","input_type": "cus_'+str(_prop.id)+'","input_value": "","option": {"crtf": false,"hidden": false,"multiple": true,"oneline": false,"required": false,"showlist": false},"title": "'+_prop.name+'","title_i18n": {"en": "", "ja": "'+_prop.name+'"}}')
-                            data['schemaeditor']['schema'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
+                            # data['schemaeditor']['schema'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
                             if multiple_flg:
                                 data['table_row_map']['schema']['properties'][_prop_id]['items']=pickle.loads(pickle.dumps(_prop.schema, -1))
                                 data['table_row_map']['schema']['properties'][_prop_id]['type']="array"
@@ -955,9 +952,10 @@ class ItemTypes(RecordBase):
                                 if 'format' in data['table_row_map']['schema']['properties'][_prop_id]:
                                     data['table_row_map']['schema']['properties'][_prop_id].pop('format')
                                 
-                                tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))                               
+                                tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))                            
                                 _forms = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.forms, -1))).replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_forms, -1))
+
                                 _tmp_data = data['table_row_map']['form'][idx]
                                 cls.update_attribute_options(tmp_data, _tmp_data, renew_value)
                                 cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'][_prop_id],data['table_row_map']['schema']['properties'][_prop_id])
@@ -975,10 +973,11 @@ class ItemTypes(RecordBase):
         
         table_row_map = data.get('table_row_map')
         json_schema = fix_json_schema(table_row_map.get('schema'))
+        
         json_form = table_row_map.get('form')
         json_schema = update_required_schema_not_exist_in_form(
             json_schema, json_form)
-
+        
         if itemtype_id != 0:
             json_schema, json_form = update_text_and_textarea(
                 itemtype_id, json_schema, json_form)
@@ -993,6 +992,12 @@ class ItemTypes(RecordBase):
         #             .first()
         #         )
         # data['table_row_map']['mapping'] = item_type_mapping.mapping if item_type_mapping else {}
+
+        # current_app.logger.error("Update ItemType({})".format(itemtype_id))
+        # current_app.logger.error("Update data({})".format(data))
+        # current_app.logger.error("Update json_schema({})".format(json_schema))
+        
+        # print(data)
 
         record = cls.update(id_=itemtype_id,
                                       name=item_type.item_type_name.name,
@@ -1019,66 +1024,106 @@ class ItemTypes(RecordBase):
 
     @classmethod
     def update_property_enum(cls, old_value, new_value):
-            if isinstance(old_value, dict):
-               for key, value in old_value.items():
-                    if isinstance(old_value[key], dict):
-                        if key in new_value and key in old_value:
-                            if "enum" in old_value[key]:
-                                new_value[key]["enum"] = old_value[key]["enum"]
-                            elif "currentEnum" in old_value[key]:
-                                new_value[key]["currentEnum"] = old_value[key]["currentEnum"]  
-                            else:
-                                if key in new_value and key in old_value:
-                                    cls.update_property_enum(old_value[key], new_value[key])
+        managed_key_list = current_app.config.get("WEKO_RECORDS_MANAGED_KEYS")
+        if isinstance(old_value, dict):
+            for key, value in old_value.items():
+                if isinstance(old_value[key], dict):
+                    if key in new_value and key in old_value:
+                        if "enum" in old_value[key]:
+                            if key not in managed_key_list:
+                                if old_value[key]["enum"] != [None]:
+                                    new_value[key]["enum"] = old_value[key]["enum"]
+                        if "currentEnum" in old_value[key]:
+                            if key not in managed_key_list:
+                                if old_value[key]["currentEnum"] != [None]:
+                                    new_value[key]["currentEnum"] = old_value[key]["currentEnum"]
+                        # if "title" in old_value[key]:
+                        #     if old_value[key]["title"] != "":
+                        #         new_value[key]["title"] = old_value[key]["title"]
+                        # if "title_i18n" in old_value[key]:
+                        #     if old_value[key]["title_i18n"] != "":
+                        #         new_value[key]["title_i18n"] = old_value[key]["title_i18n"]
+                        if "enum" not in old_value[key] and "currentEnum" not in old_value[key]:
+                            if key in new_value and key in old_value:
+                                cls.update_property_enum(old_value[key], new_value[key])
 
     @classmethod
-    def update_attribute_options(cls, old_value, new_value, renew_value):        
-        if "items" in old_value:
-            for idx2,item2 in enumerate(old_value["items"]):
-                isHide = False
-                isShowList = False
-                isNonDisplay = False
-                isSpecifyNewline = False
-                isRequired = False
-                title_i18n = None
-                title_i18n_temp = None
-                titleMap = None
-                if "isHide" in item2:
-                    isHide = item2["isHide"]
-                if "isShowList" in item2:
-                    isShowList = item2["isShowList"]
-                if "isNonDisplay" in item2:
-                    isNonDisplay = item2["isNonDisplay"]
-                if "isSpecifyNewline" in item2:
-                    isSpecifyNewline = item2["isSpecifyNewline"]
-                if "required" in item2:
-                   isRequired = item2["required"]
-                if "title_i18n" in item2 and renew_value not in ["ALL", "LOC"]:
-                    title_i18n_temp = item2["title_i18n"]
-                    title_i18n = title_i18n_temp
-                if "title_i18n_temp" in item2 and renew_value not in ["ALL", "LOC"]:
-                    title_i18n_temp = item2["title_i18n_temp"]
-                if ("titleMap" in item2 and renew_value not in ["ALL", "VAL"]) or \
-                         ('titleMap' in new_value["items"][idx2] and 
-                          not new_value["items"][idx2]["titleMap"]):
-                    titleMap = item2["titleMap"]
-                                        
-                new_value["items"][idx2]["isHide"] = isHide
-                new_value["items"][idx2]["isShowList"] = isShowList
-                new_value["items"][idx2]["isNonDisplay"] = isNonDisplay
-                new_value["items"][idx2]["isSpecifyNewline"] = isSpecifyNewline
-                new_value["items"][idx2]["required"] = isRequired
-                if title_i18n:
-                    new_value["items"][idx2]["title_i18n"] = title_i18n
-                if title_i18n_temp:
-                    new_value["items"][idx2]["title_i18n_temp"] = title_i18n_temp
-                if titleMap:
-                    new_value["items"][idx2]["titleMap"] = titleMap
+    def update_attribute_options(cls, old_value, new_value, renew_value = 'None'):
+        managed_key_list = current_app.config.get("WEKO_RECORDS_MANAGED_KEYS")
+        if isinstance(old_value, list):
+           for i in old_value:
+               cls.update_attribute_options(i, new_value, renew_value)     
+        elif isinstance(old_value, dict): 
+            if "key" in old_value:
+                key = old_value["key"]
+                new_item = cls.getItemByItemsKey(new_value,key)
+                if new_item is not None:    
+                    isHide = False
+                    isShowList = False
+                    isNonDisplay = False
+                    isSpecifyNewline = False
+                    isRequired = False
+                    title_i18n = None
+                    title_i18n_temp = None
+                    titleMap = None
+                    title = None
+                    
+                    if "title" in old_value:
+                        title = old_value["title"]
+                    if "isHide" in old_value:
+                        isHide = old_value["isHide"]
+                    if "isShowList" in old_value:
+                        isShowList = old_value["isShowList"]
+                    if "isNonDisplay" in old_value:
+                        isNonDisplay = old_value["isNonDisplay"]
+                    if "isSpecifyNewline" in old_value:
+                        isSpecifyNewline = old_value["isSpecifyNewline"]
+                    if "required" in old_value:
+                        isRequired = old_value["required"]
+                    if "title_i18n" in old_value and renew_value not in ["ALL", "LOC"]:
+                        title_i18n_temp = old_value["title_i18n"]
+                        title_i18n = title_i18n_temp
+                    if "title_i18n_temp" in old_value and renew_value not in ["ALL", "LOC"]:
+                        title_i18n_temp = old_value["title_i18n_temp"]
+                    if ("titleMap" in old_value and key.split(".")[-1] not in managed_key_list) or ("titleMap" in old_value and renew_value not in ["ALL", "VAL"]) :
+                        titleMap = old_value["titleMap"]
+                    
+                    new_item["isHide"] = isHide
+                    new_item["isShowList"] = isShowList
+                    new_item["isNonDisplay"] = isNonDisplay
+                    new_item["isSpecifyNewline"] = isSpecifyNewline
+                    new_item["required"] = isRequired
+                    if title:
+                        new_item["title"] = title
+                    if title_i18n:
+                        new_item["title_i18n"] = title_i18n
+                    if title_i18n_temp:
+                        new_item["title_i18n_temp"] = title_i18n_temp
+                    if titleMap:
+                        new_item["titleMap"] = titleMap
+                    if 'items' in old_value:
+                        cls.update_attribute_options(old_value["items"], new_item, renew_value)
 
-                if 'items' in item2:
-                    cls.update_attribute_options(item2, new_value["items"][idx2], renew_value)
-
-
+    @classmethod
+    def getItemByItemsKey(cls,prop,key):
+        if isinstance(prop, list):
+            for i in prop:
+                ret = cls.getItemByItemsKey(i,key)
+                if ret is not None:
+                    return ret
+        elif isinstance(prop, dict):
+            if "key" in prop and prop["key"] == key:
+                return prop
+            elif "items" in prop:
+                for item in prop["items"]:
+                    if "key" in item and item["key"] == key:
+                        return item
+                    if "items" in item:
+                        ret = cls.getItemByItemsKey(item,key)
+                        if ret is not None:
+                            return ret
+        return None
+ 
 class ItemTypeEditHistory(object):
     """Define API for Itemtype Property creation and manipulation."""
 

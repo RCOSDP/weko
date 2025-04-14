@@ -1,10 +1,11 @@
 from weko_records.models import ItemType
 from weko_itemtypes_ui.utils import fix_json_schema, update_required_schema_not_exist_in_form
-from sqlalchemy import desc
+from sqlalchemy import desc,asc
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from invenio_db import db
 from flask import current_app
+import logging
 
 import argparse
 
@@ -27,6 +28,9 @@ def replace_schema(schema_old, schema_new):
     if schema_old and schema_old.get("currentEnum") and \
             isinstance(schema_new, dict):
         schema_new["currentEnum"] = schema_old.get("currentEnum")
+    if schema_old and schema_old.get("title") and \
+            isinstance(schema_new, dict):
+        schema_new["title"] = schema_old.get("title")
     if schema_old and schema_old.get("title_i18n") and \
             isinstance(schema_new, dict):
         schema_new["title_i18n"] = schema_old.get("title_i18n")
@@ -52,57 +56,78 @@ def replace_schema(schema_old, schema_new):
                         schema_new["properties"][subkey]
                     )
     
-        
-
-def replace_form(form_old, form_new):
-    if form_old and form_new:
-        for i in form_old:
-            _k = i.get("key")
+def replace_form(item_old, item_new):
+    if item_old and item_new:
+        if isinstance(item_old, dict) and isinstance(item_new, dict):
             _option = {
-                "required": i.get("required", False),
-                "isShowList": i.get("isShowList", False),
-                "isSpecifyNewline": i.get("isSpecifyNewline", False),
-                "isHide": i.get("isHide", False),
-                "isNonDisplay": i.get("isNonDisplay", False),
+                "required": item_old.get("required", False),
+                "isShowList": item_old.get("isShowList", False),
+                "isSpecifyNewline": item_old.get("isSpecifyNewline", False),
+                "isHide": item_old.get("isHide", False),
+                "isNonDisplay": item_old.get("isNonDisplay", False),
             }
-            _titleMap = i.get("titleMap")
-            _title_i18n = i.get("title_i18n")
-            _title_i18n_temp = i.get("title_i18n_temp")
-            for j in form_new:
-                if j.get("key") == _k:
-                    for k, v in _option.items():
-                        j[k] = v
-                    if _titleMap:
-                        j["titleMap"] = _titleMap
-                    if _title_i18n:
-                        j["title_i18n"] = _title_i18n
-                    if _title_i18n_temp:
-                        j["title_i18n_temp"] = _title_i18n_temp
-                    if "items" in i and "items" in j:
-                        replace_form(i["items"], j["items"])
-                    break
-
+            _titleMap = item_old.get("titleMap")
+            _title = item_old.get("title")
+            _title_i18n = item_old.get("title_i18n")
+            _title_i18n_temp = item_old.get("title_i18n_temp")
+            for k, v in _option.items():
+                item_new[k] = v
+            if _title:
+                item_new["title"] = _title
+            if _titleMap:
+                item_new["titleMap"] = _titleMap
+            if _title_i18n:
+                item_new["title_i18n"] = _title_i18n
+            if _title_i18n_temp:
+                item_new["title_i18n_temp"] = _title_i18n_temp
+            if "items" in item_old and "items" in item_new:
+                replace_form(item_old["items"], item_new["items"])
+        elif isinstance(item_old, list) and isinstance(item_new, list):
+            for i in item_old:
+                for j in item_new:
+                    if i.get("key") == j.get("key"):
+                        replace_form(i, j)
+                        break
 
 def replace_item_type_data(render_old, render_new, _form_prop_old, item_key):
-    _table_row_schema_old = render_old['table_row_map']['schema']["properties"][item_key] \
-        if item_key in render_old['table_row_map']['schema']["properties"] else None
-    _table_row_schema_new = render_new['table_row_map']['schema']["properties"][item_key] \
-        if item_key in render_new['table_row_map']['schema']["properties"] else None
-    _schema_old = render_old['schemaeditor']['schema'][item_key] \
-        if item_key in render_old['schemaeditor']['schema'] else None
-    _schema_new = render_new['schemaeditor']['schema'][item_key] \
-        if item_key in render_new['schemaeditor']['schema'] else None
-    _form_new = render_new['table_row_map']['form']
-    replace_schema(_table_row_schema_old, _table_row_schema_new)
-    replace_schema(_schema_old, _schema_new)
-    for f in _form_new:
-        if f.get("key") == item_key and "items" in f:
-            replace_form(_form_prop_old, f["items"])
-            break
-    
-
+    try:
+        _table_row_schema_old = render_old['table_row_map']['schema']["properties"][item_key] \
+            if item_key in render_old['table_row_map']['schema']["properties"] else None
+        _table_row_schema_new = render_new['table_row_map']['schema']["properties"][item_key] \
+            if item_key in render_new['table_row_map']['schema']["properties"] else None
+        _schema_old = render_old['schemaeditor']['schema'][item_key] \
+            if item_key in render_old['schemaeditor']['schema'] else None
+        _schema_new = render_new['schemaeditor']['schema'][item_key] \
+            if item_key in render_new['schemaeditor']['schema'] else None
+        _form_new = render_new['table_row_map']['form']
+        _form_old = render_old['table_row_map']['form']
+        replace_schema(_table_row_schema_old, _table_row_schema_new)
+        replace_schema(_schema_old, _schema_new)
+        for f in _form_new:
+            if f.get("key") == item_key and "items" in f:
+                for j in _form_old:
+                    if j.get("key") == item_key and "items" in j:
+                        _titleMap = j.get("titleMap")
+                        _title = j.get("title")
+                        _title_i18n = j.get("title_i18n")
+                        _title_i18n_temp = j.get("title_i18n_temp")
+                        if _title:
+                            f["title"] = _title
+                        if _titleMap:
+                            f["titleMap"] = _titleMap
+                        if _title_i18n:
+                            f["title_i18n"] = _title_i18n
+                        if _title_i18n_temp:
+                            f["title_i18n_temp"] = _title_i18n_temp
+                        replace_form(j["items"], f["items"])
+                        break
+    except Exception as e:
+        import traceback
+        current_app.logger.error(traceback.format_exc())
+        current_app.logger.error(e)
 
 def main():
+    current_app.logger.setLevel(logging.INFO)
     current_app.logger.info('=============== replace_item_type_data ===============')
     try:
         _update_date = args.update_date if args else UPDATE_DATE

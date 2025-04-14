@@ -358,10 +358,10 @@ def form(
                             "key": "{}.subitem_funding_stream_identifiers.subitem_funding_stream_identifier".format(
                                 key
                             ),
-                            "title": "研究課題番号タイプ",
+                            "title": "プログラム情報識別子",
                             "title_i18n": {
                                 "en": "Funding Stream Identifier",
-                                "ja": "研究課題番号タイプ",
+                                "ja": "プログラム情報識別子",
                             },
                             "type": "text",
                         },
@@ -386,7 +386,7 @@ def form(
                             "type": "select",
                         },
                         {
-                            "key": "{}.subitem_funding_streams.subitem_funding_stream".format(
+                            "key": "{}.subitem_funding_streams[].subitem_funding_stream".format(
                                 key
                             ),
                             "title": "プログラム情報",
