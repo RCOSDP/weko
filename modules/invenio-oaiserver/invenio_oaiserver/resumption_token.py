@@ -21,6 +21,37 @@ def _schema_from_verb(verb, partial=False):
     return getattr(Verbs, verb)(partial=partial)
 
 
+def serialize_file_response(data_index, data_count, **param):
+    """ resumption token serializer when creating a response from a file.
+
+        Args:
+            data_index: Current INDEX.
+            data_count: Overall number of data returned
+            param: Parameters to be embedded in Token
+        Returns:
+            resumption token serializer
+    """
+    if data_index == data_count:
+        return None
+
+    token_builder = URLSafeTimedSerializer(
+        current_app.config['SECRET_KEY'],
+        salt=param['verb'],
+    )
+
+    schema = _schema_from_verb(param['verb'], partial=False)
+    data = dict(seed=random.random(), index=data_index,
+                kwargs=schema.dump(param).data,
+                metadataPrefix=param['metadataPrefix'],
+                data_id=param['data_id'],
+                until=param.get('until_time_str'),
+                expirationDate=param['expirationDate'])
+    data['from'] = param.get('from_time_str')
+    data['set'] = param.get('set_spec')
+
+    return token_builder.dumps(data)
+
+
 def serialize(pagination, **kwargs):
     """Return resumption token serializer."""
     if not pagination.has_next:
