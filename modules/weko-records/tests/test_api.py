@@ -23,7 +23,9 @@
 from re import T
 # from tkinter import W
 import pytest
+from unittest import TestCase
 import json
+from elasticsearch import helpers
 from elasticsearch.exceptions import RequestError
 from invenio_records.api import Record
 from invenio_records.errors import MissingModelError
@@ -41,7 +43,7 @@ from weko_records.api import FeedbackMailList, FilesMetadata, ItemLink, \
 from weko_records.models import ItemType, ItemTypeName, \
     SiteLicenseInfo, SiteLicenseIpAddress
 from jsonschema.validators import Draft4Validator
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # class RecordBase(dict):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_recordbase -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -476,6 +478,40 @@ def test_itemtypes_update_item_type(app, db, location):
 #     def __update_item_type(cls, id_, schema, form, render):
 #     def __update_metadata(cls, item_type_id, item_type_name, old_render, new_render):
 #     def __get_records_by_item_type_name(cls, item_type_name):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test__get_records_by_item_type_name -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test__get_records_by_item_type_name(app, esindex):
+    item_type_name = "test_item_type"
+    def _generate_es_data(num, start_datetime=datetime.now()):
+        for i in range(num):
+            doc = {
+                "_index": "test-weko-item-v1.0.0",
+                "_type": "item-v1.0.0",
+                "_id": f"2d1a2520-9080-437f-a304-230adc8{i:05d}",
+                "_source": {
+                    "_item_metadata": {
+                        "title": [f"test_title_{i}"],
+                    },
+                    "relation_version_is_last": True,
+                    "path": ["66"],
+                    "control_number": f"{i:05d}",
+                    "_created": (start_datetime + timedelta(seconds=i)).isoformat(),
+                    "_updated": (start_datetime + timedelta(seconds=i)).isoformat(),
+                    "publish_date": (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d'),
+                    "publish_status": "0",
+                },
+            }
+            if i % 2 == 0:
+                doc["_source"]["itemtype"] = item_type_name
+            else:
+                doc["_source"]["itemtype"] = "test_item_type2"
+            yield doc
+
+    generate_data_num = 20002
+    helpers.bulk(esindex, _generate_es_data(generate_data_num), refresh='true')
+
+    # result over 10000
+    assert len(ItemTypes._ItemTypes__get_records_by_item_type_name(item_type_name)) == int(generate_data_num/2)
+
 
 # class ItemTypes(RecordBase):
 #     def get_record(cls, id_, with_deleted=False):
@@ -864,56 +900,101 @@ def test_revision_ItemTypes(app):
     with patch('weko_records.api.RevisionsIterator', return_value=MagicMock()):
         assert test.revisions() != None
 
-
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::TestItemTypes::test_update_attribute_options -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records/.tox/c1/tmp
 class TestItemTypes:
-    def test_update_attribute_options(app):
-        
+    
+    # def (cls, itemtype_id, specified_list=[], renew_value='None'):
+    # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::TestItemTypes::test_reload -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records/.tox/c1/tmp
+    def test_reload(self, app, db, user, item_type_with_form, item_type_mapping_with_form):
+
+        item_type_id = item_type_with_form.id
+
+        with patch('weko_records.api.db.session.merge', return_value=""):
+            with patch('weko_records.api.db.session.commit', return_value=""):
+                result = ItemTypes.reload(item_type_id)
+                assert result["msg"] == "Fix ItemType({}) mapping".format(item_type_id)
+                assert result["code"] == 0
+
+                result = ItemTypes.reload(item_type_id, specified_list=[1000])
+                assert result["msg"] == "Update ItemType({})".format(item_type_id)
+                assert result["code"] == 0
+
+    # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::TestItemTypes::test_update_property_enum -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records/.tox/c1/tmp
+    def test_update_property_enum(app):
+        old_value = {'type': 'array', 'items': {'type': 'object', 'title': 'dcterms_date', 'format': 'object', 'properties': {'subitem_dcterms_date': {'type': 'string', 'title': '日付（リテラル）', 'format': 'text', 'title_i18n': {'en': 'Date Literal', 'ja': '日付（リテラル）'}}, 'subitem_dcterms_date_language': {'enum': [None, 'ja', 'ja-Kana', 'ja-Latn', 'en', 'fr', 'it', 'de', 'es', 'zh-cn', 'zh-tw', 'ru', 'la', 'ms', 'eo', 'ar', 'el', 'ko'], 'type': ['null', 'string'], 'title': '言語', 'format': 'select', 'editAble': True}}, 'system_prop': False}, 'title': 'dcterms_date', 'maxItems': 9999, 'minItems': 1, 'system_prop': False}
+        new_value = {'type': 'array', 'items': {'type': 'object', 'title': 'dcterms_date', 'format': 'object', 'properties': {'subitem_dcterms_date': {'type': 'string', 'title': '日付（リテラル）', 'format': 'text', 'title_i18n': {'en': 'Date Literal', 'ja': '日付（リテラル）'}}, 'subitem_dcterms_date_language': {'enum': [None, 'ja', 'ja-Kana', 'ja-Latn', 'en', 'fr', 'it', 'de', 'es', 'zh-cn', 'zh-tw', 'ru', 'la', 'ms', 'eo', 'ar', 'el', 'ko'], 'type': ['null', 'string'], 'title': '言語', 'format': 'select', 'editAble': True}}, 'system_prop': False}, 'title': 'dcterms_date', 'maxItems': 9999, 'minItems': 1, 'system_prop': False}
+        expected_dict = {'type': 'array', 'items': {'type': 'object', 'title': 'dcterms_date', 'format': 'object', 'properties': {'subitem_dcterms_date': {'type': 'string', 'title': '日付（リテラル）', 'format': 'text', 'title_i18n': {'en': 'Date Literal', 'ja': '日付（リテラル）'}}, 'subitem_dcterms_date_language': {'enum': [None, 'ja', 'ja-Kana', 'ja-Latn', 'en', 'fr', 'it', 'de', 'es', 'zh-cn', 'zh-tw', 'ru', 'la', 'ms', 'eo', 'ar', 'el', 'ko'], 'type': ['null', 'string'], 'title': '言語', 'format': 'select', 'editAble': True}}, 'system_prop': False}, 'title': 'dcterms_date', 'maxItems': 9999, 'minItems': 1, 'system_prop': False}
+        ItemTypes.update_property_enum(old_value,new_value)
+        TestCase().assertDictEqual(new_value, expected_dict)
+
+        old_value = {'type': 'array', 'items': {'type': 'object', 'title': 'dcterms_date', 'format': 'object', 'properties': {'subitem_dcterms_date': {'type': 'string', 'title': '日付（リテラル）', 'format': 'text', 'title_i18n': {'en': 'Date Literal', 'ja': '日付（リテラル）'}}, 'subitem_dcterms_date_language': {'type': ['null', 'string'], 'title': '言語', 'format': 'select', 'editAble': True}}, 'system_prop': False}, 'title': 'dcterms_date', 'maxItems': 9999, 'minItems': 1, 'system_prop': False}
+        new_value = {'type': 'array', 'items': {'type': 'object', 'title': 'dcterms_date', 'format': 'object', 'properties': {'subitem_dcterms_date': {'type': 'string', 'title': '日付（リテラル）', 'format': 'text', 'title_i18n': {'en': 'Date Literal', 'ja': '日付（リテラル）'}}, 'subitem_dcterms_date_language': {'enum': [None, 'ja', 'ja-Kana', 'ja-Latn', 'en', 'fr', 'it', 'de', 'es', 'zh-cn', 'zh-tw', 'ru', 'la', 'ms', 'eo', 'ar', 'el', 'ko'], 'type': ['null', 'string'], 'title': '言語', 'format': 'select', 'editAble': True}}, 'system_prop': False}, 'title': 'dcterms_date', 'maxItems': 9999, 'minItems': 1, 'system_prop': False}
+        expected_dict = {'type': 'array', 'items': {'type': 'object', 'title': 'dcterms_date', 'format': 'object', 'properties': {'subitem_dcterms_date': {'type': 'string', 'title': '日付（リテラル）', 'format': 'text', 'title_i18n': {'en': 'Date Literal', 'ja': '日付（リテラル）'}}, 'subitem_dcterms_date_language': {'enum': [None, 'ja', 'ja-Kana', 'ja-Latn', 'en', 'fr', 'it', 'de', 'es', 'zh-cn', 'zh-tw', 'ru', 'la', 'ms', 'eo', 'ar', 'el', 'ko'], 'type': ['null', 'string'], 'title': '言語', 'format': 'select', 'editAble': True}}, 'system_prop': False}, 'title': 'dcterms_date', 'maxItems': 9999, 'minItems': 1, 'system_prop': False}
+        ItemTypes.update_property_enum(old_value,new_value)
+        TestCase().assertDictEqual(new_value, expected_dict)
+    # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::TestItemTypes::test_update_attribute_options -vv -s -v  --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-records/.tox/c1/tmp
+    def test_update_attribute_options(self, app):
         a = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報","isHide":True, "required": True, "isShowList": True, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDisplay": True, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": True}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
         b = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報", "isHide":True, "required": True, "isShowList": True, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDisplay": True, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": True}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
-        expected_dict = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報", "isHide":True, "required": True, "isShowList": True, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDisplay": True, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": True}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
-        ItemTypes.update_attribute_options(a,b)
+        expected_dict = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報", "isHide":True, "required": True, "isShowList": True, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDisplay": True, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": True}], "title": "Version", "isHide": False, "isShowList": False, "isNonDisplay": False, "isSpecifyNewline": False, "required": False, "title_i18n": {"en": "Version", "ja": "バージョン情報"},"title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}}
+        ItemTypes.update_attribute_options(a,b,"None")
         TestCase().assertDictEqual(b, expected_dict)
         
         a = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報","isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDisplay": False, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": False}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
         b = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報", "isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDisplay": False, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": False}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
-        expected_dict = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報", "isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDi
-splay": False, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": False}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
-        ItemTypes.update_attribute_options(a,b)
+        expected_dict = {"isHide": False, "isShowList": False, "isNonDisplay": False, "isSpecifyNewline": False, "required": False, "key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報", "isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDisplay": False, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": False}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"},"title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}}
+        ItemTypes.update_attribute_options(a,b,"None")
         TestCase().assertDictEqual(b, expected_dict)
         
         a = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報","title_i18n": {"en": "Version", "ja": "バージョン情報"},"title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
         b = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報","title_i18n": {"en": "Version", "ja": "バージョン情報"},"title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
-        expected_dict = {"key": "key", "type": "fieldset", "items": [{"isHide": False,"isNonDisplay": False,"isShowList": False,"isSpecifyNewline": False,"required":False,"key": "key.subkey", "type": "text", "title": "バージョン情報", "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
-        ItemTypes.update_attribute_options(a,b)
+        expected_dict = {"isHide": False, "isShowList": False, "isNonDisplay": False, "isSpecifyNewline": False, "required": False, "key": "key", "type": "fieldset", "items": [{"isHide": False,"isNonDisplay": False,"isShowList": False,"isSpecifyNewline": False,"required":False,"key": "key.subkey", "type": "text", "title": "バージョン情報", "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}}
+        ItemTypes.update_attribute_options(a,b,"None")
         TestCase().assertDictEqual(b, expected_dict)
 
         a = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報","isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDisplay": True, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": False}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
         b = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報", "isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDisplay": False, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": False}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
-        expected_dict = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報", "isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDisplay": True, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": False}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
-        ItemTypes.update_attribute_options(a,b)
+        expected_dict = {"isHide": False, "isShowList": False, "isNonDisplay": False, "isSpecifyNewline": False, "required": False, "key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報", "isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDisplay": True, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": False}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}}
+        ItemTypes.update_attribute_options(a,b, "None")
         TestCase().assertDictEqual(b, expected_dict)
 
-        a = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "subkey","isHide":False
-, "required": False, "isShowList": False, "title_i18n": {"en": "subkey", "ja": "subkey"}, "isNonDisplay": True, "title_i18n_temp": {"en": "subkey", "ja": "subkey"}, "isSpecifyNewline": False,"items": [{"key": "key.subkey.subkey", "type": "text", "title": "subkey.subkey","isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "subkey.subkey", "ja": "subkey.subkey"}, "isNonDisplay": True, "title_i18n_temp": {"en": "subkey.subkey", "ja": "subkey.subkey"}, "isSpecifyNewline": False}]}], "title": "Version", "title_i18n": {"en": "key", "ja": "key"}}
+        a = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "subkey","isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "subkey", "ja": "subkey"}, "isNonDisplay": True, "title_i18n_temp": {"en": "subkey", "ja": "subkey"}, "isSpecifyNewline": False,"items": [{"key": "key.subkey.subkey", "type": "text", "title": "subkey.subkey","isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "subkey.subkey", "ja": "subkey.subkey"}, "isNonDisplay": True, "title_i18n_temp": {"en": "subkey.subkey", "ja": "subkey.subkey"}, "isSpecifyNewline": False}]}], "title": "Version", "title_i18n": {"en": "key", "ja": "key"}}
         b = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "subkey","isHide":True, "required": True, "isShowList": True, "title_i18n": {"en": "subkey", "ja": "subkey"}, "isNonDisplay": False, "title_i18n_temp": {"en": "subkey", "ja": "subkey"}, "isSpecifyNewline": True,"items": [{"key": "key.subkey.subkey", "type": "text", "title": "subkey.subkey","isHide":True, "required": True, "isShowList": True, "title_i18n": {"en": "subkey.subkey", "ja": "subkey.subkey"}, "isNonDisplay": False, "title_i18n_temp": {"en": "subkey.subkey", "ja": "subkey.subkey"}, "isSpecifyNewline": True}]}], "title": "Version", "title_i18n": {"en": "key", "ja": "key"}}
-        expected_dict = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "subkey","isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "subkey", "ja": "subkey"}, "isNonDisplay": True, "title_i18n_temp": {"en": "subkey", "ja": "subkey"}, "isSpecifyNewline": False,"items": [{"key": "key.subkey.subkey", "type": "text", "title": "subkey.subkey","isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "subkey.subkey", "ja": "subkey.subkey"}, "isNonDisplay": True, "title_i18n_temp": {"en": "subkey.subkey", "ja": "subkey.subkey"}, "isSpecifyNewline": False}]}], "title": "Version", "title_i18n": {"en": "key", "ja": "key"}}
-        ItemTypes.update_attribute_options(a,b)
+        expected_dict = {"isHide": False, "isShowList": False, "isNonDisplay": False, "isSpecifyNewline": False, "required": False, "key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "subkey","isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "subkey", "ja": "subkey"}, "isNonDisplay": True, "title_i18n_temp": {"en": "subkey", "ja": "subkey"}, "isSpecifyNewline": False,"items": [{"key": "key.subkey.subkey", "type": "text", "title": "subkey.subkey","isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "subkey.subkey", "ja": "subkey.subkey"}, "isNonDisplay": True, "title_i18n_temp": {"en": "subkey.subkey", "ja": "subkey.subkey"}, "isSpecifyNewline": False}]}], "title": "Version", "title_i18n": {"en": "key", "ja": "key"},"title_i18n_temp": {"en": "key", "ja": "key"}}
+        ItemTypes.update_attribute_options(a,b, "None")
         TestCase().assertDictEqual(b, expected_dict)
         
         old_value = {"key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_language", "type": "select", "title": "言語", "titleMap": [{"name": "ja", "value": "ja"}, {"name": "en", "value": "en"}], "title_i18n": {"en": "Language", "ja": "言語"}, "title_i18n_temp": {"en": "Language", "ja": "言語"}}, {"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [{"name": "a", "value": "a"}, {"name": "b", "value": "b"}, {"name": "c", "value": "c"}, {"name": "d", "value": "d"}, {"name": "e", "value": "e"}, {"name": "f", "value": "f"}], "title_i18n": {"en": "Value", "ja": "値"}, "title_i18n_temp": {"en": "Value", "ja": "値"}}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""}}
         new_value = {"key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_language", "type": "select", "title": "言語", "titleMap": '', "title_i18n": {"en": "Language", "ja": "言語"}, "title_i18n_temp": {"en": "Language", "ja": "言語"}}, {"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [], "title_i18n": {"en": "Value", "ja": "値"}, "title_i18n_temp": {"en": "Value", "ja": "値"}}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""}}
-        expected_dict = {"key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_language", "type": "select", "title": "言語", "titleMap": [{"name": "ja", "value": "ja"}, {"name": "en", "value": "en"}], "title_i18n": {"en": "Language", "ja": "言語"}, "title_i18n_temp": {"en": "Language", "ja": "言語"},'isHide': False,'isNonDisplay': False,'isShowList': False, 'isSpecifyNewline': False,'required': False}, {"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [{"name
-": "a", "value": "a"}, {"name": "b", "value": "b"}, {"name": "c", "value": "c"}, {"name": "d", "value": "d"}, {"name": "e", "value": "e"}, {"name": "f", "value": "f"}], "title_i18n": {"en": "Value", "ja": "値"}, "title_i18n_temp": {"en": "Value", "ja": "値"},'isHide': False,'isNonDisplay': False,'isShowList': False, 'isSpecifyNewline': False,'required': False}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""}}
-        ItemTypes.update_attribute_options(old_value,new_value)
+        expected_dict = {"isHide": False, "isShowList": False, "isNonDisplay": False, "isSpecifyNewline": False, "required": False,"key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_language", "type": "select", "title": "言語", "titleMap": [{"name": "ja", "value": "ja"}, {"name": "en", "value": "en"}], "title_i18n": {"en": "Language", "ja": "言語"}, "title_i18n_temp": {"en": "Language", "ja": "言語"},'isHide': False,'isNonDisplay': False,'isShowList': False, 'isSpecifyNewline': False,'required': False}, {"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [{"name": "a", "value": "a"}, {"name": "b", "value": "b"}, {"name": "c", "value": "c"}, {"name": "d", "value": "d"}, {"name": "e", "value": "e"}, {"name": "f", "value": "f"}], "title_i18n": {"en": "Value", "ja": "値"}, "title_i18n_temp": {"en": "Value", "ja": "値"},'isHide': False,'isNonDisplay': False,'isShowList': False, 'isSpecifyNewline': False,'required': False}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""},"title_i18n_temp": {"en": "", "ja": ""}}
+        ItemTypes.update_attribute_options(old_value,new_value,"None")
         TestCase().assertDictEqual(new_value, expected_dict)
 
         old_value = {"key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_language", "type": "select", "title": "言語", "titleMap": [{"name": "ja", "value": "ja"}, {"name": "en", "value": "en"}], "title_i18n": {"en": "Language", "ja": "言語"}, "title_i18n_temp": {"en": "Language", "ja": "言語"}}, {"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [{"name": "a", "value": "a"}, {"name": "b", "value": "b"}, {"name": "c", "value": "c"}, {"name": "d", "value": "d"}, {"name": "e", "value": "e"}, {"name": "f", "value": "f"}], "title_i18n": {"en": "Value", "ja": "値"}, "title_i18n_temp": {"en": "Value", "ja": "値"}}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""}}
         new_value = {"key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_language", "type": "select", "title": "言語", "titleMap": '', "title_i18n": {"en": "Language", "ja": "言語"}}, {"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [], "title_i18n": {"en": "Value", "ja": "値"}, "title_i18n_temp": {"en": "Value", "ja": "値"}}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""}}
-        expected_dict = {"key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_language", "type": "select", "title": "言語", "titleMap": [{"name": "ja", "value": "ja"}, {"name": "en", "value": "en"}], "title_i18n": {"en": "Language", "ja": "言語"}, "title_i18n_temp": {"en": "Language", "ja": "言語"},'isHide': False,'isNonDisplay': False,'isShowList': False, 'isSpecifyNewline': False,'required': False}, {"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [{"name": "a", "value": "a"}, {"name": "b", "value": "b"}, {"name": "c", "value": "c"}, {"name": "d", "value": "d"}, {"name": "e", "value": "e"}, {"name": "f", "value": "f"}], "title_i18n": {"en": "Value", "ja": "値"}, "title_i18n_temp": {"en": "Value", "ja": "値"},'isHide': False,'isNonDisplay': False,'isShowList': False, 'isSpecifyNewline': False,'required': False}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""}}
-        ItemTypes.update_attribute_options(old_value,new_value)
+        expected_dict = {"isHide": False, "isShowList": False, "isNonDisplay": False, "isSpecifyNewline": False, "required": False,"key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_language", "type": "select", "title": "言語", "titleMap": [{"name": "ja", "value": "ja"}, {"name": "en", "value": "en"}], "title_i18n": {"en": "Language", "ja": "言語"}, "title_i18n_temp": {"en": "Language", "ja": "言語"},'isHide': False,'isNonDisplay': False,'isShowList': False, 'isSpecifyNewline': False,'required': False}, {"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [{"name": "a", "value": "a"}, {"name": "b", "value": "b"}, {"name": "c", "value": "c"}, {"name": "d", "value": "d"}, {"name": "e", "value": "e"}, {"name": "f", "value": "f"}], "title_i18n": {"en": "Value", "ja": "値"}, "title_i18n_temp": {"en": "Value", "ja": "値"},'isHide': False,'isNonDisplay': False,'isShowList': False, 'isSpecifyNewline': False,'required': False}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""},"title_i18n_temp": {"en": "", "ja": ""}}
+        ItemTypes.update_attribute_options(old_value,new_value, "None")
         TestCase().assertDictEqual(new_value, expected_dict)
 
+        old_value = {"key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [{"name": "a", "value": "a"}, {"name": "b", "value": "b"}], "title_i18n": {"en": "Value", "ja": "値"}, "title_i18n_temp": {"en": "Value", "ja": "値"}}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""}}
+        new_value = {"key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [{"name": "a", "value": "a"}, {"name": "b", "value": "b"}, {"name": "c", "value": "c"}], "title_i18n": {"en": "Test Value", "ja": "テスト値"}, "title_i18n_temp": {"en": "Test Value", "ja": "テスト値"}}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""}}
+        expected_dict = {"isHide": False, "isShowList": False, "isNonDisplay": False, "isSpecifyNewline": False, "required": False,"key": "key", "key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [{"name": "a", "value": "a"}, {"name": "b", "value": "b"}], "title_i18n": {"en": "Value", "ja": "値"}, "title_i18n_temp": {"en": "Value", "ja": "値"},'isHide': False,'isNonDisplay': False,'isShowList': False, 'isSpecifyNewline': False,'required': False}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""}, "title_i18n_temp": {"en": "", "ja": ""}}
+        ItemTypes.update_attribute_options(old_value,new_value,"VAL")
+        TestCase().assertDictEqual(new_value, expected_dict)
+
+        old_value = {"key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [{"name": "a", "value": "a"}, {"name": "b", "value": "b"}], "title_i18n": {"en": "Value", "ja": "値"}, "title_i18n_temp": {"en": "Value", "ja": "値"}}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""}}
+        new_value = {"key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [{"name": "a", "value": "a"}, {"name": "b", "value": "b"}, {"name": "c", "value": "c"}], "title_i18n": {"en": "Test Value", "ja": "テスト値"}, "title_i18n_temp": {"en": "Test Value", "ja": "テスト値"}}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""}}
+        expected_dict = {"isHide": False, "isShowList": False, "isNonDisplay": False, "isSpecifyNewline": False, "required": False,"key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [{"name": "a", "value": "a"}, {"name": "b", "value": "b"}], "title_i18n": {"en": "Test Value", "ja": "テスト値"}, "title_i18n_temp": {"en": "Test Value", "ja": "テスト値"},'isHide': False,'isNonDisplay': False,'isShowList': False, 'isSpecifyNewline': False,'required': False}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""}}
+        ItemTypes.update_attribute_options(old_value,new_value,"LOC")
+        TestCase().assertDictEqual(new_value, expected_dict)
+
+        old_value = {"key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [{"name": "a", "value": "a"}, {"name": "b", "value": "b"}], "title_i18n": {"en": "Value", "ja": "値"}, "title_i18n_temp": {"en": "Value", "ja": "値"}}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""}}
+        new_value = {"key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [{"name": "a", "value": "a"}, {"name": "b", "value": "b"}, {"name": "c", "value": "c"}], "title_i18n": {"en": "Test Value", "ja": "テスト値"}, "title_i18n_temp": {"en": "Test Value", "ja": "テスト値"}}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""}}
+        expected_dict = {"isHide": False, "isShowList": False, "isNonDisplay": False, "isSpecifyNewline": False, "required": False,"key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [{"name": "a", "value": "a"}, {"name": "b", "value": "b"}], "title_i18n": {"en": "Test Value", "ja": "テスト値"}, "title_i18n_temp": {"en": "Test Value", "ja": "テスト値"},'isHide': False,'isNonDisplay': False,'isShowList': False, 'isSpecifyNewline': False,'required': False}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""}}
+        ItemTypes.update_attribute_options(old_value,new_value,"ALL")
+        TestCase().assertDictEqual(new_value, expected_dict)
+
+ 
 # class ItemTypeEditHistory(RecordBase):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_type_edit_history -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_item_type_edit_history(app, db, user):

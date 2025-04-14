@@ -1135,7 +1135,7 @@ class RecordResource(ContentNegotiatedMethodView):
                         if index.cid not in can_edit_indexes:
                             can_edit_indexes.append(str(index.cid))
                 path = record.get('path', [])
-                data['index'] = list(set(path) - set(can_edit_indexes)) + data.get('index', [])
+                data['index'] = list(set(list(set(path) - set(can_edit_indexes)) + data.get('index', [])))
             record.clear()
             record.update(data)
             record.commit()
@@ -1146,6 +1146,7 @@ class RecordResource(ContentNegotiatedMethodView):
         except BaseException as e:
             db.session.rollback()
             current_app.logger.error(traceback.format_exc())
+            return self.make_response(None, None, 500)
 
         return self.make_response(
             pid, record, links_factory=self.links_factory)

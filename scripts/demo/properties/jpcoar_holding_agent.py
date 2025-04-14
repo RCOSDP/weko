@@ -25,10 +25,10 @@ mapping = {
                 },
             },
             "holdingAgentNameIdentifier": {
-                "@value": "holding_agent_name_identifier.holding_agent_name_idenfitier_value",
+                "@value": "holding_agent_name_identifier.holding_agent_name_identifier_value",
                 "@attributes": {
-                    "nameIdentifierScheme": "holding_agent_name_identifier.holding_agent_name_idenfitier_scheme",
-                    "nameIdentifierURI": "holding_agent_name_identifier.holding_agent_name_idenfitier_uri",
+                    "nameIdentifierScheme": "holding_agent_name_identifier.holding_agent_name_identifier_scheme",
+                    "nameIdentifierURI": "holding_agent_name_identifier.holding_agent_name_identifier_uri",
                 },
             },
         }
@@ -95,7 +95,7 @@ def schema(title="", multi_flag=multiple_flag):
                     "format": "object",
                     "title": "所蔵機関識別子",
                     "properties": {
-                        "holding_agent_name_idenfitier_value": {
+                        "holding_agent_name_identifier_value": {
                             "type": "string",
                             "format": "text",
                             "title": "所蔵機関識別子",
@@ -104,7 +104,7 @@ def schema(title="", multi_flag=multiple_flag):
                                 "en": "Holding Agent Name Identifier",
                             },
                         },
-                        "holding_agent_name_idenfitier_scheme": {
+                        "holding_agent_name_identifier_scheme": {
                             "type": "string",
                             "format": "select",
                             "enum": config.HOLDING_AGENT_NAMEID_SCHEMA_VAL,
@@ -115,7 +115,7 @@ def schema(title="", multi_flag=multiple_flag):
                                 "en": "Holding Agent Name Identifier Schema",
                             },
                         },
-                        "holding_agent_name_idenfitier_uri": {
+                        "holding_agent_name_identifier_uri": {
                             "type": "string",
                             "format": "text",
                             "title": "所蔵機関識別子URI",
@@ -178,7 +178,7 @@ def form(
                     "key": "{}.holding_agent_name_identifier".format(key),
                     "items": [
                         {
-                            "key": "{}.holding_agent_name_identifier.holding_agent_name_idenfitier_value".format(
+                            "key": "{}.holding_agent_name_identifier.holding_agent_name_identifier_value".format(
                                 key
                             ),
                             "type": "text",

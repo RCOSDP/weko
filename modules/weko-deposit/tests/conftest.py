@@ -141,7 +141,9 @@ def base_app(instance_path):
         CELERY_CACHE_BACKEND="memory",
         CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
         CELERY_RESULT_BACKEND="cache",
-        CACHE_REDIS_URL="redis://redis:6379/0",
+        CACHE_REDIS_URL=os.environ.get(
+            "CACHE_REDIS_URL", "redis://redis:6379/0"
+        ),
         CACHE_REDIS_DB=0,
         CACHE_REDIS_HOST="redis",
         REDIS_PORT="6379",
@@ -184,7 +186,7 @@ def base_app(instance_path):
         WEKO_INDEX_TREE_REST_ENDPOINTS=WEKO_INDEX_TREE_REST_ENDPOINTS,
         I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English"),("da", "Danish")],
         SERVER_NAME="TEST_SERVER",
-        SEARCH_ELASTIC_HOSTS="elasticsearch",
+        SEARCH_ELASTIC_HOSTS=os.environ.get("SEARCH_ELASTIC_HOSTS", "elasticsearch"),
         SEARCH_INDEX_PREFIX="test-",
         WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME=WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,
         WEKO_SCHEMA_DDI_SCHEMA_NAME=WEKO_SCHEMA_DDI_SCHEMA_NAME,
@@ -193,6 +195,14 @@ def base_app(instance_path):
             "Repository Administrator",
         ],
         WEKO_PERMISSION_ROLE_COMMUNITY=["Community Administrator"],
+        WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME="jpcoar_mapping",
+        WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE={
+            "periodical": "journal",
+            "interview": "other",
+            "internal report": "other",
+            "report part": "other",
+            "conference object": "conference output",
+        }
     )
     # with ESTestServer(timeout=30) as server:
     Babel(app_)

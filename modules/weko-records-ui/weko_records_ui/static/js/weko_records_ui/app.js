@@ -438,3 +438,7 @@ function OnLinkClick(uri, pid_value, accessrole) {
       });
     window.open(uri);
 }
+
+function exportZip() {
+    document.getElementById("export_zip_form").submit()
+}

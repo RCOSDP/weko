@@ -269,10 +269,11 @@ def get_all_mapping(item_value, mapping_type):
     @return:
     """
     lst_result = []
-    for sub_key, sub_val in item_value.items():
-        if sub_key == mapping_type and isinstance(sub_val, dict):
-            for i in get_lst_mapping(sub_val, [sub_key]):
-                lst_result.append(i)
+    if item_value and isinstance(item_value, dict):
+        for sub_key, sub_val in item_value.items():
+            if sub_key == mapping_type and isinstance(sub_val, dict):
+                for i in get_lst_mapping(sub_val, [sub_key]):
+                    lst_result.append(i)
     return lst_result
 
 
