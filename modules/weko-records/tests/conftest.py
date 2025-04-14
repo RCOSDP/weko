@@ -63,7 +63,7 @@ from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, WEKO_PERMISS
 from weko_records import WekoRecords
 from weko_records.api import ItemTypes, Mapping
 from weko_records.config import WEKO_ITEMTYPE_EXCLUDED_KEYS
-from weko_records.models import ItemTypeName, SiteLicenseInfo, FeedbackMailList, ItemReference
+from weko_records.models import ItemTypeName, SiteLicenseInfo, FeedbackMailList, ItemReference, ItemTypeProperty
 
 from tests.helpers import json_data, create_record
 
@@ -461,6 +461,228 @@ def item_type_mapping2(app, db):
         }
     }
     return Mapping.create(2, _mapping)
+
+@pytest.fixture()
+def item_type_property(app, db):
+    """Create item type property."""
+    
+    _schema = {
+        "type": "object",
+        "format": "object",
+        "properties": {
+            "subitem_value": {
+                "type": "string",
+                "title": "タイトル",
+                "format": "text",
+            }
+        }
+    }
+    
+    _form = {
+        "key": "parentkey",
+        "type": "fieldset",
+        "items": [
+            {
+                "key": "parentkey.subitem_value",
+                "type": "text",
+                "title": "タイトル",
+            },
+        ],
+    }
+    
+    _forms = {
+        "add": "New",
+        "key": "parentkey",
+        "items": [
+            {
+                "key": "parentkey[].subitem_value",
+                "type": "text",
+                "title": "タイトル",
+            },
+        ],
+        "style": {
+            "add": "btn-success"
+        },
+    }
+    
+    item_type_property1 = ItemTypeProperty(
+        id = 1000,
+        name='title',
+        schema=_schema,
+        form=_form,
+        forms=_forms,
+        sort = 1,
+    )
+    
+    db.session.add(item_type_property1)
+    db.session.commit()
+    
+    return item_type_property1
+
+@pytest.fixture()
+def item_type_with_form(app, db, item_type_property):
+    _item_type_name = ItemTypeName(name='test')
+
+    prop_schema = item_type_property.schema
+    prop_form = item_type_property.form
+    prop_forms = item_type_property.forms
+
+    _default_settings = {
+        "isHide": False,
+        "required": False,
+        "isShowList": False,
+        "isNonDisplay": False,
+        "isSpecifyNewline": False
+    }
+
+    _schema = {
+        "type": "object",
+        'properties': {
+            "pubdate": {
+                "type": "string",
+                "title": "PubDate",
+                "format": "datetime"
+            },
+            "item_3_form": {
+                "type": "array",
+                "items": prop_schema,
+                "title": "item3",
+                "maxItems": 9999,
+                "minItems": 1
+            },
+            "item_4_form": prop_schema,
+            "item_5_form": {
+                "type": "array",
+                "items": prop_schema,
+                "title": "item5",
+                "properties": {},
+                "format": "sample",
+            },
+        }
+    }
+    
+    form_item3 = json.loads(json.dumps(prop_forms, ensure_ascii=False).replace("parentkey", "item_3_form"))
+    form_item3.update(_default_settings)
+    [props.update(_default_settings) for props in form_item3['items']]
+    
+    form_item4 = json.loads(json.dumps(prop_form, ensure_ascii=False).replace("parentkey", "item_4_form"))
+    form_item4.update(_default_settings)
+    [props.update(_default_settings) for props in form_item4['items']]
+
+    form_item5 = json.loads(json.dumps(prop_forms, ensure_ascii=False).replace("parentkey", "item_5_form"))
+    form_item5.update(_default_settings)
+    [props.update(_default_settings) for props in form_item3['items']]
+
+    _form = [
+        {
+            "key": "pubdate",
+            "type": "template",
+            "title": "PubDate",
+            "format": "yyyy-MM-dd",
+            "required": True,
+            "title_i18n": {
+                "en": "PubDate",
+                "ja": "公開日"
+            },
+            "templateUrl": "/static/templates/weko_deposit/datepicker.html"
+        },
+        form_item3,
+        form_item4,
+    ]
+
+    _render = {
+        'meta_fix': {},
+        'meta_list': {
+            "item_3_form": {
+                "title": "Title",
+                "option": {
+                    "crtf": True,
+                    "hidden": False,
+                    "multiple": True,
+                    "required": True,
+                    "showlist": True
+                },
+                "input_type": "cus_1000",
+                "title_i18n": {
+                    "en": "Title",
+                    "ja": "タイトル"
+                },
+                "input_value": "",
+                "input_maxItems": "9999",
+                "input_minItems": "1"
+            },
+            "item_4_form": {
+                "title": "Title2",
+                "option": {
+                    "crtf": True,
+                    "hidden": False,
+                    "multiple": False,
+                    "required": True,
+                    "showlist": True
+                },
+                "input_type": "cus_1000",
+                "title_i18n": {
+                    "en": "Title2",
+                    "ja": "タイトル2"
+                },
+                "input_value": "",
+                "input_maxItems": "9999",
+                "input_minItems": "1"
+            },
+            "item_5_form": {
+                "title": "Title",
+                "option": {
+                    "crtf": True,
+                    "hidden": False,
+                    "multiple": True,
+                    "required": True,
+                    "showlist": True
+                },
+                "input_type": "cus_1000",
+                "title_i18n": {
+                    "en": "Title3",
+                    "ja": "タイトル3"
+                },
+                "input_value": "",
+                "input_maxItems": "9999",
+                "input_minItems": "1"
+            },
+        },
+        'table_row_map': {
+            'schema': _schema
+        },
+        'table_row': ['item_1', 'item_2'],
+        "table_row_map": {
+            "schema": _schema,
+            "form": _form
+        },
+        "schemaeditor": {
+            "schema": _schema,
+        }
+    }
+
+    return ItemTypes.create(
+        name='test',
+        item_type_name=_item_type_name,
+        schema=_schema,
+        form=_form,
+        render=_render,
+        tag=1
+    )
+
+@pytest.fixture()
+def item_type_mapping_with_form(app, db, item_type_with_form):
+    _mapping = {
+        'item_1': {
+            'jpcoar_mapping': {
+                'item': {
+                    '@value': 'interim'
+                }
+            }
+        }
+    }
+    return Mapping.create(item_type_with_form.id, _mapping)
+
 
 @pytest.fixture()
 def mock_execute():

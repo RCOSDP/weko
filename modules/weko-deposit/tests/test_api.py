@@ -751,7 +751,7 @@ class TestWekoDeposit:
         deposit = record['deposit']
         record_data = record['item_data']
         index_obj = {'index': ['1'], 'actions': '1'}
-        test1 = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'タイトル', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'title', 'subitem_1551255648112': 'en'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}), ('item_title', 'title'), ('item_type_id', '1'), ('control_number', '1'), ('author_link', []), ('_oai', {'id': '1'}), ('weko_shared_id', -1), ('owner', '1'), ('publish_date', '2022-08-20'), ('title', ['title']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status','0')])
+        test1 = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'タイトル', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'title', 'subitem_1551255648112': 'en'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}), ('item_title', 'title'), ('item_type_id', '1'), ('control_number', '1'), ('author_link', []), ('_oai', {'id': '1'}), ('publish_date', '2022-08-20'), ('title', ['title']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status','0')])
         test2 = None
         ret1,ret2 = deposit.convert_item_metadata(index_obj,record_data)
         assert ret1 == test1
@@ -766,6 +766,9 @@ class TestWekoDeposit:
         with patch("weko_deposit.api.json_loader",side_effect=RuntimeError):
             with pytest.raises(RuntimeError):
                 ret = deposit.convert_item_metadata(index_obj,record_data)
+        with patch("weko_deposit.api.json_loader",side_effect=ValueError):
+            with pytest.raises(ValueError):
+                deposit.convert_item_metadata(index_obj,record_data)
         with patch("weko_deposit.api.json_loader",side_effect=BaseException("test_error")):
             with pytest.raises(HTTPException) as httperror:
                 ret = deposit.convert_item_metadata(index_obj,record_data)

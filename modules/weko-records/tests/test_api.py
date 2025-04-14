@@ -902,6 +902,23 @@ def test_revision_ItemTypes(app):
 
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::TestItemTypes::test_update_attribute_options -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records/.tox/c1/tmp
 class TestItemTypes:
+    
+    # def (cls, itemtype_id, specified_list=[], renew_value='None'):
+    # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::TestItemTypes::test_reload -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records/.tox/c1/tmp
+    def test_reload(self, app, db, user, item_type_with_form, item_type_mapping_with_form):
+
+        item_type_id = item_type_with_form.id
+
+        with patch('weko_records.api.db.session.merge', return_value=""):
+            with patch('weko_records.api.db.session.commit', return_value=""):
+                result = ItemTypes.reload(item_type_id)
+                assert result["msg"] == "Fix ItemType({}) mapping".format(item_type_id)
+                assert result["code"] == 0
+
+                result = ItemTypes.reload(item_type_id, specified_list=[1000])
+                assert result["msg"] == "Update ItemType({})".format(item_type_id)
+                assert result["code"] == 0
+
     # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::TestItemTypes::test_update_property_enum -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records/.tox/c1/tmp
     def test_update_property_enum(app):
         old_value = {'type': 'array', 'items': {'type': 'object', 'title': 'dcterms_date', 'format': 'object', 'properties': {'subitem_dcterms_date': {'type': 'string', 'title': '日付（リテラル）', 'format': 'text', 'title_i18n': {'en': 'Date Literal', 'ja': '日付（リテラル）'}}, 'subitem_dcterms_date_language': {'enum': [None, 'ja', 'ja-Kana', 'ja-Latn', 'en', 'fr', 'it', 'de', 'es', 'zh-cn', 'zh-tw', 'ru', 'la', 'ms', 'eo', 'ar', 'el', 'ko'], 'type': ['null', 'string'], 'title': '言語', 'format': 'select', 'editAble': True}}, 'system_prop': False}, 'title': 'dcterms_date', 'maxItems': 9999, 'minItems': 1, 'system_prop': False}
