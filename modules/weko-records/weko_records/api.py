@@ -951,8 +951,8 @@ class ItemTypes(RecordBase):
                                     data['table_row_map']['schema']['properties'][_prop_id].pop('properties')
                                 if 'format' in data['table_row_map']['schema']['properties'][_prop_id]:
                                     data['table_row_map']['schema']['properties'][_prop_id].pop('format')
-                                
-                                tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))                            
+
+                                tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))
                                 _forms = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.forms, -1))).replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_forms, -1))
 
