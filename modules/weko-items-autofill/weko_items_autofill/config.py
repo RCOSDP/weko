@@ -21,17 +21,11 @@ WEKO_ITEMS_AUTOFILL_API_LIST = [
     "CrossRef",
     "DataCite",
     "CiNii Research",
+    "Original"
 ]
 """API list"""
 
-WEKO_ITEMS_AUTOFILL_TO_BE_USED = [
-    "JaLC API",
-    "医中誌 Web API",
-    "CrossRef",
-    "DataCite",
-    "CiNii Research",
-    "Original",
-]
+WEKO_ITEMS_AUTOFILL_TO_BE_USED = []
 """API list to be used"""
 
 WEKO_ITEMS_AUTOFILL_CROSSREF_API_URL = 'https://doi.crossref.org'
