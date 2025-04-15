@@ -934,8 +934,8 @@ def check_jsonld_import_items(
                 "save_as_is": system_info.get("save_as_is", False),
                 "metadata_replace": system_info.get("metadata_replace", False),
                 "cnri": system_info.get("cnri"),
-                "doi_ra": system_info.get("doi_ra"),
-                "doi": system_info.get("doi"),
+                "doi_ra": system_info.get("doi_ra", ""),
+                "doi": system_info.get("doi", ""),
                 "amend_doi": system_info.get("amend_doi"),
             } for item_metadata, system_info in item_metadatas
         ]
