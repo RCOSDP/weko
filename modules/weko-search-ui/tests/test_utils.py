@@ -10,6 +10,7 @@ import uuid
 
 import pytest
 from elasticsearch import helpers
+from elasticsearch_dsl import Search
 from flask import current_app, make_response, request
 from flask_babelex import Babel
 from flask_login import current_user
@@ -47,6 +48,7 @@ from weko_search_ui.utils import (
     define_default_dict,
     delete_exported,
     delete_records,
+    execute_search_with_pagination,
     export_all,
     get_change_identifier_mode_content,
     get_content_workflow,
@@ -177,6 +179,56 @@ class MockSearchPerm:
     def can(self):
         return True
 
+# def execute_search_with_pagination(search_instance, get_all=False, size=None):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_execute_search_with_pagination -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_execute_search_with_pagination(i18n_app, indices, users, db_records, mocker, esindex):
+    i18n_app.config['WEKO_SEARCH_TYPE_INDEX'] = 'index'
+    i18n_app.config['OAISERVER_ES_MAX_CLAUSE_COUNT'] = 1
+    i18n_app.config['WEKO_ADMIN_MANAGEMENT_OPTIONS'] = WEKO_ADMIN_MANAGEMENT_OPTIONS
+
+    mocker.patch("weko_search_ui.query.search_permission",side_effect=MockSearchPerm)
+
+    def _generate_es_data(num, start_datetime=datetime.now()):
+        for i in range(num):
+            doc = {
+                "_index": i18n_app.config.get("INDEXER_DEFAULT_INDEX", "test-weko-item-v1.0.0"),
+                "_type": "item-v1.0.0",
+                "_id": f"2d1a2520-9080-437f-a304-230adc8{i:05d}",
+                "_source": {
+                    "_item_metadata": {
+                        "title": [f"test_title_{i}"],
+                    },
+                    "relation_version_is_last": True,
+                    "path": ["66"],
+                    "control_number": f"{i:05d}",
+                    "_created": (start_datetime + timedelta(seconds=i)).isoformat(),
+                    "publish_status": "0",
+                },
+                "sort": i,
+            }
+            yield doc
+
+    generate_data_num = 20005
+    preset_records_num = len(db_records)
+    expected_data_num = generate_data_num + preset_records_num + 3
+    helpers.bulk(esindex, _generate_es_data(generate_data_num), refresh='true')
+    i18n_app.config['RECORDS_REST_SORT_OPTIONS'] = {"test-weko":{"controlnumber":{"title":"ID","fields": ["control_number"],"default_order": "asc","order": 2}}}
+    search = Search(using=esindex)
+    search._sort.append( {"_created": {"order": "asc", "unmapped_type": "long"}})
+
+    with i18n_app.test_request_context(query_string={"sort": "control_number", "q": "66"}):
+        with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+            # max_result_size < 0
+            assert len(execute_search_with_pagination(search, max_result_size=-1)) == expected_data_num
+            # max_result_size   default
+            assert len(execute_search_with_pagination(search)) == 10000
+            # max_result_size = 1
+            assert len(execute_search_with_pagination(search, max_result_size=1)) == 1
+            # max_result_size = 15000
+            assert len(execute_search_with_pagination(search, max_result_size=15000)) == 15000
+            # max_result_size = 30000
+            assert len(execute_search_with_pagination(search, max_result_size=30000)) == expected_data_num
+
 
 # def execute_search_with_pagination(search_instance, get_all=False, size=None):
 # def get_tree_items(index_tree_id): ERROR ~ AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
@@ -234,16 +286,16 @@ def test_get_tree_items(i18n_app, indices, users, mocker, esindex):
 
     with i18n_app.test_request_context(query_string={"sort": "control_number", "q": "66"}):
         with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
-                # max_result_size < 0
-                assert len(get_tree_items(66, max_result_size=-1)) == generate_data_num
-                # max_result_size   default
-                assert len(get_tree_items(66)) == 10000
-                # max_result_size = 1
-                assert len(get_tree_items(66, max_result_size=1)) == 1
-                # max_result_size = 15000
-                assert len(get_tree_items(66, max_result_size=15000)) == 15000
-                # max_result_size = 30000
-                assert len(get_tree_items(66, max_result_size=30000)) == generate_data_num
+            # max_result_size < 0
+            assert len(get_tree_items(66, max_result_size=-1)) == generate_data_num
+            # max_result_size   default
+            assert len(get_tree_items(66)) == 10000
+            # max_result_size = 1
+            assert len(get_tree_items(66, max_result_size=1)) == 1
+            # max_result_size = 15000
+            assert len(get_tree_items(66, max_result_size=15000)) == 15000
+            # max_result_size = 30000
+            assert len(get_tree_items(66, max_result_size=30000)) == generate_data_num
 
 
 # def delete_records(index_tree_id, ignore_items):
