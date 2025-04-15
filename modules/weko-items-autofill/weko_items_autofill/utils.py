@@ -313,7 +313,8 @@ def get_doi_with_original(doi, item_type_id, original_metadeta=None):
             else:
                 continue
         else:
-            record_data_list = record_funcs_map[key](doi, item_type_id)
+            record_data_list = record_funcs_map[key](doi, item_type_id) \
+                if key in record_funcs_map else []
             record_data_dict = list_to_dict(record_data_list)
         result_dict = deep_merge(result_dict, record_data_dict)
     return result_dict
