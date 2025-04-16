@@ -288,7 +288,7 @@ def get_doi_record_data(doi, item_type_id, activity_id):
     return doi_response
 
 
-def get_doi_with_original(doi, item_type_id, original_metadeta=None):
+def get_doi_with_original(doi, item_type_id, original_metadeta=None, **kwargs):
     """Get record data base on DOI API.
 
     :param naid: The DOI ID
@@ -305,7 +305,10 @@ def get_doi_with_original(doi, item_type_id, original_metadeta=None):
     }
 
     result_dict = {}
-    for key in current_app.config["WEKO_ITEMS_AUTOFILL_TO_BE_USED"]:
+    api_priority = kwargs.get("meta_data_api")
+    if api_priority is None:
+        api_priority = current_app.config["WEKO_ITEMS_AUTOFILL_TO_BE_USED"]
+    for key in api_priority:
         record_data_dict = {}
         if key == "Original":
             if original_metadeta is not None:

@@ -801,6 +801,7 @@ def check_jsonld_import_items(
         file,
         packaging,
         mapping_id,
+        meta_data_api,
         shared_id=-1,
         validate_bagit=True,
         is_change_identifier=False):
@@ -814,6 +815,7 @@ def check_jsonld_import_items(
         packaging (str): Packaging type. SWORDBagIt or SimpleZip.
         shared_id (int): Shared ID. Defaults to -1.
         mapping_id (int): Mapping ID. Defaults to None.
+        meta_data_api (list): Metadata API. Defaults to None.
         validate_bagit (bool, optional):
             Validate BagIt. Defaults to True.
         is_change_identifier (bool, optional):
@@ -943,7 +945,7 @@ def check_jsonld_import_items(
         list_record.sort(key=lambda x: get_priority(x["link_data"]))
         handle_save_bagit(list_record, file, data_path, filename)
 
-        handle_metadata_amend_by_doi(list_record)
+        handle_metadata_amend_by_doi(list_record, meta_data_api)
         handle_flatten_data_encode_filename(list_record, data_path)
 
         handle_set_change_identifier_flag(list_record, is_change_identifier)
@@ -5084,22 +5086,23 @@ def create_tsv_row(dict, data_response):
     return result_row
 
 
-def handle_metadata_by_doi(item, doi):
+def handle_metadata_by_doi(item, doi, meta_data_api):
     """Handle doi.
 
     Args:
         item (dict): Item metadata.
         doi (str): DOI.
+        meta_data_api (list[str]): Metadata API.
     :return
         doi_response (dict): Metadata complemented by DOI.
     """
     metadata = item.get("metadata")
     item_type_id = item.get("item_type_id")
-    doi_response = get_doi_with_original(doi, item_type_id, metadata)
+    doi_response = get_doi_with_original(doi, item_type_id, metadata, meta_data_api=meta_data_api)
     return doi_response
 
 
-def handle_metadata_amend_by_doi(list_record):
+def handle_metadata_amend_by_doi(list_record, meta_data_api):
     """Amend metadata by using DOI.
 
     Amend metadata, by using Web APIs, if DOI exists in the metadata.
@@ -5108,13 +5111,14 @@ def handle_metadata_amend_by_doi(list_record):
 
     Args:
         list_record (list[dict]): List record import.
+        meta_data_api (list[str]): Metadata API.
     """
     for item in list_record:
         metadata = item["metadata"]
         doi = item.get("amend_doi")
         if doi is None:
             continue
-        item["metadata"] = handle_metadata_by_doi(item, doi)
+        item["metadata"] = handle_metadata_by_doi(item, doi, meta_data_api)
 
 
 def handle_flatten_data_encode_filename(list_record, data_path):
