@@ -402,16 +402,7 @@ class HeadlessActivity(WorkActivity):
                 metadata = {**_old_metadata, **metadata}
             # if metadata_replace is True, replace all metadata
             metadata.update({"$schema": f"/items/jsonschema/{self.item_type.id}"})
-            workflow_index = self.workflow.index_tree_id
-            index = {
-                "index": (
-                    [workflow_index]
-                    if workflow_index is not None else metadata.get("path", [])
-                ),
-                "actions": metadata.get("publish_status")
-            }
-            self._deposit.update(index, metadata)
-            self._deposit.commit()
+
             data = {
                 "metainfo": metadata,
                 "files": [],
@@ -432,18 +423,37 @@ class HeadlessActivity(WorkActivity):
 
             # to exclude from file text extraction
             for file in data["files"]:
-                if file["filename"] in non_extract:
+                if isinstance(non_extract, list) and file["filename"] in non_extract:
                     file["non_extract"] = True
-          
+
             if workspace_register:
                 data_without_outer_list = data["files"][0]
                 data["files"] = data_without_outer_list
 
             data["endpoint"].update(base_factory(pid))
             self.upt_activity_metadata(self.activity_id, json.dumps(data))
+
+            # designate_index
+            workflow_index = self.workflow.index_tree_id
+            list_index =  (
+                [workflow_index]
+                if workflow_index is not None else metadata.get("path", [])
+            )
+            if not isinstance(list_index, list) or not list_index:
+                raise Exception(
+                    "Index is not specified in workflow or item metadata."
+                )
+
+            index = {
+                "index": list_index,
+                "actions": metadata.get("publish_status")
+            }
+            self._deposit.update(index, metadata)
+            self._deposit.commit()
         except Exception as ex:
-            current_app.logger.error(f"failed to input metadata: {ex}")
-            raise WekoWorkflowException(f"failed to input metadata: {ex}")
+            msg = f"Failed to input metadata to deposit: {ex}"
+            current_app.logger.error(msg)
+            raise WekoWorkflowException(msg) from ex
         finally:
             self._activity_unlock(locked_value)
 
