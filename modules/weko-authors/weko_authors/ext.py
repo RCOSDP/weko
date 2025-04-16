@@ -21,8 +21,6 @@
 """Flask extension for weko-authors."""
 
 from . import config
-from .rest import create_blueprint
-
 
 class WekoAuthors(object):
     """weko-authors extension."""
@@ -80,6 +78,7 @@ class WekoAuthorsREST(object):
         :param app: An instance of :class:`flask.Flask`.
         """
         self.init_config(app)
+        from .rest import create_blueprint
         blueprint = create_blueprint(app.config['WEKO_AUTHORS_REST_ENDPOINTS'])
         app.register_blueprint(blueprint)
         app.extensions['weko_authors_rest'] = self

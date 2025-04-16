@@ -22,28 +22,30 @@
 
 import json
 import traceback
-import inspect
-import pdb
 
-from flask import Blueprint, current_app, Response, jsonify
+from flask import Blueprint, current_app, request, Response, jsonify
+from sqlalchemy.exc import SQLAlchemyError
+from werkzeug.exceptions import BadRequest, InternalServerError, NotFound
 from invenio_db import db
 from invenio_rest import ContentNegotiatedMethodView
-from .scopes import author_search_scope,author_create_scope,author_update_scope,author_delete_scope
-from invenio_records_rest.utils import obj_or_import_string
-from werkzeug.exceptions import InternalServerError, NotFound
+from invenio_search import current_search_client
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
+
 from weko_accounts.utils import roles_required, limiter
-from .errors import VersionNotFoundRESTError
+from weko_admin.config import (
+    WEKO_ADMIN_PERMISSION_ROLE_SYSTEM, WEKO_ADMIN_PERMISSION_ROLE_REPO
+)
 from weko_authors.api import WekoAuthors
 from weko_authors.utils import validate_weko_id, check_period_date
 
-from flask import request, jsonify, current_app
-from sqlalchemy.exc import SQLAlchemyError
-from werkzeug.exceptions import BadRequest
-from invenio_search import current_search_client
+from .errors import VersionNotFoundRESTError
+from .scopes import (
+    author_search_scope,
+    author_create_scope,
+    author_update_scope,
+    author_delete_scope
+)
 
-WEKO_ADMIN_PERMISSION_ROLE_SYSTEM = "System Administrator"
-WEKO_ADMIN_PERMISSION_ROLE_REPO = "Repository Administrator"
 
 def create_blueprint(endpoints):
     """Create Weko-Authors-REST blueprint.
@@ -109,11 +111,9 @@ class Authors(ContentNegotiatedMethodView):
     def get(self, **kwargs):
         """Count authors."""
         version = kwargs.get('version')
-        from .config import WEKO_AUTHORS_COUNT_API_VERSION
-        func = WEKO_AUTHORS_COUNT_API_VERSION.get(f'get-{version}')
-
-        if func:
-            return func(self, **kwargs)
+        func_name = f'get_{version}'
+        if hasattr(self, func_name):
+            return getattr(self, func_name)(**kwargs)
         else:
             raise VersionNotFoundRESTError()
 
@@ -141,6 +141,7 @@ class Authors(ContentNegotiatedMethodView):
         except Exception:
             current_app.logger.error(traceback.print_exc())
             raise InternalServerError()
+
 
 class AuthorDBManagementAPI(ContentNegotiatedMethodView):
     """Author Database Management API."""
