@@ -1880,9 +1880,6 @@ class JsonLdMapper(JsonMapper):
         rocrate.root_dataset["wk:publishStatus"] = (
             "public" if metadata["publish_status"] == "0" else "private")
         rocrate.root_dataset["wk:index"] = metadata.get("path", [])
-        rocrate.root_dataset["wk:editMode"] = "Keep"
-
-
         # wk:feedbackMail
         feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(
             metadata["control_number"]
