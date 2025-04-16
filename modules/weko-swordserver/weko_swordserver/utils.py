@@ -187,7 +187,9 @@ def is_valid_file_hash(expected_hash, file):
     return expected_hash == body_hash
 
 
-def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
+def check_import_items(
+    file, file_format, is_change_identifier=False, shared_id=-1, **kwargs
+):
     """Check metadata file for import.
 
     Check the contents of the file and return the result of the check.
@@ -197,6 +199,10 @@ def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
         file_format (str): File format. "TSV/CSV", "XML" or "JSON-LD".
         is_change_identifier (bool, optional):
             Change Identifier Mode. Defaults to False.
+        shared_id (int, optional): Contributor ID. Defaults to -1.
+        **kwargs: Additional arguments.
+            - client_id (str): Client ID.
+            - packaging (str): Packaging type.
     Returns:
         dict: Result of the check.
     """
@@ -214,6 +220,8 @@ def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
     check_result = {}
     check_result.update({"register_type": register_type})
     check_result.update({"duplicate_check": duplicate_check})
+    check_result.update({"weko_shared_id": shared_id})
+
     if not is_active:
         current_app.logger.error(f"{file_format} metadata import is not enabled.")
         raise WekoSwordserverException(
@@ -222,7 +230,9 @@ def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
         )
 
     if file_format == "TSV/CSV":
-        check_result.update(check_tsv_import_items(file, is_change_identifier))
+        check_result.update(
+            check_tsv_import_items(file, is_change_identifier, shared_id=shared_id)
+        )
 
         if register_type == "Workflow":
             item_type_id = check_result["list_record"][0].get("item_type_id")
@@ -238,12 +248,14 @@ def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
         workflow_id = int(settings.get(file_format, {}).get("workflow", "-1"))
         workflow = WorkFlow.query.get(workflow_id)
         item_type_id = workflow.itemtype_id
-        check_result.update(check_xml_import_items(file, item_type_id))
+        check_result.update(
+            check_xml_import_items(file, item_type_id, shared_id=shared_id)
+        )
+        check_result.update({"workflow_id": workflow.id})
 
     elif file_format == "JSON":
         packaging = kwargs.get("packaging")
         client_id = kwargs.get("client_id")
-        shared_id = kwargs.get("shared_id", -1)
 
         sword_client = SwordClient.get_client_by_id(client_id)
         if sword_client is None or not sword_client.active:
