@@ -23,12 +23,12 @@
 from flask_assets import Bundle
 
 js_item_list = Bundle(
-    'js/WorkspaceItemList.js',
+    'js/weko_workspace/WorkspaceItemList.js',
     filters='requirejs',
     output="gen/WorkspaceItemList.%(version)s.js"
 )
 
 css_workspace = Bundle(
-    'css/WorkspaceBodyContents.css',
+    'css/weko_workspace/WorkspaceBodyContents.css',
     output="gen/WorkspaceBodyContents.css"
 )
