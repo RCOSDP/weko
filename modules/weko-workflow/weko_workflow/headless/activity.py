@@ -139,10 +139,7 @@ class HeadlessActivity(WorkActivity):
             _external=True
         ) if self._model is not None else ""
 
-    def init_activity(
-            self, user_id, workflow_id=None, community=None,
-            activity_id=None, item_id=None, for_delete=False
-        ):
+    def init_activity(self, user_id, **kwargs):
         """Manual initialization of activity.
 
         Note:
@@ -169,6 +166,7 @@ class HeadlessActivity(WorkActivity):
             current_app.logger.error("activity is already initialized.")
             raise WekoWorkflowException("activity is already initialized.")
 
+        activity_id = kwargs.get("activity_id")
         if activity_id is not None:
             result = verify_deletion(activity_id).json
             if result.get("is_delete"):
@@ -199,9 +197,11 @@ class HeadlessActivity(WorkActivity):
             self._activity_unlock(locked_value)
             return self.detail
 
+        item_id = kwargs.get("item_id")
+        community = kwargs.get("community")
         if item_id is not None:
             # edit or delete item
-            if not for_delete:
+            if not kwargs.get("for_delete", False):
                 response = prepare_edit_item(item_id, community)
             else:
                 response = prepare_delete_item(item_id, community)
@@ -222,6 +222,7 @@ class HeadlessActivity(WorkActivity):
             self.item_type = ItemTypes.get_by_id(self.workflow.itemtype_id)
 
         else:
+            workflow_id = kwargs.get("workflow_id")
             if workflow_id is None:
                 current_app.logger.error("workflow_id is required to create activity.")
                 raise WekoWorkflowException("workflow_id is required to create activity.")
@@ -276,11 +277,7 @@ class HeadlessActivity(WorkActivity):
             grant_data (dict): data for identifier grant <br>
         """
 
-        self.init_activity(
-            params.get("user_id"), params.get("workflow_id"),
-            params.get("community"), params.get("activity_id"),
-            params.get("item_id")
-        )
+        self.init_activity(**params)
 
         # skip locks temporarily even if skip flag is not True
         _lf = self._lock_skip
@@ -342,7 +339,7 @@ class HeadlessActivity(WorkActivity):
             raise WekoWorkflowException(error)
 
         self.recid = self._input_metadata(metadata, files, non_extract, workspace_register)
-        self._designate_index(index)
+        # self._designate_index(index)      # not needed
         self._comment(comment)
 
         return self.detail
@@ -353,8 +350,6 @@ class HeadlessActivity(WorkActivity):
         locked_value = self._activity_lock()
 
         try:
-            # TODO: metadata input assist (W-OA-06 2.2)
-
             metadata.setdefault("pubdate", datetime.now().strftime("%Y-%m-%d"))
             feedback_maillist = metadata.pop("feedback_mail_list", [])
             self.create_or_update_action_feedbackmail(
