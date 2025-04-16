@@ -265,6 +265,7 @@ webencodings==0.5.1
 -e ../weko-items-ui
 -e ../weko-itemtypes-ui
 -e ../weko-logging
+-e ../weko-notifications
 -e ../weko-records
 -e ../weko-records-ui
 -e ../weko-redis

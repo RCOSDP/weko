@@ -278,7 +278,7 @@ def check_import_items(
         check_result.update(
             check_jsonld_import_items(
                 file, packaging, mapping_id, shared_id,
-                is_change_identifier
+                is_change_identifier=is_change_identifier
             )
         )
 
