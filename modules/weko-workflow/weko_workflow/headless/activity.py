@@ -440,7 +440,7 @@ class HeadlessActivity(WorkActivity):
                 if file["filename"] in non_extract:
                     file["non_extract"] = True
           
-            if workspace_register:
+            if workspace_register and data["files"]:
                 data_without_outer_list = data["files"][0]
                 data["files"] = data_without_outer_list
 
