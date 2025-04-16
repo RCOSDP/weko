@@ -352,7 +352,6 @@ def get_file_place_info(org_pid, org_bucket_id, file_name, content_type=None):
         file_place = 'local'
     else:
     # S3 strage
-        print('S3')
         file_place = 'S3'
 
         new_bucket = Bucket.create(location=location, storage_class=current_app.config[
