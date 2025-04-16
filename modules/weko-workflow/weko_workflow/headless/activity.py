@@ -363,9 +363,13 @@ class HeadlessActivity(WorkActivity):
             item_map = get_mapping(self.item_type.id, "jpcoar_mapping", self.item_type)
             title_value_key = "title.@value"
             title, _ = get_data_by_property(metadata, item_map, title_value_key)
+            weko_shared_id = metadata.get("weko_shared_id", -1)
+            shared_user_id = metadata.get("shared_user_id", -1)
+
             self.update_activity(self.activity_id, {
                 "title": title[0] if len(title) > 0 else "",
-                "shared_user_id": metadata.pop("shared_user_id", -1)
+                "shared_user_id": weko_shared_id
+                    if shared_user_id == -1 else shared_user_id
             })
 
             result = {"is_valid": True}
@@ -425,8 +429,8 @@ class HeadlessActivity(WorkActivity):
             for file in data["files"]:
                 if isinstance(non_extract, list) and file["filename"] in non_extract:
                     file["non_extract"] = True
-
-            if workspace_register:
+      
+            if workspace_register and data["files"]:
                 data_without_outer_list = data["files"][0]
                 data["files"] = data_without_outer_list
 

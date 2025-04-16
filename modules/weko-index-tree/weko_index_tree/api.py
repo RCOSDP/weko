@@ -22,7 +22,6 @@
 
 import pickle
 import os
-from copy import deepcopy
 from datetime import date, datetime, timezone
 from functools import partial
 from socketserver import DatagramRequestHandler
@@ -79,39 +78,39 @@ class Indexes(object):
         if not isinstance(indexes, dict):
             return
 
-        data = dict()
+        data = {}
         is_ok = True
         try:
-            cid = indexes.get('id')
+            cid = indexes.get("id")
 
             if not cid:
                 return
 
             data["id"] = cid
             data["parent"] = pid
-            data["index_name"] = indexes.get('value')
-            data["index_name_english"] = indexes.get('value')
+            data["index_name"] = indexes.get("value")
+            data["index_name_english"] = indexes.get("value")
             data["index_link_name_english"] = data["index_name_english"]
             data["owner_user_id"] = current_user.get_id()
             role = cls.get_account_role()
             data["browsing_role"] = \
-                ",".join(list(map(lambda x: str(x['id']), role)))
+                ",".join(list(map(lambda x: str(x["id"]), role)))
             data["contribute_role"] = data["browsing_role"]
 
             data["more_check"] = False
             data["display_no"] = current_app.config[
-                'WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER']
+                "WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER"]
 
             data["coverpage_state"] = False
             data["recursive_coverpage_check"] = False
 
-            group_list = ''
+            group_list = ""
             groups = Group.query.all()
             for group in groups:
                 if not group_list:
                     group_list = str(group.id)
                 else:
-                    group_list = group_list + ',' + str(group.id)
+                    group_list = group_list + "," + str(group.id)
 
             data["browsing_group"] = group_list
             data["contribute_group"] = group_list
@@ -175,7 +174,7 @@ class Indexes(object):
             UserActivityLogger.error(
                 operation="INDEX_CREATE",
             )
-            if 'uix_position' in ''.join(ie.args):
+            if "uix_position" in "".join(ie.args):
                 try:
                     pid_info = cls.get_index(pid, with_count=True)
                     data["position"] = 0 if not pid_info else \
@@ -223,7 +222,7 @@ class Indexes(object):
                         v = ",".join(map(lambda x: str(x["id"]), v["allow"]))
                     if isinstance(v, str) and "public_date" in k:
                         if len(v) > 0:
-                            v = datetime.strptime(v, '%Y%m%d')
+                            v = datetime.strptime(v, "%Y%m%d")
                         else:
                             v = None
                     if v is not None and (
@@ -259,26 +258,26 @@ class Indexes(object):
                 index.contribute_group = ",".join([str(group["id"]) for group in updated_contribute_group_allow])
 
                 recs_group = {
-                    'recursive_coverpage_check': partial(
+                    "recursive_coverpage_check": partial(
                         cls.set_coverpage_state_resc, index_id,
                         getattr(index, "coverpage_state")),
-                    'recursive_public_state': partial(
+                    "recursive_public_state": partial(
                         cls.set_public_state_resc, index_id,
                         getattr(index, "public_state"),
                         getattr(index, "public_date")),
-                    'recursive_browsing_group': partial(
+                    "recursive_browsing_group": partial(
                         cls.set_browsing_group_resc, index_id,
                         getattr(index, "browsing_group")),
-                    'recursive_browsing_role': partial(
+                    "recursive_browsing_role": partial(
                         cls.set_browsing_role_resc, index_id,
                         getattr(index, "browsing_role")),
-                    'recursive_contribute_group': partial(
+                    "recursive_contribute_group": partial(
                         cls.set_contribute_group_resc, index_id,
                         getattr(index, "contribute_group")),
-                    'recursive_contribute_role': partial(
+                    "recursive_contribute_role": partial(
                         cls.set_contribute_role_resc, index_id,
                         getattr(index, "contribute_role")),
-                    'biblio_flag': partial(
+                    "biblio_flag": partial(
                         cls.set_online_issn_resc, index_id,
                         getattr(index, "online_issn"))
                 }

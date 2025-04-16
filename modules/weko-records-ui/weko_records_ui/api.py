@@ -2,23 +2,22 @@ from datetime import datetime, timezone
 import os
 import random
 import string
-import json
 import hashlib
 import traceback
 import boto3
 import tempfile
 import shutil
 from email_validator import validate_email
-from flask import current_app
+from flask import current_app, request
 
 from flask_login import current_user
 from flask_mail import Message
 from flask_babelex import lazy_gettext as _
 
 from invenio_mail.admin import _load_mail_cfg_from_db, _set_flask_mail_cfg
-from invenio_files_rest.models import Bucket, ObjectVersion, FileInstance
-from invenio_pidstore.models import PersistentIdentifier
-from invenio_records.api import Record
+from flask_babelex import lazy_gettext as _
+from invenio_db import db
+
 from weko_records.api import RequestMailList
 from weko_records_ui.captcha import get_captcha_info
 from weko_records_ui.errors import (
@@ -353,7 +352,6 @@ def get_file_place_info(org_pid, org_bucket_id, file_name, content_type=None):
         file_place = 'local'
     else:
     # S3 strage
-        print('S3')
         file_place = 'S3'
 
         new_bucket = Bucket.create(location=location, storage_class=current_app.config[

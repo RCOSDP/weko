@@ -342,21 +342,19 @@ def get_workspace_itemlist():
             ]
 
             for accessrole_date in accessrole_date_list:
+                access_role = accessrole_date["accessrole"]
+                date_val = accessrole_date["dateValue"]
 
-                # "publicSts": None,  # 公開ファイル有無ステータス
-                # "publicCnt": None,  # 公開ファイル数
-                if accessrole_date["dateValue"] <= hit["metadata"]["publish_date"]:
+                if access_role == "open_access" or \
+                    (access_role == "open_date" and date_val <= datetime.now(timezone.utc).strftime("%Y-%m-%d")):
+                    # public
                     publicCnt += 1
-
-                # "embargoedSts": None,  # エンバーゴ有無ステータス
-                # "embargoedCnt": None,  # エンバーゴ有数
-                if accessrole_date["dateValue"] > datetime.now().strftime("%Y%m%d"):
-                    embargoedCnt += 1
-
-                # "restrictedPublicationSts": None,  # 制限公開有無ステータス
-                # "restrictedPublicationCnt": None,  # 制限公開ファイル数
-                if accessrole_date["accessrole"] == "open_access":
+                elif access_role == "open_restricted":
+                    # restricted
                     restrictedPublicationCnt += 1
+                else:
+                    # embargo
+                    embargoedCnt += 1
         else:
             workspaceItem["fileSts"] = False
             workspaceItem["fileCnt"] = 0
@@ -382,23 +380,27 @@ def get_workspace_itemlist():
             'file_present': 'fileSts',
             'resource_type': 'resourceType',
             'related_to_data': 'connectionToDatasetSts',
-            'related_to_paper': 'connectionToPaperSts'
+            'related_to_paper': 'connectionToPaperSts',
+            'funder_name': 'funderName',
+            'award_title': 'awardTitle',
         }
 
         # フィルタリング処理
-        filteredItems = [
-            item for item in workspaceItemList
-            if all(
-                item.get(filter_mapping[key]) == jsonCondition[key]
-                if key != 'resource_type'
-                else item.get(filter_mapping[key]) in jsonCondition[key]
-                for key in filter_mapping
-                if key in jsonCondition and
-                key not in ['award_title', 'funder_name'] and
-                jsonCondition.get(key) is not None and
-                jsonCondition.get(key) != []
-            )
-        ]
+        filteredItems = []
+        for item in workspaceItemList:
+            match = True
+            for key, value in filter_mapping.items():
+                if key in jsonCondition and jsonCondition[key] is not None and jsonCondition[key] != []:
+                    if key in ['resource_type', 'award_title', 'funder_name']:
+                        if item[value] not in jsonCondition[key]:
+                            match = False
+                            break
+                    elif item[value] != jsonCondition[key]:
+                        match = False
+                        break
+            if match:
+                filteredItems.append(item)
+
         workspaceItemList = filteredItems
 
     else:
@@ -875,6 +877,7 @@ def item_register_save():
             if index.index_name == indexName or index.index_name_english == indexName:
                 indexIdList.append(str(index.id))
     if settings.workFlow_select_flg == '0':
+        # registration by workflow
         grant_data = {}
         link_data = []
         comment = ""
@@ -914,6 +917,7 @@ def item_register_save():
             result['error'] = str(e)
         return jsonify(result)
     else:
+        # directly registration
         try:
             list_record = []
             item_dict = {}

@@ -26,7 +26,7 @@ class InvenioS3(object):
         if app:
             self.init_app(app)
 
-    @cached_property
+    # @cached_property
     def init_s3fs_info(self, location):
         """Gather all the information needed to start the S3FSFileSystem."""
         if 'S3_ACCCESS_KEY_ID' in current_app.config:
@@ -76,9 +76,9 @@ class InvenioS3(object):
             info['key'] = location.access_key
             info['secret'] = location.secret_key
             info['client_kwargs']['endpoint_url'] = location.s3_endpoint_url
-            region_name = location.s3_region_name
-            if region_name:
-                info['client_kwargs']['region_name'] = region_name
+            # region_name = location.s3_region_name
+            # if region_name:
+            #     info['client_kwargs']['region_name'] = region_name
             info['config_kwargs']['signature_version'] = location.s3_signature_version
 
         return info

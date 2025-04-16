@@ -34,9 +34,8 @@ from flask import Flask
 from flask_babelex import Babel, lazy_gettext as _
 from flask_celeryext import FlaskCeleryExt
 from flask_menu import Menu
-from flask_login import current_user, login_user, LoginManager
 from werkzeug.local import LocalProxy
-from tests.helpers import create_record, json_data, fill_oauth2_headers
+from .helpers import create_record, json_data, fill_oauth2_headers
 
 from invenio_deposit.config import (
     DEPOSIT_DEFAULT_STORAGE_CLASS,
@@ -96,10 +95,9 @@ from invenio_db.utils import drop_alembic_version_table
 from weko_admin.models import AdminLangSettings
 from weko_schema_ui.models import OAIServerSchema
 from weko_index_tree.api import Indexes
-from weko_records import WekoRecords
 from weko_accounts import WekoAccounts
+from weko_logging.audit import WekoLoggingUserActivity
 from weko_records.api import ItemTypes
-from weko_records.config import WEKO_ITEMTYPE_EXCLUDED_KEYS
 from weko_records.models import ItemTypeName, ItemType
 from weko_records_ui.models import PDFCoverPageSettings
 from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, WEKO_PERMISSION_ROLE_COMMUNITY, EMAIL_DISPLAY_FLG
@@ -107,18 +105,12 @@ from weko_groups import WekoGroups
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
 from weko_index_tree.models import Index
-from weko_index_tree import WekoIndexTree, WekoIndexTreeREST
 from weko_index_tree.views import blueprint_api
 from weko_index_tree.rest import create_blueprint
 from weko_index_tree.scopes import create_index_scope
-from weko_search_ui import WekoSearchUI, WekoSearchREST
-from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX
+from weko_search_ui import WekoSearchUI
 from weko_redis.redis import RedisConnection
 from weko_admin.models import SessionLifetime
-
-from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session
-from sqlalchemy import event
 
 
 @pytest.yield_fixture()
@@ -479,7 +471,8 @@ def base_app(instance_path):
     WekoWorkflow(app_)
     WekoGroups(app_)
     WekoAccounts(app_)
-    
+    WekoLoggingUserActivity(app_)
+
     current_assets = LocalProxy(lambda: app_.extensions["invenio-assets"])
     current_assets.collect.collect()
 
@@ -600,7 +593,7 @@ def users(app, db):
         originalroleuser = User.query.filter_by(email='originalroleuser@test.org').first()
         originalroleuser2 = User.query.filter_by(email='originalroleuser2@test.org').first()
         noroleuser = User.query.filter_by(email='noroleuser@test.org').first()
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -628,7 +621,7 @@ def users(app, db):
     ds.add_role_to_user(user, repoadmin_role)
     ds.add_role_to_user(user, contributor_role)
     ds.add_role_to_user(user, comadmin_role)
-    
+
     # Assign access authorization
     with db.session.begin_nested():
         action_users = [
@@ -761,7 +754,7 @@ def indices(app, db):
         db.session.add(testIndexThreeChild)
         db.session.add(testIndexMore)
         db.session.add(testIndexPrivate)
-        
+
     return {
         'index_dict': dict(testIndexThree),
         'index_non_dict': testIndexThree,
@@ -830,7 +823,7 @@ def test_indices(app, db):
         db.session.add(base_index(100, 0, 3, is_deleted=True))
         db.session.add(base_index(101, 100, 0, coverpage_state=True, is_deleted=True))
     db.session.commit()
-    
+
 @pytest.fixture
 def indices_for_api(app, db):
     with db.session.begin_nested():
@@ -893,7 +886,7 @@ def indices_for_api(app, db):
             created=datetime(2025, 3, 3, 4, 3, 33, 316001),
             updated=datetime(2025, 3, 3, 4, 3, 58, 104842)
         )
-        
+
         child_index_3 = Index(
             id=1740974612380,
             parent=1740974612379,
@@ -919,7 +912,8 @@ def indices_for_api(app, db):
         'sample_index': sample_index,
         'parent_index': parent_index,
         'child_index_1': child_index_1,
-        'child_index_2': child_index_2
+        'child_index_2': child_index_2,
+        "child_index_3": child_index_3,
     }
 
 @pytest.yield_fixture
@@ -946,10 +940,10 @@ def esindex(app,db_records):
             search.client.indices.create("test-weko-items",body=mapping)
             search.client.indices.put_alias(index="test-weko-items", name="test-weko")
         # print(current_search_client.indices.get_alias())
-    
+
     for depid, recid, parent, doi, record, item in db_records:
         search.client.index(index='test-weko-item-v1.0.0', doc_type='item-v1.0.0', id=record.id, body=record,refresh='true')
-    
+
 
     yield search
 
@@ -991,11 +985,11 @@ def db_records(db, instance_path, users):
             'parent': 0,
             'value': 'IndexB',
         }
-    
+
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         Indexes.create(0, index_metadata)
 
- 
+
     yield result
 
 
@@ -1015,7 +1009,7 @@ def db_register(app, db):
         for data in action_datas:
             actions_db.append(Action(**data))
         db.session.add_all(actions_db)
-    
+
     actionstatus_datas = dict()
     with open('tests/data/action_status.json') as f:
         actionstatus_datas = json.load(f)
@@ -1024,7 +1018,7 @@ def db_register(app, db):
         for data in actionstatus_datas:
             actionstatus_db.append(ActionStatus(**data))
         db.session.add_all(actionstatus_db)
-    
+
     index = Index(
         public_state=True
     )
@@ -1048,7 +1042,7 @@ def db_register(app, db):
                          form={'type':'test form'},
                          render={'type':'test render'},
                          tag=1,version_id=1,is_deleted=False)
-    
+
     flow_action1 = FlowAction(status='N',
                      flow_id=flow_define.flow_id,
                      action_id=1,
@@ -1096,7 +1090,7 @@ def db_register(app, db):
                     activity_confirm_term_of_use=True,
                     title='test', shared_user_id=-1, extra_info={},
                     action_order=6)
-    
+
     with db.session.begin_nested():
         db.session.add(index)
         db.session.add(flow_define)
@@ -1107,7 +1101,7 @@ def db_register(app, db):
         db.session.add(flow_action3)
         db.session.add(workflow)
         db.session.add(activity)
-    
+
     # return {'flow_define':flow_define,'item_type_name':item_type_name,'item_type':item_type,'flow_action':flow_action,'workflow':workflow,'activity':activity}
     return {
         'flow_define': flow_define,
@@ -1124,7 +1118,7 @@ def db_register(app, db):
 @pytest.fixture()
 def db_register2(app, db):
     session_lifetime = SessionLifetime(lifetime=60,is_delete=False)
-    
+
     with db.session.begin_nested():
         db.session.add(session_lifetime)
 
@@ -1156,7 +1150,7 @@ def records(db):
         db.session.add(rec1)
         db.session.add(rec2)
         db.session.add(rec3)
-        
+
         search_query_result = json_data("data/search_result.json")
 
     return(search_query_result)
@@ -1734,9 +1728,9 @@ def index_thumbnail(app,instance_path):
                     )
     if not os.path.isdir(dir_path):
         os.makedirs(dir_path)
-    
+
     with open(thumbnail_path, "w") as f:
         f.write("test")
-    
+
     return thumbnail_path
-    
+
