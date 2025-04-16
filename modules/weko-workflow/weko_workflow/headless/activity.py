@@ -327,7 +327,7 @@ class HeadlessActivity(WorkActivity):
             # TODO: update propaties of files metadata, but it is difficult to
             # decide whitch key should be updated.
           
-            if workspace_register:
+            if workspace_register and data["files"]:
                 data_without_outer_list = data["files"][0]
                 data["files"] = data_without_outer_list
 
