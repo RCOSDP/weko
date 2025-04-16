@@ -1187,8 +1187,12 @@ def dbsession_clean(exception):
 
 @blueprint.route("/records/get_bucket_list", methods=['GET'])
 def get_bucket_list():
-    bucket_list = get_s3_bucket_list()
-    return jsonify(bucket_list)
+    try:
+        bucket_list = get_s3_bucket_list()
+        return jsonify(bucket_list)
+    except Exception as e:
+        current_app.logger.info(str(e))
+        return jsonify({'error': str(e)}), 400
 
 @blueprint.route("/records/copy_bucket", methods=['POST'])
 def copy_bucket():
@@ -1246,6 +1250,7 @@ def replace_file():
                                       new_version_id=new_version_id)
             return jsonify(result)
         except Exception as e:
+            current_app.logger.info(str(e))
             return jsonify({'error': str(e)}), 400
 
     else:
@@ -1260,5 +1265,6 @@ def replace_file():
                                       file_size=file_size)
             return jsonify(result)
         except Exception as e:
+            current_app.logger.info(str(e))
             return jsonify({'error': str(e)}), 400
 
