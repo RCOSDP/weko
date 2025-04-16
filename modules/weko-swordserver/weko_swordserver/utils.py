@@ -266,7 +266,7 @@ def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
         check_result.update(
             check_jsonld_import_items(
                 file, packaging, mapping_id, shared_id,
-                is_change_identifier
+                is_change_identifier=is_change_identifier
             )
         )
 
