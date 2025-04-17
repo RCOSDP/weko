@@ -20,19 +20,23 @@ WEKO_ITEMS_AUTOFILL_API_LIST = [
     "医中誌 Web API",
     "CrossRef",
     "DataCite",
-    "CiNii Research",
+    "CiNii Research"
 ]
 """API list"""
 
-WEKO_ITEMS_AUTOFILL_TO_BE_USED = [
-    "JaLC API",
-    "医中誌 Web API",
-    "CrossRef",
-    "DataCite",
-    "CiNii Research",
-    "Original",
-]
-"""API list to be used"""
+WEKO_ITEMS_AUTOFILL_TO_BE_USED = []
+"""API list to be used.
+
+This list should be ordered by priority.
+
+Choose from the following:
+    - JaLC API
+    - 医中誌 Web API
+    - CrossRef
+    - DataCite
+    - CiNii Research
+    - Original  -->  Original metadata, not from API.
+"""
 
 WEKO_ITEMS_AUTOFILL_CROSSREF_API_URL = 'https://doi.crossref.org'
 """Crossref API URL"""

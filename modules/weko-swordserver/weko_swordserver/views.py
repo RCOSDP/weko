@@ -12,6 +12,7 @@ from __future__ import absolute_import, print_function
 import os
 import shutil
 from datetime import datetime, timedelta
+import traceback
 
 from flask import Blueprint, current_app, jsonify, request, url_for, abort, Response
 from flask_login import current_user
@@ -237,6 +238,9 @@ def post_service_document():
     packaging = request.headers.get("Packaging")
     file_format = check_import_file_format(file, packaging)
 
+    on_behalf_of = request.headers.get("On-Behalf-Of")
+    shared_id = get_shared_id_from_on_behalf_of(on_behalf_of)
+
     if file_format == "JSON":
         digest = request.headers.get("Digest")
         if current_app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"]:
@@ -254,15 +258,15 @@ def post_service_document():
                 )
 
         client_id = request.oauth.client.client_id
-        on_behalf_of = request.headers.get("On-Behalf-Of")
-        shared_id = get_shared_id_from_on_behalf_of(on_behalf_of)
         check_result = check_import_items(
-            file, file_format, packaging=packaging,
-            shared_id=shared_id, client_id=client_id
+            file, file_format, False, shared_id, 
+            packaging=packaging, client_id=client_id
         )
 
     else:
-        check_result = check_import_items(file, file_format, False)
+        check_result = check_import_items(
+            file, file_format, False, shared_id
+        )
 
     data_path = check_result.get("data_path","")
     expire = datetime.now() + timedelta(days=1)
@@ -317,10 +321,10 @@ def post_service_document():
         result, list_id, list_url = check_duplicate(item["metadata"], is_item=True)
         if check_result.get("duplicate_check", False) and result:
             current_app.logger.error(
-                f"This item appears to be a duplicate: {list_id}"
+                f"New item appears to be a duplicate: {list_id}"
             )
             raise WekoSwordserverException(
-                f"This item appears to be a duplicate: {list_url}",
+                f"Some similar items are already registered: {list_url}",
                 ErrorType.BadRequest,
             )
 
@@ -370,6 +374,7 @@ def post_service_document():
 
         except Exception as e:
             current_app.logger.error(f"Unexpected error in process_item: {str(e)}")
+            traceback.print_exc()
             raise WekoSwordserverException(
                 f"Unexpected error in process_item: {str(e)}",
                 ErrorType.ServerError
@@ -387,7 +392,7 @@ def post_service_document():
         try:
             activity_id, recid, error = process_item(item, request_info)
             if error:
-                warns.append((activity_id, recid))
+                warns.append((error, activity_id, recid))
             if file_format == "JSON":
                 update_item_ids(check_result["list_record"], recid)
         except Exception as e:
@@ -409,15 +414,17 @@ def post_service_document():
         else:
             error_messages = "; ".join(
                 [
-                    "An error occurred. Please open the following URL to continue "
+                    "{error} Please open the following URL to continue "
                     "with the remaining operations.{url}: Item id: {recid}."
                     .format(
+                        error=error,
                         url=url_for(
                             "weko_workflow.display_activity",
                             activity_id=activity_id, _external=True
                         ),
-                        recid=recid)
-                    for activity_id, recid in warns
+                        recid=recid
+                    )
+                    for error, activity_id, recid in warns
                 ]
             )
 
