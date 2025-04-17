@@ -220,21 +220,6 @@ def dict_to_list(d):
     return d  # If not a dictionary, return
 
 
-def get_crossref_record_data_without_pid(doi, item_type_id):
-    """
-    Get record data base on CrossRef without pid. FIXME: change after merge
-
-    :return: The record data
-    """
-    # FIXME: resurrect after merge
-    # pid_response = get_current_api_certification('crf')
-    # pid = pid_response['cert_data']
-    # result = get_crossref_record_data(pid, doi, item_type_id)
-    # FIXME: delete after merge
-    result = [{"item_30001_title0": [{"subitem_title": "Identification of cDNA Sequences Encoding the Complement Components of Zebrafish (Danio rerio)", "subitem_title_language": "en"}]}, {"item_30001_creator2": [{"creatorNames": [{"creatorName": "Somamoto Tomonori", "creatorNameLang": "en"}]}]}, {"item_30001_bibliographic_information17": {"bibliographic_titles": [{"bibliographic_title": "Journal of the Faculty of Agriculture, Kyushu University", "bibliographic_titleLang": "en"}]}}, {"item_30001_source_identifier16": [{"subitem_source_identifier": "0023-6152", "subitem_source_identifier_type": "ISSN"}]}, {"item_30001_bibliographic_information17": {"bibliographicVolumeNumber": "54"}}, {"item_30001_bibliographic_information17": {"bibliographicIssueNumber": "2"}}, {"item_30001_bibliographic_information17": {"bibliographicPageStart": "373"}}, {"item_30001_bibliographic_information17": {"bibliographicPageEnd": "387"}}, {"item_30001_bibliographic_information17": {"bibliographicIssueDates": {"bibliographicIssueDate": "2009", "bibliographicIssueDateType": "Issued"}}}, {"item_30001_relation14": [{"subitem_relation_type_id": {"subitem_relation_type_id_text": "10.5109/16119", "subitem_relation_type_select": "DOI"}}]}]
-    return result
-
-
 def get_crossref_record_data_default_pid(doi, item_type_id):
     """
     Get record data base on CrossRef default pid.
