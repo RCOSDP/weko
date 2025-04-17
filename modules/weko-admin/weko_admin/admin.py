@@ -1790,11 +1790,16 @@ class SwordAPIJsonldSettingsView(ModelView):
             # GET activity Waiting approval workflow
             exist_waiting_approval_activity = False
             if model.workflow_id is not None:
-                count = WorkActivity().count_waiting_approval_by_workflow_id(model.workflow_id)
-                if count > 0:
-                    exist_waiting_approval_activity = True
+                count = (
+                    WorkActivity()
+                    .count_waiting_approval_by_workflow_id(model.workflow_id)
+                )
+                exist_waiting_approval_activity =  count > 0
             if exist_waiting_approval_activity:
-                current_app.logger.info()
+                current_app.logger.info(
+                    "Cannot edit workflow because there are activities waiting "
+                    f"for approval using workflow: {model.workflow_id}"
+                )
 
             # All mapping
             jsonld_mappings = [
