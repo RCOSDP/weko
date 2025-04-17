@@ -59,6 +59,7 @@ def get_permission_filter(index_id: str = None, is_community=False):
 
     Args:
         index_id (str, optional): Index Identifier Number. Defaults to None.
+        is_community (bool): Includes child indexes under the specified index. Defaults to False.
 
     Returns:
         List: Query command.
