@@ -1215,10 +1215,9 @@ def get_file_place():
     pid = request.form.get('pid')
     bucket_id = request.form.get('bucket_id')
     file_name = request.form.get('file_name')
-    content_type = request.form.get('content_type')
 
     try:
-        file_place, uri, new_bucket_id, new_version_id = get_file_place_info(pid, bucket_id, file_name, content_type)
+        file_place, uri, new_bucket_id, new_version_id = get_file_place_info(pid, bucket_id, file_name)
         result = {
             'file_place': file_place,
             'uri': uri,

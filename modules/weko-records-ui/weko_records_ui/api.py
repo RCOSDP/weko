@@ -176,14 +176,14 @@ def get_s3_bucket_list():
 
     profile = UserProfile.get_by_userid(current_user.id)
     if not profile:
-        raise RequiredItemNotExistError(_('S3 setting none. Please check your profile.'))
+        raise Exception(_('S3 setting none. Please check your profile.'))
     endpoint_url = profile.s3_endpoint_url
     access_key = profile.access_key
     secret_key = profile.secret_key
     if (endpoint_url is None or endpoint_url == "") or \
         (access_key is None or access_key == "") or \
         (secret_key is None or secret_key == ""):
-        raise RequiredItemNotExistError(_('S3 setting none. Please check your profile.'))
+        raise Exception(_('S3 setting none. Please check your profile.'))
 
     s3_client = boto3.client(
         's3',
@@ -265,7 +265,7 @@ def copy_bucket_to_s3(pid, filename, org_bucket_id, checked, bucket_name):
     )
     try:
         location_response = s3_client.get_bucket_location(Bucket=bucket_name)
-        bucket_region = location_response['LocationConstraint']
+        bucket_region = location_response.get('LocationConstraint')
         # bucket on us-east-1
         if bucket_region is None:
             bucket_region = 'us-east-1'
@@ -290,7 +290,7 @@ def copy_bucket_to_s3(pid, filename, org_bucket_id, checked, bucket_name):
         raise Exception(_('Uploading file failed.') + str(e))
 
 
-def get_file_place_info(org_pid, org_bucket_id, file_name, content_type=None):
+def get_file_place_info(org_pid, org_bucket_id, file_name):
 
     file_place = None
     url = None
@@ -398,7 +398,7 @@ def get_file_place_info(org_pid, org_bucket_id, file_name, content_type=None):
                     directory_path = pre + directory_path
             else:
                 # ex: https://bucket_name.s3.us-east-1.amazonaws.com/file_name
-                parts = url.split('/')
+                parts = location.uri.split('/')
                 sub_parts = parts[2].split('.')
                 bucket_name = sub_parts[0]
                 if len(sub_parts) >= 3:
