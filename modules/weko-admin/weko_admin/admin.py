@@ -1699,7 +1699,7 @@ class SwordAPIJsonldSettingsView(ModelView):
                 current_page_type="add",
                 current_client_name=None,
                 current_model_json=None,
-                exist_Waiting_approval_workflow=False,
+                exist_waiting_approval_activity=False,
                 item_type_names=item_type_names,
             )
         else:
@@ -1756,6 +1756,20 @@ class SwordAPIJsonldSettingsView(ModelView):
         if model is None:
             abort(404)
 
+        # GET activity Waiting approval workflow
+        exist_waiting_approval_activity = False
+        if model.workflow_id is not None:
+            count = (
+                WorkActivity()
+                .count_waiting_approval_by_workflow_id(model.workflow_id)
+            )
+            exist_waiting_approval_activity =  count > 0
+        if exist_waiting_approval_activity:
+            current_app.logger.info(
+                "Cannot edit workflow because there are activities waiting "
+                f"for approval using workflow: {model.workflow_id}"
+            )
+
         if request.method == "GET":
             # GET
             form = FlaskForm(request.form)
@@ -1787,19 +1801,6 @@ class SwordAPIJsonldSettingsView(ModelView):
             from weko_workflow.utils import exclude_admin_workflow
             exclude_admin_workflow(workflows)
 
-            # GET activity Waiting approval workflow
-            exist_waiting_approval_activity = False
-            if model.workflow_id is not None:
-                count = (
-                    WorkActivity()
-                    .count_waiting_approval_by_workflow_id(model.workflow_id)
-                )
-                exist_waiting_approval_activity =  count > 0
-            if exist_waiting_approval_activity:
-                current_app.logger.info(
-                    "Cannot edit workflow because there are activities waiting "
-                    f"for approval using workflow: {model.workflow_id}"
-                )
 
             # All mapping
             jsonld_mappings = [
@@ -1845,11 +1846,14 @@ class SwordAPIJsonldSettingsView(ModelView):
                 current_page_type="edit",
                 current_client_name=current_client_name,
                 current_model_json=current_model_json,
-                exist_Waiting_approval_workflow=exist_waiting_approval_activity,
+                exist_waiting_approval_activity=exist_waiting_approval_activity,
                 item_type_names=item_type_names,
             )
         else:
             # POST
+            if exist_waiting_approval_activity:
+                return jsonify("Unapproved items exit"), 400
+
             try:
                 if request.json.get("registration_type") == "Direct":
                     registration_type_id = SwordClientModel.RegistrationType.DIRECT

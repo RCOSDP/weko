@@ -96,7 +96,7 @@ const deleted_workflows_name = JSON.parse(document.getElementById('deleted_workf
 const sword_item_type_mappings = JSON.parse(document.getElementById('sword_item_type_mappings').value);
 const current_page_type = document.getElementById('current_page_type').value;
 const current_model_json = JSON.parse(document.getElementById('current_model_json').value);
-const exist_Waiting_approval_workflow = document.getElementById('exist_Waiting_approval_workflow').value;
+const exist_waiting_approval_activity = document.getElementById('exist_waiting_approval_activity').value;
 const item_type_names = JSON.parse(document.getElementById('item_type_names').value);
 
 /** close ErrorMessage area */
@@ -185,6 +185,9 @@ function isEmpty(value){
 }
 
 function handleMappingChange() {
+  if (exist_waiting_approval_activity === 'True') {
+    return;
+  }
   // save button enable
   save_button_state_change();
 
@@ -412,7 +415,7 @@ window.onload = function () {
     $('#moveLeft').prop('disabled', moveLeftDisabled);
 
     $('#save_button').prop('disabled', false);
-    if (exist_Waiting_approval_workflow === 'True') {
+    if (exist_waiting_approval_activity === 'True') {
       $('#error_modal').modal('show');
       $('#save_button').prop('disabled', true);
       $('#application').prop('disabled', true);
