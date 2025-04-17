@@ -107,6 +107,22 @@ def test_get_permission_filter(i18n_app, users, client_request_args, indices):
                 res = get_permission_filter(33)
                 # assert res == ([Terms(publish_status=['0', '1']), Terms(path=['33']), Bool(must=[Terms(publish_status=['0', '1']), Match(relation_version_is_last='true')])], ['33', '33/44'])
 
+def test_get_permission_filter_with_community(i18n_app, users, client_request_args, indices, communities):
+    # is_perm is True
+    with patch('weko_search_ui.query.search_permission.can', return_value=True):
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            # result is False
+            with patch("weko_search_ui.query.check_permission_user",return_value=(users[3]["id"],True)):
+                # exist index_id, search_type = Full_TEXT
+                with i18n_app.test_request_context("/test?search_type=0"):
+                    # index_id in is_perm_indexes
+                    res = get_permission_filter(33, is_community=True)
+                    assert "[Bool(must=[Bool(should=[Terms(path=['33', '44'])])]" in str(res[0])
+                # exist index_id, search_type = Full_TEXT
+                with i18n_app.test_request_context("/test?search_type=1"):
+                    # index_id in is_perm_indexes
+                    res = get_permission_filter(33, is_community=True)
+                    assert "[Bool(must=[Terms(path=['33', '44'])]" in str(res[0])
 
 # def default_search_factory(self, search, query_parser=None, search_type=None):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_query.py::test_default_search_factory -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
