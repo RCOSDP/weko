@@ -2577,7 +2577,7 @@ class WorkActivity(object):
         metadata = self.get_activity_metadata(activity_id)
         if metadata is None:
             return None
-        item_json = json.loads(metadata)
+        item_json = json.loads(metadata) if isinstance(metadata, str) else metadata
         # Load files from temp_data.
         files = item_json.get('files', [])
         return [
