@@ -35,7 +35,7 @@ from weko_records.serializers.utils import get_mapping
 from weko_workflow.api import WorkActivity
 from weko_workflow.models import ActionJournal
 from weko_workflow.utils import MappingData
-from weko_workflow.utils import (
+from weko_workspace.utils import (
     get_jalc_record_data,
     get_jamas_record_data,
     get_datacite_record_data,
