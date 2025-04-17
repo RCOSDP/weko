@@ -142,7 +142,6 @@ document.getElementById('fileInput').addEventListener('change', async function(e
     formData.append('pid', pid);
     formData.append('bucket_id', bucket_id);
     formData.append('file_name', file.name);
-    formData.append('content_type', file.type);
     url ="/records/get_file_place";
 
     await fetch(url ,{method:'POST', credentials:"include", body: formData})
