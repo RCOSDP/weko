@@ -88,6 +88,7 @@ def create():
             return jsonify(msg=_('The value is already in use as WEKO ID.')), 500
     except Exception as ex:
         current_app.logger.error(ex)
+        traceback.print_exc()
         return jsonify(msg=_('Failed')), 500
 
 
