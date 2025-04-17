@@ -54,7 +54,7 @@ def get_item_type_aggs(search_index):
     return facets.get(search_index).get("aggs", {})
 
 
-def get_permission_filter(index_id: str = None):
+def get_permission_filter(index_id: str = None, is_community=False):
     """Check permission.
 
     Args:
@@ -85,13 +85,21 @@ def get_permission_filter(index_id: str = None):
         if search_type == config.WEKO_SEARCH_TYPE_DICT["FULL_TEXT"]:
             should_path = []
             if index_id in is_perm_indexes:
-                term_list.append(index_id)
+                if is_community:
+                    child_ids = Indexes.get_child_list_recursive(int(index_id))
+                    term_list.extend([i for i in child_ids if i in is_perm_indexes])
+                else:
+                    term_list.append(index_id)
                 should_path.append(Q("terms", path=term_list))
 
             terms = Q("bool", should=should_path)
         else:  # In case search_type is keyword or index
             if index_id in is_perm_indexes:
-                term_list.append(index_id)
+                if is_community:
+                    child_ids = Indexes.get_child_list_recursive(int(index_id))
+                    term_list.extend([i for i in child_ids if i in is_perm_indexes])
+                else:
+                    term_list.append(index_id)
 
             terms = Q("terms", path=term_list)
     else:
@@ -689,7 +697,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
         comm = Community.get(community_id)
         root_node_id = comm.root_node_id
 
-        mst, _ = get_permission_filter(root_node_id)
+        mst, _ = get_permission_filter(root_node_id, is_community=True)
         q = _get_search_qs_query(qs)
 
         if q:
@@ -769,7 +777,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
         # add  Permission filter by publish date and status
         comm = Community.get(community_id)
         root_node_id = comm.root_node_id
-        mst, _ = get_permission_filter(root_node_id)
+        mst, _ = get_permission_filter(root_node_id, is_community=True)
 
         # multi keywords search filter
         mkq = _get_detail_keywords_query()
