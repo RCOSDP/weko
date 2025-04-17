@@ -101,11 +101,10 @@ def check_rocrate_import_items_task(file_path, is_change_identifier: bool,
     with current_app.test_request_context(
         host_url, headers=[("Accept-Language", lang)]
     ):
-        check_result = check_jsonld_import_items(file_path, packaging,
-                                        mapping_id,
-                                        None,
-                                        -1,
-                                        is_change_identifier)
+        check_result = check_jsonld_import_items(
+            file_path, packaging, mapping_id,
+            is_change_identifier=is_change_identifier
+        )
     # remove zip file
     shutil.rmtree("/".join(file_path.split("/")[:-1]))
     data_path = check_result.get("data_path", "")

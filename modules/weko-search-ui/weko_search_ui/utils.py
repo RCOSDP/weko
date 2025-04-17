@@ -798,13 +798,9 @@ def generate_metadata_from_jpcoar(data_path: str, filenames: list, item_type_id:
     return list_record
 
 def check_jsonld_import_items(
-        file,
-        packaging,
-        mapping_id,
-        meta_data_api,
-        shared_id=-1,
-        validate_bagit=True,
-        is_change_identifier=False):
+        file, packaging, mapping_id, meta_data_api=None,
+        shared_id=-1, validate_bagit=True, is_change_identifier=False
+):
     """Check bagit import items.
 
     Check that the actual file contents match the recorded hashes stored
