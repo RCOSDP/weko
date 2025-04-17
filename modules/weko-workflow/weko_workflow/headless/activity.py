@@ -339,7 +339,7 @@ class HeadlessActivity(WorkActivity):
             raise WekoWorkflowException(error)
 
         self.recid = self._input_metadata(metadata, files, non_extract, workspace_register)
-        # self._designate_index(index)      # not needed
+        self._designate_index(index)
         self._comment(comment)
 
         return self.detail
