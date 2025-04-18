@@ -5,6 +5,7 @@ const workflow_deleted_alert = document.getElementById('workflow_deleted_alert')
 const Unapproved_Items_Exit = document.getElementById('Unapproved_Items_Exit').value;
 const current_page_type = document.getElementById('current_page_type').value;
 const current_model_json = JSON.parse(document.getElementById('current_model_json').value);
+const can_edit = document.getElementById('can_edit').value;
 const current_name = document.getElementById('current_name').value;
 const current_item_type_id = document.getElementById('current_item_type_id').value;
 const current_mapping = document.getElementById('current_mapping').value;
@@ -177,21 +178,18 @@ function openDeleteModal() {
 
 function deleteData() {
   closeError();
-  const form = {};
   fetch(
     '/admin/jsonld-mapping/delete/' + current_model_json['id'],
     {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'DELETE',
       credentials: 'include',
-      body: JSON.stringify(form),
     }
   )
     .then((res) => {
       if (!res.ok) {
         throw new Error('');
       }
-      alert(Successfully_Changed);
+      showMsg(Successfully_Changed, true);
       window.location.href = '/admin/jsonld-mapping/';
     })
     .catch((error) => {
@@ -217,10 +215,11 @@ window.onload = function () {
       showMsg('Failed to get mapping', false);
     }
 
-    if (exist_Waiting_approval_workflow === 'True') {
+    if (can_edit === 'False') {
       $('#modal-message').text(Unapproved_Items_Exit);
       $('#error_modal').modal('show');
       $('#save_button').prop('disabled', true);
+      $('#delete_button').prop('disabled', true);
     }
   }
 };

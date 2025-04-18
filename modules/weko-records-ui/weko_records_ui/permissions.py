@@ -288,7 +288,7 @@ def check_permission_period(permission : FilePermission) -> bool :
     """Check download permission.
         Args
             FilePermission:permission
-        Returns 
+        Returns
             bool:is the user has access rights or not
     """
 
@@ -434,6 +434,13 @@ def check_publish_status(record):
 #                 is_himself = False
 #     return is_himself
 
+def check_created_id_by_recid(recid):
+    from weko_deposit.api import WekoRecord
+    record = WekoRecord.get_record_by_pid(recid)
+    if not record:
+        return False
+    return check_created_id(record)
+
 def check_created_id(record):
     """Check edit permission to the record for the current user
 
@@ -443,13 +450,13 @@ def check_created_id(record):
 
     Returns:
         bool: True is the current user has the edit permission.
-    """    
+    """
     is_himself = False
     # Super users
     supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
     user_id = current_user.get_id() \
             if current_user and current_user.is_authenticated else None
-    if user_id is not None:    
+    if user_id is not None:
         created_id = record.get('_deposit', {}).get('created_by')
         shared_id = record.get('weko_shared_id')
         if user_id and created_id and user_id == str(created_id):
@@ -487,7 +494,7 @@ def check_create_usage_report(record, file_json , user_id=None):
     return None
 
 def is_owners_or_superusers(record) -> bool:
-    """ 
+    """
     return true if the user can download the record's contents unconditionally
 
     Args
@@ -513,7 +520,7 @@ def is_owners_or_superusers(record) -> bool:
     for role in list(current_user.roles or []):
         if role.name in supers:
             return True
-    
+
     return False
 
 

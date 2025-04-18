@@ -93,10 +93,10 @@ const workflow_deleted_alert = document.getElementById('workflow_deleted_alert')
 const registration_type_value = document.getElementById('registration_type_value').value;
 const workflow_value = document.getElementById('workflow_value').value;
 const deleted_workflows_name = JSON.parse(document.getElementById('deleted_workflows_name').value);
-const sword_item_type_mappings = JSON.parse(document.getElementById('sword_item_type_mappings').value);
+const jsonld_mappings = JSON.parse(document.getElementById('jsonld_mappings').value);
 const current_page_type = document.getElementById('current_page_type').value;
 const current_model_json = JSON.parse(document.getElementById('current_model_json').value);
-const exist_Waiting_approval_workflow = document.getElementById('exist_Waiting_approval_workflow').value;
+const can_edit = document.getElementById('can_edit').value;
 const item_type_names = JSON.parse(document.getElementById('item_type_names').value);
 
 /** close ErrorMessage area */
@@ -145,11 +145,11 @@ function changeRegistrationType(value) {
     // mapping set
     $('#mapping').children().remove();
     $('#mapping').append($('<option>').html("").val(""));
-    for (let i = 0; i < sword_item_type_mappings.length; i++) {
+    for (let i = 0; i < jsonld_mappings.length; i++) {
       $('#mapping').append(
         $('<option>')
-          .html(sword_item_type_mappings[i]['name'])
-          .val(sword_item_type_mappings[i]['id'])
+          .html(jsonld_mappings[i]['name'])
+          .val(jsonld_mappings[i]['id'])
       );
     }
   } else if (value === 'Workflow') {
@@ -185,6 +185,9 @@ function isEmpty(value){
 }
 
 function handleMappingChange() {
+  if (can_edit === 'False') {
+    return;
+  }
   // save button enable
   save_button_state_change();
 
@@ -192,7 +195,7 @@ function handleMappingChange() {
   let mapping_val = $('#mapping').val();
   if (mapping_val !== '') {
     mapping_val = Number(mapping_val);
-    let result = sword_item_type_mappings.find(data => data.id === mapping_val);
+    let result = jsonld_mappings.find(data => data.id === mapping_val);
     let item_type_id = result['item_type_id'];
     result = item_type_names.find(data => data.id === item_type_id);
     let item_type_name = result['name'];
@@ -235,9 +238,9 @@ $('#workflow').change(function(){
   const select_item_type_id = selectedOption.data('itemtype');
   $('#mapping').children().remove();
   $('#mapping').append($('<option>').html("").val(""));
-  for (let i = 0; i < sword_item_type_mappings.length; i++){
-    if (sword_item_type_mappings[i]['item_type_id'] === select_item_type_id) {
-      $('#mapping').append($('<option>').html(sword_item_type_mappings[i]['name']).val(sword_item_type_mappings[i]['id']));
+  for (let i = 0; i < jsonld_mappings.length; i++){
+    if (jsonld_mappings[i]['item_type_id'] === select_item_type_id) {
+      $('#mapping').append($('<option>').html(jsonld_mappings[i]['name']).val(jsonld_mappings[i]['id']));
     }
   }
 
@@ -323,7 +326,7 @@ function saveDataFormat(type) {
     workflow_id: workflowMenu.value,
     mapping_id: mapping.value,
     duplicate_check: duplicate_check_value,
-    Meta_data_API_selected: selected_API,
+    metadata_api_selected: selected_API,
     Meta_data_API_no_selected: no_selected_API,
   };
 
@@ -376,14 +379,14 @@ window.onload = function () {
       const select_item_type_id = selectedOption.data('itemtype');
       $('#mapping').children().remove();
       $('#mapping').append($('<option>').html("").val(""));
-      for (let i = 0; i < sword_item_type_mappings.length; i++) {
+      for (let i = 0; i < jsonld_mappings.length; i++) {
         if (
-          sword_item_type_mappings[i]['item_type_id'] === select_item_type_id
+          jsonld_mappings[i]['item_type_id'] === select_item_type_id
         ) {
           $('#mapping').append(
             $('<option>')
-              .html(sword_item_type_mappings[i]['name'])
-              .val(sword_item_type_mappings[i]['id'])
+              .html(jsonld_mappings[i]['name'])
+              .val(jsonld_mappings[i]['id'])
           );
         }
       }
@@ -412,7 +415,7 @@ window.onload = function () {
     $('#moveLeft').prop('disabled', moveLeftDisabled);
 
     $('#save_button').prop('disabled', false);
-    if (exist_Waiting_approval_workflow === 'True') {
+    if (can_edit === 'False') {
       $('#error_modal').modal('show');
       $('#save_button').prop('disabled', true);
       $('#application').prop('disabled', true);

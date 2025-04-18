@@ -72,9 +72,11 @@ from weko_workflow.utils import get_item_info, process_send_mail, set_mail_info
 
 from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
-from .permissions import check_content_clickable, check_created_id, \
-    check_file_download_permission, check_original_pdf_download_permission, \
+from .permissions import (
+    check_content_clickable, check_created_id, check_created_id_by_recid,
+    check_file_download_permission, check_original_pdf_download_permission,
     check_permission_period, file_permission_factory, get_permission
+)
 from .utils import create_secret_url, get_billing_file_download_permission, \
     get_google_detaset_meta, get_google_scholar_meta, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
@@ -1006,7 +1008,7 @@ def citation(record, pid, style=None, ln=None):
 def soft_delete(recid):
     """Soft delete item."""
     try:
-        if not has_update_version_role(current_user):
+        if not check_created_id_by_recid(recid):
             abort(403)
         starts_with_del_ver = True
         if recid.startswith('del_ver_'):

@@ -180,3 +180,17 @@ class SwordClient():
         """Get client_id all. """
         query = db.session.query(SwordClientModel.client_id).distinct()
         return query.all()
+
+
+    @classmethod
+    def get_clients_by_mapping_id(cls, mapping_id):
+        """Get client by mapping_id.
+
+        Args:
+            mapping_id (int): Mapping ID.
+
+        Returns:
+            SwordClient: Client object. If not found, return `None`.
+        """
+        obj = SwordClientModel.query.filter_by(mapping_id=mapping_id).all()
+        return obj

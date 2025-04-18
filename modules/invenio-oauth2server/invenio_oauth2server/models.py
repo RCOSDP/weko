@@ -287,7 +287,11 @@ class Client(db.Model):
     @classmethod
     def get_client_id_by_user_id(cls, user_id):
         """Get client_id, name by user_id. """
-        query = db.session.query(cls).with_entities(cls.client_id, cls.name).filter(cls.user_id == user_id)
+        query =(
+            db.session.query(cls)
+            .with_entities(cls.client_id, cls.name, cls.is_internal)
+            .filter(cls.user_id == user_id)
+        )
         return query.all()
 
     @classmethod
