@@ -372,3 +372,12 @@ msgstr "氏名が指定されていません"
 
 msgid "Position (Others)"
 msgstr "役職（その他）"
+
+msgid "Endpoint URL must not begin with https://s3."
+msgstr "エンドポイントURLは https://s3. で始まる形式でないものにしてください。"
+
+msgid "Please enter if you use your own S3 Bucket."
+msgstr "自身のS3バケット使用する場合は入力してください。"
+
+msgid "Please enter if you specify your own S3 Bucket region."
+msgstr "自身のS3バケットリージョン指定する場合は入力してください。"
