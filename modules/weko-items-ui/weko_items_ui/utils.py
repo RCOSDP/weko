@@ -4189,6 +4189,7 @@ def check_duplicate(data, is_item=True):
             if cleaned == normalized_title:
                 matched_recids.add(recid)
                 break
+    matched_recids.discard(int(data["metainfo"]["id"]))
 
     if not matched_recids:
         return False, [], []
@@ -4203,6 +4204,8 @@ def check_duplicate(data, is_item=True):
     db.session.commit()
     recids_resource = {r[0] for r in result}
     matched_recids &= recids_resource
+    matched_recids.discard(int(data["metainfo"]["id"]))
+    
     if not matched_recids:
         return False, [], []
 
