@@ -53,13 +53,17 @@ document.getElementById('search').addEventListener('focus', function() {
   document.querySelector('.options-list').style.display = 'block';
 });
 
-// 入力ボックスからフォーカスが外れたときにオプションリストを非表示にする
-document.getElementById('search').addEventListener('blur', function() {
-  setTimeout(() => {
-      document.querySelector('.options-list').style.display = 'none';
-  }, 400); // 少し遅延を入れて、クリックイベントが処理されるのを待つ
-});
+// オプションリストのアイテムがクリックされたときの処理
+const options = document.querySelectorAll('.options-list li');
+options.forEach(option => {
+  option.addEventListener('mousedown', function(event) {
+      // クリックされたオプションの値を入力ボックスに設定
+      document.getElementById('search').value = this.textContent;
 
+      // オプションリストを非表示にする
+      document.querySelector('.options-list').style.display = 'none';
+  });
+});
 
 async function copyFileToBucket() {
   $('#execution').prop("disabled", true);
