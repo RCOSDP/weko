@@ -82,7 +82,8 @@ def get_author_prefix_obj_by_id(id):
         return db.session.query(AuthorsPrefixSettings).filter(
             AuthorsPrefixSettings.id == id).one_or_none()
     except Exception as ex:
-        current_app.logger.debug(ex)
+        current_app.logger.error(ex)
+        traceback.print_exc()
     return None
 
 def get_author_affiliation_obj(scheme):
@@ -91,7 +92,8 @@ def get_author_affiliation_obj(scheme):
         return db.session.query(AuthorsAffiliationSettings).filter(
             AuthorsAffiliationSettings.scheme == scheme).one_or_none()
     except Exception as ex:
-        current_app.logger.debug(ex)
+        current_app.logger.error(ex)
+        traceback.print_exc()
     return None
 
 def get_author_affiliation_obj_by_id(id):
@@ -100,7 +102,8 @@ def get_author_affiliation_obj_by_id(id):
         return db.session.query(AuthorsAffiliationSettings).filter(
             AuthorsAffiliationSettings.id == id).one_or_none()
     except Exception as ex:
-        current_app.logger.debug(ex)
+        current_app.logger.error(ex)
+        traceback.print_exc()
     return None
 
 
@@ -317,8 +320,9 @@ def export_authors():
     retrys = current_app.config["WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY"]
     interval = current_app.config["WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL"]
     size =  current_app.config.get("WEKO_AUTHORS_EXPORT_BATCH_SIZE", 1000)
-    stop_point = current_cache.get(\
-        current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"])
+    stop_point = current_cache.get(
+        current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]
+    )
     mappings = []
     schemes = {}
     records_count = 0
@@ -350,10 +354,13 @@ def export_authors():
                     current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"])
                 break
             except SQLAlchemyError as ex:
+                traceback.print_exc(file=stdout)
                 handle_exception(ex, attempt, retrys, interval)
             except RedisError as ex:
+                traceback.print_exc(file=stdout)
                 handle_exception(ex, attempt, retrys, interval)
             except TimeoutError as ex:
+                traceback.print_exc(file=stdout)
                 handle_exception(ex, attempt, retrys, interval)
 
         # stop_pointがあればstart_pointに代入
@@ -379,10 +386,13 @@ def export_authors():
                         WekoAuthors.prepare_export_data(mappings, affiliation_mappings, authors, schemes, aff_schemes, i, size)
                     break
                 except SQLAlchemyError as ex:
+                    traceback.print_exc(file=stdout)
                     handle_exception(ex, attempt, retrys, interval, stop_point=i)
                 except RedisError as ex:
+                    traceback.print_exc(file=stdout)
                     handle_exception(ex, attempt, retrys, interval, stop_point=i)
                 except TimeoutError as ex:
+                    traceback.print_exc(file=stdout)
                     handle_exception(ex, attempt, retrys, interval, stop_point=i)
             # 一時ファイルに書き込み
             write_to_tempfile(i, row_header, row_label_en, row_label_jp, row_data)
@@ -474,10 +484,13 @@ def export_prefix(target):
             )
             break
         except SQLAlchemyError as ex:
+            traceback.print_exc(file=stdout)
             handle_exception(ex, attempt, retrys, interval)
         except RedisError as ex:
+            traceback.print_exc(file=stdout)
             handle_exception(ex, attempt, retrys, interval)
         except TimeoutError as ex:
+            traceback.print_exc(file=stdout)
             handle_exception(ex, attempt, retrys, interval)
     return file_uri
 
@@ -524,6 +537,7 @@ def write_to_tempfile(start, row_header, row_label_en, row_label_jp, row_data):
             writer.writerows(row_data)
     except Exception as ex:
         current_app.logger.error(ex)
+        traceback.print_exc(file=stdout)
 
 def check_import_data(file_name: str):
     """Validation importing tsv/csv file.
@@ -534,17 +548,18 @@ def check_import_data(file_name: str):
         return       -- check information.
     """
     result = {}
-    temp_file_path = current_cache.get(\
-        current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"])
+    temp_file_path = current_cache.get(
+        current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"]
+    )
     try:
         affiliation_mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"])
         mapping = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING"])
         mapping.append(affiliation_mappings)
-        flat_mapping_all, flat_mapping_ids = flatten_authors_mapping(
-            mapping)
+        flat_mapping_all, flat_mapping_ids = flatten_authors_mapping(mapping)
         file_format = file_name.split('.')[-1].lower()
         max_part_num = unpackage_and_check_import_file(
-            file_format, file_name, temp_file_path, flat_mapping_ids)
+            file_format, file_name, temp_file_path, flat_mapping_ids
+        )
         list_import_id=[]
         temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
         base_file_name = os.path.splitext(os.path.basename(temp_file_path))[0]
@@ -576,6 +591,7 @@ def check_import_data(file_name: str):
                 current_app.logger.info(f"Deleted: {part_file_path}")
             except Exception as e:
                 current_app.logger.error(f"Error deleting {part_file_path}: {e}")
+                traceback.print_exc()
         part1_check_file_name = f"{check_file_name}-part1"
         check_file_part1_path = os.path.join(temp_folder_path, part1_check_file_name)
         with open(check_file_part1_path, "r", encoding="utf-8-sig") as check_part1:
@@ -590,20 +606,19 @@ def check_import_data(file_name: str):
 
     except Exception as ex:
         error = _('Internal server error')
+        traceback.print_exc()
         if isinstance(ex, UnicodeDecodeError):
             error = ex.reason
         elif ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
                 and ex.args[0].get('error_msg'):
             error = ex.args[0].get('error_msg')
         result['error'] = error
-        current_app.logger.error('-' * 60)
-        traceback.print_exc(file=sys.stdout)
-        current_app.logger.error('-' * 60)
     try:
         os.remove(temp_file_path)
         current_app.logger.debug(f"Deleted: {temp_file_path}")
     except Exception as e:
         current_app.logger.error(f"Error deleting {temp_file_path}: {e}")
+        traceback.print_exc()
 
     return result
 
@@ -629,15 +644,13 @@ def check_import_data_for_prefix(target, file_name: str, file_content: str):
         result['list_import_data'] = validate_import_data_for_prefix(file_data, target)
     except Exception as ex:
         error = _('Internal server error')
+        traceback.print_exc()
         if isinstance(ex, UnicodeDecodeError):
             error = ex.reason
         elif ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
                 and ex.args[0].get('error_msg'):
             error = ex.args[0].get('error_msg')
         result['error'] = error
-        current_app.logger.error('-' * 60)
-        traceback.print_exc(file=sys.stdout)
-        current_app.logger.error('-' * 60)
 
     return result
 
@@ -759,6 +772,7 @@ def unpackage_and_check_import_file(file_format, file_name, temp_file_path, mapp
                 write_tmp_part_file(math.ceil((count-3)/json_size), file_data, temp_file_path)
             # ファイルの行数が3行未満の場合エラー
             elif not file_data and count <= 3:
+                current_app.logger.error("There is no data to import.")
                 raise Exception({
                     'error_msg': _('There is no data to import.')
                 })
@@ -766,9 +780,9 @@ def unpackage_and_check_import_file(file_format, file_name, temp_file_path, mapp
             ex.reason = _('{} could not be read. Make sure the file'
                           + ' format is {} and that the file is'
                           + ' UTF-8 encoded.').format(file_name, file_format.upper())
-            raise ex
+            raise
         except Exception as ex:
-            raise ex
+            raise
 
     return math.ceil((count-3)/json_size)
 
@@ -955,19 +969,20 @@ def unpackage_and_check_import_file_for_prefix(file_format, file_name, temp_file
                     try:
                         for num, data in enumerate(data_row, start=0):
                             tmp_data[header[num]] = data
-                    except Exception:
-                        ex = Exception({
+                    except Exception as ex:
+                        current_app.logger.error(ex)
+                        traceback.print_exc()
+                        raise Exception({
                             'error_msg': _('Cannot read {} file correctly.').format(file_format.upper())
-                        })
-                        raise ex
+                        }) from export_authors
                     file_data.append(tmp_data)
         except UnicodeDecodeError as ex:
             ex.reason = _('{} could not be read. Make sure the file'
                           + ' format is {} and that the file is'
                           + ' UTF-8 encoded.').format(file_name, file_format.upper())
-            raise ex
+            raise
         except Exception as ex:
-            raise ex
+            raise
     return file_data
 
 
@@ -1101,7 +1116,7 @@ def band_check_file_for_user(max_page):
 
                     writer.writerow([index, current_weko_id, new_weko_id, full_name_info, email, check_result])
     except Exception as ex:
-        raise ex
+        raise
 
     update_cache_data(
         current_app.config["WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_USER_FILE_PATH_KEY"],
@@ -1311,6 +1326,7 @@ def import_author_to_system(author, status, weko_id, force_change_mode):
 
             if status == 'new':
                 if check_weko_id:
+                    current_app.logger.error("WekoID is duplicated")
                     raise Exception({'error_id': "WekoID is duplicated"})
                 author["authorIdInfo"].insert(
                     0,
@@ -1327,6 +1343,7 @@ def import_author_to_system(author, status, weko_id, force_change_mode):
                     raise Exception({'error_id': 'delete_author_link'})
 
                 if check_weko_id:
+                    current_app.logger.error("WekoID is duplicated")
                     raise Exception({'error_id': "WekoID is duplicated"})
                 author["authorIdInfo"].insert(
                     0,
@@ -1343,7 +1360,7 @@ def import_author_to_system(author, status, weko_id, force_change_mode):
             current_app.logger.error(
                 'Author id: %s import error.' % author['pk_id'])
             traceback.print_exc(file=sys.stdout)
-            raise ex
+            raise
 
 def create_result_file_for_user(json):
     """
@@ -1388,6 +1405,7 @@ def create_result_file_for_user(json):
                     count += 1
     except Exception as e:
         current_app.logger.error(e)
+        traceback.print_exc()
     update_cache_data(
         current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_FILE_PATH_KEY"],
         result_file_path,
@@ -1468,15 +1486,17 @@ def import_id_prefix_to_system(id_prefix):
                     db.session.commit()
                     break
                 except SQLAlchemyError as ex:
+                    traceback.print_exc(file=stdout)
                     handle_exception(ex, attempt, retrys, interval)
                 except TimeoutError as ex:
+                    traceback.print_exc(file=stdout)
                     handle_exception(ex, attempt, retrys, interval)
         except Exception as ex:
             db.session.rollback()
             current_app.logger.error(
                 f'Id prefix: {id_prefix["scheme"]} import error.')
             traceback.print_exc(file=sys.stdout)
-            raise ex
+            raise
 
 def import_affiliation_id_to_system(affiliation_id):
     """
@@ -1520,7 +1540,7 @@ def import_affiliation_id_to_system(affiliation_id):
             current_app.logger.error(
                 f'Affiliation Id: {affiliation_id["scheme"]} import error.')
             traceback.print_exc(file=sys.stdout)
-            raise ex
+            raise
 
 def update_data_for_weko_link(data, weko_link):
     """
