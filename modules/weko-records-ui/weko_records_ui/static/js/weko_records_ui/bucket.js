@@ -10,7 +10,14 @@ async function openBucketCopyModal() {
 
   url ="/records/get_bucket_list";
   await fetch(url ,{method:'GET' ,headers:{'Content-Type':'application/json'} ,credentials:"include"})
-  .then(res => res.json())
+  .then(res => {
+    if (!res.ok) {
+      return res.json().then(errorData => {
+          throw new Error(errorData.error);
+      });
+    }
+    return res.json();
+  })
   .then((result) => {
     $('.options-list').empty();
     result.forEach(function(bucket_name) {
@@ -19,8 +26,7 @@ async function openBucketCopyModal() {
     });
   })
   .catch(error => {
-    console.log(error);
-    alert('failed getting Bucket.');
+    alert(error);
   });
   $('#modal-message').text('');
   $('#modal-guide').show();
