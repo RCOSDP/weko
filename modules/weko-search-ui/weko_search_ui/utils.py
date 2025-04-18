@@ -89,7 +89,6 @@ from weko_index_tree.utils import (
 )
 from weko_index_tree.models import Index
 from weko_indextree_journal.api import Journals
-from weko_items_autofill.utils import get_doi_with_original
 from weko_records.api import FeedbackMailList, JsonldMapping, RequestMailList, ItemTypes, Mapping
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_full_mapping, get_mapping
@@ -5119,6 +5118,7 @@ def handle_metadata_by_doi(item, doi, meta_data_api):
     :return
         doi_response (dict): Metadata complemented by DOI.
     """
+    from weko_items_autofill.utils import get_doi_with_original
     metadata = item.get("metadata")
     item_type_id = item.get("item_type_id")
     doi_response = get_doi_with_original(doi, item_type_id, metadata, meta_data_api=meta_data_api)

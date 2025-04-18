@@ -42,7 +42,6 @@ from weko_records.api import (
     ItemTypes,
     Mapping,
 )
-from weko_items_autofill.utils import sort_by_item_type_order
 from .api import CiNiiURL, JALCURL, DATACITEURL, JamasURL
 from lxml import etree
 
@@ -53,9 +52,9 @@ def get_workspace_filterCon():
 
     Returns:
         tuple:
-            - default_con (dict): The user's default filtering conditions. 
+            - default_con (dict): The user's default filtering conditions.
                 If the query fails or returns None, `DEFAULT_FILTERS` is returned.
-            - isnotNone (bool): Indicates whether a non-null value was successfully retrieved from the database. 
+            - isnotNone (bool): Indicates whether a non-null value was successfully retrieved from the database.
                 Returns False if the query fails or returns None.
 
     Raises:
@@ -91,7 +90,7 @@ def get_es_itemlist():
     Fetches records data from an external API.
 
     Returns:
-        dict or None: The records data in JSON format if the API requests are successful; 
+        dict or None: The records data in JSON format if the API requests are successful;
                       returns `None` if an error occurs.
 
     Raises:
@@ -165,7 +164,7 @@ def get_accessCnt_downloadCnt(recid: str):
             If an error occurs, returns (0, 0).
 
     Raises:
-        Exception: If any error occurs during the process (e.g., failure in retrieving UUID 
+        Exception: If any error occurs during the process (e.g., failure in retrieving UUID
                    or querying statistics), the function returns (0, 0).
     """
     try:
@@ -244,7 +243,7 @@ def insert_workspace_status(user_id, recid, is_favorited=False, is_read=False):
         WorkspaceStatusManagement: The newly created workspace status entry.
 
     Raises:
-        Exception: If an error occurs during the database commit, the transaction is rolled back 
+        Exception: If an error occurs during the database commit, the transaction is rolled back
                   and the exception is raised.
     """
     new_status = WorkspaceStatusManagement(
@@ -276,12 +275,12 @@ def update_workspace_status(user_id, recid, is_favorited=False, is_read=False):
         is_read (bool, optional): The updated read status. Defaults to False.
 
     Returns:
-        WorkspaceStatusManagement or None: The updated workspace status record if the status 
-                                            was found and updated, or `None` if the status 
+        WorkspaceStatusManagement or None: The updated workspace status record if the status
+                                            was found and updated, or `None` if the status
                                             for the given `user_id` and `recid` was not found.
 
     Raises:
-        Exception: If an error occurs during the commit, the transaction is rolled back and 
+        Exception: If an error occurs during the commit, the transaction is rolled back and
                   the exception is raised.
     """
     status = WorkspaceStatusManagement.query.filter_by(
@@ -342,12 +341,12 @@ def extract_metadata_info(item_metadata):
 def changeLang(language: str, defaultconditions: dict):
     """
         Translates the labels in the given dictionary to Japanese if the selected language is "ja".
-        
+
         Parameters:
         language (str): The target language code. If it is "ja", the labels will be translated to Japanese.
         defaultconditions (dict): A dictionary containing resource attributes, where each key represents a category
                                 and each value is a dictionary that may contain a "label" field.
-        
+
         Returns:
         dict: The updated dictionary with translated labels if the language is "ja"; otherwise, the original dictionary.
         """
@@ -444,6 +443,7 @@ def get_jamas_record_data(doi, item_type_id):
 
     api_data = get_jamas_data_by_key(api_response, 'all')
     items = ItemTypes.get_by_id(item_type_id)
+    from weko_items_autofill.utils import sort_by_item_type_order
     if items is None:
         return result
     elif items.form is not None:
@@ -732,7 +732,7 @@ def get_cinii_data_by_key(api, keyword):
             result[key] = get_cinii_data_by_key(api, key).get(key)
     return result
 
-    
+
 def get_cinii_product_identifier(data, type1, type2):
     """Identifier Mapping.
 
@@ -753,7 +753,7 @@ def get_cinii_product_identifier(data, type1, type2):
             new_data['@type'] = "NAID"
             result.append(new_data)
     return result
-    
+
 
 def pack_data_with_multiple_type_cinii(data):
     """Map CiNii multi data with type.
@@ -1152,7 +1152,7 @@ def get_cinii_autofill_item(item_id):
     """
     jpcoar_item = get_item_id(item_id)
     cinii_req_item = dict()
-    
+
     for key in current_app.config.get("WEKO_ITEMS_AUTOFILL_CINII_REQUIRED_ITEM"):
         if jpcoar_item.get(key) is not None:
             cinii_req_item[key] = jpcoar_item.get(key)
@@ -1648,7 +1648,7 @@ def get_jalc_numpage(startingPage, endingPage):
 
     :param: data: jalc data
     :return: number of page is packed
-    """  
+    """
     if startingPage and endingPage:
         try:
             end = int(endingPage)
@@ -1736,7 +1736,7 @@ def get_datacite_record_data(doi, item_type_id):
     elif items.form is not None:
         autofill_key_tree = get_autofill_key_tree(
             items.form, get_cinii_autofill_item(item_type_id))
-        result = build_record_model(autofill_key_tree, api_data) 
+        result = build_record_model(autofill_key_tree, api_data)
     return result
 
 
@@ -1762,7 +1762,7 @@ def get_datacite_data_by_key(api, keyword):
     elif keyword == 'description' and data['data']['attributes'].get('descriptions'):
         result[keyword] = get_datacite_description_data(
             data['data']['attributes'].get('descriptions')
-        )    
+        )
     elif keyword == 'subject' and data['data']['attributes'].get('subjects'):
         result[keyword] = get_datacite_subject_data(data['data']['attributes'].get('subjects'))
     elif keyword == 'sourceTitle' and data['data']['attributes'].get('publisher'):
@@ -1799,9 +1799,9 @@ def get_datacite_publisher_data(data):
     default_language = 'en'
     new_data = dict()
     new_data["@type"] = data
-    
+
     new_data['@language'] = default_language
-    
+
     result.append(new_data)
     return result
 
@@ -1824,7 +1824,7 @@ def get_datacite_title_data(data):
         new_data = dict()
         new_data["@value"] = title.get('title')
         new_data['@language'] = title.get('lang', default_language)
-        
+
         result.append(new_data)
     return result
 
@@ -1849,7 +1849,7 @@ def get_datacite_creator_data(data):
             new_data = dict()
             new_data['@value'] = item.get('name')
             new_data['@language'] = default_language
-            
+
             result_creator.append(new_data)
             result.append(result_creator)
     return result
@@ -1875,7 +1875,7 @@ def get_datacite_contributor_data(data):
             new_data = dict()
             new_data['@value'] = item.get('name')
             new_data['@language'] = default_language
-            
+
             result_creator.append(new_data)
             result.append(result_creator)
     return result
@@ -1903,7 +1903,7 @@ def get_datacite_description_data(data):
             new_data = dict()
             new_data['@value'] = item.get('description')
             new_data['@language'] = default_language
-            
+
             result_creator.append(new_data)
             result.append(result_creator)
     return result
@@ -1926,12 +1926,12 @@ def get_datacite_subject_data(data):
     result = list()
     default_language = 'ja'
     for sub in data:
-        if 'subject' in sub: 
+        if 'subject' in sub:
             result_creator = list()
             new_data = dict()
-            new_data['@value'] = sub.get('subject') 
+            new_data['@value'] = sub.get('subject')
             new_data['@subjectScheme'] = sub.get('subjectScheme')
-            
+
             result_creator.append(new_data)
             result.append(result_creator)
     return result
@@ -2000,4 +2000,3 @@ def get_datacite_product_identifier(data):
         new_data['@type'] = None
         result.append(new_data)
     return result
-    
