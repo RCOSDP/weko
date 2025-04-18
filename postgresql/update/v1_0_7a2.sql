@@ -1,10 +1,7 @@
 CREATE OR REPLACE FUNCTION update_v107a2()
 RETURNS void AS $$
 BEGIN
-    IF (SELECT COUNT(id) FROM authors_prefix_settings WHERE scheme='e-Rad')>0 THEN
-        UPDATE authors_prefix_settings SET scheme='e-Rad_Researcher',url='' WHERE scheme='e-Rad';
-    END IF;
-    IF (SELECT COUNT(id) FROM authors_prefix_settings WHERE scheme='e-Rad' or scheme='e-Rad_Researcher')=0 THEN
+    IF (SELECT COUNT(id) FROM authors_prefix_settings WHERE scheme='e-Rad_Researcher')=0 THEN
         INSERT INTO authors_prefix_settings ( name,scheme,url,created,updated ) VALUES ('e-Rad_Researcher','e-Rad_Researcher','','2024-12-24 00:00:00','2024-12-24 00:00:00');
     END IF;
     IF (SELECT COUNT(id) FROM authors_prefix_settings WHERE scheme='ROR')=0 THEN

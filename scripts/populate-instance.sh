@@ -455,6 +455,8 @@ ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "VIAF" "VIAF" "https://viaf.org/viaf/##"
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "AID" "AID" ""
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "e-Rad_Researcher" "e-Rad_Researcher" ""
 # create-default-authors-prefix-settings-end
 
 # create-default-authors-affiliation-settings-begin
