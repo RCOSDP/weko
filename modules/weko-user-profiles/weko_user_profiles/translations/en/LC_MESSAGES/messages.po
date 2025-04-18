@@ -381,3 +381,12 @@ msgstr ""
 
 msgid "Position (Others)"
 msgstr ""
+
+msgid "Endpoint URL must not begin with https://s3."
+msgstr ""
+
+msgid "Please enter if you use your own S3 Bucket."
+msgstr ""
+
+msgid "Please enter if you specify your own S3 Bucket region."
+msgstr ""
