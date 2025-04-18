@@ -44,7 +44,7 @@
 <input id="workflow_value" type="hidden" value='{{workflow_value}}'/>
 <input id="current_page_type" type="hidden" value='{{ current_page_type }}'/>
 <input id="current_model_json" type="hidden" value='{{ current_model_json | tojson | safe }}'/>
-<input id="exist_Waiting_approval_workflow" type="hidden" value='{{ exist_Waiting_approval_workflow }}'/>
+<input id="can_edit" type="hidden" value='{{ can_edit }}'/>
 <input id="current_name" type="hidden" value='{{ current_name }}'/>
 <input id="current_item_type_id" type="hidden" value='{{ current_item_type_id }}'/>
 <input id="current_mapping" type="hidden" value='{{ current_mapping }}'/>
@@ -121,7 +121,7 @@
           {{_('Save')}}
       </button>
       {%- if current_page_type == "edit" -%}
-      <button type="button" class="btn btn-danger pull-right" style="margin-right: 10px;" onclick="openDeleteModal()">
+      <button type="button" id="delete_button" class="btn btn-danger pull-right" style="margin-right: 10px;" onclick="openDeleteModal()">
         <span class="glyphicon glyphicon-trash"></span>&nbsp
               {{_('Delete')}}
       </button>

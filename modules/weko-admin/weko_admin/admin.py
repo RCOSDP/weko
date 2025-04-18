@@ -42,7 +42,7 @@ from flask_babelex import gettext as _
 from flask_login import current_user
 from flask_mail import Attachment
 from flask_wtf import FlaskForm,Form
-from sqlalchemy.sql import func
+from sqlalchemy.exc import SQLAlchemyError
 from invenio_communities.models import Community
 from invenio_accounts.models import User
 from invenio_db import db
@@ -1432,17 +1432,17 @@ class FacetSearchSettingView(ModelView):
             id=id
         )
 
-class SwordAPISettingsView(BaseView):
 
+class SwordAPISettingsView(BaseView):
+    """SWORD API TSV/CSV and XML Settings admin view."""
     @expose("/", methods=["GET","POST"])
     def index(self):
+        """Each metadata format settings."""
         TSVCSV = "TSV/CSV"
         XML = "XML"
         page_type = TSVCSV
         if request.args.get("tab") == "xml":
             page_type = XML
-
-        template = current_app.config["WEKO_ADMIN_SWORD_API_TEMPLATE"]
 
         if request.method == "GET":
             # GET
@@ -1495,7 +1495,6 @@ class SwordAPISettingsView(BaseView):
                 current_settings = new_settings
                 current_settings_json = json.dumps(current_settings)
 
-
             form = FlaskForm(request.form)
             workflow = WorkFlow()
             workflow_list = workflow.get_workflow_list()
@@ -1527,7 +1526,8 @@ class SwordAPISettingsView(BaseView):
                 if current_settings[TSVCSV]["duplicate_check"] == True:
                     duplicate_check_value = "checked"
 
-            return self.render(template,
+            return self.render(
+                current_app.config["WEKO_ADMIN_SWORD_API_TEMPLATE"],
                 current_settings = current_settings,
                 current_settings_json = current_settings_json,
                 deleted_workflow_name_dict = json.dumps(deleted_workflow_name_dict),
@@ -1562,8 +1562,9 @@ class SwordAPISettingsView(BaseView):
             )
             return jsonify(success=True),200
 
+
 class SwordAPIJsonldSettingsView(ModelView):
-    """Pidstore Identifier admin view."""
+    """SWORD API JSON-LD Settings admin view."""
     form_base_class = Form
 
     can_create = True
@@ -1588,20 +1589,24 @@ class SwordAPIJsonldSettingsView(ModelView):
     def _format_application_name(view, context, model, name):
         result = Client.get_name_by_client_id(model.client_id)
         return result.name
+
     def _format_active(view, context, model, name):
         if model.active:
             return _("Active Message")
         else:
             return _("Inactive Message")
+
     def _format_creator(view, context, model, name):
         client = Client.get_user_id_by_client_id(model.client_id)
         result = User.get_email_by_id(client.user_id)
         return result.email
+
     def _format_registration_type(view, context, model, name):
         if model.registration_type_id == 1:
             return "Direct"
         else:
             return "Workflow"
+
     def _format_input_support(view, context, model, name):
         if len(model.meta_data_api) > 0:
             return "ON"
@@ -1635,18 +1640,25 @@ class SwordAPIJsonldSettingsView(ModelView):
                 .filter(Client.user_id == current_user.get_id())
             )
 
+
     @expose("/add/", methods=["GET", "POST"])
     def create_view(self):
-
+        """Create new SWORD API JSON-LD settings."""
         if request.method == "GET":
             # GET
             form = FlaskForm(request.form)
 
-            # GET client
-            current_user_clients = Client.get_client_id_by_user_id(current_user.get_id())
+            # GET current user oauth clients
+            current_user_clients = [
+                client 
+                for client in Client.get_client_id_by_user_id(current_user.get_id())
+                # exclude personal clients
+                if not client.is_internal
+            ]
             list_sword_clients = [
                 client.client_id for client in SwordClient.get_client_id_all()
             ]
+            # exclude already registered clients
             client_list = [
                 client for client in current_user_clients
                 if client.client_id not in list_sword_clients
@@ -1694,12 +1706,12 @@ class SwordAPIJsonldSettingsView(ModelView):
                 metadata_api=metadata_api,
                 deleted_workflow_name_dict=json.dumps(deleted_workflow_name_dict),
                 workflows=workflows,
-                sword_item_type_mappings=jsonld_mappings,
+                jsonld_mappings=jsonld_mappings,
                 return_url = request.args.get("url"),
                 current_page_type="add",
                 current_client_name=None,
                 current_model_json=None,
-                exist_waiting_approval_activity=False,
+                can_edit=True,
                 item_type_names=item_type_names,
             )
         else:
@@ -1715,7 +1727,7 @@ class SwordAPIJsonldSettingsView(ModelView):
                 mapping_id = request.json.get("mapping_id")
                 active = request.json.get("active") == "True"
                 duplicate_check = request.json.get("duplicate_check") == "True"
-                meta_data_api = request.json.get("Meta_data_API_selected")
+                meta_data_api = request.json.get("metadata_api_selected")
 
                 obj = JsonldMapping.get_mapping_by_id(mapping_id)
                 itemtype_id = obj.item_type_id
@@ -1744,48 +1756,38 @@ class SwordAPIJsonldSettingsView(ModelView):
                 )
                 return jsonify(results=True), 200
 
-            except Exception as e:
+            except SQLAlchemyError as ex:
+                db.session.rollback()
                 msg = "Failed to create application settings."
                 current_app.logger.error(msg)
                 traceback.print_exc()
                 return jsonify({"error": msg}), 400
 
+
     @expose("/edit/<string:id>/", methods=["GET", "POST"])
     def edit_view(self, id):
+        """Edit SWORD API JSON-LD settings."""
         model = self.get_one(id)
         if model is None:
+            current_app.logger.error(
+                f"SWORD API JSON-LD settings not found: {id}"
+            )
             abort(404)
 
         # GET activity Waiting approval workflow
-        exist_waiting_approval_activity = False
-        if model.workflow_id is not None:
-            count = (
-                WorkActivity()
-                .count_waiting_approval_by_workflow_id(model.workflow_id)
-            )
-            exist_waiting_approval_activity =  count > 0
-        if exist_waiting_approval_activity:
+        can_edit = self._is_editable(model.workflow_id)
+        if not can_edit:
             current_app.logger.info(
-                "Cannot edit workflow because there are activities waiting "
-                f"for approval using workflow: {model.workflow_id}"
+                "Cannot edit SWORD API JSON-LD settings because there are "
+                "activities awaiting approval that use workflow: {}."
+                .format(model.workflow_id)
             )
 
         if request.method == "GET":
             # GET
             form = FlaskForm(request.form)
 
-            # GET client
-            all_clients =  Client.get_client_id_all()
-            list_sword_clients = [
-                client.client_id for client in SwordClient.get_client_id_all()
-            ]
-            client_list = [
-                client for client in all_clients
-                if client.client_id not in list_sword_clients
-            ]
-
             # GET metadata api
-            metadata_api = []
             metadata_api = WEKO_ITEMS_AUTOFILL_API_LIST.copy()
             metadata_api.append("Original")
 
@@ -1811,12 +1813,6 @@ class SwordAPIJsonldSettingsView(ModelView):
                 } for mapping in JsonldMapping.get_all()
             ]
 
-            current_client_name = next((
-                client.name for client in all_clients
-                    if client.client_id == model.client_id
-                ),
-                None
-            )
             current_model_json = {
                 "id": model.id,
                 "client_id": model.client_id,
@@ -1837,21 +1833,20 @@ class SwordAPIJsonldSettingsView(ModelView):
             return self.render(
                 self.edit_template,
                 form=form,
-                client_list=client_list,
                 metadata_api=metadata_api,
                 deleted_workflow_name_dict=json.dumps(deleted_workflow_name_dict),
                 workflows=workflows,
-                sword_item_type_mappings=jsonld_mappings,
+                jsonld_mappings=jsonld_mappings,
                 return_url = request.args.get("url"),
                 current_page_type="edit",
-                current_client_name=current_client_name,
+                current_client_name=model.oauth_client.name,
                 current_model_json=current_model_json,
-                exist_waiting_approval_activity=exist_waiting_approval_activity,
+                can_edit=can_edit,
                 item_type_names=item_type_names,
             )
         else:
             # POST
-            if exist_waiting_approval_activity:
+            if not can_edit:
                 return jsonify("Unapproved items exit"), 400
 
             try:
@@ -1864,7 +1859,7 @@ class SwordAPIJsonldSettingsView(ModelView):
                 mapping_id = request.json.get("mapping_id")
                 active = request.json.get("active") == "True"
                 duplicate_check = request.json.get("duplicate_check") == "True"
-                meta_data_api = request.json.get("Meta_data_API_selected")
+                meta_data_api = request.json.get("metadata_api_selected")
 
                 obj = JsonldMapping.get_mapping_by_id(mapping_id)
                 itemtype_id = obj.item_type_id
@@ -1893,11 +1888,12 @@ class SwordAPIJsonldSettingsView(ModelView):
                 )
                 return jsonify(results=True), 200
 
-            except Exception as e:
+            except SQLAlchemyError as ex:
                 msg = f"Failed to update application settings: {model.oauth_client.name}"
                 current_app.logger.error(msg)
                 traceback.print_exc()
                 return jsonify({"error": msg}), 400
+
 
     @expose("/validate/<string:id>/", methods=["GET"])
     def valedate_mapping(self, id):
@@ -1910,6 +1906,54 @@ class SwordAPIJsonldSettingsView(ModelView):
             current_app.logger.error(msg)
             traceback.print_exc()
             return jsonify({"error": msg}), 400
+
+
+    @expose("/delete/", methods=["POST"])
+    def delete_data(self):
+        model = self.get_one(request.form.get("id"))
+        if model is None:
+            current_app.logger.error(
+                f"SWORD API JSON-LD settings not found: {id}"
+            )
+            abort(404)
+            
+        name = model.oauth_client.name
+        return_url = get_redirect_target() or self.get_url(".index_view")
+
+        if self._is_editable(model.workflow_id):
+            try:
+                SwordClient.remove(model.client_id)
+                current_app.logger.info(
+                    f"SWORD API JSON-LD settings deleted: {name}"
+                )
+                flash(_("SWORD API JSON-LD settings deleted"), "success")
+            except SQLAlchemyError as e:
+                db.session.rollback()
+                msg = f"Failed to delete SWORD API JSON-LD settings: {name}"
+                current_app.logger.error(msg)
+                traceback.print_exc()
+                flash(_("Failed to delete SWORD API JSON-LD settings"), "error")
+        else:
+            current_app.logger.info(
+                "Cannot delete SWORD API JSON-LD settings because there are "
+                "activities awaiting approval that use workflow: {}."
+                .format(model.workflow_id)
+            )
+            flash(_("Unapproved Items Exit"), "error")
+
+        return redirect(return_url)
+
+
+    def _is_editable(self, workflow_id):
+        """Check if the mapping is editable."""
+        can_edit = True
+        if workflow_id is not None:
+            count = (
+                WorkActivity()
+                .count_waiting_approval_by_workflow_id(workflow_id)
+            )
+            can_edit = not bool(count)
+        return can_edit
 
 
 class JsonldMappingView(ModelView):
@@ -1974,7 +2018,7 @@ class JsonldMappingView(ModelView):
                 current_mapping=None,
                 current_item_type_id=None,
                 current_model_json=None,
-                exist_Waiting_approval_workflow=False,
+                can_edit=False,
                 id=None,
             )
         else:
@@ -1988,7 +2032,7 @@ class JsonldMappingView(ModelView):
                 current_app.logger.info(f"new jsonld mapping created: {name}")
                 return jsonify(results=True), 200
 
-            except Exception as ex:
+            except SQLAlchemyError as ex:
                 msg = f"Failed to create jsonld mapping: {name}"
                 current_app.logger.error(msg)
                 traceback.print_exc()
@@ -1998,7 +2042,19 @@ class JsonldMappingView(ModelView):
     def edit_view(self, id):
         model = self.get_one(id)
         if model is None:
+            current_app.logger.error(
+                f"JSON-LD mapping not found. ID: {id}"
+            )
             abort(404)
+
+        # GET activity Waiting approval workflow
+        can_edit = self._is_editable(id)
+        if can_edit:
+            current_app.logger.info(
+                "Cannot edit JSON-LD mapping because there are "
+                "some activities awaiting approval that use mapping {}."
+                .format(model.name)
+            )
 
         if request.method == "GET":
             # GET
@@ -2018,20 +2074,6 @@ class JsonldMappingView(ModelView):
                 "item_type_id": model.item_type_id,
             }
 
-            # GET activity Waiting approval workflow
-            exist_waiting_approval_activity = False
-            workflows = WorkFlow().get_workflow_by_itemtype_id(model.item_type_id)
-            workflow_ids = [workflow.id for workflow in workflows]
-            for workflow_id in workflow_ids:
-                count = WorkActivity().count_waiting_approval_by_workflow_id(workflow_id)
-                if count > 0:
-                    exist_waiting_approval_activity = True
-            if exist_waiting_approval_activity:
-                current_app.logger.info(
-                    "There are some activities awaiting approval that use mapping {}."
-                    .format(model.name)
-                )
-
             return self.render(
                 self.edit_template,
                 form=form,
@@ -2042,38 +2084,57 @@ class JsonldMappingView(ModelView):
                 current_mapping=model.mapping,
                 current_item_type_id=model.item_type_id,
                 current_model_json=current_model_json,
-                exist_Waiting_approval_workflow=exist_waiting_approval_activity,
+                can_edit=can_edit,
                 id=id,
             )
         else:
             # POST
+            if self._is_editable(id):
+                return jsonify("Unapproved items exit"), 400
+
+            name = request.json.get("name")
+            mapping = request.json.get("mapping")
+            item_type_id = request.json.get("item_type_id")
             try:
-                name = request.json.get("name")
-                mapping = request.json.get("mapping")
-                item_type_id = request.json.get("item_type_id")
                 JsonldMapping.update(id, name, mapping, item_type_id)
                 current_app.logger.info(f"jsonld mapping updated: {name}")
                 return jsonify(results=True),200
 
-            except Exception as e:
+            except SQLAlchemyError as ex:
                 msg = f"Failed to update jsonld mapping: {model.name}"
                 current_app.logger.error(msg)
                 traceback.print_exc()
                 return jsonify({"error": msg}), 400
 
-    @expose("/delete/<string:id>/", methods=["POST"])
-    def delte_data(self, id):
-            try:
-                obj = JsonldMapping.delete(id)
-                current_app.logger.info(f"jsonld mapping deleted: {obj.name}")
-                return jsonify(results=True), 200
+    @expose("/delete/<string:id>/", methods=["DELETE"])
+    def delte(self, id):
+        """Delete JSON-LD mapping."""
+        model = self.get_one(id)
+        if model is None:
+            current_app.logger.error(
+                f"JSON-LD mapping not found. ID: {id}"
+            )
+            abort(404)
+        if not self._is_editable(id):
+            current_app.logger.info(
+                "Cannot delete JSON-LD mapping because there are "
+                "some activities awaiting approval that use mapping {}."
+                .format(model.name)
+            )
+            return jsonify("Unapproved items exit"), 400
 
-            except Exception as e:
-                db.session.rollback()
-                msg = f"Failed to delete jsonld mapping: {id}"
-                current_app.logger.error(msg)
-                traceback.print_exc()
-                return jsonify({"error": msg}), 400
+        try:
+            obj = JsonldMapping.delete(id)
+            current_app.logger.info(f"jsonld mapping deleted: {obj.name}")
+            return jsonify(results=True), 200
+
+        except SQLAlchemyError as ex:
+            db.session.rollback()
+            msg = f"Failed to delete jsonld mapping: {model.name}"
+            current_app.logger.error(msg)
+            traceback.print_exc()
+            return jsonify({"error": msg}), 400
+
 
     @expose("/validate", methods=["POST"])
     def valedate_mapping(self):
@@ -2086,6 +2147,30 @@ class JsonldMappingView(ModelView):
             mapping = JsonldMapping.get_mapping_by_id(mapping_id).mapping
 
         return jsonify(JsonLdMapper(itemtype_id, mapping).validate())
+
+    def _is_editable(self, mapping_id):
+        """Check if the mapping is editable.
+
+        This method checks if there are any activities awaiting approval
+        that use the given mapping ID.
+
+        Args:
+            mapping_id (str): Mapping ID.
+
+        Returns:
+            bool: True if the mapping is editable, False otherwise.
+        """
+        list_sword_client = SwordClient.get_clients_by_mapping_id(mapping_id)
+        list_workflow_id = [
+            client.workflow_id for client in list_sword_client
+            if client.workflow_id is not None
+        ]
+        for workflow_id in list_workflow_id:
+            count = WorkActivity().count_waiting_approval_by_workflow_id(workflow_id)
+            if count > 0:
+                return False
+        return True
+
 
 
 style_adminview = {
