@@ -2214,7 +2214,7 @@ def import_items_to_activity(item, request_info):
             in files_info[0].get("items", {})
     ]
     comment = metadata.get("comment")
-    link_data = getattr(item["metadata"], "link_data", None)
+    link_data = item.get("link_data")
     grant_data = item.get("grant_data")
     metadata_replace = item.get("metadata_replace", False)
 
