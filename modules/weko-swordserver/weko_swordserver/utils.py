@@ -265,6 +265,7 @@ def check_import_items(
                 errorType=ErrorType.ServerError
             )
         mapping_id = sword_client.mapping_id
+        meta_data_api = sword_client.meta_data_api
         # Check workflow and item type
         register_type = sword_client.registration_type
         check_result.update({"register_type": register_type})
@@ -277,7 +278,7 @@ def check_import_items(
 
         check_result.update(
             check_jsonld_import_items(
-                file, packaging, mapping_id, shared_id,
+                file, packaging, mapping_id, meta_data_api, shared_id,
                 is_change_identifier=is_change_identifier
             )
         )
