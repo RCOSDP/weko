@@ -58,7 +58,7 @@ class S3FSFileStorage(PyFSFileStorage):
 
     def _get_fs(self, *args, **kwargs):
         """Get PyFilesystem instance and S3 real path."""
-        if self.location.type == None:
+        if self.location is None or self.location.type == None:
             return super(S3FSFileStorage, self)._get_fs(*args, **kwargs)
 
         url = self.fileurl
