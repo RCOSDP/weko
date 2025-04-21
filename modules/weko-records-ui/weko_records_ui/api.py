@@ -199,7 +199,8 @@ def get_s3_bucket_list():
         bucket_name_list = [bucket['Name'] for bucket in buckets]
         return bucket_name_list
     except Exception as e:
-        raise Exception(_('Getting Bucket List failed.') + str(e))
+        traceback.print_exc()
+        raise Exception(_('Getting Bucket List failed.'))
 
 def copy_bucket_to_s3(pid, filename, org_bucket_id, checked, bucket_name):
     #get progfile
@@ -253,8 +254,8 @@ def copy_bucket_to_s3(pid, filename, org_bucket_id, checked, bucket_name):
                 )
 
         except Exception as e:
-            current_app.logger.exception(_('Creating Bucket failed.') + str(e))
-            raise Exception(_('Creating Bucket failed.') + str(e))
+            traceback.print_exc()
+            raise Exception(_('Creating Bucket failed.'))
 
     # get bucket region
     s3_client = boto3.client(
@@ -270,8 +271,8 @@ def copy_bucket_to_s3(pid, filename, org_bucket_id, checked, bucket_name):
         if bucket_region is None:
             bucket_region = 'us-east-1'
     except Exception as e:
-        current_app.logger.exception(_('Getting region failed.') + str(e))
-        raise Exception(_('Getting region failed.') + str(e))
+        traceback.print_exc()
+        raise Exception(_('Getting region failed.'))
 
     #make uri
     uri = 'https://' + bucket_name + '.s3.' + bucket_region + '.amazonaws.com/'
@@ -286,8 +287,8 @@ def copy_bucket_to_s3(pid, filename, org_bucket_id, checked, bucket_name):
         s3_client.upload_file(file_path, bucket_name, filename)
         return uri + filename
     except Exception as e:
-        current_app.logger.exception(_('Uploading file failed.') + str(e))
-        raise Exception(_('Uploading file failed.') + str(e))
+        traceback.print_exc()
+        raise Exception(_('Uploading file failed.'))
 
 
 def get_file_place_info(org_pid, org_bucket_id, file_name):
@@ -302,7 +303,7 @@ def get_file_place_info(org_pid, org_bucket_id, file_name):
         item = {"id": org_pid}
         handle_check_item_is_locked(item)
     except Exception as e:
-        current_app.logger.exception(_('Cannot update because the corresponding item is being edited.'))
+        traceback.print_exc()
         raise Exception(_('Cannot update because the corresponding item is being edited.'))
 
     from weko_workflow.api import WorkActivity
@@ -419,8 +420,8 @@ def get_file_place_info(org_pid, org_bucket_id, file_name):
                                                 ExpiresIn = 300,
                                                 HttpMethod = 'PUT')
         except Exception as e:
-            current_app.logger.exception(str(e))
-            raise Exception(str(e))
+            traceback.print_exc()
+            raise Exception(_("Unexpected error occurred."))
 
     return file_place, url, new_bucket_id, new_version_id
 
@@ -611,7 +612,7 @@ def replace_file_bucket(org_pid, org_bucket_id, file=None,
 
         except Exception as e:
             # エラー処理
-            current_app.logger.error(f"エラーが発生しました: {e}")
+            traceback.print_exc()
             raise Exception(f"{e}")
 
         finally:
@@ -663,7 +664,7 @@ def replace_file_bucket(org_pid, org_bucket_id, file=None,
                     raise Exception(f"Error in import_items_to_system: {item.get('error_id')}")
         except Exception as e:
             # エラー処理
-            current_app.logger.error(f"エラーが発生しました: {e}")
+            traceback.print_exc()
             raise Exception(f"{e}")
 
         # records_bucketsの更新
@@ -748,7 +749,7 @@ def replace_file_bucket(org_pid, org_bucket_id, file=None,
                     raise Exception(f"Error in import_items_to_system: {item.get('error_id')}")
         except Exception as e:
             # エラー処理
-            current_app.logger.error(f"エラーが発生しました: {e}")
+            traceback.print_exc()
             raise Exception(f"{e}")
 
         # record_metadata update

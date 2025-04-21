@@ -1193,7 +1193,7 @@ def get_bucket_list():
         bucket_list = get_s3_bucket_list()
         return jsonify(bucket_list)
     except Exception as e:
-        current_app.logger.info(str(e))
+        current_app.logger.error(str(e))
         return jsonify({'error': str(e)}), 400
 
 @blueprint.route("/records/copy_bucket", methods=['POST'])
@@ -1208,7 +1208,7 @@ def copy_bucket():
         uri = copy_bucket_to_s3(pid, filename, bucket_id, checked=checked, bucket_name=bucket_name)
         return jsonify(uri)
     except Exception as e:
-        traceback.print_exc()
+        current_app.logger.error(str(e))
         return jsonify({'error': str(e)}), 400
 
 
@@ -1228,7 +1228,7 @@ def get_file_place():
         }
         return jsonify(result)
     except Exception as e:
-        traceback.print_exc()
+        current_app.logger.error(str(e))
         return jsonify({'error': str(e)}), 400
 
 @blueprint.route("/records/replace_file", methods=['POST'])
@@ -1251,7 +1251,7 @@ def replace_file():
                                       new_version_id=new_version_id)
             return jsonify(result)
         except Exception as e:
-            current_app.logger.info(str(e))
+            current_app.logger.error(str(e))
             return jsonify({'error': str(e)}), 400
 
     else:
@@ -1266,6 +1266,6 @@ def replace_file():
                                       file_size=file_size)
             return jsonify(result)
         except Exception as e:
-            current_app.logger.info(str(e))
+            current_app.logger.error(str(e))
             return jsonify({'error': str(e)}), 400
 
