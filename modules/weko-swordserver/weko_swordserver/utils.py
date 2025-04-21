@@ -380,12 +380,12 @@ def delete_items_with_activity(item_id, request_info):
         WekoWorkflowException: If any error occurs during deletion.
     """
     user_id=request_info.get("user_id")
-    community_id=request_info.get("community_id")
+    community=request_info.get("community")
 
     try:
         headless = HeadlessActivity()
         url = headless.init_activity(
-            user_id=user_id, community_id=community_id,
+            user_id=user_id, community=community,
             item_id=item_id, for_delete=True
         )
     except WekoWorkflowException as ex:
