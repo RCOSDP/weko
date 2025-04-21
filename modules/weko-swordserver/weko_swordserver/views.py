@@ -259,7 +259,7 @@ def post_service_document():
 
         client_id = request.oauth.client.client_id
         check_result = check_import_items(
-            file, file_format, False, shared_id, 
+            file, file_format, False, shared_id,
             packaging=packaging, client_id=client_id
         )
 
@@ -542,7 +542,7 @@ def put_object(recid):
         )
         current_app.logger.error(f"Error in check_import_items: {error_msg}")
         raise WekoSwordserverException(
-            f"Error in check_import_items: {error_msg}",
+            f"Item check error: {error_msg}",
             ErrorType.ContentMalformed
         )
 
@@ -582,7 +582,7 @@ def put_object(recid):
         import_result = import_items_to_system(item, request_info=request_info)
         if not import_result.get("success"):
             current_app.logger.error(
-                f"Error in import_items_to_system: {item.get('error_id')}"
+                f"Item import error: {item.get('error_id')}"
             )
             raise WekoSwordserverException(
                 f"Error in import_items_to_system: {import_result.get('error_id')}",

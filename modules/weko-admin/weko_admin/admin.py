@@ -1650,7 +1650,7 @@ class SwordAPIJsonldSettingsView(ModelView):
 
             # GET current user oauth clients
             current_user_clients = [
-                client 
+                client
                 for client in Client.get_client_id_by_user_id(current_user.get_id())
                 # exclude personal clients
                 if not client.is_internal
@@ -1916,7 +1916,7 @@ class SwordAPIJsonldSettingsView(ModelView):
                 f"SWORD API JSON-LD settings not found: {id}"
             )
             abort(404)
-            
+
         name = model.oauth_client.name
         return_url = get_redirect_target() or self.get_url(".index_view")
 
@@ -2049,7 +2049,7 @@ class JsonldMappingView(ModelView):
 
         # GET activity Waiting approval workflow
         can_edit = self._is_editable(id)
-        if can_edit:
+        if not can_edit:
             current_app.logger.info(
                 "Cannot edit JSON-LD mapping because there are "
                 "some activities awaiting approval that use mapping {}."
@@ -2089,7 +2089,7 @@ class JsonldMappingView(ModelView):
             )
         else:
             # POST
-            if self._is_editable(id):
+            if not can_edit:
                 return jsonify("Unapproved items exit"), 400
 
             name = request.json.get("name")

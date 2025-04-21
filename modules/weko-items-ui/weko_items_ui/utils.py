@@ -2753,7 +2753,7 @@ def export_rocrate(post_data):
             mappings = JsonldMapping.get_by_itemtype_id(item_type_id)
             mapper = JsonLdMapper(item_type_id, None)
             for m in mappings:
-                mapper.json_mapping = m
+                mapper.json_mapping = m.mapping
                 if mapper.is_valid:
                     break
             if mapper.json_mapping is None:

@@ -1405,7 +1405,7 @@ class JsonLdMapper(JsonMapper):
         mapped_metadata = {}
         system_info = {
             **system_info,
-            **({"id": str(system_info["id"])} 
+            **({"id": str(system_info["id"])}
                 if isinstance(system_info.get("id"), int) else {}),
             "list_file": [
                 filename[5:] for filename in system_info["list_file"]
@@ -1417,7 +1417,6 @@ class JsonLdMapper(JsonMapper):
             ],
         }
 
-        mapped_metadata.setdefault("publish_status", "private")
         mapped_metadata.setdefault("edit_mode", "Keep")
 
         missing_metadata = {}
