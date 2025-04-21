@@ -152,12 +152,13 @@ class HeadlessActivity(WorkActivity):
 
         Args:
             user_id (int): User ID
-            workflow_id (int, optional): Workflow ID
-            community (str, optional): Community ID
-            activity_id (str, optional): Activity ID
-            item_id (str, optional): Item ID
-            for_delete (bool, optional):
-                Flag to create activity for delete item. Defaults to False.
+            **kwargs:
+                - workflow_id (int): Workflow ID
+                - community (str): Community ID
+                - activity_id (str): Activity ID
+                - item_id (str): Item ID
+                - for_delete (bool): <br>
+                    Flag to create activity for delete item. Defaults to False.
 
         Returns:
             str: Activity detail URL.
@@ -429,7 +430,7 @@ class HeadlessActivity(WorkActivity):
             for file in data["files"]:
                 if isinstance(non_extract, list) and file["filename"] in non_extract:
                     file["non_extract"] = True
-      
+
             if workspace_register and data["files"]:
                 data_without_outer_list = data["files"][0]
                 data["files"] = data_without_outer_list
@@ -549,7 +550,7 @@ class HeadlessActivity(WorkActivity):
         """
         locked_value = self._activity_lock()
 
-        index = index or self.workflow.index_tree_id
+        index = self.workflow.index_tree_id or index
 
         if not isinstance(index, list):
             index = [index]
