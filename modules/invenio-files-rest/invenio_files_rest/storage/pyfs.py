@@ -203,6 +203,8 @@ def pyfs_storage_factory(fileinstance=None, default_location=None,
     # Either the FileInstance needs to be specified or all filestorage
     # class parameters need to be specified
     assert fileinstance or (fileurl and size)
+    location = None
+    locationList = fileinstance.get_location_all()
 
     if fileinstance:
         # FIXME: Code here should be refactored since it assumes a lot on the
@@ -226,10 +228,13 @@ def pyfs_storage_factory(fileinstance=None, default_location=None,
                 current_app.config['FILES_REST_STORAGE_PATH_SPLIT_LENGTH'],
             )
 
-        locationList = fileinstance.get_location_all()
         location = next((loc for loc in locationList if str(loc.uri) == str(default_location)), None)
+
+    if location is None:
+        location = next((loc for loc in locationList if str(loc.uri) in str(fileurl)), None)
         if location is None:
-            location = next((loc for loc in locationList if str(loc.uri) in str(fileurl)), None)
+            # if not match fileurl with location, then get default location
+            location = next((loc for loc in locationList if loc.default == True), None)
 
     return filestorage_class(
         fileurl, size=size, modified=modified, clean_dir=clean_dir, location=location)
