@@ -2766,12 +2766,14 @@ class WorkActivity(object):
                     f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
+                return
             except Exception as ex:
                 current_app.logger.error(
                     "Unexpected error had orrured during sending notification "
                     f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
+                return
         current_app.logger.info(
             "{num} notification(s) sent for item registered: {activity_id}"
             .format(num=len(set_target_id), activity_id=activity.activity_id)
@@ -2898,12 +2900,14 @@ class WorkActivity(object):
                     f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
+                return
             except Exception as ex:
                 current_app.logger.error(
                     "Unexpected error had orrured during sending notification "
                     f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
+                return
         current_app.logger.info(
             "{num} notification(s) sent for request approval: {activity_id}"
             .format(num=len(set_target_id), activity_id=activity.activity_id)
@@ -2963,12 +2967,14 @@ class WorkActivity(object):
                     f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
+                return
             except Exception as ex:
                 current_app.logger.error(
                     "Unexpected error had orrured during sending notification "
                     f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
+                return
         current_app.logger.info(
             "{num} notification(s) sent for item approved: {activity_id}"
             .format(num=len(set_target_id), activity_id=activity.activity_id)
@@ -3027,12 +3033,14 @@ class WorkActivity(object):
                     f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
+                return
             except Exception as ex:
                 current_app.logger.error(
                     "Unexpected error had orrured during sending notification "
                     f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
+                return
         current_app.logger.info(
             "{num} notification(s) sent for item rejected: {activity_id}"
             .format(num=len(set_target_id), activity_id=activity.activity_id)
