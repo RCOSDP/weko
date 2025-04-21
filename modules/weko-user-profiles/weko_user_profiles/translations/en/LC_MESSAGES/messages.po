@@ -1,15 +1,15 @@
-# English translations for invenio-userprofiles.
-# Copyright (C) 2015 CERN
-# This file is distributed under the same license as the
-# invenio-userprofiles project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2015.
+# English translations for weko-user-profiles.
+# Copyright (C) 2019 National Institute of Informatics
+# This file is distributed under the same license as the weko-user-profiles
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2019.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: invenio-userprofiles 1.0.0.dev20150000\n"
-"Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2019-04-25 19:04+0900\n"
-"PO-Revision-Date: 2015-11-24 13:19+0100\n"
+"Project-Id-Version: weko-user-profiles 0.1.0.dev20170000\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2019-07-02 02:08+0000\n"
+"PO-Revision-Date: 2025-04-21 09:27+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -243,24 +243,6 @@ msgstr ""
 #: weko_user_profiles/views.py:178
 msgid "Profile was updated."
 msgstr "Updated your profile"
-
-#~ msgid "Full name"
-#~ msgstr ""
-
-#~ msgid "Send verification email"
-#~ msgstr ""
-
-#~ msgid "User Profile"
-#~ msgstr ""
-
-#~ msgid "You have not yet verified your email address."
-#~ msgstr ""
-
-#~ msgid "Cancel"
-#~ msgstr ""
-
-#~ msgid "Update profile"
-#~ msgstr ""
 
 ### Label on 'Profile' screen
 msgid "University/Institution"
