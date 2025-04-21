@@ -317,7 +317,7 @@ def check_import_items(
     return check_result
 
 
-def update_item_ids(list_record, new_id):
+def update_item_ids(list_record, new_id, _id):
     """Iterate through list_record, check and update item_id.
 
     Args:
@@ -331,7 +331,6 @@ def update_item_ids(list_record, new_id):
         ValueError: If list_record is not a list.
     """
     # Create a dictionary to map identifiers to their respective items
-    identifier_to_item = {}
     for item in list_record:
         if not isinstance(item, dict):
             continue
@@ -339,8 +338,6 @@ def update_item_ids(list_record, new_id):
         metadata = item.get("metadata")
         if not metadata or not item.get("_id"):
             continue  # Skip if metadata is missing or doesn't have "_id"
-
-        identifier_to_item[item["_id"]] = item
 
     # Iterate through each ITEM in list_record
     for item in list_record:
@@ -355,7 +352,7 @@ def update_item_ids(list_record, new_id):
 
             item_id = link_item.get("item_id")
             sele_id = link_item.get("sele_id")
-            if item_id in identifier_to_item and sele_id == "isSupplementedBy":
+            if item_id == _id and sele_id == "isSupplementedBy":
                 # If a match is found, overwrite item_id with new_id
                 link_item["item_id"] = new_id
                 current_app.logger.info(

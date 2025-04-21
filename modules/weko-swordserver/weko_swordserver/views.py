@@ -394,7 +394,8 @@ def post_service_document():
             if error:
                 warns.append((error, activity_id, recid))
             if file_format == "JSON":
-                update_item_ids(check_result["list_record"], recid)
+                update_item_ids(
+                    check_result["list_record"], recid, item.get("_id"))
         except Exception as e:
             current_app.logger.error(f"Unexpected error: {str(e)}")
             continue  # Skip to the next iteration
