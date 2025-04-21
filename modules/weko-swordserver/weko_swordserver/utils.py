@@ -210,6 +210,7 @@ def check_import_items(
     register_type = settings.get(file_format, {}).get(
         "registration_type", "Direct"
     )
+    workflow_id = None
     duplicate_check = settings.get(file_format, {}).get(
         "duplicate_check", False
     )
@@ -236,8 +237,20 @@ def check_import_items(
 
         if register_type == "Workflow":
             item_type_id = check_result["list_record"][0].get("item_type_id")
-            workflow = WorkFlows().get_workflow_by_item_type_id(item_type_id)
-            check_result.update({"workflow_id": workflow.id})
+            item_type_name = check_result["list_record"][0].get("item_type_name")
+            workflow = WorkFlows().get_workflow_by_itemtype_id(item_type_id)
+
+            if workflow is None:
+                current_app.logger.error(
+                    f"Workflow not found for item type ID: {item_type_name}"
+                )
+                raise WekoSwordserverException(
+                    "Workflow not found for registration your item.",
+                    errorType=ErrorType.BadRequest
+                )
+            workflow_id = workflow.id
+            check_result.update({"workflow_id": workflow_id})
+
     elif file_format == "XML":
         if register_type == "Direct":
             raise WekoSwordserverException(
@@ -246,12 +259,22 @@ def check_import_items(
             )
 
         workflow_id = int(settings.get(file_format, {}).get("workflow", "-1"))
-        workflow = WorkFlow.query.get(workflow_id)
+        workflow = WorkFlows().get_workflow_by_id(workflow_id)
+
+        if workflow is None or workflow.is_deleted:
+            current_app.logger.error(
+                f"Workflow not found. Workflow ID: {workflow_id}"
+            )
+            raise WekoSwordserverException(
+                "Workflow not found for registration your item.",
+                errorType=ErrorType.BadRequest
+            )
+
         item_type_id = workflow.itemtype_id
         check_result.update(
             check_xml_import_items(file, item_type_id, shared_id=shared_id)
         )
-        check_result.update({"workflow_id": workflow.id})
+        check_result.update({"workflow_id": workflow_id})
 
     elif file_format == "JSON":
         packaging = kwargs.get("packaging")
@@ -259,12 +282,15 @@ def check_import_items(
 
         sword_client = SwordClient.get_client_by_id(client_id)
         if sword_client is None or not sword_client.active:
-            current_app.logger.error(f"No setting foound for client ID: {client_id}")
+            current_app.logger.error(
+                f"No SWORD API setting foound for client ID: {client_id}"
+            )
             raise WekoSwordserverException(
-                "No setting found for client ID that you are using.",
+                "No SWORD API setting found for client ID that you are using.",
                 errorType=ErrorType.ServerError
             )
         mapping_id = sword_client.mapping_id
+        workflow_id = sword_client.workflow_id
         meta_data_api = sword_client.meta_data_api
         # Check workflow and item type
         register_type = sword_client.registration_type
@@ -272,9 +298,20 @@ def check_import_items(
 
         check_result.update({
             "register_type": register_type,
-            "workflow_id": sword_client.workflow_id,
+            "workflow_id": workflow_id,
             "duplicate_check": sword_client.duplicate_check,
         })
+
+        if register_type == "Workflow":
+            workflow = WorkFlows().get_workflow_by_id(workflow_id)
+            if workflow is None or workflow.is_deleted:
+                current_app.logger.error(
+                    f"Workflow not found for client ID: {client_id}"
+                )
+                raise WekoSwordserverException(
+                    "Workflow not found for registration your item.",
+                    errorType=ErrorType.BadRequest
+                )
 
         check_result.update(
             check_jsonld_import_items(
@@ -284,13 +321,6 @@ def check_import_items(
         )
 
         if register_type == "Workflow":
-            workflow = WorkFlows().get_workflow_by_id(sword_client.workflow_id)
-            if workflow is None or workflow.is_deleted:
-                current_app.logger.error(f"Workflow not found for client ID: {client_id}")
-                raise WekoSwordserverException(
-                    "Workflow not found for registration your item.",
-                    errorType=ErrorType.ServerError
-                )
             item_type_id = check_result.get("item_type_id")
             # Check if workflow and item type match
             if workflow.itemtype_id != item_type_id:
@@ -300,19 +330,13 @@ def check_import_items(
                     f"but the workflow's ItemType ID was {workflow.itemtype_id}.")
                 raise WekoSwordserverException(
                     "Item type and workflow do not match.",
-                    errorType=ErrorType.ServerError
+                    errorType=ErrorType.BadRequest
                 )
     else:
         raise WekoSwordserverException(
             f"Unsupported file format: {file_format}",
             ErrorType.MetadataFormatNotAcceptable
         )
-
-    if register_type == "Workflow" and (workflow is None or workflow.is_deleted):
-        raise WekoSwordserverException(
-            "Workflow is not configured for importing xml.",
-            ErrorType.ServerError
-    )
 
     return check_result
 
