@@ -18,24 +18,26 @@
             alt="{{record.metadata._thumbnail.thumbnail_label}}" width="{{record.metadata._thumbnail.thumbnail_width}}">
         </td>
         <td style="vertical-align: top;">
-          <span ng-repeat="author in record.metadata._creator_info track by $index">
-            <span ng-if="author.creatorNames.creatorName">{{ author.creatorNames.creatorName|escapeTitle }}</span>
-            <span ng-if="!author.creatorNames.creatorName && author.familyNames.familyName">{{ author.familyNames.familyName|escapeTitle }}, </span>
-            <span ng-if="!author.creatorNames.creatorName && author.givenNames.givenName">{{ author.givenNames.givenName|escapeTitle }}</span>
-            <span ng-repeat="nameIdentifier in author.nameIdentifiers track by $index">
-              <a ng-if="nameIdentifier.nameIdentifierScheme=='ORCID'" href="{{ nameIdentifier.nameIdentifierURI }}" title="{{ nameIdentifier.nameIdentifierScheme }}:{{ nameIdentifier.nameIdentifier }}" alt="{{ nameIdentifier.nameIdentifierScheme }}:{{ nameIdentifier.nameIdentifier }}">
-                <img style="display: inline-block; _display: inline;height: 1em;vertical-align: middle;" src="static/images/orcid.svg"/>
-              </a>
-              <a ng-if="!(nameIdentifier.nameIdentifierScheme=='ORCID') && !(nameIdentifier.nameIdentifierScheme=='WEKO') && nameIdentifier.nameIdentifierURI" title="{{ nameIdentifier.nameIdentifierScheme }}:{{ nameIdentifier.nameIdentifier }}" href="{{ nameIdentifier.nameIdentifierURI }}">
-                <span style="display: inline-block; _display: inline;vertical-align: middle;background: #337ab7;border-radius: 50%;width: 1.2em;height: 1.2em;color: #fff;font-size: 0.8em;text-align: center;line-height: 1.2em;">{{ (nameIdentifier.nameIdentifierScheme)[0] }}</span>
-              </a>
-              <a ng-if="nameIdentifier.nameIdentifierScheme=='WEKO'" title="{{ nameIdentifier.nameIdentifierScheme }}:{{ nameIdentifier.nameIdentifier }}">
-                <span style="display: inline-block; _display: inline;vertical-align: middle;background: #337ab7;border-radius: 50%;width: 1.2em;height: 1.2em;color: #fff;font-size: 0.8em;text-align: center;line-height: 1.2em;">{{ (nameIdentifier.nameIdentifierScheme)[0] }}</span>
-              </a>
+          <span  ng-if="record.metadata._creator_info.length > 0">
+            <span ng-repeat="author in record.metadata._creator_info track by $index">
+              <span ng-if="author.creatorNames.creatorName">{{ author.creatorNames.creatorName|escapeTitle }}</span>
+              <span ng-if="!author.creatorNames.creatorName && author.familyNames.familyName">{{ author.familyNames.familyName|escapeTitle }}, </span>
+              <span ng-if="!author.creatorNames.creatorName && author.givenNames.givenName">{{ author.givenNames.givenName|escapeTitle }}</span>
+              <span ng-repeat="nameIdentifier in author.nameIdentifiers track by $index">
+                <a ng-if="nameIdentifier.nameIdentifierScheme=='ORCID'" href="{{ nameIdentifier.nameIdentifierURI }}" title="{{ nameIdentifier.nameIdentifierScheme }}:{{ nameIdentifier.nameIdentifier }}" alt="{{ nameIdentifier.nameIdentifierScheme }}:{{ nameIdentifier.nameIdentifier }}">
+                  <img style="display: inline-block; _display: inline;height: 1em;vertical-align: middle;" src="static/images/orcid.svg"/>
+                </a>
+                <a ng-if="!(nameIdentifier.nameIdentifierScheme=='ORCID') && !(nameIdentifier.nameIdentifierScheme=='WEKO') && nameIdentifier.nameIdentifierURI" title="{{ nameIdentifier.nameIdentifierScheme }}:{{ nameIdentifier.nameIdentifier }}" href="{{ nameIdentifier.nameIdentifierURI }}">
+                  <span style="display: inline-block; _display: inline;vertical-align: middle;background: #337ab7;border-radius: 50%;width: 1.2em;height: 1.2em;color: #fff;font-size: 0.8em;text-align: center;line-height: 1.2em;">{{ (nameIdentifier.nameIdentifierScheme)[0] }}</span>
+                </a>
+                <a ng-if="nameIdentifier.nameIdentifierScheme=='WEKO'" title="{{ nameIdentifier.nameIdentifierScheme }}:{{ nameIdentifier.nameIdentifier }}">
+                  <span style="display: inline-block; _display: inline;vertical-align: middle;background: #337ab7;border-radius: 50%;width: 1.2em;height: 1.2em;color: #fff;font-size: 0.8em;text-align: center;line-height: 1.2em;">{{ (nameIdentifier.nameIdentifierScheme)[0] }}</span>
+                </a>
 
-              </span>
-            ;
-          </span><br/>
+                </span>
+              ;
+            </span><br/>
+          </span>
           <pre class="hide">{{record.metadata._comment}}</pre>
 
           <span ng-repeat="comment in record.metadata._comment track by $index"> {{ comment|escapeTitle }} <br> </span>

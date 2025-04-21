@@ -1194,6 +1194,8 @@ async def sort_meta_data_by_options(
                         creator.pop("familyNames")
                     else:
                         creator["familyNames"] = get_value_by_selected_language(creator["familyNames"],"familyNameLang",current_lang)
+                        if not creator["familyNames"]:
+                            creator.pop("familyNames")
                 opt = dict["{}.{}.{}".format(key,"familyNames","familyName")]
                 if opt.get('option'):
                     _opt = opt.get('option')
@@ -1209,6 +1211,8 @@ async def sort_meta_data_by_options(
                         creator.pop("creatorNames")
                     else:
                         creator["creatorNames"] = get_value_by_selected_language(creator["creatorNames"],"creatorNameLang",current_lang)
+                        if not creator["creatorNames"]:
+                            creator.pop("creatorNames")
 
                 opt = dict["{}.{}.{}".format(key,"creatorNames","creatorName")]
                 if opt.get('option'):
@@ -1225,6 +1229,8 @@ async def sort_meta_data_by_options(
                         creator.pop("givenNames")
                     else:
                         creator["givenNames"] = get_value_by_selected_language(creator["givenNames"],"givenNameLang",current_lang)
+                        if not creator["givenNames"]:
+                            creator.pop("givenNames")
                 opt = dict["{}.{}.{}".format(key,"givenNames","givenName")]
                 if opt.get('option'):
                     _opt = opt.get('option')
@@ -1274,7 +1280,8 @@ async def sort_meta_data_by_options(
                         creator.pop("affiliationNameIdentifiers")
 
             # current_app.logger.error("creator:{}".format(creator))
-            ret.append(creator)
+            if creator:
+                ret.append(creator)
 
         return ret
 
