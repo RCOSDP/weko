@@ -1463,7 +1463,10 @@ class JsonLdMapper(JsonMapper):
             parent_prop_key = re.split(rf"\.{prop_props[1]}(?=\.|$)", PROP_PATH)[0]
             m_index = re.search(r"\[(\d+)\]", meta_props[0])
             index = int(m_index.group(1)) if m_index is not None else None
-            if not parent_prop_key in properties_mapping.values():
+            if (
+                not parent_prop_key in properties_mapping.values()
+                and not len(meta_props) == 1
+            ):
                 # The corresponding layers are different,
                 # so the prop_path needs to progress to the lower layer.
                 sub_prop_key = parent_prop_key + "." + prop_props[1]
