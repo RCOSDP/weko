@@ -13,6 +13,7 @@ import uuid
 from copy import deepcopy
 from datetime import datetime
 from flask import current_app, url_for, request
+from sqlalchemy.exc import SQLAlchemyError
 
 from invenio_accounts.models import User
 from invenio_cache import current_cache
@@ -23,7 +24,7 @@ from invenio_indexer.api import RecordIndexer
 from invenio_pidstore import current_pidstore
 from invenio_pidstore.models import PersistentIdentifier
 
-from weko_deposit.api import WekoDeposit
+from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_deposit.links import base_factory
 from weko_deposit.serializer import file_uploaded_owner
 from weko_items_autofill.utils import get_workflow_journal
@@ -386,21 +387,47 @@ class HeadlessActivity(WorkActivity):
                 pid = current_pidstore.minters["weko_deposit_minter"](record_uuid, data=record_data)
                 self._deposit = WekoDeposit.create(record_data, id_=record_uuid)
                 self._model.item_id = record_uuid
-                db.session.commit()
 
             else:
                 record_uuid = self._model.item_id
-                pid = PersistentIdentifier.query.filter_by(
+                self._deposit = WekoDeposit.get_record(record_uuid)
+
+                if metadata.get("edit_mode").lower() == "upgrade":
+                    cur_pid = PersistentIdentifier.query.filter_by(
                         pid_type="recid", object_uuid=record_uuid
                     ).first()
-                self._deposit = WekoDeposit.get_record(record_uuid)
-                # if status == "upgrade":
-                #     self._deposit = self._deposit.newversion(pid)
+                    parent_pid = PersistentIdentifier.get(
+                        "recid", cur_pid.pid_value.split(".")[0]
+                    )
+                    _deposit = WekoDeposit.get_record(parent_pid.object_uuid)
+                    self._deposit = _deposit.newversion(parent_pid)
+
+                    if self._deposit:
+                        self._deposit.merge_data_to_record_without_version(cur_pid)
+                        record_uuid = self._model.item_id = self._deposit.model.id
+                        db.session.merge(self._model)
+
+                    weko_record = WekoRecord.get_record_by_pid(
+                        self._deposit.pid.pid_value
+                    )
+                    weko_record.update_item_link(parent_pid.pid_value)
+                    current_app.logger.info(
+                        "Item {} is upgraded to {}."
+                        .format(
+                            parent_pid.pid_value,
+                            self._deposit.pid.pid_value.split(".")[1]
+                        )
+                    )
+
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type="recid", object_uuid=record_uuid
+                ).first()
 
                 # get old metadata by record_uuid
                 _old_metadata = ItemsMetadata.get_by_object_id(record_uuid).json
                 _old_files = to_files_js(self._deposit)
-                db.session.commit()
+
+            db.session.commit()
 
             if not self._metadata_replace:
                 # update old metadata partially
@@ -455,6 +482,11 @@ class HeadlessActivity(WorkActivity):
             }
             self._deposit.update(index, metadata)
             self._deposit.commit()
+        except SQLAlchemyError as ex:
+            db.session.rollback()
+            msg = f"Failed to input metadata to deposit: {ex}"
+            current_app.logger.error(msg)
+            raise WekoWorkflowException(msg) from ex
         except Exception as ex:
             msg = f"Failed to input metadata to deposit: {ex}"
             current_app.logger.error(msg)

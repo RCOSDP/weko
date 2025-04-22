@@ -556,10 +556,10 @@ def put_object(recid):
         )
     if item.get("id") != recid:
         current_app.logger.error(
-            f"Item id does not match: {item.get('id')}, {recid}"
+            f"Item id does not match. item: {item.get('id')}, request: {recid}"
         )
         raise WekoSwordserverException(
-            f"Item id does not match: {item.get('id')}, {recid}",
+            f"Item id does not match. item: {item.get('id')}, request: {recid}",
             ErrorType.BadRequest,
         )
 
