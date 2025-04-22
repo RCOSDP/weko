@@ -77,7 +77,7 @@ from weko_deposit.signals import item_created
 from weko_index_tree.utils import get_user_roles
 from weko_items_ui.api import item_login
 from weko_items_ui.utils import check_item_is_being_edit, get_workflow_by_item_type_id, \
-    get_current_user
+    get_current_user, send_mail_delete_request, send_mail_delete_approved
 from weko_records.api import FeedbackMailList, RequestMailList, ItemLink, ItemTypes
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
@@ -1725,6 +1725,8 @@ def next_action(activity_id='0', action_id=0, json_data=None):
         delete_item_id = current_pid.pid_value.split('.')[0]
         from weko_records_ui.views import soft_delete
         soft_delete(delete_item_id)
+        if action_endpoint == "approval":
+            send_mail_delete_approved(delete_item_id, deposit, activity_detail, current_user.id)
 
     rtn = history.create_activity_history(activity, action_order)
     if not rtn:
@@ -1747,7 +1749,10 @@ def next_action(activity_id='0', action_id=0, json_data=None):
     )
 
     if next_action_endpoint == "approval":
-        work_activity.notify_about_activity(activity_id, "request_approval")
+        if for_delete:
+            send_mail_delete_request(work_activity.get_activity_by_id(activity_id))
+        else:
+            work_activity.notify_about_activity(activity_id, "request_approval")
 
     if next_action_endpoint == "end_action":
         if not for_delete:
