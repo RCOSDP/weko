@@ -108,6 +108,7 @@ def check_rocrate_import_items_task(file_path, is_change_identifier: bool,
     # remove zip file
     shutil.rmtree("/".join(file_path.split("/")[:-1]))
     data_path = check_result.get("data_path", "")
+    check_flag_metadata_replace(check_result.get("list_record", []))
     if check_result.get("error"):
         remove_temp_dir_task.apply_async((data_path,))
         result["error"] = check_result.get("error")
@@ -260,3 +261,19 @@ def check_session_lifetime():
     """Check session lifetime."""
     lifetime = get_lifetime()
     return True if lifetime >= 86400 else False
+
+
+def check_flag_metadata_replace(list_record):
+    """Check metadata_replace flag.
+
+    It cannot be used in the import item.
+
+    Args:
+        list_record (list): List of record.
+    """
+    error = "wk:metadata_replace flag cannot be used."
+    for item in list_record:
+        if item.get("metadata_replace"):
+            item["errors"] = (
+                item["errors"] + [error] if item.get("errors") else [error]
+            )
