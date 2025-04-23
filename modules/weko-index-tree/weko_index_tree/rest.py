@@ -1104,7 +1104,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
         index_id = int(time.time() * 1000)
         indexes = {
             "id": index_id,
-            "value": index_info.get("index_name", "New Index"),
+            "value": "New Index",
         }
         try:
             create_result = self.record_class.create(
