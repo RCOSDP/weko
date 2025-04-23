@@ -2,7 +2,7 @@ import pytest
 
 from marshmallow import ValidationError
 
-from weko_index_tree.schema import IndexesSchemaBase, IndexManagementRequestSchema, validate_public_date, validate_role_or_group
+from weko_index_tree.schema import IndexesSchemaBase, validate_public_date, validate_role_or_group
 
 
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_schema.py -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp --full-trace
@@ -49,7 +49,7 @@ def test_validate_public_date():
 class TestIndexesSchemaBase:
     def test_valid_index(self):
         index = {
-            "parent": 0,
+            "parent": 1,
             "index_name": "Index Name",
             "index_name_english": "Index Name English",
             "index_link_name": "Index Link Name",
@@ -75,7 +75,7 @@ class TestIndexesSchemaBase:
         assert result == index
 
         index_s = {
-            # "parent": 0,                  # Missing field, should be integer
+            "parent": "2",                  # String instead of integer
             "index_name": "Index Name",
             "index_name_english": "Index Name English",
             "index_link_name": "Index Link Name",
@@ -100,7 +100,7 @@ class TestIndexesSchemaBase:
         schema = IndexesSchemaBase()
         result = schema.load(index_s).data
 
-        assert result["parent"] == 0
+        assert result["parent"] == 2
         assert result["index_link_enabled"] is True
         assert result["more_check"] is False
         assert result["display_no"] == 1

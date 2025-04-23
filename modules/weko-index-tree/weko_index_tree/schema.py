@@ -41,7 +41,7 @@ class IndexesSchemaBase(Schema):
     This is based on weko_index_tree.models.Index.
 
     """
-    parent = fields.Integer(missing=0)
+    parent = fields.Integer(required=True)
     """Parent Information of the index."""
 
     index_name = fields.String()
