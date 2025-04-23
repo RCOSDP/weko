@@ -3568,6 +3568,10 @@ def handle_fill_system_item(list_record):
         item_doi_suffix = ""
         item_cnri = item.get("cnri", "")
 
+        if len(item_doi.split("/")) > 2:
+            errors.append(_("Please specify DOI prefix/suffix."))
+            item["errors"] = errors
+            continue
         if item_doi and "/" in item_doi:
             item_doi_prefix, item_doi_suffix = item_doi.split("/")
         else:
