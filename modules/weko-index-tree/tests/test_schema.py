@@ -116,7 +116,7 @@ class TestIndexesSchemaBase:
             "index_name_english": "",           # Invalid type, should not be empty
             "index_link_name": "Index Link Name",
             "index_link_name_english": "Index Link Name English",
-            "index_link_enabled": True,
+            "index_link_enabled": None,         # Invalid type, should be boolean
             "comment": "Comment",
             "more_check": False,
             "display_no": 1,
@@ -138,6 +138,7 @@ class TestIndexesSchemaBase:
         assert "parent" in excinfo.value.messages
         assert "index_name" in excinfo.value.messages
         assert "index_name_english" in excinfo.value.messages
+        assert "index_link_enabled" in excinfo.value.messages
         assert "public_date" in excinfo.value.messages
         assert "browsing_role" in excinfo.value.messages
         assert "contribute_role" in excinfo.value.messages

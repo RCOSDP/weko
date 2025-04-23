@@ -1106,6 +1106,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             "id": index_id,
             "value": "New Index",
         }
+
         try:
             create_result = self.record_class.create(
                 pid=parent_id,
@@ -1115,11 +1116,22 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             if not create_result:
                 current_app.logger.error(f"Failed to create index: {index_id}")
                 raise InternalServerError(
-                    description=f"Internal Server Error: Failed to create index {index_id}"
+                    description=f"Internal Server Error: Failed to create index."
                 )
 
             current_app.logger.info(f"Create new index: {index_id}")
 
+        except SQLAlchemyError as ex:
+            db.session.rollback()
+            current_app.logger.error(
+                f"Error occurred in DB while creating index: {ex}"
+            )
+            traceback.print_exc()
+            raise InternalServerError(
+                description=f"Internal Server Error: Failed to create index."
+            ) from ex
+
+        try:
             new_index = self.record_class.get_index(index_id)
 
             index_data = {
@@ -1141,63 +1153,80 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                     ]
                 }
             }
-            updated_index = self.record_class.update(index_id, **index_data)
 
+            updated_index = self.record_class.update(index_id, **index_data)
+            updated_index = None
             if not updated_index:
-                current_app.logger.error(f"Failed to update new index: {index_id}")
+                current_app.logger.error(
+                    f"Failed to update new index: {index_id}. "
+                    "Delete it."
+                )
                 raise InternalServerError(
                     description=f"Internal Server Error: Failed to update new index {index_id}"
                 )
 
             current_app.logger.info(f"Update info new index: {index_id}")
 
-            response_data = {
-                "index": {
-                    **{
-                        column.name: getattr(updated_index, column.name)
-                        for column in updated_index.__table__.columns
-                    },
-                    "created": updated_index.created.isoformat(),
-                    "updated": updated_index.updated.isoformat(),
-                    **{
-                        "public_date": updated_index.public_date.strftime("%Y%m%d")
-                        if updated_index.public_date
-                        else {}
-                    },
-                }
-            }
-
-            # Update index tree in Redis all languages
-            langs = AdminLangSettings.get_registered_language()
-            if "ja" in [lang["lang_code"] for lang in langs]:
-                tree_ja = self.record_class.get_index_tree(lang="ja")
-            tree = self.record_class.get_index_tree(lang="other_lang")
-            for lang in langs:
-                lang_code = lang["lang_code"]
-                if lang_code == "ja":
-                        save_index_trees_to_redis(tree_ja, lang=lang_code)
-                else:
-                    save_index_trees_to_redis(tree, lang=lang_code)
-
-            return make_response(jsonify(response_data), 200)
-
         except InternalServerError:
+            db.session.delete(new_index)
+            db.session.commit()
             raise
 
         except SQLAlchemyError as ex:
             db.session.rollback()
+            db.session.delete(new_index)
+            db.session.commit()
             current_app.logger.error(
-                f"Error occurred in DB while creating index: {ex}"
+                f"Error occurred in DB while creating index: {ex}. "
+                f"Delete it. Index ID: {index_id}"
             )
             traceback.print_exc()
-            raise InternalServerError() from ex
+            raise InternalServerError(
+                description=f"Internal Server Error: Failed to create index."
+            ) from ex
 
         except Exception as ex:
+            db.session.rollback()
+            db.session.delete(new_index)
+            db.session.commit()
             current_app.logger.error(
-                f"Unexpected error occurred while creating index: {ex}"
+                f"Unexpected error occurred while creating index: {ex}. "
+                f"Delete it. Index ID: {index_id}"
             )
             traceback.print_exc()
-            raise InternalServerError() from ex
+            raise InternalServerError(
+                description=f"Internal Server Error: Failed to create index."
+            ) from ex
+
+        # Update index tree in Redis all languages
+        langs = AdminLangSettings.get_registered_language()
+        if "ja" in [lang["lang_code"] for lang in langs]:
+            tree_ja = self.record_class.get_index_tree(lang="ja")
+        tree = self.record_class.get_index_tree(lang="other_lang")
+        for lang in langs:
+            lang_code = lang["lang_code"]
+            if lang_code == "ja":
+                    save_index_trees_to_redis(tree_ja, lang=lang_code)
+            else:
+                save_index_trees_to_redis(tree, lang=lang_code)
+
+        response_data = {
+            "index": {
+                **{
+                    column.name: getattr(updated_index, column.name)
+                    for column in updated_index.__table__.columns
+                },
+                "created": updated_index.created.isoformat(),
+                "updated": updated_index.updated.isoformat(),
+                **{
+                    "public_date": updated_index.public_date.strftime("%Y%m%d")
+                    if updated_index.public_date
+                    else {}
+                },
+            }
+        }
+
+        return make_response(jsonify(response_data), 200)
 
     def put_v1(self, index_id, **kwargs):
         """Update an existing index tree node."""
