@@ -88,7 +88,7 @@ class TestIndexesSchemaBase:
             "display_format": "Format",
             "public_state": "false",        # String instead of boolean
             "public_date": "20230101",
-            "rss_status": "True",           # String instead of boolean
+            "rss_status": 1,           # String instead of boolean
             "browsing_role": "3,4,-98,-99",
             "contribute_role": "3,4,-98,-99",
             "browsing_group": "",
@@ -111,9 +111,9 @@ class TestIndexesSchemaBase:
 
     def test_invalid_index(self):
         index = {
-            "parent": "a",                      # Invalid type, should be integer
-            "index_name": "Index Name",
-            "index_name_english": "Index Name English",
+            "parent": "X",                      # Invalid type, should be integer
+            "index_name": 123,                  # Invalid type, should be string
+            "index_name_english": "",           # Invalid type, should not be empty
             "index_link_name": "Index Link Name",
             "index_link_name_english": "Index Link Name English",
             "index_link_enabled": True,
@@ -136,7 +136,8 @@ class TestIndexesSchemaBase:
         with pytest.raises(ValidationError) as excinfo:
             schema.load(index)
         assert "parent" in excinfo.value.messages
+        assert "index_name" in excinfo.value.messages
+        assert "index_name_english" in excinfo.value.messages
         assert "public_date" in excinfo.value.messages
         assert "browsing_role" in excinfo.value.messages
         assert "contribute_role" in excinfo.value.messages
-

@@ -47,13 +47,13 @@ class IndexesSchemaBase(Schema):
     index_name = fields.String()
     """Name of the index."""
 
-    index_name_english = fields.String()
+    index_name_english = fields.String(validate=lambda x: len(x) > 0)
     """English Name of the index."""
 
     index_link_name = fields.String()
     """Name of the index link."""
 
-    index_link_name_english = fields.String()
+    index_link_name_english = fields.String(validate=lambda x: len(x) > 0)
     """English Name of the index link."""
 
     index_link_enabled = fields.Boolean()
