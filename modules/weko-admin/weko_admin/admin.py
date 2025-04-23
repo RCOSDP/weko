@@ -33,6 +33,7 @@ from datetime import datetime, timedelta
 
 from flask import abort, current_app, flash, jsonify, make_response, \
     redirect, render_template, request, url_for
+from markupsafe import Markup
 from flask_admin import BaseView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.contrib.sqla.fields import QuerySelectField
@@ -1993,8 +1994,14 @@ class JsonldMappingView(ModelView):
         result = ItemTypeNames.get_record(id_=model.item_type_id)
         return result.name
 
+    def _formatting_mapping_json(view, context, model, name):
+        format_json =json.dumps(model.mapping, indent=4, ensure_ascii=False)
+        return Markup(f'<pre style="white-space: pre; border: none; \
+                      background-color: transparent;">{format_json}</pre>')
+
     column_formatters = {
         "item_type": _item_type_name,
+        "mapping": _formatting_mapping_json,
     }
     column_searchable_list = ("id", "name", "item_type_id")
 
