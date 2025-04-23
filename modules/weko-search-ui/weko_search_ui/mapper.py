@@ -1417,8 +1417,6 @@ class JsonLdMapper(JsonMapper):
             ],
         }
 
-        mapped_metadata.setdefault("edit_mode", "Keep")
-
         missing_metadata = {}
 
         def _empty_metadata(parent_prop_key):
