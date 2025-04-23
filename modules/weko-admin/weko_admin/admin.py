@@ -1640,6 +1640,15 @@ class SwordAPIJsonldSettingsView(ModelView):
                 .filter(Client.user_id == current_user.get_id())
             )
 
+    def get_count_query(self):
+        list_role = [role.name for role in current_user.roles]
+        if current_app.config["WEKO_ADMIN_PERMISSION_ROLE_SYSTEM"] in list_role:
+            return super(SwordAPIJsonldSettingsView, self).get_count_query()
+        else:
+            return (super(SwordAPIJsonldSettingsView, self).get_count_query()
+            .join(Client)
+            .filter(Client.client_id == SwordClientModel.client_id)
+            .filter(Client.user_id == current_user.get_id()))
 
     @expose("/add/", methods=["GET", "POST"])
     def create_view(self):
