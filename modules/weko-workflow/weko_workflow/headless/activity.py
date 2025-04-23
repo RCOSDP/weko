@@ -608,7 +608,8 @@ class HeadlessActivity(WorkActivity):
 
         try:
             result, _ = next_action(
-                self.activity_id, self.current_action_id, {"commond": comment}
+                activity_id=self.activity_id, action_id=self.current_action_id,
+                json_data={"commond": comment}
             )
         except Exception as ex:
             current_app.logger.error(f"failed to set comment: {ex}")
@@ -627,7 +628,8 @@ class HeadlessActivity(WorkActivity):
 
         try:
             result, _ = next_action(
-                self.activity_id, self.current_action_id, {"link_data": link_data}
+                activity_id=self.activity_id, action_id=self.current_action_id,
+                json_data={"link_data": link_data}
             )
         except Exception as ex:
             current_app.logger.error(f"failed in Item Link: {ex}")
@@ -661,7 +663,8 @@ class HeadlessActivity(WorkActivity):
             # If not enough metadata, return to item registration and
             # leave error message in cache.
             result, _ = next_action(
-                self.activity_id, self.current_action_id, grant_data
+                activity_id=self.activity_id, action_id=self.current_action_id,
+                json_data=grant_data
             )
         except Exception as ex:
             current_app.logger.error(f"failed in Identifier Grant: {ex}")
