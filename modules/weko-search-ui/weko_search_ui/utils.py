@@ -5159,7 +5159,7 @@ def handle_flatten_data_encode_filename(list_record, data_path):
         # get filename from metadata
         for file_info in files_info:
             key = file_info.get("key")
-            metadata[key] = []
+            new_file_list = []
 
             for file in file_info["items"]:
                 filename = file.get("filename")
@@ -5180,7 +5180,9 @@ def handle_flatten_data_encode_filename(list_record, data_path):
                 item["filepath"].append(encoded_filename)
 
                 # for Workflow registration
-                metadata[key].append(file)  # replace metadata
+                new_file_list.append(file)
+            if new_file_list:
+                metadata[key] = new_file_list # replace metadata
 
 
 def check_replace_file_import_items(list_record, data_path=None, is_gakuninrdm=False,
