@@ -1707,7 +1707,7 @@ class JsonLdMapper(JsonMapper):
         list_extracted = []
         if format == "ro-crate":
             extracted = extracted.get(rocrate_entity_key).get("about")
-            if extracted.get("wk:is_splited", False) and "hasPart" in extracted:
+            if extracted.get("wk:isSplited", False) and "hasPart" in extracted:
                 # each metadata part must be in "hasPart"
                 list_extracted = [ part for part in extracted.get("hasPart") ]
             else:
