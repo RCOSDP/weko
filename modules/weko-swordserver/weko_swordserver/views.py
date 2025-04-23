@@ -365,6 +365,8 @@ def post_service_document():
                     error = True
                 else:
                     recid = import_result.get("recid")
+                    from weko_items_ui.utils import send_mail_direct_registered
+                    send_mail_direct_registered(recid, current_user.id)
 
             elif register_type == "Workflow":
                 url, recid, _ , error = import_items_to_activity(
@@ -588,6 +590,8 @@ def put_object(recid):
                 f"Error in import_items_to_system: {import_result.get('error_id')}",
                 ErrorType.ServerError
             )
+        from weko_items_ui.utils import send_mail_direct_registered
+        send_mail_direct_registered(recid, current_user.id)
         response = jsonify(_get_status_document(recid))
     elif register_type == "Workflow":
         required_scopes = set([activity_scope.id])
@@ -880,6 +884,8 @@ def delete_item(recid):
 
     else:
         soft_delete(recid)
+        from weko_items_ui.utils import send_mail_item_deleted
+        send_mail_item_deleted(recid, record, current_user.id)
         response = Response(status=204)
 
     return response

@@ -1521,8 +1521,10 @@ def prepare_delete_item(id=None, community=None):
         workflow_detail = workflows.get_workflow_by_id(post_activity['workflow_id'])
 
         from weko_records_ui.views import soft_delete
+        from .utils import send_mail_item_deleted, send_mail_delete_request
         if workflow_detail.delete_flow_id is None:
             soft_delete(pid_value)
+            send_mail_item_deleted(pid_value, deposit, user_id)
             return jsonify(
                 code=0,
                 msg="success",
@@ -1573,6 +1575,10 @@ def prepare_delete_item(id=None, community=None):
 
         if rtn.action_id == 2:   # end_action
             soft_delete(pid_value)
+            send_mail_item_deleted(pid_value, deposit, user_id)
+
+        if rtn.action_id == 4:   # approval
+            send_mail_delete_request(rtn)
 
         if url_redirect.startswith("/api/"):
             url_redirect = url_redirect[4:]

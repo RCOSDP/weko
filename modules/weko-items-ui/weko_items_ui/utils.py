@@ -36,9 +36,11 @@ from datetime import date, datetime, timedelta, timezone
 from io import StringIO
 import zipfile
 import secrets
+import pytz
 
 import bagit
 import redis
+from sqlalchemy.exc import SQLAlchemyError
 from redis import sentinel
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch import exceptions as es_exceptions
@@ -78,6 +80,7 @@ from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
 from weko_index_tree.utils import check_index_permissions, get_index_id, \
     get_user_roles
+from weko_notifications.models import NotificationsUserSettings
 from weko_records.api import FeedbackMailList, JsonldMapping, RequestMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
@@ -5187,3 +5190,446 @@ def get_access_token(api_code):
     except Exception as e:
         current_app.logger.error(f"AccessToken Error: {str(e)}")
         return {"error": "Internal server error"}, 500
+
+
+# --- 通知対象取得関数 ---
+
+def get_notification_targets(deposit, user_id):
+    """
+    Retrieve notification targets for a given deposit and user.
+
+    Args:
+        deposit (dict): The deposit data containing information about owners
+                        and shared users.
+        user_id (int): The ID of the current user.
+
+    Returns:
+        dict: A dictionary containing the following keys:
+            - "targets" (list): List of User objects who are the notification targets.
+            - "settings" (dict): A dictionary mapping user IDs to their notification settings.
+            - "profiles" (dict): A dictionary mapping user IDs to their user profiles.
+    """
+    owners = deposit.get("_deposit", {}).get("owners", [])
+    set_target_id = set(owners)
+    is_shared = deposit.get("weko_shared_id") != -1
+
+    if is_shared:
+        set_target_id.add(deposit.get("weko_shared_id"))
+    else:
+        set_target_id.discard(int(user_id))
+
+    target_ids = list(set_target_id)
+    current_app.logger.debug(f"[get_notification_targets] target_ids: {target_ids}")
+
+    try:
+        targets = User.query.filter(User.id.in_(target_ids)).all()
+        settings = NotificationsUserSettings.query.filter(
+            NotificationsUserSettings.user_id.in_(target_ids)
+        ).all()
+        profiles = UserProfile.query.filter(
+            UserProfile.user_id.in_(target_ids)
+        ).all()
+
+        return {
+            "targets": targets,
+            "settings": {s.user_id: s for s in settings},
+            "profiles": {p.user_id: p for p in profiles}
+        }
+    except SQLAlchemyError:
+        current_app.logger.exception("[get_notification_targets] DB access failed")
+        return dict()
+
+
+def get_notification_targets_approver(activity):
+    """
+    Retrieve notification targets for the approval process in a workflow.
+
+    Args:
+        activity (Activity): The workflow activity instance containing information such as
+            the actor, flow definition, and community ID.
+
+    Returns:
+        dict: A dictionary containing the following keys:
+            - "targets" (list of User): List of users to be notified.
+            - "settings" (dict): Mapping of user_id to NotificationsUserSettings for the targets.
+            - "profiles" (dict): Mapping of user_id to UserProfile for the targets.
+            - "actor" (dict): A dictionary with the name and email of the actor (initiator).
+    """
+    from weko_workflow.api import Flow, GetCommunity
+    from weko_workflow.models import Action
+    try:
+        actor_id = activity.activity_login_user
+        actor_profile = UserProfile.get_by_userid(actor_id)
+        actor_name = actor_profile.username if actor_profile else None
+
+        flow_id = activity.flow_define.flow_id
+        flow_detail = Flow().get_flow_detail(flow_id)
+        approval_action = Action.query.filter_by(
+            action_endpoint="approval"
+        ).one()
+        approval_action_role = None
+        for action in flow_detail.flow_actions:
+            if action.action_id == approval_action.id:
+                approval_action_role = action.action_role
+                break
+
+        admin_role_id = Role.query.filter_by(
+            name=current_app.config.get("WEKO_ADMIN_PERMISSION_ROLE_REPO")
+        ).one().id
+
+        target_role = {admin_role_id}
+        if approval_action_role:
+            action_role_id = approval_action_role.action_role
+            if isinstance(action_role_id, int) and approval_action_role.action_role_exclude:
+                target_role.discard(action_role_id)
+
+        set_target_id = {
+            uid[0] for uid in db.session.query(userrole.c.user_id)
+            .filter(userrole.c.role_id.in_(target_role)).distinct()
+        }
+
+        if approval_action_role:
+            action_user_id = approval_action_role.action_user
+            if isinstance(action_user_id, int):
+                if approval_action_role.action_user_exclude:
+                    set_target_id.discard(action_user_id)
+                else:
+                    set_target_id.add(action_user_id)
+
+        community_id = activity.activity_community_id
+        if community_id is not None:
+            community_admin_role_id = Role.query.filter_by(
+                name=current_app.config.get("WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY")
+            ).one().id
+            community_owner_role_id = GetCommunity.get_community_by_id(community_id).id_role
+            role_left = userrole.alias("role_left")
+            role_right = userrole.alias("role_right")
+
+            set_community_admin_id = {
+                uid[0] for uid in db.session.query(role_left.c.user_id)
+                .join(role_right, role_left.c.role_id == role_right.c.role_id)
+                .filter(
+                    role_left.c.role_id == community_admin_role_id,
+                    role_right.c.role_id == community_owner_role_id
+                ).distinct()
+            }
+            set_target_id.update(set_community_admin_id)
+
+        is_shared = activity.shared_user_id is not None and activity.shared_user_id != -1
+        if not is_shared:
+            set_target_id.discard(actor_id)
+
+        targets = User.query.filter(User.id.in_(list(set_target_id))).all()
+        settings = NotificationsUserSettings.query.filter(
+            NotificationsUserSettings.user_id.in_(list(set_target_id))
+        ).all()
+        profiles = UserProfile.query.filter(
+            UserProfile.user_id.in_(list(set_target_id))
+        ).all()
+        actor = User.query.filter_by(id=actor_id).one_or_none()
+
+        return {
+            "targets": targets,
+            "settings": {s.user_id: s for s in settings},
+            "profiles": {p.user_id: p for p in profiles},
+            "actor": {"name": actor_name, "email": actor.email}
+        }
+
+    except SQLAlchemyError:
+        current_app.logger.exception("[get_notification_targets_approver] DB access failed")
+        return dict()
+
+
+# --- メール本文生成関数 ---
+
+def create_item_deleted_data(deposit, profile, target, url):
+    """
+    Generate the email content for item deletion notification.
+
+    Args:
+        deposit (dict): Data of the deleted item.
+        profile (UserProfile): Profile information of the user receiving the notification.
+        target (User): User object of the recipient.
+        url (str): URL of the deleted item.
+
+    Returns:
+        dict: A dictionary containing the filled email subject and body with the following keys:
+              - 'subject' (str): The subject of the email.
+              - 'body' (str): The body of the email.
+    """
+    from weko_workflow.utils import load_template, fill_template
+    language = profile.language or "en"
+    timezone = profile.timezone or "UTC"
+    registration_date = datetime.now(pytz.timezone(timezone))
+
+    template_file = 'email_notification_item_deleted_{language}.tpl'
+    template = load_template(template_file, language)
+
+    data = {
+        "item_title": deposit.get("item_title", ""),
+        "submitter_name": profile.username or target.email,
+        "registration_date": registration_date.strftime("%Y-%m-%d %H:%M:%S"),
+        "record_url": url
+    }
+
+    return fill_template(template, data)
+
+
+def create_delete_request_data(activity, profile, target, url, actor):
+    """
+    Generate email content for a delete request notification.
+
+    Args:
+        activity (Activity): The activity object containing details about the delete request.
+        profile (UserProfile): The profile of the recipient user.
+        target (User): The target user object receiving the notification.
+        url (str): The URL for the approval page.
+        actor (dict): Information about the actor initiating the delete request, including name or email.
+
+    Returns:
+        dict: A dictionary containing the email subject and body with the following keys:
+            - 'subject' (str): The subject of the email.
+            - 'body' (str): The body of the email.
+    """
+    from weko_workflow.utils import load_template, fill_template, convert_to_timezone
+    language = profile.language or "en"
+    timezone = profile.timezone or None
+    submission_date = convert_to_timezone(activity.updated, timezone)
+
+    template_file = 'email_notification_delete_request_{language}.tpl'
+    template = load_template(template_file, language)
+
+    data = {
+        "approver_name": profile.username or target.email,
+        "item_title": activity.title,
+        "submitter_name": actor.get("name") or actor.get("email"),
+        "submission_date": submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+        "approval_url": url
+    }
+
+    return fill_template(template, data)
+
+
+def create_delete_approved_data(deposit, profile, target, url, activity, approver_id):
+    """
+    Generate email content for a delete approval notification.
+
+    Args:
+        deposit (dict): Data of the approved item.
+        profile (UserProfile): Profile information of the user receiving the notification.
+        target (User): User object of the recipient.
+        url (str): URL of the approved item.
+        activity (Activity): The activity object containing details about the delete approval.
+        approver_id (int): ID of the approver.
+
+    Returns:
+        dict: A dictionary containing the filled email subject and body with the following keys:
+            - 'subject' (str): The subject of the email.
+            - 'body' (str): The body of the email.
+    """
+    from weko_workflow.utils import load_template, fill_template, convert_to_timezone
+    language = profile.language or "en"
+    timezone = profile.timezone or "UTC"
+    approval_date = convert_to_timezone(activity.updated, timezone)
+    approver = User.query.filter_by(id=approver_id).one_or_none()
+    approver_profile = UserProfile.get_by_userid(approver_id)
+    approver_name = approver_profile.username if approver_profile else None
+
+    template_file = 'email_notification_delete_approved_{language}.tpl'
+    template = load_template(template_file, language)
+
+    data = {
+        "item_title": deposit.get("item_title", "") or activity.title,
+        "submitter_name": profile.username or target.email,
+        "approver_name": approver_name or approver.email,
+        "approval_date": approval_date.strftime("%Y-%m-%d %H:%M:%S"),
+        "record_url": url
+    }
+
+    return fill_template(template, data)
+
+
+def create_direct_registered_data(deposit, profile, target, url):
+    """
+    Generate email content for a direct registration notification.
+
+    Args:
+        deposit (dict): Data of the registered item.
+        profile (UserProfile): Profile information of the user receiving the notification.
+        target (User): User object of the recipient.
+        url (str): URL of the registered item.
+
+    Returns:
+        dict: A dictionary containing the filled email subject and body with the following keys:
+            - 'subject' (str): The subject of the email.
+            - 'body' (str): The body of the email.
+    """
+    from weko_workflow.utils import load_template, fill_template
+    language = profile.language or "en"
+    timezone = profile.timezone or "UTC"
+    registration_date = datetime.now(pytz.timezone(timezone))
+
+    template_file = 'email_nortification_item_registered_{language}.tpl'
+    template = load_template(template_file, language)
+
+    data = {
+        "item_title": deposit.get("item_title", ""),
+        "submitter_name": profile.username or target.email,
+        "registration_date": registration_date.strftime("%Y-%m-%d %H:%M:%S"),
+        "record_url": url
+    }
+    return fill_template(template, data)
+
+
+# --- 共通通知送信関数 ---
+
+def send_mail_from_notification_info(get_info_func, context_obj, content_creator, record_url=None):
+    """
+    Send notification emails to a list of users based on the provided context and content creator function.
+
+    Args:
+        get_info_func (function): A function that retrieves notification target information.
+                                  It should accept `context_obj` as an argument and return a dictionary
+                                  containing "targets", "settings", "profiles", and optionally "actor".
+        context_obj (object): The context object used to retrieve notification target information.
+        content_creator (function): A function that generates the email content.
+                                     It should accept `context_obj`, `profile`, `target`, `record_url`, and optionally `actor`
+                                     as arguments and return a dictionary with "subject" and "body" keys.
+        record_url (str, optional): The URL of the record associated with the notification. Defaults to None.
+
+    Returns:
+        int: The total number of successfully sent emails.
+"""
+    from weko_workflow.utils import send_mail
+
+    with db.session.begin_nested():
+        info = get_info_func(context_obj)
+
+    targets = info.get("targets", [])
+    settings = info.get("settings", {})
+    profiles = info.get("profiles", {})
+    actor = info.get("actor", None)
+
+    send_count = 0
+
+    for target in targets:
+        try:
+            setting = settings.get(target.id)
+            if not setting:
+                current_app.logger.debug(f"[send_mail] No setting for user_id: {target.id}")
+                continue
+            if not target.confirmed_at:
+                current_app.logger.debug(f"[send_mail] User {target.id} not confirmed")
+                continue
+            if not setting.subscribe_email:
+                current_app.logger.debug(f"[send_mail] User {target.id} unsubscribed from emails")
+                continue
+
+            profile = profiles.get(target.id)
+            if actor:
+                mail_data = content_creator(context_obj, profile, target, record_url, actor)
+            else:
+                mail_data = content_creator(context_obj, profile, target, record_url)
+
+            recipient = target.email
+            current_app.logger.debug(f"[send_mail] Sending to: {target.id}")
+            res = send_mail(mail_data.get("subject"), recipient, mail_data.get("body"))
+
+            if res:
+                send_count += 1
+
+        except Exception:
+            current_app.logger.exception(
+                f"[send_mail] Failed for user_id: {target.id}"
+            )
+
+    current_app.logger.debug(f"[send_mail] Total mails sent: {send_count}")
+    return send_count
+
+
+# --- 各イベントから呼び出すエントリーポイント ---
+
+def send_mail_item_deleted(pid_value, deposit, user_id):
+    """
+    Send a notification email when an item is deleted.
+
+    Args:
+        pid_value (str): The persistent identifier (PID) of the deleted item.
+        deposit (dict): The deposit data of the deleted item.
+        user_id (int): The ID of the user who initiated the deletion.
+
+    Returns:
+        int: The total number of successfully sent emails.
+    """
+    record_url = request.host_url + f"records/{pid_value}"
+    current_app.logger.debug(f"[send_mail_item_deleted] pid_value: {pid_value}, user_id: {user_id}")
+    return send_mail_from_notification_info(
+        get_info_func=lambda obj: get_notification_targets(obj, user_id),
+        context_obj=deposit,
+        content_creator=create_item_deleted_data,
+        record_url=record_url
+    )
+
+
+def send_mail_delete_request(activity):
+    """
+    Send a notification email for a delete request.
+
+    Args:
+        activity (Activity): The activity object containing details about the delete request.
+
+    Returns:
+        int: The total number of successfully sent emails.
+    """
+    record_url = request.host_url + f"workflow/activity/detail/{activity.activity_id}"
+    current_app.logger.debug(f"[send_mail_delete_request] activity: {activity.activity_id}")
+    return send_mail_from_notification_info(
+        get_info_func=get_notification_targets_approver,
+        context_obj=activity,
+        content_creator=create_delete_request_data,
+        record_url=record_url
+    )
+
+
+def send_mail_delete_approved(pid_value, deposit, activity, user_id):
+    """
+    Send a notification email when a delete request is approved.
+
+    Args:
+        pid_value (str): The persistent identifier (PID) of the approved item.
+        deposit (dict): The deposit data of the approved item.
+        activity (Activity): The activity object containing details about the delete approval.
+        user_id (int): The ID of the user who approved the delete request.
+
+    Returns:
+        int: The total number of successfully sent emails.
+    """
+    record_url = request.host_url + f"records/{pid_value}"
+    current_app.logger.debug(f"[send_mail_delete_approved] pid_value: {pid_value}, user_id: {user_id}")
+    return send_mail_from_notification_info(
+        get_info_func=lambda obj: get_notification_targets(obj, user_id),
+        context_obj=deposit,
+        content_creator=lambda deposit, profile, target, url: create_delete_approved_data(deposit, profile, target, url, activity, user_id),
+        record_url=record_url
+    )
+
+def send_mail_direct_registered(pid_value, user_id):
+    """
+    Send a notification email for a directly registered item.
+
+    Args:
+        pid_value (str): The persistent identifier (PID) of the registered item.
+        user_id (int): The ID of the user who registered the item.
+
+    Returns:
+        int: The total number of successfully sent emails.
+    """
+    deposit = WekoRecord.get_record_by_pid(pid_value)
+    record_url = request.host_url + f"records/{pid_value}"
+    current_app.logger.debug(f"[send_mail_direct_registered] pid_value: {pid_value}, user_id: {user_id}")
+    return send_mail_from_notification_info(
+        get_info_func=lambda obj: get_notification_targets(obj, user_id),
+        context_obj=deposit,
+        content_creator=create_direct_registered_data,
+        record_url=record_url
+    )
