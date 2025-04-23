@@ -5178,7 +5178,9 @@ def handle_flatten_data_encode_filename(list_record, data_path):
                         os.path.join(data_path, filename),
                         os.path.join(data_path, encoded_filename)
                     )
-                current_app.logger.info(f"flattened and encoded file: {filename}")
+                    current_app.logger.info(
+                        f"flattened and encoded file: {filename}"
+                    )
 
                 # for Direct registration
                 item["filepath"].append(encoded_filename)
