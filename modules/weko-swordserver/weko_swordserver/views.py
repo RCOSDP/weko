@@ -293,6 +293,15 @@ def post_service_document():
             "Invalid register type in admin settings", ErrorType.ServerError
         )
 
+    if check_result.get("error"):
+        current_app.logger.error(
+            f"Error in check_import_items: {check_result.get('error')}"
+        )
+        raise WekoSwordserverException(
+            f"Item check error: {check_result.get('error')}",
+            ErrorType.ContentMalformed
+        )
+
     # Validate items in the check result
     for item in check_result["list_record"]:
         if not item or item.get("errors"):
@@ -303,10 +312,9 @@ def post_service_document():
             )
             current_app.logger.error(f"Error in check_import_items: {error_msg}")
             raise WekoSwordserverException(
-                f"Error in check_import_items: {error_msg}",
+                f"Item check error: {error_msg}",
                 ErrorType.ContentMalformed
             )
-
 
         if item.get("status") != "new":
             current_app.logger.error(
