@@ -2216,12 +2216,12 @@ def import_items_to_activity(item, request_info):
     comment = metadata.get("comment")
     link_data = item.get("link_data")
     grant_data = item.get("grant_data")
-    metadata_replace = item.get("metadata_replace", False)
+    files_inheritance = item.get("metadata_replace", False)
 
     error = None
     try:
         from weko_workflow.headless.activity import HeadlessActivity
-        headless = HeadlessActivity(_metadata_replace=metadata_replace)
+        headless = HeadlessActivity(_files_inheritance=files_inheritance)
         url, current_action, recid = headless.auto(
             user_id=request_info.get("user_id"),
             workflow_id=workflow_id, item_id=item_id,

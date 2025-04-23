@@ -79,13 +79,20 @@ class HeadlessActivity(WorkActivity):
     http://weko3.example.org/workflow/activity/detail/A-EXAMPLE-0001 end_action 1
     """
     def __init__(
-            self, _lock_skip=True, _metadata_replace=True, _files_replace=True
+            self, _lock_skip=True,
+            _metadata_inheritance=False, _files_inheritance=False
         ):
         """Initialize.
 
         Args:
             _lock_skip (bool, optional): Defaults to True.
-                if True, skip user and activity lock and unlock process.
+                If True, skips the user and activity lock/unlock process.
+            _metadata_inheritance (bool, optional): Defaults to True.
+                If True, inherits metadata from the previous version.
+                If False, replaces all metadata.
+            _files_inheritance (bool, optional): Defaults to True.
+                If True, inherits files from the previous version.
+                If False, replaces all files.
         """
         super().__init__()
         self.user = None
@@ -99,8 +106,8 @@ class HeadlessActivity(WorkActivity):
         self._model = None
         self._deposit = None
         self._lock_skip = _lock_skip
-        self._metadata_replace = _metadata_replace
-        self._files_replace= _files_replace
+        self._metadata_inheritance = _metadata_inheritance
+        self._files_inheritance= _files_inheritance
 
         actions = Action().get_action_list()
         self._actions = {
@@ -429,7 +436,7 @@ class HeadlessActivity(WorkActivity):
 
             db.session.commit()
 
-            if not self._metadata_replace:
+            if self._metadata_inheritance:
                 # update old metadata partially
                 metadata = {**_old_metadata, **metadata}
             # if metadata_replace is True, replace all metadata
@@ -444,7 +451,7 @@ class HeadlessActivity(WorkActivity):
             }
 
             # TODO: update submited files and reuse other files
-            if self._files_replace:
+            if not self._files_inheritance:
                 data["files"] = self.files_info = self._upload_files(files)
             else:
                 _new_files = self._upload_files(files)
