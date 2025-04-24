@@ -258,6 +258,7 @@ class SchemaTree:
                 if isinstance(schema, OAIServerSchema) and self._schema_name == schema.schema_name:
                     self._location = schema.schema_location
                     self._target_namespace = schema.target_namespace
+        self._remain_keys = []
 
     def get_ignore_item_from_option(self):
         """Get all keys of properties that is enable Hide option in metadata."""
@@ -278,6 +279,29 @@ class SchemaTree:
                 # only get hide option
                 ignore_dict_all[element_info[0]] = element_info[3].get("hide", False)
         return ignore_dict_all, ignore_list_parents
+    
+    def remove_empty_tag(self, mp):
+        flag = False
+        if not mp:
+            flag = True 
+        elif isinstance(mp, str) and (not mp or mp not in self._remain_keys):
+            flag = True
+        elif isinstance(mp, dict):
+            remove_list = []
+            for it in mp:
+                if self.remove_empty_tag(mp[it]):
+                    remove_list.append(it)
+            for it in remove_list:
+                mp.pop(it)
+            if not mp:
+                flag = True
+        elif isinstance(mp, list):
+            for it in mp:
+                if self.remove_empty_tag(it):
+                    mp.remove(it)
+            if not mp:
+                flag = True
+        return flag
 
     def get_mapping_data(self):
         """
@@ -703,24 +727,6 @@ class SchemaTree:
             # current_app.logger.debug('atr_name:{0}'.format(atr_name))
             # atr_name:Resource Type
 
-            remain_keys = []
-
-            def remove_empty_tag(mp):
-                if isinstance(mp, str) and (not mp or mp not in remain_keys):
-                    return True
-                elif isinstance(mp, dict):
-                    remove_list = []
-                    for it in mp:
-                        if remove_empty_tag(mp[it]):
-                            remove_list.append(it)
-                    for it in remove_list:
-                        mp.pop(it)
-                elif isinstance(mp, list):
-                    for it in mp:
-                        if remove_empty_tag(it):
-                            mp.remove(it)
-                return False
-
             def get_type_item(item_type_mapping, atr_name):
                 type_item = None
                 if atr_name == 'contributor':
@@ -866,7 +872,7 @@ class SchemaTree:
                 vlc = copy.deepcopy(vl)
                 for node_result, node_result_key in get_key_value(vlc):
                     if node_result_key == self._atr:
-                        get_atr_value_lst(node_result, atr_vm, remain_keys)
+                        get_atr_value_lst(node_result, atr_vm, self._remain_keys)
                     else:
                         if not node_result.get(self._v):
                             continue
@@ -878,7 +884,7 @@ class SchemaTree:
                         # if not have expression or formula
                         if len(lk) == 1:
                             nlst = get_items_value_lst(
-                                atr_vm.copy(), lk[0].strip(), remain_keys,
+                                atr_vm.copy(), lk[0].strip(), self._remain_keys,
                                 node_result, k)
                             if nlst:
                                 # [['Update PDF 3']]
@@ -889,7 +895,7 @@ class SchemaTree:
                             nlst = []
                             for val in lk:
                                 klst = get_items_value_lst(
-                                    atr_vm, val.strip(), remain_keys,
+                                    atr_vm, val.strip(), self._remain_keys,
                                     node_result, k)
                                 nlst.append(klst)
 
@@ -897,7 +903,7 @@ class SchemaTree:
                                 node_result[self._v] = analyze_value_with_exp(
                                     nlst, exp)
                 if remove_empty:
-                    remove_empty_tag(vlc)
+                    self.remove_empty_tag(vlc)
                 vlst.append({ky: vlc})
 
             for vlist_item in vlst:
