@@ -1289,6 +1289,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                 current_app.logger.error(f"Failed to delete index: {index_id}")
                 return make_response(jsonify({'status': 500, 'error': 'Internal Server Error: Failed to delete index'}), 500)
             current_app.logger.info(f"Delete index: {index_id}")
+            self.save_redis()
             return make_response(jsonify({'status': 200, 'message': 'Index deleted successfully.'}), 200)
 
         except (SameContentException, PermissionError, IndexNotFound404Error) as ex:
