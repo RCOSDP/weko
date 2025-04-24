@@ -5112,7 +5112,7 @@ def create_tsv_row(dict, data_response):
     return result_row
 
 
-def handle_metadata_by_doi(item, doi, meta_data_api):
+def handle_metadata_by_doi(item, doi, meta_data_api=None):
     """Handle doi.
 
     Args:
