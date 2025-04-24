@@ -41,19 +41,19 @@ class IndexesSchemaBase(Schema):
     This is based on weko_index_tree.models.Index.
 
     """
-    parent = fields.Integer(missing=0)
+    parent = fields.Integer(required=True)
     """Parent Information of the index."""
 
     index_name = fields.String()
     """Name of the index."""
 
-    index_name_english = fields.String()
+    index_name_english = fields.String(validate=lambda x: len(x) > 0)
     """English Name of the index."""
 
     index_link_name = fields.String()
     """Name of the index link."""
 
-    index_link_name_english = fields.String()
+    index_link_name_english = fields.String(validate=lambda x: len(x) > 0)
     """English Name of the index link."""
 
     index_link_enabled = fields.Boolean()
