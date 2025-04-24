@@ -1,14 +1,14 @@
 # Japanese translations for weko-admin.
-# Copyright (C) 2018 National Institute of Informatics
+# Copyright (C) 2025 National Institute of Informatics
 # This file is distributed under the same license as the weko-admin project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: weko-admin 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-04-01 13:10+0900\n"
-"PO-Revision-Date: 2018-01-19 19:54+0900\n"
+"POT-Creation-Date: 2025-04-01 15:39+0900\n"
+"PO-Revision-Date: 2025-04-24 10:54+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
 "Language-Team: ja <LL@li.org>\n"
@@ -1702,6 +1702,12 @@ msgstr ""
 msgid "Unapproved Items Exit"
 msgstr "このアプリケーションを使用するワークフローに未承認のアイテムがあります。すべて承認されるまで、設定の変更はできません。"
 
+msgid "This Mapping is using SWORD API JSON-LD."
+msgstr "このマッピングはSWORD API JSON-LDで使用されています。"
+
+msgid "\"Original\" means the original metadata received via the SWORD API."
+msgstr "\"Original\"はSWORD API経由で受信したもともとのメタデータを指します。"
+
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_mapping_settings.html:93
 msgid "Item Type"
 msgstr "アイテムタイプ"
@@ -1718,7 +1724,7 @@ msgstr "登録方式"
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:139
 #: weko_admin/templates/weko_admin/admin/sword_api_settings.html:96
 msgid "WorkFlow Cautionary Note"
-msgstr "選択したワークフローに紐づくアイテムタイプのみ登録可能となります"
+msgstr "選択したワークフローに紐づくアイテムタイプのみ登録可能となります。"
 
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:161
 #, fuzzy

@@ -2072,6 +2072,15 @@ class JsonldMappingView(ModelView):
                 .format(model.name)
             )
 
+        # check Using sword_clients
+        using_sword_clients = False
+        sword_clients = SwordClient.get_clients_by_mapping_id(model.id)
+        if sword_clients:
+            current_app.logger.info(
+                "Cannot edit JSON-LD mapping because this mapping is using sword_clients."
+            )
+            using_sword_clients = True
+
         if request.method == "GET":
             # GET
             form = FlaskForm(request.form)
@@ -2102,11 +2111,15 @@ class JsonldMappingView(ModelView):
                 current_model_json=current_model_json,
                 can_edit=can_edit,
                 id=id,
+                using_sword_clients=using_sword_clients,
             )
         else:
             # POST
             if not can_edit:
                 return jsonify("Unapproved items exit"), 400
+
+            if using_sword_clients:
+                return jsonify("using sword_clients exit"), 400
 
             name = request.json.get("name")
             mapping = request.json.get("mapping")

@@ -1696,6 +1696,12 @@ msgstr ""
 msgid "Unapproved Items Exit"
 msgstr ""
 
+msgid "This Mapping is using SWORD API JSON-LD."
+msgstr ""
+
+msgid "\"Original\" means the original metadata received via the SWORD API."
+msgstr ""
+
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_mapping_settings.html:93
 msgid "Item Type"
 msgstr ""
