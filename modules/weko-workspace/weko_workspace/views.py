@@ -36,6 +36,8 @@ from flask_login import current_user, login_required
 from flask_menu import register_menu
 from weko_records.api import FeedbackMailList
 from invenio_db import db
+from invenio_pidstore.errors import PIDDoesNotExistError
+from invenio_pidstore.models import PersistentIdentifier
 from sqlalchemy.exc import SQLAlchemyError
 from flask import session
 
@@ -130,42 +132,37 @@ def get_workspace_itemlist():
 
     # 2,ESからアイテム一覧取得処理
     recordsData = get_es_itemlist()
-
     # 7,ユーザー名と所属情報取得処理
     userNm = get_userNm_affiliation()
 
-    if ( not recordsData or "hits" not in recordsData or "hits" not in recordsData["hits"]):
-        return render_template(
-            current_app.config["WEKO_WORKSPACE_BASE_TEMPLATE"],
-            username=userNm,
-            workspaceItemList=[],
-            defaultconditions=changeLang(lang, jsonCondition),
-        )
-
-    # Get items owned by this user.
-    recordsDataList = []
-    for item in recordsData["hits"]["hits"]:
-        metadata = item.get("metadata", {})
-        if (
-            metadata.get("weko_creator_id") == str(current_user.id)
-            or metadata.get("weko_shared_id") == current_user.id
-        ):
-            recordsDataList.append(item)
-
     # →ループ処理
-    for hit in recordsDataList:
+    for record in recordsData:
+        source = record.get("_source", {})
+        if not source or (
+            str(source.get("weko_creator_id", None)) != str(current_user.get_id()) and
+            str(source.get("weko_shared_id", None)) != str(current_user.get_id())
+        ):
+            # If user ID does not match, skip this record
+            current_app.logger.debug(f"[workspace] skip item \"_id\": {record.get('_id')}")
+            continue
+
         workspaceItem = copy.deepcopy(current_app.config["WEKO_WORKSPACE_ITEM"])
 
         # ファイルリストと査読状況を取得
-        itemMetadata = hit["metadata"]["_item_metadata"]
-        fileList, peerReviewed = extract_metadata_info(itemMetadata)
+        fileList, peerReviewed = extract_metadata_info(source.get("_item_metadata", {}))
 
         # "recid": None,  # レコードID
-        recid = hit["id"]
-        workspaceItem["recid"] = str(recid)
+        try:
+            pid = PersistentIdentifier.get_by_object("recid", "rec", record.get("_id"))
+        except PIDDoesNotExistError as e:
+            print(f"Error: {e}")
+            continue
+        recid = pid.pid_value
+        workspaceItem["recid"] = recid
 
         # "title": None,  # タイトル
-        workspaceItem["title"] = hit["metadata"].get("title", [])[0]
+        title = source.get("title", [])
+        workspaceItem["title"] = title[0] if title else ""
 
         # "favoriteSts": None,  # お気に入りステータス状況
         workspaceItem["favoriteSts"] = (
@@ -185,20 +182,21 @@ def get_workspace_itemlist():
         workspaceItem["peerReviewSts"] = peerReviewed
 
         # "doi": None,  # DOIリンク
-        identifiers = hit["metadata"].get("identifier", [])
+        identifiers = source.get("identifier", [])
         if identifiers:
             workspaceItem["doi"] = identifiers[0].get("value", "")
         else:
             workspaceItem["doi"] = ""
 
         # "resourceType": None,  # リソースタイプ
-        workspaceItem["resourceType"] = hit["metadata"].get("type", [])[0]
+        resourceType = source.get("type", [])
+        workspaceItem["resourceType"] = resourceType[0] if resourceType else ""
 
         #  "authorlist": None,   著者リスト[著者名]
         workspaceItem["authorlist"] = (
-            hit["metadata"]["creator"]["creatorName"]
-            if "creator" in hit["metadata"]
-            and hit["metadata"]["creator"]["creatorName"]
+            source["creator"]["creatorName"]
+            if "creator" in source
+            and source["creator"]["creatorName"]
             else None
         )
 
@@ -212,17 +210,17 @@ def get_workspace_itemlist():
         workspaceItem["itemStatus"] = get_item_status(str(recid))
 
         # "publicationDate": None,  # 出版年月日
-        workspaceItem["publicationDate"] = hit["metadata"]["publish_date"]
+        workspaceItem["publicationDate"] = source.get("publish_date", "")
 
         # "magazineName": None,  # 雑誌名
         workspaceItem["magazineName"] = (
-            hit["metadata"]["sourceTitle"][0]
-            if "sourceTitle" in hit["metadata"]
+            source["sourceTitle"][0]
+            if "sourceTitle" in source
             else None
         )
 
         # "conferenceName": None,  # 会議名
-        conference = hit["metadata"].get("conference", [])
+        conference = source.get("conference", [])
         if conference and conference["conferenceName"]:
             workspaceItem["conferenceName"] = conference["conferenceName"][0]
         else:
@@ -230,20 +228,20 @@ def get_workspace_itemlist():
 
         # "volume": None,  # 巻
         workspaceItem["volume"] = (
-            hit["metadata"].get("volume", [])[0]
-            if hit["metadata"].get("volume", [])
+            source.get("volume", [])[0]
+            if source.get("volume", [])
             else None
         )
 
         # "issue": None,  # 号
         workspaceItem["issue"] = (
-            hit["metadata"].get("issue", [])[0]
-            if hit["metadata"].get("issue", [])
+            source.get("issue", [])[0]
+            if source.get("issue", [])
             else None
         )
 
         # "funderName": None,  # 資金別情報機関名
-        fundingReference = hit["metadata"].get("fundingReference", [])
+        fundingReference = source.get("fundingReference", [])
         if fundingReference and fundingReference["funderName"]:
             workspaceItem["funderName"] = fundingReference["funderName"][0]
 
@@ -291,25 +289,25 @@ def get_workspace_itemlist():
         # "relation": None,  # 関連情報リスト
         relations = []
         relationLen = (
-            len(hit["metadata"]["relation"]["relatedTitle"])
-            if "relation" in hit["metadata"]
+            len(source["relation"]["relatedTitle"])
+            if "relation" in source
             else 0
         )
 
-        if "relation" in hit["metadata"]:
+        if "relation" in source:
             for i in range(relationLen):
                 # "relationType": None,  # 関連情報タイプ
-                workspaceItem["relationType"] = hit["metadata"].get("relation", [])[
+                workspaceItem["relationType"] = source.get("relation", [])[
                     "@attributes"
                 ]["relationType"][i][0]
 
                 # # "relationTitle": None,  # 関連情報タイトル
-                workspaceItem["relationTitle"] = hit["metadata"].get("relation", [])[
+                workspaceItem["relationTitle"] = source.get("relation", [])[
                     "relatedTitle"
                 ][i]
 
                 # # "relationUrl": None,  # 関連情報URLやDOI
-                workspaceItem["relationUrl"] = hit["metadata"].get("relation", [])["relatedIdentifier"][i]["value"]
+                workspaceItem["relationUrl"] = source.get("relation", [])["relatedIdentifier"][i]["value"]
 
                 relation = {
                     "relationType": workspaceItem["relationType"],
@@ -869,6 +867,7 @@ def item_register_save():
     item = data.get('recordModel', '')
     settings = AdminSettings.get('workspace_workflow_settings')
 
+    user_id = current_user.get_id()
     indexIdList = []
     indexList = data.get('indexlist', '')
     for indexName in indexList:
@@ -902,7 +901,6 @@ def item_register_save():
         workspace_register = True
         try:
             headless = HeadlessActivity()
-            user_id=current_user.get_id()
             api_response = headless.auto(
                 user_id= user_id, workflow_id=settings.work_flow_id,
                 index=index, metadata=item, files=files, comment=comment,
@@ -960,7 +958,7 @@ def item_register_save():
             handle_check_and_prepare_publish_status(list_record)
 
 
-            request_info = {}
+            request_info = {"user_id": user_id}
 
             register_result = import_items_to_system(list_record[0], request_info=request_info)
             if not register_result.get("success"):

@@ -21,6 +21,7 @@
 """Configuration for weko-workspace."""
 
 from flask_babelex import lazy_gettext as _
+from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 
 # Front-end variable definition
 WEKO_WORKSPACE_BASE_TEMPLATE = 'weko_workspace/workspace_base.html'
@@ -302,6 +303,11 @@ WEKO_WORKSPACE_AUTOFILL_JAMAS_REQUIRED_ITEM = [
     "relation"
 ]
 """Jamas required item"""
+
+WEKO_WORKSPACE_ITEM_SEARCH_INDEX = "{}-weko".format(index_prefix)
+"""Search index for WEKO workspace item."""
+WEKO_WORKSPACE_ITEM_SEARCH_TYPE = "item-v1.0.0"
+"""Search type for WEKO workspace item."""
 
 
 WEKO_WORKFLOW_BASE_TEMPLATE = 'weko_workflow/base.html'

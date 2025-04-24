@@ -22,6 +22,10 @@
 
 import json
 from datetime import datetime,timezone
+import traceback
+from elasticsearch_dsl.query import Q
+from elasticsearch.exceptions import TransportError
+from invenio_search import RecordsSearch
 import requests
 from flask import current_app, request
 from flask_babelex import gettext as _
@@ -29,6 +33,7 @@ from flask_security import current_user
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
 from sqlalchemy.exc import SQLAlchemyError
+from weko_schema_ui.models import PublishStatus
 from weko_user_profiles.models import UserProfile
 from weko_records.models import OaStatus
 from weko_admin.utils import StatisticMail
@@ -94,29 +99,68 @@ def get_es_itemlist():
                       returns `None` if an error occurs.
 
     Raises:
-        requests.exceptions.RequestException: If an HTTP error occurs, such as a timeout or invalid response.
-        json.JSONDecodeError: If the response cannot be decoded as JSON.
-        KeyError: If the expected keys are missing in the response data.
+        TransportError: If an error occurs during the Elasticsearch query, returns `None`.
+        Exception: If any other unexpected error occurs, returns `None`.
     """
-    invenio_api_path = "/api/workspace/search"
-    headers = {"Accept": "application/json"}
-    base_url = request.host_url.rstrip("/")
-
     try:
-        response = requests.get(base_url + invenio_api_path, headers=headers)
-        response.raise_for_status()
-        size = response.json()["hits"]["total"]
-        size_param = "?size=" + str(size) if size else ""
+        size = 3
+        search_index = current_app.config["WEKO_WORKSPACE_ITEM_SEARCH_INDEX"]
+        search_type = current_app.config["WEKO_WORKSPACE_ITEM_SEARCH_TYPE"]
+        search_obj = RecordsSearch(index=search_index, doc_type=search_type)
+        search = search_obj.with_preference_param().params(version=True)
 
-        response = requests.get(base_url + invenio_api_path + size_param, headers=headers)
-        response.raise_for_status()
-        records_data = response.json()
-        return records_data
-    except requests.exceptions.RequestException as e:
+        # Set the search query
+        publish_status_match = Q("terms", publish_status=[
+            PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value
+        ])
+        user_id = (
+            current_user.get_id()
+            if current_user and current_user.is_authenticated
+            else None
+        )
+        creator_user_match = Q("match", weko_creator_id=user_id)
+        shared_user_match = Q("match", weko_shared_id=user_id)
+        shuld = []
+        shuld.append(Q("bool", must=[publish_status_match, creator_user_match]))
+        shuld.append(Q("bool", must=[publish_status_match, shared_user_match]))
+        must = []
+        must.append(Q("bool", should=shuld))
+        must.append(Q("bool", must=Q("match", relation_version_is_last="true")))
+        search = search.filter(Q("bool", must=must))
+        search = search.query(Q("bool", must=Q("match_all")))
+
+        # Set size / Exclude content field from the source
+        src = {
+            "size": size,
+            "_source": {"excludes": ["content"]}
+        }
+        search._extra.update(src)
+
+        # Set sorting
+        search = search.sort("-control_number")
+
+        # Execute search. Use search_after to retrieve all records
+        records = []
+        current_app.logger.debug(f"[workspace] search obj: {search.to_dict()}")
+        page = search.execute().to_dict()
+        current_app.logger.debug(f"[workspace] search result: {page}")
+        while page.get('hits', {}).get('hits', []):
+            records.extend(page.get('hits', {}).get('hits', []))
+            if len(page.get('hits', {}).get('hits', [])) < size:
+                break
+            search = search.extra(search_after=page.get('hits', {}).get('hits', [])[-1].get('sort'))
+            current_app.logger.debug(f"[workspace] search obj: {search.to_dict()}")
+            page = search.execute().to_dict()
+            current_app.logger.debug(f"[workspace] search result: {page}")
+        return records
+    
+    except TransportError as e:
+        traceback.print_exc()
+        current_app.logger.error(f"Failed to get workflow item list from ES: {e} / {search.to_dict()}")
         return None
-    except json.JSONDecodeError as e:
-        return None
-    except KeyError as e:
+    except Exception as e:
+        traceback.print_exc()
+        current_app.logger.error(e)
         return None
 
 
