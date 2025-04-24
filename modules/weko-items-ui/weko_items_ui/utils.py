@@ -4193,6 +4193,8 @@ def check_duplicate(data, is_item=True):
                 matched_recids.add(recid)
                 break
 
+    matched_recids.discard(int(data.get("metainfo", {}).get("id") or 0))
+
     if not matched_recids:
         return False, [], []
 
@@ -4206,6 +4208,8 @@ def check_duplicate(data, is_item=True):
     db.session.commit()
     recids_resource = {r[0] for r in result}
     matched_recids &= recids_resource
+    matched_recids.discard(int(data.get("metainfo", {}).get("id") or 0))
+    
     if not matched_recids:
         return False, [], []
 
