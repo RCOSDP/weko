@@ -103,7 +103,7 @@ def get_es_itemlist():
         Exception: If any other unexpected error occurs, returns `None`.
     """
     try:
-        size = 3
+        size = 10000
         search_index = current_app.config["WEKO_WORKSPACE_ITEM_SEARCH_INDEX"]
         search_type = current_app.config["WEKO_WORKSPACE_ITEM_SEARCH_TYPE"]
         search_obj = RecordsSearch(index=search_index, doc_type=search_type)
