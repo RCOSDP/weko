@@ -41,9 +41,6 @@ class IndexesSchemaBase(Schema):
     This is based on weko_index_tree.models.Index.
 
     """
-    parent = fields.Integer(required=True)
-    """Parent Information of the index."""
-
     index_name = fields.String()
     """Name of the index."""
 
@@ -104,14 +101,45 @@ class IndexesSchemaBase(Schema):
     class Meta:
         strict = True
 
+class IndexCreateSchema(IndexesSchemaBase):
+    """Index create schema."""
 
-class IndexManagementRequestSchema(Schema):
+    parent = fields.Integer(required=True)
+    """Parent Information of the index. Required for creation."""
+
+    class Meta:
+        strict = True
+
+
+class IndexUpdateSchema(IndexesSchemaBase):
+    """Index update schema."""
+
+    parent = fields.Integer()
+    """Parent Information of the index."""
+
+    class Meta:
+        strict = True
+
+
+class IndexCreateRequestSchema(Schema):
     """Index management request schema.
 
     Schema for weko_index_tree.rest.IndexManagementAPI.
     """
 
-    index = fields.Nested(IndexesSchemaBase, required=True)
+    index = fields.Nested(IndexCreateSchema, required=True)
+    """Index field."""
+
+    class Meta:
+        strict = True
+
+class IndexUpdateRequestSchema(Schema):
+    """Index management request schema.
+
+    Schema for weko_index_tree.rest.IndexManagementAPI.
+    """
+
+    index = fields.Nested(IndexUpdateSchema, required=True)
     """Index field."""
 
     class Meta:

@@ -2,7 +2,7 @@ import pytest
 
 from marshmallow import ValidationError
 
-from weko_index_tree.schema import IndexesSchemaBase, validate_public_date, validate_role_or_group
+from weko_index_tree.schema import IndexCreateRequestSchema, IndexCreateSchema, IndexUpdateRequestSchema, validate_public_date, validate_role_or_group
 
 
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_schema.py -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp --full-trace
@@ -44,9 +44,9 @@ def test_validate_public_date():
     assert "Not a valid date format. Use YYYYMMDD." in str(excinfo.value)
 
 
-# class IndexesSchemaBase:
-# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_schema.py::TestIndexesSchemaBase -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp --full-trace
-class TestIndexesSchemaBase:
+# class IndexCreateSchema:
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_schema.py::TestIndexCreateSchema -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp --full-trace
+class TestIndexCreateSchema:
     def test_valid_index(self):
         index = {
             "parent": 1,
@@ -70,7 +70,7 @@ class TestIndexesSchemaBase:
             "online_issn": "1234-5678",
         }
 
-        schema = IndexesSchemaBase()
+        schema = IndexCreateSchema()
         result = schema.load(index).data
         assert result == index
 
@@ -97,7 +97,7 @@ class TestIndexesSchemaBase:
             "invalid_field": "Invalid"      # Extra field not in schema
         }
         # Test with string values for boolean fields
-        schema = IndexesSchemaBase()
+        schema = IndexCreateSchema()
         result = schema.load(index_s).data
 
         assert result["parent"] == 2
@@ -132,7 +132,7 @@ class TestIndexesSchemaBase:
             "online_issn": "1234-5678",
         }
 
-        schema = IndexesSchemaBase()
+        schema = IndexCreateSchema()
         with pytest.raises(ValidationError) as excinfo:
             schema.load(index)
         assert "parent" in excinfo.value.messages
@@ -142,3 +142,145 @@ class TestIndexesSchemaBase:
         assert "public_date" in excinfo.value.messages
         assert "browsing_role" in excinfo.value.messages
         assert "contribute_role" in excinfo.value.messages
+
+        index = {}
+
+        schema = IndexCreateSchema()
+        with pytest.raises(ValidationError) as excinfo:
+            schema.load(index)
+        assert "parent" in excinfo.value.messages
+
+
+# class IndexCreateRequestSchema:
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_schema.py::TestIndexCreateRequestSchema::test_invalid_index -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp --full-trace
+class TestIndexCreateRequestSchema:
+    def test_valid_index(self):
+        json = {
+            "index": {
+                "parent": 1,
+                "index_name": "Index Name",
+                "index_name_english": "Index Name English",
+                "index_link_name": "Index Link Name",
+                "index_link_name_english": "Index Link Name English",
+                "index_link_enabled": True,
+                "comment": "Comment",
+                "more_check": False,
+                "display_no": 1,
+                "harvest_public_state": True,
+                "display_format": "Format",
+                "public_state": True,
+                "public_date": "20230101",
+                "rss_status": True,
+                "browsing_role": "3,4,-98,-99",
+                "contribute_role": "3,4,-98,-99",
+                "browsing_group": "",
+                "contribute_group": "",
+                "online_issn": "1234-5678",
+            }
+        }
+
+        schema = IndexCreateRequestSchema()
+        result = schema.load(json).data
+        assert result == json
+
+        json = {
+            "index": {
+                "parent": "2",                  # String instead of integer
+                "index_name": "Index Name",
+                "index_name_english": "Index Name English",
+                "index_link_name": "Index Link Name",
+                "index_link_name_english": "Index Link Name English",
+                "index_link_enabled": "True",   # String instead of boolean
+                "comment": "Comment",
+                "more_check": "False",          # String instead of boolean
+                "display_no": "1",              # String instead of integer
+                "harvest_public_state": "true", # String instead of boolean
+                "display_format": "Format",
+                "public_state": "false",        # String instead of boolean
+                "public_date": "20230101",
+                "rss_status": 1,                # String instead of boolean
+                "browsing_role": "3,4,-98,-99",
+                "contribute_role": "3,4,-98,-99",
+                "browsing_group": "",
+                "contribute_group": "",
+                "online_issn": "1234-5678",
+                "invalid_field": "Invalid"      # Extra field not in schema
+            }
+        }
+
+        schema = IndexCreateRequestSchema()
+        result = schema.load(json).data
+        assert result["index"]["parent"] == 2
+        assert result["index"]["index_link_enabled"] is True
+        assert result["index"]["more_check"] is False
+        assert result["index"]["display_no"] == 1
+        assert result["index"]["harvest_public_state"] is True
+        assert result["index"]["public_state"] is False
+        assert result["index"]["rss_status"] is True
+        assert "invalid_field" not in result
+
+    def test_invalid_index(self):
+        json = {}
+
+        schema = IndexCreateRequestSchema()
+        with pytest.raises(ValidationError) as excinfo:
+            schema.load(json)
+        assert "index" in excinfo.value.messages
+        assert "parent" in excinfo.value.messages["index"]
+
+        json = {
+            "index": {}
+        }
+        schema = IndexCreateRequestSchema()
+        with pytest.raises(ValidationError) as excinfo:
+            schema.load(json)
+        assert "index" in excinfo.value.messages
+        assert "parent" in excinfo.value.messages["index"]
+
+
+# class IndexUpdateRequestSchema:
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_schema.py::TestIndexUpdateRequestSchema -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp --full-trace
+class TestIndexUpdateRequestSchema:
+    def test_valid_index(self):
+        json = {
+            "index": {
+                "parent": 1,
+                "index_name": "Index Name",
+                "index_name_english": "Index Name English",
+                "index_link_name": "Index Link Name",
+                "index_link_name_english": "Index Link Name English",
+                "index_link_enabled": True,
+                "comment": "Comment",
+                "more_check": False,
+                "display_no": 1,
+                "harvest_public_state": True,
+                "display_format": "Format",
+                "public_state": True,
+                "public_date": "20230101",
+                "rss_status": True,
+                "browsing_role": "3,4,-98,-99",
+                "contribute_role": "3,4,-98,-99",
+                "browsing_group": "",
+                "contribute_group": "",
+                "online_issn": "1234-5678",
+            }
+        }
+
+        schema = IndexUpdateRequestSchema()
+        result = schema.load(json).data
+        assert result == json
+
+        json = {
+            "index": {}
+        }
+        schema = IndexUpdateRequestSchema()
+        result = schema.load(json).data
+        assert result == json
+
+    def test_invalid_index(self):
+        json = {}
+
+        schema = IndexUpdateRequestSchema()
+        with pytest.raises(ValidationError) as excinfo:
+            schema.load(json)
+        assert "index" in excinfo.value.messages

@@ -12,6 +12,7 @@ from redis.exceptions import RedisError
 from sqlalchemy.exc import SQLAlchemyError
 
 from weko_admin.models import AdminLangSettings
+from weko_index_tree.models import Index
 from weko_index_tree.rest import (
     need_record_permission,
     create_blueprint
@@ -610,6 +611,10 @@ class TestIndexManagementAPI:
     # │   ├── child Index 1 [1740974554289]
     # │   ├── child Index 2 [1740974612379]
 
+    @property
+    def count_indices(self):
+        return Index.query.count()
+
     # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexManagementAPI::test_get_v1 -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace -p no:warnings
     def test_get_v1(self, app, client_rest, auth_headers_noroleuser, auth_headers_sysadmin, auth_headers_sysadmin_without_scope, create_auth_headers, indices_for_api):
         """
@@ -813,16 +818,25 @@ class TestIndexManagementAPI:
             assert response.status_code == 400
 
             url = "v1/tree/index/"
+            # empty body
             response = client_rest.post(url, headers=auth_headers_sysadmin)
             assert response.status_code == 400
+            assert response.json["message"] == "Bad Request: Failed to parse provided."
+            # invalid body
             response = client_rest.post(url, headers=auth_headers_sysadmin,json=123)
             assert response.status_code == 400
+            assert response.json["message"] == "Bad Request: Invalid payload, {'_schema': ['Invalid input type.']}"
+            # missing required field
+            response = client_rest.post(url, headers=auth_headers_sysadmin,json={})
+            assert response.status_code == 400
+            assert response.json["message"] == "Bad Request: Invalid payload, {'index': {'parent': ['Missing data for required field.']}}"
 
             from copy import deepcopy
             invalid_parrent_id = deepcopy(json_)
             invalid_parrent_id["index"]["parent"] = 999999
             response = client_rest.post(url, headers=auth_headers_sysadmin,json=invalid_parrent_id)
             assert response.status_code == 404
+            assert response.json["message"] == "Index not found: 999999."
 
             private_parrent_id = deepcopy(json_)
             private_parrent_id["index"]["parent"] = 1740974499997
@@ -833,8 +847,13 @@ class TestIndexManagementAPI:
                 assert response.status_code == 403
 
             url = "v1/tree/index/"
+            # parent is not deleted
+            count_before = self.count_indices
             response = client_rest.post(url, headers=auth_headers_sysadmin, json=private_parrent_id)
             assert response.status_code == 200
+            data = response.json
+            assert data["index"]["parent"] == 1740974499997
+            assert self.count_indices == count_before + 1, "Index has not been created successfully"
 
             # parent is deleted
             url = "v1/tree/index/"
@@ -842,7 +861,8 @@ class TestIndexManagementAPI:
             parent.is_deleted = True
             db.session.commit()
             response = client_rest.post(url, headers=auth_headers_sysadmin, json=private_parrent_id)
-            assert response.status_code == 204
+            assert response.status_code == 404
+            assert response.json["message"] == "Index is deleted: 1740974499997."
 
             # エラー
             with patch("weko_index_tree.api.Indexes.create", return_value=None):
@@ -851,9 +871,11 @@ class TestIndexManagementAPI:
                 assert response.status_code == 500
 
             with patch("weko_index_tree.api.Indexes.update", return_value=None):
+                count_before = self.count_indices
                 url = "v1/tree/index/"
                 response = client_rest.post(url, headers=auth_headers_sysadmin, json=json_)
                 assert response.status_code == 500
+                assert self.count_indices == count_before, "Index has been created successfully"
 
                 # DBエラーを発生させるために `Indexes.get_all_indexes` をモック
             with patch("weko_index_tree.api.Indexes.create", side_effect=SQLAlchemyError):
@@ -861,14 +883,24 @@ class TestIndexManagementAPI:
                 response = client_rest.post(url, headers=auth_headers_sysadmin, json=json_)
                 assert response.status_code == 500
 
-            with patch("weko_index_tree.api.Indexes.create", side_effect=Exception):
+            with patch("weko_index_tree.api.Indexes.update", side_effect=SQLAlchemyError):
+                count_before = self.count_indices
                 url = "v1/tree/index/"
                 response = client_rest.post(url, headers=auth_headers_sysadmin, json=json_)
                 assert response.status_code == 500
+                assert self.count_indices == count_before, "Index has been created successfully"
+
+            with patch("weko_index_tree.api.Indexes.update", side_effect=Exception):
+                count_before = self.count_indices
+                url = "v1/tree/index/"
+                response = client_rest.post(url, headers=auth_headers_sysadmin, json=json_)
+                assert response.status_code == 500
+                assert self.count_indices == count_before, "Index has been created successfully"
 
     def create_index_with_default_values(self, client_rest, auth_headers):
         """Test creating an index with empty JSON to ensure default values are used."""
-        json_ = {"index": {}}
+        count_before = self.count_indices
+        json_ = {"index": {"parent": 0}}
         url = "v1/tree/index/"
         response = client_rest.post(url, headers=auth_headers, json=json_)
         assert response.status_code == 200
@@ -896,6 +928,7 @@ class TestIndexManagementAPI:
         assert created_index_db.browsing_group == ""
         assert created_index_db.contribute_group == ""
         assert created_index_db.online_issn == ""
+        assert self.count_indices == count_before + 1, "Index has not been created successfully"
 
         # print("Test passed: Index created with default values.")
 
@@ -903,6 +936,7 @@ class TestIndexManagementAPI:
         """
         正常にインデックスを作成できるか確認（200）
         """
+        count_before = self.count_indices
         url = "v1/tree/index/"
         response = client_rest.post(url, headers=auth_headers, json=json_)
         assert response.status_code == 200
@@ -910,6 +944,7 @@ class TestIndexManagementAPI:
         assert "index" in data, "レスポンスに 'index' キーが含まれていない"
         assert data["index"]["index_name"] == "テストインデックス", "インデックス名が一致しない"
         assert data["index"]["index_name_english"] == "Test Index", "英語のインデックス名が一致しない"
+        assert self.count_indices == count_before + 1, "Index has not been created successfully"
 
     def run_create_index_unauthorized(self, app, client_rest):
         """
@@ -945,10 +980,11 @@ class TestIndexManagementAPI:
         """
         DBエラー発生時に500エラーを返すか確認
         """
+        count_before = self.count_indices
         url = "v1/tree/index/"
         payload = {
             "index": {
-                "parent_id": "0",
+                "parent": "0",
                 "index_name": "DB Error Test"
             }
         }
@@ -957,9 +993,10 @@ class TestIndexManagementAPI:
         with patch("weko_index_tree.api.Indexes.create", side_effect=SQLAlchemyError):
             response = client_rest.post(url, headers=auth_headers, json=payload)
             assert response.status_code == 500, "DBエラー発生時のリクエストが500にならなかった"
+            assert self.count_indices == count_before, "Index has been created when it should not have been"
 
     # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexManagementAPI::test_put_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace -p no:warnings
-    def test_put_v1(self, app, client_rest, auth_headers_sysadmin, auth_headers_noroleuser,auth_headers_noroleuser_1,auth_headers_sysadmin_without_scope, create_auth_headers, indices_for_api):
+    def test_put_v1(self, app, db, client_rest, auth_headers_sysadmin, auth_headers_noroleuser,auth_headers_noroleuser_1,auth_headers_sysadmin_without_scope, create_auth_headers, indices_for_api):
         """
         インデックス管理API - インデックス更新
         - 正常系: インデックスの更新が成功するか確認
@@ -989,10 +1026,8 @@ class TestIndexManagementAPI:
             allowed_roles = ["sysadmin", "repoadmin"]
             for role, headers in create_auth_headers.items():
                 if role in allowed_roles:
-                    print(f"{role} should be able to update index (200)")
                     self.run_update_index_success(app, client_rest, headers)
                 else:
-                    print(f"{role} should NOT be able to update index (403)")
                     self.run_update_index_forbidden(app, client_rest, headers)
 
             # 権限のないユーザーが403エラーを受け取るか
@@ -1012,7 +1047,7 @@ class TestIndexManagementAPI:
             url = "v1/tree/index/1740974554289"
             response = client_rest.put(url, headers=auth_headers_noroleuser_1, json=payload)
             assert response.status_code == 403
-            print(response.get_data())
+
             response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload)
             assert response.status_code == 200
 
@@ -1020,6 +1055,12 @@ class TestIndexManagementAPI:
                 url = "v1/tree/index/1740974554289"
                 response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload)
                 assert response.status_code == 403
+
+            # cannot update root index
+            url = "v1/tree/index/0"
+            response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload)
+            assert response.status_code == 400
+            assert response.json["message"] == "Bad Request: Cannot update root index."
 
             # VersionNotFoundRESTError
             url = "v2/tree/index/9999999999999"
@@ -1035,13 +1076,9 @@ class TestIndexManagementAPI:
                 response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload)
                 assert response.status_code == 500
 
-            with patch("weko_index_tree.api.Indexes.get_index", side_effect=PermissionError):
+            with patch("weko_index_tree.rest.IndexManagementAPI.check_index_accessible", side_effect=PermissionError):
                 response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload)
                 assert response.status_code == 403
-
-            with patch("weko_index_tree.api.Indexes.get_index", side_effect=Exception):
-                response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload)
-                assert response.status_code == 500
 
     def run_update_index_success(self, app, client_rest, auth_headers):
         """
