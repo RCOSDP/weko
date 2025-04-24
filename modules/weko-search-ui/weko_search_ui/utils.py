@@ -970,6 +970,11 @@ def check_jsonld_import_items(
         handle_check_authors_prefix(list_record)
         handle_check_authors_affiliation(list_record)
 
+        handle_check_cnri(list_record)
+        handle_check_doi_indexes(list_record)
+        handle_check_doi_ra(list_record)
+        handle_check_doi(list_record)
+
         check_result.update({"list_record": list_record})
 
     except zipfile.BadZipFile as ex:
