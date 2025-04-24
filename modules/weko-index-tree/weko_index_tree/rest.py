@@ -1056,14 +1056,14 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
 
         index_info = request_data.get("index")
         parent_id = index_info.get("parent")
-        self.check_parent_index(parent_id)
+        self.check_index_accessible(parent_id)
 
+        # Create new index
         index_id = int(time.time() * 1000)
         indexes = {
             "id": index_id,
             "value": "New Index",
         }
-
         try:
             create_result = self.record_class.create(
                 pid=parent_id, indexes=indexes
@@ -1087,6 +1087,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                 description=f"Internal Server Error: Failed to create index."
             ) from ex
 
+        # Update new index with provided data
         try:
             new_index = self.record_class.get_index(index_id)
 
@@ -1117,7 +1118,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                     f"Failed to update new index: {index_id}. Delete it."
                 )
                 raise InternalServerError(
-                    description=f"Internal Server Error: Failed to update new index {index_id}"
+                    description=f"Internal Server Error: Failed to update new index {index_id}."
                 )
 
             current_app.logger.info(f"Update info new index: {index_id}")
@@ -1132,12 +1133,12 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             db.session.delete(new_index)
             db.session.commit()
             current_app.logger.error(
-                f"Error occurred in DB while creating index: {ex}. "
-                f"Delete it. Index ID: {index_id}"
+                f"Failed to update new index: {index_id}. Database error. "
+                "Delete it."
             )
             traceback.print_exc()
             raise InternalServerError(
-                description=f"Internal Server Error: Failed to create index."
+                description=f"Database Error: Failed to create index."
             ) from ex
 
         except Exception as ex:
@@ -1145,8 +1146,8 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             db.session.delete(new_index)
             db.session.commit()
             current_app.logger.error(
-                f"Unexpected error occurred while creating index: {ex}. "
-                f"Delete it. Index ID: {index_id}"
+                f"Failed to update new index: {index_id}. Unexpected error. "
+                "Delete it."
             )
             traceback.print_exc()
             raise InternalServerError(
@@ -1154,16 +1155,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             ) from ex
 
         # Update index tree in Redis all languages
-        langs = AdminLangSettings.get_registered_language()
-        if "ja" in [lang["lang_code"] for lang in langs]:
-            tree_ja = self.record_class.get_index_tree(lang="ja")
-        tree = self.record_class.get_index_tree(lang="other_lang")
-        for lang in langs:
-            lang_code = lang["lang_code"]
-            if lang_code == "ja":
-                    save_index_trees_to_redis(tree_ja, lang=lang_code)
-            else:
-                save_index_trees_to_redis(tree, lang=lang_code)
+        self.save_redis()
 
         response_data = {
             "index": {
@@ -1183,6 +1175,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
 
         return make_response(jsonify(response_data), 200)
 
+
     def put_v1(self, index_id, **kwargs):
         """ Update an existing index tree node.
 
@@ -1193,133 +1186,89 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
         Args:
             index_id (int): The ID of the index to be updated.
         """
+        if index_id == 0:
+            current_app.logger.error("Bad Request: Cannot update root index.")
+            raise BadRequest(
+                description="Bad Request: Cannot update root index."
+            )
+
         request_data = self.validate_request(request, IndexUpdateRequestSchema)
 
+        index_info = request_data.get("index")
+        index = self.check_index_accessible(index_id)
+        parent_id = index_info.get("parent")
+        self.check_index_accessible(parent_id)
+
         try:
-            index_obj = self.record_class.get_index(index_id)
-            if not index_obj:
-                current_app.logger.error(f"Index not found: {index_id}")
-                return make_response(jsonify({'status': 404, 'error': 'Index not found'}), 404)
-            else:
-                lst = {column.name: getattr(index_obj, column.name) for column in index_obj.__table__.columns}
-                if not can_user_access_index(lst):
-                    current_app.logger.error(f"Permission denied for index: {index_id}")
-                    return make_response(jsonify({'status': 403, 'error': f'Permission denied: You do not have access to index {index_id}.'}), 403)
-
-            if not request_data or "index" not in request_data:
-                current_app.logger.error("No data provided for index update.")
-                return make_response(jsonify({'status': 400, 'error': 'Bad Request: No data provided'}), 400)
-
-            request_index_data = request_data["index"]
-            if not isinstance(request_index_data, dict):
-                current_app.logger.error("Invalid format for index data.")
-                return make_response(jsonify({'status': 400, 'error': 'Bad Request: Invalid format'}), 400)
-
             index_data = {
-                "id": index_id,
-                "parent": request_index_data.get("parent_id", index_obj.parent),
-                "index_name": request_index_data.get("index_name", index_obj.index_name),
-                "index_name_english": request_index_data.get("index_name_english", index_obj.index_name_english),
-                "index_link_name": request_index_data.get("index_link_name", index_obj.index_link_name),
-                "index_link_name_english": request_index_data.get("index_link_name_english", index_obj.index_link_name_english),
-                "index_link_enabled": request_index_data.get("index_link_enabled", index_obj.index_link_enabled),
-                "comment": request_index_data.get("comment", index_obj.comment),
-                "more_check": request_index_data.get("more_check", index_obj.more_check),
-                "display_no": request_index_data.get("display_no", index_obj.display_no),
-                "harvest_public_state": request_index_data.get("harvest_public_state", index_obj.harvest_public_state),
-                "display_format": request_index_data.get("display_format", index_obj.display_format),
-                "public_state": request_index_data.get("public_state", index_obj.public_state),
-                "public_date": request_index_data.get("public_date", index_obj.public_date),
-                "rss_status": request_index_data.get("rss_status", index_obj.rss_status),
-                "browsing_role": request_index_data.get("browsing_role", index_obj.browsing_role),
-                "contribute_role": request_index_data.get("contribute_role", index_obj.contribute_role),
-                # "browsing_group": request_index_data.get("browsing_group", index_obj.browsing_group),
-                "browsing_group": {"allow": [
-                    {"id": role}
-                    for role in request_index_data.get("browsing_group", index_obj.browsing_group).split(",")
+                **index_info,
+                "browsing_group": {
+                    "allow": [
+                        {"id": role}
+                        for role in index_info.get(
+                                "browsing_group", index.browsing_group
+                            ).split(",")
                     ]
                 },
-                "contribute_group": {"allow": [
-                    {"id": role}
-                    for role in request_index_data.get("contribute_group", index_obj.contribute_group).split(",")
+                "contribute_group": {
+                    "allow": [
+                        {"id": role}
+                        for role in index_info.get(
+                                "contribute_group", index.contribute_group
+                            ).split(",")
                     ]
-                },
-            #    "contribute_group": request_index_data.get("contribute_group", index_obj.contribute_group),
-                "online_issn": request_index_data.get("online_issn", index_obj.online_issn),
-            }
-
-            # for key, value in index_data.items():
-            #     if hasattr(index_obj, key):
-            #         setattr(index_obj, key, value)
-            # db.session.commit()
-            # current_app.logger.info(f"Update index: {index_id}")
-
-            # updated_index = index_obj
-            updated_index = self.record_class.update(index_id, **index_data)
-
-            if not updated_index:
-                current_app.logger.error(f"Failed to update index: {index_id}")
-                return make_response(jsonify({'status': 500, 'error': 'Internal Server Error: Failed to update index'}), 500)
-            current_app.logger.info(f"Update index: {index_id}")
-            response_data = {
-                "index": {
-                    "created": updated_index.created.isoformat(),
-                    "updated": datetime.utcnow().isoformat(),
-                    "id": updated_index.id,
-                    "parent": updated_index.parent,
-                    "position": updated_index.position,
-                    "index_name": updated_index.index_name,
-                    "index_name_english": updated_index.index_name_english,
-                    "index_link_name": updated_index.index_link_name,
-                    "index_link_name_english": updated_index.index_link_name_english,
-                    "index_link_enabled": updated_index.index_link_enabled,
-                    "comment": updated_index.comment,
-                    "more_check": updated_index.more_check,
-                    "display_no": updated_index.display_no,
-                    "harvest_public_state": updated_index.harvest_public_state,
-                    "display_format": updated_index.display_format,
-                    "public_state": updated_index.public_state,
-                    "public_date": updated_index.public_date,
-                    "rss_status": updated_index.rss_status,
-                    "coverpage_state": updated_index.coverpage_state,
-                    "browsing_role": updated_index.browsing_role,
-                    "contribute_role": updated_index.contribute_role,
-                    "browsing_group": updated_index.browsing_group,
-                    "contribute_group": updated_index.contribute_group,
-                    "owner_user_id": updated_index.owner_user_id,
-                    "online_issn": updated_index.online_issn
                 }
             }
 
-            # Update index tree in Redis all languages
-            langs = AdminLangSettings.get_registered_language()
-            if "ja" in [lang["lang_code"] for lang in langs]:
-                tree_ja = self.record_class.get_index_tree(lang="ja")
-            tree = self.record_class.get_index_tree(lang="other_lang")
-            for lang in langs:
-                lang_code = lang["lang_code"]
-                if lang_code == "ja":
-                        save_index_trees_to_redis(tree_ja, lang=lang_code)
-                else:
-                    save_index_trees_to_redis(tree, lang=lang_code)
+            updated_index = self.record_class.update(index_id, **index_data)
 
-            return make_response(jsonify(response_data), 200)
+            if not updated_index:
+                current_app.logger.error(f"Failed to update index: {index_id}.")
+                raise InternalServerError(
+                    description=f"Internal Server Error: Failed to update index {index_id}."
+                )
 
-        except (SameContentException, PermissionError, IndexNotFound404Error, BadRequest) as ex:
-            current_app.logger.error(f"Error occurred while updating index: {index_id}")
-            traceback.print_exc()
-            raise
+            current_app.logger.info(f"Update index: {index_id}")
 
         except SQLAlchemyError:
             db.session.rollback()
-            current_app.logger.error(f"Database error occurred while updating index: {index_id}")
+            current_app.logger.error(
+                f"Failed to update index: {index_id}. Database error.")
             traceback.print_exc()
-            raise InternalServerError()
+            raise InternalServerError(
+                description=f"Database Error: Failed to update index {index_id}."
+            ) from ex
 
         except Exception as ex:
-            current_app.logger.error(f"Unexpected error occurred while updating index: {index_id}")
+            db.session.rollback()
+            current_app.logger.error(
+                f"Failed to update index: {index_id}. Unexpected error.")
             traceback.print_exc()
-            raise InternalServerError() from ex
+            raise InternalServerError(
+                description=f"Internal Server Error: Failed to update index {index_id}."
+            ) from ex
+
+        # Update index tree in Redis all languages
+        self.save_redis()
+
+        response_data = {
+            "index": {
+                **{
+                    column.name: getattr(updated_index, column.name)
+                    for column in updated_index.__table__.columns
+                },
+                "created": updated_index.created.isoformat(),
+                "updated": updated_index.updated.isoformat(),
+                **{
+                    "public_date": updated_index.public_date.strftime("%Y%m%d")
+                    if updated_index.public_date
+                    else {}
+                },
+            }
+        }
+
+        return make_response(jsonify(response_data), 200)
+
 
     def delete_v1(self, index_id, **kwargs):
         """Delete an existing index tree node."""
@@ -1399,39 +1348,58 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
         return request_data
 
 
-    def check_parent_index(self, parent_id):
-        """Check if the parent index exists.
+    def check_index_accessible(self, id):
+        """Check if the user has access to the index.
 
         Args:
-            parent_id (int): The ID of the parent index.
+            id (int): The ID of the index.
+
+        Returns:
+            Index: The index object if the user has access.
 
         Raises:
-            IndexNotFound404Error: If the parent index is not found.
-            IndexDeletedRESTError: If the parent index is deleted.
-            PermissionError: If the user does not have access to the parent index.
+            IndexNotFound404Error: If the index is not found.
+            IndexDeletedRESTError: If the index is deleted.
+            PermissionError: If the user does not have access to the index.
 
         """
-        if parent_id == 0:
-            return
+        if not id:
+            return None
 
-        parent_index = self.record_class.get_index(parent_id, with_deleted=True)
-        if not parent_index:
-            msg = f"Parent index not found: {parent_id}."
+        index = self.record_class.get_index(id, with_deleted=True)
+        if not index:
+            msg = f"Index not found: {id}."
             current_app.logger.error(msg)
             raise IndexNotFound404Error(description=msg)
-        if parent_index.is_deleted:
-            msg = f"Parent index is deleted: {parent_id}."
+        if index.is_deleted:
+            msg = f"Index is deleted: {id}."
             current_app.logger.error(msg)
             raise IndexNotFound404Error(description=msg)
 
         lst = {
-            column.name: getattr(parent_index, column.name)
-            for column in parent_index.__table__.columns
+            column.name: getattr(index, column.name)
+            for column in index.__table__.columns
         }
         if not can_user_access_index(lst):
             current_app.logger.error(
-                f"User does not have access to parent index: {parent_id}"
+                f"User does not have access to index: {id}"
             )
             raise PermissionError(
-                description=f"Permission denied: Cannot access parent index {parent_id}"
+                description=f"Permission denied: Cannot access index {id}"
             )
+
+        return index
+
+
+    def save_redis(self):
+        """Save index tree to Redis."""
+        langs = AdminLangSettings.get_registered_language()
+        if "ja" in [lang["lang_code"] for lang in langs]:
+            tree_ja = self.record_class.get_index_tree(lang="ja")
+        tree = self.record_class.get_index_tree(lang="other_lang")
+        for lang in langs:
+            lang_code = lang["lang_code"]
+            if lang_code == "ja":
+                    save_index_trees_to_redis(tree_ja, lang=lang_code)
+            else:
+                save_index_trees_to_redis(tree, lang=lang_code)

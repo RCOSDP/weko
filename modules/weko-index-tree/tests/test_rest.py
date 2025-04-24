@@ -836,7 +836,7 @@ class TestIndexManagementAPI:
             invalid_parrent_id["index"]["parent"] = 999999
             response = client_rest.post(url, headers=auth_headers_sysadmin,json=invalid_parrent_id)
             assert response.status_code == 404
-            assert response.json["message"] == "Parent index not found: 999999."
+            assert response.json["message"] == "Index not found: 999999."
 
             private_parrent_id = deepcopy(json_)
             private_parrent_id["index"]["parent"] = 1740974499997
@@ -862,7 +862,7 @@ class TestIndexManagementAPI:
             db.session.commit()
             response = client_rest.post(url, headers=auth_headers_sysadmin, json=private_parrent_id)
             assert response.status_code == 404
-            assert response.json["message"] == "Parent index is deleted: 1740974499997."
+            assert response.json["message"] == "Index is deleted: 1740974499997."
 
             # エラー
             with patch("weko_index_tree.api.Indexes.create", return_value=None):
