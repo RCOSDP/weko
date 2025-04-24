@@ -98,6 +98,7 @@ const current_page_type = document.getElementById('current_page_type').value;
 const current_model_json = JSON.parse(document.getElementById('current_model_json').value);
 const can_edit = document.getElementById('can_edit').value;
 const item_type_names = JSON.parse(document.getElementById('item_type_names').value);
+let check_integrity_result = false;
 
 /** close ErrorMessage area */
 function closeError() {
@@ -130,6 +131,10 @@ function isDeletedWorkflow(value){
   }
   return is_deleted;
 }
+
+$('#application').change(function(){
+  save_button_state_change();
+});
 
 function changeRegistrationType(value) {
   const workflowMenu = document.getElementById('workflow');
@@ -172,6 +177,8 @@ function changeRegistrationType(value) {
     workflowOption.removeAttribute('disabled');
     workflowMenu.setAttribute('required', true);
   }
+  $('#mapping-check').empty();
+  check_integrity_result = false;
   // save button enable
   save_button_state_change();
 }
@@ -216,19 +223,26 @@ function handleMappingChange() {
         if (result.results) {
           $('#mapping-check').empty();
           $('#mapping-check').append('Item type : ' + item_type_name + '<span class="text-success">✓</span>');
-          $('#save_button').prop('disabled', false);
+          check_integrity_result = true;
+          save_button_state_change();
         } else {
           $('#mapping-check').empty();
           $('#mapping-check').append('Item type:' + item_type_name + '<span class="text-danger">✘</span>');
-          $('#save_button').prop('disabled', true);
+          check_integrity_result = false;
+          save_button_state_change()
         }
       })
       .catch(error => {
         showMsg(Failed_Changed, false);
+        $('#mapping-check').empty();
+        check_integrity_result = false;
+        save_button_state_change()
         return;
       });
   } else {
     $('#mapping-check').empty();
+    check_integrity_result = false;
+    save_button_state_change()
   }
 }
 
@@ -245,17 +259,35 @@ $('#workflow').change(function(){
   }
 
   // save button enable
+  $('#mapping-check').empty();
+  check_integrity_result = false;
   save_button_state_change();
 });
 
 $('#mapping').change(handleMappingChange);
 
 function save_button_state_change() {
-  if ( $('#mapping').val() !== '' ) {
+  if ( checke_save_button_enable() ) {
     $('#save_button').prop('disabled', false);
   } else {
     $('#save_button').prop('disabled', true);
   }
+}
+
+function checke_save_button_enable() {
+  result = false;
+  if (current_page_type === 'add') {
+    if ( $('#application').val() !== '' ) {
+      if (check_integrity_result === true) {
+        result = true;
+      }
+    }
+  } else {
+    if (check_integrity_result === true) {
+      result = true;
+    }
+  }
+  return result;
 }
 
 function saveDataFormat(type) {
