@@ -202,9 +202,10 @@ def pyfs_storage_factory(fileinstance=None, default_location=None,
     """Get factory function for creating a PyFS file storage instance."""
     # Either the FileInstance needs to be specified or all filestorage
     # class parameters need to be specified
+    from ..models import Location
     assert fileinstance or (fileurl and size)
     location = None
-    locationList = fileinstance.get_location_all()
+    locationList = Location.all()
 
     if fileinstance:
         # FIXME: Code here should be refactored since it assumes a lot on the
@@ -218,7 +219,6 @@ def pyfs_storage_factory(fileinstance=None, default_location=None,
             fileurl = fileinstance.uri
         else:
             assert default_location
-            tmp_uri = default_location
             # Generate a new URL.
             fileurl = make_path(
                 default_location,
