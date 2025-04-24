@@ -376,7 +376,7 @@ class HeadlessActivity(WorkActivity):
             shared_user_id = metadata.get("shared_user_id", -1)
 
             self.update_activity(self.activity_id, {
-                "title": title[0] if len(title) > 0 else "",
+                "title": title[0] if title else "",
                 "shared_user_id": weko_shared_id
                     if shared_user_id == -1 else shared_user_id
             })
