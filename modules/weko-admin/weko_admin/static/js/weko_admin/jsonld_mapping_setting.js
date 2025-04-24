@@ -3,9 +3,11 @@ const Failed_Changed = document.getElementById('Failed_Changed').value;
 const item_required_alert = document.getElementById('items_required_alert').value;
 const workflow_deleted_alert = document.getElementById('workflow_deleted_alert').value;
 const Unapproved_Items_Exit = document.getElementById('Unapproved_Items_Exit').value;
+const using_sword_api_message = document.getElementById('using_sword_api_message').value;
 const current_page_type = document.getElementById('current_page_type').value;
 const current_model_json = JSON.parse(document.getElementById('current_model_json').value);
 const can_edit = document.getElementById('can_edit').value;
+const using_sword_clients = document.getElementById('using_sword_clients').value;
 const current_name = document.getElementById('current_name').value;
 const current_item_type_id = document.getElementById('current_item_type_id').value;
 const current_mapping = document.getElementById('current_mapping').value;
@@ -217,6 +219,12 @@ window.onload = function () {
 
     if (can_edit === 'False') {
       $('#modal-message').text(Unapproved_Items_Exit);
+      $('#error_modal').modal('show');
+      $('#save_button').prop('disabled', true);
+      $('#delete_button').prop('disabled', true);
+    }
+    if (using_sword_clients === 'True') {
+      $('#modal-message').text(using_sword_api_message);
       $('#error_modal').modal('show');
       $('#save_button').prop('disabled', true);
       $('#delete_button').prop('disabled', true);

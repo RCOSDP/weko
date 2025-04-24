@@ -1,15 +1,14 @@
 # English translations for weko-admin.
-# Copyright (C) 2017 National Institute of Informatics.
-# This file is distributed under the same license as the WEKO-Admin
-# project.
-# FIRST AUTHOR <wekosoftware@nii.ac.jp>, 2017.
+# Copyright (C) 2025 National Institute of Informatics
+# This file is distributed under the same license as the weko-admin project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: weko_admin 0.1.0.dev20170000\n"
+"Project-Id-Version: weko-admin 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
 "POT-Creation-Date: 2025-04-01 15:39+0900\n"
-"PO-Revision-Date: 2018-01-04 16:19+0100\n"
+"PO-Revision-Date: 2025-04-24 10:54+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -1719,6 +1718,12 @@ msgstr ""
 "There are unapproved items in the workflow using this application. Until "
 "all are approved, no changes can be made to the configuration."
 
+msgid "This Mapping is using SWORD API JSON-LD."
+msgstr ""
+
+msgid "\"Original\" means the original metadata received via the SWORD API."
+msgstr ""
+
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_mapping_settings.html:93
 msgid "Item Type"
 msgstr ""
@@ -1735,7 +1740,7 @@ msgstr ""
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:139
 #: weko_admin/templates/weko_admin/admin/sword_api_settings.html:96
 msgid "WorkFlow Cautionary Note"
-msgstr "Only item types that are linked to the selected workflow can be registered"
+msgstr "Only item types that are linked to the selected workflow can be registered."
 
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:161
 msgid "Meta data API"
