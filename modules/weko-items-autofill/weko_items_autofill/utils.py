@@ -268,6 +268,8 @@ def get_doi_with_original(doi, item_type_id, original_metadeta=None, **kwargs):
     api_priority = kwargs.get("meta_data_api")
     if api_priority is None:
         api_priority = current_app.config["WEKO_ITEMS_AUTOFILL_TO_BE_USED"]
+    if not api_priority:
+        api_priority = ["Original"]
     for key in api_priority:
         record_data_dict = {}
         if key == "Original":
