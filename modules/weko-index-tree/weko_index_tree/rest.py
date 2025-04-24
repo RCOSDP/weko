@@ -1093,22 +1093,18 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
 
             index_data = {
                 **index_info,
-                "browsing_group": {
+                **({"browsing_group": {
                     "allow": [
                         {"id": role}
-                        for role in index_info.get(
-                                "browsing_group", new_index.browsing_group
-                            ).split(",")
+                        for role in index_info["browsing_group"].split(",")
                     ]
-                },
-                "contribute_group": {
+                }} if "browsing_group" in index_info else {}),
+                **({"contribute_group": {
                     "allow": [
                         {"id": role}
-                        for role in index_info.get(
-                                "contribute_group", new_index.contribute_group
-                            ).split(",")
+                        for role in index_info["contribute_group"].split(",")
                     ]
-                }
+                }} if "contribute_group" in index_info else {})
             }
 
             updated_index = self.record_class.update(index_id, **index_data)
@@ -1191,33 +1187,29 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             raise IndexBaseRESTError(
                 description="Bad Request: Cannot update root index."
             )
+        self.check_index_accessible(index_id)
 
         request_data = self.validate_request(request, IndexUpdateRequestSchema)
 
         index_info = request_data.get("index")
-        index = self.check_index_accessible(index_id)
         parent_id = index_info.get("parent")
         self.check_index_accessible(parent_id)
 
         try:
             index_data = {
                 **index_info,
-                "browsing_group": {
+                **({"browsing_group": {
                     "allow": [
                         {"id": role}
-                        for role in index_info.get(
-                                "browsing_group", index.browsing_group
-                            ).split(",")
+                        for role in index_info["browsing_group"].split(",")
                     ]
-                },
-                "contribute_group": {
+                }} if "browsing_group" in index_info else {}),
+                **({"contribute_group": {
                     "allow": [
                         {"id": role}
-                        for role in index_info.get(
-                                "contribute_group", index.contribute_group
-                            ).split(",")
+                        for role in index_info["contribute_group"].split(",")
                     ]
-                }
+                }} if "contribute_group" in index_info else {})
             }
 
             updated_index = self.record_class.update(index_id, **index_data)
