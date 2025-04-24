@@ -1188,7 +1188,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
         """
         if index_id == 0:
             current_app.logger.error("Bad Request: Cannot update root index.")
-            raise BadRequest(
+            raise IndexBaseRESTError(
                 description="Bad Request: Cannot update root index."
             )
 
@@ -1230,7 +1230,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
 
             current_app.logger.info(f"Update index: {index_id}")
 
-        except SQLAlchemyError:
+        except SQLAlchemyError as ex:
             db.session.rollback()
             current_app.logger.error(
                 f"Failed to update index: {index_id}. Database error.")
@@ -1394,12 +1394,11 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
     def save_redis(self):
         """Save index tree to Redis."""
         langs = AdminLangSettings.get_registered_language()
-        if "ja" in [lang["lang_code"] for lang in langs]:
-            tree_ja = self.record_class.get_index_tree(lang="ja")
         tree = self.record_class.get_index_tree(lang="other_lang")
         for lang in langs:
             lang_code = lang["lang_code"]
             if lang_code == "ja":
-                    save_index_trees_to_redis(tree_ja, lang=lang_code)
+                tree_ja = self.record_class.get_index_tree(lang="ja")
+                save_index_trees_to_redis(tree_ja, lang=lang_code)
             else:
                 save_index_trees_to_redis(tree, lang=lang_code)

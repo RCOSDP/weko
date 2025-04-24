@@ -996,7 +996,7 @@ class TestIndexManagementAPI:
             assert self.count_indices == count_before, "Index has been created when it should not have been"
 
     # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexManagementAPI::test_put_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace -p no:warnings
-    def test_put_v1(self, app, client_rest, auth_headers_sysadmin, auth_headers_noroleuser,auth_headers_noroleuser_1,auth_headers_sysadmin_without_scope, create_auth_headers, indices_for_api):
+    def test_put_v1(self, app, db, client_rest, auth_headers_sysadmin, auth_headers_noroleuser,auth_headers_noroleuser_1,auth_headers_sysadmin_without_scope, create_auth_headers, indices_for_api):
         """
         インデックス管理API - インデックス更新
         - 正常系: インデックスの更新が成功するか確認
@@ -1026,10 +1026,8 @@ class TestIndexManagementAPI:
             allowed_roles = ["sysadmin", "repoadmin"]
             for role, headers in create_auth_headers.items():
                 if role in allowed_roles:
-                    print(f"{role} should be able to update index (200)")
                     self.run_update_index_success(app, client_rest, headers)
                 else:
-                    print(f"{role} should NOT be able to update index (403)")
                     self.run_update_index_forbidden(app, client_rest, headers)
 
             # 権限のないユーザーが403エラーを受け取るか
@@ -1049,7 +1047,7 @@ class TestIndexManagementAPI:
             url = "v1/tree/index/1740974554289"
             response = client_rest.put(url, headers=auth_headers_noroleuser_1, json=payload)
             assert response.status_code == 403
-            print(response.get_data())
+
             response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload)
             assert response.status_code == 200
 
@@ -1057,6 +1055,12 @@ class TestIndexManagementAPI:
                 url = "v1/tree/index/1740974554289"
                 response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload)
                 assert response.status_code == 403
+
+            # cannot update root index
+            url = "v1/tree/index/0"
+            response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload)
+            assert response.status_code == 400
+            assert response.json["message"] == "Bad Request: Cannot update root index."
 
             # VersionNotFoundRESTError
             url = "v2/tree/index/9999999999999"
@@ -1072,13 +1076,9 @@ class TestIndexManagementAPI:
                 response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload)
                 assert response.status_code == 500
 
-            with patch("weko_index_tree.api.Indexes.get_index", side_effect=PermissionError):
+            with patch("weko_index_tree.rest.IndexManagementAPI.check_index_accessible", side_effect=PermissionError):
                 response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload)
                 assert response.status_code == 403
-
-            with patch("weko_index_tree.api.Indexes.get_index", side_effect=Exception):
-                response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload)
-                assert response.status_code == 500
 
     def run_update_index_success(self, app, client_rest, auth_headers):
         """
