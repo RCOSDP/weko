@@ -2,7 +2,7 @@ import pytest
 
 from marshmallow import ValidationError
 
-from weko_index_tree.schema import IndexesSchemaBase, validate_public_date, validate_role_or_group
+from weko_index_tree.schema import IndexCreateSchema, validate_public_date, validate_role_or_group
 
 
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_schema.py -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp --full-trace
@@ -44,9 +44,9 @@ def test_validate_public_date():
     assert "Not a valid date format. Use YYYYMMDD." in str(excinfo.value)
 
 
-# class IndexesSchemaBase:
-# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_schema.py::TestIndexesSchemaBase -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp --full-trace
-class TestIndexesSchemaBase:
+# class IndexCreateSchema:
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_schema.py::TestIndexCreateSchema -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp --full-trace
+class TestIndexCreateSchema:
     def test_valid_index(self):
         index = {
             "parent": 1,
@@ -70,7 +70,7 @@ class TestIndexesSchemaBase:
             "online_issn": "1234-5678",
         }
 
-        schema = IndexesSchemaBase()
+        schema = IndexCreateSchema()
         result = schema.load(index).data
         assert result == index
 
@@ -97,7 +97,7 @@ class TestIndexesSchemaBase:
             "invalid_field": "Invalid"      # Extra field not in schema
         }
         # Test with string values for boolean fields
-        schema = IndexesSchemaBase()
+        schema = IndexCreateSchema()
         result = schema.load(index_s).data
 
         assert result["parent"] == 2
@@ -132,7 +132,7 @@ class TestIndexesSchemaBase:
             "online_issn": "1234-5678",
         }
 
-        schema = IndexesSchemaBase()
+        schema = IndexCreateSchema()
         with pytest.raises(ValidationError) as excinfo:
             schema.load(index)
         assert "parent" in excinfo.value.messages

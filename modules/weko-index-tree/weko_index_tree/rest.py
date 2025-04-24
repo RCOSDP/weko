@@ -67,7 +67,7 @@ from .utils import (
     check_doi_in_index, check_index_permissions, can_user_access_index,
     is_index_locked, perform_delete_index, save_index_trees_to_redis, reset_tree
 )
-from .schema import IndexManagementRequestSchema
+from .schema import IndexCreateRequestSchema, IndexUpdateRequestSchema
 
 JST = timezone(timedelta(hours=+9), 'JST')
 
@@ -1052,54 +1052,11 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
         Payload should be in JSON format and include the following fields: <br>
             - index: Dictionary containing the index information.
         """
-        if request.headers.get("Content-Type") != "application/json":
-            current_app.logger.error("Invalid Content-Type for index creation.")
-            raise IndexBaseRESTError(
-                description="Bad Request: Content-Type must be application/json."
-            )
-
-        try:
-            request_data = IndexManagementRequestSchema().load(request.json).data
-
-        except ValidationError as ex:
-            current_app.logger.error("Invalid payload for index creation.")
-            traceback.print_exc()
-            raise InvalidDataRESTError(
-                description=f"Bad Request: Invalid payload, {ex}"
-            ) from ex
-
-        except BadRequest as ex:
-            current_app.logger.error("Failed to parse JSON data for index creation.")
-            traceback.print_exc()
-            raise InvalidDataRESTError(
-                description=f"Bad Request: Failed to parse provided."
-            ) from ex
-
+        request_data = self.validate_request(request, IndexCreateRequestSchema)
 
         index_info = request_data.get("index")
         parent_id = index_info.get("parent")
-        if parent_id != 0:
-            parent_index = self.record_class.get_index(parent_id, with_deleted=True)
-            if not parent_index:
-                msg = f"Parent index not found: {parent_id}"
-                current_app.logger.error(msg)
-                raise IndexNotFound404Error(description=msg)
-            if parent_index.is_deleted:
-                msg = f"Parent index is deleted: {parent_id}"
-                current_app.logger.error(msg)
-                raise IndexDeletedRESTError(description=msg)
-
-            lst = {
-                column.name: getattr(parent_index, column.name)
-                for column in parent_index.__table__.columns
-            }
-            if not can_user_access_index(lst):
-                current_app.logger.error(
-                    f"User does not have access to parent index: {parent_id}"
-                )
-                raise PermissionError(
-                    description=f"Permission denied: Cannot access parent index {parent_id}"
-                )
+        self.check_parent_index(parent_id)
 
         index_id = int(time.time() * 1000)
         indexes = {
@@ -1109,8 +1066,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
 
         try:
             create_result = self.record_class.create(
-                pid=parent_id,
-                indexes=indexes
+                pid=parent_id, indexes=indexes
             )
 
             if not create_result:
@@ -1155,11 +1111,10 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             }
 
             updated_index = self.record_class.update(index_id, **index_data)
-            updated_index = None
+
             if not updated_index:
                 current_app.logger.error(
-                    f"Failed to update new index: {index_id}. "
-                    "Delete it."
+                    f"Failed to update new index: {index_id}. Delete it."
                 )
                 raise InternalServerError(
                     description=f"Internal Server Error: Failed to update new index {index_id}"
@@ -1229,7 +1184,17 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
         return make_response(jsonify(response_data), 200)
 
     def put_v1(self, index_id, **kwargs):
-        """Update an existing index tree node."""
+        """ Update an existing index tree node.
+
+        API endpoint to update an existing index tree node. <br>
+        Payload should be in JSON format and include the following fields: <br>
+            - index: Dictionary containing the index information.
+
+        Args:
+            index_id (int): The ID of the index to be updated.
+        """
+        request_data = self.validate_request(request, IndexUpdateRequestSchema)
+
         try:
             index_obj = self.record_class.get_index(index_id)
             if not index_obj:
@@ -1241,7 +1206,6 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                     current_app.logger.error(f"Permission denied for index: {index_id}")
                     return make_response(jsonify({'status': 403, 'error': f'Permission denied: You do not have access to index {index_id}.'}), 403)
 
-            request_data = request.get_json()
             if not request_data or "index" not in request_data:
                 current_app.logger.error("No data provided for index update.")
                 return make_response(jsonify({'status': 400, 'error': 'Bad Request: No data provided'}), 400)
@@ -1393,3 +1357,81 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             current_app.logger.error(f"Unexpected error occurred while deleting index: {index_id}")
             traceback.print_exc()
             raise InternalServerError()
+
+
+    def validate_request(self, request, schema):
+        """Validate the request.
+
+        Args:
+            request (Request): The incoming request.
+            schema (Schema): The schema to validate against.
+
+        Returns:
+            dict: The validated data.
+
+        Raises:
+            InvalidDataRESTError: If the request data is invalid.
+            IndexBaseRESTError: If the Content-Type is not application/json.
+
+        """
+        if request.headers.get("Content-Type") != "application/json":
+            current_app.logger.error("Invalid Content-Type for index creation.")
+            raise IndexBaseRESTError(
+                description="Bad Request: Content-Type must be application/json."
+            )
+
+        try:
+            request_data = schema().load(request.json).data
+        except ValidationError as ex:
+            current_app.logger.error("Invalid payload for index creation.")
+            traceback.print_exc()
+            raise InvalidDataRESTError(
+                description=f"Bad Request: Invalid payload, {ex}"
+            ) from ex
+
+        except BadRequest as ex:
+            current_app.logger.error("Failed to parse JSON data for index creation.")
+            traceback.print_exc()
+            raise InvalidDataRESTError(
+                description=f"Bad Request: Failed to parse provided."
+            ) from ex
+
+        return request_data
+
+
+    def check_parent_index(self, parent_id):
+        """Check if the parent index exists.
+
+        Args:
+            parent_id (int): The ID of the parent index.
+
+        Raises:
+            IndexNotFound404Error: If the parent index is not found.
+            IndexDeletedRESTError: If the parent index is deleted.
+            PermissionError: If the user does not have access to the parent index.
+
+        """
+        if parent_id == 0:
+            return
+
+        parent_index = self.record_class.get_index(parent_id, with_deleted=True)
+        if not parent_index:
+            msg = f"Parent index not found: {parent_id}."
+            current_app.logger.error(msg)
+            raise IndexNotFound404Error(description=msg)
+        if parent_index.is_deleted:
+            msg = f"Parent index is deleted: {parent_id}."
+            current_app.logger.error(msg)
+            raise IndexNotFound404Error(description=msg)
+
+        lst = {
+            column.name: getattr(parent_index, column.name)
+            for column in parent_index.__table__.columns
+        }
+        if not can_user_access_index(lst):
+            current_app.logger.error(
+                f"User does not have access to parent index: {parent_id}"
+            )
+            raise PermissionError(
+                description=f"Permission denied: Cannot access parent index {parent_id}"
+            )
