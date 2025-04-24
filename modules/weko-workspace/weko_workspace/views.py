@@ -622,7 +622,7 @@ def item_register():
 
 
         json_schema = '/items/jsonschema/{}'.format(workflow_detail.itemtype_id)
-        schema_form = '/items/schemaform_simple/{}'.format(workflow_detail.itemtype_id)
+        schema_form = '/items/schemaform/{}'.format(workflow_detail.itemtype_id)
         record = {}
         files = []
         endpoints = {}
@@ -677,7 +677,7 @@ def item_register():
         need_file, need_billing_file = is_schema_include_key(item_type.schema)
 
         json_schema = '/items/jsonschema/{}'.format(settings.item_type_id)
-        schema_form = '/items/schemaform_simple/{}'.format(settings.item_type_id)
+        schema_form = '/items/schemaform/{}'.format(settings.item_type_id)
         record = {}
         files = []
         endpoints = {}

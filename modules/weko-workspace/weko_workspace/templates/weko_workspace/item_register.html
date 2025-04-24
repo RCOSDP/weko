@@ -227,8 +227,8 @@
                     </div>&nbsp;
 
                     <invenio-records-form
-                      form-templates='{{ config.DEPOSIT_FORM_TEMPLATES_WORKSPACE | tojson }}'
-                      form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_WORKSPACE_BASE) }}"
+                      form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
+                      form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
                       template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
                     </invenio-records-form>
                     
