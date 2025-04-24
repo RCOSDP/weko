@@ -2,7 +2,7 @@ import pytest
 
 from marshmallow import ValidationError
 
-from weko_index_tree.schema import IndexCreateRequestSchema, IndexCreateSchema, validate_public_date, validate_role_or_group
+from weko_index_tree.schema import IndexCreateRequestSchema, IndexCreateSchema, IndexUpdateRequestSchema, validate_public_date, validate_role_or_group
 
 
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_schema.py -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp --full-trace
@@ -237,3 +237,50 @@ class TestIndexCreateRequestSchema:
         assert "index" in excinfo.value.messages
         assert "parent" in excinfo.value.messages["index"]
 
+
+# class IndexUpdateRequestSchema:
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_schema.py::TestIndexUpdateRequestSchema -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp --full-trace
+class TestIndexUpdateRequestSchema:
+    def test_valid_index(self):
+        json = {
+            "index": {
+                "parent": 1,
+                "index_name": "Index Name",
+                "index_name_english": "Index Name English",
+                "index_link_name": "Index Link Name",
+                "index_link_name_english": "Index Link Name English",
+                "index_link_enabled": True,
+                "comment": "Comment",
+                "more_check": False,
+                "display_no": 1,
+                "harvest_public_state": True,
+                "display_format": "Format",
+                "public_state": True,
+                "public_date": "20230101",
+                "rss_status": True,
+                "browsing_role": "3,4,-98,-99",
+                "contribute_role": "3,4,-98,-99",
+                "browsing_group": "",
+                "contribute_group": "",
+                "online_issn": "1234-5678",
+            }
+        }
+
+        schema = IndexUpdateRequestSchema()
+        result = schema.load(json).data
+        assert result == json
+
+        json = {
+            "index": {}
+        }
+        schema = IndexUpdateRequestSchema()
+        result = schema.load(json).data
+        assert result == json
+
+    def test_invalid_index(self):
+        json = {}
+
+        schema = IndexUpdateRequestSchema()
+        with pytest.raises(ValidationError) as excinfo:
+            schema.load(json)
+        assert "index" in excinfo.value.messages
