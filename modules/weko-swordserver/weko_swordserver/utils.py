@@ -20,6 +20,7 @@ from invenio_oauth2server.models import Token
 from invenio_pidstore.models import PersistentIdentifier
 from weko_accounts.models import ShibbolethUser
 from weko_admin.models import AdminSettings
+from weko_items_ui.utils import get_workflow_by_item_type_id
 from weko_records.api import ItemTypes, ItemsMetadata
 from weko_search_ui.config import SWORD_METADATA_FILE, ROCRATE_METADATA_FILE
 from weko_search_ui.utils import (
@@ -238,7 +239,9 @@ def check_import_items(
         if register_type == "Workflow":
             item_type_id = check_result["list_record"][0].get("item_type_id")
             item_type_name = check_result["list_record"][0].get("item_type_name")
-            workflow = WorkFlows().get_workflow_by_itemtype_id(item_type_id)
+            item_type = ItemTypes.get_by_id(item_type_id)
+            workflow = get_workflow_by_item_type_id(item_type.name_id,
+                                                    item_type_id)
 
             if workflow is None:
                 current_app.logger.error(
