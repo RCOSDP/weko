@@ -186,7 +186,7 @@ msgstr "RO-Crate インポートでは、`wk:metadata_replace`フラグを有効
 
 #: weko_search_ui/tasks.py:294
 msgid "`wk:isSplited` flag cannot be used in RO-Crate Import."
-msgstr "RO-Crate インポートでは、`wk:metadata_replace`フラグを有効にできません。"
+msgstr "RO-Crate インポートでは、`wk:isSplited`フラグを有効にできません。"
 
 #: weko_search_ui/utils.py:539
 msgid "The same item may have been registered."
