@@ -22,6 +22,7 @@
 import traceback
 import requests
 from flask import current_app
+from flask_babelex import gettext as _
 
 from . import config
 
@@ -52,9 +53,9 @@ class CrossRefOpenURL:
         :param https_proxy:
         """
         if not pid:
-            raise ValueError('PID is required.')
+            raise ValueError(_('PID is not set.'))
         if not doi:
-            raise ValueError('DOI is required.')
+            raise ValueError(_('DOI is not specified.'))
         self._pid = pid
         self._doi = doi.strip()
         if response_format:
