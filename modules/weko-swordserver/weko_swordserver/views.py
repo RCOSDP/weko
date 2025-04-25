@@ -967,7 +967,16 @@ def delete_object(recid):
         if not required_scopes.issubset(token_scopes):
             abort(403)
 
-        url = delete_items_with_activity(recid, request_info=request_info)
+        try:
+            url = delete_items_with_activity(recid, request_info=request_info)
+        except Exception as ex:
+            current_app.logger.error(
+                f"Failed to delete item with activity: {str(ex)}"
+            )
+            raise WekoSwordserverException(
+                f"Error in delete_items_with_activity: {str(ex)}",
+                ErrorType.BadRequest
+            )
 
         response = Response(status=202, headers={"Location": url})
 
