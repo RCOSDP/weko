@@ -73,9 +73,11 @@ from weko_workflow.utils import get_item_info, process_send_mail, set_mail_info
 
 from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
-from .permissions import check_content_clickable, check_created_id, \
-    check_file_download_permission, check_original_pdf_download_permission, \
+from .permissions import (
+    check_content_clickable, check_created_id, check_created_id_by_recid,
+    check_file_download_permission, check_original_pdf_download_permission,
     check_permission_period, file_permission_factory, get_permission
+)
 from .utils import create_secret_url, get_billing_file_download_permission, \
     get_google_detaset_meta, get_google_scholar_meta, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
@@ -1013,7 +1015,7 @@ def citation(record, pid, style=None, ln=None):
 def soft_delete(recid):
     """Soft delete item."""
     try:
-        if not has_update_version_role(current_user):
+        if not check_created_id_by_recid(recid):
             abort(403)
         starts_with_del_ver = True
         if recid.startswith('del_ver_'):
@@ -1194,8 +1196,12 @@ def dbsession_clean(exception):
 
 @blueprint.route("/records/get_bucket_list", methods=['GET'])
 def get_bucket_list():
-    bucket_list = get_s3_bucket_list()
-    return jsonify(bucket_list)
+    try:
+        bucket_list = get_s3_bucket_list()
+        return jsonify(bucket_list)
+    except Exception as e:
+        current_app.logger.error(str(e))
+        return jsonify({'error': str(e)}), 400
 
 @blueprint.route("/records/copy_bucket", methods=['POST'])
 def copy_bucket():
@@ -1209,7 +1215,7 @@ def copy_bucket():
         uri = copy_bucket_to_s3(pid, filename, bucket_id, checked=checked, bucket_name=bucket_name)
         return jsonify(uri)
     except Exception as e:
-        traceback.print_exc()
+        current_app.logger.error(str(e))
         return jsonify({'error': str(e)}), 400
 
 
@@ -1218,10 +1224,9 @@ def get_file_place():
     pid = request.form.get('pid')
     bucket_id = request.form.get('bucket_id')
     file_name = request.form.get('file_name')
-    content_type = request.form.get('content_type')
 
     try:
-        file_place, uri, new_bucket_id, new_version_id = get_file_place_info(pid, bucket_id, file_name, content_type)
+        file_place, uri, new_bucket_id, new_version_id = get_file_place_info(pid, bucket_id, file_name)
         result = {
             'file_place': file_place,
             'uri': uri,
@@ -1230,7 +1235,7 @@ def get_file_place():
         }
         return jsonify(result)
     except Exception as e:
-        traceback.print_exc()
+        current_app.logger.error(str(e))
         return jsonify({'error': str(e)}), 400
 
 @blueprint.route("/records/replace_file", methods=['POST'])
@@ -1253,6 +1258,7 @@ def replace_file():
                                       new_version_id=new_version_id)
             return jsonify(result)
         except Exception as e:
+            current_app.logger.error(str(e))
             return jsonify({'error': str(e)}), 400
 
     else:
@@ -1267,5 +1273,6 @@ def replace_file():
                                       file_size=file_size)
             return jsonify(result)
         except Exception as e:
+            current_app.logger.error(str(e))
             return jsonify({'error': str(e)}), 400
 

@@ -17,20 +17,19 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from invenio_accounts.models import User
 from invenio_oauth2server.models import Token
-from invenio_pidstore.models import PersistentIdentifier
 from weko_accounts.models import ShibbolethUser
 from weko_admin.models import AdminSettings
-from weko_records.api import ItemTypes, ItemsMetadata
+from weko_items_ui.utils import get_workflow_by_item_type_id
+from weko_records.api import ItemTypes
 from weko_search_ui.config import SWORD_METADATA_FILE, ROCRATE_METADATA_FILE
 from weko_search_ui.utils import (
     check_tsv_import_items,
     check_xml_import_items,
     check_jsonld_import_items
 )
-from weko_workflow.api import WorkActivity, WorkFlow as WorkFlows
+from weko_workflow.api import WorkFlow as WorkFlows
 from weko_workflow.errors import WekoWorkflowException
 from weko_workflow.headless import HeadlessActivity
-from weko_workflow.models import  WorkFlow
 
 from .api import SwordClient
 from .errors import ErrorType, WekoSwordserverException
@@ -187,7 +186,9 @@ def is_valid_file_hash(expected_hash, file):
     return expected_hash == body_hash
 
 
-def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
+def check_import_items(
+    file, file_format, is_change_identifier=False, shared_id=-1, **kwargs
+):
     """Check metadata file for import.
 
     Check the contents of the file and return the result of the check.
@@ -197,6 +198,10 @@ def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
         file_format (str): File format. "TSV/CSV", "XML" or "JSON-LD".
         is_change_identifier (bool, optional):
             Change Identifier Mode. Defaults to False.
+        shared_id (int, optional): Contributor ID. Defaults to -1.
+        **kwargs: Additional arguments.
+            - client_id (str): Client ID.
+            - packaging (str): Packaging type.
     Returns:
         dict: Result of the check.
     """
@@ -204,6 +209,7 @@ def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
     register_type = settings.get(file_format, {}).get(
         "registration_type", "Direct"
     )
+    workflow_id = None
     duplicate_check = settings.get(file_format, {}).get(
         "duplicate_check", False
     )
@@ -214,6 +220,8 @@ def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
     check_result = {}
     check_result.update({"register_type": register_type})
     check_result.update({"duplicate_check": duplicate_check})
+    check_result.update({"weko_shared_id": shared_id})
+
     if not is_active:
         current_app.logger.error(f"{file_format} metadata import is not enabled.")
         raise WekoSwordserverException(
@@ -222,12 +230,28 @@ def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
         )
 
     if file_format == "TSV/CSV":
-        check_result.update(check_tsv_import_items(file, is_change_identifier))
+        check_result.update(
+            check_tsv_import_items(file, is_change_identifier, shared_id=shared_id)
+        )
 
         if register_type == "Workflow":
             item_type_id = check_result["list_record"][0].get("item_type_id")
-            workflow = WorkFlows().get_workflow_by_item_type_id(item_type_id)
-            check_result.update({"workflow_id": workflow.id})
+            item_type_name = check_result["list_record"][0].get("item_type_name")
+            item_type = ItemTypes.get_by_id(item_type_id)
+            workflow = get_workflow_by_item_type_id(item_type.name_id,
+                                                    item_type_id)
+
+            if workflow is None:
+                current_app.logger.error(
+                    f"Workflow not found for item type ID: {item_type_name}"
+                )
+                raise WekoSwordserverException(
+                    "Workflow not found for registration your item.",
+                    errorType=ErrorType.BadRequest
+                )
+            workflow_id = workflow.id
+            check_result.update({"workflow_id": workflow_id})
+
     elif file_format == "XML":
         if register_type == "Direct":
             raise WekoSwordserverException(
@@ -236,48 +260,68 @@ def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
             )
 
         workflow_id = int(settings.get(file_format, {}).get("workflow", "-1"))
-        workflow = WorkFlow.query.get(workflow_id)
+        workflow = WorkFlows().get_workflow_by_id(workflow_id)
+
+        if workflow is None or workflow.is_deleted:
+            current_app.logger.error(
+                f"Workflow not found. Workflow ID: {workflow_id}"
+            )
+            raise WekoSwordserverException(
+                "Workflow not found for registration your item.",
+                errorType=ErrorType.BadRequest
+            )
+
         item_type_id = workflow.itemtype_id
-        check_result.update(check_xml_import_items(file, item_type_id))
+        check_result.update(
+            check_xml_import_items(file, item_type_id, shared_id=shared_id)
+        )
+        check_result.update({"workflow_id": workflow_id})
 
     elif file_format == "JSON":
         packaging = kwargs.get("packaging")
         client_id = kwargs.get("client_id")
-        shared_id = kwargs.get("shared_id", -1)
 
         sword_client = SwordClient.get_client_by_id(client_id)
         if sword_client is None or not sword_client.active:
-            current_app.logger.error(f"No setting foound for client ID: {client_id}")
+            current_app.logger.error(
+                f"No SWORD API setting foound for client ID: {client_id}"
+            )
             raise WekoSwordserverException(
-                "No setting found for client ID that you are using.",
+                "No SWORD API setting found for client ID that you are using.",
                 errorType=ErrorType.ServerError
             )
         mapping_id = sword_client.mapping_id
+        workflow_id = sword_client.workflow_id
+        meta_data_api = sword_client.meta_data_api
         # Check workflow and item type
         register_type = sword_client.registration_type
         check_result.update({"register_type": register_type})
 
         check_result.update({
             "register_type": register_type,
-            "workflow_id": sword_client.workflow_id,
+            "workflow_id": workflow_id,
             "duplicate_check": sword_client.duplicate_check,
         })
 
+        if register_type == "Workflow":
+            workflow = WorkFlows().get_workflow_by_id(workflow_id)
+            if workflow is None or workflow.is_deleted:
+                current_app.logger.error(
+                    f"Workflow not found for client ID: {client_id}"
+                )
+                raise WekoSwordserverException(
+                    "Workflow not found for registration your item.",
+                    errorType=ErrorType.BadRequest
+                )
+
         check_result.update(
             check_jsonld_import_items(
-                file, packaging, mapping_id, shared_id,
-                is_change_identifier
+                file, packaging, mapping_id, meta_data_api, shared_id,
+                is_change_identifier=is_change_identifier
             )
         )
 
         if register_type == "Workflow":
-            workflow = WorkFlows().get_workflow_by_id(sword_client.workflow_id)
-            if workflow is None or workflow.is_deleted:
-                current_app.logger.error(f"Workflow not found for client ID: {client_id}")
-                raise WekoSwordserverException(
-                    "Workflow not found for registration your item.",
-                    errorType=ErrorType.ServerError
-                )
             item_type_id = check_result.get("item_type_id")
             # Check if workflow and item type match
             if workflow.itemtype_id != item_type_id:
@@ -287,7 +331,7 @@ def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
                     f"but the workflow's ItemType ID was {workflow.itemtype_id}.")
                 raise WekoSwordserverException(
                     "Item type and workflow do not match.",
-                    errorType=ErrorType.ServerError
+                    errorType=ErrorType.BadRequest
                 )
     else:
         raise WekoSwordserverException(
@@ -295,16 +339,10 @@ def check_import_items(file, file_format, is_change_identifier=False, **kwargs):
             ErrorType.MetadataFormatNotAcceptable
         )
 
-    if register_type == "Workflow" and (workflow is None or workflow.is_deleted):
-        raise WekoSwordserverException(
-            "Workflow is not configured for importing xml.",
-            ErrorType.ServerError
-    )
-
     return check_result
 
 
-def update_item_ids(list_record, new_id):
+def update_item_ids(list_record, new_id, _id):
     """Iterate through list_record, check and update item_id.
 
     Args:
@@ -318,7 +356,6 @@ def update_item_ids(list_record, new_id):
         ValueError: If list_record is not a list.
     """
     # Create a dictionary to map identifiers to their respective items
-    identifier_to_item = {}
     for item in list_record:
         if not isinstance(item, dict):
             continue
@@ -326,8 +363,6 @@ def update_item_ids(list_record, new_id):
         metadata = item.get("metadata")
         if not metadata or not item.get("_id"):
             continue  # Skip if metadata is missing or doesn't have "_id"
-
-        identifier_to_item[item["_id"]] = item
 
     # Iterate through each ITEM in list_record
     for item in list_record:
@@ -342,7 +377,7 @@ def update_item_ids(list_record, new_id):
 
             item_id = link_item.get("item_id")
             sele_id = link_item.get("sele_id")
-            if item_id in identifier_to_item and sele_id == "isSupplementedBy":
+            if item_id == _id and sele_id == "isSupplementedBy":
                 # If a match is found, overwrite item_id with new_id
                 link_item["item_id"] = new_id
                 current_app.logger.info(
@@ -367,12 +402,12 @@ def delete_items_with_activity(item_id, request_info):
         WekoWorkflowException: If any error occurs during deletion.
     """
     user_id=request_info.get("user_id")
-    community_id=request_info.get("community_id")
+    community=request_info.get("community")
 
     try:
         headless = HeadlessActivity()
         url = headless.init_activity(
-            user_id=user_id, community_id=community_id,
+            user_id=user_id, community=community,
             item_id=item_id, for_delete=True
         )
     except WekoWorkflowException as ex:

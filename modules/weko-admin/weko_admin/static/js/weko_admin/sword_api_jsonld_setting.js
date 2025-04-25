@@ -64,7 +64,7 @@ $(document).ready(function () {
     moveRight.prop('disabled', moveRightDisabled);
 
     let moveLeftDisabled = true;
-    if (rightSelect.children().length) {
+    if (rightSelect.children().length > 1) {
       moveLeftDisabled = false;
     }
     moveLeft.prop('disabled', moveLeftDisabled);
@@ -93,11 +93,12 @@ const workflow_deleted_alert = document.getElementById('workflow_deleted_alert')
 const registration_type_value = document.getElementById('registration_type_value').value;
 const workflow_value = document.getElementById('workflow_value').value;
 const deleted_workflows_name = JSON.parse(document.getElementById('deleted_workflows_name').value);
-const sword_item_type_mappings = JSON.parse(document.getElementById('sword_item_type_mappings').value);
+const jsonld_mappings = JSON.parse(document.getElementById('jsonld_mappings').value);
 const current_page_type = document.getElementById('current_page_type').value;
 const current_model_json = JSON.parse(document.getElementById('current_model_json').value);
-const exist_Waiting_approval_workflow = document.getElementById('exist_Waiting_approval_workflow').value;
+const can_edit = document.getElementById('can_edit').value;
 const item_type_names = JSON.parse(document.getElementById('item_type_names').value);
+let check_integrity_result = false;
 
 /** close ErrorMessage area */
 function closeError() {
@@ -131,6 +132,10 @@ function isDeletedWorkflow(value){
   return is_deleted;
 }
 
+$('#application').change(function(){
+  save_button_state_change();
+});
+
 function changeRegistrationType(value) {
   const workflowMenu = document.getElementById('workflow');
   closeError();
@@ -145,11 +150,11 @@ function changeRegistrationType(value) {
     // mapping set
     $('#mapping').children().remove();
     $('#mapping').append($('<option>').html("").val(""));
-    for (let i = 0; i < sword_item_type_mappings.length; i++) {
+    for (let i = 0; i < jsonld_mappings.length; i++) {
       $('#mapping').append(
         $('<option>')
-          .html(sword_item_type_mappings[i]['name'])
-          .val(sword_item_type_mappings[i]['id'])
+          .html(jsonld_mappings[i]['name'])
+          .val(jsonld_mappings[i]['id'])
       );
     }
   } else if (value === 'Workflow') {
@@ -172,6 +177,8 @@ function changeRegistrationType(value) {
     workflowOption.removeAttribute('disabled');
     workflowMenu.setAttribute('required', true);
   }
+  $('#mapping-check').empty();
+  check_integrity_result = false;
   // save button enable
   save_button_state_change();
 }
@@ -185,6 +192,9 @@ function isEmpty(value){
 }
 
 function handleMappingChange() {
+  if (can_edit === 'False') {
+    return;
+  }
   // save button enable
   save_button_state_change();
 
@@ -192,7 +202,7 @@ function handleMappingChange() {
   let mapping_val = $('#mapping').val();
   if (mapping_val !== '') {
     mapping_val = Number(mapping_val);
-    let result = sword_item_type_mappings.find(data => data.id === mapping_val);
+    let result = jsonld_mappings.find(data => data.id === mapping_val);
     let item_type_id = result['item_type_id'];
     result = item_type_names.find(data => data.id === item_type_id);
     let item_type_name = result['name'];
@@ -213,19 +223,26 @@ function handleMappingChange() {
         if (result.results) {
           $('#mapping-check').empty();
           $('#mapping-check').append('Item type : ' + item_type_name + '<span class="text-success">✓</span>');
-          $('#save_button').prop('disabled', false);
+          check_integrity_result = true;
+          save_button_state_change();
         } else {
           $('#mapping-check').empty();
           $('#mapping-check').append('Item type:' + item_type_name + '<span class="text-danger">✘</span>');
-          $('#save_button').prop('disabled', true);
+          check_integrity_result = false;
+          save_button_state_change()
         }
       })
       .catch(error => {
         showMsg(Failed_Changed, false);
+        $('#mapping-check').empty();
+        check_integrity_result = false;
+        save_button_state_change()
         return;
       });
   } else {
     $('#mapping-check').empty();
+    check_integrity_result = false;
+    save_button_state_change()
   }
 }
 
@@ -235,24 +252,42 @@ $('#workflow').change(function(){
   const select_item_type_id = selectedOption.data('itemtype');
   $('#mapping').children().remove();
   $('#mapping').append($('<option>').html("").val(""));
-  for (let i = 0; i < sword_item_type_mappings.length; i++){
-    if (sword_item_type_mappings[i]['item_type_id'] === select_item_type_id) {
-      $('#mapping').append($('<option>').html(sword_item_type_mappings[i]['name']).val(sword_item_type_mappings[i]['id']));
+  for (let i = 0; i < jsonld_mappings.length; i++){
+    if (jsonld_mappings[i]['item_type_id'] === select_item_type_id) {
+      $('#mapping').append($('<option>').html(jsonld_mappings[i]['name']).val(jsonld_mappings[i]['id']));
     }
   }
 
   // save button enable
+  $('#mapping-check').empty();
+  check_integrity_result = false;
   save_button_state_change();
 });
 
 $('#mapping').change(handleMappingChange);
 
 function save_button_state_change() {
-  if ( $('#mapping').val() !== '' ) {
+  if ( checke_save_button_enable() ) {
     $('#save_button').prop('disabled', false);
   } else {
     $('#save_button').prop('disabled', true);
   }
+}
+
+function checke_save_button_enable() {
+  result = false;
+  if (current_page_type === 'add') {
+    if ( $('#application').val() !== '' ) {
+      if (check_integrity_result === true) {
+        result = true;
+      }
+    }
+  } else {
+    if (check_integrity_result === true) {
+      result = true;
+    }
+  }
+  return result;
 }
 
 function saveDataFormat(type) {
@@ -308,6 +343,9 @@ function saveDataFormat(type) {
     let element = selectedChildren[index].value;
     selected_API.push(element);
   }
+  if (selected_API.length ===1 && selected_API[0] === "Original") {
+    selected_API = [];
+  }
   no_selected_API = [];
   for (let index = 0; index < children.length; index++) {
     let element = children[index].value;
@@ -323,7 +361,7 @@ function saveDataFormat(type) {
     workflow_id: workflowMenu.value,
     mapping_id: mapping.value,
     duplicate_check: duplicate_check_value,
-    Meta_data_API_selected: selected_API,
+    metadata_api_selected: selected_API,
     Meta_data_API_no_selected: no_selected_API,
   };
 
@@ -355,6 +393,14 @@ window.onload = function () {
   if (current_page_type === 'add') {
     // add
     registration_type[0].checked = true;
+
+    // metadata api set
+    $('#leftSelect')
+      .find('option[value="Original"]')
+      .prop('selected', false)
+      .appendTo($('#rightSelect'));
+    $('#moveLeft').prop('disabled', true);
+
     changeRegistrationType('Direct');
   } else {
     // edit
@@ -376,14 +422,14 @@ window.onload = function () {
       const select_item_type_id = selectedOption.data('itemtype');
       $('#mapping').children().remove();
       $('#mapping').append($('<option>').html("").val(""));
-      for (let i = 0; i < sword_item_type_mappings.length; i++) {
+      for (let i = 0; i < jsonld_mappings.length; i++) {
         if (
-          sword_item_type_mappings[i]['item_type_id'] === select_item_type_id
+          jsonld_mappings[i]['item_type_id'] === select_item_type_id
         ) {
           $('#mapping').append(
             $('<option>')
-              .html(sword_item_type_mappings[i]['name'])
-              .val(sword_item_type_mappings[i]['id'])
+              .html(jsonld_mappings[i]['name'])
+              .val(jsonld_mappings[i]['id'])
           );
         }
       }
@@ -392,13 +438,22 @@ window.onload = function () {
     if (current_model_json['duplicate_check'] === true) {
       $('#duplicate_check').prop('checked', true);
     }
+
+    // metadata api set
     const meta_data_api = current_model_json['meta_data_api'];
-    meta_data_api.forEach(function (api) {
+    if (meta_data_api.length === 0) {
       $('#leftSelect')
-        .find('option[value="' + api + '"]')
-        .prop('selected', false)
-        .appendTo($('#rightSelect'));
-    });
+      .find('option[value="Original"]')
+      .prop('selected', false)
+      .appendTo($('#rightSelect'));
+    } else {
+      meta_data_api.forEach(function (api) {
+        $('#leftSelect')
+          .find('option[value="' + api + '"]')
+          .prop('selected', false)
+          .appendTo($('#rightSelect'));
+      });
+    }
     let moveRightDisabled = true;
     if ($('#leftSelect').children().length) {
       moveRightDisabled = false;
@@ -406,13 +461,13 @@ window.onload = function () {
     $('#moveRight').prop('disabled', moveRightDisabled);
 
     let moveLeftDisabled = true;
-    if ($('#rightSelect').children().length) {
+    if ($('#rightSelect').children().length > 1) {
       moveLeftDisabled = false;
     }
     $('#moveLeft').prop('disabled', moveLeftDisabled);
 
     $('#save_button').prop('disabled', false);
-    if (exist_Waiting_approval_workflow === 'True') {
+    if (can_edit === 'False') {
       $('#error_modal').modal('show');
       $('#save_button').prop('disabled', true);
       $('#application').prop('disabled', true);

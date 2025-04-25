@@ -22,6 +22,10 @@
 
 import json
 from datetime import datetime,timezone
+import traceback
+from elasticsearch_dsl.query import Q
+from elasticsearch.exceptions import TransportError
+from invenio_search import RecordsSearch
 import requests
 from flask import current_app, request
 from flask_babelex import gettext as _
@@ -29,6 +33,7 @@ from flask_security import current_user
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
 from sqlalchemy.exc import SQLAlchemyError
+from weko_schema_ui.models import PublishStatus
 from weko_user_profiles.models import UserProfile
 from weko_records.models import OaStatus
 from weko_admin.utils import StatisticMail
@@ -42,7 +47,6 @@ from weko_records.api import (
     ItemTypes,
     Mapping,
 )
-from weko_items_autofill.utils import sort_by_item_type_order
 from .api import CiNiiURL, JALCURL, DATACITEURL, JamasURL
 from lxml import etree
 
@@ -53,9 +57,9 @@ def get_workspace_filterCon():
 
     Returns:
         tuple:
-            - default_con (dict): The user's default filtering conditions. 
+            - default_con (dict): The user's default filtering conditions.
                 If the query fails or returns None, `DEFAULT_FILTERS` is returned.
-            - isnotNone (bool): Indicates whether a non-null value was successfully retrieved from the database. 
+            - isnotNone (bool): Indicates whether a non-null value was successfully retrieved from the database.
                 Returns False if the query fails or returns None.
 
     Raises:
@@ -91,33 +95,72 @@ def get_es_itemlist():
     Fetches records data from an external API.
 
     Returns:
-        dict or None: The records data in JSON format if the API requests are successful; 
+        dict or None: The records data in JSON format if the API requests are successful;
                       returns `None` if an error occurs.
 
     Raises:
-        requests.exceptions.RequestException: If an HTTP error occurs, such as a timeout or invalid response.
-        json.JSONDecodeError: If the response cannot be decoded as JSON.
-        KeyError: If the expected keys are missing in the response data.
+        TransportError: If an error occurs during the Elasticsearch query, returns `None`.
+        Exception: If any other unexpected error occurs, returns `None`.
     """
-    invenio_api_path = "/api/workspace/search"
-    headers = {"Accept": "application/json"}
-    base_url = request.host_url.rstrip("/")
-
     try:
-        response = requests.get(base_url + invenio_api_path, headers=headers)
-        response.raise_for_status()
-        size = response.json()["hits"]["total"]
-        size_param = "?size=" + str(size) if size else ""
+        size = 10000
+        search_index = current_app.config["WEKO_WORKSPACE_ITEM_SEARCH_INDEX"]
+        search_type = current_app.config["WEKO_WORKSPACE_ITEM_SEARCH_TYPE"]
+        search_obj = RecordsSearch(index=search_index, doc_type=search_type)
+        search = search_obj.with_preference_param().params(version=True)
 
-        response = requests.get(base_url + invenio_api_path + size_param, headers=headers)
-        response.raise_for_status()
-        records_data = response.json()
-        return records_data
-    except requests.exceptions.RequestException as e:
+        # Set the search query
+        publish_status_match = Q("terms", publish_status=[
+            PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value
+        ])
+        user_id = (
+            current_user.get_id()
+            if current_user and current_user.is_authenticated
+            else None
+        )
+        creator_user_match = Q("match", weko_creator_id=user_id)
+        shared_user_match = Q("match", weko_shared_id=user_id)
+        shuld = []
+        shuld.append(Q("bool", must=[publish_status_match, creator_user_match]))
+        shuld.append(Q("bool", must=[publish_status_match, shared_user_match]))
+        must = []
+        must.append(Q("bool", should=shuld))
+        must.append(Q("bool", must=Q("match", relation_version_is_last="true")))
+        search = search.filter(Q("bool", must=must))
+        search = search.query(Q("bool", must=Q("match_all")))
+
+        # Set size / Exclude content field from the source
+        src = {
+            "size": size,
+            "_source": {"excludes": ["content"]}
+        }
+        search._extra.update(src)
+
+        # Set sorting
+        search = search.sort("-control_number")
+
+        # Execute search. Use search_after to retrieve all records
+        records = []
+        current_app.logger.debug(f"[workspace] search obj: {search.to_dict()}")
+        page = search.execute().to_dict()
+        current_app.logger.debug(f"[workspace] search result: {page}")
+        while page.get('hits', {}).get('hits', []):
+            records.extend(page.get('hits', {}).get('hits', []))
+            if len(page.get('hits', {}).get('hits', [])) < size:
+                break
+            search = search.extra(search_after=page.get('hits', {}).get('hits', [])[-1].get('sort'))
+            current_app.logger.debug(f"[workspace] search obj: {search.to_dict()}")
+            page = search.execute().to_dict()
+            current_app.logger.debug(f"[workspace] search result: {page}")
+        return records
+    
+    except TransportError as e:
+        traceback.print_exc()
+        current_app.logger.error(f"Failed to get workflow item list from ES: {e} / {search.to_dict()}")
         return None
-    except json.JSONDecodeError as e:
-        return None
-    except KeyError as e:
+    except Exception as e:
+        traceback.print_exc()
+        current_app.logger.error(e)
         return None
 
 
@@ -165,7 +208,7 @@ def get_accessCnt_downloadCnt(recid: str):
             If an error occurs, returns (0, 0).
 
     Raises:
-        Exception: If any error occurs during the process (e.g., failure in retrieving UUID 
+        Exception: If any error occurs during the process (e.g., failure in retrieving UUID
                    or querying statistics), the function returns (0, 0).
     """
     try:
@@ -244,7 +287,7 @@ def insert_workspace_status(user_id, recid, is_favorited=False, is_read=False):
         WorkspaceStatusManagement: The newly created workspace status entry.
 
     Raises:
-        Exception: If an error occurs during the database commit, the transaction is rolled back 
+        Exception: If an error occurs during the database commit, the transaction is rolled back
                   and the exception is raised.
     """
     new_status = WorkspaceStatusManagement(
@@ -276,12 +319,12 @@ def update_workspace_status(user_id, recid, is_favorited=False, is_read=False):
         is_read (bool, optional): The updated read status. Defaults to False.
 
     Returns:
-        WorkspaceStatusManagement or None: The updated workspace status record if the status 
-                                            was found and updated, or `None` if the status 
+        WorkspaceStatusManagement or None: The updated workspace status record if the status
+                                            was found and updated, or `None` if the status
                                             for the given `user_id` and `recid` was not found.
 
     Raises:
-        Exception: If an error occurs during the commit, the transaction is rolled back and 
+        Exception: If an error occurs during the commit, the transaction is rolled back and
                   the exception is raised.
     """
     status = WorkspaceStatusManagement.query.filter_by(
@@ -342,12 +385,12 @@ def extract_metadata_info(item_metadata):
 def changeLang(language: str, defaultconditions: dict):
     """
         Translates the labels in the given dictionary to Japanese if the selected language is "ja".
-        
+
         Parameters:
         language (str): The target language code. If it is "ja", the labels will be translated to Japanese.
         defaultconditions (dict): A dictionary containing resource attributes, where each key represents a category
                                 and each value is a dictionary that may contain a "label" field.
-        
+
         Returns:
         dict: The updated dictionary with translated labels if the language is "ja"; otherwise, the original dictionary.
         """
@@ -444,6 +487,7 @@ def get_jamas_record_data(doi, item_type_id):
 
     api_data = get_jamas_data_by_key(api_response, 'all')
     items = ItemTypes.get_by_id(item_type_id)
+    from weko_items_autofill.utils import sort_by_item_type_order
     if items is None:
         return result
     elif items.form is not None:
@@ -732,7 +776,7 @@ def get_cinii_data_by_key(api, keyword):
             result[key] = get_cinii_data_by_key(api, key).get(key)
     return result
 
-    
+
 def get_cinii_product_identifier(data, type1, type2):
     """Identifier Mapping.
 
@@ -753,7 +797,7 @@ def get_cinii_product_identifier(data, type1, type2):
             new_data['@type'] = "NAID"
             result.append(new_data)
     return result
-    
+
 
 def pack_data_with_multiple_type_cinii(data):
     """Map CiNii multi data with type.
@@ -1152,7 +1196,7 @@ def get_cinii_autofill_item(item_id):
     """
     jpcoar_item = get_item_id(item_id)
     cinii_req_item = dict()
-    
+
     for key in current_app.config.get("WEKO_ITEMS_AUTOFILL_CINII_REQUIRED_ITEM"):
         if jpcoar_item.get(key) is not None:
             cinii_req_item[key] = jpcoar_item.get(key)
@@ -1648,7 +1692,7 @@ def get_jalc_numpage(startingPage, endingPage):
 
     :param: data: jalc data
     :return: number of page is packed
-    """  
+    """
     if startingPage and endingPage:
         try:
             end = int(endingPage)
@@ -1736,7 +1780,7 @@ def get_datacite_record_data(doi, item_type_id):
     elif items.form is not None:
         autofill_key_tree = get_autofill_key_tree(
             items.form, get_cinii_autofill_item(item_type_id))
-        result = build_record_model(autofill_key_tree, api_data) 
+        result = build_record_model(autofill_key_tree, api_data)
     return result
 
 
@@ -1762,7 +1806,7 @@ def get_datacite_data_by_key(api, keyword):
     elif keyword == 'description' and data['data']['attributes'].get('descriptions'):
         result[keyword] = get_datacite_description_data(
             data['data']['attributes'].get('descriptions')
-        )    
+        )
     elif keyword == 'subject' and data['data']['attributes'].get('subjects'):
         result[keyword] = get_datacite_subject_data(data['data']['attributes'].get('subjects'))
     elif keyword == 'sourceTitle' and data['data']['attributes'].get('publisher'):
@@ -1799,9 +1843,9 @@ def get_datacite_publisher_data(data):
     default_language = 'en'
     new_data = dict()
     new_data["@type"] = data
-    
+
     new_data['@language'] = default_language
-    
+
     result.append(new_data)
     return result
 
@@ -1824,7 +1868,7 @@ def get_datacite_title_data(data):
         new_data = dict()
         new_data["@value"] = title.get('title')
         new_data['@language'] = title.get('lang', default_language)
-        
+
         result.append(new_data)
     return result
 
@@ -1849,7 +1893,7 @@ def get_datacite_creator_data(data):
             new_data = dict()
             new_data['@value'] = item.get('name')
             new_data['@language'] = default_language
-            
+
             result_creator.append(new_data)
             result.append(result_creator)
     return result
@@ -1875,7 +1919,7 @@ def get_datacite_contributor_data(data):
             new_data = dict()
             new_data['@value'] = item.get('name')
             new_data['@language'] = default_language
-            
+
             result_creator.append(new_data)
             result.append(result_creator)
     return result
@@ -1903,7 +1947,7 @@ def get_datacite_description_data(data):
             new_data = dict()
             new_data['@value'] = item.get('description')
             new_data['@language'] = default_language
-            
+
             result_creator.append(new_data)
             result.append(result_creator)
     return result
@@ -1926,12 +1970,12 @@ def get_datacite_subject_data(data):
     result = list()
     default_language = 'ja'
     for sub in data:
-        if 'subject' in sub: 
+        if 'subject' in sub:
             result_creator = list()
             new_data = dict()
-            new_data['@value'] = sub.get('subject') 
+            new_data['@value'] = sub.get('subject')
             new_data['@subjectScheme'] = sub.get('subjectScheme')
-            
+
             result_creator.append(new_data)
             result.append(result_creator)
     return result
@@ -2000,4 +2044,3 @@ def get_datacite_product_identifier(data):
         new_data['@type'] = None
         result.append(new_data)
     return result
-    

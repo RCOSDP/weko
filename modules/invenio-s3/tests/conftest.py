@@ -33,7 +33,7 @@ def app_config(app_config):
     app_config[
         'FILES_REST_STORAGE_FACTORY'] = 'invenio_s3.s3fs_storage_factory'
     app_config['S3_ENDPOINT_URL'] = None
-    
+
     app_config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI',
                                            'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest')
     app_config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
@@ -62,7 +62,7 @@ def create_app():
 def base_app():
     """Flask application fixture."""
     app = Flask('testapp')
-    
+
     app.config.update(
     FILES_REST_STORAGE_FACTORY='invenio_s3:s3_storage_factory',
     S3_ENDPOINT_URL=None,
@@ -124,7 +124,7 @@ def location(location_path, database):
     return loc
 
 @pytest.fixture(scope='function')
-def s3_bucket(appctx):
+def s3_bucket(app):
     """S3 bucket fixture."""
     with mock_s3():
         session = boto3.Session(

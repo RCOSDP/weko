@@ -110,6 +110,7 @@ class WekoAuthors(object):
         config_index = current_app.config['WEKO_AUTHORS_ES_INDEX_NAME']
         config_doc_type = current_app.config['WEKO_AUTHORS_ES_DOC_TYPE']
 
+        from weko_logging.activity_logger import UserActivityLogger
         try:
             with db.session.begin_nested():
                 author = Authors.query.filter_by(id=author_id).one()
@@ -123,17 +124,13 @@ class WekoAuthors(object):
                 author.json = data
                 db.session.merge(author)
 
-            from weko_logging.activity_logger import UserActivityLogger
             UserActivityLogger.info(
-                operation="AUTHOR_UPDATE",
-                target_key=author_id
+                operation="AUTHOR_UPDATE", target_key=author_id
             )
         except Exception as ex:
             db.session.rollback()
             UserActivityLogger.error(
-                operation="AUTHOR_UPDATE",
-                target_key=author_id
-            )
+                operation="AUTHOR_UPDATE", target_key=author_id)
             raise
         else:
             update_es_data(es_data, es_id)
@@ -144,7 +141,8 @@ class WekoAuthors(object):
             user_id = current_user.get_id()
 
         update_items_by_authorInfo.delay(
-            user_id, data, [author_id], [data["id"]], force_change=force_change)
+            user_id, data, [author_id], [data["id"]], force_change=force_change
+        )
 
     @classmethod
     def get_all(cls, with_deleted=True, with_gather=True):
@@ -177,7 +175,7 @@ class WekoAuthors(object):
                 return query.all()
         except Exception as ex:
             current_app.logger.error(ex)
-            raise ex
+            raise
 
     @classmethod
     def get_records_count(cls, with_deleted=True, with_gather=True):
@@ -194,7 +192,7 @@ class WekoAuthors(object):
                 return query.count()
         except Exception as ex:
             current_app.logger.error(ex)
-            raise ex
+            raise
 
 
     @classmethod
@@ -278,7 +276,8 @@ class WekoAuthors(object):
                         break
             return weko_id
         except Exception as ex:
-            raise ex
+            current_app.logger.error("Failed to get weko_id by pk_id")
+            raise
 
     @classmethod
     def get_used_scheme_of_id_prefix(cls):
@@ -293,9 +292,13 @@ class WekoAuthors(object):
             metadata = author.json
             for authorIdInfo in metadata.get('authorIdInfo', {}):
                 idType = authorIdInfo.get('idType')
-                if idType and idType != '1' \
-                    and idtype_and_scheme.get(int(idType)) not in used_external_id_prefix:
-                    used_external_id_prefix.append(idtype_and_scheme.get(int(idType)))
+                if (
+                    idType and idType != '1'
+                    and idtype_and_scheme.get(int(idType)) not in used_external_id_prefix
+                ):
+                    used_external_id_prefix.append(
+                        idtype_and_scheme.get(int(idType))
+                    )
         return used_external_id_prefix, idtype_and_scheme
 
     @classmethod
@@ -312,8 +315,9 @@ class WekoAuthors(object):
             for affiliationInfo in metadata.get('affiliationInfo', []):
                 for identifierInfo in affiliationInfo.get('identifierInfo', []):
                     idType = identifierInfo.get('affiliationIdType')
-                    if idType \
-                        and idtype_and_scheme.get(int(idType)) not in used_external_id:
+                    if (idType
+                        and idtype_and_scheme.get(int(idType)) not in used_external_id
+                    ):
                         used_external_id.append(idtype_and_scheme.get(int(idType)))
         return used_external_id, idtype_and_scheme
 
@@ -390,7 +394,9 @@ class WekoAuthors(object):
             if not mappings:
                 mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING"])
             if not affiliation_mappings:
-                affiliation_mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"])
+                affiliation_mappings = deepcopy(
+                    current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"]
+                )
             if not records_count:
                 records_count = cls.get_records_count(False, False)
             # 削除されておらず、統合されていない著者の合計を取得
@@ -406,11 +412,12 @@ class WekoAuthors(object):
                             mapping['max'] = max(mapping.get('max', 1), 1)
                         else:
                             mapping['max'] = max(
-                                    mapping.get('max', 1),
-                                    max(
-                                    list(map(lambda x: len(x.json.get(mapping['json_id'], [])), authors))
-                                    )
-                                )
+                                mapping.get('max', 1),
+                                max(list(map(
+                                    lambda x: len(x.json.get(mapping['json_id'], [])),
+                                    authors
+                                )))
+                            )
                             if mapping['max'] == 0:
                                 mapping['max'] = 1
 
@@ -434,7 +441,7 @@ class WekoAuthors(object):
                                 "identifierInfo" : 1,
                                 "affiliationNameInfo" : 1,
                                 "affiliationPeriodInfo" : 1,
-                                })
+                            })
                         for child in affiliation_mappings["child"]:
                             child_length = len(affiliation.get(child["json_id"], []))
                             if child_length > mapping_max[index][child["json_id"]]:
@@ -461,10 +468,10 @@ class WekoAuthors(object):
                 )
                 return result
             else:
-                raise ex
+                raise
         except Exception as ex:
             current_app.logger.error(ex)
-            raise ex
+            raise
         return mappings, affiliation_mappings
 
     @classmethod
@@ -476,11 +483,11 @@ class WekoAuthors(object):
         row_data = []
 
         if not mappings or not affiliation_mappings:
-            mappings, affiliation_mappings = WekoAuthors.mapping_max_item(\
+            mappings, affiliation_mappings = WekoAuthors.mapping_max_item(
                 deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING"]),
                 deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"]),
                 WekoAuthors.get_records_count(False, False)
-                )
+            )
         if not authors:
             authors = cls.get_by_range(start, size, False, False)
         if not schemes:

@@ -111,8 +111,8 @@ def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
             # for browsing role check
             reduce_index_by_role(tree, roles, groups)
         if not ignore_more:
-            reduce_index_by_more(tree=tree, more_ids=more_ids)   
-            
+            reduce_index_by_more(tree=tree, more_ids=more_ids)
+
 def can_user_access_index(lst):
     """Check if the specified user has access to the index item.
 
@@ -127,11 +127,9 @@ def can_user_access_index(lst):
         bool: True if the user has access, False otherwise.
     """
     from weko_records_ui.utils import is_future
-    
-    roles = get_user_roles(is_super_role=True)
-    
-    if roles[0]:
-        return True
+
+    result, roles = get_user_roles(is_super_role=True)
+
     groups = get_user_groups()
 
     brw_role = lst.get('browsing_role', [])
@@ -141,19 +139,18 @@ def can_user_access_index(lst):
     public_state = lst.get('public_state', False)
     public_date = lst.get('public_date', None)
 
-    if isinstance(public_date, str):
-        public_date = str_to_datetime(public_date, "%Y-%m-%dT%H:%M:%S")
+    if not result:
+        if isinstance(public_date, str):
+            public_date = str_to_datetime(public_date, "%Y-%m-%dT%H:%M:%S")
 
-    if check_roles(roles, brw_role) or check_groups(groups, brw_group):
-        if public_state and (public_date is None or not is_future(public_date)):
-            return True
-        else:
-            return False
+        if check_roles(roles, brw_role) or check_groups(groups, brw_group):
+            if public_state and (public_date is None or not is_future(public_date)):
+                result = True
 
-    if check_roles(roles, contribute_role) or check_groups(groups, contribute_group):
-        return True
+        if check_roles(roles, contribute_role) or check_groups(groups, contribute_group):
+            result = True
 
-    return False
+    return result
 
 def get_tree_json(index_list, root_id):
     """Get Tree Json.
@@ -1117,7 +1114,7 @@ def str_to_datetime(str_dt, format):
         return datetime.strptime(str_dt, format)
     except ValueError:
         return None
-    
+
 def get_descendant_index_names(index_id):
     """Retrieve all indexes under the specified index_id
         in the format of parent_index_name-/-child_index_name-/-grandchild_index_name.

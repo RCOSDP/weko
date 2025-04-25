@@ -9,6 +9,7 @@
 """Shibboleth User API."""
 
 import re
+import traceback
 from datetime import datetime
 from urllib.parse import urlparse
 
@@ -294,20 +295,21 @@ class ShibUser(object):
                 if not self._find_organization_name(roles_add):
                     self._assign_roles_to_user(roles_add)
         except Exception as ex:
+            traceback.print_exc()
             return str(ex)
 
         return None
 
     def _get_roles_to_add(self):
-        """
-        Get roles to add based on Shibboleth attributes.
+        """Get roles to add based on Shibboleth attributes.
 
-        Shibboleth属性に基づいて追加するロールを取得します。
-        具体的には、WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS設定がTrueの場合に、
-        WEKO_SHIB_ATTR_IS_MEMBER_OF属性またはWEKO_ACCOUNTS_IDP_ENTITY_ID属性に基づいて
-        追加するロールを決定します。
+        Gets the roles to add based on Shibboleth attributes.
+        Specifically, if the WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS setting
+        is True, it determines the roles to add based on the
+        WEKO_SHIB_ATTR_IS_MEMBER_OF or WEKO_ACCOUNTS_IDP_ENTITY_ID attribute.
 
-        :return: Set of roles to add
+        Returns:
+            list: List of roles to add.
         """
         shib_attr_is_member_of = []
 
@@ -324,9 +326,13 @@ class ShibUser(object):
                 if not shib_attr_is_member_of:
                     idp_entity_id = current_app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID']
                     if not idp_entity_id:
-                        raise KeyError('WEKO_ACCOUNTS_IDP_ENTITY_ID is missing in config')
+                        raise KeyError(
+                            'WEKO_ACCOUNTS_IDP_ENTITY_ID is missing in config'
+                    )
 
-                    shib_attr_is_member_of = current_app.config['WEKO_ACCOUNTS_GAKUNIN_DEFAULT_GROUP_MAPPING'].get(idp_entity_id, [])
+                    shib_attr_is_member_of = current_app.config[
+                        'WEKO_ACCOUNTS_GAKUNIN_DEFAULT_GROUP_MAPPING'
+                    ].get(idp_entity_id, [])
             except Exception as ex:
                 current_app.logger.error(f"Unexpected error: {ex}")
                 raise ex
@@ -335,7 +341,11 @@ class ShibUser(object):
 
     def _find_organization_name(self, group_ids):
         """
-        事前に各ロールにorganization_nameが登録されていた場合、そのロールを割り当てる
+        If organization_name has been registered for each role beforehand,
+        that role will be assigned.
+
+        Args:
+            group_ids (list): List of group IDs.
         """
         try:
             with db.session.begin_nested():
@@ -362,9 +372,9 @@ class ShibUser(object):
                 db.session.commit()
                 return False
         except Exception as ex:
-                current_app.logger.error(f"Error assigning roles: {ex}")
                 db.session.rollback()
-                raise ex
+                current_app.logger.error(f"Error assigning roles: {ex}")
+                raise
 
 
     def _assign_roles_to_user(self, map_group_names):
@@ -412,6 +422,15 @@ class ShibUser(object):
             raise ex
 
     def get_organization_from_api(self, group_id):
+        """Get organization name from API using group_id.
+
+        Args:
+            group_id (str): Group ID to search for.
+        Returns:
+            str: Organization name.
+        Raises:
+            ValueError: If the API response is not as expected.
+        """
         url = f"https://cg.gakunin.jp/api/people/@me/{group_id}"
         headers = {
             'Content-Type': 'application/json',
@@ -440,18 +459,20 @@ class ShibUser(object):
 
     @classmethod
     def shib_user_logout(cls):
-        """
-        Remove login info for shibboleth user.
-
-        :return:
-
-        """
+        """Remove login info for shibboleth user."""
         user_logged_out.send(current_app._get_current_object(),
                              user=current_user)
 
 
 def get_user_info_by_role_name(role_name):
-    """Get user info by role name."""
+    """Get user info by role name.
+
+    Args:
+        role_name (str): Role name to filter users by.
+
+    Returns:
+        list: List of users associated with the specified role name.
+    """
     role = Role.query.filter_by(name=role_name).first()
     return User.query.filter(User.roles.contains(role)).all()
 
@@ -481,13 +502,13 @@ def sync_shib_gakunin_map_groups():
             update_roles(map_group_list, roles)
     except KeyError as ke:
         current_app.logger.error(f"Missing key in request headers: {ke}")
-        raise ke
+        raise
     except redis.ConnectionError as rce:
         current_app.logger.error(f"Redis connection error: {rce}")
-        raise rce
+        raise
     except Exception as ex:
         current_app.logger.error(f"Unexpected error: {ex}")
-        raise ex
+        raise
 
 
 def update_roles(map_group_list, roles):

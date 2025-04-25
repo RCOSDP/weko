@@ -41,10 +41,10 @@
 <input id="deleted_workflows_name" type="hidden" value='{{deleted_workflow_name_dict}}'/>
 <input id="registration_type_value" type="hidden" value='{{registration_type_value}}'/>
 <input id="workflow_value" type="hidden" value='{{workflow_value}}'/>
-<input id="sword_item_type_mappings" type="hidden" value='{{ sword_item_type_mappings | tojson | safe }}'/>
+<input id="jsonld_mappings" type="hidden" value='{{ jsonld_mappings | tojson | safe }}'/>
 <input id="current_page_type" type="hidden" value='{{ current_page_type }}'/>
 <input id="current_model_json" type="hidden" value='{{ current_model_json | tojson | safe }}'/>
-<input id="exist_Waiting_approval_workflow" type="hidden" value='{{ exist_Waiting_approval_workflow }}'/>
+<input id="can_edit" type="hidden" value='{{ can_edit }}'/>
 <input id="item_type_names" type="hidden" value='{{ item_type_names | tojson | safe }}'/>
 
 {% block navlinks %}
@@ -171,8 +171,8 @@
       <label for="mapping_list">{{_('Meta data API')}}</label>
     </div>
     <div class="col-sm-8">
-      <div class="panel-group">
-        <div class="panel panel-default">
+      <div class="panel-group" style="margin-bottom: 0;">
+        <div class="panel panel-default" style="margin-bottom: 0;">
           <div class="panel-body" id="color_setting">
             <div class="row">
               <div class="col-sm-10">
@@ -223,6 +223,10 @@
       </div>
     </div>
   </div>
+  <div class="row">
+    <div class="col-sm-2 text-left"></div>
+    <div class="col-sm-8">※ {{_('\"Original\" means the original metadata received via the SWORD API.')}}</div>
+  </div>
   <div class="row form-group">
     <div className="pull-right" style="margin-right: 15px;">
       <button type="button" id="save_button" name="submit" class="btn btn-primary pull-right" value="{{ current_page_type }}" disabled onclick="saveDataFormat(value)">
@@ -243,7 +247,7 @@
         <h4 class="modal-title">WEKO</h4>
       </div>
       <div class="modal-body">
-        <p class="text-center">{{_('Unapproved Items Exit')}}</p>
+        <p class="text-center">{{_('Unapproved Items Exit.')}}</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-info close-button" data-dismiss="modal">
