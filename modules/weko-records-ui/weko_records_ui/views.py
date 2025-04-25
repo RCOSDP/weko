@@ -55,6 +55,7 @@ from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
+from weko_logging.activity_logger import UserActivityLogger
 from weko_records.api import ItemLink, Mapping, ItemTypes, RequestMailList
 from weko_records.serializers import citeproc_v1
 from weko_records.serializers.utils import get_mapping
@@ -163,6 +164,12 @@ def publish(pid, record, template=None, **kwargs):
     indexer.update_es_data(record, update_revision=False, field='publish_status')
     indexer.update_es_data(last_record, update_revision=False, field='publish_status')
     call_external_system(old_record=old_record, new_record=last_record)
+
+    operation = "ITEM_PUBLISH" if publish_status else "ITEM_UNPUBLISH"
+    UserActivityLogger.info(
+        operation=operation,
+        target_key=record.get("recid"),
+    )
 
     return redirect(url_for('.recid', pid_value=pid.pid_value))
 

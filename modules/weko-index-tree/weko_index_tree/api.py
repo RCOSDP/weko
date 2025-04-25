@@ -22,6 +22,7 @@
 
 import pickle
 import os
+import sys
 from datetime import date, datetime, timezone
 from functools import partial
 from socketserver import DatagramRequestHandler
@@ -171,8 +172,11 @@ class Indexes(object):
             )
         except IntegrityError as ie:
             current_app.logger.error(f"Error occurred while creating index: {cid}")
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
             UserActivityLogger.error(
                 operation="INDEX_CREATE",
+                remarks=tb_info[0]
             )
             if "uix_position" in "".join(ie.args):
                 try:
@@ -300,9 +304,12 @@ class Indexes(object):
                 f"Error occurred while updating index: {index_id}"
             )
             traceback.print_exc()
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
             UserActivityLogger.error(
                 operation="INDEX_UPDATE",
-                target_key=index_id
+                target_key=index_id,
+                remarks=tb_info[0]
             )
         return
 
@@ -335,10 +342,6 @@ class Indexes(object):
                 slf.is_deleted = True
                 p_lst = [o.id for o in obj_list]
                 cls.delete_set_info('move', index_id, p_lst)
-                UserActivityLogger.info(
-                    operation="INDEX_DELETE",
-                    target_key=index_id
-                )
                 return p_lst
         else:
             with db.session.no_autoflush:
@@ -382,10 +385,6 @@ class Indexes(object):
                                 synchronize_session='fetch'
                             )
                 cls.delete_set_info('delete', index_id, p_lst)
-                UserActivityLogger.info(
-                    operation="INDEX_DELETE",
-                    target_key=index_id
-                )
                 return p_lst
 
         return 0

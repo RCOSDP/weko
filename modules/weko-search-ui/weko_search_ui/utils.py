@@ -89,6 +89,7 @@ from weko_index_tree.utils import (
 )
 from weko_index_tree.models import Index
 from weko_indextree_journal.api import Journals
+from weko_logging.activity_logger import UserActivityLogger
 from weko_records.api import FeedbackMailList, JsonldMapping, RequestMailList, ItemTypes, Mapping
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_full_mapping, get_mapping
@@ -2013,13 +2014,14 @@ def send_item_created_event_to_es(item, request_info):
         )
 
 
-def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, metadata_only=False):
+def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, metadata_only=False, parent_id=None):
     """Validation importing zip file.
 
     :argument
         item        -- Items Metadata.
         request_info -- Information from request.
         is_gakuninrdm - Is call by gakuninrdm api.
+        parent_id   -- Parent ID of the log entry.
     :return
         return      -- Json response.
 
@@ -2086,6 +2088,13 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, m
             new_record = WekoRecord.get_record_by_pid(record_pid.pid_value)
             call_external_system(old_record=old_record, new_record=new_record)
 
+            opration = "ITEM_CREATE" if item.get("status") == "new" else "ITEM_UPDATE"
+            UserActivityLogger.info(
+                operation=opration,
+                parent_id=parent_id,
+                target_key=item["id"]
+            )
+
             # clean unuse file content in keep mode if import success
             cache_key = current_app.config[
                 "WEKO_SEARCH_UI_IMPORT_UNUSE_FILES_URI"
@@ -2113,6 +2122,15 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, m
                 handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
             current_app.logger.error("item id: %s update error." % item["id"])
             traceback.print_exc(file=sys.stdout)
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            opration = "ITEM_CREATE" if item.get("status") == "new" else "ITEM_UPDATE"
+            UserActivityLogger.error(
+                operation=opration,
+                target_key=item.get("id"),
+                parent_id=parent_id,
+                remarks=tb_info[0]
+            )
             error_id = None
             if (
                 ex.args
@@ -2137,6 +2155,14 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, m
                 handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
             current_app.logger.error("item id: %s update error." % item["id"])
             traceback.print_exc(file=sys.stdout)
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            opration = "ITEM_CREATE" if item.get("status") == "new" else "ITEM_UPDATE"
+            UserActivityLogger.error(
+                operation=opration,
+                target_key=item.get("id"),
+                remarks=tb_info[0]
+            )
             error_id = None
             if (
                 ex.args
@@ -2161,6 +2187,14 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, m
                 handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
             current_app.logger.error("item id: %s update error." % item["id"])
             traceback.print_exc(file=sys.stdout)
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            opration = "ITEM_CREATE" if item.get("status") == "new" else "ITEM_UPDATE"
+            UserActivityLogger.error(
+                operation=opration,
+                target_key=item.get("id"),
+                remarks=tb_info[0]
+            )
             error_id = None
             if (
                 ex.args
@@ -2185,6 +2219,14 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, m
                 handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
             current_app.logger.error("item id: %s update error." % item["id"])
             traceback.print_exc(file=sys.stdout)
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            opration = "ITEM_CREATE" if item.get("status") == "new" else "ITEM_UPDATE"
+            UserActivityLogger.error(
+                operation=opration,
+                target_key=item.get("id"),
+                remarks=tb_info[0]
+            )
             error_id = None
             if (
                 ex.args

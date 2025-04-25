@@ -258,27 +258,6 @@ WEKO_LOGGING_OPERATION_MASTER = {
          }
       }
    },
-   "METADATA": {
-      "id": 13,
-      "label": "メタデータ操作",
-      "operation": {
-         "METADATA_CREATE": {
-            "id": 1,
-            "label": "メタデータ登録",
-            "target": "metadata",
-         },
-         "METADATA_UPDATE": {
-            "id": 2,
-            "label": "メタデータ変更",
-            "target": "metadata"
-         },
-         "METADATA_DELETE": {
-            "id": 3,
-            "label": "メタデータ削除",
-            "target": "metadata"
-         }
-      }
-   },
    "WORKFLOW": {
       "id": 20,
       "label": "ワークフロー操作",

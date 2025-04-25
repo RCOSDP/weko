@@ -28,6 +28,7 @@ from datetime import datetime, timedelta, timezone
 import traceback
 from urllib.parse import urlencode
 import pickle
+import sys
 
 from blinker import Namespace
 from celery import chord
@@ -49,6 +50,8 @@ from weko_index_tree.utils import (
     get_editing_items_in_index,
     is_index_locked,
 )
+from weko_logging.activity_logger import UserActivityLogger
+from weko_logging.models import UserActivityLog
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkFlow
 from weko_records_ui.external import call_external_system
@@ -138,6 +141,15 @@ class ItemManagementBulkDelete(BaseView):
                                         direct_child_trees.append(child_tree.id)
 
                         db.session.commit()
+                        parent_id = UserActivityLog.get_sequence()
+                        UserActivityLogger.info(operation="ITEM_BULK_DELETE")
+                        for pid in delete_record_list:
+                            UserActivityLogger.info(
+                                operation="ITEM_DELETE",
+                                parent_id=parent_id,
+                                target_key=pid
+                            )
+
                         for recid in delete_record_list:
                             record = WekoRecord.get_record_by_pid(recid)
                             call_external_system(old_record=record)
@@ -160,6 +172,12 @@ class ItemManagementBulkDelete(BaseView):
                     except Exception as e:
                         db.session.rollback()
                         current_app.logger.error(e)
+                        exec_info = sys.exc_info()
+                        tb_info = traceback.format_tb(exec_info[2])
+                        UserActivityLogger.error(
+                            operation="ITEM_BULK_DELETE",
+                            remarks=tb_info[0]
+                        )
                         msg = str(e)
 
             return jsonify({"status": 0, "msg": msg})
@@ -470,6 +488,8 @@ class ItemImportView(BaseView):
         list_doi = data.get("list_doi")
         if list_record:
             group_tasks = []
+            parent_id = UserActivityLog.get_sequence(db.session)
+            UserActivityLogger.info(operation="ITEM_BULK_CREATE")
             for idx, item in enumerate(list_record):
                 try:
                     item["root_path"] = data_path + "/data"
@@ -478,11 +498,17 @@ class ItemImportView(BaseView):
                     if (list_doi[idx]):
                         metadata_doi = handle_metadata_by_doi(item, list_doi[idx])
                         item["metadata"] = metadata_doi
-                    group_tasks.append(import_item.s(item, request_info))
+                    group_tasks.append(import_item.s(item, request_info, parent_id=parent_id))
                     db.session.commit()
                 except Exception as e:
                     db.session.rollback()
                     current_app.logger.error(e)
+                    exec_info = sys.exc_info()
+                    tb_info = traceback.format_tb(exec_info[2])
+                    UserActivityLogger.error(
+                        operation="ITEM_BULK_CREATE",
+                        remarks=tb_info[0]
+                    )
 
             # handle import tasks
             import_task = chord(group_tasks)(remove_temp_dir_task.si(data_path))
@@ -891,17 +917,28 @@ class ItemRocrateImportView(BaseView):
         ]
         if list_record:
             group_tasks = []
+            parent_id = UserActivityLog.get_sequence(db.session)
+            UserActivityLogger.info(
+                operation="ITEM_BULK_CREATE",
+                remarks="RO-Crate Import"
+            )
             for item in list_record:
                 try:
                     item["root_path"] = os.path.join(data_path + "data")
                     create_flow_define()
                     handle_workflow(item)
-                    group_tasks.append(import_item.s(item, request_info))
+                    group_tasks.append(import_item.s(item, request_info, parent_id=parent_id))
                     db.session.commit()
                 except Exception as e:
                     db.session.rollback()
                     current_app.logger.error(e)
                     traceback.print_exc()
+                    exec_info = sys.exc_info()
+                    tb_info = traceback.format_tb(exec_info[2])
+                    UserActivityLogger.error(
+                        operation="ITEM_BULK_CREATE",
+                        remarks=tb_info[0]
+                    )
 
             # handle import tasks
             import_task = chord(group_tasks)(remove_temp_dir_task.si(data_path))

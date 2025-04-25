@@ -1308,6 +1308,7 @@ def import_author_to_system(author, status, weko_id, force_change_mode):
     Args:
         author (object): Author metadata from tsv/csv.
     """
+    from weko_logging.activity_logger import UserActivityLogger
     if author:
         try:
             check_weko_id = check_weko_id_is_exists(weko_id, author.get('pk_id'))
@@ -1355,11 +1356,30 @@ def import_author_to_system(author, status, weko_id, force_change_mode):
                 )
                 WekoAuthors.update(author['pk_id'], author, force_change_mode)
             db.session.commit()
+            if status == "new":
+                UserActivityLogger.info(operation="AUTHOR_CREATE")
+            else:
+                UserActivityLogger.info(
+                    operation="AUTHOR_UPDATE",
+                    target_key=author['pk_id'])
         except Exception as ex:
             db.session.rollback()
             current_app.logger.error(
                 'Author id: %s import error.' % author['pk_id'])
             traceback.print_exc(file=sys.stdout)
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            if status != "new" and author.get("pk_id"):
+                UserActivityLogger.error(
+                    operation="AUTHOR_UPDATE",
+                    target_key=author['pk_id'],
+                    remarks=tb_info[0]
+                )
+            else:
+                UserActivityLogger.error(
+                    operation="AUTHOR_CREATE",
+                    remarks=tb_info[0]
+                )
             raise
 
 def create_result_file_for_user(json):

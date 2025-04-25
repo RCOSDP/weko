@@ -33,6 +33,8 @@ from flask_login import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import AdminSettings, BillingPermission, AdminLangSettings
+from weko_logging.activity_logger import UserActivityLogger
+from weko_logging.models import UserActivityLog
 from weko_records.api import ItemsMetadata, ItemTypeEditHistory, \
     ItemTypeNames, ItemTypeProps, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping_inactive_show_list
@@ -157,13 +159,24 @@ class ItemTypeMetaDataView(BaseView):
                         db.session.commit()
                     except BaseException:
                         db.session.rollback()
+                        exec_info = sys.exc_info()
+                        tb_info = traceback.format_tb(exec_info[2])
                         current_app.logger.error(
-                            "Unexpected error: {}".format(sys.exc_info()))
+                            "Unexpected error: {}".format(exec_info))
+                        UserActivityLogger.error(
+                            operation='ITEM_TYPE_DELETE',
+                            target_key=item_type_id,
+                            remarks=tb_info[0]
+                        )
                         flash(_('Failed to delete Item type.'), 'error')
                         return jsonify(code=-1)
 
                     current_app.logger.debug(
                         'Itemtype delete: {}'.format(item_type_id))
+                    UserActivityLogger.info(
+                        operation='ITEM_TYPE_DELETE',
+                        target_key=item_type_id
+                    )
                     flash(_('Deleted Item type successfully.'))
                     return jsonify(code=0)
 
@@ -231,8 +244,52 @@ class ItemTypeMetaDataView(BaseView):
             )
             
             db.session.commit()
+            next_id = UserActivityLog.get_sequence(db.session)
+            if item_type_id == 0:
+                UserActivityLogger.info(
+                    operation="ITEM_TYPE_CREATE",
+                    target_key=record.model.id
+                )
+            else:
+                UserActivityLogger.info(
+                    operation="ITEM_TYPE_UPDATE",
+                    target_key=item_type_id
+                )
+            # log item type mapping and workflow
+            if not upgrade_version or item_type_id != record.model.id:
+                UserActivityLogger.info(
+                    operation="ITEM_TYPE_MAPING_CREATE",
+                    parent_id=next_id,
+                    target_key=record.model.id
+                )
+            else:
+                UserActivityLogger.info(
+                    operation="ITEM_TYPE_MAPING_UPDATE",
+                    parent_id=next_id,
+                    target_key=item_type_id
+                )
+                workflow_list = WorkFlow().get_workflow_by_itemtype_id(item_type_id)
+                for wf in workflow_list:
+                    UserActivityLogger.info(
+                        operation="WORKFLOW_UPDATE",
+                        parent_id=next_id,
+                        target_key=wf.id
+                    )
         except Exception as ex:
             db.session.rollback()
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            if item_type_id != 0:
+                UserActivityLogger.error(
+                    operation='ITEM_TYPE_UPDATE',
+                    target_key=item_type_id,
+                    remarks=tb_info[0]
+                )
+            else:
+                UserActivityLogger.error(
+                    operation='ITEM_TYPE_CREATE',
+                    remarks=tb_info[0]
+                )
             default_msg = _('Failed to register Item type.')
             response = jsonify(msg='{} {}'.format(default_msg, str(ex)))
             response.status_code = 400
@@ -452,6 +509,17 @@ class ItemTypeMetaDataView(BaseView):
             )
 
             db.session.commit()
+            next_id = UserActivityLog.get_sequence(db.session)
+            UserActivityLogger.info(
+                operation="ITEM_TYPE_CREATE",
+                target_key=item_type_id
+            )
+            # log item type mapping and workflow
+            UserActivityLogger.info(
+                operation="ITEM_TYPE_MAPING_CREATE",
+                parent_id=next_id,
+                target_key=item_type_id
+            )
         except Exception as ex:
             db.session.rollback()
             default_msg = _('Failed to import Item type.')
@@ -715,10 +783,21 @@ class ItemTypeMappingView(BaseView):
             Mapping.create(item_type_id=data.get('item_type_id'),
                            mapping=data_mapping)
             db.session.commit()
+            UserActivityLogger.info(
+                operation="ITEM_TYPE_MAPING_UPDATE",
+                target_key=data.get('item_type_id')
+            )
         except BaseException:
             db.session.rollback()
             current_app.logger.error(
                 "Unexpected error: {}".format(sys.exc_info()))
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            UserActivityLogger.error(
+                operation='ITEM_TYPE_MAPING_UPDATE',
+                target_key=data.get('item_type_id'),
+                remarks=tb_info[0]
+            )
             return jsonify(msg=_('Unexpected error occurred.'))
         return jsonify(msg=_('Successfully saved new mapping.'))
 
