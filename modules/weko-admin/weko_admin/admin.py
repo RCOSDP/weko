@@ -1857,7 +1857,7 @@ class SwordAPIJsonldSettingsView(ModelView):
         else:
             # POST
             if not can_edit:
-                return jsonify("Unapproved items exit"), 400
+                return jsonify("Unapproved items exit."), 400
 
             try:
                 if request.json.get("registration_type") == "Direct":
@@ -1936,20 +1936,20 @@ class SwordAPIJsonldSettingsView(ModelView):
                 current_app.logger.info(
                     f"SWORD API JSON-LD settings deleted: {name}"
                 )
-                flash(_("SWORD API JSON-LD settings deleted"), "success")
+                flash(_("SWORD API JSON-LD settings deleted."), "success")
             except SQLAlchemyError as e:
                 db.session.rollback()
                 msg = f"Failed to delete SWORD API JSON-LD settings: {name}"
                 current_app.logger.error(msg)
                 traceback.print_exc()
-                flash(_("Failed to delete SWORD API JSON-LD settings"), "error")
+                flash(_("Failed to delete SWORD API JSON-LD settings."), "error")
         else:
             current_app.logger.info(
                 "Cannot delete SWORD API JSON-LD settings because there are "
                 "activities awaiting approval that use workflow: {}."
                 .format(model.workflow_id)
             )
-            flash(_("Unapproved Items Exit"), "error")
+            flash(_("Unapproved Items Exit."), "error")
 
         return redirect(return_url)
 
@@ -2063,7 +2063,7 @@ class JsonldMappingView(ModelView):
             )
             abort(404)
 
-        # GET activity Waiting approval workflow
+        # Get activity waiting approval workflow
         can_edit = self._is_editable(id)
         if not can_edit:
             current_app.logger.info(
@@ -2072,14 +2072,13 @@ class JsonldMappingView(ModelView):
                 .format(model.name)
             )
 
-        # check Using sword_clients
-        using_sword_clients = False
-        sword_clients = SwordClient.get_clients_by_mapping_id(model.id)
-        if sword_clients:
+        # check if this mapping is using sword_clients
+        can_change_itemtype = not bool(SwordClient.get_clients_by_mapping_id(model.id))
+        if can_change_itemtype:
             current_app.logger.info(
-                "Cannot edit JSON-LD mapping because this mapping is using sword_clients."
+                "Cannot edit JSON-LD mapping because this mapping is using "
+                "SWORD API JSON-LD settings."
             )
-            using_sword_clients = True
 
         if request.method == "GET":
             # GET
@@ -2110,20 +2109,24 @@ class JsonldMappingView(ModelView):
                 current_item_type_id=model.item_type_id,
                 current_model_json=current_model_json,
                 can_edit=can_edit,
+                can_change_itemtype=can_change_itemtype,
                 id=id,
-                using_sword_clients=using_sword_clients,
             )
         else:
             # POST
             if not can_edit:
-                return jsonify("Unapproved items exit"), 400
+                return jsonify("Unapproved items exit."), 400
 
-            if using_sword_clients:
-                return jsonify("using sword_clients exit"), 400
 
             name = request.json.get("name")
             mapping = request.json.get("mapping")
             item_type_id = request.json.get("item_type_id")
+
+            if (
+                not can_change_itemtype
+                and item_type_id != model.item_type_id
+            ):
+                return jsonify("Cannot change item type"), 400
             try:
                 JsonldMapping.update(id, name, mapping, item_type_id)
                 current_app.logger.info(f"jsonld mapping updated: {name}")
@@ -2150,7 +2153,7 @@ class JsonldMappingView(ModelView):
                 "some activities awaiting approval that use mapping {}."
                 .format(model.name)
             )
-            return jsonify("Unapproved items exit"), 400
+            return jsonify("Unapproved items exit."), 400
 
         try:
             obj = JsonldMapping.delete(id)

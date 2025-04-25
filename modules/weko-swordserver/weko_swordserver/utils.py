@@ -17,21 +17,19 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from invenio_accounts.models import User
 from invenio_oauth2server.models import Token
-from invenio_pidstore.models import PersistentIdentifier
 from weko_accounts.models import ShibbolethUser
 from weko_admin.models import AdminSettings
 from weko_items_ui.utils import get_workflow_by_item_type_id
-from weko_records.api import ItemTypes, ItemsMetadata
+from weko_records.api import ItemTypes
 from weko_search_ui.config import SWORD_METADATA_FILE, ROCRATE_METADATA_FILE
 from weko_search_ui.utils import (
     check_tsv_import_items,
     check_xml_import_items,
     check_jsonld_import_items
 )
-from weko_workflow.api import WorkActivity, WorkFlow as WorkFlows
+from weko_workflow.api import WorkFlow as WorkFlows
 from weko_workflow.errors import WekoWorkflowException
 from weko_workflow.headless import HeadlessActivity
-from weko_workflow.models import  WorkFlow
 
 from .api import SwordClient
 from .errors import ErrorType, WekoSwordserverException
