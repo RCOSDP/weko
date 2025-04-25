@@ -64,7 +64,7 @@ $(document).ready(function () {
     moveRight.prop('disabled', moveRightDisabled);
 
     let moveLeftDisabled = true;
-    if (rightSelect.children().length) {
+    if (rightSelect.children().length > 1) {
       moveLeftDisabled = false;
     }
     moveLeft.prop('disabled', moveLeftDisabled);
@@ -343,6 +343,9 @@ function saveDataFormat(type) {
     let element = selectedChildren[index].value;
     selected_API.push(element);
   }
+  if (selected_API.length ===1 && selected_API[0] === "Original") {
+    selected_API = [];
+  }
   no_selected_API = [];
   for (let index = 0; index < children.length; index++) {
     let element = children[index].value;
@@ -390,6 +393,14 @@ window.onload = function () {
   if (current_page_type === 'add') {
     // add
     registration_type[0].checked = true;
+
+    // metadata api set
+    $('#leftSelect')
+      .find('option[value="Original"]')
+      .prop('selected', false)
+      .appendTo($('#rightSelect'));
+    $('#moveLeft').prop('disabled', true);
+
     changeRegistrationType('Direct');
   } else {
     // edit
@@ -427,13 +438,22 @@ window.onload = function () {
     if (current_model_json['duplicate_check'] === true) {
       $('#duplicate_check').prop('checked', true);
     }
+
+    // metadata api set
     const meta_data_api = current_model_json['meta_data_api'];
-    meta_data_api.forEach(function (api) {
+    if (meta_data_api.length === 0) {
       $('#leftSelect')
-        .find('option[value="' + api + '"]')
-        .prop('selected', false)
-        .appendTo($('#rightSelect'));
-    });
+      .find('option[value="Original"]')
+      .prop('selected', false)
+      .appendTo($('#rightSelect'));
+    } else {
+      meta_data_api.forEach(function (api) {
+        $('#leftSelect')
+          .find('option[value="' + api + '"]')
+          .prop('selected', false)
+          .appendTo($('#rightSelect'));
+      });
+    }
     let moveRightDisabled = true;
     if ($('#leftSelect').children().length) {
       moveRightDisabled = false;
@@ -441,7 +461,7 @@ window.onload = function () {
     $('#moveRight').prop('disabled', moveRightDisabled);
 
     let moveLeftDisabled = true;
-    if ($('#rightSelect').children().length) {
+    if ($('#rightSelect').children().length > 1) {
       moveLeftDisabled = false;
     }
     $('#moveLeft').prop('disabled', moveLeftDisabled);
