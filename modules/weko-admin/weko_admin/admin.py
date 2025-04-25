@@ -1499,7 +1499,8 @@ class SwordAPISettingsView(BaseView):
             form = FlaskForm(request.form)
             workflow = WorkFlow()
             workflow_list = workflow.get_workflow_list()
-            workflows = workflow.get_workflows_by_roles(workflow_list)
+            reduce_workflows = workflow.reduce_workflows_for_registration(workflow_list)
+            workflows = workflow.get_workflows_by_roles(reduce_workflows)
             deleted_workflows = workflow.get_deleted_workflow_list()
             deleted_workflow_name_dict = {
                 deleted_workflow.id: deleted_workflow.flows_name
@@ -1684,7 +1685,8 @@ class SwordAPIJsonldSettingsView(ModelView):
             # GET workflow
             workflow = WorkFlow()
             workflow_list = workflow.get_workflow_list()
-            workflows = workflow.get_workflows_by_roles(workflow_list)
+            reduce_workflows = workflow.reduce_workflows_for_registration(workflow_list)
+            workflows = workflow.get_workflows_by_roles(reduce_workflows)
             deleted_workflows = workflow.get_deleted_workflow_list()
             deleted_workflow_name_dict = {}
             for deleted_workflow in deleted_workflows:
@@ -1804,7 +1806,8 @@ class SwordAPIJsonldSettingsView(ModelView):
             # GET workflow
             workflow = WorkFlow()
             workflow_list = workflow.get_workflow_list()
-            workflows = workflow.get_workflows_by_roles(workflow_list)
+            reduce_workflows = workflow.reduce_workflows_for_registration(workflow_list)
+            workflows = workflow.get_workflows_by_roles(reduce_workflows)
             deleted_workflows = workflow.get_deleted_workflow_list()
             deleted_workflow_name_dict = {}
             for deleted_workflow in deleted_workflows:
