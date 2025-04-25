@@ -1385,3 +1385,6 @@ msgstr ""
 
 msgid "Success Secret URL Generate"
 msgstr "Success: Secret URL Generate is succeed. Sent the URL to your email adress."
+
+msgid "MSG_WEKO_RECORDS_UI_IS_EDITING_TRUE"
+msgstr "Cannot delete because it is being edited."

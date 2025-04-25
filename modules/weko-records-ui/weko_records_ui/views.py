@@ -64,7 +64,7 @@ from weko_user_profiles.models import UserProfile
 from weko_workflow.api import WorkFlow
 
 from weko_records_ui.fd import add_signals_info
-from weko_records_ui.utils import check_items_settings, get_file_info_list
+from weko_records_ui.utils import check_items_settings, get_file_info_list, is_workflow_activity_work
 from weko_workflow.utils import get_item_info, process_send_mail, set_mail_info
 
 from .ipaddr import check_site_license_permission
@@ -972,7 +972,15 @@ def citation(record, pid, style=None, ln=None):
 @blueprint.route("/records/soft_delete/<recid>", methods=['POST'])
 @login_required
 def soft_delete(recid):
-    """Soft delete item."""
+    """
+    Soft delete item.
+    
+    Args:
+        recid (str): record id.
+    Returns:
+        object: response of delete result.
+            return json data
+    """
     try:
         if not has_update_version_role(current_user):
             abort(403)
@@ -980,6 +988,29 @@ def soft_delete(recid):
             recid = recid.replace('del_ver_', '')
             delete_version(recid)
         else:
+            is_editing = False
+            try:
+                ver_0 = PersistentIdentifier.get('recid', recid + '.0')
+            except PIDDoesNotExistError:
+                ver_0 = None
+            if ver_0 and is_workflow_activity_work(ver_0.object_uuid):
+                 is_editing = True
+            if not is_editing:
+                pid = PersistentIdentifier.get('recid', recid)
+                versioning = PIDVersioning(child=pid)
+                if versioning.exists:
+                   all_ver = versioning.children.all()
+                   for ver in all_ver:
+                        if is_workflow_activity_work(ver.object_uuid):
+                            is_editing = True
+                            break
+            if is_editing:
+                response_data = {
+                    "code": -1,
+                    "is_locked": True,
+                    "msg": _("MSG_WEKO_RECORDS_UI_IS_EDITING_TRUE")
+                }
+                return make_response(jsonify(response_data), 200)
             soft_delete_imp(recid)
         db.session.commit()
         return make_response('PID: ' + str(recid) + ' DELETED', 200)

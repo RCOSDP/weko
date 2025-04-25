@@ -2096,6 +2096,7 @@ def cancel_action(activity_id='0', action_id=0):
         try:
             with db.session.begin_nested():
                 if cancel_record:
+                    pid_value = cancel_record.pid.pid_value
                     cancel_deposit = WekoDeposit(
                         cancel_record, cancel_record.model)
 
@@ -2136,12 +2137,12 @@ def cancel_action(activity_id='0', action_id=0):
             db.session.commit()
             # update item link info
             if cancel_record:
-                if cancel_record.pid.pid_value.endswith('.0'):
-                    weko_record = WekoRecord.get_record_by_pid(cancel_record.pid.pid_value)
+                if pid_value.endswith('.0'):
+                    weko_record = WekoRecord.get_record_by_pid(pid_value)
                     if weko_record:
-                        weko_record.update_item_link(cancel_record.pid.pid_value.split('.')[0])
+                        weko_record.update_item_link(pid_value.split('.')[0])
                 else:
-                    item_link = ItemLink(cancel_record.pid.pid_value)
+                    item_link = ItemLink(pid_value)
                     item_link.update([])
         except Exception:
             db.session.rollback()
@@ -2493,7 +2494,7 @@ def user_lock_activity(activity_id="0"):
     """
     validate_csrf_header(request)
     cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
-    timeout = current_app.permanent_session_lifetime.seconds
+    timeout = current_app.permanent_session_lifetime
     cur_locked_val = str(get_cache_data(cache_key)) or str()
     err = ""
     if cur_locked_val:
@@ -2630,7 +2631,7 @@ def lock_activity(activity_id="0"):
         return jsonify(res.data), 500
 
     cache_key = 'workflow_locked_activity_{}'.format(activity_id)
-    timeout = current_app.permanent_session_lifetime.seconds
+    timeout = current_app.permanent_session_lifetime
     try:
         schema_load = LockSchema().load(request.form.to_dict())
     except ValidationError as err:

@@ -919,10 +919,8 @@ def validate_before_delete_index(index_id):
                 _('The index cannot be deleted because there is'
                   ' a link from an item that has a DOI.')
             )
-        elif check_has_any_item_in_index_is_locked(index_id):
-            errors.append(_('This index cannot be deleted because '
-                            'the item belonging to this index is '
-                            'being edited by the import function.'))
+        elif get_editing_items_in_index(index_id):
+            errors.append(_('This index cannot be deleted because the item belonging to this index is being edited.'))
         elif check_has_any_harvest_settings_in_index_is_locked(index_id):
             errors.append(_('The index cannot be deleted becase '
                             'the index in harvester settings.'))
