@@ -192,5 +192,5 @@ class SwordClient():
         Returns:
             SwordClient: Client object. If not found, return `None`.
         """
-        obj = SwordClientModel.query.filter_by(mapping_id=mapping_id).all()
-        return obj
+        query = SwordClientModel.query.filter_by(mapping_id=mapping_id)
+        return query.all()

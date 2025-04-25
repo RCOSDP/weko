@@ -7,7 +7,7 @@ const using_sword_api_message = document.getElementById('using_sword_api_message
 const current_page_type = document.getElementById('current_page_type').value;
 const current_model_json = JSON.parse(document.getElementById('current_model_json').value);
 const can_edit = document.getElementById('can_edit').value;
-const using_sword_clients = document.getElementById('using_sword_clients').value;
+const can_change_itemtype = document.getElementById('can_change_itemtype').value;
 const current_name = document.getElementById('current_name').value;
 const current_item_type_id = document.getElementById('current_item_type_id').value;
 const current_mapping = document.getElementById('current_mapping').value;
@@ -21,12 +21,12 @@ function closeError() {
 function showMsg(msg, success = false) {
   $('#errors').append(
     '<div class="alert ' +
-      (success ? 'alert-success' : 'alert-danger') +
-      ' alert-dismissable">' +
-      '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
-      '&times;</button>' +
-      msg +
-      '</div>'
+    (success ? 'alert-success' : 'alert-danger') +
+    ' alert-dismissable">' +
+    '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
+    '&times;</button>' +
+    msg +
+    '</div>'
   );
 }
 
@@ -222,12 +222,10 @@ window.onload = function () {
       $('#error_modal').modal('show');
       $('#save_button').prop('disabled', true);
       $('#delete_button').prop('disabled', true);
-    }
-    if (using_sword_clients === 'True') {
+    } else if (can_change_itemtype === 'False') {
       $('#modal-message').text(using_sword_api_message);
       $('#error_modal').modal('show');
-      $('#save_button').prop('disabled', true);
-      $('#delete_button').prop('disabled', true);
+      $('#item_type').prop('disabled', true);
     }
   }
 };
