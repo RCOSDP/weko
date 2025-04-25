@@ -83,6 +83,7 @@ from .config import DOI_VALIDATION_INFO, DOI_VALIDATION_INFO_CROSSREF, DOI_VALID
 from .models import Action as _Action, Activity
 from .models import ActionStatusPolicy, ActivityStatusPolicy, GuestActivity,FlowAction 
 from .models import WorkFlow as _WorkFlow
+from redis.exceptions import ResponseError
 
 def get_current_language():
     """Get current language.
@@ -1980,14 +1981,28 @@ def delete_cache_data(key: str):
 def update_cache_data(key: str, value: str, timeout=None):
     """Create or Update cache data.
 
-    :param key: Cache key.
-    :param value: Cache value.
-    :param timeout: Cache expired.
+    Args:
+        key(str): 
+            Cache key.
+        value(str): 
+            Cache value.
+        timeout(int or timedelta or None): 
+            Cache expired.
+    Returns:
+        None    
+    Raises:
+        ResponseError: 
+            Redis error.
     """
-    if timeout is not None:
-        current_cache.set(key, value, timeout=timeout)
-    else:
-        current_cache.set(key, value)
+    try:
+        if timeout is not None:
+            current_cache.set(key, value, timeout=timeout)
+        else:
+            current_cache.set(key, value)
+    except ResponseError as ex:
+        current_app.logger.error(ex)
+        current_app.logger.error('key: %s, value: %s, changed timeout: %s', key, value, current_app.config['PERMANENT_SESSION_LIFETIME'])
+        current_cache.set(key, value, timeout=current_app.config['PERMANENT_SESSION_LIFETIME'])
 
 
 def get_cache_data(key: str):

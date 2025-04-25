@@ -4,6 +4,7 @@ import pytest
 import io
 from flask import Flask, json, jsonify, session, url_for ,make_response
 from flask_security.utils import login_user
+from flask_babelex import gettext as _
 from invenio_accounts.testutils import login_user_via_session
 from invenio_files_rest.models import ObjectVersion
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -730,6 +731,7 @@ def test_citation(records):
 # def soft_delete(recid):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_soft_delete_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_soft_delete_acl_guest(client, records):
+    # 51994 case.04(soft_delete)
     url = url_for(
         "weko_records_ui.soft_delete", recid=1, _external=True
     )
@@ -756,6 +758,7 @@ def test_soft_delete_acl(client, records, users, id, status_code):
         url = url_for(
             "weko_records_ui.soft_delete", recid=1, _external=True
         )
+        # 51994 case.01, 05(soft_delete)
         with patch("flask.templating._render", return_value=""):
             pid = PersistentIdentifier.query.filter_by(
                 pid_type='recid', pid_value='1').first()
@@ -769,7 +772,84 @@ def test_soft_delete_acl(client, records, users, id, status_code):
             else:
                 assert pid.status == PIDStatus.REGISTERED
 
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_soft_delete_with_del_ver_prefix -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, status_code",
+    [
+        (1, 200), # repoadmin
+        (2, 200), # sysadmin
+        (3, 200), # comadmin
+        (6, 200), # originalroleuser
+    ],
+)
+def test_soft_delete_with_del_ver_prefix(client, records, users, id, status_code):
+    """Test soft_delete when recid starts with 'del_ver_'."""
+    login_user_via_session(client=client, email=users[id]["email"])
+    # Arrange
+    recid = "del_ver_12345"
 
+    # 51994 case.02(soft_delete)
+    with patch("weko_records_ui.views.delete_version") as mock_delete_version:
+        # Act
+        res = client.post(url_for("weko_records_ui.soft_delete", recid=recid, _external=True))
+
+        # Assert
+        assert res.status_code == status_code
+        mock_delete_version.assert_called_once_with("12345")
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_soft_delete_locked -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, status_code",
+    [
+        (1, 200), # repoadmin
+        (2, 200), # sysadmin
+        (3, 200), # comadmin
+        (6, 200), # originalroleuser
+    ],
+)
+def test_soft_delete_locked(client, records, users, id, status_code):
+    """Test soft_delete when item is locked."""
+    login_user_via_session(client=client, email=users[id]["email"])
+    
+    # 51994 case.03(soft_delete)
+    with patch("weko_records_ui.views.is_workflow_activity_work", return_value=True):
+        res = client.post(url_for("weko_records_ui.soft_delete", recid=1, _external=True))
+        expected_response = {
+            "code": -1,
+            "is_locked": True,
+            "msg": _("MSG_WEKO_RECORDS_UI_IS_EDITING_TRUE")
+        }
+        assert res.status_code == status_code
+        assert json.loads(res.data) == expected_response
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_soft_delete_exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_soft_delete_exception(client, records, users):
+    """Test soft_delete when raise Exception."""
+    login_user_via_session(client=client, email=users[2]["email"])
+    expected_response = {
+            "code": -1,
+            "is_locked": True,
+            "msg": "Test Error."
+        }
+    with patch("weko_records_ui.views.has_update_version_role", return_value=True):
+        with patch("flask.templating._render", return_value=""):
+            pid = PersistentIdentifier.query.filter_by(pid_type='recid', pid_value='1').first()
+            assert pid.status == PIDStatus.REGISTERED
+            with patch("weko_records_ui.views.soft_delete_imp", side_effect=Exception([{
+                "is_locked": True,
+                "msg": "Test Error."
+            }])):
+                with pytest.raises(Exception):
+                    # 51994 case.06, 07(soft_delete)
+                    res = client.post(url_for("weko_records_ui.soft_delete", recid=1, _external=True))
+
+                    
+                    pid = PersistentIdentifier.query.filter_by(pid_type='recid', pid_value='1').first()
+                    assert pid.status == PIDStatus.REGISTERED
+                    assert res.status_code == 500
+                    assert res.json == expected_response
+    
+    
 # def restore(recid):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_restore_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_restore_acl_guest(client, records):
