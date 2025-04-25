@@ -53,6 +53,8 @@ def get_selection_option():
     """
     options = [{'value': 'Default', 'text': _('Select the ID')}]
     options.extend(current_app.config['WEKO_ITEMS_AUTOFILL_SELECT_OPTION'])
+    if not current_app.config['WEKO_ITEMS_AUTOFILL_TO_BE_USED']:
+        options.remove({'value': 'DOI', 'text': 'DOI'})
     result = {
         'options': options
     }
