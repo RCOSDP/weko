@@ -161,6 +161,14 @@ def check_package_contents():
                         f"Not accept packaging: {packaging}",
                         ErrorType.PackagingFormatNotAcceptable
                     )
+            elif packaging is None:
+                current_app.logger.error(
+                    "Packaging is required, but not contained in request headers."
+                )
+                raise WekoSwordserverException(
+                    "Packaging is required.",
+                    ErrorType.PackagingFormatNotAcceptable
+                )
 
             return f(*args, **kwargs)
         return decorated
