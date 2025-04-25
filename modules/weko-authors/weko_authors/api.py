@@ -56,17 +56,8 @@ class WekoAuthors(object):
                 author = Authors(id=new_id, json=data)
                 session.add(author)
 
-            from weko_logging.activity_logger import UserActivityLogger
-            UserActivityLogger.info(
-                operation="AUTHOR_CREATE",
-                target_key=new_id
-            )
         except Exception as ex:
             session.rollback()
-            UserActivityLogger.error(
-            operation="AUTHOR_CREATE",
-            target_key=None
-            )
             raise
         else:
             RecordIndexer().client.index(

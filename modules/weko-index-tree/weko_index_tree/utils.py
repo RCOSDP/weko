@@ -20,6 +20,8 @@
 
 """Module of weko-index-tree utils."""
 import os
+import sys
+import traceback
 from datetime import date, datetime
 from functools import wraps
 from operator import itemgetter
@@ -41,6 +43,7 @@ from invenio_search import RecordsSearch
 from simplekv.memory.redisstore import RedisStore
 from weko_admin.utils import is_exists_key_in_redis
 from weko_groups.models import Group
+from weko_logging.activity_logger import UserActivityLogger
 from weko_redis.redis import RedisConnection
 from weko_schema_ui.models import PublishStatus
 
@@ -1024,9 +1027,20 @@ def perform_delete_index(index_id, record_class, action: str):
                         description='Could not delete data.')
             msg = 'Index deleted successfully.'
         db.session.commit()
+        UserActivityLogger.info(
+            operation="INDEX_DELETE",
+            target_key=index_id
+        )
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(e)
+        exec_info = sys.exc_info()
+        tb_info = traceback.format_tb(exec_info[2])
+        UserActivityLogger.error(
+            operation="INDEX_DELETE",
+            target_key=index_id,
+            remarks=tb_info[0]
+        )
         msg = 'Failed to delete index.'
     finally:
         if is_unlock:

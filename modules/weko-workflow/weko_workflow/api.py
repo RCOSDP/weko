@@ -25,6 +25,7 @@ import math
 from typing import List
 import urllib.parse
 import uuid
+import sys
 import traceback
 from datetime import datetime, timedelta, timezone
 import os
@@ -41,6 +42,7 @@ from sqlalchemy import and_, asc, desc, func, or_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 from weko_deposit.api import WekoDeposit
+from weko_logging.activity_logger import UserActivityLogger
 from weko_notifications import Notification, NotificationClient
 from weko_notifications.utils import inbox_url
 from weko_notifications.models import NotificationsUserSettings
@@ -432,10 +434,20 @@ class WorkFlow(object):
             with db.session.begin_nested():
                 db.session.execute(_WorkFlow.__table__.insert(), workflow)
             db.session.commit()
+            UserActivityLogger.info(
+                operation="WORKFLOW_CREATE",
+                remarks=json.dumps(workflow)
+            )
             return workflow
         except Exception as ex:
             db.session.rollback()
             current_app.logger.exception(str(ex))
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            UserActivityLogger.error(
+                operation="WORKFLOW_CREATE",
+                remarks=tb_info[0]
+            )
             return None
 
     def upt_workflow(self, workflow):
@@ -462,10 +474,21 @@ class WorkFlow(object):
                     _workflow.repository_id = workflow.get('repository_id') if workflow.get('repository_id') else _workflow.repository_id
                     db.session.merge(_workflow)
             db.session.commit()
+            UserActivityLogger.info(
+                operation="WORKFLOW_UPDATE",
+                target_key=workflow.get("flows_id")
+            )
             return _workflow
         except Exception as ex:
             db.session.rollback()
             current_app.logger.exception(str(ex))
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            UserActivityLogger.error(
+                operation="WORKFLOW_UPDATE",
+                target_key=workflow.get("flows_id"),
+                remarks=tb_info[0]
+            )
             return None
 
     def get_workflow_list(self, user=None):
@@ -564,10 +587,21 @@ class WorkFlow(object):
                     workflow.is_deleted = True
                     db.session.merge(workflow)
             db.session.commit()
+            UserActivityLogger.info(
+                operation="WORKFLOW_DELETE",
+                target_key=workflow_id
+            )
             return {'code': 0, 'msg': ''}
         except Exception as ex:
             db.session.rollback()
             current_app.logger.exception(str(ex))
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            UserActivityLogger.error(
+                operation="WORKFLOW_DELETE",
+                target_key=workflow_id,
+                remarks=tb_info[0]
+            )
             return {'code': 500, 'msg': str(ex)}
 
     def find_workflow_by_name(self, workflow_name):

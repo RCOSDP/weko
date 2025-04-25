@@ -26,6 +26,7 @@ import os
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime, timedelta
+import sys
 from typing import List, NoReturn, Optional, Tuple, Union
 import traceback
 
@@ -58,6 +59,7 @@ from weko_admin.models import Identifier, SiteInfo, AdminSettings
 from weko_admin.utils import get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
+from weko_logging.activity_logger import UserActivityLogger
 from weko_records.api import FeedbackMailList, RequestMailList, ItemsMetadata, ItemTypeNames, \
     ItemTypes, Mapping
 from weko_records.models import ItemType, ItemReference
@@ -202,6 +204,10 @@ def saving_doi_pidstore(item_id,
             else:
                 identifier = IdentifierHandle(record_without_version)
                 reg = identifier.register_pidstore('doi', identifier_val)
+                UserActivityLogger.info(
+                    operation="ITEM_ASSIGN_DOI",
+                    target_key=item_id,
+                )
                 identifier.update_idt_registration_metadata(
                     doi_register_val,
                     doi_register_typ)
@@ -214,6 +220,14 @@ def saving_doi_pidstore(item_id,
         return True
     except Exception as ex:
         current_app.logger.exception(str(ex))
+        if not temporal_saving:
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            UserActivityLogger.error(
+                operation="ITEM_ASSIGN_DOI",
+                target_key=item_id,
+                remarks=tb_info[0]
+            )
         return False
 
 

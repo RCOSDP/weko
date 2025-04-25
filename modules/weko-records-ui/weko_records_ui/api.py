@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 import os
 import random
 import string
+import sys
 import json
 import hashlib
 import traceback
@@ -19,6 +20,7 @@ from invenio_mail.admin import _load_mail_cfg_from_db, _set_flask_mail_cfg
 from invenio_files_rest.models import Bucket, ObjectVersion, FileInstance
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record
+from weko_logging.activity_logger import UserActivityLogger
 from weko_records.api import RequestMailList
 from weko_records_ui.captcha import get_captcha_info
 from weko_records_ui.errors import (
@@ -94,8 +96,19 @@ def send_request_mail(item_id, mail_info):
             body = notification_msg_body
         )
         current_app.extensions['mail'].send(notification_msg)
+        UserActivityLogger.info(
+            operation="FILE_REQUEST_MAIL",
+            target_key=item_id
+        )
     except Exception:
         current_app.logger.exception('Sending Email handles unexpected error.')
+        exec_info = sys.exc_info()
+        tb_info = traceback.format_tb(exec_info[2])
+        UserActivityLogger.error(
+            operation="FILE_REQUEST_MAIL",
+            target_key=item_id,
+            remarks=tb_info[0]
+        )
         raise InternalServerError() # 500
 
     # Create response
