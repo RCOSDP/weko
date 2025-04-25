@@ -81,37 +81,43 @@ blueprint.before_request(verify_oauth_token_and_set_current_user)
 @limiter.limit("")
 @check_on_behalf_of()
 def get_service_document():
-    """
-    Request from the server a list of the Service-URLs that the client can deposit to.
-    A Service-URL allows the server to support multiple different deposit conditions - each URL may have its own set of rules/workflows behind it;
-    for example, Service-URLs may be subject-specific, organizational-specific, or process-specific.
-    It is up to the client to determine which is the suitable URL for its deposit, based on the information provided by the server.
-    The list of Service-URLs may vary depending on the authentication credentials supplied by the client.
+    """Retrieve the Service Document
 
-    This request can be made against a root Service-URL, which will describe the capabilities of the entire server,
-    for information about the full list of Service-URLs, or can be made against an individual Service-URL for information just about that service.
-    """
+    https://swordapp.github.io/swordv3/swordv3-behaviours.html#1
 
-    """
+    Request from the server a list of the Service-URLs that the client can deposit
+    to. A Service-URL allows the server to support multiple different deposit
+    conditions - each URL may have its own set of rules/workflows behind it;
+    for example, Service-URLs may be subject-specific, organizational-specific,
+    or process-specific. It is up to the client to determine which is the suitable
+    URL for its deposit, based on the information provided by the server.
+    The list of Service-URLs may vary depending on the authentication credentials
+    supplied by the client.
+
+    This request can be made against a root Service-URL, which will describe the
+    capabilities of the entire server, for information about the full list of
+    Service-URLs, or can be made against an individual Service-URL for information
+    just about that service.
+
+    Protocol Operation
+        * GET Service-URL: https://swordapp.github.io/swordv3/swordv3.html#7.3.1
+
+    Request Requirements
+        * MAY specify Authorization and On-Behalf-Of headers (i.e. if authenticating this request)
+
     Server Requirements
         * If Authorization (and optionally On-Behalf-Of) headers are provided, MUST authenticate the request
-    """
 
-    """
     Response Requirements
         * If Authorization (and optionally On-Behalf-Of) headers are provided, MUST only list Service-URLs in the Service Document for which a deposit request would be permitted
         * MUST respond with a valid Service Document or a suitable error response
-    """
 
-    """
     Error Responses
         * If no authentication credentials were supplied, but were expected, MUST respond with a 401 (AuthenticationRequired)
         * If authentication fails with supplied credentials, MUST respond with a 403 (AuthenticationFailed)
         * If the server does not allow this method in this context at this time, MAY respond with a 405 (MethodNotAllowed)
         * If the server does not support On-Behalf-Of deposit and the On-Behalf-Of header has been provided, MAY respond with a 412 (OnBehalfOfNotAllowed)
-    """
 
-    """
     Set raw data to ServiceDocument
     """
     repositoryName, site_name_ja = get_site_info_name()
@@ -162,12 +168,28 @@ def get_service_document():
 @check_on_behalf_of()
 @check_package_contents()
 def post_service_document():
-    """
-    Create a new Object on the server, sending a single Binary File.
-    The Binary File itself is specified as Packaged Content, which the server may understand how to unpack.
-    """
+    """Creating Objects with Packaged Content
 
-    """
+    https://swordapp.github.io/swordv3/swordv3-behaviours.html#2.6
+
+    Create a new Object on the server, sending a single Binary File.
+    The Binary File itself is specified as Packaged Content, which the server
+    may understand how to unpack.
+
+    Protocol Operation
+        * POST Service-URL: https://swordapp.github.io/swordv3/swordv3.html#7.3.2
+
+    Request Requirements
+        * MAY specify Authorization and On-Behalf-Of headers (i.e. if authenticating this request)
+        * MUST provide the Content-Disposition header, with the appropriate value for the request
+        * MUST provide the Digest header
+        * SHOULD provide the Content-Length
+        * MUST provide the Content-Type header
+        * MUST provide the Packaging header
+        * MUST provide Packaged Content in the request body
+        * MAY provide the Slug header
+        * MAY provide the In-Progress header
+
     Server Requirements
         * If Authorization (and optionally On-Behalf-Of) headers are provided, MUST authenticate the request
         * MUST verify that the content matches the Digest header
@@ -179,9 +201,7 @@ def post_service_document():
         * If accepting the request MUST create a new Object
         * If no In-Progress header is provided, MUST assume that it is false
         * If In-Progress is false, SHOULD expect further updates to the item, and not progress it through any ingest workflows yet.
-    """
 
-    """
     Response Requirements
         * MUST include ETag header if implementing concurrency control
         * MUST include one or more File-URLs for the deposited content in the Status document. The behavior of these File-URLs may vary depending on the type of content deposited (e.g. ByReference and Segmented Uploads do not need to be immediately retrievable)
@@ -189,9 +209,7 @@ def post_service_document():
         * MUST respond with a valid Status Document or a suitable error response
         * Status Document MUST be available on GET to the Object-URL in the Location header immediately (irrespective of whether this is a 201 or 202 response)
         * MUST respond with a 201 if the item was created immediately, a 202 if the item was queued for import, or raise an error.
-    """
 
-    """
     Error Responses
         * If no authentication credentials were supplied, but were expected, MUST respond with a 401 (AuthenticationRequired)
         * If authentication fails with supplied credentials, MUST respond with a 403 (AuthenticationFailed)
@@ -203,9 +221,7 @@ def post_service_document():
         * If the body content is larger than the maximum allowed by the server, MAY return 413 (MaxUploadSizeExceeded)
         * If the server does not accept packages in the format identified in the Packaging header, MUST respond with a 415 (PackagingFormatNotAcceptable)
         * If the Packaging header does not match the format found in the body content, SHOULD return 415 (FormatHeaderMismatch). Note that the server may not be able to inspect the package during the request-response, so MAY NOT return this response.
-    """
 
-    """
     Check content-disposition
         Request format:
             Content-Disposition	attachment; filename=[filename]
@@ -461,14 +477,67 @@ def post_service_document():
 @check_on_behalf_of()
 @check_package_contents()
 def put_object(recid):
-    """
-    Replace the Object on the server, sending a single Binary File.
+    """Replacing an Object with Packaged Content
+
+    https://swordapp.github.io/swordv3/swordv3-behaviours.html#5.12
+
+    Replace in its entirety the Object, including all Metadata and Files, with
+    the Metadata and Files contained in the Packaged Content. All previous files
+    and metadata will be removed, and new ones will replace them. The server may
+    or may not keep old versions of the content available.
 
     Args:
         recid (str): Record Identifier.
 
-    Returns:
-        Response: A response document.
+    Protocol Operation
+        * PUT Object-URL: https://swordapp.github.io/swordv3/swordv3.html#7.3.5
+
+    Request Requirements
+        * MAY specify Authorization and On-Behalf-Of headers (i.e. if authenticating this request)
+        * MUST provide the Content-Disposition header, with the appropriate value for the request
+        * MUST provide the Digest header
+        * SHOULD provide the Content-Length
+        * MUST provide the Content-Type header
+        * MUST provide the Packaging header
+        * MUST provide Packaged Content in the request body
+        * MUST include the If-Match header, if the server implements concurrency control
+        * MAY provide the In-Progress header
+
+    Server Requirements
+        * If Authorization (and optionally On-Behalf-Of) headers are provided, MUST authenticate the request
+        * MUST verify that the content matches the Digest header
+        * MUST verify that the supplied content matches the Content-Length if this is provided
+        * If all preconditions are met, MUST either accept the deposit request immediately, queue the request for processing, or respond with an error
+        * If accepting the request MUST attach the supplied file to the Object as an originalDeposit
+        * The server MAY attempt to unpack the file, and create derivedResources from it.
+        * MUST reject the request if the If-Match header does not match the current ETag of the resource
+        * If no In-Progress header is provided, MUST assume that it is false
+        * If accepting the new File, MUST remove all existing Files from the Object and replace with the new File. The new File should be marked as an originalDeposit. The server MUST also remove all Metadata, so the Metadata Resource contains no fields.
+
+    Response Requirements
+        * MUST include ETag header if implementing concurrency control
+        * MUST include one or more File-URLs for the deposited content in the Status document. The behaviour of these File-URLs may vary depending on the type of content deposited (e.g. ByReference and Segmented Uploads do not need to be immediately retrievable)
+        * MUST respond with a valid Status Document or a suitable error response
+        * MUST include ETag header if implementing concurrency control
+        * MUST respond with a 200 if the request was accepted immediately, a 202 if the request was queued for processing, or raise an error.
+
+    Error Responses
+        * If no authentication credentials were supplied, but were expected, MUST respond with a 401 (AuthenticationRequired)
+        * If authentication fails with supplied credentials, MUST respond with a 403 (AuthenticationFailed)
+        * If the server does not allow this method in this context at this time, MAY respond with a 405 (MethodNotAllowed)
+        * If the server does not support On-Behalf-Of deposit and the On-Behalf-Of header has been provided, MAY respond with a 412 (OnBehalfOfNotAllowed)
+        * If one or more of the digests provided by the client that the server checked did not match, MAY respond with 412 (DigestMismatch). Note that servers MAY NOT check digests in real-time.
+        * If the body content could not be read correctly, MAY return a 400 (ContentMalformed)
+        * If the Content-Type header contains a format that the server cannot accept, MUST respond with 415 (ContentTypeNotAcceptable)
+        * If the body content is larger than the maximum allowed by the server, MAY return 413 (MaxUploadSizeExceeded)
+        * If the server does not accept packages in the format identified in the Packaging header, MUST respond with a 415 (PackagingFormatNotAcceptable)
+        * If the Packaging header does not match the format found in the body content, SHOULD return 415 (FormatHeaderMismatch). Note that the server may not be able to inspect the package during the request-response, so MAY NOT return this response.
+        * For servers implementing concurrency control, if the If-Match header does not match the current ETag, MUST respond with 412 (ETagNotMatched)
+        * For servers implementing concurrency control, if no If-Match header is provided, MUST respond with 412 (ETagRequired)
+
+    Check content-disposition
+        Request format:
+            Content-Disposition	attachment; filename=[filename]
     """
     content_disposition, content_disposition_options = parse_options_header(
         request.headers.get("Content-Disposition") or ""
@@ -645,23 +714,29 @@ def put_object(recid):
 @oauth2.require_oauth()
 @check_on_behalf_of()
 def get_status_document(recid):
-    """
-    For an Object where you have an Object-URL, you may request information about the current state of that resource,
-    and receive the Status document in response.
-    """
+    """Retrieving an Object's Status
 
-    """
+    https://swordapp.github.io/swordv3/swordv3-behaviours.html#3.1
+
+    For an Object where you have an Object-URL, you may request information about
+    the current state of that resource, and receive the Status document in response.
+
+    Args:
+        recid (str): Record Identifier.
+
+    Protocol Operation
+        * GET Object-URL: https://swordapp.github.io/swordv3/swordv3.html#7.3.3
+
+    Request Requirements
+        * MAY specify Authorization and On-Behalf-Of headers (i.e. if authenticating this request)
+
     Server Requirements
         * If Authorization (and optionally On-Behalf-Of) headers are provided, MUST authenticate the request
-    """
 
-    """
     Response Requirements
         * MUST respond with a valid Status Document or a suitable error response
         * MUST include ETag header if implementing concurrency control
-    """
 
-    """
     Error Responses
         * If no authentication credentials were supplied, but were expected, MUST respond with a 401 (AuthenticationRequired)
         * If authentication fails with supplied credentials, MUST respond with a 403 (AuthenticationFailed)
@@ -830,22 +905,28 @@ def _get_status_workflow_document(activity_id, recid):
 @require_oauth_scopes(item_delete_scope.id)
 @roles_required(WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE)
 @check_on_behalf_of()
-def delete_item(recid):
-    """ Delete the Object in its entirety from the server, along with all Metadata and Files. """
+def delete_object(recid):
+    """Deleting the entire Object
 
-    """
+    Delete the Object in its entirety from the server, along with all Metadata and Files.
+
+    Args:
+        recid (str): Record Identifier.
+
+    Protocol Operation
+        * DELETE Object-URL: https://swordapp.github.io/swordv3/swordv3.html#7.3.6
+
+    Request Requirements
+        * MAY specify Authorization and On-Behalf-Of headers (i.e. if authenticating this request)
+
     Server Requirements
         * If Authorization (and optionally On-Behalf-Of) headers are provided, MUST authenticate the request
         * MUST verify that the content matches the Digest header
         * MUST verify that the supplied content matches the Content-Length if this is provided
-    """
 
-    """
     Response Requirements
         * MUST respond with a 204 if the delete is successful, 202 if the delete is queued for processing, or raise an error
-    """
 
-    """
     Error Responses
         * If no authentication credentials were supplied, but were expected, MUST respond with a 401 (AuthenticationRequired)
         * If authentication fails with supplied credentials, MUST respond with a 403 (AuthenticationFailed)
@@ -886,7 +967,16 @@ def delete_item(recid):
         if not required_scopes.issubset(token_scopes):
             abort(403)
 
-        url = delete_items_with_activity(recid, request_info=request_info)
+        try:
+            url = delete_items_with_activity(recid, request_info=request_info)
+        except Exception as ex:
+            current_app.logger.error(
+                f"Failed to delete item with activity: {str(ex)}"
+            )
+            raise WekoSwordserverException(
+                f"Error in delete_items_with_activity: {str(ex)}",
+                ErrorType.BadRequest
+            )
 
         response = Response(status=202, headers={"Location": url})
 
@@ -894,6 +984,9 @@ def delete_item(recid):
         soft_delete(recid)
         from weko_items_ui.utils import send_mail_item_deleted
         send_mail_item_deleted(recid, record, current_user.id)
+        current_app.logger.info(
+            f"Item deleted by sword from {request.oauth.client.name} (recid={recid})"
+        )
         response = Response(status=204)
 
     return response
