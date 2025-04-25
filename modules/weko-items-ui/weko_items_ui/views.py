@@ -1131,10 +1131,7 @@ def prepare_delete_item(id=None, community=None):
     if not id and request:
         if request.headers['Content-Type'] != 'application/json':
             """Check header of request"""
-            return jsonify(
-                code=err_code,
-                msg=_('Header Error')
-            )
+            return jsonify(code=err_code, msg=_('Header Error'))
 
     post_activity = request.get_json() or {}
     getargs = request.args if request else {}
@@ -1272,15 +1269,6 @@ def prepare_delete_item(id=None, community=None):
             return jsonify(
                 code=err_code,
                 msg=_('An error has occurred.')
-            )
-
-        err_code = current_app.config.get('WEKO_ITEMS_UI_API_RETURN_CODE_ERROR',
-                                        -1)
-        if request.headers['Content-Type'] != 'application/json':
-            """Check header of request"""
-            return jsonify(
-                code=err_code,
-                msg=_('Header Error')
             )
 
         if community:

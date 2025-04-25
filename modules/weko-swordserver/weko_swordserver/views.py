@@ -975,6 +975,9 @@ def delete_object(recid):
         soft_delete(recid)
         from weko_items_ui.utils import send_mail_item_deleted
         send_mail_item_deleted(recid, record, current_user.id)
+        current_app.logger.info(
+            f"Item deleted by sword from {request.oauth.client.name} (recid={recid})"
+        )
         response = Response(status=204)
 
     return response
