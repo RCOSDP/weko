@@ -24,16 +24,38 @@ def test_get_weko_contents(i18n_app, users, client_request_args, communities, re
         index_style = MagicMock()
         index_style.index_link_enabled = False
         with patch('weko_theme.utils.IndexStyle.get', return_value=index_style):
-            result = get_weko_contents('comm1')
+            result = get_weko_contents({'c': 'comm1'})
             assert result
             assert not result['index_link_list']
 
             index_style.index_link_enabled = True
             with patch('weko_theme.utils.IndexStyle.get', return_value=index_style):
-                result = get_weko_contents('comm1')
+                result = get_weko_contents({'c': 'comm1'})
                 assert result
                 assert result['index_link_list']
 
+    search_setting = {
+        "init_disp_setting": {
+            "init_disp_screen_setting": "3",
+            "init_disp_index_disp_method": "0",
+            "init_disp_index": MagicMock(),
+            "init_disp_web_content": "24",
+        }
+    }
+
+    widgetmultilangdata_1 = WidgetMultiLangData(
+        widget_id=24, lang_code='en', label='',
+        description_data='{"description": ""}', is_deleted=False)
+    widgetmultilangdata_2 = WidgetMultiLangData(
+        widget_id=24, lang_code='ja', label='',
+        description_data='{description": ""}', is_deleted=False)
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        with patch('weko_theme.utils.get_search_setting',
+                   return_value=search_setting):
+            with patch("weko_theme.utils.WidgetMultiLangData.get_by_widget_id",
+                       return_value=[widgetmultilangdata_1,
+                                     widgetmultilangdata_2]):
+                assert get_weko_contents({'c': 'comm1'})
 
 # def get_community_id(getargs):
 def test_get_community_id(i18n_app, communities, db):

@@ -330,11 +330,11 @@ def save_item_data(bucket, format, batch_time_str):
                 item_json = {}
                 item_json.update(identifier=identifier.text)
                 item_json.update(datestamp=datestamp.text)
-                if setspecs is not None:
-                    setspec_attr = []
-                    for setspec in setspecs:
-                        setspec_attr.append(setspec.text)
-                    item_json.update(setSpec=setspec_attr)
+
+                setspec_attr = []
+                for setspec in setspecs:
+                    setspec_attr.append(setspec.text)
+                item_json.update(setSpec=setspec_attr)
 
                 # rec delete sets
                 for child in rec.iter():
