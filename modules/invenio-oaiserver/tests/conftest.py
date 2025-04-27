@@ -15,6 +15,7 @@ import shutil
 import tempfile
 import pytest
 import json
+import io
 from os.path import join, dirname
 from mock import patch
 
@@ -39,6 +40,8 @@ from invenio_marc21 import InvenioMARC21
 from invenio_pidstore import InvenioPIDStore
 from invenio_records import InvenioRecords
 from invenio_search import InvenioSearch
+from invenio_files_rest.models import Location, ObjectVersion, Bucket
+from invenio_files_rest import InvenioFilesREST
 from weko_records.api import ItemTypes
 from weko_records.models import ItemTypeName
 from weko_records_ui.config import WEKO_RECORDS_UI_LICENSE_DICT
@@ -559,3 +562,81 @@ def indexes(app,db):
         public_state=True,
         browsing_role="3,-99"
     )
+
+@pytest.yield_fixture()
+def batch_app(app):
+    app.config.update(
+        FILES_REST_DEFAULT_QUOTA_SIZE=None,
+        FILES_REST_DEFAULT_STORAGE_CLASS='S',
+        FILES_REST_STORAGE_CLASS_LIST={
+            'S': 'Standard',
+            'A': 'Archive',
+        },
+        FILES_REST_DEFAULT_MAX_FILE_SIZE=None,
+        FILES_REST_OBJECT_KEY_MAX_LEN=255,
+        THEME_SITEURL='TEST',
+        OAISERVER_RESUMPTION_TOKEN_EXPIRE_TIME=720,
+        OAISERVER_FILE_BATCH_ENABLE=True,
+        OAISERVER_FILE_BATCH_STORAGE_LOACTION='testloc',
+        OAISERVER_FILE_BATCH_FORMATS=['ddi', 'jpcoar'],
+        OAISERVER_FILE_BATCH_FILE_EXPIRY=720
+    )
+    InvenioFilesREST(app)
+
+    with app.app_context():
+        yield app
+
+@pytest.yield_fixture()
+def dummy_location(db):
+    """File system location."""
+    tmppath = tempfile.mkdtemp()
+
+    loc = Location(
+        name='testloc',
+        uri=tmppath,
+        default=True
+    )
+    db.session.add(loc)
+    db.session.commit()
+
+    yield loc
+
+@pytest.fixture()
+def bucket(db, dummy_location):
+    """File system location."""
+    b1 = Bucket.create(dummy_location)
+    db.session.commit()
+    return b1
+
+
+@pytest.yield_fixture()
+def data_json():
+    result = {
+        "current_data": "20250414203611626869",
+        "datas": [
+            {
+                "create_time": "2025-04-13T20:36:11Z",
+                "expired_time": "2025-05-13T20:36:11Z",
+                "id": "20250413203611626869"
+            },
+            {
+                "create_time": "2025-04-14T20:36:11Z",
+                "expired_time": "2025-05-14T20:36:11Z",
+                "id": "20250414203611626869"
+            },
+        ]
+
+    }
+
+    return result
+
+
+@pytest.yield_fixture()
+def data_json_obj(db, bucket, data_json):
+    bytesIO = io.BytesIO(bytes(json.dumps(data_json), encoding="utf-8"))
+    ObjectVersion.create(bucket, 'OAI_SERVER_FILE_CREATE')
+    obj = ObjectVersion.create(bucket, 'OAI_SERVER_FILE_CREATE/data.json',
+                               stream=bytesIO)
+    db.session.commit()
+
+    yield obj
