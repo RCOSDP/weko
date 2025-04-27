@@ -3,6 +3,7 @@
 from invenio_oaiserver.resumption_token import (
     _schema_from_verb,
     serialize,
+    serialize_file_response,
     ResumptionTokenSchema
 )
 
@@ -46,8 +47,21 @@ def test_serialize(app,mocker):
 #    def load(self, data, many=None, partial=None):
 # .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_resumption_token.py::test_ResumptionTokenSchema -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
 def test_ResumptionTokenSchema(app,mocker):
-    
+
     data = {"resumptionToken":"test_token","verb":"GetRecord","kwargs":{"identifier":"test_identifier","metadataPrefix":"jpcoar_1.0"}}
     mocker.patch("invenio_oaiserver.resumption_token.URLSafeTimedSerializer.loads",return_value={"kwargs":data["kwargs"]})
     result = ResumptionTokenSchema().load(data)
     assert result
+
+
+def serialize_file_response(app, mocker):
+    app.config.update(SECRET_KEY='test_key')
+    param = {'verb': 'ListRecords', 'data_id': 'test_id', 'metadataPrefix': 'ddi', 'expirationDate': 'test_expiration_date'}
+
+    # If not required.
+    token = serialize_file_response(100, 100, **param)
+    assert token is None
+
+    token = serialize_file_response(100, 500, **param)
+    assert token is not None
+
