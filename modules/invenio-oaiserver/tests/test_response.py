@@ -9,8 +9,10 @@
 """test cases."""
 import pytest
 import uuid
+import json
+import io
 from datetime import timedelta, datetime
-from mock import patch
+from mock import patch, MagicMock
 from flask import current_app
 from flask_babelex import Babel
 from werkzeug.utils import cached_property
@@ -22,6 +24,7 @@ from invenio_records.models import RecordMetadata
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier,PIDStatus
 from invenio_pidrelations.models import PIDRelation
+from invenio_files_rest.models import Location, ObjectVersion, Bucket
 
 from weko_index_tree.models import Index
 from weko_records.api import ItemTypes, Mapping
@@ -52,11 +55,24 @@ from invenio_oaiserver.response import (
     create_files_url,
     get_identifier,
     header,
-    identify
+    identify,
+    _use_file_data,
+    _get_parameter,
+    get_data_json,
+    get_location,
+    is_target_file,
+    get_target_files,
+    _resumption_token_file_response,
+    _create_response_from_file
 )
 
 
 NAMESPACES = {'x': NS_OAIPMH, 'y': NS_OAIDC, 'z': NS_DC}
+
+NSMAP = {
+    None: NS_OAIPMH,
+}
+
 
 
 #def test_is_private_index(app):
@@ -2119,3 +2135,346 @@ def test_issue34851_listidentifiers(es_app, records, item_type, mock_execute,db,
             res=listidentifiers(**kwargs)
             assert res.xpath("/x:OAI-PMH/x:ListIdentifiers/x:header[1]/x:datestamp/text()",namespaces=NAMESPACES) == [records[1][2].updated.replace(microsecond=0).isoformat()+"Z"]
             assert res.xpath("/x:OAI-PMH/x:ListIdentifiers/x:header[2]/x:datestamp/text()",namespaces=NAMESPACES) == [records[2][2].updated.replace(microsecond=0).isoformat()+"Z"]
+
+def test_use_file_data(batch_app,db,dummy_location,data_json_obj, data_json):
+    kwargs={}
+
+    # Requests from batches
+    kwargs.update(url='batch')
+    assert _use_file_data(**kwargs) == False
+
+    # Continuing to create responses from files
+    kwargs.update(url='test', resumptionToken={'data_id': 'TEST'})
+    assert _use_file_data(**kwargs) == True
+
+    # Continue to create responses from online
+    kwargs.update(url='test', resumptionToken={})
+    assert _use_file_data(**kwargs) == False
+
+    kwargs={}
+
+    # file use disabled
+    batch_app.config.update(OAISERVER_FILE_BATCH_ENABLE=False)
+    assert _use_file_data(**kwargs) == False
+
+    # Loaction Not obtainable
+    batch_app.config.update(OAISERVER_FILE_BATCH_ENABLE=True)
+    with patch('invenio_oaiserver.response.get_location', return_value=None):
+        assert _use_file_data(**kwargs) == False
+
+    # metadataPrefix Not applicable.
+    kwargs.update(metadataPrefix='oai_dc')
+    assert _use_file_data(**kwargs) == False
+
+    kwargs.update(metadataPrefix='ddi')
+
+    # data_json is not available.
+    with patch('invenio_oaiserver.response.get_data_json', return_value=None):
+        assert _use_file_data(**kwargs) == False
+
+    # data_json current_data None
+    with patch('invenio_oaiserver.response.get_data_json', return_value={}):
+        assert _use_file_data(**kwargs) == False
+
+    # index_json None
+    assert _use_file_data(**kwargs) == False
+
+    # index_json exists.
+    bucket1 = Bucket.create(dummy_location)
+    ObjectVersion.create(bucket1, 'OAI_SERVER_FILE_CREATE/20250414203611626869')
+    ObjectVersion.create(bucket1, 'OAI_SERVER_FILE_CREATE/20250414203611626869/ddi/index.json')
+    db.session.commit()
+    assert _use_file_data(**kwargs) == True
+
+    # exception case
+    with patch('invenio_oaiserver.response.get_location', side_effect=Exception()):
+        with pytest.raises(Exception) as e:
+            _use_file_data(**kwargs)
+            assert False
+
+
+def test_get_parameter(batch_app,db,dummy_location,data_json_obj, data_json):
+
+    # Initial parameters (not set)
+    kwargs={}
+    kwargs.update(verb='ListRecords',metadataPrefix='ddi')
+    param = _get_parameter(data_json, **kwargs)
+    assert param['verb'] == 'ListRecords'
+    assert param['data_id'] == '20250414203611626869'
+    assert param.get('from_time') is None
+    assert param.get('from_time_str') is None
+    assert param.get('until_time') is None
+    assert param.get('until_time_str') is None
+    assert param.get('set_spec') is None
+    assert param['index'] == 0
+    assert param['expirationDate'] == data_json['datas'][1]['expired_time']
+
+    # Initial parameters (with settings)
+    batch_time = datetime.now()
+    batch_time_str = batch_time.strftime('%Y%m%d%H%M%S%f')
+    kwargs.update(set='test_set', metadataPrefix='ddi', from_=batch_time, until=batch_time)
+    with patch('invenio_oaiserver.response.OAISet.get_set_by_spec', return_value=True):
+        with patch('invenio_oaiserver.response.get_index_state', return_value=True):
+            with patch('invenio_oaiserver.response.is_output_harvest', return_value=True):
+                param = _get_parameter(data_json, **kwargs)
+                assert param['verb'] == 'ListRecords'
+                assert param['data_id'] == '20250414203611626869'
+                assert param.get('from_time') == batch_time
+                assert param.get('from_time_str') == datetime_to_datestamp(batch_time)
+                assert param.get('until_time') == batch_time
+                assert param.get('until_time_str')  == datetime_to_datestamp(batch_time)
+                assert param.get('set_spec') == 'test_set'
+                assert param['index'] == 0
+                assert param['expirationDate'] == data_json['datas'][1]['expired_time']
+
+    # Initial parameters (SET deficiency 1)
+    with patch('invenio_oaiserver.response.OAISet.get_set_by_spec', return_value=False):
+         param = _get_parameter(data_json, **kwargs)
+
+    # Initial parameters (SET deficiency 2)
+    with patch('invenio_oaiserver.response.OAISet.get_set_by_spec', return_value=True):
+        with patch('invenio_oaiserver.response.get_index_state', return_value=True):
+            with patch('invenio_oaiserver.response.is_output_harvest', return_value=HARVEST_PRIVATE):
+                param = _get_parameter(data_json, **kwargs)
+
+    # Continuity parameter (not set)
+    kwargs={}
+    kwargs.update(verb='ListRecords', resumptionToken={'data_id': 'test_id', 'metadataPrefix': 'ddi', 'index': 100, 'expirationDate': 'test_expiration_date'})
+    param = _get_parameter(data_json, **kwargs)
+    assert param['verb'] == 'ListRecords'
+    assert param['data_id'] == 'test_id'
+    assert param.get('from_time') is None
+    assert param.get('from_time_str') is None
+    assert param.get('until_time') is None
+    assert param.get('until_time_str') is None
+    assert param.get('set_spec') is None
+    assert param['index'] == 100
+    assert param['expirationDate'] == 'test_expiration_date'
+
+    # Continuity parameters (with settings)
+    kwargs.update(resumptionToken={'data_id': 'test_id', 'metadataPrefix': 'ddi', 'index': 100, 'expirationDate': 'test_expiration_date',
+                                   'from': '2025-04-13T20:36:11Z', 'until': '2025-05-13T20:36:11Z', 'set': 'test_set'})
+    param = _get_parameter(data_json, **kwargs)
+    assert param['verb'] == 'ListRecords'
+    assert param['data_id'] == 'test_id'
+    assert param.get('from_time') == datetime.strptime('2025-04-13T20:36:11Z', '%Y-%m-%dT%H:%M:%SZ')
+    assert param.get('from_time_str') == '2025-04-13T20:36:11Z'
+    assert param.get('until_time') == datetime.strptime('2025-05-13T20:36:11Z', '%Y-%m-%dT%H:%M:%SZ')
+    assert param.get('until_time_str') == '2025-05-13T20:36:11Z'
+    assert param.get('set_spec') == 'test_set'
+    assert param['index'] == 100
+    assert param['expirationDate'] == 'test_expiration_date'
+
+
+def test_get_data_json_data_notfound(batch_app,db,bucket,dummy_location):
+
+    # If no data exists.
+    with patch('invenio_oaiserver.response.ObjectVersion.query.filter_by', return_value=None):
+        data_json = get_data_json(dummy_location)
+        assert data_json is None
+
+
+def test_get_data_json_data_found(batch_app,db,bucket,dummy_location,data_json_obj):
+
+    # If there are data_json with different locations
+    other_location = Location(
+        name='dummy',
+        uri='dummy',
+        default=False
+    )
+    data_json = get_data_json(other_location)
+    assert data_json is None
+
+    # Only folder definitions are available and data_json cannot be retrieved.
+    with patch('invenio_oaiserver.response.ObjectVersion.get', return_value=None):
+        data_json = get_data_json(dummy_location)
+        assert data_json is None
+
+    # data_json can be retrieved.
+    with patch('invenio_oaiserver.response.ObjectVersion.get', return_value=data_json_obj):
+        data_json = get_data_json(dummy_location)
+        assert data_json['current_data'] == '20250414203611626869'
+
+    # exception case
+    mock = MagicMock()
+    mock.file.side_effect = Exception()
+
+    with patch('invenio_oaiserver.response.ObjectVersion.get', return_value=mock):
+        with pytest.raises(Exception) as e:
+            obj, result = get_data_json(dummy_location)
+            assert False
+
+
+def test_get_location(batch_app,db,dummy_location,data_json_obj, data_json):
+
+    batch_app.config.update(OAISERVER_FILE_BATCH_STORAGE_LOACTION=None)
+    result = get_location()
+    assert result is None
+
+    batch_app.config.update(OAISERVER_FILE_BATCH_STORAGE_LOACTION='DUMMY')
+    result = get_location()
+    assert result is None
+
+    batch_app.config.update(OAISERVER_FILE_BATCH_STORAGE_LOACTION='testloc')
+    result = get_location()
+    assert result.name == 'testloc'
+
+
+def test_is_target_file(batch_app,db,dummy_location,data_json_obj, data_json):
+
+    item_json = {}
+    item_json.update(datestamp='2025-04-20T20:36:11Z', setSpec=['test_set1','test_set2'])
+    param = {}
+
+    # No parameter setting
+    assert is_target_file(item_json, param)
+
+    # From Mismatch.
+    param.update(from_time=datetime.strptime('2025-04-21T20:36:11Z', '%Y-%m-%dT%H:%M:%SZ'))
+    assert is_target_file(item_json, param) == False
+
+    # To Mismatch.
+    param.update(from_time=None,until_time=datetime.strptime('2025-04-19T20:36:11Z', '%Y-%m-%dT%H:%M:%SZ'))
+    assert is_target_file(item_json, param) == False
+
+    # set Mismatch
+    param.update(from_time=None,until_time=None,set_spec='test_set1')
+    assert is_target_file(item_json, param) == False
+
+    # set Mismatch (set is empty)
+    item_json.update(datestamp='2025-04-20T20:36:11Z', setSpec=[])
+    assert is_target_file(item_json, param) == False
+
+
+def test_get_target_files(batch_app,db,dummy_location,data_json_obj, data_json):
+
+    # without data
+    param = {'data_id': '20250414203611626869', 'metadataPrefix': 'ddi', 'index': 0}
+    file_objs, target_count, index_obj = get_target_files(param)
+    assert file_objs == None
+    assert target_count == None
+    assert index_obj == None
+
+    # Data available
+    batch_app.config.update(OAISERVER_PAGE_SIZE=2)
+
+    index_json = {
+        'items': [
+            {'datestamp': '2025-04-13T20:36:11Z', 'setSpec': ['test_set'], 'file_name': 'file_name1'},
+            {'datestamp': '2025-04-14T20:36:11Z', 'setSpec': ['test_set'], 'file_name': 'file_name2'},
+            {'datestamp': '2025-04-15T20:36:11Z', 'setSpec': ['test_set'], 'file_name': 'file_name3'},
+            {'datestamp': '2025-04-16T20:36:11Z', 'setSpec': ['test_set2'], 'file_name': 'file_name4'},
+            {'datestamp': '2025-04-17T20:36:11Z', 'setSpec': ['test_set2'], 'file_name': 'file_name5'}
+        ]
+    }
+    bytesIO = io.BytesIO(bytes(json.dumps(index_json), encoding="utf-8"))
+    bucket = Bucket.create(dummy_location)
+    ObjectVersion.create(bucket, 'OAI_SERVER_FILE_CREATE/20250414203611626869/ddi/index.json', stream=bytesIO)
+    ObjectVersion.create(bucket, 'OAI_SERVER_FILE_CREATE/20250414203611626869/ddi/file_name1')
+    ObjectVersion.create(bucket, 'OAI_SERVER_FILE_CREATE/20250414203611626869/ddi/file_name2')
+    ObjectVersion.create(bucket, 'OAI_SERVER_FILE_CREATE/20250414203611626869/ddi/file_name3')
+    ObjectVersion.create(bucket, 'OAI_SERVER_FILE_CREATE/20250414203611626869/ddi/file_name4')
+    ObjectVersion.create(bucket, 'OAI_SERVER_FILE_CREATE/20250414203611626869/ddi/file_name5')
+    db.session.commit()
+
+    param.update(set_spec='test_set')
+    file_objs, target_count, index_obj = get_target_files(param)
+    assert file_objs.count() == 2
+    assert target_count == 3
+
+    param.update(index=2)
+    file_objs, target_count, index_obj = get_target_files(param)
+    assert file_objs.count() == 1
+    assert target_count == 3
+
+
+def test_resumption_token_file_response(batch_app,db,dummy_location,data_json_obj, data_json):
+    param={}
+    param.update(expirationDate='2025-05-17T20:36:11Z', index=0)
+    batch_app.config.update(OAISERVER_PAGE_SIZE=2)
+    parent1 = Element(etree.QName(NS_OAIPMH, 'OAI-PMH'), nsmap=NSMAP)
+
+    # If it fits on one page
+    _resumption_token_file_response(parent1, 1, 1, **param)
+    resumptionToken = parent1.find('./resumptionToken', namespaces=NSMAP)
+    assert resumptionToken is None
+
+    # Where data are available.
+    param.update(index=2)
+    parent2 = Element(etree.QName(NS_OAIPMH, 'OAI-PMH'), nsmap=NSMAP)
+    with patch('invenio_oaiserver.response.serialize_file_response', return_value='test_token'):
+        _resumption_token_file_response(parent2, 2, 5, **param)
+        resumptionToken = parent2.find('./resumptionToken', namespaces=NSMAP)
+        assert resumptionToken.attrib.get('expirationDate') == '2025-05-17T20:36:11Z'
+        assert resumptionToken.attrib.get('cursor') == '2'
+        assert resumptionToken.attrib.get('completeListSize') == '5'
+        assert resumptionToken.text == 'test_token'
+
+    # If there is no TOKEN
+    parent3 = Element(etree.QName(NS_OAIPMH, 'OAI-PMH'), nsmap=NSMAP)
+    with patch('invenio_oaiserver.response.serialize_file_response', return_value=''):
+        _resumption_token_file_response(parent3, 2, 5, **param)
+        resumptionToken = parent3.find('./resumptionToken', namespaces=NSMAP)
+        assert resumptionToken.attrib.get('expirationDate') == '2025-05-17T20:36:11Z'
+        assert resumptionToken.attrib.get('cursor') == '2'
+        assert resumptionToken.attrib.get('completeListSize') == '5'
+        assert resumptionToken.text is None
+
+
+def test_create_response_from_file(batch_app,db,dummy_location,data_json_obj, data_json):
+
+    param = {'verb': 'ListRecords','data_id': '20250414203611626869', 'metadataPrefix': 'ddi', 'index': '0'}
+
+    # No Location
+    with patch('invenio_oaiserver.response.get_location', return_value=None):
+        e_tree = _create_response_from_file(**param)
+        assert e_tree.getroot().find('./error', namespaces=NSMAP).attrib.get('code') == 'ERR_IOS-001'
+
+    # First time data_json None
+    with patch('invenio_oaiserver.response.get_data_json', return_value=None):
+        e_tree = _create_response_from_file(**param)
+        assert e_tree.getroot().find('./error', namespaces=NSMAP).attrib.get('code') == 'ERR_IOS-002'
+
+    # First time index_json None
+    e_tree = _create_response_from_file(**param)
+    assert e_tree.getroot().find('./error', namespaces=NSMAP).attrib.get('code') == 'ERR_IOS-002'
+
+    # First time Data available
+    batch_app.config.update(OAISERVER_PAGE_SIZE=2)
+
+    index_json = {
+        'items': [
+            {'datestamp': '2025-04-13T20:36:11Z', 'setSpec': ['test_set'], 'file_name': 'file_name1'},
+            {'datestamp': '2025-04-14T20:36:11Z', 'setSpec': ['test_set'], 'file_name': 'file_name2'},
+            {'datestamp': '2025-04-15T20:36:11Z', 'setSpec': ['test_set'], 'file_name': 'file_name3'},
+            {'datestamp': '2025-04-16T20:36:11Z', 'setSpec': ['test_set2'], 'file_name': 'file_name4'},
+            {'datestamp': '2025-04-17T20:36:11Z', 'setSpec': ['test_set2'], 'file_name': 'file_name5'}
+        ]
+    }
+    bytesIO = io.BytesIO(bytes(json.dumps(index_json), encoding="utf-8"))
+    bucket = Bucket.create(dummy_location)
+    index_obj = ObjectVersion.create(bucket, 'OAI_SERVER_FILE_CREATE/20250414203611626869/ddi/index.json', stream=bytesIO)
+    bytesIO1 = io.BytesIO(bytes('<ns0:record xmlns:ns0="http://www.openarchives.org/OAI/2.0/"></ns0:record>', encoding="utf-8"))
+    ObjectVersion.create(bucket, 'OAI_SERVER_FILE_CREATE/20250414203611626869/ddi/file_name1', stream=bytesIO1)
+    bytesIO2 = io.BytesIO(bytes('<ns0:record xmlns:ns0="http://www.openarchives.org/OAI/2.0/"></ns0:record>', encoding="utf-8"))
+    ObjectVersion.create(bucket, 'OAI_SERVER_FILE_CREATE/20250414203611626869/ddi/file_name2', stream=bytesIO2)
+    bytesIO3 = io.BytesIO(bytes('<ns0:record xmlns:ns0="http://www.openarchives.org/OAI/2.0/"></ns0:record>', encoding="utf-8"))
+    ObjectVersion.create(bucket, 'OAI_SERVER_FILE_CREATE/20250414203611626869/ddi/file_name3', stream=bytesIO3)
+    bytesIO4 = io.BytesIO(bytes('<ns0:record xmlns:ns0="http://www.openarchives.org/OAI/2.0/"></ns0:record>', encoding="utf-8"))
+    ObjectVersion.create(bucket, 'OAI_SERVER_FILE_CREATE/20250414203611626869/ddi/file_name4', stream=bytesIO4)
+    bytesIO5 = io.BytesIO(bytes('<ns0:record xmlns:ns0="http://www.openarchives.org/OAI/2.0/"></ns0:record>', encoding="utf-8"))
+    ObjectVersion.create(bucket, 'OAI_SERVER_FILE_CREATE/20250414203611626869/ddi/file_name5', stream=bytesIO5)
+
+    e_tree = _create_response_from_file(**param)
+    assert len(e_tree.getroot().findall('./ListRecords/record', namespaces=NSMAP)) == 2
+
+     # Continued Data available
+    param.update(verb='ListRecords', resumptionToken={'data_id': '20250414203611626869', 'metadataPrefix': 'ddi', 'index': 2, 'expirationDate': 'test_expiration_date', 'token': 'test_token'})
+    e_tree = _create_response_from_file(**param)
+    assert len(e_tree.getroot().findall('./ListRecords/record', namespaces=NSMAP)) == 2
+
+    # No target data
+    param = {'verb': 'ListRecords','data_id': '20250414203611626869', 'metadataPrefix': 'ddi', 'index': '0', 'set': 'dummy_set'}
+    with patch('invenio_oaiserver.response.get_target_files', return_value=[None, 0, index_obj]):
+        e_tree = _create_response_from_file(**param)
+        assert e_tree.getroot().find('./error', namespaces=NSMAP).attrib.get('code') == 'noRecordsMatch'
