@@ -4,6 +4,22 @@
     "items":[
       {
         "key":"item_test1_creator[].creatorName",
+        "items":[
+          {
+            "key":"item_test1_creator[].creatorNames[].creatorName",
+            "type":"text",
+            "title": "姓名",
+            "title_i18n": {"en": "Name","ja": "姓名"},
+            "title_i18n_temp": {"en": "Name","ja": "姓名"}
+          },
+          {
+            "key":"item_test1_creator[].creatorNames[].creatorNameLang",
+            "type":"text",
+            "title": "姓名",
+            "title_i18n": {"en": "Name","ja": "姓名言語"},
+            "title_i18n_temp": {"en": "Name","ja": "姓名言語"}
+          }
+        ],
         "type":"text",
         "title":"creator_name",
         "title_i18n":{"en":"Creator Name","ja":"作成者氏名"},
@@ -48,9 +64,17 @@
     "key":"item_test3_bibliographic",
     "items":[
       {
-        "key":"item_test3_bibliographic[].bibliographic_titles",
-        "type":"text",
-        "isShowList":true
+        "key":"item_test3_bibliographic.bibliographic_titles",
+        "items":[
+          {
+            "key":"item_test3_bibliographic.bibliographic_titles[].bibliographic_title",
+            "type":"text"
+          },
+          {
+            "key":"item_test3_bibliographic.bibliographic_titles[].bibliographic_titleLang",
+            "type":"text"
+          }
+        ]
       }
     ],
     "stype":{"add":"btn-success"},
