@@ -500,9 +500,9 @@ class ItemImportView(BaseView):
                         item["metadata"] = metadata_doi
                     group_tasks.append(import_item.s(item, request_info, parent_id=parent_id))
                     db.session.commit()
-                except Exception as e:
+                except Exception as ex:
                     db.session.rollback()
-                    current_app.logger.error(e)
+                    current_app.logger.error("Failed to Item import.")
                     exec_info = sys.exc_info()
                     tb_info = traceback.format_tb(exec_info[2])
                     UserActivityLogger.error(
@@ -929,9 +929,9 @@ class ItemRocrateImportView(BaseView):
                     handle_workflow(item)
                     group_tasks.append(import_item.s(item, request_info, parent_id=parent_id))
                     db.session.commit()
-                except Exception as e:
+                except Exception as ex:
                     db.session.rollback()
-                    current_app.logger.error(e)
+                    current_app.logger.error("Failed to item import.")
                     traceback.print_exc()
                     exec_info = sys.exc_info()
                     tb_info = traceback.format_tb(exec_info[2])

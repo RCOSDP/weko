@@ -183,10 +183,12 @@ def get_workspace_itemlist():
 
         # "doi": None,  # DOIリンク
         identifiers = source.get("identifier", [])
+        workspaceItem["doi"] = ""
         if identifiers:
-            workspaceItem["doi"] = identifiers[0].get("value", "")
-        else:
-            workspaceItem["doi"] = ""
+            for value in identifiers:
+                if value.get("value"):
+                    workspaceItem["doi"] = current_app.config.get("OAIHARVESTER_DOI_PREFIX", "") + "/" + identifiers[0].get("value", "")
+                    breack
 
         # "resourceType": None,  # リソースタイプ
         resourceType = source.get("type", [])

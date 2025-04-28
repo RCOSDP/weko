@@ -49,7 +49,8 @@ from invenio_rest.errors import SameContentException
 from weko_accounts.utils import limiter, roles_required
 from weko_admin.config import (
     WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
-    WEKO_ADMIN_PERMISSION_ROLE_REPO
+    WEKO_ADMIN_PERMISSION_ROLE_REPO,
+    WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY,
 )
 from weko_admin.models import AdminLangSettings
 
@@ -64,7 +65,7 @@ from .scopes import (
     create_index_scope, read_index_scope, update_index_scope, delete_index_scope
 )
 from .utils import (
-    check_doi_in_index, check_index_permissions, can_user_access_index,
+    check_doi_in_index, check_index_permissions, can_admin_access_index,
     is_index_locked, perform_delete_index, save_index_trees_to_redis, reset_tree
 )
 from .schema import IndexCreateRequestSchema, IndexUpdateRequestSchema
@@ -888,7 +889,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             raise VersionNotFoundRESTError()
 
     @require_api_auth(allow_anonymous=False)
-    @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,WEKO_ADMIN_PERMISSION_ROLE_REPO])
+    @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,WEKO_ADMIN_PERMISSION_ROLE_REPO,WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
     @require_oauth_scopes(create_index_scope.id)
     @limiter.limit('')
     def post(self, **kwargs):
@@ -901,7 +902,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             raise VersionNotFoundRESTError()
 
     @require_api_auth(allow_anonymous=False)
-    @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,WEKO_ADMIN_PERMISSION_ROLE_REPO])
+    @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,WEKO_ADMIN_PERMISSION_ROLE_REPO,WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
     @require_oauth_scopes(update_index_scope.id)
     @limiter.limit('')
     def put(self, **kwargs):
@@ -915,7 +916,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             raise VersionNotFoundRESTError()
 
     @require_api_auth(allow_anonymous=False)
-    @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,WEKO_ADMIN_PERMISSION_ROLE_REPO])
+    @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,WEKO_ADMIN_PERMISSION_ROLE_REPO,WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
     @require_oauth_scopes(delete_index_scope.id)
     @limiter.limit('')
     def delete(self, **kwargs):
@@ -1271,7 +1272,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                 return make_response(jsonify({'status': 404, 'error': 'Index not found'}), 404)
             else:
                 lst = {column.name: getattr(index_obj, column.name) for column in index_obj.__table__.columns}
-                if not can_user_access_index(lst):
+                if not can_admin_access_index(lst):
                     current_app.logger.error(f"Permission denied for index: {index_id}")
                     return make_response(jsonify({'status': 403, 'error': f'Permission denied: You do not have access to index {index_id}.'}), 403)
 
@@ -1357,6 +1358,11 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
 
         """
         if not id:
+            if id == 0 and any(role.name == current_app.config.get("WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY")
+                    for role in getattr(current_user, 'roles', [])):
+                raise PermissionError(
+                    description=f"Permission denied: Community administrators cannot access root index"
+                )
             return None
 
         index = self.record_class.get_index(id, with_deleted=True)
@@ -1373,7 +1379,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             column.name: getattr(index, column.name)
             for column in index.__table__.columns
         }
-        if not can_user_access_index(lst):
+        if not can_admin_access_index(lst):
             current_app.logger.error(
                 f"User does not have access to index: {id}"
             )
