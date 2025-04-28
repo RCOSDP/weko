@@ -853,24 +853,42 @@ def db_activity(app, db,users,location,db_itemtype,db_actions):
     with db.session.begin_nested():
         db.session.add(no_location_workflow)
         db.session.add(location_workflow)
-    no_location_activity = Activity(activity_id='1',workflow_id=no_location_workflow.id, flow_id=flow_define.id,
-                    action_id=1, activity_login_user=1,
-                    activity_update_user=1,
-                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
-                    activity_community_id=3,
-                    activity_confirm_term_of_use=True,
-                    title='test', shared_user_id=-1, extra_info={},
-                    action_order=1,
-                    )
-    location_activity = Activity(activity_id='2',workflow_id=location_workflow.id, flow_id=flow_define.id,
-                    action_id=1, activity_login_user=1,
-                    activity_update_user=1,
-                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
-                    activity_community_id=3,
-                    activity_confirm_term_of_use=True,
-                    title='test', shared_user_id=-1, extra_info={},
-                    action_order=1,
-                    )
+    activity = Activity(
+        activity_id='A1',
+        workflow_id=location_workflow.id,
+        flow_id=flow_define.id,
+        action_id=3,
+        activity_status='M',
+        activity_login_user=1,
+        activity_update_user=1,
+        activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+        activity_community_id=3,
+        activity_confirm_term_of_use=True,
+        title='test',
+        shared_user_id=-1,
+        extra_info={},
+        action_order=1,
+    )
+    no_location_activity = Activity(
+        activity_id='1',workflow_id=no_location_workflow.id, flow_id=flow_define.id,
+        action_id=1, activity_login_user=1,
+        activity_update_user=1,
+        activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+        activity_community_id=3,
+        activity_confirm_term_of_use=True,
+        title='test', shared_user_id=-1, extra_info={},
+        action_order=1,
+    )
+    location_activity = Activity(
+        activity_id='2',workflow_id=location_workflow.id, flow_id=flow_define.id,
+        action_id=1, activity_login_user=1,
+        activity_update_user=1,
+        activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+        activity_community_id=3,
+        activity_confirm_term_of_use=True,
+        title='test', shared_user_id=-1, extra_info={},
+        action_order=1,
+    )
     with db.session.begin_nested():
         db.session.add(no_location_activity)
         db.session.add(location_activity)
