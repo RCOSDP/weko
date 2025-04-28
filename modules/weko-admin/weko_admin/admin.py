@@ -2077,7 +2077,7 @@ class JsonldMappingView(ModelView):
 
         # check if this mapping is using sword_clients
         can_change_itemtype = not bool(SwordClient.get_clients_by_mapping_id(model.id))
-        if can_change_itemtype:
+        if not can_change_itemtype:
             current_app.logger.info(
                 "Cannot edit JSON-LD mapping because this mapping is using "
                 "SWORD API JSON-LD settings."
@@ -2127,7 +2127,7 @@ class JsonldMappingView(ModelView):
 
             if (
                 not can_change_itemtype
-                and item_type_id != model.item_type_id
+                and int(item_type_id) != model.item_type_id
             ):
                 return jsonify("Cannot change item type"), 400
             try:
