@@ -1582,7 +1582,7 @@ class SwordAPIJsonldSettingsView(ModelView):
         "active",
         "creator",
         "registration_type",
-        "input_support",
+        "metadata_collection",
         "duplicate_check"
     )
     column_searchable_list = ("registration_type_id", "client_id", "workflow_id")
@@ -1609,7 +1609,7 @@ class SwordAPIJsonldSettingsView(ModelView):
         else:
             return "Workflow"
 
-    def _format_input_support(view, context, model, name):
+    def _format_metadata_collection(view, context, model, name):
         if len(model.meta_data_api) > 0:
             return "ON"
         else:
@@ -1626,7 +1626,7 @@ class SwordAPIJsonldSettingsView(ModelView):
         "active": _format_active,
         "creator": _format_creator,
         "registration_type": _format_registration_type,
-        "input_support": _format_input_support,
+        "metadata_collection": _format_metadata_collection,
         "duplicate_check": _format_duplicate_check,
     }
 
