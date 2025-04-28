@@ -14,6 +14,7 @@ from zipfile import ZipFile
 
 from flask import current_app, request
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm.exc import NoResultFound
 
 from invenio_accounts.models import User
 from invenio_oauth2server.models import Token
@@ -148,16 +149,22 @@ def get_shared_id_from_on_behalf_of(on_behalf_of):
             # get weko user id from shibboleth user eppn
             shib_user = (
                 ShibbolethUser.query
-                .filter_by(shib_eppn=on_behalf_of).one_or_none()
+                .filter_by(shib_eppn=on_behalf_of).one()
             )
             shared_id = shib_user.weko_uid if shib_user is not None else None
-    except SQLAlchemyError as ex:
-        current_app.logger.error(
-            "Somthing went wrong while searching user by On-Behalf-Of.")
+    except NoResultFound as ex:
+        msg = "No user found by On-Behalf-Of."
+        current_app.logger.error(msg)
         traceback.print_exc()
         raise WekoSwordserverException(
-            "An error occurred while searching user by On-Behalf-Of.",
-            errorType=ErrorType.ServerError
+            msg, errorType=ErrorType.BadRequest
+        ) from ex
+    except SQLAlchemyError as ex:
+        msg = "DB error occurred while searching user by On-Behalf-Of."
+        current_app.logger.error(msg)
+        traceback.print_exc()
+        raise WekoSwordserverException(
+            msg, errorType=ErrorType.ServerError
         ) from ex
     return shared_id
 
