@@ -20,18 +20,21 @@
 
 {% macro tabs_selector(tab_value='top',community_id='') %}
   {%- if community_id %}
-    <li role="presentation" {% if tab_value=='top' %}class="active"{% endif %}><a href="/?community={{community_id}}">{{ _('Top') }}</a></li>
+    {%- set top_url = get_top_page_url(community_id) -%}
+    <li role="presentation" {% if tab_value=='top' %}class="active"{% endif %}><a href="{{top_url}}">{{ _('Top') }}</a></li>
     {%- if current_user.is_authenticated and current_user.roles %}
-    <li role="presentation" {% if tab_value=='flow' %}class="active"{% endif %}><a href="{{url_for('weko_workflow.index',community=community_id)}}">{{ _('WorkFlow') }}</a></li>
+      <li role="presentation" {% if tab_value=='flow' %}class="active"{% endif %}><a href="{{url_for('weko_workflow.index', community=community_id)}}">{{ _('WorkFlow') }}</a></li>
     {%- endif %}
-    {%- else %}
-    <li role="presentation" {% if tab_value=='top' %}class="active"{% endif %}><a href="/">{{ _('Top') }}</a></li>
+    <li role="presentation" class="{{ check_ranking_show() }} {% if tab_value=='rank' %}active{% endif %}"><a href="{{url_for('weko_items_ui.ranking', community=community_id)}}">{{ _('Ranking') }}</a></li>
+  {%- else %}
+    {%- set top_url = get_top_page_url() -%}
+    <li role="presentation" {% if tab_value=='top' %}class="active"{% endif %}><a href="{{top_url}}">{{ _('Top') }}</a></li>
     {%- if current_user.is_authenticated and current_user.roles %}
-    <li role="presentation" {% if tab_value=='flow' %}class="active"{% endif %}><a href="{{url_for('weko_workflow.index')}}">{{ _('WorkFlow') }}</a></li>
+      <li role="presentation" {% if tab_value=='flow' %}class="active"{% endif %}><a href="{{url_for('weko_workflow.index')}}">{{ _('WorkFlow') }}</a></li>
     {%- endif %}
     {% if display_community %}
-    <li role="presentation" {% if tab_value=='community' %}class="active"{% endif %}><a href="{{url_for('invenio_communities.community_list')}}">{{ _('Communities') }}</a></li>
+      <li role="presentation" {% if tab_value=='community' %}class="active"{% endif %}><a href="{{url_for('invenio_communities.community_list')}}">{{ _('Communities') }}</a></li>
     {% endif %}
+    <li role="presentation" class="{{ check_ranking_show() }} {% if tab_value=='rank' %}active{% endif %}"><a href="{{url_for('weko_items_ui.ranking')}}">{{ _('Ranking') }}</a></li>
   {%- endif %}
-  <li role="presentation" class="{{ check_ranking_show() }} {% if tab_value=='rank' %}active{% endif %}"><a href="{{url_for('weko_items_ui.ranking')}}">{{ _('Ranking') }}</a></li>
 {% endmacro %}
