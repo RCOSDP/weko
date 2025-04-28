@@ -465,20 +465,36 @@ def _add_url_rule(url_or_urls):
 
 
 @blueprint_api.route('/access_counter_record/<string:repository_id>'
-                     '/<string:current_language>', methods=['GET'])
-def get_access_counter_record(repository_id, current_language):
+                     '/<string:path>/<string:current_language>', methods=['GET'])
+def get_access_counter_record(repository_id, path,current_language):
     """Get access Top page value."""
     cached_data = current_cache.get('access_counter')
-    if not cached_data:
+    if path == "main":
         widget_design_setting = WidgetDesignServices.get_widget_design_setting(
             repository_id, current_language or get_default_language())
+    else:
+        page_id = WidgetDesignPage.get_by_url("/"+path).id
+        widget_design_setting = WidgetDesignPageServices.get_widget_design_setting(
+            page_id, current_language or get_default_language())
+
+    widget_ids = [
+        str(widget.get("widget_id")) for widget in widget_design_setting.get("widget-settings", {})
+        if widget.get("type") == WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE
+    ]
+    if len(widget_ids) == 0:
+        return abort(404)
+
+    if not cached_data or set(list(json.loads(cached_data.data).keys())) != set(widget_ids):
         result = {}
         # need to logic check
         if widget_design_setting.get('widget-settings'):
             for widget in widget_design_setting['widget-settings']:
                 if str(widget.get('type')) == \
                         WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE:
-                    start_date = widget.get('created_date')
+                    if widget.get('count_start_date'):
+                        start_date = widget.get('count_start_date')
+                    else:
+                        start_date = widget.get('created_date')
 
                     if start_date:
                         end_date = date.today().strftime("%Y-%m-%d")
@@ -488,7 +504,7 @@ def get_access_counter_record(repository_id, current_language):
                         count = 0
                         for item in top_view_total_by_widget_id['all'].values():
                             count = count + int(item['count'])
-                        
+
                         top_view_total_by_widget_id['all'] = {} # clear all data
                         top_view_total_by_widget_id['all'].update(
                             {'count': count})
