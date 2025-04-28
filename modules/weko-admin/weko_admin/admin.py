@@ -1582,7 +1582,7 @@ class SwordAPIJsonldSettingsView(ModelView):
         "active",
         "creator",
         "registration_type",
-        "input_support",
+        "metadata_collection",
         "duplicate_check"
     )
     column_searchable_list = ("registration_type_id", "client_id", "workflow_id")
@@ -1609,7 +1609,7 @@ class SwordAPIJsonldSettingsView(ModelView):
         else:
             return "Workflow"
 
-    def _format_input_support(view, context, model, name):
+    def _format_metadata_collection(view, context, model, name):
         if len(model.meta_data_api) > 0:
             return "ON"
         else:
@@ -1626,7 +1626,7 @@ class SwordAPIJsonldSettingsView(ModelView):
         "active": _format_active,
         "creator": _format_creator,
         "registration_type": _format_registration_type,
-        "input_support": _format_input_support,
+        "metadata_collection": _format_metadata_collection,
         "duplicate_check": _format_duplicate_check,
     }
 
@@ -2077,7 +2077,7 @@ class JsonldMappingView(ModelView):
 
         # check if this mapping is using sword_clients
         can_change_itemtype = not bool(SwordClient.get_clients_by_mapping_id(model.id))
-        if can_change_itemtype:
+        if not can_change_itemtype:
             current_app.logger.info(
                 "Cannot edit JSON-LD mapping because this mapping is using "
                 "SWORD API JSON-LD settings."
@@ -2127,7 +2127,7 @@ class JsonldMappingView(ModelView):
 
             if (
                 not can_change_itemtype
-                and item_type_id != model.item_type_id
+                and int(item_type_id) != model.item_type_id
             ):
                 return jsonify("Cannot change item type"), 400
             try:
