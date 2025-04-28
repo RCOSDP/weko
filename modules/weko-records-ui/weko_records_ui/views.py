@@ -23,6 +23,7 @@
 from datetime import datetime
 import re
 import os
+import traceback
 import uuid
 
 import six
@@ -32,6 +33,7 @@ from flask import Blueprint, abort, current_app, escape, flash, json, \
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
+from sqlalchemy.orm.exc import NoResultFound
 from invenio_cache import cached_unless_authenticated
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion, FileInstance
@@ -1144,13 +1146,20 @@ def get_uri():
           200:
     """  
     data = request.get_json()
+    if not isinstance(data, dict):
+        current_app.logger.error('Invalid request data')
+        abort(400)
     uri = data.get('uri')
     pid_value = data.get('pid_value')
     accessrole = data.get('accessrole')
     pattern = re.compile('^/record/{}/files/.*'.format(pid_value))
     if not pattern.match(uri):
-        pid = PersistentIdentifier.get('recid', pid_value)
-        record = WekoRecord.get_record_by_pid(pid_value)
+        try:
+            record = WekoRecord.get_record_by_pid(pid_value)
+        except (NoResultFound, PIDDoesNotExistError):
+            current_app.logger.error(traceback.format_exc())
+            abort(404)
+
         bucket_id = record.get('_buckets', {}).get('deposit')
         file_id_key = '{}_{}'.format(bucket_id, uri)
 
