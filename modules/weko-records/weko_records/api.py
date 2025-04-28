@@ -26,6 +26,8 @@ from typing import Union
 import json
 import copy
 import re
+import sys
+import traceback
 
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import QueryString
@@ -2889,6 +2891,8 @@ class ItemLink(object):
         :param items: List of dictionaries containing 'item_id' and 'sele_id' (relationship type).
         :return: Error message if any, otherwise None.
         """
+        from weko_logging.activity_logger import UserActivityLogger
+
         # Fetch all existing relationships where the current item is the source
         dst_relations = ItemReference.get_src_references(self.org_item_id).all()
         # Create a set of destination item IDs for quick lookup
@@ -2994,15 +2998,42 @@ class ItemLink(object):
 
             # Commit the transaction if all operations succeed
             db.session.commit()
+            for item_id in deleted:
+                UserActivityLogger.info(
+                    operation="ITEM_DELETE_LINK",
+                    target_key=item_id
+                )
+            for updated_item in updated:
+                UserActivityLogger.info(
+                    operation="ITEM_UPDATE_LINK",
+                    target_key=updated_item["item_id"]
+                )
+            for created_info in created:
+                UserActivityLogger.info(
+                    operation="ITEM_CREATE_LINK",
+                    target_key=created_info["item_id"]
+                )
         except IntegrityError as ex:
             # Log and handle integrity errors (e.g., duplicate entries)
             current_app.logger.error(ex)
             db.session.rollback()
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            UserActivityLogger.error(
+                operation="ITEM_UPDATE_LINK",
+                remarks=tb_info[0]
+            )
             return str(ex)
         except SQLAlchemyError as ex:
             # Log and handle other SQLAlchemy errors
             current_app.logger.error(ex)
             db.session.rollback()
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            UserActivityLogger.error(
+                operation="ITEM_UPDATE_LINK",
+                remarks=tb_info[0]
+            )
             return str(ex)
         # Return None if no errors occurred
         return None

@@ -27,6 +27,7 @@ Blueprint.
 import json
 import sys
 import re
+import traceback
 from urllib.parse import quote_plus
 
 from flask import Blueprint, abort, current_app, flash, redirect, \
@@ -40,6 +41,7 @@ from weko_redis.redis import RedisConnection
 from werkzeug.local import LocalProxy
 from invenio_db import db
 from weko_admin.models import AdminSettings, db
+from weko_logging.activity_logger import UserActivityLogger
 
 from .api import ShibUser, sync_shib_gakunin_map_groups
 from .utils import generate_random_str, parse_attributes
@@ -218,10 +220,21 @@ def shib_auto_login():
 
         datastore.delete(cache_key)
         db.session.commit()
+        UserActivityLogger.info(
+            operation="LOGIN",
+            target_key=shib_user.user.id,
+            remarks="Shibboleth login"
+        )
         return redirect(session['next'] if 'next' in session else '/')
     except BaseException:
         db.session.rollback()
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
+        exec_info = sys.exc_info()
+        tb_info = traceback.format_tb(exec_info[2])
+        UserActivityLogger.error(
+            operation="LOGIN",
+            remarks=tb_info[0]
+        )
     return abort(400)
 
 
@@ -279,9 +292,20 @@ def confirm_user():
         if shib_user.shib_user:
             shib_user.shib_user_login()
         datastore.delete(cache_key)
+        UserActivityLogger.info(
+            operation="LOGIN",
+            target_key=shib_user.user.id,
+            remarks="Shibboleth login"
+        )
         return redirect(session['next'] if 'next' in session else '/')
     except BaseException:
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
+        exec_info = sys.exc_info()
+        tb_info = traceback.format_tb(exec_info[2])
+        UserActivityLogger.error(
+            operation="LOGIN",
+            remarks=tb_info[0]
+        )
     return abort(400)
 
 
@@ -529,7 +553,13 @@ def shib_logout():
 
     :return:
     """
+    user_id = current_user.id
     ShibUser.shib_user_logout()
+    UserActivityLogger.info(
+        operation="LOGOUT",
+        target_key=user_id,
+        remarks="Shibboleth logout"
+    )
     return 'logout success'
 
 @blueprint.teardown_request

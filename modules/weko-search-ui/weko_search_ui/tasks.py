@@ -26,11 +26,15 @@ import os
 import pickle
 import shutil
 from datetime import datetime, timedelta
+import sys
+import traceback
 
 from celery import shared_task
 from celery.result import AsyncResult
 from celery.task.control import inspect
 from flask import current_app, request
+from flask_babelex import gettext as _
+
 from weko_admin.api import TempDirInfo
 from weko_admin.utils import get_redis_cache, reset_redis_cache
 from weko_redis.redis import RedisConnection
@@ -101,10 +105,15 @@ def check_rocrate_import_items_task(file_path, is_change_identifier: bool,
     with current_app.test_request_context(
         host_url, headers=[("Accept-Language", lang)]
     ):
-        check_result = check_jsonld_import_items(file_path, packaging,
-                                        mapping_id,
-                                        -1,
-                                        is_change_identifier)
+        check_result = check_jsonld_import_items(
+            file_path, packaging, mapping_id,
+            validate_bagit=False,
+            is_change_identifier=is_change_identifier
+        )
+        list_record = check_result.get("list_record", [])
+        check_flag_metadata_replace(list_record)
+        check_import_item_splited(check_result)
+
     # remove zip file
     shutil.rmtree("/".join(file_path.split("/")[:-1]))
     data_path = check_result.get("data_path", "")
@@ -112,7 +121,6 @@ def check_rocrate_import_items_task(file_path, is_change_identifier: bool,
         remove_temp_dir_task.apply_async((data_path,))
         result["error"] = check_result.get("error")
     else:
-        list_record = check_result.get("list_record", [])
         num_record_err = len([i for i in list_record if i.get("errors")])
         if len(list_record) == num_record_err:
             remove_temp_dir_task.apply_async((data_path,))
@@ -129,15 +137,19 @@ def check_rocrate_import_items_task(file_path, is_change_identifier: bool,
 
 
 @shared_task(ignore_results=False)
-def import_item(item, request_info):
+def import_item(item, request_info, parent_id=None):
     """Import Item."""
     try:
-        start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        result = import_items_to_system(item, request_info) or dict()
-        result["start_date"] = start_date
+        with current_app.test_request_context():
+            start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            result = import_items_to_system(
+                item, request_info, parent_id=parent_id
+            ) or dict()
+            result["start_date"] = start_date
         return result
     except Exception as ex:
         current_app.logger.error(ex)
+        traceback.print_exc(file=sys.stdout)
 
 
 @shared_task
@@ -260,3 +272,36 @@ def check_session_lifetime():
     """Check session lifetime."""
     lifetime = get_lifetime()
     return True if lifetime >= 86400 else False
+
+
+def check_flag_metadata_replace(list_record):
+    """Check metadata_replace flag.
+
+    `wk:metadataReplace` cannot be used in the import item.
+
+    Args:
+        list_record (list): List of record.
+    """
+    error = _("`wk:metadata_replace` flag cannot be used in RO-Crate Import.")
+    for item in list_record:
+        if item.get("metadata_replace"):
+            item["errors"] = (
+                item["errors"] + [error] if item.get("errors") else [error]
+            )
+
+def check_import_item_splited(check_result):
+    """Check import item splited.
+
+    `wk:isSplited` cannot be used in the import item.
+
+    Args:
+        list_record (list): List of record.
+    """
+    error = _("`wk:isSplited` flag cannot be used in RO-Crate Import.")
+    list_record = check_result.get("list_record", [])
+    if len(list_record) > 1:
+        current_app.logger.error(
+            "The number of import items is more than 2. "
+            "`wk:isSplited` flag cannot be used."
+        )
+        check_result["error"] = error

@@ -28,7 +28,7 @@
           "@id": "_:EvidenceData1"
         }
       ],
-      "wk:is_splited": true
+      "wk:isSplited": true
     },
     {
       "@id": "_:JournalPaper1",

@@ -25,6 +25,7 @@ import math
 from typing import List
 import urllib.parse
 import uuid
+import sys
 import traceback
 from datetime import datetime, timedelta, timezone
 import os
@@ -41,6 +42,7 @@ from sqlalchemy import and_, asc, desc, func, or_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 from weko_deposit.api import WekoDeposit
+from weko_logging.activity_logger import UserActivityLogger
 from weko_notifications import Notification, NotificationClient
 from weko_notifications.utils import inbox_url
 from weko_notifications.models import NotificationsUserSettings
@@ -432,10 +434,20 @@ class WorkFlow(object):
             with db.session.begin_nested():
                 db.session.execute(_WorkFlow.__table__.insert(), workflow)
             db.session.commit()
+            UserActivityLogger.info(
+                operation="WORKFLOW_CREATE",
+                remarks=json.dumps(workflow)
+            )
             return workflow
         except Exception as ex:
             db.session.rollback()
             current_app.logger.exception(str(ex))
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            UserActivityLogger.error(
+                operation="WORKFLOW_CREATE",
+                remarks=tb_info[0]
+            )
             return None
 
     def upt_workflow(self, workflow):
@@ -462,10 +474,21 @@ class WorkFlow(object):
                     _workflow.repository_id = workflow.get('repository_id') if workflow.get('repository_id') else _workflow.repository_id
                     db.session.merge(_workflow)
             db.session.commit()
+            UserActivityLogger.info(
+                operation="WORKFLOW_UPDATE",
+                target_key=workflow.get("flows_id")
+            )
             return _workflow
         except Exception as ex:
             db.session.rollback()
             current_app.logger.exception(str(ex))
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            UserActivityLogger.error(
+                operation="WORKFLOW_UPDATE",
+                target_key=workflow.get("flows_id"),
+                remarks=tb_info[0]
+            )
             return None
 
     def get_workflow_list(self, user=None):
@@ -564,10 +587,21 @@ class WorkFlow(object):
                     workflow.is_deleted = True
                     db.session.merge(workflow)
             db.session.commit()
+            UserActivityLogger.info(
+                operation="WORKFLOW_DELETE",
+                target_key=workflow_id
+            )
             return {'code': 0, 'msg': ''}
         except Exception as ex:
             db.session.rollback()
             current_app.logger.exception(str(ex))
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            UserActivityLogger.error(
+                operation="WORKFLOW_DELETE",
+                target_key=workflow_id,
+                remarks=tb_info[0]
+            )
             return {'code': 500, 'msg': str(ex)}
 
     def find_workflow_by_name(self, workflow_name):
@@ -637,6 +671,21 @@ class WorkFlow(object):
                     wfs.append(tmp)
         return wfs
 
+    def reduce_workflows_for_registration(self, workflows):
+        """Reduce workflows for registration.
+
+        :param workflows.
+
+        :return: wfs.
+        """
+        wfs = []
+        item_registration_id = current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID")
+        if isinstance(workflows, list):
+            for workflow in workflows:
+                actions = workflow.flow_define.flow_actions
+                if item_registration_id in [action.action_id for action in actions]:
+                    wfs.append(workflow)
+        return wfs
 
 class Action(object):
     """Operated on the Action."""
@@ -2577,7 +2626,7 @@ class WorkActivity(object):
         metadata = self.get_activity_metadata(activity_id)
         if metadata is None:
             return None
-        item_json = json.loads(metadata)
+        item_json = json.loads(metadata) if isinstance(metadata, str) else metadata
         # Load files from temp_data.
         files = item_json.get('files', [])
         return [
@@ -2766,12 +2815,14 @@ class WorkActivity(object):
                     f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
+                return
             except Exception as ex:
                 current_app.logger.error(
                     "Unexpected error had orrured during sending notification "
                     f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
+                return
         current_app.logger.info(
             "{num} notification(s) sent for item registered: {activity_id}"
             .format(num=len(set_target_id), activity_id=activity.activity_id)
@@ -2898,12 +2949,14 @@ class WorkActivity(object):
                     f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
+                return
             except Exception as ex:
                 current_app.logger.error(
                     "Unexpected error had orrured during sending notification "
                     f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
+                return
         current_app.logger.info(
             "{num} notification(s) sent for request approval: {activity_id}"
             .format(num=len(set_target_id), activity_id=activity.activity_id)
@@ -2963,12 +3016,14 @@ class WorkActivity(object):
                     f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
+                return
             except Exception as ex:
                 current_app.logger.error(
                     "Unexpected error had orrured during sending notification "
                     f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
+                return
         current_app.logger.info(
             "{num} notification(s) sent for item approved: {activity_id}"
             .format(num=len(set_target_id), activity_id=activity.activity_id)
@@ -3027,12 +3082,14 @@ class WorkActivity(object):
                     f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
+                return
             except Exception as ex:
                 current_app.logger.error(
                     "Unexpected error had orrured during sending notification "
                     f"for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
+                return
         current_app.logger.info(
             "{num} notification(s) sent for item rejected: {activity_id}"
             .format(num=len(set_target_id), activity_id=activity.activity_id)

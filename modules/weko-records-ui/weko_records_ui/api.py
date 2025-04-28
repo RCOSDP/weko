@@ -2,14 +2,14 @@ from datetime import datetime, timezone
 import os
 import random
 import string
-import json
+import sys
 import hashlib
 import traceback
 import boto3
 import tempfile
 import shutil
 from email_validator import validate_email
-from flask import current_app
+from flask import current_app, request
 
 from flask_login import current_user
 from flask_mail import Message
@@ -19,6 +19,9 @@ from invenio_mail.admin import _load_mail_cfg_from_db, _set_flask_mail_cfg
 from invenio_files_rest.models import Bucket, ObjectVersion, FileInstance
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record
+from weko_logging.activity_logger import UserActivityLogger
+from invenio_db import db
+
 from weko_records.api import RequestMailList
 from weko_records_ui.captcha import get_captcha_info
 from weko_records_ui.errors import (
@@ -94,8 +97,19 @@ def send_request_mail(item_id, mail_info):
             body = notification_msg_body
         )
         current_app.extensions['mail'].send(notification_msg)
+        UserActivityLogger.info(
+            operation="FILE_REQUEST_MAIL",
+            target_key=item_id
+        )
     except Exception:
         current_app.logger.exception('Sending Email handles unexpected error.')
+        exec_info = sys.exc_info()
+        tb_info = traceback.format_tb(exec_info[2])
+        UserActivityLogger.error(
+            operation="FILE_REQUEST_MAIL",
+            target_key=item_id,
+            remarks=tb_info[0]
+        )
         raise InternalServerError() # 500
 
     # Create response
@@ -177,14 +191,14 @@ def get_s3_bucket_list():
 
     profile = UserProfile.get_by_userid(current_user.id)
     if not profile:
-        raise RequiredItemNotExistError(_('S3 setting none. Please check your profile.'))
+        raise Exception(_('S3 setting none. Please check your profile.'))
     endpoint_url = profile.s3_endpoint_url
     access_key = profile.access_key
     secret_key = profile.secret_key
     if (endpoint_url is None or endpoint_url == "") or \
         (access_key is None or access_key == "") or \
         (secret_key is None or secret_key == ""):
-        raise RequiredItemNotExistError(_('S3 setting none. Please check your profile.'))
+        raise Exception(_('S3 setting none. Please check your profile.'))
 
     s3_client = boto3.client(
         's3',
@@ -200,7 +214,8 @@ def get_s3_bucket_list():
         bucket_name_list = [bucket['Name'] for bucket in buckets]
         return bucket_name_list
     except Exception as e:
-        raise Exception(_('Getting Bucket List failed.') + str(e))
+        traceback.print_exc()
+        raise Exception(_('Getting Bucket List failed.'))
 
 def copy_bucket_to_s3(pid, filename, org_bucket_id, checked, bucket_name):
     #get progfile
@@ -254,8 +269,8 @@ def copy_bucket_to_s3(pid, filename, org_bucket_id, checked, bucket_name):
                 )
 
         except Exception as e:
-            current_app.logger.exception(_('Creating Bucket failed.') + str(e))
-            raise Exception(_('Creating Bucket failed.') + str(e))
+            traceback.print_exc()
+            raise Exception(_('Creating Bucket failed.'))
 
     # get bucket region
     s3_client = boto3.client(
@@ -266,13 +281,13 @@ def copy_bucket_to_s3(pid, filename, org_bucket_id, checked, bucket_name):
     )
     try:
         location_response = s3_client.get_bucket_location(Bucket=bucket_name)
-        bucket_region = location_response['LocationConstraint']
+        bucket_region = location_response.get('LocationConstraint')
         # bucket on us-east-1
         if bucket_region is None:
             bucket_region = 'us-east-1'
     except Exception as e:
-        current_app.logger.exception(_('Getting region failed.') + str(e))
-        raise Exception(_('Getting region failed.') + str(e))
+        traceback.print_exc()
+        raise Exception(_('Getting region failed.'))
 
     #make uri
     uri = 'https://' + bucket_name + '.s3.' + bucket_region + '.amazonaws.com/'
@@ -287,11 +302,11 @@ def copy_bucket_to_s3(pid, filename, org_bucket_id, checked, bucket_name):
         s3_client.upload_file(file_path, bucket_name, filename)
         return uri + filename
     except Exception as e:
-        current_app.logger.exception(_('Uploading file failed.') + str(e))
-        raise Exception(_('Uploading file failed.') + str(e))
+        traceback.print_exc()
+        raise Exception(_('Uploading file failed.'))
 
 
-def get_file_place_info(org_pid, org_bucket_id, file_name, content_type=None):
+def get_file_place_info(org_pid, org_bucket_id, file_name):
 
     file_place = None
     url = None
@@ -303,7 +318,7 @@ def get_file_place_info(org_pid, org_bucket_id, file_name, content_type=None):
         item = {"id": org_pid}
         handle_check_item_is_locked(item)
     except Exception as e:
-        current_app.logger.exception(_('Cannot update because the corresponding item is being edited.'))
+        traceback.print_exc()
         raise Exception(_('Cannot update because the corresponding item is being edited.'))
 
     from weko_workflow.api import WorkActivity
@@ -353,7 +368,6 @@ def get_file_place_info(org_pid, org_bucket_id, file_name, content_type=None):
         file_place = 'local'
     else:
     # S3 strage
-        print('S3')
         file_place = 'S3'
 
         new_bucket = Bucket.create(location=location, storage_class=current_app.config[
@@ -400,7 +414,7 @@ def get_file_place_info(org_pid, org_bucket_id, file_name, content_type=None):
                     directory_path = pre + directory_path
             else:
                 # ex: https://bucket_name.s3.us-east-1.amazonaws.com/file_name
-                parts = url.split('/')
+                parts = location.uri.split('/')
                 sub_parts = parts[2].split('.')
                 bucket_name = sub_parts[0]
                 if len(sub_parts) >= 3:
@@ -421,8 +435,8 @@ def get_file_place_info(org_pid, org_bucket_id, file_name, content_type=None):
                                                 ExpiresIn = 300,
                                                 HttpMethod = 'PUT')
         except Exception as e:
-            current_app.logger.exception(str(e))
-            raise Exception(str(e))
+            traceback.print_exc()
+            raise Exception(_("Unexpected error occurred."))
 
     return file_place, url, new_bucket_id, new_version_id
 
@@ -613,7 +627,7 @@ def replace_file_bucket(org_pid, org_bucket_id, file=None,
 
         except Exception as e:
             # エラー処理
-            current_app.logger.error(f"エラーが発生しました: {e}")
+            traceback.print_exc()
             raise Exception(f"{e}")
 
         finally:
@@ -665,7 +679,7 @@ def replace_file_bucket(org_pid, org_bucket_id, file=None,
                     raise Exception(f"Error in import_items_to_system: {item.get('error_id')}")
         except Exception as e:
             # エラー処理
-            current_app.logger.error(f"エラーが発生しました: {e}")
+            traceback.print_exc()
             raise Exception(f"{e}")
 
         # records_bucketsの更新
@@ -750,7 +764,7 @@ def replace_file_bucket(org_pid, org_bucket_id, file=None,
                     raise Exception(f"Error in import_items_to_system: {item.get('error_id')}")
         except Exception as e:
             # エラー処理
-            current_app.logger.error(f"エラーが発生しました: {e}")
+            traceback.print_exc()
             raise Exception(f"{e}")
 
         # record_metadata update

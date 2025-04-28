@@ -20,16 +20,11 @@
 <!DOCTYPE html>
 <html lang="en">
   {%- block css %}
-  {% assets "weko_theme_css" %}
-  <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "weko_theme_css_bootstrap" %}
-  <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "weko_theme_css_buttons" %}
-  <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "weko_theme_css_widget" %}
-  <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "weko_admin_quill_css" %}
-  <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_theme_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_theme_css_bootstrap" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_theme_css_widget" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_admin_quill_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 
   {% assets "workspace_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 
@@ -46,7 +41,7 @@
   </script>
 
   {%- assets "workspace_item_list_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  <script type="text/javascript" src="static/js/WorkspaceExport.js"></script>
+  <script type="text/javascript" src="static/js/weko_workspace/WorkspaceExport.js"></script>
 
   {%- endblock js %}
 

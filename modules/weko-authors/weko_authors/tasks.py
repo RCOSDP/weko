@@ -22,6 +22,8 @@
 import os
 import glob
 import gc, json, csv
+import sys
+import traceback
 from datetime import datetime, timezone
 from time import sleep
 
@@ -60,6 +62,7 @@ def export_all(export_target):
         return file_uri
     except Exception as ex:
         current_app.logger.error(ex)
+        traceback.print_exc(file=sys.stdout)
 
 
 @shared_task
@@ -81,10 +84,13 @@ def import_author(author, force_change_mode):
                 result['status'] = states.SUCCESS
                 break
             except SQLAlchemyError as ex:
+                traceback.print_exc(file=sys.stdout)
                 handle_exception(ex, attempt, retrys, interval)
             except ElasticsearchException as ex:
+                traceback.print_exc(file=sys.stdout)
                 handle_exception(ex, attempt, retrys, interval)
             except TimeoutError as ex:
+                traceback.print_exc(file=sys.stdout)
                 handle_exception(ex, attempt, retrys, interval)
     except Exception as ex:
         current_app.logger.error(ex)
@@ -159,6 +165,7 @@ def import_author_over_max(reached_point, task_ids ,max_part):
         result['status'] = states.SUCCESS
     except Exception as ex:
         current_app.logger.error(ex)
+        traceback.print_exc(file=sys.stdout)
         result['status'] = states.FAILURE
         if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
                 and ex.args[0].get('error_id'):
@@ -225,6 +232,7 @@ def import_authors_from_temp_files(reached_point, max_part):
             os.remove(check_file_part_path)
             current_app.logger.debug(f"Deleted: {check_file_part_path}")
         except Exception as e:
+            traceback.print_exc(file=sys.stdout)
             current_app.logger.error(f"Error deleting {check_file_part_path}: {e}")
     # authorsが残っている場合
     if authors:
@@ -355,6 +363,7 @@ def write_result_temp_file(result):
 
     except Exception as e:
         current_app.logger.error(e)
+        traceback.print_exc(file=sys.stdout)
         raise e
 
 def update_summary(success_count, failure_count):

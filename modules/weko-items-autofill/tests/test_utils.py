@@ -407,6 +407,31 @@ def test_get_doi_with_original(app,db,itemtypes,mocker):
         {"name_original": "test_name_original"},
     ]
 
+    # sword
+    app.config.update(
+        WEKO_ITEMS_AUTOFILL_TO_BE_USED = [],
+    )
+    meta_data_api = [
+        "JaLC API",
+        "医中誌 Web API",
+        "CrossRef",
+        "DataCite",
+        "CiNii Research",
+        "Original"
+    ]
+    original_metadata = {"id": "test_original", "name_original": "test_name_original"}
+    result = get_doi_with_original("test_doi","test_item_type_id",original_metadata,meta_data_api=meta_data_api)
+    print(f"result: {result}")
+    assert result == [
+        {'id': 'id_jalc'},
+        {"name_jalc": "test_name_jalc"},
+        {"name_ichushi": "test_name_ichushi"},
+        {"name_crossref": "test_name_crossref"},
+        {"name_datacite": "test_name_datacite"},
+        {"name_cinii": "test_name_cinii"},
+        {"name_original": "test_name_original"},
+    ]
+
 
 # def get_crossref_record_data(pid, doi, item_type_id):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_crossref_record_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp

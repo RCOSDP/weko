@@ -1041,8 +1041,9 @@ def test_handle_workflow(i18n_app, es_item_file_pipeline, es_records, db):
 def test_handle_metadata_by_doi():
     item = {"metadata": {"test": "test"}, "item_type_id": 1}
     doi = "test"
+    meta_data_api = ["CrossRef", "DataCite", "Original"]
     with patch("weko_search_ui.utils.get_doi_with_original", return_value=item["metadata"]):
-        metadata = handle_metadata_by_doi(item, doi)
+        metadata = handle_metadata_by_doi(item, doi, meta_data_api)
         assert metadata == item["metadata"]
 
 

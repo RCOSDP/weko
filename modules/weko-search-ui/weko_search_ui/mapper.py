@@ -1294,31 +1294,6 @@ class JsonMapper(BaseMapper):
                 ])
         return required
 
-    class _InformedMetadata(dict):
-        """Meatadata with identifier."""
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self.id = None
-            """Identifier of the metadata."""
-            self.link_data = []
-            """Link data. <br>
-            e.g. [{"item_id": 123, "sele_id": "isSupplementedBy"}]
-            """
-            self.list_file = []
-            """List of files."""
-            self.non_extract = []
-            """Non-extract file list for elastic search."""
-            self.save_as_is = False
-            """Flag to save BagIt as is. for SWORD deposit."""
-            self.cnri = ""
-            """CNRI for grant. .CNRI in tsv"""
-            self.doi_ra = ""
-            """DOI_RA for grant. .DOI_RA in tsv"""
-            self.doi = ""
-            """DOI for grant. .DOI in tsv"""
-            self.metadata_replace = False
-            """Flag to save only metadata. for SWORD deposit."""
-
 
 class JsonLdMapper(JsonMapper):
     """JsonLdMapper."""
@@ -1428,18 +1403,19 @@ class JsonLdMapper(JsonMapper):
                 fixed_properties[key][sub_key] = value
 
         mapped_metadata = {}
-        system_info = {**system_info}
-        system_info["list_file"] = [
-            filename[5:] for filename in system_info["list_file"]
-            if filename.startswith("data/")
-        ]
-        system_info["non_extract"] = [
-            filename[5:] for filename in system_info["non_extract"]
-            if filename.startswith("data/")
-        ]
-
-        mapped_metadata.setdefault("publish_status", "private")
-        mapped_metadata.setdefault("edit_mode", "Keep")
+        system_info = {
+            **system_info,
+            **({"id": str(system_info["id"])}
+                if isinstance(system_info.get("id"), int) else {}),
+            "list_file": [
+                filename[5:] for filename in system_info["list_file"]
+                if filename.startswith("data/")
+            ],
+            "non_extract": [
+                filename[5:] for filename in system_info["non_extract"]
+                if filename.startswith("data/")
+            ],
+        }
 
         missing_metadata = {}
 
@@ -1485,7 +1461,10 @@ class JsonLdMapper(JsonMapper):
             parent_prop_key = re.split(rf"\.{prop_props[1]}(?=\.|$)", PROP_PATH)[0]
             m_index = re.search(r"\[(\d+)\]", meta_props[0])
             index = int(m_index.group(1)) if m_index is not None else None
-            if not parent_prop_key in properties_mapping.values():
+            if (
+                not parent_prop_key in properties_mapping.values()
+                and not len(meta_props) == 1
+            ):
                 # The corresponding layers are different,
                 # so the prop_path needs to progress to the lower layer.
                 sub_prop_key = parent_prop_key + "." + prop_props[1]
@@ -1558,8 +1537,8 @@ class JsonLdMapper(JsonMapper):
             elif "wk:feedbackMail" in META_PATH:
                 # TODO: implement handling author_id
                 feedback_mail_list = metadata.get("feedback_mail_list", [])
-                feedback_mail_list.append({
-                    "email": metadata.get(META_KEY), "author_id": ""}
+                feedback_mail_list.append(
+                    {"email": metadata.get(META_KEY), "author_id": ""}
                 )
                 mapped_metadata["feedback_mail_list"] = feedback_mail_list
             # TODO: implement request mail list
@@ -1728,7 +1707,7 @@ class JsonLdMapper(JsonMapper):
         list_extracted = []
         if format == "ro-crate":
             extracted = extracted.get(rocrate_entity_key).get("about")
-            if extracted.get("wk:is_splited", False) and "hasPart" in extracted:
+            if extracted.get("wk:isSplited", False) and "hasPart" in extracted:
                 # each metadata part must be in "hasPart"
                 list_extracted = [ part for part in extracted.get("hasPart") ]
             else:
@@ -1901,9 +1880,6 @@ class JsonLdMapper(JsonMapper):
         rocrate.root_dataset["wk:publishStatus"] = (
             "public" if metadata["publish_status"] == "0" else "private")
         rocrate.root_dataset["wk:index"] = metadata.get("path", [])
-        rocrate.root_dataset["wk:editMode"] = "Keep"
-
-
         # wk:feedbackMail
         feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(
             metadata["control_number"]
