@@ -544,7 +544,10 @@ def update_site_info():
     if validate.get('error'):
         return jsonify(validate)
     else:
+        print("check0:{}".format(db.session.is_active))
         site_info = SiteInfo.update(format_data)
+        print("type:{}".format(type(site_info)))
+        print("check4:{}".format(db.session.is_active))
         overwrite_the_memory_config_with_db(current_app, site_info)
         return jsonify(format_data)
 
