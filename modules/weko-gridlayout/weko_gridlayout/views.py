@@ -115,7 +115,10 @@ def load_widget_design_setting(current_language=''):
     :return:
     """
     data = request.get_json()
-    repository_id = data.get('repository_id')
+    if not isinstance(data, dict):
+        current_app.logger.error('Invalid request data.')
+        abort(400)
+    repository_id = data.get('repository_id', '')
     response = get_widget_design_setting(repository_id, current_language)
     return response
 
@@ -155,6 +158,9 @@ def load_widget_list_design_setting():
     """
     result = dict()
     data = request.get_json()
+    if not isinstance(data, dict):
+        current_app.logger.error('Invalid request data.')
+        abort(400)
     repository_id = data.get('repository_id')
     lang_default = get_default_language()
     result["widget-list"] = WidgetDesignServices.get_widget_list(
@@ -186,6 +192,9 @@ def save_widget_layout_setting():
         return jsonify(result)
 
     data = request.get_json()
+    if not isinstance(data, dict):
+        current_app.logger.error('Invalid request data.')
+        abort(400)
     result = WidgetDesignServices.update_widget_design_setting(data)
     return jsonify(result)
 
@@ -211,6 +220,9 @@ def load_widget_design_pages(lang=''):
     """
     result = dict()
     data = request.get_json()
+    if not isinstance(data, dict):
+        current_app.logger.error('Invalid request data.')
+        abort(400)
     repository_id = data.get('repository_id')
     lang_default = get_default_language()
     lang_default = lang_default.get('lang_code') if lang_default else None
@@ -233,6 +245,9 @@ def load_widget_design_page():
             "error": ""
     """
     data = request.get_json()
+    if not isinstance(data, dict):
+        current_app.logger.error('Invalid request data.')
+        abort(400)
     page_id = data.get('page_id')
     repository_id = data.get('repository_id')
     return jsonify(WidgetDesignPageServices.get_page(page_id, repository_id))
@@ -252,6 +267,9 @@ def save_widget_design_page():
         return jsonify(result)
 
     data = request.get_json()
+    if not isinstance(data, dict):
+        current_app.logger.error('Invalid request data.')
+        abort(400)
     result = WidgetDesignPageServices.add_or_update_page(data)
     return jsonify(result)
 
@@ -270,6 +288,9 @@ def delete_widget_design_page():
         return jsonify(result)
 
     data = request.get_json()
+    if not isinstance(data, dict):
+        current_app.logger.error('Invalid request data.')
+        abort(400)
     result = WidgetDesignPageServices.delete_page(data.get('page_id'))
     return jsonify(result)
 
@@ -301,6 +322,9 @@ def delete_widget_item():
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg='Header Error')
     data = request.get_json()
+    if not isinstance(data, dict):
+        current_app.logger.error('Invalid request data.')
+        abort(400)
     return jsonify(WidgetItemServices.delete_by_id(data.get('data_id')))
 
 
@@ -569,6 +593,9 @@ def unlocked_widget():
     :return:
     """
     data = request.get_json()
+    if not isinstance(data, dict):
+        current_app.logger.error('Invalid request data.')
+        abort(400)
     widget_id = data.get('widget_id')
     if WidgetItemServices.unlock_widget(widget_id):
         return jsonify(success=True), 200

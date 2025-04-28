@@ -132,6 +132,27 @@ def test_load_widget_list_design_setting_guest(client, users):
                           content_type="application/json")
     assert res.status_code == 302
 
+# .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_views.py::test_load_widget_list_design_setting_issue50978 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_load_widget_list_design_setting_issue50978(client, users):
+    from weko_gridlayout import views
+    from weko_gridlayout.services import WidgetDesignServices
+    views.get_default_language = Mock()
+    WidgetDesignServices.get_widget_list = Mock(return_value={})
+    WidgetDesignServices.get_widget_preview = Mock(return_value={})
+    login_user_via_session(client=client, email=users[3]["email"])
+
+    # no request data
+    res = client.post("/admin/load_widget_list_design_setting")
+    assert res.status_code == 400
+
+    # invalid request data
+    res = client.post(
+        "/admin/load_widget_list_design_setting",
+        data="test",
+        content_type="application/json"
+    )
+    assert res.status_code == 400
+
 
 user_results2 = [
     (0, 200),
@@ -168,10 +189,26 @@ def test_load_widget_design_setting_guest(client, users):
         assert res2.status_code == 200
 
 
+# .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_views.py::test_load_widget_design_setting_issue50978 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_load_widget_design_setting_issue50978(client, users):
+    with patch("weko_gridlayout.views.get_widget_design_setting", return_value=jsonify({})):
+        # no request data
+        res3 = client.post("/admin/load_widget_design_setting/japanese")
+        assert res3.status_code == 400
+
+        # invalid request data
+        res4 = client.post(
+            "/admin/load_widget_design_setting/japanese",
+            data="test",
+            content_type="application/json"
+        )
+        assert res4.status_code == 400
+
+
 @pytest.mark.parametrize('id, status_code', user_results1)
 def test_load_widget_design_pages_login(client, users, id, status_code):
     login_user_via_session(client=client, email=users[id]["email"])
-    with patch("weko_gridlayout.views.get_default_language", return_vlaue={}):
+    with patch("weko_gridlayout.views.get_default_language", return_value={}):
         with patch("weko_gridlayout.views.WidgetDesignPageServices.get_page_list", return_value={}):
             res1 = client.post("/admin/load_widget_design_pages",
                                   data=json.dumps({}),
@@ -184,7 +221,7 @@ def test_load_widget_design_pages_login(client, users, id, status_code):
 
 
 def test_load_widget_design_pages_guest(client, users):
-    with patch("weko_gridlayout.views.get_default_language", return_vlaue={}):
+    with patch("weko_gridlayout.views.get_default_language", return_value={}):
         with patch("weko_gridlayout.views.WidgetDesignPageServices.get_page_list", return_value={}):
             res1 = client.post("/admin/load_widget_design_pages",
                                   data=json.dumps({}),
@@ -194,6 +231,24 @@ def test_load_widget_design_pages_guest(client, users):
                       data=json.dumps({}),
                       content_type="application/json")
             assert res2.status_code == 302
+
+
+# .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_views.py::test_load_widget_design_pages_issue50978 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_load_widget_design_pages_issue50978(client, users):
+    login_user_via_session(client=client, email=users[3]["email"])
+    with patch("weko_gridlayout.views.get_default_language", return_value={}):
+        with patch("weko_gridlayout.views.WidgetDesignPageServices.get_page_list", return_value={}):
+            # no request data
+            res3 = client.post("/admin/load_widget_design_pages/japanese")
+            assert res3.status_code == 400
+
+            # invalid request data
+            res4 = client.post(
+                "/admin/load_widget_design_pages/japanese",
+                data="test",
+                content_type="application/json"
+            )
+            assert res4.status_code == 400
 
 
 @pytest.mark.parametrize('id, status_code', user_results1)
@@ -214,6 +269,23 @@ def test_load_widget_design_page_guest(client, users):
         assert res.status_code == 302
 
 
+# .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_views.py::test_load_widget_design_page_issue50978 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_load_widget_design_page_issue50978(client, users):
+    login_user_via_session(client=client, email=users[3]["email"])
+    with patch("weko_gridlayout.views.WidgetDesignPageServices.get_page", return_value={}):
+        # no request data
+        res3 = client.post("/admin/load_widget_design_page")
+        assert res3.status_code == 400
+
+        # invalid request data
+        res4 = client.post(
+            "/admin/load_widget_design_page",
+            data="test",
+            content_type="application/json"
+        )
+        assert res4.status_code == 400
+
+
 @pytest.mark.parametrize('id, status_code', user_results1)
 def test_delete_widget_item_login(client, users, id, status_code):
     login_user_via_session(client=client, email=users[id]["email"])
@@ -232,6 +304,23 @@ def test_delete_widget_item_guest(client, users):
         assert res.status_code == 302
 
 
+# .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_views.py::test_load_widget_design_page_issue50978 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_delete_widget_item_issue50978(client, users):
+    login_user_via_session(client=client, email=users[3]["email"])
+    with patch("weko_gridlayout.views.WidgetItemServices.delete_by_id", return_value={}):
+        # no request data
+        res3 = client.post("/admin/delete_widget_item")
+        assert res3.status_code == 400
+
+        # invalid request data
+        res4 = client.post(
+            "/admin/delete_widget_item",
+            data="test",
+            content_type="application/json"
+        )
+        assert res4.status_code == 400
+
+
 @pytest.mark.parametrize('id, status_code', user_results1)
 def test_delete_widget_design_page_login(client, users, id, status_code):
     login_user_via_session(client=client, email=users[id]["email"])
@@ -248,6 +337,26 @@ def test_delete_widget_design_page_guest(client, users):
                               data=json.dumps({}),
                               content_type="application/json")
         assert res.status_code == 302
+
+
+# .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_views.py::test_delete_widget_design_page_issue50978 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_delete_widget_design_page_issue50978(client, users):
+    login_user_via_session(client=client, email=users[3]["email"])
+    with patch("weko_gridlayout.views.WidgetDesignPageServices.delete_page", return_value={}):
+        # no request data
+        res3 = client.post(
+            "/admin/delete_widget_design_page",
+            content_type="application/json"
+        )
+        assert res3.status_code == 400
+
+        # invalid request data
+        res4 = client.post(
+            "/admin/delete_widget_design_page",
+            data="test",
+            content_type="application/json"
+        )
+        assert res4.status_code == 400
 
 
 # def index(): 
@@ -288,6 +397,24 @@ def test_save_widget_layout_setting(client, users):
     )
     assert res.status_code == 200
 
+# .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_views.py::test_save_widget_layout_setting_issue50978 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_save_widget_layout_setting_issue50978(client, users):
+    login_user_via_session(client=client, email=users[2]['obj'].email)
+    # no request data
+    res3 = client.post(
+        "/admin/save_widget_layout_setting",
+        content_type="application/json"
+    )
+    assert res3.status_code == 400
+
+    # invalid request data
+    res4 = client.post(
+        "/admin/save_widget_layout_setting",
+        data="test",
+        content_type="application/json"
+    )
+    assert res4.status_code == 400
+
 
 # def save_widget_design_page(): 
 def test_save_widget_design_page(client, users):
@@ -297,6 +424,25 @@ def test_save_widget_design_page(client, users):
         headers={"Content-Type": "application/test"}
     )
     assert res.status_code == 200
+
+
+# .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_views.py::test_save_widget_design_page_issue50978 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_save_widget_design_page_issue50978(client, users):
+    login_user_via_session(client=client, email=users[3]["email"])
+    # no request data
+    res3 = client.post(
+        "/admin/save_widget_design_page",
+        content_type="application/json"
+    )
+    assert res3.status_code == 400
+
+    # invalid request data
+    res4 = client.post(
+        "/admin/save_widget_design_page",
+        data="test",
+        content_type="application/json"
+    )
+    assert res4.status_code == 400
 
 
 # def delete_widget_design_page(): 
@@ -695,3 +841,22 @@ def test_unlocked_widget(client):
                 json={"widget_id": 1}
             )
         assert res.status_code == 200
+
+
+# .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_views.py::test_unlocked_widget_issue50978 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_unlocked_widget_issue50978(client, users):
+    with patch('weko_gridlayout.views.WidgetItemServices.unlock_widget', return_value=False):
+        # no request data
+        res3 = client.post(
+            "/admin/widget/unlock",
+            content_type="application/json"
+        )
+        assert res3.status_code == 400
+
+        # invalid request data
+        res4 = client.post(
+            "/admin/widget/unlock",
+            data="test",
+            content_type="application/json"
+        )
+        assert res4.status_code == 400
