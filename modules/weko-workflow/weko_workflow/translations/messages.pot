@@ -625,3 +625,6 @@ msgstr ""
 
 msgid "Are you sure you want to delete the filtered activity?"
 msgstr ""
+
+msgid "Deletion Flow"
+msgstr ""

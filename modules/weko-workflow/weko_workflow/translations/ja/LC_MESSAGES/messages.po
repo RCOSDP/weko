@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-workflow 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-07-02 09:20+0000\n"
+"POT-Creation-Date: 2023-02-16 11:42+0900\n"
 "PO-Revision-Date: 2018-08-06 13:44+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -756,6 +756,9 @@ msgstr "削除したアクティビティは元に戻せません。"
 
 msgid "Are you sure you want to delete the filtered activity?"
 msgstr "選択したアクティビティを削除してもよろしいですか？"
+
+msgid "Deletion Flow"
+msgstr "削除用フロー"
 
 msgid "Clear Confirm"
 msgstr "削除の確認"
