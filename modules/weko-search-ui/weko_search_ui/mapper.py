@@ -1405,8 +1405,11 @@ class JsonLdMapper(JsonMapper):
         mapped_metadata = {}
         system_info = {
             **system_info,
+            # if new item, must not exist "id" and "uri"
             **({"id": str(system_info["id"])}
-                if isinstance(system_info.get("id"), int) else {}),
+                if isinstance(system_info.get("id"), (int, str)) else {}),
+            **({"uri": system_info["uri"]}
+                if isinstance(system_info.get("uri"), str) else {}),
             "list_file": [
                 filename[5:] for filename in system_info["list_file"]
                 if filename.startswith("data/")
@@ -1728,11 +1731,20 @@ class JsonLdMapper(JsonMapper):
                 if "uri" in extracted else {}
             )
 
+            list_grant = extracted.get("wk:grant", [])
+            if not isinstance(list_grant, list):
+                raise ValueError(
+                    "Invalid json-ld format: wk:grant is not a list."
+                )
             for grant in extracted.get("wk:grant", []):
+                if not isinstance(grant, dict):
+                    continue
                 if grant.get("jpcoar:identifier") == "HDL":
                     system_info["cnri"] = grant.get("@id")
                     break
             for grant in extracted.get("wk:grant", []):
+                if not isinstance(grant, dict):
+                    continue
                 if grant.get("jpcoar:identifier") == "DOI":
                     system_info["doi"] = grant.get("@id")
                     system_info["doi_ra"] = grant.get("jpcoar:identifierRegistration")

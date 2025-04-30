@@ -328,18 +328,20 @@ def check_import_items(
             )
         )
 
-        if register_type == "Workflow":
-            item_type_id = check_result.get("item_type_id")
-            # Check if workflow and item type match
-            if workflow.itemtype_id != item_type_id:
-                current_app.logger.error(
-                    "Item type and workflow do not match. "
-                    f"ItemType ID must be {item_type_id}, "
-                    f"but the workflow's ItemType ID was {workflow.itemtype_id}.")
-                raise WekoSwordserverException(
-                    "Item type and workflow do not match.",
-                    errorType=ErrorType.BadRequest
-                )
+        item_type_id = check_result.get("item_type_id")
+        # Check if workflow and item type match
+        if (
+            register_type == "Workflow"
+            and workflow.itemtype_id != item_type_id
+        ):
+            current_app.logger.error(
+                "Item type and workflow do not match. "
+                f"ItemType ID must be {item_type_id}, "
+                f"but the workflow's ItemType ID was {workflow.itemtype_id}.")
+            raise WekoSwordserverException(
+                "Item type and workflow do not match.",
+                errorType=ErrorType.BadRequest
+            )
     else:
         raise WekoSwordserverException(
             f"Unsupported file format: {file_format}",
