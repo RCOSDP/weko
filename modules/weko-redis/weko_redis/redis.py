@@ -21,7 +21,7 @@ class RedisConnection:
     """
     def __init__(self):
         self.redis_type = current_app.config['CACHE_TYPE']
-
+        self.socket_timeout = current_app.config.get('REDIS_SOCKET_TIMEOUT',0.1)
 
     def connection(self, db, kv = False):
         """
@@ -81,7 +81,7 @@ class RedisConnection:
         """
         store = None
         try:
-            sentinels = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'], decode_responses=False)
+            sentinels = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'], decode_responses=False, socket_timeout=self.socket_timeout)
             store = sentinels.master_for(
                 current_app.config['CACHE_REDIS_SENTINEL_MASTER'], db= db)
         except Exception as ex:
