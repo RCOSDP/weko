@@ -1405,8 +1405,11 @@ class JsonLdMapper(JsonMapper):
         mapped_metadata = {}
         system_info = {
             **system_info,
+            # if new item, must not exist "id" and "uri"
             **({"id": str(system_info["id"])}
-                if isinstance(system_info.get("id"), int) else {}),
+                if isinstance(system_info.get("id"), (int, str)) else {}),
+            **({"uri": system_info["uri"]}
+                if isinstance(system_info.get("uri"), str) else {}),
             "list_file": [
                 filename[5:] for filename in system_info["list_file"]
                 if filename.startswith("data/")

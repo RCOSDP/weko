@@ -911,11 +911,9 @@ def check_jsonld_import_items(
         mapping = json_mapping.mapping
         mapper = JsonLdMapper(item_type.id, mapping)
         if not mapper.is_valid:
-            current_app.logger.info(
-                f"Mapping is invalid for item type {item_type.item_type_name.name}."
-            )
             raise Exception(
-                f"Mapping is invalid for item type {item_type.item_type_name.name}."
+                "Mapping is invalid for item type {}."
+                .format(item_type.item_type_name.name)
             )
 
         with open(f"{data_path}/{json_name}", "r") as f:
@@ -924,25 +922,13 @@ def check_jsonld_import_items(
         list_record = [
             {
                 "$schema": f"/items/jsonschema/{item_type.id}",
-                # if new item, must not exist "id" and "uri"
-                **({"id": system_info.get("id")} if "id" in system_info else {}),
-                **({"uri": system_info.get("uri")} if "uri" in system_info else {}),
-                "_id": system_info.get("_id"),
                 "metadata": item_metadata,
                 "item_type_name": item_type.item_type_name.name,
                 "item_type_id": item_type.id,
                 "publish_status": item_metadata.get("publish_status"),
                 **({"edit_mode": item_metadata.get("edit_mode")}
                     if "edit_mode" in item_metadata else {}),
-                "link_data": system_info.get("link_data", []),
-                "file_path": system_info.get("list_file", []),
-                "non_extract": system_info.get("non_extract", []),
-                "save_as_is": system_info.get("save_as_is", False),
-                "metadata_replace": system_info.get("metadata_replace", False),
-                "cnri": system_info.get("cnri"),
-                "doi_ra": system_info.get("doi_ra", ""),
-                "doi": system_info.get("doi", ""),
-                "amend_doi": system_info.get("amend_doi"),
+                **system_info
             } for item_metadata, system_info in item_metadatas
         ]
         data_path = os.path.join(data_path, "data")
