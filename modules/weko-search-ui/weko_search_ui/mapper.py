@@ -1728,11 +1728,20 @@ class JsonLdMapper(JsonMapper):
                 if "uri" in extracted else {}
             )
 
+            list_grant = extracted.get("wk:grant", [])
+            if not isinstance(list_grant, list):
+                raise ValueError(
+                    "Invalid json-ld format: wk:grant is not a list."
+                )
             for grant in extracted.get("wk:grant", []):
+                if not isinstance(grant, dict):
+                    continue
                 if grant.get("jpcoar:identifier") == "HDL":
                     system_info["cnri"] = grant.get("@id")
                     break
             for grant in extracted.get("wk:grant", []):
+                if not isinstance(grant, dict):
+                    continue
                 if grant.get("jpcoar:identifier") == "DOI":
                     system_info["doi"] = grant.get("@id")
                     system_info["doi_ra"] = grant.get("jpcoar:identifierRegistration")
