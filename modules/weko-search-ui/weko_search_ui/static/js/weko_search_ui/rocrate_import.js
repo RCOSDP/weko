@@ -1208,7 +1208,8 @@ class MappingComponent extends React.Component {
           <div class="col-md-12 form-inline">
             <div class="form-group">
               <label style={{ marginRight: ".5rem" }}>{mapping}:</label>
-              <select class="form-control" style={{ marginRight: ".5rem" }} onChange={this.onCbxMappingChange}>
+              <select class="form-control" style={{ marginRight: ".5rem",
+                    minWidth: "300px" }} onChange={this.onCbxMappingChange}>
                 {select_options}
               </select>
             </div>
