@@ -256,33 +256,30 @@ def post_service_document():
 
     on_behalf_of = request.headers.get("On-Behalf-Of")
     shared_id = get_shared_id_from_on_behalf_of(on_behalf_of)
+    client_id = request.oauth.client.client_id
 
-    if file_format == "JSON":
-        digest = request.headers.get("Digest")
-        if current_app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"]:
-            if (
-                digest is None
-                or not digest.startswith("SHA-256=")
-                or not is_valid_file_hash(digest.split("SHA-256=")[-1], file)
-            ):
-                current_app.logger.error(
-                    "Request body and digest verification failed."
-                )
-                raise WekoSwordserverException(
-                    "Request body and digest verification failed.",
-                    ErrorType.DigestMismatch
-                )
+    digest = request.headers.get("Digest")
+    if (
+        file_format == "JSON"
+        and current_app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"]
+    ):
+        if (
+            digest is None
+            or not digest.startswith("SHA-256=")
+            or not is_valid_file_hash(digest.split("SHA-256=")[-1], file)
+        ):
+            current_app.logger.error(
+                "Request body and digest verification failed."
+            )
+            raise WekoSwordserverException(
+                "Request body and digest verification failed.",
+                ErrorType.DigestMismatch
+            )
 
-        client_id = request.oauth.client.client_id
-        check_result = check_import_items(
-            file, file_format, False, shared_id,
-            packaging=packaging, client_id=client_id
-        )
-
-    else:
-        check_result = check_import_items(
-            file, file_format, False, shared_id
-        )
+    check_result = check_import_items(
+        file, file_format, shared_id=shared_id,
+        packaging=packaging, client_id=client_id
+    )
 
     data_path = check_result.get("data_path","")
     expire = datetime.now() + timedelta(days=1)
@@ -299,19 +296,9 @@ def post_service_document():
         if not required_scopes.issubset(token_scopes):
             abort(403)
 
-
-    # Determine registration type
-    if register_type is None:
-        if os.path.exists(data_path):
-            shutil.rmtree(data_path)
-            TempDirInfo().delete(data_path)
-        raise WekoSwordserverException(
-            "Invalid register type in admin settings", ErrorType.ServerError
-        )
-
     if check_result.get("error"):
         current_app.logger.error(
-            f"Error in check_import_items: {check_result.get('error')}"
+            f"Error in item to import: {check_result.get('error')}"
         )
         raise WekoSwordserverException(
             f"Item check error: {check_result.get('error')}",
@@ -319,12 +306,11 @@ def post_service_document():
         )
 
     # Validate items in the check result
-    for item in check_result["list_record"]:
+    for item in check_result.get("list_record", [{}]):
         if not item or item.get("errors"):
             error_msg = (
                 ", ".join(item.get("errors"))
-                if item and item.get("errors")
-                else "item_missing"
+                if item and item.get("errors") else "item_missing"
             )
             current_app.logger.error(f"Error in check_import_items: {error_msg}")
             raise WekoSwordserverException(
@@ -432,7 +418,7 @@ def post_service_document():
         TempDirInfo().delete(data_path)
 
     current_app.logger.info(
-        f"Items imported by sword from {request.oauth.client.name}; item: {recid}"
+        f"Items imported via SWORD api by {request.oauth.client.name} (recid={recid})"
     )
     if len(warns) > 0:
         if register_type == "Direct":
@@ -557,7 +543,6 @@ def put_object(recid):
     for _, value in request.files.items():
         if value.filename == filename:
             file = value
-
     if file is None:
         current_app.logger.error(f"Not found {filename} in request body.")
         raise WekoSwordserverException(
@@ -568,32 +553,32 @@ def put_object(recid):
     packaging = request.headers.get("Packaging")
     file_format = check_import_file_format(file, packaging)
 
-    if file_format == "JSON":
-        digest = request.headers.get("Digest")
-        if current_app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"]:
-            if (
-                digest is None
-                or not digest.startswith("SHA-256=")
-                or not is_valid_file_hash(digest.split("SHA-256=")[-1], file)
-            ):
-                current_app.logger.error(
-                    "Request body and digest verification failed."
-                )
-                raise WekoSwordserverException(
-                    "Request body and digest verification failed.",
-                    ErrorType.DigestMismatch
-                )
+    on_behalf_of = request.headers.get("On-Behalf-Of")
+    shared_id = get_shared_id_from_on_behalf_of(on_behalf_of)
+    client_id = request.oauth.client.client_id
 
-        client_id = request.oauth.client.client_id
-        on_behalf_of = request.headers.get("On-Behalf-Of")
-        shared_id = get_shared_id_from_on_behalf_of(on_behalf_of)
-        check_result = check_import_items(
-            file, file_format, packaging=packaging,
-            shared_id=shared_id, client_id=client_id
-        )
+    digest = request.headers.get("Digest")
+    if (
+        file_format == "JSON"
+        and current_app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"]
+    ):
+        if (
+            digest is None
+            or not digest.startswith("SHA-256=")
+            or not is_valid_file_hash(digest.split("SHA-256=")[-1], file)
+        ):
+            current_app.logger.error(
+                "Request body and digest verification failed."
+            )
+            raise WekoSwordserverException(
+                "Request body and digest verification failed.",
+                ErrorType.DigestMismatch
+            )
 
-    else:
-        check_result = check_import_items(file, file_format, False)
+    check_result = check_import_items(
+        file, file_format, shared_id=shared_id,
+        packaging=packaging, client_id=client_id
+    )
 
     data_path = check_result.get("data_path","")
     expire = datetime.now() + timedelta(days=1)
@@ -601,23 +586,30 @@ def put_object(recid):
         data_path,
         {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")}
     )
+
     register_type = check_result.get("register_type")
-    # Determine registration type
-    if register_type is None:
-        if os.path.exists(data_path):
-            shutil.rmtree(data_path)
-            TempDirInfo().delete(data_path)
+    if register_type == "Workflow":
+        # activity scope check
+        required_scopes = set([activity_scope.id])
+        token_scopes = set(request.oauth.access_token.scopes)
+        if not required_scopes.issubset(token_scopes):
+            abort(403)
+
+    if check_result.get("error"):
+        current_app.logger.error(
+            f"Error in check_import_items: {check_result.get('error')}"
+        )
         raise WekoSwordserverException(
-            "Invalid register type in admin settings", ErrorType.ServerError
+            f"Item check error: {check_result.get('error')}",
+            ErrorType.ContentMalformed
         )
 
     # only first item
-    item = check_result.get("list_record")[0]
+    item = check_result.get("list_record", [{}])[0]
     if not item or item.get("errors"):
         error_msg = (
             ", ".join(item.get("errors"))
-            if item and item.get("errors")
-            else "item_missing"
+            if item and item.get("errors") else "item_missing"
         )
         current_app.logger.error(f"Error in check_import_items: {error_msg}")
         raise WekoSwordserverException(
@@ -661,34 +653,32 @@ def put_object(recid):
         import_result = import_items_to_system(item, request_info=request_info)
         if not import_result.get("success"):
             current_app.logger.error(
-                f"Item import error: {item.get('error_id')}"
+                f"Error in import_items_to_system: {item.get('error_id')}"
             )
             raise WekoSwordserverException(
-                f"Error in import_items_to_system: {import_result.get('error_id')}",
+                f"Item import error:: {import_result.get('error_id')}",
                 ErrorType.ServerError
             )
         from weko_items_ui.utils import send_mail_direct_registered
         send_mail_direct_registered(recid, current_user.id)
         response = jsonify(_get_status_document(recid))
-    elif register_type == "Workflow":
-        required_scopes = set([activity_scope.id])
-        token_scopes = set(request.oauth.access_token.scopes)
-        if not required_scopes.issubset(token_scopes):
-            abort(403)
 
-        url, _, _, error = import_items_to_activity(item, request_info=request_info)
+    elif register_type == "Workflow":
+        url, _, _, error = import_items_to_activity(
+            item, request_info=request_info
+        )
         activity_id = url.split("/")[-1]
+
         if error and url:
             raise WekoSwordserverException(
                 "Error: {error}. Please open the following URL to continue "
                 "with the remaining operations.{url}: Item id: {recid}."
                 .format(error=error, url=url, recid=recid),
-                ErrorType.ServerError
+                ErrorType.BadRequest
             )
         if error:
             raise WekoSwordserverException(
-                f"Error: {error}. Please contact the administrator.",
-                ErrorType.ServerError
+                f"Unexpected error: {error}.", ErrorType.ServerError
             )
         response = jsonify(_get_status_workflow_document(activity_id, recid))
     else:
@@ -705,7 +695,7 @@ def put_object(recid):
         TempDirInfo().delete(data_path)
 
     current_app.logger.info(
-        f"item imported by sword from {request.oauth.client.name} (recid={recid})"
+        f"Item updated via SWORD api by {request.oauth.client.name} (recid={recid})"
     )
 
     return response
