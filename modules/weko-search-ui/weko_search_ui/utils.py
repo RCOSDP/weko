@@ -1071,7 +1071,7 @@ def handle_save_bagit(list_record, file, data_path, filename):
             {
                 "value": str(os.path.getsize(
                     os.path.join(data_path, filename))
-                ),
+                ) + " B",
             }
         ],
         "filename":  filename,
@@ -1082,6 +1082,7 @@ def handle_save_bagit(list_record, file, data_path, filename):
         },
     }
     metadata[key] = [dataset_info]
+    files_info[0]["items"] = [dataset_info]
 
 
 def get_priority(link_data):
