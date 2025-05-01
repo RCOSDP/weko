@@ -2240,6 +2240,7 @@ def import_items_to_activity(item, request_info):
     workflow_id = request_info.get("workflow_id")
     item_id = item.get("id")
     metadata = item.get("metadata")
+    metadata["$schema"] = item.get("$schema")
     index = metadata.get("path")
     files_info = metadata.pop("files_info", [{}])
     files = [
