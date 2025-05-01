@@ -1855,6 +1855,9 @@ msgstr "Current"
 msgid "Update"
 msgstr "Update"
 
+msgid "Deleted ItemType"
+msgstr ""
+
 #~ msgid "Title_Asc"
 #~ msgstr "Title (Asc)"
 
@@ -2001,5 +2004,4 @@ msgstr "Update"
 
 #~ msgid "Display Numbe"
 #~ msgstr ""
-
 

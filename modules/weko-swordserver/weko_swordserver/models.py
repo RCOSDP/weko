@@ -87,6 +87,13 @@ class SwordClientModel(db.Model, Timestamp):
         nullable=False)
     """Mapping ID of the client. Foreign key from SwordItemTypeMapping."""
 
+    mappings = db.relationship(
+        ItemTypeJsonldMapping,
+        backref=db.backref("sword_clients", lazy="dynamic"),
+        foreign_keys=[mapping_id]
+    )
+    """Relationship to the ItemTypeJsonldMapping."""
+
     workflow_id = db.Column(
         db.Integer,
         db.ForeignKey(WorkFlow.id),
