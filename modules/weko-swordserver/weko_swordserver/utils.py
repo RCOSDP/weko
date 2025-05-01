@@ -20,8 +20,6 @@ from invenio_accounts.models import User
 from invenio_oauth2server.models import Token
 from weko_accounts.models import ShibbolethUser
 from weko_admin.models import AdminSettings
-from weko_items_ui.utils import get_workflow_by_item_type_id
-from weko_records.api import ItemTypes
 from weko_search_ui.config import SWORD_METADATA_FILE, ROCRATE_METADATA_FILE
 from weko_search_ui.utils import (
     check_tsv_import_items,
@@ -244,11 +242,9 @@ def check_import_items(
         if register_type == "Workflow":
             item_type_id = check_result["list_record"][0].get("item_type_id")
             item_type_name = check_result["list_record"][0].get("item_type_name")
-            item_type = ItemTypes.get_by_id(item_type_id)
-            workflow = get_workflow_by_item_type_id(item_type.name_id,
-                                                    item_type_id)
 
-            if workflow is None:
+            list_workflow = WorkFlows().get_workflow_by_itemtype_id(item_type_id)
+            if not list_workflow:
                 current_app.logger.error(
                     f"Workflow not found for item type ID: {item_type_name}"
                 )
@@ -256,6 +252,7 @@ def check_import_items(
                     "Workflow not found for registration your item.",
                     errorType=ErrorType.BadRequest
                 )
+            workflow = list_workflow[0]
             workflow_id = workflow.id
             check_result.update({"workflow_id": workflow_id})
 
