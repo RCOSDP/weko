@@ -238,7 +238,7 @@ class HeadlessActivity(WorkActivity):
 
             # create activity for new item
             self.workflow = workflow = WorkFlow().get_workflow_by_id(workflow_id)
-            if workflow is None:
+            if workflow is None or workflow.is_deleted:
                 current_app.logger.error(f"workflow(id={workflow_id}) is not found.")
                 raise WekoWorkflowException(f"workflow(id={workflow_id}) is not found.")
 
@@ -359,6 +359,17 @@ class HeadlessActivity(WorkActivity):
         locked_value = self._activity_lock()
 
         try:
+            itemtype_id = metadata.get("$schema", "").split("/")[-1]
+            if itemtype_id != "" and int(itemtype_id) != self.item_type.id:
+                msg = (
+                    "Itemtype of importing item;(id={}) is not matched with "
+                    "workflow itemtype;(id={})."
+                    .format(itemtype_id, self.item_type.id)
+                )
+                current_app.logger.error(msg)
+                raise WekoWorkflowException(msg)
+            metadata.update({"$schema": f"/items/jsonschema/{self.item_type.id}"})
+
             metadata.setdefault("pubdate", datetime.now().strftime("%Y-%m-%d"))
             feedback_maillist = metadata.pop("feedback_mail_list", [])
             self.create_or_update_action_feedbackmail(
@@ -440,7 +451,6 @@ class HeadlessActivity(WorkActivity):
                 # update old metadata partially
                 metadata = {**_old_metadata, **metadata}
             # if metadata_replace is True, replace all metadata
-            metadata.update({"$schema": f"/items/jsonschema/{self.item_type.id}"})
 
             data = {
                 "metainfo": metadata,
