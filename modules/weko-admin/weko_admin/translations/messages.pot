@@ -1829,3 +1829,5 @@ msgstr ""
 msgid "Update"
 msgstr ""
 
+msgid "Deleted ItemType"
+msgstr ""

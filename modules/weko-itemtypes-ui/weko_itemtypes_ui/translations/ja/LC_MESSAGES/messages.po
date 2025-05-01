@@ -29,6 +29,9 @@ msgstr "ハーベスト用アイテムは削除できません"
 msgid "Cannot delete due to child existing item types."
 msgstr "所属アイテムが存在するため削除できません"
 
+msgid "Cannot delete due to SWORD API is using this item types."
+msgstr "SWORD APIで使用されているため削除できません"
+
 #: weko_itemtypes_ui/admin.py:150
 msgid "Failed to delete Item type."
 msgstr "アイテムタイプの削除に失敗しました"

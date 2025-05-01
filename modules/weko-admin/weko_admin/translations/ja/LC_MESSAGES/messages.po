@@ -1836,6 +1836,9 @@ msgstr "現行"
 msgid "Update"
 msgstr "更新"
 
+msgid "Deleted ItemType"
+msgstr "削除済みアイテムタイプ"
+
 #~ msgid "Title_Asc"
 #~ msgstr "タイトル（昇順）"
 

@@ -28,6 +28,9 @@ msgstr ""
 msgid "Cannot delete due to child existing item types."
 msgstr ""
 
+msgid "Cannot delete due to SWORD API is using this item types."
+msgstr ""
+
 #: weko_itemtypes_ui/admin.py:150
 msgid "Failed to delete Item type."
 msgstr ""

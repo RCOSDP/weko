@@ -679,12 +679,15 @@ class WorkFlow(object):
         :return: wfs.
         """
         wfs = []
-        item_registration_id = current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID")
+        item_registration_id = \
+            current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID")
         if isinstance(workflows, list):
             for workflow in workflows:
-                actions = workflow.flow_define.flow_actions
-                if item_registration_id in [action.action_id for action in actions]:
-                    wfs.append(workflow)
+                if hasattr(workflow, 'flow_define'):
+                    actions = workflow.flow_define.flow_actions
+                    if item_registration_id in \
+                        [action.action_id for action in actions]:
+                        wfs.append(workflow)
         return wfs
 
 class Action(object):

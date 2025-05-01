@@ -39,6 +39,7 @@ from weko_records.api import ItemsMetadata, ItemTypeEditHistory, \
     ItemTypeNames, ItemTypeProps, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping_inactive_show_list
 from weko_records_ui.models import RocrateMapping
+from weko_records.api import JsonldMapping
 from weko_schema_ui.api import WekoSchema
 from weko_search_ui.utils import get_key_by_property
 from weko_search_ui.tasks import is_import_running
@@ -126,7 +127,7 @@ class ItemTypeMetaDataView(BaseView):
         if check == "is_import_running":
             flash(_('Item type cannot be deleted becase import is in progress.'), 'error')
             return jsonify(code=-1)
-        
+
         if item_type_id > 0:
             record = ItemTypes.get_record(id_=item_type_id)
             if record is not None:
@@ -146,6 +147,16 @@ class ItemTypeMetaDataView(BaseView):
                         flash(_('Cannot delete due to child'
                                 ' existing item types.'), 'error')
                         return jsonify(code=-1)
+                # Check that item type is used SWORD API
+                itemtype_json_ld_mappings = \
+                    JsonldMapping.get_by_itemtype_id(item_type_id)
+                for itemtype_json_ld_mapping in itemtype_json_ld_mappings:
+                    sword_clients = itemtype_json_ld_mapping.sword_clients.all()
+                    if sword_clients:
+                        flash(_('Cannot delete due to SWORD API'
+                                ' is using this item types.'), 'error')
+                        return jsonify(code=-1)
+
                 # Get item type name
                 item_type_name = ItemTypeNames.get_record(
                     id_=record.model.name_id)
@@ -169,6 +180,28 @@ class ItemTypeMetaDataView(BaseView):
                             remarks=tb_info[0]
                         )
                         flash(_('Failed to delete Item type.'), 'error')
+                        return jsonify(code=-1)
+
+                    try:
+                        # Delete itemtype JOSN-LD mapping
+                        if itemtype_json_ld_mappings:
+                            for itemtype_json_ld_mapping in \
+                                itemtype_json_ld_mappings:
+                                JsonldMapping.delete(itemtype_json_ld_mapping.id)
+                            db.session.commit()
+                    except BaseException:
+                        db.session.rollback()
+                        exec_info = sys.exc_info()
+                        tb_info = traceback.format_tb(exec_info[2])
+                        current_app.logger.error(
+                            "Unexpected error: {}".format(exec_info))
+                        UserActivityLogger.error(
+                            operation='ITEM_TYPE_DELETE',
+                            target_key=item_type_id,
+                            remarks=tb_info[0]
+                        )
+                        flash(_('Failed to delete Item type'/
+                                ' JSON-LD mapping.'), 'error')
                         return jsonify(code=-1)
 
                     current_app.logger.debug(
@@ -223,7 +256,7 @@ class ItemTypeMetaDataView(BaseView):
             upgrade_version = current_app.config[
                 'WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED'
             ]
-            
+
             if not upgrade_version:
                 Mapping.create(item_type_id=record.model.id,
                                mapping=table_row_map.get('mapping'))
@@ -242,7 +275,7 @@ class ItemTypeMetaDataView(BaseView):
                 user_id=current_user.get_id(),
                 notes=data.get('edit_notes', {})
             )
-            
+
             db.session.commit()
             next_id = UserActivityLog.get_sequence(db.session)
             if item_type_id == 0:
@@ -391,7 +424,7 @@ class ItemTypeMetaDataView(BaseView):
                         'value': 'datetime'}}
 
         return jsonify(lists)
-    
+
     @expose('/<int:item_type_id>/export', methods=['GET'])
     def export(self,item_type_id):
         item_types = ItemTypes.get_by_id(id_=item_type_id)
@@ -428,7 +461,7 @@ class ItemTypeMetaDataView(BaseView):
             attachment_filename ='ItemType_export.zip' ,
             as_attachment = True
         )
-    
+
     @expose('/import', methods=['POST'])
     @item_type_permission.require(http_exception=403)
     def item_type_import(self):
@@ -445,7 +478,7 @@ class ItemTypeMetaDataView(BaseView):
         if input_file.mimetype is None:
             current_app.logger.debug(input_file.mimetype)
             return jsonify(msg=_('Illegal mimetype Error'))
-        
+
         try:
             readable_files = ["ItemType.json", "ItemTypeName.json", "ItemTypeMapping.json", "ItemTypeProperty.json"]
             import_data = {
@@ -476,17 +509,17 @@ class ItemTypeMetaDataView(BaseView):
                             elif file_name == "ItemTypeProperty.json":
                                 import_data["ItemTypeProperty"] = json_obj
                                 #print(json_obj)
-            
+
             # ZIPファイル内に規定のアイテムタイプデータが無ければエラー
             if import_data["ItemType"] is null or import_data["ItemTypeName"] is null or import_data["ItemTypeMapping"] is null or import_data["ItemTypeProperty"] is null :
                 raise ValueError('Zip file contents invalid.')
-            
-            
+
+
             json_schema = fix_json_schema(import_data["ItemType"].get('schema'))
             json_form = import_data["ItemType"].get('form')
             json_schema = update_required_schema_not_exist_in_form(
                 json_schema, json_form)
-            
+
             if not json_schema:
                 raise ValueError('Schema is in wrong format.')
 
@@ -535,7 +568,7 @@ class ItemTypeMetaDataView(BaseView):
 class ItemTypeSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = ItemType
-        
+
 class ItemTypeNameSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = ItemTypeName
@@ -557,7 +590,7 @@ class ItemTypePropertiesView(BaseView):
     def index(self, property_id=0):
         """Renders an primitive property view."""
         lists = ItemTypeProps.get_records([])
-        
+
         # remove default properties
         properties = lists.copy()
         defaults_property_ids = [prop.id for prop in lists if
