@@ -113,6 +113,11 @@ def notifications():
                 requests.post(inbox_url("/subscribe"), json=subscripsion)
                 requests.post(inbox_url("/userprofile"), json=userprofile)
             else:
+                current_app.logger.info(
+                    "Unsubscribing push subscription for user %s: %s",
+                    current_user.id,
+                    endpoint[:24] + "..." + endpoint[-8:]
+                )
                 requests.post(inbox_url("/unsubscribe"), json={"endpoint": endpoint})
         except Exception as ex:
             traceback.print_exc()

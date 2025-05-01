@@ -1,3 +1,5 @@
+const sleep = (time) => new Promise((resolve) => setTimeout(resolve, time));
+
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
   const base64 = (base64String + padding)
@@ -32,8 +34,6 @@ async function subscribePush(reg) {
       userVisibleOnly: true,
       applicationServerKey: applicationServerKey
     });
-    console.log('Push subscription:', subscription);
-    console.log('Push subscription:', subscription.toJSON());
     return subscription.toJSON();
   } catch (e) {
     console.error(e);
@@ -54,10 +54,8 @@ async function unsubscribePush() {
     const subscription = await reg.pushManager.getSubscription();
     if (subscription) {
       await subscription.unsubscribe();
-      console.log('Push unsubscription:', subscription);
       return subscription.toJSON();
     } else {
-      console.log('No subscription found.');
       return null;
     }
   } catch (e) {
@@ -80,6 +78,17 @@ async function registerServiceWorker() {
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       window.location.reload();
     });
+
+    const timeout = 3000;
+    const startTime = Date.now();
+    while (!reg || !reg.active) {
+      if (Date.now() - startTime > timeout) {
+        console.error('Service worker activation timed out.');
+        return;
+      }
+      await sleep(100);
+    }
+
     return reg;
   } catch (e) {
     console.error('Service worker registration failed:', e);

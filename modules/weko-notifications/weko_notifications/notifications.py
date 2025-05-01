@@ -68,7 +68,7 @@ class Notification(object):
 
     def __eq__(self, other):
         """Return True if the value is equal to the current id."""
-        return self.id == other.id
+        return isinstance(other, self.__class__) and self.id == other.id
 
     @property
     def id(self):
