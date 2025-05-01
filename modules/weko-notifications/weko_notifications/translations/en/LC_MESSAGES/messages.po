@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-notifications 1.0.0.dev20250000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-03-31 22:34+0900\n"
+"POT-Creation-Date: 2025-05-01 14:04+0900\n"
 "PO-Revision-Date: 2025-03-16 16:28+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -19,67 +19,71 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_notifications/forms.py:35
+#: weko_notifications/forms.py:38
 msgid "Email notifications require a confirmed email address."
 msgstr ""
 
 #: weko_notifications/forms.py:44
+msgid "Failed to get subscription information. Please try again."
+msgstr ""
+
+#: weko_notifications/forms.py:53
 msgid "Notifications settings updated."
 msgstr ""
 
-#: weko_notifications/forms.py:47
-msgid "There was an error updating your notifications settings."
+#: weko_notifications/forms.py:56
+msgid "Failed to update your notifications settings."
 msgstr ""
 
 #. NOTE: Form field label
-#: weko_notifications/forms.py:57
+#: weko_notifications/forms.py:66
 msgid "Web push"
 msgstr ""
 
 #. NOTE: Form field help text
-#: weko_notifications/forms.py:59
+#: weko_notifications/forms.py:68
 msgid "Receive notifications via web push."
 msgstr ""
 "Receive web push notifications in this browser. Please refrain from using"
 " this feature on shared devices."
 
-#: weko_notifications/forms.py:63
+#: weko_notifications/forms.py:72
 msgid "Web push endpoint"
 msgstr ""
 
-#: weko_notifications/forms.py:66
+#: weko_notifications/forms.py:75
 msgid "Web push expiration time"
 msgstr ""
 
-#: weko_notifications/forms.py:69
+#: weko_notifications/forms.py:78
 msgid "Web push p256dh"
 msgstr ""
 
-#: weko_notifications/forms.py:72
+#: weko_notifications/forms.py:81
 msgid "Web push auth"
 msgstr ""
 
-#: weko_notifications/forms.py:75
+#: weko_notifications/forms.py:84
 msgid "Email"
 msgstr ""
 
-#: weko_notifications/forms.py:76
+#: weko_notifications/forms.py:85
 msgid "Receive notifications via email."
 msgstr ""
 "Receive email notifications via the verified email address in your "
 "Profile."
 
-#: weko_notifications/views.py:48
+#: weko_notifications/views.py:72
 #, python-format
 msgid "%(icon)s Notifications"
 msgstr ""
 
 #: weko_notifications/templates/weko_notifications/settings/notifications.html:25
-#: weko_notifications/views.py:52
+#: weko_notifications/views.py:76
 msgid "Notifications"
 msgstr ""
 
-#: weko_notifications/views.py:98
+#: weko_notifications/views.py:127
 msgid "Failed to update push subscription."
 msgstr ""
 
@@ -101,7 +105,4 @@ msgstr ""
 #: weko_notifications/templates/weko_notifications/settings/notifications.html:47
 msgid "Update"
 msgstr ""
-
-#~ msgid "WEKO-Notifications"
-#~ msgstr ""
 
