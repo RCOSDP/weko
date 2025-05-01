@@ -20,6 +20,7 @@ notifications_settings_js = Bundle(
     output="gen/notifications_settings.%(version)s.js"
 )
 
+# note: do not use %(version)s here, becouse the file name MUST not be changed.
 sw_js = Bundle(
     "js/weko_notifications/sw.js",
     output="gen/sw.js"
