@@ -952,6 +952,9 @@ def check_jsonld_import_items(
         handle_check_and_prepare_index_tree(list_record, True, [])
         handle_check_and_prepare_publish_status(list_record)
 
+        handle_check_and_prepare_feedback_mail(list_record)
+        handle_check_and_prepare_request_mail(list_record)
+
         handle_check_file_metadata(list_record, data_path)
 
         handle_check_authors_prefix(list_record)
