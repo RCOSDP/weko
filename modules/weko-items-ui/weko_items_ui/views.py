@@ -1201,6 +1201,7 @@ def prepare_delete_item(id=None, community=None):
                 msg=_('Item cannot be edited because the import is in progress.')
             )
 
+        workflow, workflow_id = None, None
         # ! Check Record is being edit
         item_uuid = latest_pid.object_uuid
         latest_activity = work_activity.get_workflow_activity_by_item_id(item_uuid)
@@ -1215,38 +1216,30 @@ def prepare_delete_item(id=None, community=None):
                 )
 
         if latest_activity:
-            post_activity['workflow_id'] = latest_activity.workflow_id
-        else:
-            latest_activity = work_activity.get_workflow_activity_by_item_id(
-                recid.object_uuid
-            )
+            workflow = WorkFlows().get_workflow_by_id(latest_activity.workflow_id)
+            if not workflow.is_deleted:
+                workflow_id = latest_activity.workflow_id
+
+        if not workflow_id:
             workflow = get_workflow_by_item_type_id(
-                item_type.name_id, item_type_id
+                item_type.name_id, item_type_id, with_deleted=False
             )
-            if not workflow:
-                return jsonify(
-                    code=err_code,
-                    msg=_('Workflow setting does not exist.')
-                )
-            post_activity['workflow_id'] = workflow.id
+            if workflow:
+                workflow_id = workflow.id
 
         post_activity['itemtype_id'] = item_type_id
         post_activity['community'] = community
-        post_activity['post_workflow'] = latest_activity
-
-        workflow_detail = WorkFlows().get_workflow_by_id(
-            post_activity['workflow_id']
-        )
+        post_activity['workflow_id'] = workflow_id
 
         from weko_records_ui.views import soft_delete
         from .utils import send_mail_item_deleted, send_mail_delete_request
 
-        if workflow_detail.delete_flow_id is None:
+        if not workflow or workflow.delete_flow_id is None:
             soft_delete(pid_value)
             send_mail_item_deleted(pid_value, deposit, user_id)
             return jsonify(code=0, msg="success")
 
-        post_activity['flow_id'] = workflow_detail.delete_flow_id
+        post_activity['flow_id'] = workflow.delete_flow_id
 
         try:
             rtn = prepare_delete_workflow(post_activity, recid, deposit)
