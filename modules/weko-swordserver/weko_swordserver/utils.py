@@ -335,10 +335,9 @@ def check_import_items(
                 "Item type and workflow do not match. "
                 f"ItemType ID must be {item_type_id}, "
                 f"but the workflow's ItemType ID was {workflow.itemtype_id}.")
-            raise WekoSwordserverException(
-                "Item type and workflow do not match.",
-                errorType=ErrorType.BadRequest
-            )
+            error = check_result.get("error", "")
+            error += "; Item type and workflow do not match."
+            check_result.update({"error": error})
     else:
         raise WekoSwordserverException(
             f"Unsupported file format: {file_format}",
