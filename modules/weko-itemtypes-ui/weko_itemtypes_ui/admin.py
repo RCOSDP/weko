@@ -128,93 +128,96 @@ class ItemTypeMetaDataView(BaseView):
             flash(_('Item type cannot be deleted becase import is in progress.'), 'error')
             return jsonify(code=-1)
 
-        if item_type_id > 0:
-            record = ItemTypes.get_record(id_=item_type_id)
-            if record is not None:
-                # Check harvesting_type
-                if record.model.harvesting_type:
-                    flash(_('Cannot delete Item type for Harvesting.'),
-                          'error')
+        if not item_type_id > 0:
+            flash(_('An error has occurred.'), 'error')
+            return jsonify(code=-1)
+
+        record = ItemTypes.get_record(id_=item_type_id)
+        if record is not None:
+            # Check harvesting_type
+            if record.model.harvesting_type:
+                flash(_('Cannot delete Item type for Harvesting.'), 'error')
+                return jsonify(code=-1)
+            # Get all versions
+            all_records = ItemTypes.get_records_by_name_id(
+                name_id=record.model.name_id
+            )
+            # Check that item type is already registered to an item or not
+            for item in all_records:
+                items = ItemsMetadata.get_registered_item_metadata(
+                    item_type_id=item.id)
+                if len(items) > 0:
+                    flash(
+                        _('Cannot delete due to child existing item types.'),
+                        'error'
+                    )
                     return jsonify(code=-1)
-                # Get all versions
-                all_records = ItemTypes.get_records_by_name_id(
-                    name_id=record.model.name_id)
-                # Check that item type is already registered to an item or not
-                for item in all_records:
-                    items = ItemsMetadata.get_registered_item_metadata(
-                        item_type_id=item.id)
-                    if len(items) > 0:
-                        flash(_('Cannot delete due to child'
-                                ' existing item types.'), 'error')
-                        return jsonify(code=-1)
-                # Check that item type is used SWORD API
-                itemtype_json_ld_mappings = \
-                    JsonldMapping.get_by_itemtype_id(item_type_id)
-                for itemtype_json_ld_mapping in itemtype_json_ld_mappings:
-                    sword_clients = itemtype_json_ld_mapping.sword_clients.all()
-                    if sword_clients:
-                        flash(_('Cannot delete due to SWORD API'
-                                ' is using this item types.'), 'error')
-                        return jsonify(code=-1)
+            # Check that item type is used SWORD API
+            jsonld_mappings = JsonldMapping.get_by_itemtype_id(item_type_id)
+            for jsonld_mapping in jsonld_mappings:
+                sword_clients = jsonld_mapping.sword_clients.all()
+                if sword_clients:
+                    current_app.logger.info("Item type is used SWORD API.")
+                    flash(
+                        _('Cannot delete due to SWORD API is using this item types.'),
+                        'error'
+                    )
+                    return jsonify(code=-1)
 
-                # Get item type name
-                item_type_name = ItemTypeNames.get_record(
-                    id_=record.model.name_id)
-                if all_records and item_type_name:
-                    try:
-                        # Delete item type name
-                        ItemTypeNames.delete(item_type_name)
-                        # Delete item typea
-                        for k in all_records:
-                            k.delete()
-                        db.session.commit()
-                    except BaseException:
-                        db.session.rollback()
-                        exec_info = sys.exc_info()
-                        tb_info = traceback.format_tb(exec_info[2])
-                        current_app.logger.error(
-                            "Unexpected error: {}".format(exec_info))
-                        UserActivityLogger.error(
-                            operation='ITEM_TYPE_DELETE',
-                            target_key=item_type_id,
-                            remarks=tb_info[0]
-                        )
-                        flash(_('Failed to delete Item type.'), 'error')
-                        return jsonify(code=-1)
+            # Get item type name
+            item_type_name = ItemTypeNames.get_record(
+                id_=record.model.name_id)
+            if all_records and item_type_name:
+                try:
+                    # Delete item type name
+                    ItemTypeNames.delete(item_type_name)
+                    # Delete item typea
+                    for k in all_records:
+                        k.delete()
+                    db.session.commit()
+                    current_app.logger.info(
+                        f"Item type deleted: {item_type_name.name}"
+                    )
+                except Exception:
+                    db.session.rollback()
+                    exec_info = sys.exc_info()
+                    tb_info = traceback.format_tb(exec_info[2])
+                    current_app.logger.error(
+                        "Unexpected error: {}".format(exec_info))
+                    UserActivityLogger.error(
+                        operation='ITEM_TYPE_DELETE',
+                        target_key=item_type_id,
+                        remarks=tb_info[0]
+                    )
+                    traceback.print_exc()
+                    flash(_('Failed to delete Item type.'), 'error')
+                    return jsonify(code=-1)
 
+                for jsonld_mapping in jsonld_mappings:
                     try:
                         # Delete itemtype JOSN-LD mapping
-                        if itemtype_json_ld_mappings:
-                            for itemtype_json_ld_mapping in \
-                                itemtype_json_ld_mappings:
-                                JsonldMapping.delete(itemtype_json_ld_mapping.id)
-                            db.session.commit()
-                    except BaseException:
-                        db.session.rollback()
-                        exec_info = sys.exc_info()
-                        tb_info = traceback.format_tb(exec_info[2])
-                        current_app.logger.error(
-                            "Unexpected error: {}".format(exec_info))
-                        UserActivityLogger.error(
-                            operation='ITEM_TYPE_DELETE',
-                            target_key=item_type_id,
-                            remarks=tb_info[0]
+                        JsonldMapping.delete(jsonld_mapping.id)
+                        db.session.commit()
+                        current_app.logger.info(
+                            f"JSON-LD mapping deleted: {jsonld_mapping.name}"
                         )
-                        flash(_('Failed to delete Item type'/
-                                ' JSON-LD mapping.'), 'error')
-                        return jsonify(code=-1)
+                    except Exception:
+                        db.session.rollback()
+                        current_app.logger.error(
+                            "Failed to delete Item type JSON-LD mapping: {}"
+                            .format(jsonld_mapping.name)
+                        )
+                        traceback.print_exc()
 
-                    current_app.logger.debug(
-                        'Itemtype delete: {}'.format(item_type_id))
-                    UserActivityLogger.info(
-                        operation='ITEM_TYPE_DELETE',
-                        target_key=item_type_id
-                    )
-                    flash(_('Deleted Item type successfully.'))
-                    return jsonify(code=0)
+                current_app.logger.debug(
+                    'Itemtype delete: {}'.format(item_type_id))
+                UserActivityLogger.info(
+                    operation='ITEM_TYPE_DELETE',
+                    target_key=item_type_id
+                )
+                flash(_('Deleted Item type successfully.'))
+                return jsonify(code=0)
 
-        flash(_('An error has occurred.'), 'error')
-        return jsonify(code=-1)
 
     @expose('/register', methods=['POST'])
     @expose('/<int:item_type_id>/register', methods=['POST'])
