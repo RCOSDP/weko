@@ -1908,8 +1908,8 @@ class JsonLdMapper(JsonMapper):
         list_at_id = []
         for item_link_info in list_item_link_info:
             dict_item_link = {
-                "identifier": item_link_info.item_links,
-                "value": item_link_info.value
+                "identifier": item_link_info["item_links"],
+                "value": item_link_info["value"]
             }
             list_entity.append(dict_item_link)
             list_at_id.append(gen_id("itemLinks"))
