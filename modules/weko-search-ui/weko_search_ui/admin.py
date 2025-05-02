@@ -924,7 +924,7 @@ class ItemRocrateImportView(BaseView):
             )
             for item in list_record:
                 try:
-                    item["root_path"] = os.path.join(data_path + "data")
+                    item["root_path"] = os.path.join(data_path, "data")
                     create_flow_define()
                     handle_workflow(item)
                     group_tasks.append(import_item.s(item, request_info, parent_id=parent_id))
