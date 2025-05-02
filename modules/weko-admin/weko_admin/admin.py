@@ -2002,15 +2002,18 @@ class JsonldMappingView(ModelView):
             result = ItemTypeNames.get_record(id_=model.item_type_id,\
                                                with_deleted=True)
             if result is not None:
-                result_name = _('Deleted ItemType')
-                current_app.logger.info('ItemType:'/
-                    + str(model.item_type_id) + " is deleted itemtype")
+                result_name = _("Deleted ItemType")
+                current_app.logger.info(
+                    f"ItemType: {model.item_type_id} is deleted itemtype."
+                )
         return result_name
 
     def _formatting_mapping_json(view, context, model, name):
         format_json =json.dumps(model.mapping, indent=4, ensure_ascii=False)
-        return Markup(f'<pre style="white-space: pre; border: none; \
-                      background-color: transparent;">{format_json}</pre>')
+        return Markup(
+            '<pre style="white-space: pre; border: none; '
+            f'background-color: transparent;">{format_json}</pre>'
+        )
 
     column_formatters = {
         "item_type": _item_type_name,
