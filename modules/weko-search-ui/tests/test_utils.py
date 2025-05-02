@@ -431,7 +431,7 @@ def test_read_stats_file(i18n_app, db_itemtype, users):
         "schema": "test",
         "is_lastest": "test",
         "name": "test",
-        "item_type_id": "test",
+        "item_type_id": 1,
     }
 
     with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
@@ -440,6 +440,51 @@ def test_read_stats_file(i18n_app, db_itemtype, users):
             assert read_stats_file(file_path_csv, file_name_csv, "csv")
             assert read_stats_file(file_path_tsv_2, file_name_tsv_2, "tsv")
 
+def test_read_stats_file_long_str_keys(i18n_app, db_itemtype, users):
+    from flask_babelex import gettext as _
+    def set_warnings(str_keys):
+        if len(str_keys) > 200:
+            str_keys = str_keys[:200] + "..."
+        expected_warning = _(
+                                "The following items are not registered because "
+                                + "they do not exist in the specified "
+                                + "item type. {}"
+                            ).format(str_keys)
+        return expected_warning
+
+    current_path = os.path.dirname(os.path.abspath(__file__))
+    file_name_tsv = "sample_tsv_2.tsv"
+    file_path_tsv = os.path.join(current_path, "data", "sample_file", file_name_tsv)
+    check_item_type = {
+        "schema": "test",
+        "is_lastest": "test",
+        "name": "test",
+        "item_type_id": 1,
+    }
+    item_path_not_existed_under200 = [
+        ".metadata.item_{}".format(i) for i in range(1, 10)
+    ]
+    item_path_not_existed_over200 = [
+        ".metadata.item_{}".format(i) for i in range(1, 30)
+    ]
+
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        with patch("weko_search_ui.utils.get_item_type", return_value=check_item_type):
+            with patch("weko_search_ui.utils.handle_check_metadata_not_existed", return_value=item_path_not_existed_under200):
+                result1 = read_stats_file(file_path_tsv, file_name_tsv, "tsv")
+            with patch("weko_search_ui.utils.handle_check_metadata_not_existed", return_value=item_path_not_existed_over200):
+                result2 = read_stats_file(file_path_tsv, file_name_tsv, "tsv")
+
+    str_keys_under200 = ", ".join(item_path_not_existed_under200).replace(".metadata.", "")
+    str_keys_over200 = ", ".join(item_path_not_existed_over200).replace(".metadata.", "")
+    expected_warning_under200 = set_warnings(str_keys_under200)
+    expected_warning_over200 = set_warnings(str_keys_over200)
+
+    assert "warnings" in result1["data_list"][0]
+    assert result1["data_list"][0]["warnings"][0] == expected_warning_under200
+    
+    assert "warnings" in result2["data_list"][0]
+    assert result2["data_list"][0]["warnings"][0] == expected_warning_over200
 
 # def handle_convert_validate_msg_to_jp(message: str):
 def test_handle_convert_validate_msg_to_jp(i18n_app):
