@@ -1034,8 +1034,14 @@ def handle_save_bagit(list_record, file, data_path, filename):
     """Handle save bagit file as is.
 
     Save the bagit file as is if the metadata has the save_as_is flag.
+
+    Args:
+        list_record (list): List of records.
+        file (FileStorage | str): File object or file path.
+        data_path (str): Path to save the bagit file.
+        filename (str): Name of the bagit file.
     """
-    if len(list_record) > 2:
+    if not list_record or len(list_record) > 2:
         # item split flag takes precedence over save Bag flag
         return
 
@@ -1055,14 +1061,19 @@ def handle_save_bagit(list_record, file, data_path, filename):
     files_info = metadata.get("files_info")  # for Workflow registration
     key = files_info[0].get("key")
 
+    size = os.path.getsize(os.path.join(data_path, filename))
+    if size >= pow(1024, 4):
+        size_str = "{} TB".format(round(size/(pow(1024, 4)), 1))
+    elif size >= pow(1024, 3):
+        size_str = "{} GB".format(round(size/(pow(1024, 3)), 1))
+    elif size >= pow(1024, 2):
+        size_str = "{} MB".format(round(size/(pow(1024, 2)), 1))
+    elif size >= 1024:
+        size_str = "{} KB".format(round(size/1024, 1))
+    else:
+        size_str = "{} B".format(size)
     dataset_info = {                         # replace metadata
-        "filesize": [
-            {
-                "value": str(os.path.getsize(
-                    os.path.join(data_path, filename))
-                ) + " B",
-            }
-        ],
+        "filesize": [{ "value": size_str }],
         "filename":  filename,
         "format": "application/zip",
         "url": {
@@ -2016,7 +2027,6 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, m
         return      -- Json response.
 
     """
-
     owner = -1
     if request_info and 'user_id' in request_info:
         owner = request_info['user_id']
@@ -5196,7 +5206,7 @@ def handle_flatten_data_encode_filename(list_record, data_path):
     for item in list_record:
         metadata = item.get("metadata")
         files_info = metadata.get("files_info")
-        item["filepath"] = []
+        item["file_path"] = []
 
         # get filename from metadata
         for file_info in files_info:
@@ -5221,7 +5231,7 @@ def handle_flatten_data_encode_filename(list_record, data_path):
                     )
 
                 # for Direct registration
-                item["filepath"].append(encoded_filename)
+                item["file_path"].append(encoded_filename)
 
                 # for Workflow registration
                 new_file_list.append(file)

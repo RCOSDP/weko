@@ -363,36 +363,27 @@ def post_service_document():
             tuple: A tuple containing the response and the record ID.
         """
         activity_id, recid, error = None, None, False
-        try:
-            if register_type == "Direct":
-                import_result = import_items_to_system(
-                    item, request_info=request_info
+        if register_type == "Direct":
+            import_result = import_items_to_system(
+                item, request_info=request_info
+            )
+            if not import_result.get("success"):
+                current_app.logger.error(
+                    f"Error in import_items_to_system: {item.get('error_id')}"
                 )
-                if not import_result.get("success"):
-                    current_app.logger.error(
-                        f"Error in import_items_to_system: {item.get('error_id')}"
-                    )
-                    error = True
-                else:
-                    recid = import_result.get("recid")
-                    from weko_items_ui.utils import send_mail_direct_registered
-                    send_mail_direct_registered(recid, current_user.id)
+                error = True
+            else:
+                recid = import_result.get("recid")
+                from weko_items_ui.utils import send_mail_direct_registered
+                send_mail_direct_registered(recid, current_user.id)
 
-            elif register_type == "Workflow":
-                url, recid, _ , error = import_items_to_activity(
-                    item, request_info=request_info
-                )
-                activity_id = url.split("/")[-1]
+        elif register_type == "Workflow":
+            url, recid, _ , error = import_items_to_activity(
+                item, request_info=request_info
+            )
+            activity_id = url.split("/")[-1]
 
-        except Exception as e:
-            current_app.logger.error(f"Unexpected error in process_item: {str(e)}")
-            traceback.print_exc()
-            raise WekoSwordserverException(
-                f"Unexpected error in process_item: {str(e)}",
-                ErrorType.ServerError
-            ) from e
         return activity_id, recid, error
-
 
     response = {}
     warns = []
@@ -408,8 +399,8 @@ def post_service_document():
             if file_format == "JSON":
                 update_item_ids(
                     check_result["list_record"], recid, item.get("_id"))
-        except Exception as e:
-            current_app.logger.error(f"Unexpected error: {str(e)}")
+        except Exception as ex:
+            current_app.logger.error(f"Unexpected error during item import: {ex}")
             continue  # Skip to the next iteration
 
     # Clean up temporary directory
