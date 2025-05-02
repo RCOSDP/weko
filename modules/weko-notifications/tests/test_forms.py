@@ -47,7 +47,6 @@ def test_handle_notifications_form(app, db, users, mocker):
     mock_flash.assert_called_with("Notifications settings updated.", category="success")
     mock_settings.assert_called_with(
         user_id=users[0]["obj"].id,
-        subscribe_webpush=False,
         subscribe_email=True
     )
 
@@ -93,7 +92,7 @@ def test_handle_notifications_form(app, db, users, mocker):
         handle_notifications_form(notifications_form)
     mock_settings.assert_not_called()
     mock_flash.assert_called_with(
-        "There was an error updating your notifications settings.", category="error"
+        "Failed to update your notifications settings.", category="error"
     )
     mock_flash.reset_mock()
     mock_settings.reset_mock()

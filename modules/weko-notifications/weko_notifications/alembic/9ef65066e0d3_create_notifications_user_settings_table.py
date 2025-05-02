@@ -27,11 +27,6 @@ def upgrade():
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("user_profile_id", sa.Integer(), nullable=True),
         sa.Column(
-            "subscribe_webpush",
-            sa.Boolean(name="subscribe_webpush"),
-            nullable=True
-        ),
-        sa.Column(
             "subscribe_email",
             sa.Boolean(name="subscribe_email"),
             nullable=False

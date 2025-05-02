@@ -47,7 +47,6 @@ def handle_notifications_form(form):
             return
         NotificationsUserSettings.create_or_update(
             user_id=current_user.id,
-            subscribe_webpush=False,  # NOTE: This is not used.
             subscribe_email=form.subscribe_email.data
         )
         flash(_("Notifications settings updated."), category="success")
