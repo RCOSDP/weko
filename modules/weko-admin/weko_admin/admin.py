@@ -1992,6 +1992,15 @@ class JsonldMappingView(ModelView):
         "item_type",
         "updated",
     )
+    column_details_list = (
+        "id",
+        "created",
+        "updated",
+        "name",
+        "item_type",
+        "mapping",
+        "version_id",
+    )
 
     def _item_type_name(view, context, model, name):
         result_name = None
