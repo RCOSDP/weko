@@ -93,13 +93,8 @@ require([
             data: JSON.stringify(post_data),
             success: function (data, status) {
               if (0 == data.code) {
-                setTimeout(function () {
-                  document.location.href = data.data.redirect;
-                }, 5000);
+                document.location.href = data.data.redirect;
               } else {
-                setTimeout(function () {
-                    document.location.href = data.data.redirect;
-                }, 5000);
                 loadingMessage.classList.remove('alert-success');
                 loadingMessage.classList.add('alert-danger');
                 loadingMessage.textContent = 'failed to create activity. Please reload the page and try again.';
