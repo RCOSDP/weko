@@ -1410,8 +1410,8 @@ class JsonLdMapper(JsonMapper):
                 if isinstance(system_info.get("id"), (int, str)) else {}),
             **({"uri": system_info["uri"]}
                 if isinstance(system_info.get("uri"), str) else {}),
-            "list_file": [
-                filename[5:] for filename in system_info["list_file"]
+            "file_path": [
+                filename[5:] for filename in system_info["file_path"]
                 if filename.startswith("data/")
             ],
             "non_extract": [
@@ -1755,7 +1755,7 @@ class JsonLdMapper(JsonMapper):
                 {"item_id": link.get("identifier"), "sele_id" : link.get("value")}
                     for link in extracted.get("wk:itemLinks", [])
             ]
-            system_info["list_file"] = [
+            system_info["file_path"] = [
                 file["@id"] for file in extracted.get("hasPart", [])
             ]
             system_info["non_extract"] = [
@@ -1908,8 +1908,8 @@ class JsonLdMapper(JsonMapper):
         list_at_id = []
         for item_link_info in list_item_link_info:
             dict_item_link = {
-                "identifier": item_link_info.item_links,
-                "value": item_link_info.value
+                "identifier": item_link_info["item_links"],
+                "value": item_link_info["value"]
             }
             list_entity.append(dict_item_link)
             list_at_id.append(gen_id("itemLinks"))
