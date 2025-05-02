@@ -5214,14 +5214,22 @@ def handle_flatten_data_encode_filename(list_record, data_path):
             new_file_list = []
 
             for file in file_info["items"]:
-                filename = file.get("filename")
+                filename = (
+                    file.get("url", {}).get("label")
+                    or file.get("filename")
+                )
+                if not filename:
+                    continue
 
                 # encode filename
                 encoded_filename = urllib.parse.quote(filename, safe='')
                 file["filename"] = encoded_filename
 
                 # copy file in directory to root under data_path
-                if not os.path.exists(os.path.join(data_path, encoded_filename)):
+                if (
+                    encoded_filename != filename
+                    and os.path.exists(os.path.join(data_path, filename))
+                ):
                     shutil.copy(
                         os.path.join(data_path, filename),
                         os.path.join(data_path, encoded_filename)
@@ -5238,6 +5246,10 @@ def handle_flatten_data_encode_filename(list_record, data_path):
             if new_file_list:
                 metadata[key] = new_file_list # replace metadata
 
+        item["non_extract"] = [
+            urllib.parse.quote(filename, safe='')
+            for filename in item.get("non_extract")
+        ]
 
 def check_replace_file_import_items(list_record, data_path=None, is_gakuninrdm=False,
                        all_index_permission=True, can_edit_indexes=[]):
