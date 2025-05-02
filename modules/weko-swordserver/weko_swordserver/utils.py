@@ -248,10 +248,10 @@ def check_import_items(
                 current_app.logger.error(
                     f"Workflow not found for item type ID: {item_type_name}"
                 )
-                raise WekoSwordserverException(
-                    "Workflow not found for registration your item.",
-                    errorType=ErrorType.BadRequest
-                )
+                error = check_result.get("error", "")
+                error += "; Workflow not found for item type ID."
+                check_result.update({"error": error})
+
             workflow = list_workflow[0]
             workflow_id = workflow.id
             check_result.update({"workflow_id": workflow_id})

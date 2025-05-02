@@ -3799,20 +3799,29 @@ def translate_validation_message(item_property, cur_lang):
             translate_validation_message(value, cur_lang)
 
 
-def get_workflow_by_item_type_id(item_type_name_id, item_type_id):
+def get_workflow_by_item_type_id(
+    item_type_name_id, item_type_id, with_deleted=True
+):
     """Get workflow settings by item type id."""
     from weko_workflow.models import WorkFlow
 
-    workflow = WorkFlow.query.filter_by(
-        itemtype_id=item_type_id).first()
+    query = WorkFlow.query.filter_by(itemtype_id=item_type_id)
+    if not with_deleted:
+        query = query.filter_by(is_deleted=False)
+    workflow = query.first()
+
     if not workflow:
         item_type_list = ItemTypes.get_by_name_id(item_type_name_id)
         id_list = [x.id for x in item_type_list]
-        workflow = (
+        query = (
             WorkFlow.query
             .filter(WorkFlow.itemtype_id.in_(id_list))
             .order_by(WorkFlow.itemtype_id.desc())
-            .order_by(WorkFlow.flow_id.asc()).first())
+            .order_by(WorkFlow.flow_id.asc())
+        )
+        if not with_deleted:
+            query = query.filter_by(is_deleted=False)
+        workflow = query.first()
     return workflow
 
 
@@ -4209,7 +4218,7 @@ def check_duplicate(data, is_item=True):
     recids_resource = {r[0] for r in result}
     matched_recids &= recids_resource
     matched_recids.discard(int(data.get("metainfo", {}).get("id") or 0))
-    
+
     if not matched_recids:
         return False, [], []
 
