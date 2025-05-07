@@ -2906,6 +2906,9 @@ def handle_check_item_link(list_record):
                 continue
             if item_exist and item_exist.pid.is_deleted():
                 errors.append(_("Linking item already deleted in the system."))
+                continue
+
+            link_info["item_id"] = item_id
 
         if errors:
             item["errors"] = (
