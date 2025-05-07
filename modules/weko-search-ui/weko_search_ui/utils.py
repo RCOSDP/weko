@@ -1357,7 +1357,7 @@ def read_jpcoar_xml_file(file_path, item_type_info) -> dict:
     except Exception as ex:
         raise ex
     result["data_list"].append({
-        "$schema": item_type_info['schema'],
+        "$schema": f"/items/jsonschema/{item_type_info['item_type_id']}",
         "metadata": res,
         "item_type_name": item_type_info['name'],
         "item_type_id": item_type_info['item_type_id'],
