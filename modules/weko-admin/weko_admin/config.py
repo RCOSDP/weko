@@ -1161,6 +1161,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'site-license',
     'search-management',
     'sitemap',
+    'activity',
     'indexlink',
     'itemsetting',
     'statssettings',
