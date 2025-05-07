@@ -1904,13 +1904,13 @@ def prepare_delete_workflow(post_activity, recid, deposit):
     Create new workflow activity.
     Clone Identifier and Feedbackmail relation to last activity.
 
-    parameter:
-        post_activity: latest activity information.
-        recid: current record id.
-        deposit: current deposit data.
-    return:
-        rtn: new activity
+    Args:
+        post_activity (dict): latest activity information.
+        recid (PersistentIdentifier): current record id.
+        deposit (WekoDeposit): current deposit data.
 
+    Returns:
+        Activity: new activity object.
     """
     # ! Check pid's version
     community = post_activity['community']
@@ -1923,55 +1923,16 @@ def prepare_delete_workflow(post_activity, recid, deposit):
 
     if not draft_pid:
         draft_record = deposit.prepare_draft_item(recid)
-        rtn = activity.init_activity(
-            post_activity, community, draft_record.model.id
-        )
-        # create item link info of draft record from parent record
-        weko_record = WekoRecord.get_record_by_pid(
-            draft_record.pid.pid_value
-        )
-        if weko_record:
-            weko_record.update_item_link(recid.pid_value)
+        item_id = draft_record.model.id
     else:
-        # Clone org bucket into draft record.
-        try:
-            _parent = WekoDeposit.get_record(recid.object_uuid)
-            _deposit = WekoDeposit.get_record(draft_pid.object_uuid)
-            _deposit['path'] = _parent.get('path')
-            _deposit.merge_data_to_record_without_version(recid, True)
-            _deposit.publish()
-            _bucket = Bucket.get(_deposit.files.bucket.id)
+        item_id = draft_pid.object_uuid
 
-            if not _bucket:
-                _bucket = Bucket.create(
-                    quota_size=current_app.config['WEKO_BUCKET_QUOTA_SIZE'],
-                    max_file_size=current_app.config['WEKO_MAX_FILE_SIZE'],
-                )
-                RecordsBuckets.create(record=_deposit.model, bucket=_bucket)
-                _deposit.files.bucket.id = _bucket
-
-            bucket = deposit.files.bucket
-
-            sync_bucket = RecordsBuckets.query.filter_by(
-                bucket_id=_deposit.files.bucket.id
-            ).first()
-
-            snapshot = bucket.snapshot(lock=False)
-            snapshot.locked = False
-            _bucket.locked = False
-
-            sync_bucket.bucket_id = snapshot.id
-            _deposit['_buckets']['deposit'] = str(snapshot.id)
-
-            db.session.add(sync_bucket)
-            _bucket.remove()
-
-        except SQLAlchemyError as ex:
-            raise ex
-
-        rtn = activity.init_activity(
-            post_activity, community, draft_pid.object_uuid
-        )
+    rtn = activity.init_activity(
+        post_activity, community, item_id
+    )
+    if rtn.action_id == 2:   # end_action
+        from weko_records_ui.views import soft_delete
+        soft_delete(recid.pid_value)
 
     return rtn
 

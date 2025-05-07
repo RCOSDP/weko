@@ -1095,7 +1095,7 @@ def prepare_edit_item(id=None, community=None):
     )
 
 
-@blueprint_api.route('/prepare_delete_item', methods=['POST'])
+@blueprint.route('/prepare_delete_item', methods=['POST'])
 @login_required
 def prepare_delete_item(id=None, community=None):
     """Prepare_delete_item.
@@ -1231,10 +1231,10 @@ def prepare_delete_item(id=None, community=None):
         post_activity['community'] = community
         post_activity['workflow_id'] = workflow_id
 
-        from weko_records_ui.views import soft_delete
         from .utils import send_mail_item_deleted, send_mail_delete_request
 
         if not workflow or workflow.delete_flow_id is None:
+            from weko_records_ui.views import soft_delete
             soft_delete(pid_value)
             send_mail_item_deleted(pid_value, deposit, user_id)
             return jsonify(code=0, msg="success")
@@ -1274,14 +1274,10 @@ def prepare_delete_item(id=None, community=None):
             )
 
         if rtn.action_id == 2:   # end_action
-            soft_delete(pid_value)
             send_mail_item_deleted(pid_value, deposit, user_id)
 
         if rtn.action_id == 4:   # approval
             send_mail_delete_request(rtn)
-
-        if url_redirect.startswith("/api/"):
-            url_redirect = url_redirect[4:]
 
         return jsonify(
             code=0,

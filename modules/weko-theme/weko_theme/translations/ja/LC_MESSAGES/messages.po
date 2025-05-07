@@ -913,7 +913,7 @@ msgid "Admin menu_Setting_Items"
 msgstr "アイテム表示"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
-msgid "Admin menu_Setting_Activity"
+msgid "Admin menu_Setting_Activity List"
 msgstr "アクティビティ一覧表示"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
