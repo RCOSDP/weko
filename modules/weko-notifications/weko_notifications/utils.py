@@ -37,7 +37,7 @@ def inbox_url(endpoint=None, _external=False):
     else:
         url += current_app.config["WEKO_NOTIFICATIONS_INBOX_ENDPOINT"]
 
-    return url
+    return str(url)
 
 
 def rfc3339(timezone=None):
