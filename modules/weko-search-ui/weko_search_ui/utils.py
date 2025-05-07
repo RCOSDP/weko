@@ -95,6 +95,7 @@ from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_full_mapping, get_mapping
 from weko_records_ui.external import call_external_system
 from weko_redis.redis import RedisConnection
+from weko_schema_ui.config import WEKO_SCHEMA_RELATION_TYPE
 from weko_schema_ui.models import PublishStatus
 from weko_search_ui.mapper import BaseMapper, JPCOARV2Mapper, JsonLdMapper
 from weko_workflow.api import Flow, WorkActivity
@@ -965,6 +966,8 @@ def check_jsonld_import_items(
         handle_check_doi_ra(list_record)
         handle_check_doi(list_record)
 
+        handle_check_item_link(list_record)
+
         check_result.update({"list_record": list_record})
 
     except zipfile.BadZipFile as ex:
@@ -1510,11 +1513,11 @@ def handle_check_exist_record(list_record) -> list:
                     item_exist = WekoRecord.get_record_by_pid(item_id)
                 except PIDDoesNotExistError:
                     item["status"] = None
-                    errors.append(_("Item does not exits" " in the system"))
+                    errors.append(_("Item does not exits in the system"))
                 if item_exist:
                     if item_exist.pid.is_deleted():
                         item["status"] = None
-                        errors.append(_("Item already DELETED" " in the system"))
+                        errors.append(_("Item already DELETED in the system"))
                     else:
                         exist_url = (
                                 request.host_url + "records/" + str(item_exist.get("recid"))
@@ -2851,6 +2854,63 @@ def handle_check_doi(list_record):
         if error:
             item["errors"] = item["errors"] + [error] if item.get("errors") else [error]
             item["errors"] = list(set(item["errors"]))
+
+
+def handle_check_item_link(list_record):
+    """Check item link.
+
+    Check if item link url is valid.
+
+    Args:
+        list_record (list): List of records.
+    """
+    for item in list_record:
+        errors = []
+        link_data = item.get("link_data")
+        if not isinstance(link_data, list):
+            continue
+
+        for link_info in link_data:
+            if not isinstance(link_info, dict):
+                continue
+
+            uri = link_info.get("item_id")
+            reference_type = link_info.get("sele_id")
+            if reference_type not in WEKO_SCHEMA_RELATION_TYPE:
+                errors.append(
+                    _("Item Link type: '{}' is not one of {}.")
+                    .format(reference_type, WEKO_SCHEMA_RELATION_TYPE)
+                )
+            if not isinstance(uri, str):
+                errors.append(_("Please specify Item URL for item link."))
+                continue
+
+            item_id = uri.split("/")[-1]
+            if not item_id.isdecimal():
+                current_app.logger.error(f"item_id: {item_id}, uri: {uri}")
+                continue
+
+            system_url = request.host_url + "records/" + item_id
+            if uri != system_url:
+                current_app.logger.error(
+                    f"uri: {uri}, system_url: {system_url}"
+                )
+                errors.append(
+                    _("Specified Item Link URI and system URI do not match.")
+                )
+            try:
+                item_exist = WekoRecord.get_record_by_pid(item_id)
+            except PIDDoesNotExistError:
+                traceback.print_exc(file=sys.stdout)
+                errors.append(_("Linking item does not exist in the system."))
+                continue
+            if item_exist and item_exist.pid.is_deleted():
+                errors.append(_("Linking item already deleted in the system."))
+
+        if errors:
+            item["errors"] = (
+                item["errors"] + errors if item.get("errors") else errors
+            )
 
 
 def register_item_handle(item):
