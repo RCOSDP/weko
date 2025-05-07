@@ -95,11 +95,11 @@ def check_import_file_format(file, packaging):
             file_format = "TSV/CSV"
         else:
             current_app.logger.error(
-                "ro-crate-metadata.json or other metadata file is not found."
+                "Metadata file is not found in SimpleZip."
             )
             raise WekoSwordserverException(
                 "SimpleZip requires ro-crate-metadata.json or other metadata file.",
-                ErrorType.MetadataFormatNotAcceptable
+                ErrorType.ContentMalformed
                 )
     else:
         current_app.logger.error(
@@ -126,7 +126,8 @@ def get_shared_id_from_on_behalf_of(on_behalf_of):
 
     Raises:
         WekoSwordserverException:
-            If an error occurs while searching user by On-Behalf-Of.
+            - If no user found by On-Behalf-Of.
+            - If an error occurs while searching user by On-Behalf-Of.
     """
     shared_id = -1
     if on_behalf_of is None:
@@ -135,21 +136,21 @@ def get_shared_id_from_on_behalf_of(on_behalf_of):
     try:
         # get weko user id from email
         user = User.query.filter_by(email=on_behalf_of).one_or_none()
-        shared_id = user.id if user is not None else None
+        shared_id = int(user.id) if user is not None else None
         if shared_id is None:
             # get weko user id from personal access token
             token = (
                 Token.query
                 .filter_by(access_token=on_behalf_of).one_or_none()
             )
-            shared_id = token.user_id if token is not None else None
+            shared_id = int(token.user_id) if token is not None else None
         if shared_id is None:
             # get weko user id from shibboleth user eppn
             shib_user = (
                 ShibbolethUser.query
                 .filter_by(shib_eppn=on_behalf_of).one()
             )
-            shared_id = shib_user.weko_uid if shib_user is not None else None
+            shared_id = int(shib_user.weko_uid)
     except NoResultFound as ex:
         msg = "No user found by On-Behalf-Of."
         current_app.logger.error(msg)
@@ -158,14 +159,15 @@ def get_shared_id_from_on_behalf_of(on_behalf_of):
             msg, errorType=ErrorType.BadRequest
         ) from ex
     except SQLAlchemyError as ex:
-        msg = "DB error occurred while searching user by On-Behalf-Of."
-        current_app.logger.error(msg)
+        current_app.logger.error(
+            "DB error occurred while searching user by On-Behalf-Of."
+        )
         traceback.print_exc()
         raise WekoSwordserverException(
-            msg, errorType=ErrorType.ServerError
+            "Failed to get shared ID from On-Behalf-Of.",
+            errorType=ErrorType.ServerError
         ) from ex
     return shared_id
-
 
 
 def is_valid_file_hash(expected_hash, file):
@@ -182,6 +184,9 @@ def is_valid_file_hash(expected_hash, file):
     Returns:
         bool: Check result.
     """
+    if not isinstance(expected_hash, str):
+        return False
+
     file.seek(0)
     hasher = sha256()
     for chunk in iter(lambda: file.read(4096), b""):
@@ -249,12 +254,13 @@ def check_import_items(
                     f"Workflow not found for item type ID: {item_type_name}"
                 )
                 error = check_result.get("error", "")
-                error += "; Workflow not found for item type ID."
+                error_ = "Workflow not found for item type ID."
+                error += f"; {error_}" if error else error_
                 check_result.update({"error": error})
-
-            workflow = list_workflow[0]
-            workflow_id = workflow.id
-            check_result.update({"workflow_id": workflow_id})
+            else:
+                workflow = list_workflow[0]
+                workflow_id = workflow.id
+                check_result.update({"workflow_id": workflow_id})
 
     elif file_format == "XML":
         if register_type == "Direct":
@@ -292,7 +298,7 @@ def check_import_items(
             )
             raise WekoSwordserverException(
                 "No SWORD API setting found for client ID that you are using.",
-                errorType=ErrorType.ServerError
+                errorType=ErrorType.BadRequest
             )
         mapping_id = sword_client.mapping_id
         workflow_id = sword_client.workflow_id

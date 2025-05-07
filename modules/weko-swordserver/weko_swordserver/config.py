@@ -36,7 +36,10 @@ WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_METADATA = [
 ]
 """ List of Metadata Formats which are acceptable to the server. """
 
-WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_PACKAGING = ["*"]
+WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_PACKAGING = [
+    "http://purl.org/net/sword/3.0/package/SimpleZip",
+    "http://purl.org/net/sword/3.0/package/SWORDBagIt",
+]
 """ List of Packaging Formats which are acceptable to the server.
 
     ["*"] or List of Packaging Formats URI

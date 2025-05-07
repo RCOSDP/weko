@@ -54,105 +54,304 @@ def test_get_service_document(client,users,tokens):
         assert res.json["dc:title"] == "testRepositoryName2"
 
 # def post_service_document():
-# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test_post_service_document_json_ld -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
-def test_post_service_document_json_ld(app,client,db,users,esindex,location,index,make_crate,tokens,item_type,doi_identifier,sword_mapping,sword_client,mocker):
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test_post_service_document -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
+def test_post_service_document(app,client,db,users,make_crate,esindex,location,index,make_zip,tokens,item_type,doi_identifier,mocker,sword_mapping,sword_client):
     def update_location_size():
         loc = db.session.query(Location).filter(
                     Location.id == 1).one()
         loc.size = 1547
-    mocker.patch("weko_swordserver.views._get_status_document",side_effect=lambda x:{"recid":x})
-    mocker.patch("weko_search_ui.utils.find_and_update_location_size",side_effect=update_location_size)
-    mocker.patch("weko_search_ui.utils.send_item_created_event_to_es")
+    mocker.patch("weko_swordserver.views._get_status_document", side_effect=lambda id:{"recid": id})
+    mocker.patch("weko_swordserver.views._get_status_workflow_document", side_effect=lambda aid, id:{"activity": aid,"recid": id})
+    mocker.patch("weko_search_ui.utils.find_and_update_location_size", side_effect=update_location_size)
     mocker.patch("weko_swordserver.views.dbsession_clean")
 
     token_direct = tokens[0]["token"].access_token
     token_workflow = tokens[1]["token"].access_token
-    token_none = tokens[3]["token"].access_token
     url = url_for("weko_swordserver.post_service_document")
 
-    # Digest VERIFICATION ON
-    app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = True
-
-    login_user_via_session(client=client,email=users[0]["email"])
     # Direct registration
-    zip, _ = make_crate()
-    storage = FileStorage(filename="payload.zip",stream=zip)
-    mapped_json = json_data("data/item_type/mapped_json_2.json")
+    login_user_via_session(client=client, email=users[0]["email"])
+    app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = False
     headers = {
-        "Authorization":"Bearer {}".format(token_direct),
-        "Content-Disposition":"attachment; filename=payload.zip",
-        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
-        "Digest":"SHA-256={}".format(calculate_hash(storage))
+        "Authorization": "Bearer {}".format(token_direct),
+        "Content-Disposition": "attachment; filename=payload.zip",
+        "Packaging": "http://purl.org/net/sword/3.0/package/SimpleZip",
+        "On-Behalf-Of": "test_on_behalf_of",
     }
-    with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
-        with patch("weko_swordserver.registration.bagit.Bag.validate"):
-            res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-        assert res.status_code == 200
-        recid = res.json["recid"]
-        recid = PersistentIdentifier.get("recid",recid)
-        record = RecordMetadata.query.filter_by(id=recid.object_uuid).one_or_none()
-        assert record is not None
-        record = record.json
-        file_metadata = record["item_1617604990215"]["attribute_value_mlt"][0]
-        assert file_metadata.get("url") is not None
-        assert file_metadata.get("url").get("url") == f"https://localhost/record/{recid.id}/files/sample.rst"
+    zip = make_zip()
+    storage=FileStorage(filename="payload.zip", stream=zip)
+    mocker.patch("weko_swordserver.views.check_import_file_format", return_value="TSV/CSV")
+    mocker.patch("weko_swordserver.views.get_shared_id_from_on_behalf_of", return_value=-1)
+    mocker_check_item = mocker.patch("weko_swordserver.views.check_import_items")
+    mocker_check_item.return_value = {
+        "data_path": "/var/tmp/test",
+        "register_type": "Direct",
+        "list_record": [{"status": "new"}]
+    }
+    mocker.patch("weko_swordserver.views.import_items_to_system", return_value={"success": True, "recid": 2000001})
+    mocker.patch("weko_items_ui.utils.send_mail_direct_registered")
+    os.makedirs("/var/tmp/test", exist_ok=True)
+
+    result = client.post(url, data={"file": storage}, content_type="multipart/form-data", headers=headers)
+    assert result.status_code == 200
+    assert result.json.get("recid") == "2000001"
+    assert not os.path.exists("/var/tmp/test"), os.rmdir("/var/tmp/test")
+
+    # Workflow registration, duplicate check
+    login_user_via_session(client=client, email=users[1]["email"])
+    app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = True
+    headers = {
+        "Authorization": "Bearer {}".format(token_workflow),
+        "Content-Disposition": "attachment; filename=payload.zip",
+        "Packaging": "http://purl.org/net/sword/3.0/package/SimpleZip",
+        "On-Behalf-Of": "test_on_behalf_of"
+    }
+    zip = make_zip()
+    storage = FileStorage(filename="payload.zip", stream=zip)
+    mocker.patch("weko_swordserver.views.check_import_file_format", return_value="TSV/CSV")
+    mocker.patch("weko_swordserver.views.get_shared_id_from_on_behalf_of", return_value=-1)
+    mocker_check_item = mocker.patch("weko_swordserver.views.check_import_items")
+    mocker_check_item.return_value = {
+        "data_path": "/var/tmp/test",
+        "register_type": "Workflow",
+        "workflow_id": 1001,
+        "list_record": [{"status": "new", "metadata": {}}],
+        "duplicate_check": True
+    }
+    mocker.patch("weko_items_ui.utils.check_duplicate", return_value=(False, [], []))
+    mocker.patch("weko_swordserver.views.import_items_to_activity", return_value=(url_for("weko_workflow.display_activity", activity_id="A-TEST-00001"), "2000001", "end_action", None))
+
+    result = client.post(url, data={"file": storage}, content_type="multipart/form-data", headers=headers)
+    assert result.status_code == 200
+    assert result.json.get("recid") == "2000001"
 
 
-    # invalid hash and be rejected
+    # invalid Content-Disposition's filename
+    login_user_via_session(client=client, email=users[0]["email"])
+    headers = {
+        "Authorization": "Bearer {}".format(token_direct),
+        "Content-Disposition": "attachment; filename=invalid_payload.zip",
+        "Packaging": "http://purl.org/net/sword/3.0/package/SimpleZip",
+    }
+    zip = make_zip()
+    storage = FileStorage(filename="payload.zip", stream=zip)
+    mocker.patch("weko_swordserver.views.check_import_file_format", return_value="TSV/CSV")
+
+    result = client.post(url, data={"file": storage}, content_type="multipart/form-data", headers=headers)
+    assert result.status_code == 400
+    assert result.json.get("error") == "Not found invalid_payload.zip in request body."
+
+    # invalid Content-Disposition
+    login_user_via_session(client=client, email=users[0]["email"])
+    headers = {
+        "Authorization": "Bearer {}".format(token_direct),
+        "Content-Disposition": "invalid",
+        "Packaging": "http://purl.org/net/sword/3.0/package/SimpleZip",
+    }
+    zip = make_zip()
+    storage = FileStorage(filename="payload.zip", stream=zip)
+    mocker.patch("weko_swordserver.views.check_import_file_format", return_value="TSV/CSV")
+
+    result = client.post(url, data={"file": storage}, content_type="multipart/form-data", headers=headers)
+    assert result.status_code == 400
+    assert result.json.get("error") == "Cannot get filename by Content-Disposition."
+
+    # Workflow registration, not have activity sqope
+    login_user_via_session(client=client, email=users[0]["email"])
+    headers = {
+        "Authorization": "Bearer {}".format(token_direct),
+        "Content-Disposition": "attachment; filename=payload.zip",
+        "Packaging": "http://purl.org/net/sword/3.0/package/SimpleZip",
+    }
+    zip = make_zip()
+    storage = FileStorage(filename="payload.zip", stream=zip)
+    mocker.patch("weko_swordserver.views.check_import_file_format", return_value="TSV/CSV")
+    mocker.patch("weko_swordserver.views.get_shared_id_from_on_behalf_of", return_value=-1)
+    mocker_check_item = mocker.patch("weko_swordserver.views.check_import_items")
+    mocker_check_item.return_value = {
+        "data_path": "/var/tmp/test",
+        "register_type": "Workflow",
+        "list_record": [{"status": "new", "metadata": {}}],
+        "duplicate_check": True
+    }
+
+    result = client.post(url, data={"file": storage}, content_type="multipart/form-data", headers=headers)
+    assert result.status_code == 403
+    assert result.json.get("error") == "Not allowed operation in your token scope."
+
+    # error in result
+    login_user_via_session(client=client, email=users[0]["email"])
+    headers = {
+        "Authorization": "Bearer {}".format(token_direct),
+        "Content-Disposition": "attachment; filename=payload.zip",
+        "Packaging": "http://purl.org/net/sword/3.0/package/SimpleZip",
+    }
+    zip = make_zip()
+    storage = FileStorage(filename="payload.zip", stream=zip)
+    mocker.patch("weko_swordserver.views.check_import_file_format", return_value="TSV/CSV")
+    mocker.patch("weko_swordserver.views.get_shared_id_from_on_behalf_of", return_value=-1)
+    mocker_check_item = mocker.patch("weko_swordserver.views.check_import_items")
+    mocker_check_item.return_value = {
+        "data_path": "/var/tmp/test",
+        "register_type": "Direct",
+        "error": "Unexpected error.",
+    }
+
+    result = client.post(url, data={"file": storage}, content_type="multipart/form-data", headers=headers)
+    assert result.status_code == 400
+    assert result.json.get("error") == "Item check error: Unexpected error."
+
+    # error in item
+    login_user_via_session(client=client, email=users[0]["email"])
+    headers = {
+        "Authorization": "Bearer {}".format(token_direct),
+        "Content-Disposition": "attachment; filename=payload.zip",
+        "Packaging": "http://purl.org/net/sword/3.0/package/SimpleZip",
+    }
+    zip = make_zip()
+    storage = FileStorage(filename="payload.zip", stream=zip)
+    mocker.patch("weko_swordserver.views.check_import_file_format", return_value="TSV/CSV")
+    mocker.patch("weko_swordserver.views.get_shared_id_from_on_behalf_of", return_value=-1)
+    mocker_check_item = mocker.patch("weko_swordserver.views.check_import_items")
+    mocker_check_item.return_value = {
+        "data_path": "/var/tmp/test",
+        "register_type": "Direct",
+        "list_record": [{"status": "new", "errors": ["Item check error."]}],
+    }
+
+    result = client.post(url, data={"file": storage}, content_type="multipart/form-data", headers=headers)
+    assert result.status_code == 400
+    assert result.json.get("error") == "Item check error: Item check error."
+
+    # not new item
+    login_user_via_session(client=client, email=users[0]["email"])
+    headers = {
+        "Authorization": "Bearer {}".format(token_direct),
+        "Content-Disposition": "attachment; filename=payload.zip",
+        "Packaging": "http://purl.org/net/sword/3.0/package/SimpleZip",
+    }
+    zip = make_zip()
+    storage = FileStorage(filename="payload.zip", stream=zip)
+    mocker.patch("weko_swordserver.views.check_import_file_format", return_value="TSV/CSV")
+    mocker.patch("weko_swordserver.views.get_shared_id_from_on_behalf_of", return_value=-1)
+    mocker_check_item = mocker.patch("weko_swordserver.views.check_import_items")
+    mocker_check_item.return_value = {
+        "data_path": "/var/tmp/test",
+        "register_type": "Direct",
+        "list_record": [{"status": "keep", "item_title": "test_title"}],
+    }
+
+    result = client.post(url, data={"file": storage}, content_type="multipart/form-data", headers=headers)
+    assert result.status_code == 400
+    assert result.json.get("error") == "This item is already registered: test_title."
+
+    # item duplicated
+    login_user_via_session(client=client, email=users[0]["email"])
+    headers = {
+        "Authorization": "Bearer {}".format(token_direct),
+        "Content-Disposition": "attachment; filename=payload.zip",
+        "Packaging": "http://purl.org/net/sword/3.0/package/SimpleZip",
+    }
+    zip = make_zip()
+    storage = FileStorage(filename="payload.zip", stream=zip)
+    mocker.patch("weko_swordserver.views.check_import_file_format", return_value="TSV/CSV")
+    mocker.patch("weko_swordserver.views.get_shared_id_from_on_behalf_of", return_value=-1)
+    mocker_check_item = mocker.patch("weko_swordserver.views.check_import_items")
+    mocker_check_item.return_value = {
+        "data_path": "/var/tmp/test",
+        "register_type": "Direct",
+        "list_record": [{"status": "new", "metadata": {},}],
+        "duplicate_check": True
+    }
+    mocker.patch("weko_items_ui.utils.check_duplicate", return_value=(True, ["2000001"], ["/records/2000001"]))
+
+    result = client.post(url, data={"file": storage}, content_type="multipart/form-data", headers=headers)
+    assert result.status_code == 400
+    assert result.json.get("error") == "Some similar items are already registered: ['/records/2000001']."
+
+    # failed to import to system
+    login_user_via_session(client=client, email=users[0]["email"])
+    headers = {
+        "Authorization": "Bearer {}".format(token_direct),
+        "Content-Disposition": "attachment; filename=payload.zip",
+        "Packaging": "http://purl.org/net/sword/3.0/package/SimpleZip",
+    }
+    zip = make_zip()
+    storage = FileStorage(filename="payload.zip", stream=zip)
+    mocker.patch("weko_swordserver.views.check_import_file_format", return_value="TSV/CSV")
+    mocker.patch("weko_swordserver.views.get_shared_id_from_on_behalf_of", return_value=-1)
+    mocker_check_item = mocker.patch("weko_swordserver.views.check_import_items")
+    mocker_check_item.return_value = {
+        "data_path": "/var/tmp/test",
+        "register_type": "Direct",
+        "list_record": [{"status": "new", "metadata": {},}]
+    }
+    with patch("weko_swordserver.views.import_items_to_system", return_value={"success": False, "error_id": "Failed to import to system."}):
+        result = client.post(url, data={"file": storage}, content_type="multipart/form-data", headers=headers)
+        assert result.status_code == 500
+        assert result.json.get("error") == "Failed to import item."
+
+    # unexpected error in import to system
+    login_user_via_session(client=client, email=users[0]["email"])
+    headers = {
+        "Authorization": "Bearer {}".format(token_direct),
+        "Content-Disposition": "attachment; filename=payload.zip",
+        "Packaging": "http://purl.org/net/sword/3.0/package/SimpleZip",
+    }
+    zip = make_zip()
+    storage = FileStorage(filename="payload.zip", stream=zip)
+    mocker.patch("weko_swordserver.views.check_import_file_format", return_value="TSV/CSV")
+    mocker.patch("weko_swordserver.views.get_shared_id_from_on_behalf_of", return_value=-1)
+    mocker_check_item = mocker.patch("weko_swordserver.views.check_import_items")
+    mocker_check_item.return_value = {
+        "data_path": "/var/tmp/test",
+        "register_type": "Workflow",
+        "list_record": [{"status": "new", "metadata": {},}]
+    }
+
+    # jsonid format
+    login_user_via_session(client=client, email=users[0]["email"])
     app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = True
     zip, _ = make_crate()
-    storage = FileStorage(filename="payload.zip",stream=zip)
+    storage = FileStorage(filename="payload.zip", stream=zip)
     headers = {
-        "Authorization":"Bearer {}".format(token_direct),
-        "Content-Disposition":"attachment; filename=payload.zip",
-        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
-        "Digest":"SHA-256=1NVAL1DHASHTEST"
+        "Authorization": "Bearer {}".format(token_direct),
+        "Content-Disposition": "attachment; filename=payload.zip",
+        "Packaging": "http://purl.org/net/sword/3.0/package/SimpleZip",
+        "Digest": "SHA-256={}".format(calculate_hash(storage)),
     }
-    with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
-        with patch("weko_swordserver.registration.bagit.Bag.validate"):
-            res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-        assert res.status_code == 412
-        assert res.json.get("@type") == "DigestMismatch"
-        assert res.json.get("error") == "Request body and digest verification failed."
+    mocker.patch("weko_swordserver.views.check_import_file_format", return_value="JSON")
+    mocker.patch("weko_swordserver.views.get_shared_id_from_on_behalf_of", return_value=-1)
+    mocker.patch("weko_swordserver.views.is_valid_file_hash", return_value=True)
+    mocker_check_item = mocker.patch("weko_swordserver.views.check_import_items")
+    mocker_check_item.return_value = {
+        "data_path": "/var/tmp/test",
+        "register_type": "Direct",
+        "list_record": [{"status": "new", "metadata": {}}],
+    }
 
+    result = client.post(url, data={"file": storage}, content_type="multipart/form-data", headers=headers)
+    assert result.status_code == 200
+    assert result.json.get("recid") == "2000001"
 
-    # invalid hash but setting is off
-    app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = False
-
-    # Workflow registration
-    login_user_via_session(client=client,email=users[0]["email"])
+    # digest mismatch
+    login_user_via_session(client=client, email=users[0]["email"])
+    app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = True
     zip, _ = make_crate()
-    storage = FileStorage(filename="payload.zip",stream=zip)
+    storage = FileStorage(filename="payload.zip", stream=zip)
     headers = {
-        "Authorization":"Bearer {}".format(token_workflow),
-        "Content-Disposition":"attachment; filename=payload.zip",
-        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
-        "Digest":"SHA-256={}".format(calculate_hash(storage))
+        "Authorization": "Bearer {}".format(token_direct),
+        "Content-Disposition": "attachment; filename=payload.zip",
+        "Packaging": "http://purl.org/net/sword/3.0/package/SimpleZip",
+        "Digest": "SHA-256={}".format(calculate_hash(storage)),
     }
-    detail = "http://test_server.localdomain/workflow/activity/detail/A-TEST-00002"
-    current_action = "item_login"
-    recid = 200001
-    mapped_json = json_data("data/item_type/mapped_json_2.json")
-    with patch("weko_swordserver.views.import_items_to_activity", return_value=(detail, recid, current_action)):
-        with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
-            with patch("weko_swordserver.registration.bagit.Bag.validate"):
-                res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-        assert res.status_code == 200
+    mocker.patch("weko_swordserver.views.check_import_file_format", return_value="JSON")
+    mocker.patch("weko_swordserver.views.get_shared_id_from_on_behalf_of", return_value=-1)
+    mocker.patch("weko_swordserver.views.is_valid_file_hash", return_value=False)
 
-    # no scopes
-    zip, _  = make_crate()
-    storage = FileStorage(filename="payload.zip",stream=zip)
-    headers = {
-        "Authorization":"Bearer {}".format(token_none),
-        "Content-Disposition":"attachment; filename=payload.zip",
-        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
-        "Digest":"SHA-256={}".format(calculate_hash(storage))
-    }
-    mapped_json = json_data("data/item_type/mapped_json_2.json")
-    with patch("weko_swordserver.mapper.WekoSwordMapper.map",return_value=mapped_json):
-        with patch("weko_swordserver.registration.bagit.Bag.validate"):
-            res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-        assert res.status_code == 403
+    result = client.post(url, data={"file": storage}, content_type="multipart/form-data", headers=headers)
+    assert result.status_code == 412
+    assert result.json.get("error") == "Request body and digest verification failed."
 
 
 # def get_status_document(recid):
@@ -345,24 +544,59 @@ def test__get_status_workflow_document(app, records):
 
 # def delete_item(recid):
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test_delete_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
-def test_delete_item(client, tokens, users,es_records):
+def test_delete_item(app, client, db, tokens, sword_client, users,es_records, mocker):
+    mocker.patch("weko_swordserver.views._get_status_document", side_effect=lambda id:{"recid": id})
+    mocker.patch("weko_swordserver.views.dbsession_clean")
+    mocker.patch("weko_items_ui.utils.send_mail_item_deleted")
+
+    token_direct = tokens[0]["token"].access_token
+    token_workflow = tokens[1]["token"].access_token
+
+    # direct deletion
     login_user_via_session(client=client,email=users[0]["email"])
-    token = tokens[0]["token"].access_token
-    delete_item = es_records[0][0].pid_value
-    url = url_for("weko_swordserver.delete_item",recid=delete_item)
+    tokens[0]["token"]._scopes = "deposit:write item:delete"
+    tokens[1]["token"]._scopes = "deposit:write item:delete user:activity"
+    db.session.commit()
+
+    mock_record = MagicMock()
+    mock_record.pid_doi = None
+    mocker.patch("weko_swordserver.views.WekoRecord.get_record_by_pid", return_value=mock_record)
+    mocker.patch("weko_swordserver.views.get_deletion_type", return_value={"deletion_type": "Direct"})
+    mock_soft_delete = mocker.patch("weko_swordserver.views.soft_delete")
+
+    url = url_for("weko_swordserver.delete_object", recid=2000001)
     headers = {
-        "Authorization":"Bearer {}".format(token),
+        "Authorization":"Bearer {}".format(token_direct),
     }
 
     res = client.delete(url, headers=headers)
     assert res.status_code == 204
-    target = PersistentIdentifier.query.filter_by(pid_type="recid",pid_value=delete_item).first()
-    assert target.status == "D"
+    mock_soft_delete.assert_called_once_with("2000001")
 
-    # coverage - Exception
-    with patch("weko_swordserver.views.soft_delete", side_effect=Exception):
-        res = client.delete(url, headers=headers)
-        assert res.status_code == 204
+    # workflow deletion, not have activity scope
+    login_user_via_session(client=client,email=users[1]["email"])
+    mocker.patch("weko_swordserver.views.get_deletion_type", return_value={"deletion_type": "Workflow"})
+
+    url = url_for("weko_swordserver.delete_object", recid=2000001)
+    headers = {
+        "Authorization": "Bearer {}".format(token_direct)
+    }
+    res = client.delete(url, headers=headers)
+    assert res.status_code == 403
+    assert res.json.get("error") == "Not allowed operation in your token scope."
+
+    # workflow deletion, have activity scope
+    login_user_via_session(client=client,email=users[1]["email"])
+    mock_delete_with_activity = mocker.patch("weko_swordserver.views.delete_items_with_activity")
+    headers = {
+        "Authorization": "Bearer {}".format(token_workflow)
+    }
+
+    res = client.delete(url, headers=headers)
+    print(res.json)
+    assert res.status_code == 202
+    mock_delete_with_activity.assert_called_once
+
 
 # def _create_error_document(type, error):
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test__create_error_document -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
@@ -454,404 +688,3 @@ def test_handle_weko_swordserver_exception(client,sessionlifetime):
         res = client.get(url)
         assert res.status_code == 400
         assert res.json == {"type":"BadRequest","msg":"this is test BadRequest exception"}
-
-
-# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test_post_service_document -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
-def test_post_service_document(app,client,db,users,make_crate,esindex,location,index,make_zip,tokens,item_type,doi_identifier,mocker,sword_mapping,sword_client,admin_settings):
-    token_direct = tokens[0]["token"].access_token
-    token_workflow = tokens[1]["token"].access_token
-    token_none = tokens[3]["token"].access_token
-    admin_settings[9].settings = {"data_format": {"TSV": {"item_type": "1", "register_format": "Direct"}, "XML": {"workflow": "1", "item_type": "1", "register_format": "Workflow"}}, "default_format": "TSV"}
-    db.session.commit()
-    url = url_for("weko_swordserver.post_service_document")
-
-    # ケース1: Content-Dispositionが不正
-    login_user_via_session(client=client,email=users[0]["email"])
-    headers = {
-        "Authorization":"Bearer {}".format(token_direct),
-        "Content-Disposition":"inline",
-        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
-    }
-    zip = make_zip()
-    storage=FileStorage(filename="payload.zip",stream=zip)
-    res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-    assert res.status_code == 400
-    assert json.loads(res.data).get("@type") == "BadRequest"
-    assert json.loads(res.data).get("error") == "Cannot get filename by Content-Disposition."
-
-    # ケース2: filenameがNone
-    url = url_for("weko_swordserver.post_service_document")
-    login_user_via_session(client=client,email=users[0]["email"])
-    headers = {
-        "Authorization":"Bearer {}".format(token_direct),
-        "Content-Disposition":"attachment",
-        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
-    }
-    zip = make_zip()
-    storage=FileStorage(filename="payload.zip",stream=zip)
-    res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-    assert res.status_code == 400
-    assert json.loads(res.data).get("@type") == "BadRequest"
-    assert json.loads(res.data).get("error") == "Cannot get filename by Content-Disposition."
-
-    # ケース3: ファイルが見つからない
-    login_user_via_session(client=client,email=users[0]["email"])
-    headers = {
-        "Authorization":"Bearer {}".format(token_direct),
-        "Content-Disposition":"attachment; filename=invalid.txt",
-        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
-    }
-    zip = make_zip()
-    storage=FileStorage(filename="payload.zip",stream=zip)
-    res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-    assert res.status_code == 400
-    assert json.loads(res.data).get("@type") == "BadRequest"
-    assert json.loads(res.data).get("error") == "Not found invalid.txt in request body."
-
-    # ケース4: Digestなし (JSON)
-    app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = True
-    login_user_via_session(client=client,email=users[0]["email"])
-    with patch("weko_swordserver.views.check_import_file_format", return_value="JSON"):
-        zip, _ = make_crate()
-        storage = FileStorage(filename="payload.zip", stream=zip)
-        headers = {
-            "Authorization":"Bearer {}".format(token_direct),
-            "Content-Disposition":"attachment; filename=payload.zip",
-            "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
-        }
-
-        # POSTリクエストを送信
-        res = client.post(
-            url,
-            data=dict(file=storage),
-            content_type="multipart/form-data",
-            headers=headers,
-        )
-
-        assert res.status_code == 412
-        assert json.loads(res.data).get("@type") == "DigestMismatch"
-        assert json.loads(res.data).get("error") == "Request body and digest verification failed."
-
-    # ケース5: DigestがSHA-256でない
-    app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = True
-    with patch("weko_swordserver.views.check_import_file_format", return_value="JSON"):
-        zip, _ = make_crate()
-        storage = FileStorage(filename="payload.zip", stream=zip)
-        headers = {
-            "Authorization":"Bearer {}".format(token_direct),
-            "Content-Disposition":"attachment; filename=payload.zip",
-            "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
-            "Digest":"Md5=1234567890"
-        }
-
-        # POSTリクエストを送信
-        res = client.post(
-            url,
-            data=dict(file=storage),
-            content_type="multipart/form-data",
-            headers=headers,
-        )
-
-        assert res.status_code == 412
-        assert json.loads(res.data).get("@type") == "DigestMismatch"
-        assert json.loads(res.data).get("error") == "Request body and digest verification failed."
-
-    # ケース6: Digest不一致
-    app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = True
-    with patch("weko_swordserver.views.check_import_file_format", return_value="JSON"):
-        zip, _ = make_crate()
-        storage = FileStorage(filename="payload.zip", stream=zip)
-        headers = {
-            "Authorization":"Bearer {}".format(token_direct),
-            "Content-Disposition":"attachment; filename=payload.zip",
-            "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
-            "Digest":"SHA-256=1234567890"
-        }
-
-        # POSTリクエストを送信
-        res = client.post(
-            url,
-            data=dict(file=storage),
-            content_type="multipart/form-data",
-            headers=headers,
-        )
-
-        assert res.status_code == 412
-        assert json.loads(res.data).get("@type") == "DigestMismatch"
-        assert json.loads(res.data).get("error") == "Request body and digest verification failed."
-
-    # ケース6: Digest一致
-    app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = True
-    login_user_via_session(client=client,email=users[0]["email"])
-    with patch("weko_swordserver.views.check_import_file_format", return_value="JSON"):
-        zip, _ = make_crate()
-        storage = FileStorage(filename="payload.zip", stream=zip)
-        headers = {
-            "Authorization":"Bearer {}".format(token_direct),
-            "Content-Disposition":"attachment; filename=payload.zip",
-            "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
-            "Digest":"SHA-256={}".format(calculate_hash(storage))
-        }
-        with patch("weko_swordserver.views.check_import_items", return_value={
-            "data_path": "/tmp/test",
-            "list_record": [{"status": "new"}],
-            "register_type": "Direct"
-        }):
-            with patch("weko_swordserver.views.get_shared_id_from_on_behalf_of", return_value="share_id"):
-                with patch("weko_swordserver.views.import_items_to_system", return_value={"success": True,  "recid": "recid_test"}):
-                    with patch("weko_swordserver.views._get_status_document", return_value={"status": "created"}):
-                        res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-                        assert json.loads(res.data)=={"status": "created"}
-
-    # ケース6: registration typeでエラー　かつ　data_pathが存在している場合
-    app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = True
-    login_user_via_session(client=client,email=users[0]["email"])
-    with patch('shutil.rmtree') as mock_rmtree:
-        with patch("weko_swordserver.views.check_import_file_format", return_value="JSON"):
-            zip, _ = make_crate()
-            storage = FileStorage(filename="payload.zip", stream=zip)
-            headers = {
-                "Authorization":"Bearer {}".format(token_direct),
-                "Content-Disposition":"attachment; filename=payload.zip",
-                "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
-                "Digest":"SHA-256={}".format(calculate_hash(storage))
-            }
-            with patch("weko_swordserver.views.check_import_items", return_value={
-                "data_path": "/tmp/test",
-                "list_record": [{"status": "new"}]
-            }):
-                with patch("os.path.exists", return_value=True):
-                    res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-                    assert res.status_code == 500
-                    assert json.loads(res.data).get("@type") == "ServerError"
-                    assert json.loads(res.data).get("error") == "Invalid register type in admin settings"
-                    mock_rmtree.assert_called_with("/tmp/test")
-
-    # ケース7: registration typeでエラー　かつ　data_pathが存在していない場合
-    login_user_via_session(client=client,email=users[0]["email"])
-    headers = {
-        "Authorization":"Bearer {}".format(token_direct),
-        "Content-Disposition":"attachment; filename=payload.zip",
-        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
-    }
-    zip = make_zip()
-    storage=FileStorage(filename="payload.zip",stream=zip)
-    with patch("weko_swordserver.views.check_import_items", return_value={
-        "data_path": "/tmp/test_data_path",
-        "list_record": [{"status": "new", "item_title": "Test Item"}]
-    }):
-        res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-        assert res.status_code == 500
-        assert json.loads(res.data).get("@type") == "ServerError"
-        assert json.loads(res.data).get("error") == "Invalid register type in admin settings"
-
-
-    # ケース8: check_import_itemsでエラー
-    login_user_via_session(client=client,email=users[0]["email"])
-    headers = {
-        "Authorization":"Bearer {}".format(token_direct),
-        "Content-Disposition":"attachment; filename=payload.zip",
-        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
-    }
-    zip = make_zip()
-    storage=FileStorage(filename="payload.zip",stream=zip)
-    with patch("weko_swordserver.views.check_import_items", return_value={
-        "data_path": "/tmp/test_data_path",
-        "register_type": "Direct",
-        "list_record": [{"errors": "error example", "item_title": "Test Item"}]
-    }):
-        res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-        assert res.status_code == 400
-        assert json.loads(res.data).get("@type") == "ContentMalformed"
-        assert "Error in check_import_items:" in json.loads(res.data).get("error")
-
-    # ケース9: 既存アイテム
-    login_user_via_session(client=client,email=users[0]["email"])
-    headers = {
-        "Authorization":"Bearer {}".format(token_direct),
-        "Content-Disposition":"attachment; filename=payload.zip",
-        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
-    }
-    zip = make_zip()
-    storage=FileStorage(filename="payload.zip",stream=zip)
-    with patch("weko_swordserver.views.check_import_items", return_value={
-        "data_path": "/tmp/test_data_path",
-        "register_type": "Direct",
-        "list_record":[{"status": "existing", "item_title": "Test Item"}],
-    }):
-        res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-        assert res.status_code == 400
-        assert json.loads(res.data).get("@type") == "BadRequest"
-        assert json.loads(res.data).get("error") == "This item is already registered: Test Item"
-
-    # ケース10: Direct - import失敗
-    login_user_via_session(client=client,email=users[0]["email"])
-    headers = {
-        "Authorization":"Bearer {}".format(token_direct),
-        "Content-Disposition":"attachment; filename=payload.zip",
-        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
-    }
-    zip = make_zip()
-    storage=FileStorage(filename="payload.zip",stream=zip)
-    with patch("weko_swordserver.views.check_import_items", return_value={
-        "data_path": "/tmp/test",
-        "list_record": [{"status": "new"}],
-        "register_type": "Direct"
-    }):
-        with patch("weko_swordserver.views.import_items_to_system", return_value={"success": False, "error_id": "err1"}):
-            res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-            assert res.status_code == 500
-            assert json.loads(res.data).get("@type") == "ServerError"
-            assert json.loads(res.data).get("error") == "An error occurred by importing Item!"
-
-    # ケース11: Direct - 成功
-    login_user_via_session(client=client,email=users[0]["email"])
-    headers = {
-        "Authorization":"Bearer {}".format(token_direct),
-        "Content-Disposition":"attachment; filename=payload.zip",
-        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
-    }
-    zip = make_zip()
-    storage=FileStorage(filename="payload.zip",stream=zip)
-    with patch("weko_swordserver.views.check_import_items", return_value={
-        "data_path": "/tmp/test",
-        "list_record": [{"status": "new"}],
-        "register_type": "Direct"
-    }):
-        with patch("weko_swordserver.views.import_items_to_system", return_value={"success": True,  "recid": "recid_test"}):
-            with patch("weko_swordserver.views._get_status_document", return_value={"status": "created"}):
-                res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-                assert json.loads(res.data)=={"status": "created"}
-
-    # # ケース12: Workflow - activity スコープ不足
-    login_user_via_session(client=client,email=users[0]["email"])
-    headers = {
-        "Authorization":"Bearer {}".format(token_direct),
-        "Content-Disposition":"attachment; filename=payload.zip",
-        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
-    }
-    zip = make_zip()
-    storage=FileStorage(filename="payload.zip",stream=zip)
-    with patch("weko_swordserver.views.check_import_items", return_value={
-        "data_path": "/tmp/test",
-        "list_record": [{"status": "new"}],
-        "register_type": "Workflow"
-    }):
-        # POSTリクエストを送信
-        res = client.post(
-            url_for("weko_swordserver.post_service_document"),
-            data=dict(file=storage),
-            content_type="multipart/form-data",
-            headers=headers,
-        )
-        # レスポンスの検証
-        print("res.data:",res.data)
-        assert res.status_code == 403
-        assert res.json.get("@type") == "Forbidden"
-        assert res.json.get("error") == "Not allowed operation in your token scope."
-
-    # ケース13: Workflow - importエラー
-    login_user_via_session(client=client,email=users[0]["email"])
-    headers = {
-        "Authorization":"Bearer {}".format(token_workflow),
-        "Content-Disposition":"attachment; filename=payload.zip",
-        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
-    }
-    zip = make_zip()
-    storage=FileStorage(filename="payload.zip",stream=zip)
-    with patch("weko_swordserver.views.check_import_items", return_value={
-        "data_path": "/tmp/test",
-        "list_record": [{"status": "new"}],
-        "register_type": "Workflow"
-    }):
-        with patch("weko_swordserver.views.import_items_to_activity", return_value=(
-            "http://test_server.localdomain/workflow/activity/detail/A-TEST-00002",
-            "test_recid",
-            "item_login",
-            True
-            )):
-
-            res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-            assert "An error occurred. Please open the following URL to " \
-                "continue with the remaining operations." \
-                "http://test_server.localdomain/workflow/activity/detail/A-TEST-00002: " \
-                "Item id: test_recid." in json.loads(res.data).get("error")
-
-    # ケース14: Workflow - 成功
-    login_user_via_session(client=client,email=users[0]["email"])
-    with patch('shutil.rmtree') as mock_rmtree:
-        mock_rmtree.reset_mock()
-        with patch("weko_swordserver.views.check_import_file_format", return_value="JSON"):
-            zip = make_zip()
-            storage=FileStorage(filename="payload.zip",stream=zip)
-            headers = {
-                "Authorization":"Bearer {}".format(token_workflow),
-                "Content-Disposition":"attachment; filename=payload.zip",
-                "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip",
-                "Digest":"SHA-256={}".format(calculate_hash(storage))
-            }
-            test_dir = "/tmp/test"
-            os.makedirs(test_dir, exist_ok=True)
-            with patch("weko_swordserver.views.check_import_items", return_value={
-                "data_path": test_dir,
-                "list_record": [{"status": "new"}],
-                "register_type": "Workflow"
-            }):
-
-                with patch("weko_swordserver.views.import_items_to_activity", return_value=(
-                    "http://test_server.localdomain/workflow/activity/detail/A-TEST-00002",
-                    "test_recid",
-                    "item_login",
-                    False
-                    )):
-                    res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-                    mock_rmtree.assert_called_with("/tmp/test")
-                    assert "An error occurred. " not in json.loads(res.data)
-                    shutil.rmtree(test_dir)
-
-    # ケース15: 複数なWorkflow - 一番目失敗、二番目成功
-    login_user_via_session(client=client,email=users[0]["email"])
-    headers = {
-        "Authorization":"Bearer {}".format(token_workflow),
-        "Content-Disposition":"attachment; filename=payload.zip",
-        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
-    }
-    zip = make_zip()
-    storage=FileStorage(filename="payload.zip",stream=zip)
-    with patch("weko_swordserver.views.check_import_items", return_value={
-        "data_path": "/tmp/test",
-        "list_record": [{"status": "new"},{"status": "new"}],
-        "register_type": "Workflow"
-    }):
-        with patch("weko_swordserver.views.import_items_to_activity", side_effect=[(
-            "http://test_server.localdomain/workflow/activity/detail/A-TEST-00002",
-            "test_recid",
-            "item_login",
-            False),
-            ("http://test_server.localdomain/workflow/activity/detail/A-TEST-00001",
-            "test_recid",
-            "item_login",
-            True)
-            ]):
-
-            res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-            assert "An error occurred. " not in json.loads(res.data)
-
-    # ケース18: process_item - 予期しない例外
-    login_user_via_session(client=client,email=users[0]["email"])
-    headers = {
-        "Authorization":"Bearer {}".format(token_direct),
-        "Content-Disposition":"attachment; filename=payload.zip",
-        "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
-    }
-    zip = make_zip()
-    storage=FileStorage(filename="payload.zip",stream=zip)
-    with patch("weko_swordserver.views.check_import_items", return_value={
-        "data_path": "/tmp/test",
-        "list_record": [{"status": "new"}],
-        "register_type": "Direct"
-    }):
-        with patch("weko_swordserver.views.import_items_to_system", side_effect=Exception("Exception")):
-            res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
-            assert json.loads(res.data).get("@type") == "NotFound"
-            assert json.loads(res.data).get("error") =="Item not found. (recid=None)"
