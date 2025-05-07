@@ -634,8 +634,13 @@ class WorkFlow(object):
     def get_workflow_by_itemtype_id(self, item_type_id):
         """Get workflow detail info by item type id.
 
-        :param item_type_id:
-        :return:
+        Get workflows which are not deleted by item type id.
+
+        Args:
+            item_type_id (int): item type id.
+
+        Returns:
+            list: workflow object list.
         """
         with db.session.no_autoflush:
             query = _WorkFlow.query.filter_by(
@@ -674,9 +679,13 @@ class WorkFlow(object):
     def reduce_workflows_for_registration(self, workflows):
         """Reduce workflows for registration.
 
-        :param workflows.
+        Get workflows which are not deleted and have item registration action.
 
-        :return: wfs.
+        Args:
+            workflows (list): workflow model object list.
+
+        Returns:
+            list: workflow model object list with item registration action.
         """
         if not isinstance(workflows, list):
             return workflows
@@ -790,11 +799,13 @@ class WorkActivity(object):
     def init_activity(self, activity, community_id=None, item_id=None):
         """Create new activity.
 
-        :param activity:
-        :param community_id:
-        :param item_id:
-        :param for_delete:
-        :return:
+        Args:
+            activity (dict): activity info.
+            community_id (int): community id.
+            item_id (int): item id.
+
+        Returns:
+            Activity: activity object.
         """
         try:
             action_id = 0
@@ -2493,8 +2504,11 @@ class WorkActivity(object):
     def get_activity_by_id(activity_id):
         """Get activity by identifier.
 
-        @param activity_id: Activity identifier.
-        @return:
+        Args:
+            activity_id (str): Activity ID.
+
+        Returns:
+            Activity: Activity object. if not found, return None.
         """
         return _Activity.query.filter_by(activity_id=activity_id).one_or_none()
 
