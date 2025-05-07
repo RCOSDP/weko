@@ -20,7 +20,8 @@ from rocrate.model.contextentity import ContextEntity
 
 from flask import current_app, url_for
 
-from weko_records.api import Mapping, ItemTypes, FeedbackMailList, ItemLink
+from invenio_pidstore.models import PersistentIdentifier
+from weko_records.api import Mapping, ItemTypes, FeedbackMailList, RequestMailList, ItemLink
 from weko_records.models import ItemType
 from weko_records.serializers.utils import get_full_mapping
 
@@ -1539,12 +1540,19 @@ class JsonLdMapper(JsonMapper):
                 mapped_metadata["edit_mode"] = metadata.get(META_KEY)
             elif "wk:feedbackMail" in META_PATH:
                 # TODO: implement handling author_id
-                feedback_mail_list = metadata.get("feedback_mail_list", [])
+                feedback_mail_list = mapped_metadata.get(
+                    "feedback_mail_list", [])
                 feedback_mail_list.append(
                     {"email": metadata.get(META_KEY), "author_id": ""}
                 )
                 mapped_metadata["feedback_mail_list"] = feedback_mail_list
-            # TODO: implement request mail list
+            elif "wk:requestMail" in META_PATH:
+                request_mail_list = mapped_metadata.get(
+                    "request_mail_list", [])
+                request_mail_list.append(
+                    {"email": metadata.get(META_KEY), "author_id": ""}
+                )
+                mapped_metadata["request_mail_list"] = request_mail_list
             elif META_PATH not in properties_mapping:
                 missing_metadata[META_KEY] = metadata[META_KEY]
             else:
@@ -1893,10 +1901,18 @@ class JsonLdMapper(JsonMapper):
             "public" if metadata["publish_status"] == "0" else "private")
         rocrate.root_dataset["wk:index"] = metadata.get("path", [])
         # wk:feedbackMail
+        pid = PersistentIdentifier.get("recid", metadata["control_number"])
         feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(
-            metadata["control_number"]
+            pid.object_uuid
         )
+        feedback_mail_list = [mail.get("email") for mail in feedback_mail_list]
         rocrate.root_dataset["wk:feedbackMail"] = feedback_mail_list
+        # wk:requestMail
+        request_mail_list = RequestMailList.get_mail_list_by_item_id(
+            pid.object_uuid
+        )
+        request_mail_list = [mail.get("email") for mail in request_mail_list]
+        rocrate.root_dataset["wk:requestMail"] = request_mail_list
         rocrate.root_dataset["wk:index"] = metadata.get("path", [])
         rocrate.root_dataset["wk:editMode"] = "Keep"
 
