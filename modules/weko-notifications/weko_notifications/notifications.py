@@ -73,12 +73,12 @@ class Notification(object):
     @property
     def id(self):
         """str: Notification ID."""
-        return self.payload["id"] if "id" in self.payload else None
+        return str(self.payload["id"]) if "id" in self.payload else None
 
     @property
     def updated(self):
         """str: Updated timestamp. """
-        return self.payload["updated"] if "updated" in self.payload else None
+        return str(self.payload["updated"]) if "updated" in self.payload else None
 
     @property
     def current_body(self):
@@ -131,6 +131,7 @@ class Notification(object):
 
         Args:
             payload (dict): Notification payload.
+
         Returns:
             Notification: Notification instance with payload.
         """
@@ -145,9 +146,14 @@ class Notification(object):
 
         Returns:
             Notification: Notification instance with payload.
+
+        Raises:
+            ValidationError: If the payload is not valid.
         """
         from .schema import NotificationSchema
         self.payload = NotificationSchema().load(self.current_body).data
+        self._is_validated = True
+        return self
 
     def set_type(self, activity_type):
         """Set activity type.
@@ -155,6 +161,7 @@ class Notification(object):
         Args:
             activity_type (ActivityType):
                 One of the Activity Stream 2.0 Activity Types
+
         Returns:
             Notification: Notification instance
         """
@@ -172,6 +179,7 @@ class Notification(object):
                 Inbox URL of the origin entity.
             entity_type (list[str] | str):
                 Type of the origin entity.
+
         Returns:
             Notification: Notification instance
         """
@@ -190,6 +198,7 @@ class Notification(object):
                 Inbox URL of the target entity.
             entity_type (list[str] | str):
                 Type of the target entity.
+
         Returns:
             Notification: Notification instance
         """
@@ -216,6 +225,7 @@ class Notification(object):
                 URL of the object entity.
             name (str | None):
                 Name of the object entity.
+
         Returns:
             Notification: Notification instance
         """
@@ -238,6 +248,7 @@ class Notification(object):
                 Type of the actor entity.
             name (str):
                 Name of the actor entity.
+
         Returns:
             Notification: Notification instance
         """
@@ -255,6 +266,7 @@ class Notification(object):
                 IETF Cite As of the context entity. alias of 'ietf:cite-as'.
             entity_type (list[str] | str):
                 Type of the context entity.
+
         Returns:
             Notification: Notification instance
         """

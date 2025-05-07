@@ -80,7 +80,8 @@ class NotificationsUserSettings(db.Model, Timestamp):
         Returns:
             NotificationsUserSettings: Settings.
         """
-        return cls.query.filter_by(user_id=user_id).one_or_none()
+        obj = cls.query.filter_by(user_id=user_id).one_or_none()
+        return obj if isinstance(obj, cls) else None
 
     @classmethod
     def create_or_update(
