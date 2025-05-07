@@ -310,7 +310,7 @@ WEKO_THEME_ADMIN_MENU = [
                 'order': 1
             },
             {
-                'name': 'Activity',
+                'name': 'Activity List',
                 'order': 2
             },
             {

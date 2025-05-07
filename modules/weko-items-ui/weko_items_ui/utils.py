@@ -4108,14 +4108,15 @@ def check_duplicate(data, is_item=True):
     """
     Check if a record or item is duplicate in records_metadata.
 
-    Parameters:
-    - data (dict or str): Metadata dictionary (or JSON string).
-    - is_item (bool): True if checking an item, False if checking a record.
+    Args:
+        data (dict or str): Metadata dictionary (or JSON string).
+        is_item (bool): True if checking an item, False if checking a record.
 
     Returns:
-    - bool: True if duplicate exists, False otherwise.
-    - list: List of duplicate record IDs.
-    - list: List of duplicate record URLs.
+        tuple:
+            - bool: True if duplicate exists, False otherwise.
+            - list: List of duplicate record IDs.
+            - list: List of duplicate record URLs.
     """
     if isinstance(data, str):
         try:

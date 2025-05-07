@@ -35,12 +35,6 @@ from weko_records.serializers.utils import get_mapping
 from weko_workflow.api import WorkActivity
 from weko_workflow.models import ActionJournal
 from weko_workflow.utils import MappingData
-from weko_workspace.utils import (
-    get_jalc_record_data,
-    get_jamas_record_data,
-    get_datacite_record_data,
-    get_cinii_record_data
-)
 
 from . import config
 from .api import CiNiiURL, CrossRefOpenURL
@@ -256,6 +250,12 @@ def get_doi_with_original(doi, item_type_id, original_metadeta=None, **kwargs):
     :param original_metadeta: The original metadata
     :return: doi data
     """
+    from weko_workspace.utils import (
+        get_jalc_record_data,
+        get_jamas_record_data,
+        get_datacite_record_data,
+        get_cinii_record_data
+    )
     record_funcs_map = {
         "JaLC API": get_jalc_record_data,
         "医中誌 Web API": get_jamas_record_data,
