@@ -1671,14 +1671,14 @@ def test_site_license_get_records(app, db, site_license_info, users):
     assert records[0]['domain_name']=='domain'
     assert records[0]['mail_address']=='nii@nii.co.jp'
     assert records[0]['addresses']==[]
-    
+
     records = SiteLicense.get_records(users[0]['obj'])
     assert len(records)==1
     assert records[0]['organization_name']=='test'
     assert records[0]['domain_name']=='domain'
     assert records[0]['mail_address']=='nii@nii.co.jp'
     assert records[0]['addresses']==[]
-    
+
     site_license_info.repository_id = "comm01"
     db.session.commit()
     records = SiteLicense.get_records(users[2]['obj'])
@@ -1734,7 +1734,7 @@ def test_site_license_update(app, db, site_license_info, users):
     assert records[0]['domain_name']=='domain1'
     assert records[0]['mail_address']=='nii@nii.co.jp'
     assert records[0]['addresses']==[{'finish_ip_address': '255.255.255.255', 'start_ip_address': '0.0.0.0'}]
-    
+
     user = users[2]["obj"]
     login_user(user)
     SiteLicense.update(_test_obj)
@@ -2400,16 +2400,16 @@ class TestJsonldMapping:
         # not found
         assert JsonldMapping.get_mapping_by_id(999) is None
 
-        # Retrieval with include_deleted=False
+        # Retrieval with_deleted=False
         obj.is_deleted = True
         db.session.commit()
-        mapping = JsonldMapping.get_mapping_by_id(obj.id, include_deleted=False)
+        mapping = JsonldMapping.get_mapping_by_id(obj.id, with_deleted=False)
         assert mapping is None
 
-        # Retrieve with include_deleted=True
+        # Retrieve with_deleted=True
         obj.is_deleted = True
         db.session.commit()
-        mapping = JsonldMapping.get_mapping_by_id(obj.id, include_deleted=True)
+        mapping = JsonldMapping.get_mapping_by_id(obj.id, with_deleted=True)
         assert mapping.id == obj.id
         assert mapping.is_deleted is True
 

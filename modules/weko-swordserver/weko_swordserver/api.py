@@ -172,14 +172,18 @@ class SwordClient():
             SwordClient: Client object. If not found, return `None`.
         """
         obj = SwordClientModel.query.filter_by(client_id=client_id).one_or_none()
-        return obj
+        return obj if isinstance(obj, SwordClientModel) else None
 
 
     @classmethod
     def get_client_id_all(cls):
-        """Get client_id all. """
+        """Get client_id all.
+
+        Returns:
+            list: List of client_id. If not found, return empty list.
+        """
         query = db.session.query(SwordClientModel.client_id).distinct()
-        return query.all()
+        return [str(client.client_id) for client in query.all()]
 
 
     @classmethod
@@ -190,7 +194,10 @@ class SwordClient():
             mapping_id (int): Mapping ID.
 
         Returns:
-            SwordClient: Client object. If not found, return `None`.
+            SwordClient: Client object. If not found, return empty list.
         """
         query = SwordClientModel.query.filter_by(mapping_id=mapping_id)
-        return query.all()
+        return [
+            client for client in query.all()
+            if isinstance(client, SwordClientModel)
+        ]

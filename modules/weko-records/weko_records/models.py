@@ -369,6 +369,13 @@ class ItemTypeJsonldMapping(db.Model, Timestamp):
         nullable=False)
     """Target itemtype of the mapping."""
 
+    item_type = db.relationship(
+        'ItemType',
+        backref=db.backref('jsonld_mappings', lazy='dynamic'),
+        foreign_keys=[item_type_id]
+    )
+    """Relationship to the ItemType."""
+
     version_id = db.Column(db.Integer, nullable=False)
     """Version id of the mapping."""
 

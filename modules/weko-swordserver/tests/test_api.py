@@ -22,34 +22,6 @@ from .helpers import json_data
 # class SwordClient:
 #  .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordClient -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
 class TestSwordClient:
-    # def get_client_by_id(cls, client_id):
-    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordClient::test_get_client_by_id -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-    def test_get_client_by_id(app, db, sword_client):
-        # direct
-        obj = sword_client[0]["sword_client"]
-        result = SwordClient.get_client_by_id(obj.client_id)
-        assert result == obj
-        assert result.registration_type == "Direct"
-
-        assert SwordClient.get_client_by_id("999") is None
-        assert SwordClient.get_client_by_id(None) is None
-
-        # workflow
-        obj = sword_client[1]["sword_client"]
-        result = SwordClient.get_client_by_id(obj.client_id)
-        assert result == obj
-        assert result.registration_type == "Workflow"
-
-        assert SwordClient.get_client_by_id("999") is None
-        assert SwordClient.get_client_by_id(None) is None
-
-    # def get_client_id_all(cls):
-    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordClient::test_get_client_id_all -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-    def test_get_client_id_all(app, db, sword_client):
-        # direct
-        lst = SwordClient.get_client_id_all()
-        assert len(lst) > 0
-
     # def register(cls, client_id, registration_type_id, mapping_id, workflow_id):
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordClient::test_register -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
     def test_register(app, db, tokens, sword_mapping, workflow):
@@ -230,19 +202,45 @@ class TestSwordClient:
     # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordClient::test_get_client_by_id -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
     def test_get_client_by_id(self, db, sword_client):
         # Get client by valid ID (Direct registration)
-        client = sword_client[0]["sword_client"]
-        result = SwordClient.get_client_by_id(client.client_id)
-        assert result == client
+        obj = sword_client[0]["sword_client"]
+        result = SwordClient.get_client_by_id(obj.client_id)
+        assert result == obj
         assert result.registration_type_id == SwordClientModel.RegistrationType.DIRECT
+        assert result.registration_type == "Direct"
+
 
         # Get client by valid ID (Workflow registration)
-        client = sword_client[1]["sword_client"]
-        result = SwordClient.get_client_by_id(client.client_id)
-        assert result == client
+        obj = sword_client[1]["sword_client"]
+        result = SwordClient.get_client_by_id(obj.client_id)
+        assert result == obj
         assert result.registration_type_id == SwordClientModel.RegistrationType.WORKFLOW
+        assert result.registration_type == "Workflow"
 
         # Get client by non-existent ID
         result = SwordClient.get_client_by_id("non_existent_client_id")
         assert result is None
 
 
+    # def get_client_id_all(cls):
+    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordClient::test_get_client_id_all -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+    def test_get_client_id_all(app, db, sword_client):
+        lst = SwordClient.get_client_id_all()
+        assert len(lst) == 3
+        assert lst[0] == sword_client[0]["sword_client"].client_id
+        assert lst[1] == sword_client[1]["sword_client"].client_id
+        assert lst[2] == sword_client[2]["sword_client"].client_id
+
+
+    # def get_clients_by_mapping_id(cls, mapping_id):
+    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestSwordClient::test_get_clients_by_mapping_id -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+    def test_get_clients_by_mapping_id(app, db, sword_client):
+        # Get clients by valid mapping ID
+        obj = sword_client[0]["sword_client"]
+        result = SwordClient.get_clients_by_mapping_id(obj.mapping_id)
+        assert len(result) == 2
+        assert result[0].client_id == sword_client[0]["sword_client"].client_id
+        assert result[1].client_id == sword_client[2]["sword_client"].client_id
+
+        # Get clients by non-existent mapping ID
+        result = SwordClient.get_clients_by_mapping_id(999)
+        assert len(result) == 0
