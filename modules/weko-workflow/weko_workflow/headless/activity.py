@@ -20,14 +20,12 @@ from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.errors import FileSizeError
 from invenio_files_rest.models import Bucket, ObjectVersion
-from invenio_indexer.api import RecordIndexer
 from invenio_pidstore import current_pidstore
 from invenio_pidstore.models import PersistentIdentifier
 
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_deposit.links import base_factory
 from weko_deposit.serializer import file_uploaded_owner
-from weko_items_autofill.utils import get_workflow_journal
 from weko_items_ui.utils import (
     update_index_tree_for_record, validate_form_input_data, to_files_js
 )
@@ -36,8 +34,6 @@ from weko_items_ui.views import (
 )
 from weko_records.api import ItemTypes, ItemsMetadata
 from weko_records.serializers.utils import get_mapping
-from weko_records_ui.utils import soft_delete
-from weko_search_ui.utils import get_data_by_property
 
 from ..api import Action, WorkActivity, WorkFlow, ActivityStatusPolicy
 from ..errors import WekoWorkflowException
@@ -52,7 +48,6 @@ from ..views import (
     next_action,
     verify_deletion,
     init_activity,
-    get_feedback_maillist,
     lock_activity
 )
 
@@ -111,7 +106,7 @@ class HeadlessActivity(WorkActivity):
 
         actions = Action().get_action_list()
         self._actions = {
-            action.id: action.action_endpoint for action in actions
+            int(action.id): str(action.action_endpoint) for action in actions
         }
 
     @property
@@ -122,7 +117,7 @@ class HeadlessActivity(WorkActivity):
     @property
     def current_action_id(self):
         """int: current action id."""
-        return self._model.action_id if self._model is not None else None
+        return int(self._model.action_id) if self._model is not None else None
 
     @property
     def current_action(self):
@@ -141,11 +136,11 @@ class HeadlessActivity(WorkActivity):
     @property
     def detail(self):
         """str: activity detail URL."""
-        return url_for(
+        return str(url_for(
             "weko_workflow.display_activity",
             activity_id=self.activity_id, community=self.community,
             _external=True
-        ) if self._model is not None else ""
+        )) if self._model is not None else ""
 
     def init_activity(self, user_id, **kwargs):
         """Manual initialization of activity.
@@ -314,7 +309,7 @@ class HeadlessActivity(WorkActivity):
         self._activity_unlock(locked_value)
         self._user_unlock()
 
-        returns = (self.detail, self.current_action, self.recid)
+        returns = (str(self.detail), self.current_action, str(self.recid))
 
         self.end()
 

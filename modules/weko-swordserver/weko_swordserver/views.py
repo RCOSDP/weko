@@ -264,7 +264,7 @@ def post_service_document():
         and current_app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"]
     ):
         if (
-            digest is None
+            not isinstance(digest, str)
             or not digest.startswith("SHA-256=")
             or not is_valid_file_hash(digest.split("SHA-256=")[-1], file)
         ):
@@ -306,7 +306,7 @@ def post_service_document():
         )
 
     # Validate items in the check result
-    for item in check_result.get("list_record", [{}]):
+    for item in check_result.get("list_record") or [{}]:
         if not item or item.get("errors"):
             error_msg = (
                 ", ".join(item.get("errors"))
@@ -323,20 +323,21 @@ def post_service_document():
                 f"This item is already registered: {item.get('item_title')}"
             )
             raise WekoSwordserverException(
-                f"This item is already registered: {item.get('item_title')}",
+                f"This item is already registered: {item.get('item_title')}.",
                 ErrorType.BadRequest,
             )
 
-        from weko_items_ui.utils import check_duplicate
-        result, list_id, list_url = check_duplicate(item["metadata"], is_item=True)
-        if check_result.get("duplicate_check", False) and result:
-            current_app.logger.error(
-                f"New item appears to be a duplicate: {list_id}"
-            )
-            raise WekoSwordserverException(
-                f"Some similar items are already registered: {list_url}",
-                ErrorType.BadRequest,
-            )
+        if check_result.get("duplicate_check", False):
+            from weko_items_ui.utils import check_duplicate
+            result, list_id, list_url = check_duplicate(item["metadata"], is_item=True)
+            if result:
+                current_app.logger.error(
+                    f"New item appears to be a duplicate: {list_id}"
+                )
+                raise WekoSwordserverException(
+                    f"Some similar items are already registered: {list_url}.",
+                    ErrorType.BadRequest,
+                )
 
     # Prepare request information
     owner = -1
@@ -362,7 +363,7 @@ def post_service_document():
         Returns:
             tuple: A tuple containing the response and the record ID.
         """
-        activity_id, recid, error = None, None, False
+        activity_id, recid, error = None, None, None
         if register_type == "Direct":
             import_result = import_items_to_system(
                 item, request_info=request_info
@@ -371,9 +372,9 @@ def post_service_document():
                 current_app.logger.error(
                     f"Error in import_items_to_system: {item.get('error_id')}"
                 )
-                error = True
+                error = str(item.get('error_id'))
             else:
-                recid = import_result.get("recid")
+                recid = str(import_result.get("recid"))
                 from weko_items_ui.utils import send_mail_direct_registered
                 send_mail_direct_registered(recid, current_user.id)
 
@@ -381,7 +382,7 @@ def post_service_document():
             url, recid, _ , error = import_items_to_activity(
                 item, request_info=request_info
             )
-            activity_id = url.split("/")[-1]
+            activity_id = str(url.split("/")[-1])
 
         return activity_id, recid, error
 
@@ -400,7 +401,9 @@ def post_service_document():
                 update_item_ids(
                     check_result["list_record"], recid, item.get("_id"))
         except Exception as ex:
-            current_app.logger.error(f"Unexpected error during item import: {ex}")
+            current_app.logger.error(f"Unexpected error: {ex}")
+            traceback.print_exc()
+            warns.append(("Unexpected error: {ex}", activity_id, recid))
             continue  # Skip to the next iteration
 
     # Clean up temporary directory
@@ -414,7 +417,7 @@ def post_service_document():
     if len(warns) > 0:
         if register_type == "Direct":
             raise WekoSwordserverException(
-                "An error occurred by importing Item!", ErrorType.ServerError)
+                "Failed to import item.", ErrorType.ServerError)
         else:
             error_messages = "; ".join(
                 [
@@ -554,7 +557,7 @@ def put_object(recid):
         and current_app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"]
     ):
         if (
-            digest is None
+            not isinstance(digest, str)
             or not digest.startswith("SHA-256=")
             or not is_valid_file_hash(digest.split("SHA-256=")[-1], file)
         ):
@@ -596,7 +599,7 @@ def put_object(recid):
         )
 
     # only first item
-    item = check_result.get("list_record", [{}])[0]
+    item = (check_result.get("list_record") or [{}])[0]
     if not item or item.get("errors"):
         error_msg = (
             ", ".join(item.get("errors"))
@@ -917,7 +920,6 @@ def delete_object(recid):
     # check if the item exists
     _ = _get_status_document(recid)
     has_update_version_role(current_user)
-
     record = WekoRecord.get_record_by_pid(recid)
     if record.pid_doi:
         current_app.logger.error(f"Cannot delete item with DOI; item id {recid}")

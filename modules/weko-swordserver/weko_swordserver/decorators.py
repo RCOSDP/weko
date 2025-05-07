@@ -136,10 +136,8 @@ def check_package_contents():
             failedContentType = None
             if reqContentType not in acceptArchiveFormat:
                 failedContentType = reqContentType
-                if filesContentType is not None:
+                if filesContentType not in acceptArchiveFormat:
                     failedContentType = filesContentType
-                    if filesContentType in acceptArchiveFormat:
-                        failedContentType = None
             if failedContentType is not None:
                 current_app.logger.error(
                     f"Not accept Content-Type: {failedContentType}"

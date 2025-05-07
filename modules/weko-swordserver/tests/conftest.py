@@ -248,8 +248,8 @@ def db(app):
 @pytest.fixture
 def tokens(app,users,db):
     scopes = [
-        "deposit:write deposit:actions",
-        "deposit:write deposit:actions user:activity",
+        "deposit:write deposit:actions item:create",
+        "deposit:write deposit:actions item:create user:activity",
         "deposit:write user:activity",
         ""
     ]
@@ -275,14 +275,46 @@ def tokens(app,users,db):
             access_token=jwt_create_token(user_id=user_id),
             expires=datetime.now() + timedelta(hours=10),
             is_personal=False,
-            is_internal=True,
+            is_internal=False,
             _scopes=scope
         )
 
         db.session.add(test_client)
         db.session.add(test_token)
-
         tokens.append({"token":test_token, "client":test_client, "scope":scope})
+
+    db.session.commit()
+
+    return tokens
+
+
+@pytest.fixture()
+def personal_token(app, users, db):
+    tokens = []
+
+    for i, user in enumerate(users):
+        user_id = str(user["id"])
+        test_client = Client(
+            client_id=f"dev{user_id}",
+            client_secret=f"dev{user_id}",
+            name="Test name",
+            description="test description",
+            user_id=user_id,
+            is_internal=True,
+        )
+        test_token = Token(
+            client=test_client,
+            user_id=user_id,
+            token_type="bearer",
+            access_token=jwt_create_token(user_id=user_id),
+            expires=datetime.now() + timedelta(hours=10),
+            is_personal=True,
+            is_internal=True,
+        )
+
+        db.session.add(test_client)
+        db.session.add(test_token)
+        tokens.append({"token":test_token, "client":test_client})
 
     db.session.commit()
 
@@ -563,7 +595,7 @@ def records(db,location):
 
 @pytest.fixture()
 def admin_settings(db):
-    settings = list()
+    settings = []
     settings.append(AdminSettings(id=1,name='items_display_settings',settings={"items_display_email": False, "items_search_author": "name", "item_display_open_date": False}))
     settings.append(AdminSettings(id=2,name='storage_check_settings',settings={"day": 0, "cycle": "weekly", "threshold_rate": 80}))
     settings.append(AdminSettings(id=3,name='site_license_mail_settings',settings={"auto_send_flag": False}))
@@ -573,7 +605,7 @@ def admin_settings(db):
     settings.append(AdminSettings(id=7,name="display_stats_settings",settings={"display_stats":False}))
     settings.append(AdminSettings(id=8,name='convert_pdf_settings',settings={"path":"/tmp/file","pdf_ttl":1800}))
     settings.append(AdminSettings(id=9,name="elastic_reindex_settings",settings={"has_errored": False}))
-    settings.append(AdminSettings(id=10,name="sword_api_setting",settings={"data_format": {"TSV": {"item_type": "15", "register_format": "Direct"}, "XML": {"workflow": "-1", "item_type": "15", "register_format": "Workflow"}}, "default_format": "TSV"}))
+    settings.append(AdminSettings(id=10,name="sword_api_setting",settings={"TSV/CSV": {"item_type": "15", "registration_type": "Direct", "duplicate_check": False}, "XML": {"workflow": "1", "item_type": "15", "registration_type": "Workflow", "duplicate_check": False}}))
     db.session.add_all(settings)
     db.session.commit()
     return settings
@@ -951,4 +983,4 @@ def sword_client(db, tokens, sword_mapping, workflow):
         {"sword_client": sword_client1},
         {"sword_client": sword_client2},
         {"sword_client": sword_client3}
-        ]
+    ]
