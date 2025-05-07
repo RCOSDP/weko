@@ -377,6 +377,12 @@ class HeadlessActivity(WorkActivity):
                 action_id=self.current_action_id,
                 feedback_maillist=feedback_maillist
             )
+            request_maillist = metadata.pop("request_mail_list", [])
+            self.create_or_update_activity_request_mail(
+                activity_id=self.activity_id,
+                request_maillist=request_maillist,
+                is_display_request_button=False
+            )
 
             from weko_search_ui.utils import get_data_by_property
             # get value of "Title" from metadata by jpcoar_mapping
