@@ -22,6 +22,7 @@
 import copy
 from functools import wraps
 import json
+import traceback
 
 from flask import current_app
 from flask_babelex import gettext as _
@@ -107,7 +108,8 @@ def get_item_id(item_type_id):
                 if isinstance(jpcoar, dict):
                     _get_jpcoar_mapping(results, jpcoar)
     except Exception as e:
-        current_app.logger.debug(e)
+        current_app.logger.error(e)
+        traceback.print_exc()
         results['error'] = str(e)
 
     return results
@@ -136,7 +138,8 @@ def _get_title_data(jpcoar_data, key, rtn_title):
             #current_app.logger.debug("not contain 'item' in key:{}".format(key))
             return
     except Exception as e:
-        current_app.logger.debug(e)
+        current_app.logger.error(e)
+        traceback.print_exc()
 
 
 def get_title_pubdate_path(item_type_id):
@@ -236,7 +239,9 @@ def get_doi_record_data(doi, item_type_id, activity_id):
     """
     activity = WorkActivity()
     metadata = activity.get_activity_metadata(activity_id)
-    metainfo = json.loads(metadata).get("metainfo", {})
+    if not isinstance(metadata, dict):
+        metadata = json.loads(metadata)
+    metainfo = metadata.get("metainfo", {})
     doi_with_original = get_doi_with_original(doi, item_type_id, metainfo)
     doi_response = dict_to_list(doi_with_original)
     return doi_response
@@ -307,6 +312,7 @@ def get_doi_with_original(doi, item_type_id, original_metadeta=None, **kwargs):
                     "Key '{}' skipped due to an error.".format(key)
                 )
                 record_data_dict = {}
+                traceback.print_exc()
         result_dict = deep_merge(result_dict, record_data_dict)
     return result_dict
 
@@ -545,7 +551,7 @@ def get_cinii_page_data(data):
         result = int(data)
         return pack_single_value_as_dict(str(result))
     except Exception as e:
-        current_app.logger.debug(e)
+        current_app.logger.error(e)
         return pack_single_value_as_dict(None)
 
 
@@ -567,7 +573,7 @@ def get_cinii_numpage(data):
             num_pages = end - start + 1
             return pack_single_value_as_dict(str(num_pages))
         except Exception as e:
-            current_app.logger.debug(e)
+            current_app.logger.error(e)
             return pack_single_value_as_dict(None)
     return {"@value": None}
 
@@ -757,7 +763,7 @@ def get_start_and_end_page(data):
         result = int(data)
         return pack_single_value_as_dict(str(result))
     except ValueError as e:
-        current_app.logger.debug(e)
+        current_app.logger.error(e)
         return pack_single_value_as_dict(None)
 
 
@@ -1107,7 +1113,8 @@ def get_autofill_key_path(schema_form, parent_key, child_key):
                         child_key.split('.'), item_data)
         result['key'] = key_result
     except Exception as e:
-        current_app.logger.debug(e)
+        current_app.logger.error(e)
+        traceback.print_exc()
         result['key'] = None
         result['error'] = str(e)
 
@@ -1384,6 +1391,7 @@ def convert_crossref_xml_data_to_dictionary(api_data, encoding='utf-8'):
         rtn_data['response'] = result
     except Exception as e:
         rtn_data['error'] = str(e)
+        traceback.print_exc()
     return rtn_data
 
 
