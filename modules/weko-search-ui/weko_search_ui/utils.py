@@ -1513,11 +1513,11 @@ def handle_check_exist_record(list_record) -> list:
                     item_exist = WekoRecord.get_record_by_pid(item_id)
                 except PIDDoesNotExistError:
                     item["status"] = None
-                    errors.append(_("Item does not exits in the system"))
+                    errors.append(_("Item does not exist in the system."))
                 if item_exist:
                     if item_exist.pid.is_deleted():
                         item["status"] = None
-                        errors.append(_("Item already DELETED in the system"))
+                        errors.append(_("Item already DELETED in the system."))
                     else:
                         exist_url = (
                                 request.host_url + "records/" + str(item_exist.get("recid"))
