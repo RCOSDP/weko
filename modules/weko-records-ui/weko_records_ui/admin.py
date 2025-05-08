@@ -58,8 +58,13 @@ class ItemSettingView(BaseView):
             check_items_settings()
             email_display_flg = '0'
             search_author_flg = 'name'
-            open_date_display_flg = current_app.config.get(
-                'OPEN_DATE_HIDE_VALUE')
+            open_date_display_flg = current_app.config.get('OPEN_DATE_HIDE_VALUE')
+            is_display_request_form = current_app.config.get('DISPLAY_REQUEST_FORM', False)
+            # Get display request form settings
+            items_display_settings = AdminSettings.get('items_display_settings')
+            if items_display_settings:
+                is_display_request_form = items_display_settings.__dict__.get('display_request_form')
+
             if current_app.config['EMAIL_DISPLAY_FLG']:
                 email_display_flg = '1'
             if 'ITEM_SEARCH_FLG' in current_app.config:
@@ -72,32 +77,37 @@ class ItemSettingView(BaseView):
                 # Process forms
                 form = request.form.get('submit', None)
                 if form == 'set_search_author_form':
-                    settings = AdminSettings.get('items_display_settings')
+                    settings = items_display_settings.__dict__
                     email_display_flg = request.form.get('displayRadios', '0')
-                    if email_display_flg == '1':
-                        settings.items_display_email = True
-                    else:
-                        settings.items_display_email = False
-                    open_date_display_flg = request.form.get(
-                        'openDateDisplayRadios', '0')
-                    if open_date_display_flg == '1':
-                        settings.item_display_open_date = True
-                    else:
-                        settings.item_display_open_date = False
-                    AdminSettings.update('items_display_settings',
-                                         settings.__dict__)
+                    is_email_display = (email_display_flg == '1')
+                    settings['items_display_email'] = is_email_display
+
+                    open_date_display_flg = request.form.get('openDateDisplayRadios', '0')
+                    is_open_date_display = open_date_display_flg == '1'
+                    settings['item_display_open_date'] = is_open_date_display
+
+                    request_form_display_value = request.form.get('requestFormDisplayRadios', '0')
+                    is_display_request_form = request_form_display_value == '1'
+                    settings['display_request_form'] = is_display_request_form
+
+                    AdminSettings.update('items_display_settings', settings)
                     flash(_('Author flag was updated.'), category='success')
 
             return self.render(config.ADMIN_SET_ITEM_TEMPLATE,
                                search_author_flg=search_author_flg,
                                email_display_flg=email_display_flg,
                                open_date_display_flg=open_date_display_flg,
+                               is_request_form_display=is_display_request_form,
                                form=form)
         except BaseException:
+            import traceback
+            exc, val, tb = sys.exc_info()
             current_app.logger.error(
                 'Unexpected error: {}'.format(sys.exc_info()))
+            current_app.logger.error(
+                traceback.format_exception(exc, val, tb)
+            )
         return abort(400)
-
 
 class PdfCoverPageSettingView(BaseView):
     """PdfCover Page settings."""

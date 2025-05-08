@@ -237,6 +237,13 @@ def base_app(instance_path):
         WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME='jpcoar_v1_mapping',
         WEKO_SCHEMA_DDI_SCHEMA_NAME='ddi_mapping',
         INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
+        WEKO_IMPORT_DOI_TYPE = ["JaLC", "Crossref", "DataCite", "NDL JaLC"],
+        IDENTIFIER_GRANT_LIST = [(0, 'Not Grant', ''),
+                         (1, 'JaLC DOI', 'https://doi.org'),
+                         (2, 'JaLC CrossRef DOI', 'https://doi.org'),
+                         (3, 'JaLC DataCite DOI', 'https://doi.org'),
+                         (4, 'NDL JaLC DOI', 'https://doi.org')
+                         ]
     )
     
     app_.config['WEKO_SEARCH_REST_ENDPOINTS']['recid']['search_index']='test-weko'
@@ -513,7 +520,62 @@ def users(app, db):
         {"email": user.email, "id": user.id, "obj": user},
     ]
 
+@pytest.fixture()
+def users_1(app, db):
+    """Create users."""
+    ds = app.extensions["invenio-accounts"].datastore
+    user_count = User.query.filter_by(email="user@test.org").count()
+    if user_count != 1:
+        sysadmin = create_test_user(email="wekosoftware@ivis.co.jp")
+        repoadmin = create_test_user(email="repoadmin@example.org")
+    else:
+        sysadmin = User.query.filter_by(email="wekosoftware@ivis.co.jp").first()
+        repoadmin = User.query.filter_by(email="repoadmin@example.org").first()
 
+    role_count = Role.query.filter_by(name="System Administrator").count()
+    if role_count != 1:
+        sysadmin_role = ds.create_role(name="System Administrator")
+        repoadmin_role = ds.create_role(name="Repository Administrator")
+    else:
+        sysadmin_role = Role.query.filter_by(name="System Administrator").first()
+        repoadmin_role = Role.query.filter_by(name="Repository Administrator").first()
+
+    # Assign access authorization
+    with db.session.begin_nested():
+        action_users = [
+            ActionUsers(action="superuser-access", user=sysadmin),
+        ]
+        db.session.add_all(action_users)
+        action_roles = [
+            ActionRoles(action="superuser-access", role=sysadmin_role),
+            ActionRoles(action="admin-access", role=repoadmin_role),
+            ActionRoles(action="schema-access", role=repoadmin_role),
+            ActionRoles(action="index-tree-access", role=repoadmin_role),
+            ActionRoles(action="indextree-journal-access", role=repoadmin_role),
+            ActionRoles(action="item-type-access", role=repoadmin_role),
+            ActionRoles(action="item-access", role=repoadmin_role),
+            ActionRoles(action="files-rest-bucket-update", role=repoadmin_role),
+            ActionRoles(action="files-rest-object-delete", role=repoadmin_role),
+            ActionRoles(action="files-rest-object-delete-version", role=repoadmin_role),
+            ActionRoles(action="files-rest-object-read", role=repoadmin_role),
+            ActionRoles(action="search-access", role=repoadmin_role),
+            ActionRoles(action="detail-page-acces", role=repoadmin_role),
+            ActionRoles(action="download-original-pdf-access", role=repoadmin_role),
+            ActionRoles(action="author-access", role=repoadmin_role),
+            ActionRoles(action="items-autofill", role=repoadmin_role),
+            ActionRoles(action="stats-api-access", role=repoadmin_role),
+            ActionRoles(action="read-style-action", role=repoadmin_role),
+            ActionRoles(action="update-style-action", role=repoadmin_role),
+            ActionRoles(action="detail-page-acces", role=repoadmin_role),
+        ]
+        db.session.add_all(action_roles)
+        ds.add_role_to_user(sysadmin, sysadmin_role)
+        ds.add_role_to_user(repoadmin, repoadmin_role)
+
+    return [
+        {"email": sysadmin.email, "id": sysadmin.id, "obj": sysadmin},
+        {"email": repoadmin.email, "id": repoadmin.id, "obj": repoadmin}
+    ]
 @pytest.fixture()
 def identifier(db):
     identifier_info = {
@@ -591,6 +653,7 @@ def db_userprofile(app, db):
             p = UserProfile()
             p.user_id = user.id
             p._username = (user.email).split("@")[0]
+            p._displayname = (user.email).split("@")[0]
             profiles[user.email] = p
             db.session.add(p)
     return profiles
@@ -754,6 +817,48 @@ def db_itemtype5(app, db):
     )
 
     item_type_mapping = ItemTypeMapping(id=5,item_type_id=5, mapping=item_type_mapping)
+
+    with db.session.begin_nested():
+        db.session.add(item_type_name)
+        db.session.add(item_type)
+        db.session.add(item_type_mapping)
+
+    return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
+
+@pytest.fixture()
+def db_itemtype6(app, db):
+    item_type_name = ItemTypeName(id=6,
+        name="テストアイテムタイプ6", has_site_license=True, is_active=True
+    )
+    item_type_schema = dict()
+    with open("tests/data/itemtype5_schema.json", "r") as f:
+        item_type_schema = json.load(f)
+
+    item_type_form = dict()
+    with open("tests/data/itemtype5_form.json", "r") as f:
+        item_type_form = json.load(f)
+
+    item_type_render = dict()
+    with open("tests/data/itemtype5_render.json", "r") as f:
+        item_type_render = json.load(f)
+
+    item_type_mapping = dict()
+    with open("tests/data/itemtype5_mapping.json", "r") as f:
+        item_type_mapping = json.load(f)
+
+    item_type = ItemType(
+        id=6,
+        name_id=6,
+        harvesting_type=True,
+        schema=item_type_schema,
+        form=item_type_form,
+        render=item_type_render,
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+
+    item_type_mapping = ItemTypeMapping(id=6,item_type_id=6, mapping=item_type_mapping)
 
     with db.session.begin_nested():
         db.session.add(item_type_name)
@@ -1019,7 +1124,7 @@ def db_workflow(app, db, db_itemtype, users):
         activity_community_id=3,
         activity_confirm_term_of_use=True,
         title="test",
-        shared_user_id=-1,
+        shared_user_ids=[],
         extra_info={},
         action_order=6,
     )
@@ -1081,7 +1186,7 @@ def db_activity(db, db_records, db_itemtype, db_workflow, users):
         ),
         activity_confirm_term_of_use=True,
         title="test",
-        shared_user_id=-1,
+        shared_user_ids=[],
         extra_info={},
         action_order=6,
     )

@@ -955,3 +955,14 @@ msgstr "Maintenance"
 #: msgid "ElasticSearch Index"
 msgid "Admin menu_Maintenance_ElasticSearch Index"
 msgstr "ElasticSearch Index"
+msgid "Password(reconfirmation)"
+msgstr ""
+
+msgid "password rule1"
+msgstr "Please set a password with at least 8 characters."
+
+msgid "password rule2"
+msgstr "Please include at least one uppercase letter, lowercase letter, number, and symbol."
+
+msgid "available characters"
+msgstr "available characters"

@@ -35,25 +35,14 @@
       <label>{{_('Display Email')}}</label>
     </div>
     <div class="col-sm-8">
-      {%- if email_display_flg == '1' %}
-        <label class="radio-inline">
-          <input type="radio" name="displayRadios" id="displayRadios1" value="1" checked>
-          {{_("Display Email")}}
-        </label>
-        <label class="radio-inline">
-          <input type="radio" name="displayRadios" id="displayRadios0" value="0">
-          {{_("Hide Email")}}
-        </label>
-      {%- else %}
-        <label class="radio-inline">
-          <input type="radio" name="displayRadios" id="displayRadios1" value="1">
-          {{_("Display Email")}}
-        </label>
-        <label class="radio-inline">
-          <input type="radio" name="displayRadios" id="displayRadios0" value="0" checked>
-          {{_("Hide Email")}}
-        </label>
-      {%- endif %}
+      <label class="radio-inline">
+        <input type="radio" name="displayRadios" id="displayRadios1" value="1" {{ 'checked' if email_display_flg == '1' }}>
+        {{_("Display Email")}}
+      </label>
+      <label class="radio-inline">
+        <input type="radio" name="displayRadios" id="displayRadios0" value="0" {{ 'checked' if email_display_flg != '1' }}>
+        {{_("Hide Email")}}
+      </label>
     </div>
   </div>
   <div class="row">
@@ -61,25 +50,29 @@
       <label>{{_('Open Date')}}</label>
     </div>
     <div class="col-sm-8">
-      {%- if open_date_display_flg == '1' %}
-        <label class="radio-inline">
-          <input type="radio" name="openDateDisplayRadios" id="openDateDisplayRadios1" value="1" checked>
-          {{_("Display")}}
-        </label>
-        <label class="radio-inline">
-          <input type="radio" name="openDateDisplayRadios" id="openDateDisplayRadios0" value="0">
-          {{_("Hide Open Date")}}
-        </label>
-      {%- else %}
-        <label class="radio-inline">
-          <input type="radio" name="openDateDisplayRadios" id="openDateDisplayRadios1" value="1">
-          {{_("Display")}}
-        </label>
-        <label class="radio-inline">
-          <input type="radio" name="openDateDisplayRadios" id="openDateDisplayRadios0" value="0" checked>
-          {{_("Hide Open Date")}}
-        </label>
-      {%- endif %}
+      <label class="radio-inline">
+        <input type="radio" name="openDateDisplayRadios" id="openDateDisplayRadios1" value="1" {{ 'checked' if open_date_display_flg == '1' }}>
+        {{_("Display")}}
+      </label>
+      <label class="radio-inline">
+        <input type="radio" name="openDateDisplayRadios" id="openDateDisplayRadios0" value="0" {{ 'checked' if open_date_display_flg != '1' }}>
+        {{_("Hide Open Date")}}
+      </label>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-2 text-right">
+      <label>{{_('Request Form')}}</label>
+    </div>
+    <div class="col-sm-8">
+      <label class="radio-inline">
+        <input type="radio" name="requestFormDisplayRadios" id="requestFormDisplayRadios1" value="1" {{ 'checked' if is_request_form_display }}>
+        {{_("Display Request Form")}}
+      </label>
+      <label class="radio-inline">
+        <input type="radio" name="requestFormDisplayRadios" id="requestFormDisplayRadios0" value="0" {{ 'checked' if not is_request_form_display }} >
+        {{_("Hide Request Form")}}
+      </label>
     </div>
   </div>
   <div class="form-actions">

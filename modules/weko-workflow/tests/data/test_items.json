@@ -3,9 +3,9 @@
       "id": "1",
       "pid": { "type": "depid", "value": "1", "revision_id": 0 },
       "lang": "ja",
-      "owner": "1",
-      "title": "title",
+      "owner": 1,
       "owners": [1],
+      "title": "title",
       "status": "published",
       "$schema": "/items/jsonschema/15",
       "pubdate": "2022-08-20",
@@ -15,7 +15,7 @@
         "username": "",
         "displayname": ""
       },
-      "shared_user_id": -1,
+      "shared_user_ids": [],
       "item_1617186331708": [
         { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
       ],
@@ -61,9 +61,9 @@
       "id": "1.0",
       "pid": { "type": "depid", "value": "1.0", "revision_id": 0 },
       "lang": "ja",
-      "owner": "1",
-      "title": "title",
+      "owner": 1,
       "owners": [1],
+      "title": "title",
       "status": "published",
       "$schema": "/items/jsonschema/15",
       "pubdate": "2022-08-20",
@@ -73,7 +73,7 @@
         "username": "",
         "displayname": ""
       },
-      "shared_user_id": -1,
+      "shared_user_ids": [],
       "item_1617186331708": [
         { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
       ],
@@ -86,9 +86,9 @@
       "id": "1.1",
       "pid": { "type": "depid", "value": "1.1", "revision_id": 0 },
       "lang": "ja",
-      "owner": "1",
-      "title": "title",
+      "owner": 1,
       "owners": [1],
+      "title": "title",
       "status": "published",
       "$schema": "/items/jsonschema/15",
       "pubdate": "2022-08-20",
@@ -98,7 +98,7 @@
         "username": "",
         "displayname": ""
       },
-      "shared_user_id": -1,
+      "shared_user_ids": [],
       "item_1617186331708": [
         { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
       ],
@@ -111,7 +111,7 @@
       "id": "2",
       "pid": { "type": "depid", "value": "2", "revision_id": 0 },
       "lang": "ja",
-      "owner": "1",
+      "owner": 1,
       "title": "title2",
       "owners": [1],
       "status": "published",
@@ -123,7 +123,7 @@
         "username": "",
         "displayname": ""
       },
-      "shared_user_id": -1,
+      "shared_user_ids": [],
       "item_1617186331708": [
         { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
       ],
@@ -136,7 +136,7 @@
       "id": "2.0",
       "pid": { "type": "depid", "value": "2.0", "revision_id": 0 },
       "lang": "ja",
-      "owner": "1",
+      "owner": 1,
       "title": "title2",
       "owners": [1],
       "status": "published",
@@ -148,7 +148,7 @@
         "username": "",
         "displayname": ""
       },
-      "shared_user_id": -1,
+      "shared_user_ids": [],
       "item_1617186331708": [
         { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
       ],
@@ -161,7 +161,7 @@
       "id": "2.1",
       "pid": { "type": "depid", "value": "2.1", "revision_id": 0 },
       "lang": "ja",
-      "owner": "1",
+      "owner": 1,
       "title": "title2",
       "owners": [1],
       "status": "published",
@@ -173,7 +173,102 @@
         "username": "",
         "displayname": ""
       },
-      "shared_user_id": -1,
+      "shared_user_ids": [],
+      "item_1617186331708": [
+        { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
+      ],
+      "item_1617258105262": {
+        "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+        "resourcetype": "conference paper"
+      }
+    },
+    {
+      "id": "194",
+      "pid": { "type": "depid", "value": "194", "revision_id": 0 },
+      "lang": "ja",
+      "owner": 1,
+      "title": ["テスト タイトル1"],
+      "owners": [1],
+      "status": "published",
+      "$schema": "/items/jsonschema/15",
+      "pubdate": "2023-04-25",
+      "created_by": 1,
+      "owners_ext": {
+        "email": "wekosoftware@ivis.co.jp", 
+        "username": null,
+        "displayname": "system administrator"
+      },
+      "shared_user_ids": [],
+      "item_1617186331708": {"subitem_1551255647225": "テスト タイトル1", "subitem_1551255648112": "en" },
+      "item_1681954089710": {
+        "attribute_name": "ContentsFile","attribute_type": "file",
+        "attribute_value_mlt": [
+        {
+          "url": {"url": "https://weko3.example.org/record/194/files/W-2023-21.docx"},
+          "date": [{"dateType": "Available","dateValue": "2023-05-26"}],
+          "roles": [{"role": "1"},{"role": "2"}],
+          "format": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "filename": "W-2023-21.docx",
+          "filesize": [{"value": "216 KB"}],
+          "accessdate": "2023-06-10",
+          "accessrole": "open_date",
+          "version_id": "c65ba84c-0a95-4d4a-896f-a7e2f37f397a"
+        }
+        ]
+      }
+    },
+    {
+      "id": "195",
+      "pid": { "type": "depid", "value": "195", "revision_id": 0 },
+      "lang": "ja",
+      "owner": 1,
+      "title": ["テスト タイトル2"],
+      "owners": [1],
+      "status": "published",
+      "$schema": "/items/jsonschema/15",
+      "pubdate": "2023-04-25",
+      "created_by": 1,
+      "owners_ext": {
+        "email": "wekosoftware@ivis.co.jp", 
+        "username": null,
+        "displayname": "system administrator"
+      },
+      "shared_user_ids": [6],
+      "item_1617186331708": {"subitem_1551255647225": "テスト タイトル2", "subitem_1551255648112": "en" },
+      "item_1681954089710": {
+        "attribute_name": "ContentsFile","attribute_type": "file",
+        "attribute_value_mlt": [
+        {
+          "url": {"url": "https://weko3.example.org/record/194/files/W-2023-21.docx"},
+          "date": [{"dateType": "Available","dateValue": "2023-05-26"}],
+          "roles": [{"role": "1"},{"role": "2"}],
+          "format": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "filename": "W-2023-21.docx",
+          "filesize": [{"value": "216 KB"}],
+          "accessdate": "2023-06-10",
+          "accessrole": "open_date",
+          "version_id": "c65ba84c-0a95-4d4a-896f-a7e2f37f397a"
+        }
+        ]
+      }
+    },
+    {
+      "id": "3",
+      "pid": { "type": "depid", "value": "3", "revision_id": 0 },
+      "lang": "ja",
+      "owner": 1,
+      "title": "title3",
+      "owners": [1],
+      "status": "published",
+      "$schema": "/items/jsonschema/15",
+      "pubdate": "2022-08-20",
+      "created_by": 1,
+      "owners_ext": {
+        "email": "",
+        "username": "",
+        "displayname": ""
+      },
+      "shared_user_ids": [1],
       "item_1617186331708": [
         { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
       ],

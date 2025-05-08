@@ -31,13 +31,15 @@ from copy import deepcopy
 from datetime import datetime
 from functools import wraps
 from typing import List
+from urllib.parse import urljoin
 
 import redis
 from redis import sentinel
+from weko_admin.models import AdminSettings
 from weko_workflow.schema.marshmallow import ActionSchema, \
-    ActivitySchema, ResponseMessageSchema, CancelSchema, PasswdSchema, LockSchema,\
+    ActivitySchema, GetRequestMailListSchema, ResponseMessageSchema, CancelSchema, PasswdSchema, LockSchema,\
     ResponseLockSchema, LockedValueSchema, GetFeedbackMailListSchema, SaveActivityResponseSchema,\
-    SaveActivitySchema, CheckApprovalSchema,ResponseUnlockSchema
+    SaveActivitySchema, CheckApprovalSchema,ResponseUnlockSchema, GetRequestMailListSchema, GetItemApplicationSchema
 from weko_workflow.schema.utils import get_schema_action, type_null_check
 from marshmallow.exceptions import ValidationError
 
@@ -45,6 +47,7 @@ from flask import Response, Blueprint, abort, current_app, has_request_context, 
     jsonify, make_response, render_template, request, session, url_for, send_file
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
+from flask_security.utils import hash_password
 from weko_admin.api import validate_csrf_header
 from flask_wtf import FlaskForm
 from invenio_accounts.models import Role, User, userrole
@@ -56,21 +59,20 @@ from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError,PIDDeletedError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_rest import ContentNegotiatedMethodView
-from simplekv.memory.redisstore import RedisStore
-from sqlalchemy import types,or_
+from sqlalchemy import or_
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.sql.expression import cast
 from weko_redis import RedisConnection
 from weko_accounts.api import ShibUser
 from weko_accounts.utils import login_required_customize
 from weko_authors.models import Authors
+from weko_admin.models import AdminSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_deposit.links import base_factory
 from weko_deposit.pidstore import get_record_identifier, \
     get_record_without_version
 from weko_deposit.signals import item_created
 from weko_items_ui.api import item_login
-from weko_records.api import FeedbackMailList, ItemLink
+from weko_records.api import FeedbackMailList, RequestMailList, ItemLink, ItemApplication
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
@@ -88,6 +90,7 @@ from .errors import ActivityBaseRESTError, ActivityNotFoundRESTError, \
     RegisteredActivityNotFoundRESTError
 from .models import ActionStatusPolicy, Activity, ActivityAction, \
     ActivityStatusPolicy, FlowAction, GuestActivity
+from .models import Action as _Action
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .scopes import activity_scope
 from .utils import IdentifierHandle, auto_fill_title, \
@@ -109,8 +112,7 @@ from .utils import IdentifierHandle, auto_fill_title, \
     save_activity_data, saving_doi_pidstore, \
     send_usage_application_mail_for_guest_user, set_files_display_type, \
     update_approval_date, update_cache_data, validate_guest_activity_expired, \
-    validate_guest_activity_token, make_activitylog_tsv, validate_action_role_user, \
-    validate_guest_activity_token, make_activitylog_tsv, \
+    validate_guest_activity_token, get_contributors, make_activitylog_tsv, validate_action_role_user, \
     delete_lock_activity_cache, delete_user_lock_activity_cache
 
 workflow_blueprint = Blueprint(
@@ -192,14 +194,14 @@ def index():
 
     tab = request.args.get('tab',WEKO_WORKFLOW_TODO_TAB)
     if 'community' in request.args:
-        activities, maxpage, size, pages, name_param = activity \
+        activities, maxpage, size, pages, name_param, _ = activity \
             .get_activity_list(conditions=conditions)
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
         if comm is not None:
             community_id = comm.id
     else:
-        activities, maxpage, size, pages, name_param = activity \
+        activities, maxpage, size, pages, name_param, _ = activity \
             .get_activity_list(conditions=conditions)
 
     # WEKO_WORKFOW_PAGINATION_VISIBLE_PAGES = 1
@@ -530,7 +532,6 @@ def init_activity():
         if rtn is None:
             res = ResponseMessageSchema().load({'code':-1,'msg':'can not make activity_id'})
             return jsonify(res.data), 500
-
         url = url_for('weko_workflow.display_activity',
                       activity_id=rtn.activity_id)
         if 'community' in request.args and request.args.get('community') != 'undefined':
@@ -581,7 +582,7 @@ def list_activity():
     getargs = request.args
     conditions = filter_all_condition(getargs)
 
-    activities, maxpage, size, pages, name_param = activity.get_activity_list(
+    activities, maxpage, size, pages, name_param, _ = activity.get_activity_list(
         conditions=conditions)
 
     from weko_theme.utils import get_design_layout
@@ -613,6 +614,11 @@ def init_activity_guest():
         
     """
     post_data = request.get_json()
+
+    password_for_download = ""
+    if post_data.get('password_for_download'):
+        pwd = post_data['password_for_download']
+        password_for_download = hash_password(pwd)
     
     if is_terms_of_use_only(post_data["workflow_id"]):
         # if the workflow is terms_of_use_only(利用規約のみ) ,
@@ -637,7 +643,8 @@ def init_activity_guest():
                     "related_title": post_data.get('guest_item_title'),
                     "file_name": post_data.get('file_name'),
                     "is_restricted_access": True,
-                }
+                    "password_for_download": password_for_download
+                },
             }
             __, tmp_url = init_activity_for_guest_user(data)
             db.session.commit()
@@ -651,13 +658,30 @@ def init_activity_guest():
             return jsonify(msg='Cannot send mail')
 
         if send_usage_application_mail_for_guest_user(
-                post_data.get('guest_mail'), tmp_url):
+                post_data.get('guest_mail'), tmp_url, data.get('extra_info')):
             return jsonify(msg=_('Email is sent successfully.'))
     return jsonify(msg='Cannot send mail')
 
 
 @workflow_blueprint.route('/activity/guest-user/<string:file_name>', methods=['GET'])
 def display_guest_activity(file_name=""):
+    """Display content application activity for guest user.
+    @param file_name:File name
+    @return:
+    """
+    render_guest_workflow(file_name=file_name)
+
+
+@workflow_blueprint.route('/activity/guest-user/recid/<string:record_id>', methods=['GET'])
+def display_guest_activity_item_application(record_id=""):
+    """Display item application activity for guest user.
+    @param record_id:File name
+    @return:
+    """
+    render_guest_workflow(file_name='recid/' + record_id)
+
+
+def render_guest_workflow(file_name=""):
     """Display activity for guest user.
 
     @param file_name:File name
@@ -811,9 +835,9 @@ def display_activity(activity_id="0"):
         activity_id = activity_id.split("?")[0]
 
     action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-        steps, temporary_comment, workflow_detail = \
+        steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = \
         get_activity_display_info(activity_id)
-    if any([s is None for s in [action_endpoint, action_id, activity_detail, cur_action, histories, steps, workflow_detail]]):
+    if any([s is None for s in [action_endpoint, action_id, activity_detail, cur_action, histories, steps, workflow_detail, owner_id, shared_user_ids]]):
         current_app.logger.error("display_activity: can not get activity display info")
         return render_template("weko_theme/error.html",
                 error="can not get data required for rendering")
@@ -862,6 +886,7 @@ def display_activity(activity_id="0"):
     application_item_type = False
     approval_record = []
     cur_step = action_endpoint
+    contributors = []
     data_type = activity_detail.extra_info.get(
         'related_title') if activity_detail.extra_info else None
     endpoints = {}
@@ -953,6 +978,12 @@ def display_activity(activity_id="0"):
 
             links = base_factory(recid)
 
+            # get contributors data
+            # 一時保存データが無い場合は、登録済みアイテムから取得する
+            if len(shared_user_ids) == 0:
+                contributors = get_contributors(recid.pid_value)
+            else:
+                contributors = get_contributors(None, user_id_list_json=shared_user_ids, owner_id=owner_id)
         except PIDDeletedError:
             current_app.logger.debug("PIDDeletedError: {}".format(sys.exc_info()))
             abort(404)
@@ -961,11 +992,14 @@ def display_activity(activity_id="0"):
             abort(404)
         except Exception:
             current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
+    else:
+            # get contributors data
+            # 登録済みアイテムが無い場合は、一時保存データから取得する
+            contributors = get_contributors(None, user_id_list_json=shared_user_ids, owner_id=owner_id)
 
     res_check = check_authority_action(str(activity_id), int(action_id),
                                        is_auto_set_index_action,
                                        activity_detail.action_order)
-
     getargs = request.args
     ctx = {'community': None}
     community_id = ""
@@ -1059,6 +1093,31 @@ def display_activity(activity_id="0"):
     
     form = FlaskForm(request.form)
 
+    approval_preview = False
+    if action_endpoint == 'approval' and current_app.config.get('WEKO_WORKFLOW_APPROVAL_PREVIEW'):
+        approval_preview = workflow_detail.open_restricted
+    
+    approval_pending = False
+    if action_endpoint == 'approval' and workflow_detail.open_restricted:
+        approval_pending = True
+
+    application_approved = False
+    url_to_item_to_apply_for = ''
+    if getattr(activity_detail, 'extra_info', '') and activity_detail.extra_info and action_endpoint == 'end_action':
+        applied_record_id = activity_detail.extra_info.get('record_id', -1)
+        record = WekoRecord.get_record_by_pid(applied_record_id)
+        if record:
+            url_to_item_to_apply_for = urljoin(request.url_root, url_for(
+                'invenio_records_ui.recid', pid_value=record.pid.pid_value))
+            application_approved = True
+
+    # Get Settings
+    enable_request_maillist = False
+    items_display_settings = AdminSettings.get(name='items_display_settings',
+                                        dict_to_object=False)
+    if items_display_settings:
+        enable_request_maillist = items_display_settings.get('display_request_form', False)
+
     return render_template(
         'weko_workflow/activity_detail.html',
         action_endpoint_key=current_app.config.get(
@@ -1067,16 +1126,21 @@ def display_activity(activity_id="0"):
         activity_id=activity_detail.activity_id,
         activity=activity_detail,
         allow_multi_thumbnail=allow_multi_thumbnail,
+        application_approved = application_approved,
         application_item_type=application_item_type,
         approval_email_key=approval_email_key,
+        approval_pending = approval_pending,
+        approval_preview=approval_preview,
         auto_fill_data_type=data_type,
         auto_fill_title=title,
         community_id=community_id,
         cur_step=cur_step,
+        contributors=contributors,
         enable_contributor=current_app.config[
             'WEKO_WORKFLOW_ENABLE_CONTRIBUTOR'],
         enable_feedback_maillist=current_app.config[
             'WEKO_WORKFLOW_ENABLE_FEEDBACK_MAIL'],
+        enable_request_maillist=enable_request_maillist,
         endpoints=endpoints,
         error_type='item_login_error',
         histories=histories,
@@ -1116,6 +1180,7 @@ def display_activity(activity_id="0"):
         temporary_idf_grant=temporary_identifier_select,
         temporary_journal=temporary_journal,
         term_and_condition_content=term_and_condition_content,
+        url_to_item_to_apply_for = url_to_item_to_apply_for,
         user_profile=user_profile,
         form=form,
         **ctx
@@ -1162,18 +1227,29 @@ def check_authority_action(activity_id='0', action_id=0,
         return 0
 
     cur_user = current_user.get_id()
-    if current_app.config['WEKO_WORKFLOW_ENABLE_CONTRIBUTOR']:
-        if action_id!=4:
-           # Check if this activity has contributor equaling to current user
-            im = ItemMetadata.query.filter_by(id=activity.item_id) \
-                .filter(or_(
-                cast(ItemMetadata.json['shared_user_id'], types.INT)== int(cur_user),
-                cast(ItemMetadata.json['weko_shared_id'], types.INT)== int(cur_user))).one_or_none()
-            if im:
-                # There is an ItemMetadata with contributor equaling to current user, allow to access
-                # user, allow to access
+    if current_app.config['WEKO_WORKFLOW_ENABLE_CONTRIBUTOR'] and \
+        action_id != _Action.query.filter_by(action_endpoint='approval').one().id:
+        # item_registrationが完了していないactivityを再編集する場合、item_metadataテーブルにデータはない
+        # その為、workflow_activityテーブルのtemp_dataを参照し、保存されている代理投稿者をチェックする
+        im = ItemMetadata.query.filter_by(id=activity.item_id).one_or_none()
+        if not im and activity.temp_data:
+            temp_data = json.loads(activity.temp_data)
+            if temp_data is not None:
+                activity_shared_user_ids = temp_data.get('metainfo').get("shared_user_ids", [])
+                activity_owner = temp_data.get('metainfo').get("owner", '-1')
+                shared_user_ids = [ int(shared_user_ids_dict['user']) for shared_user_ids_dict in activity_shared_user_ids ]
+                # if exist shared_user_ids or owner allow to access
+                if int(cur_user) in shared_user_ids:
+                    return 0
+                if int(cur_user) == int(activity_owner):
+                    return 0
+        elif im:
+            # Check if this activity has contributor equaling to current user
+            metadata_shared_user_ids = im.json.get('shared_user_ids', [])
+            metadata_owner = int(im.json.get('owner', '-1'))
+            if int(cur_user) in metadata_shared_user_ids:
                 return 0
-            if int(cur_user) == activity.shared_user_id:
+            if int(cur_user) == int(metadata_owner):
                 return 0
     
     # Validation of action role(user)
@@ -1272,6 +1348,11 @@ def next_action(activity_id='0', action_id=0):
         res = ResponseMessageSchema().load({"code":-1, "msg":"argument error"})
         return jsonify(res.data), 500
 
+    action = Action().get_action_detail(action_id)
+    action_endpoint = action.action_endpoint
+
+    current_app.logger.debug('action_endpoint: {0}'.format(action_endpoint))
+
     work_activity = WorkActivity()
     history = WorkActivityHistory()
     activity_detail = work_activity.get_activity_detail(activity_id)
@@ -1287,7 +1368,10 @@ def next_action(activity_id='0', action_id=0):
             current_app.logger.error("next_action: can not get schema by action_id")
             res = ResponseMessageSchema().load({"code":-2, "msg":"can not get schema by action_id"})
             return jsonify(res.data), 500
-        schema_load = schema.load(request.get_json())
+        req_body = request.get_json() or {}
+        if 'action_version' not in req_body:
+            req_body['action_version'] = action.action_version
+        schema_load = schema.load(req_body)
     except ValidationError as err:
         current_app.logger.error("next_action: "+str(err))
         res = ResponseMessageSchema().load({"code":-1, "msg":str(err)})
@@ -1314,11 +1398,6 @@ def next_action(activity_id='0', action_id=0):
         commond=post_json.get('commond'),
         action_order=action_order
     )
-
-    action = Action().get_action_detail(action_id)
-    action_endpoint = action.action_endpoint
-
-    current_app.logger.debug('action_endpoint: {0}'.format(action_endpoint))
 
     if action_endpoint == 'begin_action':
         res = ResponseMessageSchema().load({"code":0, "msg":_("success")})
@@ -1367,6 +1446,12 @@ def next_action(activity_id='0', action_id=0):
         register_hdl(activity_id)
 
     flow = Flow()
+    current_flow_action = flow.get_flow_action_detail(
+        activity_detail.flow_define.flow_id, action_id, action_order)
+    if current_flow_action is None:
+        current_app.logger.error("next_action: can not get current_flow_action")
+        res = ResponseMessageSchema().load({"code":-1, "msg":"can not get curretn_flow_action"})
+        return jsonify(res.data), 500
     next_flow_action = flow.get_next_flow_action(
         activity_detail.flow_define.flow_id, action_id, action_order)
     if not isinstance(next_flow_action, list) or len(next_flow_action) <= 0:
@@ -1379,12 +1464,6 @@ def next_action(activity_id='0', action_id=0):
         0].action_order if action_order else None
     # Start to send mail
     if next_action_endpoint in ['approval' , 'end_action'] and post_json.get('temporary_save') == 0:
-        current_flow_action = flow.get_flow_action_detail(
-            activity_detail.flow_define.flow_id, action_id, action_order)
-        if current_flow_action is None:
-            current_app.logger.error("next_action: can not get current_flow_action")
-            res = ResponseMessageSchema().load({"code":-1, "msg":"can not get curretn_flow_action"})
-            return jsonify(res.data), 500
         next_action_detail = work_activity.get_activity_action_comment(
             activity_id, next_action_id,
             next_action_order)
@@ -1402,12 +1481,16 @@ def next_action(activity_id='0', action_id=0):
             # 利用申請のWF時、申請されたファイルと、そのアイテム内の制限公開ファイルすべてにアクセス権を付与する
             permissions :List[FilePermission] = FilePermission.find_by_activity(activity_id)
             guest_activity :GuestActivity = GuestActivity.find_by_activity_id(activity_id)
-            if permissions and len(permissions) == 1:
-                # 利用申請(ログイン済)なら、WF作成時にFilePermissionが1レコードだけ作られている。
-                url_and_expired_date = grant_access_rights_to_all_open_restricted_files(activity_id,permissions[0] ,activity_detail)
-            elif guest_activity and len(guest_activity) == 1:
-                # 利用申請(ゲスト)なら、WF作成時にFilePermissionが作られていないが、GuestActivityが作られている。
-                url_and_expired_date = grant_access_rights_to_all_open_restricted_files(activity_id,guest_activity[0] ,activity_detail)
+            # validate file name
+            extra_info: dict = deepcopy(activity_detail.extra_info)
+            if extra_info and extra_info.get('file_name') and \
+                not re.fullmatch(r'recid/\d+(?:\.\d+)?', extra_info.get('file_name')):
+                if permissions and len(permissions) == 1:
+                    # 利用申請(ログイン済)なら、WF作成時にFilePermissionが1レコードだけ作られている。
+                    url_and_expired_date = grant_access_rights_to_all_open_restricted_files(activity_id,permissions[0] ,activity_detail)
+                elif guest_activity and len(guest_activity) == 1:
+                    # 利用申請(ゲスト)なら、WF作成時にFilePermissionが作られていないが、GuestActivityが作られている。
+                    url_and_expired_date = grant_access_rights_to_all_open_restricted_files(activity_id,guest_activity[0] ,activity_detail)
 
             
             if not url_and_expired_date:
@@ -1429,13 +1512,28 @@ def next_action(activity_id='0', action_id=0):
                 flow_id=activity_detail.flow_define.flow_id,
                 action_id=next_action_id,
                 action_order=next_action_order).one_or_none()
+            if current_flow_action and current_flow_action.action_roles and current_flow_action.action_roles[0].action_request_mail:
+                is_request_enabled = AdminSettings.get('items_display_settings',{})\
+                    .get("display_request_form", False)
+                #リクエスト機能がAdmin画面で無効化されている場合、メールは送信しない。
+                if is_request_enabled :
+                    next_action_handler = work_activity.get_user_ids_of_request_mails_by_activity_id(activity_id)
+                else:
+                    next_action_handler = []
             if current_flow_action and current_flow_action.action_roles and \
                     current_flow_action.action_roles[0].action_user:
                 next_action_handler = current_flow_action.action_roles[
                     0].action_user
-        process_send_approval_mails(activity_detail, action_mails_setting,
-                                    next_action_handler,
-                                    url_and_expired_date)
+        # next_action_handlerがlist型ならfor文で複数回メール送信する。その際、handlerがロールを満たすか確認する。
+        if type(next_action_handler) == list:
+            for handler in next_action_handler:
+                roles, users = work_activity.get_activity_action_role(activity_id, next_action_id,
+                                                 current_flow_action.action_order)
+                is_approver = work_activity.check_user_role_for_mail(handler, roles)
+                if is_approver:
+                    process_send_approval_mails(activity_detail, action_mails_setting, handler, url_and_expired_date)
+        else:
+            process_send_approval_mails(activity_detail, action_mails_setting, next_action_handler, url_and_expired_date)
     if current_app.config.get(
         'WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL') and \
         current_user.is_authenticated and \
@@ -1501,7 +1599,12 @@ def next_action(activity_id='0', action_id=0):
             activity_id=activity_id,
             action_id=current_app.config.get(
                 "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3))
-        if action_feedbackmail:
+        activity_request_mail = work_activity.get_activity_request_mail(
+            activity_id=activity_id)
+        activity_item_application = work_activity.get_activity_item_application(
+            activity_id=activity_id
+        )
+        if action_feedbackmail or activity_request_mail or activity_item_application:
             item_ids = [item_id]
             if not recid:
                 if ".0" in current_pid.pid_value:
@@ -1522,7 +1625,7 @@ def next_action(activity_id='0', action_id=0):
                     item_ids.append(draft_pid.object_uuid)
                 item_ids.append(pid_without_ver.object_uuid)
 
-            if action_feedbackmail.feedback_maillist:
+            if action_feedbackmail and action_feedbackmail.feedback_maillist:
                 FeedbackMailList.update_by_list_item_id(
                     item_ids=item_ids,
                     feedback_maillist=action_feedbackmail.feedback_maillist
@@ -1530,6 +1633,29 @@ def next_action(activity_id='0', action_id=0):
             else:
                 FeedbackMailList.delete_by_list_item_id(item_ids)
 
+            enable_request_maillist = False
+            items_display_settings = AdminSettings.get(name='items_display_settings',
+                                        dict_to_object=False)
+            if items_display_settings:
+                enable_request_maillist = items_display_settings.get('display_request_form', False)         
+
+            if activity_request_mail and activity_request_mail.request_maillist and enable_request_maillist:
+                RequestMailList.update_by_list_item_id(
+                    item_ids=item_ids,
+                    request_maillist=activity_request_mail.request_maillist
+                )
+            else:
+                RequestMailList.delete_by_list_item_id(item_ids)
+
+            if activity_item_application and activity_item_application.item_application:
+                ItemApplication.update_by_list_item_id(
+                    item_ids=item_ids,
+                    item_application=activity_item_application.item_application
+                )
+            else:
+                ItemApplication.delete_by_list_item_id(item_ids)
+
+        deposit.update_request_mail()
 
     if action_endpoint == 'item_link' and item_id:
 
@@ -1794,7 +1920,11 @@ def previous_action(activity_id='0', action_id=0, req=0):
         res = ResponseMessageSchema().load({"code":-1,"msg":"argument error"})
         return jsonify(res.data), 500
     try:
-        schema_load = ActionSchema().load(request.get_json())
+        action = Action().get_action_detail(action_id)
+        req_body = request.get_json() or {}
+        if 'action_version' not in req_body:
+            req_body['action_version'] = action.action_version
+        schema_load = ActionSchema().load(req_body)
     except ValidationError as err:
         current_app.logger.error("previous_action: "+str(err))
         res = ResponseMessageSchema().load({"code":-1, "msg":str(err)})
@@ -2159,9 +2289,10 @@ def cancel_action(activity_id='0', action_id=0):
         delete_guest_activity(activity_id)
 
     # Remove to file permission
-    permission = FilePermission.find_by_activity(activity_id)
-    if permission:
-        FilePermission.delete_object(permission)
+    permissions = FilePermission.find_by_activity(activity_id)
+    if permissions:
+        for permission in permissions:
+            FilePermission.delete_object(permission)
     
     #  not work 
     cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
@@ -2339,6 +2470,75 @@ def save_feedback_maillist(activity_id='0', action_id='0'):
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     return jsonify(code=-1, msg=_('Error'))
 
+
+@workflow_blueprint.route(
+    '/save_request_maillist/<string:activity_id>/<int:action_id>',
+    methods=['POST'])
+@login_required
+@check_authority
+def save_request_maillist(activity_id='0', action_id='0'):
+    """Save request_mail's list to Activity History models.
+
+    :return:
+    """
+    try:
+        if request.headers['Content-Type'] != 'application/json':
+            """Check header of request"""
+            return jsonify(code=-1, msg=_('Header Error'))
+
+        request_body = request.get_json(force=True)
+        request_maillist = request_body.get('request_maillist', [])
+        is_display_request_button = request_body.get('is_display_request_button', False)
+
+        work_activity = WorkActivity()
+        work_activity.create_or_update_activity_request_mail(
+            activity_id=activity_id,
+            request_maillist=request_maillist,
+            is_display_request_button=is_display_request_button
+        )
+        return jsonify(code=0, msg=_('Success'))
+    except Exception:
+        current_app.logger.exception("Unexpected error occured.")
+    return jsonify(code=-1, msg=_('Error'))
+
+@workflow_blueprint.route(
+    '/save_item_application/<string:activity_id>/<int:action_id>',
+    methods=['POST'])
+@login_required
+@check_authority
+def save_item_application(activity_id='0', action_id='0'):
+
+    try:
+        if request.headers['Content-Type'] != 'application/json':
+            """Check header of request"""
+            return jsonify(code=-1, msg=_('Header Error'))
+
+        request_body = request.get_json(force=True)
+        workflow_for_item_application = request_body.get('workflow_for_item_application', '')
+        terms_without_contents = request_body.get('terms_without_contents', '')
+        is_display_item_application_button = request_body.get('is_display_item_application_button', False)
+        terms_description_without_contents =request_body.get('terms_description_without_contents', '')
+        if terms_description_without_contents:
+            item_application = {
+                "workflow" : workflow_for_item_application,
+                "terms" : terms_without_contents,
+                "termsDescription" : terms_description_without_contents
+            }
+        else:
+            item_application = {
+                "workflow" : workflow_for_item_application,
+                "terms" : terms_without_contents
+            }
+        work_activity = WorkActivity()
+        work_activity.create_or_update_activity_item_application(
+            activity_id=activity_id,
+            item_application=item_application,
+            is_display_item_application_button= is_display_item_application_button
+        )
+        return jsonify(code=0, msg=_('Success'))
+    except Exception:
+        current_app.logger.exception("Unexpected error occured.")
+    return jsonify(code=-1, msg=_('Error'))
 
 @workflow_blueprint.route('/get_feedback_maillist/<string:activity_id>',
                  methods=['GET'])
@@ -2540,6 +2740,105 @@ def user_unlock_activity(activity_id="0"):
     msg = delete_user_lock_activity_cache(activity_id, data)
     res = {"code":200, "msg":msg}
     return jsonify(res), 200
+
+@workflow_blueprint.route('/get_request_maillist/<string:activity_id>', methods=['GET'])
+@login_required
+def get_request_maillist(activity_id='0'):
+    """アクティビティに設定されているリクエストメール送信先の情報を取得して返す
+
+    Args:
+       activity_id (str, optional): 対象のアクティビティID.パスパラメータから取得. Defaults to '0'.
+
+    Returns:
+        object: 設定されているリクエストメール送信先を示すResponse
+               json data validated by ResponseMessageSchema or GetRequestMailListSchema
+
+    Raises:
+        marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
+    ---
+    get:
+        description: "get request maillist"
+        security:
+            - login_required: []
+        responses:
+            200:
+                description: "success"
+                content:
+                    application/json:
+                        schema:
+                            GetRequestMailListSchema
+                        example: {"code":1,"msg":_('Success'),"data":mail_list}
+            400:
+                description: "arguments error"
+                content:
+                    application/json:
+                        schema:
+                            ResponseMessageSchema
+                        example: {"code": -1, "msg": "arguments error"}
+    """
+    check_flg = type_null_check(activity_id, str)
+    if not check_flg:
+        current_app.logger.error("get_request_maillist: argument error")
+        res = ResponseMessageSchema().load({"code":-1, "msg":"arguments error"})
+        return jsonify(res.data), 400
+    try:
+        activity_request_mail = WorkActivity().get_activity_request_mail(
+            activity_id=activity_id)
+        if activity_request_mail:
+            request_mail_list = activity_request_mail.request_maillist
+            if not isinstance(request_mail_list, list):
+                res = ResponseMessageSchema().load({"code":-1,"msg":"mail_list is not list"})
+                return jsonify(res.data), 400
+            for mail in request_mail_list:
+                # replace email address
+                if mail.get('author_id'):
+                    email = Authors.get_first_email_by_id(
+                        mail.get('author_id'))
+                    if email:
+                        mail['email'] = email
+                    else:
+                        request_mail_list.remove(mail)
+            res = GetRequestMailListSchema().load({
+                'code':1,
+                'msg':_('Success'),
+                'request_maillist': request_mail_list,
+                'is_display_request_button': activity_request_mail.display_request_button
+            })
+            return jsonify(res.data), 200
+        else:
+            res = ResponseMessageSchema().load({'code':0,'msg':'Empty!'})
+            return jsonify(res.data), 200
+    except Exception:
+        current_app.logger.exception("Unexpected error:")
+    res = ResponseMessageSchema().load({'code':-1,'msg':_('Error')})
+    return jsonify(res.data), 400
+
+@workflow_blueprint.route('/get_item_application/<string:activity_id>', methods=['GET'])
+@login_required
+def get_item_application(activity_id='0'):
+    check_flg = type_null_check(activity_id, str)
+    if not check_flg:
+        current_app.logger.error("get_request_maillist: argument error")
+        res = ResponseMessageSchema().load({"code":-1, "msg":"arguments error"})
+        return jsonify(res.data), 400
+    try:
+        item_application_and_button = WorkActivity().get_activity_item_application(
+            activity_id=activity_id)
+        if item_application_and_button:
+            res = GetItemApplicationSchema().load({
+                'code':1,
+                'msg':_('Success'),
+                'item_application': item_application_and_button.item_application,
+                'is_display_item_application_button': item_application_and_button.display_item_application_button
+            })
+            return jsonify(res.data), 200
+        else:
+            res = ResponseMessageSchema().load({'code':0,'msg':'Empty!'})
+            return jsonify(res.data), 200
+    except Exception:
+        current_app.logger.exception("Unexpected error:")
+    res = ResponseMessageSchema().load({'code':-1,'msg':_('Error')})
+    return jsonify(res.data), 400
 
 @workflow_blueprint.route('/activity/lock/<string:activity_id>', methods=['POST'])
 @login_required
@@ -2835,7 +3134,7 @@ def save_activity():
                 application/json:
                     schema:
                         SaveActivitySchema
-                    example: {"activity_id": "A-20220830-00001", "title": "title", "shared_user_id": -1}
+                    example: {"activity_id": "A-20220830-00001", "title": "title", "shared_user_ids": []}
         responses:
             200:
                 description: "success"
@@ -2850,7 +3149,7 @@ def save_activity():
                     application/json:
                         schema:
                             ResponseMessageSchema
-                        example: {"code": -1,"msg":"{'shared_user_id': ['Missing data for required field.']}"}
+                        example: {"code": -1,"msg":"{'shared_user_ids': ['Missing data for required field.']}"}
     """
     response = {
         "success": True,
@@ -2891,7 +3190,7 @@ def usage_report():
     conditions['status'] = ['doing']
     activity = WorkActivity()
     # For usage report, just get all activities with provided conditions
-    activities, _, _, _, _ = activity \
+    activities, _, _, _, _, _ = activity \
         .get_activity_list(conditions=conditions, is_get_all=True)
     get_workflow_item_type_names(activities)
     activities_result = []
@@ -2924,9 +3223,15 @@ def get_data_init():
     init_workflows = get_workflows()
     init_roles = get_roles()
     init_terms = get_terms()
+    roles = Role.query.all()
+    logged_roles = []
+    for role in roles:
+        if role.id > 2:
+            logged_roles.append({'id': role.id, 'name': role.name})
     return jsonify(
         init_workflows=init_workflows,
         init_roles=init_roles,
+        logged_roles = logged_roles,
         init_terms=init_terms)
 
 

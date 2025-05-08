@@ -119,6 +119,15 @@ def create_record(record_data, item_data):
     return recid, depid, record, item, parent, doi, deposit
 
 
+def fill_oauth2_headers(json_headers, token):
+    """Create authentication headers (with a valid oauth2 token)."""
+    headers = copy.deepcopy(json_headers)
+    headers.append(
+        ('Authorization', 'Bearer {0}'.format(token.access_token))
+    )
+    return headers
+
+
 def create_activity(db, item_title, recid, path, login_user, shared_user, workflow, status, action_order):
     item_id = uuid.uuid4()
     if action_order > 2:

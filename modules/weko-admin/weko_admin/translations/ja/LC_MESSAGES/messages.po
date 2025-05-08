@@ -1607,6 +1607,12 @@ msgstr "現行"
 msgid "Update"
 msgstr "更新"
 
+msgid "restricted_error_message"
+msgstr "エラーメッセージ"
+
+msgid "password check function"
+msgstr "非ログインユーザーのDLにおけるパスワードチェック機能"
+
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "reindex item_index"
 msgstr "アイテムインデックスの再作成"
@@ -1650,6 +1656,12 @@ msgstr "本処理の実行にはかなりの時間がかかることが予想さ
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "completed"
 msgstr "処理が完了しました。"
+
+#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:37
+msgid ""
+"Please classify a check into the organization send a use of site license "
+"statistics eamil."
+msgstr ""
 
 #~ msgid "Title_Asc"
 #~ msgstr "タイトル（昇順）"
@@ -1768,15 +1780,10 @@ msgstr "処理が完了しました。"
 #~ msgid "Mail Address"
 #~ msgstr "メールアドレス"
 
-#~ msgid ""
-#~ "Please classify a check into the "
-#~ "organization send a use of site "
-#~ "license statistics eamil."
-#~ msgstr ""
-
 #~ msgid "Add_Agg"
 #~ msgstr "追加"
 
 #~ msgid "Facet Search List"
 #~ msgstr "ファセット検索一覧"
+
 

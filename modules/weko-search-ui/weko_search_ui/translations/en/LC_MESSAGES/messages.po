@@ -211,6 +211,10 @@ msgstr ""
 msgid "PID does not meet the conditions."
 msgstr "PID does not meet the conditions."
 
+#: weko_search_ui/utils.py:1915
+msgid "If there is a info of content file, terms of use cannot be set."
+msgstr "If there is a info of content file, terms of use cannot be set."
+
 #: weko_search_ui/utils.py:1955
 msgid "Please specify the date with any format of YYYY-MM-DD, YYYY-MM, YYYY."
 msgstr ""
@@ -256,6 +260,14 @@ msgstr ""
 
 #: weko_search_ui/utils.py:2833
 msgid "The file name specified in {} and {} do not match."
+msgstr ""
+
+#: weko_search_ui/utils.py:3900
+msgid "The specified provinding method does not exist in the system"
+msgstr ""
+
+#: weko_search_ui/utils.py:3910
+msgid "The specified terms does not exist in the system"
 msgstr ""
 
 #: weko_search_ui/static/js/weko_search_ui/moment.min.js:1
@@ -793,6 +805,9 @@ msgstr ""
 #~ msgstr "DetailSearch"
 
 #~ msgid "\"<\" and \">\" are cannot be used for searching."
+#~ msgstr ""
+
+#~ msgid "ERROR:The specified provinding user policy does not exist in the system"
 #~ msgstr ""
 
 #~ msgid "The last item ID"

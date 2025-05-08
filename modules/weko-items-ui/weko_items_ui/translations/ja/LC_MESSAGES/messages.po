@@ -70,6 +70,10 @@ msgstr "レコードが存在しません"
 msgid "Item cannot be edited because the import is in progress."
 msgstr "インポートを実行中のためアイテムの編集はできません。"
 
+#: weko_items_ui/views.py:848
+msgid "Logged-in user cannot be deleted."
+msgstr "ログインユーザーは削除できません。"
+
 #: weko_items_ui/views.py:854
 #, fuzzy
 msgid "This Item is being edited."
@@ -580,33 +584,44 @@ msgstr "インポート"
 #~ msgid "Advisor"
 #~ msgstr "指導教員"
 
-#~ msgid "Guarantor"
-#~ msgstr "保証人"
-
-#~ msgid "Email (Advisor)"
-#~ msgstr "メール（指導教員）"
-
-#~ msgid "Email (Guarantor)"
-#~ msgstr "メール（保証人）"
-
-#~ msgid "Required item is not inputted"
-#~ msgstr "必須項目がありません。"
-
 #~ msgid "Cannot preview because the file size is too large."
 #~ msgstr "ファイルサイズが大きいためプレビューできません。"
 
-#~ msgid "Item cannot be deleted because the import is in progress."
-#~ msgstr "インポートを実行中のためアイテムの削除はできません。"
+msgid "Guarantor"
+msgstr "保証人"
 
-#~ msgid "Guest"
-#~ msgstr "非ログインユーザー"
+msgid "Email (Advisor)"
+msgstr "メール（指導教員）"
 
-#~ msgid "Free Input"
-#~ msgstr "自由入力"
+msgid "Email (Guarantor)"
+msgstr "メール（保証人）"
 
-#~ msgid ""
-#~ "The item cannot be copied because "
-#~ "you do not have permission to view"
-#~ " it."
-#~ msgstr "該当アイテムの参照権限がないため流用できません。"
+msgid "The approver email address cannot be the same as the applicant. Please recheck and input."
+msgstr "承認者のメールアドレスが申請者と同じにすることはできません。ご確認の上、再度入力してください。"
 
+msgid "Required item is not inputted"
+msgstr "必須項目がありません。"
+
+msgid "Item cannot be deleted because the import is in progress."
+msgstr "インポートを実行中のためアイテムの削除はできません。"
+
+msgid "Guest"
+msgstr "非ログインユーザー"
+
+msgid "Free Input"
+msgstr "自由入力"
+
+msgid "The item cannot be copied because you do not have permission to view it."
+msgstr "該当アイテムの参照権限がないため流用できません。"
+
+msgid "Request Mail Destination"
+msgstr "リクエストメール送信先"
+
+msgid "Display Request Mail Button"
+msgstr "リクエストボタンを表示"
+
+msgid "error message for item application"
+msgstr "ファイルアップロード時は、アイテムに対し利用申請ワークフローを設定はできません。"
+
+msgid "Set usage application workflow for item"
+msgstr "アイテムに利用申請ワークフローを設定"

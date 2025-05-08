@@ -5,32 +5,6 @@
     "self": "https://localhost:8443/api/records/1"
   },
   "metadata": {
-    "_comment": [
-      "en_conference paperITEM00000001(public_open_access_simple)",
-      "WEKO-,- ORCID-,- CiNii-,- KAKEN2-,- ORCID-,- CiNii-,- KAKEN2-,- ORCID-,- CiNii-,- KAKEN2",
-      "https://orcid.org/-,- https://ci.nii.ac.jp/-,- https://kaken.nii.ac.jp/-,- https://orcid.org/-,- https://ci.nii.ac.jp/-,- https://kaken.nii.ac.jp/-,- https://orcid.org/-,- https://ci.nii.ac.jp/-,- https://kaken.nii.ac.jp/",
-      "4-,- xxxxxxx-,- xxxxxxx-,- zzzzzzz-,- xxxxxxx-,- xxxxxxx-,- zzzzzzz-,- xxxxxxx-,- xxxxxxx-,- zzzzzzz",
-      "Joho, Taro,Joho, Taro,Joho, Taro",
-      "Joho,Joho,Joho",
-      "Taro,Taro,Taro",
-      "0000000121691048",
-      "ISNI",
-      "http://isni.org/isni/0000000121691048",
-      "University,Source Title,1,111,12,1,3,Degree Name,2021-06-30,xxxxxx,kakenhi,Degree Grantor Name",
-      "Conference Name",
-      "1",
-      "JPN",
-      "Sponsor",
-      "2000",
-      "12",
-      "1",
-      "2020",
-      "12",
-      "2020/12/11",
-      "1",
-      "Conference Venue",
-      "Conference Place"
-    ],
     "_files_info": [
       {
         "extention": "pdf",
@@ -769,7 +743,7 @@
         "ja_conference paperITEM00000001(public_open_access_open_access_simple)"
       ],
       "weko_creator_id": "1",
-      "weko_shared_id": -1
+      "weko_shared_ids": []
     },
     "_oai": {
       "id": "oai:weko3.example.org:00000001",
@@ -913,9 +887,6 @@
     "degreeGrantor": {
       "degreeGrantorName": [
         "Degree Grantor Name"
-      ],
-      "nameIdentifier": [
-        "xxxxxx"
       ]
     },
     "degreeName": [
@@ -923,18 +894,10 @@
     ],
     "description": [
       {
-        "descriptionType": "Abstract",
         "value": "Description\nDescription<br/>Description"
       },
       {
-        "descriptionType": "Abstract",
         "value": "概要\n概要\n概要\n概要"
-      }
-    ],
-    "feedback_mail_list": [
-      {
-        "author_id": "",
-        "email": "wekosoftware@nii.ac.jp"
       }
     ],
     "fundingReference": {
@@ -1051,7 +1014,7 @@
       "1"
     ],
     "weko_creator_id": "1",
-    "weko_shared_id": -1
+    "weko_shared_ids": []
   },
   "updated": "2022-08-26T12:57:36.376731+00:00"
 }

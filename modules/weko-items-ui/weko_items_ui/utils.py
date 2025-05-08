@@ -66,7 +66,7 @@ from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
 from weko_index_tree.utils import check_index_permissions, get_index_id, \
     get_user_roles
-from weko_records.api import FeedbackMailList, ItemTypes, Mapping
+from weko_records.api import FeedbackMailList, RequestMailList, ItemTypes, Mapping, ItemApplication
 from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
 from weko_records_ui.permissions import check_created_id, \
@@ -86,22 +86,28 @@ from weko_workflow.models import Activity, FlowAction, FlowActionRole, \
     FlowDefine
 from weko_workflow.utils import IdentifierHandle
 
+def check_display_shared_user(user_id):
+    for role_id in current_app.config['WEKO_ITEMS_UI_SHARED_USER_ROLE_ID_LIST']:
+        recs = db.session.query(userrole).filter_by(role_id=role_id).all()
+        for rec in recs:
+            if user_id == rec.user_id:
+                return True
+    return False
 
 def get_list_username():
     """Get list username.
 
     Query database to get all available username
     return: list of username
-    TODO: 
     """
-    current_user_id = current_user.get_id()
-    current_app.logger.debug("current_user:{}".format(current_user))
     from weko_user_profiles.models import UserProfile
 
-    users = UserProfile.query.filter(UserProfile.user_id != current_user_id).all()
+    users = UserProfile.query.all()
     result = list()
     for user in users:
-        username = user.get_username
+        if not check_display_shared_user(user.user_id):
+            continue
+        username = user.username
         if username:
             result.append(username)
     
@@ -114,28 +120,14 @@ def get_list_email():
     Query database to get all available email
     return: list of email
     """
-    current_user_id = current_user.get_id()
     result = list()
-    users = User.query.filter(User.id != current_user_id).all()
+    users = User.query.all()
     for user in users:
+        if not check_display_shared_user(user.id):
+            continue
         email = user.email
         if email:
             result.append(email)
-    # try:
-    #     metadata = MetaData()
-    #     metadata.reflect(bind=db.engine)
-    #     table_name = 'accounts_user'
-
-    #     user_table = Table(table_name, metadata)
-    #     record = db.session.query(user_table)
-
-    #     data = record.all()
-
-    #     for item in data:
-    #         if not int(current_user_id) == item[0]:
-    #             result.append(item[1])
-    # except Exception as e:
-    #     result = str(e)
 
     return result
 
@@ -143,7 +135,7 @@ def get_list_email():
 def get_user_info_by_username(username):
     """Get user information by username.
 
-    Query database to get user id by using username
+    Query database to get user id by using displayname
     Get email from database using user id
     Pack response data: user id, user name, email
 
@@ -153,7 +145,7 @@ def get_user_info_by_username(username):
     """
     result = dict()
     try:
-        user = UserProfile.get_by_username(username)
+        user = UserProfile.get_by_displayname(username)
         user_id = user.user_id
 
         metadata = MetaData()
@@ -166,7 +158,7 @@ def get_user_info_by_username(username):
         data = record.all()
 
         for item in data:
-            if item[0] == user_id:
+            if item[0] == user_id and check_display_shared_user(user_id):
                 result['username'] = username
                 result['user_id'] = user_id
                 result['email'] = item[1]
@@ -198,7 +190,7 @@ def validate_user(username, email):
         'error': ''
     }
     try:
-        user = UserProfile.get_by_username(username)
+        user = UserProfile.get_by_displayname(username)
         user_id = 0
 
         metadata = MetaData()
@@ -214,8 +206,10 @@ def validate_user(username, email):
             if item[1] == email:
                 user_id = item[0]
                 break
-
-        if user.user_id == user_id:
+        if user is None:
+            result['error'] = 'User is not exist UserProfile'
+            return result
+        if user.user_id == user_id and check_display_shared_user(user_id):
             user_info = dict()
             user_info['username'] = username
             user_info['user_id'] = user_id
@@ -252,12 +246,12 @@ def get_user_info_by_email(email):
 
         data = record.all()
         for item in data:
-            if item[1] == email:
+            if item[1] == email and check_display_shared_user(item[0]):
                 user = UserProfile.get_by_userid(item[0])
                 if user is None:
                     result['username'] = ""
                 else:
-                    result['username'] = user.get_username
+                    result['username'] = user.username
                 result['user_id'] = item[0]
                 result['email'] = email
                 return result
@@ -266,27 +260,19 @@ def get_user_info_by_email(email):
         result['error'] = str(e)
 
 
-def get_user_information(user_id):
+def get_user_information(user_ids):
     """
-    Get user information user_id.
+    Get user information user_id list.
 
     Query database to get email by using user_id
     Get username from database using user id
-    Pack response data: user id, user name, email
+    Pack response data list: [ user id, user name, email ]
 
     parameter:
-        user_id: The user_id
+        user_ids: The user_id list
     return: response
     """
-    result = {
-        'username': '',
-        'email': '',
-        'fullname': '',
-    }
-    user_info = UserProfile.get_by_userid(user_id)
-    if user_info is not None:
-        result['username'] = user_info.get_username
-        result['fullname'] = user_info.fullname
+    result = []
 
     metadata = MetaData()
     metadata.reflect(bind=db.engine)
@@ -297,13 +283,34 @@ def get_user_information(user_id):
 
     data = record.all()
 
-    for item in data:
-        if item[0] == user_id:
-            result['email'] = item[1]
-            return result
+    if type(user_ids) is int:
+        user_ids = [user_ids]
+    for user_id in user_ids:
+        info = {
+            'userid':'',
+            'username': '',
+            'email': '',
+            'fullname': '',
+            'error': ''
+        }
+        user_info = UserProfile.get_by_userid(user_id)
+        if user_info is not None:
+            info['userid'] = user_id
+            info['username'] = user_info.get_username
+            info['fullname'] = user_info.fullname
+        else:
+            info['userid'] = user_id
+        
+        temp = list(map(lambda x : x[0], data))
+        if not user_id in temp:
+            info['error'] = "The specified user ID is incorrect"
+        
+        for item in data:
+            if int(item[0]) == int(user_id):
+                info['email'] = item[1]
+        result.append(info)
 
     return result
-
 
 def get_user_permission(user_id):
     """
@@ -321,7 +328,6 @@ def get_user_permission(user_id):
     if str(user_id) == current_id:
         return True
     return False
-
 
 def get_current_user():
     """
@@ -1992,6 +1998,33 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
 
             return self.attr_data['feedback_mail_list']['max_size']
 
+        def get_max_ins_request_mail(self):
+            """Get max data each request mail in all exporting records."""
+            largest_size = 1
+            self.attr_data['request_mail_list'] = {'max_size': 0}
+            for record_id, record in self.records.items():
+                if check_created_id(record):
+                    mail_list = RequestMailList.get_mail_list_by_item_id(
+                        record.id)
+                    self.attr_data['request_mail_list'][record_id] = [
+                        mail.get('email') for mail in mail_list]
+                    if len(mail_list) > largest_size:
+                        largest_size = len(mail_list)
+            self.attr_data['request_mail_list']['max_size'] = largest_size
+
+            return self.attr_data['request_mail_list']['max_size']
+        
+        # 利用申請を取得する内部メソッド
+        def get_item_application(self):
+            self.attr_data['item_application']={}
+            for record_id, record in self.records.items():
+                if check_created_id(record):
+                    item_application = ItemApplication.get_item_application_by_item_id(record.id)
+                    self.attr_data['item_application'][record_id] = {'workflow':item_application.get('workflow',""),
+                                                                    'terms':item_application.get('terms',""),
+                                                                    'termsDescription':item_application.get('termsDescription',"")}
+            return 0
+
         def get_max_items(self, item_attrs):
             """Get max data each sub property in all exporting records."""
             max_length = 0
@@ -2180,8 +2213,17 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
         ret.append('.feedback_mail[{}]'.format(i))
         ret_label.append('.FEEDBACK_MAIL[{}]'.format(i))
 
-    ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
-    ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
+    max_request_mail = records.get_max_ins_request_mail()
+    for i in range(max_request_mail):
+        ret.append('.request_mail[{}]'.format(i))
+        ret_label.append('.REQUEST_MAIL[{}]'.format(i))
+
+    records.get_item_application()
+
+    ret.extend(['.item_application.workflow','.item_application.terms','.item_application.termsDescription',
+                '.cnri', '.doi_ra', '.doi', '.edit_mode'])
+    ret_label.extend(['.ITEM_APPLICATION.WORKFLOW','.ITEM_APPLICATION.TERMS','.ITEM_APPLICATION.TERMS_DESCRIPTION',
+                      '.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
     has_pubdate = len([
         record for _, record in records.records.items()
         if record.get('pubdate')
@@ -2210,6 +2252,18 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
         records.attr_output[recid].extend(
             [''] * (max_feedback_mail - len(feedback_mail_list))
         )
+
+        request_mail_list = records.attr_data['request_mail_list'] \
+            .get(recid, [])
+        records.attr_output[recid].extend(request_mail_list)
+        records.attr_output[recid].extend(
+            [''] * (max_request_mail - len(request_mail_list))
+        )
+
+        item_application = records.attr_data['item_application'].get(recid, {})
+        records.attr_output[recid].append(item_application.get('workflow',''))
+        records.attr_output[recid].append(item_application.get('terms',''))
+        records.attr_output[recid].append(item_application.get('termsDescription',''))
 
         pid_cnri = record.pid_cnri
         cnri = ''
@@ -2302,7 +2356,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
     ret_system = []
     ret_option = []
     multiple_option = ['.metadata.path', '.pos_index',
-                       '.feedback_mail', '.file_path', '.thumbnail_path']
+                       '.feedback_mail', '.request_mail', '.file_path', '.thumbnail_path']
     meta_list = item_type.render.get('meta_list', {})
     meta_list.update(item_type.render.get('meta_fix', {}))
     form = item_type.render.get('table_row_map', {}).get('form', {})
@@ -2637,7 +2691,7 @@ def _export_item(record_id,
         exported_item['name'] = 'recid_{}'.format(record_id)
         exported_item['files'] = []
         exported_item['path'] = 'recid_' + str(record_id)
-        exported_item['item_type_id'] = record.get('item_type_id')
+        exported_item['item_type_id'] = str(record.get('item_type_id')) if record.get('item_type_id') else None
         if not records_data:
             records_data = record
         if exported_item['item_type_id']:
@@ -2652,10 +2706,10 @@ def _export_item(record_id,
                                         False, False)
                 record_role_ids = {
                     'weko_creator_id': meta_data.get('weko_creator_id'),
-                    'weko_shared_id': meta_data.get('weko_shared_id')
+                    'weko_shared_ids': meta_data.get('weko_shared_ids')
                 }
                 list_item_role.update(
-                    {exported_item['item_type_id']: record_role_ids})
+                    {str(exported_item['item_type_id']): record_role_ids})
                 if hide_meta_data_for_role(record_role_ids):
                     for hide_key in list_hidden:
                         if isinstance(hide_key, str) \
@@ -3168,7 +3222,7 @@ def hide_meta_data_for_role(record):
     # Item Register users and Sharing users
     if record and current_user.get_id() in [
         record.get('weko_creator_id'),
-            str(record.get('weko_shared_id'))]:
+            str(record.get('weko_shared_ids'))]:
         is_hidden = False
 
     return is_hidden
@@ -3762,14 +3816,15 @@ def save_title(activity_id, request_data):
     """
     activity = WorkActivity()
     db_activity = activity.get_activity_detail(activity_id)
-    item_type_id = db_activity.workflow.itemtype.id
-    if item_type_id:
-        item_type_mapping = Mapping.get_record(item_type_id)
-        # current_app.logger.debug("item_type_mapping:{}".format(item_type_mapping))
-        key_list, key_child_dict = get_key_title_in_item_type_mapping(item_type_mapping)
-    if key_list and key_child_dict:
-        title = get_title_in_request(request_data, key_list, key_child_dict)
-        activity.update_title(activity_id, title)
+    if db_activity and db_activity.workflow:
+        item_type_id = db_activity.workflow.itemtype.id
+        if item_type_id:
+            item_type_mapping = Mapping.get_record(item_type_id)
+            # current_app.logger.debug("item_type_mapping:{}".format(item_type_mapping))
+            key_list, key_child_dict = get_key_title_in_item_type_mapping(item_type_mapping)
+        if key_list and key_child_dict:
+            title = get_title_in_request(request_data, key_list, key_child_dict)
+            activity.update_title(activity_id, title)
 
 
 def get_key_title_in_item_type_mapping(item_type_mapping):
@@ -4036,6 +4091,33 @@ def make_stats_file_with_permission(item_type_id, recids,
 
             return self.attr_data['feedback_mail_list']['max_size']
 
+        def get_max_ins_request_mail(self):
+            """Get max data each request mail in all exporting records."""
+            largest_size = 1
+            self.attr_data['request_mail_list'] = {'max_size': 0}
+            for record_id, record in self.records.items():
+                if permissions['check_created_id'](record):
+                    mail_list = RequestMailList.get_mail_list_by_item_id(
+                        record.id)
+                    self.attr_data['request_mail_list'][record_id] = [
+                        mail.get('email') for mail in mail_list]
+                    if len(mail_list) > largest_size:
+                        largest_size = len(mail_list)
+            self.attr_data['request_mail_list']['max_size'] = largest_size
+
+            return self.attr_data['request_mail_list']['max_size']
+        
+        # 利用申請を取得する内部メソッド
+        def get_item_application(self):
+            self.attr_data['item_application']={}
+            for record_id, record in self.records.items():
+                if permissions['check_created_id'](record):
+                    item_application = ItemApplication.get_item_application_by_item_id(record.id)
+                    self.attr_data['item_application'][record_id] = {'workflow':item_application.get('workflow',""),
+                                                                    'terms':item_application.get('terms',""),
+                                                                    'termsDescription':item_application.get('termsDescription',"")}
+            return 0
+
         def get_max_items(self, item_attrs):
             """Get max data each sub property in all exporting records."""
             max_length = 0
@@ -4223,9 +4305,16 @@ def make_stats_file_with_permission(item_type_id, recids,
     for i in range(max_feedback_mail):
         ret.append('.feedback_mail[{}]'.format(i))
         ret_label.append('.FEEDBACK_MAIL[{}]'.format(i))
+    max_request_mail = records.get_max_ins_request_mail()
+    for i in range(max_request_mail):
+        ret.append('.request_mail[{}]'.format(i))
+        ret_label.append('.REQUEST_MAIL[{}]'.format(i))
 
-    ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
-    ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
+    records.get_item_application()
+    ret.extend(['.item_application.workflow','.item_application.terms','.item_application.termsDescription',
+                '.cnri', '.doi_ra', '.doi', '.edit_mode'])
+    ret_label.extend(['.ITEM_APPLICATION.WORKFLOW','.ITEM_APPLICATION.TERMS','.ITEM_APPLICATION.TERMS_DESCRIPTION',
+                      '.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
     ret.append('.metadata.pubdate')
     ret_label.append('公開日' if
                      permissions['current_language']() == 'ja' else 'PubDate')
@@ -4250,6 +4339,18 @@ def make_stats_file_with_permission(item_type_id, recids,
         records.attr_output[recid].extend(
             [''] * (max_feedback_mail - len(feedback_mail_list))
         )
+
+        request_mail_list = records.attr_data['request_mail_list'] \
+            .get(recid, [])
+        records.attr_output[recid].extend(request_mail_list)
+        records.attr_output[recid].extend(
+            [''] * (max_request_mail - len(request_mail_list))
+        )
+
+        item_application = records.attr_data['item_application'].get(recid, {})
+        records.attr_output[recid].append(item_application.get('workflow',''))
+        records.attr_output[recid].append(item_application.get('terms',''))
+        records.attr_output[recid].append(item_application.get('termsDescription',''))
 
         pid_cnri = record.pid_cnri
         cnri = ''
@@ -4346,7 +4447,7 @@ def make_stats_file_with_permission(item_type_id, recids,
     ret_system = []
     ret_option = []
     multiple_option = ['.metadata.path', '.pos_index',
-                       '.feedback_mail', '.file_path', '.thumbnail_path']
+                       '.feedback_mail', '.request_mail', '.file_path', '.thumbnail_path']
     meta_list = item_type.get('meta_list', {})
     meta_list.update(item_type.get('meta_fix', {}))
     form = item_type.get('table_row_map', {}).get('form', {})

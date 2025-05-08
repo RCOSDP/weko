@@ -46,6 +46,8 @@
     {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
     {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
     {% assets "weko_items_ui_feedback_maillist_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+    {% assets "weko_items_ui_request_maillist_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+    {% assets "weko_items_ui_no_file_approval_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
     {{ super() }}
     {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
     {%- if need_thumbnail %}
@@ -174,7 +176,7 @@
                 </div>
                 </div>
               {%- endif %}
-              <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+              <div id="weko_records_ctrl" ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                 {%- if is_show_autofill_metadata %}
                 <div class="row row-4">
                   <div class="col-sm-12">
@@ -203,7 +205,7 @@
                       <div class="panel-heading">
                         <h3 class="panel-title">Contributor</h3>
                       </div>
-                      <div class="panel-body panel-body2">    
+                      <div class="panel-body panel-body2">
                           <div class="row row-4" id="radio_form_share">
                             <div class="radio">
                               <label>
@@ -211,30 +213,29 @@
                                 <br><label><input type="radio" role="presentation" onchange="handleSharePermission(this.value)" name="checkedSharePermiss" id="input" value="other_user" class="other_user_rad">Other user</label>
                             </div>
                           </div>
-                          <div class="form_share_permission">     
-                            <div class="row row-4" id="pd_username">
-                              <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_username">
-                                <label for="share_username">Username </label>
-                              </div>
-                              <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
-                                <div class="autocomplete">
-                                    <input id="share_username" autocomplete="off" type="text" name="share_username" placeholder="Username" class="form-control"  onclick="get_search_data('username')">
-                                    <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" id="id_spinners_username"></span>
-                                  </div>
+                          <div class="form_share_permission">
+                            <div class="radio" id="id_contributor_list">
+                            {% with users = contributors %}
+                              {% if users is none or users|length == 0 %}
+                                <div id="contributor_new_row_0">
+                                  {% with default_id = '0_0' %}
+                                    {% include 'weko_items_ui/iframe/item_edit_contributor_new_row.html' %}
+                                  {% endwith %}
+                                </div>
+                              {% else %}
+                                {% include 'weko_items_ui/iframe/item_edit_contributor.html' %}
+                              {% endif %}
+                            {% endwith %}
+                              <div id="contributor_new_row" style="display: none;">
+                                {% with default_id = '0' %}
+                                  {% include 'weko_items_ui/iframe/item_edit_contributor_new_row.html' %}
+                                {% endwith %}
                               </div>
                             </div>
-                            <div class="row row-4">
-                              <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_email">
-                                <label for="share_email">Email </label>
-                              </div>
-                              <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
-                                <div class="autocomplete">
-                                    <input id="share_email" autocomplete="off" type="text" name="share_email" placeholder="Email" class="form-control" onclick="get_search_data('email')">
-                                    <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" id="id_spinners_email"></span>
-                                </div>
-                              </div>
-                            </div>      
-                          </div>             
+                            <button onclick="addUser()" type="button" class="btn btn-success pull-right clearfix">
+                              <i class="glyphicon glyphicon-plus"></i>New
+                            </button>
+                          </div>
                         </div>
                     </div>
                   </div>
@@ -279,7 +280,10 @@
                   </invenio-records-form>
                   {%- block feedback_mail_list %}
                     <div id="react"></div>
+                    <div id="request-maillist"></div>
                     <input id="component-search-email-name" type="hidden" value="{{_('Feedback Mail Destination')}}" />
+                    <input id="enable-request-email-checkbox-label" type="hidden" value="{{_('Display Request Mail Button')}}" />
+                    <input id="request-email-list-label" type="hidden" value="{{_('Request Mail Destination')}}" />
                     <input id="open-modal-search-button-name" type="hidden" value="{{_('From author DB')}}" />
                     <input id="delete-button-name" type="hidden" value="{{_('Delete')}}" />
                     <input id="input-text-placeholder" type="hidden" value="{{_('Input text')}}" />
@@ -291,6 +295,14 @@
                     <input id="mail-address-label" type="hidden" value="{{_('Mail address')}}" />
                     <input id="import-button-name" type="hidden" value="{{_('Feedback Mail Import')}}" />
                   {%- endblock feedback_mail_list %}
+
+                  {%- block none_contents_approval %}
+                  <div id="none-contents-approval"></div>
+                  <input id="no_file_approval_checkbox_label" type="hidden" value="{{_('Set usage application workflow for item')}}" />
+                  <input id="no_file_approval_label" type="hidden" value="{{_('WorkFlow')}}" />
+                  <input id="terms_and_conditions_label" type="hidden" value="{{_('Terms and Conditions')}}" />
+                  <input id="invalid-item-application-format" type="hidden" value="{{_('error message for item application')}}" />                  
+                  {%- endblock none_contents_approval %}
 
                   {% if record|length %} <!-- Check Item Registration is edit mode then show version_management -->
                     {%- block radio_version_management %}
@@ -328,13 +340,13 @@
                         {%- endif %}
                         <button ng-disabled="recordsVM.invenioRecordsLoading"
                                 class="btn btn-primary save-button"
-                                ng-click="saveActivityData('{{item_save_uri}}',{{action_id}},'{{enable_contributor}}','{{enable_feedback_maillist}}', true, false);">
+                                ng-click="saveActivityData('{{item_save_uri}}',{{action_id}},'{{enable_contributor}}','{{enable_feedback_maillist}}', '{{enable_request_maillist}}', true, false);">
                               <span class="glyphicon glyphicon-saved"></span>&nbsp
                               {{_('Save')}}
                         </button>
                         <button ng-disabled="recordsVM.invenioRecordsLoading"
                                 class="btn btn-info next-button"
-                                ng-click="updateDataJson('{{activity_id}}',{{steps}},'{{item_save_uri}}',{{action_id}},'{{is_auto_set_index_action}}','{{enable_contributor}}','{{enable_feedback_maillist}}')"> {{_('Next')}}&nbsp
+                                ng-click="updateDataJson('{{activity_id}}',{{steps}},'{{item_save_uri}}',{{action_id}},'{{is_auto_set_index_action}}','{{enable_contributor}}','{{enable_feedback_maillist}}', '{{enable_request_maillist}}')"> {{_('Next')}}&nbsp
                         <span class="glyphicon glyphicon-chevron-right"></span>
                         </button>
                       </div>
@@ -448,6 +460,7 @@
           <input type="hidden" id="list_license_data" name="list_license_data" value='{{ list_license_data }}'>
           <input type="hidden" id="application_item_type" name="application_item_type" value='{{application_item_type}}'>
           <input type="hidden" id="enable_feedback_maillist" name="enable_feedback_maillist" value='{{enable_feedback_maillist}}'>
+          <input type="hidden" id="enable_request_maillist" name="enable_request_maillist" value='{{enable_request_maillist}}'/>
           {% set position_err_msg = "Position is being inputted (Only input when selecting 'Others')" %}
           <input type="hidden" id="err_input_other_position" name="err_input_other_position" value='{{_(position_err_msg)}}'>
           <input type="hidden" id="err_position_not_provided" name="err_position_not_provided" value='{{_("Position not provided.")}}'>
@@ -468,6 +481,8 @@
               value="{{_('The following items contains an invalid date format. Please recheck and re-input.')}}">
           <input type="hidden" id="validate_email_register" name="validate_email_register"
               value="{{_('The following email address is not registered in the system. Please recheck and input.')}}">
+          <input type="hidden" id="validate_email_check" name="validate_email_check"
+              value="{{_('The approver email address cannot be the same as the applicant. Please recheck and input.')}}">
           <input type="hidden" id="validate_email_map" name="validate_email_map"
                  value="{{_('Can not found the email address of approval.')}}">
           <input type="hidden" id="validate_email_required" name="validate_email_required"
@@ -487,22 +502,22 @@
             value='{{usage_type}}'>
           <input type="hidden" id="auto_fill_subitem_restricted_access_dataset_usage"
             name="auto_fill_subitem_restricted_access_dataset_usage" value='{{dataset_usage}}'>
-          <input type="hidden" id="auto_fill_subitem_restricted_access_name"
-            name="auto_fill_subitem_restricted_access_name" value='{{usage_data_name}}'>
-          <input type="hidden" id="auto_fill_subitem_restricted_access_mail_address"
-            name="auto_fill_subitem_restricted_access_mail_address" value='{{mail_address}}'>
-          <input type="hidden" id="auto_fill_subitem_restricted_access_university/institution"
-            name="auto_fill_subitem_restricted_access_university/institution"
+          <input type="hidden" id="auto_fill_subitem_fullname"
+            name="auto_fill_subitem_fullname" value='{{usage_data_name}}'>
+          <input type="hidden" id="auto_fill_subitem_mail_address"
+            name="auto_fill_subitem_mail_address" value='{{mail_address}}'>
+          <input type="hidden" id="auto_fill_subitem_university/institution"
+            name="auto_fill_subitem_university/institution"
             value='{{university_institution}}'>
-          <input type="hidden" id="auto_fill_subitem_restricted_access_affiliated_division/department"
-            name="auto_fill_subitem_restricted_access_affiliated_division/department"
+          <input type="hidden" id="auto_fill_subitem_affiliated_division/department"
+            name="auto_fill_subitem_affiliated_division/department"
             value='{{affiliated_division_department}}'>
-          <input type="hidden" id="auto_fill_subitem_restricted_access_position"
-            name="auto_fill_subitem_restricted_access_position" value='{{position}}'>
-          <input type="hidden" id="auto_fill_subitem_restricted_access_position(others)"
-            name="auto_fill_subitem_restricted_access_position(others)" value='{{position_other}}'>
-          <input type="hidden" id="auto_fill_subitem_restricted_access_phone_number"
-            name="auto_fill_subitem_restricted_access_phone_number" value='{{phone_number}}'>
+          <input type="hidden" id="auto_fill_subitem_position"
+            name="auto_fill_subitem_position" value='{{position}}'>
+          <input type="hidden" id="auto_fill_subitem_position(others)"
+            name="auto_fill_subitem_position(others)" value='{{position_other}}'>
+          <input type="hidden" id="auto_fill_subitem_phone_number"
+            name="auto_fill_subitem_phone_number" value='{{phone_number}}'>
           <input type="hidden" id="auto_fill_subitem_restricted_access_usage_report_id"
             name="auto_fill_subitem_restricted_access_usage_report_id" value='{{usage_report_id}}'>
           <input type="hidden" id="auto_fill_subitem_restricted_access_wf_issued_date"

@@ -1002,7 +1002,7 @@ def db_register(app, db):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test', shared_user_id=-1, extra_info={},
+                    title='test', shared_user_ids=[], extra_info={},
                     action_order=6)
     
     with db.session.begin_nested():

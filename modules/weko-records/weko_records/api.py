@@ -41,6 +41,7 @@ from invenio_records.signals import after_record_delete, after_record_insert, \
     before_record_insert, before_record_revert, before_record_update
 from invenio_search import RecordsSearch
 from jsonpatch import apply_patch
+from sqlalchemy import and_, asc, desc, func, or_, not_, cast, String
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import desc
@@ -50,6 +51,8 @@ from weko_authors.models import Authors
 
 from .fetchers import weko_record_fetcher
 from .models import FeedbackMailList as _FeedbackMailList
+from .models import RequestMailList as _RequestMailList
+from .models import ItemApplication as _ItemApplication
 from .models import FileMetadata, ItemMetadata, ItemReference, ItemType
 from .models import ItemTypeEditHistory as ItemTypeEditHistoryModel
 from .models import ItemTypeMapping, ItemTypeName, ItemTypeProperty, \
@@ -155,7 +158,7 @@ class RecordBase(dict):
             raises a :class:`jsonschema.exceptions.ValidationError`.
         """
         if '$schema' in self and self['$schema'] is not None:
-            kwargs['cls'] = kwargs.pop('validator', None)   
+            kwargs['cls'] = kwargs.pop('validator', None)
             _records_state.validate(self, self['$schema'], **kwargs)
 
     def replace_refs(self):
@@ -2409,6 +2412,177 @@ class FeedbackMailList(object):
         for item_id in item_ids:
             cls.delete(item_id)
 
+
+class RequestMailList(object):
+    """Request-Mail List API."""
+
+    @classmethod
+    def update(cls, item_id, request_maillist):
+        """Create a new instance request_mail_list.
+
+        :param item_id: Item Identifier
+        :param request_maillist: list of request mail
+        :return boolean: True if success
+        """
+        try:
+            with db.session.begin_nested():
+                query_object = _RequestMailList.query.filter_by(
+                    item_id=item_id).one_or_none()
+                if not query_object:
+                    query_object = _RequestMailList(
+                        item_id=item_id,
+                        mail_list=request_maillist
+                    )
+                    db.session.add(query_object)
+                else:
+                    query_object.mail_list = request_maillist
+                    db.session.merge(query_object)
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            return False
+        return True
+
+    @classmethod
+    def update_by_list_item_id(cls, item_ids, request_maillist):
+        """Create a new instance reqeust_mail_list.
+
+        :param item_ids: Item Identifiers
+        :param request_maillist: Request mail list
+        """
+        for item_id in item_ids:
+            cls.update(item_id, request_maillist)
+
+    @classmethod
+    def get_mail_list_by_item_id(cls, item_id):
+        """Get a RequestMail list by item_id.
+
+        :param item_id:
+        :return request_mail_list
+
+        """
+        try:
+            with db.session.no_autoflush:
+                query_object = _RequestMailList.query.filter_by(
+                    item_id=item_id).one_or_none()
+                if query_object and query_object.mail_list:
+                    return query_object.mail_list
+                else:
+                    return []
+        except SQLAlchemyError:
+            return []
+
+    @classmethod
+    def get_request_mail_by_mailaddress(cls, address):
+        """Get a RequestMail list by mailaddress
+        :param address: str, mailaddress
+        :return request_mail_list
+        """
+        try:
+            with db.session.no_autoflush:
+                query_object = _RequestMailList.query.filter(
+                    cast(_RequestMailList.mail_list, String).contains('"'+address+'"')).all()
+                if query_object:
+                    return query_object
+                else:
+                    return []
+        except SQLAlchemyError:
+            return []
+
+    @classmethod
+    def delete(cls, item_id):
+        """Delete a request_mail_list by item_id.
+
+        :param item_id: item_id of target request_mail_list
+        :return: bool: True if success
+        """
+        try:
+            cls.delete_without_commit(item_id)
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            return False
+        return True
+
+    @classmethod
+    def delete_without_commit(cls, item_id):
+        """Delete a request_mail_list by item_id without commit.
+
+        :param item_id: item_id of target request_mail_list
+        :return: bool: True if success
+        """
+        with db.session.begin_nested():
+            _RequestMailList.query.filter_by(item_id=item_id).delete()
+
+    @classmethod
+    def delete_by_list_item_id(cls, item_ids):
+        """Delete a request_mail_list by item_id.
+
+        :param item_ids: item_id of target request_mail_list
+        """
+        for item_id in item_ids:
+            cls.delete(item_id)
+
+class ItemApplication(object):
+
+    @classmethod
+    def update(cls, item_id, item_application):
+        try:
+            with db.session.begin_nested():
+                query_object = _ItemApplication.query.filter_by(
+                    item_id=item_id).one_or_none()
+                if not query_object:
+                    query_object = _ItemApplication(
+                        item_id=item_id,
+                        item_application=item_application
+                    )
+                    db.session.add(query_object)
+                else:
+                    query_object.item_application = item_application
+                    db.session.merge(query_object)
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            return False
+        return True
+
+    @classmethod
+    def update_by_list_item_id(cls, item_ids, item_application):
+        for item_id in item_ids:
+            cls.update(item_id, item_application)
+
+    @classmethod
+    def get_item_application_by_item_id(cls, item_id):
+        try:
+            with db.session.no_autoflush:
+                query_object = _ItemApplication.query.filter_by(
+                    item_id=item_id).one_or_none()
+                if query_object and query_object.item_application:
+                    return query_object.item_application
+                else:
+                    return {}
+        except SQLAlchemyError:
+            return {}
+
+    @classmethod
+    def delete(cls, item_id):
+        try:
+            cls.delete_without_commit(item_id)
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            return False
+        return True
+
+    @classmethod
+    def delete_without_commit(cls, item_id):
+        with db.session.begin_nested():
+            _ItemApplication.query.filter_by(item_id=item_id).delete()
+
+    @classmethod
+    def delete_by_list_item_id(cls, item_ids):
+        for item_id in item_ids:
+            cls.delete(item_id)
 
 class ItemLink(object):
     """Item Link API."""
