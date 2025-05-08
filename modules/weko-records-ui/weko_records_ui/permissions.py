@@ -454,6 +454,7 @@ def check_created_id(record):
     is_himself = False
     # Super users
     supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+    comadmin = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
     user_id = current_user.get_id() \
             if current_user and current_user.is_authenticated else None
     if user_id is not None:
@@ -467,7 +468,36 @@ def check_created_id(record):
             # In case of supper user,it's always have permission
             if lst.name in supers:
                 is_himself = True
+            if lst.name in comadmin:
+                if has_comadmin_permission(record):
+                    is_himself = True
     return is_himself
+
+
+def has_comadmin_permission(record):
+    """Check community admin permission.
+
+    Args:
+        record (dict): the record to check edit permission.
+
+    Returns:
+        bool: True is the current user has the edit permission.
+    """
+    from invenio_communities.models import Community
+    from weko_index_tree.api import Indexes
+
+    record_indexes = record.get("path", [])
+    if not record_indexes:
+        return False
+
+    com_list = Community.get_repositories_by_user(current_user)
+    for com in com_list:
+        indexes = set(
+            str(i) for i in Indexes.get_child_list_recursive(com.root_node_id)
+        )
+        if any(str(idx) in indexes for idx in record_indexes):
+            return True
+    return False
 
 
 def check_usage_report_in_permission(permission):
