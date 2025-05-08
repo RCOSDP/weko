@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-search-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-05-08 09:12+0900\n"
+"POT-Creation-Date: 2025-05-08 10:33+0900\n"
 "PO-Revision-Date: 2025-04-09 23:22+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -277,11 +277,11 @@ msgid "Specified URI and system URI do not match."
 msgstr ""
 
 #: weko_search_ui/utils.py:1516
-msgid "Item does not exits in the system"
+msgid "Item does not exist in the system."
 msgstr ""
 
 #: weko_search_ui/utils.py:1520
-msgid "Item already DELETED in the system"
+msgid "Item already DELETED in the system."
 msgstr ""
 
 #: weko_search_ui/utils.py:1533

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-search-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-05-08 09:12+0900\n"
+"POT-Creation-Date: 2025-05-08 10:33+0900\n"
 "PO-Revision-Date: 2025-04-09 22:35+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -277,12 +277,12 @@ msgid "Specified URI and system URI do not match."
 msgstr "指定されたURIとシステムURIが一致しません。"
 
 #: weko_search_ui/utils.py:1516
-msgid "Item does not exits in the system"
+msgid "Item does not exist in the system."
 msgstr "アイテムがシステムに存在しません。"
 
 #: weko_search_ui/utils.py:1520
-msgid "Item already DELETED in the system"
-msgstr "該当アイテムは削除済です。"
+msgid "Item already DELETED in the system."
+msgstr "リンク先アイテムは削除済です。"
 
 #: weko_search_ui/utils.py:1533
 msgid "Please specify either \"Keep\" or \"Upgrade\"."
@@ -1041,10 +1041,4 @@ msgstr "マッピング"
 #: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:96
 msgid "Failed to get mapping list."
 msgstr "マッピング定義リストの取得に失敗しました。"
-
-#~ msgid "wk:metadata_replace flag cannot be used in RO-Crate Import."
-#~ msgstr ""
-
-#~ msgid "wk:isSplited flag cannot be used in RO-Crate Import."
-#~ msgstr ""
 
