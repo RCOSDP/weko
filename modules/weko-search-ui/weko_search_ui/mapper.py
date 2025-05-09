@@ -22,7 +22,6 @@ from flask import current_app, url_for
 
 from invenio_pidstore.models import PersistentIdentifier
 from weko_records.api import Mapping, ItemTypes, FeedbackMailList, RequestMailList, ItemLink
-from weko_records.models import ItemType
 from weko_records.serializers.utils import get_full_mapping
 
 from .config import ROCRATE_METADATA_FILE
