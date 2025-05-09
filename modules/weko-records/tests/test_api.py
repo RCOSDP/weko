@@ -1986,171 +1986,358 @@ def test_request_mail_list_delete(app, db):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_link_update -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_item_link_update(app, db, records):
     """
-    ItemLinkのupdateメソッドをテストする関数。
-    各テストケースで期待データと実際のデータを比較する。
+    test cases for ItemLink.update()
     """
-    # テスト用のレコードを作成
-    org_item_id = "999"
-    dst_item_id_1 = "1"
-    dst_item_id_2 = "2"
-    dst_item_id_3 = "3"
+    with app.test_request_context():
+        with app.test_client() as client:
+            # test case with integer id
+            # src item pid
+            org_item_id = "999"
+            # dst item pid
+            dst_item_id_1 = "1"
+            dst_item_id_1_0 = "1.0"
+            dst_item_id_1_1 = "1.1"
+            dst_item_id_2 = "2"
+            dst_item_id_2_0 = "2.0"
+            dst_item_id_2_1 = "2.1"
+            dst_item_id_3 = "3"
+            dst_item_id_3_0 = "3.0"
+            dst_item_id_3_1 = "3.1"
 
-    # テスト対象のインスタンスを作成
-    instance = ItemLink(recid=org_item_id)
+            # create test instance
+            instance = ItemLink(recid=org_item_id)
 
-    #テストケース 1: 新しいリレーションシップの作成
-    items = [
-        {'item_id': dst_item_id_1, 'sele_id': 'normal'},
-        {'item_id': dst_item_id_2, 'sele_id': 'isSupplementTo'}
-    ]
-    result = instance.update(items)
-    assert result is None  # エラーが発生しないことを確認
+            # test case 1: create new relation
+            items = [
+                {'item_id': dst_item_id_1, 'sele_id': 'normal'},
+                {'item_id': dst_item_id_2, 'sele_id': 'isSupplementTo'}
+            ]
+            result = instance.update(items)
+            assert result is None
 
-    # 期待データ: 新しいリレーションシップが作成されているか確認
-    expected_relations = [
-        {'src_item_pid': org_item_id, 'dst_item_pid': dst_item_id_1, 'reference_type': 'normal'},
-        {'src_item_pid': org_item_id, 'dst_item_pid': dst_item_id_2, 'reference_type': 'isSupplementTo'},
-        {'src_item_pid': dst_item_id_2, 'dst_item_pid': org_item_id, 'reference_type': 'isSupplementedBy'}  # 逆リレーション
-    ]
-    actual_relations = ItemReference.query.all()
-    assert len(actual_relations) == len(expected_relations)  # リレーションシップの数が一致するか確認
-    for rel in actual_relations:
-        assert {'src_item_pid': rel.src_item_pid, 'dst_item_pid': rel.dst_item_pid, 'reference_type': rel.reference_type} in expected_relations
+            expected_relations = [
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_1,
+                 'reference_type': 'normal'},
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_2,
+                 'reference_type': 'isSupplementTo'},
+                {'src_item_pid': dst_item_id_2,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementedBy'}, # inverse relation
+                {'src_item_pid': dst_item_id_2_0,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementedBy'}, # inverse relation
+                {'src_item_pid': dst_item_id_2_1,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementedBy'} # inverse relation
+            ]
+            actual_relations = ItemReference.query.all()
+            assert len(actual_relations) == len(expected_relations)
+            for rel in actual_relations:
+                assert {'src_item_pid': rel.src_item_pid,
+                        'dst_item_pid': rel.dst_item_pid,
+                        'reference_type': rel.reference_type
+                        } in expected_relations
 
-    # # テストケース 2: 既存のリレーションシップの更新
-    items = []
-    result = instance.update(items)
-    assert result is None
-    items = [
-        {'item_id': org_item_id, 'dst_item_id': dst_item_id_1, 'sele_id': 'isSupplementTo'},
-        {'item_id': org_item_id, 'dst_item_id': dst_item_id_2, 'sele_id': 'isSupplementedBy'}
-    ]
-    instance.bulk_create(items)
-    items = [
-            {'item_id': dst_item_id_2, 'sele_id': 'isSupplementedBy'},
-            {'item_id': dst_item_id_1, 'sele_id': 'isSupplementedBy'}
-        ]
-    result = instance.update(items)
-    # 期待データ: 新しいリレーションシップが作成されているか確認
-    expected_relations = [
-        {'src_item_pid': org_item_id, 'dst_item_pid': dst_item_id_2, 'reference_type': 'isSupplementedBy'},
-        {'src_item_pid': dst_item_id_2, 'dst_item_pid': org_item_id, 'reference_type': 'isSupplementTo'},  # 逆リレーション
-        {'src_item_pid': org_item_id, 'dst_item_pid': dst_item_id_1, 'reference_type': 'isSupplementedBy'},
-        {'src_item_pid': dst_item_id_1, 'dst_item_pid': org_item_id, 'reference_type': 'isSupplementTo'}  # 逆リレーション
-    ]
+            # test case 2: update exist relations
+            items = []
+            result = instance.update(items)
+            assert result is None
+            items = [
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_1,
+                 'sele_id': 'isSupplementTo'},
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_2,
+                 'sele_id': 'isSupplementedBy'},
+                {'src_item_pid': dst_item_id_2,
+                 'dst_item_pid': org_item_id,
+                 'sele_id': 'normal'} # overwritten after update
+            ]
+            instance.bulk_create(items)
+            items = [
+                    {'item_id': dst_item_id_2, 'sele_id': 'isSupplementedBy'},
+                    {'item_id': dst_item_id_1, 'sele_id': 'isSupplementedBy'}
+                ]
+            result = instance.update(items)
+            expected_relations = [
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_2,
+                 'reference_type': 'isSupplementedBy'},
+                {'src_item_pid': dst_item_id_2,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementTo'}, # inverse relation
+                {'src_item_pid': dst_item_id_2_0,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementTo'}, # inverse relation
+                {'src_item_pid': dst_item_id_2_1,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementTo'}, # inverse relation
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_1,
+                 'reference_type': 'isSupplementedBy'},
+                {'src_item_pid': dst_item_id_1,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementTo'}, # inverse relation
+                {'src_item_pid': dst_item_id_1_0,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementTo'}, # inverse relation
+                {'src_item_pid': dst_item_id_1_1,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementTo'} # inverse relation
+            ]
 
-    actual_relations = ItemReference.query.all()
-    assert len(actual_relations) == len(expected_relations)  # リレーションシップの数が一致するか確認
-    for rel in actual_relations:
-        assert {'src_item_pid': rel.src_item_pid, 'dst_item_pid': rel.dst_item_pid, 'reference_type': rel.reference_type} in expected_relations
+            actual_relations = ItemReference.query.all()
+            assert len(actual_relations) == len(expected_relations)
+            for rel in actual_relations:
+                assert {'src_item_pid': rel.src_item_pid,
+                        'dst_item_pid': rel.dst_item_pid,
+                        'reference_type': rel.reference_type
+                        } in expected_relations
 
-    # テストケース 3: リレーションシップの削除
-    items = []
-    result = instance.update(items)
-    assert result is None
+            # test case 3: delete relations
+            items = []
+            result = instance.update(items)
+            assert result is None
+            assert ItemReference.query.count() == 0
 
-    # 期待データ: すべてのリレーションシップが削除されているか確認
-    assert ItemReference.query.count() == 0
+            # test case 4: create and delete supplement relations
+            items = [
+                {'item_id': dst_item_id_1, 'sele_id': 'isSupplementTo'}
+            ]
+            result = instance.update(items)
+            assert result is None
 
-    # テストケース 4: 補足リレーションシップの作成と削除
-    items = [
-        {'item_id': dst_item_id_1, 'sele_id': 'isSupplementTo'}
-    ]
-    result = instance.update(items)
-    assert result is None
+            supplement_relation = ItemReference.query.filter_by(
+                src_item_pid=org_item_id, dst_item_pid=dst_item_id_1).first()
+            assert supplement_relation.reference_type == 'isSupplementTo'
+            inverse_relation = ItemReference.query.filter_by(
+                src_item_pid=dst_item_id_1, dst_item_pid=org_item_id).first()
+            assert inverse_relation.reference_type == 'isSupplementedBy'
 
-    # 期待データ: 補足リレーションシップが作成されているか確認
-    supplement_relation = ItemReference.query.filter_by(src_item_pid=org_item_id, dst_item_pid=dst_item_id_1).first()
-    assert supplement_relation.reference_type == 'isSupplementTo'
-    inverse_relation = ItemReference.query.filter_by(src_item_pid=dst_item_id_1, dst_item_pid=org_item_id).first()
-    assert inverse_relation.reference_type == 'isSupplementedBy'
+            # test case 5: invalid item id
+            items = [
+                {'item_id': 'invalid', 'sele_id': 'normal'}
+            ]
+            result = instance.update(items)
+            assert result is None
+            assert ItemReference.query.filter_by(
+                dst_item_pid='invalid'
+                ).first() is None
 
-    # テストケース 5: 無効なアイテムIDの処理
-    items = [
-        {'item_id': 'invalid', 'sele_id': 'normal'}
-    ]
-    result = instance.update(items)
-    assert result is None
+            # test case 6: DB error
+            # case IntegrityError
+            with patch.object(
+                    instance,
+                    'bulk_create',
+                    side_effect=IntegrityError(
+                        "duplicate key value", None, None)
+                ):
+                items = [
+                    {'item_id': dst_item_id_1, 'sele_id': 'normal'}
+                ]
+                result = instance.update(items)
 
-    # 期待データ: 無効なアイテムIDは無視され、リレーションシップが作成されていないか確認
-    assert ItemReference.query.filter_by(dst_item_pid='invalid').first() is None
+                assert result is not None
+                assert "duplicate key value" in result
 
-    # テストケース 6: データベースエラーの処理
-    # エラーを発生させるための不正なデータを入力
+            # case SQLAlchemyError
+            with patch.object(
+                    instance,
+                    'bulk_create',
+                    side_effect=SQLAlchemyError("transaction error")
+                ):
+                items = [
+                    {'item_id': dst_item_id_1, 'sele_id': 'normal'}
+                ]
+                result = instance.update(items)
 
-    # bulk_create メソッドをモックし、IntegrityError を発生させる
-    with patch.object(instance, 'bulk_create', side_effect=IntegrityError("duplicate key value", None, None)):
-        items = [
-            {'item_id': dst_item_id_1, 'sele_id': 'normal'}
-        ]
-        result = instance.update(items)
+                assert result is not None
+                assert "transaction error" in result
 
-        # IntegrityError が発生し、エラーメッセージが返されることを確認
-        assert result is not None
-        assert "duplicate key value" in result
+            # test case 7: multi relations
+            items = [
+                {'item_id': dst_item_id_1, 'sele_id': 'normal'},
+                {'item_id': dst_item_id_2, 'sele_id': 'isSupplementTo'},
+                {'item_id': dst_item_id_3, 'sele_id': 'isSupplementedBy'}
+            ]
+            result = instance.update(items)
+            assert result is None
 
-    # bulk_create メソッドをモックし、SQLAlchemyError を発生させる
-    with patch.object(instance, 'bulk_create', side_effect=SQLAlchemyError("transaction error")):
-        items = [
-            {'item_id': dst_item_id_1, 'sele_id': 'normal'}
-        ]
-        result = instance.update(items)
+            expected_relations = [
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_1,
+                 'reference_type': 'normal'},
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_2,
+                 'reference_type': 'isSupplementTo'},
+                {'src_item_pid': dst_item_id_2,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementedBy'}, # inverse relation
+                {'src_item_pid': dst_item_id_2_0,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementedBy'}, # inverse relation
+                {'src_item_pid': dst_item_id_2_1,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementedBy'}, # inverse relation
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_3,
+                 'reference_type': 'isSupplementedBy'},
+                {'src_item_pid': dst_item_id_3,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementTo'}, # inverse relation
+                {'src_item_pid': dst_item_id_3_0,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementTo'}, # inverse relation
+                {'src_item_pid': dst_item_id_3_1,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementTo'} # inverse relation
+            ]
+            actual_relations = ItemReference.query.all()
+            assert len(actual_relations) == len(expected_relations)
+            for rel in actual_relations:
+                assert {'src_item_pid': rel.src_item_pid,
+                        'dst_item_pid': rel.dst_item_pid,
+                        'reference_type': rel.reference_type
+                        } in expected_relations
 
-        # SQLAlchemyError が発生し、エラーメッセージが返されることを確認
-        assert result is not None
-        assert "transaction error" in result
+            # test case8: create inverse relations of supplement relations
+            items = [
+                {'item_id': dst_item_id_1, 'sele_id': 'isSupplementTo'}
+            ]
+            result = instance.update(items)
+            assert result is None
 
-    # テストケース 7: 複数のリレーションシップの一括処理
-    items = [
-        {'item_id': dst_item_id_1, 'sele_id': 'normal'},
-        {'item_id': dst_item_id_2, 'sele_id': 'isSupplementTo'},
-        {'item_id': dst_item_id_3, 'sele_id': 'isSupplementedBy'}
-    ]
-    result = instance.update(items)
-    assert result is None
+            inverse_relation = ItemReference.query.filter_by(
+                src_item_pid=dst_item_id_1, dst_item_pid=org_item_id).first()
+            assert inverse_relation.reference_type == 'isSupplementedBy'
 
-    # 期待データ: すべてのリレーションシップが正しく作成されているか確認
-    expected_relations = [
-        {'src_item_pid': org_item_id, 'dst_item_pid': dst_item_id_1, 'reference_type': 'normal'},
-        {'src_item_pid': org_item_id, 'dst_item_pid': dst_item_id_2, 'reference_type': 'isSupplementTo'},
-        {'src_item_pid': dst_item_id_2, 'dst_item_pid': org_item_id, 'reference_type': 'isSupplementedBy'},
-        {'src_item_pid': org_item_id, 'dst_item_pid': dst_item_id_3, 'reference_type': 'isSupplementedBy'},
-        {'src_item_pid': dst_item_id_3, 'dst_item_pid': org_item_id, 'reference_type': 'isSupplementTo'}
-    ]
-    actual_relations = ItemReference.query.all()
-    assert len(actual_relations) == len(expected_relations)  # リレーションシップの数が一致するか確認
-    for rel in actual_relations:
-        assert {'src_item_pid': rel.src_item_pid, 'dst_item_pid': rel.dst_item_pid, 'reference_type': rel.reference_type} in expected_relations
+            # test case 9: update from `isSupplementedBy` to `isSupplementTo`
+            items = [
+                {'item_id': dst_item_id_1, 'sele_id': 'isSupplementTo'}
+            ]
+            result = instance.update(items)
+            assert result is None
 
-    # テストケース 8: 補足リレーションシップの逆リレーションシップの作成
-    items = [
-        {'item_id': dst_item_id_1, 'sele_id': 'isSupplementTo'}
-    ]
-    result = instance.update(items)
-    assert result is None
+            updated_relation = ItemReference.query.filter_by(
+                src_item_pid=org_item_id, dst_item_pid=dst_item_id_1).first()
+            assert updated_relation.reference_type == 'isSupplementTo'
 
-    # 期待データ: 逆リレーションシップが正しく作成されているか確認
-    inverse_relation = ItemReference.query.filter_by(src_item_pid=dst_item_id_1, dst_item_pid=org_item_id).first()
-    assert inverse_relation.reference_type == 'isSupplementedBy'
+            # test case 10: update from supplement to non-supplement
+            items = [
+                {'item_id': dst_item_id_1, 'sele_id': 'isSupplementTo'}
+            ]
+            result = instance.update(items)
+            assert result is None
 
-    # テストケース 9: `isSupplementedBy`から`isSupplementTo`への更新
-    items = [
-        {'item_id': dst_item_id_1, 'sele_id': 'isSupplementTo'}
-    ]
-    result = instance.update(items)
-    assert result is None
+            updated_relation = ItemReference.query.filter_by(
+                src_item_pid=org_item_id, dst_item_pid=dst_item_id_1).first()
+            inverse_relation = ItemReference.query.filter_by(
+                src_item_pid=dst_item_id_1, dst_item_pid=org_item_id).first()
+            inverse_relation_0 = ItemReference.query.filter_by(
+                src_item_pid=dst_item_id_1_0, dst_item_pid=org_item_id).first()
+            inverse_relation_1 = ItemReference.query.filter_by(
+                src_item_pid=dst_item_id_1_1, dst_item_pid=org_item_id).first()
+            assert updated_relation.reference_type == 'isSupplementTo'
+            assert inverse_relation.reference_type == 'isSupplementedBy'
+            assert inverse_relation_0.reference_type == 'isSupplementedBy'
+            assert inverse_relation_1.reference_type == 'isSupplementedBy'
 
-    # 期待データ: リレーションシップが正しく更新されているか確認
-    updated_relation = ItemReference.query.filter_by(src_item_pid=org_item_id, dst_item_pid=dst_item_id_1).first()
-    assert updated_relation.reference_type == 'isSupplementTo'
+            items = [
+                {'item_id': dst_item_id_1, 'sele_id': 'normal'}
+            ]
+            result = instance.update(items)
+            updated_relation = ItemReference.query.filter_by(
+                src_item_pid=org_item_id, dst_item_pid=dst_item_id_1).first()
+            inverse_relation = ItemReference.query.filter_by(
+                src_item_pid=dst_item_id_1, dst_item_pid=org_item_id).all()
+            inverse_relation_0 = ItemReference.query.filter_by(
+                src_item_pid=dst_item_id_1_0, dst_item_pid=org_item_id).all()
+            inverse_relation_1 = ItemReference.query.filter_by(
+                src_item_pid=dst_item_id_1_1, dst_item_pid=org_item_id).all()
+            assert updated_relation.reference_type == 'normal'
+            assert len (inverse_relation) == 0
+            assert len (inverse_relation_0) == 0
+            assert len (inverse_relation_1) == 0
 
-    # テストケース 10: 補足リレーションシップの削除
-    items = []
-    result = instance.update(items)
-    assert result is None
+            # test case 11: delete supplement relations
+            items = []
+            result = instance.update(items)
+            assert result is None
+            assert ItemReference.query.count() == 0
 
-    # 期待データ: すべてのリレーションシップが削除されているか確認
-    assert ItemReference.query.count() == 0
+            # test case with decimal id
+            # src item pid
+            org_item_id = "999.0"
+            # dst item pid
+            dst_item_id_1 = "1"
+            dst_item_id_2 = "2"
+            dst_item_id_3 = "3"
+
+            # create test instance
+            instance = ItemLink(recid=org_item_id)
+
+            # test case 1.0: create new relation
+            items = [
+                {'item_id': dst_item_id_1, 'sele_id': 'normal'},
+                {'item_id': dst_item_id_2, 'sele_id': 'isSupplementTo'}
+            ]
+            result = instance.update(items)
+            assert result is None
+
+            expected_relations = [
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_1,
+                 'reference_type': 'normal'},
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_2,
+                 'reference_type': 'isSupplementTo'}
+            ]
+            actual_relations = ItemReference.query.all()
+            assert len(actual_relations) == len(expected_relations)
+            for rel in actual_relations:
+                assert {'src_item_pid': rel.src_item_pid,
+                 'dst_item_pid': rel.dst_item_pid,
+                 'reference_type': rel.reference_type
+                 } in expected_relations
+
+            # test case 2.0: update exist relations
+            # create old relations
+            items = []
+            result = instance.update(items)
+            assert result is None
+            items = [
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_1,
+                 'sele_id': 'isSupplementTo'},
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_2,
+                 'sele_id': 'isSupplementedBy'}
+            ]
+            instance.bulk_create(items)
+
+            # update relations
+            items = [
+                    {'item_id': dst_item_id_2, 'sele_id': 'isSupplementedBy'},
+                    {'item_id': dst_item_id_1, 'sele_id': 'isSupplementedBy'}
+                ]
+            result = instance.update(items)
+
+            expected_relations = [
+                {'src_item_pid': org_item_id, 'dst_item_pid': dst_item_id_2,
+                 'reference_type': 'isSupplementedBy'},
+                {'src_item_pid': org_item_id, 'dst_item_pid': dst_item_id_1,
+                 'reference_type': 'isSupplementedBy'}
+            ]
+
+            actual_relations = ItemReference.query.all()
+            assert len(actual_relations) == len(expected_relations)
+            for rel in actual_relations:
+                assert {'src_item_pid': rel.src_item_pid,
+                        'dst_item_pid': rel.dst_item_pid,
+                        'reference_type': rel.reference_type
+                        } in expected_relations
 
 
 # class ItemLink(object):
@@ -2162,8 +2349,8 @@ def test_item_link_bulk_create(app, db, records):
     _uuid = str(records[0][0].object_uuid)
     _items = [
         {
-            'dst_item_id': '1',
-            'item_id': _uuid,
+            'src_item_pid': _uuid,
+            'dst_item_pid': '1',
             'sele_id': 'URI'
         }
     ]
@@ -2179,72 +2366,6 @@ def test_item_link_bulk_create(app, db, records):
     #assert len(r)==1
     #assert r[0]['reference_type']=='URI'
 
-# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_bulk_create_supplement -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_bulk_create_supplement(app, db):
-    """
-    bulk_create_supplement メソッドの動作をテストする。
-    各ケースで期待される動作を確認する。
-    """
-    # テストケース 1: dst_items に1つのアイテムリンク情報が含まれている場合
-    dst_items_single = [
-        {'src_item_id': '1', 'dst_item_id': '2', 'sele_id': 'isSupplementTo'}
-    ]
-    instance = ItemLink(recid='999')
-    instance.bulk_create_supplement(dst_items_single)
-
-    # データベースに保存されたアイテムを確認
-    saved_items = ItemReference.query.all()
-    assert len(saved_items) == 1
-    assert saved_items[0].src_item_pid == '1'
-    assert saved_items[0].dst_item_pid == '2'
-    assert saved_items[0].reference_type == 'isSupplementTo'
-
-    # テストケース 2: dst_items に複数のアイテムリンク情報（src_item_id キーが重複しない）が含まれている場合
-    dst_items_multiple = [
-        {'src_item_id': '3', 'dst_item_id': '4', 'sele_id': 'isSupplementedBy'},
-        {'src_item_id': '5', 'dst_item_id': '6', 'sele_id': 'isSupplementTo'}
-    ]
-    instance.bulk_create_supplement(dst_items_multiple)
-
-    # データベースに保存されたアイテムを確認
-    saved_items = ItemReference.query.all()
-    assert len(saved_items) == 3  # 前のテストケースで1つ追加されているため、合計3つ
-    assert saved_items[1].src_item_pid == '3'
-    assert saved_items[2].src_item_pid == '5'
-
-    # テストケース 3: dst_items のいずれかの辞書に src_item_id, dst_item_id, sele_id のいずれかのキーが欠けている場合
-    dst_items_missing_key = [
-        {'src_item_id': '7', 'dst_item_id': '8', 'sele_id': 'isSupplementTo'},
-        {'src_item_id': '9', 'dst_item_id': '10'},  # sele_id が欠けている
-        {'src_item_id': '11', 'dst_item_id': '12', 'sele_id': 'isSupplementTo'}
-    ]
-    with pytest.raises(Exception):
-        instance.bulk_create_supplement(dst_items_missing_key)
-
-    # データベースに変更がないことを確認
-    saved_items = ItemReference.query.all()
-    assert len(saved_items) == 3  # 前のテストケースで追加された3つのみ
-
-    # テストケース 4: dst_items に複数のアイテムリンク情報（src_item_id キーが重複）が含まれている場合
-    # データベースに変更がないことを確認
-    saved_items = ItemReference.query.all()
-    updateBefore = len(saved_items)
-    dst_items = [
-        {'src_item_id': '1', 'dst_item_id': '2', 'sele_id': 'isSupplementTo'},
-        {'src_item_id': '1', 'dst_item_id': '3', 'sele_id': 'isSupplementedBy'},  # src_item_id が重複
-        {'src_item_id': '4', 'dst_item_id': '5', 'sele_id': 'isSupplementTo'}
-    ]
-
-    instance = ItemLink(recid='999')
-
-    # bulk_create_supplement メソッドをモックし、IntegrityError を発生させる
-    with patch.object(instance, 'bulk_create_supplement', side_effect=IntegrityError("duplicate key value", None, None)):
-        with pytest.raises(IntegrityError):
-            instance.bulk_create_supplement(dst_items)
-
-    # データベースに変更がないことを確認
-    saved_items = ItemReference.query.all()
-    assert len(saved_items) == updateBefore
 
 # class ItemLink(object):
 #     def bulk_update(self, dst_items):
@@ -2253,19 +2374,20 @@ def test_item_link_bulk_update(app, db, records):
     _uuid = str(records[0][0].object_uuid)
     _items1 = [
         {
-            'item_id': '1',
+            'src_item_pid': _uuid,
+            'dst_item_pid': '1',
             'sele_id': 'URI'
         }
     ]
     _items2 = [
         {
-            'item_id': _uuid,
-            'dst_item_id': '1',
+            'src_item_pid': _uuid,
+            'dst_item_pid': '1',
             'sele_id': 'URI'
         },
         {
-            'item_id': _uuid,
-            'dst_item_id': '2',
+            'src_item_pid': _uuid,
+            'dst_item_pid': '2',
             'sele_id': 'DOI'
         }
     ]
@@ -2288,99 +2410,29 @@ def test_item_link_bulk_delete(app, db, records):
     _uuid = str(records[0][0].object_uuid)
     _items = [
         {
-            'item_id': _uuid,
-            'dst_item_id': '1',
+            'src_item_pid': _uuid,
+            'dst_item_pid': '1',
             'sele_id': 'URI'
         },
         {
-            'item_id': _uuid,
-            'dst_item_id': '2',
+            'src_item_pid': _uuid,
+            'dst_item_pid': '2',
             'sele_id': 'DOI'
         },
         {
-            'item_id': _uuid,
-            'dst_item_id': '3',
+            'src_item_pid': _uuid,
+            'dst_item_pid': '3',
             'sele_id': 'HDL'
         }
     ]
     ItemLink.bulk_create(ItemLink(_uuid), _items)
 
-    ItemLink.bulk_delete(ItemLink(_uuid), ['1', '2'])
+    ItemLink.bulk_delete(ItemLink(_uuid), _items[0:2])
     r = ItemLink.get_item_link_info(_uuid)
     assert len(r)==1
     assert r[0]['item_links']=='3'
     assert r[0]['item_title']==records[2][1]['item_title']
     assert r[0]['value']=='HDL'
-
-
-# class ItemLink(object):
-#     def bulk_delete_supplement(self, dst_item_ids):
-# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_bulk_delete_supplement -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_bulk_delete_supplement(app, db, records):
-    """
-    bulk_delete_supplement メソッドの動作をテストする。
-    各ケースで期待される動作を確認する。
-    """
-    org_item_id = "999"
-
-    # テストケース 1: dst_item_ids に1つのアイテムIDが含まれている場合
-    dst_item_id_single = "1"
-
-    # ItemReference テーブルにテストデータを追加
-    db.session.add(ItemReference(
-        src_item_pid=dst_item_id_single,
-        dst_item_pid=org_item_id,
-        reference_type="isSupplementTo"
-    ))
-    db.session.add(ItemReference(
-        src_item_pid=org_item_id,
-        dst_item_pid=dst_item_id_single,
-        reference_type="isSupplementedBy"
-    ))
-    db.session.commit()
-
-    # bulk_delete_supplement を実行
-    instance = ItemLink(recid=org_item_id)
-    instance.bulk_delete_supplement([dst_item_id_single])
-
-    # データベースの状態を確認
-    deleted_items = db.session.query(ItemReference).filter(
-        ItemReference.src_item_pid == dst_item_id_single,
-        ItemReference.dst_item_pid == org_item_id,
-        ItemReference.reference_type.in_(["isSupplementTo", "isSupplementedBy"])
-    ).all()
-
-    assert len(deleted_items) == 0  # 該当するレコードが削除されていることを確認
-
-    # テストケース 2: dst_item_ids に複数のアイテムIDが含まれている場合
-    dst_item_ids_multiple = ["2", "3", "4"]
-
-    # ItemReference テーブルにテストデータを追加
-    for dst_item_id in dst_item_ids_multiple:
-        db.session.add(ItemReference(
-            src_item_pid=dst_item_id,
-            dst_item_pid=org_item_id,
-            reference_type="isSupplementTo"
-        ))
-        db.session.add(ItemReference(
-            src_item_pid=org_item_id,
-            dst_item_pid=dst_item_id,
-            reference_type="isSupplementedBy"
-        ))
-    db.session.commit()
-
-    # bulk_delete_supplement を実行
-    instance.bulk_delete_supplement(dst_item_ids_multiple)
-
-    # データベースの状態を確認
-    for dst_item_id in dst_item_ids_multiple:
-        deleted_items = db.session.query(ItemReference).filter(
-            ItemReference.src_item_pid == dst_item_id,
-            ItemReference.dst_item_pid == org_item_id,
-            ItemReference.reference_type.in_(["isSupplementTo", "isSupplementedBy"])
-        ).all()
-
-        assert len(deleted_items) == 0  # 該当するレコードが削除されていることを確認
 
 
 # class JsonldMapping:
