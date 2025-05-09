@@ -922,7 +922,7 @@ def get_current_login_user_id():
     return jsonify(result)
 
 
-@blueprint_api.route('/prepare_edit_item', methods=['POST'])
+@blueprint.route('/prepare_edit_item', methods=['POST'])
 @login_required
 def prepare_edit_item(id=None, community=None):
     """Prepare_edit_item.
@@ -961,6 +961,7 @@ def prepare_edit_item(id=None, community=None):
         db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True
     )
     if sessionstorage.redis.exists("pid_{}_will_be_edit".format(pid_value)):
+        current_app.logger.error(f"Item {pid_value} is being edited.")
         return jsonify(
             code=err_code,
             msg=_('This Item is being edited.')
@@ -972,6 +973,7 @@ def prepare_edit_item(id=None, community=None):
             ttl_secs=3)
 
     if pid_value:
+        pid_value = str(pid_value)
         record_class = import_string('weko_deposit.api:WekoDeposit')
         resolver = Resolver(pid_type='recid',
                             object_type='rec',
@@ -1023,10 +1025,12 @@ def prepare_edit_item(id=None, community=None):
         # ! Check Record is being edit
         item_uuid = latest_pid.object_uuid
         latest_activity = work_activity.get_workflow_activity_by_item_id(item_uuid)
+        current_app.logger.info(f"pid_value: {pid_value}, item_uuid: {item_uuid}, latest_activity: {latest_activity}")
 
         if latest_activity:
             is_begin_edit = check_item_is_being_edit(recid, latest_activity, work_activity)
             if is_begin_edit:
+                current_app.logger.info(f"Item {pid_value} is being edited.")
                 return jsonify(
                     code=err_code,
                     msg=_('This Item is being edited.'),
@@ -1060,6 +1064,7 @@ def prepare_edit_item(id=None, community=None):
             db.session.commit()
         except SQLAlchemyError as ex:
             current_app.logger.error('sqlalchemy error: {}'.format(ex))
+            traceback.format_exc()
             db.session.rollback()
             return jsonify(
                 code=err_code,
@@ -1141,6 +1146,7 @@ def prepare_delete_item(id=None, community=None):
         db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True
     )
     if sessionstorage.redis.exists("pid_{}_will_be_edit".format(pid_value)):
+        current_app.logger.info(f"Item {pid_value} is being edited.")
         return jsonify(
             code=err_code,
             msg=_('This Item is being edited.')
@@ -1153,6 +1159,7 @@ def prepare_delete_item(id=None, community=None):
         )
 
     if pid_value:
+        pid_value = str(pid_value)
         record_class = import_string('weko_deposit.api:WekoDeposit')
         resolver = Resolver(
             pid_type='recid', object_type='rec',
@@ -1209,6 +1216,7 @@ def prepare_delete_item(id=None, community=None):
         if latest_activity:
             is_begin_edit = check_item_is_being_edit(recid, latest_activity, work_activity)
             if is_begin_edit:
+                current_app.logger.info(f"Item {pid_value} is being edited.")
                 return jsonify(
                     code=err_code,
                     msg=_('This Item is being edited.'),
