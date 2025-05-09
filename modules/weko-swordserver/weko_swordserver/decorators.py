@@ -83,77 +83,59 @@ def check_package_contents():
                 )
 
             # Check Content-Length
-            maxUploadSize = current_app.config.get(
+            max_upload_size = current_app.config.get(
                 "WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE"
             )
-            contentLength = request.headers.get("Content-Length", None)
-            # Get length by real file
+            content_length = request.headers.get("Content-Length")
+
             file.seek(0, os.SEEK_END)
-            real_contentLength = file.tell()
+            content_size = file.tell()
             file.seek(0, 0)
-            if current_app.config.get("WEKO_SWORDSERVER_CONTENT_LENGTH"):
-                if contentLength is None:
-                    current_app.logger.error(
-                        "Content-Length is required, but not contained in request headers."
-                    )
-                    raise WekoSwordserverException(
-                        "Content-Length is required.",
-                        ErrorType.ContentMalformed
-                    )
-                if int(contentLength) != real_contentLength:
-                    current_app.logger.error(
-                        "Content-Length is not match. "
-                        + f"(request:{contentLength}, real:{real_contentLength})"
-                    )
-                    raise WekoSwordserverException(
-                        "Content-Length is not match. "
-                        + f"(request:{contentLength}, real:{real_contentLength})",
-                        ErrorType.ContentMalformed
-                    )
-            elif contentLength is None:
-                contentLength = real_contentLength
-            if int(contentLength or '0') > maxUploadSize:
+
+            if int(content_length or content_size) > max_upload_size:
                 current_app.logger.error(
                     "Content size is too large. "
-                    + f"(request:{contentLength}, maxUploadSize:{maxUploadSize})"
+                    + f"(request:{content_length}, maxUploadSize:{max_upload_size})"
                 )
                 raise WekoSwordserverException(
                     "Content size is too large. "
-                    + f"(request:{contentLength}, maxUploadSize:{maxUploadSize})",
+                    + f"(request:{content_length}, maxUploadSize:{max_upload_size})",
                     ErrorType.MaxUploadSizeExceeded
                 )
 
             # Check Content-Type
-            acceptArchiveFormat = current_app.config.get(
+            accept_archive_format = current_app.config.get(
                 "WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT"
             )
-            reqContentType = request.headers.get("Content-Type", None)
-            if reqContentType and (';' in reqContentType):
-                reqContentType = reqContentType.split(';')[0]
-            filesContentType = file.headers.get('Content-Type', None)
-            if filesContentType and (';' in filesContentType):
-                filesContentType = filesContentType.split(';')[0]
-            failedContentType = None
-            if reqContentType not in acceptArchiveFormat:
-                failedContentType = reqContentType
-                if filesContentType not in acceptArchiveFormat:
-                    failedContentType = filesContentType
-            if failedContentType is not None:
+            req_content_type = request.headers.get("Content-Type", None)
+            if req_content_type and (';' in req_content_type):
+                req_content_type = req_content_type.split(';')[0]
+
+            files_content_type = file.headers.get('Content-Type', None)
+            if files_content_type and (';' in files_content_type):
+                files_content_type = files_content_type.split(';')[0]
+
+            failed_content_type = None
+            if req_content_type not in accept_archive_format:
+                failed_content_type = req_content_type
+                if files_content_type not in accept_archive_format:
+                    failed_content_type = files_content_type
+            if failed_content_type is not None:
                 current_app.logger.error(
-                    f"Not accept Content-Type: {failedContentType}"
+                    f"Not accept Content-Type: {failed_content_type}"
                 )
                 raise WekoSwordserverException(
-                    f"Not accept Content-Type: {failedContentType}",
+                    f"Not accept Content-Type: {failed_content_type}",
                     ErrorType.ContentTypeNotAcceptable
                 )
 
             # Check Packaging
             packaging = request.headers.get("Packaging", None)
-            acceptPackaging = current_app.config.get(
+            accept_packaging = current_app.config.get(
                 "WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_PACKAGING"
             )
-            if '*' not in acceptPackaging:
-                if packaging not in acceptPackaging:
+            if '*' not in accept_packaging:
+                if packaging not in accept_packaging:
                     current_app.logger.error(f"Not accept packaging: {packaging}")
                     raise WekoSwordserverException(
                         f"Not accept packaging: {packaging}",
