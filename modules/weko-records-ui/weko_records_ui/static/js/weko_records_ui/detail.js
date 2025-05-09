@@ -86,16 +86,71 @@ require([
   });
 
   const del_msg = document.getElementById('del_msg').textContent;
+  const del_ver_msg = document.getElementById('del_ver_msg').textContent;
   $('a#btn_delete').on('click', function () {
     $('#confirm_delete_content').text(del_msg);
     $('#confirm_delete').modal('show');
   });
+  $('a#btn_ver_delete').on('click', function () {
+    $('#confirm_ver_delete_content').text(del_ver_msg);
+    $('#confirm_ver_delete').modal('show');
+  });
 
   $('#confirm_delete_button').on('click', function () {
     $('#confirm_delete').modal('hide');
-    $('#confirm_delete_button').removeAttr("disabled");
     $('[role="alert"]').hide();
-    $(this).attr("disabled", true);
+    $('#btn_delete').attr("disabled", true);
+    $('#btn_ver_delete').attr("disabled", true);
+    $('[role="msg"]').css('display', 'inline-block');
+    let post_uri = "/items/prepare_delete_item";
+    let pid_val = $(this).data('pid-value');
+    let community = $(this).data('community');
+    let post_data = {
+      pid_value: pid_val
+    };
+    if (community) {
+      post_uri = post_uri + "?community=" + community;
+    }
+    $.ajax({
+      url: post_uri,
+      method: 'POST',
+      async: true,
+      contentType: 'application/json',
+      data: JSON.stringify(post_data),
+      success: function (res, status) {
+        $('[role="msg"]').hide();
+        if (0 == res.code) {
+          let uri = res.data.redirect.replace('api/', '')
+          document.location.href = uri;
+        } else {
+          $('#btn_edit').removeAttr("disabled");
+          $('#btn_delete').removeAttr("disabled");
+          $('#btn_ver_delete').removeAttr("disabled");
+          $('[role="alert"]').css('display', 'inline-block');
+          $('[role="alert"]').text(res.msg);
+          if ("activity_id" in res) {
+            url = "/workflow/activity/detail/"+res.activity_id;
+            if (community) {
+              url = url + "?community=" + community;
+            }
+            $('[role="alert"]').append(' <a href=' + url + '>' + res.activity_id + '</a>')
+          }
+        }
+      },
+      error: function (jqXHE, status) {
+        $('[role="msg"]').hide();
+        $('#btn_edit').removeAttr("disabled");
+        $('#btn_delete').removeAttr("disabled");
+        $('#btn_ver_delete').removeAttr("disabled");
+        $('[role="alert"]').css('display', 'inline-block');
+        $('[role="alert"]').text("INTERNAL SERVER ERROR");
+      }
+    });
+  });
+
+  $('#confirm_ver_delete_button').on('click', function () {
+    $('#confirm_ver_delete').modal('hide');
+    $('[role="alert"]').hide();
     $('#btn_delete').attr("disabled", true);
     $('#btn_ver_delete').attr("disabled", true);
     $('[role="msg"]').css('display', 'inline-block');
