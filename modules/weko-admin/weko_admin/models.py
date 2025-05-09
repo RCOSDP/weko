@@ -21,6 +21,7 @@
 """Database models for weko-admin."""
 
 from datetime import datetime
+import traceback
 
 from flask import current_app, escape, request
 from invenio_db import db
@@ -902,10 +903,10 @@ class StatisticsEmail(db.Model):
                 data_obj.repository_id = repository_id
                 db.session.add(data_obj)
             db.session.commit()
-        except BaseException as ex:
+        except Exception as ex:
             db.session.rollback()
-            current_app.logger.debug(ex)
-            raise ex
+            current_app.logger.error(ex)
+            raise
         return cls
 
     @classmethod
@@ -913,7 +914,7 @@ class StatisticsEmail(db.Model):
         """Get all recipient emails as a list."""
         all_objects = cls.query.all()
         return [row.email_address for row in all_objects]
-    
+
     @classmethod
     def get_emails_by_repo(cls, repository_id):
         """Get all recipient emails as a list."""
@@ -939,11 +940,11 @@ class StatisticsEmail(db.Model):
                 delete_all = cls.query.delete()
             db.session.commit()
         except Exception as ex:
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
             db.session.rollback()
             raise ex
         return delete_all
-    
+
     @classmethod
     def delete_by_repo(cls, repository_id):
         """Delete all."""
@@ -952,9 +953,9 @@ class StatisticsEmail(db.Model):
                 delete_by_repo = cls.query.filter_by(repository_id=repository_id).delete()
             db.session.commit()
         except Exception as ex:
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
             db.session.rollback()
-            raise ex
+            raise
         return delete_by_repo
 
 
@@ -1079,7 +1080,7 @@ class FeedbackMailSetting(db.Model, Timestamp):
         db.String(100)
     )
     """Store system root url."""
-    
+
     repository_id = db.Column(
         db.String(100),
         nullable=False,
@@ -1109,8 +1110,9 @@ class FeedbackMailSetting(db.Model, Timestamp):
                 new_record.repository_id = repo_id
                 db.session.add(new_record)
             db.session.commit()
-        except BaseException:
+        except Exception as ex:
             db.session.rollback()
+            current_app.logger.error(ex)
             return False
         return True
 
@@ -1128,7 +1130,7 @@ class FeedbackMailSetting(db.Model, Timestamp):
                 return feedback_settings
         except Exception:
             return []
-        
+
     @classmethod
     def get_feedback_email_setting_by_repo(cls, repo_id):
         """Get all feedback email setting.
@@ -1143,7 +1145,8 @@ class FeedbackMailSetting(db.Model, Timestamp):
             with db.session.no_autoflush:
                 feedback_settings = cls.query.filter_by(repository_id=repo_id).all()
                 return feedback_settings
-        except Exception:
+        except Exception as ex:
+            current_app.logger.error(ex)
             return []
 
     @classmethod
@@ -1217,7 +1220,7 @@ class FeedbackMailSetting(db.Model, Timestamp):
             return True
         except BaseException as ex:
             db.session.rollback()
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
             return False
 
 
@@ -1270,7 +1273,7 @@ class AdminSettings(db.Model):
                 else:
                     return admin_setting_object.settings
         except Exception as ex:
-            current_app.logger.debug('dict to object')
+            traceback.print_exc()
             current_app.logger.error(ex)
         return None
 
@@ -1537,7 +1540,7 @@ class FeedbackMailHistory(db.Model):
         db.Boolean(name='lastest'),
         nullable=False
     )
-    
+
     repository_id = db.Column(
         db.String(100),
         nullable=False,

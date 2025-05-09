@@ -53,6 +53,10 @@ from weko_records_ui.views import (
     get_workflow_detail,
     preview_able,
     get_uri,
+    get_bucket_list,
+    copy_bucket,
+    get_file_place,
+    replace_file,
 )
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -1143,3 +1147,53 @@ def test_publish(app, client, records):
                         with app.test_request_context(data={"status": "0"}):
                             publish(record.pid, record_1_b)
                             mock_external.assert_called_with(old_record=record_1_c, new_record=record_0_c)
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_request_context -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_get_bucket_list(app,records,users,id):
+    with app.test_request_context():
+        with patch("weko_records_ui.api.get_s3_bucket_list", return_value={}):
+            response = get_bucket_list()
+            assert response.status_code == 200
+        with patch("weko_records_ui.api.get_s3_bucket_list",side_effect=Exception):
+            response = get_bucket_list()
+            assert response.status_code == 400
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_bucket -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_copy_bucket(app,records,users,id):
+    with app.test_request_context():
+        with patch("weko_records_ui.api.copy_bucket_to_s3", return_value={}):
+            response = copy_bucket()
+            assert response.status_code == 200
+        with patch("weko_records_ui.api.copy_bucket_to_s3",side_effect=Exception):
+            response = copy_bucket()
+            assert response.status_code == 400
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_place -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_get_file_place(app,records,users,id):
+    with app.test_request_context():
+        with patch("weko_records_ui.api.get_file_place_info", return_value={}):
+            response = get_file_place()
+            assert response.status_code == 200
+        with patch("weko_records_ui.api.get_file_place_info",side_effect=Exception):
+            response = get_file_place()
+            assert response.status_code == 400
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_replace_file(app,records,users,id):
+    with app.test_request_context():
+        with patch("flask.request.form.get", return_value='S3'):
+            with patch("weko_records_ui.api.replace_file_bucket", return_value={}):
+                response = replace_file()
+                assert response.status_code == 200
+        with patch("flask.request.form.get", return_value='S3'):
+            with patch("weko_records_ui.api.replace_file_bucket",side_effect=Exception):
+                response = replace_file()
+                assert response.status_code == 400
+        with patch("flask.request.form.get", return_value='local'):
+            with patch("weko_records_ui.api.replace_file_bucket", return_value={}):
+                response = replace_file()
+                assert response.status_code == 200
+        with patch("flask.request.form.get", return_value='local'):
+            with patch("weko_records_ui.api.replace_file_bucket",side_effect=Exception):
+                response = replace_file()
+                assert response.status_code == 400

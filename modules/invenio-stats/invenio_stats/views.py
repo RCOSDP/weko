@@ -7,6 +7,7 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """InvenioStats views."""
+import traceback
 import uuid
 
 import calendar
@@ -114,7 +115,7 @@ class QueryRecordViewCount(WekoQuery):
 
     def _get_data(self, record_id, query_date=None, get_period=False):
         """Get data."""
-        
+
         result = {}
         period = []
         country = {}
@@ -143,7 +144,7 @@ class QueryRecordViewCount(WekoQuery):
             query_total = query_total_cfg.query_class(
                 **query_total_cfg.query_config)
             res_total = query_total.run(**params)
-            
+
             result['total'] = res_total['count']
             for d in res_total['buckets']:
                 country[d['key']] = d['count']
@@ -407,7 +408,8 @@ class QueryItemRegReport(WekoQuery):
         try:
             page_index = int(request.args.get('p', 1)) - 1
         except Exception as e:
-            current_app.logger.debug(e)
+            traceback.print_exc()
+            current_app.logger.error(e)
 
         repository_id = request.args.get('repo')
         if repository_id:

@@ -272,7 +272,7 @@ def users(app, db):
         ds.add_role_to_user(originalroleuser2, repoadmin_role)
         ds.add_role_to_user(subrepoadmin, group_role)
         ds.add_role_to_user(subrepoadmin, comadmin_role)
-        
+
 
 
     return [

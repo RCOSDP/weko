@@ -65,7 +65,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import cast
 from weko_redis import RedisConnection
 from weko_accounts.api import ShibUser
+from weko_accounts.models import User
 from weko_accounts.utils import login_required_customize
+from weko_admin.models import AdminSettings
 from weko_authors.models import Authors
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_deposit.links import base_factory
@@ -75,7 +77,7 @@ from weko_deposit.signals import item_created
 from weko_index_tree.utils import get_user_roles
 from weko_items_ui.api import item_login
 from weko_items_ui.utils import check_item_is_being_edit, get_workflow_by_item_type_id, \
-    get_current_user
+    get_current_user, send_mail_delete_request, send_mail_delete_approved
 from weko_records.api import FeedbackMailList, RequestMailList, ItemLink, ItemTypes
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
@@ -84,12 +86,14 @@ from weko_search_ui.utils import check_tsv_import_items, import_items_to_system
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
+from weko_user_profiles.models import UserProfile
 from werkzeug.utils import import_string
 
 from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
-    IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
+    IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB, \
+    WEKO_WORKFLOW_DELETION_FLOW_TYPE
 from .errors import ActivityBaseRESTError, ActivityNotFoundRESTError, \
     DeleteActivityFailedRESTError, InvalidInputRESTError, \
     RegisteredActivityNotFoundRESTError
@@ -241,6 +245,18 @@ def index():
         get_application_and_approved_date(activities, columns)
         get_workflow_item_type_names(activities)
 
+    settings = AdminSettings.get('activity_display_settings')
+
+    if settings:
+        activity_display_flg = settings.activity_display_flg
+    else:
+        activity_display_flg = current_app.config.get("WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE")
+
+    if 'approver_email' in columns and not activity_display_flg:
+        columns.remove('approver_email')
+    elif 'approver_email' not in columns and activity_display_flg:
+        columns.append('approver_email')
+
     from weko_user_profiles.config import WEKO_USERPROFILES_ADMINISTRATOR_ROLE
     admin_role = WEKO_USERPROFILES_ADMINISTRATOR_ROLE
     has_admin_role = False
@@ -249,6 +265,26 @@ def index():
             has_admin_role = True
             break
     send_mail = has_admin_role and send_mail
+
+    # Get Approver Info
+    for activitie in activities:
+        activitie.approver = []
+        activitie.approver_email = []
+        steps = activity.get_activity_steps(activitie.activity_id)
+        for step in steps:
+            if step['ActionName'] == 'Approval':
+                approver = User.query.filter_by(email=step['Author']).one_or_none()
+                if approver is not None:
+                    approver_id = approver.id
+                    approver_profile = UserProfile.get_by_userid(approver_id)
+                    if hasattr(approver_profile, '_displayname') and approver_profile._displayname:
+                        activitie.approver.append(approver_profile._displayname)
+                    else:
+                        # If the Author has not registered his/her name, use his/her email address.
+                        activitie.approver.append(step['Author'])
+                else:
+                    activitie.approver.append(step['Author'])
+                activitie.approver_email.append(step['Author'])
 
     return render_template(
         'weko_workflow/activity_list.html',
@@ -730,7 +766,16 @@ def display_guest_activity(file_name=""):
 @workflow_blueprint.route('/verify_deletion/<string:activity_id>', methods=['GET'])
 @login_required_customize
 def verify_deletion(activity_id="0"):
+    """Verify if the activity is deleted.
+
+    Args:
+        activity_id (str, optional): Activity ID. Defaults to "0".
+
+    Returns:
+        dict: JSON response with code, is_deleted, and for_delete status.
+    """
     is_deleted = False
+    for_delete = False
     activity = WorkActivity().get_activity_by_id(activity_id)
     if activity and activity.item_id:
         item_id = str(activity.item_id)
@@ -740,7 +785,9 @@ def verify_deletion(activity_id="0"):
         ).one_or_none()
         if recid and recid.is_deleted():
             is_deleted = True
-    res = {'code': 200, 'is_deleted':is_deleted}
+
+        for_delete = activity.flow_define.flow_type == WEKO_WORKFLOW_DELETION_FLOW_TYPE
+    res = {'code': 200, 'is_deleted':is_deleted, 'for_delete':for_delete}
 
     return jsonify(res), 200
 
@@ -817,6 +864,9 @@ def display_activity(activity_id="0", community_id=None):
                 error="can not get data required for rendering")
 
     activity = WorkActivity()
+    activity_detail = activity.get_activity_detail(activity_id)
+    for_delete = activity_detail.flow_define.flow_type == WEKO_WORKFLOW_DELETION_FLOW_TYPE
+
     if "?" in activity_id:
         activity_id = activity_id.split("?")[0]
 
@@ -956,18 +1006,19 @@ def display_activity(activity_id="0", community_id=None):
             activity_detail.item_id and \
             activity_detail.activity_status != ActivityStatusPolicy.ACTIVITY_CANCEL:
         try:
-            item_id = str(activity_detail.item_id)
-            # get record data for the first time access to editing item screen
-            recid, approval_record = get_pid_and_record(item_id)
-            files, files_thumbnail = get_files_and_thumbnail(activity_id, item_id)
+            if not for_delete:
+                item_id = str(activity_detail.item_id)
+                # get record data for the first time access to editing item screen
+                recid, approval_record = get_pid_and_record(item_id)
+                files, files_thumbnail = get_files_and_thumbnail(activity_id, item_id)
 
-            links = base_factory(recid)
+                links = base_factory(recid)
 
         except PIDDeletedError:
-            current_app.logger.debug("PIDDeletedError: {}".format(sys.exc_info()))
+            current_app.logger.error("PIDDeletedError: {}".format(sys.exc_info()))
             abort(404)
         except PIDDoesNotExistError:
-            current_app.logger.debug("PIDDoesNotExistError: {}".format(sys.exc_info()))
+            current_app.logger.error("PIDDoesNotExistError: {}".format(sys.exc_info()))
             abort(404)
         except Exception:
             current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
@@ -1026,22 +1077,23 @@ def display_activity(activity_id="0", community_id=None):
         ctx['item_link'] = item_link
 
     # Get item link info.
-    if activity_detail.activity_status != ActivityStatusPolicy.ACTIVITY_CANCEL:
-        record_detail_alt = get_main_record_detail(
-            activity_id, activity_detail, action_endpoint, item,
-            approval_record, files, files_thumbnail)
-        if not record_detail_alt:
-            current_app.logger.error("display_activity: bad value for record_detail_alt")
-            return render_template("weko_theme/error.html",
-                        error="can not get data required for rendering")
+    if not for_delete:
+        if activity_detail.activity_status != ActivityStatusPolicy.ACTIVITY_CANCEL:
+            record_detail_alt = get_main_record_detail(
+                activity_id, activity_detail, action_endpoint, item,
+                approval_record, files, files_thumbnail)
+            if not record_detail_alt:
+                current_app.logger.error("display_activity: bad value for record_detail_alt")
+                return render_template("weko_theme/error.html",
+                            error="can not get data required for rendering")
 
-        ctx.update(
-            dict(
-                record_org=record_detail_alt.get('record'),
-                files_org=record_detail_alt.get('files'),
-                thumbnails_org=record_detail_alt.get('files_thumbnail')
+            ctx.update(
+                dict(
+                    record_org=record_detail_alt.get('record'),
+                    files_org=record_detail_alt.get('files'),
+                    thumbnails_org=record_detail_alt.get('files_thumbnail')
+                )
             )
-        )
 
     # Get email approval key
     approval_email_key = get_approval_keys()
@@ -1135,6 +1187,7 @@ def display_activity(activity_id="0", community_id=None):
         term_and_condition_content=term_and_condition_content,
         user_profile=user_profile,
         form=form,
+        for_delete=for_delete,
         **ctx
     )
 
@@ -1314,6 +1367,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
         current_app.logger.error("next_action: can not get activity_detail")
         res = ResponseMessageSchema().load({"code":-1, "msg":"can not get activity detail"})
         return jsonify(res.data), 500
+    for_delete = activity_detail.flow_define.flow_type == WEKO_WORKFLOW_DELETION_FLOW_TYPE
     action_order = activity_detail.action_order
 
     try:
@@ -1503,7 +1557,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
             journal=post_json.get('journal')
         )
 
-    if action_endpoint == 'approval' and item_id:
+    if action_endpoint == 'approval' and item_id and not for_delete:
         last_idt_setting = work_activity.get_action_identifier_grant(
             activity_id=activity_id,
             action_id=get_actionid('identifier_grant'))
@@ -1572,7 +1626,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
             items_display_settings = AdminSettings.get(name='items_display_settings',
                                         dict_to_object=False)
             if items_display_settings:
-                enable_request_maillist = items_display_settings.get('display_request_form', False)         
+                enable_request_maillist = items_display_settings.get('display_request_form', False)
 
             if activity_request_mail and activity_request_mail.request_maillist and enable_request_maillist:
                 RequestMailList.update_by_list_item_id(
@@ -1678,6 +1732,13 @@ def next_action(activity_id='0', action_id=0, json_data=None):
                     action_id=action_id,
                     req=-1)
 
+    if next_action_endpoint == "end_action"  and for_delete:
+        delete_item_id = current_pid.pid_value.split('.')[0]
+        from weko_records_ui.views import soft_delete
+        soft_delete(delete_item_id)
+        if action_endpoint == "approval":
+            send_mail_delete_approved(delete_item_id, deposit, activity_detail, current_user.id)
+
     rtn = history.create_activity_history(activity, action_order)
     if not rtn:
         res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
@@ -1697,35 +1758,58 @@ def next_action(activity_id='0', action_id=0, json_data=None):
         comment='',
         action_order=action_order
     )
-    if 'end_action' == next_action_endpoint:
-        new_activity_id = None
-        new_activity_id = handle_finish_workflow(deposit,
-                                                 current_pid,
-                                                 recid)
-        if new_activity_id is None:
-            res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
-            return jsonify(res.data), 500
 
-        activity.update(
-            action_id=next_action_id,
-            action_version=next_flow_action[0].action_version,
-            item_id=new_activity_id,
-            action_order=next_action_order
-        )
-        work_activity.end_activity(activity)
-        # Call signal to push item data to ES.
-        try:
-            if '.' not in current_pid.pid_value and has_request_context():
-                user_id = activity_detail.activity_login_user if \
-                    activity and activity_detail.activity_login_user else -1
-                item_created.send(
-                    current_app._get_current_object(),
-                    user_id=user_id,
-                    item_id=current_pid,
-                    item_title=activity_detail.title
-                )
-        except BaseException:
-            abort(500, 'MAPPING_ERROR')
+    if next_action_endpoint == "approval":
+        if for_delete:
+            send_mail_delete_request(work_activity.get_activity_by_id(activity_id))
+        else:
+            work_activity.notify_about_activity(activity_id, "request_approval")
+
+    if next_action_endpoint == "end_action":
+        if not for_delete:
+            non_extract = work_activity.get_non_extract_files(activity_id)
+            deposit.non_extract = non_extract
+            new_item_id = handle_finish_workflow(
+                deposit, current_pid, recid
+            )
+            if new_item_id is None:
+                res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
+                return jsonify(res.data), 500
+
+            activity.update(
+                action_id=next_action_id,
+                action_version=next_flow_action[0].action_version,
+                item_id=new_item_id,
+                action_order=next_action_order
+            )
+            work_activity.end_activity(activity)
+
+            if action_endpoint == "approval":
+                work_activity.notify_about_activity(activity_id, "approved")
+            else:
+                work_activity.notify_about_activity(activity_id, "registered")
+
+            # Call signal to push item data to ES.
+            try:
+                if '.' not in current_pid.pid_value and has_request_context():
+                    user_id = activity_detail.activity_login_user if \
+                        activity and activity_detail.activity_login_user else -1
+                    item_created.send(
+                        current_app._get_current_object(),
+                        user_id=user_id,
+                        item_id=current_pid,
+                        item_title=activity_detail.title
+                    )
+            except BaseException:
+                abort(500, 'MAPPING_ERROR')
+        else:
+            activity.update(
+                action_id=next_action_id,
+                action_version=next_flow_action[0].action_version,
+                item_id=current_pid.object_uuid,
+                action_order=next_action_order
+            )
+            work_activity.end_activity(activity)
     else:
         flag = work_activity.upt_activity_action(
             activity_id=activity_id, action_id=next_action_id,
@@ -1905,7 +1989,7 @@ def previous_action(activity_id='0', action_id=0, req=0):
             db.session.delete(pid_identifier)
         db.session.commit()
     except PIDDoesNotExistError as pidNotEx:
-        current_app.logger.info(pidNotEx)
+        current_app.logger.info("doi does not exists.")
 
     if req == -1:
         pre_action = flow.get_item_registration_flow_action(
@@ -1958,6 +2042,10 @@ def previous_action(activity_id='0', action_id=0, req=0):
             res = ResponseMessageSchema().load({'code':-2,'msg':""})
             return jsonify(res.data), 500
     res = ResponseMessageSchema().load({'code':0,'msg':_('success')})
+
+    if action_id == 4:          # action_endpoint == "approval"
+        work_activity.notify_about_activity(activity_id, "rejected")
+
     return jsonify(res.data), 200
 
 
@@ -3596,7 +3684,7 @@ def edit_item_direct_after_login(pid_value):
                             object_type='rec',
                             getter=record_class.get_record)
         recid, deposit = resolver.resolve(pid_value)
-        
+
         if not deposit:
             return render_template("weko_theme/error.html",
                     error="Record does not exist."), 404

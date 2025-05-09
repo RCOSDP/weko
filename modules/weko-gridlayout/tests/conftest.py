@@ -451,7 +451,7 @@ def indices(app, db):
 
         db.session.add(testIndexThree)
         db.session.add(testIndexThreeChild)
-        
+
     return {
         'index_dict': dict(testIndexThree),
         'index_non_dict': testIndexThree,
@@ -542,11 +542,11 @@ def widget_upload(app,db,location):
                             location=location,
                             default_storage_class=storage_class)
     db.session.add(bucket)
-    
-            
+
+
     img = Image.new("L", (128, 128))
     img_bytes = io.BytesIO()
-    
+
     key = "{0}_{1}".format(0,"test.png")
     img.save(img_bytes, format='PNG')
     img_bytes.seek(0)
@@ -557,4 +557,3 @@ def widget_upload(app,db,location):
     db.session.add(obj)
     db.session.commit()
     return {"obj":obj,"key":key}
-                

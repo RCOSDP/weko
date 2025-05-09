@@ -70,25 +70,17 @@ from weko_deposit.api import WekoIndexer
 from weko_index_tree.ext import WekoIndexTree
 from weko_index_tree.models import Index
 from weko_items_ui.ext import WekoItemsUI
-from weko_records.models import ItemTypeName, ItemType,ItemTypeMapping
+from weko_records.models import ItemTypeName, ItemType,ItemTypeMapping, ItemTypeJsonldMapping
 from weko_schema_ui.ext import WekoSchemaUI
 from weko_search_ui import WekoSearchUI
-from weko_swordserver.models import SwordClientModel, SwordItemTypeMappingModel
+from weko_swordserver.models import SwordClientModel
 from weko_theme.ext import WekoTheme
 from weko_workflow import WekoWorkflow
-from weko_workflow.models import (
-    Action,
-    ActionStatus,
-    FlowAction,
-    FlowDefine,
-    WorkFlow,
-)
-
+from weko_workflow.models import Action, ActionStatus, FlowAction, FlowDefine, WorkFlow
 from weko_swordserver import WekoSWORDServer
 from weko_swordserver.views import blueprint as weko_swordserver_blueprint
 
-from tests.helpers import json_data, create_record
-from weko_workflow.models import Action, ActionStatus, FlowAction, FlowDefine, WorkFlow
+from .helpers import json_data, create_record
 
 @pytest.yield_fixture()
 def instance_path():
@@ -256,8 +248,8 @@ def db(app):
 @pytest.fixture
 def tokens(app,users,db):
     scopes = [
-        "deposit:write deposit:actions",
-        "deposit:write deposit:actions user:activity",
+        "deposit:write deposit:actions item:create",
+        "deposit:write deposit:actions item:create user:activity",
         "deposit:write user:activity",
         ""
     ]
@@ -283,14 +275,46 @@ def tokens(app,users,db):
             access_token=jwt_create_token(user_id=user_id),
             expires=datetime.now() + timedelta(hours=10),
             is_personal=False,
-            is_internal=True,
+            is_internal=False,
             _scopes=scope
         )
 
         db.session.add(test_client)
         db.session.add(test_token)
-
         tokens.append({"token":test_token, "client":test_client, "scope":scope})
+
+    db.session.commit()
+
+    return tokens
+
+
+@pytest.fixture()
+def personal_token(app, users, db):
+    tokens = []
+
+    for i, user in enumerate(users):
+        user_id = str(user["id"])
+        test_client = Client(
+            client_id=f"dev{user_id}",
+            client_secret=f"dev{user_id}",
+            name="Test name",
+            description="test description",
+            user_id=user_id,
+            is_internal=True,
+        )
+        test_token = Token(
+            client=test_client,
+            user_id=user_id,
+            token_type="bearer",
+            access_token=jwt_create_token(user_id=user_id),
+            expires=datetime.now() + timedelta(hours=10),
+            is_personal=True,
+            is_internal=True,
+        )
+
+        db.session.add(test_client)
+        db.session.add(test_token)
+        tokens.append({"token":test_token, "client":test_client})
 
     db.session.commit()
 
@@ -571,7 +595,7 @@ def records(db,location):
 
 @pytest.fixture()
 def admin_settings(db):
-    settings = list()
+    settings = []
     settings.append(AdminSettings(id=1,name='items_display_settings',settings={"items_display_email": False, "items_search_author": "name", "item_display_open_date": False}))
     settings.append(AdminSettings(id=2,name='storage_check_settings',settings={"day": 0, "cycle": "weekly", "threshold_rate": 80}))
     settings.append(AdminSettings(id=3,name='site_license_mail_settings',settings={"auto_send_flag": False}))
@@ -581,7 +605,7 @@ def admin_settings(db):
     settings.append(AdminSettings(id=7,name="display_stats_settings",settings={"display_stats":False}))
     settings.append(AdminSettings(id=8,name='convert_pdf_settings',settings={"path":"/tmp/file","pdf_ttl":1800}))
     settings.append(AdminSettings(id=9,name="elastic_reindex_settings",settings={"has_errored": False}))
-    settings.append(AdminSettings(id=10,name="sword_api_setting",settings={"data_format": {"TSV": {"item_type": "15", "register_format": "Direct"}, "XML": {"workflow": "-1", "item_type": "15", "register_format": "Workflow"}}, "default_format": "TSV"}))
+    settings.append(AdminSettings(id=10,name="sword_api_setting",settings={"TSV/CSV": {"item_type": "15", "registration_type": "Direct", "duplicate_check": False}, "XML": {"workflow": "1", "item_type": "15", "registration_type": "Workflow", "duplicate_check": False}}))
     db.session.add_all(settings)
     db.session.commit()
     return settings
@@ -623,25 +647,26 @@ def make_zip():
         return fp
     return factory
 
-# @pytest.fixture()
-# def make_crate():
-#     def factory():
-#         fp = BytesIO()
-#         with ZipFile(fp, 'w', compression=ZIP_DEFLATED) as new_zip:
-#             for dir, subdirs, files in os.walk("tests/data/zip_crate/"):
-#                 new_zip.write(dir,dir.split("/")[-1])
-#                 for file in files:
-#                     new_zip.write(os.path.join(dir, file),os.path.join(dir.split("/")[-1],file))
-#         fp.seek(0)
-#         return fp
-#     return factory
-
 @pytest.fixture()
 def make_crate():
     def factory():
         temp_dir = tempfile.mkdtemp()
         zip_path = os.path.join(temp_dir, "crate.zip")
         shutil.make_archive(zip_path.replace(".zip", ""), 'zip', "tests/data/zip_crate/")
+        file_size = os.path.getsize(zip_path)
+        with open(zip_path, 'rb') as f:
+            fp = BytesIO(f.read())
+        shutil.rmtree(temp_dir)
+        fp.seek(0)
+        return fp, file_size
+    return factory
+
+@pytest.fixture()
+def make_crate2():
+    def factory():
+        temp_dir = tempfile.mkdtemp()
+        zip_path = os.path.join(temp_dir, "crate.zip")
+        shutil.make_archive(zip_path.replace(".zip", ""), 'zip', "tests/data/zip_crate2/")
         file_size = os.path.getsize(zip_path)
         with open(zip_path, 'rb') as f:
             fp = BytesIO(f.read())
@@ -894,9 +919,9 @@ def workflow(app, db, item_type, action_data, users):
 def sword_mapping(db, item_type):
     sword_mapping = []
     for i in range(1, 4):
-        obj = SwordItemTypeMappingModel(
+        obj = ItemTypeJsonldMapping(
             name=f"test{i}",
-            mapping=json_data("data/item_type/sword_mapping_2.json"),
+            mapping=json_data("data/jsonld/ro-crate_mapping.json"),
             item_type_id=item_type[1]["item_type"].id,
             is_deleted=False
         )
@@ -922,21 +947,30 @@ def sword_client(db, tokens, sword_mapping, workflow):
     client = tokens[0]["client"]
     sword_client1 = SwordClientModel(
         client_id=client.client_id,
+        active=True,
         registration_type_id=SwordClientModel.RegistrationType.DIRECT,
         mapping_id=sword_mapping[0]["sword_mapping"].id,
+        duplicate_check=False,
+        meta_data_api=[],
     )
     client = tokens[1]["client"]
     sword_client2 = SwordClientModel(
         client_id=client.client_id,
+        active=True,
         registration_type_id=SwordClientModel.RegistrationType.WORKFLOW,
         mapping_id=sword_mapping[1]["sword_mapping"].id,
         workflow_id=workflow[1]["workflow"].id,
+        duplicate_check=True,
+        meta_data_api=[],
     )
     client = tokens[2]["client"]
     sword_client3 = SwordClientModel(
         client_id=client.client_id,
+        active=False,
         registration_type_id=SwordClientModel.RegistrationType.DIRECT,
         mapping_id=sword_mapping[0]["sword_mapping"].id,
+        duplicate_check=False,
+        meta_data_api=[],
     )
 
     with db.session.begin_nested():
@@ -949,4 +983,4 @@ def sword_client(db, tokens, sword_mapping, workflow):
         {"sword_client": sword_client1},
         {"sword_client": sword_client2},
         {"sword_client": sword_client3}
-        ]
+    ]

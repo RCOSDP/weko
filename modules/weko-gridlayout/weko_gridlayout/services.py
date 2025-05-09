@@ -31,7 +31,7 @@ from flask_login import current_user
 from invenio_communities.models import Community
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
-from invenio_stats.utils import QueryRankingHelper  
+from invenio_stats.utils import QueryRankingHelper
 from sqlalchemy.orm.exc import NoResultFound
 from weko_admin.config import WEKO_ADMIN_DEFAULT_LIFETIME
 from weko_index_tree.api import Indexes
@@ -442,6 +442,7 @@ class WidgetDesignServices:
                     community_result['title'] = community.title
                     result['repositories'].append(community_result)
         except Exception as e:
+            current_app.logger.error(f"Error getting repository list: {e}")
             result['error'] = str(e)
 
         return result

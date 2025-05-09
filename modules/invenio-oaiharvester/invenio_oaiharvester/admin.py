@@ -254,7 +254,7 @@ class HarvestSettingView(ModelView):
             index = Indexes.get_child_list_recursive(repository.root_node_id)
             index_list.extend(index)
         return self.model.index_id.in_([int(index) for index in index_list])
-    
+
     details_template = 'invenio_oaiharvester/details.html'
     edit_template = 'invenio_oaiharvester/edit.html'
     can_create = True
@@ -288,7 +288,7 @@ class HarvestSettingView(ModelView):
             'OAIHARVESTER_UPDATE_STYLE_OPTIONS'].items()),
         auto_distribution=LazyChoices(lambda: current_app.config[
             'OAIHARVESTER_AUTO_DISTRIBUTION_OPTIONS'].items()))
-    
+
     form_args = {
         'target_index': {
             'query_factory': index_query

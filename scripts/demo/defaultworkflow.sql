@@ -21,7 +21,7 @@ SET row_security = off;
 -- Data for Name: workflow_flow_define; Type: TABLE DATA; Schema: public; Owner: invenio
 --
 
-INSERT INTO public.workflow_flow_define (status, created, updated, id, flow_id, flow_name, flow_user, flow_status, is_deleted, repository_id) VALUES ('N', '2024-06-12 21:30:19.564693', '2024-06-12 21:31:01.443099', 1, '95b9a88f-3318-4da4-8949-7345b9396e87', 'Registration Flow', 1, 'A', false, 'Root Index');
+INSERT INTO public.workflow_flow_define (status, created, updated, id, flow_id, flow_name, flow_user, flow_status, is_deleted, repository_id, flow_type) VALUES ('N', '2024-06-12 21:30:19.564693', '2024-06-12 21:31:01.443099', 1, '95b9a88f-3318-4da4-8949-7345b9396e87', 'Registration Flow', 1, 'A', false, 'Root Index', 1);
 
 
 --

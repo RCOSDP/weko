@@ -20,41 +20,57 @@
 
 """Blueprint for Weko index tree rest."""
 
+import os
 import inspect
 import json
-import os
+import time
 import traceback
 from functools import wraps
 from datetime import datetime, timezone, timedelta
 
-from flask import Blueprint, abort, current_app, jsonify, make_response, \
+from flask import (
+    Blueprint, abort, current_app, jsonify, make_response,
     request, Response
+)
 from flask_babelex import gettext as _
 from flask_babelex import get_locale as get_current_locale
 from flask_login import current_user
+from marshmallow import ValidationError
+from sqlalchemy.exc import SQLAlchemyError
+from werkzeug.exceptions import BadRequest
 from werkzeug.http import generate_etag
+
+from invenio_db import db
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.errors import SameContentException
-from invenio_db import db
-from sqlalchemy.exc import SQLAlchemyError
+
+from weko_accounts.utils import limiter, roles_required
+from weko_admin.config import (
+    WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+    WEKO_ADMIN_PERMISSION_ROLE_REPO,
+    WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY,
+)
 from weko_admin.models import AdminLangSettings
 
 from .api import Indexes
-from .errors import IndexAddedRESTError, IndexNotFoundRESTError, \
-    IndexUpdatedRESTError, InvalidDataRESTError, VersionNotFoundRESTError, InternalServerError, \
+from .errors import (
+    IndexAddedRESTError, IndexBaseRESTError, IndexDeletedRESTError, IndexNotFoundRESTError, IndexUpdatedRESTError,
+    InvalidDataRESTError, VersionNotFoundRESTError, InternalServerError,
     PermissionError, IndexNotFound404Error
+)
 from .models import Index
-from .scopes import read_index_scope
-from .utils import check_doi_in_index, check_index_permissions, \
-    is_index_locked, perform_delete_index, save_index_trees_to_redis, reset_tree, \
-    create_limiter
+from .scopes import (
+    create_index_scope, read_index_scope, update_index_scope, delete_index_scope
+)
+from .utils import (
+    check_doi_in_index, check_index_permissions, can_admin_access_index,
+    is_index_locked, perform_delete_index, save_index_trees_to_redis, reset_tree
+)
+from .schema import IndexCreateRequestSchema, IndexUpdateRequestSchema
 
 JST = timezone(timedelta(hours=+9), 'JST')
-
-limiter = create_limiter()
-
 
 def need_record_permission(factory_name):
     """Decorator checking that the user has the required permissions on record.
@@ -164,6 +180,14 @@ def create_blueprint(app, endpoints):
             default_media_type=options.get('default_media_type'),
         )
 
+        ima = IndexManagementAPI.as_view(
+            f"{IndexManagementAPI.view_name}_{endpoint}",
+            ctx=ctx,
+            record_serializers=record_serializers,
+            default_media_type=options.get('default_media_type'),
+        )
+
+
         blueprint.add_url_rule(
             options.get('index_route'),
             view_func=iar,
@@ -174,6 +198,36 @@ def create_blueprint(app, endpoints):
             options.get('get_index_tree'),
             view_func=itg,
             methods=['GET'],
+        )
+
+        blueprint.add_url_rule(
+            options.get('api_get_all_index_jp_en'),
+            view_func=ima,
+            methods=['GET'],
+        )
+
+        blueprint.add_url_rule(
+            options.get('api_get_index_tree'),
+            view_func=ima,
+            methods=['GET'],
+        )
+
+        blueprint.add_url_rule(
+            options.get('api_create_index'),
+            view_func=ima,
+            methods=['POST'],
+        )
+
+        blueprint.add_url_rule(
+            options.get('api_update_index'),
+            view_func=ima,
+            methods=['PUT'],
+        )
+
+        blueprint.add_url_rule(
+            options.get('api_delete_index'),
+            view_func=ima,
+            methods=['DELETE'],
         )
 
         blueprint.add_url_rule(
@@ -464,7 +518,9 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
             pid = kwargs.get('pid_value')
 
             if pid:
-                if comm_id:
+                if pid == "item_registration":
+                    tree = self.record_class.get_browsing_tree()
+                elif comm_id:
                     comm = Community.get(comm_id)
                     tree = self.record_class.get_contribute_tree(
                         pid, int(comm.root_node_id))
@@ -473,11 +529,11 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
             elif action and 'browsing' in action and comm_id is None:
                 if more_id_list is None:
                     tree = self.record_class.get_browsing_tree()
-                    
+
                 else:
                     tree = self.record_class.get_more_browsing_tree(
                         more_ids=more_ids)
-            
+
             elif action and 'browsing' in action and comm_id is not None:
                 comm = Community.get(comm_id)
 
@@ -493,7 +549,7 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
             else:
                 tree = []
                 role_ids = []
-                
+
                 if current_user and current_user.is_authenticated:
                     for role in current_user.roles:
                         if role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
@@ -517,7 +573,7 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                             if index_id not in check_list:
                                 tree += self.record_class.get_index_tree(index_id)
                                 check_list.append(index_id)
-            
+
             return make_response(jsonify(tree), 200)
         except Exception as ex:
             current_app.logger.error('IndexTree Action Exception: ', ex)
@@ -784,3 +840,564 @@ class GetParentIndex(ContentNegotiatedMethodView):
         except Exception:
             current_app.logger.error(traceback.print_exc())
             raise InternalServerError()
+
+
+class IndexManagementAPI(ContentNegotiatedMethodView):
+    """Get Index Tree API.
+
+        WEKO_INDEX_TREE_REST_ENDPOINTS = dict(
+            tid=dict(
+                record_class='weko_index_tree.api:Indexes',
+                api_get_all_index_jp_en='/<string:version>/tree',
+                api_get_index_tree='/<string:version>/tree/<int:index_id>',
+                api_create_index='/<string:version>/tree/index',
+                api_update_index='/<string:version>/tree/index/<int:index_id>',
+                api_delete_index='/<string:version>/tree/index/<int:index_id>',
+            )
+        )
+
+    """
+
+    view_name = '{0}_index_management_api'
+
+    def __init__(self, ctx, record_serializers=None, default_media_type=None, **kwargs):
+        """Constructor."""
+        super(IndexManagementAPI, self).__init__(
+            method_serializers={
+                'GET': record_serializers,
+            },
+            default_method_media_type={
+                'GET': default_media_type,
+            },
+            default_media_type=default_media_type,
+            **kwargs
+        )
+        for key, value in ctx.items():
+            setattr(self, key, value)
+
+    @require_api_auth(allow_anonymous=True)
+    @require_oauth_scopes(read_index_scope.id)
+    @roles_required([], allow_anonymous=True)
+    @limiter.limit('')
+    def get(self, **kwargs):
+        """Get index tree."""
+        version = kwargs.get('version')
+        func_name = f'get_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
+        else:
+            raise VersionNotFoundRESTError()
+
+    @require_api_auth(allow_anonymous=False)
+    @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,WEKO_ADMIN_PERMISSION_ROLE_REPO,WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
+    @require_oauth_scopes(create_index_scope.id)
+    @limiter.limit('')
+    def post(self, **kwargs):
+        """Create a new index tree node."""
+        version = kwargs.get('version')
+        func_name = f'post_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
+        else:
+            raise VersionNotFoundRESTError()
+
+    @require_api_auth(allow_anonymous=False)
+    @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,WEKO_ADMIN_PERMISSION_ROLE_REPO,WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
+    @require_oauth_scopes(update_index_scope.id)
+    @limiter.limit('')
+    def put(self, **kwargs):
+        """Update an existing index tree node."""
+        current_app.logger.info("Updating an existing index tree node")
+        version = kwargs.get('version')
+        func_name = f'put_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
+        else:
+            raise VersionNotFoundRESTError()
+
+    @require_api_auth(allow_anonymous=False)
+    @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,WEKO_ADMIN_PERMISSION_ROLE_REPO,WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
+    @require_oauth_scopes(delete_index_scope.id)
+    @limiter.limit('')
+    def delete(self, **kwargs):
+        """Delete an existing index tree node."""
+        version = kwargs.get('version')
+        func_name = f'delete_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
+        else:
+            raise VersionNotFoundRESTError()
+
+
+    def get_v1(self, **kwargs):
+        """Get index tree."""
+        try:
+            pid = kwargs.get('index_id')
+
+            # Get update time
+            if pid and pid != 0:
+                index = self.record_class.get_index(pid)
+                if not index:
+                    raise IndexNotFound404Error()
+                updated = index.updated
+            else:
+                all_indexes = self.record_class.get_all_indexes()
+                current_app.logger.info(all_indexes)
+                all_indexes = sorted(all_indexes, key=lambda x: x.updated, reverse=True)
+                updated = all_indexes[0].updated if len(all_indexes) > 0 else datetime.now()
+
+            # Check Etag
+            hash_str = str(pid) + updated.strftime("%a, %d %b %Y %H:%M:%S GMT")
+            etag = generate_etag(hash_str.encode('utf-8'))
+            self.check_etag(etag, weak=True)
+
+            # Check Last-Modified
+            if not request.if_none_match:
+                self.check_if_modified_since(dt=updated)
+
+            # Get index tree
+            if pid and pid != 0:
+                tree = self.record_class.get_index_tree(pid, lang="ja")
+                reset_tree(tree=tree)
+                if len(tree) == 0:
+                    raise PermissionError()
+                result_tree_ja = dict(
+                    index=tree[0]
+                )
+
+                tree = self.record_class.get_index_tree(pid, lang="en")
+                reset_tree(tree=tree)
+                result_tree_en = dict(
+                    index=tree[0]
+                )
+            else:
+                tree = self.record_class.get_index_tree(pid=0, lang="ja")
+                current_app.logger.error(tree)
+
+                reset_tree(tree=tree)
+                current_app.logger.error(tree)
+                result_tree_ja = dict(
+                    index=dict(
+                        children=tree,
+                        cid=0,
+                        name='Root-index',
+                        id='0',
+                        public_state=True,
+                        value='Root-index'
+                    )
+                )
+
+                tree = self.record_class.get_index_tree(pid=0, lang="en")
+                reset_tree(tree=tree)
+                result_tree_en = dict(
+                    index=dict(
+                        children=tree,
+                        cid=0,
+                        name='Root-index',
+                        id='0',
+                        public_state=True,
+                        value='Root-index'
+                    )
+                )
+
+            merged_tree = self.merge_index_trees(result_tree_ja, result_tree_en)
+
+            indent = 4 if request.args.get('pretty') == 'true' else None
+
+            res = Response(
+                response=json.dumps(merged_tree, indent=indent),
+                status=200,
+                content_type='application/json'
+            )
+            res.set_etag(etag)
+            res.last_modified = updated
+            return res
+
+        except (SameContentException, PermissionError, IndexNotFound404Error) as e:
+            raise e
+
+        except SQLAlchemyError:
+            raise InternalServerError()
+
+        except Exception:
+            current_app.logger.error(traceback.print_exc())
+            raise InternalServerError()
+
+    def merge_index_trees(self, tree_ja, tree_en):
+        """Merge Japanese and English index trees."""
+        def merge_nodes(node_ja, node_en):
+            merged_node = node_ja.copy()
+            merged_node.update({
+                "index_name": merged_node.get("value", ""),
+                "index_name_english": node_en.get("value", ""),
+                "index_link_name_english": node_en.get("index_link_name", ""),
+                "value_english": node_en.get("value", ""),
+            })
+
+            # Merge children recursively
+            children_ja = {child["cid"]: child for child in node_ja.get("children", [])}
+            children_en = {child["cid"]: child for child in node_en.get("children", [])}
+            merged_children = []
+            for cid in set(children_ja.keys()).union(children_en.keys()):
+                merged_children.append(merge_nodes(children_ja.get(cid), children_en.get(cid)))
+            merged_node["children"] = merged_children
+
+            return merged_node
+
+        return {"index": merge_nodes(tree_ja["index"], tree_en["index"])}
+
+    def post_v1(self, **kwargs):
+        """Create a new index tree node.
+
+        API endpoint to create a new index tree node. <br>
+        Payload should be in JSON format and include the following fields: <br>
+            - index: Dictionary containing the index information.
+        """
+        request_data = self.validate_request(request, IndexCreateRequestSchema)
+
+        index_info = request_data.get("index")
+        parent_id = index_info.get("parent")
+        self.check_index_accessible(parent_id)
+
+        # Create new index
+        index_id = int(time.time() * 1000)
+        indexes = {
+            "id": index_id,
+            "value": "New Index",
+        }
+        try:
+            create_result = self.record_class.create(
+                pid=parent_id, indexes=indexes
+            )
+
+            if not create_result:
+                current_app.logger.error(f"Failed to create index: {index_id}")
+                raise InternalServerError(
+                    description=f"Internal Server Error: Failed to create index."
+                )
+
+            current_app.logger.info(f"Create new index: {index_id}")
+
+        except SQLAlchemyError as ex:
+            db.session.rollback()
+            current_app.logger.error(
+                f"Error occurred in DB while creating index: {ex}"
+            )
+            traceback.print_exc()
+            raise InternalServerError(
+                description=f"Internal Server Error: Failed to create index."
+            ) from ex
+
+        # Update new index with provided data
+        try:
+            new_index = self.record_class.get_index(index_id)
+
+            index_data = {
+                **index_info,
+                **({"browsing_group": {
+                    "allow": [
+                        {"id": role}
+                        for role in index_info["browsing_group"].split(",")
+                    ]
+                }} if "browsing_group" in index_info else {}),
+                **({"contribute_group": {
+                    "allow": [
+                        {"id": role}
+                        for role in index_info["contribute_group"].split(",")
+                    ]
+                }} if "contribute_group" in index_info else {})
+            }
+
+            updated_index = self.record_class.update(index_id, **index_data)
+
+            if not updated_index:
+                current_app.logger.error(
+                    f"Failed to update new index: {index_id}. Delete it."
+                )
+                raise InternalServerError(
+                    description=f"Internal Server Error: Failed to update new index {index_id}."
+                )
+
+            current_app.logger.info(f"Update info new index: {index_id}")
+
+        except InternalServerError:
+            db.session.delete(new_index)
+            db.session.commit()
+            raise
+
+        except SQLAlchemyError as ex:
+            db.session.rollback()
+            db.session.delete(new_index)
+            db.session.commit()
+            current_app.logger.error(
+                f"Failed to update new index: {index_id}. Database error. "
+                "Delete it."
+            )
+            traceback.print_exc()
+            raise InternalServerError(
+                description=f"Database Error: Failed to create index."
+            ) from ex
+
+        except Exception as ex:
+            db.session.rollback()
+            db.session.delete(new_index)
+            db.session.commit()
+            current_app.logger.error(
+                f"Failed to update new index: {index_id}. Unexpected error. "
+                "Delete it."
+            )
+            traceback.print_exc()
+            raise InternalServerError(
+                description=f"Internal Server Error: Failed to create index."
+            ) from ex
+
+        # Update index tree in Redis all languages
+        self.save_redis()
+
+        response_data = {
+            "index": {
+                **{
+                    column.name: getattr(updated_index, column.name)
+                    for column in updated_index.__table__.columns
+                },
+                "created": updated_index.created.isoformat(),
+                "updated": updated_index.updated.isoformat(),
+                **{
+                    "public_date": updated_index.public_date.strftime("%Y%m%d")
+                    if updated_index.public_date
+                    else {}
+                },
+            }
+        }
+
+        return make_response(jsonify(response_data), 200)
+
+
+    def put_v1(self, index_id, **kwargs):
+        """ Update an existing index tree node.
+
+        API endpoint to update an existing index tree node. <br>
+        Payload should be in JSON format and include the following fields: <br>
+            - index: Dictionary containing the index information.
+
+        Args:
+            index_id (int): The ID of the index to be updated.
+        """
+        if index_id == 0:
+            current_app.logger.error("Bad Request: Cannot update root index.")
+            raise IndexBaseRESTError(
+                description="Bad Request: Cannot update root index."
+            )
+        self.check_index_accessible(index_id)
+
+        request_data = self.validate_request(request, IndexUpdateRequestSchema)
+
+        index_info = request_data.get("index")
+        parent_id = index_info.get("parent")
+        self.check_index_accessible(parent_id)
+
+        try:
+            index_data = {
+                **index_info,
+                **({"browsing_group": {
+                    "allow": [
+                        {"id": role}
+                        for role in index_info["browsing_group"].split(",")
+                    ]
+                }} if "browsing_group" in index_info else {}),
+                **({"contribute_group": {
+                    "allow": [
+                        {"id": role}
+                        for role in index_info["contribute_group"].split(",")
+                    ]
+                }} if "contribute_group" in index_info else {})
+            }
+
+            updated_index = self.record_class.update(index_id, **index_data)
+
+            if not updated_index:
+                current_app.logger.error(f"Failed to update index: {index_id}.")
+                raise InternalServerError(
+                    description=f"Internal Server Error: Failed to update index {index_id}."
+                )
+
+            current_app.logger.info(f"Update index: {index_id}")
+
+        except SQLAlchemyError as ex:
+            db.session.rollback()
+            current_app.logger.error(
+                f"Failed to update index: {index_id}. Database error.")
+            traceback.print_exc()
+            raise InternalServerError(
+                description=f"Database Error: Failed to update index {index_id}."
+            ) from ex
+
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(
+                f"Failed to update index: {index_id}. Unexpected error.")
+            traceback.print_exc()
+            raise InternalServerError(
+                description=f"Internal Server Error: Failed to update index {index_id}."
+            ) from ex
+
+        # Update index tree in Redis all languages
+        self.save_redis()
+
+        response_data = {
+            "index": {
+                **{
+                    column.name: getattr(updated_index, column.name)
+                    for column in updated_index.__table__.columns
+                },
+                "created": updated_index.created.isoformat(),
+                "updated": updated_index.updated.isoformat(),
+                **{
+                    "public_date": updated_index.public_date.strftime("%Y%m%d")
+                    if updated_index.public_date
+                    else {}
+                },
+            }
+        }
+
+        return make_response(jsonify(response_data), 200)
+
+
+    def delete_v1(self, index_id, **kwargs):
+        """Delete an existing index tree node."""
+        try:
+            index_obj = self.record_class.get_index(index_id)
+            if not index_obj:
+                current_app.logger.error(f"Index not found: {index_id}")
+                return make_response(jsonify({'status': 404, 'error': 'Index not found'}), 404)
+            else:
+                lst = {column.name: getattr(index_obj, column.name) for column in index_obj.__table__.columns}
+                if not can_admin_access_index(lst):
+                    current_app.logger.error(f"Permission denied for index: {index_id}")
+                    return make_response(jsonify({'status': 403, 'error': f'Permission denied: You do not have access to index {index_id}.'}), 403)
+
+            delete_result = self.record_class.delete(index_id)
+
+            if not delete_result:
+                current_app.logger.error(f"Failed to delete index: {index_id}")
+                return make_response(jsonify({'status': 500, 'error': 'Internal Server Error: Failed to delete index'}), 500)
+            current_app.logger.info(f"Delete index: {index_id}")
+            self.save_redis()
+            return make_response(jsonify({'status': 200, 'message': 'Index deleted successfully.'}), 200)
+
+        except (SameContentException, PermissionError, IndexNotFound404Error) as ex:
+            current_app.logger.error(f"Error occurred while deleting index: {index_id}")
+            traceback.print_exc()
+            raise
+
+        except SQLAlchemyError:
+            db.session.rollback()
+            current_app.logger.error(f"Database error occurred while deleting index: {index_id}")
+            traceback.print_exc()
+            raise InternalServerError()
+
+        except Exception:
+            current_app.logger.error(f"Unexpected error occurred while deleting index: {index_id}")
+            traceback.print_exc()
+            raise InternalServerError()
+
+
+    def validate_request(self, request, schema):
+        """Validate the request.
+
+        Args:
+            request (Request): The incoming request.
+            schema (Schema): The schema to validate against.
+
+        Returns:
+            dict: The validated data.
+
+        Raises:
+            InvalidDataRESTError: If the request data is invalid.
+            IndexBaseRESTError: If the Content-Type is not application/json.
+
+        """
+        if request.headers.get("Content-Type") != "application/json":
+            current_app.logger.error("Invalid Content-Type for index creation.")
+            raise IndexBaseRESTError(
+                description="Bad Request: Content-Type must be application/json."
+            )
+
+        try:
+            request_data = schema().load(request.json).data
+        except ValidationError as ex:
+            current_app.logger.error("Invalid payload for index creation.")
+            traceback.print_exc()
+            raise InvalidDataRESTError(
+                description=f"Bad Request: Invalid payload, {ex}"
+            ) from ex
+
+        except BadRequest as ex:
+            current_app.logger.error("Failed to parse JSON data for index creation.")
+            traceback.print_exc()
+            raise InvalidDataRESTError(
+                description=f"Bad Request: Failed to parse provided."
+            ) from ex
+
+        return request_data
+
+
+    def check_index_accessible(self, id):
+        """Check if the user has access to the index.
+
+        Args:
+            id (int): The ID of the index.
+
+        Returns:
+            Index: The index object if the user has access.
+
+        Raises:
+            IndexNotFound404Error: If the index is not found.
+            IndexDeletedRESTError: If the index is deleted.
+            PermissionError: If the user does not have access to the index.
+
+        """
+        if not id:
+            if id == 0 and any(role.name == current_app.config.get("WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY")
+                    for role in getattr(current_user, 'roles', [])):
+                raise PermissionError(
+                    description=f"Permission denied: Community administrators cannot access root index"
+                )
+            return None
+
+        index = self.record_class.get_index(id, with_deleted=True)
+        if not index:
+            msg = f"Index not found: {id}."
+            current_app.logger.error(msg)
+            raise IndexNotFound404Error(description=msg)
+        if index.is_deleted:
+            msg = f"Index is deleted: {id}."
+            current_app.logger.error(msg)
+            raise IndexNotFound404Error(description=msg)
+
+        lst = {
+            column.name: getattr(index, column.name)
+            for column in index.__table__.columns
+        }
+        if not can_admin_access_index(lst):
+            current_app.logger.error(
+                f"User does not have access to index: {id}"
+            )
+            raise PermissionError(
+                description=f"Permission denied: Cannot access index {id}"
+            )
+
+        return index
+
+
+    def save_redis(self):
+        """Save index tree to Redis."""
+        langs = AdminLangSettings.get_registered_language()
+        tree = self.record_class.get_index_tree(lang="other_lang")
+        for lang in langs:
+            lang_code = lang["lang_code"]
+            if lang_code == "ja":
+                tree_ja = self.record_class.get_index_tree(lang="ja")
+                save_index_trees_to_redis(tree_ja, lang=lang_code)
+            else:
+                save_index_trees_to_redis(tree, lang=lang_code)

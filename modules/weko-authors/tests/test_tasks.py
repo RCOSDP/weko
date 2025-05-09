@@ -32,11 +32,11 @@ def test_export_all(app,mocker):
 
     result = export_all('author_db')
     assert result == "test_url.txt"
-    
+
     mocker.patch("weko_authors.tasks.export_authors",return_value=None)
     result = export_all('id_prefix')
     assert result == None
-    
+
     mocker.patch("weko_authors.tasks.export_authors",side_effect=Exception)
     result = export_all('XXXX')
     assert result == None
@@ -117,7 +117,7 @@ def test_check_is_import_available(app,mocker):
                 return MockTask(2,"not success")
             elif task_id == "not_success_task2":
                 return MockTask("not_success_task2","not success")
-            
+
     def mock_restore(task_id):
             if task_id == "not_exist_task":
                 return None
@@ -137,7 +137,7 @@ def test_check_is_import_available(app,mocker):
     mocker.patch("weko_authors.tasks.inspect",return_value=MockInspect(False))
     result = check_is_import_available()
     assert result == {"is_available":False,"celery_not_run":True}
-    
+
     # inspect.ping is true
     mocker.patch("weko_authors.tasks.inspect",return_value=MockInspect(True))
 
@@ -146,19 +146,19 @@ def test_check_is_import_available(app,mocker):
     mocker.patch("weko_authors.tasks.GroupResult.restore",side_effect=mock_restore)
     result = check_is_import_available()
     assert result == {"is_available":True}
-    
+
     # not exist task
     current_cache.set(cache_key,{"group_task_id":"not_exist_task"})
     result = check_is_import_available()
     assert result == {"is_available":True}
     assert current_cache.get(cache_key) is None
-    
+
     # task is successful
     current_cache.set(cache_key,{"group_task_id":"success_task"})
     result = check_is_import_available(1)
     assert result == {"is_available":True}
     assert current_cache.get(cache_key) is None
-    
+
     # task is not success,failed, group_task_id = taks.id
     current_cache.set(cache_key,{"group_task_id":"not_success_task1"})
     result = check_is_import_available(2)
@@ -170,7 +170,7 @@ def test_check_is_import_available(app,mocker):
     result = check_is_import_available(2)
     assert result == {"is_available":False}
     assert current_cache.get(cache_key) is not None
-    
+
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::TestImportAuthorsFromTempFiles -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 class TestImportAuthorsFromTempFiles:
@@ -193,7 +193,7 @@ class TestImportAuthorsFromTempFiles:
             yield mock
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::TestImportAuthorsFromTempFiles::test_import_authors_from_temp_files_normal_case -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-    def test_import_authors_from_temp_files_normal_case(self, app2, mock_update_cache_data, mock_get_check_base_name, 
+    def test_import_authors_from_temp_files_normal_case(self, app2, mock_update_cache_data, mock_get_check_base_name,
                                                     mock_import_authors_for_over_max):
         """
         正常系
@@ -210,7 +210,7 @@ class TestImportAuthorsFromTempFiles:
         # テスト用データの準備
         reached_point = {"part_number": 1, "count": 2}
         max_part = 2
-        
+
         # 一時ファイルの内容をモック
         part1_data = [
             {"pk_id": 1, "authorNameInfo": [{"familyName": "Doe", "firstName": "John"}], "status": "new", "weko_id": "1001", "current_weko_id": "1000"},
@@ -218,45 +218,45 @@ class TestImportAuthorsFromTempFiles:
             {"pk_id": 3, "authorNameInfo": [{"familyName": "Brown", "firstName": "Bob"}], "status": "new", "weko_id": "1003", "current_weko_id": ""},
             {"pk_id": 4, "authorNameInfo": [{"familyName": "Lee", "firstName": "Alice"}], "status": "update", "weko_id": "1004", "current_weko_id": "1004"},
         ]
-        
+
         part2_data = [
             {"pk_id": 5, "authorNameInfo": [{"familyName": "Lee", "firstName": "Alice"}], "status": "update", "weko_id": "1004", "current_weko_id": "1004"},
         ]
-        
+
         # ファイル読み込みのモック
         mock_file_data = {
             '/data/test_check_base-part1': json.dumps(part1_data),
             '/data/test_check_base-part2': json.dumps(part2_data)
         }
-        
+
         def mock_open_side_effect(*args, **kwargs):
             file_path = args[0]
             if file_path in mock_file_data:
                 mock = mock_open(read_data=mock_file_data[file_path])
                 return mock(*args, **kwargs)
             return mock_open()(*args, **kwargs)
-        
+
         # os.removeをモック
         with patch('os.remove') as mock_remove, \
             patch('builtins.open', side_effect=mock_open_side_effect):
-            
+
             # 関数実行
             import_authors_from_temp_files(reached_point, max_part)
-            
+
             # アサーション
             # update_cache_dataが呼ばれたことを確認
             mock_update_cache_data.assert_called_once()
-        
+
             # import_authors_for_over_maxが2回呼ばれたことを確認
             assert mock_import_authors_for_over_max.call_count == 2
-            
+
             # 一時ファイルの削除が呼ばれたことを確認
             mock_remove.assert_has_calls([
                 call('/data/test_check_base-part1'),
                 call('/data/test_check_base-part2')
             ])
 
-    def test_import_authors_from_temp_files_with_batch_size(self, app2, mock_update_cache_data, mock_get_check_base_name, 
+    def test_import_authors_from_temp_files_with_batch_size(self, app2, mock_update_cache_data, mock_get_check_base_name,
                                                         mock_import_authors_for_over_max):
         """
         正常系
@@ -268,11 +268,11 @@ class TestImportAuthorsFromTempFiles:
         期待結果：
             - バッチサイズ（2）ごとにimport_authors_for_over_maxが呼び出される
         """
-            
+
         # テスト用データの準備
         reached_point = {"part_number": 1, "count": 0}
         max_part = 1
-        
+
         # 一時ファイルの内容をモック（5人の著者）
         part1_data = [
             {"pk_id": 1, "authorNameInfo": [{"familyName": "Doe", "firstName": "John"}], "status": "new", "weko_id": "1001", "current_weko_id": ""},
@@ -281,34 +281,34 @@ class TestImportAuthorsFromTempFiles:
             {"pk_id": 4, "authorNameInfo": [{"familyName": "Lee", "firstName": "Alice"}], "status": "update", "weko_id": "1004", "current_weko_id": "1004"},
             {"pk_id": 5, "authorNameInfo": [{"familyName": "Wang", "firstName": "Chen"}], "status": "new", "weko_id": "1005", "current_weko_id": "", "errors":["error"]}
         ]
-        
+
         # ファイル読み込みのモック
         mock_file_data = {
             '/data/test_check_base-part1': json.dumps(part1_data)
         }
-        
+
         def mock_open_side_effect(*args, **kwargs):
             file_path = args[0]
             if file_path in mock_file_data:
                 mock = mock_open(read_data=mock_file_data[file_path])
                 return mock(*args, **kwargs)
             return mock_open()(*args, **kwargs)
-        
+
         # os.removeをモック
         with patch('os.remove') as mock_remove, \
             patch('builtins.open', side_effect=mock_open_side_effect):
-            
+
             # 関数実行
             import_authors_from_temp_files(reached_point, max_part)
-            
+
             # アサーション
             # import_authors_for_over_maxが呼ばれたことを確認
             assert mock_import_authors_for_over_max.call_count == 1
-            
+
             # 最初のバッチ（0, 1）
             mock_import_authors_for_over_max.assert_any_call(part1_data[0:4])
 
-    def test_import_authors_from_temp_files_file_not_found(self, app2, mock_update_cache_data, mock_get_check_base_name, 
+    def test_import_authors_from_temp_files_file_not_found(self, app2, mock_update_cache_data, mock_get_check_base_name,
                                                         mock_import_authors_for_over_max):
         """
         異常系
@@ -331,26 +331,26 @@ class TestImportAuthorsFromTempFiles:
             {"pk_id": 4, "authorNameInfo": [{"familyName": "Lee", "firstName": "Alice"}], "status": "update", "weko_id": "1004", "current_weko_id": "1004"},
             {"pk_id": 5, "authorNameInfo": [{"familyName": "Wang", "firstName": "Chen"}], "status": "new", "weko_id": "1005", "current_weko_id": "", "errors":["error"]}
         ]
-        
+
         # ファイル読み込みのモック
         mock_file_data = {
             '/data/test_check_base-part1': json.dumps(part1_data)
         }
-        
+
         def mock_open_side_effect(*args, **kwargs):
             file_path = args[0]
             if file_path in mock_file_data:
                 mock = mock_open(read_data=mock_file_data[file_path])
                 return mock(*args, **kwargs)
             return mock_open()(*args, **kwargs)
-        
+
         # os.removeをモック
         with patch('os.remove', side_effect=FileNotFoundError("File not found")) as mock_remove, \
             patch('builtins.open', side_effect=mock_open_side_effect):
-            
+
             import_authors_from_temp_files(reached_point, max_part)
 
-    def test_import_authors_from_temp_files_invalid_json(self, app2, mock_update_cache_data, mock_get_check_base_name, 
+    def test_import_authors_from_temp_files_invalid_json(self, app2, mock_update_cache_data, mock_get_check_base_name,
                                                     mock_import_authors_for_over_max):
         """
         異常系
@@ -365,34 +365,34 @@ class TestImportAuthorsFromTempFiles:
         # テスト用データの準備
         reached_point = {"part_number": 1, "count": 0}
         max_part = 1
-        
+
         # 不正なJSONをシミュレート
         invalid_json = "{ invalid json }"
-        
+
         # ファイル読み込みのモック
         mock_file_data = {
             '/data/test_check_base-part1': invalid_json
         }
-        
+
         def mock_open_side_effect(*args, **kwargs):
             file_path = args[0]
             if file_path in mock_file_data:
                 mock = mock_open(read_data=mock_file_data[file_path])
                 return mock(*args, **kwargs)
             return mock_open()(*args, **kwargs)
-        
+
         # os.removeをモック
         with patch('os.remove') as mock_remove, \
             patch('builtins.open', side_effect=mock_open_side_effect):
-            
+
             # 関数実行してエラーを検証
             with pytest.raises(json.JSONDecodeError):
                 import_authors_from_temp_files(reached_point, max_part)
-            
+
             # 削除は呼ばれないはず
             mock_remove.assert_not_called()
 
-    def test_import_authors_from_temp_files_file_deletion_error(self, app2, mock_update_cache_data, mock_get_check_base_name, 
+    def test_import_authors_from_temp_files_file_deletion_error(self, app2, mock_update_cache_data, mock_get_check_base_name,
                                                             mock_import_authors_for_over_max):
         """
         異常系
@@ -407,24 +407,24 @@ class TestImportAuthorsFromTempFiles:
         # テスト用データの準備
         reached_point = {"part_number": 1, "count": 0}
         max_part = 1
-        
+
         # 一時ファイルの内容をモック
         part1_data = [
             {"pk_id": 1, "authorNameInfo": [{"familyName": "Doe", "firstName": "John"}], "status": "new", "weko_id": "1001", "current_weko_id": ""}
         ]
-        
+
         # ファイル読み込みのモック
         mock_file_data = {
             '/data/test_check_base-part1': json.dumps(part1_data)
         }
-        
+
         def mock_open_side_effect(*args, **kwargs):
             file_path = args[0]
             if file_path in mock_file_data:
                 mock = mock_open(read_data=mock_file_data[file_path])
                 return mock(*args, **kwargs)
             return mock
-        
+
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::TestImportAuthorsForOverMax -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 class TestImportAuthorsForOverMax:
@@ -473,8 +473,8 @@ class TestImportAuthorsForOverMax:
         with patch('weko_authors.tasks.check_task_end') as mock_check:
             yield mock_check
 
-    def test_import_authors_for_over_max_success(self, app2, mock_cache, 
-                                                mock_get_cache_data, mock_update_summary, 
+    def test_import_authors_for_over_max_success(self, app2, mock_cache,
+                                                mock_get_cache_data, mock_update_summary,
                                                 mock_csv_writer, mock_group, mock_check_task_end):
         """
         正常系
@@ -503,7 +503,7 @@ class TestImportAuthorsForOverMax:
             "status": "update"
         }
         authors = [author1, author2]
-        
+
         # Setup task children and results
         task1_mock = MagicMock()
         task1_mock.task_id = "task1"
@@ -512,7 +512,7 @@ class TestImportAuthorsForOverMax:
             'end_date': '2025-03-16 10:00:05',
             'status': states.SUCCESS
         }
-        
+
         task2_mock = MagicMock()
         task2_mock.task_id = "task2"
         task2_mock.result = {
@@ -520,29 +520,29 @@ class TestImportAuthorsForOverMax:
             'end_date': '2025-03-16 10:00:05',
             'status': states.SUCCESS
         }
-        
+
         mock_task.children = [task1_mock, task2_mock]
-        
+
         with patch('weko_authors.tasks.import_author.AsyncResult') as mock_async_result:
             mock_async_result.side_effect = [task1_mock, task2_mock]
-            
+
             # Execute
             import_authors_for_over_max(authors)
-            
+
             # Verify
             assert mock_group_obj.call_count == 1
             mock_check_task_end.assert_called_once()
             mock_update_summary.assert_called()
-            
+
             # Check that we wrote to the result file
             assert mock_csv_writer.writerow.call_count == 2
-            
+
             # Check task results were processed and records were forgotten
             assert task1_mock.forget.call_count == 1
             assert task2_mock.forget.call_count == 1
 
-    def test_import_authors_for_over_max_partial_failure(self, app2, mock_cache, 
-                                                    mock_get_cache_data, mock_update_summary, 
+    def test_import_authors_for_over_max_partial_failure(self, app2, mock_cache,
+                                                    mock_get_cache_data, mock_update_summary,
                                                     mock_csv_writer, mock_group, mock_check_task_end):
         """
         正常系
@@ -570,7 +570,7 @@ class TestImportAuthorsForOverMax:
             "status": "update"
         }
         authors = [author1, author2]
-        
+
         # Setup task children and results
         task1_mock = MagicMock()
         task1_mock.task_id = "task1"
@@ -579,7 +579,7 @@ class TestImportAuthorsForOverMax:
             'end_date': '2025-03-16 10:00:05',
             'status': states.SUCCESS
         }
-        
+
         task2_mock = MagicMock()
         task2_mock.task_id = "task2"
         task2_mock.result = {
@@ -588,24 +588,24 @@ class TestImportAuthorsForOverMax:
             'status': states.FAILURE,
             'error_id': 'delete_author_link'
         }
-        
+
         mock_task.children = [task1_mock, task2_mock]
-        
+
         with patch('weko_authors.tasks.import_author.AsyncResult') as mock_async_result:
             mock_async_result.side_effect = [task1_mock, task2_mock]
-            
+
             # Execute
             import_authors_for_over_max(authors)
-            
+
             # Verify
             assert mock_group_obj.call_count == 1
             mock_check_task_end.assert_called_once()
-            
+
             # Check that the summary was updated with correct counts
             mock_update_summary.assert_called_with(1,1)
 
-    def test_import_authors_for_over_max_timeout(self, app2, mock_cache, 
-                                            mock_get_cache_data, mock_update_summary, 
+    def test_import_authors_for_over_max_timeout(self, app2, mock_cache,
+                                            mock_get_cache_data, mock_update_summary,
                                             mock_csv_writer, mock_group, mock_check_task_end):
         """
         異常系
@@ -625,34 +625,34 @@ class TestImportAuthorsForOverMax:
             "status": "new"
         }
         authors = [author]
-        
+
         # Setup task children with timeout (result=None)
         task_mock = MagicMock()
         task_mock.task_id = "task1"
         task_mock.result = None  # Simulate timeout with no result
-        
+
         mock_task.children = [task_mock]
-        
+
         with patch('weko_authors.tasks.import_author.AsyncResult') as mock_async_result, \
             patch('weko_authors.tasks.datetime') as mock_datetime:
-            
+
             mock_datetime.now.return_value.strftime.return_value = '2025-03-16 10:00:00'
             mock_async_result.return_value = task_mock
-            
+
             # Execute
             import_authors_for_over_max(authors)
-            
+
             # Verify
             mock_check_task_end.assert_called_once()
-            
+
             # Check that we wrote to the result file with timeout error
             mock_csv_writer.writerow.assert_called_once()
-            
+
             # Check that the summary was updated with failure count
             mock_update_summary.assert_called_with(0,1)
 
-    def test_import_authors_for_over_max_no_summary(self, app2, mock_cache, 
-                                                mock_get_cache_data, mock_update_summary, 
+    def test_import_authors_for_over_max_no_summary(self, app2, mock_cache,
+                                                mock_get_cache_data, mock_update_summary,
                                                 mock_csv_writer, mock_group, mock_check_task_end):
         """
         正常系
@@ -664,7 +664,7 @@ class TestImportAuthorsForOverMax:
         """
         # Setup - returns None for summary data
         mock_get_cache_data.return_value = None
-        
+
         mock_group_obj, mock_task = mock_group
         author = {
             "pk_id": 1,
@@ -676,7 +676,7 @@ class TestImportAuthorsForOverMax:
             "status": "new"
         }
         authors = [author]
-        
+
         task_mock = MagicMock()
         task_mock.task_id = "task1"
         task_mock.result = {
@@ -684,21 +684,21 @@ class TestImportAuthorsForOverMax:
             'end_date': '2025-03-16 10:00:05',
             'status': states.SUCCESS
         }
-        
+
         mock_task.children = [task_mock]
-        
+
         with patch('weko_authors.tasks.import_author.AsyncResult') as mock_async_result:
             mock_async_result.return_value = task_mock
-            
+
             # Execute
             import_authors_for_over_max(authors)
-            
+
             # Verify
             # Check that a new summary was created
             mock_update_summary.assert_called_with(1,0)
-                
-    def test_import_authors_for_over_max_for_cover(self, app2, mock_cache, 
-                                                mock_get_cache_data, mock_update_summary, 
+
+    def test_import_authors_for_over_max_for_cover(self, app2, mock_cache,
+                                                mock_get_cache_data, mock_update_summary,
                                                 mock_csv_writer, mock_group, mock_check_task_end):
         """
         正常系
@@ -709,7 +709,7 @@ class TestImportAuthorsForOverMax:
         """
         # Setup - returns None for summary data
         mock_get_cache_data.return_value = None
-        
+
         mock_group_obj, mock_task = mock_group
         author = {
             "pk_id": 1,
@@ -721,7 +721,7 @@ class TestImportAuthorsForOverMax:
             "status": "new"
         }
         authors = [author]
-        
+
         task_mock = MagicMock()
         task_mock.task_id = "task1"
         task_mock.result = {
@@ -729,15 +729,15 @@ class TestImportAuthorsForOverMax:
             'end_date': '2025-03-16 10:00:05',
             'status': states.PENDING
         }
-        
+
         mock_task.children = [task_mock]
-        
+
         with patch('weko_authors.tasks.import_author.AsyncResult') as mock_async_result:
             mock_async_result.return_value = task_mock
-            
+
             # Execute
             import_authors_for_over_max(authors)
-            
+
             # Verify
             # Check that a new summary was created
             mock_update_summary.assert_called_with(0,0)
@@ -758,7 +758,7 @@ def test_import_id_prefix(app, caplog: LogCaptureFixture):
         info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
         assert [('testapp', logging.ERROR, "{'error_id': 123, 'message': 'DB upload failed'}")] == info_logs
         assert result['status'] == 'FAILURE'
-    
+
 
 # def import_affiliation_id(affiliation_id):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_import_affiliation_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -773,7 +773,7 @@ def test_import_affiliation_id(app, caplog: LogCaptureFixture):
         info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
         assert [('testapp', logging.ERROR, "{'error_id': 123, 'message': 'DB upload failed'}")] == info_logs
         assert result['status'] == 'FAILURE'
-    
+
 
 # def import_author_over_max(reached_point, task_ids ,max_part):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_import_author_over_max -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -784,7 +784,7 @@ def test_import_author_over_max(app, caplog: LogCaptureFixture):
     with patch('weko_authors.tasks.check_task_end', return_value=0), \
         patch("weko_authors.tasks.import_authors_from_temp_files") as mock_temp:
             result = import_author_over_max(reached_points, task_ids, 5)
-            assert result['status'] == 'SUCCESS'  
+            assert result['status'] == 'SUCCESS'
             mock_temp.assert_called()
 
     with patch('weko_authors.tasks.check_task_end', return_value=0):
@@ -827,12 +827,12 @@ def test_update_summary(app):
     summary = get_cache_data(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"])
     assert summary["success_count"] == 2
     assert summary["failure_count"] == 2
-    
+
     update_summary(2, 2)
     summary = get_cache_data(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"])
     assert summary["success_count"] == 4
     assert summary["failure_count"] == 4
-    
+
 
 # def prepare_display_status(status, type, error_id):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_prepare_display_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -855,7 +855,7 @@ def test_prepare_success_msg():
 
     result = prepare_success_msg('update')
     assert result == 'Update Success'
-    
+
     result = prepare_success_msg('deleted')
     assert result == 'Delete Success'
 
@@ -869,10 +869,10 @@ def test_check_task_end(app):
     data = ["aaa","bbb","ccc"]
     mock_task1 = MagicMock()
     mock_task1.result = {'end_date': '2023-01-01'}
-    
+
     mock_task2 = MagicMock()
     mock_task2.result = {'end_date': '2023-01-01'}
-    
+
     mock_task3 = MagicMock()
     mock_task3.result = {'end_date': '2023-01-01'}
     with patch('weko_authors.tasks.import_author.AsyncResult', side_effect=[mock_task1, mock_task2, mock_task3]),\
@@ -901,7 +901,7 @@ def test_check_tmp_file_time_for_author(app, caplog: LogCaptureFixture):
         check_tmp_file_time_for_author()
         mock_remove.assert_called()
         mock_rmdir.assert_called()
-    
+
     mock_current_time = datetime.now(timezone.utc)
     with patch('glob.glob', return_value=[mock_file_path]), \
         patch('os.path.getmtime', return_value=(mock_current_time - timedelta(seconds=3600)).timestamp()), \
@@ -913,7 +913,7 @@ def test_check_tmp_file_time_for_author(app, caplog: LogCaptureFixture):
         check_tmp_file_time_for_author()
         mock_remove.assert_not_called()
         mock_rmdir.assert_not_called()
-    
+
     mock_current_time = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
     with patch('glob.glob', return_value=[mock_file_path]), \
         patch('os.path.getmtime', return_value=(mock_current_time - timedelta(seconds=3600)).timestamp()), \

@@ -1,0 +1,183 @@
+{#
+    # This file is part of WEKO3.
+    # Copyright (C) 2017 National Institute of Informatics.
+    #
+    # WEKO3 is free software; you can redistribute it
+    # and/or modify it under the terms of the GNU General Public License as
+    # published by the Free Software Foundation; either version 2 of the
+    # License, or (at your option) any later version.
+    #
+    # WEKO3 is distributed in the hope that it will be
+    # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+    # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    # General Public License for more details.
+    #
+    # You should have received a copy of the GNU General Public License
+    # along with WEKO3; if not, write to the
+    # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+    # MA 02111-1307, USA.
+    #}
+
+{%- extends admin_base_template %}
+
+{% block css %}
+{{ super() }}
+{% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% assets "weko_theme_css_bootstrap" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}<!-- New -->
+{% assets "weko_admin_quill_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+<link href="{{ url_for('static', filename='css/weko_admin/language.css') }}" rel="stylesheet">
+{% endblock %}
+
+{%- block javascript %}
+{{ super() }}
+{% assets "weko_admin_jsonld_mapping_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block body %}
+<input id="Successfully_Changed" type="hidden" value="{{_('Successfully Changed Settings.')}}" />
+<input id="Failed_Changed" type="hidden" value="{{_('Failed To Change Settings')}}" />
+<input id="items_required_alert" type="hidden" value="{{_('The following items is required. Please recheck and input.')}}"/>
+<input id="workflow_deleted_alert" type="hidden" value="{{_('The selected Workflow has been deleted. Please recheck and input.')}}"/>
+<input id="Unapproved_Items_Exit" type="hidden" value="{{_('Unapproved Items Exit.')}}"/>
+<input id="using_sword_api_message" type="hidden" value="{{_('This Mapping is using SWORD API.')}}"/>
+<input id="deleted_workflows_name" type="hidden" value='{{deleted_workflow_name_dict}}'/>
+<input id="registration_type_value" type="hidden" value='{{registration_type_value}}'/>
+<input id="workflow_value" type="hidden" value='{{workflow_value}}'/>
+<input id="current_page_type" type="hidden" value='{{ current_page_type }}'/>
+<input id="current_model_json" type="hidden" value='{{ current_model_json | tojson | safe }}'/>
+<input id="can_edit" type="hidden" value='{{ can_edit }}'/>
+<input id="can_change_itemtype" type="hidden" value='{{ can_change_itemtype }}'/>
+<input id="current_name" type="hidden" value='{{ current_name }}'/>
+<input id="current_item_type_id" type="hidden" value='{{ current_item_type_id }}'/>
+<input id="current_mapping" type="hidden" value='{{ current_mapping }}'/>
+
+{% block navlinks %}
+<ul class="nav nav-tabs">
+  <li>
+      <a href="{{ return_url }}">{{ _gettext('List') }}</a>
+  </li>
+  {%- if admin_view.can_create and current_page_type == "new" -%}
+  <li class="active">
+      <a href="{{ get_url('.create_view', url=return_url) }}">{{ _gettext('Create') }}</a>
+  </li>
+  {%- endif -%}
+  {%- if admin_view.can_create and current_page_type != "new" -%}
+  <li>
+      <a href="{{ get_url('.create_view', url=return_url) }}">{{ _gettext('Create') }}</a>
+  </li>
+  {%- endif -%}
+  {%- if current_page_type == "edit" -%}
+  <li class="active">
+      <a href="javascript:void(0)">{{ _gettext('Edit') }}</a>
+  </li>
+  <li>
+    <a href="/admin/jsonld-mapping/details/?id={{id}}&url=%2Fadmin%2Fjsonld-mapping%2F">{{ _gettext('Details') }}</a>
+  </li>
+  {%- endif -%}
+</ul>
+{% endblock %}
+
+<div style="padding-top: 20px; padding-left: 20px;">
+  <div class="form-group">
+    <div class="row">
+      <div class="col-sm-2 text-left">
+        <label class="field-required">{{_('Name')}}</label>
+      </div>
+      <div class="col-sm-8">
+      <input type="text" class="form-control" name="name" id="name">
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <div class="row">
+      <div class="col-sm-2 text-left">
+        <label class="field-required">{{_('Item Type')}}</label>
+      </div>
+      <div class="col-sm-8">
+      <select class="form-control" name="item_type" id="item_type">
+        <option selected hidden value=""></option>
+        {% for item_type in item_types %}
+        <option value="{{ item_type['id'] }}">{{ item_type['item_type_name'] }}</option>
+        {% endfor %}
+      </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <div class="row">
+      <div class="col-sm-2 text-left">
+        <label class="field-required">{{_('Mapping')}}</label>
+      </div>
+      <div class="col-sm-8">
+      <textarea class="form-control" name="mapping" id="mapping" style="height: 200px;"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="row form-group">
+    <div className="pull-right" style="margin-right: 15px;">
+      <button type="button" id="save_button" name="submit" class="btn btn-primary pull-right" value="{{ current_page_type }}" onclick="saveDataFormat(event, this.value)">
+          <span class="glyphicon glyphicon-save"></span>&nbsp
+          {{_('Save')}}
+      </button>
+      {%- if current_page_type == "edit" -%}
+      <button type="button" id="delete_button" class="btn btn-danger pull-right" style="margin-right: 10px;" onclick="openDeleteModal()">
+        <span class="glyphicon glyphicon-trash"></span>&nbsp
+              {{_('Delete')}}
+      </button>
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+<!-- Error Modal -->
+<div class="modal fade" tabindex="-1" role="dialog" id="error_modal">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"
+            aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">WEKO</h4>
+      </div>
+      <div class="modal-body">
+        <div class="text-center" id="modal-message"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-info" data-dismiss="modal">
+              <span class="glyphicon glyphicon-remove"></span>
+                 {{_('Close')}}
+        </button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<!-- Delete Modal -->
+<div class="modal fade" tabindex="-1" role="dialog" id="delete_modal">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"
+            aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">WEKO</h4>
+      </div>
+      <div class="modal-body">
+        <p class="text-center" id="modal-message">{{_('Are you sure you want to delete it?')}}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-info" data-dismiss="modal">
+              <span class="glyphicon glyphicon-remove"></span>
+                 {{_('Close')}}
+        </button>
+        <button type="button" class="btn btn-danger" onclick="deleteData()">
+          <span class="glyphicon glyphicon-trash"></span>&nbsp
+                {{_('Delete')}}
+        </button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+{%- endblock body %}

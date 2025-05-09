@@ -19,7 +19,10 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
+import traceback
 import requests
+from flask import current_app
+from flask_babelex import gettext as _
 
 from . import config
 
@@ -50,9 +53,9 @@ class CrossRefOpenURL:
         :param https_proxy:
         """
         if not pid:
-            raise ValueError('PID is required.')
+            raise ValueError(_('PID is not set.'))
         if not doi:
-            raise ValueError('DOI is required.')
+            raise ValueError(_('DOI is not specified.'))
         self._pid = pid
         self._doi = doi.strip()
         if response_format:
@@ -106,7 +109,10 @@ class CrossRefOpenURL:
             result = self._do_http_request()
             if result.status_code == 200:
                 response['response'] = result.text
+                current_app.logger.debug(f"CrossRef result: {response['response']}")
         except Exception as e:
+            current_app.logger.error(e)
+            current_app.logger.error(traceback.format_exc())
             response['error'] = str(e)
         return response
 

@@ -3,7 +3,7 @@ $(document).ready(function () {
   $('#repository_select').change(function () {
     var selectedRepo = $(this).val();
     var currentUrl = new URL(window.location.href);
-    
+
     if (selectedRepo) {
       currentUrl.searchParams.set('repo_id', selectedRepo);
     } else {
@@ -17,7 +17,7 @@ $(document).ready(function () {
     var year = $("#report_year_select").val();
     var month = $("#report_month_select").val();
     var type = $("#report_type_select").val();
-    if(year == 'Year') {
+    if (year == 'Year') {
       alert('Year is required!');
       return;
     } else if (month == 'Month') {
@@ -25,22 +25,22 @@ $(document).ready(function () {
       return;
     }
     let uriByType = {
-        file_download:'/api/stats/report/file/file_download',
-        file_preview:'/api/stats/report/file/file_preview',
-        billing_file_download:'/api/stats/report/file/billing_file_download',
-        billing_file_preview:'/api/stats/report/file/billing_file_preview',
-        index_access:'/api/stats/report/record/record_view_per_index',
-        detail_view:'/api/stats/report/record/record_view',
-        file_using_per_user:'/api/stats/report/file/file_using_per_user',
-        top_page_access:'/api/stats/top_page_access',
-        search_count:'/api/stats/report/search_keywords',
-        user_roles: '/admin/report/user_report_data',
-        site_access: '/api/stats/site_access'
+      file_download: '/api/stats/report/file/file_download',
+      file_preview: '/api/stats/report/file/file_preview',
+      billing_file_download: '/api/stats/report/file/billing_file_download',
+      billing_file_preview: '/api/stats/report/file/billing_file_preview',
+      index_access: '/api/stats/report/record/record_view_per_index',
+      detail_view: '/api/stats/report/record/record_view',
+      file_using_per_user: '/api/stats/report/file/file_using_per_user',
+      top_page_access: '/api/stats/top_page_access',
+      search_count: '/api/stats/report/search_keywords',
+      user_roles: '/admin/report/user_report_data',
+      site_access: '/api/stats/site_access'
     };
 
     var statsURL = (type == 'user_roles' ? uriByType[type] : uriByType[type] + '/' + year + '/' + month);
     var statsReports = {};
-    var ajaxReturn = [0,0,0,0];
+    var ajaxReturn = [0, 0, 0, 0];
 
     if (type == 'all') { // Get both reports
       let options = ['file_download',
@@ -66,7 +66,7 @@ $(document).ready(function () {
         async: false,
         contentType: 'application/json',
         data: {
-            repository_id:$('#repository_select').val()
+          repository_id: $('#repository_select').val()
         },
         success: function (results) {
           statsReports[type] = results;
@@ -86,34 +86,34 @@ $(document).ready(function () {
   });
 
   $('#addEmail').on('click', function () {
-        if (document.getElementById('email_form').checkValidity()) {
-            moreEmail();
-        }
-        else {
-            addAlert('Please check email input fields.');
-        }
-   });
+    if (document.getElementById('email_form').checkValidity()) {
+      moreEmail();
+    }
+    else {
+      addAlert('Please check email input fields.');
+    }
+  });
 
   $('#saveEmail').on('click', function () {
-      // save any invalid addresses
-      let invalidInputs = Array.from(document.getElementById('email_form').elements).filter(function(element){
-        return element.type == 'email' && element.value && !element.checkValidity();
-      });
-      let invalidEmails = [];
-      for (let element of invalidInputs) {
-        invalidEmails.push(element.value);
-      }
-      localStorage.setItem('invalidEmails', JSON.stringify(invalidEmails));
+    // save any invalid addresses
+    let invalidInputs = Array.from(document.getElementById('email_form').elements).filter(function (element) {
+      return element.type == 'email' && element.value && !element.checkValidity();
+    });
+    let invalidEmails = [];
+    for (let element of invalidInputs) {
+      invalidEmails.push(element.value);
+    }
+    localStorage.setItem('invalidEmails', JSON.stringify(invalidEmails));
 
-      // add repository select
-      let repositorySelect = $('#repository_select').val();
-      $('<input>').attr({
-        type: 'hidden',
-        name: 'repository_select',
-        value: repositorySelect
-      }).appendTo('#email_form');
+    // add repository select
+    let repositorySelect = $('#repository_select').val();
+    $('<input>').attr({
+      type: 'hidden',
+      name: 'repository_select',
+      value: repositorySelect
+    }).appendTo('#email_form');
 
-      $('#email_form').submit();
+    $('#email_form').submit();
   });
 
   // check before parsing to prevent error in case of empty string
@@ -137,7 +137,7 @@ function ajaxGetFile(endpoint) {
     async: false,
     contentType: 'application/json',
     data: {
-        repository_id:$('#repository_select').val()
+      repository_id: $('#repository_select').val()
     },
     success: function (results) {
       result = results;
@@ -176,7 +176,7 @@ function addAlert(message) {
   contentHeader.insertBefore(flashMessage, contentHeader.firstChild)
 }
 
-function moreEmail(){
+function moreEmail() {
 
   let removableEmailField = document.createElement('div');
 
@@ -210,7 +210,7 @@ function moreEmail(){
   let deleteButtonLink = document.createElement('a');
   deleteButtonLink.classList.add('btn-default');
   deleteButtonLink.classList.add('remove-button');
-  deleteButtonLink.addEventListener('click', function() {
+  deleteButtonLink.addEventListener('click', function () {
     removableEmailField.parentElement.removeChild(removableEmailField);
   });
 
@@ -227,11 +227,10 @@ function moreEmail(){
 
 }
 
-function IsEmpty(){
-  if(document.form['email_form'].inputEmail.value === "")
-  {
+function IsEmpty() {
+  if (document.form['email_form'].inputEmail.value === "") {
     alert("empty");
     return false;
   }
-    return true;
+  return true;
 }

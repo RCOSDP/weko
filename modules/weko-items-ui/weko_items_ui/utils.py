@@ -32,12 +32,15 @@ import tempfile
 import traceback
 import unicodedata
 from collections import OrderedDict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from io import StringIO
+import zipfile
 import secrets
+import pytz
 
 import bagit
 import redis
+from sqlalchemy.exc import SQLAlchemyError
 from redis import sentinel
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch import exceptions as es_exceptions
@@ -77,14 +80,16 @@ from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
 from weko_index_tree.utils import check_index_permissions, get_index_id, \
     get_user_roles
-from weko_records.api import FeedbackMailList, RequestMailList, ItemTypes, Mapping
+from weko_notifications.models import NotificationsUserSettings
+from weko_records.api import FeedbackMailList, JsonldMapping, RequestMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
 from weko_records_ui.errors import AvailableFilesNotFoundRESTError
 from weko_records_ui.permissions import check_created_id, \
     check_file_download_permission, check_publish_status
 from weko_redis.redis import RedisConnection
-from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
+from weko_search_ui.config import ROCRATE_METADATA_FILE, WEKO_IMPORT_DOI_TYPE
+from weko_search_ui.mapper import JsonLdMapper
 from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
     get_root_item_option, get_sub_item_option
@@ -2593,6 +2598,241 @@ def export_items(post_data):
     return resp
 
 
+def bagify(
+    bag_dir, bag_info=None, processes=1, checksums=None, encoding="utf-8"
+):
+    """ Give manifests and tag files to an existing directory.
+
+    This is a modified version of the make_bag function from the bagit library.
+    Give tag files and manifests to an existing directory.
+    It is required that the given directory contains data in data/.
+    If the directory does not have data/, use the bagit.make_bag function.
+
+    Args:
+        bag_dir (str): The directory to bag.
+        bag_info (dict): A dictionary of tag file values.
+        processes (int): The number of processes to use when creating manifests.
+        checksums (list of str): The checksum algorithms to use when creating manifests.
+        encoding (str): The encoding to use when creating tag files.
+
+    Returns:
+        Bag: The bag created from the given directory.
+    """
+
+    if checksums is None:
+        checksums = bagit.DEFAULT_CHECKSUMS
+
+    bag_dir = os.path.abspath(bag_dir)
+    cwd = os.path.abspath(os.path.curdir)
+
+    if cwd.startswith(bag_dir) and cwd != bag_dir:
+        raise RuntimeError(
+            "Bagging a parent of the current directory is not supported"
+        )
+
+    current_app.logger.info(f"Creating tag for directory {bag_dir}")
+
+    if not os.path.isdir(bag_dir):
+        current_app.logger.error(f"Bag directory {bag_dir} does not exist")
+        raise RuntimeError(f"Bag directory {bag_dir} does not exist")
+
+    old_dir = os.path.abspath(os.path.curdir)
+
+    if not os.path.exists(os.path.join(bag_dir, "data")):
+        current_app.logger.error(f"Bag directory {bag_dir} does not contain a data directory")
+        raise RuntimeError(f"Bag directory {bag_dir} does not contain a data directory")
+
+    try:
+        unbaggable = bagit._can_bag(bag_dir)
+
+        if unbaggable:
+            current_app.logger.error(
+                f"Unable to write to the following directories and files: {unbaggable}"
+            )
+            raise bagit.BagError("Missing permissions to move all files and directories")
+
+        unreadable_dirs, unreadable_files = bagit._can_read(bag_dir)
+
+        if unreadable_dirs or unreadable_files:
+            if unreadable_dirs:
+                current_app.logger.error(
+                    f"The following directories do not have read permissions: {unreadable_dirs}"
+                )
+            if unreadable_files:
+                current_app.logger.error(
+                    f"The following files do not have read permissions: {unreadable_files}"
+                )
+            raise bagit.BagError(
+                "Read permissions are required to calculate file fixities"
+            )
+        else:
+            current_app.logger.info(_("Creating data directory"))
+
+            os.chdir(bag_dir)
+            cwd = os.getcwd()
+
+            # permissions for the payload directory should match those of the
+            # original directory
+            os.chmod("data", os.stat(cwd).st_mode)
+
+            total_bytes, total_files = bagit.make_manifests(
+                "data", processes, algorithms=checksums, encoding=encoding
+            )
+
+            current_app.logger.info("Creating bagit.txt")
+            txt = """BagIt-Version: 0.97\nTag-File-Character-Encoding: UTF-8\n"""
+            with bagit.open_text_file("bagit.txt", "w") as bagit_file:
+                bagit_file.write(txt)
+
+            current_app.logger.info(_("Creating bag-info.txt"))
+            if bag_info is None:
+                bag_info = {}
+
+            # allow 'Bagging-Date' and 'Bag-Software-Agent' to be overidden
+            if "Bagging-Date" not in bag_info:
+                bag_info["Bagging-Date"] = date.strftime(date.today(), "%Y-%m-%d")
+            if "Bag-Software-Agent" not in bag_info:
+                bag_info["Bag-Software-Agent"] = "bagit.py v%s <%s>" % (
+                    bagit.VERSION,
+                    bagit.PROJECT_URL,
+                )
+
+            bag_info["Payload-Oxum"] = "%s.%s" % (total_bytes, total_files)
+            bagit._make_tag_file("bag-info.txt", bag_info)
+
+            for c in checksums:
+                bagit._make_tagmanifest_file(c, bag_dir, encoding="utf-8")
+    except Exception:
+        current_app.logger.error(f"An error occurred creating a bag in {bag_dir}")
+        raise
+    finally:
+        os.chdir(old_dir)
+
+    return bagit.Bag(bag_dir)
+
+
+def export_rocrate(post_data):
+    """Gather all the item data and export and return as a Crate BagIt.
+
+    :param post_data: Post Data
+    :return: Crate BagIt
+    """
+    current_app.logger.debug("post_data:{}".format(post_data))
+    record_ids = json.loads(post_data["record_ids"])
+    invalid_record_ids = json.loads(post_data["invalid_record_ids"])
+    if isinstance(invalid_record_ids,dict) or isinstance(invalid_record_ids,list):
+        invalid_record_ids = [int(i) for i in invalid_record_ids]
+    else:
+        invalid_record_ids = [invalid_record_ids]
+    # Remove all invalid records
+    record_ids = list(set(record_ids) - set(invalid_record_ids))
+    if len(record_ids) > _get_max_export_items():
+        return abort(400)
+    elif len(record_ids) == 0:
+        return "", 204
+
+    # Get Metadata from ElasticSearch
+    metadata_dict = _get_metadata_dict_in_es(record_ids)
+
+    # Create temporary directory
+    temp_path = tempfile.TemporaryDirectory(
+            prefix=current_app.config["WEKO_ITEMS_UI_EXPORT_TMP_PREFIX"])
+
+    try:
+        # Set export folder
+        datetime_now = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+        export_path = os.path.join(temp_path.name, datetime_now)
+
+        # Outer zip file path
+        outer_zip_path = os.path.join(export_path, "out_zip")
+        for record_id in record_ids:
+            record_path = os.path.join(export_path, f"recid_{record_id}")
+            data_path = os.path.join(record_path, "data")
+            os.makedirs(data_path, exist_ok=True)
+            _export_file(record_id, data_path)
+            # Metadata
+            metadata, filenames = metadata_dict.get(str(record_id), ({}, []))
+            item_type_id = metadata.get("item_type_id")
+            mappings = JsonldMapping.get_by_itemtype_id(item_type_id)
+            mapper = JsonLdMapper(item_type_id, None)
+            for m in mappings:
+                mapper.json_mapping = m.mapping
+                if mapper.is_valid:
+                    break
+            if mapper.json_mapping is None:
+                raise Exception("No valid mapping found for item type")
+
+            # Create RO-Crate info file
+            rocrate = mapper.to_rocrate_metadata(metadata, extracted_files=filenames)
+            rocrate_path = os.path.join(record_path, ROCRATE_METADATA_FILE)
+            with open(rocrate_path, "w", encoding="utf8") as f:
+                # text garbling solves when using ensure_ascii=False
+                json.dump(rocrate.metadata.generate(), f, indent=2, sort_keys=True,
+                    ensure_ascii=False)
+            # Create bag
+            bagify(record_path, checksums=["sha256"])
+            # Create individual zip file
+            inner_zip_path = os.path.join(outer_zip_path, f"recid_{record_id}")
+            shutil.make_archive(inner_zip_path, "zip", record_path)
+        # Create README.md file
+        readme_path = os.path.join(outer_zip_path, "README.md")
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        source_path = current_app.config["WEKO_ITEMS_UI_README_MD"]
+        src_readme_path = os.path.join(current_dir, source_path)
+        with open(readme_path, "w", encoding="utf8") as dest_readme,\
+                    open(src_readme_path, "r", encoding="utf8") as src_readme:
+                dest_readme.write(src_readme.read())
+        # Create download file
+        zip_path = os.path.join(
+            export_path, f"{os.path.basename(temp_path.name)}-{datetime_now}"
+        )
+        shutil.make_archive(zip_path, 'zip', outer_zip_path)
+        resp = send_file(
+            f"{zip_path}.zip",
+            as_attachment = True,
+            attachment_filename = "export.zip"
+        )
+        return resp
+    except Exception as ex:
+        current_app.logger.error("Error occurred during item export.")
+        traceback.print_exc()
+        flash(_("Error occurred during item export."), "error")
+        return redirect(url_for("weko_items_ui.export"))
+    finally:
+        temp_path.cleanup()
+
+
+def _get_metadata_dict_in_es(record_ids):
+    """Get metadata by record id from ElasticSearch.
+
+    :param record_ids: Record IDs
+    :return: Metadata
+    """
+    metadata_dict = {}
+    try:
+        # Get metadata from ElasticSearch
+        search = RecordsSearch(
+            index=current_app.config["SEARCH_UI_SEARCH_INDEX"])
+        search = search.filter("terms", control_number=record_ids)
+        search = search.filter("term", relation_version_is_last=True)
+        search = search.sort("control_number")
+        search = search.source(["_item_metadata", "content"])
+        search = search.params(from_=0, size=100)
+        search_result = search.execute().to_dict()
+        record_list = search_result.get("hits", {}).get("hits", [])
+        for record in record_list:
+            [key] = record.get("sort")
+            metadata = record.get("_source", {}).get("_item_metadata", {})
+            content = record.get("_source", {}).get("content", [])
+            extraction_file_list = [
+                file_content.get("filename") for file_content in content
+            ]
+            metadata_dict.update({key: (metadata, extraction_file_list)})
+    except NotFoundError as e:
+        current_app.logger.error("Index do not exist yet: ", str(e))
+
+    return metadata_dict
+
 
 def _get_max_export_items():
     """Get max amount of items to export."""
@@ -2709,6 +2949,38 @@ def _export_item(record_id,
                             temp_file.close()
 
     return exported_item, list_item_role
+
+
+def _export_file(record_id, data_path=None):
+    """Exports files for record according to view permissions.
+
+    :param record_id: Record ID
+    :param data_path: Data Path. Defaults to None.
+    """
+    record = WekoRecord.get_record_by_pid(record_id)
+    if record:
+        # Get files
+        for file in record.files:
+            if check_file_download_permission(record, file.info()):
+                accessrole = file.info().get("accessrole")
+                if accessrole == "open_restricted":
+                    continue
+                if accessrole == "open_date":
+                    file_date = file.info().get("date", {})
+                    date_value = (
+                        file_date[0].get("dateValue")
+                            if isinstance(file_date, list) and file_date
+                        else file_date.get("dateValue")
+                            if isinstance(file_date, dict)
+                        else None
+                    )
+                    open_date = datetime.strptime(date_value, "%Y-%m-%d")
+                    if open_date.date() > datetime.now().date():
+                        continue
+                with file.obj.file.storage().open() as file_buffered:
+                    tmp_path = os.path.join(data_path, file.obj.basename)
+                    with open(tmp_path, "wb") as temp_file:
+                        temp_file.write(file_buffered.read())
 
 
 def _custom_export_metadata(record_metadata: dict, hide_item: bool = True,
@@ -3166,7 +3438,7 @@ def get_weko_link(metadata):
     メタデータからweko_idを取得し、weko_idに対応するpk_idと一緒に
     weko_linkを作成します。
     args
-        metadata: dict 
+        metadata: dict
         例：{
                 "metainfo": {
                     "item_30002_creator2": [
@@ -3527,20 +3799,29 @@ def translate_validation_message(item_property, cur_lang):
             translate_validation_message(value, cur_lang)
 
 
-def get_workflow_by_item_type_id(item_type_name_id, item_type_id):
+def get_workflow_by_item_type_id(
+    item_type_name_id, item_type_id, with_deleted=True
+):
     """Get workflow settings by item type id."""
     from weko_workflow.models import WorkFlow
 
-    workflow = WorkFlow.query.filter_by(
-        itemtype_id=item_type_id).first()
+    query = WorkFlow.query.filter_by(itemtype_id=item_type_id)
+    if not with_deleted:
+        query = query.filter_by(is_deleted=False)
+    workflow = query.first()
+
     if not workflow:
         item_type_list = ItemTypes.get_by_name_id(item_type_name_id)
         id_list = [x.id for x in item_type_list]
-        workflow = (
+        query = (
             WorkFlow.query
             .filter(WorkFlow.itemtype_id.in_(id_list))
             .order_by(WorkFlow.itemtype_id.desc())
-            .order_by(WorkFlow.flow_id.asc()).first())
+            .order_by(WorkFlow.flow_id.asc())
+        )
+        if not with_deleted:
+            query = query.filter_by(is_deleted=False)
+        workflow = query.first()
     return workflow
 
 
@@ -3827,14 +4108,15 @@ def check_duplicate(data, is_item=True):
     """
     Check if a record or item is duplicate in records_metadata.
 
-    Parameters:
-    - data (dict or str): Metadata dictionary (or JSON string).
-    - is_item (bool): True if checking an item, False if checking a record.
+    Args:
+        data (dict or str): Metadata dictionary (or JSON string).
+        is_item (bool): True if checking an item, False if checking a record.
 
     Returns:
-    - bool: True if duplicate exists, False otherwise.
-    - list: List of duplicate record IDs.
-    - list: List of duplicate record URLs.
+        tuple:
+            - bool: True if duplicate exists, False otherwise.
+            - list: List of duplicate record IDs.
+            - list: List of duplicate record URLs.
     """
     if isinstance(data, str):
         try:
@@ -3921,6 +4203,8 @@ def check_duplicate(data, is_item=True):
                 matched_recids.add(recid)
                 break
 
+    matched_recids.discard(int(data.get("metainfo", {}).get("id") or 0))
+
     if not matched_recids:
         return False, [], []
 
@@ -3934,6 +4218,8 @@ def check_duplicate(data, is_item=True):
     db.session.commit()
     recids_resource = {r[0] for r in result}
     matched_recids &= recids_resource
+    matched_recids.discard(int(data.get("metainfo", {}).get("id") or 0))
+
     if not matched_recids:
         return False, [], []
 
@@ -4000,7 +4286,7 @@ def check_duplicate(data, is_item=True):
         links = [f"https://{host}/records/{r}" for r in final_matched]
         return True, list(final_matched), links
 
-    print("No duplicates found.")
+    current_app.logger.info("No duplicates found.")
     return False, [], []
 
 
@@ -4918,3 +5204,446 @@ def get_access_token(api_code):
     except Exception as e:
         current_app.logger.error(f"AccessToken Error: {str(e)}")
         return {"error": "Internal server error"}, 500
+
+
+# --- 通知対象取得関数 ---
+
+def get_notification_targets(deposit, user_id):
+    """
+    Retrieve notification targets for a given deposit and user.
+
+    Args:
+        deposit (dict): The deposit data containing information about owners
+                        and shared users.
+        user_id (int): The ID of the current user.
+
+    Returns:
+        dict: A dictionary containing the following keys:
+            - "targets" (list): List of User objects who are the notification targets.
+            - "settings" (dict): A dictionary mapping user IDs to their notification settings.
+            - "profiles" (dict): A dictionary mapping user IDs to their user profiles.
+    """
+    owners = deposit.get("_deposit", {}).get("owners", [])
+    set_target_id = set(owners)
+    is_shared = deposit.get("weko_shared_id") != -1
+
+    if is_shared:
+        set_target_id.add(deposit.get("weko_shared_id"))
+    else:
+        set_target_id.discard(int(user_id))
+
+    target_ids = list(set_target_id)
+    current_app.logger.debug(f"[get_notification_targets] target_ids: {target_ids}")
+
+    try:
+        targets = User.query.filter(User.id.in_(target_ids)).all()
+        settings = NotificationsUserSettings.query.filter(
+            NotificationsUserSettings.user_id.in_(target_ids)
+        ).all()
+        profiles = UserProfile.query.filter(
+            UserProfile.user_id.in_(target_ids)
+        ).all()
+
+        return {
+            "targets": targets,
+            "settings": {s.user_id: s for s in settings},
+            "profiles": {p.user_id: p for p in profiles}
+        }
+    except SQLAlchemyError:
+        current_app.logger.exception("[get_notification_targets] DB access failed")
+        return dict()
+
+
+def get_notification_targets_approver(activity):
+    """
+    Retrieve notification targets for the approval process in a workflow.
+
+    Args:
+        activity (Activity): The workflow activity instance containing information such as
+            the actor, flow definition, and community ID.
+
+    Returns:
+        dict: A dictionary containing the following keys:
+            - "targets" (list of User): List of users to be notified.
+            - "settings" (dict): Mapping of user_id to NotificationsUserSettings for the targets.
+            - "profiles" (dict): Mapping of user_id to UserProfile for the targets.
+            - "actor" (dict): A dictionary with the name and email of the actor (initiator).
+    """
+    from weko_workflow.api import Flow, GetCommunity
+    from weko_workflow.models import Action
+    try:
+        actor_id = activity.activity_login_user
+        actor_profile = UserProfile.get_by_userid(actor_id)
+        actor_name = actor_profile.username if actor_profile else None
+
+        flow_id = activity.flow_define.flow_id
+        flow_detail = Flow().get_flow_detail(flow_id)
+        approval_action = Action.query.filter_by(
+            action_endpoint="approval"
+        ).one()
+        approval_action_role = None
+        for action in flow_detail.flow_actions:
+            if action.action_id == approval_action.id:
+                approval_action_role = action.action_role
+                break
+
+        admin_role_id = Role.query.filter_by(
+            name=current_app.config.get("WEKO_ADMIN_PERMISSION_ROLE_REPO")
+        ).one().id
+
+        target_role = {admin_role_id}
+        if approval_action_role:
+            action_role_id = approval_action_role.action_role
+            if isinstance(action_role_id, int) and approval_action_role.action_role_exclude:
+                target_role.discard(action_role_id)
+
+        set_target_id = {
+            uid[0] for uid in db.session.query(userrole.c.user_id)
+            .filter(userrole.c.role_id.in_(target_role)).distinct()
+        }
+
+        if approval_action_role:
+            action_user_id = approval_action_role.action_user
+            if isinstance(action_user_id, int):
+                if approval_action_role.action_user_exclude:
+                    set_target_id.discard(action_user_id)
+                else:
+                    set_target_id.add(action_user_id)
+
+        community_id = activity.activity_community_id
+        if community_id is not None:
+            community_admin_role_id = Role.query.filter_by(
+                name=current_app.config.get("WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY")
+            ).one().id
+            community_owner_role_id = GetCommunity.get_community_by_id(community_id).id_role
+            role_left = userrole.alias("role_left")
+            role_right = userrole.alias("role_right")
+
+            set_community_admin_id = {
+                uid[0] for uid in db.session.query(role_left.c.user_id)
+                .join(role_right, role_left.c.role_id == role_right.c.role_id)
+                .filter(
+                    role_left.c.role_id == community_admin_role_id,
+                    role_right.c.role_id == community_owner_role_id
+                ).distinct()
+            }
+            set_target_id.update(set_community_admin_id)
+
+        is_shared = activity.shared_user_id is not None and activity.shared_user_id != -1
+        if not is_shared:
+            set_target_id.discard(actor_id)
+
+        targets = User.query.filter(User.id.in_(list(set_target_id))).all()
+        settings = NotificationsUserSettings.query.filter(
+            NotificationsUserSettings.user_id.in_(list(set_target_id))
+        ).all()
+        profiles = UserProfile.query.filter(
+            UserProfile.user_id.in_(list(set_target_id))
+        ).all()
+        actor = User.query.filter_by(id=actor_id).one_or_none()
+
+        return {
+            "targets": targets,
+            "settings": {s.user_id: s for s in settings},
+            "profiles": {p.user_id: p for p in profiles},
+            "actor": {"name": actor_name, "email": actor.email}
+        }
+
+    except SQLAlchemyError:
+        current_app.logger.exception("[get_notification_targets_approver] DB access failed")
+        return dict()
+
+
+# --- メール本文生成関数 ---
+
+def create_item_deleted_data(deposit, profile, target, url):
+    """
+    Generate the email content for item deletion notification.
+
+    Args:
+        deposit (dict): Data of the deleted item.
+        profile (UserProfile): Profile information of the user receiving the notification.
+        target (User): User object of the recipient.
+        url (str): URL of the deleted item.
+
+    Returns:
+        dict: A dictionary containing the filled email subject and body with the following keys:
+              - 'subject' (str): The subject of the email.
+              - 'body' (str): The body of the email.
+    """
+    from weko_workflow.utils import load_template, fill_template
+    language = profile.language or "en"
+    timezone = profile.timezone or "UTC"
+    registration_date = datetime.now(pytz.timezone(timezone))
+
+    template_file = 'email_notification_item_deleted_{language}.tpl'
+    template = load_template(template_file, language)
+
+    data = {
+        "item_title": deposit.get("item_title", ""),
+        "submitter_name": profile.username or target.email,
+        "registration_date": registration_date.strftime("%Y-%m-%d %H:%M:%S"),
+        "record_url": url
+    }
+
+    return fill_template(template, data)
+
+
+def create_delete_request_data(activity, profile, target, url, actor):
+    """
+    Generate email content for a delete request notification.
+
+    Args:
+        activity (Activity): The activity object containing details about the delete request.
+        profile (UserProfile): The profile of the recipient user.
+        target (User): The target user object receiving the notification.
+        url (str): The URL for the approval page.
+        actor (dict): Information about the actor initiating the delete request, including name or email.
+
+    Returns:
+        dict: A dictionary containing the email subject and body with the following keys:
+            - 'subject' (str): The subject of the email.
+            - 'body' (str): The body of the email.
+    """
+    from weko_workflow.utils import load_template, fill_template, convert_to_timezone
+    language = profile.language or "en"
+    timezone = profile.timezone or None
+    submission_date = convert_to_timezone(activity.updated, timezone)
+
+    template_file = 'email_notification_delete_request_{language}.tpl'
+    template = load_template(template_file, language)
+
+    data = {
+        "approver_name": profile.username or target.email,
+        "item_title": activity.title,
+        "submitter_name": actor.get("name") or actor.get("email"),
+        "submission_date": submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+        "approval_url": url
+    }
+
+    return fill_template(template, data)
+
+
+def create_delete_approved_data(deposit, profile, target, url, activity, approver_id):
+    """
+    Generate email content for a delete approval notification.
+
+    Args:
+        deposit (dict): Data of the approved item.
+        profile (UserProfile): Profile information of the user receiving the notification.
+        target (User): User object of the recipient.
+        url (str): URL of the approved item.
+        activity (Activity): The activity object containing details about the delete approval.
+        approver_id (int): ID of the approver.
+
+    Returns:
+        dict: A dictionary containing the filled email subject and body with the following keys:
+            - 'subject' (str): The subject of the email.
+            - 'body' (str): The body of the email.
+    """
+    from weko_workflow.utils import load_template, fill_template, convert_to_timezone
+    language = profile.language or "en"
+    timezone = profile.timezone or "UTC"
+    approval_date = convert_to_timezone(activity.updated, timezone)
+    approver = User.query.filter_by(id=approver_id).one_or_none()
+    approver_profile = UserProfile.get_by_userid(approver_id)
+    approver_name = approver_profile.username if approver_profile else None
+
+    template_file = 'email_notification_delete_approved_{language}.tpl'
+    template = load_template(template_file, language)
+
+    data = {
+        "item_title": deposit.get("item_title", "") or activity.title,
+        "submitter_name": profile.username or target.email,
+        "approver_name": approver_name or approver.email,
+        "approval_date": approval_date.strftime("%Y-%m-%d %H:%M:%S"),
+        "record_url": url
+    }
+
+    return fill_template(template, data)
+
+
+def create_direct_registered_data(deposit, profile, target, url):
+    """
+    Generate email content for a direct registration notification.
+
+    Args:
+        deposit (dict): Data of the registered item.
+        profile (UserProfile): Profile information of the user receiving the notification.
+        target (User): User object of the recipient.
+        url (str): URL of the registered item.
+
+    Returns:
+        dict: A dictionary containing the filled email subject and body with the following keys:
+            - 'subject' (str): The subject of the email.
+            - 'body' (str): The body of the email.
+    """
+    from weko_workflow.utils import load_template, fill_template
+    language = profile.language or "en"
+    timezone = profile.timezone or "UTC"
+    registration_date = datetime.now(pytz.timezone(timezone))
+
+    template_file = 'email_nortification_item_registered_{language}.tpl'
+    template = load_template(template_file, language)
+
+    data = {
+        "item_title": deposit.get("item_title", ""),
+        "submitter_name": profile.username or target.email,
+        "registration_date": registration_date.strftime("%Y-%m-%d %H:%M:%S"),
+        "record_url": url
+    }
+    return fill_template(template, data)
+
+
+# --- 共通通知送信関数 ---
+
+def send_mail_from_notification_info(get_info_func, context_obj, content_creator, record_url=None):
+    """
+    Send notification emails to a list of users based on the provided context and content creator function.
+
+    Args:
+        get_info_func (function): A function that retrieves notification target information.
+                                  It should accept `context_obj` as an argument and return a dictionary
+                                  containing "targets", "settings", "profiles", and optionally "actor".
+        context_obj (object): The context object used to retrieve notification target information.
+        content_creator (function): A function that generates the email content.
+                                     It should accept `context_obj`, `profile`, `target`, `record_url`, and optionally `actor`
+                                     as arguments and return a dictionary with "subject" and "body" keys.
+        record_url (str, optional): The URL of the record associated with the notification. Defaults to None.
+
+    Returns:
+        int: The total number of successfully sent emails.
+"""
+    from weko_workflow.utils import send_mail
+
+    with db.session.begin_nested():
+        info = get_info_func(context_obj)
+
+    targets = info.get("targets", [])
+    settings = info.get("settings", {})
+    profiles = info.get("profiles", {})
+    actor = info.get("actor", None)
+
+    send_count = 0
+
+    for target in targets:
+        try:
+            setting = settings.get(target.id)
+            if not setting:
+                current_app.logger.debug(f"[send_mail] No setting for user_id: {target.id}")
+                continue
+            if not target.confirmed_at:
+                current_app.logger.debug(f"[send_mail] User {target.id} not confirmed")
+                continue
+            if not setting.subscribe_email:
+                current_app.logger.debug(f"[send_mail] User {target.id} unsubscribed from emails")
+                continue
+
+            profile = profiles.get(target.id)
+            if actor:
+                mail_data = content_creator(context_obj, profile, target, record_url, actor)
+            else:
+                mail_data = content_creator(context_obj, profile, target, record_url)
+
+            recipient = target.email
+            current_app.logger.debug(f"[send_mail] Sending to: {target.id}")
+            res = send_mail(mail_data.get("subject"), recipient, mail_data.get("body"))
+
+            if res:
+                send_count += 1
+
+        except Exception:
+            current_app.logger.exception(
+                f"[send_mail] Failed for user_id: {target.id}"
+            )
+
+    current_app.logger.debug(f"[send_mail] Total mails sent: {send_count}")
+    return send_count
+
+
+# --- 各イベントから呼び出すエントリーポイント ---
+
+def send_mail_item_deleted(pid_value, deposit, user_id):
+    """
+    Send a notification email when an item is deleted.
+
+    Args:
+        pid_value (str): The persistent identifier (PID) of the deleted item.
+        deposit (dict): The deposit data of the deleted item.
+        user_id (int): The ID of the user who initiated the deletion.
+
+    Returns:
+        int: The total number of successfully sent emails.
+    """
+    record_url = request.host_url + f"records/{pid_value}"
+    current_app.logger.debug(f"[send_mail_item_deleted] pid_value: {pid_value}, user_id: {user_id}")
+    return send_mail_from_notification_info(
+        get_info_func=lambda obj: get_notification_targets(obj, user_id),
+        context_obj=deposit,
+        content_creator=create_item_deleted_data,
+        record_url=record_url
+    )
+
+
+def send_mail_delete_request(activity):
+    """
+    Send a notification email for a delete request.
+
+    Args:
+        activity (Activity): The activity object containing details about the delete request.
+
+    Returns:
+        int: The total number of successfully sent emails.
+    """
+    record_url = request.host_url + f"workflow/activity/detail/{activity.activity_id}"
+    current_app.logger.debug(f"[send_mail_delete_request] activity: {activity.activity_id}")
+    return send_mail_from_notification_info(
+        get_info_func=get_notification_targets_approver,
+        context_obj=activity,
+        content_creator=create_delete_request_data,
+        record_url=record_url
+    )
+
+
+def send_mail_delete_approved(pid_value, deposit, activity, user_id):
+    """
+    Send a notification email when a delete request is approved.
+
+    Args:
+        pid_value (str): The persistent identifier (PID) of the approved item.
+        deposit (dict): The deposit data of the approved item.
+        activity (Activity): The activity object containing details about the delete approval.
+        user_id (int): The ID of the user who approved the delete request.
+
+    Returns:
+        int: The total number of successfully sent emails.
+    """
+    record_url = request.host_url + f"records/{pid_value}"
+    current_app.logger.debug(f"[send_mail_delete_approved] pid_value: {pid_value}, user_id: {user_id}")
+    return send_mail_from_notification_info(
+        get_info_func=lambda obj: get_notification_targets(obj, user_id),
+        context_obj=deposit,
+        content_creator=lambda deposit, profile, target, url: create_delete_approved_data(deposit, profile, target, url, activity, user_id),
+        record_url=record_url
+    )
+
+def send_mail_direct_registered(pid_value, user_id):
+    """
+    Send a notification email for a directly registered item.
+
+    Args:
+        pid_value (str): The persistent identifier (PID) of the registered item.
+        user_id (int): The ID of the user who registered the item.
+
+    Returns:
+        int: The total number of successfully sent emails.
+    """
+    deposit = WekoRecord.get_record_by_pid(pid_value)
+    record_url = request.host_url + f"records/{pid_value}"
+    current_app.logger.debug(f"[send_mail_direct_registered] pid_value: {pid_value}, user_id: {user_id}")
+    return send_mail_from_notification_info(
+        get_info_func=lambda obj: get_notification_targets(obj, user_id),
+        context_obj=deposit,
+        content_creator=create_direct_registered_data,
+        record_url=record_url
+    )

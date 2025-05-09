@@ -43,6 +43,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from weko_accounts.views import _redirect_method
 from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
+from weko_logging.activity_logger import UserActivityLogger
 from weko_records.api import FilesMetadata, ItemTypes
 from weko_records_ui.utils import generate_one_time_download_url
 from weko_records_ui.errors import AvailableFilesNotFoundRESTError
@@ -281,6 +282,13 @@ def _download_file(file_obj, is_preview, lang, obj, pid, record):
     """
     # Add download signal
     add_signals_info(record, obj)
+
+    if not is_preview:
+        UserActivityLogger.info(
+            operation="FILE_DOWNLOAD",
+            target_key=pid.pid_value,
+        )
+
     # Send file without its pdf cover page
     try:
         pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)

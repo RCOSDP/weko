@@ -121,7 +121,7 @@ class MockEs():
             pass
         def delete_alias(self, index="", name="",ignore=""):
             pass
-        
+
         # def search(self,index="",doc_type="",body={},**kwargs):
         #     pass
     class MockCluster():
@@ -476,7 +476,7 @@ def users(app, db):
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
         student = User.query.filter_by(email='student@test.org').first()
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -596,7 +596,7 @@ def create_author(app, db, esindex):
             author = Authors(id=next_id, json=data)
             db.session.add(author)
         db.session.commit()
-            
+
         current_search_client.index(
             index=app.config["WEKO_AUTHORS_ES_INDEX_NAME"],
             doc_type=app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
@@ -644,7 +644,7 @@ def authors(app,db,esindex):
             id=es_id,
             body=es_data,
             refresh='true')
-    
+
     db.session.add_all(returns)
     db.session.commit()
     return returns
@@ -668,7 +668,7 @@ def authors2(app,db,esindex):
             id=es_id,
             body=es_data,
             refresh='true')
-    
+
     db.session.add_all(returns)
     db.session.commit()
     return returns
@@ -707,7 +707,7 @@ def authors_affiliation_settings(db):
     aass.append(AuthorsAffiliationSettings(name="kakenhi",scheme="kakenhi"))
     db.session.add_all(aass)
     db.session.commit()
-    
+
     return aass
 
 @pytest.fixture()
@@ -739,7 +739,7 @@ def file_instance(db):
 #     with app2.test_request_context():
 #         client.indices.delete_alias(index=index_name, name=alias_name)
 #         client.indices.delete(index=index_name, ignore=[400, 404])
-        
+
 from invenio_oauth2server.models import Client
 
 @pytest.fixture()
@@ -929,7 +929,7 @@ def author_records_for_test(app, esindex, db):
     record_2 = WekoAuthors.create(record_2_data)
     record_3 = WekoAuthors.create(record_3_data)
     record_3 = WekoAuthors.create(record_4_data)
-    
+
     esindex.indices.refresh(index=app.config['WEKO_AUTHORS_ES_INDEX_NAME'])
     result=[]
     for i in range(4):
@@ -939,7 +939,7 @@ def author_records_for_test(app, esindex, db):
             size=1
         )
         if search_results["hits"]["total"] > 0:
-            
+
             result.append(search_results["hits"]["hits"][0]["_id"])
 
     return {

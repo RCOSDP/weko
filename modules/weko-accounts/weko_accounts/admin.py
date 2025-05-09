@@ -74,7 +74,7 @@ class ShibSettingView(BaseView):
             # ブロックユーザー
             block_user_settings = AdminSettings.get('blocked_user_settings', dict_to_object=False)
             block_user_list = block_user_settings.get('blocked_ePPNs', [])
-            
+
             if request.method == 'POST':
                 # Process forms
                 form = request.form.get('submit', None)
@@ -103,7 +103,7 @@ class ShibSettingView(BaseView):
                             flash(_(f'{key.replace("_", " ").title()} mapping was updated.'), category='success')
                         AdminSettings.update('attribute_mapping', attributes)
 
-                    # ブロックユーザーの更新    
+                    # ブロックユーザーの更新
                     if block_user_list != json.loads(new_block_user_list):
                         new_eppn_list = json.loads(new_block_user_list)
                         new_eppn_list.sort()
@@ -123,7 +123,7 @@ class ShibSettingView(BaseView):
             current_app.logger.error(
                 'Unexpected error: {}'.format(sys.exc_info()))
         return abort(400)
-    
+
     def get_latest_current_app(self):
         _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] = AdminSettings.get('shib_login_enable', dict_to_object=False)['shib_flg']
         default_roles = AdminSettings.get('default_role_settings', dict_to_object=False)

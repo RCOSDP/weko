@@ -1,22 +1,9 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of WEKO3.
-# Copyright (C) 2017 National Institute of Informatics.
+# Copyright (C) 2022 National Institute of Informatics.
 #
-# WEKO3 is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# WEKO3 is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with WEKO3; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
+# WEKO-Records is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 """Record models."""
 
@@ -325,6 +312,84 @@ class ItemTypeMapping(db.Model, Timestamp):
     }
 
 
+class ItemTypeJsonldMapping(db.Model, Timestamp):
+    """Jsonld Mapping Model
+
+    Mapping for JSON-LD matadata to WEKO item type.
+    When updating the mapping, the verion_id is incremented and the previous
+    mapping moves to the history table.
+
+    Operation methods are defined in api.py.
+
+    Columns:
+        `id` (int): ID of the mapping. Primary key, autoincrement.
+        `name` (str): Name of the mapping.
+        `mapping` (JSON): Mapping in JSON format.
+        `item_type_id` (str): Target itemtype of the mapping.\
+            Foreign key referencing `ItemType.id`.
+        `version_id` (int): Version ID of the mapping.
+        `is_deleted` (bool): Sofr-delete status of the mapping.
+    """
+
+    # Enables SQLAlchemy-Continuum versioning
+    __versioned__ = {}
+
+    __tablename__ = 'jsonld_mappings'
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+        unique=True,
+        autoincrement=True
+    )
+    """ID of the mapping."""
+
+    name = db.Column(db.String(255), nullable=False)
+    """Name of the mapping."""
+
+    mapping = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=False),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: {},
+        nullable=False
+    )
+    """Mapping in JSON format. Foreign key from ItemType."""
+
+    item_type_id = db.Column(
+        db.Integer(),
+        db.ForeignKey(ItemType.id),
+        nullable=False)
+    """Target itemtype of the mapping."""
+
+    item_type = db.relationship(
+        'ItemType',
+        backref=db.backref('jsonld_mappings', lazy='dynamic'),
+        foreign_keys=[item_type_id]
+    )
+    """Relationship to the ItemType."""
+
+    version_id = db.Column(db.Integer, nullable=False)
+    """Version id of the mapping."""
+
+    is_deleted = db.Column(
+        db.Boolean(name='is_deleted'),
+        nullable=False,
+        default=False)
+    """Sofr-delete status of the mapping."""
+
+    __mapper_args__ = {
+        'version_id_col': version_id
+    }
+
+
 class ItemMetadata(db.Model, Timestamp):
     """Represent a record metadata.
 
@@ -561,7 +626,7 @@ class SiteLicenseInfo(db.Model, Timestamp):
         default='F',
         nullable=False
     )
-    
+
     repository_id = db.Column(
         db.String(100),
         nullable=False,
@@ -671,7 +736,7 @@ class FeedbackMailList(db.Model, Timestamp):
         default=''
     )
     """Author identifier."""
-    
+
     repository_id = db.Column(
         db.String(100),
         nullable=False,
@@ -794,7 +859,7 @@ class OaStatus(db.Model, Timestamp):
     def get_oa_status(cls, oa_article_id):
         """Get OA status by article id."""
         return cls.query.filter(cls.oa_article_id == oa_article_id).first() if oa_article_id else None
-    
+
     @classmethod
     def get_oa_status_by_weko_item_pid(cls, weko_item_pid):
         """Get OA status by weko item pid."""

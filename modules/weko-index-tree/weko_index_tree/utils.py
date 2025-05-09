@@ -20,6 +20,8 @@
 
 """Module of weko-index-tree utils."""
 import os
+import sys
+import traceback
 from datetime import date, datetime
 from functools import wraps
 from operator import itemgetter
@@ -34,6 +36,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_login import current_user
 from invenio_cache import current_cache
+from invenio_communities.models import Community
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
@@ -41,6 +44,7 @@ from invenio_search import RecordsSearch
 from simplekv.memory.redisstore import RedisStore
 from weko_admin.utils import is_exists_key_in_redis
 from weko_groups.models import Group
+from weko_logging.activity_logger import UserActivityLogger
 from weko_redis.redis import RedisConnection
 from weko_schema_ui.models import PublishStatus
 
@@ -108,7 +112,77 @@ def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
             # for browsing role check
             reduce_index_by_role(tree, roles, groups)
         if not ignore_more:
-            reduce_index_by_more(tree=tree, more_ids=more_ids)   
+            reduce_index_by_more(tree=tree, more_ids=more_ids)
+
+def can_user_access_index(lst):
+    """Check if the specified user has access to the index item.
+
+    This function determines access permissions based on the user's roles and groups.
+    It checks whether the user has viewing or editing rights for the index item.
+    It also considers the public state and public date of the index to evaluate accessibility.
+
+    Args:
+        lst (dict): Dictionary representing the index item.
+
+    Returns:
+        bool: True if the user has access, False otherwise.
+    """
+    from weko_records_ui.utils import is_future
+
+    result, roles = get_user_roles(is_super_role=True)
+
+    groups = get_user_groups()
+
+    brw_role = lst.get('browsing_role', [])
+    brw_group = lst.get('browsing_group', [])
+    contribute_role = lst.get('contribute_role', [])
+    contribute_group = lst.get('contribute_group', [])
+    public_state = lst.get('public_state', False)
+    public_date = lst.get('public_date', None)
+
+    if not result:
+        if isinstance(public_date, str):
+            public_date = str_to_datetime(public_date, "%Y-%m-%dT%H:%M:%S")
+
+        if check_roles(roles, brw_role) or check_groups(groups, brw_group):
+            if public_state and (public_date is None or not is_future(public_date)):
+                result = True
+
+        if check_roles(roles, contribute_role) or check_groups(groups, contribute_group):
+            result = True
+
+    return result
+
+def can_admin_access_index(lst):
+    """Check if the specified user with admin role has access to the index item.
+
+    This function determines access permissions based on the user's admin roles.
+    It checks whether the user has administrative privileges directly on the index item,
+    or indirectly through one of its parent indexes.
+
+    Args:
+        lst (dict): Dictionary representing the index item.
+
+    Returns:
+        bool: True if the user has admin access to the index, False otherwise.
+    """
+    from .api import Indexes
+
+    result, roles = get_user_roles(is_super_role=False)
+
+    if not result:
+        if check_comadmin(roles, lst.get('id')):
+            result = True
+        else:
+            parent_id = lst.get('parent', 0)
+            while parent_id and parent_id != '0':
+                parent = Indexes.get_index(parent_id)
+                if parent and check_comadmin(roles, parent.id):
+                    result = True
+                    break
+                parent_id = parent.parent if parent else None
+
+    return result
 
 def get_tree_json(index_list, root_id):
     """Get Tree Json.
@@ -302,6 +376,10 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
             lst = tree[i]
 
             if isinstance(lst, dict):
+                if check_comadmin(roles[1], lst.get('id')):
+                    i += 1
+                    continue
+
                 contribute_role = lst.pop('contribute_role')
                 public_state = lst.pop('public_state')
                 public_date = lst.pop('public_date')
@@ -982,9 +1060,20 @@ def perform_delete_index(index_id, record_class, action: str):
                         description='Could not delete data.')
             msg = 'Index deleted successfully.'
         db.session.commit()
+        UserActivityLogger.info(
+            operation="INDEX_DELETE",
+            target_key=index_id
+        )
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(e)
+        exec_info = sys.exc_info()
+        tb_info = traceback.format_tb(exec_info[2])
+        UserActivityLogger.error(
+            operation="INDEX_DELETE",
+            target_key=index_id,
+            remarks=tb_info[0]
+        )
         msg = 'Failed to delete index.'
     finally:
         if is_unlock:
@@ -1061,7 +1150,7 @@ def str_to_datetime(str_dt, format):
         return datetime.strptime(str_dt, format)
     except ValueError:
         return None
-    
+
 def get_descendant_index_names(index_id):
     """Retrieve all indexes under the specified index_id
         in the format of parent_index_name-/-child_index_name-/-grandchild_index_name.
@@ -1135,3 +1224,15 @@ def get_all_records_in_index(index_id):
 def create_limiter():
     from .config import WEKO_INDEX_TREE_API_LIMIT_RATE_DEFAULT
     return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_INDEX_TREE_API_LIMIT_RATE_DEFAULT)
+
+
+def check_comadmin(roles, index_id):
+    """Check if the user is a community admin based on roles and group_id."""
+    if roles is not None and any(
+            role.name == current_app.config.get("WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY")
+            for role in current_user.roles
+    ):
+        com_list = Community.get_by_root_node_id(index_id)
+        if any(com.group_id and com.group_id in roles for com in com_list):
+            return True
+    return False

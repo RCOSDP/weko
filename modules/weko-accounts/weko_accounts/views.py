@@ -27,6 +27,7 @@ Blueprint.
 import json
 import sys
 import re
+import traceback
 from urllib.parse import quote_plus
 
 from flask import Blueprint, abort, current_app, flash, redirect, \
@@ -40,6 +41,7 @@ from weko_redis.redis import RedisConnection
 from werkzeug.local import LocalProxy
 from invenio_db import db
 from weko_admin.models import AdminSettings, db
+from weko_logging.activity_logger import UserActivityLogger
 
 from .api import ShibUser, sync_shib_gakunin_map_groups
 from .utils import generate_random_str, parse_attributes
@@ -72,14 +74,14 @@ def init_menu():
         _('%(icon)s Administration', icon='<i class="fa fa-cogs fa-fw"></i>'),
         visible_when=_has_admin_access,
         order=100)
-    
+
 @blueprint.before_app_first_request
 def _adjust_shib_admin_DB():
     """
     Create or Update Shibboleth Admin database table.
     """
-    if current_app.config.get('TESTING', False):  # テスト環境では何もしない	
-        return	
+    if current_app.config.get('TESTING', False):  # テスト環境では何もしない
+        return
 
     with _app.app_context():
         if AdminSettings.query.filter_by(name='blocked_user_settings').first() is None:
@@ -105,7 +107,7 @@ def _adjust_shib_admin_DB():
             setting = AdminSettings.query.filter_by(name='shib_login_enable').first()
             setting.settings = {"shib_flg": _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']}
             db.session.commit()
-        
+
         if AdminSettings.query.filter_by(name='default_role_settings').first() is None:
             max_id = db.session.query(db.func.max(AdminSettings.id)).scalar()
             new_setting = AdminSettings(
@@ -218,10 +220,21 @@ def shib_auto_login():
 
         datastore.delete(cache_key)
         db.session.commit()
+        UserActivityLogger.info(
+            operation="LOGIN",
+            target_key=shib_user.user.id,
+            remarks="Shibboleth login"
+        )
         return redirect(session['next'] if 'next' in session else '/')
     except BaseException:
         db.session.rollback()
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
+        exec_info = sys.exc_info()
+        tb_info = traceback.format_tb(exec_info[2])
+        UserActivityLogger.error(
+            operation="LOGIN",
+            remarks=tb_info[0]
+        )
     return abort(400)
 
 
@@ -279,9 +292,20 @@ def confirm_user():
         if shib_user.shib_user:
             shib_user.shib_user_login()
         datastore.delete(cache_key)
+        UserActivityLogger.info(
+            operation="LOGIN",
+            target_key=shib_user.user.id,
+            remarks="Shibboleth login"
+        )
         return redirect(session['next'] if 'next' in session else '/')
     except BaseException:
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
+        exec_info = sys.exc_info()
+        tb_info = traceback.format_tb(exec_info[2])
+        UserActivityLogger.error(
+            operation="LOGIN",
+            remarks=tb_info[0]
+        )
     return abort(400)
 
 
@@ -395,7 +419,7 @@ def find_user_by_email(shib_attributes):
     _datastore = LocalProxy(
             lambda: current_app.extensions['security'].datastore)
     user = _datastore.find_user(email=shib_attributes.get('shib_mail'))
-        
+
     return user
 
 @blueprint.route('/shib/login', methods=['POST'])
@@ -440,9 +464,9 @@ def shib_sp_login():
             def _wildcard_to_regex(pattern):
                 regex_pattern = pattern.replace("*", ".*")
                 return re.compile(f"^{regex_pattern}$")
-            
+
             blocked = any(_wildcard_to_regex(pattern).match(shib_eppn) or pattern == shib_eppn for pattern in block_user_list)
-        
+
             if blocked:
                 flash(_("Failed to login."), category='error')
                 return _redirect_method()
@@ -500,11 +524,11 @@ def shib_stub_login():
     sp_entityID = "https://" + current_app.config["WEB_HOST_NAME"]+"/shibboleth-sp"
     if 'SP_ENTITYID' in current_app.config:
         sp_entityID = current_app.config['SP_ENTITYID']
-    
+
     sp_handlerURL = "https://" + current_app.config["WEB_HOST_NAME"]+"/Shibboleth.sso"
     if 'SP_HANDLERURL' in current_app.config:
         sp_handlerURL = current_app.config['SP_HANDLERURL']
-    
+
     # LOGIN USING JAIROCLOUD PAGE
     if current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED']:
         return redirect(_shib_login_url.format(request.url_root)+ '?next=' + request.args.get('next', '/'))
@@ -529,7 +553,13 @@ def shib_logout():
 
     :return:
     """
+    user_id = current_user.id
     ShibUser.shib_user_logout()
+    UserActivityLogger.info(
+        operation="LOGOUT",
+        target_key=user_id,
+        remarks="Shibboleth logout"
+    )
     return 'logout success'
 
 @blueprint.teardown_request

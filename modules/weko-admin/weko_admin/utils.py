@@ -23,6 +23,7 @@ import csv
 import json
 import math
 import os
+import traceback
 import zipfile
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
@@ -327,7 +328,7 @@ def get_user_report_data(repo_id=None):
                     .group_by(Role.id).all()
     except Exception as e:
         current_app.logger.error('Could not retrieve user report data: ')
-        current_app.logger.error(e)
+        traceback.print_exc()
         return {}
 
     role_counts = [dict(role_name=name, count=count)
@@ -666,6 +667,7 @@ class StatisticMail:
                     failed_mail += 1
         except Exception as ex:
             current_app.logger.error('Error has occurred: {}'.format(ex))
+            traceback.print_exc()
         end_time = datetime.now()
         FeedbackMailHistory.create(
             session,
@@ -1157,7 +1159,7 @@ class FeedbackMail:
         if not repo_id:
             result['error'] = "Repository ID is required."
             return result
-        
+
         if not data and not is_sending_feedback:
             update_result = FeedbackMailSetting.delete_by_repo(repo_id)
             return cls.handle_update_message(
@@ -1342,6 +1344,7 @@ class FeedbackMail:
                 config.WEKO_ADMIN_NUMBER_OF_SEND_MAIL_HISTORY
             return result
         except Exception as ex:
+            traceback.print_exc()
             result['error'] = 'Cannot get data. Detail: ' + str(ex)
             return result
 
@@ -1791,7 +1794,7 @@ def update_restricted_access(restricted_access: dict):
                 secret_URL_file_download['secret_download_limit']) < 1:
             return False
         return True
-        
+
     def parse_content_file_download():
         if content_file_download.get('expiration_date_unlimited_chk'):
             content_file_download['expiration_date'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
@@ -2144,10 +2147,10 @@ def get_item_mapping_list():
 def get_detail_search_list():
     """
     Gets the name and type of the search condition used in the detail search.
-    The purpose of this function is to return the information of a detail search in order to prevent 
+    The purpose of this function is to return the information of a detail search in order to prevent
     duplication of parameter names used in a facet search with those used in a detail search.
 
-    It extracts the part related to the detail_condition from the search settings and returns [id], 
+    It extracts the part related to the detail_condition from the search settings and returns [id],
     which is the source of the parameter name, and [inputType], which determines the type.
 
     If there is a special search parameter, the parameter name is defined in [mappingName] and is included in the response.
@@ -2334,38 +2337,38 @@ def overwrite_the_memory_config_with_db(app, site_info):
             )
 
 def elasticsearch_reindex( is_db_to_es ):
-    """ 
+    """
     reindex *-weko-item-* of elasticsearch index
 
     Args:
     is_db_to_es : boolean
         if True,  index Documents from DB data
         if False, index Documents from ES data itself
-    
+
     Returns:
-        str : 'completed' 
-        
+        str : 'completed'
+
     Raises:
-    AssersionError 
+    AssersionError
         In case of the response code from ElasticSearch is not 200,
         Subsequent processing is interrupted.
-    
+
     Todo:
-        warning: Simultaneous execution is prohibited. 
-        warning: Execution during operation is prohibited 
-                because documents submitted during execution may not be reflected. 
+        warning: Simultaneous execution is prohibited.
+        warning: Execution during operation is prohibited
+                because documents submitted during execution may not be reflected.
                 Please allow execution only during maintenance periods.
     """
     from invenio_oaiserver.percolator import _create_percolator_mapping
     # consts
-    elasticsearch_host = os.environ.get('INVENIO_ELASTICSEARCH_HOST') 
+    elasticsearch_host = os.environ.get('INVENIO_ELASTICSEARCH_HOST')
     base_url = 'http://' + elasticsearch_host + ':9200/'
     reindex_url = base_url + '_reindex?pretty&refresh=true&wait_for_completion=true'
-    
+
     # "{}-weko-item-v1.0.0".format(prefix)
     index = current_app.config['INDEXER_DEFAULT_INDEX']
     tmpindex = "{}-tmp".format(index)
-    
+
     # "{}-weko".format(prefix)
     alias_name = current_app.config['SEARCH_UI_SEARCH_INDEX']
 
@@ -2407,7 +2410,7 @@ def elasticsearch_reindex( is_db_to_es ):
     current_app.logger.info(' START elasticsearch reindex: {}.'.format(index))
 
     # トランザクションログをLucenceに保存。
-    response = requests.post(base_url + index + "/_flush?wait_if_ongoing=true") 
+    response = requests.post(base_url + index + "/_flush?wait_if_ongoing=true")
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
 
@@ -2415,26 +2418,26 @@ def elasticsearch_reindex( is_db_to_es ):
 
     # 一時保管用のインデックスを作成
     # create tmp index
-    current_app.logger.info("START create tmpindex") 
-    current_app.logger.info("PUT tmpindex") 
+    current_app.logger.info("START create tmpindex")
+    current_app.logger.info("PUT tmpindex")
     response = requests.put(base_url + tmpindex + "?pretty", headers=headers ,json=base_index_definition)
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
-    current_app.logger.info("add setting percolator") 
+    current_app.logger.info("add setting percolator")
 
     _create_percolator_mapping(tmpindex, "item-v1.0.0")
-    current_app.logger.info("END create tmpindex") 
-    
+    current_app.logger.info("END create tmpindex")
+
     # 高速化を期待してインデックスの設定を変更。
-    current_app.logger.info("START change setting for faster") 
+    current_app.logger.info("START change setting for faster")
     response = requests.put(base_url + tmpindex + "/_settings?pretty", headers=headers ,json={ "index" : {"number_of_replicas" : 0, "refresh_interval": -1 }})
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text #
-    current_app.logger.info("END change setting for faster") 
+    current_app.logger.info("END change setting for faster")
 
-    
+
     # document count
-    current_app.logger.info("index document count:{}".format(requests.get(base_url + "_cat/count/"+ index ).text)) 
+    current_app.logger.info("index document count:{}".format(requests.get(base_url + "_cat/count/"+ index ).text))
     current_app.logger.info("tmpindex document count:{}".format(requests.get(base_url + "_cat/count/"+ tmpindex ).text))
 
     # 一時保管用のインデックスに元のインデックスの再インデックスを行う
@@ -2448,41 +2451,41 @@ def elasticsearch_reindex( is_db_to_es ):
     # document count
     index_cnt = requests.get(base_url + "_cat/count/"+ index + "?h=count").text
     tmpindex_cnt = requests.get(base_url + "_cat/count/"+ tmpindex + "?h=count").text
-    current_app.logger.info("index document count:{}".format(index_cnt)) 
+    current_app.logger.info("index document count:{}".format(index_cnt))
     current_app.logger.info("tmpindex document count:{}".format(tmpindex_cnt))
     assert index_cnt == tmpindex_cnt,'Document counts do not match.'
 
     # 再インデックス前のインデックスを削除する
-    current_app.logger.info("START delete index") 
+    current_app.logger.info("START delete index")
     response = requests.delete(base_url + index)
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
-    current_app.logger.info("END delete index") 
+    current_app.logger.info("END delete index")
 
     # 新しくインデックスを作成する
     #create index
-    current_app.logger.info("START create index") 
-    current_app.logger.info("PUT index") 
+    current_app.logger.info("START create index")
+    current_app.logger.info("PUT index")
     response = requests.put(url = base_url + index + "?pretty", headers=headers ,json=base_index_definition)
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
-    current_app.logger.info("add setting percolator") 
+    current_app.logger.info("add setting percolator")
     _create_percolator_mapping(index, "item-v1.0.0")
-    current_app.logger.info("END create index") 
+    current_app.logger.info("END create index")
 
     # 高速化を期待してインデックスの設定を変更。
-    current_app.logger.info("START change setting for faster") 
+    current_app.logger.info("START change setting for faster")
     response = requests.put(base_url + index + "/_settings?pretty", headers=headers ,json={ "index" : {"number_of_replicas" : 0, "refresh_interval": -1 }})
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
-    current_app.logger.info("END change setting for faster") 
+    current_app.logger.info("END change setting for faster")
 
     # aliasを再設定する。
-    current_app.logger.info("START re-regist alias") 
+    current_app.logger.info("START re-regist alias")
     response = requests.post(base_url + "_aliases", headers=headers, json=json_data_set_alias )
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
-    current_app.logger.info("END re-regist alias") 
+    current_app.logger.info("END re-regist alias")
 
     # アイテムを再投入する。
     current_app.logger.info("START reindex")
@@ -2504,30 +2507,30 @@ def elasticsearch_reindex( is_db_to_es ):
     current_app.logger.info("END reindex")
 
     # 高速化を期待して変更したインデックスの設定を元に戻す。
-    current_app.logger.info("START revert setting for faster") 
+    current_app.logger.info("START revert setting for faster")
     response = requests.put(base_url + index + "/_settings?pretty", headers=headers ,json={ "index" : {"number_of_replicas" : number_of_replicas, "refresh_interval": refresh_interval }})
     current_app.logger.info(response.text)
-    assert response.status_code == 200 ,response.text 
-    current_app.logger.info("END revert setting for faster") 
+    assert response.status_code == 200 ,response.text
+    current_app.logger.info("END revert setting for faster")
 
     # document count
     index_cnt = requests.get(base_url + "_cat/count/"+ index + "?h=count").text
     tmpindex_cnt = requests.get(base_url + "_cat/count/"+ tmpindex + "?h=count").text
-    current_app.logger.info("index document count:{}".format(index_cnt)) 
+    current_app.logger.info("index document count:{}".format(index_cnt))
     current_app.logger.info("tmpindex document count:{}".format(tmpindex_cnt))
     assert index_cnt == tmpindex_cnt ,'Document counts do not match.'
 
 
-    # 一時保管用のインデックスを削除する 
+    # 一時保管用のインデックスを削除する
     # delete tmp-index
-    current_app.logger.info("START delete tmpindex") 
+    current_app.logger.info("START delete tmpindex")
     response = requests.delete(base_url + tmpindex)
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
-    current_app.logger.info("END delete tmpindex") 
+    current_app.logger.info("END delete tmpindex")
 
     current_app.logger.info(' END elasticsearch reindex: {}.'.format(index))
-    
+
     return 'completed'
 
 def _elasticsearch_remake_item_index(index_name):
@@ -2561,5 +2564,5 @@ def _elasticsearch_remake_item_index(index_name):
         assert res.get("_shards").get("failed") == 0 ,'Index fail.'
         returnlist.append(res)
     current_app.logger.info(' END elasticsearch import from records_metadata')
-    
+
     return returnlist

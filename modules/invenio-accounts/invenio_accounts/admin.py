@@ -98,9 +98,9 @@ class UserView(ModelView):
             get_label='name',
             widget=Select2Widget(multiple=True)
         )
-        
+
         return form_class
-    
+
     def _order_fields(self, form):
         custom_order = ['email', 'password', 'active', 'role', 'group', 'notification']
         ordered_fields = OrderedDict()
@@ -108,11 +108,11 @@ class UserView(ModelView):
             ordered_fields[field_name] = form._fields[field_name]
         form._fields = ordered_fields
         return form
-    
+
     def create_form(self, obj=None):
         form = super(UserView, self).create_form(obj)
         return self._order_fields(form)
-    
+
     def edit_form(self, obj=None):
         form = super(UserView, self).edit_form(obj)
         return self._order_fields(form)
@@ -121,7 +121,7 @@ class UserView(ModelView):
         obj = self.get_one(id)
         form.role.data = [role for role in obj.roles if '_groups_' not in role.name]
         form.group.data = [role for role in obj.roles if '_groups_' in role.name]
-    
+
     def on_model_change(self, form, User, is_created):
         """Hash password when saving."""
         if form.password.data is not None:
@@ -207,7 +207,7 @@ class UserView(ModelView):
     _com_role = os.environ.get('INVENIO_ROLE_COMMUNITY',
                                'Community Administrator')
     _admin_roles = [_system_role, _repo_role, _com_role]
-    
+
     @property
     def can_create(self):
         """Check permission for creating."""

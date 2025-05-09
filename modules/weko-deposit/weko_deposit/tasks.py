@@ -19,15 +19,22 @@
 # MA 02111-1307, USA.
 
 """Weko Deposit celery tasks."""
+import os
 import csv
 import json
+import subprocess
+import time
+import copy
 from time import sleep
 from io import StringIO
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
+from elasticsearch.exceptions import NotFoundError, ConflictError
 from flask import current_app
-import copy
+from fs.errors import ResourceNotFoundError
+
+from invenio_files_rest.proxies import current_files_rest
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -40,7 +47,7 @@ from weko_records.api import ItemsMetadata
 from weko_schema_ui.models import PublishStatus
 from weko_workflow.utils import delete_cache_data, update_cache_data
 
-from .api import WekoDeposit
+from .api import WekoDeposit, WekoIndexer
 
 logger = get_task_logger(__name__)
 
@@ -82,7 +89,7 @@ def update_items_by_authorInfo( user_id, target, origin_pkid_list=[], origin_id_
             "affiliations_key": "creatorAffiliations",
             "affiliation_ids_key": "affiliationNameIdentifiers",
             "affiliation_id_key": "affiliationNameIdentifier",
-            "affiliation_id_uri_key": "affiliationNameIdentifierURI",            
+            "affiliation_id_uri_key": "affiliationNameIdentifierURI",
             "affiliation_id_scheme_key": "affiliationNameIdentifierScheme",
             "affiliation_names_key": "affiliationNames",
             "affiliation_name_key": "affiliationName",
@@ -107,7 +114,7 @@ def update_items_by_authorInfo( user_id, target, origin_pkid_list=[], origin_id_
             "affiliations_key": "contributorAffiliations",
             "affiliation_ids_key": "contributorAffiliationNameIdentifiers",
             "affiliation_id_key": "contributorAffiliationNameIdentifier",
-            "affiliation_id_uri_key": "contributorAffiliationURI",            
+            "affiliation_id_uri_key": "contributorAffiliationURI",
             "affiliation_id_scheme_key": "contributorAffiliationScheme",
             "affiliation_names_key": "contributorAffiliationNames",
             "affiliation_name_key": "contributorAffiliationName",
@@ -132,7 +139,7 @@ def update_items_by_authorInfo( user_id, target, origin_pkid_list=[], origin_id_
             "affiliations_key": "affiliations",
             "affiliation_ids_key": "nameIdentifiers",
             "affiliation_id_key": "nameIdentifier",
-            "affiliation_id_uri_key": "nameIdentifierURI",            
+            "affiliation_id_uri_key": "nameIdentifierURI",
             "affiliation_id_scheme_key": "nameIdentifierScheme",
             "affiliation_names_key": "affiliationNames",
             "affiliation_name_key": "affiliationName",
@@ -197,7 +204,7 @@ def _get_affiliation_id():
                 'scheme': s.scheme,
                 'url': s.url
             }
-    return result    
+    return result
 
 def _process(data_size, data_from, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change):
     res = False
@@ -218,7 +225,7 @@ def _process(data_size, data_from, process_counter, target, origin_pkid_list, ke
                                 {"bool": {"must_not": {"exists": {"field": "relation_version_is_last"}}}}
                             ]
                         }
-                    }, 
+                    },
                     {
                         "terms": {
                             "author_link.raw": origin_pkid_list
@@ -255,7 +262,7 @@ def _process(data_size, data_from, process_counter, target, origin_pkid_list, ke
         sleep_time = 2
         count = 1
         while True:
-            try: 
+            try:
                 query = (x[0] for x in PersistentIdentifier.query.filter(
                     PersistentIdentifier.object_uuid.in_(record_ids)
                 ).values(
@@ -308,7 +315,7 @@ def _update_author_data(item_id, record_ids, process_counter, target, origin_pki
         author_data = {}
         current_weko_link = dep.get("weko_link", {})
         weko_link = copy.deepcopy(current_weko_link)
-        
+
         # targetを用いてweko_linkを新しくする。
         if target:
             # weko_idを取得する。
@@ -367,7 +374,7 @@ def _update_author_data(item_id, record_ids, process_counter, target, origin_pki
 
         dep['author_link'] = list(author_link)
         dep["weko_link"] = weko_link
-        
+
         dep.update_item_by_task()
         obj = ItemsMetadata.get_record(pid.object_uuid)
         obj.update(author_data)
@@ -418,7 +425,7 @@ def _change_to_meta(target, author_prefix, affiliation_id, key_map, force_change
 
                 if prefix_info['scheme'] == 'WEKO':
                     target_id = id.get('authorId', '')
-        
+
         # 強制変更フラグがオフならば、ここで処理を終了する。
         # 識別子の情報のみアップデートする。
         if not force_change:
@@ -427,7 +434,7 @@ def _change_to_meta(target, author_prefix, affiliation_id, key_map, force_change
                     key_map['ids_key']: identifiers
                 })
             return target_id, meta
-        
+
         for name in target.get('authorNameInfo', []):
             if not bool(name.get('nameShowFlg', "true")):
                 continue
@@ -525,7 +532,7 @@ def update_db_es_data(origin_pkid_list, origin_id_list):
                 author_data.gather_flg = 1
                 db.session.merge(author_data)
         db.session.commit()
-    
+
         # update ES of Author
         update_author_q = {
             "query": {
@@ -599,3 +606,88 @@ def make_stats_file(raw_stats):
             writer.writerow(term)
 
     return file_output
+
+
+@shared_task(ignore_result=True)
+def extract_pdf_and_update_file_contents(files, record_uuid, retry_count=3, retry_delay=1):
+    """Extract text from pdf and update es document
+
+    Args:
+        files(dict): pdf_files uri and size. ex: {'test1.pdf': {'uri': '/var/tmp/tmp5beo2byv/e2/5a/e1af-d89b-4ce0-bd01-a78833acbe1e/data', 'size': 1252395}"
+        record_uuid(str): The id of the document to update.
+        retry_count(int, Optional): The number of times to retry. Defaults to 3.
+        retry_delay(int, Optional): The number of seconds to wait between retries. Defaults to 1.
+    """
+    tika_jar_path = os.environ.get("TIKA_JAR_FILE_PATH")
+    if not tika_jar_path or os.path.isfile(tika_jar_path) is False:
+        raise Exception("not exist tika jar file.")
+    file_datas = {}
+    for filename, file in files.items():
+        data = ""
+        try:
+            storage = current_files_rest.storage_factory(
+                fileurl=file["uri"],
+                size=file["size"],
+            )
+
+            with storage.open(mode="rb") as fp:
+                buffer = fp.read(current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT'])
+                args = ["java", "-jar", tika_jar_path, "-t"]
+                result = subprocess.run(
+                    args,
+                    input=buffer,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+                if result.returncode != 0:
+                    raise Exception("raise in tika: {}".format(result.stderr.decode("utf-8")))
+                data = "".join(result.stdout.decode("utf-8").splitlines())
+        except FileNotFoundError as ex:
+            current_app.logger.error(ex)
+        except ResourceNotFoundError as ex:
+            current_app.logger.error(ex)
+        except Exception as ex:
+            current_app.logger.error(ex)
+        file_datas[filename] = data
+
+    for attempt in range(retry_count):
+        try:
+            update_file_content(record_uuid, file_datas)
+            break
+        except ConflictError:
+            current_app.logger.error(f"Version conflict error occurred while updating file content. Retrying {attempt + 1}/{retry_count}")
+            time.sleep(retry_delay)
+        except NotFoundError:
+            current_app.logger.error(f"The document targeted for content update({record_uuid}) does not exist. Retrying {attempt + 1}/{retry_count}")
+            time.sleep(retry_delay)
+        except Exception:
+            current_app.logger.error(f"An error occurred({record_uuid}). Retrying {attempt + 1}/{retry_count}")
+            time.sleep(retry_delay)
+
+def update_file_content(record_uuid, file_datas):
+    """Update the content of the es document
+    Args:
+        record_uuid (str): The id of the document to update.
+        file_datas (dict): A dictionary of file names and contents.
+
+    Raises:
+        ConflictError: Elasticsearch document version conflict error
+        NotFoundError: No document to update error
+    """
+    indexer = WekoIndexer()
+    indexer.get_es_index()
+    res = indexer.get_metadata_by_item_id(record_uuid)
+    es_data = res.get("_source",{})
+    contents = es_data.get("content",[])
+    for content in contents:
+        if content.get("filename") not in list(file_datas.keys()):
+            continue
+        if content.get("attachment",{}):
+            content["attachment"]["content"] = file_datas[content.get("filename")]
+    update_body = {"doc":{"content":contents}}
+    indexer.client.update(
+        index=indexer.es_index,
+        doc_type=indexer.es_doc_type,
+        id=str(record_uuid),
+        body=update_body
+    )

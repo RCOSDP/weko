@@ -149,7 +149,7 @@ def test_view(client,app,db,communities,mocker):
 def test_content_policy(client, app, db, communities, mocker):
     comm = communities[0]
     mock_render = mocker.patch("invenio_communities.views.ui.render_template",return_value=make_response())
-    
+
     # valid community
     url = url_for("invenio_communities.content_policy", community_id=comm.id)
     response = client.get(url)
@@ -157,7 +157,7 @@ def test_content_policy(client, app, db, communities, mocker):
     args, kwargs = mock_render.call_args
     assert args[0] == "invenio_communities/content_policy.html"
     assert kwargs["community"].id == comm.id
-    
+
     # invalid community
     url = url_for("invenio_communities.content_policy", community_id="invalid_id")
     response = client.get(url)

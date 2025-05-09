@@ -19,23 +19,29 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
+import os
 import gc
 import json
 import os
 import pickle
 import shutil
 from datetime import datetime, timedelta
+import sys
+import traceback
 
 from celery import shared_task
 from celery.result import AsyncResult
 from celery.task.control import inspect
-from flask import current_app
+from flask import current_app, request
+from flask_babelex import gettext as _
+
 from weko_admin.api import TempDirInfo
 from weko_admin.utils import get_redis_cache, reset_redis_cache
 from weko_redis.redis import RedisConnection
 from invenio_db import db
 
 from .utils import (
+    check_jsonld_import_items,
     check_tsv_import_items,
     delete_exported,
     export_all,
@@ -79,16 +85,71 @@ def check_import_items_task(file_path, is_change_identifier: bool, host_url,
     return result
 
 
+@shared_task
+def check_rocrate_import_items_task(file_path, is_change_identifier: bool,
+                                host_url, packaging, mapping_id, lang="en"):
+    """Check RO-Crate import items.
+    Check the contents of an RO-Crate file and processes its metadata.
+
+    Args:
+        file_path (str): File path.
+        is_change_identifier (bool): Change identifier or not.
+        host_url (str): Host URL.
+        packaging (str): Packaging.
+        mapping_id (int): Mapping ID.
+        lang (str): Language code(default is "en").
+    Returns:
+        dict: Check Result.
+    """
+    result = {"start_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+    with current_app.test_request_context(
+        host_url, headers=[("Accept-Language", lang)]
+    ):
+        check_result = check_jsonld_import_items(
+            file_path, packaging, mapping_id,
+            validate_bagit=False,
+            is_change_identifier=is_change_identifier
+        )
+        list_record = check_result.get("list_record", [])
+        check_flag_metadata_replace(list_record)
+        check_import_item_splited(check_result)
+
+    # remove zip file
+    shutil.rmtree("/".join(file_path.split("/")[:-1]))
+    data_path = check_result.get("data_path", "")
+    if check_result.get("error"):
+        remove_temp_dir_task.apply_async((data_path,))
+        result["error"] = check_result.get("error")
+    else:
+        num_record_err = len([i for i in list_record if i.get("errors")])
+        if len(list_record) == num_record_err:
+            remove_temp_dir_task.apply_async((data_path,))
+        else:
+            expire = datetime.now() + timedelta(seconds=get_lifetime())
+            TempDirInfo().set(
+                data_path, {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")}
+            )
+        result["data_path"] = data_path
+        result["list_record"] = list_record
+
+    result["end_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return result
+
+
 @shared_task(ignore_results=False)
-def import_item(item, request_info):
+def import_item(item, request_info, parent_id=None):
     """Import Item."""
     try:
-        start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        result = import_items_to_system(item, request_info) or dict()
-        result["start_date"] = start_date
+        with current_app.test_request_context():
+            start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            result = import_items_to_system(
+                item, request_info, parent_id=parent_id
+            ) or dict()
+            result["start_date"] = start_date
         return result
     except Exception as ex:
         current_app.logger.error(ex)
+        traceback.print_exc(file=sys.stdout)
 
 
 @shared_task
@@ -116,7 +177,7 @@ def export_all_task(root_url, user_id, data, start_time):
 @shared_task
 def write_files_task(export_path, pickle_file_name , user_id):
     """Write files for export.
-    
+
     Args:
         export_path (str): path of files where csv/tsv export to.
         pickle_file_name (str): pickle file's name
@@ -206,8 +267,41 @@ def check_celery_is_run():
         return False
     else:
         return True
-    
+
 def check_session_lifetime():
     """Check session lifetime."""
     lifetime = get_lifetime()
     return True if lifetime >= 86400 else False
+
+
+def check_flag_metadata_replace(list_record):
+    """Check metadata_replace flag.
+
+    `wk:metadataReplace` cannot be used in the import item.
+
+    Args:
+        list_record (list): List of record.
+    """
+    error = _("`wk:metadata_replace` flag cannot be used in RO-Crate Import.")
+    for item in list_record:
+        if item.get("metadata_replace"):
+            item["errors"] = (
+                item["errors"] + [error] if item.get("errors") else [error]
+            )
+
+def check_import_item_splited(check_result):
+    """Check import item splited.
+
+    `wk:isSplited` cannot be used in the import item.
+
+    Args:
+        list_record (list): List of record.
+    """
+    error = _("`wk:isSplited` flag cannot be used in RO-Crate Import.")
+    list_record = check_result.get("list_record", [])
+    if len(list_record) > 1:
+        current_app.logger.error(
+            "The number of import items is more than 2. "
+            "`wk:isSplited` flag cannot be used."
+        )
+        check_result["error"] = error

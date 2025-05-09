@@ -219,7 +219,7 @@ def test_AdminResyncClient_toggle_auto(app, client, test_resync, users, test_ind
 # .tox/c1/bin/pytest --cov=invenio_resourcesyncclient tests/test_admin.py::test_get_repository -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncclient/.tox/c1/tmp
 def test_get_repository(app, client, users):
     url = url_for('resync.get_repository')
-    
+
     # super role user
     login_user_via_session(client, email=users[2]["email"])
     data = {'id': 1, 'name': 'root', 'children': []}
@@ -228,7 +228,7 @@ def test_get_repository(app, client, users):
         assert res.status_code == 200
         assert json.loads(res.data) == [{'id': 0, 'value': 'Root Index'},
                                         {'id': 1, 'value': 'root <ID:1>'}]
-    
+
     # super role user with children
     data = {'id': 1, 'name': 'root', 'children': [{'id': 2, 'name': 'child', 'children': []}]}
     with patch("weko_index_tree.api.Indexes.get_index_tree", return_value=[data]):
@@ -237,7 +237,7 @@ def test_get_repository(app, client, users):
         assert json.loads(res.data) == [{'id': 0, 'value': 'Root Index'},
                                         {'id': 1, 'value': 'root <ID:1>'},
                                         {'id': 2, 'value': 'root <ID:1> / child <ID:2>'}]
-    
+
     # comadmin role user with repository
     login_user_via_session(client, email=users[3]["email"])
     mock_repo = Community(root_node_id=1)
@@ -247,13 +247,13 @@ def test_get_repository(app, client, users):
             res = client.get(url)
             assert res.status_code == 200
             assert json.loads(res.data) == [{'id': 1, 'value': 'root <ID:1>'}]
-    
+
     # comadmin role user with no repository
     with patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[]):
         res = client.get(url)
         assert res.status_code == 200
         assert json.loads(res.data) == []
-    
+
     # comadmin role user with repository but no index
     with patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[mock_repo]):
         with patch("weko_index_tree.api.Indexes.get_index_tree", return_value=[]):

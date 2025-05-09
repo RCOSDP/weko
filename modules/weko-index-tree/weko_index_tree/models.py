@@ -130,7 +130,7 @@ class Index(db.Model, Timestamp):
     """Recursive PDF Cover Page State of the index."""
 
     browsing_role = db.Column(db.Text, nullable=True)
-    """Browsing Role of the  ."""
+    """Browsing role of the index."""
 
     recursive_browsing_role = db.Column(
         db.Boolean(name='recs_browsing_role'), nullable=True, default=False)
@@ -144,7 +144,7 @@ class Index(db.Model, Timestamp):
     """Recursive Browsing Role of the index."""
 
     browsing_group = db.Column(db.Text, nullable=True)
-    """Browsing Group of the  ."""
+    """Browsing Group of the index."""
 
     recursive_browsing_group = db.Column(
         db.Boolean(name='recs_browsing_group'), nullable=True, default=False)

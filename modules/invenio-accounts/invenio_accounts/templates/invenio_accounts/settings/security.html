@@ -31,7 +31,7 @@
       {%- endif %}
     </div>
     <div class="col-xs-9">
-      <b>{{session.ip}}</b><br />
+      <b>{{session.ip}} {% if session.orgniazation_name %}{% trans orgniazation_name=session.orgniazation_name %}MSG_INVENIO_ACCOUNT_AUTHENTICATED_IDP{% endtrans %}{%- endif %}</b><br />
       <small>
         {{_("Signed in")}}:
         {{session.created | tousertimezone | dateformat}}

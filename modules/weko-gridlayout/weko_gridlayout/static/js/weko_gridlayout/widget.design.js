@@ -95,7 +95,7 @@ class Repository extends React.Component {
     });
 
     disableButton();
-    this.setState({repositoryId: repositoryId});
+    this.setState({ repositoryId: repositoryId });
     this.props.callbackMainLayout('repositoryId', repositoryId);
     event.preventDefault();
   }
@@ -103,12 +103,12 @@ class Repository extends React.Component {
   render() {
     return (
       <div className="form-group row">
-        <div id="alerts"/>
+        <div id="alerts" />
         <label htmlFor="input_type" className="control-label col-xs-1">Repository<span
           style={this.styleRed}>*</span></label>
         <div className="controls col-xs-5">
           <select id="repository-id" value={this.state.repositoryId}
-                  onChange={this.handleChange} className="form-control">
+            onChange={this.handleChange} className="form-control">
             <option value="0">Please select the Repository</option>
             {this.state.selectOptions}
           </select>
@@ -213,16 +213,16 @@ class PagesListSelect extends React.Component {
       if (page.is_main_layout) {
         options.shift();
         options.unshift(<option data-is-main-layout={page.is_main_layout}
-                                key={page.id}
-                                value={page.id}>{page.name}</option>);
+          key={page.id}
+          value={page.id}>{page.name}</option>);
         if (selectedPage === 0) {
           selectedPage = page.id;
         }
         isMainLayout = page.is_main_layout;
       } else {
         options.push(<option data-is-main-layout={page.is_main_layout}
-                             key={page.id}
-                             value={page.id}>{page.name}</option>);
+          key={page.id}
+          value={page.id}>{page.name}</option>);
       }
     });
     this.setState({
@@ -284,17 +284,17 @@ class PagesListSelect extends React.Component {
     return (
       <div className="form-group row">
         <label htmlFor="pages-list-select"
-               className="control-label col-xs-1">Pages</label>
+          className="control-label col-xs-1">Pages</label>
         <div className="controls col-xs-5">
           <select id="pages-list-select" onChange={this.handleChange}
-                  className="form-control">
+            className="form-control">
             {this.state.options}
           </select>
         </div>
         <PagesListSelectControls isMainLayout={this.state.isMainLayout}
-                                 refreshList={this.refreshList}
-                                 selectedOption={selectedOption}
-                                 repositoryId={this.props.repositoryId}/>
+          refreshList={this.refreshList}
+          selectedOption={selectedOption}
+          repositoryId={this.props.repositoryId} />
       </div>
     );
   }
@@ -331,7 +331,7 @@ class PagesListSelectControls extends React.Component {
       data: JSON.stringify(requestData),
       success: function (result) {
         if (result.error) {
-          this.setState({page: {}});
+          this.setState({ page: {} });
           alertModal("Can't get page! \nDetail: " + result.error);
         } else {  // Set the data for the modal
           this.setState({
@@ -341,15 +341,15 @@ class PagesListSelectControls extends React.Component {
         }
       },
       error: function (error) {
-        this.setState({page: {}});
+        this.setState({ page: {} });
         alertModal("Can't get page! \nDetail: " + error);
       }
     });
   }
 
   handleDelete() {
-    this.setState({deleteModalOpen: false});
-    let postData = {page_id: this.props.selectedOption};
+    this.setState({ deleteModalOpen: false });
+    let postData = { page_id: this.props.selectedOption };
     $.ajax({
       context: this,
       url: DELETE_WIDGET_DESIGN_PAGE_URL,
@@ -376,14 +376,14 @@ class PagesListSelectControls extends React.Component {
     let addButton = <IconButton id={'add-page'} onClick={() => this.setState({
       pageModalOpen: true,
       isEdit: false
-    })} iconClass={'fa fa-plus glyphicon glyphicon-plus'}/>;
+    })} iconClass={'fa fa-plus glyphicon glyphicon-plus'} />;
     let editButton = <IconButton id={'edit-page'} onClick={(e) => {
       this.handleEdit(e);
-      this.setState({isEdit: true})
-    }} iconClass={'fa fa-pencil glyphicon glyphicon-pencil'}/>;
+      this.setState({ isEdit: true })
+    }} iconClass={'fa fa-pencil glyphicon glyphicon-pencil'} />;
     let deleteButton = <IconButton id={'delete-page'}
-                                   onClick={() => this.setState({deleteModalOpen: true})}
-                                   iconClass={'fa fa-trash glyphicon glyphicon-trash'}/>;
+      onClick={() => this.setState({ deleteModalOpen: true })}
+      iconClass={'fa fa-trash glyphicon glyphicon-trash'} />;
     if (parseInt(selected) !== 0 && !this.props.isMainLayout) {  // Do not allow the deletion of parent layout
       buttons.push(editButton);
       buttons.push(deleteButton);
@@ -399,15 +399,15 @@ class PagesListSelectControls extends React.Component {
           </div>
         </div>,
         <DeletePageModal deleteModalOpen={this.state.deleteModalOpen}
-                         handleDelete={this.handleDelete}
-                         handleClose={() => this.setState({deleteModalOpen: false})}/>,
+          handleDelete={this.handleDelete}
+          handleClose={() => this.setState({ deleteModalOpen: false })} />,
         <AddPageModal isEdit={this.state.isEdit}
-                      isOpen={this.state.pageModalOpen}
-                      handleClose={() => this.setState({pageModalOpen: false})}
-                      repositoryId={this.props.repositoryId}
-                      addPageEndpoint={'/api/admin/save_widget_design_page'}
-                      pageId={selected} page={this.state.page}
-                      refreshList={this.props.refreshList}/>
+          isOpen={this.state.pageModalOpen}
+          handleClose={() => this.setState({ pageModalOpen: false })}
+          repositoryId={this.props.repositoryId}
+          addPageEndpoint={'/api/admin/save_widget_design_page'}
+          pageId={selected} page={this.state.page}
+          refreshList={this.props.refreshList} />
       ]
     )
   }
@@ -424,7 +424,7 @@ class IconButton extends React.Component {
   render() {
     return (
       <button id={this.props.id} className="icon" onClick={this.props.onClick}>
-        <span className={this.props.iconClass} aria-hidden="true"/>
+        <span className={this.props.iconClass} aria-hidden="true" />
       </button>
     )
   }
@@ -441,13 +441,13 @@ class DeletePageModal extends React.Component {
   render() {
     return (
       <div className="modal" tabIndex="-1" role="dialog"
-           style={this.props.deleteModalOpen ? {display: 'block'} : {display: 'none'}}>
+        style={this.props.deleteModalOpen ? { display: 'block' } : { display: 'none' }}>
         <div className="modal-dialog" role="document">
           <div className="modal-content">
             <div className="modal-header">
               <button type="button" className="close"
-                      onClick={this.props.handleClose} aria-label="Close"><span
-                aria-hidden="true">&times;</span></button>
+                onClick={this.props.handleClose} aria-label="Close"><span
+                  aria-hidden="true">&times;</span></button>
               <h4 className="modal-title">Delete Page</h4>
             </div>
             <div className="modal-body">
@@ -456,13 +456,13 @@ class DeletePageModal extends React.Component {
             </div>
             <div className="modal-footer">
               <button id="delete-page" className="btn btn-primary save-button"
-                      onClick={this.props.handleDelete}>
-                <span className="glyphicon glyphicon-check"/>
+                onClick={this.props.handleDelete}>
+                <span className="glyphicon glyphicon-check" />
                 Submit
               </button>
               <button type="button" className="btn btn-info close-button"
-                      onClick={this.props.handleClose}>
-                <span className="glyphicon glyphicon-remove"/>
+                onClick={this.props.handleClose}>
+                <span className="glyphicon glyphicon-remove" />
                 Close
               </button>
             </div>
@@ -493,7 +493,7 @@ class AddPageModal extends React.Component {
   }
 
   handleInputChange(name, value) {
-    this.setState({[name]: value});
+    this.setState({ [name]: value });
   }
 
   componentWillReceiveProps(nextProps) {
@@ -511,12 +511,12 @@ class AddPageModal extends React.Component {
 
   validateInput() {
     if (!this.props.repositoryId) {
-      this.setState({'errorMessage': 'Please select the repository.'});
+      this.setState({ 'errorMessage': 'Please select the repository.' });
       return false;
     }
 
     if (!/\/[a-z0-9?&/=]*/.test(this.state.url)) {
-      this.setState({'errorMessage': 'Not a valid URL.'});
+      this.setState({ 'errorMessage': 'Not a valid URL.' });
       return false;
     }
     return true;
@@ -525,7 +525,7 @@ class AddPageModal extends React.Component {
   handleSave(event) {
     event.preventDefault();
     let url = '';
-    if ((this.props.repositoryId === 'Root Index') || (this.props.repositoryId === '0')|| (this.props.repositoryId.length === 0)) {
+    if ((this.props.repositoryId === 'Root Index') || (this.props.repositoryId === '0') || (this.props.repositoryId.length === 0)) {
       url = this.state.url
     } else {
       if (this.state.url.startsWith('/c/' + this.props.repositoryId + '/page')) {
@@ -535,7 +535,7 @@ class AddPageModal extends React.Component {
       }
     }
     if (this.validateInput()) {
-      this.setState({'errorMessage': ''});
+      this.setState({ 'errorMessage': '' });
       this.props.handleClose();
       let postData = {
         page_id: this.props.pageId,
@@ -587,19 +587,19 @@ class AddPageModal extends React.Component {
   render() {
     return (
       <div className="modal" tabIndex="-1" role="dialog"
-           style={this.props.isOpen ? {display: 'block'} : {display: 'none'}}>
+        style={this.props.isOpen ? { display: 'block' } : { display: 'none' }}>
         <div className="modal-dialog modal-lg" role="document">
           <div className="modal-content">
             <div className="modal-header">
               <button type="button" className="close" onClick={this.handleClose}
-                      aria-label="Close"><span aria-hidden="true">&times;</span>
+                aria-label="Close"><span aria-hidden="true">&times;</span>
               </button>
               <h4 className="modal-title">Page</h4>
             </div>
             <div className="modal-body">
               <p
                 className="text-center text-danger">{this.state.errorMessage}</p>
-              {(this.props.repositoryId === 'Root Index') || (this.props.repositoryId === '0')|| (this.props.repositoryId.length === 0) ?
+              {(this.props.repositoryId === 'Root Index') || (this.props.repositoryId === '0') || (this.props.repositoryId.length === 0) ?
                 null :
                 <p>※ For &nbsp;{this.props.repositoryId}&nbsp; page,&nbsp;"/c/{this.props.repositoryId}/page"&nbsp;will be automatically added to before the URL</p>
               }
@@ -617,13 +617,13 @@ class AddPageModal extends React.Component {
             </div>
             <div className="modal-footer">
               <button className="btn btn-primary save-button"
-                      onClick={this.handleSave}>
-                <span className="glyphicon glyphicon-check"/>
+                onClick={this.handleSave}>
+                <span className="glyphicon glyphicon-check" />
                 Save
               </button>
               <button type="button" className="btn btn-info close-button"
-                      onClick={this.handleClose}>
-                <span className="glyphicon glyphicon-remove"/>
+                onClick={this.handleClose}>
+                <span className="glyphicon glyphicon-remove" />
                 Close
               </button>
             </div>
@@ -651,9 +651,9 @@ class AddPageForm extends React.Component {
           </label>
           <div className="col-xs-6">
             <input name="url" type="text" value={this.props.values.url}
-                   onChange={(e) => this.props.handleInputChange(e.target.name, e.target.value)}
-                   className="form-control"
-                   disabled={this.props.values.isMainLayout}/>
+              onChange={(e) => this.props.handleInputChange(e.target.name, e.target.value)}
+              className="form-control"
+              disabled={this.props.values.isMainLayout} />
           </div>
         </div>
         <div className="form-group row">
@@ -661,9 +661,9 @@ class AddPageForm extends React.Component {
             Title
           </label>
           <PageTitle title={this.props.values.title}
-                     multiLangData={this.props.values.multiLangData}
-                     handleChange={this.props.handleInputChange}
-                     pageModalOpen={this.props.pageModalOpen}/>
+            multiLangData={this.props.values.multiLangData}
+            handleChange={this.props.handleInputChange}
+            pageModalOpen={this.props.pageModalOpen} />
         </div>
       </div>
     )
@@ -791,13 +791,13 @@ class PageTitle extends React.Component {
     let multiLangData = this.state.multiLangData;
     console.log(selectedValue, multiLangData);
     if (multiLangData.hasOwnProperty(selectedValue)) {
-      this.setState({title: multiLangData[selectedValue]});
+      this.setState({ title: multiLangData[selectedValue] });
     } else if (selectedValue === this.state.defaultLanguage) {  // Default language is main one
-      this.setState({title: this.props.title});
+      this.setState({ title: this.props.title });
     } else {
-      this.setState({title: ''});
+      this.setState({ title: '' });
     }
-    this.setState({selectedLanguage: selectedValue});
+    this.setState({ selectedLanguage: selectedValue });
   }
 
   componentWillReceiveProps(nextProps) {
@@ -819,15 +819,15 @@ class PageTitle extends React.Component {
       <div>
         <div className="col-xs-6">
           <input id="page-title-input"
-                 name="title" type="text"
-                 value={this.state.title}
-                 onChange={this.handleChange}
-                 className="form-control"/>
+            name="title" type="text"
+            value={this.state.title}
+            onChange={this.handleChange}
+            className="form-control" />
         </div>
         <div key={this.state.pageModalOpen} className="col-xs-2">
           <select id="page-language-select"
-                  onChange={this.handleChangeLanguage}
-                  className="form-control">
+            onChange={this.handleChangeLanguage}
+            className="form-control">
             {this.state.options}
           </select>
         </div>
@@ -917,14 +917,14 @@ class ButtonLayout extends React.Component {
     return (
       <div className="form-group col-xs-10">
         <button id="save-grid" className="btn btn-primary save-button"
-                style={this.style} onClick={this.handleSave}>
-          <span className="glyphicon glyphicon-saved" aria-hidden="true"/>
+          style={this.style} onClick={this.handleSave}>
+          <span className="glyphicon glyphicon-saved" aria-hidden="true" />
           &nbsp;Save
         </button>
         <button id="clear-grid"
-                className="form-group btn btn-info cancel-button"
-                onClick={this.handleCancel}>
-          <span className="glyphicon glyphicon-remove" aria-hidden="true"/>
+          className="form-group btn btn-info cancel-button"
+          onClick={this.handleCancel}>
+          <span className="glyphicon glyphicon-remove" aria-hidden="true" />
           Cancel
         </button>
       </div>
@@ -946,7 +946,7 @@ class MainLayout extends React.Component {
   }
 
   callbackMainLayout(name, value) {
-    this.setState({[name]: value});
+    this.setState({ [name]: value });
   }
 
   render() {
@@ -954,25 +954,25 @@ class MainLayout extends React.Component {
     return (
       <div>
         <div className="row">
-          <Repository callbackMainLayout={this.callbackMainLayout.bind(this)}/>
+          <Repository callbackMainLayout={this.callbackMainLayout.bind(this)} />
           {(repositoryId !== 0 || repositoryId !== '0' && repositoryId.length) ?  // Only show if parent data is available
             <PagesListSelect
               callbackMainLayout={this.callbackMainLayout.bind(this)}
-              repositoryId={repositoryId}/> :
+              repositoryId={repositoryId} /> :
             null
           }
         </div>
         <div className="row">
           <div className="form-group col-xs-2">
-            <WidgetList repositoryId={this.state.repositoryId}/>
+            <WidgetList repositoryId={this.state.repositoryId} />
           </div>
           <div className="form-group col-xs-10">
-            <PreviewWidget/>
+            <PreviewWidget />
           </div>
         </div>
         <div className="row">
           <ButtonLayout repositoryId={this.state.repositoryId}
-                        pageId={this.state.pageId}/>
+            pageId={this.state.pageId} />
         </div>
       </div>
     )
@@ -1209,7 +1209,7 @@ function loadWidgetList(widgetListItems) {
       '<div>'
       + '<div class="grid-stack-item-content">'
       + ' <div class="text-left" style="z-index: 90;position: absolute;margin: 5px;">'
-      +     '<div class="glyphicon glyphicon-cog pointer" data-id="' + widget.Id +'"></div>'
+      + '<div class="glyphicon glyphicon-cog pointer" data-id="' + widget.Id + '"></div>'
       + ' </div>'
       + ' <span class="widget-label" >&lt;' + widgetType + '&gt;</span>'
       + ' <span class="widget-label">' + widget.label + '</span>'
@@ -1293,7 +1293,7 @@ function openRequestedSinglePopup(url, windowName) {
 
 $(function () {
   ReactDOM.render(
-    <MainLayout/>,
+    <MainLayout />,
     document.getElementById('root')
   );
   disableButton();

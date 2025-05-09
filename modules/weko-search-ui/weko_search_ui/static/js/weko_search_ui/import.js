@@ -24,6 +24,7 @@ const download = document.getElementById("download").value;
 const no = document.getElementById("no").value;
 const item_id = document.getElementById("item_id").value;
 const title = document.getElementById("title").value;
+const doi = document.getElementById("doi").value;
 const check_result = document.getElementById("check_result").value;
 const error = document.getElementById("error").value;
 const warning = document.getElementById("warning").value;
@@ -179,12 +180,12 @@ class MainLayout extends React.Component {
     closeError();
     this.setState({ isChecking: true });
 
-    var  csrf_token=$('#csrf_token').val();
+    var csrf_token = $('#csrf_token').val();
     $.ajaxSetup({
-      beforeSend: function(xhr, settings) {
-         if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain){
-             xhr.setRequestHeader("X-CSRFToken", csrf_token);
-         }
+      beforeSend: function (xhr, settings) {
+        if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+          xhr.setRequestHeader("X-CSRFToken", csrf_token);
+        }
       }
     });
 
@@ -290,7 +291,8 @@ class MainLayout extends React.Component {
       type: 'POST',
       data: JSON.stringify({
         list_record: list_record.filter(item => !item.errors),
-        data_path
+        data_path,
+        list_doi: $('[name="list_doi"]:not(:disabled)').map((_, el) => $(el).val()).get()
       }),
       contentType: "application/json; charset=utf-8",
       dataType: "json",
@@ -837,7 +839,7 @@ class CheckComponent extends React.Component {
       return item.status && (item.status === 'keep' || item.status === 'upgrade')
     }).length
     const warning_item = list_record.filter((item) => {
-        return item.warnings && item.warnings.length > 0
+      return item.warnings && item.warnings.length > 0
     }).length
 
     this.setState({
@@ -860,14 +862,14 @@ class CheckComponent extends React.Component {
   create_errors(errors) {
     let result = "";
     if (errors[0]) {
-      
-      for(let i = 0;i < errors.length; i++) {
+
+      for (let i = 0; i < errors.length; i++) {
         result += "ERRORS: " + errors[i];
-        if (i != errors.length -1 ){
+        if (i != errors.length - 1) {
           result += "; ";
         }
       }
-    }else{
+    } else {
       result = "ERRORS";
     }
     return result
@@ -923,7 +925,7 @@ class CheckComponent extends React.Component {
   }
 
   render() {
-    const { total, list_record, update_item, new_item, check_error ,warning_item} = this.state
+    const { total, list_record, update_item, new_item, check_error, warning_item } = this.state
     const { is_import, isShowMessage } = this.props
     return (
       <div className="check-component">
@@ -983,6 +985,7 @@ class CheckComponent extends React.Component {
                   <th><p className="item_type">{item_type}</p></th>
                   <th><p className="item_id">{item_id}</p></th>
                   <th>{title}</th>
+                  <th>{doi}</th>
                   <th><p className="check_result">{check_result}</p></th>
                 </tr>
               </thead>
@@ -1003,6 +1006,11 @@ class CheckComponent extends React.Component {
                             {item['item_title'] ? item['item_title'] : ''}
                           </p>
 
+                        </td>
+                        <td>
+                          <div class="form-inline">
+                            <input class="form-control" type="text" name="list_doi" disabled={item.errors && item.errors.length > 0} />
+                          </div>
                         </td>
                         <td>
                           {

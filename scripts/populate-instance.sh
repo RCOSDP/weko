@@ -373,6 +373,7 @@ ${INVENIO_WEB_INSTANCE} roles add \
 
 # sphinxdoc-set-web-api-account-combobox-begin
 ${INVENIO_WEB_INSTANCE} cert insert crf CrossRef
+${INVENIO_WEB_INSTANCE} cert insert oaa "OAアシスト"
 # sphinxdoc-set-web-api-account-combobox-end
 
 #### sphinxdoc-create-widget_type-data-begin
@@ -491,28 +492,17 @@ ${INVENIO_WEB_INSTANCE} widget init
 
 # create-facet-search-setting-begin
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \
-       "Data Language"	"デ一タの言語"	"language"	"[]"	True   SelectBox     1      True   
+       "Data Language"	"デ一タの言語"	"language"	"[]"	True   SelectBox     1      True    OR
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \
-       "Access"	"アクセス制限"	"accessRights"	"[]"	True   SelectBox     2      True
+       "Access"	"アクセス制限"	"accessRights"	"[]"	True   SelectBox     2      True    OR
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \
-       "Location"	"地域"	"geoLocation.geoLocationPlace"	"[]"	True   SelectBox     3      True
+       "Location"	"地域"	"geoLocation.geoLocationPlace"	"[]"	True   SelectBox     3      True    OR
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \
-       "Temporal"	"時間的範囲"	"temporal"	"[]"	True   SelectBox     4      True
+       "Temporal"	"時間的範囲"	"temporal"	"[]"	True   SelectBox     4      True    OR
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \
-       "Topic"	"トピック"	"subject.value"	"[]"	True   SelectBox     5      True
+       "Topic"	"トピック"	"subject.value"	"[]"	True   SelectBox     5      True    OR
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \
-       "Distributor"	"配布者"	"contributor.contributorName"	"[{'agg_value': 'Distributor', 'agg_mapping': 'contributor.@attributes.contributorType'}]"	True   SelectBox     6      True
+       "Distributor"	"配布者"	"contributor.contributorName"	"[{'agg_value': 'Distributor', 'agg_mapping': 'contributor.@attributes.contributorType'}]"	True   SelectBox     6      True    OR
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \
-       "Data Type"	"デ一タタイプ"	"description.value"	"[{'agg_value': 'Other', 'agg_mapping': 'description.descriptionType'}]"	True   SelectBox     7      True
+       "Data Type"	"デ一タタイプ"	"description.value"	"[{'agg_value': 'Other', 'agg_mapping': 'description.descriptionType'}]"	True   SelectBox     7      True    OR
 # create-facet-search-setting-end
-
-# update-shib-admin-setting-begin
-${INVENIO_WEB_INSTANCE} shib_admin_setting update \
-       "shib_eppn" "eduPersonPrincipalName"
-${INVENIO_WEB_INSTANCE} shib_admin_setting update \
-       "shib_mail" "mail"      
-${INVENIO_WEB_INSTANCE} shib_admin_setting update \
-       "shib_user_name" "displayName"                         
-${INVENIO_WEB_INSTANCE} shib_admin_setting update \
-       "shib_role_authority_name" "eduPersonAffiliation"
-# update-shib-admin-setting-end

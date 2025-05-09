@@ -108,6 +108,7 @@ from weko_search_ui.utils import (
     handle_check_authors_prefix,
     handle_check_authors_affiliation,
     handle_convert_validate_msg_to_jp,
+    handle_metadata_by_doi,
     handle_doi_required_check,
     handle_fill_system_item,
     handle_generate_key_path,
@@ -118,6 +119,7 @@ from weko_search_ui.utils import (
     handle_set_change_identifier_flag,
     handle_validate_item_import,
     handle_workflow,
+    handle_flatten_data_encode_filename,
     import_items_to_system,
     make_file_by_line,
     make_stats_file,
@@ -139,10 +141,11 @@ from weko_search_ui.utils import (
     validation_date_property,
     validation_file_open_date,
     write_files,
-    combine_aggs
+    combine_aggs,
     result_download_ui,
     search_results_to_tsv,
     create_tsv_row,
+    get_priority
 )
 from werkzeug.exceptions import NotFound
 
@@ -200,11 +203,11 @@ class MockSearchPerm:
 
     def can(self):
         return True
-    
+
 def clear_test_data():
     Redirect.query.delete()
     iv_db.session.commit()
-    
+
     PersistentIdentifier.query.delete()
     iv_db.session.commit()
 
@@ -1031,6 +1034,17 @@ def test_handle_workflow(i18n_app, es_item_file_pipeline, es_records, db):
         item = {"id": "test", "item_type_id": 2}
         # Doesn't return any value
         assert not handle_workflow(item)
+
+
+# def handle_metadata_by_doi(item: dict):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_metadata_by_doi():
+    item = {"metadata": {"test": "test"}, "item_type_id": 1}
+    doi = "test"
+    meta_data_api = ["CrossRef", "DataCite", "Original"]
+    with patch("weko_search_ui.utils.get_doi_with_original", return_value=item["metadata"]):
+        metadata = handle_metadata_by_doi(item, doi, meta_data_api)
+        assert metadata == item["metadata"]
 
 
 # def create_work_flow(item_type_id):
@@ -2719,7 +2733,7 @@ def test_export_all(db_activity, i18n_app, users, item_type, db_records2, redis_
                         "json": {"publish_status": "private"}
                     }
                 ]
-                
+
                 with patch("weko_search_ui.utils.get_all_record_id", return_value=recid_data_1):
                     export_all(root_url, user_id, data, start_time_str)
 
@@ -2804,9 +2818,9 @@ def test_get_retry_info():
 # def delete_exported(uri, cache_key):
 def test_delete_exported(i18n_app, file_instance_mock):
     file_path = '/code/modules/weko-search-ui/tests/data/sample_file/sample_file.txt'
-    
+
     mock_file_instance = FileInstance(uri=file_path)
-    
+
     with patch("invenio_files_rest.models.FileInstance.get_by_uri", return_value=mock_file_instance):
         with patch("invenio_files_rest.models.FileInstance.delete", return_value=None):
             # Doesn't return any value
@@ -2919,7 +2933,7 @@ def test_get_export_status(i18n_app, users, redis_connect,mocker, location):
             return self.state == "SUCCESS"
         def failed(self):
             return self.state == "FAILED"
-        
+
     start_time_str = '2024/05/21 14:23:46'
     def create_file_json(status):
         return {
@@ -2931,7 +2945,7 @@ def test_get_export_status(i18n_app, users, redis_connect,mocker, location):
                 '1': status
             }
         }
-    
+
     def create_file_cancel_json(status):
         return {
             'start_time': start_time_str,
@@ -2951,7 +2965,7 @@ def test_get_export_status(i18n_app, users, redis_connect,mocker, location):
             'cancel_flg': False,
             'write_file_status': {}
         }
-    
+
     def create_not_param_file_json():
         return {
             'start_time': start_time_str,
@@ -3068,7 +3082,7 @@ def test_get_export_status(i18n_app, users, redis_connect,mocker, location):
         result=get_export_status()
         uri = datastore.get(cache_uri)
         assert result == (True, uri.decode(), "test_msg", "test_run_msg", "SUCCESS", start_time_str, "")
-        
+
         # raise Exception
         with patch("weko_search_ui.utils.AsyncResult",side_effect=Exception("test_error")):
             datastore.delete(cache_uri)
@@ -3736,9 +3750,97 @@ def test_create_tsv_row(app):
             'Field': '生物学'
         }
 
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_flatten_data_encode_filename -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_flatten_data_encode_filename(app, tmpdir):
+    # Arrange
+    def _create_files_from_files_info(list_record, data_path):
+        for item in list_record:
+            metadata = item.get("metadata")
+            files_info = metadata.get("files_info")
+            for file_info in files_info:
+                for item in file_info["items"]:
+                    filename = item["filename"]
+                    # get file directory
+                    file_dir = os.path.join(data_path, os.path.dirname(filename))
+                    # create directory if not exists
+                    os.makedirs(file_dir, exist_ok=True)
+                    # create file
+                    file_path = os.path.join(data_path, filename)
+                    with open(file_path, "w") as f:
+                        f.write(f"This is a placeholder for {filename}")
+
+    data_path = tmpdir.mkdir("data")
+    with open("tests/data/list_records/list_record_handle_flatten_data_encode_filename.json", "r") as json_file:
+        list_record = json.load(json_file)
+    with open("tests/data/list_records/list_record_handle_flatten_data_encode_filename_expected.json", "r") as json_file:
+        expected_list_record = json.load(json_file)
+
+    # Create files from files_info
+    _create_files_from_files_info(list_record, data_path)
+
+    # Act
+    with patch("weko_search_ui.utils.current_app.logger") as mock_logger:
+        handle_flatten_data_encode_filename(list_record, data_path)
+
+    # Assert
+    assert list_record == expected_list_record
+    for filepath in list_record[0].get("filepath"):
+        assert os.path.exists(os.path.join(data_path, filepath))
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_get_priority -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_get_priority():
+    """
+    get_priority 関数の動作をテストする。
+    各ケースで期待される優先度が返されることを確認する。
+    """
+    # テストケース 1: すべての sele_id が 'isSupplementTo' で、すべての item_id が数字でない場合
+    link_data_1 = [
+        {'sele_id': 'isSupplementTo', 'item_id': 'abc'},
+        {'sele_id': 'isSupplementTo', 'item_id': 'def'}
+    ]
+    assert get_priority(link_data_1) == 1  # 最高優先度
+
+    # テストケース 2: すべての sele_id が 'isSupplementTo' で、一部の item_id が数字でない場合
+    link_data_2 = [
+        {'sele_id': 'isSupplementTo', 'item_id': '123'},
+        {'sele_id': 'isSupplementTo', 'item_id': 'abc'}
+    ]
+    assert get_priority(link_data_2) == 2  # 第二優先度
+
+    # テストケース 3: 一部の sele_id が 'isSupplementTo' で、対応する item_id が数字でない場合
+    link_data_3 = [
+        {'sele_id': 'isSupplementTo', 'item_id': 'abc'},
+        {'sele_id': 'isSupplementedBy', 'item_id': '123'}
+    ]
+    assert get_priority(link_data_3) == 3  # 第三優先度
+
+    # テストケース 4: すべての sele_id が 'isSupplementTo' で、すべての item_id が数字の場合
+    link_data_4 = [
+        {'sele_id': 'isSupplementTo', 'item_id': '123'},
+        {'sele_id': 'isSupplementTo', 'item_id': '456'}
+    ]
+    assert get_priority(link_data_4) == 4  # 第四優先度
+
+    # テストケース 5: すべての sele_id が 'isSupplementedBy' の場合
+    link_data_5 = [
+        {'sele_id': 'isSupplementedBy', 'item_id': '123'},
+        {'sele_id': 'isSupplementedBy', 'item_id': '456'}
+    ]
+    assert get_priority(link_data_5) == 5  # 最低優先度
+
+    # テストケース 6: その他の場合
+    link_data_6 = [
+        {'sele_id': 'normal', 'item_id': '123'},
+        {'sele_id': 'isSupplementTo', 'item_id': '456'}
+    ]
+    assert get_priority(link_data_6) == 6  # その他のケース
+
+
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::TestHandleCheckAuthorsPrefix -v -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 class TestHandleCheckAuthorsPrefix:
-    
+
     @pytest.fixture()
     def authors_prefix_settings(self, db):
         apss = list()
@@ -3750,7 +3852,7 @@ class TestHandleCheckAuthorsPrefix:
         db.session.add_all(apss)
         db.session.commit()
         return apss
-    
+
     def test_handle_check_authors_prefix_no_nameidentifiers(self, db, authors_prefix_settings):
         """
         正常系
@@ -3766,16 +3868,16 @@ class TestHandleCheckAuthorsPrefix:
                 }
             }
         ]
-        
+
         # AuthorsPrefixSettingsのモック
         with patch('weko_authors.models.AuthorsPrefixSettings') as MockSettings:
             mock_setting = MagicMock()
             mock_setting.scheme = "ORCID"
             MockSettings.query.all.return_value = [mock_setting]
-            
+
             # テスト対象関数を実行
             handle_check_authors_prefix(list_record)
-            
+
             # 検証
             assert "errors" not in list_record[0]
 
@@ -3802,16 +3904,16 @@ class TestHandleCheckAuthorsPrefix:
                 }
             }
         ]
-        
+
         # AuthorsPrefixSettingsのモック
         with patch('weko_authors.models.AuthorsPrefixSettings') as MockSettings:
             mock_setting = MagicMock()
             mock_setting.scheme = "ORCID"
             MockSettings.query.all.return_value = [mock_setting]
-            
+
             # テスト対象関数を実行
             handle_check_authors_prefix(list_record)
-            
+
             # 検証
             assert "errors" not in list_record[0]
 
@@ -3838,16 +3940,16 @@ class TestHandleCheckAuthorsPrefix:
                 }
             }
         ]
-        
+
         # AuthorsPrefixSettingsのモック
         with patch('weko_authors.models.AuthorsPrefixSettings') as MockSettings:
             mock_setting = MagicMock()
             mock_setting.scheme = "ORCID"
             MockSettings.query.all.return_value = [mock_setting]
-            
+
             # テスト対象関数を実行
             handle_check_authors_prefix(list_record)
-            
+
             # 検証
             assert "errors" in list_record[0]
             assert '"INVALID" is not one of [\'WEKO\', \'ORCID\', \'CiNii\', \'KAKEN2\', \'ROR\'] in authors' in list_record[0]["errors"]
@@ -3873,16 +3975,16 @@ class TestHandleCheckAuthorsPrefix:
                 }
             }
         ]
-        
+
         # AuthorsPrefixSettingsのモック
         with patch('weko_authors.models.AuthorsPrefixSettings') as MockSettings:
             mock_setting = MagicMock()
             mock_setting.scheme = "ORCID"
             MockSettings.query.all.return_value = [mock_setting]
-            
+
             # テスト対象関数を実行
             handle_check_authors_prefix(list_record)
-            
+
             # 検証
             assert "errors" in list_record[0]
             assert '"INVALID" is not one of [\'WEKO\', \'ORCID\', \'CiNii\', \'KAKEN2\', \'ROR\'] in authors' in list_record[0]["errors"]
@@ -3916,16 +4018,16 @@ class TestHandleCheckAuthorsPrefix:
                 }
             }
         ]
-        
+
         # AuthorsPrefixSettingsのモック
         with patch('weko_authors.models.AuthorsPrefixSettings') as MockSettings:
             mock_setting = MagicMock()
             mock_setting.scheme = "ORCID"
             MockSettings.query.all.return_value = [mock_setting]
-            
+
             # テスト対象関数を実行
             handle_check_authors_prefix(list_record)
-            
+
             # 検証
             assert "errors" in list_record[0]
             assert len(list_record[0]["errors"]) == 2
@@ -3958,16 +4060,16 @@ class TestHandleCheckAuthorsPrefix:
                 "errors": ["Existing error"]
             }
         ]
-        
+
         # AuthorsPrefixSettingsのモック
         with patch('weko_authors.models.AuthorsPrefixSettings') as MockSettings:
             mock_setting = MagicMock()
             mock_setting.scheme = "ORCID"
             MockSettings.query.all.return_value = [mock_setting]
-            
+
             # テスト対象関数を実行
             handle_check_authors_prefix(list_record)
-            
+
             # 検証
             assert "errors" in list_record[0]
             assert len(list_record[0]["errors"]) == 2
@@ -3997,22 +4099,22 @@ class TestHandleCheckAuthorsPrefix:
                 }
             }
         ]
-        
+
         # AuthorsPrefixSettingsのモック
         with patch('weko_authors.models.AuthorsPrefixSettings') as MockSettings:
             mock_setting = MagicMock()
             mock_setting.scheme = "ORCID"
             MockSettings.query.all.return_value = [mock_setting]
-            
+
             # テスト対象関数を実行
             handle_check_authors_prefix(list_record)
-            
+
             # 検証
             assert "errors" not in list_record[0]
-            
+
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::TestHandleCheckAuthorsAffiliation -v -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 class TestHandleCheckAuthorsAffiliation:
-    
+
     @pytest.fixture()
     def authors_affiliation_settings(self, db):
         aass = list()
@@ -4020,7 +4122,7 @@ class TestHandleCheckAuthorsAffiliation:
         aass.append(AuthorsAffiliationSettings(name="ROR",scheme="ROR",url="https://ror.org/##"))
         db.session.add_all(aass)
         db.session.commit()
-    
+
         return aass
 
     @pytest.fixture
@@ -4030,11 +4132,11 @@ class TestHandleCheckAuthorsAffiliation:
         setting1.scheme = "ROR"
         setting2 = MagicMock()
         setting2.scheme = "ISNI"
-        
+
         with patch('weko_authors.models.AuthorsAffiliationSettings') as mock_settings:
             mock_settings.query.all.return_value = [setting1, setting2]
             yield mock_settings
-    
+
     def test_no_affiliations(self, mock_settings, app, db):
         """
         正常系
@@ -4050,11 +4152,11 @@ class TestHandleCheckAuthorsAffiliation:
                 }
             }
         ]
-        
+
         handle_check_authors_affiliation(list_record)
-        
+
         assert "errors" not in list_record[0]
-    
+
     def test_creator_valid_scheme(self, mock_settings, app, db, authors_affiliation_settings):
         """
         正常系
@@ -4082,11 +4184,11 @@ class TestHandleCheckAuthorsAffiliation:
                 }
             }
         ]
-        
+
         handle_check_authors_affiliation(list_record)
-        
+
         assert "errors" not in list_record[0]
-    
+
     def test_creator_invalid_scheme(self, mock_settings, app, db):
         """
         異常系
@@ -4114,14 +4216,14 @@ class TestHandleCheckAuthorsAffiliation:
                 }
             }
         ]
-        
+
         handle_check_authors_affiliation(list_record)
-        
+
         assert "errors" in list_record[0]
         assert len(list_record[0]["errors"]) == 1
         assert '"DOI" is not one of' in list_record[0]["errors"][0]
         assert "creator" in list_record[0]["errors"][0]
-    
+
     def test_creator_list_invalid_scheme(self, mock_settings, app, db):
         """
         異常系
@@ -4151,14 +4253,14 @@ class TestHandleCheckAuthorsAffiliation:
                 }
             }
         ]
-        
+
         handle_check_authors_affiliation(list_record)
-        
+
         assert "errors" in list_record[0]
         assert len(list_record[0]["errors"]) == 1
         assert '"GRID" is not one of' in list_record[0]["errors"][0]
         assert "creators" in list_record[0]["errors"][0]
-    
+
     def test_contributor_valid_scheme(self, mock_settings, app, db, authors_affiliation_settings):
         """
         正常系
@@ -4186,11 +4288,11 @@ class TestHandleCheckAuthorsAffiliation:
                 }
             }
         ]
-        
+
         handle_check_authors_affiliation(list_record)
-        
+
         assert "errors" not in list_record[0]
-    
+
     def test_contributor_invalid_scheme(self, mock_settings, app, db):
         """
         異常系
@@ -4218,14 +4320,14 @@ class TestHandleCheckAuthorsAffiliation:
                 }
             }
         ]
-        
+
         handle_check_authors_affiliation(list_record)
-        
+
         assert "errors" in list_record[0]
         assert len(list_record[0]["errors"]) == 1
         assert '"ORCID" is not one of' in list_record[0]["errors"][0]
         assert "contributor" in list_record[0]["errors"][0]
-    
+
     def test_contributor_list_invalid_scheme(self, mock_settings, app, db):
         """
         異常系
@@ -4255,14 +4357,14 @@ class TestHandleCheckAuthorsAffiliation:
                 }
             }
         ]
-        
+
         handle_check_authors_affiliation(list_record)
-        
+
         assert "errors" in list_record[0]
         assert len(list_record[0]["errors"]) == 1
         assert '"Scopus" is not one of' in list_record[0]["errors"][0]
         assert "contributors" in list_record[0]["errors"][0]
-    
+
     def test_existing_errors(self, mock_settings, app, db):
         """
         正常系
@@ -4291,14 +4393,14 @@ class TestHandleCheckAuthorsAffiliation:
                 "errors": ["Existing error"]
             }
         ]
-        
+
         handle_check_authors_affiliation(list_record)
-        
+
         assert "errors" in list_record[0]
         assert len(list_record[0]["errors"]) == 2
         assert "Existing error" == list_record[0]["errors"][0]
         assert '"Wikidata" is not one of' in list_record[0]["errors"][1]
-    
+
     def test_multiple_invalid_schemes(self, mock_settings, app, db):
         """
         異常系
@@ -4340,14 +4442,14 @@ class TestHandleCheckAuthorsAffiliation:
                 }
             }
         ]
-        
+
         handle_check_authors_affiliation(list_record)
-        
+
         assert "errors" in list_record[0]
         assert len(list_record[0]["errors"]) == 2
         assert any('"Wikidata" is not one of' in error for error in list_record[0]["errors"])
         assert any('"ORCID" is not one of' in error for error in list_record[0]["errors"])
-    
+
     def test_none_scheme(self, mock_settings, app, db):
         """
         正常系
@@ -4375,7 +4477,7 @@ class TestHandleCheckAuthorsAffiliation:
                 }
             }
         ]
-        
+
         handle_check_authors_affiliation(list_record)
-        
+
         assert "errors" not in list_record[0]

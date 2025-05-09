@@ -51,6 +51,7 @@ from invenio_assets import InvenioAssets
 from invenio_assets.cli import collect, npm
 from invenio_cache import InvenioCache
 from invenio_communities import InvenioCommunities
+from invenio_communities.models import Community
 from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
 from invenio_db import InvenioDB
 from invenio_db import db as db_
@@ -102,6 +103,7 @@ from weko_index_tree import WekoIndexTree, WekoIndexTreeREST
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
 from weko_index_tree.config import WEKO_INDEX_TREE_REST_ENDPOINTS,WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER
+from weko_notifications.models import NotificationsUserSettings
 from weko_records import WekoRecords
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from weko_records.api import ItemsMetadata
@@ -246,7 +248,9 @@ def base_app(instance_path):
                          (2, 'JaLC CrossRef DOI', 'https://doi.org'),
                          (3, 'JaLC DataCite DOI', 'https://doi.org'),
                          (4, 'NDL JaLC DOI', 'https://doi.org')
-                         ]
+                         ],
+        WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY = "Community Administrator",
+        WEKO_ADMIN_PERMISSION_ROLE_REPO = "Repository Administrator",
     )
 
     app_.config['WEKO_SEARCH_REST_ENDPOINTS']['recid']['search_index']='test-weko'
@@ -23273,4 +23277,49 @@ def mock_certificate():
             "token": "valid_token",
             "expires_at": (datetime.now() + timedelta(seconds=3600)).strftime("%Y-%m-%dT%H:%M:%S")
         }
+    }
+
+
+@pytest.fixture()
+def db_notifsetting(users):
+    """Mock NotificationsUserSettings"""
+    return {
+        user["id"]: NotificationsUserSettings.create_or_update(user["id"],subscribe_email=True )
+        for user in users
+    }
+
+@pytest.fixture()
+def db_community(db, users):
+    com_index = Index(position=1, id=111)
+    db.session.add(com_index)
+    db.session.commit()
+    comm = Community(id="test_com11", id_role=users[3]["obj"].roles[0].id,
+                        id_user=users[3]["id"], title="test community",
+                        description="this is test community",
+                        root_node_id=com_index.id)
+    db.session.add(comm)
+    db.session.commit()
+    return comm
+
+@pytest.fixture()
+def db_approval_action(db, db_workflow, users):
+    flow_define = db_workflow["flow_define"]
+    flow_action = FlowAction(status='N',
+                    flow_id=flow_define.flow_id,
+                    action_id=4,
+                    action_version='1.0.0',
+                    action_order=4,
+                    action_condition='',
+                    action_status='A',
+                    action_date=datetime.strptime('2025/01/01 0:00:00','%Y/%m/%d %H:%M:%S'),
+                    send_mail_setting={}
+                    )
+    db.session.add(flow_action)
+    db.session.commit()
+    flow_action_role = FlowActionRole(flow_action_id = flow_action.id,)
+    db.session.add(flow_action_role)
+    db.session.commit()
+    return {
+        "flow_action": flow_action,
+        "flow_action_role": flow_action_role,
     }

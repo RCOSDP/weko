@@ -211,7 +211,7 @@ def test_admin_sessions_action_delete(app):
         with app.test_client() as client:
             login_user_via_view(client=client, email=user2_email,
                                 password=user2_pw)
-            
+
             with patch('invenio_accounts.admin.db.session.commit', side_effect=Exception('')):
                 view.action_delete([user1_sid])
                 sessions = SessionActivity.query.all()

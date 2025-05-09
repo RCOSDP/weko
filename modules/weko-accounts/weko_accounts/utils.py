@@ -37,6 +37,18 @@ limiter = Limiter(
     key_func=lambda: f"{request.endpoint}_{get_remote_addr()}",
     default_limits=WEKO_API_LIMIT_RATE_DEFAULT
 )
+"""Limiter for API rate per user.
+
+Limit the access rate for each endpoint.
+
+Example:
+
+    @blueprint.route("/")
+    @limiter.limit("10 per minute")
+    def api_view():
+        return "OK", 200
+
+"""
 
 
 def get_remote_addr():
@@ -168,7 +180,7 @@ def login_required_customize(func):
     return decorated_view
 
 
-def roles_required(roles):
+def roles_required(roles, allow_anonymous=False):
     """Roles required.
 
     Args:
@@ -187,6 +199,8 @@ def roles_required(roles):
                     return func(*args, **kwargs)
                 abort(401)
             else:
+                if allow_anonymous:
+                    return func(*args, **kwargs)
                 can = False
                 for role in current_user.roles:
                     if role and role.name in roles:

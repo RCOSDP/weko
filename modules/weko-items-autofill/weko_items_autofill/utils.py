@@ -21,6 +21,8 @@
 """Module of weko-items-autofill utils.."""
 import copy
 from functools import wraps
+import json
+import traceback
 
 from flask import current_app
 from flask_babelex import gettext as _
@@ -28,8 +30,10 @@ from invenio_cache import current_cache
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
 from lxml import etree
+from weko_admin.utils import get_current_api_certification
 from weko_records.api import ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
+from weko_workflow.api import WorkActivity
 from weko_workflow.models import ActionJournal
 from weko_workflow.utils import MappingData
 
@@ -104,7 +108,8 @@ def get_item_id(item_type_id):
                 if isinstance(jpcoar, dict):
                     _get_jpcoar_mapping(results, jpcoar)
     except Exception as e:
-        current_app.logger.debug(e)
+        current_app.logger.error(e)
+        traceback.print_exc()
         results['error'] = str(e)
 
     return results
@@ -133,7 +138,8 @@ def _get_title_data(jpcoar_data, key, rtn_title):
             #current_app.logger.debug("not contain 'item' in key:{}".format(key))
             return
     except Exception as e:
-        current_app.logger.debug(e)
+        current_app.logger.error(e)
+        traceback.print_exc()
 
 
 def get_title_pubdate_path(item_type_id):
@@ -157,6 +163,158 @@ def get_title_pubdate_path(item_type_id):
                     break
     result['title'] = title
     return result
+
+
+def deep_merge(*dicts):
+    """Recursively merge multiple dictionaries, supporting deep list merging"""
+    merged_dict = {}
+    for d in dicts:
+        for key, value in d.items():
+            if key in merged_dict:
+                if isinstance(value, dict) and isinstance(merged_dict[key], dict):
+                    # Recursively merge sub-dictionaries
+                    merged_dict[key] = deep_merge(merged_dict[key], value)
+                elif isinstance(value, list) and isinstance(merged_dict[key], list):
+                    # Recursively merge elements in the list
+                    merged_dict[key] = merge_lists(merged_dict[key], value)
+                else:
+                    # Do not overwrite existing values
+                    pass
+            else:
+                # Directly add new value
+                merged_dict[key] = value
+    return merged_dict
+
+
+def merge_lists(list1, list2):
+    """Recursively merge dictionaries in the list and remove duplicates"""
+    merged_list = list1[:]
+
+    if (len(merged_list) != 1 or len(list2) != 1):
+        return merged_list + list2[:]
+
+    dict1, dict2 = merged_list[0], list2[0]
+    if all(not v for v in dict1.values()) and any(v for v in dict2.values()):
+        merged_list = list2[:]
+
+    return merged_list
+
+
+def list_to_dict(lst):
+    """If all elements in the list are dictionaries, merge them into a single dictionary"""
+    if isinstance(lst, list) and all(isinstance(item, dict) for item in lst):
+        merged_dict = {}
+        for item in lst:
+            merged_dict.update(item)  # Merge dictionaries
+        return merged_dict
+    return lst  # If the list does not meet the conditions, return
+
+
+def dict_to_list(d):
+    """Convert a dictionary to a list, with each key-value pair becoming a separate dictionary"""
+    if isinstance(d, dict):
+        return [{k: v} for k, v in d.items()]
+    return d  # If not a dictionary, return
+
+
+def get_crossref_record_data_default_pid(doi, item_type_id):
+    """
+    Get record data base on CrossRef default pid.
+
+    :return: The record data
+    """
+    pid_response = get_current_api_certification("crf")
+    pid = pid_response["cert_data"]
+    return get_crossref_record_data(pid, doi, item_type_id)
+
+
+@cached_api_json(timeout=50, key_prefix="doi_data")
+def get_doi_record_data(doi, item_type_id, activity_id):
+    """Get record data base on DOI API.
+
+    :param naid: The DOI ID
+    :param item_type_id: The item type ID
+    :param activity_id: The activity ID
+    :return: The record data
+    """
+    activity = WorkActivity()
+    metadata = activity.get_activity_metadata(activity_id)
+    if not isinstance(metadata, dict):
+        metadata = json.loads(metadata)
+    metainfo = metadata.get("metainfo", {})
+    doi_with_original = get_doi_with_original(doi, item_type_id, metainfo)
+    doi_response = dict_to_list(doi_with_original)
+    return doi_response
+
+
+def get_doi_with_original(doi, item_type_id, original_metadeta=None, **kwargs):
+    """Get record data base on DOI API.
+
+    :param naid: The DOI ID
+    :param item_type_id: The item type ID
+    :param original_metadeta: The original metadata
+    :return: doi data
+    """
+    from weko_workspace.utils import (
+        get_jalc_record_data,
+        get_jamas_record_data,
+        get_datacite_record_data,
+        get_cinii_record_data
+    )
+    record_funcs_map = {
+        "JaLC API": get_jalc_record_data,
+        "医中誌 Web API": get_jamas_record_data,
+        "CrossRef": get_crossref_record_data_default_pid,
+        "DataCite": get_datacite_record_data,
+        "CiNii Research": get_cinii_record_data,
+    }
+
+    result_dict = {}
+    api_priority = kwargs.get("meta_data_api")
+
+    # Check if api_priority is None.
+    # api_priority is not None if it comes from SWORD API.
+    if api_priority is None:
+        api_priority = current_app.config["WEKO_ITEMS_AUTOFILL_TO_BE_USED"]
+    # If api_priority is empty, apply original metadata.
+    if not api_priority:
+        api_priority = ["Original"]
+    for key in api_priority:
+        record_data_dict = {}
+        # case: Original.
+        if key == "Original":
+            if original_metadeta is not None:
+                record_data_dict = original_metadeta
+                current_app.logger.info(
+                    "Successfully completed metadata retrieval for key '{}'.".format(key)
+                )
+            else:
+                current_app.logger.info(
+                    "Key '{}' skipped as no original metadata is provided.".format(key)
+                )
+                continue
+        # case: APIs.
+        # If some exception occurs, record_data_dict will be empty.
+        # It means that skip this API.
+        else:
+            try:
+                record_data_list = record_funcs_map[key](doi, item_type_id) \
+                    if key in record_funcs_map else []
+                record_data_dict = list_to_dict(record_data_list)
+                current_app.logger.info(
+                    "Successfully completed metadata retrieval for key '{}'.".format(key)
+                )
+            except Exception as ex:
+                current_app.logger.warning(
+                    "Error in {}: {}".format(key, str(ex))
+                )
+                current_app.logger.info(
+                    "Key '{}' skipped due to an error.".format(key)
+                )
+                record_data_dict = {}
+                traceback.print_exc()
+        result_dict = deep_merge(result_dict, record_data_dict)
+    return result_dict
 
 
 @cached_api_json(timeout=50, key_prefix="crossref_data")
@@ -393,7 +551,7 @@ def get_cinii_page_data(data):
         result = int(data)
         return pack_single_value_as_dict(str(result))
     except Exception as e:
-        current_app.logger.debug(e)
+        current_app.logger.error(e)
         return pack_single_value_as_dict(None)
 
 
@@ -415,7 +573,7 @@ def get_cinii_numpage(data):
             num_pages = end - start + 1
             return pack_single_value_as_dict(str(num_pages))
         except Exception as e:
-            current_app.logger.debug(e)
+            current_app.logger.error(e)
             return pack_single_value_as_dict(None)
     return {"@value": None}
 
@@ -446,7 +604,7 @@ def get_cinii_product_identifier(data, type1, type2):
     _data = [item.get('identifier') for item in data]
     result = pack_data_with_multiple_type_cinii(_data, type1, type2)
     return result
-    
+
 def get_cinii_data_by_key(api, keyword):
     """Get data from CiNii based on keyword.
 
@@ -605,7 +763,7 @@ def get_start_and_end_page(data):
         result = int(data)
         return pack_single_value_as_dict(str(result))
     except ValueError as e:
-        current_app.logger.debug(e)
+        current_app.logger.error(e)
         return pack_single_value_as_dict(None)
 
 
@@ -955,7 +1113,8 @@ def get_autofill_key_path(schema_form, parent_key, child_key):
                         child_key.split('.'), item_data)
         result['key'] = key_result
     except Exception as e:
-        current_app.logger.debug(e)
+        current_app.logger.error(e)
+        traceback.print_exc()
         result['key'] = None
         result['error'] = str(e)
 
@@ -1232,6 +1391,7 @@ def convert_crossref_xml_data_to_dictionary(api_data, encoding='utf-8'):
         rtn_data['response'] = result
     except Exception as e:
         rtn_data['error'] = str(e)
+        traceback.print_exc()
     return rtn_data
 
 

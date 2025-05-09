@@ -5,8 +5,6 @@
 # WEKO-SWORDServer is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
-import base64
-from weko_swordserver.models import SwordClientModel
 
 """Module of weko-swordserver."""
 
@@ -26,8 +24,12 @@ WEKO_SWORDSERVER_SERVICEDOCUMENT_ABSTRACT = ""
 WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT = ["*/*"]
 """ List of Content Types which are acceptable to the server. """
 
-WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT = ['application/zip', 'multipart/form-data']
-""" List of Archive Formats that the server can unpack. If the server sends a package using a different format, the server MAY treat it as a Binary File """
+WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT = [
+    'application/zip', 'multipart/form-data'
+]
+""" List of Archive Formats that the server can unpack. If the server sends
+a package using a different format, the server MAY treat it as a Binary File
+"""
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_DEPOSITS = True
 """ Does the Service accept deposits? """
@@ -38,7 +40,10 @@ WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_METADATA = [
 ]
 """ List of Metadata Formats which are acceptable to the server. """
 
-WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_PACKAGING = ["*"]
+WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_PACKAGING = [
+    "http://purl.org/net/sword/3.0/package/SimpleZip",
+    "http://purl.org/net/sword/3.0/package/SWORDBagIt",
+]
 """ List of Packaging Formats which are acceptable to the server.
 
     ["*"] or List of Packaging Formats URI
@@ -67,7 +72,9 @@ WEKO_SWORDSERVER_SERVICEDOCUMENT_STAGING = ""
 """ The URL where clients may stage content prior to deposit, in particular for segmented upload """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_STAGING_MAX_IDLE = 3600
-""" What is the minimum time a server will hold on to an incomplete Segmented File Upload since it last received any content before deleting it. """
+""" What is the minimum time a server will hold on to an incomplete Segmented
+File Upload since it last received any content before deleting it.
+"""
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_BY_REFERENCE_DEPOSIT = False
 """ Does the server support By-Reference deposit? """
@@ -94,39 +101,12 @@ WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_ASSEMBLED_SIZE = 30000000000000
 """ Maximum size in bytes as an integer for the total size of an assembled segmented upload """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_SEGMENTS = 1000
-""" Maximum number of segments that the server will accept for a single segmented upload, if segmented upload is supported. """
-
-WEKO_SWORDSERVER_REGISTRATION_TYPE = SwordClientModel.RegistrationType
-""" Enum class for registration type.
-
-    - `Direct` (1): Direct registration.
-    - `Workfolw` (2): Workflow registration.
+""" Maximum number of segments that the server will accept for a single
+segmented upload, if segmented upload is supported.
 """
-
-WEKO_SWORDSERVER_METADATA_FILE_ROCRATE = "ro-crate-metadata.json"
-""" Metadata file name for RO-Crate+Bagit. """
-
-WEKO_SWORDSERVER_METADATA_FILE_SWORD = "metadata/sword.json"
-""" Metadata file name for SWORDBagIt. """
-
-WEKO_SWORDSERVER_DATASET_PREFIX = "weko-"
-""" Prefix to be added to the dataset identifier. """
-
-WEKO_SWORDSERVER_DATASET_ROOT = {
-    "": "./",
-    "enc": base64.b64encode(
-        f"{WEKO_SWORDSERVER_DATASET_PREFIX}./".encode("utf-8")).decode("utf-8")
-}
-""" Dataset identifier replacement setting. """
 
 WEKO_SWORDSERVER_DIGEST_VERIFICATION = True
 """ Does the server require the client to send a digest? """
-
-WEKO_SWORDSERVER_CONTENT_LENGTH = False
-""" Does the server require a Content-Length header? """
-
-WEKO_SWORDSERVER_DEPOSIT_DATASET = False
-""" Does register the zip file of the dataset as an item?"""
 
 WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE = [
     "System Administrator",

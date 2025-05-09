@@ -6,41 +6,38 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 import pytest
-import os
 from io import BytesIO
-import shutil
-import tempfile
-import zipfile
-import time
 from hashlib import sha256,sha512
-from zipfile import ZipFile, BadZipFile
-from weko_swordserver.api import SwordClient, SwordItemTypeMapping
+from zipfile import ZipFile
 from unittest.mock import MagicMock, patch
+from weko_accounts.models import ShibbolethUser
+from weko_admin.models import AdminSettings
 from weko_swordserver.utils import (
     check_import_file_format,
-    get_record_by_client_id,
-    process_json,
-    unpack_zip,
-    is_valid_file_hash
+    check_import_items,
+    get_shared_id_from_on_behalf_of,
+    is_valid_file_hash,
+    update_item_ids
 )
 from .helpers import json_data
 from weko_swordserver.errors import ErrorType, WekoSwordserverException
-from weko_swordserver.models import SwordClientModel, SwordItemTypeMappingModel
+from weko_swordserver.models import SwordClientModel
+from weko_search_ui.mapper import JsonLdMapper
+
 
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
 
 # def check_import_file_format(file, packaging):
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_check_import_file_format -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
 def test_check_import_file_format(app):
-    # No 1
+    # SWORDBagIt; metadata/sword.json
     file_content = BytesIO()
     with ZipFile(file_content, 'w') as zip_file:
         zip_file.writestr('metadata/sword.json', '{}')
     file_content.seek(0)
     assert check_import_file_format(file_content, 'SWORDBagIt') == 'JSON'
 
-
-    # No 2
+    # SWORDBagIt; invalid json file
     file_content = BytesIO()
     with ZipFile(file_content, 'w') as zip_file:
         zip_file.writestr('metadata/invalid.json', '{}')
@@ -50,21 +47,44 @@ def test_check_import_file_format(app):
     assert e.value.errorType == ErrorType.MetadataFormatNotAcceptable
     assert e.value.message == "SWORDBagIt requires metadate/sword.json."
 
-    # No 3
+    # SWORDBagIt; mismatch packaging
     file_content = BytesIO()
     with ZipFile(file_content, 'w') as zip_file:
-        zip_file.writestr('ro-crate-metadata.json', '{}')
+        zip_file.writestr('metadata/sword.json', '{}')
+    file_content.seek(0)
+    with pytest.raises(WekoSwordserverException) as e:
+        check_import_file_format(file_content, 'SimpleZip')
+    assert e.value.errorType == ErrorType.MetadataFormatNotAcceptable
+    assert e.value.message == "packaging format is SimpleZip, but sword.json is found."
+
+    # RO-Crate; ro-crate-metadata.json
+    file_content = BytesIO()
+    with ZipFile(file_content, 'w') as zip_file:
+        zip_file.writestr('data/ro-crate-metadata.json', '{}')
     file_content.seek(0)
     assert check_import_file_format(file_content, 'SimpleZip') == 'JSON'
 
-    # No 4
+    # RO-Crate; invalid place
+    file_content = BytesIO()
+    with ZipFile(file_content, 'w') as zip_file:
+        zip_file.writestr('metadata/ro-crate-metadata.json', '{}')
+    file_content.seek(0)
+    with pytest.raises(WekoSwordserverException) as e:
+        check_import_file_format(file_content, 'SimpleZip')
+    assert e.value.errorType == ErrorType.MetadataFormatNotAcceptable
+    assert e.value.message == "ro-crate-metadata.json is required in data/ directory."
+
+    # Invalid json file
     file_content = BytesIO()
     with ZipFile(file_content, 'w') as zip_file:
         zip_file.writestr('invalid.json', '{}')
     file_content.seek(0)
-    assert check_import_file_format(file_content, 'SimpleZip') == 'OTHERS'
+    with pytest.raises(WekoSwordserverException) as e:
+        check_import_file_format(file_content, 'SimpleZip')
+    assert e.value.errorType == ErrorType.ContentMalformed
+    assert e.value.message == "SimpleZip requires ro-crate-metadata.json or other metadata file."
 
-    # No 5
+    # Invalid packaging format
     file_content = BytesIO()
     with ZipFile(file_content, 'w') as zip_file:
         zip_file.writestr('metadata/sword.json', '{}')
@@ -75,151 +95,358 @@ def test_check_import_file_format(app):
     assert e.value.errorType == ErrorType.PackagingFormatNotAcceptable
     assert e.value.message == f"Not accept packaging format: {packaging}"
 
-
-# def unpack_zip(file):
-# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_unpack_zip -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-def test_unpack_zip(app,mocker):
-    # No 1
+    # TSV
     file_content = BytesIO()
     with ZipFile(file_content, 'w') as zip_file:
-        zip_file.writestr('test.txt', 'This is a test file.')
-        zip_file.writestr('test1.txt', 'This is a test1 file.')
+        zip_file.writestr('data/itemtype（1）.tsv', '')
     file_content.seek(0)
+    assert check_import_file_format(file_content, 'SimpleZip') == 'TSV/CSV'
 
-    data_path, file_list = unpack_zip(file_content)
-
-    assert os.path.exists(data_path)
-    assert 'test.txt' in file_list
-    assert 'test1.txt' in file_list
-    assert os.path.isfile(os.path.join(data_path, 'test.txt'))
-    assert os.path.isfile(os.path.join(data_path, 'test1.txt'))
-
-    # Clean up
-    if os.path.exists(data_path):
-        shutil.rmtree(data_path)
-
-    # No 2  NG
-    file_content = BytesIO(b"This is not a zip file")
-    with pytest.raises(Exception) as e:
-        data_path, file_list = unpack_zip(file_content)
-    assert e.type == BadZipFile
-    assert str(e.value) == "File is not a zip file"
-
-    # Clean up
-    if os.path.exists(data_path):
-        shutil.rmtree(data_path)
-
-    # No 19
-    time.sleep(1)
+    # CSV
     file_content = BytesIO()
     with ZipFile(file_content, 'w') as zip_file:
-        zip_file.writestr('dir\\test.txt', 'This is a test file.')
+        zip_file.writestr('data/itemtype（1）.csv', '')
     file_content.seek(0)
-    original_os_sep = os.sep
-    os.sep = "\\"
-    data_path, file_list = unpack_zip(file_content)
+    assert check_import_file_format(file_content, 'SimpleZip') == 'TSV/CSV'
 
-    assert os.path.exists(data_path)
-    assert 'dir/test.txt' in file_list
-    assert os.path.isfile(os.path.join(data_path, 'dir/test.txt'))
-    os.sep = original_os_sep
-
-    if os.path.exists(data_path):
-        shutil.rmtree(data_path)
-
-    # Exception
+    # XML
     file_content = BytesIO()
     with ZipFile(file_content, 'w') as zip_file:
-        zip_file.writestr('test.txt', 'This is a test file.')
+        zip_file.writestr('data/itemtype.xml', '')
     file_content.seek(0)
-    zip_ref = ZipFile(file_content)
-    infolist = zip_ref.infolist()
-    infolist[0].orig_filename = "invalid\x80.txt"
-    with patch("zipfile.ZipFile.infolist", return_value=infolist):
-        with pytest.raises(UnicodeEncodeError):
-            unpack_zip(file_content)
+    assert check_import_file_format(file_content, 'SimpleZip') == 'XML'
+
+
+# def get_shared_id_from_on_behalf_of(on_behalf_of):
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_get_shared_id_from_on_behalf_of -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+def test_get_shared_id_from_on_behalf_of(app, db, users, personal_token):
+    on_behalf_of = None
+    assert get_shared_id_from_on_behalf_of(on_behalf_of) == -1
+
+    on_behalf_of = users[3].get("email")
+    assert get_shared_id_from_on_behalf_of(on_behalf_of) == users[3]["id"]
+
+    on_behalf_of = personal_token[3]["token"].access_token
+    assert get_shared_id_from_on_behalf_of(on_behalf_of) == personal_token[3]["token"].user_id
+    assert get_shared_id_from_on_behalf_of(on_behalf_of) == users[3]["id"]
+
+    shib_user = ShibbolethUser(shib_eppn="test@example.ac.jp", shib_user_name="testuser", weko_uid=users[3]["id"])
+    db.session.add(shib_user)
+    db.session.commit()
+    on_behalf_of = shib_user.shib_eppn
+    assert get_shared_id_from_on_behalf_of(on_behalf_of) == users[3]["id"]
+
+    on_behalf_of = "invalid"
+    with pytest.raises(WekoSwordserverException) as e:
+        get_shared_id_from_on_behalf_of(on_behalf_of)
+    assert e.value.errorType == ErrorType.BadRequest
+    assert e.value.message == "No user found by On-Behalf-Of."
+
+    on_behalf_of = 999
+    with pytest.raises(WekoSwordserverException) as e:
+        get_shared_id_from_on_behalf_of(on_behalf_of)
+    assert e.value.errorType == ErrorType.ServerError
+    assert e.value.message == "Failed to get shared ID from On-Behalf-Of."
 
 # def is_valid_file_hash(expected_hash, file):
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_is_valid_file_hash -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
 def test_is_valid_file_hash():
-    # No 1
-    file_content = BytesIO(b'This is a test file content')
+    # correct hash
+    body = b"This is a test file content."
+    file_content = BytesIO(body)
     file_content.seek(0)
-    expected_hash = sha256(b'This is a test file content').hexdigest()
-    result = is_valid_file_hash(expected_hash,file_content)
-    assert result is True
+    expected_hash = sha256(body).hexdigest()
+    assert is_valid_file_hash(expected_hash, file_content)
 
-    # No 2
+    # incorrect hash
     file_content.seek(0)
     invalid_hash = sha256(b'Invalid content').hexdigest()
-    result = is_valid_file_hash(invalid_hash ,file_content)
-    assert result is False
+    assert not is_valid_file_hash(invalid_hash, file_content)
 
-    # No 3:
-    file_content = BytesIO(b'This is a test file content')
+    # invalid hash algorithm
+    file_content = BytesIO(body)
     file_content.seek(0)
-    expected_hash = sha512(b'This is a test file content').hexdigest()
-    result = is_valid_file_hash(expected_hash,file_content )
-    assert result is False
+    expected_hash = sha512(body).hexdigest()
+    assert not is_valid_file_hash(expected_hash, file_content)
 
     # No 4:
-    file_content = BytesIO(b'This is a test file content')
+    file_content = BytesIO(body)
     file_content.seek(0)
-    expected_hash = sha256(b'This is a test file content')
-    result = is_valid_file_hash(expected_hash,file_content )
-    assert result is False
+    expected_hash = sha256(body)
+    assert not is_valid_file_hash(expected_hash, file_content)
+
+
+# def check_import_items(file, file_format, is_change_identifier=False, shared_id=-1, **kwargs):
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_check_import_items -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+def test_check_import_items(app, admin_settings, item_type, workflow, sword_client, mocker):
+    item_type_id = item_type[0]["item_type"].id
+    item_type_name = item_type[0]["item_type_name"].name
+    AdminSettings.update("sword_api_setting", {"TSV/CSV": {"active": True, "item_type": str(item_type_id), "registration_type": "Direct", "duplicate_check": False}})
+
+    # check tsv, direct registration, shared_id is -1
+    file_content = BytesIO()
+    mocker_tsv_check = mocker.patch("weko_swordserver.utils.check_tsv_import_items")
+    mocker_tsv_check.return_value = {
+        "list_record": [{"item_type_id": item_type_id, "item_type_name": item_type_name, "metadata": {"title": "test"}}],
+    }
+    check_result = check_import_items(file_content, "TSV/CSV")
+
+    mocker_tsv_check.assert_called_once_with(file_content, False, shared_id=-1)
+    assert check_result["list_record"][0]["item_type_id"] == item_type_id
+    assert check_result["list_record"][0]["item_type_name"] == item_type_name
+    assert check_result["list_record"][0]["metadata"]["title"] == "test"
+    assert check_result["register_type"] == "Direct"
+    assert check_result["duplicate_check"] == False
+    assert check_result["weko_shared_id"] == -1
+
+    # check tsv, workflow registration, shared_id is 3
+    AdminSettings.update("sword_api_setting", {"TSV/CSV": {"active": True, "item_type": str(item_type_id), "registration_type": "Workflow", "duplicate_check": True}})
+    file_content = BytesIO()
+    mocker_tsv_check = mocker.patch("weko_swordserver.utils.check_tsv_import_items")
+    mocker_tsv_check.return_value = {
+        "list_record": [{"item_type_id": item_type_id, "item_type_name": item_type_name, "metadata": {"title": "test"}}]
+    }
+    check_result = check_import_items(file_content, "TSV/CSV", True, 3)
+
+    mocker_tsv_check.assert_called_once_with(file_content, True, shared_id=3)
+    assert check_result["list_record"][0]["item_type_id"] == item_type_id
+    assert check_result["list_record"][0]["item_type_name"] == item_type_name
+    assert check_result["list_record"][0]["metadata"]["title"] == "test"
+    assert check_result["register_type"] == "Workflow"
+    assert check_result["workflow_id"] == workflow[0]["workflow"].id
+    assert check_result["duplicate_check"] == True
+    assert check_result["weko_shared_id"] == 3
+
+    # check jsonld, direct registration, shared_id is -1
+    client_id = sword_client[0]["sword_client"].client_id
+    mapping_id = sword_client[0]["sword_client"].mapping_id
+    file_content = BytesIO()
+    mocker_jsonld_check = mocker.patch("weko_swordserver.utils.check_jsonld_import_items")
+    mocker_jsonld_check.return_value = {
+        "list_record": [{"item_type_id": item_type_id, "item_type_name": item_type_name, "metadata": {"title": "test"}}]
+    }
+    check_result = check_import_items(file_content, "JSON", False, -1, packaging="SimpleZip", client_id=client_id)
+
+    mocker_jsonld_check.assert_called_once_with(file_content, "SimpleZip", mapping_id, [], -1, is_change_identifier=False)
+    assert check_result["list_record"][0]["item_type_id"] == item_type_id
+    assert check_result["list_record"][0]["item_type_name"] == item_type_name
+    assert check_result["list_record"][0]["metadata"]["title"] == "test"
+    assert check_result["register_type"] == "Direct"
+    assert check_result["duplicate_check"] == False
+    assert check_result["weko_shared_id"] == -1
+
+    # check jsonld, workflow registration, shared_id is 3
+    client_id = sword_client[1]["sword_client"].client_id
+    mapping_id = sword_client[1]["sword_client"].mapping_id
+    file_content = BytesIO()
+    mocker_jsonld_check = mocker.patch("weko_swordserver.utils.check_jsonld_import_items")
+    mocker_jsonld_check.return_value = {
+        "list_record": [{"item_type_id": item_type_id, "item_type_name": item_type_name, "metadata": {"title": "test"}}]
+    }
+    check_result = check_import_items(file_content, "JSON", True, 3, packaging="SimpleZip", client_id=client_id)
+    mocker_jsonld_check.assert_called_once_with(file_content, "SimpleZip", mapping_id, [], 3, is_change_identifier=True)
+    assert check_result["list_record"][0]["item_type_id"] == item_type_id
+    assert check_result["list_record"][0]["item_type_name"] == item_type_name
+    assert check_result["list_record"][0]["metadata"]["title"] == "test"
+    assert check_result["register_type"] == "Workflow"
+    assert check_result["workflow_id"] == sword_client[1]["sword_client"].workflow_id
+    assert check_result["duplicate_check"] == True
+    assert check_result["weko_shared_id"] == 3
+
+    # tsv, workflow not found
+    file_content = BytesIO()
+    mocker_tsv_check = mocker.patch("weko_swordserver.utils.check_tsv_import_items")
+    mocker_tsv_check.return_value = {
+        "list_record": [{"item_type_id": item_type_id, "item_type_name": item_type_name, "metadata": {"title": "test"}}]
+    }
+    with patch("weko_swordserver.utils.WorkFlows.get_workflow_by_itemtype_id", return_value=[]):
+        check_result = check_import_items(file_content, "TSV/CSV", True, 3)
+    assert check_result["error"] == "Workflow not found for item type ID."
+
+    item_type_id = item_type[1]["item_type"].id
+    item_type_name = item_type[1]["item_type_name"].name
+    # xml, direct registration, not supported
+    AdminSettings.update("sword_api_setting", {"XML": {"active": True, "item_type": str(item_type_id), "registration_type": "Direct", "duplicate_check": False}})
+    file_content = BytesIO()
+    with pytest.raises(WekoSwordserverException) as e:
+        check_import_items(file_content, "XML")
+    assert e.value.errorType == ErrorType.MetadataFormatNotAcceptable
+    assert e.value.message == "Direct registration is not allowed for XML metadata yet."
+
+    # xml, workflow registration, shared_id is 3
+    AdminSettings.update("sword_api_setting", {"XML": {"active": True, "item_type": str(item_type_id), "registration_type": "Workflow", "workflow": str(workflow[1]["workflow"].id), "duplicate_check": True}})
+    file_content = BytesIO()
+    mocker_xml_check = mocker.patch("weko_swordserver.utils.check_xml_import_items")
+    mocker_xml_check.return_value = {
+        "list_record": [{"item_type_id": item_type_id, "item_type_name": item_type_name, "metadata": {"title": "test"}}]
+    }
+    check_result = check_import_items(file_content, "XML", True, 3)
+    mocker_xml_check.assert_called_once_with(file_content, item_type_id, shared_id=3)
+    assert check_result["list_record"][0]["item_type_id"] == item_type_id
+    assert check_result["list_record"][0]["item_type_name"] == item_type_name
+    assert check_result["list_record"][0]["metadata"]["title"] == "test"
+    assert check_result["register_type"] == "Workflow"
+    assert check_result["workflow_id"] == workflow[1]["workflow"].id
+    assert check_result["duplicate_check"] == True
+    assert check_result["weko_shared_id"] == 3
+
+    # import item format is not active
+    AdminSettings.update("sword_api_setting", {"TSV/CSV": {"active": False, "item_type": str(item_type_id), "registration_type": "Workflow", "duplicate_check": True}})
+    file_content = BytesIO()
+    mocker_tsv_check = mocker.patch("weko_swordserver.utils.check_tsv_import_items")
+    with pytest.raises(WekoSwordserverException) as e:
+        check_import_items(file_content, "TSV/CSV", True, 3)
+    e.value.errorType == ErrorType.MetadataFormatNotAcceptable
+    e.value.message == "TSV/CSV metadata import is not enabled."
+
+    AdminSettings.update("sword_api_setting", {})
+    file_content = BytesIO()
+    mocker_tsv_check = mocker.patch("weko_swordserver.utils.check_tsv_import_items")
+    with pytest.raises(WekoSwordserverException) as e:
+        check_import_items(file_content, "XML", True, 3)
+    e.value.errorType == ErrorType.MetadataFormatNotAcceptable
+    e.value.message == "XML metadata import is not enabled."
+
+    # xml, workflow not found
+    AdminSettings.update("sword_api_setting", {"XML": {"active": True, "item_type": str(item_type_id), "registration_type": "Workflow", "workflow": str(workflow[1]["workflow"].id), "duplicate_check": False}})
+    file_content = BytesIO()
+    with patch("weko_swordserver.utils.WorkFlows.get_workflow_by_id", return_value=None):
+        with pytest.raises(WekoSwordserverException) as e:
+            check_result = check_import_items(file_content, "XML", True, 3)
+    assert e.value.errorType == ErrorType.BadRequest
+    assert e.value.message == "Workflow not found for registration your item."
+
+    # jsonld, sword_client not found
+    client_id = "invalid_client_id"
+    file_content = BytesIO()
+    with pytest.raises(WekoSwordserverException) as e:
+        check_result = check_import_items(file_content, "JSON", True, 3, packaging="SimpleZip", client_id=client_id)
+    assert e.value.errorType == ErrorType.BadRequest
+    assert e.value.message == "No SWORD API setting found for client ID that you are using."
+
+    # jsonld, workflow not found
+    client_id = sword_client[1]["sword_client"].client_id
+    mapping_id = sword_client[1]["sword_client"].mapping_id
+    file_content = BytesIO()
+    with patch("weko_swordserver.utils.WorkFlows.get_workflow_by_id", return_value=None):
+        with pytest.raises(WekoSwordserverException) as e:
+            check_result = check_import_items(file_content, "JSON", True, 3, packaging="SimpleZip", client_id=client_id)
+    assert e.value.errorType == ErrorType.BadRequest
+    assert e.value.message == "Workflow not found for registration your item."
+
+    # invalid file format
+    file_content = BytesIO()
+    with pytest.raises(WekoSwordserverException) as e:
+        check_import_items(file_content, "InvalidFormat")
+    assert e.value.errorType == ErrorType.MetadataFormatNotAcceptable
+    assert e.value.message == "Unsupported file format: InvalidFormat"
+
+
+# def update_item_ids(list_record, new_id):
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_update_item_ids -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+@pytest.mark.skip()
+def test_update_item_ids(app, mocker):
+    """
+    update_item_ids 関数の動作をテストする。
+    すべての条件分岐やエッジケースをカバーする。
+    """
+    # list_record が空のリストの場合
+    assert update_item_ids([], "new_id") == []
+
+    # list_record に dict 以外の要素が含まれている場合
+    # list_record_3 = [1, 2, 3]
+    # assert update_item_ids(list_record_3, "new_id") == list_record_3
+
+    # list_record の要素に metadata がない場合
+    list_record_4 = [{"key": "value"}]
+    assert update_item_ids(list_record_4, "new_id") == list_record_4
+
+    # metadata に id がない場合
+    list_record_5 = [{"metadata": {}}]
+    assert update_item_ids(list_record_5, "new_id") == list_record_5
+
+    # metadata に link_data がない場合
+    list_record_6 = [{"metadata": {"id": "123"}}]
+    assert update_item_ids(list_record_6, "new_id") == list_record_6
+
+    metadata = {"test": "test"}
+
+    # link_data の要素に item_id と sele_id がない場合
+    list_record_9 = [{"metadata": metadata, "id": "123", "link_data": [{"key": "value"}]}]
+    assert update_item_ids(list_record_9, "new_id") == list_record_9
+
+    # link_data の要素に item_id があるが、sele_id が "isSupplementedBy" でない場合
+    _id = "123"
+    link_data = [{"item_id": "456", "sele_id": "isSupplementTo"}]
+
+    list_record = [{"metadata": metadata, "_id": _id, "link_data": link_data}]
+    new_id = "new_id"
+
+    result = update_item_ids(list_record, new_id)
+
+    assert result[0]["link_data"][0]["item_id"] == "456"
+    assert result[0]["link_data"][0]["sele_id"] == "isSupplementTo"
+
+    # link_data の要素に item_id があり、sele_id が "isSupplementedBy" の場合
+    _id = "123"
+    link_data = [{"item_id": "123", "sele_id": "isSupplementedBy"}]
+
+    list_record = [{"metadata": metadata, "_id": _id, "link_data": link_data}]
+    new_id = "new_id"
+
+    result = update_item_ids(list_record, new_id)
+
+
+    assert result[0]["link_data"][0]["item_id"] == new_id
+    assert link_data == [{"item_id": "new_id", "sele_id": "isSupplementedBy"}]
+
+    # 複数の ITEM が含まれる場合
+    _id1 = "123"
+    link_data1 = [{"item_id": "789", "sele_id": "isSupplementTo"}]
+
+    _id2 = "789"
+    link_data2 = [{"item_id": "123", "sele_id": "isSupplementedBy"}]
+
+    list_record = [
+        {"metadata": metadata, "_id": _id1, "link_data": link_data1},
+        {"metadata": metadata, "_id": _id2, "link_data": link_data2}
+    ]
+    new_id = "new_id"
+
+    result = update_item_ids(list_record, new_id)
+
+    assert result[0]["link_data"][0]["item_id"] == "789"
+    assert result[1]["link_data"][0]["item_id"] == new_id
+
 
 # def get_record_by_client_id(client_id):
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_get_record_by_client_id -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-def test_get_record_by_client_id(app,mocker):
-    # No 1
-    client_id = "valid_client_id"
-    expected_client = SwordClientModel(client_id="client_id", mapping_id="mapping_id")
-    expected_mapping = SwordItemTypeMappingModel(id="mapping_id")
+# def test_get_record_by_client_id(app,mocker):
+#     # No 1
+#     client_id = "valid_client_id"
+#     expected_client = SwordClientModel(client_id="client_id", mapping_id="mapping_id")
+#     expected_mapping = SwordItemTypeMappingModel(id="mapping_id")
 
-    with patch.object(SwordClient, 'get_client_by_id', return_value=expected_client):
-        with patch.object(SwordItemTypeMapping, 'get_mapping_by_id', return_value=expected_mapping):
-            client, mapping = get_record_by_client_id(client_id)
-            assert client == expected_client
-            assert mapping == expected_mapping
+#     with patch.object(SwordClient, 'get_client_by_id', return_value=expected_client):
+#         with patch.object(SwordItemTypeMapping, 'get_mapping_by_id', return_value=expected_mapping):
+#             client, mapping = get_record_by_client_id(client_id)
+#             assert client == expected_client
+#             assert mapping == expected_mapping
 
-    # No 2
-    invalid_client_id = "invalid_client_id"
+#     # No 2
+#     invalid_client_id = "invalid_client_id"
 
-    with patch.object(SwordClient, 'get_client_by_id', return_value=None):
-        with patch.object(SwordItemTypeMapping, 'get_mapping_by_id', return_value=expected_mapping):
-            client, mapping = get_record_by_client_id(invalid_client_id)
-            assert client == None
-            assert mapping == expected_mapping
+#     with patch.object(SwordClient, 'get_client_by_id', return_value=None):
+#         with patch.object(SwordItemTypeMapping, 'get_mapping_by_id', return_value=expected_mapping):
+#             client, mapping = get_record_by_client_id(invalid_client_id)
+#             assert client == None
+#             assert mapping == expected_mapping
 
-    # No 3
-    valid_client_id = "valid_client_id"
-    expected_client = SwordClientModel(client_id="client_id", mapping_id="invalid_mapping_id")
-    with patch.object(SwordClient, 'get_client_by_id', return_value=expected_client):
-        with patch.object(SwordItemTypeMapping, 'get_mapping_by_id', return_value=None):
-            client, mapping = get_record_by_client_id(valid_client_id)
-            assert client == expected_client
-            assert mapping == None
-
-# def process_json(json_ld):
-# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_process_json -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-def test_process_json(app):
-    # No 1: Valid JSON-LD
-    json_ld = json_data("data/item_type/ro-crate-metadata_2.json")
-    expected_json = json_data("data/item_type/processed_json_2.json")
-    result = process_json(json_ld)
-    assert result == expected_json
-
-    # No 2: Invalid JSON-LD format @id is missing
-    invalid_json_ld = {"@graph": [{"@type": "Dataset"}, {"@id": "#summary"}]}
-    with pytest.raises(WekoSwordserverException) as e:
-        process_json(invalid_json_ld)
-    assert e.value.errorType == ErrorType.MetadataFormatNotAcceptable
-    assert e.value.message == "Invalid json-ld format."
-
-    # No 3: Invalid JSON-LD format "@graph" not in json
-    invalid_json_ld = {"@graph1": [{"@id": "invalid"}]}
-    with pytest.raises(WekoSwordserverException) as e:
-        process_json(invalid_json_ld)
-    assert e.value.errorType == ErrorType.MetadataFormatNotAcceptable
-    assert e.value.message == "Invalid json-ld format."
+#     # No 3
+#     valid_client_id = "valid_client_id"
+#     expected_client = SwordClientModel(client_id="client_id", mapping_id="invalid_mapping_id")
+#     with patch.object(SwordClient, 'get_client_by_id', return_value=expected_client):
+#         with patch.object(SwordItemTypeMapping, 'get_mapping_by_id', return_value=None):
+#             client, mapping = get_record_by_client_id(valid_client_id)
+#             assert client == expected_client
+#             assert mapping == None

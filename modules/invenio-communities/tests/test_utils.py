@@ -261,7 +261,7 @@ def test_get_repository_id_by_item_id(app, db, users, mocker):
                             root_node_id=index1.id,
                             group_id=1)
     db.session.commit()
-    
+
     # Setup mock data
     record_data = {1: {"path": [1]}, 2: {"path": [2]}, 3: {"path": [3]},}
 
@@ -283,7 +283,7 @@ def test_get_repository_id_by_item_id(app, db, users, mocker):
     repository_id = get_repository_id_by_item_id(1)
     assert repository_id == comm1.id
 
-    # 
+    #
     repository_id = get_repository_id_by_item_id(2)
     assert repository_id == comm1.id
 

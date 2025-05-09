@@ -34,9 +34,8 @@ from flask import Flask
 from flask_babelex import Babel, lazy_gettext as _
 from flask_celeryext import FlaskCeleryExt
 from flask_menu import Menu
-from flask_login import current_user, login_user, LoginManager
 from werkzeug.local import LocalProxy
-from tests.helpers import create_record, json_data, fill_oauth2_headers
+from .helpers import create_record, json_data, fill_oauth2_headers
 
 from invenio_deposit.config import (
     DEPOSIT_DEFAULT_STORAGE_CLASS,
@@ -96,9 +95,9 @@ from invenio_db.utils import drop_alembic_version_table
 from weko_admin.models import AdminLangSettings
 from weko_schema_ui.models import OAIServerSchema
 from weko_index_tree.api import Indexes
-from weko_records import WekoRecords
+from weko_accounts import WekoAccounts
+from weko_logging.audit import WekoLoggingUserActivity
 from weko_records.api import ItemTypes
-from weko_records.config import WEKO_ITEMTYPE_EXCLUDED_KEYS
 from weko_records.models import ItemTypeName, ItemType
 from weko_records_ui.models import PDFCoverPageSettings
 from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, WEKO_PERMISSION_ROLE_COMMUNITY, EMAIL_DISPLAY_FLG
@@ -106,18 +105,12 @@ from weko_groups import WekoGroups
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
 from weko_index_tree.models import Index
-from weko_index_tree import WekoIndexTree, WekoIndexTreeREST
 from weko_index_tree.views import blueprint_api
 from weko_index_tree.rest import create_blueprint
 from weko_index_tree.scopes import create_index_scope
-from weko_search_ui import WekoSearchUI, WekoSearchREST
-from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX
+from weko_search_ui import WekoSearchUI
 from weko_redis.redis import RedisConnection
 from weko_admin.models import SessionLifetime
-
-from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session
-from sqlalchemy import event
 
 
 @pytest.yield_fixture()
@@ -430,6 +423,11 @@ def base_app(instance_path):
                 item_tree_route='/tree/<string:pid_value>',
                 index_move_route='/tree/move/<int:index_id>',
                 default_media_type='application/json',
+                api_get_all_index_jp_en='/<string:version>/tree',
+                api_get_index_tree='/<string:version>/tree/<int:index_id>',
+                api_create_index='/<string:version>/tree/index/',
+                api_update_index='/<string:version>/tree/index/<int:index_id>',
+                api_delete_index='/<string:version>/tree/index/<int:index_id>',
                 create_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
                 read_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
                 update_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
@@ -472,7 +470,9 @@ def base_app(instance_path):
     WekoSearchUI(app_)
     WekoWorkflow(app_)
     WekoGroups(app_)
-    
+    WekoAccounts(app_)
+    WekoLoggingUserActivity(app_)
+
     current_assets = LocalProxy(lambda: app_.extensions["invenio-assets"])
     current_assets.collect.collect()
 
@@ -593,7 +593,7 @@ def users(app, db):
         originalroleuser = User.query.filter_by(email='originalroleuser@test.org').first()
         originalroleuser2 = User.query.filter_by(email='originalroleuser2@test.org').first()
         noroleuser = User.query.filter_by(email='noroleuser@test.org').first()
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -621,7 +621,7 @@ def users(app, db):
     ds.add_role_to_user(user, repoadmin_role)
     ds.add_role_to_user(user, contributor_role)
     ds.add_role_to_user(user, comadmin_role)
-    
+
     # Assign access authorization
     with db.session.begin_nested():
         action_users = [
@@ -754,7 +754,7 @@ def indices(app, db):
         db.session.add(testIndexThreeChild)
         db.session.add(testIndexMore)
         db.session.add(testIndexPrivate)
-        
+
     return {
         'index_dict': dict(testIndexThree),
         'index_non_dict': testIndexThree,
@@ -824,6 +824,108 @@ def test_indices(app, db):
         db.session.add(base_index(101, 100, 0, coverpage_state=True, is_deleted=True))
     db.session.commit()
 
+@pytest.fixture
+def indices_for_api(app, db):
+    with db.session.begin_nested():
+        sample_index = Index(
+            id=1623632832836,
+            parent=0,
+            position=0,
+            index_name="サンプルインデックス",
+            index_name_english="Sample Index",
+            browsing_role="3,-98,-99",
+            contribute_role="1,2,3,4,-98",
+            browsing_group="",
+            contribute_group="",
+            public_state=False,
+            harvest_public_state=False,
+            owner_user_id=1,
+            created=datetime(2021, 6, 14, 1, 7, 10, 647996),
+            updated=datetime(2024, 6, 12, 12, 21, 26, 526676)
+        )
+
+        parent_index = Index(
+            id=1740974499997,
+            parent=0,
+            position=1,
+            index_name="親インデックス",
+            index_name_english="parent index",
+            browsing_role="3,4,-98,-99",
+            contribute_role="3,4,-98,-99",
+            browsing_group="",
+            contribute_group="",
+            public_state=True,
+            harvest_public_state=True,
+            owner_user_id=1,
+            created=datetime(2025, 3, 3, 4, 1, 40, 933902),
+            updated=datetime(2025, 3, 3, 4, 2, 30, 157607)
+        )
+
+        child_index_1 = Index(
+            id=1740974554289,
+            parent=1740974499997,
+            position=0,
+            index_name="子インデックス 1",
+            index_name_english="child index 1",
+            browsing_role="3,4,-98,-99",
+            contribute_role="3,4,-98,-99",
+            browsing_group="",
+            contribute_group="",
+            public_state=False,
+            harvest_public_state=True,
+            owner_user_id=1,
+            created=datetime(2025, 3, 3, 4, 2, 35, 229217),
+            updated=datetime(2025, 3, 3, 4, 3, 6, 841368)
+        )
+
+        child_index_2 = Index(
+            id=1740974612379,
+            parent=1740974499997,
+            position=1,
+            index_name="子インデックス 2",
+            index_name_english="child index 2",
+            browsing_role="3,4,-98,-99",
+            contribute_role="3,4,-98,-99",
+            browsing_group="",
+            contribute_group="",
+            public_state=True,
+            harvest_public_state=True,
+            owner_user_id=1,
+            created=datetime(2025, 3, 3, 4, 3, 33, 316001),
+            updated=datetime(2025, 3, 3, 4, 3, 58, 104842)
+        )
+
+        child_index_3 = Index(
+            id=1740974612380,
+            parent=1740974612379,
+            position=1,
+            index_name="子インデックス 3",
+            index_name_english="child index 3",
+            browsing_role="3,4,-98,-99",
+            contribute_role="3,4,-98,-99",
+            browsing_group="",
+            contribute_group="",
+            public_state=False,
+            harvest_public_state=True,
+            owner_user_id=1,
+            created=datetime(2025, 3, 3, 4, 3, 33, 316001),
+            updated=datetime(2025, 3, 3, 4, 3, 58, 104842)
+        )
+
+        db.session.add(sample_index)
+        db.session.add(parent_index)
+        db.session.add(child_index_1)
+        db.session.add(child_index_2)
+        db.session.add(child_index_3)
+
+    return {
+        'sample_index': sample_index,
+        'parent_index': parent_index,
+        'child_index_1': child_index_1,
+        'child_index_2': child_index_2,
+        "child_index_3": child_index_3,
+    }
+
 @pytest.yield_fixture
 def without_oaiset_signals(app):
     """Temporary disable oaiset signals."""
@@ -848,10 +950,10 @@ def esindex(app,db_records):
             search.client.indices.create("test-weko-items",body=mapping)
             search.client.indices.put_alias(index="test-weko-items", name="test-weko")
         # print(current_search_client.indices.get_alias())
-    
+
     for depid, recid, parent, doi, record, item in db_records:
         search.client.index(index='test-weko-item-v1.0.0', doc_type='item-v1.0.0', id=record.id, body=record,refresh='true')
-    
+
 
     yield search
 
@@ -893,11 +995,11 @@ def db_records(db, instance_path, users):
             'parent': 0,
             'value': 'IndexB',
         }
-    
+
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         Indexes.create(0, index_metadata)
 
- 
+
     yield result
 
 
@@ -917,7 +1019,7 @@ def db_register(app, db):
         for data in action_datas:
             actions_db.append(Action(**data))
         db.session.add_all(actions_db)
-    
+
     actionstatus_datas = dict()
     with open('tests/data/action_status.json') as f:
         actionstatus_datas = json.load(f)
@@ -926,7 +1028,7 @@ def db_register(app, db):
         for data in actionstatus_datas:
             actionstatus_db.append(ActionStatus(**data))
         db.session.add_all(actionstatus_db)
-    
+
     index = Index(
         public_state=True
     )
@@ -950,7 +1052,7 @@ def db_register(app, db):
                          form={'type':'test form'},
                          render={'type':'test render'},
                          tag=1,version_id=1,is_deleted=False)
-    
+
     flow_action1 = FlowAction(status='N',
                      flow_id=flow_define.flow_id,
                      action_id=1,
@@ -998,7 +1100,7 @@ def db_register(app, db):
                     activity_confirm_term_of_use=True,
                     title='test', shared_user_id=-1, extra_info={},
                     action_order=6)
-    
+
     with db.session.begin_nested():
         db.session.add(index)
         db.session.add(flow_define)
@@ -1009,7 +1111,7 @@ def db_register(app, db):
         db.session.add(flow_action3)
         db.session.add(workflow)
         db.session.add(activity)
-    
+
     # return {'flow_define':flow_define,'item_type_name':item_type_name,'item_type':item_type,'flow_action':flow_action,'workflow':workflow,'activity':activity}
     return {
         'flow_define': flow_define,
@@ -1026,7 +1128,7 @@ def db_register(app, db):
 @pytest.fixture()
 def db_register2(app, db):
     session_lifetime = SessionLifetime(lifetime=60,is_delete=False)
-    
+
     with db.session.begin_nested():
         db.session.add(session_lifetime)
 
@@ -1058,7 +1160,7 @@ def records(db):
         db.session.add(rec1)
         db.session.add(rec2)
         db.session.add(rec3)
-        
+
         search_query_result = json_data("data/search_result.json")
 
     return(search_query_result)
@@ -1446,6 +1548,131 @@ def create_token_user_1(client_api, client, users):
     db_.session.commit()
     return token_
 
+@pytest.fixture()
+def create_token_user_noroleuser(client_api, client, users):
+    """Create token."""
+    with db_.session.begin_nested():
+        token_ = Token(
+            client=client,
+            user=next((user for user in users if user["id"] == 9), None)['obj'],
+            token_type='bearer',
+            access_token='dev_access_create_token_user_noroleuser',
+            # refresh_token='',
+            expires=datetime.now() + timedelta(hours=10),
+            is_personal=True,
+            is_internal=False,
+            _scopes="index:read",
+        )
+        db_.session.add(token_)
+    db_.session.commit()
+    return token_
+
+@pytest.fixture()
+def create_token_user_noroleuser_1(client_api, client, users):
+    """Create token."""
+    with db_.session.begin_nested():
+        token_ = Token(
+            client=client,
+            user=next((user for user in users if user["id"] == 9), None)['obj'],
+            token_type='bearer',
+            access_token='dev_access_create_token_user_noroleuser_1',
+            # refresh_token='',
+            expires=datetime.now() + timedelta(hours=10),
+            is_personal=True,
+            is_internal=False,
+            _scopes="index:update index:delete index:read index:create",
+        )
+        db_.session.add(token_)
+    db_.session.commit()
+    return token_
+
+@pytest.fixture()
+def create_token_user_sysadmin(client_api, client, users):
+    """Create token."""
+    with db_.session.begin_nested():
+        token_ = Token(
+            client=client,
+            user=next((user for user in users if user["id"] == 5), None)['obj'],
+            token_type='bearer',
+            access_token='dev_access_create_token_user_sysadmin',
+            # refresh_token='',
+            expires=datetime.now() + timedelta(hours=10),
+            is_personal=True,
+            is_internal=False,
+            _scopes="index:update index:delete index:read index:create",
+        )
+        db_.session.add(token_)
+    db_.session.commit()
+    return token_
+
+
+@pytest.fixture()
+def create_token_user_sysadmin_without_scope(client_api, client, users):
+    """Create token."""
+    with db_.session.begin_nested():
+        token_ = Token(
+            client=client,
+            user=next((user for user in users if user["id"] == 5), None)['obj'],
+            token_type='bearer',
+            access_token='dev_access_create_token_user_sysadmin_without_scope',
+            # refresh_token='',
+            expires=datetime.now() + timedelta(hours=10),
+            is_personal=True,
+            is_internal=False,
+            _scopes="",
+        )
+        db_.session.add(token_)
+    db_.session.commit()
+    return token_
+
+@pytest.fixture()
+def create_tokens(client_api, client, users):
+    """Create tokens for users that exist in roles_scopes."""
+    tokens = {}
+    roles_scopes = {
+        "noroleuser": "index:read",
+        "contributor": "index:read",
+        "repoadmin": "index:update index:delete index:read index:create",
+        "sysadmin": "index:update index:delete index:read index:create",
+        "comadmin": "index:read"
+    }
+
+    with db_.session.begin_nested():
+        for user_data in users:
+            role_name = user_data["email"].split("@")[0]
+
+            if role_name not in roles_scopes:
+                continue
+
+            user_obj = user_data["obj"]
+            access_token = f"dev_access_{role_name}"
+            scopes = roles_scopes[role_name]
+
+            token_ = Token(
+                client=client,
+                user=user_obj,
+                token_type='bearer',
+                access_token=access_token,
+                expires=datetime.now() + timedelta(hours=10),
+                is_personal=True,
+                is_internal=False,
+                _scopes=scopes,
+            )
+            db_.session.add(token_)
+            tokens[role_name] = token_
+
+    db_.session.commit()
+    return tokens
+
+@pytest.fixture()
+def create_auth_headers(client_api, json_headers, create_tokens):
+    """Generate authentication headers for each user role."""
+    auth_headers = {}
+
+    for role, token in create_tokens.items():
+        auth_headers[role] = fill_oauth2_headers(json_headers, token)
+
+    return auth_headers
 
 @pytest.fixture()
 def json_headers():
@@ -1461,6 +1688,38 @@ def auth_headers(client_api, json_headers, create_token_user_1):
     It uses the token associated with the first user.
     """
     return fill_oauth2_headers(json_headers, create_token_user_1)
+
+@pytest.fixture()
+def auth_headers_noroleuser_1(client_api, json_headers, create_token_user_noroleuser_1):
+    """Authentication headers (with a valid oauth2 token).
+
+    It uses the token associated with the first user.
+    """
+    return fill_oauth2_headers(json_headers, create_token_user_noroleuser_1)
+
+@pytest.fixture()
+def auth_headers_noroleuser(client_api, json_headers, create_token_user_noroleuser):
+    """Authentication headers (with a valid oauth2 token).
+
+    It uses the token associated with the first user.
+    """
+    return fill_oauth2_headers(json_headers, create_token_user_noroleuser)
+
+@pytest.fixture()
+def auth_headers_sysadmin_without_scope(client_api, json_headers, create_token_user_sysadmin_without_scope):
+    """Authentication headers (with a valid oauth2 token).
+
+    It uses the token associated with the first user.
+    """
+    return fill_oauth2_headers(json_headers, create_token_user_sysadmin_without_scope)
+
+@pytest.fixture()
+def auth_headers_sysadmin(client_api, json_headers, create_token_user_sysadmin):
+    """Authentication headers (with a valid oauth2 token).
+
+    It uses the token associated with the first user.
+    """
+    return fill_oauth2_headers(json_headers, create_token_user_sysadmin)
 
 @pytest.fixture()
 def admin_lang_setting(db):
@@ -1479,9 +1738,9 @@ def index_thumbnail(app,instance_path):
                     )
     if not os.path.isdir(dir_path):
         os.makedirs(dir_path)
-    
+
     with open(thumbnail_path, "w") as f:
         f.write("test")
-    
+
     return thumbnail_path
-    
+

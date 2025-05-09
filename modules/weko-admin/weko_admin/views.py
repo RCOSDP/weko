@@ -25,6 +25,7 @@ import json
 import sys
 import time
 from datetime import timedelta, datetime
+import traceback
 
 from flask import Blueprint, Response, abort, current_app, flash, json, \
     jsonify, render_template, request
@@ -222,7 +223,7 @@ def save_lang_list():
     from weko_index_tree.utils import delete_index_trees_from_redis
     for lang_code in [lang["lang_code"] for lang in data if not lang["is_registered"]]:
         delete_index_trees_from_redis(lang_code)
-        
+
     try:
         update_admin_lang_setting(data)
         db.session.commit()
@@ -326,7 +327,9 @@ def save_api_cert_data():
     if not cert_data:
         result['error'] = _(
             'Account information is invalid. Please check again.')
-    elif validate_certification(cert_data):
+    elif api_code == "crf" and validate_certification(cert_data):
+        result = save_api_certification(api_code, cert_data)
+    elif api_code == "oaa":
         result = save_api_certification(api_code, cert_data)
     else:
         result['error'] = _(
@@ -386,8 +389,10 @@ def get_repository_list():
         result['repositories'] = repository_ids
         result['success'] = True
     except Exception as e:
+        current_app.logger_error(f"Error getting repository list: {e}")
+        traceback.print_exc()
         result['error'] = str(e)
-    
+
     return jsonify(result)
 
 
@@ -488,7 +493,7 @@ def get_failed_mail():
         page = int(data.get('page'))
         history_id = int(data.get('id'))
     except Exception as ex:
-        current_app.logger.debug("Cannot convert parameter: {}".format(ex))
+        current_app.logger.error("Cannot convert parameter: {}".format(ex))
         page = 1
         history_id = 1
     result = FeedbackMail.load_feedback_failed_mail(history_id, page)
@@ -519,7 +524,7 @@ def resend_failed_mail():
         )
         FeedbackMail.update_history_after_resend(history_id)
     except Exception as ex:
-        current_app.logger.debug("Cannot resend mail:{}".format(ex))
+        current_app.logger.error("Cannot resend mail:{}".format(ex))
         result['success'] = False
         result['error'] = 'Request package is invalid'
     return jsonify(result)
@@ -573,15 +578,15 @@ def manual_send_site_license_mail(start_month, end_month, repo_id=None):
                      methods=['GET'])
 def get_site_license_send_mail_settings():
     repo_id = request.args.get('repo_id')
-    
+
     sitelicenses = SiteLicenseInfo.query.filter_by(repository_id=repo_id).order_by(
         SiteLicenseInfo.organization_id).all()
     settings = AdminSettings.get('site_license_mail_settings', dict_to_object=False)
-    if settings:    
+    if settings:
         setting = settings.get(repo_id, {'auto_send_flag': False})
     else:
         setting = {'auto_send_flag': False}
-    
+
     sitelicenses_data = [
         {
             'organization_id': s.organization_id,
@@ -591,8 +596,8 @@ def get_site_license_send_mail_settings():
         }
         for s in sitelicenses
     ]
-        
-    return jsonify({    
+
+    return jsonify({
         'sitelicenses': sitelicenses_data,
         'auto_send': setting["auto_send_flag"],
     })
@@ -611,7 +616,7 @@ def update_site_info():
     site_info = request.get_json()
     format_data = format_site_info_data(site_info)
     validate = validation_site_info(format_data)
-    
+
     if validate.get('error'):
         return jsonify(validate)
     else:
@@ -652,13 +657,13 @@ def get_site_info():
     result['notify'] = site_info.notify
     result['google_tracking_id_user'] = site_info.google_tracking_id_user
     result['addthis_user_id'] = site_info.addthis_user_id
-    
+
     if site_info.ogp_image and site_info.ogp_image_name:
         ts = time.time()
         result['ogp_image'] = request.host_url + \
             'api/admin/ogp_image'
         result['ogp_image_name'] = site_info.ogp_image_name
-    
+
     return jsonify(result)
 
 

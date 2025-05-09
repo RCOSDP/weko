@@ -30,11 +30,10 @@ from flask_security.utils import verify_password
 from invenio_accounts.models import User
 from invenio_db import db
 from invenio_rest import ContentNegotiatedMethodView
+from weko_logging.activity_logger import UserActivityLogger
 
 from .errors import VersionNotFoundRESTError, UserAllreadyLoggedInError, UserNotFoundError, InvalidPasswordError, DisabledUserError
-from .utils import create_limiter
-
-limiter = create_limiter()
+from .utils import limiter
 
 
 def create_blueprint(app, endpoints):
@@ -142,6 +141,10 @@ class WekoLogin(ContentNegotiatedMethodView):
             'id': user.id,
             'email': user.email,
         }
+        UserActivityLogger.info(
+            operation="LOGIN",
+            target_key=user.id
+        )
         return make_response(jsonify(res_json), 200)
 
 
@@ -173,7 +176,12 @@ class WekoLogout(ContentNegotiatedMethodView):
     def post_v1(self, **kwargs):
 
         # Logout
+        user_id = current_user.id
         if current_user.is_authenticated:
             logout_user()
 
+        UserActivityLogger.info(
+            operation="LOGOUT",
+            target_key=user_id
+        )
         return make_response('', 200)

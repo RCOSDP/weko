@@ -27,7 +27,8 @@ from flask_security.forms import email_required, email_validator, \
     unique_user_email
 from flask_wtf import FlaskForm
 from sqlalchemy.orm.exc import NoResultFound
-from wtforms import FormField, SelectField, StringField, SubmitField
+from wtforms.widgets import PasswordInput
+from wtforms import FormField, SelectField, StringField, SubmitField, PasswordField
 from wtforms.validators import DataRequired, EqualTo, StopValidation, \
     ValidationError
 
@@ -75,6 +76,15 @@ def check_length_100_characters(form, field):
     """
     if len(field.data) > 100:
         raise ValidationError(_("Text field must be less than 100 characters."))
+
+def check_s3_endpoint_url(form, field):
+    """Check s3_endpoint_url.
+
+    :param form:
+    :param field:
+    """
+    if field.data.startswith('https://s3.'):
+        raise ValidationError(_("Endpoint URL must not begin with https://s3."))
 
 
 def check_other_position(form, field):
@@ -142,6 +152,46 @@ class ProfileForm(FlaskForm):
             EqualTo('email', message=_('Email addresses do not match.'))
         ]
     )
+
+    access_key = PasswordField(
+        # NOTE: Form field label
+        _('access key'),
+        # NOTE: Form field help text
+        description=_('Please enter if you use your own S3 Bucket.'),
+        validators=[check_length_100_characters],
+        filters=[strip_filter],
+        widget=PasswordInput(hide_value=False),
+    )
+
+    secret_key = PasswordField(
+        # NOTE: Form field label
+        _('secret key'),
+        # NOTE: Form field help text
+        description=_('Please enter if you use your own S3 Bucket.'),
+        validators=[check_length_100_characters],
+        filters=[strip_filter],
+        widget=PasswordInput(hide_value=False),
+    )
+
+    s3_endpoint_url = StringField(
+        # NOTE: Form field label
+        _('endpoint url'),
+        # NOTE: Form field help text
+        description=_('Please enter if you use your own S3 Bucket.'),
+        validators=[check_length_100_characters,
+                    check_s3_endpoint_url],
+        filters=[strip_filter],
+    )
+
+    s3_region_name = StringField(
+        # NOTE: Form field label
+        _('region name'),
+        description=_('Please enter if you specify your own S3 Bucket region.'),
+        # NOTE: Form field help text
+        validators=[check_length_100_characters],
+        filters=[strip_filter],
+    )
+
 
     fullname = StringField(
         # NOTE: Form label

@@ -3,16 +3,16 @@
 # This file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met: 
-# 
+# modification, are permitted provided that the following conditions are met:
+#
 # 1. Redistributions of source code must retain the above copyright notice,
-#    this list of conditions and the following disclaimer. 
+#    this list of conditions and the following disclaimer.
 # 2. Redistributions in binary form must reproduce the above copyright notice,
 #    this list of conditions and the following disclaimer in the documentation
-#    and/or other materials provided with the distribution. 
-# 
+#    and/or other materials provided with the distribution.
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 # ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -23,9 +23,9 @@
 # ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 # The views and conclusions contained in the software and documentation are those
-# of the authors and should not be interpreted as representing official policies, 
+# of the authors and should not be interpreted as representing official policies,
 # either expressed or implied, of the FreeBSD Project.
 
 
@@ -88,6 +88,7 @@ services:
       - WEKO_RECORDS_UI_SECRET_KEY="secret"
       - SECRET_KEY="CHANGE ME"
       - WTF_CSRF_SECRET_KEY="CHANGE ME"
+      - TIKA_JAR_FILE_PATH=/code/tika/tika-app-2.6.0.jar
     volumes:
       - weko3_data:/var/tmp
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
@@ -140,6 +141,9 @@ services:
       - /code/modules/weko-sitemap/weko_sitemap.egg-info
       - /code/modules/invenio-iiif/invenio_iiif.egg-info
       - /code/modules/weko-swordserver/weko_swordserver.egg-info
+      - /code/modules/weko-workspace/weko_workspace.egg-info
+      - /code/modules/weko-signposting/weko_signposting.egg-info
+      - /code/modules/weko-notifications/weko_notifications.egg-info
     user: invenio
     links:
       - postgresql
@@ -148,6 +152,7 @@ services:
       - elasticsearch
       - rabbitmq
       - worker
+      - inbox
     logging:
       driver: "json-file"
       options:
@@ -186,7 +191,7 @@ services:
       - INVENIO_USER_EMAIL=wekosoftware@nii.ac.jp
       - INVENIO_USER_PASS=uspass123
       #- INVENIO_POSTGRESQL_HOST=postgresql
-      - INVENIO_POSTGRESQL_HOST=pgpool      
+      - INVENIO_POSTGRESQL_HOST=pgpool
       - INVENIO_POSTGRESQL_DBNAME=invenio
       - INVENIO_POSTGRESQL_DBUSER=invenio
       - INVENIO_POSTGRESQL_DBPASS=dbpass123
@@ -212,12 +217,13 @@ services:
       - INVENIO_DB_POOL_CLASS=NullPool
       - GOOGLE_TRACKING_ID_SYSTEM=UA-86504114-1
       - GOOGLE_TRACKING_ID_USER=
+      - TIKA_JAR_FILE_PATH=/code/tika/tika-app-2.6.0.jar
       - TMPDIR=/var/tmp
     volumes:
       - weko3_data:/var/tmp
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
       - data_data:/home/invenio/.virtualenvs/invenio/var/instance/data
-      - conf_data:/home/invenio/.virtualenvs/invenio/var/instance/conf    
+      - conf_data:/home/invenio/.virtualenvs/invenio/var/instance/conf
       - type: bind
         source: .
         target: /code
@@ -265,6 +271,9 @@ services:
       - /code/modules/weko-sitemap/weko_sitemap.egg-info
       - /code/modules/invenio-iiif/invenio_iiif.egg-info
       - /code/modules/weko-swordserver/weko_swordserver.egg-info
+      - /code/modules/weko-workspace/weko_workspace.egg-info
+      - /code/modules/weko-signposting/weko_signposting.egg-info
+      - /code/modules/weko-notifications/weko_notifications.egg-info
     user: invenio
     links:
       - postgresql
@@ -286,7 +295,6 @@ services:
         limits:
           memory: 8000m
 
-
   postgresql:
     restart: "always"
     image: postgres:12
@@ -302,7 +310,7 @@ services:
       - "5432"
 
   pgpool:
-    restart: "always" 
+    restart: "always"
     image: bitnami/pgpool
     environment:
       - PGPOOL_BACKEND_NODES=0:postgresql:5432
@@ -318,7 +326,7 @@ services:
       - PGPOOL_NUM_INIT_CHILDREN=2
       - PGPOOL_MAX_POOL=2
     ports:
-      - "25401:5432" 
+      - "25401:5432"
 
   redis:
     restart: "always"
@@ -345,7 +353,7 @@ services:
 
   rabbitmq:
     restart: "always"
-    image: rabbitmq:4.0.2 
+    image: rabbitmq:4.0.2
     ports:
       - "24301:4369"
       - "45601:25672"
@@ -365,6 +373,7 @@ services:
 #      - letsencrypt_html:/var/www/html
     links:
       - web
+      - inbox
     deploy:
       resources:
         limits:
@@ -385,6 +394,38 @@ services:
       - "5501:5555"
     links:
       - rabbitmq
+
+  inbox:
+    restart: "always"
+    build:
+      context: ./inbox
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - ENABLE_PUSH_NOTIFICATIONS=False
+      - ICON=/static/images/weko-logo-256.png
+      - MONGO_DB_URI=mongodb://inbox:ibpass123@mongo:27017
+      - MONGO_DB_NAME=inbox
+      - ON_RECEIVE_NOTIFICATION_WEBHOOK_URL=
+      - ALLOWED_ADMIN_ORIGINS=["*"]
+      - ALLOWED_ORIGINS=["*"]
+      - SUBSCRIBER=mailto:wekosoftware@nii.ac.jp
+      - VAPID_PUBLIC_KEY=
+      - VAPID_PRIVATE_KEY=
+    links:
+      - mongo
+
+  mongo:
+    restart: "always"
+    image: mongo:7.0.14
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=inbox
+      - MONGO_INITDB_ROOT_PASSWORD=ibpass123
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
 
 #  kibana:
 #    build:
@@ -408,6 +449,7 @@ volumes:
   conf_data:
   pgsql-data:
   es-data:
+  mongo_data:
 #  letsencrypt_etc:
 #  letsencrypt_html:
 

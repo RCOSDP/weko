@@ -37,6 +37,27 @@ item_read_scope = Scope(
 )
 """Scope to protect item."""
 
+item_create_scope = Scope(
+    id_='item:create',
+    group='item',
+    help_text=_('Allow create item.'),
+)
+"""Scope to create item."""
+
+item_update_scope = Scope(
+    id_='item:update',
+    group='item',
+    help_text=_('Allow update item.'),
+)
+"""Scope to update item."""
+
+item_delete_scope = Scope(
+    id_='item:delete',
+    group='item',
+    help_text=_('Allow delete item.'),
+)
+"""Scope to delete item."""
+
 
 ranking_read_scope = Scope(
     id_='ranking:read',

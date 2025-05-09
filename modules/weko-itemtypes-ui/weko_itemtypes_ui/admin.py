@@ -33,10 +33,13 @@ from flask_login import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import AdminSettings, BillingPermission, AdminLangSettings
+from weko_logging.activity_logger import UserActivityLogger
+from weko_logging.models import UserActivityLog
 from weko_records.api import ItemsMetadata, ItemTypeEditHistory, \
     ItemTypeNames, ItemTypeProps, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping_inactive_show_list
 from weko_records_ui.models import RocrateMapping
+from weko_records.api import JsonldMapping
 from weko_schema_ui.api import WekoSchema
 from weko_search_ui.utils import get_key_by_property
 from weko_search_ui.tasks import is_import_running
@@ -124,51 +127,97 @@ class ItemTypeMetaDataView(BaseView):
         if check == "is_import_running":
             flash(_('Item type cannot be deleted becase import is in progress.'), 'error')
             return jsonify(code=-1)
-        
-        if item_type_id > 0:
-            record = ItemTypes.get_record(id_=item_type_id)
-            if record is not None:
-                # Check harvesting_type
-                if record.model.harvesting_type:
-                    flash(_('Cannot delete Item type for Harvesting.'),
-                          'error')
+
+        if not item_type_id > 0:
+            flash(_('An error has occurred.'), 'error')
+            return jsonify(code=-1)
+
+        record = ItemTypes.get_record(id_=item_type_id)
+        if record is not None:
+            # Check harvesting_type
+            if record.model.harvesting_type:
+                flash(_('Cannot delete Item type for Harvesting.'), 'error')
+                return jsonify(code=-1)
+            # Get all versions
+            all_records = ItemTypes.get_records_by_name_id(
+                name_id=record.model.name_id
+            )
+            # Check that item type is already registered to an item or not
+            for item in all_records:
+                items = ItemsMetadata.get_registered_item_metadata(
+                    item_type_id=item.id)
+                if len(items) > 0:
+                    flash(
+                        _('Cannot delete due to child existing item types.'),
+                        'error'
+                    )
                     return jsonify(code=-1)
-                # Get all versions
-                all_records = ItemTypes.get_records_by_name_id(
-                    name_id=record.model.name_id)
-                # Check that item type is already registered to an item or not
-                for item in all_records:
-                    items = ItemsMetadata.get_registered_item_metadata(
-                        item_type_id=item.id)
-                    if len(items) > 0:
-                        flash(_('Cannot delete due to child'
-                                ' existing item types.'), 'error')
-                        return jsonify(code=-1)
-                # Get item type name
-                item_type_name = ItemTypeNames.get_record(
-                    id_=record.model.name_id)
-                if all_records and item_type_name:
+            # Check that item type is used SWORD API
+            jsonld_mappings = JsonldMapping.get_by_itemtype_id(item_type_id)
+            for jsonld_mapping in jsonld_mappings:
+                sword_clients = jsonld_mapping.sword_clients.all()
+                if sword_clients:
+                    current_app.logger.info("Item type is used SWORD API.")
+                    flash(
+                        _('Cannot delete due to SWORD API is using this item types.'),
+                        'error'
+                    )
+                    return jsonify(code=-1)
+
+            # Get item type name
+            item_type_name = ItemTypeNames.get_record(
+                id_=record.model.name_id)
+            if all_records and item_type_name:
+                try:
+                    # Delete item type name
+                    ItemTypeNames.delete(item_type_name)
+                    # Delete item typea
+                    for k in all_records:
+                        k.delete()
+                    db.session.commit()
+                    current_app.logger.info(
+                        f"Item type deleted: {item_type_name.name}"
+                    )
+                except Exception:
+                    db.session.rollback()
+                    exec_info = sys.exc_info()
+                    tb_info = traceback.format_tb(exec_info[2])
+                    current_app.logger.error(
+                        "Unexpected error: {}".format(exec_info))
+                    UserActivityLogger.error(
+                        operation='ITEM_TYPE_DELETE',
+                        target_key=item_type_id,
+                        remarks=tb_info[0]
+                    )
+                    traceback.print_exc()
+                    flash(_('Failed to delete Item type.'), 'error')
+                    return jsonify(code=-1)
+
+                for jsonld_mapping in jsonld_mappings:
                     try:
-                        # Delete item type name
-                        ItemTypeNames.delete(item_type_name)
-                        # Delete item typea
-                        for k in all_records:
-                            k.delete()
+                        # Delete itemtype JOSN-LD mapping
+                        JsonldMapping.delete(jsonld_mapping.id)
                         db.session.commit()
-                    except BaseException:
+                        current_app.logger.info(
+                            f"JSON-LD mapping deleted: {jsonld_mapping.name}"
+                        )
+                    except Exception:
                         db.session.rollback()
                         current_app.logger.error(
-                            "Unexpected error: {}".format(sys.exc_info()))
-                        flash(_('Failed to delete Item type.'), 'error')
-                        return jsonify(code=-1)
+                            "Failed to delete Item type JSON-LD mapping: {}"
+                            .format(jsonld_mapping.name)
+                        )
+                        traceback.print_exc()
 
-                    current_app.logger.debug(
-                        'Itemtype delete: {}'.format(item_type_id))
-                    flash(_('Deleted Item type successfully.'))
-                    return jsonify(code=0)
+                current_app.logger.debug(
+                    'Itemtype delete: {}'.format(item_type_id))
+                UserActivityLogger.info(
+                    operation='ITEM_TYPE_DELETE',
+                    target_key=item_type_id
+                )
+                flash(_('Deleted Item type successfully.'))
+                return jsonify(code=0)
 
-        flash(_('An error has occurred.'), 'error')
-        return jsonify(code=-1)
 
     @expose('/register', methods=['POST'])
     @expose('/<int:item_type_id>/register', methods=['POST'])
@@ -210,7 +259,7 @@ class ItemTypeMetaDataView(BaseView):
             upgrade_version = current_app.config[
                 'WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED'
             ]
-            
+
             if not upgrade_version:
                 Mapping.create(item_type_id=record.model.id,
                                mapping=table_row_map.get('mapping'))
@@ -229,10 +278,54 @@ class ItemTypeMetaDataView(BaseView):
                 user_id=current_user.get_id(),
                 notes=data.get('edit_notes', {})
             )
-            
+
             db.session.commit()
+            next_id = UserActivityLog.get_sequence(db.session)
+            if item_type_id == 0:
+                UserActivityLogger.info(
+                    operation="ITEM_TYPE_CREATE",
+                    target_key=record.model.id
+                )
+            else:
+                UserActivityLogger.info(
+                    operation="ITEM_TYPE_UPDATE",
+                    target_key=item_type_id
+                )
+            # log item type mapping and workflow
+            if not upgrade_version or item_type_id != record.model.id:
+                UserActivityLogger.info(
+                    operation="ITEM_TYPE_MAPING_CREATE",
+                    parent_id=next_id,
+                    target_key=record.model.id
+                )
+            else:
+                UserActivityLogger.info(
+                    operation="ITEM_TYPE_MAPING_UPDATE",
+                    parent_id=next_id,
+                    target_key=item_type_id
+                )
+                workflow_list = WorkFlow().get_workflow_by_itemtype_id(item_type_id)
+                for wf in workflow_list:
+                    UserActivityLogger.info(
+                        operation="WORKFLOW_UPDATE",
+                        parent_id=next_id,
+                        target_key=wf.id
+                    )
         except Exception as ex:
             db.session.rollback()
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            if item_type_id != 0:
+                UserActivityLogger.error(
+                    operation='ITEM_TYPE_UPDATE',
+                    target_key=item_type_id,
+                    remarks=tb_info[0]
+                )
+            else:
+                UserActivityLogger.error(
+                    operation='ITEM_TYPE_CREATE',
+                    remarks=tb_info[0]
+                )
             default_msg = _('Failed to register Item type.')
             response = jsonify(msg='{} {}'.format(default_msg, str(ex)))
             response.status_code = 400
@@ -334,7 +427,7 @@ class ItemTypeMetaDataView(BaseView):
                         'value': 'datetime'}}
 
         return jsonify(lists)
-    
+
     @expose('/<int:item_type_id>/export', methods=['GET'])
     def export(self,item_type_id):
         item_types = ItemTypes.get_by_id(id_=item_type_id)
@@ -371,7 +464,7 @@ class ItemTypeMetaDataView(BaseView):
             attachment_filename ='ItemType_export.zip' ,
             as_attachment = True
         )
-    
+
     @expose('/import', methods=['POST'])
     @item_type_permission.require(http_exception=403)
     def item_type_import(self):
@@ -388,7 +481,7 @@ class ItemTypeMetaDataView(BaseView):
         if input_file.mimetype is None:
             current_app.logger.debug(input_file.mimetype)
             return jsonify(msg=_('Illegal mimetype Error'))
-        
+
         try:
             readable_files = ["ItemType.json", "ItemTypeName.json", "ItemTypeMapping.json", "ItemTypeProperty.json"]
             import_data = {
@@ -419,17 +512,17 @@ class ItemTypeMetaDataView(BaseView):
                             elif file_name == "ItemTypeProperty.json":
                                 import_data["ItemTypeProperty"] = json_obj
                                 #print(json_obj)
-            
+
             # ZIPファイル内に規定のアイテムタイプデータが無ければエラー
             if import_data["ItemType"] is null or import_data["ItemTypeName"] is null or import_data["ItemTypeMapping"] is null or import_data["ItemTypeProperty"] is null :
                 raise ValueError('Zip file contents invalid.')
-            
-            
+
+
             json_schema = fix_json_schema(import_data["ItemType"].get('schema'))
             json_form = import_data["ItemType"].get('form')
             json_schema = update_required_schema_not_exist_in_form(
                 json_schema, json_form)
-            
+
             if not json_schema:
                 raise ValueError('Schema is in wrong format.')
 
@@ -452,6 +545,17 @@ class ItemTypeMetaDataView(BaseView):
             )
 
             db.session.commit()
+            next_id = UserActivityLog.get_sequence(db.session)
+            UserActivityLogger.info(
+                operation="ITEM_TYPE_CREATE",
+                target_key=item_type_id
+            )
+            # log item type mapping and workflow
+            UserActivityLogger.info(
+                operation="ITEM_TYPE_MAPING_CREATE",
+                parent_id=next_id,
+                target_key=item_type_id
+            )
         except Exception as ex:
             db.session.rollback()
             default_msg = _('Failed to import Item type.')
@@ -467,7 +571,7 @@ class ItemTypeMetaDataView(BaseView):
 class ItemTypeSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = ItemType
-        
+
 class ItemTypeNameSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = ItemTypeName
@@ -489,7 +593,7 @@ class ItemTypePropertiesView(BaseView):
     def index(self, property_id=0):
         """Renders an primitive property view."""
         lists = ItemTypeProps.get_records([])
-        
+
         # remove default properties
         properties = lists.copy()
         defaults_property_ids = [prop.id for prop in lists if
@@ -715,10 +819,21 @@ class ItemTypeMappingView(BaseView):
             Mapping.create(item_type_id=data.get('item_type_id'),
                            mapping=data_mapping)
             db.session.commit()
+            UserActivityLogger.info(
+                operation="ITEM_TYPE_MAPING_UPDATE",
+                target_key=data.get('item_type_id')
+            )
         except BaseException:
             db.session.rollback()
             current_app.logger.error(
                 "Unexpected error: {}".format(sys.exc_info()))
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            UserActivityLogger.error(
+                operation='ITEM_TYPE_MAPING_UPDATE',
+                target_key=data.get('item_type_id'),
+                remarks=tb_info[0]
+            )
             return jsonify(msg=_('Unexpected error occurred.'))
         return jsonify(msg=_('Successfully saved new mapping.'))
 

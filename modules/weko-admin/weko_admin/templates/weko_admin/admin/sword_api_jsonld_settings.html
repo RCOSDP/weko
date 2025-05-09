@@ -1,0 +1,262 @@
+{#
+    # This file is part of WEKO3.
+    # Copyright (C) 2017 National Institute of Informatics.
+    #
+    # WEKO3 is free software; you can redistribute it
+    # and/or modify it under the terms of the GNU General Public License as
+    # published by the Free Software Foundation; either version 2 of the
+    # License, or (at your option) any later version.
+    #
+    # WEKO3 is distributed in the hope that it will be
+    # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+    # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    # General Public License for more details.
+    #
+    # You should have received a copy of the GNU General Public License
+    # along with WEKO3; if not, write to the
+    # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+    # MA 02111-1307, USA.
+    #}
+
+{%- extends admin_base_template %}
+
+{% block css %}
+{{ super() }}
+{% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% assets "weko_theme_css_bootstrap" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}<!-- New -->
+{% assets "weko_admin_quill_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+<link href="{{ url_for('static', filename='css/weko_admin/language.css') }}" rel="stylesheet">
+{% endblock %}
+
+{%- block javascript %}
+{{ super() }}
+{% assets "weko_admin_sword_api_jsonld_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block body %}
+<input id="Successfully_Changed" type="hidden" value="{{_('Successfully Changed Settings.')}}" />
+<input id="Failed_Changed" type="hidden" value="{{_('Failed To Change Settings')}}" />
+<input id="items_required_alert" type="hidden" value="{{_('The following items is required. Please recheck and input.')}}"/>
+<input id="workflow_deleted_alert" type="hidden" value="{{_('The selected Workflow has been deleted. Please recheck and input.')}}"/>
+<input id="deleted_workflows_name" type="hidden" value='{{deleted_workflow_name_dict}}'/>
+<input id="registration_type_value" type="hidden" value='{{registration_type_value}}'/>
+<input id="workflow_value" type="hidden" value='{{workflow_value}}'/>
+<input id="jsonld_mappings" type="hidden" value='{{ jsonld_mappings | tojson | safe }}'/>
+<input id="current_page_type" type="hidden" value='{{ current_page_type }}'/>
+<input id="current_model_json" type="hidden" value='{{ current_model_json | tojson | safe }}'/>
+<input id="can_edit" type="hidden" value='{{ can_edit }}'/>
+<input id="item_type_names" type="hidden" value='{{ item_type_names | tojson | safe }}'/>
+
+{% block navlinks %}
+<ul class="nav nav-tabs">
+  <li>
+      <a href="{{ return_url }}">{{ _gettext('List') }}</a>
+  </li>
+  {%- if admin_view.can_create and current_page_type == "add" -%}
+  <li class="active">
+      <a href="{{ get_url('.create_view', url=return_url) }}">{{ _gettext('Create') }}</a>
+  </li>
+  {%- endif -%}
+  {%- if admin_view.can_create and current_page_type != "add" -%}
+  <li>
+      <a href="{{ get_url('.create_view', url=return_url) }}">{{ _gettext('Create') }}</a>
+  </li>
+  {%- endif -%}
+  {%- if current_page_type == "edit" -%}
+  <li class="active">
+      <a href="javascript:void(0)">{{ _gettext('Edit') }}</a>
+  </li>
+  {%- endif -%}
+</ul>
+{% endblock %}
+
+<div style="padding-top: 20px; padding-left: 20px;">
+  <div class="form-group">
+    <div class="row">
+      <div class="col-sm-2 text-left">
+        <label for="application_list" class="field-required">{{_('Application')}}</label>
+      </div>
+      {%- if current_page_type == "add" -%}
+      <div class="col-sm-8">
+      <select class="form-control" name="application" id="application">
+        <option selected hidden value=""></option>
+        {% for client in client_list %}
+        <option value="{{ client['client_id'] }}">{{ client['name'] }}</option>
+        {% endfor %}
+      </select>
+      </div>
+      {%- else -%}
+      <div class="col-sm-8">
+        {{ current_client_name }}
+        <select class="form-control" name="application" id="application" style="display: none;">
+          <option selected hidden value=""></option>
+          {% for client in client_list %}
+          <option value="{{ client['client_id'] }}">{{ client['name'] }}</option>
+          {% endfor %}
+        </select>
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+
+  <div class="row form-group">
+    <div class="col-sm-2 text-left">
+        <label>{{_('Active')}}</label>
+    </div>
+    <div class="col-sm-6">
+      <input type="checkbox" id="active" name="active" {{active_value}} />
+    </div>
+  </div>
+
+  <div class="row form-group">
+    <div class="col-sm-2 text-left">
+        <label class="field-required">{{_('Registration Type')}}</label>
+    </div>
+    <div class="col-sm-4" style="display: flex; justify-content: space-between;">
+      <label for="Direct"><input type="radio" name="registration_type" value="Direct" onchange="changeRegistrationType(value)"/>
+        {{_("Direct_Registration")}}</label>
+      <label for="Workflow"><input type="radio" name="registration_type" value="Workflow" onchange="changeRegistrationType(value)"/>
+        {{_("WorkFlow_Registration")}}</label>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <div class="row">
+      <div class="col-sm-2 text-left">
+        <label for="workflow_list">{{_('WorkFlow')}}</label>
+      </div>
+      <div class="col-sm-8">
+      <select class="form-control" name="workflow" id="workflow" disabled>
+        <option selected hidden value=""></option>
+        {%- for workflow in workflows -%}
+        <option  value="{{ workflow.id }}" data-itemtype="{{ workflow.itemtype_id }}">{{ workflow.flows_name }}</option>
+        {%- endfor -%}
+      </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-2"></div>
+      <div class="col-sm-8">{{_('WorkFlow Cautionary Note')}}</div>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <div class="row">
+      <div class="col-sm-2 text-left">
+        <label for="mapping_list" class="field-required">{{_('Mapping')}}</label>
+      </div>
+      <div class="col-sm-8">
+      <select class="form-control" name="mapping" id="mapping">
+        <option selected hidden value=""></option>
+      </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-2"></div>
+      <div class="col-sm-8" id="mapping-check" style="font-size: 12px;"></div>
+    </div>
+  </div>
+
+  <div class="row form-group">
+    <div class="col-sm-2 text-left">
+      <label>{{_('Duplicate Check')}}</label>
+    </div>
+    <div class="col-sm-6">
+      <input type="checkbox" id="duplicate_check" name="duplicate_check" {{duplicate_check_value}} />
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-2 text-left">
+      <label for="mapping_list">{{_('Metadata Collection API')}}</label>
+    </div>
+    <div class="col-sm-8">
+      <div class="panel-group" style="margin-bottom: 0;">
+        <div class="panel panel-default" style="margin-bottom: 0;">
+          <div class="panel-body" id="color_setting">
+            <div class="row">
+              <div class="col-sm-10">
+                <div id="alerts"></div>
+                <span class="query-columns">
+                  <span>
+                    <label>{{_('Disable')}}</label>
+                    <select id="leftSelect" multiple="multiple" style="height: 150px;">
+                      {% for item in metadata_api %}
+                        <option value="{{ item }}">{{ item }}</option>
+                      {% endfor %}
+                    </select>
+                  </span>
+                  <span class="buttons">
+                    <button type="button" id="moveRight" class="btn btn-default btn-sm">
+                        <i class="fa fa-angle-right"></i>
+                    </button><br/><br/>
+                    <button type="button" class="btn btn-default btn-sm" id="moveLeft">
+                        <i class="fa fa-angle-left"></i>
+                    </button>
+                  </span>
+                  <span>
+                    <label>{{_('Enable')}}</label>
+                    <select id="rightSelect" multiple="multiple" style="height: 150px;">
+                    </select>
+                  </span>
+                  <span class="buttons">
+                    <br/>
+                    <button type="button" id="moveTop" class="btn btn-default btn-sm" style="margin-bottom: 5px;">
+                        <i class="fa fa-angle-double-up"></i>
+                    </button><br/>
+                    <button type="button" id="moveUp" class="btn btn-default btn-sm" style="margin-bottom: 5px;">
+                        <i class="fa fa-angle-up"></i>
+                    </button><br/>
+                    <button type="button" id="moveDown" class="btn btn-default btn-sm" style="margin-bottom: 5px;">
+                        <i class="fa fa-angle-down"></i>
+                    </button><br/>
+                    <button type="button" id="moveBottom" class="btn btn-default btn-sm" style="margin-bottom: 5px;">
+                        <i class="fa fa-angle-double-down"></i>
+                    </button><br/>
+                  </span>
+                </span>
+                <br/>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-2 text-left"></div>
+    <div class="col-sm-8">※ {{_('\"Original\" means the original metadata received via the SWORD API.')}}</div>
+  </div>
+  <div class="row form-group">
+    <div className="pull-right" style="margin-right: 15px;">
+      <button type="button" id="save_button" name="submit" class="btn btn-primary pull-right" value="{{ current_page_type }}" disabled onclick="saveDataFormat(value)">
+          <span class="glyphicon glyphicon-save"></span>&nbsp
+          {{_('Save')}}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Error Modal -->
+<div class="modal fade" tabindex="-1" role="dialog" id="error_modal">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"
+            aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">WEKO</h4>
+      </div>
+      <div class="modal-body">
+        <p class="text-center">{{_('Unapproved Items Exit.')}}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-info close-button" data-dismiss="modal">
+              <span class="glyphicon glyphicon-remove"></span>
+                 {{_('Close')}}
+        </button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+{%- endblock body %}

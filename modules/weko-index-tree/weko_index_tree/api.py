@@ -22,27 +22,29 @@
 
 import pickle
 import os
-from copy import deepcopy
+import sys
 from datetime import date, datetime, timezone
 from functools import partial
-from socketserver import DatagramRequestHandler
+import traceback
 
+from b2handle.clientcredentials import PIDClientCredentials
 from redis.exceptions import RedisError
 from flask import current_app, json, request
 from flask_babelex import gettext as _
 from flask_login import current_user
-from invenio_accounts.models import Role
-from invenio_db import db
-from invenio_i18n.ext import current_i18n
-from invenio_indexer.api import RecordIndexer
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import case, func, literal_column, and_
+
+from invenio_accounts.models import Role
+from invenio_db import db
+from invenio_i18n.ext import current_i18n
+from invenio_indexer.api import RecordIndexer
+
 from weko_groups.api import Group
 from weko_redis.redis import RedisConnection
 from weko_handle.api import Handle
-from b2handle.clientcredentials import PIDClientCredentials
 
 from .models import Index
 from .utils import cached_index_tree_json, check_doi_in_index, \
@@ -62,9 +64,10 @@ class Indexes(object):
         :param indexes: the index information.
         :returns: The :class:`Index` instance lists or None.
         """
-        
+
         # delay import
         from weko_workflow.config import WEKO_SERVER_CNRI_HOST_LINK
+        from weko_logging.activity_logger import UserActivityLogger
 
         def _add_index(data):
             with db.session.begin_nested():
@@ -75,18 +78,18 @@ class Indexes(object):
         if not isinstance(indexes, dict):
             return
 
-        data = dict()
+        data = {}
         is_ok = True
         try:
-            cid = indexes.get('id')
+            cid = indexes.get("id")
 
             if not cid:
                 return
 
             data["id"] = cid
             data["parent"] = pid
-            data["index_name"] = indexes.get('value')
-            data["index_name_english"] = indexes.get('value')
+            data["index_name"] = indexes.get("value")
+            data["index_name_english"] = indexes.get("value")
             data["index_link_name_english"] = data["index_name_english"]
             data["owner_user_id"] = current_user.get_id()
             role = cls.get_account_role()
@@ -99,18 +102,18 @@ class Indexes(object):
 
             data["more_check"] = False
             data["display_no"] = current_app.config[
-                'WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER']
+                "WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER"]
 
             data["coverpage_state"] = False
             data["recursive_coverpage_check"] = False
 
-            group_list = ''
+            group_list = ""
             groups = Group.query.all()
             for group in groups:
                 if not group_list:
                     group_list = str(group.id)
                 else:
-                    group_list = group_list + ',' + str(group.id)
+                    group_list = group_list + "," + str(group.id)
 
             data["browsing_group"] = group_list
             data["contribute_group"] = group_list
@@ -165,8 +168,19 @@ class Indexes(object):
                 else:
                     return
             _add_index(data)
+            UserActivityLogger.info(
+                operation="INDEX_CREATE",
+                target_key=data["id"]
+            )
         except IntegrityError as ie:
-            if 'uix_position' in ''.join(ie.args):
+            current_app.logger.error(f"Error occurred while creating index: {cid}")
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            UserActivityLogger.error(
+                operation="INDEX_CREATE",
+                remarks=tb_info[0]
+            )
+            if "uix_position" in "".join(ie.args):
                 try:
                     pid_info = cls.get_index(pid, with_count=True)
                     data["position"] = 0 if not pid_info else \
@@ -174,14 +188,16 @@ class Indexes(object):
                          if pid_info.position_max is not None else 0)
                     _add_index(data)
                 except SQLAlchemyError as ex:
+                    current_app.logger.error(ex)
+                    traceback.print_exc()
                     is_ok = False
-                    current_app.logger.debug(ex)
             else:
                 is_ok = False
-                current_app.logger.debug(ie)
+                current_app.logger.error(ie)
         except Exception as ex:
             is_ok = False
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
+            traceback.print_exc()
         finally:
             del data
             if not is_ok:
@@ -197,6 +213,8 @@ class Indexes(object):
         :param detail: new index info for update.
         :return: Updated index info
         """
+        from weko_logging.activity_logger import UserActivityLogger
+
         try:
             with db.session.begin_nested():
                 index = cls.get_index(index_id)
@@ -210,9 +228,9 @@ class Indexes(object):
                             continue
                     if isinstance(v, dict):
                         v = ",".join(map(lambda x: str(x["id"]), v["allow"]))
-                    if "public_date" in k:
+                    if isinstance(v, str) and "public_date" in k:
                         if len(v) > 0:
-                            v = datetime.strptime(v, '%Y%m%d')
+                            v = datetime.strptime(v, "%Y%m%d")
                         else:
                             v = None
                     if v is not None and (
@@ -248,26 +266,26 @@ class Indexes(object):
                 index.contribute_group = ",".join([str(group["id"]) for group in updated_contribute_group_allow])
 
                 recs_group = {
-                    'recursive_coverpage_check': partial(
+                    "recursive_coverpage_check": partial(
                         cls.set_coverpage_state_resc, index_id,
                         getattr(index, "coverpage_state")),
-                    'recursive_public_state': partial(
+                    "recursive_public_state": partial(
                         cls.set_public_state_resc, index_id,
                         getattr(index, "public_state"),
                         getattr(index, "public_date")),
-                    'recursive_browsing_group': partial(
+                    "recursive_browsing_group": partial(
                         cls.set_browsing_group_resc, index_id,
                         getattr(index, "browsing_group")),
-                    'recursive_browsing_role': partial(
+                    "recursive_browsing_role": partial(
                         cls.set_browsing_role_resc, index_id,
                         getattr(index, "browsing_role")),
-                    'recursive_contribute_group': partial(
+                    "recursive_contribute_group": partial(
                         cls.set_contribute_group_resc, index_id,
                         getattr(index, "contribute_group")),
-                    'recursive_contribute_role': partial(
+                    "recursive_contribute_role": partial(
                         cls.set_contribute_role_resc, index_id,
                         getattr(index, "contribute_role")),
-                    'biblio_flag': partial(
+                    "biblio_flag": partial(
                         cls.set_online_issn_resc, index_id,
                         getattr(index, "online_issn"))
                 }
@@ -279,10 +297,24 @@ class Indexes(object):
                 db.session.merge(index)
             db.session.commit()
             cls.update_set_info(index)
+            UserActivityLogger.info(
+                operation="INDEX_UPDATE",
+                target_key=index_id
+            )
             return index
         except Exception as ex:
-            current_app.logger.debug(ex)
             db.session.rollback()
+            current_app.logger.error(
+                f"Error occurred while updating index: {index_id}"
+            )
+            traceback.print_exc()
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            UserActivityLogger.error(
+                operation="INDEX_UPDATE",
+                target_key=index_id,
+                remarks=tb_info[0]
+            )
         return
 
     @classmethod

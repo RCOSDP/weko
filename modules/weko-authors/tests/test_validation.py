@@ -29,7 +29,7 @@ def test_validate_by_extend_validator():
     with patch("weko_authors.contrib.validation.validate_identifier_scheme", return_value=["test_error"]):
         result = validate_by_extend_validator(item, values, validator)
         assert result == ["test_error"]
-    
+
     # values and validator is none
     result = validate_by_extend_validator(item)
     assert result == []
@@ -39,10 +39,10 @@ def test_validate_by_extend_validator():
 def test_validate_required():
     item = {
         'authorIdInfo': [
-            {'idType': 'ORCID', 
-             'authorId': '1234', 
+            {'idType': 'ORCID',
+             'authorId': '1234',
              'authorIdShowFlg': 'Y'}
-            ], 
+            ],
     }
     values = [{"key":"authorIdInfo[0].authorId","reduce_keys":["authorIdInfo",0,"authorId"],"value":"1234"}]
     required = {
@@ -50,21 +50,21 @@ def test_validate_required():
     }
     result = validate_required(item, values, required)
     assert result == []
-    
+
     # not exist required value
     values = [{"key":"authorIdInfo[0].authorId","reduce_keys":["authorIdInfo",0,"authorId"],"value":""}]
     result = validate_required(item, values, required)
     assert result == ["authorIdInfo[0].authorId"]
-    
+
     # is not if_cond
     result = validate_required(item, values, required={})
     assert result == []
-    
-    
+
+
 # def validate_map(values=[], _map=[]):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_validation.py::test_validate_map -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_validate_map():
-    
+
     map = ['ja', 'ja-Kana', 'en', 'fr',
                 'it', 'de', 'es', 'zh-cn', 'zh-tw',
                 'ru', 'la', 'ms', 'eo', 'ar', 'el', 'ko']
@@ -72,12 +72,12 @@ def test_validate_map():
     values = [{"key":"authorNameInfo[0].language","reduce_keys":["authorNameInfo",0,"language"],"value":"ja"}]
     result = validate_map(values, map)
     assert result == []
-    
+
     # value not in map
     values = [{"key":"authorNameInfo[0].language","reduce_keys":["authorNameInfo",0,"language"],"value":"none"}]
     result = validate_map(values, map)
     assert result == ["authorNameInfo[0].language"]
-    
+
     # values, _map is none
     result = validate_map(values, _map=[])
     assert result == []
@@ -90,13 +90,13 @@ def test_validate_identifier_scheme(authors_prefix_settings):
     item = 'item'
     result = validate_identifier_scheme(item)
     assert result == []
-    
+
     # value is in schemes
     item = 'item'
     values = [{"key":"authorIdInfo[0].idType","reduce_keys":["authorIdInfo",0,"idType"],"value":"WEKO"}]
     result = validate_identifier_scheme(item, values)
     assert result == []
-    
+
     # value is not in schemes
     item = 'item'
     values = [{"key":"authorIdInfo[0].idType","reduce_keys":["authorIdInfo",0,"idType"],"value":"NON-EXIST-SCHEME"}]
@@ -117,7 +117,7 @@ def test_validate_external_author_identifier(authors):
     existed_external_authors_id = {"2":{"1234":["1"]}}
     result = validate_external_author_identifier(item, values, existed_external_authors_id)
     assert result == None
-    
+
     # authorId is none
     item = {
         "pk_id": "1",
@@ -130,7 +130,7 @@ def test_validate_external_author_identifier(authors):
     existed_external_authors_id = {"2":{"":["1"]}}
     result = validate_external_author_identifier(item, values, existed_external_authors_id)
     assert result == None
-    
+
     # pk_id not in weko_ids
     item = {
         "pk_id": "1",
@@ -331,8 +331,8 @@ def test_validate_digits_for_wekoid():
     # def validate_affiliation_identifier_scheme(item, values=[])
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_validation.py::test_validate_affiliation_identifier_scheme -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_validate_affiliation_identifier_scheme(authors_affiliation_settings):
-    
-    
+
+
     item = 'item'
     values = [{"key":"authorIdInfo[0].idType","reduce_keys":["authorIdInfo",0,"idType"],"value":"ISNI"}]
     result = validate_affiliation_identifier_scheme(item, values)

@@ -21,14 +21,14 @@
 """Module tests."""
 
 import pytest
-import json
-from elasticsearch.exceptions import NotFoundError
-from tests.helpers import json_data
+import uuid
+import os
+from tests.helpers import json_data, create_record_with_pdf
 from mock import patch, MagicMock
-from invenio_pidstore.errors import PIDDoesNotExistError
 from weko_authors.models import AuthorsAffiliationSettings,AuthorsPrefixSettings
+from weko_deposit.api import WekoIndexer
+from weko_deposit.tasks import update_items_by_authorInfo, extract_pdf_and_update_file_contents, update_file_content
 
-from weko_deposit.tasks import update_items_by_authorInfo
 [
     {
         "recid": "1",
@@ -65,7 +65,7 @@ class MockRecordsSearch:
             return self.MockExecute()
     def __init__(self, index=None):
         pass
-    
+
     def update_from_dict(self,query=None):
         return self.MockQuery()
 
@@ -92,7 +92,7 @@ class TestUpdateItemsByAuthorInfo:
                 patch('weko_deposit.tasks.update_db_es_data') as mock_update_db_es_data, \
                 patch('weko_deposit.tasks.delete_cache_data') as mock_delete_cache_data, \
                 patch('weko_deposit.tasks.update_cache_data') as mock_update_cache_data:
-            
+
             mock_get_author_prefix.return_value = {}
             mock_get_affiliation_id.return_value = {}
             mock_process.return_value = (1, False)
@@ -100,22 +100,22 @@ class TestUpdateItemsByAuthorInfo:
             mock_update_db_es_data.return_value = None
             mock_delete_cache_data.return_value = None
             mock_update_cache_data.return_value = None
-            
+
             user_id = 1
             target = {"pk_id": "1", "authorIdInfo": [{"idType": "1", "authorId": "weko_id_1", "authorIdShowFlg": "true"}]}
             origin_pkid_list = ["1"]
             origin_id_list = ["weko_id_1"]
             update_gather_flg = True
             force_change = False
-            
+
             update_items_by_authorInfo(user_id, target, origin_pkid_list, origin_id_list, update_gather_flg, force_change)
-            
+
             mock_process.assert_called()
             mock_get_origin_data.assert_called()
             mock_update_db_es_data.assert_called()
             mock_delete_cache_data.assert_called()
             mock_update_cache_data.assert_called()
-                
+
     # Test for update_gather_flg = False and 「if not next」
     def test_update_items_by_authorInfo_success2(self, db, app):
         with patch('weko_deposit.tasks._get_author_prefix') as mock_get_author_prefix, \
@@ -125,7 +125,7 @@ class TestUpdateItemsByAuthorInfo:
                 patch('weko_deposit.tasks.update_db_es_data') as mock_update_db_es_data, \
                 patch('weko_deposit.tasks.delete_cache_data') as mock_delete_cache_data, \
                 patch('weko_deposit.tasks.update_cache_data') as mock_update_cache_data:
-            
+
             mock_get_author_prefix.return_value = {}
             mock_get_affiliation_id.return_value = {}
             mock_process.side_effect = [(1, True), (2, False)]  # 1度目と2度目のreturn_valueを設定
@@ -133,22 +133,22 @@ class TestUpdateItemsByAuthorInfo:
             mock_update_db_es_data.return_value = None
             mock_delete_cache_data.return_value = None
             mock_update_cache_data.return_value = None
-            
+
             user_id = 1
             target = {"pk_id": "1", "authorIdInfo": [{"idType": "1", "authorId": "weko_id_1", "authorIdShowFlg": "true"}]}
             origin_pkid_list = ["1"]
             origin_id_list = ["weko_id_1"]
             update_gather_flg = False
             force_change = False
-            
+
             update_items_by_authorInfo(user_id, target, origin_pkid_list, origin_id_list, update_gather_flg, force_change)
-            
+
             mock_process.assert_called()
             mock_get_origin_data.assert_not_called()
             mock_update_db_es_data.assert_not_called()
             mock_delete_cache_data.assert_not_called()
             mock_update_cache_data.assert_not_called()
-                
+
     def test_update_items_by_authorInfo_sqlalchemy_error(self, db, app):
         with patch('weko_deposit.tasks._get_author_prefix') as mock_get_author_prefix, \
                 patch('weko_deposit.tasks._get_affiliation_id') as mock_get_affiliation_id, \
@@ -159,7 +159,7 @@ class TestUpdateItemsByAuthorInfo:
                 patch('weko_deposit.tasks.update_cache_data') as mock_update_cache_data, \
                 patch('weko_deposit.tasks.db.session.rollback') as mock_db_rollback, \
                 patch('weko_deposit.tasks.update_items_by_authorInfo.retry') as mock_retry:
-            
+
             mock_get_author_prefix.return_value = {}
             mock_get_affiliation_id.return_value = {}
             mock_process.side_effect = SQLAlchemyError("Test SQLAlchemyError")
@@ -169,21 +169,21 @@ class TestUpdateItemsByAuthorInfo:
             mock_update_cache_data.return_value = None
             mock_db_rollback.return_value = None
             mock_retry.return_value = None
-            
+
             user_id = 1
             target = {"pk_id": "1", "authorIdInfo": [{"idType": "1", "authorId": "weko_id_1", "authorIdShowFlg": "true"}]}
             origin_pkid_list = ["1"]
             origin_id_list = ["weko_id_1"]
             update_gather_flg = True
             force_change = False
-            
+
             update_items_by_authorInfo(user_id, target, origin_pkid_list, origin_id_list, update_gather_flg, force_change)
-            
+
             mock_process.assert_called()
             mock_db_rollback.assert_called()
             mock_retry.assert_called()
 
-# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestGetAuthorPrefix -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp            
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestGetAuthorPrefix -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 class TestGetAuthorPrefix:
     def test_get_author_prefix_with_data(self, db):
         # 条件: AuthorsPrefixSettings テーブルにデータが存在する
@@ -207,7 +207,7 @@ class TestGetAuthorPrefix:
         db.session.add(weko)
         db.session.add(orcid)
         db.session.add(cinii)
-        
+
         # 期待結果: 関数はデータを含む辞書を返す
         expected_result = {'1': {'scheme': 'WEKO', 'url': None},
                         '2': {'scheme': 'ORCID', 'url': 'https://orcid.org/##'},
@@ -243,9 +243,9 @@ class TestGetAffiliaitonId:
         db.session.add(isni)
         db.session.add(grid)
         db.session.add(ringgold)
-        
+
         expected_result = {'1': {'scheme': 'ISNI', 'url': 'http://www.isni.org/isni/##'},
-                        '2': {'scheme': 'GRID', 'url': 'https://www.grid.ac/institutes/'}, 
+                        '2': {'scheme': 'GRID', 'url': 'https://www.grid.ac/institutes/'},
                         '3': {'scheme': 'Ringgold', 'url': None}}
         assert _get_affiliation_id() == expected_result
 
@@ -257,17 +257,17 @@ import uuid
 from weko_deposit.api import WekoDeposit
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestProcess -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 class TestProcess:
-    
+
     class MockWekoDeposit:
         def __init__(self):
             self.control_number = '1'
-            
+
         def get_record(self):
             return self
-        
+
         def update_author_link_and_weko_link(self):
             pass
-    
+
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestProcess::test_process_with_data -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     @patch('weko_deposit.tasks.RecordsSearch')
     @patch('weko_deposit.tasks._update_author_data')
@@ -313,9 +313,9 @@ class TestProcess:
             }
             result = _process(data_size, data_from, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
             assert result == (1, True)
-            
-            
-            
+
+
+
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestProcess::test_process_no_data -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     @patch('weko_deposit.tasks.RecordsSearch')
     @patch('weko_deposit.tasks._update_author_data')
@@ -347,7 +347,7 @@ class TestProcess:
 
         # 期待結果
         assert result == (0, False)
-        
+
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestProcess::test_process_first_retry_error -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     @patch('weko_deposit.tasks.RecordsSearch')
     @patch('weko_deposit.tasks._update_author_data')
@@ -376,7 +376,7 @@ class TestProcess:
         # 実行と期待結果
         with pytest.raises(Exception):
             _process(data_size, data_from, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
-            
+
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestProcess::test_process_second_retry_error -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     @patch('weko_deposit.tasks.RecordsSearch')
     @patch('weko_deposit.tasks._update_author_data')
@@ -408,7 +408,7 @@ class TestProcess:
         # 実行と期待結果
         with pytest.raises(Exception):
             _process(data_size, data_from, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
-            
+
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestChangeToMeta -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 class TestChangeToMeta:
@@ -609,15 +609,15 @@ class TestChangeToMeta:
 
         # 期待結果
         expected_target_id = "weko_id_1"
-        expected_meta = {'familyNames': [{'familyName': 'Test', 'familyNameLang': 'en'}], 
+        expected_meta = {'familyNames': [{'familyName': 'Test', 'familyNameLang': 'en'}],
                     'givenNames': [{'givenName': 'User', 'givenNameLang': 'en'}],
-                    'names': [{'name': 'Test, User', 'nameLang': 'en'}], 'nameIdentifiers': 
+                    'names': [{'name': 'Test, User', 'nameLang': 'en'}], 'nameIdentifiers':
                         [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': 'weko_id_1',
                         'nameIdentifierURI': 'https://weko.example.com/'}],
-                        'mails': [{'mail': 'test@example.com'}], 
+                        'mails': [{'mail': 'test@example.com'}],
                         'affiliations': [{'nameIdentifiers':
-                            [{'nameIdentifierScheme': 'Affiliation', 'nameIdentifier': 'aff_id_1', 
-                            'nameIdentifierURI': 'https://affiliation.example.com/'}], 'affiliationNames': 
+                            [{'nameIdentifierScheme': 'Affiliation', 'nameIdentifier': 'aff_id_1',
+                            'nameIdentifierURI': 'https://affiliation.example.com/'}], 'affiliationNames':
                     [{'affiliationName': 'Test Affiliation', 'affiliationNameLang': 'en'}]}]}
 
         # 実行と検証
@@ -810,7 +810,7 @@ class TestUpdateAuthorData:
             }
         }
                 # モックの設定
-            
+
         mock_get_pid.return_value = MagicMock(object_uuid="uuid1")
         mock_get_record.return_value = WekoDeposit({})
         mock_get_record_items.return_value = WekoDeposit(dep_items)
@@ -822,6 +822,150 @@ class TestUpdateAuthorData:
         assert result ==  ('uuid1', ['uuid1'], {'1'}, {'1': 'weko_id_1'})
         assert process_counter["success_items"] == [{"record_id": "1", "author_ids": [], "message": ""}]
 
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_extract_pdf_and_update_file_contents -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+def test_extract_pdf_and_update_file_contents(app, db, location, caplog):
+    app.config["TIKA_JAE_FILE_PARH"] = "/code/tika/tika-app-2.6.0.jar"
+    indexer = WekoIndexer()
+    indexer.get_es_index()
+
+    app.config["WEKO_DEPOSIT_FILESIZE_LIMIT"] = 100 * 1024 # 1KB
+    rec_uuid = uuid.uuid4()
+    pdf_files, deposit = create_record_with_pdf(rec_uuid,1)
+    test_data = {}
+    for filename, file in pdf_files.items():
+        test_data[filename] = {
+            "uri":file.obj.file.uri,
+            "size":file.obj.file.size
+        }
+    extract_pdf_and_update_file_contents(test_data, deposit.id)
+    result = indexer.client.get(
+        index=app.config["INDEXER_DEFAULT_INDEX"],
+        doc_type="item-v1.0.0",
+        id=deposit.id
+    )
+
+    attachments = [r["attachment"] for r in result["_source"]["content"]]
+    test = [
+        {"content":"test file page1   test file page2   test file page3   test file page4   test file page5   test file page6   test file page7   test file page8    test file page9   test file page10   test file page11   test file page12   test file page13   test file page14   test file page15   test file page16   test file page17   test file page18   test file page19   test file page20   test file page21   test file page22   test file page23   test file page24   test file page25   test file page26   test file page27   test file page28   test file page29   test file page30   test file page31   test file page32   test file page33   test file page34   test file page35   test file page36   test file page37   test file page38   test file page39   test file page40 test file page1   test file page2   test file page3   test file page4   test file page5   test file page6   test file page7   test file page8    test file page9   test file page10   test file page11   test file page12   test file page13   test file page14   test file page15   test file page16   test file page17   test file page18   test file page19   test file page20   test file page21   test file page22   test file page23   test file page24   test file page25   test file page26   test file page27   test file page28   test file page29   test file page30   test file page31   test file page32   test file page33   test file page34   test file page35   test file page36   test file page37   test file page38   test file page39   test file page40 test file page1   test file page2   test file page3   test file page4   test file page5   test file page6   test file page7   test file page8    test file page9   test file page10   test file page11   test file page12   test file page13   test file page14   test file page15   test file page16   test file page17   test file page18   test file page19   test file page20   test file page21   test file page22   test file page23   test file page24   test file page25   test file page26   test file page27   test file page28   test file page29   test file page30   test file page31   test file page32   test file page33   test file page34   test file page35   test file page36   test file page37   test file page38   test file page39   test file page40 test file page1   test file page2   test file page3   test file page4   test file page5   test file page6   test file page7   test file page8    test file page9   test file page10   test file page11   test file page12   test file page13   test file page14   test file page15   test file page16   test file page17   test file page18   test file page19   test file page20   test file page21   test file page22   test file page23   test file page24   test file page25   test file page26   test file page27   test file page28   test file page29   test file page30   test file page31   test file page32   test file page33   test file page34   test file page35   test file page36   "}, # big pdf
+        {"content":"これはテストファイルです  This is test file.  "}, # small pdf
+        {}, # not pdf
+        {"content":""}, # not exist pdf
+    ]
+
+    assert attachments == test
+    assert "Resource not found: b'not_exist_dir1'" in caplog.text
+    caplog.clear()
+
+    # not exist es data
+    rec_uuid = uuid.uuid4()
+    pdf_files, deposit = create_record_with_pdf(rec_uuid,2)
+    test_data = {}
+    for filename, file in pdf_files.items():
+        test_data[filename] = {
+            "uri":file.obj.file.uri,
+            "size":file.obj.file.size
+        }
+    indexer.client.delete(
+        index=app.config["INDEXER_DEFAULT_INDEX"],
+        doc_type="item-v1.0.0",
+        id=deposit.id
+    )
+
+    extract_pdf_and_update_file_contents(test_data, deposit.id)
+    assert f"The document targeted for content update({deposit.id}) does not exist." in caplog.text
+    caplog.clear()
+
+    # not jar file
+    tika_path = os.environ.get("TIKA_JAR_FILE_PATH")
+    os.environ["TIKA_JAR_FILE_PATH"] = "not_exist_path"
+    rec_uuid = uuid.uuid4()
+    pdf_files, deposit = create_record_with_pdf(rec_uuid,3)
+    test_data = {}
+    for filename, file in pdf_files.items():
+        test_data[filename] = {
+            "uri":file.obj.file.uri,
+            "size":file.obj.file.size
+        }
+    with pytest.raises(Exception) as e:
+        extract_pdf_and_update_file_contents(test_data, deposit.id)
+    assert str(e.value) == f"not exist tika jar file."
+    result = indexer.client.get(
+        index=app.config["INDEXER_DEFAULT_INDEX"],
+        doc_type="item-v1.0.0",
+        id=deposit.id
+    )
+
+    attachments = [r["attachment"] for r in result["_source"]["content"]]
+    test = [
+        {"content":""}, # small pdf
+        {"content":""}, # big pdf
+        {}, # not pdf
+        {"content":""}, # not exist pdf
+    ]
+
+    assert attachments == test
+    caplog.clear()
+
+    # raise tika error
+    os.environ["TIKA_JAR_FILE_PATH"] = tika_path
+    rec_uuid = uuid.uuid4()
+    pdf_files, deposit = create_record_with_pdf(rec_uuid,4)
+    test_data = {}
+    for filename, file in pdf_files.items():
+        test_data[filename] = {
+            "uri":file.obj.file.uri,
+            "size":file.obj.file.size
+        }
+    from mock import MagicMock
+    mock_run = MagicMock()
+    mock_run.returncode.return_value = 1
+    mock_run.stderr.decode.return_value="test_error"
+    with patch("weko_deposit.tasks.subprocess.run", return_value = mock_run):
+        extract_pdf_and_update_file_contents(test_data, deposit.id)
+    result = indexer.client.get(
+        index=app.config["INDEXER_DEFAULT_INDEX"],
+        doc_type="item-v1.0.0",
+        id=deposit.id
+    )
+
+    attachments = [r["attachment"] for r in result["_source"]["content"]]
+    test = [
+        {"content":""}, # small pdf
+        {"content":""}, # big pdf
+        {}, # not pdf
+        {"content":""}, # not exist pdf
+    ]
+
+    assert attachments == test
+    assert "test_error" in caplog.text
+    caplog.clear()
+
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_update_file_content -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+def test_update_file_content(app, db, location):
+    indexer = WekoIndexer()
+    indexer.get_es_index()
+    rec_uuid = uuid.uuid4()
+    pdf_files, deposit = create_record_with_pdf(rec_uuid,1)
+
+    file_datas = {}
+    for filename, data in pdf_files.items():
+        file_datas[filename] = f"this is {filename}"
+
+    update_file_content(rec_uuid,file_datas)
+
+    result = indexer.client.get(
+        index=app.config["INDEXER_DEFAULT_INDEX"],
+        doc_type="item-v1.0.0",
+        id=deposit.id
+    )
+    attachments = [r["attachment"] for r in result["_source"]["content"]]
+    test = [
+        {"content":"this is test_file_1.2M.pdf"},
+        {"content":"this is test_file_82K.pdf"},
+        {},
+        {"content":"this is not_exist.pdf"},
+    ]
+    assert attachments == test
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestUpdateAuthorData::test_update_author_data_pid_not_exist -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     @patch('weko_deposit.tasks.PersistentIdentifier.get')
     @patch('weko_deposit.tasks.WekoDeposit.get_record')

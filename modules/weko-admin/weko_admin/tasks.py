@@ -38,7 +38,7 @@ from weko_admin.api import TempDirInfo
 
 from .models import AdminSettings, StatisticsEmail, FeedbackMailSetting
 from .utils import StatisticMail, get_user_report_data, package_reports ,elasticsearch_reindex
-from .views import manual_send_site_license_mail 
+from .views import manual_send_site_license_mail
 from celery.task.control import inspect
 from weko_search_ui.tasks import check_celery_is_run
 from .config import WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS,\
@@ -49,12 +49,12 @@ logger = get_task_logger(__name__)
 
 
 @shared_task(
-    name = "weko_admin.tasks.reindex" 
+    name = "weko_admin.tasks.reindex"
     ,bind=True
     ,acks_late=False
     ,ignore_results=False)
 def reindex(self, is_db_to_es ):
-    """ 
+    """
     Celery task to do elasticsearch_reindex
     if error has occord in elasticsearch_reindex , update admin_settings
 
@@ -64,10 +64,10 @@ def reindex(self, is_db_to_es ):
     is_db_to_es : boolean
         if True,  index Documents from DB data
         if False, index Documents from ES data itself
-    
+
     Returns:
         str : elasticsearch_reindex responce text
-        
+
     Raises:
         raises error in elasticsearch_reindex
 
@@ -80,13 +80,13 @@ def reindex(self, is_db_to_es ):
         return elasticsearch_reindex(is_db_to_es)
     except BaseException as ex:
         # set error in admin_settings
-        AdminSettings.update(WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS 
+        AdminSettings.update(WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS
         , dict({WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED:True}))
         raise ex
 
 def is_reindex_running():
     """Check reindex is running."""
-    
+
     if not check_celery_is_run():
         return False
 
@@ -108,7 +108,7 @@ def is_reindex_running():
             if task["name"] == "weko_admin.tasks.reindex":
                 current_app.logger.info("weko_admin.tasks.reindex is reserved")
                 return True
-    
+
     current_app.logger.debug("weko_admin.tasks.reindex is not running")
     return False
 
