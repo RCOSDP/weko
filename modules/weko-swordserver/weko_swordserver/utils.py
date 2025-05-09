@@ -388,7 +388,7 @@ def update_item_ids(list_record, new_id, _id):
 
             item_id = link_item.get("item_id")
             sele_id = link_item.get("sele_id")
-            if item_id == _id and sele_id == "isSupplementedBy":
+            if item_id == _id:
                 # If a match is found, overwrite item_id with new_id
                 link_item["item_id"] = new_id
                 current_app.logger.info(

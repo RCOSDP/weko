@@ -60,6 +60,7 @@ from weko_deposit import WekoDeposit
 from weko_itemtypes_ui import WekoItemtypesUI
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
+from weko_logging.audit import WekoLoggingUserActivity
 from weko_search_ui import WekoSearchUI
 from weko_records_ui import WekoRecordsUI
 from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, WEKO_PERMISSION_ROLE_COMMUNITY, EMAIL_DISPLAY_FLG
@@ -138,6 +139,7 @@ def base_app(instance_path):
     InvenioOAuth2ServerREST(app_)
     WekoDeposit(app_)
     WekoItemtypesUI(app_)
+    WekoLoggingUserActivity(app_)
     WekoSearchUI(app_)
     WekoRecordsUI(app_)
 
@@ -346,14 +348,14 @@ def action_data(db):
         db.session.add_all(actionstatus_db)
     db.session.commit()
     return actions_db, actionstatus_db
-    
+
 @pytest.fixture()
 def db_register(app, db, users, records, action_data, item_type):
     from weko_workflow.models import Action, FlowDefine, FlowAction, WorkFlow, Activity, ActivityAction, ActionFeedbackMail,ActivityHistory
     from datetime import datetime
     from weko_authors.models import Authors
     from weko_admin.models import Identifier
-    
+
     _pid = records[0][0].object_uuid
     _pid2 = records[1][0].object_uuid
     flow_define = FlowDefine(flow_id=uuid.uuid4(),
@@ -477,7 +479,7 @@ def db_register(app, db, users, records, action_data, item_type):
                     )
     with db.session.begin_nested():
         db.session.add(activity_03)
-    
+
     activity_action03_1 = ActivityAction(activity_id=activity_03.activity_id,
                                             action_id=1,action_status="M",action_comment="",
                                             action_handler=1, action_order=1)
@@ -488,7 +490,7 @@ def db_register(app, db, users, records, action_data, item_type):
         db.session.add(activity_action03_1)
         db.session.add(activity_action03_2)
     db.session.commit()
-    
+
     history = ActivityHistory(
         activity_id=activity.activity_id,
         action_id=activity.action_id,
@@ -513,7 +515,7 @@ def db_register(app, db, users, records, action_data, item_type):
     db.session.commit()
     return {'flow_define':flow_define,
             'item_type':item_type,
-            'workflow':workflow, 
+            'workflow':workflow,
             'action_feedback_mail':activity_item3_feedbackmail,
             'action_feedback_mail1':activity_item4_feedbackmail,
             'action_feedback_mail2':activity_item5_feedbackmail,
