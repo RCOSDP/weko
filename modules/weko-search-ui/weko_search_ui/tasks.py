@@ -140,12 +140,11 @@ def check_rocrate_import_items_task(file_path, is_change_identifier: bool,
 def import_item(item, request_info, parent_id=None):
     """Import Item."""
     try:
-        with current_app.test_request_context():
-            start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            result = import_items_to_system(
-                item, request_info, parent_id=parent_id
-            ) or dict()
-            result["start_date"] = start_date
+        start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        result = import_items_to_system(
+            item, request_info, parent_id=parent_id
+        ) or dict()
+        result["start_date"] = start_date
         return result
     except Exception as ex:
         current_app.logger.error(ex)
