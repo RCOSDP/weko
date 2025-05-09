@@ -40,7 +40,6 @@ from weko_records_ui.utils import get_record_permalink, soft_delete
 from weko_search_ui.utils import import_items_to_system, import_items_to_activity
 from weko_workflow.utils import get_site_info_name
 from weko_workflow.scopes import activity_scope
-from weko_search_ui.mapper import JsonLdMapper
 
 from .config import WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE
 from .decorators import check_on_behalf_of, check_package_contents
@@ -259,10 +258,7 @@ def post_service_document():
     client_id = request.oauth.client.client_id
 
     digest = request.headers.get("Digest")
-    if (
-        file_format == "JSON"
-        and current_app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"]
-    ):
+    if current_app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"]:
         if (
             not isinstance(digest, str)
             or not digest.startswith("SHA-256=")
@@ -552,10 +548,7 @@ def put_object(recid):
     client_id = request.oauth.client.client_id
 
     digest = request.headers.get("Digest")
-    if (
-        file_format == "JSON"
-        and current_app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"]
-    ):
+    if current_app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"]:
         if (
             not isinstance(digest, str)
             or not digest.startswith("SHA-256=")
