@@ -1,6 +1,7 @@
 import pytest
 from flask import request,current_app,session,make_response
 from flask_login.utils import login_user
+import hashlib
 from weko_accounts.utils import (
     get_remote_addr,
     generate_random_str,
@@ -232,7 +233,7 @@ def test_parse_attributes(app):
         method="POST",data={"SHIB_ATTR_EPPN":"test_eppn","SHIB_ATTR_MAIL":"test@test.org"}
     ):
         attrs, error = parse_attributes()
-        assert attrs == {"shib_eppn":"test_eppn",'shib_mail':"test@test.org",'shib_user_name':""}
+        assert attrs == {"shib_eppn":"test_eppn",'shib_mail':"test@test.org",'shib_user_name':"G_test_eppn"}
         assert error == False
     with app.test_request_context(
         method="POST",data={}
@@ -244,7 +245,17 @@ def test_parse_attributes(app):
         "/?SHIB_ATTR_EPPN=test_eppn&SHIB_ATTR_MAIL=test@test.org",method="GET"
     ):
         attrs ,error = parse_attributes()
-        assert attrs == {"shib_eppn":"test_eppn",'shib_mail':"test@test.org",'shib_user_name':""}
+        assert attrs == {"shib_eppn":"test_eppn",'shib_mail':"test@test.org",'shib_user_name':"G_test_eppn"}
+        assert error == False
+    # eppn what length is 254
+    test_eppn = 'test_eppn1234567890test_eppn1234567890test_eppn1234567890test_eppn1234567890test_eppn1234567890test_eppn1234567890test_eppn1234567890' + \
+        'test_eppn1234567890test_eppn1234567890test_eppn1234567890test_eppn1234567890test_eppn1234567890test_eppn1234567890test_ep'
+    with app.test_request_context(
+        method="POST", data={"SHIB_ATTR_EPPN": test_eppn, "SHIB_ATTR_MAIL": "test@test.org"}
+    ):
+        attrs, error = parse_attributes()
+        hash_eppn = hashlib.sha256(test_eppn.encode()).hexdigest()
+        assert attrs == {"shib_eppn": test_eppn, "shib_mail": "test@test.org", "shib_user_name": "G_" + hash_eppn}
         assert error == False
 
 #def login_required_customize(func):
