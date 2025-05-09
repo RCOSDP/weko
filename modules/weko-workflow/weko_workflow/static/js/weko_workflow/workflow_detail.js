@@ -445,14 +445,7 @@ require([
   });
 
   $('#link_record_detail').on('click', function () {
-    const forDeleteStr = $('#for_delete').text().trim();
-    const isDeleted = forDeleteStr === 'True';
-    console.log(forDeleteStr)
-    if (isDeleted) {
-      alert('Item was deleted.');
-    } else {
-      $('#myModal').modal('show');
-    }
+    $('#myModal').modal('show');
   });
 
   $('#checked').on('click', function () {

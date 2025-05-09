@@ -1077,7 +1077,7 @@ def display_activity(activity_id="0", community_id=None):
         ctx['item_link'] = item_link
 
     # Get item link info.
-    if not for_delete:
+    try:
         if activity_detail.activity_status != ActivityStatusPolicy.ACTIVITY_CANCEL:
             record_detail_alt = get_main_record_detail(
                 activity_id, activity_detail, action_endpoint, item,
@@ -1094,6 +1094,9 @@ def display_activity(activity_id="0", community_id=None):
                     thumbnails_org=record_detail_alt.get('files_thumbnail')
                 )
             )
+    except PIDDeletedError as ex:
+        current_app.logger.info("Item is already deleted.")
+        traceback.print_exc()
 
     # Get email approval key
     approval_email_key = get_approval_keys()
